@@ -133,12 +133,12 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     return chisq
 
 
-def solve_transform(scidata, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
+def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
                     halfwidth=30.):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xcen_ref and ycen_ref to the image.
 
-    :param scidata: the image of the SOSS trace.
+    :param scidata_bkg: a background subtracted image of the SOSS trace.
     :param scimask: a boolean mask of pixls to be excluded.
     :param xref_o1: a priori expectation of the order 1 trace x-positions.
     :param yref_o1: a priori expectation of the order 1 trace y-positions.
@@ -147,7 +147,7 @@ def solve_transform(scidata, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     :param halfwidth: size of the aperture mask used when extracting the trace
         positions from the data.
 
-    :type scidata: array[float]
+    :type scidata_bkg: array[float]
     :type scimask: array[bool]
     :type xref_o1: array[float]
     :type yref_o1: array[float]
@@ -170,13 +170,13 @@ def solve_transform(scidata, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     yref_o2 = yref_o2[mask]
 
     # Get centroids from data.
-    aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata.shape)
+    aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o1 | scimask
-    xdat_o1, ydat_o1, _ = get_centroids_com(scidata, mask=mask, poly_order=None)
+    xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
-    aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata.shape)
+    aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o2 | scimask
-    xdat_o2, ydat_o2, _ = get_centroids_com(scidata, mask=mask, poly_order=None)
+    xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
     # Use only the clean range between x=800 and x=1700.
     mask = (xdat_o1 >= 800) & (xdat_o1 <= 1700)

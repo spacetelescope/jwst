@@ -165,8 +165,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
         xref_o2 = spectrace_ref.trace[1].data['X']
         yref_o2 = spectrace_ref.trace[1].data['Y']
 
-        # Use the solver on the image.
-        # TODO Solver performs its own background correction, is this an issue?
+        # Use the solver on the background subtracted image.
         transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2)
 
     log.info('Using transformation parameters {}'.format(transform))
