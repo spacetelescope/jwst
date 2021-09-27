@@ -386,35 +386,6 @@ def transform_profile(simple_transform, profile, oversample, pad, native=True, n
     return trans_profile
 
 
-def write_to_file(stack, filename):  # TODO function not needed?
-    """Utility function to write transformed 2D trace profile or wavelength map
-    files to disk. Data will be saved as a multi-extension fits file.
-
-    Parameters
-    ----------
-    stack : np.ndarray (2xYx2048)
-        Array containing transformed 2D trace profile or wavelength map data.
-        The first dimension must be the spectral order, the second dimension
-        the spatial dimension, and the third the spectral dimension.
-    filename : str
-        Name of the file to which to write the data.
-    """
-
-    hdu_p = fits.PrimaryHDU()
-    hdulist = [hdu_p]
-    for order in [1, 2]:
-        hdu_o = fits.ImageHDU(data=stack[order-1])
-        hdu_o.header['ORDER'] = order
-        hdu_o.header.comments['ORDER'] = 'Spectral order.'
-        hdulist.append(hdu_o)
-
-    hdu = fits.HDUList(hdulist)
-    hdu.writeto('{}.fits'.format(filename), overwrite=True)
-    hdu.close()
-
-    return
-
-
 def main():
     """Placeholder for potential multiprocessing."""
 
