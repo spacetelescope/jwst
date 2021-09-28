@@ -3860,6 +3860,9 @@ def create_extraction(extract_ref_dict,
         spec.dispersion_direction = extract_params['dispaxis']
         copy_keyword_info(meta_source, slitname, spec)
 
+        if integ > -1:
+            spec.int_num = integ
+
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
             log.info('Applying Aperture correction.')
             # NIRSpec needs to use a wavelength in the middle of the range rather then the beginning of the range
