@@ -28,7 +28,7 @@ def read_cubepars(par_filename,
     instrument : str
         Either MIRI or NIRSPEC
     weighting : str
-        Type of weighting, msm, emem or driz
+        Type of weighting, msm, emem or drizzle
     all_channel : list
         all the channels contained in input data
     all_subchannel : list
@@ -99,7 +99,7 @@ def read_cubepars(par_filename,
                                                     table_sroi, table_wroi,
                                                     table_scalerad)
 
-            #  read in wavelength table for multi-banddata
+            #  read in wavelength table for multi-band data
             if weighting == 'msm':
                 for tabdata in ptab.ifucubepars_multichannel_msm_wavetable:
                     table_wave = tabdata['WAVELENGTH']
@@ -119,7 +119,7 @@ def read_cubepars(par_filename,
                     table_scalerad = tabdata['SCALERAD']
                     instrument_info.SetMultiChannelEMSMTable(table_wave, table_sroi,
                                                              table_wroi, table_scalerad)
-            elif weighting == 'driz':
+            elif weighting == 'drizzle':
                 for tabdata in ptab.ifucubepars_multichannel_driz_wavetable:
                     table_wave = tabdata['WAVELENGTH']
                     instrument_info.SetMultiChannelDrizTable(table_wave)

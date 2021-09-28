@@ -569,7 +569,7 @@ class IFUCubeData():
                 # --------------------------------------------------------------------------------
                 # POINTCLOUD used for skyalign and IFUalign
                 # --------------------------------------------------------------------------------
-                if self.interpolation == 'pointcloud' or self.interpolation == 'driz':
+                if self.interpolation in ['pointcloud', 'drizzle']:
                     pixelresult = self.map_detector_to_outputframe(this_par1,
                                                                    subtract_background,
                                                                    input_model)
@@ -628,7 +628,7 @@ class IFUCubeData():
                         spaxel_dq.astype(np.uint)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
-                    if self.weighting == 'driz':
+                    if self.weighting == 'drizzle':
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                         linear = 0
@@ -1415,9 +1415,9 @@ class IFUCubeData():
         else:
             min_wave_tolerance = self.zcoord[0] - np.max(self.roiw_table)
             max_wave_tolerance = self.zcoord[-1] + np.max(self.roiw_table)
-        if self.interpolation == 'driz':
+        if self.interpolation == 'drizzle':
             dmax = np.nanmax(dwave_all)
-            # print('dmax',dmax,self.zcoord[0], self.cdelt3 + dmax, self.zcoord[-1])
+
             if self.linear_wavelength:
                 min_wave_tolerance = self.zcoord[0] - (self.cdelt3 + dmax)
                 max_wave_tolerance = self.zcoord[-1] + (self.cdelt3 + dmax)
@@ -1508,7 +1508,7 @@ class IFUCubeData():
                                          ra_use, dec_use,
                                          self.rot_angle)
 
-        if self.interpolation == 'driz':
+        if self.interpolation == 'drizzle':
             dwave = np.zeros(good_shape)
             dwave[:] = dwave_all[good_data]
             ra1 = corner_coord_all[0]
@@ -1545,7 +1545,7 @@ class IFUCubeData():
                                         self.crval2,
                                         ra4, dec4,
                                         self.rot_angle)
-            print(xi1,eta1)
+
             corner_coord = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
         return coord1, coord2, corner_coord, wave, dwave, flux, err, \
             slice_no, rois_det, roiw_det, weight_det, \
@@ -1627,7 +1627,7 @@ class IFUCubeData():
         yind = np.ndarray.flatten(yind)
         slice_no = slice_det[yind, xind]
 
-        if self.interpolation == 'driz':
+        if self.interpolation == 'drizzle':
             # Delta wavelengths
             _,_,wave1 = input_model.meta.wcs(x, y - 0.4999)
             _,_,wave2 = input_model.meta.wcs(x, y + 0.4999)
@@ -1732,7 +1732,7 @@ class IFUCubeData():
             dec = dec[valid]
             lam = lam[valid]
 
-            if self.interpolation == 'driz':
+            if self.interpolation == 'drizzle':
                 # Delta wavelengths
                 _,_,wave1 = slice_wcs(x - 0.4999, y)
                 _,_,wave2 = slice_wcs(x + 0.4999, y)
@@ -1870,7 +1870,7 @@ class IFUCubeData():
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
             self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
-        elif self.interpolation == 'pointcloud' or self.interpolation == 'driz':
+        elif self.interpolation == 'pointcloud' or self.interpolation == 'drizzle':
             # Don't apply any normalization if no points contributed to a spaxel (i.e., don't divide by zero)
             good = self.spaxel_iflux > 0
 
@@ -2168,7 +2168,6 @@ class IFUCubeData():
         ifucube_model.meta.wcsinfo.pc3_2 = 0
         ifucube_model.meta.wcsinfo.pc3_3 = 1
 
-        print('rot angle',self.rot_angle)
         if self.rot_angle is None:
             self.rot_angle = 0.
         ifucube_model.meta.wcsinfo.pc1_1 = -np.cos(self.rot_angle * np.pi / 180.)
@@ -2189,7 +2188,7 @@ class IFUCubeData():
             ifucube_model.meta.bunit_data = input.meta.bunit_data
             ifucube_model.meta.bunit_err = input.meta.bunit_err
 
-        if self.interpolation == 'driz':
+        if self.interpolation == 'drizzle':
             # stick in values of 0, otherwize it is NaN and
             # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
