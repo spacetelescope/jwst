@@ -81,6 +81,9 @@ extract_1d
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
   fixed-slit inputs that are in `SlitModel` form. [#6212]
 
+- Assign integration_number to INT_NUM in each spectrum extension header,
+  for inputs with multiple integrations. [#6369]
+
 flatfield
 ---------
 
