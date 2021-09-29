@@ -185,13 +185,13 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
         # Initial pass 14 orders of magnitude.
         factors = np.logspace(-25, -12, 14)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests, devname=devname + '_tik1.png')  # TODO temporarily make figure.
+        tikfac = engine.best_tikho_factor(tests=tiktests)
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests, devname=devname + '_tik2.png')  # TODO temporarily make figure.
+        tikfac = engine.best_tikho_factor(tests=tiktests)
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
