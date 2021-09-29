@@ -75,6 +75,9 @@ datamodels
   and regions files.  Fix an incorrect comment on
   FilteroffsetModel. [#6362]
 
+- Added new column 'reference_order' to 'planned_star_table' in
+  guider_raw and guider_cal schemas [#6368]
+
 extract_1d
 ----------
 
