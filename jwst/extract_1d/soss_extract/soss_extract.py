@@ -391,7 +391,7 @@ def run_extract1d(input_model: DataModel,
             out_table['FLUX'] = fluxes[order]
             out_table['FLUX_ERROR'] = fluxerrs[order]
             out_table['DQ'] = np.zeros(table_size)  # TODO how should these be set?
-            out_table['BACKGROUND'] = np.zeros(table_size)  # TODO we do compute a background but not per order.
+            out_table['BACKGROUND'] = col_bkg  # TODO this is a columnwise, per pixel, background value computed and subtracted before the solver, engine and box extraction.
             out_table['NPIXELS'] = npixels[order]
 
             spec = datamodels.SpecModel(spec_table=out_table)
@@ -455,7 +455,7 @@ def run_extract1d(input_model: DataModel,
                 out_table['FLUX'] = fluxes[order]
                 out_table['FLUX_ERROR'] = fluxerrs[order]
                 out_table['DQ'] = np.zeros(table_size)  # TODO how should these be set?
-                out_table['BACKGROUND'] = np.zeros(table_size)  # TODO we do compute a background but not per order.
+                out_table['BACKGROUND'] = col_bkg  # TODO this is a columnwise, per pixel, background value computed and subtracted before the solver, engine and box extraction.
                 out_table['NPIXELS'] = npixels[order]
 
                 spec = datamodels.SpecModel(spec_table=out_table)
