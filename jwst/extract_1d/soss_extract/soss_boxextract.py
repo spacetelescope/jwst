@@ -6,16 +6,16 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     the box in pixels. All pixels will have the same weights except at the ends
     of the box aperture.
 
-    :param cols: Column indices of good columns Used if the centroid is defined
-        for specific columns or a subrange of columns.
     :param centroid: Position of the centroid (in rows). Same shape as `cols`
     :param n_pix: Width of the extraction box in pixels.
     :param shape: Shape of the output image. (n_row, n_column)
+    :param cols: Column indices of good columns Used if the centroid is defined
+        for specific columns or a subrange of columns. # TODO not sure the cols argument adds usefull functionality, remove?
 
-    :type cols: array[int]
     :type centroid: array[float]
     :type n_pix: float
     :type shape: Tuple(int, int)
+    :type cols: array[int]
 
     :returns: weights - An array of pixel weights to use with the box extraction.
     :rtype: array[float]

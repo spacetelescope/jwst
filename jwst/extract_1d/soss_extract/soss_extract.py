@@ -80,7 +80,7 @@ def get_trace_1d(ref_files, transform, order, cols=None):
         observation.
     :param order: The spectral order for which to return the trace parameters.
     :param cols: The columns on the detector for which to compute the trace
-        parameters.
+        parameters. # TODO not sure the cols argument adds usefull functionality, remove?
 
     :type ref_files: dict
     :type transform: array_like
@@ -92,7 +92,7 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     """
 
     if cols is None:
-        xtrace = np.arange(4, 2044)
+        xtrace = np.arange(2048)
     else:
         xtrace = cols
 
