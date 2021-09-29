@@ -3860,6 +3860,7 @@ def create_extraction(extract_ref_dict,
         spec.dispersion_direction = extract_params['dispaxis']
         copy_keyword_info(meta_source, slitname, spec)
 
+        # This might be redundant with populate_time_keywords, if INT_TABLE present
         if integ > -1:
             spec.int_num = integ
 
