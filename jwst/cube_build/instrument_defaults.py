@@ -48,16 +48,6 @@ class InstrumentInfo():
         # number of slices, starting slice number,
         # ending # slice number and default scales
         self.Info = {}
-        self.Info['psf_alpha_cuttoff'] = None
-        self.Info['psf_alpha_a_short'] = None
-        self.Info['psf_alpha_b_short'] = None
-        self.Info['psf_alpha_a_long'] = None
-        self.Info['psf_alpha_b_long'] = None
-        self.Info['psf_beta_cuttoff'] = None
-        self.Info['psf_beta_a_short'] = None
-        self.Info['psf_beta_b_short'] = None
-        self.Info['psf_beta_a_long'] = None
-        self.Info['psf_beta_b_long'] = None
 # _____________________________________________________________________
 # channel 1 parameters
         self.Info['1'] = {}
@@ -78,16 +68,6 @@ class InstrumentInfo():
         self.Info['1']['short']['softrad'] = None
         self.Info['1']['short']['scalerad'] = None
         self.Info['1']['short']['msm_power'] = None
-        self.Info['1']['short']['rp_wave_cuttoff'] = None
-        self.Info['1']['short']['rp_a_low'] = None
-        self.Info['1']['short']['rp_b_low'] = None
-        self.Info['1']['short']['rp_c_low'] = None
-        self.Info['1']['short']['rp_a_high'] = None
-        self.Info['1']['short']['rp_b_high'] = None
-        self.Info['1']['short']['rp_c_high'] = None
-        self.Info['1']['short']['rp_a_ave'] = None
-        self.Info['1']['short']['rp_b_ave'] = None
-        self.Info['1']['short']['rp_c_ave'] = None
 
         self.Info['1']['medium'] = {}
         self.Info['1']['medium']['ascale'] = None
@@ -100,16 +80,6 @@ class InstrumentInfo():
         self.Info['1']['medium']['softrad'] = None
         self.Info['1']['medium']['scalerad'] = None
         self.Info['1']['medium']['msm_power'] = None
-        self.Info['1']['medium']['rp_wave_cuttoff'] = None
-        self.Info['1']['medium']['rp_a_low'] = None
-        self.Info['1']['medium']['rp_b_low'] = None
-        self.Info['1']['medium']['rp_c_low'] = None
-        self.Info['1']['medium']['rp_a_high'] = None
-        self.Info['1']['medium']['rp_b_high'] = None
-        self.Info['1']['medium']['rp_c_high'] = None
-        self.Info['1']['medium']['rp_a_ave'] = None
-        self.Info['1']['medium']['rp_b_ave'] = None
-        self.Info['1']['medium']['rp_c_ave'] = None
 
         self.Info['1']['long'] = {}
         self.Info['1']['long']['ascale'] = None
@@ -122,16 +92,6 @@ class InstrumentInfo():
         self.Info['1']['long']['softrad'] = None
         self.Info['1']['long']['scalerad'] = None
         self.Info['1']['long']['msm_power'] = None
-        self.Info['1']['long']['rp_wave_cuttoff'] = None
-        self.Info['1']['long']['rp_a_low'] = None
-        self.Info['1']['long']['rp_b_low'] = None
-        self.Info['1']['long']['rp_c_low'] = None
-        self.Info['1']['long']['rp_a_high'] = None
-        self.Info['1']['long']['rp_b_high'] = None
-        self.Info['1']['long']['rp_c_high'] = None
-        self.Info['1']['long']['rp_a_ave'] = None
-        self.Info['1']['long']['rp_b_ave'] = None
-        self.Info['1']['long']['rp_c_ave'] = None
 # _______________________________________________________________________
 # channel 2 parameters
         self.Info['2'] = {}
@@ -152,16 +112,6 @@ class InstrumentInfo():
         self.Info['2']['short']['softrad'] = None
         self.Info['2']['short']['scalerad'] = None
         self.Info['2']['short']['msm_power'] = None
-        self.Info['2']['short']['rp_wave_cuttoff'] = None
-        self.Info['2']['short']['rp_a_low'] = None
-        self.Info['2']['short']['rp_b_low'] = None
-        self.Info['2']['short']['rp_c_low'] = None
-        self.Info['2']['short']['rp_a_high'] = None
-        self.Info['2']['short']['rp_b_high'] = None
-        self.Info['2']['short']['rp_c_high'] = None
-        self.Info['2']['short']['rp_a_ave'] = None
-        self.Info['2']['short']['rp_b_ave'] = None
-        self.Info['2']['short']['rp_c_ave'] = None
 
         self.Info['2']['medium'] = {}
         self.Info['2']['medium']['ascale'] = None
@@ -174,16 +124,6 @@ class InstrumentInfo():
         self.Info['2']['medium']['softrad'] = None
         self.Info['2']['medium']['scalerad'] = None
         self.Info['2']['medium']['msm_power'] = None
-        self.Info['2']['medium']['rp_wave_cuttoff'] = None
-        self.Info['2']['medium']['rp_a_low'] = None
-        self.Info['2']['medium']['rp_b_low'] = None
-        self.Info['2']['medium']['rp_c_low'] = None
-        self.Info['2']['medium']['rp_a_high'] = None
-        self.Info['2']['medium']['rp_b_high'] = None
-        self.Info['2']['medium']['rp_c_high'] = None
-        self.Info['2']['medium']['rp_a_ave'] = None
-        self.Info['2']['medium']['rp_b_ave'] = None
-        self.Info['2']['medium']['rp_c_ave'] = None
 
         self.Info['2']['long'] = {}
         self.Info['2']['long']['ascale'] = None
@@ -196,16 +136,6 @@ class InstrumentInfo():
         self.Info['2']['long']['softrad'] = None
         self.Info['2']['long']['scalerad'] = None
         self.Info['2']['long']['msm_power'] = None
-        self.Info['2']['long']['rp_wave_cuttoff'] = None
-        self.Info['2']['long']['rp_a_low'] = None
-        self.Info['2']['long']['rp_b_low'] = None
-        self.Info['2']['long']['rp_c_low'] = None
-        self.Info['2']['long']['rp_a_high'] = None
-        self.Info['2']['long']['rp_b_high'] = None
-        self.Info['2']['long']['rp_c_high'] = None
-        self.Info['2']['long']['rp_a_ave'] = None
-        self.Info['2']['long']['rp_b_ave'] = None
-        self.Info['2']['long']['rp_c_ave'] = None
 # ________________________________________________________________
 # channel 3 parameters
         self.Info['3'] = {}
@@ -226,16 +156,6 @@ class InstrumentInfo():
         self.Info['3']['short']['softrad'] = None
         self.Info['3']['short']['scalerad'] = None
         self.Info['3']['short']['msm_power'] = None
-        self.Info['3']['short']['rp_wave_cuttoff'] = None
-        self.Info['3']['short']['rp_a_low'] = None
-        self.Info['3']['short']['rp_b_low'] = None
-        self.Info['3']['short']['rp_c_low'] = None
-        self.Info['3']['short']['rp_a_high'] = None
-        self.Info['3']['short']['rp_b_high'] = None
-        self.Info['3']['short']['rp_c_high'] = None
-        self.Info['3']['short']['rp_a_ave'] = None
-        self.Info['3']['short']['rp_b_ave'] = None
-        self.Info['3']['short']['rp_c_ave'] = None
 
         self.Info['3']['medium'] = {}
         self.Info['3']['medium']['ascale'] = None
@@ -248,16 +168,6 @@ class InstrumentInfo():
         self.Info['3']['medium']['softrad'] = None
         self.Info['3']['medium']['scalerad'] = None
         self.Info['3']['medium']['msm_power'] = None
-        self.Info['3']['medium']['rp_wave_cuttoff'] = None
-        self.Info['3']['medium']['rp_a_low'] = None
-        self.Info['3']['medium']['rp_b_low'] = None
-        self.Info['3']['medium']['rp_c_low'] = None
-        self.Info['3']['medium']['rp_a_high'] = None
-        self.Info['3']['medium']['rp_b_high'] = None
-        self.Info['3']['medium']['rp_c_high'] = None
-        self.Info['3']['medium']['rp_a_ave'] = None
-        self.Info['3']['medium']['rp_b_ave'] = None
-        self.Info['3']['medium']['rp_c_ave'] = None
 
         self.Info['3']['long'] = {}
         self.Info['3']['long']['ascale'] = None
@@ -270,16 +180,6 @@ class InstrumentInfo():
         self.Info['3']['long']['softrad'] = None
         self.Info['3']['long']['scalerad'] = None
         self.Info['3']['long']['msm_power'] = None
-        self.Info['3']['long']['rp_wave_cuttoff'] = None
-        self.Info['3']['long']['rp_a_low'] = None
-        self.Info['3']['long']['rp_b_low'] = None
-        self.Info['3']['long']['rp_c_low'] = None
-        self.Info['3']['long']['rp_a_high'] = None
-        self.Info['3']['long']['rp_b_high'] = None
-        self.Info['3']['long']['rp_c_high'] = None
-        self.Info['3']['long']['rp_a_ave'] = None
-        self.Info['3']['long']['rp_b_ave'] = None
-        self.Info['3']['long']['rp_c_ave'] = None
 # _________________________________________________________________
 # channel 4 parameters
         self.Info['4'] = {}
@@ -300,16 +200,6 @@ class InstrumentInfo():
         self.Info['4']['short']['softrad'] = None
         self.Info['4']['short']['scalerad'] = None
         self.Info['4']['short']['msm_power'] = None
-        self.Info['4']['short']['rp_wave_cuttoff'] = None
-        self.Info['4']['short']['rp_a_low'] = None
-        self.Info['4']['short']['rp_b_low'] = None
-        self.Info['4']['short']['rp_c_low'] = None
-        self.Info['4']['short']['rp_a_high'] = None
-        self.Info['4']['short']['rp_b_high'] = None
-        self.Info['4']['short']['rp_c_high'] = None
-        self.Info['4']['short']['rp_a_ave'] = None
-        self.Info['4']['short']['rp_b_ave'] = None
-        self.Info['4']['short']['rp_c_ave'] = None
 
         self.Info['4']['medium'] = {}
         self.Info['4']['medium']['ascale'] = None
@@ -322,16 +212,6 @@ class InstrumentInfo():
         self.Info['4']['medium']['softrad'] = None
         self.Info['4']['medium']['scalerad'] = None
         self.Info['4']['medium']['msm_power'] = None
-        self.Info['4']['medium']['rp_wave_cuttoff'] = None
-        self.Info['4']['medium']['rp_a_low'] = None
-        self.Info['4']['medium']['rp_b_low'] = None
-        self.Info['4']['medium']['rp_c_low'] = None
-        self.Info['4']['medium']['rp_a_high'] = None
-        self.Info['4']['medium']['rp_b_high'] = None
-        self.Info['4']['medium']['rp_c_high'] = None
-        self.Info['4']['medium']['rp_a_ave'] = None
-        self.Info['4']['medium']['rp_b_ave'] = None
-        self.Info['4']['medium']['rp_c_ave'] = None
 
         self.Info['4']['long'] = {}
         self.Info['4']['long']['ascale'] = None
@@ -344,16 +224,6 @@ class InstrumentInfo():
         self.Info['4']['long']['softrad'] = None
         self.Info['4']['long']['scalerad'] = None
         self.Info['4']['long']['msm_power'] = None
-        self.Info['4']['long']['rp_wave_cuttoff'] = None
-        self.Info['4']['long']['rp_a_low'] = None
-        self.Info['4']['long']['rp_b_low'] = None
-        self.Info['4']['long']['rp_c_low'] = None
-        self.Info['4']['long']['rp_a_high'] = None
-        self.Info['4']['long']['rp_b_high'] = None
-        self.Info['4']['long']['rp_c_high'] = None
-        self.Info['4']['long']['rp_a_ave'] = None
-        self.Info['4']['long']['rp_b_ave'] = None
-        self.Info['4']['long']['rp_c_ave'] = None
 
         self.Info['1']['short-medium'] = {}
         self.Info['1']['short-medium']['ascale'] = None
@@ -366,16 +236,6 @@ class InstrumentInfo():
         self.Info['1']['short-medium']['softrad'] = None
         self.Info['1']['short-medium']['scalerad'] = None
         self.Info['1']['short-medium']['msm_power'] = None
-        self.Info['1']['short-medium']['rp_wave_cuttoff'] = None
-        self.Info['1']['short-medium']['rp_a_low'] = None
-        self.Info['1']['short-medium']['rp_b_low'] = None
-        self.Info['1']['short-medium']['rp_c_low'] = None
-        self.Info['1']['short-medium']['rp_a_high'] = None
-        self.Info['1']['short-medium']['rp_b_high'] = None
-        self.Info['1']['short-medium']['rp_c_high'] = None
-        self.Info['1']['short-medium']['rp_a_ave'] = None
-        self.Info['1']['short-medium']['rp_b_ave'] = None
-        self.Info['1']['short-medium']['rp_c_ave'] = None
 
         self.Info['2']['short-medium'] = {}
         self.Info['2']['short-medium']['ascale'] = None
@@ -388,16 +248,6 @@ class InstrumentInfo():
         self.Info['2']['short-medium']['softrad'] = None
         self.Info['2']['short-medium']['scalerad'] = None
         self.Info['2']['short-medium']['msm_power'] = None
-        self.Info['2']['short-medium']['rp_wave_cuttoff'] = None
-        self.Info['2']['short-medium']['rp_a_low'] = None
-        self.Info['2']['short-medium']['rp_b_low'] = None
-        self.Info['2']['short-medium']['rp_c_low'] = None
-        self.Info['2']['short-medium']['rp_a_high'] = None
-        self.Info['2']['short-medium']['rp_b_high'] = None
-        self.Info['2']['short-medium']['rp_c_high'] = None
-        self.Info['2']['short-medium']['rp_a_ave'] = None
-        self.Info['2']['short-medium']['rp_b_ave'] = None
-        self.Info['2']['short-medium']['rp_c_ave'] = None
 
         self.Info['3']['short-medium'] = {}
         self.Info['3']['short-medium']['ascale'] = None
@@ -410,16 +260,6 @@ class InstrumentInfo():
         self.Info['3']['short-medium']['softrad'] = None
         self.Info['3']['short-medium']['scalerad'] = None
         self.Info['3']['short-medium']['msm_power'] = None
-        self.Info['3']['short-medium']['rp_wave_cuttoff'] = None
-        self.Info['3']['short-medium']['rp_a_low'] = None
-        self.Info['3']['short-medium']['rp_b_low'] = None
-        self.Info['3']['short-medium']['rp_c_low'] = None
-        self.Info['3']['short-medium']['rp_a_high'] = None
-        self.Info['3']['short-medium']['rp_b_high'] = None
-        self.Info['3']['short-medium']['rp_c_high'] = None
-        self.Info['3']['short-medium']['rp_a_ave'] = None
-        self.Info['3']['short-medium']['rp_b_ave'] = None
-        self.Info['3']['short-medium']['rp_c_ave'] = None
 
         self.Info['4']['short-medium'] = {}
         self.Info['4']['short-medium']['ascale'] = None
@@ -432,16 +272,6 @@ class InstrumentInfo():
         self.Info['4']['short-medium']['softrad'] = None
         self.Info['4']['short-medium']['scalerad'] = None
         self.Info['4']['short-medium']['msm_power'] = None
-        self.Info['4']['short-medium']['rp_wave_cuttoff'] = None
-        self.Info['4']['short-medium']['rp_a_low'] = None
-        self.Info['4']['short-medium']['rp_b_low'] = None
-        self.Info['4']['short-medium']['rp_c_low'] = None
-        self.Info['4']['short-medium']['rp_a_high'] = None
-        self.Info['4']['short-medium']['rp_b_high'] = None
-        self.Info['4']['short-medium']['rp_c_high'] = None
-        self.Info['4']['short-medium']['rp_a_ave'] = None
-        self.Info['4']['short-medium']['rp_b_ave'] = None
-        self.Info['4']['short-medium']['rp_c_ave'] = None
 
         self.Info['1']['short-long'] = {}
         self.Info['1']['short-long']['ascale'] = None
@@ -454,16 +284,6 @@ class InstrumentInfo():
         self.Info['1']['short-long']['softrad'] = None
         self.Info['1']['short-long']['scalerad'] = None
         self.Info['1']['short-long']['msm_power'] = None
-        self.Info['1']['short-long']['rp_wave_cuttoff'] = None
-        self.Info['1']['short-long']['rp_a_low'] = None
-        self.Info['1']['short-long']['rp_b_low'] = None
-        self.Info['1']['short-long']['rp_c_low'] = None
-        self.Info['1']['short-long']['rp_a_high'] = None
-        self.Info['1']['short-long']['rp_b_high'] = None
-        self.Info['1']['short-long']['rp_c_high'] = None
-        self.Info['1']['short-long']['rp_a_ave'] = None
-        self.Info['1']['short-long']['rp_b_ave'] = None
-        self.Info['1']['short-long']['rp_c_ave'] = None
 
         self.Info['2']['short-long'] = {}
         self.Info['2']['short-long']['ascale'] = None
@@ -476,16 +296,6 @@ class InstrumentInfo():
         self.Info['2']['short-long']['softrad'] = None
         self.Info['2']['short-long']['scalerad'] = None
         self.Info['2']['short-long']['msm_power'] = None
-        self.Info['2']['short-long']['rp_wave_cuttoff'] = None
-        self.Info['2']['short-long']['rp_a_low'] = None
-        self.Info['2']['short-long']['rp_b_low'] = None
-        self.Info['2']['short-long']['rp_c_low'] = None
-        self.Info['2']['short-long']['rp_a_high'] = None
-        self.Info['2']['short-long']['rp_b_high'] = None
-        self.Info['2']['short-long']['rp_c_high'] = None
-        self.Info['2']['short-long']['rp_a_ave'] = None
-        self.Info['2']['short-long']['rp_b_ave'] = None
-        self.Info['2']['short-long']['rp_c_ave'] = None
 
         self.Info['3']['short-long'] = {}
         self.Info['3']['short-long']['ascale'] = None
@@ -498,16 +308,6 @@ class InstrumentInfo():
         self.Info['3']['short-long']['softrad'] = None
         self.Info['3']['short-long']['scalerad'] = None
         self.Info['3']['short-long']['msm_power'] = None
-        self.Info['3']['short-long']['rp_wave_cuttoff'] = None
-        self.Info['3']['short-long']['rp_a_low'] = None
-        self.Info['3']['short-long']['rp_b_low'] = None
-        self.Info['3']['short-long']['rp_c_low'] = None
-        self.Info['3']['short-long']['rp_a_high'] = None
-        self.Info['3']['short-long']['rp_b_high'] = None
-        self.Info['3']['short-long']['rp_c_high'] = None
-        self.Info['3']['short-long']['rp_a_ave'] = None
-        self.Info['3']['short-long']['rp_b_ave'] = None
-        self.Info['3']['short-long']['rp_c_ave'] = None
 
         self.Info['4']['short-long'] = {}
         self.Info['4']['short-long']['ascale'] = None
@@ -520,16 +320,6 @@ class InstrumentInfo():
         self.Info['4']['short-long']['softrad'] = None
         self.Info['4']['short-long']['scalerad'] = None
         self.Info['4']['short-long']['msm_power'] = None
-        self.Info['4']['short-long']['rp_wave_cuttoff'] = None
-        self.Info['4']['short-long']['rp_a_low'] = None
-        self.Info['4']['short-long']['rp_b_low'] = None
-        self.Info['4']['short-long']['rp_c_low'] = None
-        self.Info['4']['short-long']['rp_a_high'] = None
-        self.Info['4']['short-long']['rp_b_high'] = None
-        self.Info['4']['short-long']['rp_c_high'] = None
-        self.Info['4']['short-long']['rp_a_ave'] = None
-        self.Info['4']['short-long']['rp_b_ave'] = None
-        self.Info['4']['short-long']['rp_c_ave'] = None
 
         self.Info['1']['medium-short'] = {}
         self.Info['1']['medium-short']['ascale'] = None
@@ -542,16 +332,6 @@ class InstrumentInfo():
         self.Info['1']['medium-short']['softrad'] = None
         self.Info['1']['medium-short']['scalerad'] = None
         self.Info['1']['medium-short']['msm_power'] = None
-        self.Info['1']['medium-short']['rp_wave_cuttoff'] = None
-        self.Info['1']['medium-short']['rp_a_low'] = None
-        self.Info['1']['medium-short']['rp_b_low'] = None
-        self.Info['1']['medium-short']['rp_c_low'] = None
-        self.Info['1']['medium-short']['rp_a_high'] = None
-        self.Info['1']['medium-short']['rp_b_high'] = None
-        self.Info['1']['medium-short']['rp_c_high'] = None
-        self.Info['1']['medium-short']['rp_a_ave'] = None
-        self.Info['1']['medium-short']['rp_b_ave'] = None
-        self.Info['1']['medium-short']['rp_c_ave'] = None
 
         self.Info['2']['medium-short'] = {}
         self.Info['2']['medium-short']['ascale'] = None
@@ -564,16 +344,6 @@ class InstrumentInfo():
         self.Info['2']['medium-short']['softrad'] = None
         self.Info['2']['medium-short']['scalerad'] = None
         self.Info['2']['medium-short']['msm_power'] = None
-        self.Info['2']['medium-short']['rp_wave_cuttoff'] = None
-        self.Info['2']['medium-short']['rp_a_low'] = None
-        self.Info['2']['medium-short']['rp_b_low'] = None
-        self.Info['2']['medium-short']['rp_c_low'] = None
-        self.Info['2']['medium-short']['rp_a_high'] = None
-        self.Info['2']['medium-short']['rp_b_high'] = None
-        self.Info['2']['medium-short']['rp_c_high'] = None
-        self.Info['2']['medium-short']['rp_a_ave'] = None
-        self.Info['2']['medium-short']['rp_b_ave'] = None
-        self.Info['2']['medium-short']['rp_c_ave'] = None
 
         self.Info['3']['medium-short'] = {}
         self.Info['3']['medium-short']['ascale'] = None
@@ -586,16 +356,6 @@ class InstrumentInfo():
         self.Info['3']['medium-short']['softrad'] = None
         self.Info['3']['medium-short']['scalerad'] = None
         self.Info['3']['medium-short']['msm_power'] = None
-        self.Info['3']['medium-short']['rp_wave_cuttoff'] = None
-        self.Info['3']['medium-short']['rp_a_low'] = None
-        self.Info['3']['medium-short']['rp_b_low'] = None
-        self.Info['3']['medium-short']['rp_c_low'] = None
-        self.Info['3']['medium-short']['rp_a_high'] = None
-        self.Info['3']['medium-short']['rp_b_high'] = None
-        self.Info['3']['medium-short']['rp_c_high'] = None
-        self.Info['3']['medium-short']['rp_a_ave'] = None
-        self.Info['3']['medium-short']['rp_b_ave'] = None
-        self.Info['3']['medium-short']['rp_c_ave'] = None
 
         self.Info['4']['medium-short'] = {}
         self.Info['4']['medium-short']['ascale'] = None
@@ -608,16 +368,6 @@ class InstrumentInfo():
         self.Info['4']['medium-short']['softrad'] = None
         self.Info['4']['medium-short']['scalerad'] = None
         self.Info['4']['medium-short']['msm_power'] = None
-        self.Info['4']['medium-short']['rp_wave_cuttoff'] = None
-        self.Info['4']['medium-short']['rp_a_low'] = None
-        self.Info['4']['medium-short']['rp_b_low'] = None
-        self.Info['4']['medium-short']['rp_c_low'] = None
-        self.Info['4']['medium-short']['rp_a_high'] = None
-        self.Info['4']['medium-short']['rp_b_high'] = None
-        self.Info['4']['medium-short']['rp_c_high'] = None
-        self.Info['4']['medium-short']['rp_a_ave'] = None
-        self.Info['4']['medium-short']['rp_b_ave'] = None
-        self.Info['4']['medium-short']['rp_c_ave'] = None
 
         self.Info['1']['medium-long'] = {}
         self.Info['1']['medium-long']['ascale'] = None
@@ -630,16 +380,6 @@ class InstrumentInfo():
         self.Info['1']['medium-long']['softrad'] = None
         self.Info['1']['medium-long']['scalerad'] = None
         self.Info['1']['medium-long']['msm_power'] = None
-        self.Info['1']['medium-long']['rp_wave_cuttoff'] = None
-        self.Info['1']['medium-long']['rp_a_low'] = None
-        self.Info['1']['medium-long']['rp_b_low'] = None
-        self.Info['1']['medium-long']['rp_c_low'] = None
-        self.Info['1']['medium-long']['rp_a_high'] = None
-        self.Info['1']['medium-long']['rp_b_high'] = None
-        self.Info['1']['medium-long']['rp_c_high'] = None
-        self.Info['1']['medium-long']['rp_a_ave'] = None
-        self.Info['1']['medium-long']['rp_b_ave'] = None
-        self.Info['1']['medium-long']['rp_c_ave'] = None
 
         self.Info['2']['medium-long'] = {}
         self.Info['2']['medium-long']['ascale'] = None
@@ -674,16 +414,6 @@ class InstrumentInfo():
         self.Info['3']['medium-long']['softrad'] = None
         self.Info['3']['medium-long']['scalerad'] = None
         self.Info['3']['medium-long']['msm_power'] = None
-        self.Info['3']['medium-long']['rp_wave_cuttoff'] = None
-        self.Info['3']['medium-long']['rp_a_low'] = None
-        self.Info['3']['medium-long']['rp_b_low'] = None
-        self.Info['3']['medium-long']['rp_c_low'] = None
-        self.Info['3']['medium-long']['rp_a_high'] = None
-        self.Info['3']['medium-long']['rp_b_high'] = None
-        self.Info['3']['medium-long']['rp_c_high'] = None
-        self.Info['3']['medium-long']['rp_a_ave'] = None
-        self.Info['3']['medium-long']['rp_b_ave'] = None
-        self.Info['3']['medium-long']['rp_c_ave'] = None
 
         self.Info['4']['medium-long'] = {}
         self.Info['4']['medium-long']['ascale'] = None
@@ -696,16 +426,6 @@ class InstrumentInfo():
         self.Info['4']['medium-long']['softrad'] = None
         self.Info['4']['medium-long']['scalerad'] = None
         self.Info['4']['medium-long']['msm_power'] = None
-        self.Info['4']['medium-long']['rp_wave_cuttoff'] = None
-        self.Info['4']['medium-long']['rp_a_low'] = None
-        self.Info['4']['medium-long']['rp_b_low'] = None
-        self.Info['4']['medium-long']['rp_c_low'] = None
-        self.Info['4']['medium-long']['rp_a_high'] = None
-        self.Info['4']['medium-long']['rp_b_high'] = None
-        self.Info['4']['medium-long']['rp_c_high'] = None
-        self.Info['4']['medium-long']['rp_a_ave'] = None
-        self.Info['4']['medium-long']['rp_b_ave'] = None
-        self.Info['4']['medium-long']['rp_c_ave'] = None
 
         self.Info['1']['long-short'] = {}
         self.Info['1']['long-short']['ascale'] = None
@@ -718,16 +438,6 @@ class InstrumentInfo():
         self.Info['1']['long-short']['softrad'] = None
         self.Info['1']['long-short']['scalerad'] = None
         self.Info['1']['long-short']['msm_power'] = None
-        self.Info['1']['long-short']['rp_wave_cuttoff'] = None
-        self.Info['1']['long-short']['rp_a_low'] = None
-        self.Info['1']['long-short']['rp_b_low'] = None
-        self.Info['1']['long-short']['rp_c_low'] = None
-        self.Info['1']['long-short']['rp_a_high'] = None
-        self.Info['1']['long-short']['rp_b_high'] = None
-        self.Info['1']['long-short']['rp_c_high'] = None
-        self.Info['1']['long-short']['rp_a_ave'] = None
-        self.Info['1']['long-short']['rp_b_ave'] = None
-        self.Info['1']['long-short']['rp_c_ave'] = None
 
         self.Info['2']['long-short'] = {}
         self.Info['2']['long-short']['ascale'] = None
@@ -740,16 +450,6 @@ class InstrumentInfo():
         self.Info['2']['long-short']['softrad'] = None
         self.Info['2']['long-short']['scalerad'] = None
         self.Info['2']['long-short']['msm_power'] = None
-        self.Info['2']['long-short']['rp_wave_cuttoff'] = None
-        self.Info['2']['long-short']['rp_a_low'] = None
-        self.Info['2']['long-short']['rp_b_low'] = None
-        self.Info['2']['long-short']['rp_c_low'] = None
-        self.Info['2']['long-short']['rp_a_high'] = None
-        self.Info['2']['long-short']['rp_b_high'] = None
-        self.Info['2']['long-short']['rp_c_high'] = None
-        self.Info['2']['long-short']['rp_a_ave'] = None
-        self.Info['2']['long-short']['rp_b_ave'] = None
-        self.Info['2']['long-short']['rp_c_ave'] = None
 
         self.Info['3']['long-short'] = {}
         self.Info['3']['long-short']['ascale'] = None
@@ -762,16 +462,6 @@ class InstrumentInfo():
         self.Info['3']['long-short']['softrad'] = None
         self.Info['3']['long-short']['scalerad'] = None
         self.Info['3']['long-short']['msm_power'] = None
-        self.Info['3']['long-short']['rp_wave_cuttoff'] = None
-        self.Info['3']['long-short']['rp_a_low'] = None
-        self.Info['3']['long-short']['rp_b_low'] = None
-        self.Info['3']['long-short']['rp_c_low'] = None
-        self.Info['3']['long-short']['rp_a_high'] = None
-        self.Info['3']['long-short']['rp_b_high'] = None
-        self.Info['3']['long-short']['rp_c_high'] = None
-        self.Info['3']['long-short']['rp_a_ave'] = None
-        self.Info['3']['long-short']['rp_b_ave'] = None
-        self.Info['3']['long-short']['rp_c_ave'] = None
 
         self.Info['4']['long-short'] = {}
         self.Info['4']['long-short']['ascale'] = None
@@ -784,16 +474,6 @@ class InstrumentInfo():
         self.Info['4']['long-short']['softrad'] = None
         self.Info['4']['long-short']['scalerad'] = None
         self.Info['4']['long-short']['msm_power'] = None
-        self.Info['4']['long-short']['rp_wave_cuttoff'] = None
-        self.Info['4']['long-short']['rp_a_low'] = None
-        self.Info['4']['long-short']['rp_b_low'] = None
-        self.Info['4']['long-short']['rp_c_low'] = None
-        self.Info['4']['long-short']['rp_a_high'] = None
-        self.Info['4']['long-short']['rp_b_high'] = None
-        self.Info['4']['long-short']['rp_c_high'] = None
-        self.Info['4']['long-short']['rp_a_ave'] = None
-        self.Info['4']['long-short']['rp_b_ave'] = None
-        self.Info['4']['long-short']['rp_c_ave'] = None
 
         self.Info['1']['long-medium'] = {}
         self.Info['1']['long-medium']['ascale'] = None
@@ -806,16 +486,6 @@ class InstrumentInfo():
         self.Info['1']['long-medium']['softrad'] = None
         self.Info['1']['long-medium']['scalerad'] = None
         self.Info['1']['long-medium']['msm_power'] = None
-        self.Info['1']['long-medium']['rp_wave_cuttoff'] = None
-        self.Info['1']['long-medium']['rp_a_low'] = None
-        self.Info['1']['long-medium']['rp_b_low'] = None
-        self.Info['1']['long-medium']['rp_c_low'] = None
-        self.Info['1']['long-medium']['rp_a_high'] = None
-        self.Info['1']['long-medium']['rp_b_high'] = None
-        self.Info['1']['long-medium']['rp_c_high'] = None
-        self.Info['1']['long-medium']['rp_a_ave'] = None
-        self.Info['1']['long-medium']['rp_b_ave'] = None
-        self.Info['1']['long-medium']['rp_c_ave'] = None
 
         self.Info['2']['long-medium'] = {}
         self.Info['2']['long-medium']['ascale'] = None
@@ -828,16 +498,6 @@ class InstrumentInfo():
         self.Info['2']['long-medium']['softrad'] = None
         self.Info['2']['long-medium']['scalerad'] = None
         self.Info['2']['long-medium']['msm_power'] = None
-        self.Info['2']['long-medium']['rp_wave_cuttoff'] = None
-        self.Info['2']['long-medium']['rp_a_low'] = None
-        self.Info['2']['long-medium']['rp_b_low'] = None
-        self.Info['2']['long-medium']['rp_c_low'] = None
-        self.Info['2']['long-medium']['rp_a_high'] = None
-        self.Info['2']['long-medium']['rp_b_high'] = None
-        self.Info['2']['long-medium']['rp_c_high'] = None
-        self.Info['2']['long-medium']['rp_a_ave'] = None
-        self.Info['2']['long-medium']['rp_b_ave'] = None
-        self.Info['2']['long-medium']['rp_c_ave'] = None
 
         self.Info['3']['long-medium'] = {}
         self.Info['3']['long-medium']['ascale'] = None
@@ -850,16 +510,6 @@ class InstrumentInfo():
         self.Info['3']['long-medium']['softrad'] = None
         self.Info['3']['long-medium']['scalerad'] = None
         self.Info['3']['long-medium']['msm_power'] = None
-        self.Info['3']['long-medium']['rp_wave_cuttoff'] = None
-        self.Info['3']['long-medium']['rp_a_low'] = None
-        self.Info['3']['long-medium']['rp_b_low'] = None
-        self.Info['3']['long-medium']['rp_c_low'] = None
-        self.Info['3']['long-medium']['rp_a_high'] = None
-        self.Info['3']['long-medium']['rp_b_high'] = None
-        self.Info['3']['long-medium']['rp_c_high'] = None
-        self.Info['3']['long-medium']['rp_a_ave'] = None
-        self.Info['3']['long-medium']['rp_b_ave'] = None
-        self.Info['3']['long-medium']['rp_c_ave'] = None
 
         self.Info['4']['long-medium'] = {}
         self.Info['4']['long-medium']['ascale'] = None
@@ -872,16 +522,6 @@ class InstrumentInfo():
         self.Info['4']['long-medium']['softrad'] = None
         self.Info['4']['long-medium']['scalerad'] = None
         self.Info['4']['long-medium']['msm_power'] = None
-        self.Info['4']['long-medium']['rp_wave_cuttoff'] = None
-        self.Info['4']['long-medium']['rp_a_low'] = None
-        self.Info['4']['long-medium']['rp_b_low'] = None
-        self.Info['4']['long-medium']['rp_c_low'] = None
-        self.Info['4']['long-medium']['rp_a_high'] = None
-        self.Info['4']['long-medium']['rp_b_high'] = None
-        self.Info['4']['long-medium']['rp_c_high'] = None
-        self.Info['4']['long-medium']['rp_a_ave'] = None
-        self.Info['4']['long-medium']['rp_b_ave'] = None
-        self.Info['4']['long-medium']['rp_c_ave'] = None
 
 # ####################################################################
 # NIRSPEC Paramters
@@ -1175,67 +815,6 @@ class InstrumentInfo():
 
     def SetScaleRad(self, value, parameter1, parameter2):
         self.Info[parameter1][parameter2]['scalerad'] = value
-
-    def Set_RP_Wave_Cutoff(self, table_wave_center, this_channel, this_band):
-        self.Info[this_channel][this_band]['rp_wave_cuttoff'] = table_wave_center
-
-    def Set_RP_low(self, a, b, c, this_channel, this_band):
-        self.Info[this_channel][this_band]['rp_a_low'] = a
-        self.Info[this_channel][this_band]['rp_b_low'] = b
-        self.Info[this_channel][this_band]['rp_c_low'] = c
-
-    def Set_RP_high(self, a, b, c, this_channel, this_band):
-        self.Info[this_channel][this_band]['rp_a_high'] = a
-        self.Info[this_channel][this_band]['rp_b_high'] = b
-        self.Info[this_channel][this_band]['rp_c_high'] = c
-
-    def Set_RP_ave(self, a, b, c, this_channel, this_band):
-        self.Info[this_channel][this_band]['rp_a_ave'] = a
-        self.Info[this_channel][this_band]['rp_b_ave'] = b
-        self.Info[this_channel][this_band]['rp_c_ave'] = c
-
-    def Set_psf_alpha_parameters(self, cutoff,
-                                 a_short, b_short, a_long, b_long):
-        self.Info['psf_alpha_cuttoff'] = cutoff
-        self.Info['psf_alpha_a_short'] = a_short
-        self.Info['psf_alpha_b_short'] = b_short
-        self.Info['psf_alpha_a_long'] = a_long
-        self.Info['psf_alpha_b_long'] = b_long
-
-    def Set_psf_beta_parameters(self, cutoff,
-                                a_short, b_short, a_long, b_long):
-        self.Info['psf_beta_cuttoff'] = cutoff
-        self.Info['psf_beta_a_short'] = a_short
-        self.Info['psf_beta_b_short'] = b_short
-        self.Info['psf_beta_a_long'] = a_long
-        self.Info['psf_beta_b_long'] = b_long
-# ______________________________________________________________________
-
-    def Get_RP_ave_Wave(self, this_channel, this_band):
-        w = self.Info[this_channel][this_band]['rp_wave_cuttoff']
-        a = self.Info[this_channel][this_band]['rp_a_ave']
-        b = self.Info[this_channel][this_band]['rp_b_ave']
-        c = self.Info[this_channel][this_band]['rp_c_ave']
-        weight = (w, a, b, c)
-        return weight
-
-    def Get_psf_alpha_parameters(self):
-        a1 = self.Info['psf_alpha_cuttoff']
-        a2 = self.Info['psf_alpha_a_short']
-        a3 = self.Info['psf_alpha_b_short']
-        a4 = self.Info['psf_alpha_a_long']
-        a5 = self.Info['psf_alpha_b_long']
-        a_weight = (a1, a2, a3, a4, a5)
-        return a_weight
-
-    def Get_psf_beta_parameters(self):
-        b1 = self.Info['psf_beta_cuttoff']
-        b2 = self.Info['psf_beta_a_short']
-        b3 = self.Info['psf_beta_b_short']
-        b4 = self.Info['psf_beta_a_long']
-        b5 = self.Info['psf_beta_b_long']
-        b_weight = (b1, b2, b3, b4, b5)
-        return b_weight
 
     def GetWaveRoi(self, parameter1, parameter2):
         roiw = self.Info[parameter1][parameter2]['wroi']
