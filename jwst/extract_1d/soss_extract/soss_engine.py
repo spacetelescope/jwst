@@ -1176,7 +1176,8 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         mask = self.mask
 
         # Compute the log-likelihood for the spectrum.
-        logl = (model - data)/error
+        with np.errstate(divide='ignore'):
+            logl = (model - data)/error
         logl = -np.nansum((logl[~mask])**2)
 
         return logl

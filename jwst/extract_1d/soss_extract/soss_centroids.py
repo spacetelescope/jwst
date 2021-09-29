@@ -182,9 +182,12 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11, verbos
     scidata_bkg_masked = np.where(mask | ~refpix_mask, np.nan, scidata_bkg)
 
     # Find centroid - first pass, use all pixels in the column.
+
     # Normalize each column
-    with np.errstate(invalid='ignore'):
-        scidata_norm = scidata_bkg_masked/np.nanmax(scidata_bkg_masked, axis=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        maxvals = np.nanmax(scidata_bkg_masked, axis=0)
+    scidata_norm = scidata_bkg_masked/maxvals
 
     # Create 2D Array of pixel positions.
     xpix = np.arange(dimx)
