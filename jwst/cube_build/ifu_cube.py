@@ -1323,7 +1323,7 @@ class IFUCubeData():
         fluxes and pixel weighing parameters that fall within the roi of
         spaxel center
 
-        Parameter
+        Parameters
         ----------
         this_par1 : str
            for MIRI this is the channel # for NIRSPEC this is the grating name
@@ -1484,7 +1484,7 @@ class IFUCubeData():
 
         Return the coordinates of all the detector pixel in the output frame.
 
-        Parameter
+        Parameters
         ----------
         this_par1 : str
            for MIRI this is the channel # for NIRSPEC this is the grating name
@@ -1562,7 +1562,7 @@ class IFUCubeData():
         The output frame is on the SKY (ra-dec)
         Return the coordinates of all the detector pixel in the output frame.
 
-        Parameter
+        Parameters
         ----------
         input: datamodel
         input data model

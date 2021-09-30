@@ -229,9 +229,15 @@ weighting
 
 The best algorithm with which to combine the irregularly-distributed samples of the point cloud to a rectilinear
 data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
-the science goals of a particular observing program.  At present, the default method uses a flux-conserving
+the science goals of a particular observing program.  At present there are two approaches to weighting the detector pixels.
+The default method uses a flux-conserving
 variant of Shephards method in which the value of a given element of the cube is a distance-weighted average
-of all point-cloud members within a given region of influence.  In order to explain this method we will introduce the follow definitions:
+of all point-cloud members within a given region of influence.  The second approach is to use a 3-D drizzling techniuqe. 
+
+Shephards method of weighting
+##############################
+
+In order to explain this method we will introduce the follow definitions:
 
 * xdistance = distance between point in the cloud and spaxel center in units of arc seconds along the x axis
 * ydistance = distance between point in the cloud and spaxel center in units of arc seconds along the y axis
@@ -264,7 +270,10 @@ If the  alternative weighting function (set by ``weighting = msm``) is selected 
 In this  weighting function the default value for *p* is read in from the cubepar reference file. It can also  be set 
 by the argument ``weight_power=value``.
 
-There is also an algorithm for combining data using a  3d generalization of the classical 2-D drizzle technique. This algorithm is used
+3-D drizzling
+#############
+
+This algorithm for combining data uses a  3d generalization of the classical 2-D drizzle technique. It is used
 when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output pixel grid according to the relative overlap
 between the input and output pixels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial overlap and
 spectral overlap between detector pixels and cube spaxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
