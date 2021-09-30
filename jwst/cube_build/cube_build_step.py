@@ -351,13 +351,12 @@ class CubeBuildStep (Step):
         """Read user input options for channel, subchannel, filter, or grating"""
 
         # Determine if any of the input paramters channel, band, filter or
-        # grating have been set. 
+        # grating have been set.
 
         # This routine updates the dictionary self.pars_input with any user
         # provided inputs. In particular it sets pars_input['channel'],
         # pars_input['sub_channel'], pars_input['grating'], and
         # pars_input['filter'] with user provided values.
-    
 
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all', 'short-medium', 'short-long',
