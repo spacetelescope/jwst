@@ -71,7 +71,7 @@ We use the following terminology to define the spectral range divisions of MIRI:
   longest is covered by Band 4-LONG (aka 4C).
 
    For **NIRSpec** we define a *band* as a single grating-filter combination, e.g. G140M-F070LP. The possible grating/filter
-   combinations for NIRSpec are given in the table below.
+   combinations for NIRSpec are given in 
 
 NIRSpec IFU Disperser and Filter Combinations
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -90,7 +90,7 @@ G235H    F170LP  1.66 - 3.17
 G395H    F290LP  2.87 - 5.27
 =======  ======  ====================
 
-* Approximate wavelength ranges are given to aid in explaining  how to build NIRSpec IFU cubes, see the NIRSpec IFU JDOX  for up-to-date information.
+* Approximate wavelength ranges are given to aid in explaining  how to build NIRSpec IFU cubes, see `NIRSpec Spectral configuration <https://jwst-docs.stsci.edu/jwst-near-infrared-spectrograph/nirspec-observing-modes/nirspec-ifu-spectroscopy#NIRSpecIFUSpectroscopy-Spectralconfigurations>`_.
  
 
 
@@ -157,7 +157,7 @@ The SCI image contains the surface brightness of cube spaxels in units of MJy/st
 can either be linear or non-linear. If the wavelength is non-linear then the IFU cube contain data from more than one band.  A
 table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
-contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propogate the
+contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propagate the
 dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).  
 
 Output Product Name
@@ -264,28 +264,12 @@ If the  alternative weighting function (set by ``weighting = msm``) is selected 
 In this  weighting function the default value for *p* is read in from the cubepar reference file. It can also  be set 
 by the argument ``weight_power=value``.
 
-Other algorithms such as a 3d generalization of the drizzle algorithm
-are also being studied and may provide better performance for some science applications.
-
-..
-	Additional constraints for weighting=MIRIPSF
-	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	For MIRI the weighting function can be adapted to use the  width  of the PSF and LSF in weighting the point cloud members 
-	within the ROIcentered on the spaxel.  The width of the MIRI PSF varies with wavelength, broader for longer wavelengths.
-	The resolving power of  the MRS  varies with wavelength and band.  Adjacent point-cloud elements may in fact originate from
-	different exposures rotated from one another and even from different spectral bands. In order to properly weight the MIRI 
-	data the distances  between the point cloud element and spaxel the distances are determined in the alpha-beta coordinate 
-	system and then normalized by the width of the PSF and the LSF.  To weight in the alpha-beta coordinates system each cube
-	spaxel center must be mapped to the alpha-beta system corresponding to the channel-band of the point cloud member. T
-	he xdistance and ydistances are redefined to mean:
-
-	* xdistance = distance between point in the cloud and spaxel center along the alpha dimension in units of arc seconds
-	* ydistance = distance between point in the cloud and spaxel center along the beta dimension in units of arc seconds
-	* zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns along the wavelength axis
-
-	The spatial distances are then normalized by PSF width and the spectral distance is normalized by the LSF:
-
-	* xnormalized = xdistance/(width of the PSF in the alpha dimension in units of arc seconds)
-	* ynormalized = ydistance/(width of the PSF in the beta dimension  in units of arc seconds)
-	* znormalized = zdistance/( width of LSF in lambda dimension in units of microns)
+There is also an algorithm for combining data using a  3d generalization of the classical 2-D drizzle technique. This algorithm is used
+when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output pixel grid according to the relative overlap
+between the input and output pixels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial overlap and
+spectral overlap between detector pixels and cube spaxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
+the 3-D drizzle algorithm therefore assumes that detector pixels project as rectilinear volumes into cube space.  The spatial extent of each detector pixel
+volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
+to the output coordinate grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
+the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
 

@@ -39,7 +39,8 @@ CUBEPAR              BINTABLE  TFIELDS = 6
 CUBEPAR_MSM          BINTABLE  TFIELDS = 6  
 MULTICHANNEL_MSM     BINTABLE  TFIELDS = 5  
 CUBEPAR_EMSM         BINTABLE  TFIELDS = 5  
-MULTICHANNEL_EMSM    BINTABLE  TFIELDS = 5  
+MULTICHANNEL_EMSM    BINTABLE  TFIELDS = 4
+MULTICHANNEL_DRIZ    BINTABLE  TFIELDS = 1
 ===================  ========  ===========  
 
 
@@ -83,6 +84,7 @@ The MIRI reference table descriptions:
 
 - **CUBEPAR_EMSM** table contains the Exponential Modified Shepard Method (EMSM) weighting values to use for each band.
 - **MULTICHANNEL_EMSM** table is used for the EMSM weighting and contains the wavelengths and associated region of interest size to use when IFU cubes are created from several bands and the final output is to have an IFU cube of varying spectral scale.
+- **MULTICHANNEL_DRIZ** table is used for the DRIZZLE weighting and contains the wavelengths to use when IFU cubes are created from several bands and the final output is to have an IFU cube of varying spectral scale.
 
 
 The NIRSPEC reference table descriptions:
