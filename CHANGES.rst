@@ -54,6 +54,8 @@ cube_build
 - Fixed error final exposure times calculated by blend headers.Only the input models
   used in the IFU cube are past to blend headers. [#6360]
 
+- Update of documentation to explain 3d drizzling and remove miri psf weighting [#6371]
+
 datamodels
 ----------
 
