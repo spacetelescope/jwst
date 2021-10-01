@@ -3065,6 +3065,35 @@ def populate_time_keywords(
     nints = input_model.meta.exposure.nints
     int_start = input_model.meta.exposure.integration_start
 
+    if hasattr(input_model, 'data'):
+        shape = input_model.data.shape
+
+        if len(shape) == 2:
+            num_integ = 1
+        else:  # len(shape) == 3
+            num_integ = shape[0]
+    else:  # e.g. MultiSlit data
+        num_integ = 1
+
+    # This assumes that the spec attribute of output_model has already been created, and spectra have been appended.
+    n_output_spec = len(output_model.spec)
+
+    # num_j is the number of spectra per integration, e.g. the number of fixed-slit spectra, MSA spectra, or different
+    # spectral orders; num_integ is the number of integrations.
+    # The total number of output spectra is n_output_spec = num_integ * num_j
+    num_j = n_output_spec // num_integ
+
+    if n_output_spec != num_j * num_integ:  # sanity check
+        log.warning(
+            f"populate_time_keywords:  Don't understand n_output_spec = {n_output_spec}, num_j = {num_j}, num_integ = "
+            f"{num_integ}"
+        )
+    else:
+        log.debug(
+            f"Number of output spectra = {n_output_spec}; number of spectra for each integration = {num_j}; "
+            f"number of integrations = {num_integ}"
+        )
+
     if int_start is None:
         log.warning("INTSTART not found; assuming a value of 1.")
         int_start = 1
@@ -3089,7 +3118,11 @@ def populate_time_keywords(
         nrows = 0
 
     if nrows < 1:
-        log.warning("There is no INT_TIMES table in the input file.")
+        log.warning("There is no INT_TIMES table in the input file - ")
+        log.warning("Making best guess on integration numbers.")
+        for j in range(num_j):  # for each spectrum or order
+            for k in range(num_integ):  # for each integration
+                output_model.spec[j*num_integ+k].int_num = k  # n is incremented below
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel), we will only populate the keywords if the
@@ -3143,34 +3176,6 @@ def populate_time_keywords(
 
     log.debug("TSO data, so copying times from the INT_TIMES table.")
 
-    if hasattr(input_model, 'data'):
-        shape = input_model.data.shape
-
-        if len(shape) == 2:
-            num_integ = 1
-        else:  # len(shape) == 3
-            num_integ = shape[0]
-    else:  # e.g. MultiSlit data
-        num_integ = 1
-
-    # This assumes that the spec attribute of output_model has already been created, and spectra have been appended.
-    n_output_spec = len(output_model.spec)
-
-    # num_j is the number of spectra per integration, e.g. the number of fixed-slit spectra, MSA spectra, or different
-    # spectral orders; num_integ is the number of integrations.
-    # The total number of output spectra is n_output_spec = num_integ * num_j
-    num_j = n_output_spec // num_integ
-
-    if n_output_spec != num_j * num_integ:  # sanity check
-        log.warning(
-            f"populate_time_keywords:  Don't understand n_output_spec = {n_output_spec}, num_j = {num_j}, num_integ = "
-            f"{num_integ}"
-        )
-    else:
-        log.debug(
-            f"Number of output spectra = {n_output_spec}; number of spectra for each integration = {num_j}; "
-            f"number of integrations = {num_integ}"
-        )
 
     n = 0  # Counter for spectra in output_model.
 
@@ -3859,10 +3864,6 @@ def create_extraction(extract_ref_dict,
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params['dispaxis']
         copy_keyword_info(meta_source, slitname, spec)
-
-        # This might be redundant with populate_time_keywords, if INT_TABLE present
-        if integ > -1:
-            spec.int_num = integ
 
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
             log.info('Applying Aperture correction.')
