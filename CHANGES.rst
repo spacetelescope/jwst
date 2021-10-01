@@ -126,6 +126,8 @@ refpix
 - Refactored the ``subtract_reference`` routine for NRS IRS2 data to reduce
   memory usage. [#6356]
 
+- Updated bad link to JDox in the step documentation. [#6372]
+
 regtest
 -------
 
