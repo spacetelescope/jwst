@@ -3118,11 +3118,11 @@ def populate_time_keywords(
         nrows = 0
 
     if nrows < 1:
-        log.warning("There is no INT_TIMES table in the input file - ")
-        log.warning("Making best guess on integration numbers.")
+        log.warning("There is no INT_TIMES table in the input file - "
+                    "Making best guess on integration numbers.")
         for j in range(num_j):  # for each spectrum or order
             for k in range(num_integ):  # for each integration
-                output_model.spec[j*num_integ+k].int_num = k  # n is incremented below
+                output_model.spec[(j * num_integ) + k].int_num = k  # n is incremented below
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel), we will only populate the keywords if the
@@ -3175,7 +3175,6 @@ def populate_time_keywords(
         return
 
     log.debug("TSO data, so copying times from the INT_TIMES table.")
-
 
     n = 0  # Counter for spectra in output_model.
 
