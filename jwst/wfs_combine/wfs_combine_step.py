@@ -36,7 +36,7 @@ class WfsCombineStep(Step):
             self.log.info('Using input table: %s', input_table)
             self.log.info('The number of pairs of input files: %g', len(asn_table.meta.asn_table.products))
 
-            model_list = []
+            output_container = datamodels.ModelContainer()
 
             # Process each pair of input images listed in the association table
             for which_set in asn_table.meta.asn_table.products:
@@ -70,7 +70,7 @@ class WfsCombineStep(Step):
                 output_model.meta.asn.table_name = os.path.basename(input_table)
                 output_model.meta.filename = which_set.name
 
-                model_list.append(output_model)
+                output_container.append(output_model)
 
         # Return the output so it can be tested.
-        return model_list
+        return output_container
