@@ -67,10 +67,9 @@ class WfsCombineStep(Step):
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
             output_model.meta.asn.pool_name = asn_table['asn_pool']
             output_model.meta.asn.table_name = os.path.basename(input_table)
+            output_model.filename = which_set['name']
 
             output_container.append(output_model)
-
-            output_container.filename = which_set['name']
 
             # Save the output file
             # if self.save_results:
