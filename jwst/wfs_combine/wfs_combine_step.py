@@ -1,6 +1,7 @@
 import os
 
 from ..stpipe import Step
+from .. import datamodels
 from . import wfs_combine
 
 __all__ = ["WfsCombineStep"]
@@ -29,8 +30,12 @@ class WfsCombineStep(Step):
         asn_table = self.load_as_level3_asn(input_table)
         num_sets = len(asn_table['products'])
 
+        self.suffix = 'wfscmb'
+        self.output_use_model = True
         self.log.info('Using input table: %s', input_table)
         self.log.info('The number of pairs of input files: %g', num_sets)
+
+        output_container = datamodels.ModelContainer()
 
         # Process each pair of input images listed in the association table
         for which_set in asn_table['products']:
@@ -63,15 +68,19 @@ class WfsCombineStep(Step):
             output_model.meta.asn.pool_name = asn_table['asn_pool']
             output_model.meta.asn.table_name = os.path.basename(input_table)
 
+            output_container.append(output_model)
+
+            output_container.filename = which_set['name']
+
             # Save the output file
-            if self.save_results:
-                self.save_model(
-                    output_model, output_file=outfile, format=False)
+            # if self.save_results:
+            #     self.save_model(
+            #         output_model, output_file=outfile, format=False)
 
         # Short-circuit auto-save of returned model if run from strun, as it is
         # already done above.  Ideally we would use self.output_use_model,
         # self.suffix and output_model.meta.filename, but self.save_model(format=False)
         # also needs to be there, and that is not stored as a class/instance attr.
-        self.save_results = False
+        # self.save_results = False
         # Return the output so it can be tested.  Assumes there is only one product.
-        return output_model
+        return output_container
