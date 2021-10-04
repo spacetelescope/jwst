@@ -4,7 +4,7 @@ JP-1234: <Fix a bug>
 -->
 
 Closes #
-Resolves JP-
+Resolves [JP-nnnn](https://jira.stsci.edu/browse/JP-nnnn)
 
 **Description**
 
