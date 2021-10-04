@@ -210,5 +210,5 @@ For each ``k``, the inverse Fourier transform of ``ft_refpix_corr[k]`` is
 the processed array of reference pixel data, which is then subtracted from
 the normal pixel data over the range of pixels for output ``k``.
 
-.. _JdoxIRS2: https://jwst-docs.stsci.edu/display/JDOX/NIRSpec+IRS2+Detector+Readout+Mode
+.. _JdoxIRS2: https://jwst-docs.stsci.edu/jwst-near-infrared-spectrograph/nirspec-instrumentation/nirspec-detectors/nirspec-detector-readout-modes-and-patterns/nirspec-irs2-detector-readout-mode
 .. _Rauscher2017: http://adsabs.harvard.edu/abs/2017PASP..129j5003R
