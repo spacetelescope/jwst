@@ -3122,7 +3122,7 @@ def populate_time_keywords(
                     "Making best guess on integration numbers.")
         for j in range(num_j):  # for each spectrum or order
             for k in range(num_integ):  # for each integration
-                output_model.spec[(j * num_integ) + k].int_num = k  # n is incremented below
+                output_model.spec[(j * num_integ) + k].int_num = k  # set int_num to k - 0-indexed integration
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel), we will only populate the keywords if the
