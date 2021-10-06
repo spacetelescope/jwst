@@ -1,0 +1,52 @@
+Description
+===========
+
+The JWST pipeline contains two steps devoted to the removal of fringes on MIRI MRS images.
+The first correction is applied in the ``fringe_step`` in calwebb_spec2 and  consists in dividing
+detector-level data by a ‘fringe-flat’ and is described in [provide link].
+Applying the fringe flat should eliminate fringes from spectra of spatially extended sources, however
+residual fringes can remain. For spatially unresolved (point) sources or extended sources with structure,
+applying the fringe flat will undoubtedly leave residual fringes since these produce different fringe patterns
+on the detector than accounted for by the fringe flat. The second step for refringe removal is the
+``residual_fringe_step`` and is applied in the calwebb_spec3 pipeline. It is applied in the calwebb_spec3 pipeline
+because the removal of residuals fringes is best applied after the ``mrs_imatch_step``, but before the ``cube_build_step``
+
+
+
+The ``residual_fringe` step can accept several different forms of input data, including:
+
+  - a single file containing a 2-D IFU image
+
+  - a data model (IFUImageModel) containing a 2-D IFU image
+
+  - an association table (in json format) containing a list of input files
+
+  - a model container with several 2-D IFU data models
+
+
+Assumptions
+-----------
+This step only works on MIRI MRS data.
+It is assumed that the calwebb_spec2 pipeline has been run on the data and the detection of residual fringes which
+need to be removed in this step are  better determined if the ``mrs_imatch``  step has also been applied to the data,
+
+
+
+Fringe Background Information
+-----------------------------
+.As is typical for spectrometers, MIRI-MRS is affected by fringes.  These are periodic gain modulations caused by
+standing waves between parallel surfaces in the optical path, acting a slow-finesse Fabry-Pérot etalons. In the MRS,
+the principal fringe sources are the detector layers. A detailed  detailed discussion on the MIRI MRS fringe components
+can be found in Argyriou, I., Wells, M., Glasse, A., et al. 2020, A&A, 641, A150 and
+Wells, M., Pel, J.-W., Glasse, A., et al. 2015, PASP, 127, 646.
+
+
+The primary MRS fringe, observed in all MRS sub-bands, is caused by the etalons between the anti-reflection coating
+and lower layers, encompassing the detector substrate and the infrared-active layer. Since the thickness of substrate
+is not the same in the SW and LW detectors, the fringe frequency will differ in the two detectors. Up to 16 microns, this
+fringe is produced by the anti-reflection coating and  pixel metalisation etalon, whereas above 16 microns it is
+produced by the anti-reflection coating and  bottom contact etalon, resulting in a different fringe frequency.
+The information in fringe frequency
+reference file  is used to determine, for each MRS sub-band, the frequencies to fit to this main fringe component.
+The residual fringes are corrected for by fitting and removing sinusoidal gain to the detector level data.
+
