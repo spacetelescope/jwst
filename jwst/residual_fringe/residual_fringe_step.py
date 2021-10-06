@@ -28,9 +28,9 @@ class ResidualFringeStep(Step):
 
     def process(self, input):
 
-        self.transmission_level = 80 # sets the transmission level to use in the regions file
+        self.transmission_level = 80  # sets the transmission level to use in the regions file
         # 80% is what other steps use.
-        
+
         input = datamodels.open(input)
 
         # If single file, wrap in a ModelContainter
