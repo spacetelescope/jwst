@@ -14,7 +14,6 @@ from jwst.background import BackgroundStep
 from jwst.background.tests import data as data_directory
 from jwst.stpipe import Step
 from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 data_path = os.path.split(os.path.abspath(data_directory.__file__))[0]
@@ -91,11 +90,7 @@ def test_nirspec_gwa(_jail, background, science_image):
     # Test Run with GWA values the same - confirm it runs
     # And gives the predicted result
 
-    collect_pipeline_cfgs('./config')
-    result = BackgroundStep.call(
-        science_image, bkg,
-        config_file='config/background.cfg',
-    )
+    result = BackgroundStep.call(science_image, bkg)
 
     test = science_image.data - back_image.data
     assert_allclose(result.data, test)
@@ -118,11 +113,9 @@ def test_nirspec_gwa_xtilt(_jail, background, science_image):
     # Test change xtilt
     science_image.meta.instrument.gwa_xtilt = \
         science_image.meta.instrument.gwa_xtilt + 0.00001
-    collect_pipeline_cfgs('./config')
-    result = BackgroundStep.call(
-        science_image, bkg,
-        config_file='config/background.cfg',
-    )
+
+    result = BackgroundStep.call(science_image, bkg)
+
     assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
     back_image.close()
@@ -142,11 +135,9 @@ def test_nirspec_gwa_ytitl(_jail, background, science_image):
     # Test different ytilt
     science_image.meta.instrument.gwa_ytilt = \
         science_image.meta.instrument.gwa_ytilt + 0.00001
-    collect_pipeline_cfgs('./config')
-    result = BackgroundStep.call(
-        science_image, bkg,
-        config_file='config/background.cfg',
-    )
+
+    result = BackgroundStep.call(science_image, bkg)
+
     assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
 
