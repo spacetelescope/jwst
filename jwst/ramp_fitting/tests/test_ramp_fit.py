@@ -60,7 +60,7 @@ def test_mixed_crs_and_donotuse():
     gdq[0, 3, 1, 1] = JUMP_DET
 
     # max segments should be 2
-    max_seg, max_cr = calc_num_seg(gdq, 3)
+    max_seg, max_cr = calc_num_seg(gdq, 3, JUMP_DET, DO_NOT_USE)
     assert(max_seg == 2)
 
     # pix with only 1 middle group flagged DO_NOT_USE;
@@ -77,7 +77,7 @@ def test_mixed_crs_and_donotuse():
     gdq[2, 4, 1, 1] = JUMP_DET
 
     # max segments should now be 3
-    max_seg, max_cr = calc_num_seg(gdq, 3)
+    max_seg, max_cr = calc_num_seg(gdq, 3, JUMP_DET, DO_NOT_USE)
     assert(max_seg == 3)
 
 
