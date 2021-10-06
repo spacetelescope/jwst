@@ -23,7 +23,7 @@ assign_wcs
   within a given NIRSpec IFU slice. [#6316]
 
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
-  Also the x tolerance on finding slice elements was increased. [#6326] 
+  Also the x tolerance on finding slice elements was increased. [#6326]
 
 associations
 ------------
@@ -163,6 +163,12 @@ wfss_contam
 - Added step documentation [#6210]
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
+
+
+1.3.3 (2021-10-05)
+==================
+
+- Avoid using photutils 1.2.0 [#6378]
 
 
 1.3.2 (2021-09-03)
