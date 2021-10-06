@@ -27,7 +27,7 @@ def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
     xpix : array[float]
         The x-coordinates to be transformed.
     ypix : array[float]
-    The y-coordinates to be transformed.
+        The y-coordinates to be transformed.
     cenx : float (optional)
         The x-coordinate around which to rotate.
     ceny : float (optional)
@@ -296,8 +296,8 @@ def rotate_image(image, angle, origin):
 
 
 def transform_image(angle, xshift, yshift, image, cenx=1024, ceny=50):
-    """Apply the rotation and offset to a 2D reference map, and bin the map
-     down the native size and resolution.
+    """Apply the transformation found by solve_transform() to a 2D reference
+     map.
 
     Paremeters
     ----------
@@ -332,7 +332,8 @@ def transform_image(angle, xshift, yshift, image, cenx=1024, ceny=50):
 
 
 def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
-    """Apply the transformation found by solve_transform() to a 2D reference map.
+    """Apply the calculated rotation and offset to a 2D reference map, and bin
+     the map down the native size and resolution.
 
     Parameters
     ----------
@@ -381,14 +382,15 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
 
 
 def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
-    """Apply the transformation found by solve_transform() to a 2D reference map.
+    """Apply the transformation found by solve_transform() to a 2D reference
+     wavelength map.
 
     Parameters
     ----------
     simple_transform : Tuple, List, Array
         The transformation parameters returned by solve_transform().
     wavemap : array[float]
-        A reference map: e.g., a 2D Wavelength map or Trace Profile map.
+        A reference 2D wavelength map.
     oversample : int
         The oversampling factor the reference map.
     pad : int
@@ -402,7 +404,7 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
         The ref_map after having the transformation applied.
     """
 
-    # Find the minimum and maximum wavelength of the wavemap.
+    # Find the minimum and maximum wavelength of the wavelength map.
     minval = np.nanmin(wavemap)
     maxval = np.nanmax(wavemap)
 
@@ -410,10 +412,12 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
     mask = np.isnan(wavemap)
     wavemap[mask] = 0.
 
-    # Apply the transformation to the wavemap.
-    trans_wavemap = apply_transform(simple_transform, wavemap, oversample, pad, native=native)
+    # Apply the transformation to the wavelength map.
+    trans_wavemap = apply_transform(simple_transform, wavemap, oversample,
+                                    pad, native=native)
 
-    # Set pixels with interpolation artefacts zero by enforcing the original min/max.
+    # Set pixels with interpolation artifacts to zero by enforcing the
+    # original min/max.
     mask = (trans_wavemap < minval) | (trans_wavemap > maxval)
     trans_wavemap[mask] = 0
 
@@ -422,14 +426,15 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
 
 def transform_profile(simple_transform, profile, oversample, pad, native=True,
                       norm=True):
-    """Apply the transformation found by solve_transform() to a 2D reference map.
+    """Apply the transformation found by solve_transform() to a 2D reference
+     trace profile map.
 
     Parameters
     ----------
     simple_transform : Tuple, List, Array
         The transformation parameters returned by solve_transform().
     profile : array[float]
-        A reference map: e.g., a 2D Wavelength map or Trace Profile map.
+        A reference 2D trace profile map.
     oversample : int
         The oversampling factor the reference map.
     pad : int
@@ -445,8 +450,9 @@ def transform_profile(simple_transform, profile, oversample, pad, native=True,
         The ref_map after having the transformation applied.
     """
 
-    # Apply the transformation to the wavemap.
-    trans_profile = apply_transform(simple_transform, profile, oversample, pad, native=native)
+    # Apply the transformation to the 2D trace map.
+    trans_profile = apply_transform(simple_transform, profile, oversample,
+                                    pad, native=native)
 
     if norm:
 
