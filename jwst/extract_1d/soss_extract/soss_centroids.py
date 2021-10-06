@@ -37,12 +37,13 @@ def _plot_centroid(image, xtrace, ytrace):
 
     plt.title('Trace Centroids')
 
-    plt.imshow(image, origin='lower', cmap='inferno', norm=colors.LogNorm(), aspect=aspect)
+    plt.imshow(image, origin='lower', cmap='inferno', norm=colors.LogNorm(),
+               aspect=aspect)
     plt.plot(xtrace, ytrace, lw=2, ls='--', c='black', label='Centroids')
 
     plt.xlabel('Spectral Pixel', fontsize=14)
     plt.ylabel('Spatial Pixel', fontsize=14)
-    plt.legend(fontsize=12)
+    plt.legend(fontsize=14)
 
     plt.xlim(-0.5, ncols - 0.5)
     plt.ylim(-0.5, nrows - 0.5)
@@ -58,16 +59,19 @@ def _plot_centroid(image, xtrace, ytrace):
 def center_of_mass(column, ypos, halfwidth):
     """Compute a windowed center-of-mass along a column.
 
-    :param column: The column on which to compute the windowed center of mass.
-    :param ypos: The position along the column to center the window on.
-    :param halfwidth: The half-size of the window in pixels.
+    Parameters
+    ----------
+    column : array[float]
+        The column values on which to compute the windowed center of mass.
+    ypos : float
+        The position along the column to center the window on.
+    halfwidth : int
+        The half-size of the window in pixels.
 
-    :type column: array[float]
-    :type ypos: float
-    :type halfwidth: int
-
-    :returns: ycom - the centerof-mass of the pixels withn the window.
-    :rtype: float
+    Returns
+    --------
+    ycom : float
+        The center-of-mass of the pixels within the window.
     """
 
     # Get the column shape and create a corresponding array of positions.
@@ -85,26 +89,31 @@ def center_of_mass(column, ypos, halfwidth):
     return ycom
 
 
-def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11, verbose=False):
-    """Determine the x, y coordinates of the trace using a center-of-mass analysis.
-    Works for either order if there is no contamination, or for order 1 on a detector
-    where the two orders are overlapping.
+def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
+                      verbose=False):
+    """Determine the x, y coordinates of the trace using a center-of-mass
+    analysis. Works for either order if there is no contamination, or for
+    order 1 on a detector where the two orders are overlapping.
 
-    :param scidata_bkg: A background subtracted observation.
-    :param header: The header from one of the SOSS reference files.
-    :param mask: A boolean array of the same shape as image. Pixels corresponding to True values will be masked.
-    :param poly_order: Order of the polynomial to fit to the extracted trace positions.
-    :param verbose: If set True some diagnostic plots will be made.
+    Parameters
+    ----------
+    scidata_bkg : array[float]
+        A background subtracted observation.
+    header : astropy.io.fits.Header
+        The header from one of the SOSS reference files.
+    mask : array[bool]
+        A boolean array of the same shape as image. Pixels corresponding to
+        True values will be masked.
+    poly_order : None or int
+        Order of the polynomial to fit to the extracted trace positions.
+    verbose : bool
+        If set True some diagnostic plots will be made.
 
-    :type scidata_bkg: array[float]
-    :type header: astropy.io.fits.Header
-    :type mask: array[bool]
-    :type poly_order: None or int
-    :type verbose: bool
-
-    :returns: xtrace, ytrace, param - The x, y coordinates of trace as computed from the best fit polynomial
-    and the best-fit polynomial parameters.
-    :rtype: Tuple(array[float], array[float], array[float])
+    Returns
+    --------
+    xtrace, ytrace, param : Tuple(array[float], array[float], array[float])
+        The x, y coordinates of trace as computed from the best fit polynomial
+        and the best-fit polynomial parameters.
     """
 
     # If no mask was given use all pixels.
@@ -146,8 +155,9 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11, verbos
             ytrace[icol] = np.nan
             continue
 
-        # If the pixel at the centroid is below the local mean we are likely mid-way between orders and
-        # we should shift the window downward to get a reliable centroid for order 1.
+        # If the pixel at the centroid is below the local mean we are likely
+        # mid-way between orders and we should shift the window downward to
+        # get a reliable centroid for order 1.
         irow = np.int(np.around(ycom))
         miny = np.int(np.fmax(np.around(ycom) - halfwidth, 0))
         maxy = np.int(np.fmin(np.around(ycom) + halfwidth + 1, dimy))
@@ -166,9 +176,10 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11, verbos
     halfwidth = 16 * yos
     for icol in range(dimx):
 
-        ytrace[icol] = center_of_mass(scidata_norm[:, icol], ytrace[icol], halfwidth)
+        ytrace[icol] = center_of_mass(scidata_norm[:, icol], ytrace[icol],
+                                      halfwidth)
 
-    # Fit the y-positions with a polynomial and use the result as the true y-positions.
+    # Fit the y-positions with a polynomial and use result as true y-positions.
     xtrace = np.arange(dimx)
     mask = np.isfinite(ytrace)
 
