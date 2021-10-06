@@ -28,7 +28,7 @@ class WfsCombineStep(Step):
 
         self.suffix = 'wfscmb'
         self.output_use_model = True
-        self.output_use_format = False
+        self.name_format = False
 
         # Load the input ASN table
         with datamodels.open(input_table) as asn_table:
