@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# TODO I don't much like the way the rotation point is handled.
-# TODO Theoretically it could be removed entirely, but the way coords and image
-# TODO handle it are different by default (lower-left vs center).
 
 import numpy as np
 from scipy.ndimage import shift, rotate
@@ -19,24 +16,27 @@ def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
     """Apply a rotation and shift to the trace centroids positions. This
     assumes that the trace centroids are already in the CV3 coordinate system.
 
-    :param angle: The angle by which to rotate the coordinates, in degrees.
-    :param xshift: The shift to apply to the x-coordinates after rotating.
-    :param yshift: The shift to apply to the y-coordinates after rotating.
-    :param xpix: The x-coordinates to be transformed.
-    :param ypix: The y-coordinates to be transformed.
-    :param cenx: The x-coordinate around which to rotate.
-    :param ceny: The y-coordinate around which to rotate.
+    Parameters
+    ----------
+    angle : float
+        The angle by which to rotate the coordinates, in degrees.
+    xshift : float
+        The shift to apply to the x-coordinates after rotating.
+    yshift : float
+        The shift to apply to the y-coordinates after rotating.
+    xpix : array[float]
+        The x-coordinates to be transformed.
+    ypix : array[float]
+    The y-coordinates to be transformed.
+    cenx : float (optional)
+        The x-coordinate around which to rotate.
+    ceny : float (optional)
+        The y-coordinate around which to rotate.
 
-    :type angle: float
-    :type xshift: float
-    :type yshift: float
-    :type xpix: array[float]
-    :type ypix: array[float]
-    :type cenx: The x-coordinate around which to apply the rotation.
-    :type ceny: The y-coordinate around which to apply the rotation.
-
-    :returns: xrot, yrot - The rotated and shifted coordinates.
-    :rtype: Tuple(array[float], array[float])
+    Returns
+    -------
+    xrot, yrot : Tuple(array[float], array[float])
+        The rotated and shifted coordinates.
     """
 
     # Convert to numpy arrays.
@@ -64,18 +64,21 @@ def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
 def evaluate_model(xmod, transform, xref, yref):
     """Evaluate the transformed reference coordinates at particular x-values.
 
-    :param xmod: The x-values at which to evaluate the transformed coordinates.
-    :param transform: The transformation parameters.
-    :param xref: The reference x-positions.
-    :param yref: The reference y-positions.
+    Parameters
+    ----------
+    xmod : array[float]
+        The x-values at which to evaluate the transformed coordinates.
+    transform : Tuple, List, Array
+        The transformation parameters.
+    xref : array[float]
+        The reference x-positions.
+    yref : array[float]
+        The reference y-positions.
 
-    :type xmod: array[float]
-    :type transform: Tuple, List, Array
-    :type xref: array[float]
-    :type yref: array[float]
-
-    :returns: ymod - The transformed y-coordinates corresponding to xmod.
-    :rtype: array[float]
+    Returns
+    -------
+    ymod : array[float]
+        The transformed y-coordinates corresponding to xmod.
     """
 
     angle, xshift, yshift = transform
@@ -98,28 +101,34 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     """Compute the chi-squared statistic for fitting the reference positions
     to the true positions.
 
-    :param transform: The transformation parameters.
-    :param xref_o1: The order 1 reference x-positions.
-    :param yref_o1: The order 1 reference y-positions.
-    :param xref_o2: The order 2 reference x-positions.
-    :param yref_o2: The order 2 reference y-positions.
-    :param xdat_o1: The order 1 data x-positions.
-    :param ydat_o1: The order 1 data y-positions.
-    :param xdat_o2: The order 2 data x-positions.
-    :param ydat_o2: The order 2 data y-positions.
+    Parameters
+    ----------
+    transform : Tuple, List, Array
+        The transformation parameters.
+    xref_o1 : array[float]
+        The order 1 reference x-positions.
+    yref_o1 : array[float]
+        The order 1 reference y-positions.
+    xref_o2 : array[float]
+        The order 2 reference x-positions.
+    yref_o2 : array[float]
+        The order 2 reference y-positions.
+    xdat_o1 : array[float]
+        The order 1 data x-positions.
+    ydat_o1 : array[float]
+        The order 1 data y-positions.
+    xdat_o2 : array[float]
+        The order 2 data x-positions.
+    ydat_o2 : array[float]
+        The order 2 data y-positions.
+    no_rotation : bool (optional)
+        If True, set rotation angle to zero and only fit horizontal and
+        vertical offsets.
 
-    :type transform: Tuple, List, Array
-    :type xref_o1: array[float]
-    :type xref_o1: array[float]
-    :type xref_o2: array[float]
-    :type xref_o2: array[float]
-    :type xdat_o1: array[float]
-    :type ydat_o1: array[float]
-    :type xdat_o2: array[float]
-    :type ydat_o2: array[float]
-
-    :returns: chisq - The chi-squared value of the model fit.
-    :rtype: float
+    Returns
+    -------
+    chisq : float
+        The chi-squared value of the model fit.
     """
 
     # If no rotation is requested, force the rotation angle to zero.
@@ -141,30 +150,36 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
                     halfwidth=30., no_rotation=False, verbose=False):
     """Given a science image, determine the centroids and find the simple
-    transformation needed to match xcen_ref and ycen_ref to the image.
+    transformation needed to match xref_o1 and yref_o1 to the image.
 
-    :param scidata_bkg: a background subtracted image of the SOSS trace.
-    :param scimask: a boolean mask of pixls to be excluded.
-    :param xref_o1: a priori expectation of the order 1 trace x-positions.
-    :param yref_o1: a priori expectation of the order 1 trace y-positions.
-    :param xref_o2: a priori expectation of the order 2 trace x-positions.
-    :param yref_o2: a priori expectation of the order 2 trace y-positions.
-    :param halfwidth: size of the aperture mask used when extracting the trace
-        positions from the data.
-    :param verbose: if True make a diagnostic image of the best-fit transformation.
+    Parameters
+    ----------
+    scidata_bkg : array[float]
+        A background subtracted image of the SOSS trace.
+    scimask : array[float]
+        A boolean mask of pixels to be excluded.
+    xref_o1 : array[float]
+        A priori expectation of the order 1 trace x-positions.
+    yref_o1 : array[float]
+        A priori expectation of the order 1 trace y-positions.
+    xref_o2 : array[float]
+        A priori expectation of the order 2 trace x-positions.
+    yref_o2 : array[float]
+        A priori expectation of the order 2 trace y-positions.
+    halfwidth : float (optional)
+        Size of the aperture mask used when extracting the trace positions
+        from the data.
+    no_rotation : bool (optional)
+        If True, set rotation angle to zero and only fit horizontal and
+        vertical offsets.
+    verbose : bool (optional)
+        If True make a diagnostic image of the best-fit transformation.
 
-    :type scidata_bkg: array[float]
-    :type scimask: array[bool]
-    :type xref_o1: array[float]
-    :type yref_o1: array[float]
-    :type xref_o2: array[float]
-    :type yref_o2: array[float]
-    :type halfwidth: float
-    :type verbose: bool
-
-    :returns: simple_transform - Array containing the angle, x-shift and y-shift
-        needed to match xcen_ref and ycen_ref to the image.
-    :rtype: array[float]
+    Returns
+    -------
+    simple_transform : array[float]
+        Array containing the angle, x-shift and y-shift needed to match
+        xref_o1 and yref_o1 to the image.
     """
 
     # Remove any NaNs used to pad the xref, yref coordinates.
@@ -251,16 +266,19 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
 def rotate_image(image, angle, origin):
     """Rotate an image around a specific pixel.
 
-    :param image: The image to rotate.
-    :param angle: The rotation angle in degrees.
-    :param origin: The x, y pixel position around which to rotate.
+    Parameters
+    ----------
+    image : array[float]
+        The image to rotate.
+    angle : float
+        The rotation angle in degrees.
+    origin : Tuple, List, Array
+        The x and y pixel position around which to rotate.
 
-    :type image: array[float]
-    :type angle: float
-    :type origin: Tuple, List, Array
-
-    :returns: image_rot - The rotated image.
-    :rtype: array[float]
+    Returns
+    -------
+    image_rot : array[float]
+        The rotated image.
     """
 
     # Pad image so we can safely rotate around the origin.
@@ -278,27 +296,30 @@ def rotate_image(image, angle, origin):
 
 
 def transform_image(angle, xshift, yshift, image, cenx=1024, ceny=50):
-    """Apply the rotation and offset to a 2D reference map, and bin
-    the map down the native size and resolution.
+    """Apply the rotation and offset to a 2D reference map, and bin the map
+     down the native size and resolution.
 
-    :param angle: The angle by which to rotate the file, in degrees.
-    :param xshift: The x-shift to apply in native pixels, will be rounded to the
+    Paremeters
+    ----------
+    angle : float
+        The angle by which to rotate the file, in degrees.
+    xshift : float
+        The x-shift to apply in native pixels, will be rounded to the
         nearest (oversampled) pixel.
-    :param yshift: The y-shift to apply in native pixels, will be rounded to the
+    yshift : float
+        The y-shift to apply in native pixels, will be rounded to the
         nearest (oversampled) pixel.
-    :param image: An image to transform.
-    :param cenx: The x-coordinate around which to rotate.
-    :param ceny: The y-coordinate around which to rotate.
+    image : array[float]
+        An image to transform.
+    cenx : float (optional)
+        The x-coordinate around which to rotate.
+    ceny : float (optional)
+        The y-coordinate around which to rotate.
 
-    :type angle: float
-    :type xshift: float
-    :type yshift: float
-    :type image: array[float]
-    :type cenx: The x-coordinate around which to apply the rotation.
-    :type ceny: The y-coordinate around which to apply the rotation.
-
-    :returns: image_rot - The image, after applying the shift and rotation.
-    :rtype: array[float]
+    Returns
+    -------
+    image_rot : array[float]
+        The image, after applying the shift and rotation.
     """
 
     # Rotate the image.
@@ -313,23 +334,23 @@ def transform_image(angle, xshift, yshift, image, cenx=1024, ceny=50):
 def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
     """Apply the transformation found by solve_transform() to a 2D reference map.
 
-    :param simple_transform: The transformation parameters returned by
-        solve_transform().
-    :param ref_map: A reference map, e.g. a 2D Wavelength map or Trace Profile
-        map.
-    :param oversample: The oversampling factor the reference map.
-    :param pad: The padding (in native pixels) on the reference map.
-    :param native: If True bin down to native pixel sizes and remove padding.
-        Default is True
+    Parameters
+    ----------
+    simple_transform : Tuple, List, Array
+        The transformation parameters returned by solve_transform().
+    ref_map : array[float]
+        A reference map: e.g., a 2D Wavelength map or Trace Profile map.
+    oversample : int
+        The oversampling factor the reference map.
+    pad : int
+        The padding (in native pixels) on the reference map.
+    native : bool (optional)
+        If True bin down to native pixel sizes and remove padding.
 
-    :type simple_transform: Tuple, List, Array
-    :type ref_map: array[float]
-    :type oversample: int
-    :type pad: int
-    :type native: bool
-
-    :returns: trans_map - the ref_map after having the transformation applied.
-    :rtype: array[float]
+    Returns
+    -------
+    trans_map : array[float]
+        The ref_map after having the transformation applied.
     """
 
     ovs = oversample
@@ -362,22 +383,23 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
 def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
     """Apply the transformation found by solve_transform() to a 2D reference map.
 
-    :param simple_transform: The transformation parameters returned by
-        solve_transform().
-    :param wavemap: A reference wavelength map.
-    :param oversample: The oversampling factor the reference map.
-    :param pad: The padding (in native pixels) on the reference map.
-    :param native: If True bin down to native pixel sizes and remove padding.
-        Default is True
+    Parameters
+    ----------
+    simple_transform : Tuple, List, Array
+        The transformation parameters returned by solve_transform().
+    wavemap : array[float]
+        A reference map: e.g., a 2D Wavelength map or Trace Profile map.
+    oversample : int
+        The oversampling factor the reference map.
+    pad : int
+        The padding (in native pixels) on the reference map.
+    native : bool (optional)
+        If True bin down to native pixel sizes and remove padding.
 
-    :type simple_transform: Tuple, List, Array
-    :type wavemap: array[float]
-    :type oversample: int
-    :type pad: int
-    :type native: bool
-
-    :returns: trans_wavemap - the wavemap after having the transformation applied.
-    :rtype: array[float]
+    Returns
+    -------
+    trans_wavemap : array[float]
+        The ref_map after having the transformation applied.
     """
 
     # Find the minimum and maximum wavelength of the wavemap.
@@ -398,26 +420,29 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
     return trans_wavemap
 
 
-def transform_profile(simple_transform, profile, oversample, pad, native=True, norm=True):
+def transform_profile(simple_transform, profile, oversample, pad, native=True,
+                      norm=True):
     """Apply the transformation found by solve_transform() to a 2D reference map.
 
-    :param simple_transform: The transformation parameters returned by
-        solve_transform().
-    :param profile: A reference trace profile map.
-    :param oversample: The oversampling factor the reference map.
-    :param pad: The padding (in native pixels) on the reference map.
-    :param native: If True bin down to native pixel sizes and remove padding.
-        Default is True
-    :param norm: If True (re-)normalize columns so they sum to 1, as expected by the engine.
+    Parameters
+    ----------
+    simple_transform : Tuple, List, Array
+        The transformation parameters returned by solve_transform().
+    profile : array[float]
+        A reference map: e.g., a 2D Wavelength map or Trace Profile map.
+    oversample : int
+        The oversampling factor the reference map.
+    pad : int
+        The padding (in native pixels) on the reference map.
+    native : bool (optional)
+        If True bin down to native pixel sizes and remove padding.
+    norm : bool (optional)
+        If True, normalize each column of the trace profile to sum to one.
 
-    :type simple_transform: Tuple, List, Array
-    :type profile: array[float]
-    :type oversample: int
-    :type pad: int
-    :type native: bool
-
-    :returns: trans_profile - the trace profile after having the transformation applied.
-    :rtype: array[float]
+    Returns
+    -------
+    trans_profile : array[float]
+        The ref_map after having the transformation applied.
     """
 
     # Apply the transformation to the wavemap.
