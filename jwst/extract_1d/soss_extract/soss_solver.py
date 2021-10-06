@@ -94,7 +94,7 @@ def evaluate_model(xmod, transform, xref, yref):
 
 
 def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
-                 xdat_o1, ydat_o1, xdat_o2, ydat_o2):
+                 xdat_o1, ydat_o1, xdat_o2, ydat_o2, no_rotation):
     """Compute the chi-squared statistic for fitting the reference positions
     to the true positions.
 
@@ -122,6 +122,10 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     :rtype: float
     """
 
+    # If no rotation is requested, force the rotation angle to zero.
+    if no_rotation is True:
+        transform[0] = 0
+
     # Interpolate rotated model onto same x scale as data.
     ymod_o1 = evaluate_model(xdat_o1, transform, xref_o1, yref_o1)
     ymod_o2 = evaluate_model(xdat_o2, transform, xref_o2, yref_o2)
@@ -135,7 +139,7 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
-                    halfwidth=30., verbose=False):
+                    halfwidth=30., no_rotation=False, verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xcen_ref and ycen_ref to the image.
 
@@ -193,7 +197,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     # Set up the optimization problem.
     guess_transform = np.array([0., 0., 0.])
     min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
-                xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+                xdat_o1, ydat_o1, xdat_o2, ydat_o2, no_rotation)
 
     # Find the best-fit transformation.
     result = minimize(_chi_squared, guess_transform, args=min_args)
