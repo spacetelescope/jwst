@@ -20,6 +20,7 @@ from .extract1dimage import Extract1dImageModel
 from .extract1d_spec import Extract1dIFUModel
 from .flat import FlatModel
 from .fringe import FringeModel
+from .fringefreq import FringeFreqModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
 from .guider import GuiderRawModel, GuiderCalModel
@@ -58,7 +59,6 @@ from .readnoise import ReadnoiseModel
 from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
-from .fringefreq import FringeFreqModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .segmap import SegmentationMapModel
@@ -105,7 +105,7 @@ __all__ = [
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
-    'FringeModel', 'GainModel', 'GLS_RampFitModel',
+    'FringeModel', 'FringeFreqModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
@@ -131,7 +131,7 @@ __all__ = [
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
-    'RegionsModel', 'ResetModel','ResidualFringeModel',
+    'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',
