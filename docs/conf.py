@@ -35,7 +35,7 @@ conf = ConfigParser()
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('../'))
+# sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('jwst/'))
 sys.path.insert(0, os.path.abspath('exts/'))
 
@@ -82,6 +82,7 @@ if sys.version_info[0] == 2:
 # ones.
 extensions = [
     'numfig',
+    'pytest_doctestplus.sphinx.doctestplus',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -94,7 +95,6 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
-    'sphinx_astropy.ext.doctest',
     'sphinx_asdf',
     ]
 
