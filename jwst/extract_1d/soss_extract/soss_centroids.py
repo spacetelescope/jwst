@@ -7,7 +7,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from SOSS.extract import soss_read_refs  # TODO need to remove this dependency somehow. BIG ISSUE
+#from SOSS.extract import soss_read_refs  # TODO need to remove this dependency somehow. BIG ISSUE
 from .soss_utils import zero_roll, robust_polyfit, get_image_dim
 
 from matplotlib import colors
