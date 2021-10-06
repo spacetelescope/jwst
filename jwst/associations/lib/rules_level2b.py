@@ -967,7 +967,6 @@ class Asn_Lv2WFSC(
             Constraint_Base(),
             Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science),
-            Constraint_ExtCal(),
             Constraint_WFSC(),
         ])
 
