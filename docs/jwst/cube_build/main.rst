@@ -71,7 +71,7 @@ We use the following terminology to define the spectral range divisions of MIRI:
   longest is covered by Band 4-LONG (aka 4C).
 
    For **NIRSpec** we define a *band* as a single grating-filter combination, e.g. G140M-F070LP. The possible grating/filter
-   combinations for NIRSpec are given in 
+   combinations for NIRSpec are given in the table below.
 
 NIRSpec IFU Disperser and Filter Combinations
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -224,17 +224,17 @@ irregularly-distributed samples of the scene into a regularly-sampled grid in th
 
 .. _weighting:
 
-weighting
+Weighting
 +++++++++
 
 The best algorithm with which to combine the irregularly-distributed samples of the point cloud to a rectilinear
 data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
 the science goals of a particular observing program.  At present there are two approaches to weighting the detector pixels.
 The default method uses a flux-conserving
-variant of Shephards method in which the value of a given element of the cube is a distance-weighted average
-of all point-cloud members within a given region of influence.  The second approach is to use a 3-D drizzling techniuqe. 
+variant of Shepard's method in which the value of a given element of the cube is a distance-weighted average
+of all point-cloud members within a given region of influence.  The second approach is to use a 3-D drizzling technique. 
 
-Shephards method of weighting
+Shepard's method of weighting
 ##############################
 
 In order to explain this method we will introduce the follow definitions:
@@ -273,7 +273,7 @@ by the argument ``weight_power=value``.
 3-D drizzling
 #############
 
-This algorithm for combining data uses a  3d generalization of the classical 2-D drizzle technique. It is used
+This algorithm for combining data uses a  3-D generalization of the classical 2-D drizzle technique. It is used
 when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output pixel grid according to the relative overlap
 between the input and output pixels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial overlap and
 spectral overlap between detector pixels and cube spaxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
