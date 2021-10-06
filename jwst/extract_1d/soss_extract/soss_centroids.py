@@ -14,14 +14,14 @@ import matplotlib.pyplot as plt
 def _plot_centroid(image, xtrace, ytrace):
     """Overplot the extracted trace positions on the image.
 
-    :param image: A 2D image of the detector.
-    :param xtrace: The x coordinates of the trace to overplot on the image.
-    :param ytrace: The y coordinates of the trace to overplot on the image.
-
-    :type image: array[float]
-    :type xtrace: array[float]
-    :type ytrace: array[float]
-
+    Parameters
+    ----------
+    image : array[float]
+        A 2D image of the detector.
+    xtrace : array[float]
+        The x coordinates of the trace to overplot on the image.
+    ytrace : array[float]
+        The y coordinates of the trace to overplot on the image.
     """
 
     nrows, ncols = image.shape
@@ -39,66 +39,6 @@ def _plot_centroid(image, xtrace, ytrace):
 
     plt.imshow(image, origin='lower', cmap='inferno', norm=colors.LogNorm(), aspect=aspect)
     plt.plot(xtrace, ytrace, lw=2, ls='--', c='black', label='Centroids')
-
-    plt.xlabel('Spectral Pixel', fontsize=14)
-    plt.ylabel('Spatial Pixel', fontsize=14)
-    plt.legend(fontsize=12)
-
-    plt.xlim(-0.5, ncols - 0.5)
-    plt.ylim(-0.5, nrows - 0.5)
-
-    plt.tight_layout()
-
-    plt.show()
-    plt.close()
-
-    return
-
-
-def _plot_centroids(image, centroids):
-    """Visualize the trace extracted by get_soss_centroids().
-
-    :param image: A 2D image of the detector.
-    :param centroids: A dictionary containg the trace, as returned by get_soss_centroids().
-
-    :type image: array[float]
-    :type centroids: dict
-
-    """
-
-    # Determine an appropriate figure size.
-    nrows, ncols = image.shape
-
-    if nrows == ncols:
-        aspect = 1
-        figsize = ncols/64, nrows/64
-    else:
-        aspect = 2
-        figsize = ncols/64, nrows/32
-
-    # Make a figure showing the trace for all 3 orders.
-    plt.figure(figsize=figsize)
-
-    plt.title('Trace Positions')
-
-    plt.imshow(image, origin='lower', cmap='inferno', norm=colors.LogNorm(), aspect=aspect)
-
-    tmp = centroids['order 1']
-    plt.plot(tmp['X centroid'], tmp['Y centroid'], color='orange', label='Order 1')
-    plt.plot(tmp['X centroid'], tmp['Y centroid'] - tmp['trace widths'] / 2, color='orange')
-    plt.plot(tmp['X centroid'], tmp['Y centroid'] + tmp['trace widths'] / 2, color='orange')
-
-    if 'order 2' in centroids:
-        tmp = centroids['order 2']
-        plt.plot(tmp['X centroid'], tmp['Y centroid'], color='black', label='Order 2')
-        plt.plot(tmp['X centroid'], tmp['Y centroid'] - tmp['trace widths'] / 2, color='black')
-        plt.plot(tmp['X centroid'], tmp['Y centroid'] + tmp['trace widths'] / 2, color='black')
-
-    if 'order 3' in centroids:
-        tmp = centroids['order 3']
-        plt.plot(tmp['X centroid'], tmp['Y centroid'], color='red', label='Order 3')
-        plt.plot(tmp['X centroid'], tmp['Y centroid'] - tmp['trace widths'] / 2, color='red')
-        plt.plot(tmp['X centroid'], tmp['Y centroid'] + tmp['trace widths'] / 2, color='red')
 
     plt.xlabel('Spectral Pixel', fontsize=14)
     plt.ylabel('Spatial Pixel', fontsize=14)
