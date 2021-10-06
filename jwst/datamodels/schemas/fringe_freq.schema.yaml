@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
-id: "http://stsci.edu/schemas/jwst_datamodel/residual_fringe.schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/fringe_freq.schema"
 title: Default MIRI Residual Fringe Correction
 allOf:
 - $ref: referencefile.schema

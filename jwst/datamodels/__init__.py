@@ -58,7 +58,7 @@ from .readnoise import ReadnoiseModel
 from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
-from .residualfringe import ResidualFringeModel
+from .fringefreq import FringeFreqModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .segmap import SegmentationMapModel
