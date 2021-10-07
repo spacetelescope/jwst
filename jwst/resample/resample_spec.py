@@ -39,7 +39,7 @@ class ResampleSpecData(ResampleData):
 
     def __init__(self, input_models, output=None, single=False, blendheaders=False,
                  pixfrac=1.0, kernel="square", fillval=0, weight_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, **kwargs):
+                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
         ----------
@@ -56,6 +56,7 @@ class ResampleSpecData(ResampleData):
 
         self.output_filename = output
         self.pscale_ratio = pscale_ratio
+        self.pscale = pscale
         self.single = single
         self.blendheaders = blendheaders
         self.pixfrac = pixfrac

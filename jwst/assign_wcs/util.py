@@ -139,8 +139,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     yscale = np.abs(coords[0].separation(coords[2]).value)
 
     if pscale_ratio is not None:
-        xscale = xscale * pscale_ratio
-        yscale = yscale * pscale_ratio
+        xscale *= pscale_ratio
+        yscale *= pscale_ratio
 
     if spectral:
         # Assuming scale doesn't change with wavelength
@@ -194,7 +194,7 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
 
 
 def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None,
-                        pscale_ratio=None, rotation=None,
+                        pscale_ratio=None, pscale=None, rotation=None,
                         shape=None, crpix=None, crval=None):
     """
     Create a WCS from a list of input data models.
@@ -226,9 +226,12 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     bounding_box : tuple, optional
         Bounding_box of the new WCS.
         If not supplied it is computed from the bounding_box of all inputs.
-    pscale_ratio : float, optional
-        Ratio of input to output pixel scale. Ignored when ``transform`` is
-        provided.
+    pscale_ratio : float, None, optional
+        Ratio of input to output pixel scale. Ignored when either
+        ``transform`` or ``pscale`` are provided.
+    pscale : float, None, optional
+        Absolute pixel scale in degrees. When provided, overrides
+        ``pscale_ratio``. Ignored when ``transform`` is provided.
     rotation : float, None, optional
         Position angle of output image’s Y-axis relative to North.
         A value of 0.0 would orient the final output image to be North up.
@@ -303,9 +306,10 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform.append(rotation)
 
         if sky_axes:
-            scale = compute_scale(refmodel.meta.wcs, ref_fiducial,
-                                  pscale_ratio=pscale_ratio)
-            transform.append(astmodels.Scale(scale, name='cdelt1') & astmodels.Scale(scale, name='cdelt2'))
+            if not pscale:
+                pscale = compute_scale(refmodel.meta.wcs, ref_fiducial,
+                                       pscale_ratio=pscale_ratio)
+            transform.append(astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2'))
 
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)

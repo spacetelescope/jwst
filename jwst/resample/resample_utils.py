@@ -18,8 +18,8 @@ log.setLevel(logging.DEBUG)
 
 
 def make_output_wcs(input_models, ref_wcs=None,
-                    pscale_ratio=None, rotation=None, shape=None, crpix=None,
-                    crval=None):
+                    pscale_ratio=None, pscale=None, rotation=None, shape=None,
+                    crpix=None, crval=None):
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
@@ -27,7 +27,11 @@ def make_output_wcs(input_models, ref_wcs=None,
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
-        Ratio of input to output pixel scale.
+        Ratio of input to output pixel scale. Ignored when ``pscale`` is provided.
+
+    pscale : float, None, optional
+        Absolute pixel scale in degrees. When provided, overrides
+        ``pscale_ratio``.
 
     rotation : float, None, optional
         Position angle of output image’s Y-axis relative to North.
@@ -71,6 +75,7 @@ def make_output_wcs(input_models, ref_wcs=None,
     output_wcs = wcs_from_footprints(
         input_models,
         pscale_ratio=pscale_ratio,
+        pscale=pscale,
         rotation=rotation,
         shape=shape,
         crpix=crpix,

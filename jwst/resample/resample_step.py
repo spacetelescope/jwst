@@ -40,6 +40,7 @@ class ResampleStep(Step):
         crval = float_list(min=2, max=2, default=None)
         rotation = float(default=None)
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
+        pixel_scale = float(default=None) # Absolute pixel scale in arcsec
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -97,6 +98,7 @@ class ResampleStep(Step):
         kwargs['crpix'] = _check_list_pars(self.crpix, 'crpix')
         kwargs['crval'] = _check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
+        kwargs['pscale'] = self.pixel_scale
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)

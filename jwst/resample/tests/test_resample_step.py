@@ -5,6 +5,7 @@ import pytest
 
 from jwst.datamodels import ImageModel, ModelContainer
 from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample_spec import ResampleSpecData
@@ -472,3 +473,20 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
 
     # test output image shape
     assert result.data.shape == shape
+
+@pytest.mark.parametrize('ratio', [1.3, None])
+def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.data += 5
+
+    fiducial = compute_fiducial([im.meta.wcs])
+    input_scale = compute_scale(wcs=im.meta.wcs, fiducial=fiducial)
+    result = ResampleStep.call(
+        im,
+        pixel_scale_ratio=ratio,
+        pixel_scale=3600 * input_scale * 0.75
+    )
+    output_scale = compute_scale(wcs=result.meta.wcs, fiducial=fiducial)
+
+    # test scales are close
+    assert np.allclose(output_scale, input_scale * 0.75)

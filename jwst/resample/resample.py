@@ -40,7 +40,7 @@ class ResampleData:
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
                  pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, **kwargs):
+                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
         ----------
@@ -71,11 +71,15 @@ class ResampleData:
         crval = kwargs.get('crval', None)
         rotation = kwargs.get('rotation', None)
 
+        if pscale is not None:
+            pscale /= 3600.0
+
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(
             self.input_models,
             ref_wcs=ref_wcs,
             pscale_ratio=self.pscale_ratio,
+            pscale=pscale,
             rotation=rotation,
             shape=out_shape,
             crpix=crpix,
