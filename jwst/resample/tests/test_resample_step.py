@@ -474,7 +474,7 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     # test output image shape
     assert result.data.shape == shape
 
-@pytest.mark.parametrize('ratio', [1.3, None])
+@pytest.mark.parametrize('ratio', [1.3, 1])
 def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.data += 5
