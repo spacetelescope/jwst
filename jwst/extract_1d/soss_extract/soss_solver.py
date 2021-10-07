@@ -97,7 +97,7 @@ def evaluate_model(xmod, transform, xref, yref):
 
 
 def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
-                 xdat_o1, ydat_o1, xdat_o2, ydat_o2, no_rotation):
+                 xdat_o1, ydat_o1, xdat_o2, ydat_o2):
     """Compute the chi-squared statistic for fitting the reference positions
     to the true positions.
 
@@ -121,19 +121,12 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
         The order 2 data x-positions.
     ydat_o2 : array[float]
         The order 2 data y-positions.
-    no_rotation : bool (optional)
-        If True, set rotation angle to zero and only fit horizontal and
-        vertical offsets.
 
     Returns
     -------
     chisq : float
         The chi-squared value of the model fit.
     """
-
-    # If no rotation is requested, force the rotation angle to zero.
-    if no_rotation is True:
-        transform[0] = 0
 
     # Interpolate rotated model onto same x scale as data.
     ymod_o1 = evaluate_model(xdat_o1, transform, xref_o1, yref_o1)
@@ -147,8 +140,49 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     return chisq
 
 
+def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
+                       xdat_o1, ydat_o1, xdat_o2, ydat_o2):
+    """Compute the chi-squared statistic for fitting the reference positions
+    to the true positions.
+
+    Parameters
+    ----------
+    transform : Tuple, List, Array
+        The transformation parameters.
+    xref_o1 : array[float]
+        The order 1 reference x-positions.
+    yref_o1 : array[float]
+        The order 1 reference y-positions.
+    xref_o2 : array[float]
+        The order 2 reference x-positions.
+    yref_o2 : array[float]
+        The order 2 reference y-positions.
+    xdat_o1 : array[float]
+        The order 1 data x-positions.
+    ydat_o1 : array[float]
+        The order 1 data y-positions.
+    xdat_o2 : array[float]
+        The order 2 data x-positions.
+    ydat_o2 : array[float]
+        The order 2 data y-positions.
+
+    Returns
+    -------
+    chisq : float
+        The chi-squared value of the model fit.
+    """
+
+    transform_ = np.zeros(3)
+    transform_[1:] = transform
+
+    chisq = _chi_squared(transform_, xref_o1, yref_o1, xref_o2, yref_o2,
+                         xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+
+    return chisq
+
+
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
-                    halfwidth=30., no_rotation=False, verbose=False):
+                    halfwidth=30., rotation=True, verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xref_o1 and yref_o1 to the image.
 
@@ -169,8 +203,8 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     halfwidth : float (optional)
         Size of the aperture mask used when extracting the trace positions
         from the data.
-    no_rotation : bool (optional)
-        If True, set rotation angle to zero and only fit horizontal and
+    rotation : bool (optional)
+        If False, set rotation angle to zero and only fit horizontal and
         vertical offsets.
     verbose : bool (optional)
         If True make a diagnostic image of the best-fit transformation.
@@ -209,14 +243,27 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     xdat_o2 = xdat_o2[mask]
     ydat_o2 = ydat_o2[mask]
 
-    # Set up the optimization problem.
-    guess_transform = np.array([0., 0., 0.])
-    min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
-                xdat_o1, ydat_o1, xdat_o2, ydat_o2, no_rotation)
+    if rotation:
+        # Set up the optimization problem.
+        guess_transform = np.array([0., 0., 0.])
+        min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
+                    xdat_o1, ydat_o1, xdat_o2, ydat_o2)
 
-    # Find the best-fit transformation.
-    result = minimize(_chi_squared, guess_transform, args=min_args)
-    simple_transform = result.x
+        # Find the best-fit transformation.
+        result = minimize(_chi_squared, guess_transform, args=min_args)
+        simple_transform = result.x
+
+    else:
+        # Set up the optimization problem.
+        guess_transform = np.array([0., 0.])
+        min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
+                    xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+
+        # Find the best-fit transformation.
+        result = minimize(_chi_squared_shift, guess_transform, args=min_args)
+
+        simple_transform = np.zeros(3)
+        simple_transform[1:] = result.x
 
     if verbose:
 
