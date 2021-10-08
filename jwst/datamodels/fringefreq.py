@@ -1,9 +1,9 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['ResidualFringeModel']
+__all__ = ['FringeFreqModel']
 
 
-class ResidualFringeModel(ReferenceFileModel):
+class FringeFreqModel(ReferenceFileModel):
     """
     A data model for 2D fringe correction images.
 
@@ -14,4 +14,4 @@ class ResidualFringeModel(ReferenceFileModel):
     rfc_freq_long : numpy table
     max_amp : numpy table
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/residual_fringe.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/fringe_freq.schema"
