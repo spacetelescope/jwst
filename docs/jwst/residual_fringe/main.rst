@@ -44,7 +44,7 @@ Wells, M., Pel, J.-W., Glasse, A., et al. 2015, PASP, 127, 646.
 The primary MRS fringe, observed in all MRS sub-bands, is caused by the etalons between the anti-reflection coating
 and lower layers, encompassing the detector substrate and the infrared-active layer. Since the thickness of substrate
 is not the same in the SW and LW detectors, the fringe frequency will differ in the two detectors. Up to 16 microns, this
-fringe is produced by the anti-reflection coating and  pixel metalisation etalon, whereas above 16 microns it is
+fringe is produced by the anti-reflection coating and  pixel metalization etalons, whereas above 16 microns it is
 produced by the anti-reflection coating and  bottom contact etalon, resulting in a different fringe frequency.
 The information in fringe frequency
 reference file  is used to determine, for each MRS sub-band, the frequencies to fit to this main fringe component.
