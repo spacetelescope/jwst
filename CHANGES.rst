@@ -35,6 +35,9 @@ associations
   handle certain opmode/grating/lamp combinations that result in no data
   on one of the detectors. [#6304]
 
+- Removed Constraint_ExtCal from Asn_Lv2WFSC constraints, as it was
+  redundant with Constraint_Image_Science present. [#6384]
+
 cube_build
 ----------
 
