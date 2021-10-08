@@ -81,6 +81,9 @@ extract_1d
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
   fixed-slit inputs that are in `SlitModel` form. [#6212]
 
+- Assign 0-indexed integration number to INT_NUM if input
+  INT_TIMES table is empty. [#6369]
+
 flatfield
 ---------
 
