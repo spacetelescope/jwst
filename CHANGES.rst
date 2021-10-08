@@ -2021,7 +2021,7 @@ residual_fringe
 
 - Updated residual fringe reference data model to support new delivery of reference files [#6357]
 
-- Changed the model for  reference file from ResidualFringeModel to FringeFreq [#6385]
+- Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
   
 
 set_telescope_pointing
