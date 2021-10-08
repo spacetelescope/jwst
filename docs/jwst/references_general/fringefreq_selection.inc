@@ -1,14 +1,13 @@
-.. _cubepar_selectors:
+.. _fringefreq_selectors:
 
-Reference Selection Keywords for CUBEPAR
-++++++++++++++++++++++++++++++++++++++++
-CRDS selects appropriate CUBEPAR references based on the following keywords.
-CUBEPAR is not applicable for instruments not in the table.
+Reference Selection Keywords for FRINGEFREQ
+++++++++++++++++++++++++++++++++++++++++++
+CRDS selects appropriate FRINGEFREQ reference file based on the following keywords.
+FRINGEFREQ is not applicable for instruments not in the table.
 
-========== ======================================
+========== ===============================================
 Instrument Keywords                               
-========== ======================================
-MIRI       INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
-NIRSPEC    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
-========== ======================================
+========== ===============================================
+MIRI       INSTRUME, EXP_TYPE, DETECTOR, DATE-OBS, TIME-OBS 
+========== ===============================================
 

@@ -1,148 +1,51 @@
 +-------------------+--------------+-----------+------------+
 | Table             | Column       | Data type | Units      |
 +===================+==============+===========+============+
-| CUBEPAR           | CHANNEL      | shortint  | N/A        |
+| RFC_FREQ_SHORT    | SLICE        | double    | N/A        |
 +                   +--------------+-----------+------------+
-|                   | BAND         | ch*6      | N/A        |
+|                   | FFREQ        | double    | cm^-1      |
 +                   +--------------+-----------+------------+
-|                   | WAVEMIN      | float     | microns    |
+|                   | DFFREQ       | double    | cm^-1      |
 +                   +--------------+-----------+------------+
-|                   | WAVEMAX      | float     | microns    |
+|                   | MIN_NFRIGES  | int       | N/A        |
 +                   +--------------+-----------+------------+
-|                   | SPAXELSIZE   | float     | arcseconds |
+|                   | MAX_NFRINGES | int       | N/A        |
 +                   +--------------+-----------+------------+
-|                   | SPECTRALSTEP | double    | microns    |
+|                   | MIN_SNR      | double    | cm^-1      |
++                   +--------------+-----------+------------+
+|                   | PGRAM_RES    | double    | cm^-1      |
 +-------------------+--------------+-----------+------------+
-| CUBEPAR_MSM       | CHANNEL      | shortint  | N/A        |
+| FRC_FREQ_MEDIUM   | SLICE        | double    | N/A        |
 +                   +--------------+-----------+------------+
-|                   | BAND         | ch*6      | N/A        |
+|                   | FFREQ        | double    | cm^-1      |
 +                   +--------------+-----------+------------+
-|                   | ROISPATIAL   | float     | arcseconds |
+|                   | DFFREQ       | double    | cm^-1      |
 +                   +--------------+-----------+------------+
-|                   | ROISPECTRAL  | double    | microns    |
+|                   | MIN_NFRIGES  | int       | N/A        |
 +                   +--------------+-----------+------------+
-|                   | POWER        | double    | unitless   |
+|                   | MAX_NFRINGES | int       | N/A        |
 +                   +--------------+-----------+------------+
-|                   | SOFTRAD      | double    | unitless   |
+|                   | MIN_SNR      | double    | cm^-1      |
++                   +--------------+-----------+------------+
+|                   | PGRAM_RES    | double    | cm^-1      |
 +-------------------+--------------+-----------+------------+
-| MULTICHANNEL_MSM  | WAVELENGTH   | double    | microns    |
+| RFC_FREQ_LONG     | SLICE        | double    | N/A        |
 +                   +--------------+-----------+------------+
-|                   | ROISPATIAL   | double    | arcseconds |
+|                   | FFREQ        | double    | cm^-1      |
 +                   +--------------+-----------+------------+
-|                   | ROISPECTRAL  | double    | microns    |
+|                   | DFFREQ       | double    | cm^-1      |
 +                   +--------------+-----------+------------+
-|                   | POWER        | double    | unitless   |
+|                   | MIN_NFRIGES  | int       | N/A        |
 +                   +--------------+-----------+------------+
-|                   | SOFTRAD      | double    | unitless   |
+|                   | MAX_NFRINGES | int       | N/A        |
++                   +--------------+-----------+------------+
+|                   | MIN_SNR      | double    | cm^-1      |
++                   +--------------+-----------+------------+
+|                   | PGRAM_RES    | double    | cm^-1      |
 +-------------------+--------------+-----------+------------+
-| CUBEPAR_EMSM      | CHANNEL      | shortint  | N/A        |
+| MAX_AMP           | WAVELENGTH   | double    | micron     |
 +                   +--------------+-----------+------------+
-|                   | BAND         | ch*6      | N/A        |
-+                   +--------------+-----------+------------+
-|                   | ROISPATIAL   | float     | arcseconds |
-+                   +--------------+-----------+------------+
-|                   | ROISPECTRAL  | double    | microns    |
-+                   +--------------+-----------+------------+
-|                   | SCALERAD     | double    | unitless   |
-+-------------------+--------------+-----------+------------+
-| MULTICHANNEL_EMSM | WAVELENGTH   | double    | microns    |
-+                   +--------------+-----------+------------+
-|                   | ROISPATIAL   | double    | arcseconds |
-+                   +--------------+-----------+------------+
-|                   | ROISPECTRAL  | double    | microns    |
-+                   +--------------+-----------+------------+
-|                   | SCALERAD     | double    | unitless   |
+|                   | AMPLITUDE    | double    | N/A        |
 +-------------------+--------------+-----------+------------+
 
 
-+----------------------+--------------+-----------+------------+
-| Table                | Column       | Data type | Units      |
-+======================+==============+===========+============+
-| CUBEPAR              | DISPERSER    | ch*5      | N/A        |
-+                      +--------------+-----------+------------+
-|                      | FILTER       | ch*6      | N/A        |
-+                      +--------------+-----------+------------+
-|                      | WAVEMIN      | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | WAVEMAX      | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | SPAXELSIZE   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | SPECTRALSTEP | double    | microns    |
-+----------------------+--------------+-----------+------------+
-| CUBEPAR_MSM          | DISPERSER    | ch*5      | N/A        |
-+                      +--------------+-----------+------------+
-|                      | FILTER       | ch*6      | N/A        |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | POWER        | double    | unitless   |
-+                      +--------------+-----------+------------+
-|                      | SOFTRAD      | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| MULTICHAN_PRISM_MSM  | WAVELENGTH   | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | POWER        | double    | unitless   |
-+                      +--------------+-----------+------------+
-|                      | SOFTRAD      | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| MULTICHAN_MED_MSM    | WAVELENGTH   | float     | microns    |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | POWER        | double    | unitless   |
-+                      +--------------+-----------+------------+
-|                      | SOFTRAD      | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| MULTICHAN_HIGH_MSM   | WAVELENGTH   | float     | microns    |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | POWER        | double    | unitless   |
-+                      +--------------+-----------+------------+
-|                      | SOFTRAD      | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| CUBEPAR_EMSM         | DISPERSER    | ch*5      | N/A        |
-+                      +--------------+-----------+------------+
-|                      | FILTER       | ch*6      | N/A        |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | SCALERAD     | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| MULTICHAN_PRISM_EMSM | WAVELENGTH   | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | SCALERAD     | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| MULTICHAN_MED_EMSM   | WAVELENGTH   | float     | microns    |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | SCALERAD     | double    | unitless   |
-+----------------------+--------------+-----------+------------+
-| MULTICHAN_HIGH_EMSM  | WAVELENGTH   | float     | microns    |
-+                      +--------------+-----------+------------+
-|                      | ROISPATIAL   | double    | arcseconds |
-+                      +--------------+-----------+------------+
-|                      | ROISPECTRAL  | double    | microns    |
-+                      +--------------+-----------+------------+
-|                      | SCALERAD     | double    | unitless   |
-+----------------------+--------------+-----------+------------+
