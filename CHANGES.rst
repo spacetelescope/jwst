@@ -75,6 +75,8 @@ datamodels
   and regions files.  Fix an incorrect comment on
   FilteroffsetModel. [#6362]
 
+ - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
+  
 extract_1d
 ----------
 
@@ -2029,7 +2031,7 @@ residual_fringe
 - Fixed an error when a filename was give as the input to apply the residual fringe correction [#6349]
 
 - Updated residual fringe reference data model to support new delivery of reference files [#6357]
-  
+
 
 set_telescope_pointing
 ----------------------
