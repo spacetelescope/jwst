@@ -87,8 +87,6 @@ documentation on each reference file.
 | :ref:`barshadow <barshadow_step>`           | :ref:`BARSHADOW <barshadow_reffile>`             |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`cube_build <cube_build_step>`         | :ref:`CUBEPAR <cubepar_reffile>`                 |
-+                                             +--------------------------------------------------+
-|                                             | :ref:`RESOL <resol_reffile>`                     |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`dark_current <dark_current_step>`     | :ref:`DARK <dark_reffile>`                       |
 +---------------------------------------------+--------------------------------------------------+
@@ -241,8 +239,6 @@ documentation on each reference file.
 | :ref:`REGIONS <regions_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`RESET <reset_reffile>`                     | :ref:`reset <reset_step>`                   |
-+--------------------------------------------------+---------------------------------------------+
-| :ref:`RESOL <resol_reffile>`                     | :ref:`cube_build <cube_build_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`RSCD <rscd_reffile>`                       | :ref:`rscd <rscd_step>`                     |
 +--------------------------------------------------+---------------------------------------------+
