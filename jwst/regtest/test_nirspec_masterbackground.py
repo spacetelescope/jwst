@@ -21,11 +21,10 @@ def run_spec2_mbkg(jail, rtdata_module):
     # Get data
     rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_msa.fits')
     rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_rate.fits')
-    collect_pipeline_cfgs('config')
 
     # Run the pipeline
     step_params = {
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
             '--steps.master_background.skip=false',
             '--steps.master_background.save_background=true'
@@ -44,11 +43,10 @@ def run_spec2_mbkg_user(jail, rtdata_module):
     rtdata.get_data('nirspec/mos/nrs_mos_3pointnod_1_msa.fits')
     rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_masterbg1d.fits')
     rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_rate.fits')
-    collect_pipeline_cfgs('config')
 
     # Run the pipeline
     step_params = {
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
             '--steps.master_background.skip=false',
             '--steps.master_background.user_background=jw00626030001_02103_00001_nrs1_masterbg1d.fits'
