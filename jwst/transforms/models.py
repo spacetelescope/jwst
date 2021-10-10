@@ -43,6 +43,13 @@ Slit = namedtuple('Slit', ["name", "shutter_id", "dither_position", "xcen", "yce
 Slit.__new__.__defaults__ = ("", 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "",
                              0.0, 0.0, 0.0, 0.0, 0.0)
 
+NRS_FS_NAMES = ['S200A1', 'S200A2', 'S400A1', 'S1600A1', 's200B1']
+
+NRS_FS_IDS = [0, 1, 2, 3, 4]
+
+NRS_FS_N2ID = dict(zip(NRS_FS_NAMES, NRS_FS_IDS))
+
+NRS_FS_ID2N = dict(zip(NRS_FS_IDS, NRS_FS_NAMES))
 
 class GrismObject(namedtuple('GrismObject', ("sid",
                                              "order_bounding",
@@ -687,18 +694,22 @@ class Gwa2Slit(Model):
     n_outputs = 4
 
     def __init__(self, slits, models):
+        self.slit_names = [s.name for s in slits]
+        self.slit_ids = [s.shutter_id for s in slits]
         if isiterable(slits[0]):
             self._slits = [tuple(s) for s in slits]
-            self.slit_ids = [s[0] for s in self._slits]
+            #self.slit_ids = [s[0] for s in self._slits]
+            print(slits)
         else:
             self._slits = list(slits)
-            self.slit_ids = self._slits
+            #self.slit_ids = self._slits
+            print('else', slits)
 
         self.models = models
         super(Gwa2Slit, self).__init__()
-        self.inputs = ('name', 'angle1', 'angle2', 'angle3')
+        self.inputs = ('slit_id', 'angle1', 'angle2', 'angle3')
         """ Name of the slit and the three angle coordinates at the GWA going from detector to sky."""
-        self.outputs = ('name', 'x_slit', 'y_slit', 'lam')
+        self.outputs = ('slit_id', 'x_slit', 'y_slit', 'lam')
         """ Name of the slit, x and y coordinates within the virtual slit and wavelength."""
 
     @property
@@ -709,12 +720,22 @@ class Gwa2Slit(Model):
             return self.slit_ids
 
     def get_model(self, name):
-        index = self.slit_ids.index(name)
+        index = NRS_FS_N2ID[name]
         return self.models[index]
 
     def evaluate(self, name, x, y, z):
-        index = self.slit_ids.index(name)
-        return (name, ) + self.models[index](x, y, z)
+        #index = self.slit_ids.index(name)
+        name = int(name)
+        return (name, ) + self.models[name](x, y, z)
+
+    def __call__(self, name, x, y, z):
+        if isinstance(name, str):
+            id = NRS_FS_N2ID[name]
+        else:
+            id = name
+        result = self.evaluate(id, x, y, z)
+        return result
+        #return (NRS_FS_ID2N[result[0]],) + result[1:]
 
 
 class Slit2Msa(Model):
@@ -737,20 +758,24 @@ class Slit2Msa(Model):
     _separable = False
 
     n_inputs = 3
-    n_outputs = 2
+    n_outputs = 3
 
     def __init__(self, slits, models):
         super(Slit2Msa, self).__init__()
-        self.inputs = ('name', 'x_slit', 'y_slit')
+        self.inputs = ('slit_id', 'x_slit', 'y_slit')
         """ Name of the slit, x and y coordinates within the virtual slit."""
-        self.outputs = ('x_msa', 'y_msa')
+        self.outputs = ('slit_id', 'x_msa', 'y_msa')
         """ x and y coordinates in the MSA frame."""
-        if isiterable(slits[0]):
-            self._slits = [tuple(s) for s in slits]
-            self.slit_ids = [s[0] for s in self._slits]
-        else:
-            self._slits = list(slits)
-            self.slit_ids = self._slits
+        # if isiterable(slits[0]):
+        #     self._slits = [tuple(s) for s in slits]
+        #     #self.slit_ids = [s[0] for s in self._slits]
+        # else:
+        #     self._slits = list(slits)
+        #     #self.slit_ids = self._slits
+        self._slits = list(slits)
+        print(self._slits)
+        self.slit_names = [s.name for s in self._slits]
+        self.slit_ids = [s.shutter_id for s in self._slits]
         self.models = models
 
     @property
@@ -761,12 +786,23 @@ class Slit2Msa(Model):
             return self.slit_ids
 
     def get_model(self, name):
-        index = self.slit_ids.index(name)
+        index = NRS_FS_N2ID[name]
         return self.models[index]
 
     def evaluate(self, name, x, y):
-        index = self.slit_ids.index(name)
-        return self.models[index](x, y)
+        #index = self.slit_ids.index(name)
+        #return self.models[index](x, y) + (name,)
+        name = int(name)
+        return (name,) + self.models[name](x, y)
+
+    def __call__(self, name, x, y):
+        if isinstance(name, str):
+            id = NRS_FS_N2ID[name]
+        else:
+            id = name
+        result = self.evaluate(id, x, y)
+        return result
+        #return (NRS_FS_ID2N[result[0]],) + result[1:]
 
 
 class NirissSOSSModel(Model):
