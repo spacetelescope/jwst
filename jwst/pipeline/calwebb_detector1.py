@@ -24,7 +24,7 @@ from ..gain_scale import gain_scale_step
 __all__ = ['Detector1Pipeline']
 
 # Define logging
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 

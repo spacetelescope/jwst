@@ -13,7 +13,7 @@ from ..model_blender import blendmeta
 __all__ = ['Ami3Pipeline']
 
 # Define logging
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
