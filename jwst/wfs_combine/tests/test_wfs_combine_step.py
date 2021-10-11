@@ -75,7 +75,7 @@ def test_step_pos_shift_no_refine_no_flip(wfs_association):
 
     wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
                               blur_size=10, n_size=2)
-    assert wfs.meta.wcsinfo.ra_ref == 22.02351763251896
+    assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896
 
 
 def test_step_neg_shift_no_refine_no_flip(wfs_association):
@@ -93,7 +93,7 @@ def test_step_neg_shift_no_refine_no_flip(wfs_association):
 
     wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
                               blur_size=10, n_size=2)
-    assert wfs.meta.wcsinfo.ra_ref == 22.02351763251896
+    assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896
 
 
 def test_step_neg_order_no_refine_with_flip(wfs_association):
@@ -111,7 +111,7 @@ def test_step_neg_order_no_refine_with_flip(wfs_association):
 
     wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
-    assert wfs.meta.wcsinfo.ra_ref == 22.02351763251896 + delta_pixel * nircam_pixel_size
+    assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896 + delta_pixel * nircam_pixel_size
 
 
 def test_step_pos_order_no_refine_with_flip(wfs_association):
@@ -129,4 +129,4 @@ def test_step_pos_order_no_refine_with_flip(wfs_association):
 
     wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
-    assert wfs.meta.wcsinfo.ra_ref == 22.02351763251896
+    assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896
