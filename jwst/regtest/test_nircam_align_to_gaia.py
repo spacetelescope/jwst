@@ -2,7 +2,6 @@ import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst import datamodels
 
@@ -11,11 +10,10 @@ from jwst import datamodels
 def run_image3pipeline(rtdata_module, jail):
     ''' Run calwebb_image3 on NIRCam imaging and align to gaia '''
 
-    collect_pipeline_cfgs("config")
 
     rtdata = rtdata_module
     rtdata.get_asn("nircam/image/level3_F277W_3img_asn.json")
-    args = ["config/calwebb_image3.cfg", rtdata.input,
+    args = ["calwebb_image3", rtdata.input,
             "--steps.tweakreg.align_to_gaia=True",
             "--steps.tweakreg.save_results=True",
             "--steps.tweakreg.output_use_model=True"
