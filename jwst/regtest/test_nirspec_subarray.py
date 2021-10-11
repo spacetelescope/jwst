@@ -3,7 +3,6 @@ import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 """
@@ -19,8 +18,7 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("nirspec/fs/nrs1_group_subarray.fits")
 
-    collect_pipeline_cfgs('config')
-    args = ["config/calwebb_detector1.cfg", rtdata.input,
+    args = ["calwebb_detector1", rtdata.input,
             "--steps.group_scale.save_results=True"]
     Step.from_cmdline(args)
 
