@@ -91,6 +91,8 @@ extract_1d
 - Assign 0-indexed integration number to INT_NUM if input
   INT_TIMES table is empty. [#6369]
 
+- Change INT_NUM assignment to 1-indexed. [#6388]
+
 flatfield
 ---------
 
