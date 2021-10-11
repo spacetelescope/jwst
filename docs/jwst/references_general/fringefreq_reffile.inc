@@ -1,13 +1,13 @@
 .. _fringefreq_reffile:
 
 FRINGEFREQ reference file
-----------------------
+-------------------------
 
 :REFTYPE: FRINGEFREQ
 :Data models: `~jwst.datamodels.FringeFreqModel`
 
 The FRINGEFREQ reference files contain parameter values used to correct MIRI MRS images
-for  residual fringes that remains  after applying the fringe flat.
+for  residual fringes that remain  after applying the fringe flat.
 
 .. include:: ../references_general/fringefreq_selection.inc
 
@@ -46,8 +46,8 @@ The formats of the individual table extensions are listed below.
 
 .. include:: ../references_general/fringefreq_format.inc
 
-These reference files contain tables for each MIRI band  giving the
-fringe frequencies other parameters for each band to fit and remove residual fringes. 
+These reference files contain tables for each MIRI band giving the
+fringe frequencies and other parameters for each band to fit and remove residual fringes. 
 
 
 The reference table descriptions:
@@ -55,7 +55,6 @@ The reference table descriptions:
 - **RFC_FREQ_SHORT** table contains the fringe frequences and parameters for the SHORT band.
 - **RFC_FREQ_MEDIUM** table contains the fringe frequences and parameters for the MEDIUM band.
 - **RFC_FREQ_LONG** table contains the fringe frequences and parameters for the LONG band.
-
 - **MAX_AMP** table contains a wavelength dependent maximum amplitude which is use for feature
 identification and fit rejection. 
 
