@@ -119,8 +119,8 @@ def test_create_combined(_jail, wfs_association,
                                  blur_size=10, n_size=2)
 
     # Check that results are as expected
-    assert result.data[5, 5] == result_data
-    assert result.dq[5, 5] == result_dq
+    assert result[0].data[5, 5] == result_data
+    assert result[0].dq[5, 5] == result_dq
 
 
 def test_shift_order_no_refine_no_flip(wfs_association):
