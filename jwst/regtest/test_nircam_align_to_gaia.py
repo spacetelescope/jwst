@@ -10,7 +10,6 @@ from jwst import datamodels
 def run_image3pipeline(rtdata_module, jail):
     ''' Run calwebb_image3 on NIRCam imaging and align to gaia '''
 
-
     rtdata = rtdata_module
     rtdata.get_asn("nircam/image/level3_F277W_3img_asn.json")
     args = ["calwebb_image3", rtdata.input,

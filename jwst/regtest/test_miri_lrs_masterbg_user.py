@@ -2,16 +2,12 @@ import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
-from jwst.stpipe import Step
-
+from jwst.master_background import MasterBackgroundStep
 
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
 
     rtdata = rtdata_module
-
-    collect_pipeline_cfgs("config")
 
     # This is the user-supplied background file.
     rtdata.get_data("miri/lrs/miri_lrs_bkg_x1d.fits")
@@ -20,10 +16,8 @@ def run_pipeline(jail, rtdata_module):
     # This is the input file for the master_background step.
     rtdata.get_data("miri/lrs/miri_lrs_sci+bkg_cal.fits")
 
-    args = ["config/master_background.cfg", rtdata.input,
-            "--user_background=" + user_bkg,
-            "--save_results=True"]
-    Step.from_cmdline(args)
+    MasterBackgroundStep.call(rtdata.input, user_background=user_bkg,
+                              save_results=True, suffix='master_background')
 
     return rtdata
 
