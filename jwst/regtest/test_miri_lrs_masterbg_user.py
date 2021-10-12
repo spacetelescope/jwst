@@ -4,6 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.master_background import MasterBackgroundStep
 
+
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
 
