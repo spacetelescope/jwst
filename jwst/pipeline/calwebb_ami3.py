@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import logging
 import os.path as op
 
 from ..stpipe import Pipeline
@@ -11,7 +10,6 @@ from ..ami import ami_normalize_step
 from ..model_blender import blendmeta
 
 __all__ = ['Ami3Pipeline']
-
 
 
 class Ami3Pipeline(Pipeline):

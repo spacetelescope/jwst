@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from ..stpipe import Pipeline
-import logging
 from .. import datamodels
 
 # step imports
@@ -40,7 +39,7 @@ class GuiderPipeline(Pipeline):
         # model, appropriate for input to flat_field
         if (self.dq_init.skip and self.guider_cds.skip):
             self.log.info("dq_init and guider_cds are set to skip; assume they"
-                     " were run before and load data as GuiderCalModel")
+                          " were run before and load data as GuiderCalModel")
             input = datamodels.GuiderCalModel(input)
         else:
             input = datamodels.GuiderRawModel(input)

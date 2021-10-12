@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import logging
-
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -17,7 +15,6 @@ from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
 __all__ = ['DarkPipeline']
-
 
 
 class DarkPipeline(Pipeline):
