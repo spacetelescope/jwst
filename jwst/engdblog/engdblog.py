@@ -21,9 +21,10 @@ class EngDBLogStep(Step):
     """
 
     spec = """
-    stime = string(default='2021-01-25') # Start time
-    etime = string(default='2021-01-27') # End time
-    verbosity = option('initial', 'all', default='initial') # How much to report.
+    stime = string(default='2021-01-25')  # Start time
+    etime = string(default='2021-01-27')  # End time
+    verbosity = option('initial', 'all', default='initial')  # How much to report.
+    engdb_url = string(default='http://localhost')  # Mock url
     """
 
     def process(self, mnemonics):
@@ -45,7 +46,7 @@ class EngDBLogStep(Step):
         stime = self.stime
         etime = self.etime
         verbosity = self.verbosity
-        edb = ENGDB_Service()
+        edb = ENGDB_Service(base_url=self.engdb_url)
 
         if isinstance(mnemonics, str):
             mnemonics = [mnemonics]

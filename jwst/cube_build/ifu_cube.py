@@ -44,6 +44,8 @@ class IFUCubeData():
         """ Class IFUCube holds the high level data for each IFU Cube
         """
         self.new_code = 0
+        self.input_models_this_cube = []  # list of files use to make cube working on
+
         self.input_filenames = input_filenames
         self.pipeline = pipeline
 
@@ -563,6 +565,7 @@ class IFUCubeData():
             # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                self.input_models_this_cube.append(input_model)
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
                 if ib == 0 and k == 0:
@@ -733,7 +736,7 @@ class IFUCubeData():
             # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-
+                self.input_models_this_cube.append(input_model)
                 log.debug("Working on next Single IFU Cube = %i" % (j + 1))
 
                 # for each new data model create a new spaxel
@@ -1320,7 +1323,7 @@ class IFUCubeData():
         fluxes and pixel weighing parameters that fall within the roi of
         spaxel center
 
-        Parameter
+        Parameters
         ----------
         this_par1 : str
            for MIRI this is the channel # for NIRSPEC this is the grating name
@@ -1481,7 +1484,7 @@ class IFUCubeData():
 
         Return the coordinates of all the detector pixel in the output frame.
 
-        Parameter
+        Parameters
         ----------
         this_par1 : str
            for MIRI this is the channel # for NIRSPEC this is the grating name
@@ -1559,7 +1562,7 @@ class IFUCubeData():
         The output frame is on the SKY (ra-dec)
         Return the coordinates of all the detector pixel in the output frame.
 
-        Parameter
+        Parameters
         ----------
         input: datamodel
         input data model
@@ -2019,7 +2022,7 @@ class IFUCubeData():
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         output_file = IFUCube.meta.filename
-        blendmeta.blendmodels(IFUCube, inputs=self.input_models,
+        blendmeta.blendmodels(IFUCube, inputs=self.input_models_this_cube,
                               output=output_file)
 
 

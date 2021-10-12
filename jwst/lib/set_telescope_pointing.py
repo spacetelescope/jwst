@@ -1,4 +1,47 @@
-"""Set Telescope Pointing from quaternions"""
+"""Set Telescope Pointing from Observatory Engineering Telemetry
+
+Calculate and update the pointing-related and world coordinate system-related
+keywords. Given a time period, usually defined by an exposure, the engineering
+mnemonic database is queried for observatory orientation. The orientation
+defines the sky coordinates a particular point on the observatory is pointed to.
+Then, using a set of matrix transformations, the sky coordinates of the
+reference pixel of a desired aperture is calculated.
+
+The transformations are defined by the Technical Reference JWST-STScI-003222,
+SM-12. This document has undergone a number of revisions. For JWST release
+v1.3.1, the version implemented is based on an internal email version produced
+2021-07.
+
+There are a number of algorithms, or *methods*, that have been implemented.
+Most represent the historical refinement of the algorithm. Until the technical
+reference is finalized, all methods will remain in the code. The default,
+state-of-the art algorithm is represented by method ``OPS_TR_202107``,
+implemented by
+`~jwst.lib.set_telescope_pointing.calc_transforms_ops_tr_202107`.
+
+Interface
+=========
+
+The primary usage is through the command line interface
+`set_telescope_pointing.py`. Operating on a list of JWST Level 1b exposures,
+this command updates the world coordinate system keywords with the values
+necessary to translate from aperture pixel to sky coordinates.
+
+Access to the JWST Engineering Mnemonic database is required. See the
+:ref:`Engineering Database Interface<engdb>` for more information.
+
+Programmatically, the command line is implemented by the function
+`~jwst.lib.set_telescope_pointing.add_wcs`, which calls the basic function
+`~jwst.lib.set_telescope_pointing.calc_wcs`. The available methods are defined
+by `~jwst.lib.set_telescope_pointing.Methods`.
+
+There are two data structures used to maintain the state of the transformation.
+`~jwst.lib.set_telescope_pointing.TransformParameters` contains the parameters
+needed to perform the transformations.
+`~jwst.lib.set_telescope_pointing.Transforms` contains the calculated
+transformation matrices.
+
+"""
 import sys
 
 import asdf
@@ -25,6 +68,19 @@ from ..lib.pipe_utils import is_tso
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 
+__all__ = [
+    'Methods',
+    'TransformParameters',
+    'Transforms',
+    'WCSRef',
+    'add_wcs',
+    'calc_transforms',
+    'calc_transforms_ops_tr_202107',
+    'calc_wcs',
+    'calc_wcs_over_time',
+    'update_wcs',
+]
+
 # Setup logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -34,20 +90,37 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
+    """Available methods to calculate V1 and aperture WCS information
+
+    Current state-of-art is OPS_TR_202107. This method chooses either COARSE_TR_202107 or
+    TRACK_TR_202107 depending on the guidance mode, as specified by header keyword PCS_MODE.
+    """
+    #: COARSE tracking mode algorithm, TR version 2021-07
     COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107')
+    #: Guides Star commanded algorithm using the J3 position angle, TR version 2021-05
     GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')
+    #: Guides Star commanded algorithm using the V3 position angle, TR version 2021-05
     GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')
+    #: Current state-of-art algorithm, TR version 2021-07
     OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
+    #: Original algorithm, pre-JSOCINT-555 work.
     ORIGINAL = ('original', 'calc_transforms_original')
-    TR_202105 = ('tr_202105', 'calc_transforms_tr202105')  # Was FULL
-    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105')  # Was FULLVA
+    #: Observatory orientation without velocity correction, TR 2021-05
+    TR_202105 = ('tr_202105', 'calc_transforms_tr202105')
+    #: Observatory orientation with velocity correction, TR 2021-05
+    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105')
+    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
     TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
 
     # Aliases
-    default = OPS_TR_202107  # Algorithm to use by default. Used by Operations.
-    COARSE = COARSE_TR_202107  # Default algorithm under PCS_MODE COARSE.
-    OPS = OPS_TR_202107  # Default algorithm for use by Operations.
-    TRACK = TRACK_TR_202107  # Default algorithm under PCS_MODE TRACK/FINEGUIDE.
+    #: Algorithm to use by default. Used by Operations.
+    default = OPS_TR_202107
+    #: Default algorithm under PCS_MODE COARSE.
+    COARSE = COARSE_TR_202107
+    #: Default algorithm for use by Operations.
+    OPS = OPS_TR_202107
+    #: Default algorithm under PCS_MODE TRACK/FINEGUIDE.
+    TRACK = TRACK_TR_202107
 
     def __new__(cls: object, value: str, func_name: str):
         obj = object.__new__(cls)
@@ -57,6 +130,7 @@ class Methods(Enum):
 
     @property
     def func(self):
+        """Function associated with the method"""
         return globals()[self._func_name]
 
     def __str__(self):
@@ -117,21 +191,36 @@ Pointing.__new__.__defaults__ = ((None,) * 5)
 # Transforms
 @dataclasses.dataclass
 class Transforms:
-    m_eci2fgs1: np.array = None         # ECI to FGS1
-    m_eci2gs: np.array = None           # ECI to Guide Star
-    m_eci2j: np.array = None            # ECI to J-Frame
-    m_eci2siaf: np.array = None         # ECI to SIAF
-    m_eci2sifov: np.array = None        # ECI to SIFOV
-    m_eci2v: np.array = None            # ECI to V
-    m_fgs12fgsx: np.array = None        # FGS1 to FGSx transformation
-    m_fgs12sifov: np.array = None       # FGS1 to SIFOV
-    m_gs2gsapp: np.array = None         # Velocity abberation
-    m_j2fgs1: np.array = None           # J-Frame to FGS1
-    m_sifov_fsm_delta: np.array = None  # FSM correction
-    m_sifov2v: np.array = None          # SIFOV to V1
-    m_v2siaf: np.array = None           # V to SIAF
-    override: object = None             # Override values. Either another Transforms or dict-like object
-    """Transformation matrices"""
+    """The matrices used in calculation of the M_eci2siaf transformation
+    """
+    #: ECI to FGS1
+    m_eci2fgs1: np.array = None
+    #: ECI to Guide Star
+    m_eci2gs: np.array = None
+    #: ECI to J-Frame
+    m_eci2j: np.array = None
+    #: ECI to SIAF
+    m_eci2siaf: np.array = None
+    #: ECI to SIFOV
+    m_eci2sifov: np.array = None
+    #: ECI to V
+    m_eci2v: np.array = None
+    #: FGS1 to FGSx transformation
+    m_fgs12fgsx: np.array = None
+    #: FGS1 to SIFOV
+    m_fgs12sifov: np.array = None
+    #: Velocity abberation
+    m_gs2gsapp: np.array = None
+    #: J-Frame to FGS1
+    m_j2fgs1: np.array = None
+    #: FSM correction
+    m_sifov_fsm_delta: np.array = None
+    #: SIFOV to V1
+    m_sifov2v: np.array = None
+    #: V to SIAF
+    m_v2siaf: np.array = None
+    #: Override values. Either another Transforms or dict-like object
+    override: object = None
 
     @classmethod
     def from_asdf(cls, asdf_file):
@@ -213,88 +302,45 @@ WCSRef.__new__.__defaults__ = (None, None, None)
 @dataclasses.dataclass
 class TransformParameters:
     """Parameters required the calculations
-
-    Parameters
-    ----------
-    allow_default : bool
-        If telemetry cannot be determined, use existing
-        information in the observation's header.
-
-    default_pa_v3 : float
-        The V3 position angle to use if the pointing information
-        is not found.
-
-    dry_run : bool
-        Do not write out the modified file.
-
-    engdb_url : str or None
-        URL of the engineering telemetry database REST interface.
-
-    fsmcorr_version : str
-        The version of the FSM correction calculation to use.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    fsmcorr_units : str
-        Units of the FSM correction values. Default is 'arcsec'.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    guide_star_wcs : WCSRef
-        Guide star WCS info, typically from the input model.
-
-    j2fgs_transpose : bool
-        Transpose the `j2fgs1` matrix.
-
-    jwst_velocity : numpy.array
-        The [DX, DY, DZ] barycentri velocity vector
-
-    method : `Methods`
-        The method, or algorithm, to use in calculating the transform.
-        If not specified, the default method is used.
-
-    override_transforms : `Transforms`
-        If set, matrices that should be used instead of the calculated one.
-
-    pcs_mode : str
-        The tracking mode in use.
-
-    pointing : `Pointing`
-        The quaternion.
-
-    reduce_func : func or None
-        Reduction function to use on values.
-
-    siaf : `SIAF`
-        The SIAF information for the input model
-
-    siaf_db : `SiafDb`
-        The SIAF database
-
-    tolerance : int
-        If no telemetry can be found during the observation,
-        the time, in seconds, beyond the observation time to
-        search for telemetry.
-
-    useafter : str
-        The date of observation (``model.meta.date``)
     """
+    #: If telemetry cannot be determined, use existing information in the observation's header.
     allow_default: bool = False
+    #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
+    #: Do not write out the modified file.
     dry_run: bool = False
+    #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
+    #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
+    #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_units: str = 'arcsec'
+    #: Guide star WCS info, typically from the input model.
     guide_star_wcs: WCSRef = WCSRef()
+    #: Transpose the `j2fgs1` matrix.
     j2fgs_transpose: bool = True
+    #: The [DX, DY, DZ] barycentri velocity vector
     jwst_velocity: np.array = None
+    #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
     method: Methods = None
+    #: If set, matrices that should be used instead of the calculated one.
     override_transforms: Transforms = None
+    #: The tracking mode in use.
     pcs_mode: str = None
+    #: The observatory orientation, represented by the ECI quaternion, and other engineering mnemonics
     pointing: Pointing = None
+    #: Reduction function to use on values.
     reduce_func: typing.Callable = None
+    #: The SIAF information for the input model
     siaf: SIAF = None
+    #: The SIAF database
     siaf_db: SiafDb = None
+    #: If no telemetry can be found during the observation,
+    #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
+    #: The date of observation (`jwst.datamodel.DataModel.meta.date`)
     useafter: str = None
+    #: V3 position angle at Guide Star (`jwst.datamodel.DataModel.meta.guide_star.gs_v3_pa_science`)
     v3pa_at_gs: float = None
 
     def as_reprdict(self):
@@ -353,11 +399,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     Notes
     -----
-    This function adds absolute pointing information to the FITS files provided
-    to it on the command line (one or more).
-
-    Currently it only uses a constant value for the engineering keywords
-    since the Engineering Database does not yet contain them.
+    This function adds absolute pointing information to the JWST datamodels provided.
 
     It starts by populating the headers with values from the SIAF database.
     It adds the following keywords to all files:
@@ -366,18 +408,6 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     V3_REF (arcseconds)
     VPARITY (+1 or -1)
     V3I_YANG (decimal degrees)
-
-    In addition for ``IMAGING_MODES`` it adds these keywords:
-
-    CRPIX1 (pixels)
-    CRPIX2 (pixels)
-    CDELT1 (deg/pix)
-    CDELT2 (deg/pix)
-    CUNIT1 (str)
-    CUNIT2
-    CTYPE1
-    CTYPE2
-    WCSAXES
 
     The keywords computed and added to all files are:
 
@@ -806,7 +836,7 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
 
     Returns
     -------
-    obstimes, wcsinfos, vinfos : [], [WCSRef[,...]], [WCSRef[,...]]
+    obstimes, wcsinfos, vinfos : [astropy.time.Time[,...]], [WCSRef[,...]], [WCSRef[,...]]
         A 3-tuple is returned with the WCS pointings for
         the aperture and the V1 axis
     """
@@ -835,8 +865,7 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
 
 
 def calc_wcs(t_pars: TransformParameters):
-    """Transform from the given SIAF information and Pointing
-    the aperture and V1 wcs
+    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
 
     Parameters
     ----------
@@ -848,31 +877,6 @@ def calc_wcs(t_pars: TransformParameters):
     wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms
         A 3-tuple is returned with the WCS pointing for
         the aperture and the V1 axis, and the transformation matrices.
-
-    Notes
-    -----
-
-    The SIAF information is as follows:
-
-    v2ref (arcsec), v3ref (arcsec), v3idlyang (deg), vidlparity
-    (+1 or -1), are the relevant siaf parameters. The assumed
-    units are shown in parentheses.
-
-    It is assumed that the siaf ref position is the corresponding WCS
-    reference position.
-
-    The `Pointing` information is as follows:
-
-    Parameter q is the SA_ZATTEST<n> engineering parameters where
-    n ranges from 1 to 4.
-
-    Parameter j2fgs_matrix is the transformation matrix specified by
-    engineering parameters SA_ZRFGS2J<n><m> where both n and m range
-    from 1 to 3. This is to be provided as a 1d list using this order:
-    11, 21, 31, 12, 22, 32, 13, 23, 33
-
-    Parameter fsmcorr are two values provided as a list consisting of:
-    [SA_ZADUCMDX, SA_ZADUCMDY]
     """
     if t_pars.siaf is None:
         t_pars.siaf = SIAF()
@@ -1982,15 +1986,15 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     ----------
     fsmcorr : np.array((2,))
         The FSM correction parameters:
-            0: SA_ZADUCMDX
-            1: SA_ZADUCMDY
+        0: SA_ZADUCMDX
+        1: SA_ZADUCMDY
 
     fsmcorr_version : str
         The version of the FSM correction calculation to use.
         Versions available:
-            latest: The state-of-art. Currently `v2`
-            v2: Update 201708 to use actual spherical calculations
-            v1: Original linear approximation
+        latest: The state-of-art. Currently `v2`
+        v2: Update 201708 to use actual spherical calculations
+        v1: Original linear approximation
 
     fsmcorr_units : str
         The units of the FSM correction values. Default is `arcsec`.
@@ -2392,13 +2396,7 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
                 include_bracket_values=True
             )
         except Exception as exception:
-            raise ValueError(
-                'Cannot retrive {} from engineering.'
-                '\nFailure was {}'.format(
-                    mnemonic,
-                    exception
-                )
-            )
+            raise ValueError(f'Cannot retrieve {mnemonic} from engineering.') from exception
 
         # If more than two points exist, throw off the bracket values.
         # Else, ensure the bracket values are within the allowed time.

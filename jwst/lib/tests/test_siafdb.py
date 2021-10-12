@@ -30,7 +30,7 @@ def test_create(source, expected, use_pysiaf, jail_environ):
         pytest.importorskip('pysiaf')
 
     if source == 'XML_DATA':
-        os.environ['XML_DATA'] = Path(__file__).parent / 'data'
+        os.environ['XML_DATA'] = str(Path(__file__).parent / 'data')
         source = None
 
     with siafdb.SiafDb(source) as siaf_db:

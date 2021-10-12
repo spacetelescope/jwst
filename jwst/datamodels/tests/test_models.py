@@ -25,16 +25,6 @@ ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
 @pytest.fixture
-def jail_environ():
-    """Lock changes to the environment"""
-    original = os.environ.copy()
-    try:
-        yield
-    finally:
-        os.environ = original
-
-
-@pytest.fixture
 def make_models(tmp_path):
     """Create basic models
 

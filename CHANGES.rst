@@ -1,6 +1,12 @@
 1.4.0 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Call ``img_median_replace`` to replace NaN's and pixels flagged with
+  DO_NOT_USE in the input image. [#6334]
+
 assign_wcs
 ----------
 
@@ -29,6 +35,9 @@ associations
   handle certain opmode/grating/lamp combinations that result in no data
   on one of the detectors. [#6304]
 
+- Removed Constraint_ExtCal from Asn_Lv2WFSC constraints, as it was
+  redundant with Constraint_Image_Science present. [#6384]
+
 cube_build
 ----------
 
@@ -44,6 +53,11 @@ cube_build
 
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
   sky values mapped to each detector slice. [#6326]
+
+- Fixed error final exposure times calculated by blend headers.Only the input models
+  used in the IFU cube are past to blend headers. [#6360]
+
+- Update of documentation to explain 3d drizzling and remove miri psf weighting [#6371]
 
 datamodels
 ----------
@@ -64,11 +78,24 @@ datamodels
 
 - Add ``NDArrayType`` to list of valid types for ``RegionsModel.regions``. [#6333]
 
+- Fix a bug in wcs_ref_models where SpecwcsModel was failing the SimpleModel
+  validation as it contains a list of models rather than one simple model.
+  Also add some missing allowed BAND values for MIRI MRS distortion
+  and regions files.  Fix an incorrect comment on
+  FilteroffsetModel. [#6362]
+
+ - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
+  
 extract_1d
 ----------
 
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
   fixed-slit inputs that are in `SlitModel` form. [#6212]
+
+- Assign 0-indexed integration number to INT_NUM if input
+  INT_TIMES table is empty. [#6369]
+
+- Change INT_NUM assignment to 1-indexed. [#6388]
 
 flatfield
 ---------
@@ -76,10 +103,18 @@ flatfield
 - Updated flatfield step docs to include complete details on how the
   variance and error arrays are updated. [#6245]
 
+- Fixed a bug in flatfield for brightobj mode where the S-flat cutout
+  was calculated incorrectly by not accounting for the slit offset [#6332]
+
 jump
 ----
 
 - Updated jump detection step to use common code moved to stcal [#6089]
+
+lib
+---
+
+- Implement the MAST AUI interface to the Engineering Database. [#6288]
 
 outlier_detection
 -----------------
@@ -100,6 +135,19 @@ ramp_fitting
 
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
+
+refpix
+------
+
+- Refactored the ``subtract_reference`` routine for NRS IRS2 data to reduce
+  memory usage. [#6356]
+
+- Updated bad link to JDox in the step documentation. [#6372]
+
+regtest
+-------
+
+- Update okifying to handle full folder updates for associations [#6218]
 
 resample
 --------
@@ -131,6 +179,12 @@ wfss_contam
 - Added step documentation [#6210]
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
+
+
+1.3.3 (2021-10-05)
+==================
+
+- Avoid using photutils 1.2.0 [#6378]
 
 
 1.3.2 (2021-09-03)
@@ -1977,6 +2031,18 @@ refpix
 
 - Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
   schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
+
+residual_fringe
+---------------
+
+- First implementation of step. Added third party package (BayesicFitting) to setup.cfg [#6211]
+
+- Fixed suffix defined in spec [#6347]
+
+- Fixed an error when a filename was give as the input to apply the residual fringe correction [#6349]
+
+- Updated residual fringe reference data model to support new delivery of reference files [#6357]
+
 
 set_telescope_pointing
 ----------------------

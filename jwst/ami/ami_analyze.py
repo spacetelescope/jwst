@@ -1,18 +1,16 @@
 #  Module for applying the LG-PLUS algorithm to an AMI exposure
-
 import logging
 import numpy as np
 
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
-
+from .utils import img_median_replace
 
 from astropy import units as u
 
-
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+log.setLevel(logging.DEBUG)
 
 
 def apply_LG_plus(input_model, filter_model, oversample, rotation,
@@ -24,21 +22,21 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         AMI science image to be analyzed
 
-    filter_model: filter model object
+    filter_model : filter model object
         filter throughput reference data
 
-    oversample: integer
+    oversample : integer
         Oversampling factor
 
-    rotation: float (degrees)
+    rotation : float (degrees)
         Initial guess at rotation of science image relative to model
 
     Returns
     -------
-    output_model: Fringe model object
+    output_model : Fringe model object
         Fringe analysis data
 
     """
@@ -58,6 +56,11 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         input_copy.data = input_copy.data[ystart - 1:ystop, xstart - 1:xstop]
         input_copy.dq = input_copy.dq[ystart - 1:ystop, xstart - 1:xstop]
         input_copy.err = input_copy.err[ystart - 1:ystop, xstart - 1:xstop]
+
+    # Replace NaN's and DO_NOT_USE pixels in the input image
+    # with median of surrounding pixel values in a 3x3 box
+    box_size = 3
+    input_copy = img_median_replace(input_copy, box_size)
 
     data = input_copy.data
     dim = data.shape[1]

@@ -24,7 +24,7 @@ GOOD_ENDTIME = '2016-01-19'
 def engdb():
     """Setup the service to operate through the mock service"""
     with EngDB_Mocker():
-        yield engdb_tools.ENGDB_Service()
+        yield engdb_tools.ENGDB_Service(base_url='http://localhost')
 
 
 @pytest.fixture(scope='module')

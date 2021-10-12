@@ -20,6 +20,7 @@ from .extract1dimage import Extract1dImageModel
 from .extract1d_spec import Extract1dIFUModel
 from .flat import FlatModel
 from .fringe import FringeModel
+from .fringefreq import FringeFreqModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
 from .guider import GuiderRawModel, GuiderCalModel
@@ -104,7 +105,7 @@ __all__ = [
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
-    'FringeModel', 'GainModel', 'GLS_RampFitModel',
+    'FringeModel', 'FringeFreqModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',

@@ -94,9 +94,8 @@ The arguments related to region of interest and how the fluxes are combined toge
 
 
 ``weighting [string]``
-  The type of weighting to use when combining points cloud fluxes to represent the spaxel flux. Allowed values are
-  ``emsm`` and ``msm``. This defines how the point cloud members falling inside the ROI of the spaxel center are weighted	
-  to find the final spaxel flux. 
+  The type of weighting to use when combining detector pixel fluxes to represent the spaxel flux. Allowed values are
+  ``emsm``,  ``msm`` and ``drizzle``. 
 
-  For more details on how the weighting of the point cloud members are used in determining the final spaxel flux see
+  For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.

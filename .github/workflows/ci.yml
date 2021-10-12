@@ -66,10 +66,12 @@ jobs:
             python-version: 3.9
             toxenv: security
 
-          - name: macOS
-            os: macos-latest
-            python-version: 3.9
-            toxenv: py39
+          # MacOS job is flaky on Github actions and fails routinely.
+          # Re-enable when things get more reliable.
+          # - name: macOS
+          #   os: macos-latest
+          #   python-version: 3.9
+          #   toxenv: py39
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
