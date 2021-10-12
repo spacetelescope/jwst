@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from scipy.interpolate import UnivariateSpline
 
 from stdatamodels import DataModel
 
@@ -11,7 +12,7 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .soss_engine import ExtractionEngine
-from .engine_utils import ThroughputSOSS, WebbKernel
+from .engine_utils import ThroughputSOSS, WebbKernel, grid_from_map
 from .soss_boxextract import get_box_weights, box_extract
 
 # TODO remove once code is sufficiently tested.
@@ -115,6 +116,57 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     return xtrace, ytrace, wavetrace
 
 
+def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
+    """
+    Parameters
+    ----------
+    scidata_bkg: array
+        A single background subtracted NIRISS SOSS detector image.
+    scierr: array
+        The uncertainties corresponding to the detector image.
+    scimask: array
+        Pixel that should be masked from the detector image.
+    ref_files: list
+        A list of list of the reference files for each orders.
+    threshold: float
+        The threshold value for using pixels based on the spectral profile.
+    Returns
+    -------
+    A function to estimate the underlying flux as a function of wavelength
+    """
+
+    # Unpack ref_files
+    wave_maps, spat_pros, thrpts, _ = ref_files
+
+    # Oversampling of 1 to make sure the solution will be stable
+    n_os = 1
+
+    # Define wavelength grid based on order 1 only (so first index)
+    wave_grid = grid_from_map(wave_maps[0], spat_pros[0], n_os=n_os)
+
+    # Save boundaries for later
+    wave_bounds = [np.min(wave_grid), np.max(wave_grid)]
+
+    # Mask parts contaminated by order 2 based on its spatial profile
+    mask = (spat_pros[1] >= threshold) | scimask
+
+    # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
+    ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [np.array([1.])]
+    kwargs = {'wave_grid': wave_grid,
+              'orders': [1],
+              'global_mask': mask,
+              'threshold': threshold}
+    engine = ExtractionEngine(*ref_file_args, **kwargs)
+
+    # Extract estimate
+    spec_estimate = engine.extract(data=scidata_bkg, error=scierr)
+
+    # Interpolate
+    idx = np.isfinite(spec_estimate)
+    estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
+
+    return estimate_spl
+
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None,
                 tikfac=None, n_os=5, threshold=1e-4, devname=None):
     """Perform the spectral extraction on a single image.
@@ -181,17 +233,20 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
 
         log.info('Solving for the optimal Tikhonov factor.')
 
+        # Need a rough estimate of the underlying flux to estimate the tikhonov factor
+        estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, threshold)
+
         # Find the tikhonov factor.
-        # Initial pass 14 orders of magnitude.
-        factors = np.logspace(-25, -12, 14)
+        # Initial pass 8 orders of magnitude with 10 grid points.
+        factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests)
+        tikfac, _, _ = engine.best_tikho_factor(tests=tiktests)
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests)
+        tikfac, _, _ = engine.best_tikho_factor(tests=tiktests)
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
