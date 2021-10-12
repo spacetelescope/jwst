@@ -2,7 +2,6 @@ import pytest
 
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 ROOT = 'nrs_verify_nrs1'
@@ -14,10 +13,8 @@ def run_detector1(rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data(f'nirspec/imaging/{ROOT}_uncal.fits')
 
-    collect_pipeline_cfgs('config')
-
     args = [
-        'config/calwebb_detector1.cfg', rtdata.input,
+        'calwebb_detector1', rtdata.input,
         '--steps.dq_init.save_results=True',
         '--steps.saturation.save_results=True',
         '--steps.superbias.save_results=True',
@@ -43,7 +40,7 @@ def run_image2(run_detector1, rtdata_module):
     rtdata.input = f'{ROOT}_rate.fits'
 
     args = [
-        'jwst.pipeline.Image2Pipeline', rtdata.input,
+        'calwebb_image2', rtdata.input,
         '--steps.assign_wcs.save_results=true',
         '--steps.assign_wcs.override_fpa=jwst_nirspec_fpa_0005.asdf',
         '--steps.flat_field.save_results=true',

@@ -3,7 +3,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -14,14 +13,11 @@ def run_pipeline(jail, rtdata_module):
 
     rtdata = rtdata_module
 
-    # Get the cfg files
-    collect_pipeline_cfgs("config")
-
     # Get the spec3 ASN and its members
     rtdata.get_asn("miri/lrs/jw00623-o032_20191106t132852_spec3_001_asn.json")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
-    args = ["config/calwebb_spec3.cfg", rtdata.input]
+    args = ["calwebb_spec3", rtdata.input]
     Step.from_cmdline(args)
 
 
