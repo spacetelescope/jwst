@@ -1,4 +1,4 @@
-.. _arguments:
+.. _resid_fringe_arguments:
 
 Step Arguments
 ==============

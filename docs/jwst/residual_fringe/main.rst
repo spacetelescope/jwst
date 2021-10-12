@@ -2,7 +2,7 @@ Description
 ===========
 
 The JWST pipeline contains two steps devoted to the removal of fringes on MIRI MRS images.
-The first correction is applied in the ``fringe_step`` in the :ref:`calwebb_spec2<calwebb_spec2>` pipeline
+The first correction is applied in the ``fringe_step`` in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline
 and  consists in dividing
 detector-level data by a fringe-flat and is described in the :ref:`fringe <fringe_step>` step.
 Applying the fringe flat should eliminate fringes from spectra of spatially extended sources, however
