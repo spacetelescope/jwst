@@ -14,7 +14,6 @@ from jwst.datamodels.dqflags import pixel
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def make_output_wcs(input_models, pscale_ratio=1.0):

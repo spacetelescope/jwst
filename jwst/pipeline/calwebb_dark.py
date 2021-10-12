@@ -18,9 +18,6 @@ from ..linearity import linearity_step
 
 __all__ = ['DarkPipeline']
 
-# Define logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DarkPipeline(Pipeline):
@@ -51,7 +48,7 @@ class DarkPipeline(Pipeline):
     # start the actual processing
     def process(self, input):
 
-        log.info('Starting calwebb_dark ...')
+        self.log.info('Starting calwebb_dark ...')
 
         # open the input
         input = datamodels.RampModel(input)
@@ -60,7 +57,7 @@ class DarkPipeline(Pipeline):
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
-            log.debug('Processing a MIRI exposure')
+            self.log.debug('Processing a MIRI exposure')
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -74,7 +71,7 @@ class DarkPipeline(Pipeline):
         else:
 
             # process Near-IR exposures
-            log.debug('Processing a Near-IR exposure')
+            self.log.debug('Processing a Near-IR exposure')
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -84,7 +81,7 @@ class DarkPipeline(Pipeline):
             input = self.refpix(input)
             input = self.linearity(input)
 
-        log.info('... ending calwebb_dark')
+        self.log.info('... ending calwebb_dark')
 
         # reset FILETYPE in the output
         input.meta.filetype = 'calibrated ramp'

@@ -12,9 +12,6 @@ from ..model_blender import blendmeta
 
 __all__ = ['Ami3Pipeline']
 
-# Define logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Ami3Pipeline(Pipeline):
@@ -40,7 +37,7 @@ class Ami3Pipeline(Pipeline):
 
     def process(self, input):
 
-        log.info('Starting calwebb_ami3')
+        self.log.info('Starting calwebb_ami3')
 
         # Load the input association table
         asn = self.load_as_level3_asn(input)
@@ -65,21 +62,21 @@ class Ami3Pipeline(Pipeline):
 
         # Make sure we found some science target members
         if len(targ_files) == 0:
-            log.error('No science target members found in association table')
-            log.error('Calwebb_ami3 processing will be aborted')
+            self.log.error('No science target members found in association table')
+            self.log.error('Calwebb_ami3 processing will be aborted')
             return
 
         # If there aren't any PSF images, we can't do the normalize step
         if len(psf_files) == 0:
-            log.info('No PSF reference members found in association table')
-            log.info('ami_normalize step will be skipped')
+            self.log.info('No PSF reference members found in association table')
+            self.log.info('ami_normalize step will be skipped')
 
         # Run ami_analyze on all the target members
         targ_lg = []
         for input_file in targ_files:
 
             # Do the LG analysis for this image
-            log.debug('Do LG processing for member %s', input_file)
+            self.log.debug('Do LG processing for member %s', input_file)
             result = self.ami_analyze(input_file)
 
             # Save the LG analysis results to a file
@@ -96,7 +93,7 @@ class Ami3Pipeline(Pipeline):
         for input_file in psf_files:
 
             # Do the LG analysis for this image
-            log.debug('Do LG processing for member %s', input_file)
+            self.log.debug('Do LG processing for member %s', input_file)
             result = self.ami_analyze(input_file)
 
             # Save the LG analysis results to a file
@@ -166,6 +163,6 @@ class Ami3Pipeline(Pipeline):
             del targ_avg
 
         # We're done
-        log.info('... ending calwebb_ami3')
+        self.log.info('... ending calwebb_ami3')
 
         return

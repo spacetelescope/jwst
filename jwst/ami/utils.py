@@ -7,7 +7,6 @@ import numpy as np
 import numpy.fft as fft
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 

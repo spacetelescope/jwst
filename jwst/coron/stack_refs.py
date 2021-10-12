@@ -10,7 +10,6 @@ from .. import datamodels
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def make_cube(input_models):

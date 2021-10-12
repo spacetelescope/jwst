@@ -13,7 +13,6 @@ from stdatamodels.properties import merge_tree
 __all__ = ['exp_to_source', 'multislit_to_container']
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):

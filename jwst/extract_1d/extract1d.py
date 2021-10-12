@@ -19,7 +19,6 @@ __taskname__ = 'extract1d'
 __author__ = 'Mihai Cara'
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,

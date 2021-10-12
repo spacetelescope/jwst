@@ -10,7 +10,6 @@ from ..lib import pipe_utils
 from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 NumRefPixels = namedtuple("NumRefPixels",
                           ["bottom_rows", "top_rows",

@@ -5,7 +5,6 @@ from ..lib import reffile_utils
 from stcal.jump.jump import detect_jumps
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def run_detect_jumps(input_model, gain_model, readnoise_model,

@@ -30,7 +30,6 @@ from .apply_apcorr import select_apcorr
 from json.decoder import JSONDecodeError
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']

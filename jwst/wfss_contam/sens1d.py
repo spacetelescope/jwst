@@ -4,7 +4,6 @@ from jwst.photom.photom import find_row
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def get_photom_data(phot_model, filter, pupil, order):

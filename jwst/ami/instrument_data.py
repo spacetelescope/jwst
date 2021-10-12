@@ -10,7 +10,6 @@ from .mask_definitions import NRM_mask_definitions
 from . import utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 um = 1.0e-6
 

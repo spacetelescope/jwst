@@ -10,7 +10,6 @@ from .disperse import dispersed_pixel
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Observation:

@@ -24,7 +24,6 @@ from ..mrs_imatch.mrs_imatch_step import apply_background_2d
 from .cube_match_sky import cube_wrapper  # c extension
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class IFUCubeData():

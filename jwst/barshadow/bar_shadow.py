@@ -9,7 +9,6 @@ from gwcs import wcstools
 from jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 SLITRATIO = 1.15     # Ratio of slit spacing to slit height
 

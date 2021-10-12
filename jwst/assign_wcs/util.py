@@ -27,7 +27,6 @@ from ..datamodels import WavelengthrangeModel
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["reproject", "wcs_from_footprints", "velocity_correction",

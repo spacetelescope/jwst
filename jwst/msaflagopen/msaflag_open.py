@@ -11,7 +11,6 @@ from ..transforms.models import Slit
 from gwcs.wcs import WCS
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 FAILEDOPENFLAG = datamodels.dqflags.pixel['MSA_FAILED_OPEN']
