@@ -74,6 +74,10 @@ datamodels
 - Implement memmap argument when calling ``datamodels.open`` on an ASDF
   file. [#6327]
 
+- Fix bug in schema that disallowed valid p_grating values. [#6333]
+
+- Add ``NDArrayType`` to list of valid types for ``RegionsModel.regions``. [#6333]
+
 - Fix a bug in wcs_ref_models where SpecwcsModel was failing the SimpleModel
   validation as it contains a list of models rather than one simple model.
   Also add some missing allowed BAND values for MIRI MRS distortion
