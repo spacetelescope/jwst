@@ -14,7 +14,7 @@ from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference
 
 def library_function():
     import logging
-    log = logging.getLogger()
+    log = logging.getLogger(__name__)
     log.info("This is a library function log")
 
 

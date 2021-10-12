@@ -121,10 +121,18 @@ outlier_detection
 
 - Log number of flagged outliers in ``outlier_detection`` [#6260]
 
+persistence
+-----------
+
+- Changed logger from root to `__name__` [#6389]
+
 pipeline
 --------
 
 - Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
+
+- Changed logger from root to `__name__` for Ami3, Detector1, Dark, and Guider
+  Pipelines [#6389]
 
 ramp_fitting
 ------------
