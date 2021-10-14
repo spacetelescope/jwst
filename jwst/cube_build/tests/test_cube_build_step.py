@@ -9,7 +9,6 @@ from jwst.datamodels import IFUImageModel
 from jwst.cube_build import CubeBuildStep
 from jwst.cube_build.file_table import ErrorNoAssignWCS
 from jwst.cube_build.cube_build import ErrorNoChannels
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 @pytest.fixture(scope='module')
@@ -102,21 +101,20 @@ def miri_image():
 def test_call_cube_build(_jail, miri_cube_pars, miri_image):
     """ test defaults of step are set up and user input are defined correctly """
 
-    collect_pipeline_cfgs('./config')
     # we do not want to run the CubeBuild through to completion because
     # the image needs to be a full image and this take too much time
     # in a unit test
 
     # Test ErrorNoAssignWCS is raised
     with pytest.raises(ErrorNoAssignWCS):
-        step = CubeBuildStep.from_config_file('config/cube_build.cfg')
+        step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
         step.run(miri_image)
 
     # Test some defaults to step are setup correctly and
     # is user specifies channel is set up correctly
-    step = CubeBuildStep.from_config_file('config/cube_build.cfg')
+    step = CubeBuildStep()
     step.override_cubepar = miri_cube_pars
     step.channel = '1'
 
@@ -133,7 +131,7 @@ def test_call_cube_build(_jail, miri_cube_pars, miri_image):
     # Set Assign WCS has been run but the user input to channels is wrong
     miri_image.meta.cal_step.assign_wcs = 'COMPLETE'
     with pytest.raises(ErrorNoChannels):
-        step = CubeBuildStep.from_config_file('config/cube_build.cfg')
+        step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
         step.run(miri_image)

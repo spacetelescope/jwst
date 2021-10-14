@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -15,9 +14,6 @@ def run_pipelines(jail, rtdata_module):
        the do_refine option turned on."""
 
     rtdata = rtdata_module
-
-    # Get the cfg files
-    collect_pipeline_cfgs("config")
 
     # Get the image2 ASN and members
     rtdata.get_asn("nircam/wavefront/jw00632-o003_20191210t194815_wfs-image2_001_asn.json")
@@ -31,7 +27,7 @@ def run_pipelines(jail, rtdata_module):
     rtdata.get_data("nircam/wavefront/jw00632-o003_20191210t194815_wfs-image3_001_asn.json")
 
     # Run the calwebb_wfs-image3 pipeline with no refinement (default)
-    args = ["config/calwebb_wfs-image3.cfg", rtdata.input]
+    args = ["calwebb_wfs-image3", rtdata.input]
     Step.from_cmdline(args)
 
     # Get the second version of the image3 ASN, which has a unique output
@@ -39,7 +35,7 @@ def run_pipelines(jail, rtdata_module):
     rtdata.get_data("nircam/wavefront/jw00632-o003_20191210t194815_wfs-image3_002_asn.json")
 
     # Run the calwebb_wfs-image3 pipeline with refinement
-    args = ["config/calwebb_wfs-image3.cfg", rtdata.input, "--do_refine=True"]
+    args = ["calwebb_wfs-image3", rtdata.input, "--do_refine=True"]
     Step.from_cmdline(args)
 
     return rtdata

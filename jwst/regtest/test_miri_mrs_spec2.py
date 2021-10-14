@@ -36,7 +36,7 @@ def run_spec2(jail, rtdata_module):
     # Run the pipeline
     step_params = {
         'input_path': rate_path,
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
             '--steps.bkg_subtract.save_results=true',
             '--steps.assign_wcs.save_results=true',

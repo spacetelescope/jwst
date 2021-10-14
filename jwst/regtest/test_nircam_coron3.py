@@ -1,7 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -13,9 +12,8 @@ def run_pipeline(jail, rtdata_module):
     rtdata.get_asn("nircam/coron/jw99999-a3001_20170327t121212_coron3_001_asn.json")
 
     # Run the calwebb_coron3 pipeline on the association
-    collect_pipeline_cfgs("config")
     args = [
-        "config/calwebb_coron3.cfg", rtdata.input,
+        "calwebb_coron3", rtdata.input,
         f"--steps.align_refs.override_psfmask={psfmask}"
     ]
     Step.from_cmdline(args)
