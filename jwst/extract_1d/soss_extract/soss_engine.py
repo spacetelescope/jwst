@@ -1152,23 +1152,25 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
         return best_fac, best_mode, results
 
-    def rebuild(self, spectrum=None, i_orders=None, same=False):
+    def rebuild(self, spectrum=None, i_orders=None, same=False, fill_value=0.0):
         """Build current model image of the detector.
-
-        :param spectrum: flux as a function of wavelength if callable
+        Parameters
+        ----------
+        spectrum: callable or array-like
+            flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-        :param i_orders: Indices of orders to model. Default is
+        i_orders: List[int]
+            Indices of orders to model. Default is
             all available orders.
-        :param same: If True, do not recompute the pixel_mapping matrix (b_n)
+        same: bool
+            If True, do not recompute the pixel_mapping matrix (b_n)
             and instead use the most recent pixel_mapping to speed up the computation.
             Default is False.
-
-        :type spectrum: callable or array-like
-        :type i_orders: List[int]
-        :type same: bool
-
-        :returns: model - the modelled detector image.
-        :rtype: array[float]
+        fill_value: float or np.nan
+            Pixel value where the detector is masked. Default is 0.0.
+        Returns
+        -------
+        model - the modelled detector image. array[float]
         """
 
         # If no spectrum given compute it.
@@ -1195,6 +1197,9 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
             # Evaluate the model of the current order.
             model[~mask] += pixel_mapping.dot(spectrum)
+
+        # Assign masked values
+        model[mask] = fill_value
 
         return model
 

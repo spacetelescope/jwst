@@ -144,9 +144,6 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
     # Define wavelength grid based on order 1 only (so first index)
     wave_grid = grid_from_map(wave_maps[0], spat_pros[0], n_os=n_os)
 
-    # Save boundaries for later
-    wave_bounds = [np.min(wave_grid), np.max(wave_grid)]
-
     # Mask parts contaminated by order 2 based on its spatial profile
     mask = (spat_pros[1] >= threshold) | scimask
 
@@ -166,6 +163,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
     estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
 
     return estimate_spl
+
 
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None,
                 tikfac=None, n_os=5, threshold=1e-4, devname=None):
