@@ -111,8 +111,6 @@ jump
 
 - Updated jump detection step to use common code moved to stcal [#6089]
 
-- Fixed jump detection tests. [#6310]
-
 lib
 ---
 
