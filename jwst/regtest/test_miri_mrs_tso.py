@@ -2,7 +2,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 # Define artifactory source and truth
@@ -14,14 +13,13 @@ TRUTH_PATH = 'truth/test_miri_mrs_tso'
 def run_spec2(jail, rtdata_module):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
-    collect_pipeline_cfgs("config")
 
     # Setup the inputs
     file_name = 'jw80600018001_02101_00003_mirifushort_rateints.fits'
     rtdata.get_data(INPUT_PATH + '/' + file_name)
 
     # Run the pipeline
-    args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             '--steps.assign_wcs.save_results=true',
             '--steps.flat_field.save_results=true',
             '--steps.srctype.save_results=true',

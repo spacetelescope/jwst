@@ -4,9 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 import numpy as np
 
 import jwst.datamodels as dm
-from jwst.master_background import MasterBackgroundNrsSlitsStep
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
-from jwst.stpipe import Step
+from jwst.master_background import MasterBackgroundNrsSlitsStep, MasterBackgroundStep
 
 from jwst.regtest import regtestdata as rt
 
@@ -21,11 +19,10 @@ def run_spec2_mbkg(jail, rtdata_module):
     # Get data
     rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_msa.fits')
     rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_rate.fits')
-    collect_pipeline_cfgs('config')
 
     # Run the pipeline
     step_params = {
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
             '--steps.master_background.skip=false',
             '--steps.master_background.save_background=true'
@@ -44,11 +41,10 @@ def run_spec2_mbkg_user(jail, rtdata_module):
     rtdata.get_data('nirspec/mos/nrs_mos_3pointnod_1_msa.fits')
     rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_masterbg1d.fits')
     rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_rate.fits')
-    collect_pipeline_cfgs('config')
 
     # Run the pipeline
     step_params = {
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
             '--steps.master_background.skip=false',
             '--steps.master_background.user_background=jw00626030001_02103_00001_nrs1_masterbg1d.fits'
@@ -120,10 +116,8 @@ def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
     # Get input data
     rtdata.get_data("nirspec/fs/nrs_sci+bkg_cal.fits")
 
-    collect_pipeline_cfgs("config")
-    args = ["config/master_background.cfg", rtdata.input,
-            "--user_background", user_background]
-    Step.from_cmdline(args)
+    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix='master_background',
+                              user_background=user_background)
 
     output = "nrs_sci+bkg_master_background.fits"
     rtdata.output = output
@@ -145,10 +139,8 @@ def test_nirspec_ifu_mbkg_user(rtdata, fitsdiff_default_kwargs):
     # Get input data
     rtdata.get_data("nirspec/ifu/prism_sci_bkg_cal.fits")
 
-    collect_pipeline_cfgs("config")
-    args = ["config/master_background.cfg", rtdata.input,
-            "--user_background", user_background]
-    Step.from_cmdline(args)
+    MasterBackgroundStep.call(rtdata.input, user_background=user_background,
+                              save_results=True, suffix='master_background')
 
     output = "prism_sci_bkg_master_background.fits"
     rtdata.output = output
@@ -173,10 +165,8 @@ def test_nirspec_ifu_mbkg_nod(rtdata, fitsdiff_default_kwargs, output_file):
     # Get input data
     rtdata.get_asn("nirspec/ifu/nirspec_spec3_asn.json")
 
-    collect_pipeline_cfgs("config")
-    args = ["config/master_background.cfg", rtdata.input,
-            "--save_background=True"]
-    Step.from_cmdline(args)
+    MasterBackgroundStep.call(rtdata.input, save_background=True, save_results=True,
+                              suffix='master_background')
 
     rtdata.output = output_file
 

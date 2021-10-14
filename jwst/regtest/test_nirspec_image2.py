@@ -5,7 +5,6 @@ import numpy as np
 
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -13,8 +12,7 @@ from jwst.stpipe import Step
 def test_nirspec_image2(_jail, rtdata, fitsdiff_default_kwargs):
     rtdata.get_data("nirspec/imaging/jw84600010001_02102_00001_nrs2_rate.fits")
 
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_image2.cfg", rtdata.input]
+    args = ["calwebb_image2", rtdata.input]
     Step.from_cmdline(args)
     rtdata.output = "jw84600010001_02102_00001_nrs2_cal.fits"
 

@@ -159,6 +159,9 @@ regtest
 
 - Update okifying to handle full folder updates for associations [#6218]
 
+- Remove default cfg usage from all relevant regtests; replaced with
+  either pipeline alias or Step instance [#6391]
+
 resample
 --------
 

@@ -2,7 +2,6 @@ import pytest
 
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -12,9 +11,6 @@ def run_pipeline(rtdata_module):
 
     rtdata = rtdata_module
 
-    # Get the cfg files
-    collect_pipeline_cfgs("config")
-
     # Get the MSA metadata file referenced in the input exposure
     rtdata.get_data("nirspec/mos/jw95065006001_0_short_msa.fits")
 
@@ -22,7 +18,7 @@ def run_pipeline(rtdata_module):
     rtdata.get_data("nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["config/calwebb_spec2.cfg", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
             "--steps.extract_2d.save_results=true",

@@ -3,7 +3,6 @@ from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
 
 from jwst.lib.set_telescope_pointing import add_wcs
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -12,7 +11,6 @@ def run_pipelines(jail, rtdata_module):
     """Run stage 2 and 3 pipelines on NIRCam TSO image data."""
 
     rtdata = rtdata_module
-    collect_pipeline_cfgs("config")
 
     # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
     rate_files = [
@@ -21,13 +19,13 @@ def run_pipelines(jail, rtdata_module):
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
-        args = ["config/calwebb_tso-image2.cfg", rtdata.input]
+        args = ["calwebb_image2", rtdata.input]
         Step.from_cmdline(args)
 
     # Get the level3 assocation json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("nircam/tsimg/jw00312-o006_20191225t115310_tso3_001_asn.json")
-    args = ["config/calwebb_tso3.cfg", rtdata.input]
+    args = ["calwebb_tso3", rtdata.input]
     Step.from_cmdline(args)
 
     return rtdata
