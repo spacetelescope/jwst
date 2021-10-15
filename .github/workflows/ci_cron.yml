@@ -8,7 +8,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: ${HOME}/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -25,6 +25,10 @@ jobs:
             python-version: 3.9
             toxenv: devdeps
     steps:
+      - name: Is variable exported?
+        run: |
+          echo "${{ env.CRDS_PATH }}"
+
       - name: Install system packages
         if: ${{ contains(matrix.toxenv,'docs') }}
         run: |
@@ -47,6 +51,7 @@ jobs:
           echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
 
       - name: Restore CRDS cache
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         uses: actions/cache@v2
         with:
           path: ${{ env.CRDS_PATH }}
