@@ -50,7 +50,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
+          key: ${{ matrix.toxenv }}-crds-${{ steps.crds-context.outputs.pmap }}
+          restore-keys: |
+            ${{ matrix.toxenv }}-crds-jwst
 
       - name: Install tox
         run: |
