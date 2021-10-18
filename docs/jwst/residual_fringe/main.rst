@@ -9,8 +9,10 @@ Applying the fringe flat should eliminate fringes from spectra of spatially exte
 residual fringes can remain. For spatially unresolved (point) sources or extended sources with structure,
 applying the fringe flat will undoubtedly leave residual fringes since these produce different fringe patterns
 on the detector than accounted for by the fringe flat. The second step for fringe removal is the
-``residual_fringe_step`` and is applied in the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline. It is applied in the calwebb_spec3 pipeline
-because the removal of residuals fringes is best applied after the ``mrs_imatch_step``, but before the ``cube_build_step``.
+``residual_fringe_step``. At this time this step can only be run offline; it is not part of the default pipeline.
+After thorough testing and possible updates after commissioning,
+it will be determined if this step should be run as part of  :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.
+To run this offline it is best if it is applied  after the ``mrs_imatch_step``, but before the ``cube_build_step``.
 
 
 

@@ -29,7 +29,7 @@ EXP_TYPE   model.meta.exposure.type
 
 Reference File Format
 ++++++++++++++++++++++++++
-The FRINGEFREQ reference files are FITS format, with  7  BINTABLE extensions.
+The FRINGEFREQ reference files are FITS format, with  4  BINTABLE extensions.
 The FITS primary data array is assumed to be empty.
 The format and content of the FRINGEFREQ reference file is
 
