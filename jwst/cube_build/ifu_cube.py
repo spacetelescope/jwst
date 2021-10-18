@@ -3,7 +3,6 @@
 final spaxel fluxes)
 """
 
-import time
 import numpy as np
 import logging
 import math
@@ -594,7 +593,6 @@ class IFUCubeData():
                         log.warning(f'No valid data found on file {input_model.meta.filename}')
                         flag_dq_plane = 0
 
-                    t0 = time.time()
                     roiw_ave = np.mean(roiw_pixel)
                     # ______________________________________________________________________
                     # C extension setup
@@ -646,7 +644,6 @@ class IFUCubeData():
                         start_region = self.instrument_info.GetStartSlice(this_par1)
                         end_region = self.instrument_info.GetEndSlice(this_par1)
                         regions = list(range(start_region, end_region + 1))
-                        t0 = time.time()
 
                         for i in regions:
                             log.info('Working on Slice # %d', i)
@@ -657,21 +654,20 @@ class IFUCubeData():
                             y = y[index]
                             x = x[index]
                             slice = i - start_region
-                            cube_internal_cal.match_det2cube(self.instrument,
-                                                             x, y, slice,
-                                                             input_model,
-                                                             det2ab_transform,
-                                                             self.spaxel_flux,
-                                                             self.spaxel_weight,
-                                                             self.spaxel_iflux,
-                                                             self.spaxel_var,
-                                                             self.xcoord, self.zcoord,
-                                                             self.crval1, self.crval3,
-                                                             self.cdelt1, self.cdelt3,
-                                                             self.naxis1, self.naxis2)
-                            t1 = time.time()
-                            log.debug("Time to Map All slices on Detector to Cube = %.1f s" % (t1 - t0,))
-
+                            result = cube_internal_cal.match_det2cube(self.instrument,
+                                                                      x, y, slice,
+                                                                      input_model,
+                                                                      det2ab_transform,
+                                                                      self.xcoord, self.zcoord,
+                                                                      self.crval1, self.crval3,
+                                                                      self.cdelt1, self.cdelt3,
+                                                                      self.naxis1, self.naxis2)
+                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                            self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                            self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                            self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                            self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux,np.float64)
+                            result = None
                     # --------------------------------------------------------------------------------
                     # NIRSPEC
                     # --------------------------------------------------------------------------------
@@ -688,18 +684,20 @@ class IFUCubeData():
                             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
                             detector2slicer = slice_wcs.get_transform('detector', 'slicer')
 
-                            cube_internal_cal.match_det2cube(self.instrument,
-                                                             x, y, slicemap[i],
-                                                             input_model,
-                                                             detector2slicer,
-                                                             self.spaxel_flux,
-                                                             self.spaxel_weight,
-                                                             self.spaxel_iflux,
-                                                             self.spaxel_var,
-                                                             self.ycoord, self.zcoord,
-                                                             self.crval2, self.crval3,
-                                                             self.cdelt2, self.cdelt3,
-                                                             self.naxis1, self.naxis2)
+                            result = cube_internal_cal.match_det2cube(self.instrument,
+                                                                      x, y, slicemap[i],
+                                                                      input_model,
+                                                                      detector2slicer,
+                                                                      self.ycoord, self.zcoord,
+                                                                      self.crval2, self.crval3,
+                                                                      self.cdelt2, self.cdelt3,
+                                                                      self.naxis1, self.naxis2)
+                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                            self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                            self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                            self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                            self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux,np.float64)
+                            result = None
             # _______________________________________________________________________
             # done looping over files
 
