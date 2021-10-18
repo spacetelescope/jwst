@@ -59,6 +59,8 @@ cube_build
 
 - Update of documentation to explain 3d drizzling and remove miri psf weighting [#6371]
 
+- Fix a bug when creating internal_cal type cubes [#6398] 
+
 datamodels
 ----------
 
