@@ -14,7 +14,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: $HOME/crds_cache
+  CRDS_PATH: ${HOME}/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -93,16 +93,20 @@ jobs:
           python -m pip install --upgrade pip
 
       - name: Get CRDS context
+        if: ${{ contains(matrix.toxenv, 'py') }}
         id: crds-context
         run: |
           pip install crds
           echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
 
       - name: Restore CRDS cache
+        if: ${{ contains(matrix.toxenv, 'py') }}
         uses: actions/cache@v2
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
+          key: ${{ matrix.toxenv }}-crds-${{ steps.crds-context.outputs.pmap }}
+          restore-keys: |
+            ${{ matrix.toxenv }}-crds-jwst
 
       - name: Install tox
         run: |
