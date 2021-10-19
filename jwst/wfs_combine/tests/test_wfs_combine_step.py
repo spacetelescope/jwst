@@ -11,7 +11,6 @@ def wfs_association(tmp_path_factory):
     imsize = 10
     tmp_path = tmp_path_factory.mktemp("wfs")
     im1 = datamodels.ImageModel((imsize, imsize))
-    im1.meta.observation.exposure_number = 1
     im1.meta.wcsinfo = {
         'dec_ref': 11.99875540218638,
         'ra_ref': 22.02351763251896,
