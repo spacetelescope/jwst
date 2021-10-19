@@ -23,12 +23,8 @@ jobs:
           - name: Dev dependencies in requirements-dev.txt
             os: ubuntu-latest
             python-version: 3.9
-            toxenv: devdeps
+            toxenv: py39-devdeps
     steps:
-      - name: Is variable exported?
-        run: |
-          echo "${{ env.CRDS_PATH }}"
-
       - name: Install system packages
         if: ${{ contains(matrix.toxenv,'docs') }}
         run: |
@@ -51,7 +47,7 @@ jobs:
           echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
 
       - name: Restore CRDS cache
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        if: ${{ contains(matrix.toxenv, 'py') }}
         uses: actions/cache@v2
         with:
           path: ${{ env.CRDS_PATH }}
