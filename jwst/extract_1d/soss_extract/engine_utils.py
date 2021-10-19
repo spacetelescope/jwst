@@ -564,7 +564,7 @@ def _difftrap(fct, intervals, numtraps):
     return ordsum
 
 
-def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
+def get_n_nodes(grid, fct, divmax=1000, tol=0.0, rtol=1.48e-4):
     """Refine parts of a grid to reach a specified integration precision
     based on Romberg integration of a callable function or method.
     Returns the number of nodes needed in each intervals of
@@ -581,7 +581,7 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
         as separate integrals. So if grid has length N; N-1 integrals are
         optimized.
     :param fct: Function to be integrated.
-    :param tol: The desired absolute tolerance. Default is 1.48e-4.
+    :param tol: The desired absolute tolerance. Default is 0.0.
     :param rtol: The desired relative tolerance. Default is 1.48e-4.
     :param divmax: Maximum order of extrapolation. Default is 10.
 
@@ -658,15 +658,83 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
 
     else:
         # Warn that convergence is not reached everywhere.
-        msg = "divmax {%d} exceeded. Latest difference = {}"
+        msg = "divmax {:d} exceeded. Latest difference = {}"
         warn(msg.format(divmax, err.max()), AccuracyWarning)
 
     # Make sure all values of n_grid where assigned during the process.
     if (n_grid == -1).any():
         msg = "Values where not assigned at grid position: {}"
-        raise ValueError(msg.format(np.where(n_grid == -1)))
+        raise ValueError(msg.format(np.where(n_grid == -1)[0]))
 
     return n_grid, residual
+
+
+def adapt_grid(grid, fct, n_max=32, rtol=10e-6, **kwargs):
+    """
+    Return an irregular grid needed to reach a
+    given precision when integrating over each pixels.
+
+    Parameters (all optional)
+    ----------
+    grid: array
+        Grid for integration. Each sections of this grid are treated
+        as separate integrals. So if grid has length N; N-1 integrals are
+        optimized.
+    fct: callable
+        Function to be integrated. Must be a function of `grid`
+    n_max: int (n_max > 0)
+        Dictates the smallest subdivison of the grid given by delat_grid/n_max.
+        Needs to be greater then zero.
+    rtol: float
+        The desired relative tolerance. Default is 10e-6, so 10 ppm.
+
+    kwargs (other arguments passed to the function get_n_nodes)
+    ------
+    tol : float, optional
+        The desired absolute and relative tolerances. Default is 0.
+    divmax : int, optional
+        Maximum order of extrapolation. Default is 10.
+
+    Returns
+    -------
+    os_grid  : 1D array
+        Oversampled grid which minimizes the integration error based on
+        Romberg's method
+    See Also
+    --------
+    utils.get_n_nodes
+    scipy.integrate.quadrature.romberg
+    References
+    ----------
+    [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
+
+    """
+    # Number of nodes less or equal to 2^(n_iteration)
+    n_iter = np.log2(n_max)
+    n_iter = int(np.ceil(n_iter))
+    for i_os in range(2, n_iter):
+        # Find number of nodes to reach the precision
+        n_nodes, _ = get_n_nodes(grid, fct, rtol=rtol, **kwargs)
+
+        # Check if an oversampling is necessary
+        if (n_nodes == 2).all():
+            break
+
+        # Make sure n_nodes is not greater than user's define `n_max`.
+        # Also, it should not be less than 2, the minimal
+        # number of nodes to do an integration.
+        n_nodes = np.clip(n_nodes, 2, 3)
+
+        # Generate oversampled grid
+        n_oversample = n_nodes - 1
+        grid = oversample_grid(grid, n_os=n_oversample)
+
+        # Return sorted and unique.
+        grid = np.unique(grid)
+    else:
+        print('DID NOT REACH THRESHOLD')
+
+    return grid
 
 
 # ==============================================================================
@@ -761,6 +829,9 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         kernels, wave_kernels = kernels[:, i_min:i_max + 1], wave_kernels[:, i_min:i_max + 1]
         wave_center = np.array(wave_kernels[0, :])
 
+        # Save minimum kernel value (greater than zero)
+        kernels_min = np.min(kernels[(kernels > 0.0)])
+
         # Then find the pixel closest to each kernel center
         # and use the surrounding pixels (columns)
         # to get the wavelength. At the boundaries,
@@ -809,6 +880,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         self.poly = np.array(poly)
         self.fill_value = fill_value
         self.bounds_error = bounds_error
+        self.min_value = kernels_min
 
         # 2d Interpolate
         self.f_ker = RectBivariateSpline(pixels, wave_center, kernels, bbox=bbox)
@@ -833,6 +905,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         n_wv_c = len(wave_center)
         f_ker = self.f_ker
         n_pix = self.n_pix
+        min_value = self.min_value
 
         # #################################
         # First, convert wv value in pixels
@@ -874,8 +947,10 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 
         webbker = f_ker(pix, wave_c, grid=False)
 
-        # Make sure it's not negative, and put out of range values to zero.
-        webbker[webbker < 0] = 0
+        # Make sure it's not negative and greater than the min value
+        webbker = np.clip(webbker, min_value, None)
+
+        # and put out-of-range values to zero.
         webbker[pix > n_pix//2] = 0
         webbker[pix < -(n_pix//2)] = 0
 
