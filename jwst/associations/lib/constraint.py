@@ -730,6 +730,12 @@ class Constraint:
         match, to_reprocess = Constraint.any(item, constraints)
         return not match, to_reprocess
 
+    @staticmethod
+    def notall(item, constraints):
+        """True if not all of the constraints match"""
+        match, to_reprocess = Constraint.all(item,constraints)
+        return not match, to_reprocess
+
     @property
     def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
         """Return dictionary of constraints with duplicate names
