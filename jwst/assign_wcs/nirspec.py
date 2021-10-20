@@ -1254,7 +1254,7 @@ def mask_slit(ymin=-.55, ymax=.55):
     return model
 
 
-def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=.55):
+def compute_bounding_box(transform, wavelength_range, slit_id, slit_ymin=-.55, slit_ymax=.55):
     """
     Compute the bounding box of the projection of a slit/slice on the detector.
 
@@ -1302,8 +1302,8 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
 
         return pad_x, pad_y
 
-    x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
-    x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    x_range_low, y_range_low, _ = slit2detector(slit_id, [0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+    x_range_high, y_range_high, _ = slit2detector(slit_id, [0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
 
@@ -1313,7 +1313,7 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
     # Run inverse model to narrow range
     if detector2slit is not None and check_range(*bbox[0]) and check_range(*bbox[1]):
         x, y = grid_from_bounding_box(bbox)
-        _, _, lam = detector2slit(x, y)
+        _, _, lam, _ = detector2slit(x, y, slit_id)
         y_range = y[np.isfinite(lam)]
 
         bbox = bbox_from_range(x_range, y_range)
