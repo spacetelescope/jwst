@@ -38,6 +38,10 @@ associations
 - Removed Constraint_ExtCal from Asn_Lv2WFSC constraints, as it was
   redundant with Constraint_Image_Science present. [#6384]
 
+- Added constraint to Asn_Lv2ImageNonScience to prevent creation of asns
+  for NRC_TACQ exposures with WFSC_LOS_JITTER in the DMS_NOTE. Also added
+  new reduce method, Constraint.notall [#6404]
+
 cube_build
 ----------
 
