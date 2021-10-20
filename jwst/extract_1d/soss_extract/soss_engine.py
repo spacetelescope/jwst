@@ -259,13 +259,25 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
     def update_kernels(self, kernels, c_kwargs):
 
-        # Verify the c_kwargs. TODO Be explict here?
-        # TODO Specify better default c_kwargs
+        # Check the c_kwargs inputs ...
+        # ...not given...
         if c_kwargs is None:
-            c_kwargs = [{} for _ in range(self.n_orders)]
+            # Then use the kernels min_value attribute.
+            # It is a way to make sure that the full kernel
+            # is used.
+            c_kwargs = []
+            for ker in kernels:
+                # If the min_value not specified, then
+                # simply take the get_c_matrix defaults
+                try:
+                    kwargs_ker = {'thresh': ker.min_value}
+                except AttributeError:
+                    kwargs_ker = dict()
+                c_kwargs.append(kwargs_ker)
 
+        # ...or same for each orders if only a dictionary was given
         elif isinstance(c_kwargs, dict):
-            c_kwargs = [c_kwargs for _ in range(self.n_orders)]
+            c_kwargs = [c_kwargs for _ in kernels]
 
         # Define convolution sparse matrix. TODO make dict with order number as key.
         kernels_new = []

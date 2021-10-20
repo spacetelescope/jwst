@@ -223,9 +223,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
     # Prepare the reference file arguments.
     ref_file_args = get_ref_file_args(ref_files, transform)
 
+    # Set the c_kwargs using the minimum value of the kernels
+    c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
+
     # Initialize the Engine.
-    # TODO set c_kwargs?
-    engine = ExtractionEngine(*ref_file_args, n_os=n_os, threshold=threshold)
+    engine = ExtractionEngine(*ref_file_args, n_os=n_os, threshold=threshold, c_kwargs=c_kwargs)
 
     if tikfac is None:
 
@@ -238,13 +240,13 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
         # Initial pass 8 orders of magnitude with 10 grid points.
         factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac, _, _ = engine.best_tikho_factor(tests=tiktests)
+        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac, _, _ = engine.best_tikho_factor(tests=tiktests)
+        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
@@ -259,7 +261,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # TODO with the right parameters could we rebuild order 3 as well?
-    model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=refmask)
+    kwargs = {'wave_grid': engine.wave_grid,
+              'threshold': 1e-5,
+              'global_mask': refmask,
+              'c_kwargs': c_kwargs}
+    model = ExtractionEngine(*ref_file_args, **kwargs)
 
     # Model the order 1 and order 2 trace seperately.
     log.info('Building the model images of the individual orders.')

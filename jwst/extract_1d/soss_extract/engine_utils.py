@@ -826,7 +826,8 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         #######################
 
         # Keep only kernels that fall on the detector.
-        kernels, wave_kernels = kernels[:, i_min:i_max + 1], wave_kernels[:, i_min:i_max + 1]
+        kernels = kernels[:, i_min:i_max + 1].copy()
+        wave_kernels = wave_kernels[:, i_min:i_max + 1].copy()
         wave_center = np.array(wave_kernels[0, :])
 
         # Save minimum kernel value (greater than zero)
