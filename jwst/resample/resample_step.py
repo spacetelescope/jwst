@@ -79,6 +79,10 @@ class ResampleStep(Step):
             kwargs = self._set_spec_defaults()
 
         kwargs['allowed_memory'] = self.allowed_memory
+        kwargs['weight_type'] = str(self.weight_type)
+        if self.weight_type == 'exptime':
+            self.log.warning("Use of EXPTIME weighting will result in incorrect")
+            self.log.warning("propagated errors in the resampled product")
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
@@ -95,6 +99,7 @@ class ResampleStep(Step):
         if len(result) == 1:
             result = result[0]
 
+        input_models.close()
         return result
 
     def update_phot_keywords(self, model):
@@ -120,7 +125,7 @@ class ResampleStep(Step):
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,
-        then these will overwerite the defaults pulled from the reference file.
+        then these will overwrite the defaults pulled from the reference file.
         """
         with datamodels.DrizParsModel(ref_filename) as drpt:
             drizpars_table = drpt.data
