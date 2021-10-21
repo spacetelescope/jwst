@@ -51,6 +51,7 @@ Package Index
    refpix/index.rst
    resample/index.rst
    reset/index.rst
+   residual_fringe/index.rst
    rscd/index.rst
    saturation/index.rst
    skymatch/index.rst
