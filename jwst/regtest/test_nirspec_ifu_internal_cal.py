@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 
 @pytest.mark.bigdata
-def test_cube_build_internal_cal(rtdata, fitsdiff_default_kwargs):
+def test_cube_build_nirspec_internal_cal(rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = internal_cal"""
     input_file = 'jwdata0010010_11010_NRS1_cal.fits'
     rtdata.get_data(f"nirspec/ifu/{input_file}")
