@@ -733,7 +733,7 @@ class Constraint:
     @staticmethod
     def notall(item, constraints):
         """True if not all of the constraints match"""
-        match, to_reprocess = Constraint.all(item,constraints)
+        match, to_reprocess = Constraint.all(item, constraints)
         return not match, to_reprocess
 
     @property
