@@ -171,6 +171,11 @@ resample
 - Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
 
 - Fix handling of ``weight_type`` parameter to allow for user override. [#6406]
+  
+
+residual_fringe
+---------------
+ - Added documentation on step [#6387]
 
 source_catalog
 --------------
