@@ -54,8 +54,8 @@ cube_build
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
   sky values mapped to each detector slice. [#6326]
 
-- Fixed error final exposure times calculated by blend headers.Only the input models
-  used in the IFU cube are past to blend headers. [#6360]
+- Fixed error in final exposure times calculated by blend headers. Only the input models
+  used in the IFU cube are passed to blend headers. [#6360]
 
 - Update of documentation to explain 3d drizzling and remove miri psf weighting [#6371]
 
@@ -105,7 +105,7 @@ flatfield
 - Updated flatfield step docs to include complete details on how the
   variance and error arrays are updated. [#6245]
 
-- Fixed a bug in flatfield for brightobj mode where the S-flat cutout
+- Fixed a bug in flatfield for NIRSpec BrightObj mode where the S-flat cutout
   was calculated incorrectly by not accounting for the slit offset [#6332]
 
 jump
@@ -169,6 +169,8 @@ resample
   rectified WCS for lamp data.  [#6296]
 
 - Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
+
+- Fix handling of ``weight_type`` parameter to allow for user override. [#6406]
 
 source_catalog
 --------------
