@@ -5,10 +5,12 @@ Calls create_pipeline() which redirects based on EXP_TYPE.
 
 """
 import logging
+import functools
 import numpy as np
 
 from astropy.modeling import models
 from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
+from astropy.modeling.bounding_box import CompoundBoundingBox
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -398,6 +400,13 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
                         (v2v3, va_corr),
                         (v2v3vacorr, tel2sky),
                         (world, None)]
+
+    # TODO add stuff to get wavelength range
+    transforms = [step.transform for step in msa_pipeline][:4][::-1]
+    transform = functools.reduce(lambda x, y: x | y, transforms)
+    bounding_box_dict = compute_bounding_box_dict(transform, wavelength_range, open_slits_id)
+    dms2detector.bounding_box = CompoundBoundingBox.validate(dms2detector, bounding_box_dict,
+                                                             slice_args=['slice_id'], order='F')
 
     return msa_pipeline
 
@@ -1317,6 +1326,15 @@ def compute_bounding_box(transform, wavelength_range, slit_id, slit_ymin=-.55, s
         y_range = y[np.isfinite(lam)]
 
         bbox = bbox_from_range(x_range, y_range)
+
+    return bbox
+
+
+def compute_bounding_box_dict(transform, wavelength_range, slit_ids, slit_ymin=-.55, slit_ymax=.55):
+    bbox = {}
+    for slit_id in slit_ids:
+        bbox[(slit_id,)] = compute_bounding_box(transform, wavelength_range, slit_id,
+                                                slit_ymin=slit_ymin, slit_ymax=slit_ymax)
 
     return bbox
 
