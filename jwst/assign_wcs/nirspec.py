@@ -401,10 +401,9 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
                         (v2v3vacorr, tel2sky),
                         (world, None)]
 
-    # TODO add stuff to get wavelength range
     transforms = [step.transform for step in msa_pipeline][:4][::-1]
     transform = functools.reduce(lambda x, y: x | y, transforms)
-    bounding_box_dict = compute_bounding_box_dict(transform, wavelength_range, open_slits_id)
+    bounding_box_dict = compute_bounding_box_dict(transform, wrange, open_slits_id)
     dms2detector.bounding_box = CompoundBoundingBox.validate(dms2detector, bounding_box_dict,
                                                              slice_args=['slice_id'], order='F')
 
