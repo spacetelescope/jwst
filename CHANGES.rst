@@ -87,7 +87,13 @@ datamodels
   FilteroffsetModel. [#6362]
 
  - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
-  
+
+documentation
+-------------
+
+- Temporary edits to README directing conda env creation with python==3.9
+  until conflict between dependencies and python==3.10.0 is solved [#6411]
+
 extract_1d
 ----------
 
