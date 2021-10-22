@@ -71,7 +71,7 @@ def get_ref_file_args(ref_files, transform):
     wave_maps = [wavemap_o1, wavemap_o2]
     centroid = dict()
     for wv_map, order in zip(wave_maps, [1, 2]):
-        # Needs the same shape as the detector. Put zeros where not define.
+        # Needs the same number of columns as the detector. Put zeros where not define.
         wv_cent = np.zeros((1, wv_map.shape[1]))
         # Get central wavelength as a function of columns
         col, _, wv = get_trace_1d(ref_files, transform, order)
