@@ -16,6 +16,7 @@ from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import grid_from_bounding_box
+from gwcs.wcs import Step
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
@@ -360,11 +361,11 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
     if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
         # convert to microns if the pipeline ends earlier
-        msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, slit2msa),
-                        (msa_frame, None)]
+        msa_pipeline = [Step(det, dms2detector),
+                        Step(sca, det2gwa),
+                        Step(gwa, gwa2slit),
+                        Step(slit_frame, slit2msa),
+                        Step(msa_frame, None)]
     else:
         # MSA to OTEIP transform
         msa2oteip = msa_to_oteip(reference_files)
@@ -391,21 +392,24 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
         tel2sky.inputs = ("v2_corr", "v3_corr", "lam", "slit_id")
         tel2sky.outputs = ("ra", "dec", "lam", "slit_id")
 
-        msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, slit2msa),
-                        (msa_frame, msa2oteip),
-                        (oteip, oteip2v23),
-                        (v2v3, va_corr),
-                        (v2v3vacorr, tel2sky),
-                        (world, None)]
+        msa_pipeline = [Step(det, dms2detector),
+                        Step(sca, det2gwa),
+                        Step(gwa, gwa2slit),
+                        Step(slit_frame, slit2msa),
+                        Step(msa_frame, msa2oteip),
+                        Step(oteip, oteip2v23),
+                        Step(v2v3, va_corr),
+                        Step(v2v3vacorr, tel2sky),
+                        Step(world, None)]
 
-    transforms = [step.transform for step in msa_pipeline][:4][::-1]
+    transforms = [step.transform for step in msa_pipeline][:4]
     transform = functools.reduce(lambda x, y: x | y, transforms)
-    bounding_box_dict = compute_bounding_box_dict(transform, wrange, open_slits_id)
+    sl_ids = [s.shutter_id for s in open_slits_id]
+    print('sl_ids', sl_ids)
+    bounding_box_dict = compute_bounding_box_dict(transform.inverse, wrange, sl_ids)
     dms2detector.bounding_box = CompoundBoundingBox.validate(dms2detector, bounding_box_dict,
-                                                             slice_args=['slice_id'], order='F')
+                                                             slice_args=list(bounding_box_dict.keys()),
+                                                              order='F')
 
     return msa_pipeline
 
@@ -1331,10 +1335,11 @@ def compute_bounding_box(transform, wavelength_range, slit_id, slit_ymin=-.55, s
 
 def compute_bounding_box_dict(transform, wavelength_range, slit_ids, slit_ymin=-.55, slit_ymax=.55):
     bbox = {}
+
     for slit_id in slit_ids:
         bbox[(slit_id,)] = compute_bounding_box(transform, wavelength_range, slit_id,
                                                 slit_ymin=slit_ymin, slit_ymax=slit_ymax)
-
+    print('bbox', bbox)
     return bbox
 
 
