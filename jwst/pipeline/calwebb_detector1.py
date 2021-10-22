@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import logging
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -22,10 +21,6 @@ from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
 __all__ = ['Detector1Pipeline']
-
-# Define logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Detector1Pipeline(Pipeline):
@@ -65,7 +60,7 @@ class Detector1Pipeline(Pipeline):
     # start the actual processing
     def process(self, input):
 
-        log.info('Starting calwebb_detector1 ...')
+        self.log.info('Starting calwebb_detector1 ...')
 
         # open the input as a RampModel
         input = datamodels.RampModel(input)
@@ -78,7 +73,7 @@ class Detector1Pipeline(Pipeline):
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
-            log.debug('Processing a MIRI exposure')
+            self.log.debug('Processing a MIRI exposure')
 
             result = self.group_scale(input)
             result = self.dq_init(result)
@@ -98,7 +93,7 @@ class Detector1Pipeline(Pipeline):
         else:
 
             # process Near-IR exposures
-            log.debug('Processing a Near-IR exposure')
+            self.log.debug('Processing a Near-IR exposure')
 
             result = self.group_scale(input)
             result = self.dq_init(result)
@@ -149,7 +144,7 @@ class Detector1Pipeline(Pipeline):
         self.setup_output(result)
         result.meta.filetype = 'countrate'
 
-        log.info('... ending calwebb_detector1')
+        self.log.info('... ending calwebb_detector1')
 
         return result
 

@@ -10,7 +10,6 @@ from .observations import Observation
 from .sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def contam_corr(input_model, waverange, photom, max_cores):

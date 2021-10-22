@@ -10,7 +10,6 @@ from .. datamodels import dqflags
 from .. lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 

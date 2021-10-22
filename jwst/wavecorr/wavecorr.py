@@ -10,7 +10,6 @@ from .. import datamodels
 from ..transforms import models as trmodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, wavecorr_file):

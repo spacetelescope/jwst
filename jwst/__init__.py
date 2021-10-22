@@ -1,9 +1,13 @@
 import re
 import sys
+import logging
 from pkg_resources import get_distribution, DistributionNotFound
 
 __version_commit__ = ''
 _regex_git_hash = re.compile(r'.*\+g(\w+)')
+
+log = logging.getLogger('jwst')
+log.setLevel(logging.DEBUG)
 
 try:
     __version__ = get_distribution(__name__).version

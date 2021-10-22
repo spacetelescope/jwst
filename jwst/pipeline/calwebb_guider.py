@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from ..stpipe import Pipeline
-import logging
 from .. import datamodels
 
 # step imports
@@ -9,10 +8,6 @@ from ..flatfield import flat_field_step
 from ..guider_cds import guider_cds_step
 
 __all__ = ['GuiderPipeline']
-
-# Define logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class GuiderPipeline(Pipeline):
@@ -36,15 +31,15 @@ class GuiderPipeline(Pipeline):
         # Set the output product type
         self.suffix = 'cal'
 
-        log.info('Starting calwebb_guider ...')
+        self.log.info('Starting calwebb_guider ...')
 
         # Open the input:
         # If the first two steps are set to be skipped, assume
         # they've been run before and open the input as a Cal
         # model, appropriate for input to flat_field
         if (self.dq_init.skip and self.guider_cds.skip):
-            log.info("dq_init and guider_cds are set to skip; assume they"
-                     " were run before and load data as GuiderCalModel")
+            self.log.info("dq_init and guider_cds are set to skip; assume they"
+                          " were run before and load data as GuiderCalModel")
             input = datamodels.GuiderCalModel(input)
         else:
             input = datamodels.GuiderRawModel(input)
@@ -56,6 +51,6 @@ class GuiderPipeline(Pipeline):
 
         input.meta.filetype = 'countrate'
 
-        log.info('... ending calwebb_guider')
+        self.log.info('... ending calwebb_guider')
 
         return input

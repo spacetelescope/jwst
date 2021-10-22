@@ -16,7 +16,6 @@ from gwcs import coordinate_frames as cf
 from jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["assign_moving_target_wcs"]
 

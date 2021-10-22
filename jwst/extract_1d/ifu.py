@@ -13,7 +13,6 @@ from . import spec_wcs
 from scipy.interpolate import interp1d
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input extract1d reference file
 # (if any) is ASDF (default) or IMAGE

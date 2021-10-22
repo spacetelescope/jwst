@@ -10,7 +10,6 @@ from jwst.assign_wcs import nirspec, util
 import jwst.datamodels as datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 # There are 30 slices in the NIRSpec IFU, numbered from 0 to 29

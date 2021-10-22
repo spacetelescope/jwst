@@ -33,7 +33,6 @@ from ..datamodels import ImageModel, ABVegaOffsetModel
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ReferenceData:

@@ -15,7 +15,6 @@ from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']

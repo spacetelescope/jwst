@@ -15,7 +15,6 @@ from ..assign_wcs import util
 from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def extract_tso_object(input_model,

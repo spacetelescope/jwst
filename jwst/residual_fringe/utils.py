@@ -14,7 +14,6 @@ from numpy.linalg.linalg import LinAlgError
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 #
 
 # hard coded parameters, have been selected based on testing but can be changed

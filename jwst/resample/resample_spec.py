@@ -17,7 +17,6 @@ from .resample import ResampleData
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ResampleSpecData(ResampleData):

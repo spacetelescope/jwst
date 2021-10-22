@@ -12,7 +12,7 @@ from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
 
 __all__ = ["OutputTooLargeError", "ResampleData"]
 
