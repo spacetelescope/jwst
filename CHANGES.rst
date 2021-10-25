@@ -63,7 +63,7 @@ cube_build
 
 - Update of documentation to explain 3d drizzling and remove miri psf weighting [#6371]
 
-- Fix a bug when creating internal_cal type cubes [#6398] 
+- Fix a bug when creating internal_cal type cubes [#6398]
 
 datamodels
 ----------
@@ -180,7 +180,9 @@ resample
 - Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
 
 - Fix handling of ``weight_type`` parameter to allow for user override. [#6406]
-  
+
+- Add support for specifying custom output WCS parameters to the resample
+  step. [#6364]
 
 residual_fringe
 ---------------

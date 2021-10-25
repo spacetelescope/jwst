@@ -35,7 +35,12 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('ivm', 'exptime', default='ivm')
-        pixel_scale_ratio = float(default=1.0) # Ratio of output to input pixel scale
+        output_shape = int_list(min=2, max=2, default=None)  # [y, x] - numpy convention
+        crpix = float_list(min=2, max=2, default=None)
+        crval = float_list(min=2, max=2, default=None)
+        rotation = float(default=None)
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
+        pixel_scale = float(default=None) # Absolute pixel scale in arcsec
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -73,6 +78,7 @@ class ResampleStep(Step):
         if ref_filename != 'N/A':
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
+
         else:
             # If there is no drizpars reffile
             self.log.info("No DIRZPARS reffile")
@@ -83,6 +89,16 @@ class ResampleStep(Step):
         if self.weight_type == 'exptime':
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
+
+        # Custom output WCS parameters.
+        # Modify get_drizpars if any of these get into reference files:
+        kwargs['ref_wcs'] = None  # TODO: add mechanism of specifying a ref WCS
+        kwargs['out_shape'] = _check_list_pars(self.output_shape, 'output_shape',
+                                               min_vals=[1, 1])
+        kwargs['crpix'] = _check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = _check_list_pars(self.crval, 'crval')
+        kwargs['rotation'] = self.rotation
+        kwargs['pscale'] = self.pixel_scale
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
@@ -226,3 +242,19 @@ class ResampleStep(Step):
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs
+
+
+def _check_list_pars(vals, name, min_vals=None):
+    if vals is None:
+        return None
+    if len(vals) != 2:
+        raise ValueError(f"List '{name}' must have exactly two elements.")
+    n = sum(x is None for x in vals)
+    if n == 2:
+        return None
+    elif n == 0:
+        if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
+            raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
+        return list(vals)
+    else:
+        raise ValueError(f"Both '{name}' values must be either None or not None.")
