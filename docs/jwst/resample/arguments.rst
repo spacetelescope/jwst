@@ -17,7 +17,38 @@ image.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
   Ratio of input to output pixel scale.  A value of 0.5 means the output image
-  would have 4 pixels sampling each input pixel.
+  would have 4 pixels sampling each input pixel. Ignored when ``pscale`` are provided.
+
+``--pixel_scale`` (float, default=None)
+    Absolute pixel scale in ``arcsec``. When provided, overrides
+    ``pixel_scale_ratio``.
+
+``--rotation`` (float, default=None)
+    Position angle of output image’s Y-axis relative to North.
+    A value of 0.0 would orient the final output image to be North up.
+    The default of `None` specifies that the images will not be rotated,
+    but will instead be resampled in the default orientation for the camera
+    with the x and y axes of the resampled image corresponding
+    approximately to the detector axes. Ignored when ``transform`` is
+    provided.
+
+``--shape`` (tuple of int, default=None)
+    Shape of the image (data array) using ``numpy.ndarray`` convention
+    (``ny`` first and ``nx`` second). This value will be assigned to
+    ``pixel_shape`` and ``array_shape`` properties of the returned
+    WCS object. When supplied from command line, it should be a comma-separated
+    list of integers.
+
+``--crpix`` (tuple of float, default=None)
+    Position of the reference pixel in the image array.  If ``crpix`` is not
+    specified, it will be set to the center of the bounding box of the
+    returned WCS object. When supplied from command line, it should be a
+    comma-separated list of floats.
+
+``--crval`` (tuple of float, default=None)
+    Right ascension and declination of the reference pixel. Automatically
+    computed if not provided. When supplied from command line, it should be a
+    comma-separated list of floats.
 
 ``--fillval`` (str, default='INDEF')
   The value to assign to output pixels that have zero weight or do not
