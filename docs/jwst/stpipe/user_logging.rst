@@ -30,6 +30,9 @@ ignored:
     - The file specified with the ``--logcfg`` option to the
       ``strun`` script.
 
+    - The file specified with the ``logcfg`` keyword to a
+      .call() execution of a Step or Pipeline.
+
     - A file called ``stpipe-log.cfg`` in the current working
       directory.
 
