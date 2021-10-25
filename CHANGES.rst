@@ -122,6 +122,11 @@ lib
 
 - Implement the MAST AUI interface to the Engineering Database. [#6288]
 
+linearity
+--------
+
+- Use the common code in STCAL for linearity correction. [#6386]
+
 outlier_detection
 -----------------
 
