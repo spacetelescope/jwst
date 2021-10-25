@@ -91,7 +91,7 @@ datamodels
   FilteroffsetModel. [#6362]
 
  - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
-  
+
 extract_1d
 ----------
 
