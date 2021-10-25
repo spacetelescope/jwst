@@ -195,7 +195,7 @@ def average_dark_frames(dark_data, ngroups, nframes, groupgap):
     avg_dark = dark_class.DarkData(dims=dims)
 
     # Do a direct copy of the 2-d DQ array into the new dark
-    avg_dark.dq = dark_data.dq
+    avg_dark.groupdq = dark_data.groupdq
 
     # Loop over the groups of the input science data, copying or
     # averaging the dark frames to match the group structure
@@ -267,7 +267,7 @@ def average_MIRIdark_frames(dark_data, nints, ngroups, nframes, groupgap):
     avg_dark = dark_class.DarkData(dims)
 
     # Do a direct copy of the 2-d DQ array into the new dark
-    avg_dark.dq = dark_data.dq
+    avg_dark.groupdq = dark_data.groupdq
 
     # check if the number of integrations in dark reference file
     # is less than science data, if so then we only need to find the
@@ -349,12 +349,12 @@ def subtract_dark(science_data, dark_data):
     if instrument == 'MIRI':
         # MIRI dark reference file has a DQ plane for each integration,
         # so we collapse the dark DQ planes into a single 2-D array
-        darkdq = dark_data.dq[0, 0, :, :].copy()
+        darkdq = dark_data.groupdq[0, 0, :, :].copy()
         for i in range(1, dark_nints):
-            darkdq = np.bitwise_or(darkdq, dark_data.dq[i, 0, :, :])
+            darkdq = np.bitwise_or(darkdq, dark_data.groupdq[i, 0, :, :])
     else:
         # All other instruments have a single 2D dark DQ array
-        darkdq = dark_data.dq
+        darkdq = dark_data.groupdq
 
     # Combine the dark and science DQ data
     output.pixeldq = np.bitwise_or(science_data.pixeldq, darkdq)

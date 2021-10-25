@@ -83,12 +83,12 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
     if instrument == "MIRI":
         out_dark_model = datamodels.DarkMIRIModel(
             data=dark_data.data,
-            dq=dark_data.dq,
+            dq=dark_data.groupdq,
             err=dark_data.err)
     else:
         out_dark_model = datamodels.DarkModel(
             data=dark_data.data,
-            dq=dark_data.dq,
+            dq=dark_data.groupdq,
             err=dark_data.err)
     out_dark_model.update(dark_model)
 
@@ -123,7 +123,7 @@ def dark_output_data_2_ramp_model(out_data, input_model):
         return out_model
 
     out_model.data = out_data.data
-    out_model.groupdq = out_data.dq
+    out_model.groupdq = out_data.groupdq
     out_model.pixeldq = out_data.pixeldq
     out_model.err = out_data.err
 

@@ -22,7 +22,7 @@ class DarkData:
         """
         if dark_model is not None:
             self.data = dark_model.data
-            self.dq = dark_model.dq
+            self.groupdq = dark_model.dq
             self.err = dark_model.err
 
             self.exp_nframes = dark_model.meta.exposure.nframes
@@ -31,7 +31,7 @@ class DarkData:
 
         elif dims is not None:
             self.data = np.zeros(dims, dtype=np.float32)
-            self.dq = np.zeros(dims, dtype=np.uint32)
+            self.groupdq = np.zeros(dims, dtype=np.uint32)
             self.err = np.zeros(dims, dtype=np.float32)
 
             self.exp_nframes = None
@@ -40,7 +40,7 @@ class DarkData:
 
         else:
             self.data = None
-            self.dq = None
+            self.groupdq = None
             self.err = None
 
             self.exp_nframes = None
@@ -64,7 +64,7 @@ class ScienceData:
             Input data model, assumed to be a JWST RampModel like model.
         """
         self.data = science_model.data
-        self.dq = science_model.groupdq
+        self.groupdq = science_model.groupdq
         self.pixeldq = science_model.pixeldq
         self.err = science_model.err
 
