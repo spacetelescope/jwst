@@ -259,26 +259,45 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # TODO with the right parameters could we rebuild order 3 as well?
-    model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=refmask)
-
     # Model the order 1 and order 2 trace seperately.
-    log.info('Building the model images of the individual orders.')
+    order_list = ['Order 1', 'Order 2']
+    tracemodels = dict()
+    for i_order, order in enumerate(order_list):
 
-    tracemodel_o1 = model.rebuild(f_k, i_orders=[0])
-    tracemodel_o2 = model.rebuild(f_k, i_orders=[1])
+        log.info('Building the model image of the {}.'.format(order))
 
-    # TODO this shouldn't be necessary, adjust the engines use of masks?
-    tracemodel_o1 = np.where(np.isnan(tracemodel_o1), 0, tracemodel_o1)
-    tracemodel_o2 = np.where(np.isnan(tracemodel_o2), 0, tracemodel_o2)
+        # Take only the order's specific ref_files
+        ref_file_order = [[ref_f[i_order]] for ref_f in ref_file_args]
+
+        # Pre-convolve the extracted flux (f_k) at the order's resolution
+        # so that the convolution matrix must not be re-computed.
+        flux_order = engine.kernels[i_order].dot(f_k)
+
+        # Then must take the grid after convolution (smaller)
+        grid_order = engine.wave_grid_c(i_order)
+
+        # Keep only valid values to make sure there will be no Nans in the order model
+        idx_valid = np.isfinite(flux_order)
+        grid_order, flux_order = grid_order[idx_valid], flux_order[idx_valid]
+
+        # And give the identity kernel to the Engine (so no convolution)
+        ref_file_order[3] = [np.array([1.])]
+
+        # Build model of the order
+        model_kwargs = {'wave_grid': grid_order,
+                        'threshold': 1e-5,
+                        'global_mask': refmask,
+                        'orders': [i_order + 1]}
+        model = ExtractionEngine(*ref_file_order, **model_kwargs)
+
+        # Project on detector and save in dictionary
+        tracemodels[order] = model.rebuild(flux_order)
 
     # TODO temporary debug plot.
     if devname is not None:
-        devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2, devname=devname)
-
-    # Add tracemodels to a dictionary. TODO make a 3D array instead?
-    tracemodels = dict()
-    tracemodels['Order 1'] = tracemodel_o1
-    tracemodels['Order 2'] = tracemodel_o2
+        dev_tools_args = (scidata_bkg, scierr, scimask)
+        dev_tools_args += (tracemodels['Order 1'], tracemodels['Order 2'])
+        devtools.diagnostic_plot(*dev_tools_args, devname=devname)
 
     return tracemodels, transform, tikfac, logl
 
