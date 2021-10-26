@@ -336,30 +336,11 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
     """
     # TODO Make it an input? So it can change for substrip96
     # Which orders to extract.
-    order_list = ['Order 1', 'Order 2', 'Order 3']
+    order_list = (1, 2, 3)
+    order_str = {ord: f'Order {ord}' for ord in order_list}
 
-    # Define a scimask for each orders (same for now)
-    scimasks = {order: scimask for order in order_list}
-
-    # TODO Add the option 'interpolate' to bad pixel handling.
-    # Deal with bad pixels if required.
-    if bad_pix == 'model':
-
-        # First, model each bad pixels of the detector image with all orders
-        bad_pix_model = [tracemodels[ord][scimask] for ord in tracemodels]
-        bad_pix_model = np.sum(bad_pix_model, axis=0)
-
-        # Replace bad pixels
-        scidata_bkg[scimask] = bad_pix_model
-
-        # Update the mask for the modeled orders, so all the pixels are usable.
-        for order in tracemodels:
-            log.info(f'Bad pixels in {order} will be replaced with trace models.')
-            scimasks[order] = np.zeros_like(scimask)
-
-    # Unpack the models for the inbdividual orders.
-    tracemodel_o1 = tracemodels['Order 1']
-    tracemodel_o2 = tracemodels['Order 2']
+    # List of modeled orders
+    mod_order_list = tracemodels.keys()
 
     # Create dictionaries for the output spectra.
     wavelengths = dict()
@@ -369,33 +350,47 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
 
     log.info('Performing the de-contaminated box-extraction.')
 
-    # Don't extract orders 2 and 3 for SUBSTRIP96.
-    # Use the model of order 2 to de-contaminate and extract order 1.
-    log.info('Extracting order 1.')
+    # Extract each order from order list
+    for order_integer in order_list:
+        # Order string-name is used more often then integer-name
+        order = order_str[order_integer]
 
-    xtrace_o1, ytrace_o1, wavelengths['Order 1'] = get_trace_1d(ref_files, transform, 1)
-    box_weights_o1 = get_box_weights(ytrace_o1, width, scidata_bkg.shape, cols=xtrace_o1)
+        log.info(f'Extracting {order}.')
 
-    out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimasks['Order 1'], box_weights_o1, cols=xtrace_o1)
-    _, fluxes['Order 1'], fluxerrs['Order 1'], npixels['Order 1'] = out
+        # Decontaminate using all other modeled orders
+        decont = scidata_bkg
+        for mod_order in mod_order_list:
+            if mod_order != order:
+                log.info(f'Decontaminating {order} from {mod_order} using model.')
+                decont = decont - tracemodels[mod_order]
 
-    # Use the model of order 1 to de-contaminate and extract order 2.
-    log.info('Extracting order 2.')
+        # TODO Add the option 'interpolate' to bad pixel handling.
+        # Deal with bad pixels if required.
+        if bad_pix == 'model':
+            # Model the bad pixels decontaminated image when available
+            try:
+                # Replace bad pixels
+                decont[scimask] = tracemodels[order][scimask]
+                # Update the mask for the modeled order, so all the pixels are usable.
+                scimask_ord = np.zeros_like(scimask)
 
-    xtrace_o2, ytrace_o2, wavelengths['Order 2'] = get_trace_1d(ref_files, transform, 2)
-    box_weights_o2 = get_box_weights(ytrace_o2, width, scidata_bkg.shape, cols=xtrace_o2)
+                log.info(f'Bad pixels in {order} are replaced with trace model.')
 
-    out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimasks['Order 2'], box_weights_o2, cols=xtrace_o2)
-    _, fluxes['Order 2'], fluxerrs['Order 2'], npixels['Order 2'] = out
+            except KeyError:
+                # Keep same mask
+                scimask_ord = scimask
+                log.info(f'Bad pixels in {order} will be masked: trace model unavailable.')
+        else:
+            # Mask pixels
+            scimask_ord = scimask
+            log.info(f'Bad pixels in {order} will be masked.')
 
-    # Use both models to de-contaminate and extract order 3.
-    log.info('Extracting order 3.')
+        xtrace, ytrace, wavelengths[order] = get_trace_1d(ref_files, transform, order_integer)
+        box_weights = get_box_weights(ytrace, width, scidata_bkg.shape, cols=xtrace)
 
-    xtrace_o3, ytrace_o3, wavelengths['Order 3'] = get_trace_1d(ref_files, transform, 3)
-    box_weights_o3 = get_box_weights(ytrace_o3, width, scidata_bkg.shape, cols=xtrace_o3)
-
-    out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimasks['Order 3'], box_weights_o3, cols=xtrace_o3)
-    _, fluxes['Order 3'], fluxerrs['Order 3'], npixels['Order 3'] = out
+        # TODO May need to update scierr as well if it has bad pixels equivalent
+        out = box_extract(decont, scierr, scimask_ord, box_weights, cols=xtrace)
+        _, fluxes[order], fluxerrs[order], npixels[order] = out
 
     # TODO temporary debug plot.
     if devname is not None:
