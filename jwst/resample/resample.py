@@ -51,7 +51,10 @@ class ResampleData:
             filename for output
 
         kwargs : dict
-            Other parameters
+            Other parameters.
+
+            .. note::
+                ``output_shape`` is in the ``x, y`` order.
         """
         self.input_models = input_models
 
@@ -81,7 +84,7 @@ class ResampleData:
             pscale_ratio=self.pscale_ratio,
             pscale=pscale,
             rotation=rotation,
-            shape=out_shape,
+            shape=out_shape if out_shape is None else out_shape[::-1],
             crpix=crpix,
             crval=crval
         )
