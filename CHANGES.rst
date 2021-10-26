@@ -184,6 +184,8 @@ resample
 - Add support for specifying custom output WCS parameters to the resample
   step. [#6364]
 
+- Make ``output_shape`` to be in the "normal" (``nx, ny``) order. [#6417]
+
 residual_fringe
 ---------------
  - Added documentation on step [#6387]
