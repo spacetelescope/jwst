@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Utilities for the ATOCA (Darveau-Bernier 2021, in prep).
+ATOCA: Algorithm to Treat Order ContAmination (English)
+       Algorithme de Traitement d’Ordres ContAmines (French)
+
+@authors: Antoine Darveau-Bernier, Geert Jan Talens
+"""
+
 # General imports.
 import numpy as np
 from warnings import warn

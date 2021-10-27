@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+"""
+Main classes for the ATOCA (Darveau-Bernier 2021, in prep).
+ATOCA: Algorithm to Treat Order ContAmination (English)
+       Algorithme de Traitement d’Ordres ContAmines (French)
+
+@authors: Antoine Darveau-Bernier, Geert Jan Talens
+"""
+
 # TODO remove use of args and kwargs as much as possible for clearer code.
 
 # General imports.
@@ -17,7 +26,8 @@ import matplotlib.pyplot as plt
 
 class _BaseOverlap:  # TODO Merge with TrpzOverlap?
     """
-    Base class for overlaping extraction of the form:
+    Base class for the ATOCA algorithm (Darveau-Bernier 2021, in prep).
+    Used to perform an verlaping extraction of the form:
     (B_T * B) * f = (data/sig)_T * B
     where B is a matrix and f is an array.
     The matrix multiplication B * f is the 2d model of the detector.
@@ -1624,16 +1634,9 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
 class ExtractionEngine(_BaseOverlap):  # TODO Merge with _BaseOverlap?
     """
-    Version of overlaping extraction with oversampled trapezoidal integration
-    overlaping extraction solve the equation of the form:
-    (B_T * B) * f = (data/sig)_T * B
-    where B is a matrix and f is an array.
-    The matrix multiplication B * f is the 2d model of the detector.
-    We want to solve for the array f.
-    The elements of f are labelled by 'k'.
-    The pixels are labeled by 'i'.
-    Every pixel 'i' is covered by a set of 'k' for each order
-    of diffraction.
+    Run the ATOCA algorithm (Darveau-Bernier 2021, in prep).
+
+    This version models the pixels of the detector using an oversampled trapezoidal integration.
     """
 
     def __init__(self, wave_map, aperture, *args, **kwargs):
