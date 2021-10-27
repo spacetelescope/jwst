@@ -9,7 +9,7 @@ from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d
 
 # Local imports.
-from . import engine_utils
+from . import atoca_utils
 
 # Plotting.
 import matplotlib.pyplot as plt
@@ -127,7 +127,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         if wave_grid is None:
 
             if self.n_orders == 2:  # TODO should this be mandatory input.
-                wave_grid = engine_utils.get_soss_grid(wave_map, aperture, n_os=n_os)  # TODO check difference between get_soss_grid and grid_from_map
+                wave_grid = atoca_utils.get_soss_grid(wave_map, aperture, n_os=n_os)  # TODO check difference between get_soss_grid and grid_from_map
             else:
                 wave_grid, _ = self.grid_from_map()
 
@@ -272,7 +272,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         for i_order, kernel_n in enumerate(kernels):
 
             if not issparse(kernel_n):
-                kernel_n = engine_utils.get_c_matrix(kernel_n, self.wave_grid,
+                kernel_n = atoca_utils.get_c_matrix(kernel_n, self.wave_grid,
                                                      i_bounds=self.i_bounds[i_order],
                                                      **c_kwargs[i_order])
 
@@ -451,7 +451,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
             n_kc = np.diff(self.i_bounds[i_order]).astype(int)[0]
 
             # Then convert to sparse
-            weights_n = engine_utils.sparse_k(weights_n, k_idx_n, n_kc)
+            weights_n = atoca_utils.sparse_k(weights_n, k_idx_n, n_kc)
             weights.append(weights_n), weights_k_idx.append(k_idx_n)
 
         return weights, weights_k_idx
@@ -479,7 +479,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         attrs = ['wave_map', 'aperture']
         wave_map, aperture = self.get_attributes(*attrs, i_order=i_order)
 
-        wave_grid, icol = engine_utils._grid_from_map(wave_map, aperture, out_col=True)
+        wave_grid, icol = atoca_utils._grid_from_map(wave_map, aperture, out_col=True)
 
         return wave_grid, icol
 
@@ -537,14 +537,14 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
             fct = interp1d(grid_ord, convolved_spectrum, kind='cubic')
 
             # Find number of nodes to reach the precision
-            n_oversample, _ = engine_utils.get_n_nodes(grid_ord, fct, **kwargs)
+            n_oversample, _ = atoca_utils.get_n_nodes(grid_ord, fct, **kwargs)
 
             # Make sure n_oversample is not greater than
             # user's define `n_max`
             n_oversample = np.clip(n_oversample, 0, n_max)
 
             # Generate oversampled grid
-            grid_ord = engine_utils.oversample_grid(grid_ord, n_os=n_oversample)
+            grid_ord = atoca_utils.oversample_grid(grid_ord, n_os=n_oversample)
 
             # Keep only wavelength that are not already
             # covered by os_grid.
@@ -913,7 +913,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         t_mat_func: callable, optional
             Function use to generate `t_mat` is not specified.
             Will take `fargs` and `fkwargs`as imput.
-            Use the `engine_utils.get_tikho_matrix` as default.
+            Use the `atoca_utils.get_tikho_matrix` as default.
         fargs: tuple, optional
             Arguments passed to `t_mat_func`. Default is `(self.wave_grid, )`.
         fkwargs: dict, optional
@@ -926,17 +926,17 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
             # Default function if not specified
             if t_mat_func is None:
-                # Use the `engine_utils.get_tikho_matrix`
+                # Use the `atoca_utils.get_tikho_matrix`
                 # The default arguments will return the 1rst derivative
                 # as the tikhonov matrix
-                t_mat_func = engine_utils.get_tikho_matrix
+                t_mat_func = atoca_utils.get_tikho_matrix
 
             # Default args
             if fargs is None:
-                # The argument for `engine_utils.get_tikho_matrix` is the wavelength grid
+                # The argument for `atoca_utils.get_tikho_matrix` is the wavelength grid
                 fargs = (self.wave_grid, )
             if fkwargs is None:
-                # The kwargs for `engine_utils.get_tikho_matrix` are
+                # The kwargs for `atoca_utils.get_tikho_matrix` are
                 # n_derivative = 1, d_grid = True, estimate = None, pwr_law = 0
                 fkwargs = {'n_derivative': 1, 'd_grid': True, 'estimate': None, 'pwr_law': 0}
 
@@ -1053,7 +1053,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
             t_mat = self.get_tikho_matrix()
             if tikho_kwargs is None:
                 tikho_kwargs = {}
-            tikho = engine_utils.Tikhonov(b_matrix, pix_array, t_mat, **tikho_kwargs)
+            tikho = atoca_utils.Tikhonov(b_matrix, pix_array, t_mat, **tikho_kwargs)
 
         # Test all factors
         tests = tikho.test_factors(factors)
@@ -1265,7 +1265,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         """Solve system using Tikhonov regularisation"""
 
         # Note that the indexing is applied inside the function
-        return engine_utils.tikho_solve(matrix, result, t_mat, **kwargs)
+        return atoca_utils.tikho_solve(matrix, result, t_mat, **kwargs)
 
     def extract(self, tikhonov=False, tikho_kwargs=None,  # TODO merge with __call__.
                 factor=None, **kwargs):
@@ -1426,7 +1426,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
             pix_center, _ = self.grid_from_map(i_order)
 
             # Get pixels borders (plus and minus)
-            pix_p, pix_m = engine_utils.get_wave_p_or_m(pix_center)
+            pix_p, pix_m = atoca_utils.get_wave_p_or_m(pix_center)
 
         else:  # Else, unpack grid_pix
 
@@ -1445,7 +1445,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
                 pix_center = grid_pix
 
                 # Need to compute the borders
-                pix_p, pix_m = engine_utils.get_wave_p_or_m(pix_center)
+                pix_p, pix_m = atoca_utils.get_wave_p_or_m(pix_center)
 
         # Set the throughput to object attribute
         # if not given
@@ -1692,7 +1692,7 @@ class ExtractionEngine(_BaseOverlap):  # TODO Merge with _BaseOverlap?
         # TODO Could also be an input??
         wave_p, wave_m = [], []
         for wave in wave_map:  # For each order
-            lp, lm = engine_utils.get_wave_p_or_m(wave)  # Lambda plus or minus
+            lp, lm = atoca_utils.get_wave_p_or_m(wave)  # Lambda plus or minus
             wave_p.append(lp), wave_m.append(lm)
 
         self.wave_p, self.wave_m = wave_p, wave_m  # Save values
@@ -1827,7 +1827,7 @@ class ExtractionEngine(_BaseOverlap):  # TODO Merge with _BaseOverlap?
         k_last[~cond & ~ma] = hi[~cond & ~ma] + 1
 
         # Generate array of all k_i. Set to -1 if not valid
-        k_n, bad = engine_utils.arange_2d(k_first, k_last + 1, dtype=int)
+        k_n, bad = atoca_utils.arange_2d(k_first, k_last + 1, dtype=int)
         k_n[bad] = -1
 
         # Number of valid k per pixel

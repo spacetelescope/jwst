@@ -11,8 +11,8 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
-from .soss_engine import ExtractionEngine
-from .engine_utils import ThroughputSOSS, WebbKernel, grid_from_map
+from .atoca import ExtractionEngine
+from .atoca_utils import ThroughputSOSS, WebbKernel, grid_from_map
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 
 # TODO remove once code is sufficiently tested.
