@@ -28,6 +28,14 @@ def do_correction(input_model, dark_model, dark_output=None):
 
     dark_output: str
         A path to denote where to save the dark model, if desired.
+
+    Returns
+    -------
+    output_data: ScienceData
+        dark-subtracted science data
+
+    averaged_dark: DarkData
+        New dark object with averaged frames
     """
     science_data = dark_class.ScienceData(input_model)
     dark_data = dark_class.DarkData(dark_model=dark_model)
@@ -54,9 +62,11 @@ def do_correction_data(science_data, dark_data, dark_output=None):
 
     Returns
     -------
-    output_model: data model object
+    output_data: ScienceData
         dark-subtracted science data
 
+    averaged_dark: DarkData
+        New dark object with averaged frames
     """
 
     # Save some data params for easy use later
@@ -183,9 +193,8 @@ def average_dark_frames(dark_data, ngroups, nframes, groupgap):
 
     Returns
     -------
-    avg_dark: dark data model
+    avg_dark: DarkData
         New dark object with averaged frames
-
     """
 
     # Create a model for the averaged dark data
@@ -330,7 +339,6 @@ def subtract_dark(science_data, dark_data):
     -------
     output: data model object
         dark-subtracted science data
-
     """
 
     instrument = science_data.instrument_name
