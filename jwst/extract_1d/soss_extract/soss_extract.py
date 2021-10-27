@@ -466,6 +466,7 @@ def run_extract1d(input_model: DataModel,
         kwargs = dict()
         kwargs['width'] = soss_kwargs['width']
         kwargs['devname'] = soss_kwargs['devname']
+        kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
         result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], **kwargs)
         wavelengths, fluxes, fluxerrs, npixels = result
@@ -534,6 +535,7 @@ def run_extract1d(input_model: DataModel,
             kwargs = dict()
             kwargs['width'] = soss_kwargs['width']
             kwargs['devname'] = soss_kwargs['devname']
+            kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
             result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], **kwargs)
             wavelengths, fluxes, fluxerrs, npixels = result
