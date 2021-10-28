@@ -3,6 +3,7 @@ Access the JWST Engineering Mnemonic Database through MAST
 """
 import logging
 from os import getenv
+from pathlib import Path
 import requests
 
 from astropy.table import Table
@@ -90,6 +91,30 @@ class EngdbMast(EngdbABC):
                                      url=base_url + API_URI,
                                      headers={'Authorization': f'token {token}'})
         self._session = requests.Session()
+
+    def cache(self, mnemonics, starttime, endtime, cache_path):
+        """Cache results for the list of mnemonics
+
+        Parameters
+        ----------
+        mnemonics: iterable
+            List of mnemonics to retrieve
+
+        starttime: str or astropy.time.Time
+            The, inclusive, start time to retireve from.
+
+        endttime: str or astropy.time.Time
+            The, inclusive, end time to retireve from.
+
+        cache_path: str or Path-like
+        Path of the cache directory.
+        """
+        cache_path = Path(cache_path)
+        cache_path.mkdir(parents=True, exist_ok=True)
+
+        for mnemonic in mnemonics:
+            records = self._get_records(mnemonic, starttime, endtime)
+            records.write(cache_path / f'{mnemonic}.ecsv', format='ascii.ecsv')
 
     def get_meta(self, *kwargs):
         """Get the menonics meta info
