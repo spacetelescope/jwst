@@ -84,12 +84,11 @@ written as the primary output product.  In this output product, the
 4-D GROUPDQ from all integrations is collapsed into 2-D, merged
 (using a bitwise OR) with the input 2-D PIXELDQ, and stored as a 2-D DQ array. 
 The 3-D VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged
-into corresponding 2-D output arrays.  
-
-There is an edge case that affects the VAR_POISSON computation.  The median rates
-that are used in the numerator for the computation of VAR_POISSON can be negative.
-This case results in negative values for VAR_POISSON, which are nonsense.  In this
-case, the VAR_POISSON is set to zero in all output products.
+into corresponding 2-D output arrays.  There is a case where the median rate
+for a pixel can be computed as negative.  This value is used in the numerator
+when computing the VAR_POISSON.  If the median rate is negative, the VAR_POISSON
+is computed as negative, which is nonsnse.  In this case, the VAR_POISSON is
+set to zero for all output products.
 
 The slope images for each integration are stored as a data cube in a second output data
 product (rateints).  Each plane of the 3-D SCI, ERR, DQ, VAR_POISSON, and VAR_RNOISE
