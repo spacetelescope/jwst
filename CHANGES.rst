@@ -190,6 +190,12 @@ residual_fringe
 ---------------
  - Added documentation on step [#6387]
 
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#6421]
+
 source_catalog
 --------------
 
