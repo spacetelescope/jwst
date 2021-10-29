@@ -2437,6 +2437,38 @@ properties:
             title: Pixel scale ratio relative to native detector scale
             type: number
             fits_keyword: PXSCLRT
+      soss_extract1d:
+        title: NIRISS SOSS Extract1D Parameters
+        type: object
+        properties:
+          width:
+            title: Aperture width used in extraction
+            type: number
+            fits_keyword: SOSS_WDTH
+          tikhonov_factor:
+            title: Tikhonov factor used in extraction
+            type: number
+            fits_keyword: TIKFAC
+          delta_x:
+            title: X-shift used in extraction
+            type: number
+            fits_keyword: SOSS_DLTX
+          delta_y:
+            title: Y-shift used in extraction
+            type: number
+            fits_keyword: SOSS_DLTY
+          theta:
+            title: Rotation angle used in extraction
+            type: number
+            fits_keyword: SOSS_ROTN
+          oversampling:
+            title: Oversampling used in extraction
+            type: number
+            fits_keyword: OVERSAMP
+          threshold:
+            title: Threshold used in extraction
+            type: number
+            fits_keyword: THRESHLD
       background:
         title: Background information
         type: object

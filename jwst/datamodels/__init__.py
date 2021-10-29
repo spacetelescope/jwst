@@ -63,6 +63,7 @@ from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .segmap import SegmentationMapModel
 from .slit import SlitModel, SlitDataModel
+from .sossmodel import SossModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .speckernel import SpecKernelModel
@@ -135,6 +136,7 @@ __all__ = [
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',
+    'SossModel',
     'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',
