@@ -19,8 +19,8 @@ assign_wcs
 - Updated ``create_grism_bbox`` to be more robust against failures caused by
   bad input data. [#6309]
 
-- Added a function which given ra, dec, lambda computes which ones project
-  within a given NIRSpec IFU slice. [#6316]
+- Added a function that, when given RA, Dec, lambda, computes which ones project
+  into a given NIRSpec IFU slice. [#6316]
 
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
   Also the x tolerance on finding slice elements was increased. [#6326]
@@ -91,6 +91,9 @@ datamodels
   FilteroffsetModel. [#6362]
 
  - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
+
+ - Updated data products documentation to indicate that variance and error arrays
+   are now included in resampled products. [#6420]
 
 extract_1d
 ----------
