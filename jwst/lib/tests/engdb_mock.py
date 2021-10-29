@@ -7,7 +7,7 @@ import os
 import re
 import requests_mock
 
-from jwst.lib import engdb_direct, engdb_tools
+from jwst.lib import engdb_direct
 
 __all__ = [
     'ENGDB_PATH',
@@ -309,7 +309,7 @@ def cache_engdb(
     if not os.path.exists(db_path):
         os.mkdir(db_path)
 
-    edb = engdb_tools.ENGDB_Service()
+    edb = engdb_direct.EngdbDirect()
 
     # Get the meta info for all mnemonics regardless.
     meta = edb.get_meta()

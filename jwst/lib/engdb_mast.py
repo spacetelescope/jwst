@@ -1,6 +1,7 @@
 """
 Access the JWST Engineering Mnemonic Database through MAST
 """
+import json
 import logging
 from os import getenv
 from pathlib import Path
@@ -11,6 +12,7 @@ from astropy.time import Time
 import numpy as np
 
 from .engdb_lib import EngDB_Value, EngdbABC
+from .tests.engdb_mock import mnemonic_data_fname
 
 __all__ = ['EngdbMast']
 
@@ -115,6 +117,48 @@ class EngdbMast(EngdbABC):
         for mnemonic in mnemonics:
             records = self._get_records(mnemonic, starttime, endtime)
             records.write(cache_path / f'{mnemonic}.ecsv', format='ascii.ecsv')
+
+    def cache_as_local(self, mnemonics, starttime, endtime, cache_path):
+        """Cache results for the list of mnemonics, but in the EngdbLocal format
+
+        The target format is native to what the EngdbDirect service provides.
+
+        Parameters
+        ----------
+        mnemonics: iterable
+            List of mnemonics to retrieve
+
+        starttime: str or astropy.time.Time
+            The, inclusive, start time to retireve from.
+
+        endttime: str or astropy.time.Time
+            The, inclusive, end time to retireve from.
+
+        cache_path: str or Path-like
+        Path of the cache directory.
+        """
+        cache_path = Path(cache_path)
+        cache_path.mkdir(parents=True, exist_ok=True)
+
+        for mnemonic in mnemonics:
+            records = self._get_records(mnemonic, starttime, endtime)
+
+            target = dict()
+            target['TlmMnemonic'] = mnemonic.upper()
+            target['AllPoints'] = 1
+            target['Count'] = len(records)
+            target['Data'] = list()
+            for record in records:
+                t = Time(record['MJD'], format='mjd')
+                t = int(t.unix * 1000.)
+                v = record['euvalue']
+                if record['sqldataType'] == 'tinyint':
+                    v = int(v)
+                entry = {'ObsTime': f'/Date({t}+0000)/', 'EUValue': v}
+                target['Data'].append(entry)
+
+            with open(cache_path / mnemonic_data_fname(mnemonic), 'w') as fp:
+                json.dump(target, fp)
 
     def get_meta(self, *kwargs):
         """Get the menonics meta info
