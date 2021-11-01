@@ -39,6 +39,11 @@ cube_build
 - Moved variable definitions to top of code in C extension to
   support changes in #6093. [#6255]
 
+dark_current
+----------
+
+- Refactored the code in preparation for moving the code to STCAL. [#6336]
+
 datamodels
 ----------
 
