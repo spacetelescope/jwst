@@ -337,7 +337,7 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
     # TODO Make it an input? So it can change for substrip96
     # Which orders to extract.
     order_list = (1, 2, 3)
-    order_str = {ord: f'Order {ord}' for ord in order_list}
+    order_str = {order: f'Order {order}' for order in order_list}
 
     # List of modeled orders
     mod_order_list = tracemodels.keys()
@@ -370,7 +370,7 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
             # Model the bad pixels decontaminated image when available
             try:
                 # Replace bad pixels
-                decont[scimask] = tracemodels[order][scimask]
+                decont = np.where(scimask, tracemodels[order], decont)
                 # Update the mask for the modeled order, so all the pixels are usable.
                 scimask_ord = np.zeros_like(scimask)
 
