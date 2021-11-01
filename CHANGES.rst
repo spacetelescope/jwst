@@ -147,7 +147,8 @@ pipeline
 ramp_fitting
 ------------
 
-- Pixels with negative median rates will have VAR_POISSON set to zero. [STCAL #59]
+- Pixels with negative median rates will have VAR_POISSON set to zero.
+[spacetelecope/stcal#59]
 
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
