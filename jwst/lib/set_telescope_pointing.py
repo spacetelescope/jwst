@@ -96,37 +96,47 @@ class Methods(Enum):
     TRACK_TR_202107 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
     #: COARSE tracking mode algorithm, TR version 2021-07
-    COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107')
+    COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107', 'calc_wcs')
+    #: COARSE tracking mode algorithm, TR version 2021-07, with SIAF mod
+    COARSE_TR_202107_MOD = ('coarse_tr_202107_mod', 'calc_transforms_coarse_tr_202107_mod', 'calc_wcs_mod')
     #: Guides Star commanded algorithm using the J3 position angle, TR version 2021-05
-    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')
+    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags', 'calc_wcs')
     #: Guides Star commanded algorithm using the V3 position angle, TR version 2021-05
-    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')
+    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags', 'calc_wcs')
     #: Current state-of-art algorithm, TR version 2021-07
-    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
+    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107', 'calc_wcs')
+    #: Current state-of-art algorithm, TR version 2021-07, with SIAF mod
+    OPS_TR_202107_MOD = ('ops_tr_202107_mod', 'calc_transforms_ops_tr_202107_mod', 'calc_wcs_mod')
     #: Original algorithm, pre-JSOCINT-555 work.
-    ORIGINAL = ('original', 'calc_transforms_original')
+    ORIGINAL = ('original', 'calc_transforms_original', 'calc_wcs')
     #: Observatory orientation without velocity correction, TR 2021-05
-    TR_202105 = ('tr_202105', 'calc_transforms_tr202105')
+    TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs')
     #: Observatory orientation with velocity correction, TR 2021-05
-    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105')
+    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105', 'calc_wcs')
     #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
-    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
+    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs')
 
     # Aliases
     #: Algorithm to use by default. Used by Operations.
-    default = OPS_TR_202107
+    default = OPS_TR_202107_MOD
     #: Default algorithm under PCS_MODE COARSE.
-    COARSE = COARSE_TR_202107
+    COARSE = COARSE_TR_202107_MOD
     #: Default algorithm for use by Operations.
-    OPS = OPS_TR_202107
+    OPS = OPS_TR_202107_MOD
     #: Default algorithm under PCS_MODE TRACK/FINEGUIDE.
     TRACK = TRACK_TR_202107
 
-    def __new__(cls: object, value: str, func_name: str):
+    def __new__(cls: object, value: str, func_name: str, calc_func: str):
         obj = object.__new__(cls)
         obj._value_ = value
         obj._func_name = func_name
+        obj._calc_func = calc_func
         return obj
+
+    @property
+    def calc_func(self):
+        """Function associated with the method"""
+        return globals()[self._calc_func]
 
     @property
     def func(self):
@@ -726,9 +736,13 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing: %s', pointing)
+        t_pars.pointing = pointing
+
+        # Set the method
+        t_pars.method = t_pars.method if t_pars.method else Methods.default
+
         try:
-            t_pars.pointing = pointing
-            wcsinfo, vinfo, transforms = calc_wcs(t_pars)
+            wcsinfo, vinfo, transforms = t_pars.method.calc_func(t_pars)
             pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
             logger.info('Setting ENGQLPTG keyword to %s', pointing_engdb_quality)
             model.meta.visit.engdb_pointing_quality = pointing_engdb_quality
@@ -894,6 +908,36 @@ def calc_wcs(t_pars: TransformParameters):
     return wcsinfo, vinfo, tforms
 
 
+def calc_wcs_mod(t_pars: TransformParameters):
+    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
+
+    Parameters
+    ----------
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms
+        A 3-tuple is returned with the WCS pointing for
+        the aperture and the V1 axis, and the transformation matrices.
+    """
+    if t_pars.siaf is None:
+        t_pars.siaf = SIAF()
+
+    # Calculate transforms
+    tforms = calc_transforms(t_pars)
+
+    # Calculate the V1 WCS information
+    vinfo = calc_wcs_from_matrix(tforms.m_eci2v)
+
+    # Calculate the Aperture WCS
+    wcsinfo = calc_wcs_from_matrix(tforms.m_eci2siaf)
+
+    # That's all folks
+    return wcsinfo, vinfo, tforms
+
+
 def calc_transforms(t_pars: TransformParameters):
     """Calculate transforms  which determine reference point celestial WCS
 
@@ -911,7 +955,6 @@ def calc_transforms(t_pars: TransformParameters):
     transforms : `Transforms`
         The list of coordinate matrix transformations
     """
-    t_pars.method = t_pars.method if t_pars.method else Methods.default
     transforms = t_pars.method.func(t_pars)
     return transforms
 
@@ -1073,6 +1116,66 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     return t
 
 
+def calc_transforms_coarse_tr_202107_mod(t_pars: TransformParameters):
+    """Modified COURSE calculation
+
+    Same as `calc_transforms_coarse_tr_202107`, but M_eci2siaf adds the extra
+    ICS to Ideal transformation
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =
+            transpose(M_v_to_fgsx)  *
+            transpose(M_fgsx_to_gs) *
+            M_x_to_z                *
+            M_eci_to_gs
+
+        where
+
+            M_fgsx_to_v = FGSx to V-frame
+            M_gs_to_fgsx = Guide star to FGSx
+            M_eci_to_gs = ECI to Guide star
+    """
+    logger.info('Calculating transforms using TR 202107 COARSE Tracking with SIAF mod method...')
+    t_pars.method = Methods.COARSE_TR_202107_MOD
+
+    # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
+    # is returned as part of the full Transforms object. Many of the required
+    # matrices are already determined as part of this calculation.
+    t = calc_m_eci2gs(t_pars)
+
+    # Determine the M_fgsx_to_v matrix
+    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid])
+    t.m_v2fgsx = calc_v2siaf_matrix(siaf)
+
+    # Determine M_eci_to_v frame.
+    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), MX2Z, t.m_eci2gs])
+    logger.debug('M_eci2v: %s', t.m_eci2v)
+
+    # Calculate the SIAF transform matrix
+    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+
+    # Calculate full transformation
+    t.m_eci2siaf = np.linalg.multi_dot([MZ2X, t.m_v2siaf, t.m_eci2v])
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
+
+    return t
+
+
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07
 
@@ -1154,6 +1257,29 @@ def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
     """
     if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
         return calc_transforms_coarse_tr_202107(t_pars)
+    elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
+        return calc_transforms_track_tr_202107(t_pars)
+    else:
+        raise ValueError(f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be in ["NONE", "COARSE", "TRACK", "FINEGUIDE"]')
+
+
+def calc_transforms_ops_tr_202107_mod(t_pars: TransformParameters):
+    """Calculate transforms as per TR presented in 2021-07
+
+    Same as `calc_transforms_ops_tr_202107` but uses `calc_transforms_coarse_tr_202107_mod`
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+    """
+    if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
+        return calc_transforms_coarse_tr_202107_mod(t_pars)
     elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
         return calc_transforms_track_tr_202107(t_pars)
     else:
