@@ -224,7 +224,7 @@ def test_nirspec_fs_esa():
     y -= 1
 
     sca2world = w1.get_transform('sca', 'v2v3')
-    ra, dec, lp = sca2world(x, y)
+    ra, dec, lp, slit_id = sca2world(x, y, 0)
     # w1 now outputs in microns hence the 1e6 factor
     lp *= 1e-6
     lam = lam[cond]
@@ -441,7 +441,7 @@ def test_shutter_size_on_sky():
     slit2world = wslit.get_transform('slit_frame', 'world')
     ra, dec, lam = slit2world(virtual_corners_x,
                               virtual_corners_y,
-                              input_lam)
+                              input_lam, slit.name)
     sky = coords.SkyCoord(ra * u.deg, dec * u.deg)
     sep_x = sky[0].separation(sky[3]).to(u.arcsec)
     sep_y = sky[0].separation(sky[1]).to(u.arcsec)
