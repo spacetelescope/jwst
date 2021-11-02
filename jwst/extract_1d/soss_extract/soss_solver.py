@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import numpy as np
 from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
 import warnings
@@ -217,21 +218,30 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     """
 
     # Remove any NaNs used to pad the xref, yref coordinates.
-    mask = np.isfinite(xref_o1) & np.isfinite(yref_o1)
-    xref_o1 = xref_o1[mask]
-    yref_o1 = yref_o1[mask]
+    mask_o1 = np.isfinite(xref_o1) & np.isfinite(yref_o1)
+    xref_o1 = xref_o1[mask_o1]
+    yref_o1 = yref_o1[mask_o1]
 
-    mask = np.isfinite(xref_o2) & np.isfinite(yref_o2)
-    xref_o2 = xref_o2[mask]
-    yref_o2 = yref_o2[mask]
+    mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
+    xref_o2 = xref_o2[mask_o2]
+    yref_o2 = yref_o2[mask_o2]
 
     # Get centroids from data.
     aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o1 | scimask
+    # TODO-MCR remove
+    from astropy.io import fits
+    hdu = fits.PrimaryHDU(mask.astype(int))
+    hdul = fits.HDUList([hdu])
+    hdul.writeto('mask1.fits')
     xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
     aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o2 | scimask
+    # TODO-MCR remove
+    hdu = fits.PrimaryHDU(mask.astype(int))
+    hdul = fits.HDUList([hdu])
+    hdul.writeto('mask2.fits')
     xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
     # Use only the clean range between x=800 and x=1700.

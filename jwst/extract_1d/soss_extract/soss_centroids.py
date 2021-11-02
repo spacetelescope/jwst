@@ -41,9 +41,9 @@ def _plot_centroid(image, xtrace, ytrace):
                aspect=aspect)
     plt.plot(xtrace, ytrace, lw=2, ls='--', c='black', label='Centroids')
 
-    plt.xlabel('Spectral Pixel', fontsize=14)
-    plt.ylabel('Spatial Pixel', fontsize=14)
-    plt.legend(fontsize=14)
+    plt.xlabel('Spectral Pixel', fontsize=24)
+    plt.ylabel('Spatial Pixel', fontsize=24)
+    plt.legend(fontsize=24)
 
     plt.xlim(-0.5, ncols - 0.5)
     plt.ylim(-0.5, nrows - 0.5)
@@ -152,6 +152,10 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
 
         # If NaN was returned we are done.
         if not np.isfinite(ycom):
+            ytrace[icol] = np.nan
+            continue
+        # If centroid is out of bounds we are done.
+        if ycom >= dimy or ycom < 0:
             ytrace[icol] = np.nan
             continue
 

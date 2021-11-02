@@ -15,6 +15,9 @@ from .atoca import ExtractionEngine
 from .atoca_utils import ThroughputSOSS, WebbKernel, grid_from_map
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 
+#TODO-MCR remove
+from astropy.io import fits
+
 # TODO remove once code is sufficiently tested.
 from . import devtools
 
@@ -198,7 +201,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
     :rtype: TODO TBD
     """
 
-    # Some error values are 0, we need to mask those pixels for the ectraction engine.
+    # Some error values are 0, we need to mask those pixels for the extraction engine.
     scimask = scimask | ~(scierr > 0)
 
     # TODO add 1/f correction?
@@ -207,6 +210,10 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
     if transform is None:
 
         log.info('Solving for the transformation parameters.')
+        # TODO-MCR remove
+        hdu = fits.PrimaryHDU(scidata_bkg)
+        hdul = fits.HDUList([hdu])
+        hdul.writeto('centroid_test.fits')
 
         # Unpack the expected order 1 & 2 positions.
         spectrace_ref = ref_files['spectrace']
