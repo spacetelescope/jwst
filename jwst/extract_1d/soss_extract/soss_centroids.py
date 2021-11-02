@@ -159,6 +159,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
             ytrace[icol] = np.nan
             continue
 
+        # TODO - given the mask, not sure that this is entirely necessary
         # If the pixel at the centroid is below the local mean we are likely
         # mid-way between orders and we should shift the window downward to
         # get a reliable centroid for order 1.
@@ -168,7 +169,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
         if scidata_norm[irow, icol] < np.nanmean(scidata_norm[miny:maxy, icol]):
             ycom = center_of_mass(scidata_norm[:, icol], ycom - halfwidth, halfwidth)
 
-        # If NaN was returned or the position is too close to the array edge, use NaN.
+        # If the updated position is too close to the array edge, use NaN.
         if not np.isfinite(ycom) or (ycom <= 5 * yos) or (ycom >= (ynative - 6) * yos):
             ytrace[icol] = np.nan
             continue
