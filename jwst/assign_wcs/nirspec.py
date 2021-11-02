@@ -5,15 +5,18 @@ Calls create_pipeline() which redirects based on EXP_TYPE.
 
 """
 import logging
+import functools
 import numpy as np
 
 from astropy.modeling import models
 from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
+from astropy.modeling.bounding_box import CompoundBoundingBox
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import grid_from_bounding_box
+from gwcs.wcs import Step
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
@@ -358,11 +361,11 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
     if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
         # convert to microns if the pipeline ends earlier
-        msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, slit2msa),
-                        (msa_frame, None)]
+        msa_pipeline = [Step(det, dms2detector),
+                        Step(sca, det2gwa),
+                        Step(gwa, gwa2slit),
+                        Step(slit_frame, slit2msa),
+                        Step(msa_frame, None)]
     else:
         # MSA to OTEIP transform
         msa2oteip = msa_to_oteip(reference_files)
@@ -389,15 +392,24 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
         tel2sky.inputs = ("v2_corr", "v3_corr", "lam", "slit_id")
         tel2sky.outputs = ("ra", "dec", "lam", "slit_id")
 
-        msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, slit2msa),
-                        (msa_frame, msa2oteip),
-                        (oteip, oteip2v23),
-                        (v2v3, va_corr),
-                        (v2v3vacorr, tel2sky),
-                        (world, None)]
+        msa_pipeline = [Step(det, dms2detector),
+                        Step(sca, det2gwa),
+                        Step(gwa, gwa2slit),
+                        Step(slit_frame, slit2msa),
+                        Step(msa_frame, msa2oteip),
+                        Step(oteip, oteip2v23),
+                        Step(v2v3, va_corr),
+                        Step(v2v3vacorr, tel2sky),
+                        Step(world, None)]
+
+    transforms = [step.transform for step in msa_pipeline][:4]
+    transform = functools.reduce(lambda x, y: x | y, transforms)
+    sl_ids = [s.shutter_id for s in open_slits_id]
+    print('sl_ids', sl_ids)
+    bounding_box_dict = compute_bounding_box_dict(transform.inverse, wrange, sl_ids)
+    dms2detector.bounding_box = CompoundBoundingBox.validate(dms2detector, bounding_box_dict, selector_args=[('slit_id', True)], order='F')
+                                                             #slice_args=list(bounding_box_dict.keys()),
+                                                             # order='F')
 
     return msa_pipeline
 
@@ -1220,7 +1232,7 @@ def dms_to_sca(input_model):
     elif detector == 'NRS1':
         model = models.Identity(2)
     # The Identity model is for slit number
-    final = (subarray2full | model) & Identity(1)
+    final = (subarray2full | model) & Identity(1, name='slit_id')
     final.inputs = ('x', 'y', 'slit_id')
     final.outputs = ('x', 'y', 'slit_id')
     return final
@@ -1318,6 +1330,16 @@ def compute_bounding_box(transform, wavelength_range, slit_id, slit_ymin=-.55, s
 
         bbox = bbox_from_range(x_range, y_range)
 
+    return bbox
+
+
+def compute_bounding_box_dict(transform, wavelength_range, slit_ids, slit_ymin=-.55, slit_ymax=.55):
+    bbox = {}
+
+    for slit_id in slit_ids:
+        bbox[(slit_id,)] = compute_bounding_box(transform, wavelength_range, slit_id,
+                                                slit_ymin=slit_ymin, slit_ymax=slit_ymax)
+    print('bbox', bbox)
     return bbox
 
 
@@ -1705,12 +1727,24 @@ def nrs_wcs_set_input(input_model, slit_id, wavelength_range=None,
     #                               slit_ymin=slit_y_low, slit_ymax=slit_y_high)
     #
     # slit_wcs.bounding_box = bb
+    import copy
     from astropy.modeling.models import fix_inputs
+    from ..transforms.models import NRS_FS_N2ID, NRS_FS_ID2N
+    if isinstance(slit_id, str):
+        slit_id = NRS_FS_N2ID[slit_id]
+    print('slit_id', slit_id)
+    bb = input_model.meta.wcs.bounding_box
+    input_model.meta.wcs.bounding_box = None
+    slit_wcs = copy.deepcopy(input_model.meta.wcs)
+    input_model.meta.wcs.bounding_box = bb
+    first_transform = input_model.meta.wcs.get_transform('detector', 'sca').copy()
+    slit_wcs.pipeline[0].transform = fix_inputs(first_transform, {"slit_id": slit_id})
+    # for step, slit_step in zip(input_model.meta.wcs.pipeline[:-1], slit_wcs._pipeline[:-1]):
+    #     print('step name', step.transform.name, step.frame)
+    #     slit_step.transform = fix_inputs(step.transform, {"slit_id": slit_id})
+    #slit_wcs.pipeline.append(input_model.meta.wcs.pipeline[-1])
 
-    for step in input_model.meta.wcs.pipeline[:-1]:
-        step.transform = fix_inputs(step.transform, {"slit_id": slit_id})
-
-    return input_model.meta.wcs
+    return slit_wcs
 
 
 def validate_open_slits(input_model, open_slits, reference_files):

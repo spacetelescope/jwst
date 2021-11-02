@@ -694,16 +694,15 @@ class Gwa2Slit(Model):
     n_outputs = 4
 
     def __init__(self, slits, models):
-        self.slit_names = [s.name for s in slits]
-        self.slit_ids = [s.shutter_id for s in slits]
+        self._slits = [tuple(s) for s in slits]
+        # get the shhutter_id
+        self.slit_ids = [s[1] for s in slits]
         if isiterable(slits[0]):
             self._slits = [tuple(s) for s in slits]
-            #self.slit_ids = [s[0] for s in self._slits]
-            print(slits)
+            self.slit_ids = [s[1] for s in self._slits]
         else:
             self._slits = list(slits)
-            #self.slit_ids = self._slits
-            print('else', slits)
+            self.slit_ids = self._slits
 
         self.models = models
         super(Gwa2Slit, self).__init__()
@@ -733,9 +732,7 @@ class Gwa2Slit(Model):
             id = NRS_FS_N2ID[name]
         else:
             id = name
-        result = self.evaluate(id, x, y, z)
-        return result
-        #return (NRS_FS_ID2N[result[0]],) + result[1:]
+        return self.evaluate(id, x, y, z)
 
 
 class Slit2Msa(Model):
@@ -766,16 +763,12 @@ class Slit2Msa(Model):
         """ Name of the slit, x and y coordinates within the virtual slit."""
         self.outputs = ('slit_id', 'x_msa', 'y_msa')
         """ x and y coordinates in the MSA frame."""
-        # if isiterable(slits[0]):
-        #     self._slits = [tuple(s) for s in slits]
-        #     #self.slit_ids = [s[0] for s in self._slits]
-        # else:
-        #     self._slits = list(slits)
-        #     #self.slit_ids = self._slits
-        self._slits = list(slits)
-        print(self._slits)
-        self.slit_names = [s.name for s in self._slits]
-        self.slit_ids = [s.shutter_id for s in self._slits]
+        if isiterable(slits[0]):
+            self._slits = [tuple(s) for s in slits]
+            self.slit_ids = [s[1] for s in self._slits]
+        else:
+            self._slits = list(slits)
+            self.slit_ids = self._slits
         self.models = models
 
     @property
@@ -790,8 +783,6 @@ class Slit2Msa(Model):
         return self.models[index]
 
     def evaluate(self, name, x, y):
-        #index = self.slit_ids.index(name)
-        #return self.models[index](x, y) + (name,)
         name = int(name)
         return (name,) + self.models[name](x, y)
 
@@ -800,9 +791,7 @@ class Slit2Msa(Model):
             id = NRS_FS_N2ID[name]
         else:
             id = name
-        result = self.evaluate(id, x, y)
-        return result
-        #return (NRS_FS_ID2N[result[0]],) + result[1:]
+        return self.evaluate(id, x, y)
 
 
 class NirissSOSSModel(Model):
