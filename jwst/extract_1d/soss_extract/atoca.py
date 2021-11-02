@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 class _BaseOverlap:  # TODO Merge with TrpzOverlap?
     """
     Base class for the ATOCA algorithm (Darveau-Bernier 2021, in prep).
-    Used to perform an verlaping extraction of the form:
+    Used to perform an overlaping extraction of the form:
     (B_T * B) * f = (data/sig)_T * B
     where B is a matrix and f is an array.
     The matrix multiplication B * f is the 2d model of the detector.
