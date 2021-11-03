@@ -13,7 +13,7 @@ from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .soss_engine import ExtractionEngine
 from .engine_utils import ThroughputSOSS, WebbKernel, grid_from_map
-from .soss_boxextract import get_box_weights, box_extract
+from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 
 # TODO remove once code is sufficiently tested.
 from . import devtools
@@ -357,6 +357,10 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
 
         log.info(f'Extracting {order}.')
 
+        # Define the box aperture
+        xtrace, ytrace, wavelengths[order] = get_trace_1d(ref_files, transform, order_integer)
+        box_weights = get_box_weights(ytrace, width, scidata_bkg.shape, cols=xtrace)
+
         # Decontaminate using all other modeled orders
         decont = scidata_bkg
         for mod_order in mod_order_list:
@@ -376,20 +380,26 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
 
                 log.info(f'Bad pixels in {order} are replaced with trace model.')
 
+                # Replace error estimate of the bad pixels using other valid pixels of similar value.
+                # The pixel to be estimate are the masked pixels in the region of extraction
+                extraction_region = (box_weights > 0)
+                pix_to_estim = (extraction_region & scimask)
+                # Use only valid pixels (not masked) in the extraction region for the empirical estimation
+                valid_pix = (extraction_region & ~scimask)
+                scierr_ord = estim_error_nearest_data(scierr, decont, pix_to_estim, valid_pix)
+
             except KeyError:
-                # Keep same mask
+                # Keep same mask and error
                 scimask_ord = scimask
+                scierr_ord = scierr
                 log.info(f'Bad pixels in {order} will be masked: trace model unavailable.')
         else:
             # Mask pixels
             scimask_ord = scimask
             log.info(f'Bad pixels in {order} will be masked.')
 
-        xtrace, ytrace, wavelengths[order] = get_trace_1d(ref_files, transform, order_integer)
-        box_weights = get_box_weights(ytrace, width, scidata_bkg.shape, cols=xtrace)
-
         # TODO May need to update scierr as well if it has bad pixels equivalent
-        out = box_extract(decont, scierr, scimask_ord, box_weights, cols=xtrace)
+        out = box_extract(decont, scierr_ord, scimask_ord, box_weights, cols=xtrace)
         _, fluxes[order], fluxerrs[order], npixels[order] = out
 
     # TODO temporary debug plot.

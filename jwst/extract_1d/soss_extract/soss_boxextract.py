@@ -116,6 +116,64 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
     return cols, flux, flux_err, npix
 
 
+def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
+    """
+    Function to estimate pixel error empirically using the corresponding error
+    of the nearest pixel value (`data`). Intended to be used in a box extraction
+    when the bad pixels are modeled.
+
+    Parameters
+    ----------
+    err: 2d array[float]
+        Uncertainty map of the pixels.
+    data: 2d array[float]
+        Pixel values.
+    pix_to_estim: 2d array[bool]
+        Map of the pixels where the uncertainty need to be estimated.
+    valid_pix: 2d array[bool]
+        Map of valid pixels to be used to find the error empirically.
+    Returns
+    -------
+    err_filled: 2d array[float]
+        same as `err`, but the pixel to be estimated are filled with the estimated values.
+    """
+    # Tranform to 1d arrays
+    data_to_estim = data[pix_to_estim]
+    err_valid = err[valid_pix]
+    data_valid = data[valid_pix]
+
+    #
+    # Use np.searchsorted for efficiency
+    #
+    # Need to sort the arrays used to find similar values
+    idx_sort = np.argsort(data_valid)
+    err_valid = err_valid[idx_sort]
+    data_valid = data_valid[idx_sort]
+
+    # Searchsorted: gives the position of the nearest higher value,
+    # not necessarily the closest value
+    idx_higher = np.searchsorted(data_valid, data_to_estim)
+    idx_higher = np.clip(idx_higher, 0, err_valid.size - 1)
+    # The nearest lower value is given by the preceding index
+    idx_lower = np.clip(idx_higher - 1, 0, err_valid.size - 1)
+
+    # Find the best between index around the value (lower and higher index) ...
+    idx_around = np.vstack([idx_lower, idx_higher])
+    # ... using the one with the smallest error
+    distance = np.abs(data_valid[idx_around] - data_to_estim[None, :])
+    idx_best_of_2 = np.argmin(distance, axis=0)
+    idx_closest = idx_around[idx_best_of_2, np.arange(idx_best_of_2.size)]
+
+    # Get the corresponding error (that's what we want to find!)
+    err_estimate = err_valid[idx_closest]
+
+    # Replace estimated values in the ouput error 2d image
+    err_out = err.copy()
+    err_out[pix_to_estim] = err_estimate
+
+    return err_out
+
+
 def main():
 
     return
