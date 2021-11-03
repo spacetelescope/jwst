@@ -149,17 +149,34 @@ class Extract1dStep(Step):
 
             self.log.info('Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
 
-            # TODO implement the extraction for the F277 filter.
-            if input_model.meta.instrument.filter != 'CLEAR':
-                self.log.error('The SOSS extraction is implemented for the CLEAR filter only.')
+            # Set the filter configuration
+            if input_model.meta.instrument.filter == 'CLEAR':
+                self.log.info('Exposure is through the GR700XD + CLEAR (science).')
+                soss_filter = 'CLEAR'
+            elif input_model.meta.instrument.filter == 'F277W':
+                self.log.info('Exposure is through the GR700XD + F277W (calibration).')
+                soss_filter = 'F277W'
+            else:
+                self.log.error('The SOSS extraction is implemented for the CLEAR or F277W filters only.')
                 self.log.error('extract_1d will be skipped.')
                 input_model.meta.cal_step.extract_1d = 'SKIPPED'
                 return input_model
 
-            # TODO implement the extraction for the FULL subarray (no change except ref files?),
-            # TODO and SUBSTRIP96 subarray (skip order 2, 3 box extraction?).
-            if input_model.meta.subarray.name != 'SUBSTRIP256':
-                self.log.error('The SOSS extraction is implemented for the SUBSTRIP256 subarray only.')
+            # Set the subarray mode being processed
+            if input_model.meta.subarray.name == 'SUBSTRIP256':
+                self.log.info('Exposure is in the SUBSTRIP256 subarray.')
+                self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
+                subarray = 'SUBSTRIP256'
+            if input_model.meta.subarray.name == 'FULL':
+                self.log.info('Exposure is in the FULL subarray.')
+                self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
+                subarray = 'FULL'
+            elif input_model.meta.subarray.name == 'SUBSTRIP96':
+                self.log.info('Exposure is in the SUBSTRIP96 subarray.')
+                self.log.info('Traces of orders 1 and 2 will be modelled but only order 1 will be decontaminated before extraction.')
+                subarray = 'SUBSTRIP96'
+            else:
+                self.log.error('The SOSS extraction is implemented for the SUBSTRIP256, SUBSTRIP96 and FULL subarray only.')
                 self.log.error('extract_1d will be skipped.')
                 input_model.meta.cal_step.extract_1d = 'SKIPPED'
                 return input_model
@@ -198,6 +215,8 @@ class Extract1dStep(Step):
                                                 wavemap_ref_name,
                                                 specprofile_ref_name,
                                                 speckernel_ref_name,
+                                                subarray,
+                                                soss_filter,
                                                 soss_kwargs)
 
             # Set the step flag to complete

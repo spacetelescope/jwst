@@ -342,9 +342,12 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
     wavelengths, fluxes, fluxerrs, npixels
     Each is a dictionary with each extracted orders as key.
     """
-    # TODO Make it an input? So it can change for substrip96
     # Which orders to extract.
-    order_list = (1, 2, 3)
+    if subarray == 'SUBSTRIP96':
+        order_list = [1]
+    else:
+        order_list = [1, 2, 3]
+
     order_str = {order: f'Order {order}' for order in order_list}
 
     # List of modeled orders
@@ -360,7 +363,7 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
 
     # Extract each order from order list
     for order_integer in order_list:
-        # Order string-name is used more often then integer-name
+        # Order string-name is used more often than integer-name
         order = order_str[order_integer]
 
         log.info(f'Extracting {order}.')
@@ -422,6 +425,8 @@ def run_extract1d(input_model: DataModel,
                   wavemap_ref_name: str,
                   specprofile_ref_name: str,
                   speckernel_ref_name: str,
+                  subarray: str,
+                  soss_filter: str,
                   soss_kwargs: dict):
     """Run the spectral extraction on NIRISS SOSS data.
 
@@ -430,6 +435,8 @@ def run_extract1d(input_model: DataModel,
     :param wavemap_ref_name:
     :param specprofile_ref_name:
     :param speckernel_ref_name:
+    :param subarray:
+    :param soss_filter:
     :param soss_kwargs:
 
     :type input_model:
@@ -437,6 +444,8 @@ def run_extract1d(input_model: DataModel,
     :type wavemap_ref_name:
     :type specprofile_ref_name:
     :type speckernel_ref_name:
+    :type subarray:
+    :type soss_filter:
     :type soss_kwargs:
 
     :returns: An output_model containing the extracted spectra.
@@ -458,6 +467,7 @@ def run_extract1d(input_model: DataModel,
     ref_files['specprofile'] = specprofile_ref
     ref_files['speckernel'] = speckernel_ref
 
+    # TODO: Do we need to handle ImageModel for SOSS? or just DataModel?
     if isinstance(input_model, datamodels.ImageModel):
 
         log.info('Input is an ImageModel, processing a single integration.')
@@ -472,16 +482,23 @@ def run_extract1d(input_model: DataModel,
         bkg_mask = make_background_mask(scidata, width=40)
         scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
-        # Model the image.
-        kwargs = dict()
-        kwargs['transform'] = soss_kwargs['transform']
-        kwargs['tikfac'] = soss_kwargs['tikfac']
-        kwargs['n_os'] = soss_kwargs['n_os']
-        kwargs['threshold'] = soss_kwargs['threshold']
-        kwargs['devname'] = soss_kwargs['devname']
+        # Model the traces based on optics filter configuration (CLEAR or F277W)
+        if soss_filter == 'CLEAR':
 
-        result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
-        tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+            # Model the image.
+            kwargs = dict()
+            kwargs['transform'] = soss_kwargs['transform']
+            kwargs['tikfac'] = soss_kwargs['tikfac']
+            kwargs['n_os'] = soss_kwargs['n_os']
+            kwargs['threshold'] = soss_kwargs['threshold']
+            kwargs['devname'] = soss_kwargs['devname']
+
+            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
+            tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+
+        else:
+            tracemodels = dict()
+            # TODO: Should the tikfac (and other) kwargs be explicitely adapted here?
 
         # Use the trace models to perform a de-contaminated extraction.
         kwargs = dict()
@@ -546,16 +563,22 @@ def run_extract1d(input_model: DataModel,
             bkg_mask = make_background_mask(scidata, width=40)
             scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
-            # Model the image.
-            kwargs = dict()
-            kwargs['transform'] = soss_kwargs['transform']
-            kwargs['tikfac'] = soss_kwargs['tikfac']
-            kwargs['n_os'] = soss_kwargs['n_os']
-            kwargs['threshold'] = soss_kwargs['threshold']
-            kwargs['devname'] = soss_kwargs['devname']
+            # Model the traces based on optics filter configuration (CLEAR or F277W)
+            if soss_filter == 'CLEAR':
 
-            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
-            tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+                # Model the image.
+                kwargs = dict()
+                kwargs['transform'] = soss_kwargs['transform']
+                kwargs['tikfac'] = soss_kwargs['tikfac']
+                kwargs['n_os'] = soss_kwargs['n_os']
+                kwargs['threshold'] = soss_kwargs['threshold']
+                kwargs['devname'] = soss_kwargs['devname']
+
+                result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
+                tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+
+            else:
+                tracemodels = dict()
 
             # Use the trace models to perform a de-contaminated extraction.
             kwargs = dict()
