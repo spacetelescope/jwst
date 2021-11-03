@@ -140,7 +140,7 @@ class Extract1dStep(Step):
         # TODO should go in the else of ModelContainer? discuss with StSci.
         if input_model.meta.exposure.type == 'NIS_SOSS':
 
-            self.log.info('Input is a NIRISS SOSS observation, the specialized SOSS extraction will be used.')
+            self.log.info('Input is a NIRISS SOSS observation, the specialized SOSS extractio (ATOCA) will be used.')
 
             # TODO implement the extraction for the F277 filter.
             if input_model.meta.instrument.filter != 'CLEAR':
