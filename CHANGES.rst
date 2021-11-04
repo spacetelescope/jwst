@@ -92,6 +92,9 @@ datamodels
 
  - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
 
+- Added SOSS-specific extraction parameters to core schema; add new
+  datamodel to store SOSS model traces and aperture weights [#6422]
+
 extract_1d
 ----------
 
