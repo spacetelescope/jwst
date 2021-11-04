@@ -2,7 +2,6 @@
 (including the main loop over files and the construction of
 final spaxel fluxes)
 """
-
 import time
 import numpy as np
 import logging
