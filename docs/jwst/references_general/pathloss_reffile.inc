@@ -147,11 +147,13 @@ arrays.  The other 2 dimensions refer to the number of columns in the correction
 values for the Pupil Wheel position (PWCPOS).
 
 WCS Header Keywords
-~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++
 The headers of the pathloss extensions in all of the above reference
-files should contain the WCS information that describes what variables the
+files should contain WCS information that describes what variables the
 correction depends on and how they relate to the dimensions of the correction array.
 
+NIRSpec
+~~~~~~~
 For the NIRSpec reference files (IFU, Fixed Slit, and MSASPEC), the WCS keywords
 should have the values shown in the tables below.
 Dimension 1 expresses the decenter along the dispersion direction for a point source:
@@ -184,6 +186,8 @@ CDELT3  2.35E-7    Change in coordinate value for unit change in index
 CTYPE3  'METER'    Type of physical coordinate in this dimension
 ======= ========== ==============================================================================
 
+NIRISS SOSS
+~~~~~~~~~~~
 The NIRISS SOSS reference file should also have WCS components, but their
 interpretation is different from those in the NIRSpec reference file.
 Dimension 1 expresses the column number in the science data:
@@ -214,3 +218,30 @@ CRVAL3  1.0               Coordinate value at this reference pixel
 CDELT3  1.0               Change in coordinate value for unit change in index
 CTYPE3  'Dummy'           Type of physical coordinate in this dimension
 ======= ================= ======================================================================
+
+MIRI LRS
+~~~~~~~~
+For the MIRI LRS reference file, the WCS keywords should have the values shown in the tables below.
+Dimension 1 expresses the decenter of a point source in the spatial direction (perpendicular
+to dispersion):
+
+======= ========== ==============================================================================
+Keyword Value      Comment
+======= ========== ==============================================================================
+CRPIX1  1.0        Reference pixel in the spatial direction
+CRVAL1  -25.0      Coordinate value at this reference pixel
+CDELT1  1.0        Change in coordinate value for unit change in index
+CTYPE1  'UNITLESS' Type of physical coordinate in this dimension
+======= ========== ==============================================================================
+
+Dimension 2 expresses the decenter along the dispersion for a point source:
+
+======= ========== ==============================================================================
+CRPIX2  1.0        Reference pixel in dispersion direction
+CRVAL2  -5.0       Coordinate value at this reference pixel
+CDELT2  0.5        Change in coordinate value for unit change in index
+CTYPE2  'UNITLESS' Type of physical coordinate in this dimension
+======= ========== ==============================================================================
+
+Note that WCS keywords related to wavelength are not needed for the MIRI LRS reference file,
+because an array of wavelength values is included in the table of reference data.

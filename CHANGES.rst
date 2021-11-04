@@ -90,10 +90,13 @@ datamodels
   and regions files.  Fix an incorrect comment on
   FilteroffsetModel. [#6362]
 
- - Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
+- Changed reference file model name from ``ResidualFringeModel`` to
+  ``FringeFreq`` [#6385]
 
- - Updated data products documentation to indicate that variance and error arrays
-   are now included in resampled products. [#6420]
+- Updated data products documentation to indicate that variance and error arrays
+  are now included in resampled products. [#6420]
+
+- Added the ``MirLrsPathlossModel` for use in the ``pathloss` step. [#6435]
 
 extract_1d
 ----------
@@ -139,6 +142,12 @@ outlier_detection
 
 - Log number of flagged outliers in ``outlier_detection`` [#6260]
 
+pathloss
+--------
+
+- Updated the ``pathloss`` step and documentation to include processing of
+  MIRI LRS fixed-slit exposures. [#6435]
+
 persistence
 -----------
 
@@ -151,6 +160,9 @@ pipeline
 
 - Changed logger from root to `__name__` for Ami3, Detector1, Dark, and Guider
   Pipelines [#6389]
+
+- Updated the ``calwebb_spec2`` pipeline to apply the ``pathloss`` step to
+  MIRI LRS fixed-slit exposures. [#6435]
 
 ramp_fitting
 ------------
