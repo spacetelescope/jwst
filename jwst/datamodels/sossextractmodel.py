@@ -1,6 +1,6 @@
 from .model_base import JwstDataModel
 
-__all__ = ['SossModel']
+__all__ = ['SossExtractModel']
 
 
 class SossExtractModel(JwstDataModel):
