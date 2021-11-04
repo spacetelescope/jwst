@@ -354,8 +354,9 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow fringe correction. Skipping "fringe".')
             self.fringe.skip = True
 
-        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
-        if not self.pathloss.skip and exp_type not in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
+        # Apply pathloss correction to MIRI LRS, NIRSpec, and NIRISS SOSS exposures
+        if not self.pathloss.skip and exp_type not in ['MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
+                                                       'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
             self.log.debug('Science data does not allow pathloss correction. Skipping "pathloss".')
             self.pathloss.skip = True
 
