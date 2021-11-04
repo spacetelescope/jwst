@@ -150,12 +150,8 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
 
         ycom = center_of_mass(scidata_norm[:, icol], ytrace[icol], halfwidth)
 
-        # If NaN was returned we are done.
-        if not np.isfinite(ycom):
-            ytrace[icol] = np.nan
-            continue
-        # If centroid is out of bounds we are done.
-        if ycom >= dimy or ycom < 0:
+        # If NaN was returned or centroid is out of bounds, we are done.
+        if not np.isfinite(ycom) or (ycom > (ynative - 1) * yos) or (ycom < 0):
             ytrace[icol] = np.nan
             continue
 
