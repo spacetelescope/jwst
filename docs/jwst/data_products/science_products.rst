@@ -371,7 +371,7 @@ Resampled 2-D data: ``i2d`` and ``s2d``
 Images and spectra that have been resampled by the :ref:`resample <resample_step>` step use a
 different set of data arrays than other science products. Resampled 2-D images are stored in
 ``i2d`` products and resampled 2-D spectra are stored in ``s2d`` products.
-The FITS file structure for ``i2d`` products is as follows:
+The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
 
 +-----+-------------+----------+-----------+---------------+
 | HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
@@ -380,53 +380,37 @@ The FITS file structure for ``i2d`` products is as follows:
 +-----+-------------+----------+-----------+---------------+
 |  1  | SCI         | IMAGE    | float32   | ncols x nrows |
 +-----+-------------+----------+-----------+---------------+
-|  2  | CON         | IMAGE    | int32     | ncols x nrows |
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows |
 +-----+-------------+----------+-----------+---------------+
-|  3  | WHT         | IMAGE    | float32   | ncols x nrows |
+|  3  | CON         | IMAGE    | int32     | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  4  | WHT         | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  5  | VAR_POISSON | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  6  | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  7  | VAR_FLAT    | IMAGE    | float32   | ncols x nrows |
 +-----+-------------+----------+-----------+---------------+
 |     | HDRTAB*     | BINTABLE | N/A       | variable      |
 +-----+-------------+----------+-----------+---------------+
 |     | ASDF        | BINTABLE | N/A       | variable      |
 +-----+-------------+----------+-----------+---------------+
 
- - SCI: 2-D data array containing the pixel values, in units of surface brightness.
+ - SCI: 2-D data array containing the pixel values, in units of surface brightness
+ - ERR: 2-D data array containing resampled uncertainty estimates, given as standard deviation
  - CON: 2-D context image, which encodes information about which input images contribute
-   to a specific output pixel.
- - WHT: 2-D weight image giving the relative weight of the output pixels (effectively a
-   relative exposure time map).
+   to a specific output pixel
+ - WHT: 2-D weight image giving the relative weight of the output pixels
+ - VAR_POISSON: 2-D resampled Poisson variance estimates for each pixel
+ - VAR_RNOISE: 2-D resampled read noise variance estimates for each pixel
+ - VAR_FLAT: 2-D resampled flat-field variance estimates for each pixel
  - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
    that were combined to produce the output image. Only appears when multiple inputs are used.
  - ADSF: The data model meta data.
  
-The FITS file structure for ``s2d`` products is as follows:
-
-+-----+-------------+----------+-----------+---------------+
-| HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
-+=====+=============+==========+===========+===============+
-|  0  | N/A         | primary  | N/A       | N/A           |
-+-----+-------------+----------+-----------+---------------+
-|  1  | SCI         | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  2  | CON         | IMAGE    | int32     | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  3  | WHT         | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|     | HDRTAB*     | BINTABLE | N/A       | variable      |
-+-----+-------------+----------+-----------+---------------+
-|     | ASDF        | BINTABLE | N/A       | variable      |
-+-----+-------------+----------+-----------+---------------+
-
- - SCI: 2-D data array containing the pixel values, in units of surface brightness.
- - CON: 2-D context image, which encodes information about which input images contribute
-   to a specific output pixel.
- - WHT: 2-D weight image giving the relative weight of the output pixels (effectively a
-   relative exposure time map).
- - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
-   that were combined to produce the output image. Only appears when multiple inputs are used.
- - ADSF: The data model meta data.
-
-For exposure-based products that contain spectra for more than one source or slit
-(e.g. NIRSpec MOS) there will be multiple tuples of the SCI, CON, and WHT
+For spectroscopic exposure-based products that contain spectra for more than one source or slit
+(e.g. NIRSpec MOS) there will be multiple tuples of the SCI, ERR, CON, WHT, and variance
 extensions, one set for each source or slit. FITS "EXTVER" keywords are used in each
 extension header to segregate the multiple instances of each extension type by
 source.
@@ -447,7 +431,7 @@ files with the following structure:
 +-----+-------------+----------+-----------+------------------------+
 |  2  | ERR         | IMAGE    | float32   | ncols x nrows x nwaves |
 +-----+-------------+----------+-----------+------------------------+
-|  3  | DQ          | IMAGE    | int32     | ncols x nrows x nwaves |
+|  3  | DQ          | IMAGE    | uint32    | ncols x nrows x nwaves |
 +-----+-------------+----------+-----------+------------------------+
 |  4  | WMAP        | IMAGE    | float32   | ncols x nrows x nwaves |
 +-----+-------------+----------+-----------+------------------------+
@@ -459,9 +443,9 @@ files with the following structure:
 +-----+-------------+----------+-----------+------------------------+
 
  - SCI: 3-D data array containing the spaxel values, in units of surface brightness.
- - DQ: 3-D data array containing DQ flags for each spaxel.
  - ERR: 3-D data array containing uncertainty estimates for each spaxel.
- - WMAP: 3-D weight image giving the relative weight of the output spaxels.
+ - DQ: 3-D data array containing DQ flags for each spaxel.
+ - WMAP: 3-D weight image giving the relative weights of the output spaxels.
  - WCS-TABLE: A table listing the wavelength to be associated with each plane of the
    third axis in the SCI, DQ, ERR, and WMAP arrays, in a format that conforms to the
    FITS spectroscopic WCS standards. Column 1 of the table ("nelem") gives the number of
