@@ -24,15 +24,15 @@ allOf:
     aperture1:
       title: Pixel weights for order 1 extraction
       fits_hdu: APER1
-      ndim: 2
+      ndim: 3
       datatype: float32
     aperture2:
       title: Pixel weights for order 2 extraction
       fits_hdu: APER2
-      ndim: 2
+      ndim: 3
       datatype: float32
     aperture3:
       title: Pixel weights for order 3 extraction
       fits_hdu: APER3
-      ndim: 2
+      ndim: 3
       datatype: float32
