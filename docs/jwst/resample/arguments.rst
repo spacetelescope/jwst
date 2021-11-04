@@ -33,17 +33,18 @@ image.
     provided.
 
 ``--shape`` (tuple of int, default=None)
-    Shape of the image (data array) using ``numpy.ndarray`` convention
-    (``ny`` first and ``nx`` second). This value will be assigned to
+    Shape of the image (data array) using "standard" ``nx`` first and ``ny``
+    second (as opposite to the ``numpy.ndarray`` convention - ``ny`` first and
+    ``nx`` second). This value will be assigned to
     ``pixel_shape`` and ``array_shape`` properties of the returned
     WCS object. When supplied from command line, it should be a comma-separated
-    list of integers.
+    list of integers ``nx, ny``.
 
 ``--crpix`` (tuple of float, default=None)
-    Position of the reference pixel in the image array.  If ``crpix`` is not
-    specified, it will be set to the center of the bounding box of the
-    returned WCS object. When supplied from command line, it should be a
-    comma-separated list of floats.
+    Position of the reference pixel in the image array in the ``x, y`` order.
+    If ``crpix`` is not specified, it will be set to the center of the bounding
+    box of the returned WCS object. When supplied from command line, it should
+    be a comma-separated list of floats.
 
 ``--crval`` (tuple of float, default=None)
     Right ascension and declination of the reference pixel. Automatically
