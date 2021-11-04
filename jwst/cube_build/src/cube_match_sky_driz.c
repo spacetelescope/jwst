@@ -83,7 +83,7 @@ spaxel_dq : numpy.ndarray
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_numpy_api    //WHAT IS THIS AND WHERE IS IT USED???
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_driz_numpy_api
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 // routines used from cube_utils.c
@@ -155,9 +155,9 @@ int match_driz(double *xc, double *yc, double *zc,
   // find max of cdelt3, dwave to be used to estimate which wavelength plane the
   // pixel falls on
   zreg =0;
-  max_cdelt3  = -1000;
-  max_dwave = -10000;
-  for (iw =0; iw < nwave;  iw++){
+  max_cdelt3 = cdelt3[0];
+  max_dwave = dwave[0];
+  for (iw =1; iw < nwave;  iw++){
     if(cdelt3[iw] > max_cdelt3) { max_cdelt3 = cdelt3[iw];}
     if(dwave[iw] > max_dwave){ max_dwave = dwave[iw];}
   }
@@ -177,11 +177,12 @@ int match_driz(double *xc, double *yc, double *zc,
       ypixel[2] = eta3[k];
       ypixel[3] = eta4[k];
       ypixel[4] = eta1[k];
-      xmax = -1000.0;
-      ymax = -1000.0;
-      xmin = 1000.0;
-      ymin = 1000.0;
-      for (j =0; j< 5; j++){
+
+      xmin = xpixel[0];
+      ymin = ypixel[0];
+      xmax = xmin;
+      ymax = ymin;
+      for (j =1; j< 5; j++){
 	// if(k < 5) {printf("pixel %f %f \n", xpixel[j], ypixel[j]);}
 	if(xpixel[j] > xmax) xmax = xpixel[j];
 	if(ypixel[j] > ymax) ymax = ypixel[j];
@@ -363,7 +364,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
   // check that input parameters are valid:
 
-  if ((cdelt1 < 0) || (cdelt2 < 0)) {
+  if ((cdelt1 <= 0) || (cdelt2 <= 0)) {
     PyErr_SetString(PyExc_ValueError,
 		    "'cdelt1' and 'cdelt2' must be a strictly positive number.");
     return NULL;

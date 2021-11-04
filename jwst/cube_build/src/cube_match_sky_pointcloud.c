@@ -94,7 +94,7 @@ spaxel_dq : numpy.ndarray
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_pointcloud_numpy_api    //WHAT IS THIS AND WHERE IS IT USED???
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_pointcloud_numpy_api
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 // routines used from cube_utils.c

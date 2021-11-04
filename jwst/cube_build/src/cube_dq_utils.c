@@ -81,6 +81,8 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   int ic2_end_min = -1;
   int ic2_end_max = -1;
 
+  // TODO find a better way to find min and max than using hard coded values
+  // A little tricky because the min and max is set based on wave_distance & slice #
   float c1_end_min = 10000;
   float c2_end_min = 10000;
   float c1_end_max = -10000;
@@ -106,6 +108,29 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
       if (wave_distance < roiw_ave && slice == start_region){ 
 	c11 = coord1[ipt];
 	c21 = coord2[ipt];
+	// for the start region find min and max c1,c2
+	if( c11 !=-1){
+	  // check c1 points for min
+	  if (c11 < c1_start_min) {
+	    c1_start_min = c11;
+	    ic1_start_min = ipt;
+	  }
+	  // check c1 points for max
+	  if (c11 > c1_start_max) {
+	    c1_start_max= c11;
+	    ic1_start_max = ipt;
+	  }
+	  // check c2 points for min
+	  if (c21 < c2_start_min) {
+	    c2_start_min = c21;
+	    ic2_start_min = ipt;
+	  }
+	  // check c2 points for max
+	  if (c21 > c2_start_max) {
+	    c2_start_max= c21;
+	    ic2_start_max = ipt;
+	  }
+	}
       }
 
       // Find all the coordinates on wave slice with slice = start region
@@ -113,48 +138,24 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
       if (wave_distance < roiw_ave && slice == end_region){
 	c12 = coord1[ipt];
 	c22 = coord2[ipt];
-      }
-
-      // for the start region find min and max c1,c2
-      if( c11 !=-1){
-	// check c1 points for min
-	if (c11 < c1_start_min) {
-	  c1_start_min = c11;
-	  ic1_start_min = ipt;
-	}
-	// check c1 points for max
-	if (c11 > c1_start_max) {
-	  c1_start_max= c11;
-	  ic1_start_max = ipt;
-	}
-	// check c2 points for min
-	if (c21 < c2_start_min) {
-	  c2_start_min = c21;
-	  ic2_start_min = ipt;
-	}
-	// check c2 points for max
-	if (c21 > c2_start_max) {
-	  c2_start_max= c21;
-	  ic2_start_max = ipt;
-	}
-      }
-      // for the end region find min and max c1,c2
-      if( c12 !=-1){
-	if (c12 < c1_end_min) {
-	  c1_end_min = c12;
-	  ic1_end_min = ipt;
-	}
-	if (c12 > c1_end_max) {
-	  c1_end_max = c12;
-	  ic1_end_max = ipt;
-	}
-	if (c22 < c2_end_min) {
-	  c2_end_min = c22;
-	  ic2_end_min = ipt;
-	}
-	if (c22 > c2_end_max) {
-	  c2_end_max = c22;
-	  ic2_end_max = ipt;
+	// for the end region find min and max c1,c2
+	if( c12 !=-1){
+	  if (c12 < c1_end_min) {
+	    c1_end_min = c12;
+	    ic1_end_min = ipt;
+	  }
+	  if (c12 > c1_end_max) {
+	    c1_end_max = c12;
+	    ic1_end_max = ipt;
+	  }
+	  if (c22 < c2_end_min) {
+	    c2_end_min = c22;
+	    ic2_end_min = ipt;
+	  }
+	  if (c22 > c2_end_max) {
+	    c2_end_max = c22;
+	    ic2_end_max = ipt;
+	  }
 	}
       }
     }
@@ -261,11 +262,11 @@ int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
   int status = 0;
   int i, ixy,ix,iy;
   double area_box, tolerance_dq_overlap, x1, x2, y1, y2, area_overlap, overlap_coverage;
-  double ximin = 1000.0;
-  double etamin = 1000.0;
-  double ximax = -10000.0;
-  double etamax = -1000.0;
-  for (i=0; i<4 ; i++){
+  double ximin = xi_corner[0];
+  double etamin = eta_corner[0];
+  double ximax = ximin;
+  double etamax = etamin;
+  for (i=1; i<4 ; i++){
     if (xi_corner[i] < ximin){ ximin = xi_corner[i];}
     if (xi_corner[i] > ximax){ ximax = xi_corner[i];}
     if (eta_corner[i] < etamin){ etamin = eta_corner[i];}
