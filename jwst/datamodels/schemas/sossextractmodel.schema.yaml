@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
-id: "http://stsci.edu/schemas/jwst_datamodel/sossmodel.schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/sossextractmodel.schema"
 allOf:
 - $ref: core.schema
 - type: object

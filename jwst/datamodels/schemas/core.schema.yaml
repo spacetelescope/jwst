@@ -2042,6 +2042,33 @@ properties:
                 type: string
                 fits_keyword: R_SATURA
                 blend_table: True
+          speckernel:
+            title: Spectral convolution kernel reference file information
+            type: object
+            properties:
+              name:
+                title: Spectral convolution kernel reference file name
+                type: string
+                fits_keyword: R_SPKERN
+                blend_table: True
+          specprofile:
+            title: Spectral profile reference file information
+            type: object
+            properties:
+              name:
+                title: Spectral profile reference file name
+                type: string
+                fits_keyword: R_SPPROF
+                blend_table: True
+          spectrace:
+            title: Spectral trace reference file information
+            type: object
+            properties:
+              name:
+                title: Spectral trace reference file name
+                type: string
+                fits_keyword: R_SPTRAC
+                blend_table: True
           specwcs:
             title: Spectral distortion reference file information
             type: object
@@ -2131,6 +2158,15 @@ properties:
                 title: Wavelength Range reference file name
                 type: string
                 fits_keyword: R_WAVRAN
+                blend_table: True
+          wavemap:
+            title: Wavelength map reference file information
+            type: object
+            properties:
+              name:
+                title: Wavelength map reference file name
+                type: string
+                fits_keyword: R_WAVMAP
                 blend_table: True
       cal_step:
         title: Calibration step information

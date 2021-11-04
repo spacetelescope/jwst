@@ -3,7 +3,7 @@ from .model_base import JwstDataModel
 __all__ = ['SossModel']
 
 
-class SossModel(JwstDataModel):
+class SossExtractModel(JwstDataModel):
     """
     A data model to hold NIRISS SOSS extraction model arrays.
     For each order, stores the model trace per integration and
@@ -37,4 +37,4 @@ class SossModel(JwstDataModel):
         2-D array storing the pixel weights for box-extracting
         spectral order 3
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/sossmodel.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/sossextractmodel.schema"
