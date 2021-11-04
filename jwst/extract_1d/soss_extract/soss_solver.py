@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import numpy as np
 from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
 import warnings
