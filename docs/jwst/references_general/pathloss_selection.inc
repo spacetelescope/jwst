@@ -9,6 +9,7 @@ All keywords used for file selection are *required*.
 ========== ======================================
 Instrument Keywords                               
 ========== ======================================
+MIRI       INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
 NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
 ========== ======================================

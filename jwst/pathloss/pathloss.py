@@ -246,7 +246,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
         if is_pointsource(output_model.meta.target.source_type):
             corrections = do_correction_lrs(output_model, pathloss_model)
         else:
-            log.warning('Not a point source; step will be skipped.')
+            log.warning('Not a point source; skipping correction for LRS.')
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             corrections = None
     elif exp_type == 'NIS_SOSS':
@@ -338,7 +338,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     numerator = wavelength_grid - extended_wavelength_vector[lower_indices]
     denominator = (extended_wavelength_vector[upper_indices]
                    - extended_wavelength_vector[lower_indices])
-    
+
     fraction = numerator / denominator
 
     pathloss_grid = wavelength_grid * 0.0
@@ -963,7 +963,7 @@ def _corrections_for_lrs(data, pathloss):
 
         # Populate 2-D wavelength array from WCS info
         wavelength_array = get_wavelengths(data)
-      
+
         # MIRI LRS pathloss reference file data are in reverse order,
         # so flip them here
         wavelength_vector = wavelength_vector[::-1]
@@ -981,7 +981,6 @@ def _corrections_for_lrs(data, pathloss):
         correction.wavelength = wavelength_array
 
     else:
-        log.warning('Source is outside slit. Skipping '
-                    f'pathloss correction for LRS.')
+        log.warning('Source is outside slit. Skipping pathloss correction for LRS.')
 
     return correction

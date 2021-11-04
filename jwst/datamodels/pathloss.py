@@ -24,6 +24,7 @@ class PathlossModel(ReferenceFileModel):
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/pathloss.schema"
 
+
 class MirLrsPathlossModel(ReferenceFileModel):
     """
     A data model for MIRI LRS pathloss correction information.

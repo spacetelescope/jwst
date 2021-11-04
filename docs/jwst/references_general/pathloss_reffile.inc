@@ -4,7 +4,7 @@ PATHLOSS Reference File
 -----------------------
 
 :REFTYPE: PATHLOSS
-:Data model: `~jwst.datamodels.PathlossModel`
+:Data model: `~jwst.datamodels.PathlossModel`, `~jwst.datamodels.MirLrsPathlossModel`
 
 The PATHLOSS reference file contains correction factors as functions of
 source position in the aperture and wavelength.
@@ -30,6 +30,34 @@ Reference File Format
 +++++++++++++++++++++
 The PATHLOSS reference files are FITS files with extensions for each
 of the aperture types. The FITS primary HDU does not contain a data array.
+
+MIRI LRS Fixed Slit
+~~~~~~~~~~~~~~~~~~~
+The MIRI LRS Fixed Slit reference file has the following FITS structure:
+
+=== ======== ======== ===== ====================
+HDU EXTNAME  XTENSION NAXIS Dimensions
+=== ======== ======== ===== ====================
+1   PATHLOSS BinTable  2    3 columns x 388 rows
+=== ======== ======== ===== ====================
+
+The PATHLOSS extension contains wavelength, pathloss correction,
+and pathloss uncertainty data. The table has the following format:
+
+============ ========= ======= =============
+Column Name  Data Type Units   Dimensions
+============ ========= ======= =============
+WAVELENGTH   float32   microns 388
+PATHLOSS     float32   N/A     388 x 50 x 20
+PATHLOSS_ERR float32   N/A     388 x 50 x 20
+============ ========= ======= =============
+
+The pathloss data in each table row are stored as a 2-D array, containing
+correction factors as a function of source position (relative to the
+LRS slit reference point) in the spatial and spectral directions,
+respectively. Wavelength dependence runs along the row axis of the table.
+The correction factors are multiplicative and hence get multiplied into
+the science data being corrected.
 
 NIRSpec IFU
 ~~~~~~~~~~~
@@ -120,7 +148,7 @@ values for the Pupil Wheel position (PWCPOS).
 
 WCS Header Keywords
 ~~~~~~~~~~~~~~~~~~~
-The headers of the PS extensions in all of the above reference
+The headers of the pathloss extensions in all of the above reference
 files should contain the WCS information that describes what variables the
 correction depends on and how they relate to the dimensions of the correction array.
 
@@ -186,4 +214,3 @@ CRVAL3  1.0               Coordinate value at this reference pixel
 CDELT3  1.0               Change in coordinate value for unit change in index
 CTYPE3  'Dummy'           Type of physical coordinate in this dimension
 ======= ================= ======================================================================
-
