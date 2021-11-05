@@ -446,6 +446,10 @@ None, optional
 
                 # set pixels in 'fill_mask' that are inside a polygon to True:
                 x, y = self.wcs_inv(ra, dec)
+                xcheck = np.ndarray.round(x)
+                ycheck = np.ndarray.round(y)
+                if np.min(xcheck) == np.max(xcheck) or np.min(ycheck) == np.max(ycheck):
+                    continue
                 poly_vert = list(zip(*[x, y]))
 
                 polygon = region.Polygon(True, poly_vert)
