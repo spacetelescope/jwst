@@ -522,7 +522,6 @@ class DataSet():
         Returns
         -------
         """
-        log.debug('Starting cal_nircam')
         # Handle WFSS data separately from regular imaging
         if (isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS'):
             # Loop over the WFSS slits, applying the correct photom ref data

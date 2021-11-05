@@ -15,6 +15,7 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Get the spec2 ASN and its members
+    rtdata.get_data("miri/lrs/MIRI_FM_MIRIMAGE_P750L_PATHLOSS_8C.00.00.fits")
     rtdata.get_asn("miri/lrs/jw00623-o032_20191210t195246_spec2_001_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
@@ -23,6 +24,8 @@ def run_pipeline(jail, rtdata_module):
             "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.srctype.save_results=true",
+            "--steps.pathloss.save_results=true",
+            "--steps.pathloss.override_pathloss=MIRI_FM_MIRIMAGE_P750L_PATHLOSS_8C.00.00.fits",
             "--steps.bkg_subtract.save_combined_background=true"
             ]
     Step.from_cmdline(args)
@@ -30,7 +33,8 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "bsub", "flat_field", "assign_wcs", "srctype", "combinedbackground", "cal", "s2d", "x1d"])
+    "bsub", "flat_field", "assign_wcs", "srctype", "pathloss",
+    "combinedbackground", "cal", "s2d", "x1d"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtdata_module):
     """Regression test of the calwebb_spec2 pipeline on MIRI
        LRS fixedslit data using along-slit-nod pattern for

@@ -96,7 +96,7 @@ datamodels
 - Updated data products documentation to indicate that variance and error arrays
   are now included in resampled products. [#6420]
 
-- Added the ``MirLrsPathlossModel` for use in the ``pathloss` step. [#6435]
+- Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
 
 extract_1d
 ----------

@@ -563,6 +563,10 @@ def do_correction_lrs(data, pathloss):
     """
     correction = _corrections_for_lrs(data, pathloss)
 
+    if not correction:
+        log.warning("No correction available; skipping step")
+        return
+
     # LRS correction is multiplicative
     data.data *= correction.data
     data.err *= correction.data
