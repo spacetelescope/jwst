@@ -87,7 +87,7 @@ def create_1d_sens(data_waves, ref_waves, relresps):
     # 1D wavelength grid of the data
     sens_1d = np.interp(data_waves, ref_waves, relresps, left=np.NaN, right=np.NaN)
 
-    no_cal = np.isnan(sens_1d)
-    sens_1d[no_cal] = 0.
+    sens_1d[np.isnan(sens_1d)] = 0
+    no_cal = sens_1d == 0
 
     return sens_1d, no_cal

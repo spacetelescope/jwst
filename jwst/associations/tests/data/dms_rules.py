@@ -1,7 +1,6 @@
 # To avoid relative imports and mimic actual usage
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../../..'))
 
 from jwst.associations import Association
 from jwst.associations.association import finalize as general_asn_finalize

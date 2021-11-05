@@ -7,6 +7,8 @@ JWST pipeline step for image alignment.
 from os import path
 
 from astropy.table import Table
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
 from tweakwcs.matchutils import TPMatch
@@ -51,6 +53,7 @@ class TweakRegStep(Step):
         gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
+        output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
     """
 
     reference_file_types = []
@@ -70,6 +73,9 @@ class TweakRegStep(Step):
             # entries when aligning to GAIA
             self.expand_refcat = True
 
+        if len(images) == 0:
+            raise ValueError("Input must contain at least one image model.")
+
         # Build the catalogs for input images
         for image_model in images:
             catalog = make_tweakreg_catalog(
@@ -77,11 +83,10 @@ class TweakRegStep(Step):
                 brightest=self.brightest, peakmax=self.peakmax
             )
 
-            # filter out sources outside the image array if WCS validity
-            # region is provided:
-            wcs_bounds = image_model.meta.wcs.pixel_bounds
-            if wcs_bounds is not None:
-                ((xmin, xmax), (ymin, ymax)) = wcs_bounds
+            # filter out sources outside the WCS bounding box
+            bb = image_model.meta.wcs.bounding_box
+            if bb is not None:
+                ((xmin, xmax), (ymin, ymax)) = bb
                 xname = 'xcentroid' if 'xcentroid' in catalog.colnames else 'x'
                 yname = 'ycentroid' if 'ycentroid' in catalog.colnames else 'y'
                 x = catalog[xname]
@@ -116,11 +121,9 @@ class TweakRegStep(Step):
                               .format(catalog_filename))
                 image_model.meta.tweakreg_catalog = catalog_filename
 
+            # Temporarily attach catalog to the image model so that it follows
+            # the grouping by exposure, to be removed after use below
             image_model.catalog = catalog
-
-        # Now use the catalogs for tweakreg
-        if len(images) == 0:
-            raise ValueError("Input must contain at least one image model.")
 
         # group images by their "group id":
         grp_img = list(images.models_grouped)
@@ -143,6 +146,8 @@ class TweakRegStep(Step):
             self.skip = True
             for model in images:
                 model.meta.cal_step.tweakreg = "SKIPPED"
+                # Remove the attached catalogs
+                del model.catalog
             return input
 
         # create a list of WCS-Catalog-Images Info and/or their Groups:
@@ -153,6 +158,9 @@ class TweakRegStep(Step):
             else:
                 group_name = _common_name(g)
                 wcsimlist = list(map(self._imodel2wcsim, g))
+                # Remove the attached catalogs
+                for model in g:
+                    del model.catalog
                 self.log.info("* Images in GROUP '{}':".format(group_name))
                 for im in wcsimlist:
                     im.meta['group_id'] = group_name
@@ -200,6 +208,17 @@ class TweakRegStep(Step):
 
             else:
                 raise e
+
+        for imcat in imcats:
+            wcs = imcat.meta['image_model'].meta.wcs
+            twcs = imcat.wcs
+            if not self.fit_quality_is_good(wcs, twcs):
+                self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
+                self.log.warning("Skipping 'TweakRegStep'...")
+                self.skip = True
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images
 
         if self.align_to_gaia:
             # Get catalog of GAIA sources for the field
@@ -293,6 +312,19 @@ class TweakRegStep(Step):
                 """
 
         return images
+
+    def fit_quality_is_good(self, wcs, twcs):
+        """Check that the newly tweaked wcs hasn't gone off the rails"""
+        tolerance = 10.0 * self.tolerance * u.arcsec
+
+        ra, dec = wcs.footprint(axis_type="spatial").T
+        tra, tdec = twcs.footprint(axis_type="spatial").T
+        skycoord = SkyCoord(ra=ra, dec=dec, unit="deg")
+        tskycoord = SkyCoord(ra=tra, dec=tdec, unit="deg")
+
+        separation = skycoord.separation(tskycoord)
+
+        return (separation < tolerance).all()
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:

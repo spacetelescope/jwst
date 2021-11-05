@@ -1,7 +1,3 @@
-from astropy.io import registry
-
-from stdatamodels import ndmodel
-
 from .model_base import JwstDataModel, DataModel
 from .abvega_offset import ABVegaOffsetModel
 from .amilg import AmiLgModel
@@ -24,6 +20,7 @@ from .extract1dimage import Extract1dImageModel
 from .extract1d_spec import Extract1dIFUModel
 from .flat import FlatModel
 from .fringe import FringeModel
+from .fringefreq import FringeFreqModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
 from .guider import GuiderRawModel, GuiderCalModel
@@ -66,6 +63,7 @@ from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .segmap import SegmentationMapModel
 from .slit import SlitModel, SlitDataModel
+from .sossextractmodel import SossExtractModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .speckernel import SpecKernelModel
@@ -108,7 +106,7 @@ __all__ = [
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
-    'FringeModel', 'GainModel', 'GLS_RampFitModel',
+    'FringeModel', 'FringeFreqModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
@@ -138,6 +136,7 @@ __all__ = [
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',
+    'SossExtractModel',
     'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',
@@ -150,16 +149,6 @@ __all__ = [
     'WaveMapModel', 'WaveMapSingleModel',
     'WfssBkgModel']
 
-# Initialize the astropy.io registry,
-# but only the first time this module is called
-
-try:
-    _defined_models
-except NameError:
-    with registry.delay_doc_updates(JwstDataModel):
-        registry.register_reader('datamodel', JwstDataModel, ndmodel.read)
-        registry.register_writer('datamodel', JwstDataModel, ndmodel.write)
-        registry.register_identifier('datamodel', JwstDataModel, ndmodel.identify)
 
 _all_models = __all__[1:]
 _local_dict = locals()

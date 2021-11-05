@@ -14,14 +14,14 @@ import requests
 
 from astropy.time import Time
 
-from jwst.lib import engdb_tools
+from jwst.lib import engdb_direct, engdb_tools
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
-GOOD_STARTTIME = '2016-01-18'
-GOOD_ENDTIME = '2016-01-19'
+GOOD_STARTTIME = '2021-01-25'
+GOOD_ENDTIME = '2021-01-26'
 
-SHORT_STARTTIME = '2016-01-18 15:30:00'
+SHORT_STARTTIME = '2021-01-26 02:29:02.188'
 
 BAD_SERVER = 'https://www.stsci.edu'
 BAD_MNEMONIC = 'No_Such_MNEMONIC'
@@ -58,7 +58,7 @@ def is_alive(url):
 def engdb():
     """Setup the service to operate through the mock service"""
     with EngDB_Mocker():
-        engdb = engdb_tools.ENGDB_Service()
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
         yield engdb
 
 
@@ -95,7 +95,7 @@ def test_environmetal_bad():
 
 
 def test_basic(engdb):
-    assert engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    assert engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
 
 
 def test_bad_server():
@@ -111,38 +111,38 @@ def test_db_time():
         '+1234',
         ')/'
     ])
-    result = engdb_tools.extract_db_time(stime)
+    result = engdb_direct.extract_db_time(stime)
     assert result == time
 
 
 def test_values(engdb):
-    records = engdb.get_records(
+    records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 3
+    assert records['Count'] == 2
     values = engdb.get_values(
-        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
+        GOOD_MNEMONIC, GOOD_STARTTIME, SHORT_STARTTIME
     )
     assert len(values) == 1
-    assert values[0] == 0.19687812
+    assert values[0] == 0
 
 
 def test_values_with_bracket(engdb):
-    records = engdb.get_records(
+    records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 3
+    assert records['Count'] == 2
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_bracket_values=True
     )
-    assert len(values) == 3
-    assert values[1] == 0.19687812
+    assert len(values) == 2
+    assert values[1] == 0
 
 
 def test_values_with_time(engdb):
     values = engdb.get_values(
-        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        GOOD_MNEMONIC, GOOD_STARTTIME, SHORT_STARTTIME,
         include_obstime=True
     )
     assert len(values) >= 1
@@ -167,7 +167,7 @@ def test_unzip(engdb):
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_obstime=True,
-        zip=False
+        zip_results=False
     )
     assert isinstance(values, tuple)
     assert len(values.obstime) == len(values.value)

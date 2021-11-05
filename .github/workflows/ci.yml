@@ -14,7 +14,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -38,7 +38,7 @@ jobs:
 
           - name: SDP dependencies in requirements-sdp.txt
             os: ubuntu-latest
-            python-version: 3.8
+            python-version: 3.9
             toxenv: sdpdeps
 
           - name: Installed package with --pyargs
@@ -66,10 +66,12 @@ jobs:
             python-version: 3.9
             toxenv: security
 
-          - name: macOS
-            os: macos-latest
-            python-version: 3.9
-            toxenv: py39
+          # MacOS job is flaky on Github actions and fails routinely.
+          # Re-enable when things get more reliable.
+          # - name: macOS
+          #   os: macos-latest
+          #   python-version: 3.9
+          #   toxenv: py39
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -81,18 +83,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Get CRDS context
-        id: crds-context
-        run: |
-          pip install crds
-          echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
-
-      - name: Restore CRDS cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.CRDS_PATH }}
-          key: crds-${{ steps.crds-context.outputs.pmap }}
-
       - name: Install tox
         run: |
           pip install tox
@@ -102,7 +92,7 @@ jobs:
 
       - name: Upload coverage to codecov
         if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           file: ./coverage.xml
           flags: unit

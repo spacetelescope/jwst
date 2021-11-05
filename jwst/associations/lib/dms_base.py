@@ -892,3 +892,48 @@ def nrsifu_valid_detector(item):
 
     # Nothing has matched. Not valid.
     return False
+
+
+def nrslamp_valid_detector(item):
+    """Check that a grating/lamp combo can appear on the detector"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, grating = item_getattr(item, ['grating'])
+        _, opmode = item_getattr(item, ['opmode'])
+    except KeyError:
+        return False
+
+    if opmode in ['msaspec']:
+        # All settings can result in data on both detectors,
+        # depending on which MSA shutters are open
+        return True
+
+    elif opmode in ['ifu']:
+        # Need lamp value for IFU mode
+        try:
+            _, lamp = item_getattr(item, ['lamp'])
+        except KeyError:
+            return False
+
+        # Just a checklist of paths:
+        if grating in ['g395h', 'g235h']:
+            # long-wave, high-res gratings result in data on both detectors
+            return True
+        elif grating in ['g395m', 'g235m', 'g140m'] and detector == 'nrs1':
+            # all medium-res gratings result in data only on NRS1 detector
+            return True
+        elif grating == 'prism' and detector == 'nrs1':
+            # prism results in data only on NRS1 detector
+            return True
+        elif grating == 'g140h':
+            # short-wave, high-res grating results in data on both detectors,
+            # except when lamp FLAT4 is in use (no data on NRS2)
+            if not (detector == 'nrs2' and lamp == 'flat4'):
+                return True
+
+    elif opmode in ['fixedslit']:
+        # All slits illuminated by lamps, regardless of grating or subarray
+        return True
+
+    # Nothing has matched. Not valid.
+    return False

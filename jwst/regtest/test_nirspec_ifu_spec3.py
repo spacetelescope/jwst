@@ -15,7 +15,7 @@ def run_spec3_multi(jail, rtdata_module):
 
     step_params = {
         'input_path': 'nirspec/ifu/single_nrs1-nrs2_spec3_asn.json',
-        'step': 'calwebb_spec3.cfg',
+        'step': 'calwebb_spec3',
         'args': {
             '--steps.master_background.save_results=true',
             '--steps.mrs_imatch.save_results=true',

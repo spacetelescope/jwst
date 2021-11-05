@@ -127,10 +127,13 @@ the characteristics of the source extraction region can be specified in one
 of two different ways. 
 The simplest approach is to use the ``xstart``, ``xstop``, ``ystart``,
 ``ystop``, and ``extract_width`` parameters.  Note that all of these values are
-zero-indexed integers, and that the start and stop limits are inclusive.
+zero-indexed integers, the start and stop limits are inclusive, and the values
+are in the frame of the image being operated on (which could be a cutout of a
+larger original image).
 If ``dispaxis=1``, the limits in the dispersion direction are ``xstart``
 and ``xstop`` and the limits in the cross-dispersion direction are ``ystart``
 and ``ystop``. If ``dispaxis=2``, the rolls are reversed.
+
 If ``extract_width`` is also given, that takes priority over ``ystart`` and
 ``ystop`` (for ``dispaxis=1``) for the extraction width, but ``ystart`` and
 ``ystop`` will still be used to define the centering of the extraction region
@@ -146,8 +149,6 @@ internally set to True for point source data according to the table given in :re
 Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.
-
-
 
 A more flexible way to specify the source extraction region is via the ``src_coeff``
 parameter. ``src_coeff`` is specified as a list of lists of floating-point

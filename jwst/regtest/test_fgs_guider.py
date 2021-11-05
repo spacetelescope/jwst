@@ -1,7 +1,6 @@
 """Regression tests for FGS Guidestar in ID and FINEGUIDE modes"""
 import pytest
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.resample.resample import OutputTooLargeError
 from jwst.stpipe import Step
 
@@ -17,9 +16,8 @@ def run_guider_pipelines(jail, rtdata_module, request):
     rtdata = rtdata_module
     rtdata.get_data('fgs/level1b/' + request.param + '_uncal.fits')
 
-    collect_pipeline_cfgs('config')
     args = [
-        'config/calwebb_guider.cfg',
+        'calwebb_guider',
         rtdata.input,
         '--steps.dq_init.save_results=true',
         '--steps.guider_cds.save_results=true',
@@ -49,7 +47,6 @@ def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog, monkeypatch):
 
     rtdata.get_asn('fgs/image3/image3_asn.json')
 
-    collect_pipeline_cfgs('config')
-    args = ['config/calwebb_image3.cfg', rtdata.input]
+    args = ['calwebb_image3', rtdata.input]
     with pytest.raises(OutputTooLargeError):
         Step.from_cmdline(args)

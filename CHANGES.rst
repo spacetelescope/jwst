@@ -1,10 +1,419 @@
-1.2.1 (unreleased)
+1.4.0 (unreleased)
 ==================
+
+ami_analyze
+-----------
+
+- Call ``img_median_replace`` to replace NaN's and pixels flagged with
+  DO_NOT_USE in the input image. [#6334]
+
+assign_wcs
+----------
+
+- Open the specwcs reference file for WFSS modes using the ``with`` context
+  manager. [#6160]
+
+- Fix bug in NIRspec where ``bounding_box`` can be oversized in height for
+  some of the slits. [#6257]
+
+- Updated ``create_grism_bbox`` to be more robust against failures caused by
+  bad input data. [#6309]
+
+- Added a function that, when given RA, Dec, lambda, computes which ones project
+  into a given NIRSpec IFU slice. [#6316]
+
+- Changed in_ifu_slice in util.py to return the indices of elements in slice.
+  Also the x tolerance on finding slice elements was increased. [#6326]
+
+associations
+------------
+
+- Fix bug causing ``pytest`` to encounter an error in test collection when
+  running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
+
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
+- Removed Constraint_ExtCal from Asn_Lv2WFSC constraints, as it was
+  redundant with Constraint_Image_Science present. [#6384]
+
+- Added constraint to Asn_Lv2ImageNonScience to prevent creation of asns
+  for NRC_TACQ exposures with WFSC_LOS_JITTER in the DMS_NOTE. Also added
+  new reduce method, Constraint.notall [#6404]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+- Move computationally intensive routines to C extensions and
+  removed miri psf weight function. [#6093]
+
+- Moved cube blotting to a C extension [#6256]
+
+- Moved variable definitions to top of code in C extension to
+  support changes in #6093. [#6255]
+
+- Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
+  sky values mapped to each detector slice. [#6326]
+
+- Fixed error in final exposure times calculated by blend headers. Only the input models
+  used in the IFU cube are passed to blend headers. [#6360]
+
+- Update of documentation to explain 3d drizzling and remove miri psf weighting [#6371]
+
+- Fix a bug when creating internal_cal type cubes [#6398]
+
+datamodels
+----------
+
+- Remove astropy.io registration of JwstDataModel. [#6179]
+
+- Update VELOSYS keyword comment [#6298]
+
+- Added new keywords FPE_SIDE and ICE_SIDE to core schema [#6314]
+
+- Fix bug preventing extra arguments when calling ``datamodels.open``
+  on an ASDF file. [#6327]
+
+- Implement memmap argument when calling ``datamodels.open`` on an ASDF
+  file. [#6327]
+
+- Fix bug in schema that disallowed valid p_grating values. [#6333]
+
+- Add ``NDArrayType`` to list of valid types for ``RegionsModel.regions``. [#6333]
+
+- Fix a bug in wcs_ref_models where SpecwcsModel was failing the SimpleModel
+  validation as it contains a list of models rather than one simple model.
+  Also add some missing allowed BAND values for MIRI MRS distortion
+  and regions files.  Fix an incorrect comment on
+  FilteroffsetModel. [#6362]
+
+- Changed reference file model name from ResidualFringeModel to FringeFreq [#6385]
+
+- Added SOSS-specific extraction parameters to core schema; add new
+  datamodel to store SOSS model traces and aperture weights [#6422]
+
+- Updated data products documentation to indicate that variance and error arrays
+   are now included in resampled products. [#6420]
+
+extract_1d
+----------
+
+- Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
+  fixed-slit inputs that are in `SlitModel` form. [#6212]
+
+- Assign 0-indexed integration number to INT_NUM if input
+  INT_TIMES table is empty. [#6369]
+
+- Change INT_NUM assignment to 1-indexed. [#6388]
+
+flatfield
+---------
+
+- Updated flatfield step docs to include complete details on how the
+  variance and error arrays are updated. [#6245]
+
+- Fixed a bug in flatfield for NIRSpec BrightObj mode where the S-flat cutout
+  was calculated incorrectly by not accounting for the slit offset [#6332]
+
+jump
+----
+
+- Updated jump detection step to use common code moved to stcal [#6089]
+
+lib
+---
+
+- Implement the MAST AUI interface to the Engineering Database. [#6288]
+
+linearity
+--------
+
+- Use the common code in STCAL for linearity correction. [#6386]
+
+outlier_detection
+-----------------
+
+- Revert back to using 'linear' interpolation method as default for ``blot``.
+  The bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package is now fixed. [#6146]
+
+- Log number of flagged outliers in ``outlier_detection`` [#6260]
+
+persistence
+-----------
+
+- Changed logger from root to `__name__` [#6389]
+
+pipeline
+--------
+
+- Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
+
+- Changed logger from root to `__name__` for Ami3, Detector1, Dark, and Guider
+  Pipelines [#6389]
+
+ramp_fitting
+------------
+
+- Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
+  algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
+
+refpix
+------
+
+- Refactored the ``subtract_reference`` routine for NRS IRS2 data to reduce
+  memory usage. [#6356]
+
+- Updated bad link to JDox in the step documentation. [#6372]
+
+regtest
+-------
+
+- Update okifying to handle full folder updates for associations [#6218]
+
+- Remove default cfg usage from all relevant regtests; replaced with
+  either pipeline alias or Step instance [#6391]
+
+resample
+--------
+
+- Refactor ``resample_spec`` to use a separate function for computing the output
+  rectified WCS for lamp data.  [#6296]
+
+- Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
+
+- Fix handling of ``weight_type`` parameter to allow for user override. [#6406]
+
+- Add support for specifying custom output WCS parameters to the resample
+  step. [#6364]
+
+- Make ``output_shape`` to be in the "normal" (``nx, ny``) order. [#6417]
+
+residual_fringe
+---------------
+ - Added documentation on step [#6387]
+
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#6421]
+
+source_catalog
+--------------
+
+- Fixed issue with non-finite positions for aperture photometry. [#6206]
+
+- Fixed the documentation for ``bkg_boxsize`` to reflect that its data
+  type should be integer. [#6300]
+
+wavecorr
+--------
+
+- Location of source in NIRSpec fixed slit updated
+  (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243, #6261]
+
+wfss_contam
+-----------
+
+- Updated to process all defined spectral orders for the grism mode [#6175]
+
+- Added step documentation [#6210]
+
+- Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
+
+
+1.3.3 (2021-10-05)
+==================
+
+- Avoid using photutils 1.2.0 [#6378]
+
+
+1.3.2 (2021-09-03)
+==================
+
+associations
+------------
+
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+- Move computationally intensive routines to c extensions and
+  removed miri psf weight function. [#6093]
+
+- Moved variable definitions to top of code in c extension to
+  support changes in #6093. [#6255]
+
+- Moved cube blotting to a c extension [#6256]
+
+pipeline
+--------
+
+- Updated calwebb_tso3 to be more robust in handling null results from
+  the ``tso_photometry`` step. [#6265]
+
+
+1.3.1 (2021-08-09)
+==================
+
+lib
+---
+
+- Fixed a bug in set_telescope_pointing that was setting wrong meta for the pointing quality [#6264]
+
+
+1.3.0 (2021-07-31)
+==================
+
+associations
+------------
+
+- Ensure no Lv3_WFSC associations created on group candidates [#6131]
+
+datamodels
+----------
+
+- Add new PATTTYPE values for MIRI Coronagraphic flats:
+  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
+
+- Update ``DarkModel`` to use uint32 for DQ array. [#6228]
+
+- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
+
+lib
+---
+
+- Add overriding of the matrix calculations to ``set_telescope_pointing.py`` [#5843]
+
+- Add guide star-based pointing algorithm to ``set_telescope_pointing.py`` [#5843]
+
+resample
+--------
+
+- Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
+
+tweakreg
+--------
+
+- Add an upper tweak threshold of 10 arcsec to tweakreg [#6252]
+
+wfs_combine
+-----------
+
+- Add option to flip the dither locations so that images with different
+  filters will have the same pixel locations [#6101]
+
+- Fixed the refine option to correctly use the cross correlation to align
+  the images if the WCS is off [#6101]
+
+
+1.2.3 (2021-06-08)
+==================
+
+datamodels
+----------
+
+- Add back and use "CALCULATED" for ENGQLPTG. [#6135]
+
+- Convert incoming Path objects to strings in datamodels.open [#6130]
+
+
+1.2.2 (2021-06-08)
+==================
+
+ami_analyze
+-----------
+
+- Fix to AMI pupil phases sign error [#6128]
+
+datamodels
+----------
+
+- Update moving target schema to match b7.8 keyword schema. [#6129]
+
+
+1.2.1 (2021-06-07)
+==================
+
+associations
+------------
+
+- Asn_Lv2WFSS: Add instrument constraint. [#6114]
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
+combine_1d
+----------
+
+- Added SRCTYPE to COMBINE1D output extension headers, propagated from
+  EXTRACT1D inputs [#6079]
+
+cube_build
+----------
+
+- Fix some typos in the the arguments documentation. [#6077]
+
+datamodels
+----------
+
+- Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
+
+- Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
+
+- Added units to CombinedSpecModel table output [#6082]
+
+- Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
+  the core schema [#6086]
+
+- Remove ``ModelContainer`` schema and refactor use of association table
+  metadata within. [#6094]
 
 general
 -------
 
 - Make CRDS context reporting pytest plugin disabled by default. [#6070]
+
+- Removed all usage of sys.path, in associations and jwst.stpipe [#6098]
+
+lib
+---
+
+- Updated set_telescope_pointing to populate ENGQLPTG keyword with new
+  allowed values [#6088]
+
+outlier_detection
+-----------------
+
+- Avoid using 'linear' interpolation method as default for ``blot`` due to
+  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package. Now the default value will be 'poly5'. [#6116]
+
+ramp_fitting
+------------
+
+- Re-enable multiprocessing in ``RampFitStep`` by moving code back from
+  stcal package. [#6119]
+
+scripts
+-------
+
+- Add migrate_data command with support for migrating spec_table in
+  x1d files produced with <= 1.1.0 of this package. [#6055]
+
+tweakreg
+--------
+
+- Remove attached tweakreg catalog from datamodel before exiting step [#6102]
+
 
 1.2.0 (2021-05-24)
 ==================
@@ -173,8 +582,7 @@ jump
 lib
 ---
 
-- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to populate
-  the TARG_RA/TARG_DEC [#5808]
+- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
@@ -1668,6 +2076,18 @@ refpix
 
 - Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
   schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
+
+residual_fringe
+---------------
+
+- First implementation of step. Added third party package (BayesicFitting) to setup.cfg [#6211]
+
+- Fixed suffix defined in spec [#6347]
+
+- Fixed an error when a filename was give as the input to apply the residual fringe correction [#6349]
+
+- Updated residual fringe reference data model to support new delivery of reference files [#6357]
+
 
 set_telescope_pointing
 ----------------------
@@ -3894,8 +4314,6 @@ tso_photometry
 tweakreg
 --------
 
-wfs_combine
------------
 
 white_light
 -----------

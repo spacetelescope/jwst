@@ -34,6 +34,7 @@ Package Index
    ipc/index.rst
    jump/index.rst
    klip/index.rst
+   lib/index.rst
    lastframe/index.rst
    linearity/index.rst
    master_background/index.rst
@@ -50,6 +51,7 @@ Package Index
    refpix/index.rst
    resample/index.rst
    reset/index.rst
+   residual_fringe/index.rst
    rscd/index.rst
    saturation/index.rst
    skymatch/index.rst
@@ -64,5 +66,6 @@ Package Index
    tweakreg/index.rst
    wavecorr/index.rst
    wfs_combine/index.rst
+   wfss_contam/index.rst
    white_light/index.rst
    wiimatch/index.rst

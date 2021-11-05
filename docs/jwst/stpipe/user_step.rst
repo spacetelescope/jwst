@@ -51,37 +51,14 @@ into :ref:`stpipe-user-pipelines`, a Pipeline may use the same Step class
 multiple times, each with different configuration parameters.
 
 The parameters specific to the Step all reside under the key ``parameters``. The
-set of accepted parameters is defined in the Step’s spec member. You can print
-out a Step’s configspec using the ``stspec`` commandline utility. For example,
-to print the configspec for an imaginary step called `stpipe.cleanup`::
+set of accepted parameters is defined in the Step’s spec member.  The easiest
+way to get started on a parameter file is to call ``Step.export_config`` and
+then edit the file that is created.  This will generate an ASDF config file
+that includes every available parameter, which can then be trimmed to the
+parameters that require customization.
 
-    $ stspec stpipe.cleanup
-    # The threshold below which to apply cleanup
-    threshold = float()
-
-    # A scale factor
-    scale = float()
-
-    # The output file to save to
-    output_file = output_file(default = None)
-
-.. note::
-
-    Configspec information can also be displayed from Python, just
-    call ``print_configspec`` on any Step class.
-
-.. doctest-skip::
-
-  >>> from jwst.stpipe import cleanup
-  >>> cleanup.print_configspec()
-  >>> # The threshold below which to apply cleanup
-  >>> threshold = float()
-  >>> # A scale factor
-  >>> scale = float()
-
-Using this information, one can write a parameter file to use this step. For
-example, here is a parameter file (``do_cleanup.asdf``) that runs the
-``stpipe.cleanup`` step to clean up an image.
+Here is an example parameter file (``do_cleanup.asdf``) that runs the (imaginary)
+step ``stpipe.cleanup`` to clean up an image.
 
 .. code-block::
 

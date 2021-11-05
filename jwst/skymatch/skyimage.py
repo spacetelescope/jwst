@@ -228,9 +228,17 @@ class SkyImage:
 
         """
         if isinstance(skyimage, (SkyImage, SkyGroup)):
-            return self._polygon.intersection(skyimage.polygon)
+            other = skyimage.polygon
         else:
-            return self._polygon.intersection(skyimage)
+            other = skyimage
+
+        pts1 = np.sort(list(self._polygon.points)[0], axis=0)
+        pts2 = np.sort(list(other.points)[0], axis=0)
+        if np.allclose(pts1, pts2, rtol=0, atol=5e-9):
+            intersect_poly = self._polygon.copy()
+        else:
+            intersect_poly = self._polygon.intersection(other)
+        return intersect_poly
 
     def calc_bounding_polygon(self, stepsize=None):
         """ Compute image's bounding polygon.

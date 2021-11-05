@@ -1,0 +1,72 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/fringe_freq.schema"
+title: Default MIRI Residual Fringe Correction
+allOf:
+- $ref: referencefile.schema
+- type: object
+  title: MIRI MRS fringe frequencies model
+  properties:
+    rfc_freq_short_table:
+      title: residual fringe short table
+      fits_hdu: RFC_FREQ_SHORT
+      datatype:
+      - name: slice
+        datatype: float64
+      - name: ffreq
+        datatype: float64
+      - name: dffreq
+        datatype: float64
+      - name: min_nfringes
+        datatype: int64
+      - name: max_nfringes
+        datatype: int64
+      - name: min_snr
+        datatype: float64
+      - name: pgram_res
+        datatype: float64
+    rfc_freq_medium_table:
+      title: default residual fringe medium table
+      fits_hdu: RFC_FREQ_MEDIUM
+      datatype:
+      - name: slice
+        datatype: float64
+      - name: ffreq
+        datatype: float64
+      - name: dffreq
+        datatype: float64
+      - name: min_nfringes
+        datatype: int64
+      - name: max_nfringes
+        datatype: int64
+      - name: min_snr
+        datatype: float64
+      - name: pgram_res
+        datatype: float64
+    rfc_freq_long_table:
+      title: default residual fringe long table
+      fits_hdu: RFC_FREQ_LONG
+      datatype:
+      - name: slice
+        datatype: float64
+      - name: ffreq
+        datatype: float64
+      - name: dffreq
+        datatype: float64
+      - name: min_nfringes
+        datatype: int64
+      - name: max_nfringes
+        datatype: int64
+      - name: min_snr
+        datatype: float64
+      - name: pgram_res
+        datatype: float64
+    max_amp_table:
+      title: default residual fringe max amp table
+      fits_hdu: MAX_AMP
+      datatype:
+      - name: wavelength
+        datatype: float64
+      - name: amplitude
+        datatype: float64

@@ -7,7 +7,6 @@ import numpy as np
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
 from jwst.lib.suffix import replace_suffix
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -23,8 +22,7 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
     rtdata.get_data('nirspec/tso/jw84600042001_02101_00001_nrs2_rateints.fits')
 
     # Run the calwebb_spec2 pipeline;
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=True",
             "--steps.extract_2d.save_results=True",
             "--steps.wavecorr.save_results=True",
@@ -66,6 +64,19 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     data_flat_fielded.write(rtdata.output)
 
     rtdata.get_truth('truth/test_nirspec_brightobj_spec2/flat_fielded_step_user_supplied.fits')
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_flat_field_bots_interp_flat(rtdata, fitsdiff_default_kwargs):
+    """Test the interpolated flat for a NRS BOTS exposure"""
+    data = rtdata.get_data('nirspec/tso/jw93056001001_short_nrs1_wavecorr.fits')
+
+    FlatFieldStep.call(data, save_interpolated_flat=True)
+    rtdata.output = 'jw93056001001_short_nrs1_wavecorr_interpolatedflat.fits'
+
+    rtdata.get_truth('truth/test_nirspec_brightobj_spec2/jw93056001001_short_nrs1_wavecorr_interpolatedflat.fits')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

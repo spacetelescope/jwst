@@ -44,16 +44,16 @@ each band will be created.
   with the options above [band, channel, grating, filter] to fully control the type of IFU
   cubes to make.
 
-  - ``output_type = band`` is the default mode for calspec2 and creates IFU cubes containing only one band
-    (channel/sub-channel or  grating/filter combination).
+  - ``output_type = band`` is the default mode for calspec3 and creates IFU cubes containing only one band
+    (channel/sub-channel for MIRI or grating/filter combination for NIRSpec).
 
-  - ``output_type = channel`` combines all the MIRI channels in the data or set by the
-    channel option into a single IFU cube.
+  - ``output_type = channel`` creates a single IFU cube from each unique channel of MIRI data
+    (or just those channels set by the 'channel' option).
 
   - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
     grating option into a single IFU cube.
 
-  - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for calspec3. If in addition,
+  - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for calspec2. If in addition,
     channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
 
@@ -94,9 +94,8 @@ The arguments related to region of interest and how the fluxes are combined toge
 
 
 ``weighting [string]``
-  The type of weighting to use when combining points cloud fluxes to represent the spaxel flux. Allowed values are
-  ``emsm`` and ``msm``. This defines how the point cloud members falling inside the ROI of the spaxel center are weighted	
-  to find the final spaxel flux. 
+  The type of weighting to use when combining detector pixel fluxes to represent the spaxel flux. Allowed values are
+  ``emsm``,  ``msm`` and ``drizzle``. 
 
-  For more details on how the weighting of the point cloud members are used in determining the final spaxel flux see
+  For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.

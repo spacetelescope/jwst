@@ -40,7 +40,7 @@ class ResampleData:
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
                  pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, **kwargs):
+                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
         ----------
@@ -51,10 +51,14 @@ class ResampleData:
             filename for output
 
         kwargs : dict
-            Other parameters
+            Other parameters.
+
+            .. note::
+                ``output_shape`` is in the ``x, y`` order.
         """
         self.input_models = input_models
 
+        self.output_filename = output
         self.pscale_ratio = pscale_ratio
         self.single = single
         self.blendheaders = blendheaders
@@ -64,24 +68,37 @@ class ResampleData:
         self.weight_type = weight_type
         self.good_bits = good_bits
 
-        if output is None:
-            output = input_models.meta.resample.output
-        self.output_filename = output
+        ref_wcs = kwargs.get('ref_wcs', None)
+        out_shape = kwargs.get('out_shape', None)
+        crpix = kwargs.get('crpix', None)
+        crval = kwargs.get('crval', None)
+        rotation = kwargs.get('rotation', None)
+
+        if pscale is not None:
+            pscale /= 3600.0
 
         # Define output WCS based on all inputs, including a reference WCS
-        self.output_wcs = resample_utils.make_output_wcs(self.input_models,
-                                                         pscale_ratio=self.pscale_ratio)
-        log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
+        self.output_wcs = resample_utils.make_output_wcs(
+            self.input_models,
+            ref_wcs=ref_wcs,
+            pscale_ratio=self.pscale_ratio,
+            pscale=pscale,
+            rotation=rotation,
+            shape=out_shape if out_shape is None else out_shape[::-1],
+            crpix=crpix,
+            crval=crval
+        )
+        log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
-            self.output_wcs.data_size, kwargs['allowed_memory'], datamodels.ImageModel
+            self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
         )
         if not can_allocate:
             raise OutputTooLargeError(
-                f'Combined ImageModel size {self.output_wcs.data_size} '
+                f'Combined ImageModel size {self.output_wcs.array_shape} '
                 f'requires {bytes2human(required_memory)}. '
                 f'Model cannot be instantiated.'
             )
-        self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
+        self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
         self.blank_output.update(input_models[0])
@@ -154,6 +171,7 @@ class ResampleData:
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                         kernel=self.kernel, fillval=self.fillval)
 
+        log.info("Resampling science data")
         for img in self.input_models:
             inwht = resample_utils.build_driz_weight(img,
                                                      weight_type=self.weight_type,
@@ -189,44 +207,56 @@ class ResampleData:
     def resample_variance_array(self, name, output_model):
         """Resample variance arrays from self.input_models to the output_model
 
-        Loop through self.input_models and resample the `name` variance array
-        to the same name in output_model.  This modifies output_model in-place.
-        """
-        outwht = np.zeros_like(output_model.data)
-        outcon = np.zeros_like(output_model.con)
-        output_wcs = output_model.meta.wcs
-        output_arrays = []
+        Resample the ``name`` variance array to the same name in output_model,
+        using a cummulative sum.
 
+        This modifies output_model in-place.
+        """
+        output_wcs = output_model.meta.wcs
+        inverse_variance_sum = np.zeros_like(output_model.data)
+
+        log.info(f"Resampling {name}")
         for model in self.input_models:
-            # Unity weight but ignore pixels that are NON_SCIENCE or REFERENCE_PIXEL
+            variance = getattr(model, name)
+            if variance is None or variance.size == 0:
+                log.debug(
+                    f"No data for '{name}' for model "
+                    f"{repr(model.meta.filename)}. Skipping ..."
+                )
+                continue
+
+            elif variance.shape != model.data.shape:
+                log.warning(
+                    f"Data shape mismatch for '{name}' for model "
+                    f"{repr(model.meta.filename)}. Skipping ..."
+                )
+                continue
+
+            # Make input weight map of unity where there is science data
             inwht = resample_utils.build_driz_weight(model, weight_type=None,
                                                      good_bits="~NON_SCIENCE+REFERENCE_PIXEL")
-            input_array = getattr(model, name)
-            output_array = np.zeros_like(output_model.data)
 
-            # Resample the variance array
-            self.drizzle_arrays(input_array, inwht, model.meta.wcs,
-                                output_wcs, output_array, outwht, outcon,
+            resampled_variance = np.zeros_like(output_model.data)
+            outwht = np.zeros_like(output_model.data)
+            outcon = np.zeros_like(output_model.con)
+
+            # Resample the variance array.  Use fillval=np.inf so that when we
+            # take the reciprocal for summing, it is zero where there is zero weight
+            self.drizzle_arrays(variance, inwht, model.meta.wcs,
+                                output_wcs, resampled_variance, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.nan)
-            output_arrays.append(output_array)
+                                fillval=np.inf)
 
-        # Stack and coadd as inverse variance if there any to stack
-        if len(output_arrays) > 1:
-            stacked = np.stack(output_arrays)
+            # Add the inverse of the resampled variance to a running sum
             with np.errstate(divide="ignore"):
-                inv_var = np.reciprocal(stacked)
-            inv_var[~np.isfinite(inv_var)] = np.nan
+                inverse_variance_sum += np.reciprocal(resampled_variance)
 
-            inv_var_mean = np.nanmean(inv_var, axis=0)
-
-            with np.errstate(divide="ignore"):
-                output_err_array = np.reciprocal(inv_var_mean)
-        else:
-            output_err_array = output_arrays[0]
-        output_err_array[~np.isfinite(output_err_array)] = np.nan
-
-        setattr(output_model, name, output_err_array)
+        # We now have a sum of the inverse resampled variances.  We need the
+        # inverse of that to get back to units of variance.
+        with np.errstate(divide="ignore"):
+            output_variance = np.reciprocal(inverse_variance_sum)
+        output_variance[~np.isfinite(output_variance)] = np.nan
+        setattr(output_model, name, output_variance)
 
     def update_exposure_times(self, output_model):
         """Modify exposure time metadata in-place"""
@@ -246,7 +276,7 @@ class ResampleData:
     @staticmethod
     def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht, outcon,
                        uniqid=1, xmin=None, xmax=None, ymin=None, ymax=None,
-                       pixfrac=1.0, kernel='square', fillval="INDEF"):
+                       pixfrac=1.0, kernel='square', fillval="INDEF", wtscale=1.0):
         """
         Low level routine for performing 'drizzle' operation on one image.
 
@@ -405,7 +435,7 @@ class ResampleData:
             kernel=kernel,
             in_units="cps",
             expscale=1.0,
-            wtscale=1.0,
+            wtscale=wtscale,
             fillstr=fillval
         )
 

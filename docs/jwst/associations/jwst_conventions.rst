@@ -6,7 +6,7 @@ JWST Conventions
 
 .. _asn-jwst-naming:
 
-Naming Conventions
+Association Naming
 ==================
 
 When produced through the ground processing, all association files are
@@ -45,7 +45,7 @@ Association Types
 Each association is intended to make a specific science
 product. The type of science product is indicated by the ``ATYPE`` field
 in the association file name (see :ref:`asn-jwst-naming`), and in the ``asn_type`` meta
-keyword of the association itself (see :ref:`asn-association-meta-keywords`).
+keyword of the association itself (see :ref:`asn-level3-meta-keywords`).
 
 The pipeline uses this type as the key to indicate which Level 2 or
 Level 3 pipeline module to use to process this association.
@@ -64,3 +64,32 @@ The current association types are:
   * ``tso-spec2``: Intended for :ref:`calwebb_spec2 <calwebb_spec2>` processing
   * ``wfs-image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
   * ``wfs-image3``: Intended for :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>` processing
+
+Field Guide to File Names
+=========================
+
+The high-level distinctions between stage 2, stage 3, exposure-centric, and
+target-centric files can be determined by the following file patterns. These
+patterns are not intended to fully define all the specific types of files there
+are. However, these are the main classifications, from which the documentation
+for the individual calibrations steps and pipelines will describe any further
+details.
+
+The most general regex matches all files that have been produced by Stage 3 processing::
+
+    .+[aocr][0-9]{3:4}.+
+
+The following regexes differentiate between exposure-centric and target-centric files.
+
+- Files containing exposure-centric data
+
+  The following regex matches files names produced by either Stage 2 or 3
+  calibration and containing exposure-centric data::
+
+    jw[0-9]{11}_[0-9]{5}_[0-9]{5}_.+\.fits
+
+- Files containing target-centric data
+
+  The following regex matches file names produced by Stage 3 calibration and containing target-centric data::
+
+    jw[0-9]{5}-[aocr][0-9]{3:4}_.+

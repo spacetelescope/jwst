@@ -35,7 +35,12 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('ivm', 'exptime', default='ivm')
-        pixel_scale_ratio = float(default=1.0) # Ratio of output to input pixel scale
+        output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
+        crpix = float_list(min=2, max=2, default=None)
+        crval = float_list(min=2, max=2, default=None)
+        rotation = float(default=None)
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
+        pixel_scale = float(default=None) # Absolute pixel scale in arcsec
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -47,13 +52,19 @@ class ResampleStep(Step):
 
         input = datamodels.open(input)
 
-        # If single input, wrap in a ModelContainer
-        if not isinstance(input, datamodels.ModelContainer):
-            input_models = datamodels.ModelContainer([input])
-            input_models.meta.resample.output = input.meta.filename
-            self.blendheaders = False
-        else:
+        if isinstance(input, datamodels.ModelContainer):
             input_models = input
+            try:
+                output = input_models.meta.asn_table.products[0].name
+            except AttributeError:
+                # coron data goes through this path by the time it gets to
+                # resampling.
+                # TODO: figure out why and make sure asn_table is carried along
+                output = None
+        else:
+            input_models = datamodels.ModelContainer([input])
+            output = input.meta.filename
+            self.blendheaders = False
 
         # Check that input models are 2D images
         if len(input_models[0].data.shape) != 2:
@@ -67,28 +78,44 @@ class ResampleStep(Step):
         if ref_filename != 'N/A':
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
+
         else:
             # If there is no drizpars reffile
             self.log.info("No DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         kwargs['allowed_memory'] = self.allowed_memory
+        kwargs['weight_type'] = str(self.weight_type)
+        if self.weight_type == 'exptime':
+            self.log.warning("Use of EXPTIME weighting will result in incorrect")
+            self.log.warning("propagated errors in the resampled product")
+
+        # Custom output WCS parameters.
+        # Modify get_drizpars if any of these get into reference files:
+        kwargs['ref_wcs'] = None  # TODO: add mechanism of specifying a ref WCS
+        kwargs['out_shape'] = _check_list_pars(self.output_shape, 'output_shape',
+                                               min_vals=[1, 1])
+        kwargs['crpix'] = _check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = _check_list_pars(self.crval, 'crval')
+        kwargs['rotation'] = self.rotation
+        kwargs['pscale'] = self.pixel_scale
 
         # Call the resampling routine
-        resamp = resample.ResampleData(input_models, **kwargs)
+        resamp = resample.ResampleData(input_models, output=output, **kwargs)
         result = resamp.do_drizzle()
 
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
             util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.meta.pool_name
-            model.meta.asn.table_name = input_models.meta.table_name
+            model.meta.asn.pool_name = input_models.asn_pool_name
+            model.meta.asn.table_name = input_models.asn_table_name
             self.update_phot_keywords(model)
             model.meta.filetype = 'resampled'
 
         if len(result) == 1:
             result = result[0]
 
+        input_models.close()
         return result
 
     def update_phot_keywords(self, model):
@@ -114,7 +141,7 @@ class ResampleStep(Step):
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,
-        then these will overwerite the defaults pulled from the reference file.
+        then these will overwrite the defaults pulled from the reference file.
         """
         with datamodels.DrizParsModel(ref_filename) as drpt:
             drizpars_table = drpt.data
@@ -215,3 +242,19 @@ class ResampleStep(Step):
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs
+
+
+def _check_list_pars(vals, name, min_vals=None):
+    if vals is None:
+        return None
+    if len(vals) != 2:
+        raise ValueError(f"List '{name}' must have exactly two elements.")
+    n = sum(x is None for x in vals)
+    if n == 2:
+        return None
+    elif n == 0:
+        if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
+            raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
+        return list(vals)
+    else:
+        raise ValueError(f"Both '{name}' values must be either None or not None.")

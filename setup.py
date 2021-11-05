@@ -27,13 +27,19 @@ package_data = {
         "tests/okfile/*.prop",
     ],
 
-    "jwst.lib": ["tests/data/siaf.db"],
+    "jwst.lib": [
+        "tests/data/*.asdf",
+        "tests/data/*.db",
+        "tests/data/*.ecsv",
+        "tests/data/*.fits",
+    ],
 
     # Include the rules .py files in associations test data
     "jwst.associations": ["tests/data/*.py"],
 
     # Include C extensions
     "jwst.lib.src": ["*.c"],
+    "jwst.cube_build.src": ["*.c"],
 
     # Include the transforms schemas
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
@@ -56,6 +62,24 @@ setup(
         Extension(
             'jwst.lib.winclip',
             ['jwst/lib/src/winclip.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        ),
+        Extension(
+            'jwst.cube_build.cube_match_internal',
+            ['jwst/cube_build/src/cube_match_internal.c','jwst/cube_build/src/cube_utils.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        ),
+        Extension(
+            'jwst.cube_build.cube_match_sky',
+            ['jwst/cube_build/src/cube_match_sky.c','jwst/cube_build/src/cube_utils.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        ),
+        Extension(
+            'jwst.cube_build.blot_median',
+            ['jwst/cube_build/src/blot_median.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         )

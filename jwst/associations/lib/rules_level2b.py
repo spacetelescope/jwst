@@ -13,6 +13,7 @@ from jwst.associations.lib.dms_base import (
     item_getattr,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
+    nrslamp_valid_detector,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
@@ -101,6 +102,22 @@ class Asn_Lv2ImageNonScience(
             Constraint_Base(),
             Constraint_Image_Nonscience(),
             Constraint_Single_Science(self.has_science),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='dms_note',
+                        sources=['dms_note'],
+                        value=['wfsc_los_jitter'],
+                    ),
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrc_tacq'
+                    ),
+
+                ],
+                reduce=Constraint.notall
+            )
         ])
 
         # Now check and continue initialization.
@@ -507,9 +524,34 @@ class Asn_Lv2NRSLAMPSpectral(
                 sources=['filter'],
                 value='opaque'
             ),
-            DMSAttrConstraint(
-                name='opmode',
-                sources=['opmode'],
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrslamp_valid_detector(item),
+                force_unique=False
+            ),
+            Constraint(
+                [
+                    Constraint(
+                        [DMSAttrConstraint(
+                            name='opmode',
+                            sources=['opmode'],
+                            value='msaspec',
+                        )],
+                        reduce=Constraint.notany
+                    ),
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                sources=['opmode'],
+                                value='msaspec'
+                            ),
+                            DMSAttrConstraint(
+                                sources=['msametfl']
+                            )
+                        ]
+                    ),
+                ],
+                reduce=Constraint.any
             ),
             DMSAttrConstraint(
                 name='lamp',
@@ -568,6 +610,10 @@ class Asn_Lv2WFSS(
             # Basic constraints
             Constraint_Base(),
             Constraint_Target(),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume']
+            ),
 
             # Allow WFSS exposures but account for the direct imaging.
             Constraint([
@@ -937,7 +983,6 @@ class Asn_Lv2WFSC(
             Constraint_Base(),
             Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science),
-            Constraint_ExtCal(),
             Constraint_WFSC(),
         ])
 

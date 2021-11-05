@@ -20,13 +20,17 @@ Examples
         (91.08142005, -66.60547869)>, refpoint=<SkyCoord (ICRS): (ra, dec) in deg
         (90.70377653, -66.59540224)>, delta_v1=<Angle 0.13712727 deg>, delta_refpoint=<Angle 0.04044315 deg>)
 
->>> calc_deltas([im])
-    <Table length=1>
-      exposure                  target                ...    delta_refpoint
-                               deg,deg                ...
-       object                   object                ...       float64
-    ------------ ------------------------------------ ... -------------------
-    <ImageModel> 90.75541666666666,-66.56055555555554 ... 0.04044314761499765
+>>> t = calc_deltas([im])
+>>> print(t.columns)
+    <TableColumns names=('exposure','target','v1','refpoint','delta_v1','delta_refpoint')>
+>>> print(t["delta_v1"])
+          delta_v1
+    -------------------
+    0.13712727164010646
+>>> print(t["delta_refpoint"])
+        delta_refpoint
+    -------------------
+    0.04044314761499765
 """
 from collections import defaultdict, namedtuple
 import logging

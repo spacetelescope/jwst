@@ -64,10 +64,7 @@ import logging
 import astropy.io.fits as fits
 import numpy as np
 from numpy import cos, sin
-from jwst.lib.engdb_tools import (
-    ENGDB_BASE_URL,
-    ENGDB_Service,
-)
+from jwst.lib.engdb_tools import ENGDB_Service
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -347,9 +344,6 @@ def get_pointing(obstart, obsend, result_type='first'):
         '\n\tobstart = {}'
         '\n\tobsend = {}'.format(obstart, obsend)
     )
-    logger.info(
-        'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
-    )
     try:
         engdb = ENGDB_Service()
     except Exception as exception:
@@ -359,6 +353,9 @@ def get_pointing(obstart, obsend, result_type='first'):
                 exception
             )
         )
+    logger.info(
+        'Querying engineering DB: {}'.format(engdb.base_url)
+    )
     params = {
         'SA_ZATTEST1': None,
         'SA_ZATTEST2': None,

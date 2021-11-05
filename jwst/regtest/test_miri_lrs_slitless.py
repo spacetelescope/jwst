@@ -2,7 +2,6 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from gwcs.wcstools import grid_from_bounding_box
 from jwst.associations.asn_from_list import asn_from_list
@@ -17,11 +16,10 @@ PROGRAM = "00623"
 def run_tso1_pipeline(jail, rtdata_module):
     """Run the calwebb_tso1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
-    collect_pipeline_cfgs("config")
     rtdata.get_data(f"miri/lrs/{DATASET_ID}_uncal.fits")
 
     args = [
-        "jwst.pipeline.Detector1Pipeline",
+        "calwebb_detector1",
         rtdata.input,
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
@@ -41,10 +39,8 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, jail, rtdata_module):
 
     rtdata.input = f"{DATASET_ID}_rateints.fits"
 
-    collect_pipeline_cfgs("config")
-
     args = [
-        "config/calwebb_tso-spec2.cfg",
+        "calwebb_spec2",
         rtdata.input,
         "--steps.flat_field.save_results=true",
         "--steps.assign_wcs.save_results=true",
@@ -74,7 +70,7 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, generate_tso3_asn):
     asn_filename, _ = generate_tso3_asn
 
     args = [
-        "config/calwebb_tso3.cfg",
+        "calwebb_tso3",
         asn_filename,
         "--steps.outlier_detection.save_results=true",
     ]

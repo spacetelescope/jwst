@@ -42,6 +42,7 @@ from .refpix.refpix_step import RefPixStep
 from .resample.resample_step import ResampleStep
 from .resample.resample_spec_step import ResampleSpecStep
 from .reset.reset_step import ResetStep
+from .residual_fringe.residual_fringe_step import ResidualFringeStep
 from .rscd.rscd_step import RscdStep
 from .rscd.rscd_step import RSCD_Step
 from .saturation.saturation_step import SaturationStep
@@ -103,6 +104,7 @@ __all__ = [
     "ResampleStep",
     "ResampleSpecStep",
     "ResetStep",
+    "ResidualFringeStep",
     "RscdStep",
     "RSCD_Step",
     "SaturationStep",

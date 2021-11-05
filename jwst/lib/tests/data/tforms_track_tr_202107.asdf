@@ -1,0 +1,35 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.5.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+  name: asdf, version: 2.7.3}
+history:
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: !core/software-1.0.0 {name: asdf, version: 2.7.3}
+transforms:
+  m_eci2siaf: !core/ndarray-1.0.0
+    data:
+    - [-0.8126565916923755, -0.5039704801327788, -0.2925799363142806]
+    - [-0.5603344283055018, 0.8136707732968903, 0.15480698026247713]
+    - [-0.1600455948612094, -0.28974752429861605, 0.9436269282551999]
+    datatype: float64
+    shape: [3, 3]
+  m_eci2v: !core/ndarray-1.0.0
+    data:
+    - [-0.16193571766086515, -0.28794272195305015, 0.943856881216601]
+    - [0.8180267213354935, 0.4957858199268441, 0.2915968174390283]
+    - [-0.5519140390738069, 0.8193200898511738, 0.15525940821573725]
+    datatype: float64
+    shape: [3, 3]
+  m_v2siaf: !core/ndarray-1.0.0
+    data:
+    - [0.0005591740248066535, -0.9999516032611033, -0.009822344931788407]
+    - [0.0025632141220938687, -0.009820880986755013, 0.9999484887883017]
+    - [0.9999965586229655, 0.0005843219943163227, -0.0025575984893407545]
+    datatype: float64
+    shape: [3, 3]
+...

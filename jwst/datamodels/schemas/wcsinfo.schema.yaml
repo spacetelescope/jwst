@@ -323,7 +323,7 @@ properties:
             fits_hdu: SCI
             blend_table: True
           velosys:
-            title: "[m/s] Radial velocity wrt Barycenter"
+            title: "[m/s] Barycentric correction to radial velocity"
             type: number
             fits_keyword: VELOSYS
             fits_hdu: SCI

@@ -6,7 +6,6 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 @pytest.fixture(scope="module")
@@ -15,9 +14,8 @@ def run_detector1pipeline(rtdata_module, jail):
     rtdata = rtdata_module
     rtdata.get_data("nirspec/irs2/jw0010010_11010_nrs1_chimera_uncal.fits")
 
-    collect_pipeline_cfgs("config")
     Step.from_cmdline([
-        "config/calwebb_detector1.cfg",
+        "calwebb_detector1",
         rtdata.input,
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",

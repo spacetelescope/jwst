@@ -18,6 +18,7 @@ from ci_watson.artifactory_helpers import (
 )
 
 from jwst.associations import AssociationNotValidError, load_asn
+from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -33,8 +34,8 @@ class RegtestData:
                  results_root="jwst-pipeline-results", docopy=True,
                  input=None, input_remote=None, output=None, truth=None,
                  truth_remote=None, remote_results_path=None, test_name=None,
-                 traceback=None, **kwargs):
-        self._env = env
+                 traceback=None, okify_op='file_copy', **kwargs):
+        self.env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
         self._bigdata_root = get_bigdata_root()
@@ -52,6 +53,7 @@ class RegtestData:
         self.remote_results_path = remote_results_path
         self.test_name = test_name
         self.traceback = traceback
+        self.okify_op = okify_op
 
         # Initialize non-initialized attributes
         self.asn = None
@@ -61,7 +63,7 @@ class RegtestData:
             dict(input=self.input, output=self.output, truth=self.truth,
                  input_remote=self.input_remote, truth_remote=self.truth_remote,
                  remote_results_path=self.remote_results_path, test_name=self.test_name,
-                 traceback=self.traceback),
+                 traceback=self.traceback, okify_op=self.okify_op),
             indent=1
         )
 
@@ -142,9 +144,9 @@ class RegtestData:
             self.input_remote = path
         if docopy is None:
             docopy = self.docopy
-        self.input = get_bigdata(self._inputs_root, self._env, path,
+        self.input = get_bigdata(self._inputs_root, self.env, path,
                                  docopy=docopy)
-        self.input_remote = os.path.join(self._inputs_root, self._env, path)
+        self.input_remote = os.path.join(self._inputs_root, self.env, path)
 
         return self.input
 
@@ -154,20 +156,18 @@ class RegtestData:
             path = self.input_remote
         else:
             self.input_remote = path
-        if docopy is None:
-            docopy = self.docopy
 
         # Get full path and proceed depending on whether
         # is a local path or URL.
         root = self.bigdata_root
         if op.exists(root):
-            root_path = op.join(root, self._inputs_root, self._env)
+            root_path = op.join(root, self._inputs_root, self.env)
             root_len = len(root_path) + 1
             path = op.join(root_path, path)
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
-            root_len = len(self._env) + 1
-            file_paths = _data_glob_url(self._inputs_root, self._env, path, glob, root=root)
+            root_len = len(self.env) + 1
+            file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
         else:
             raise BigdataError('Path cannot be found: {}'.format(path))
 
@@ -190,15 +190,10 @@ class RegtestData:
         if docopy is None:
             docopy = self.docopy
         os.makedirs('truth', exist_ok=True)
-        os.chdir('truth')
-        try:
-            self.truth = get_bigdata(self._inputs_root, self._env, path,
+        with pushdir('truth'):
+            self.truth = get_bigdata(self._inputs_root, self.env, path,
                                      docopy=docopy)
-            self.truth_remote = os.path.join(self._inputs_root, self._env, path)
-        except BigdataError:
-            os.chdir('..')
-            raise
-        os.chdir('..')
+            self.truth_remote = os.path.join(self._inputs_root, self.env, path)
 
         return self.truth
 
@@ -232,7 +227,7 @@ class RegtestData:
             docopy = self.docopy
 
         # Get the association JSON file
-        self.input = get_bigdata(self._inputs_root, self._env, path,
+        self.input = get_bigdata(self._inputs_root, self.env, path,
                                  docopy=docopy)
         with open(self.input) as fp:
             asn = load_asn(fp)
@@ -245,7 +240,7 @@ class RegtestData:
                     fullpath = os.path.join(
                         os.path.dirname(self.input_remote),
                         member['expname'])
-                    get_bigdata(self._inputs_root, self._env, fullpath,
+                    get_bigdata(self._inputs_root, self.env, fullpath,
                                 docopy=self.docopy)
 
     def to_asdf(self, path):

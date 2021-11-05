@@ -10,19 +10,20 @@ def run_nis_wfss_spec2(jail, rtdata_module):
     """Run the calwebb_spec2 pipeline"""
     step_params = {
         'input_path': 'niriss/wfss/nir_wfss_spec2_asn.json',
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
-            '--steps.bkg_subtract.save_results=true',
             '--steps.assign_wcs.save_results=true',
+            '--steps.bkg_subtract.save_results=true',
             '--steps.imprint_subtract.save_results=true',
             '--steps.msa_flagging.save_results=true',
-            '--steps.extract_2d.save_results=true',
             '--steps.flat_field.save_results=true',
+            '--steps.extract_2d.save_results=true',
             '--steps.srctype.save_results=true',
             '--steps.straylight.save_results=true',
             '--steps.fringe.save_results=true',
             '--steps.pathloss.save_results=true',
             '--steps.barshadow.save_results=true',
+            '--steps.wfss_contam.save_results=true',
             '--steps.photom.save_results=true',
             '--steps.resample_spec.save_results=true',
             '--steps.cube_build.save_results=true',
@@ -50,7 +51,7 @@ def run_nis_wfss_spec3(jail, rtdata_module):
     """Run the calwebb_spec3 pipeline"""
     step_params = {
         'input_path': 'niriss/wfss/jw00625-o030_20191121t041727_spec3_001_asn.json',
-        'step': 'calwebb_spec3.cfg',
+        'step': 'calwebb_spec3',
         'args': [
             '--steps.extract_1d.save_results=true',
             '--steps.combine_1d.save_results=true',

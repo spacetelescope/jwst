@@ -11,7 +11,7 @@ from ..guider_cds import guider_cds_step
 __all__ = ['GuiderPipeline']
 
 # Define logging
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 

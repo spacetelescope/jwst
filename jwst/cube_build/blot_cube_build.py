@@ -2,12 +2,12 @@
 """
 import numpy as np
 import logging
-import time
 from .. import datamodels
 from ..assign_wcs import nirspec
 from gwcs import wcstools
+from jwst.assign_wcs.util import in_ifu_slice
 from . import instrument_defaults
-
+from .blot_median import blot_wrapper  # c extension
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -16,7 +16,6 @@ class CubeBlot():
 
     def __init__(self, median_model, input_models):
         """Class Blot holds the main varibles for blotting sky cube to detector
-
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
@@ -47,17 +46,19 @@ class CubeBlot():
         self.filter = None
         self.subchannel = None
         self.channel = None
-        self.par_median = None
+        self.par_median_select1 = None
+        self.par_median_select2 = None
 
         if self.instrument == 'MIRI':
             self.channel = median_model.meta.instrument.channel
             self.subchannel = median_model.meta.instrument.band.lower()
-            self.par_median = self.channel
+            self.par_median_select1 = self.channel
+            self.par_median_select2 = self.subchannel
 
         elif self.instrument == 'NIRSPEC':
             self.grating = median_model.meta.instrument.grating
             self.filter = median_model.meta.instrument.filter
-            self.par_median = self.grating
+            self.par_median_select1 = self.grating
         # ________________________________________________________________
         # set up x,y,z of Median Cube
         # Median cube shoud have linear wavelength
@@ -73,10 +74,11 @@ class CubeBlot():
         # cube_ra,dec,wave
         self.cube_flux = self.median_skycube.data
 
-        # remove all the nan values
+        # remove all the nan values - just in case
         valid1 = ~np.isnan(self.cube_ra)
         valid2 = ~np.isnan(self.cube_dec)
         good_data = np.where(valid1 & valid2)
+
         self.cube_ra = self.cube_ra[good_data]
         self.cube_dec = self.cube_dec[good_data]
         self.cube_wave = self.cube_wave[good_data]
@@ -86,15 +88,22 @@ class CubeBlot():
         # read channel (MIRI) or grating (NIRSpec) value that the Median Image covers
         # only use input models in this range
         self.input_models = []
-        for model in input_models:
-            if self.instrument == 'MIRI':
-                par = model.meta.instrument.channel
-            if self.instrument == 'NIRSPEC':
-                par = model.meta.instrument.grating
+        self.input_list_number = []
 
-            found = par.find(self.par_median)
-            if found > -1:
+        for icount, model in enumerate(input_models):
+            if self.instrument == 'MIRI':
+                par1 = model.meta.instrument.channel
+                par2 = model.meta.instrument.band.lower()
+                found2 = par2.find(self.par_median_select2)
+            if self.instrument == 'NIRSPEC':
+                par1 = model.meta.instrument.grating
+                par2 = model.meta.instrument.grating
+                found2 = 1
+
+            found1 = par1.find(self.par_median_select1)
+            if found1 > -1 and found2 > -1:
                 self.input_models.append(model)
+                self.input_list_number.append(icount)
     # **********************************************************************
 
     def blot_info(self):
@@ -102,7 +111,7 @@ class CubeBlot():
         """
         log.info('Information on Blotting')
         log.info('Working with instrument %s', self.instrument)
-        log.info('shape of sky cube %f %f %f',
+        log.info('Shape of sky cube %f %f %f',
                  self.median_skycube.data.shape[2],
                  self.median_skycube.data.shape[1],
                  self.median_skycube.data.shape[0])
@@ -115,14 +124,14 @@ class CubeBlot():
             log.info('Grating %s', self.grating)
             log.info('Filter %s', self.filter)
 
-        log.info('Number of input models %i ', len(self.input_models))
+    # ***********************************************************************
 
     def blot_images(self):
         if self.instrument == 'MIRI':
             blotmodels = self.blot_images_miri()
         elif self.instrument == 'NIRSPEC':
             blotmodels = self.blot_images_nirspec()
-        return blotmodels
+        return blotmodels, self.input_list_number
     # ************************************************************************
 
     def blot_images_miri(self):
@@ -135,17 +144,10 @@ class CubeBlot():
         2. Loop over every input model and using the inverse (backwards) transform
            convert the median sky cube values ra, dec, lambda to the blotted
            x, y detector value (x_cube, y_cube).
-
         3. For each input model loop over the blotted x,y values and find
-            The x, y detector values that fall within the roi region. We loop
-            over the blotted values instead of the detector x, y (the more
-            obvious method) because of speed. We can break down the x, y detector
-            pixels into a regular grid represented by an array of xcenters and
-            ycenters. Because we are really intereseted finding all those blotted
-            pixels that fall with the roi of a detector pixel we need to
-            keep track of the blot flux and blot weight as we loop.
-            c. The blotted flux  = the weighted flux determined in
-            step b and stored in blot.data
+           the x, y detector values that fall within the roi region.
+           The blotted flux  = the weighted flux, where the weight is based on
+           distance between the center of the blotted pixel and the detector pixel.
         """
         blot_models = datamodels.ModelContainer()
         instrument_info = instrument_defaults.InstrumentInfo()
@@ -168,8 +170,8 @@ class CubeBlot():
             self.ycenter_grid, self.xcenter_grid = np.mgrid[0:ysize,
                                                             0:xsize]
 
-            xsize = xend - xstart + 1
-            xcenter = np.arange(xsize) + xstart
+            xsize2 = xend - xstart + 1
+            xcenter = np.arange(xsize2) + xstart
             ycenter = np.arange(ysize)
             valid_channel = np.logical_and(xdet >= xstart, xdet <= xend)
 
@@ -182,82 +184,41 @@ class CubeBlot():
             x_cube = np.ndarray.flatten(x_cube)
             y_cube = np.ndarray.flatten(y_cube)
             flux_cube = np.ndarray.flatten(self.cube_flux)
+
             valid = ~np.isnan(y_cube)
-            x_cube = x_cube[valid]
-            y_cube = y_cube[valid]
-            flux_cube = flux_cube[valid]
             valid_channel = np.logical_and(x_cube >= xstart, x_cube <= xend)
-            x_cube = x_cube[valid_channel]
-            y_cube = y_cube[valid_channel]
-            flux_cube = flux_cube[valid_channel]
-            # ___________________________________________________________________
+            valid_flux = (flux_cube != 0)
+
+            fuse = np.where(valid & valid_channel & valid_flux)
+            x_cube = x_cube[fuse]
+            y_cube = y_cube[fuse]
+            flux_cube = flux_cube[fuse]
+
             log.info('Blotting back to %s', model.meta.filename)
             # ______________________________________________________________________________
-            # For every detector pixel find the overlapping median cube spaxels.
+            # blot_wrapper is a c extension that finds:
+            # the overlapping median cube spaxels with the detector pixels
             # A median spaxel that falls withing the ROI of the center of the
-            # detector pixel in the tangent plane is flagged as an overlapping
-            # pixel.
-            # the Regular grid is on the x,y detector
+            # detector pixel  is flagged as an overlapping pixel.
 
-            blot_flux = self.blot_overlap_quick(model, xcenter, ycenter,
-                                                xstart, x_cube, y_cube,
-                                                flux_cube)
+            xsize2 = xcenter.shape[0]
+            roi_det = 1.0  # Just large enough that we don't get holes
+
+            # set up c wrapper for blotting
+            result = blot_wrapper(roi_det, xsize, ysize, xstart, xsize2,
+                                  xcenter, ycenter,
+                                  x_cube, y_cube, flux_cube)
+            blot_flux, blot_weight = result
+            igood = np.where(blot_weight > 0)
+            blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
+            blot_flux = blot_flux.reshape((ysize, xsize))
+
             blot.data = blot_flux
             blot_models.append(blot)
         return blot_models
-    # ________________________________________________________________________________
-
-    def blot_overlap_quick(self, model, xcenter, ycenter, xstart,
-                           x_cube, y_cube, flux_cube):
-
-        # blot_overlap_quick finds to overlap between the blotted sky values
-        # (x_cube, y_cube) and the detector pixels.
-        # Looping is done over irregular arrays (x_cube, y_cube) and mapping
-        # to xcenter ycenter is quicker than looping over detector x,y and
-        # finding overlap with large array for x_cube, y_cube
-
-        blot_flux = np.zeros(model.shape, dtype=np.float32)
-        blot_weight = np.zeros(model.shape, dtype=np.float32)
-        blot_ysize, blot_xsize = blot_flux.shape
-        blot_flux = np.ndarray.flatten(blot_flux)
-        blot_weight = np.ndarray.flatten(blot_weight)
-
-        # loop over valid points in cube (not empty edge pixels)
-        roi_det = 1.0  # Just large enough that we don't get holes
-        ivalid = np.nonzero(np.absolute(flux_cube))
-
-        t0 = time.time()
-        for ipt in ivalid[0]:
-            # search xcenter and ycenter seperately. These arrays are smallsh.
-            # xcenter size = naxis1 on detector (for MIRI only 1/2 array)
-            # ycenter size = naxis2 on detector
-            xdistance = np.absolute(x_cube[ipt] - xcenter)
-            ydistance = np.absolute(y_cube[ipt] - ycenter)
-
-            index_x = np.where(xdistance <= roi_det)
-            index_y = np.where(ydistance <= roi_det)
-
-            if len(index_x[0]) > 0 and len(index_y[0]) > 0:
-                d1pix = np.array(x_cube[ipt] - xcenter[index_x])
-                d2pix = np.array(y_cube[ipt] - ycenter[index_y])
-
-                dxy = [(dx * dx + dy * dy) for dy in d2pix for dx in d1pix]
-                dxy = np.sqrt(dxy)
-                weight_distance = np.exp(-dxy)
-                weighted_flux = weight_distance * flux_cube[ipt]
-                index2d = [iy * blot_xsize + ix for iy in index_y[0] for ix in (index_x[0] + xstart)]
-                blot_flux[index2d] = blot_flux[index2d] + weighted_flux
-                blot_weight[index2d] = blot_weight[index2d] + weight_distance
-
-        t1 = time.time()
-        log.debug(f"Time to blot median image to input model =  {t1-t0:.1f}")
-        # done mapping blotted x,y (x_cube, y_cube) to detector
-        igood = np.where(blot_weight > 0)
-        blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
-        blot_flux = blot_flux.reshape((blot_ysize, blot_xsize))
-        return blot_flux
 
     # ************************************************************************
+
     def blot_images_nirspec(self):
         """ Core blotting routine for NIRSPEC
 
@@ -272,99 +233,116 @@ class CubeBlot():
         a. the x,y bounding box of slice
         b. the ra, dec, lambda values for the x,y pixels in the slice
         c. from step b, determine the min and max ra and dec for slice values
-        d. pull out the valid ra, dec and lambda values from the median sky cube that fall within
-           the min and max ra,dec determined in step c
-        e. invert the valid ra,dec, and lambda values for the slice determined in step d to the detector.
-        f. blot the inverted x,y values to the detector plane. This steps finds the determines the overlap
-           of the blotted x,y values with a regular grid setup in the detector plane which is the blotted image.
+        d. pull out the valid ra, dec and lambda values from the median sky cube that
+           fall within the min and max ra,dec determined in step c
+        e. invert the valid ra,dec, and lambda values for the slice determined in
+           step d to the detector.
+        f. blot the inverted x,y values to the detector plane. This steps finds the
+           determines the overlap of the blotted x,y values with a regular grid setup
+           in the detector plane which is the blotted image.
 
         """
         blot_models = datamodels.ModelContainer()
 
         for model in self.input_models:
-            blot_flux = np.zeros(model.shape, dtype=np.float32)
-            blot_weight = np.zeros(model.shape, dtype=np.float32)
-            blot_ysize, blot_xsize = blot_flux.shape
-            blot_flux = np.ndarray.flatten(blot_flux)
-            blot_weight = np.ndarray.flatten(blot_weight)
+            blot_ysize, blot_xsize = model.shape
+            ntotal = blot_ysize * blot_xsize
+            blot_flux = np.zeros(ntotal, dtype=np.float32)
+            blot_weight = np.zeros(ntotal, dtype=np.float32)
             blot = model.copy()
             blot.err = None
             blot.dq = None
+
             # ___________________________________________________________________
-            ysize, xsize = model.data.shape
-            ycenter = np.arange(ysize)
-            xcenter = np.arange(xsize)
+            ycenter = np.arange(blot_ysize)
+            xcenter = np.arange(blot_xsize)
 
             # for NIRSPEC wcs information accessed seperately for each slice
             nslices = 30
-            log.info('Looping over 30 slices on NIRSPEC detector, this takes a little while')
-            t0 = time.time()
+            log.info('Blotting 30 slices on NIRSPEC detector')
             roi_det = 1.0  # Just large enough that we don't get holes
+
             for ii in range(nslices):
-                ts0 = time.time()
                 # for each slice pull out the blotted values that actually fall on the slice region
                 # use the bounding box of each slice to determine the slice limits
                 slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
+                slicer2world = slice_wcs.get_transform('slicer','world')
+                detector2slicer = slice_wcs.get_transform('detector','slicer')
+
+                # find some rough limits on ra,dec, lambda using the x,y -> ra,dec,lambda
                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-                # using forward transform to limit the ra and dec values to
-                # invert. The inverse transform for NIRSpec maps too many
                 ra, dec, lam = slice_wcs(x, y)
-                ramin = np.nanmin(ra)
-                ramax = np.nanmax(ra)
-                decmin = np.nanmin(dec)
-                decmax = np.nanmax(dec)
+
+                # Add a padding to make slice a little bigger on sky.
+                # The slice is very small and the median cube is coarse grid on the sky in ra,dec
+                # So we need to expand the slice min and max or we will find not values
+                # falling in min and max limits.
+
+                ramin = np.nanmin(ra) - self.median_skycube.meta.wcsinfo.cdelt1 * 4
+                ramax = np.nanmax(ra) + self.median_skycube.meta.wcsinfo.cdelt1 * 4
+                decmin = np.nanmin(dec) - self.median_skycube.meta.wcsinfo.cdelt2 * 4
+                decmax = np.nanmax(dec) + self.median_skycube.meta.wcsinfo.cdelt2 * 4
+                lam_min = np.nanmin(lam)
+                lam_max = np.nanmax(lam)
+                if(ramin < 0):
+                    ramin = 0
+                if(ramax > 360):
+                    ramax = 360
+
                 use1 = np.logical_and(self.cube_ra >= ramin, self.cube_ra <= ramax)
                 use2 = np.logical_and(self.cube_dec >= decmin, self.cube_dec <= decmax)
-                use = np.logical_and(use1, use2)
+                use3 = np.logical_and(self.cube_wave >= lam_min, self.cube_wave <= lam_max)
+                use = np.logical_and(np.logical_and(use1, use2),use3)
 
                 ra_use = self.cube_ra[use]
                 dec_use = self.cube_dec[use]
                 wave_use = self.cube_wave[use]
                 flux_use = self.cube_flux[use]
 
-                # median cube ra,dec,wave -> x_slice, y_slice
-                x_slice, y_slice = slice_wcs.invert(ra_use, dec_use, wave_use)
+                # get the indices of elements on the slice
+                onslice_ind = in_ifu_slice(slice_wcs,ra_use,dec_use,wave_use)
+                slx, sly, sllam = slicer2world.inverse(ra_use, dec_use, wave_use)
+                xslice,yslice = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind],
+                                                        sllam[onslice_ind])
+                # pull out region for slice
+                fluxslice = flux_use[onslice_ind]
 
-                x_slice = np.ndarray.flatten(x_slice)
-                y_slice = np.ndarray.flatten(y_slice)
-                flux_slice = np.ndarray.flatten(flux_use)
-
+                # one more limit on the x,y bounding box
+                # only use values what fall in bounding box of the slice
                 xlimit, ylimit = slice_wcs.bounding_box
-                xuse = np.logical_and(x_slice >= xlimit[0], x_slice <= xlimit[1])
-                yuse = np.logical_and(y_slice >= ylimit[0], y_slice <= ylimit[1])
+                xuse = np.logical_and(xslice >= xlimit[0], xslice <= xlimit[1])
+                yuse = np.logical_and(yslice >= ylimit[0], yslice <= ylimit[1])
+                use = np.logical_and(xuse,yuse)
+                xuse = xslice[use]
+                yuse = yslice[use]
+                flux_use = fluxslice[use]
 
-                fuse = np.logical_and(xuse, yuse)
-                x_slice = x_slice[fuse]
-                y_slice = y_slice[fuse]
-                flux_slice = flux_slice[fuse]
+                if ii == 0:
+                    x_total = xuse
+                    y_total = yuse
+                    flux_total = flux_use
+                else:
+                    x_total = np.concatenate((x_total, xuse))
+                    y_total = np.concatenate((y_total, yuse))
+                    flux_total = np.concatenate((flux_total, flux_use))
 
-                nn = flux_slice.size
-                for ipt in range(nn):
-                    # search xcenter and ycenter seperately. These arrays are smallish.
-                    # xcenter size = naxis1 on detector
-                    # ycenter size = naxis2 on detector
-                    xdistance = np.absolute(x_slice[ipt] - xcenter)
-                    ydistance = np.absolute(y_slice[ipt] - ycenter)
+            # end looping over the 30 slices
+            # set up c wrapper for blotting
+            xstart = 0
+            xsize2 = blot_xsize
 
-                    index_x = np.where(xdistance <= roi_det)
-                    index_y = np.where(ydistance <= roi_det)
+            result = blot_wrapper(roi_det, blot_xsize, blot_ysize, xstart, xsize2,
+                                  xcenter, ycenter,
+                                  x_total, y_total, flux_total)
+            blot_flux_slice, blot_weight_slice = result
+            blot_flux = blot_flux + blot_flux_slice
+            blot_weight = blot_weight + blot_weight_slice
 
-                    if len(index_x[0]) > 0 and len(index_y[0]) > 0:
-                        d1pix = np.array(x_slice[ipt] - xcenter[index_x])
-                        d2pix = np.array(y_slice[ipt] - ycenter[index_y])
-
-                        dxy = [(dx * dx + dy * dy) for dy in d2pix for dx in d1pix]
-                        dxy = np.sqrt(dxy)
-                        weight_distance = np.exp(-dxy)
-                        weighted_flux = weight_distance * flux_slice[ipt]
-                        index2d = [iy * blot_xsize + ix for iy in index_y[0] for ix in (index_x[0])]
-                        blot_flux[index2d] = blot_flux[index2d] + weighted_flux
-                        blot_weight[index2d] = blot_weight[index2d] + weight_distance
-                ts1 = time.time()
-                log.debug(f"Time to map 1 slice  =  {ts1-ts0:.1f}")
+            result = None
+            blot_weight_slice = None
+            blot_flux_slice = None
             # done mapping median cube  to this input model
-            t1 = time.time()
-            log.debug(f"Time to blot median image to input model =  {t1-t0:.1f}")
+
             igood = np.where(blot_weight > 0)
             blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
             blot_flux = blot_flux.reshape((blot_ysize, blot_xsize))

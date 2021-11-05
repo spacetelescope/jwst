@@ -5,6 +5,7 @@ import pytest
 
 from jwst.stpipe import Step
 from jwst import datamodels
+from jwst.extract_1d import Extract1dStep
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +23,8 @@ def run_pipeline(jail, rtdata_module):
             "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.srctype.save_results=true",
-            "--steps.bkg_subtract.save_combined_background=true"]
+            "--steps.bkg_subtract.save_combined_background=true"
+            ]
     Step.from_cmdline(args)
 
 
@@ -41,6 +43,36 @@ def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtda
     rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")
 
     # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_miri_lrs_extract1d_from_cal(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
+    rtdata.input = "jw00623032001_03102_00001_mirimage_cal.fits"
+    Extract1dStep.call(rtdata.input, save_results=True)
+    output = "jw00623032001_03102_00001_mirimage_extract1dstep.fits"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_miri_lrs_extract1d_image_ref(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
+
+    rtdata.get_data("miri/lrs/jw00623032001_03102_00001_mirimage_image_ref.fits")
+    rtdata.input = "jw00623032001_03102_00001_mirimage_cal.fits"
+    Extract1dStep.call(rtdata.input,
+                       override_extract1d="jw00623032001_03102_00001_mirimage_image_ref.fits",
+                       suffix='x1dfromrefimage',
+                       save_results=True)
+    output = "jw00623032001_03102_00001_mirimage_x1dfromrefimage.fits"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")
+
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

@@ -13,6 +13,7 @@ from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
+from gwcs.wcstools import grid_from_bounding_box
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
@@ -1216,7 +1217,7 @@ def mask_slit(ymin=-.55, ymax=.55):
     return model
 
 
-def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_ymax=.55):
+def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=.55):
     """
     Compute the bounding box of the projection of a slit/slice on the detector.
 
@@ -1228,31 +1229,59 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_y
 
     Parameters
     ----------
-    slit2detector : `astropy.modeling.core.Model`
-        The transform from slit to detector.
+    transform : `astropy.modeling.core.Model`
+        The transform from slit to detector, or detector to slit.
+        `nrs_wcs_set_input` uses "detector to slit", validate_open_slits uses "slit to detector".
     wavelength_range : tuple
         The wavelength range for the combination of grating and filter.
 
     """
+
+    # If transform has inverse then it must be slit to detector
+    if transform.has_inverse():
+        slit2detector = transform.inverse
+        detector2slit = transform
+    else:
+        slit2detector = transform
+        detector2slit = None
+
     lam_min, lam_max = wavelength_range
     step = 1e-10
     nsteps = int((lam_max - lam_min) / step)
     lam_grid = np.linspace(lam_min, lam_max, nsteps)
+
+    def check_range(lower, upper):
+        return lower <= upper
+
+    def bbox_from_range(x_range, y_range):
+        # The -1 on both is technically because the output of slit2detector is 1-based coordinates.
+
+        # add 10 px margin
+        pad_x = (max(0, x_range.min() - 1 - 10) - 0.5,
+                 min(2047, x_range.max() - 1 + 10) + 0.5)
+        # add 2 px margin
+        pad_y = (max(0, y_range.min() - 1 - 2) - 0.5,
+                 min(2047, y_range.max() - 1 + 2) + 0.5)
+
+        return pad_x, pad_y
+
     x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
     x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
-
     y_range = np.hstack((y_range_low, y_range_high))
-    # add 10 px margin
-    # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = max(0, x_range.min() - 1 - 10)
-    x1 = min(2047, x_range.max() - 1 + 10)
-    # add 2 px margin
-    y0 = max(0, y_range.min() - 1 - 2)
-    y1 = min(2047, y_range.max() - 1 + 2)
 
-    bounding_box = ((x0 - 0.5, x1 + 0.5), (y0 - 0.5, y1 + 0.5))
-    return bounding_box
+    # Initial guess for ranges
+    bbox = bbox_from_range(x_range, y_range)
+
+    # Run inverse model to narrow range
+    if detector2slit is not None and check_range(*bbox[0]) and check_range(*bbox[1]):
+        x, y = grid_from_bounding_box(bbox)
+        _, _, lam = detector2slit(x, y)
+        y_range = y[np.isfinite(lam)]
+
+        bbox = bbox_from_range(x_range, y_range)
+
+    return bbox
 
 
 def collimator_to_gwa(reference_files, disperser):
@@ -1621,14 +1650,14 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None,
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
     slit_wcs = _nrs_wcs_set_input(input_model, slit_name)
-    slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
+    transform = slit_wcs.get_transform('detector', 'slit_frame')
     is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == 'nrs_ifu'
     if is_nirspec_ifu:
-        bb = compute_bounding_box(slit2detector, wavelength_range)
+        bb = compute_bounding_box(transform, wavelength_range)
     else:
         if slit_y_low is None or slit_y_high is None:
             slit_y_low, slit_y_high = _get_y_range(input_model)
-        bb = compute_bounding_box(slit2detector, wavelength_range,
+        bb = compute_bounding_box(transform, wavelength_range,
                                   slit_ymin=slit_y_low, slit_ymax=slit_y_high)
 
     slit_wcs.bounding_box = bb

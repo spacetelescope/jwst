@@ -172,11 +172,14 @@ class Tso3Pipeline(Pipeline):
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
 
+        # Done with all the inputs
         input_models.close()
 
-        if len(phot_result_list) == 1 and phot_result_list[0] is None:
-            self.log.info("Could not create a photometric catalog for data")
+        # Check for all null photometry results before saving
+        if phot_result_list.count(None) == len(phot_result_list):
+            self.log.warning("Could not create a photometric catalog; all results are null")
         else:
+            # Otherwise, save results to a photometry catalog file
             phot_results = vstack(phot_result_list)
             phot_results.meta['number_of_integrations'] = len(phot_results)
             phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')

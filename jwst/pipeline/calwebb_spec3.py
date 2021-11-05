@@ -95,7 +95,7 @@ class Spec3Pipeline(Pipeline):
         # Immediately update the ASNTABLE keyword value in all inputs,
         # so that all outputs get the new value
         for model in input_models:
-            model.meta.asn.table_name = op.basename(input_models.meta.table_name)
+            model.meta.asn.table_name = op.basename(input_models.asn_table_name)
 
         # For the first round of development we will assume that the input
         # is ALWAYS an ASN. There's no use case for anyone ever running a
@@ -186,7 +186,7 @@ class Spec3Pipeline(Pipeline):
                 # the downstream products have the correct table name since
                 # the _cal files are not saved they will not be updated
                 for cal_array in result:
-                    cal_array.meta.asn.table_name = op.basename(input_models.meta.table_name)
+                    cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
 
                 # Resample time. Dependent on whether the data is IFU or not.

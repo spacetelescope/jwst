@@ -26,6 +26,7 @@ from ..resample import resample_spec_step
 from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..wavecorr import wavecorr_step
+from ..wfss_contam import wfss_contam_step
 
 __all__ = ['Spec2Pipeline']
 
@@ -70,6 +71,7 @@ class Spec2Pipeline(Pipeline):
         'fringe': fringe_step.FringeStep,
         'pathloss': pathloss_step.PathLossStep,
         'barshadow': barshadow_step.BarShadowStep,
+        'wfss_contam': wfss_contam_step.WfssContamStep,
         'photom': photom_step.PhotomStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
@@ -367,6 +369,11 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow master background correction. Skipping "master_background".')
             self.master_background.skip = True
 
+        # Apply WFSS contamination correction only to WFSS exposures
+        if not self.wfss_contam.skip and exp_type not in WFSS_TYPES:
+            self.log.debug('Science data does not allow WFSS contamination correction. Skipping "wfss_contam".')
+            self.wfss_contam.skip = True
+
     def _process_grism(self, data):
         """WFSS & Grism processing
 
@@ -379,6 +386,7 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.fringe(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
+        calibrated = self.wfss_contam(calibrated)
         calibrated = self.photom(calibrated)
 
         return calibrated
