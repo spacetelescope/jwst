@@ -2,7 +2,6 @@
 (including the main loop over files and the construction of
 final spaxel fluxes)
 """
-import time
 import numpy as np
 import logging
 import math
@@ -587,7 +586,6 @@ class IFUCubeData():
                         log.warning(f'No valid data found on file {input_model.meta.filename}')
                         flag_dq_plane = 0
 
-                    t0 = time.time()
                     roiw_ave = np.mean(roiw_pixel)
                     # ______________________________________________________________________
                     # C extension setup
@@ -665,7 +663,6 @@ class IFUCubeData():
                         start_region = self.instrument_info.GetStartSlice(this_par1)
                         end_region = self.instrument_info.GetEndSlice(this_par1)
                         regions = list(range(start_region, end_region + 1))
-                        t0 = time.time()
 
                         for i in regions:
                             log.info('Working on Slice # %d', i)
@@ -688,9 +685,6 @@ class IFUCubeData():
                                                              self.crval1, self.crval3,
                                                              self.cdelt1, self.cdelt3,
                                                              self.naxis1, self.naxis2)
-                            t1 = time.time()
-                            log.debug("Time to Map All slices on Detector to Cube = %.1f s" % (t1 - t0,))
-
                     # --------------------------------------------------------------------------------
                     # NIRSPEC
                     # --------------------------------------------------------------------------------
@@ -1716,10 +1710,7 @@ class IFUCubeData():
         log.info("Mapping each NIRSpec slice to sky for input file")
 
         for ii in range(nslices):
-            t10 = time.time()
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-            t11 = time.time()
-            log.debug(f'Time to run nirspec nrs_wcs_set_input  {t11-t10} ')
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
             ra, dec, lam = slice_wcs(x, y)
 
