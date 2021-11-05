@@ -95,6 +95,9 @@ datamodels
 
 - Updated data products documentation to indicate that variance and error arrays
   are now included in resampled products. [#6420]
+  
+- Added SOSS-specific extraction parameters to core schema; add new
+  datamodel to store SOSS model traces and aperture weights [#6422]
 
 - Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
 
@@ -204,6 +207,12 @@ resample
 residual_fringe
 ---------------
  - Added documentation on step [#6387]
+
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#6421]
 
 source_catalog
 --------------
