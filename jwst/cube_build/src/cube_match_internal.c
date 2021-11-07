@@ -116,7 +116,8 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 
   // allocate memory to hold output 
   if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-    
+
+
   // loop over each valid point on detector and find match to IFU cube based
   // on along slice coordinate and wavelength
   for (ipixel= 0; ipixel< npt; ipixel++){
@@ -158,10 +159,11 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
     iz2 = round(MaxW);
 
     if(iz1 < 0){ iz1 = 0;}
+    if(iz2 < 0){ iz2 = iz1 +1;}
     if (iz2 >= nz){iz2 = nz - 1;}
 
      nplane = naxis1 * naxis2;
-    // loop over possible overlapping cube pixels      
+    // loop over possible overlapping cube pixels
     for(zz = iz1; zz < iz2+1; zz++){
       zcenter = zcoord[zz];
       istart = zz * nplane;
@@ -177,6 +179,7 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 					      cdelt_along, cdelt3,
 					      along_corner, wave_corner);
 
+
 	if (area_overlap > 0.0) {
 	  AreaRatio = area_overlap / Area;
 	  fluxv[cube_index] = fluxv[cube_index] + (AreaRatio * pixel_flux[ipixel]);
@@ -187,6 +190,7 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 	}
       }
     }
+    
   }
 
   *spaxel_flux = fluxv;

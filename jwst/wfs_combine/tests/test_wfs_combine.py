@@ -37,7 +37,6 @@ def wfs_association(tmp_path_factory):
     imsize = 10
     tmp_path = tmp_path_factory.mktemp("wfs")
     im1 = datamodels.ImageModel((imsize, imsize))
-    im1.meta.observation.exposure_number = 1
     im1.meta.wcsinfo = {
         'dec_ref': 11.99875540218638,
         'ra_ref': 22.02351763251896,
@@ -119,8 +118,8 @@ def test_create_combined(_jail, wfs_association,
                                  blur_size=10, n_size=2)
 
     # Check that results are as expected
-    assert result.data[5, 5] == result_data
-    assert result.dq[5, 5] == result_dq
+    assert result[0].data[5, 5] == result_data
+    assert result[0].dq[5, 5] == result_dq
 
 
 def test_shift_order_no_refine_no_flip(wfs_association):

@@ -1,7 +1,6 @@
 import pytest
 import subprocess
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
@@ -18,8 +17,7 @@ def test_nirspec_missing_msa_fail(_jail, rtdata, fitsdiff_default_kwargs, caplog
     rtdata.get_data('nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits')
 
     # Run the calwebb_spec2 pipeline
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_spec2.cfg", rtdata.input]
+    args = ["calwebb_spec2", rtdata.input]
 
     with pytest.raises(Exception):
         Step.from_cmdline(args)
@@ -38,8 +36,7 @@ def test_nirspec_missing_msa_nofail(_jail, rtdata, fitsdiff_default_kwargs, capl
     rtdata.get_data('nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits')
 
     # Run the calwebb_spec2 pipeline
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_spec2.cfg",
+    args = ["calwebb_spec2",
             rtdata.input,
             '--fail_on_exception=False']
 
@@ -59,8 +56,7 @@ def test_nirspec_assignwcs_skip(_jail, rtdata, fitsdiff_default_kwargs, caplog):
     rtdata.get_data('nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits')
 
     # Run the calwebb_spec2 pipeline
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_spec2.cfg",
+    args = ["calwebb_spec2",
             rtdata.input,
             '--steps.assign_wcs.skip=True']
 

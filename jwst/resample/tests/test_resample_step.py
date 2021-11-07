@@ -5,6 +5,7 @@ import pytest
 
 from jwst.datamodels import ImageModel, ModelContainer
 from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample_spec import ResampleSpecData
@@ -276,8 +277,8 @@ def test_weight_type(nircam_rate, _jail):
 
     result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
 
-    assert_allclose(result2.data[100:105, 100:105], 7.5, rtol=1e-2)
-    assert_allclose(result2.wht[100:105, 100:105], 20, rtol=1e-2)
+    assert_allclose(result2.data[100:105, 100:105], 6.667, rtol=1e-2)
+    assert_allclose(result2.wht[100:105, 100:105], 450.9, rtol=1e-1)
 
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):
@@ -382,7 +383,7 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
 
     # Make sure the output slit size is larger than the input slit size
     # for this nodded data
-    assert driz.data_size[1] > ra.shape[1]
+    assert output_wcs.array_shape[1] > ra.shape[1]
 
 
 def test_wcs_keywords(nircam_rate):
@@ -435,3 +436,58 @@ def test_resample_undefined_variance(nircam_rate, shape):
 
     c = ModelContainer([im])
     ResampleStep.call(c, blendheaders=False)
+
+
+@pytest.mark.parametrize('ratio', [0.7, 1.2])
+@pytest.mark.parametrize('rotation', [0, 15, 135])
+@pytest.mark.parametrize('crpix', [(256, 488), (700, 124)])
+@pytest.mark.parametrize('crval', [(50, 77), (250, -30)])
+@pytest.mark.parametrize('shape', [(1205, 1100)])
+def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval, shape):
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.data += 5
+    result = ResampleStep.call(
+        im,
+        output_shape=shape,
+        crpix=crpix,
+        crval=crval,
+        rotation=rotation,
+        pixel_scale_ratio=ratio
+    )
+
+    t = result.meta.wcs.forward_transform
+
+    # test rotation
+    pc = t['pc_rotation_matrix'].matrix.value
+    orientat = np.rad2deg(np.arctan2(pc[0, 1], pc[1, 1]))
+    assert np.allclose(rotation, orientat)
+
+    # test CRPIX
+    assert np.allclose(
+        (-t['crpix1'].offset.value, -t['crpix2'].offset.value),
+        crpix
+    )
+
+    # test CRVAL
+    assert np.allclose(t(*crpix), crval)
+
+    # test output image shape
+    assert result.data.shape == shape[::-1]
+
+
+@pytest.mark.parametrize('ratio', [1.3, 1])
+def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.data += 5
+
+    fiducial = compute_fiducial([im.meta.wcs])
+    input_scale = compute_scale(wcs=im.meta.wcs, fiducial=fiducial)
+    result = ResampleStep.call(
+        im,
+        pixel_scale_ratio=ratio,
+        pixel_scale=3600 * input_scale * 0.75
+    )
+    output_scale = compute_scale(wcs=result.meta.wcs, fiducial=fiducial)
+
+    # test scales are close
+    assert np.allclose(output_scale, input_scale * 0.75)

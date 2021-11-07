@@ -6,7 +6,6 @@ from jwst.regtest import regtestdata as rt
 
 from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.associations.asn_from_list import asn_from_list
 
 # Define artifactory source and truth
@@ -18,8 +17,6 @@ TRUTH_PATH = 'truth/test_miri_mrs'
 def run_spec3(jail, rtdata_module):
     """Run the Spec3Pipeline on the single cal result from the Spec2Pipeline run"""
     rtdata = rtdata_module
-
-    collect_pipeline_cfgs("config")
 
     # Note that we use the truth file from spec2 processing as the input to spec3
     rtdata.get_data(TRUTH_PATH + '/' + 'ifushort_ch12_cal.fits')
@@ -35,7 +32,7 @@ def run_spec3(jail, rtdata_module):
     rtdata.input = asn_name
 
     args = [
-        "config/calwebb_spec3.cfg",
+        "calwebb_spec3",
         rtdata.input,
         '--steps.master_background.save_results=true',
         '--steps.mrs_imatch.save_results=true',
@@ -56,7 +53,7 @@ def run_spec3_multi(jail, rtdata_module):
 
     step_params = {
         'input_path': INPUT_PATH + '/' + 'ifushort_set2_asn3.json',
-        'step': 'calwebb_spec3.cfg',
+        'step': 'calwebb_spec3',
         'args': [
             '--steps.master_background.save_results=true',
             '--steps.mrs_imatch.save_results=true',

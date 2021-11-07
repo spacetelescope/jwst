@@ -1,7 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -12,8 +11,7 @@ def run_pipeline(jail, rtdata_module):
     rtdata.get_asn("nirspec/mos/jw00626-o030_20191210t193826_spec3_001_asn.json")
 
     # Run the calwebb_spec3 pipeline on the association
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_spec3.cfg", rtdata.input]
+    args = ["calwebb_spec3", rtdata.input]
     Step.from_cmdline(args)
 
     return rtdata

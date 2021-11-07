@@ -1,7 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -9,11 +8,10 @@ from jwst.stpipe import Step
 def run_tso_spec2(jail, rtdata_module):
     """Run stage 2 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
-    collect_pipeline_cfgs("config")
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
     rtdata.get_data("niriss/soss/jw00625023001_03101_00001-seg001_nis_rateints.fits")
-    args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             "--steps.flat_field.save_results=True",
             "--steps.srctype.save_results=True",
             ]
@@ -22,7 +20,7 @@ def run_tso_spec2(jail, rtdata_module):
     # Run tso-spec2 pipeline on the second _rateints file, without saving or
     # checking any results (simply create a fresh input for level-3 test)
     rtdata.get_data("niriss/soss/jw00625023001_03101_00001-seg002_nis_rateints.fits")
-    args = ["config/calwebb_tso-spec2.cfg", rtdata.input]
+    args = ["calwebb_spec2", rtdata.input]
     Step.from_cmdline(args)
 
 
@@ -33,7 +31,7 @@ def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
     # Get the level3 assocation json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("niriss/soss/jw00625-o023_20191210t204036_tso3_001_asn.json")
-    args = ["config/calwebb_tso3.cfg", rtdata.input,
+    args = ["calwebb_tso3", rtdata.input,
             "--steps.outlier_detection.snr='13.0 10.0'",
             ]
     Step.from_cmdline(args)

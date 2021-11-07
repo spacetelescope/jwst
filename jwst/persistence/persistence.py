@@ -7,7 +7,7 @@ import logging
 from .. import datamodels
 from .. datamodels import dqflags
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 SCALEFACTOR = 2.

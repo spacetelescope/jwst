@@ -17,9 +17,6 @@ log.setLevel(logging.DEBUG)
 __all__ = ["OutlierDetectionIFU"]
 
 
-cube_build_config = 'cube_build.cfg'
-
-
 class OutlierDetectionIFU(OutlierDetection):
     """Sub-class defined for performing outlier detection on IFU data.
 
@@ -140,13 +137,11 @@ class OutlierDetectionIFU(OutlierDetection):
             select2 = self.ifu_band2[i]
 
             if self.instrument == 'MIRI':
-                cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         channel=select1, band=select2, weighting='emsm',
+                cubestep = CubeBuildStep(channel=select1, band=select2, weighting='emsm',
                                          single=True)
 
             if self.instrument == 'NIRSPEC':
-                cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         grating=select1, weighting='emsm',
+                cubestep = CubeBuildStep(grating=select1, weighting='emsm',
                                          single=True)
 
             single_IFUCube_result = cubestep.process(self.input_models)

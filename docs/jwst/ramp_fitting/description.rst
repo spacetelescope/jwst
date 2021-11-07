@@ -84,7 +84,9 @@ written as the primary output product.  In this output product, the
 4-D GROUPDQ from all integrations is collapsed into 2-D, merged
 (using a bitwise OR) with the input 2-D PIXELDQ, and stored as a 2-D DQ array. 
 The 3-D VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged
-into corresponding 2-D output arrays.
+into corresponding 2-D output arrays.  In cases where the median rate
+for a pixel is negative, the VAR_POISSON is set to zero, in order to avoid the
+unphysical situation of having a negative variance.
 
 The slope images for each integration are stored as a data cube in a second output data
 product (rateints).  Each plane of the 3-D SCI, ERR, DQ, VAR_POISSON, and VAR_RNOISE

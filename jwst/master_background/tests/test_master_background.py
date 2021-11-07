@@ -12,7 +12,6 @@ from jwst.master_background.master_background_step import (
     copy_background_to_surf_bright,
     split_container,
 )
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 @pytest.fixture(scope='module')
@@ -53,10 +52,8 @@ def test_master_background_userbg(_jail, user_background, science_image):
     """Verify data can run through the step with a user-supplied background"""
 
     # Run with a user-supplied background and verify this is recorded in header
-    collect_pipeline_cfgs('./config')
     result = MasterBackgroundStep.call(
         science_image,
-        config_file='config/master_background.cfg',
         user_background=user_background,
     )
 
@@ -73,10 +70,8 @@ def test_master_background_logic(_jail, user_background, science_image):
     science_image.meta.cal_step.back_sub = 'COMPLETE'
 
     # Run with a user-supplied background
-    collect_pipeline_cfgs('./config')
     result = MasterBackgroundStep.call(
         science_image,
-        config_file='config/master_background.cfg',
         user_background=user_background,
     )
 
@@ -86,7 +81,6 @@ def test_master_background_logic(_jail, user_background, science_image):
     # Now force it
     result = MasterBackgroundStep.call(
         science_image,
-        config_file='config/master_background.cfg',
         user_background=user_background,
         force_subtract=True
     )

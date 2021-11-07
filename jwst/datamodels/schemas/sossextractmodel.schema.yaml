@@ -1,0 +1,38 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/sossextractmodel.schema"
+allOf:
+- $ref: core.schema
+- type: object
+  properties:
+    order1:
+      title: Model trace for spectral order 1
+      fits_hdu: ORDER1
+      ndim: 3
+      datatype: float32
+    order2:
+      title: Model trace for spectral order 2
+      fits_hdu: ORDER2
+      ndim: 3
+      datatype: float32
+    order3:
+      title: Model trace for spectral order 3
+      fits_hdu: ORDER3
+      ndim: 3
+      datatype: float32
+    aperture1:
+      title: Pixel weights for order 1 extraction
+      fits_hdu: APER1
+      ndim: 3
+      datatype: float32
+    aperture2:
+      title: Pixel weights for order 2 extraction
+      fits_hdu: APER2
+      ndim: 3
+      datatype: float32
+    aperture3:
+      title: Pixel weights for order 3 extraction
+      fits_hdu: APER3
+      ndim: 3
+      datatype: float32
