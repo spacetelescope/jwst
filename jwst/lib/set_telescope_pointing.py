@@ -767,10 +767,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     model.meta.aperture.position_angle = wcsinfo.pa
     model.meta.wcsinfo.ra_ref = wcsinfo.ra
     model.meta.wcsinfo.dec_ref = wcsinfo.dec
-    # model.meta.wcsinfo.roll_ref = compute_local_roll(
-    #     vinfo.pa, wcsinfo.ra, wcsinfo.dec, t_pars.siaf.v2_ref, t_pars.siaf.v3_ref
-    # )
-    model.meta.wcsinfo.roll_ref = wcsinfo.pa - t_pars.siaf.v3yangle
+    model.meta.wcsinfo.roll_ref = pa_to_roll_ref(wcsinfo.pa, t_pars.siaf)
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         model.meta.wcsinfo.crval1 = wcsinfo.ra
         model.meta.wcsinfo.crval2 = wcsinfo.dec
@@ -3144,3 +3141,22 @@ def cart_to_vector(coord):
     ])
 
     return vector
+
+
+def pa_to_roll_ref(pa: float, siaf: SIAF):
+    """Calculate Roll from the position angle of the given aperture.
+
+    Parameters
+    ----------
+    pa : float
+        Position angle of the aperture, in degrees.
+
+    siaf : SIAF
+        The SIAF of the aperturn
+
+    Returns
+    -------
+    roll_ref : float
+        The roll reference, in degrees
+    """
+    return pa - siaf.v3yangle
