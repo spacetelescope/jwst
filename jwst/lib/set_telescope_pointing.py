@@ -111,8 +111,10 @@ class Methods(Enum):
     TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs_orig')
     #: Observatory orientation with velocity correction, TR 2021-05
     TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105', 'calc_wcs_orig')
+    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07, with SIAF modification
+    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_standard')
     #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
-    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
+    TRACK_TR_202107_ORIG = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
 
     # Aliases
     #: Algorithm to use by default. Used by Operations.
@@ -1202,6 +1204,70 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
 
 
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
+    """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07
+
+    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    From Section 5:
+
+    Under guide star control the guide star position is measured relative to
+    the V-frame. The V3 position angle at the guide star is derived from the
+    measured J-frame attitude. Then using the corrected guide star catalog
+    position the data be used to determine the inertial V-frame attitude on the
+    sky.
+
+    Same as `calc_transforms_track_tr_202107_orig`, but M_eci2siaf adds the extra
+    ICS to Ideal transformation.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =       # Complete transformation
+            M_v_to_siaf    *  # V to SIAF
+            M_eci_to_v        # ECI to V
+
+        where
+
+            M_eci_to_v = Conversion of the attitude to a DCM
+    """
+    logger.info('Calculating transforms using TR 202107 TRACK/FINEGUIDE Tracking method...')
+    t_pars.method = Methods.TRACK_TR_202107
+    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
+
+    # Determine V3PA@GS
+    v3pags = calc_v3pags(t_pars)
+    t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
+
+    # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
+    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
+
+    # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
+    # relative to the guide star.
+    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, gs_pos_v23)
+
+    # Calculate the SIAF transform matrix
+    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+
+    # Calculate the full ECI to SIAF transform matrix
+    t.m_eci2siaf = np.linalg.multi_dot([MZ2X, t.m_v2siaf, t.m_eci2v])
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
+
+    return t
+
+
+def calc_transforms_track_tr_202107_orig(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07
 
     This implements equation 43 from Technical Report JWST-STScI-003222, SM-12. 2021-07
