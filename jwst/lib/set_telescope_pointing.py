@@ -2272,32 +2272,44 @@ def calc_v2siaf_matrix(siaf):
     return transform
 
 
-def calc_position_angle(target, point):
-    """Calculate point position angle @target
+def calc_position_angle(point, ref):
+    """Calculate position angle from reference to point
+
+    Algorithm implemented is from JWST Technical Report JWST-STScI-001550, SM-12,
+    2017-11-08, Rev A., Section 5.2, page 29, final equation:
+
+    tan(pa) = cos(dec_r) * sin(ra_r - ra_p) / (sin(dec_r)cos(dec_p) - cos(dec_r)sin(dec_p)cos(ra_r-ra_p))
+
+    where
+        pa : position angle
+        _r : reference
+        _p : point
+
+    Typically the reference is the V3 RA/DEC and point is the object RA/DEC
 
     Parameters
     ----------
-    target : WCSRef
-        The TARGET wcs parameters
-
     point : WCSRef
-        The POINT wcs parameters
+        The POINT wcs parameters, in radians
+
+    ref : WCSRef
+        The TARGET wcs parameters, in radians
 
     Returns
     -------
     point_pa : float
       The POINT position angle, in radians
     """
-    y = cos(point.dec) * sin(point.ra - target.ra)
-    x = sin(point.dec) * cos(target.dec) - \
-        cos(point.dec) * sin(target.dec) * cos((point.ra - target.ra))
+    y = cos(ref.dec) * sin(ref.ra - point.ra)
+    x = sin(ref.dec) * cos(point.dec) - \
+        cos(ref.dec) * sin(point.dec) * cos((ref.ra - point.ra))
     point_pa = np.arctan2(y, x)
     if point_pa < 0:
         point_pa += PI2
     if point_pa >= PI2:
         point_pa -= PI2
 
-    logger.debug('Given target: %s, point: %s, then PA: %s', target, point, point_pa)
+    logger.debug('Given reference: %s, point: %s, then PA: %s', ref, point, point_pa)
     return point_pa
 
 
