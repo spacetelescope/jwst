@@ -449,10 +449,10 @@ def test_add_wcs_default(data_file, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f'{meta} has changed'
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                assert np.isclose(model[meta], expected[meta]), f'{meta} has changed'
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
@@ -536,10 +536,10 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f'{meta} has changed'
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                assert np.isclose(model[meta], expected[meta]), f'{meta} has changed'
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 

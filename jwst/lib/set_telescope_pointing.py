@@ -767,9 +767,10 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     model.meta.aperture.position_angle = wcsinfo.pa
     model.meta.wcsinfo.ra_ref = wcsinfo.ra
     model.meta.wcsinfo.dec_ref = wcsinfo.dec
-    model.meta.wcsinfo.roll_ref = compute_local_roll(
-        vinfo.pa, wcsinfo.ra, wcsinfo.dec, t_pars.siaf.v2_ref, t_pars.siaf.v3_ref
-    )
+    # model.meta.wcsinfo.roll_ref = compute_local_roll(
+    #     vinfo.pa, wcsinfo.ra, wcsinfo.dec, t_pars.siaf.v2_ref, t_pars.siaf.v3_ref
+    # )
+    model.meta.wcsinfo.roll_ref = wcsinfo.pa - t_pars.siaf.v3yangle
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         model.meta.wcsinfo.crval1 = wcsinfo.ra
         model.meta.wcsinfo.crval2 = wcsinfo.dec
