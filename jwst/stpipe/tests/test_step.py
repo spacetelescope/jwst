@@ -15,7 +15,7 @@ from stpipe.config_parser import ValidationError
 
 import jwst
 from jwst import datamodels
-from jwst.refpix import RefPixStep
+from jwst.white_light import WhiteLightStep
 from jwst.stpipe import Step
 
 from jwst.stpipe.tests.steps import (
@@ -29,15 +29,13 @@ import asdf
 from crds.core.exceptions import CrdsLookupError
 
 
-REFPIXSTEP_CRDS_MIRI_PARS = {
-    'class': jwst.refpix.refpix_step.RefPixStep,
-    'name': 'refpix',
-    'odd_even_columns': False,
-    'odd_even_rows': False,
-    'side_gain': 10.0,
-    'side_smoothing_length': 21,
-    'use_side_ref_pixels': False
+WHITELIGHTSTEP_CRDS_MIRI_PARS = {
+    'max_wavelength': 12.0,
+    'min_wavelength': 5.0,
+    'class': 'jwst.white_light.white_light_step.WhiteLightStep',
+    'name': 'whitelight'
 }
+
 
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
@@ -74,23 +72,19 @@ def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected
     assert expected_fn(captured.err)
 
 
-@pytest.mark.xfail(
-    reason='Need to make regression with actual CRDS data',
-    run=False,
-)
 def test_parameters_from_crds():
     """Test retrieval of parameters from CRDS"""
-    step_class = REFPIXSTEP_CRDS_MIRI_PARS['class']
-    data = datamodels.open(t_path(join('data', 'miri_data.fits')))
-    pars = step_class.get_config_from_reference(data)
-    assert pars == REFPIXSTEP_CRDS_MIRI_PARS
+    step_class = WhiteLightStep
+    with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
+        pars = step_class.get_config_from_reference(data)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
 def test_parameters_from_crds_fail():
     """Test retrieval of parameters from CRDS"""
     with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
         data.meta.instrument.name = 'NIRSPEC'
-        pars = RefPixStep.get_config_from_reference(data)
+        pars = WhiteLightStep.get_config_from_reference(data)
         assert not len(pars)
 
 
