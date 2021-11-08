@@ -13,7 +13,6 @@ from stpipe import cmdline
 from stpipe.config import StepConfig
 from stpipe.config_parser import ValidationError
 
-import jwst
 from jwst import datamodels
 from jwst.white_light import WhiteLightStep
 from jwst.stpipe import Step
@@ -74,9 +73,8 @@ def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected
 
 def test_parameters_from_crds():
     """Test retrieval of parameters from CRDS"""
-    step_class = WhiteLightStep
     with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
-        pars = step_class.get_config_from_reference(data)
+        pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
@@ -85,7 +83,7 @@ def test_parameters_from_crds_fail():
     with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
         data.meta.instrument.name = 'NIRSPEC'
         pars = WhiteLightStep.get_config_from_reference(data)
-        assert not len(pars)
+    assert not len(pars)
 
 
 @pytest.mark.parametrize(
