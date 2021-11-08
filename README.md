@@ -39,28 +39,24 @@ Details are given below on how to do this for different types of installations,
 including tagged releases, DMS builds used in operations, and development versions.
 Remember that all conda operations must be done from within a bash/zsh shell.
 
-NOTE: currently, conda environments default to `python 3.10.0`, which is not 
-yet supported by all package dependencies of `jwst`. Until this changes, `python=3.9`
-should be specified during environment creation to ensure a successful installation.
-
 
 ### Installing latest releases
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    conda create -n <env_name> python=3.9
+    conda create -n <env_name> python
     conda activate <env_name>
     pip install jwst
 
 You can also install a specific version (from `jwst 0.17.0` onward):
 
-    conda create -n <env_name> python=3.9
+    conda create -n <env_name> python
     conda activate <env_name>
     pip install jwst==1.3.3
 
 Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
-    conda create -n <env_name> python=3.9
+    conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst@0.16.2
 
@@ -70,7 +66,7 @@ Installing specific versions before `jwst 0.17.0` need to be installed from Gith
 You can install the latest development version (not as well tested) from the
 Github master branch:
 
-    conda create -n <env_name> python=3.9
+    conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
  
@@ -122,7 +118,7 @@ already installed with released versions of the `jwst` package.
 
 As usual, the first two steps are to create and activate an environment:
 
-    conda create -n <env_name> python=3.9
+    conda create -n <env_name> python
     conda activate <env_name>
 
 To install your own copy of the code into that environment, you first need to
