@@ -585,14 +585,15 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         else:
             logger.warning("Aperture name is set to 'UNKNOWN'. "
                            "WCS keywords will not be populated from SIAF.")
-            siaf = SIAF()
+            siaf = None
 
         if exp_type in FGS_GUIDE_EXP_TYPES:
             update_wcs_from_fgs_guiding(
                 model, default_roll_ref=default_roll_ref
             )
         else:
-            t_pars = TransformParameters(
+            t_pars = t_pars_from_model(
+                model,
                 default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
                 tolerance=tolerance, allow_default=allow_default,
                 reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
@@ -684,15 +685,6 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     logger.info('Updating wcs from telemetry.')
     transforms = None  # Assume no transforms are calculated.
 
-    # observation parameters
-    obsstart = model.meta.exposure.start_time
-    obsend = model.meta.exposure.end_time
-
-    # Check that the V-frame to SIAF refpoint has been defined.
-    v2siaf_pars = [getattr(t_pars.siaf, attr) for attr in ['v2_ref', 'v3_ref', 'v3yangle', 'vparity']]
-    if None in v2siaf_pars:
-        raise ValueError('Insufficient SIAF information found in header.')
-
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(
         model.meta.target.ra,
@@ -701,50 +693,8 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     )
     vinfo = wcsinfo
 
-    # Get Guide Star information
-    t_pars.guide_star_wcs = WCSRef(
-        model.meta.guidestar.gs_ra,
-        model.meta.guidestar.gs_dec,
-        model.meta.guidestar.gs_v3_pa_science
-    )
-    t_pars.pcs_mode = model.meta.guidestar.gs_pcs_mode
-    logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
-    logger.debug('PCS_MODE: %s', t_pars.pcs_mode)
-
-    # Get jwst velocity
-    t_pars.jwst_velocity = np.array([
-        model.meta.ephemeris.velocity_x_bary,
-        model.meta.ephemeris.velocity_y_bary,
-        model.meta.ephemeris.velocity_z_bary,
-    ])
-    logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
-
-    # Retrieve tracking mode.
-
-    # Get the pointing information
-    try:
-        pointing = get_pointing(obsstart, obsend, engdb_url=t_pars.engdb_url,
-                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-    except ValueError as exception:
-        if not t_pars.allow_default:
-            raise
-        else:
-            logger.warning(
-                'Cannot retrieve valid telescope pointing.'
-                ' Default pointing parameters will be used.'
-            )
-            logger.warning('Exception is %s', exception)
-            logger.info("Setting ENGQLPTG keyword to PLANNED")
-            model.meta.visit.engdb_pointing_quality = "PLANNED"
-    else:
-        # compute relevant WCS information
-        logger.info('Successful read of engineering quaternions:')
-        logger.info('\tPointing: %s', pointing)
-        t_pars.pointing = pointing
-
-        # Set the method
-        t_pars.method = t_pars.method if t_pars.method else Methods.default
-
+    # If pointing is available, attempt to calculate WCS information
+    if t_pars.pointing is not None:
         try:
             wcsinfo, vinfo, transforms = calc_wcs(t_pars)
             pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
@@ -3253,20 +3203,20 @@ def t_pars_from_model(model, **t_pars_kwargs):
     t_pars.method = t_pars.method if t_pars.method else Methods.default
 
     # Retrieve SIAF information
-    siaf = None
-    useafter = None
-    if t_pars.siaf_db is not None:
-        aperture_name = model.meta.aperture.name.upper()
-        useafter = model.meta.observation.date
-        if aperture_name != "UNKNOWN":
-            logger.info("Updating WCS for aperture %s", aperture_name)
-            siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
-
-    if siaf is None:
-        raise ValueError('Insufficient SIAF information found in header.')
-    t_pars.siaf = siaf
-    t_pars.useafter = useafter
-    logger.debug('Aperture %s SIAF: %s', aperture_name, t_pars.siaf)
+    if t_pars.siaf is None:
+        siaf = None
+        useafter = None
+        if t_pars.siaf_db is not None:
+            aperture_name = model.meta.aperture.name.upper()
+            useafter = model.meta.observation.date
+            if aperture_name != "UNKNOWN":
+                logger.info("Updating WCS for aperture %s", aperture_name)
+                siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
+        if siaf is None:
+            raise ValueError('Insufficient SIAF information found in header.')
+        t_pars.siaf = siaf
+        t_pars.useafter = useafter
+    logger.debug('SIAF: %s', t_pars.siaf)
 
     # observation parameters
     t_pars.obsstart = model.meta.exposure.start_time
@@ -3307,6 +3257,9 @@ def t_pars_from_model(model, **t_pars_kwargs):
             logger.info("Setting ENGQLPTG keyword to PLANNED")
             model.meta.visit.engdb_pointing_quality = "PLANNED"
             pointing = None
+    else:
+        logger.info('Successful read of engineering quaternions:')
+        logger.info('\tPointing: %s', pointing)
     t_pars.pointing = pointing
 
     return t_pars
