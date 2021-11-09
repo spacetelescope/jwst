@@ -434,6 +434,9 @@ def run_extract1d(input_model: DataModel,
     :returns: An output_model containing the extracted spectra.
     :rtype:
     """
+    # Map the order integer names to the string names
+    # TODO Could be better to simply use the integer name everywhere (1 instead of 'Order 1')
+    order_str_2_int = {f'Order {order}': order for order in [1, 2, 3]}
 
     # Read the reference files.
     spectrace_ref = datamodels.SpecTraceModel(spectrace_ref_name)
@@ -500,6 +503,11 @@ def run_extract1d(input_model: DataModel,
             out_table['NPIXELS'] = npixels[order]
 
             spec = datamodels.SpecModel(spec_table=out_table)
+
+            # Add integration number and spectral order
+            spec.spectral_order = order_str_2_int[order]
+            spec.int_num = i + 1  # integration number starts at 1, not 0 like python
+
             output_model.spec.append(spec)
 
     elif isinstance(input_model, datamodels.CubeModel):
@@ -565,6 +573,11 @@ def run_extract1d(input_model: DataModel,
                 out_table['NPIXELS'] = npixels[order]
 
                 spec = datamodels.SpecModel(spec_table=out_table)
+
+                # Add integration number and spectral order
+                spec.spectral_order = order_str_2_int[order]
+                spec.int_num = i + 1  # integration number starts at 1, not 0 like python
+
                 output_model.spec.append(spec)
 
     else:
