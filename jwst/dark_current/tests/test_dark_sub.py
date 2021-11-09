@@ -6,10 +6,12 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from jwst.dark_current.dark_sub import average_dark_frames
-from jwst.dark_current.dark_sub import do_correction as darkcorr
+from stcal.dark_current.dark_sub import average_dark_frames
+from stcal.dark_current.dark_sub import do_correction as darkcorr
 
-from jwst.dark_current.dark_class import DarkData
+from stcal.dark_current.dark_class import DarkData
+
+from jwst.dark_current.dark_current_step import DarkCurrentStep
 
 from jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
 
@@ -394,6 +396,41 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
 
     # check that the error array is not modified.
     np.testing.assert_array_equal(outfile.err[:, :], 0)
+
+
+# ------------------------------------------------------------------------------
+def test_basic_step(make_rampmodel, make_darkmodel):
+    """
+    Same as test_more_sci_frames above, but done calling the step code.
+    """
+    # size of integration
+    nints, ngroups, nrows, ncols = 1, 10, 200, 200
+
+    # create raw input data for step
+    dm_ramp = make_rampmodel(nints, ngroups, nrows, ncols)
+    dm_ramp.meta.exposure.nframes = 1
+    dm_ramp.meta.exposure.groupgap = 0
+
+    # populate data array of science cube
+    for i in range(0, ngroups - 1):
+        dm_ramp.data[0, i] = i
+
+    # create dark reference file model with more frames than science data
+    refgroups = 15
+    dark = make_darkmodel(refgroups, nrows, ncols)
+
+    # populate data array of reference file
+    for i in range(0, refgroups - 1):
+        dark.data[0, i] = i * 0.1
+
+    dark_model = DarkCurrentStep.call(dm_ramp, override_dark=dark)
+    outdata = np.squeeze(dark_model.data)
+
+    # check that the dark file is subtracted frame by frame from the science data
+    diff = dm_ramp.data[0] - dark.data[0, :ngroups]
+
+    # test that the output data file is equal to the difference found when subtracting ref file from sci file
+    np.testing.assert_array_equal(outdata, diff, err_msg='dark file should be subtracted from sci file ')
 
 
 @pytest.fixture(scope='function')
