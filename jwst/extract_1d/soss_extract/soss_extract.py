@@ -311,7 +311,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
 
 
 def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
-                  transform, width=40., bad_pix='model', devname=None):
+                  transform, subarray, width=40., bad_pix='model', devname=None):
     """Perform the box-extraction on the image, while using the trace model to
     correct for contamination.
     Parameters
@@ -330,6 +330,8 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
         A 3-elemnt list or array describing the rotation and
         translation to apply to the reference files in order to match the
         observation. If None the transformation is computed.
+    subarray: str
+        'SUBSTRIPT96' or 'SUBSTRIP256' or 'FULL'
     width: float
         The width of the aperture used to extract the un-contaminated spectrum.
     bad_pix: str
@@ -506,7 +508,7 @@ def run_extract1d(input_model: DataModel,
         kwargs['devname'] = soss_kwargs['devname']
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
-        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], **kwargs)
+        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], subarray, **kwargs)
         wavelengths, fluxes, fluxerrs, npixels = result
 
         # Initialize the output model.
@@ -586,7 +588,7 @@ def run_extract1d(input_model: DataModel,
             kwargs['devname'] = soss_kwargs['devname']
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
-            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], **kwargs)
+            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], subarray, **kwargs)
             wavelengths, fluxes, fluxerrs, npixels = result
 
             # Copy spectral data for each order into the output model.
