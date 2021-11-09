@@ -333,6 +333,10 @@ class TransformParameters:
     jwst_velocity: np.array = None
     #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
     method: Methods = None
+    #: Observation end time
+    obsend: float = None
+    #: Observation start time
+    obsstart: float = None
     #: If set, matrices that should be used instead of the calculated one.
     override_transforms: Transforms = None
     #: The tracking mode in use.
@@ -3226,3 +3230,83 @@ def pa_to_roll_ref(pa: float, siaf: SIAF):
         The roll reference, in degrees
     """
     return pa - siaf.v3yangle
+
+
+def t_pars_from_model(model, **t_pars_kwargs):
+    """Initialize TransformParameters from a DataModel
+
+    Parameters
+    ----------
+    model : DataModel
+        Data model to initialize from.
+
+    t_pars_kwargs : dict
+        Keyword arguments used to initialize the TransformParameters object
+        before reading from the model meta information.
+
+    Returns
+    -------
+    t_par : TransformParameters
+        The initialized parameters.
+    """
+    t_pars = TransformParameters(**t_pars_kwargs)
+    t_pars.method = t_pars.method if t_pars.method else Methods.default
+
+    # Retrieve SIAF information
+    siaf = None
+    useafter = None
+    if t_pars.siaf_db is not None:
+        aperture_name = model.meta.aperture.name.upper()
+        useafter = model.meta.observation.date
+        if aperture_name != "UNKNOWN":
+            logger.info("Updating WCS for aperture %s", aperture_name)
+            siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
+
+    if siaf is None:
+        raise ValueError('Insufficient SIAF information found in header.')
+    t_pars.siaf = siaf
+    t_pars.useafter = useafter
+    logger.debug('Aperture %s SIAF: %s', aperture_name, t_pars.siaf)
+
+    # observation parameters
+    t_pars.obsstart = model.meta.exposure.start_time
+    t_pars.obsend = model.meta.exposure.end_time
+    logger.debug('Observation time: %s - %s', t_pars.obsstart, t_pars.obsend)
+
+    # Get Guide Star information
+    t_pars.guide_star_wcs = WCSRef(
+        model.meta.guidestar.gs_ra,
+        model.meta.guidestar.gs_dec,
+        model.meta.guidestar.gs_v3_pa_science
+    )
+    t_pars.pcs_mode = model.meta.guidestar.gs_pcs_mode
+    logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
+    logger.debug('PCS_MODE: %s', t_pars.pcs_mode)
+
+    # Get jwst velocity
+    t_pars.jwst_velocity = np.array([
+        model.meta.ephemeris.velocity_x_bary,
+        model.meta.ephemeris.velocity_y_bary,
+        model.meta.ephemeris.velocity_z_bary,
+    ])
+    logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
+
+    # Get the pointing information
+    try:
+        pointing = get_pointing(t_pars.obsstart, t_pars.obsend, engdb_url=t_pars.engdb_url,
+                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+    except ValueError as exception:
+        if not t_pars.allow_default:
+            raise
+        else:
+            logger.warning(
+                'Cannot retrieve valid telescope pointing.'
+                ' Default pointing parameters will be used.'
+            )
+            logger.warning('Exception is %s', exception)
+            logger.info("Setting ENGQLPTG keyword to PLANNED")
+            model.meta.visit.engdb_pointing_quality = "PLANNED"
+            pointing = None
+    t_pars.pointing = pointing
+
+    return t_pars
