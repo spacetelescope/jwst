@@ -124,7 +124,6 @@ void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
     }
 }
 
-
 double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]){
   /* Find the area of an quadrilateral
 
@@ -269,11 +268,6 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 
    addpoint (xnew[0], ynew[0], xnew, ynew, &nVertices2); // closed polygon
     
-   //if(nVertices2 >  MaxVertices ) {
-   //  printf( " sh_find_overlap:: failure in finding the clipped polygon, nVertices2 > 9 \n ");
-   //  exit(EXIT_FAILURE);
-   //}
-   
    nVertices = nVertices2-1;
 
    for (k = 0; k< nVertices2; k++){

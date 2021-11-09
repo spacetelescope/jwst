@@ -79,3 +79,9 @@ allOf:
         datatype: float32
       - name: scalerad
         datatype: float32
+    ifucubepars_multichannel_driz_wavetable:
+      title: default IFU cube multi channel driz wavetable
+      fits_hdu: MULTICHANNEL_DRIZ
+      datatype:
+      - name: wavelength
+        datatype: float32

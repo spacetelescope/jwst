@@ -59,5 +59,8 @@ class MiriIFUCubeParsModel(ReferenceFileModel):
     ifucubepars_multichannel_emsm_wavetable : numpy table
          default IFU cube emsm wavetable
 
+    ifucubepars_multichannel_driz_wavetable : numpy table
+         default IFU cube driz wavetable
+
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_ifucubepars.schema"

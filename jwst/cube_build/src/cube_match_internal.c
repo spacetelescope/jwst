@@ -80,7 +80,7 @@ spaxel_dq : array
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_numpy_api    //WHAT IS THIS AND WHERE IS IT USED???
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_internal_numpy_api
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 
@@ -132,11 +132,11 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
     wave_corner[2] = lam3[ipixel];
     wave_corner[3] = lam4[ipixel];
 
-    along_min = 10000;
-    wave_min = 10000;
-    along_max = -10000;
-    wave_max = -10000;
-    for (j = 0; j< 4; j++){
+    along_min = along_corner[0];
+    wave_min = wave_corner[0];
+    along_max = along_min;
+    wave_max = wave_min;
+    for (j = 1; j< 4; j++){
       if(along_corner[j] < along_min) { along_min = along_corner[j];}
       if(along_corner[j] > along_max) { along_max = along_corner[j];}
       if(wave_corner[j] < wave_min) { wave_min = wave_corner[j];}
