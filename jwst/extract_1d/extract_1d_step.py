@@ -167,7 +167,7 @@ class Extract1dStep(Step):
                 self.log.info('Exposure is in the SUBSTRIP256 subarray.')
                 self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
                 subarray = 'SUBSTRIP256'
-            if input_model.meta.subarray.name == 'FULL':
+            elif input_model.meta.subarray.name == 'FULL':
                 self.log.info('Exposure is in the FULL subarray.')
                 self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
                 subarray = 'FULL'
