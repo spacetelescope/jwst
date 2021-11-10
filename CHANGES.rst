@@ -71,6 +71,8 @@ dark_current
 
 - Refactored the code in preparation for moving the code to STCAL. [#6336]
 
+- Moved dark current code from JWST to STCAL.
+
 datamodels
 ----------
 
