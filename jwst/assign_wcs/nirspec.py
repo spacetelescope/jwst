@@ -1314,7 +1314,7 @@ def compute_bounding_box(transform, wavelength_range, slit_id, slit_ymin=-.55, s
 
         return pad_x, pad_y
 
-    x_range_low, y_range_low, _ = slit2detector(slit_id, [0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+    x_range_low, y_range_low, _ = slit2detector([slit_id]*nsteps, [0] * nsteps, [slit_ymin] * nsteps, lam_grid)
     x_range_high, y_range_high, _ = slit2detector(slit_id, [0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
@@ -1805,9 +1805,9 @@ def validate_open_slits(input_model, open_slits, reference_files):
     slit2msa = slit_to_msa(open_slits, reference_files['msa'])
 
     for slit in slit2msa.slits:
-        msa_transform = slit2msa.get_model(slit.name)
-        msa2det = msa_transform & Identity(2) | col2det
-
+        #msa_transform = slit2msa.get_model(slit.name)
+        #msa2det = msa_transform & Identity(2) | col2det
+        msa2det = slit2msa | coldet
         bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
 
         valid = _is_valid_slit(bb)

@@ -190,7 +190,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     lp *= 10**-6
     assert_allclose(lp, lam[cond], atol=1e-13)
 
-
+# P
 def test_nirspec_fs_esa():
     """
     Test Nirspec FS mode using build 6 reference files.
@@ -232,7 +232,7 @@ def test_nirspec_fs_esa():
     assert_allclose(lp[nan_cond], lam[nan_cond], atol=10**-13)
     ref.close()
 
-
+# P
 def test_correct_tilt():
     """
     Example provided by Catarina.
@@ -267,7 +267,7 @@ def test_correct_tilt():
     # assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
     assert np.isclose(disp_corrected.theta_y, corrected_theta_y)
 
-
+# P
 def test_msa_configuration_normal():
     """
     Test the get_open_msa_slits function.
@@ -283,7 +283,7 @@ def test_msa_configuration_normal():
                              0.13, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
-
+# P
 def test_msa_configuration_no_background():
     """
     Test the get_open_msa_slits function.
@@ -296,7 +296,7 @@ def test_msa_configuration_no_background():
         nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                    slit_y_range=[-.5, .5])
 
-
+# P
 def test_msa_configuration_all_background():
     """
     Test the get_open_msa_slits function.
@@ -312,7 +312,7 @@ def test_msa_configuration_all_background():
                              0, -0.5, -0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
-
+# P
 def test_msa_configuration_row_skipped():
     """
     Test the get_open_msa_slits function.
@@ -328,7 +328,7 @@ def test_msa_configuration_row_skipped():
                              0.130, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
-
+# P
 def test_msa_configuration_multiple_returns():
     """
     Test the get_open_msa_slits function.
@@ -352,14 +352,14 @@ main_shutter = [24, 23, 25, 28]
 result = ["x", "x1", "110x01", "110101x"]
 test_data = list(zip(open_shutters, main_shutter, result))
 
-
+# P
 @pytest.mark.parametrize(('open_shutters', 'main_shutter', 'result'),
                          test_data)
 def test_shutter_state(open_shutters, main_shutter, result):
     shutter_state = nirspec._shutter_id_to_str(open_shutters, main_shutter)
     assert shutter_state == result
 
-
+# F
 def test_slit_projection_on_detector():
     step = assign_wcs_step.AssignWcsStep()
 
@@ -415,7 +415,7 @@ def test_open_slits():
     slits = nirspec.get_open_slits(model)
     assert len(slits) == 1
 
-
+# F
 def test_shutter_size_on_sky():
     """
     Test the size of a MOS shutter on sky is ~ .2 x .4 arcsec.
@@ -451,7 +451,7 @@ def test_shutter_size_on_sky():
     assert sep_y.value > 0.45
     assert sep_y.value < 0.46
 
-
+#F fs, msa
 @pytest.mark.parametrize(('mode'), ['fs', 'msa'])
 def test_functional_fs_msa(mode):
     #     """
@@ -969,7 +969,7 @@ def ifu_world_coord(wcs_ifu_grating):
     lam_all = np.concatenate([r.flatten() for r in lam_all])
     return ra_all, dec_all, lam_all
 
-
+# F
 @pytest.mark.parametrize("slice", [1, 17])
 def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
     """ Test that the number of valid outputs from a slice forward transform

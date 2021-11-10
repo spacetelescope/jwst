@@ -783,6 +783,7 @@ class Slit2Msa(Model):
         return self.models[index]
 
     def evaluate(self, name, x, y):
+        print('name', name)
         name = int(name)
         return (name,) + self.models[name](x, y)
 
@@ -791,6 +792,7 @@ class Slit2Msa(Model):
             id = NRS_FS_N2ID[name]
         else:
             id = name
+        print('id', id)
         return self.evaluate(id, x, y)
 
 
