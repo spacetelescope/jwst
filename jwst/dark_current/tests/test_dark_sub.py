@@ -424,6 +424,9 @@ def test_basic_step(make_rampmodel, make_darkmodel):
         dark.data[0, i] = i * 0.1
 
     dark_model = DarkCurrentStep.call(dm_ramp, override_dark=dark)
+
+    assert(dark_model.meta.cal_step.dark_sub == "COMPLETE")
+
     outdata = np.squeeze(dark_model.data)
 
     # check that the dark file is subtracted frame by frame from the science data
