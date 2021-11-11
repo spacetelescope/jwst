@@ -30,6 +30,12 @@ allOf:
       fits_hdu: ZEROFRAME
       default: 0.0
       datatype: float32
+    wavelength:
+      title: Wavelength array
+      fits_hdu: WAVELENGTH
+      ndim: 2
+      default: 0.0
+      datatype: float32
     area:
       title: Pixel area map array
       fits_hdu: AREA

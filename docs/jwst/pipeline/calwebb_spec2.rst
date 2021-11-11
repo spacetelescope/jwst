@@ -64,7 +64,7 @@ abbreviations used in the table are as follows:
 +---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`fringe <fringe_step>`                       |     |     |     |     |     | |c| |      |      |        |     |
 +---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`pathloss <pathloss_step>`                   | |c| | |c| | |c| |     |     |     |  |c| |      |        |     |
+| :ref:`pathloss <pathloss_step>`                   | |c| | |c| | |c| | |c| |     |     |  |c| |      |        |     |
 +---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`barshadow <barshadow_step>`                 |     | |c| |     |     |     |     |      |      |        |     |
 +---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
@@ -86,7 +86,7 @@ flat_field followed by extract_2d (no wavecorr or srctype).
 For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 
 Notice that NIRSpec MOS is the only mode to receive master background subtraction
-in the `calwebb_spec2` pipeline. All other spectral modes have master background
+in the ``calwebb_spec2`` pipeline. All other spectral modes have master background
 subtraction applied in the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.
 
 The :ref:`resample_spec <resample_step>` step produces a resampled/rectified product for
