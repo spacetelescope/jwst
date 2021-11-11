@@ -98,7 +98,7 @@ def ENGDB_Service(base_url=None, **service_kwargs):
             # Found the working service. Continue on.
             break
     else:
-        raise RuntimeError('Base URL of %s cannot be accessed.')
+        raise RuntimeError(f'Base URL of {base_url} cannot be accessed.')
 
     # Service is in hand.
     return service
