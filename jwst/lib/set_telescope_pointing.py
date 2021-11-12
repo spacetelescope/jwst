@@ -15,9 +15,9 @@ v1.3.1, the version implemented is based on an internal email version Rev. C, pr
 There are a number of algorithms, or *methods*, that have been implemented.
 Most represent the historical refinement of the algorithm. Until the technical
 reference is finalized, all methods will remain in the code. The default,
-state-of-the art algorithm is represented by method ``OPS_TR_202107``,
+state-of-the art algorithm is represented by method ``OPS_TR_202111``,
 implemented by
-`~jwst.lib.set_telescope_pointing.calc_transforms_ops_tr_202107`.
+`~jwst.lib.set_telescope_pointing.calc_transforms_ops_tr_202111`.
 
 Interface
 =========
@@ -75,7 +75,7 @@ __all__ = [
     'WCSRef',
     'add_wcs',
     'calc_transforms',
-    'calc_transforms_ops_tr_202107',
+    'calc_transforms_ops_tr_202111',
     'calc_wcs',
     'calc_wcs_over_time',
     'update_wcs',
@@ -92,39 +92,41 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 class Methods(Enum):
     """Available methods to calculate V1 and aperture WCS information
 
-    Current state-of-art is OPS_TR_202107. This method chooses either COARSE_TR_202107 or
-    TRACK_TR_202107 depending on the guidance mode, as specified by header keyword PCS_MODE.
+    Current state-of-art is OPS_TR_202111. This method chooses either COARSE_TR_202111 or
+    TRACK_TR_202111 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
-    #: COARSE tracking mode algorithm, TR version 2021-07, with SIAF modification.
-    COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107', 'calc_wcs_standard')
     #: COARSE tracking mode algorithm, TR version 2021-07
-    COARSE_TR_202107_ORIG = ('coarse_tr_202107_orig', 'calc_transforms_coarse_tr_202107_orig', 'calc_wcs_orig')
+    COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107', 'calc_wcs_orig')
+    #: COARSE tracking mode algorithm, TR version 2021-11.
+    COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111')
     #: Guides Star commanded algorithm using the J3 position angle, TR version 2021-05
     GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags', 'calc_wcs_orig')
     #: Guides Star commanded algorithm using the V3 position angle, TR version 2021-05
     GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags', 'calc_wcs_orig')
-    #: Current state-of-art algorithm, TR version 2021-07, with SIAF modification
-    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107', 'calc_wcs_standard')
+    #: Method to use in OPS to use TR version 2021-07
+    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107', 'calc_wcs_orig')
+    #: Method to use in OPS to use TR version 2021-11
+    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111')
     #: Original algorithm, pre-JSOCINT-555 work.
     ORIGINAL = ('original', 'calc_transforms_original', 'calc_wcs_orig')
     #: Observatory orientation without velocity correction, TR 2021-05
     TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs_orig')
     #: Observatory orientation with velocity correction, TR 2021-05
     TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105', 'calc_wcs_orig')
-    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07, with SIAF modification
-    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_standard')
     #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
-    TRACK_TR_202107_ORIG = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
+    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
+    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-11
+    TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111')
 
     # Aliases
     #: Algorithm to use by default. Used by Operations.
-    default = OPS_TR_202107
+    default = OPS_TR_202111
     #: Default algorithm under PCS_MODE COARSE.
-    COARSE = COARSE_TR_202107
+    COARSE = COARSE_TR_202111
     #: Default algorithm for use by Operations.
-    OPS = OPS_TR_202107
+    OPS = OPS_TR_202111
     #: Default algorithm under PCS_MODE TRACK/FINEGUIDE.
-    TRACK = TRACK_TR_202107
+    TRACK = TRACK_TR_202111
 
     def __new__(cls: object, value: str, func_name: str, calc_func: str):
         obj = object.__new__(cls)
@@ -884,7 +886,7 @@ def calc_wcs_orig(transforms: Transforms):
     return wcsinfo, vinfo
 
 
-def calc_wcs_standard(transforms: Transforms):
+def calc_wcs_tr_202111(transforms: Transforms):
     """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
 
     A refactor of `calc_wcs_orig` to use the standard `calc_wcs_from_matrix` instead of the specific `calc_aperture_wcs`.
@@ -1022,10 +1024,10 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
     return t
 
 
-def calc_transforms_coarse_tr_202107_orig(t_pars: TransformParameters):
+def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for COARSE guiding
 
-    This implements equation 45 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements equation 45 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 4:
 
     In COARSE mode the measured attitude of the J-frame of the spacecraft is
@@ -1063,8 +1065,8 @@ def calc_transforms_coarse_tr_202107_orig(t_pars: TransformParameters):
             M_eci_to_gs = ECI to Guide star
 
     """
-    logger.info('Calculating transforms using TR 202107 COARSE Tracking method, original...')
-    t_pars.method = Methods.COARSE_TR_202107_ORIG
+    logger.info('Calculating transforms using TR 202107 COARSE Tracking method...')
+    t_pars.method = Methods.COARSE_TR_202107
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
@@ -1089,7 +1091,7 @@ def calc_transforms_coarse_tr_202107_orig(t_pars: TransformParameters):
     return t
 
 
-def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
+def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     """Modified COURSE calculation
 
     This implements equation 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
@@ -1101,8 +1103,8 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     using the equations in section 3.2. The V-frame attitude then is determined
     using the equation below.
 
-    Same as `calc_transforms_coarse_tr_202107_orig`, but M_eci2siaf adds the extra
-    ICS to Ideal transformation.
+    One modification from the TR is the calculation of M_eci2siaf. The transformation includes
+    the rotation from ICS to Ideal.
 
     Parameters
     ----------
@@ -1134,7 +1136,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using TR 202107 COARSE Tracking with SIAF modification method...')
-    t_pars.method = Methods.COARSE_TR_202107
+    t_pars.method = Methods.COARSE_TR_202111
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
@@ -1159,7 +1161,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     return t
 
 
-def calc_transforms_track_tr_202107(t_pars: TransformParameters):
+def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
     This implements equation 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C,  2021-11
@@ -1170,8 +1172,8 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     measured J-frame attitude. Then the corrected guide star catalog position
     is used to determine the inertial V-frame attitude on the sky.
 
-    Same as `calc_transforms_track_tr_202107_orig`, but M_eci2siaf adds the extra
-    ICS to Ideal transformation.
+    One modification from the TR is the calculation of M_eci2siaf. The transformation includes
+    the rotation from ICS to Ideal.
 
     Parameters
     ----------
@@ -1198,8 +1200,8 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
             M_eci_to_v = Conversion of the attitude to a DCM
 
     """
-    logger.info('Calculating transforms using TR 202107 TRACK/FINEGUIDE Tracking method...')
-    t_pars.method = Methods.TRACK_TR_202107
+    logger.info('Calculating transforms using TR 202111 TRACK/FINEGUIDE Tracking method...')
+    t_pars.method = Methods.TRACK_TR_202111
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
     # Determine V3PA@GS
@@ -1223,10 +1225,10 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     return t
 
 
-def calc_transforms_track_tr_202107_orig(t_pars: TransformParameters):
+def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
-    This implements equation 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements equation 46 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 5:
 
     Under guide star control the guide star position is measured relative to
@@ -1285,9 +1287,9 @@ def calc_transforms_track_tr_202107_orig(t_pars: TransformParameters):
 
 
 def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms as per TR presented in 2021-07
+    """Calculate transforms in OPS using TR 2021-07
 
-    This implements the ECI-to-SIAF transformation from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    This implements the ECI-to-SIAF transformation from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     The actual implementation depends on the guide star mode, represented by the header keyword PCS_MODE.
     For COARSE or NONE, the method COARSE is used.
     For TRACK or FINEGUIDE, the method TRACK is used.
@@ -1303,9 +1305,35 @@ def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
         The list of coordinate matrix transformations
     """
     if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
-        return Methods.COARSE.func(t_pars)
+        return Methods.COARSE_TR_202107.func(t_pars)
     elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
-        return Methods.TRACK.func(t_pars)
+        return Methods.TRACK_TR_202107.func(t_pars)
+    else:
+        raise ValueError(f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be in ["NONE", "COARSE", "TRACK", "FINEGUIDE"]')
+
+
+def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
+    """Calculate transforms in OPS using TR 2021-11
+
+    This implements the ECI-to-SIAF transformation from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    The actual implementation depends on the guide star mode, represented by the header keyword PCS_MODE.
+    For COARSE or NONE, the method COARSE is used.
+    For TRACK or FINEGUIDE, the method TRACK is used.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+    """
+    if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
+        return Methods.COARSE_TR_202111.func(t_pars)
+    elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
+        return Methods.TRACK_TR_202111.func(t_pars)
     else:
         raise ValueError(f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be in ["NONE", "COARSE", "TRACK", "FINEGUIDE"]')
 
