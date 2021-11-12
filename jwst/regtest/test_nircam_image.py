@@ -187,3 +187,20 @@ def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwarg
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
+    """Test optional frame-averaged darks output from DarkCurrentStep"""
+    rtdata.get_data("nircam/image/jw00312007001_02102_00001_nrcblong_ramp.fits")
+
+    args = ["jwst.dark_current.DarkCurrentStep", rtdata.input,
+            "--dark_output='frame_averaged_darks.fits'",
+            ]
+    Step.from_cmdline(args)
+    rtdata.output = "frame_averaged_darks.fits"
+
+    rtdata.get_truth("truth/test_nircam_image/frame_averaged_darks.fits")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

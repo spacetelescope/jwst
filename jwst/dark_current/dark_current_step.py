@@ -39,12 +39,13 @@ class DarkCurrentStep(Step):
             dark_output = self.dark_output
             if dark_output is not None:
                 dark_output = self.make_output_path(
-                    None, basepath=dark_output, ignore_use_model=True
+                    basepath=dark_output,
+                    suffix=False
                 )
 
             # Open the dark ref file data model - based on Instrument
             instrument = input_model.meta.instrument.name
-            if(instrument == 'MIRI'):
+            if instrument == 'MIRI':
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
                 dark_model = datamodels.DarkModel(self.dark_name)
@@ -54,13 +55,13 @@ class DarkCurrentStep(Step):
                 input_model, dark_model, dark_output
             )
 
-        out_data, dark_data = result
+            out_data, dark_data = result
 
-        if dark_data is not None and dark_data.save:
-            save_dark_data_as_dark_model(dark_data, dark_model, instrument)
-        dark_model.close()
+            if dark_data is not None and dark_data.save:
+                save_dark_data_as_dark_model(dark_data, dark_model, instrument)
+            dark_model.close()
 
-        out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
+            out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
 
         return out_ramp
 
