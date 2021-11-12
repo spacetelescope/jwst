@@ -42,7 +42,7 @@ def is_alive():
 def engdb():
     """Open a connection"""
     try:
-        engdb = engdb_mast.EngdbMast()
+        engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
     except RuntimeError as exception:
         pytest.skip(f'Live MAST Engineering Service not available: {exception}')
     return engdb

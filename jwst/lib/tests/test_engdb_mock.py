@@ -12,6 +12,9 @@ from astropy.time import Time
 from jwst.lib.tests import engdb_mock
 from jwst.lib import engdb_direct, engdb_tools
 
+# For mocking, just use localhost
+ENGDB_MOCK_URL = 'http://localhost/'
+
 # Midpoint is about 2021-01-26T02:32:26.205
 GOOD_STARTTIME = '2021-01-26 02:29:02.188'
 GOOD_ENDTIME = '2021-01-26 02:35:50.185'
@@ -130,6 +133,7 @@ def test_cache_end_data(db_cache, engdb):
     # Filter ERFA warnings for times far into the future, LATE_STARTTIME and
     # LATE_ENDTIME.  We don't know leap seconds between now and 2034.
     warnings.filterwarnings('ignore', message='ERFA function ')
+
     # Now for post data
     data_short = db_cache.fetch_data(
         GOOD_MNEMONIC,
@@ -148,7 +152,7 @@ def test_cache_end_data(db_cache, engdb):
 def test_mocker_alive(db_cache):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_direct.ENGDB_BASE_URL,
+            ENGDB_MOCK_URL,
             engdb_direct.ENGDB_METADATA
         ])
         response = requests.get(query)
@@ -166,7 +170,7 @@ def test_mocker_alive(db_cache):
 def test_mocker_meta(db_cache, mnemonic, count):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_direct.ENGDB_BASE_URL,
+            ENGDB_MOCK_URL,
             engdb_direct.ENGDB_METADATA,
             mnemonic
         ])
@@ -179,7 +183,7 @@ def test_mocker_meta(db_cache, mnemonic, count):
 def test_mocker_data(db_cache, engdb):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_direct.ENGDB_BASE_URL,
+            ENGDB_MOCK_URL,
             engdb_direct.ENGDB_DATA,
             GOOD_MNEMONIC,
             '?sTime=',

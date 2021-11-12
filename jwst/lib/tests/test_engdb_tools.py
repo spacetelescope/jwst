@@ -28,8 +28,8 @@ BAD_MNEMONIC = 'No_Such_MNEMONIC'
 NODATA_STARTIME = '2014-01-01'
 NODATA_ENDTIME = '2014-01-02'
 
-ALTERNATE_HOST = 'http://twjwdmsemweb.stsci.edu'
-ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAcc/TlmMnemonicDataSrv.svc/'
+ALTERNATE_HOST = 'http://twjwdmsemwebag.stsci.edu'
+ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAccSide2/TlmMnemonicDataSrv.svc/'
 
 
 def is_alive(url):
@@ -62,35 +62,23 @@ def engdb():
         yield engdb
 
 
-def test_environmetal():
-    old = os.environ.get('ENG_BASE_URL', None)
+def test_environmetal(jail_environ):
+    os.environ['ENG_BASE_URL'] = ALTERNATE_URL
     try:
-        os.environ['ENG_BASE_URL'] = ALTERNATE_URL
         engdb = engdb_tools.ENGDB_Service()
     except Exception:
         pytest.skip('Alternate engineering db not available for test.')
-    finally:
-        if old is None:
-            del os.environ['ENG_BASE_URL']
-        else:
-            os.environ['ENG_BASE_URL'] = old
     assert engdb.base_url == ALTERNATE_URL
 
 
-def test_environmetal_bad():
+def test_environmetal_bad(jail_environ):
     alternate = 'http://google.com/'
-    old = os.environ.get('ENG_BASE_URL', None)
     did_except = False
+    os.environ['ENG_BASE_URL'] = alternate
     try:
-        os.environ['ENG_BASE_URL'] = alternate
         engdb = engdb_tools.ENGDB_Service()
     except Exception:
         did_except = True
-    finally:
-        if old is None:
-            del os.environ['ENG_BASE_URL']
-        else:
-            os.environ['ENG_BASE_URL'] = old
     assert did_except, 'DB connection falsely created for {}'.format(engdb.base_url)
 
 

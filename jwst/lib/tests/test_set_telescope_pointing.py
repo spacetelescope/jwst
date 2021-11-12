@@ -497,7 +497,7 @@ def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
 
     # See if access to MAST is available.
     try:
-        engdb_mast.EngdbMast()
+        engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
     except RuntimeError as exception:
         pytest.skip(f'Live MAST Engineering Service not available: {exception}')
 
