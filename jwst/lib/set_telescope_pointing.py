@@ -8,9 +8,8 @@ Then, using a set of matrix transformations, the sky coordinates of the
 reference pixel of a desired aperture is calculated.
 
 The transformations are defined by the Technical Reference JWST-STScI-003222,
-SM-12. This document has undergone a number of revisions. For JWST release
-v1.3.1, the version implemented is based on an internal email version Rev. C, produced
-2021-11.
+SM-12. This document has undergone a number of revisions. The current version
+implemented is based on an internal email version Rev. C, produced 2021-11.
 
 There are a number of algorithms, or *methods*, that have been implemented.
 Most represent the historical refinement of the algorithm. Until the technical
@@ -1027,8 +1026,8 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for COARSE guiding
 
-    This implements equation 45 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
-    From Section 4:
+    This implements equation 42 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
+    From Section 5:
 
     In COARSE mode the measured attitude of the J-frame of the spacecraft is
     determined by the star tracker and inertial gyroscopes attitude measurements
@@ -1228,7 +1227,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
-    This implements equation 46 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
+    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 5:
 
     Under guide star control the guide star position is measured relative to
@@ -3199,7 +3198,6 @@ def cart_to_vector(coord):
     -------
     vector : numpy.array(3)
         The vector version
-
     """
     vector = np.array([
         coord[0],
