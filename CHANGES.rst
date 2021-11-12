@@ -107,6 +107,12 @@ datamodels
 
 - Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
 
+dark_current
+------------
+
+- Fixed bug during save of optional averaged darks output, bug with
+  providing step a file instead of a datamodel, added regression test [#6450]
+
 extract_1d
 ----------
 
