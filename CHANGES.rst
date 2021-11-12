@@ -25,6 +25,9 @@ assign_wcs
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
   Also the x tolerance on finding slice elements was increased. [#6326]
 
+- Fix a bug due to which, under certain circumstances, ``PC``-matrix and
+  ``CDELT`` coefficients may be removed from FITS WCS of data products. [#6453]
+
 - Fixed bug in NIRSpec MOS slitlet meta data calculations for background slits
   consisting of multiple shutters. [#6454]
 
@@ -66,7 +69,7 @@ cube_build
 
 - Moved variable definitions to top of code in C extension to
   support changes in #6093. [#6255]
-- Added weighting option driz (3D drizzling) [#6297] 
+- Added weighting option driz (3D drizzling) [#6297]
 
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
   sky values mapped to each detector slice. [#6326]
@@ -113,7 +116,7 @@ datamodels
 
 - Updated data products documentation to indicate that variance and error arrays
   are now included in resampled products. [#6420]
-  
+
 - Added SOSS-specific extraction parameters to core schema; add new
   datamodel to store SOSS model traces and aperture weights [#6422]
 
@@ -121,7 +124,7 @@ datamodels
 
 - Added new column 'reference_order' to 'planned_star_table' in
   guider_raw and guider_cal schemas [#6368]
-  
+
 dark_current
 ------------
 
