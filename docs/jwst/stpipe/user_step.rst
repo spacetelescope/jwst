@@ -220,7 +220,8 @@ signature is::
 
 The positional argument ``input`` is the data to be operated on, usually a
 string representing a file path or a :ref:`DataModel<datamodels>`. The optional
-keyword argument ``config_file`` is used to specify a local parameter file.
+keyword argument ``config_file`` is used to specify a local parameter file. The
+optional keyword argument ``logcfg`` is used to specify a logging configuration file.
 Finally, the remaining optional keyword arguments are the parameters that the
 particular step accepts. The method returns the result of the step. A basic
 example is::
