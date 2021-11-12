@@ -133,14 +133,20 @@ def _calc_correction(slitlet, barshadow_model, source_type):
             # Use this transformation to calculate x, y, and wavelength
             xslit, yslit, wavelength = det2slit(x, y)
 
+            # Renormalize the yslit values so that it appears as if the source is always
+            # centered in the slitlet, which is appropriate for extended/uniform sources
+            yslit -= np.nanmean(yslit)
+
             # The returned y values are scaled to where the slit height is 1
             # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
             # so that the separation between the slit centers is 1,
             # i.e. slit height + interslit bar
             yslit = yslit / SLITRATIO
 
-            # Convert the Y and wavelength to a pixel location in the  bar shadow array
-            index_of_fiducial = shutter_status.find('x')
+            # Convert the Y and wavelength to a pixel location in the  bar shadow array;
+            # the fiducial should always be at the center of the slitlet, regardless of
+            # where the source is centered.
+            index_of_fiducial = (len(shutter_status) - 1) / 2.0
 
             # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
             # the last in the shadow array.  So the center of the first shutter referred to in
