@@ -1,9 +1,6 @@
 """
 Polygon filling algorithm.
 
-:Authors: Nadezhda Dencheva, Mihai Cara (contact: help@stsci.edu)
-
-
 """
 # Original author: Nadezhda Dencheva
 #
@@ -229,9 +226,13 @@ class Polygon(Region):
             if y < scline:
                 AET = self.update_AET(y, AET)
 
+            if self._bbox[2] <= 0:
+                y += 1
+                continue
+
             scan_line = Edge('scan_line', start=[self._bbox[0], y],
                              stop=[self._bbox[0] + self._bbox[2], y])
-            x = [np.ceil(e.compute_AET_entry(scan_line)[1]) for e in AET if e is not None]
+            x = [int(np.ceil(e.compute_AET_entry(scan_line)[1])) for e in AET if e is not None]
             xnew = np.sort(x)
             ysh = y + self._shifty
 
@@ -240,8 +241,8 @@ class Polygon(Region):
                 continue
 
             for i, j in zip(xnew[::2], xnew[1::2]):
-                xstart = max(0, int(i) + self._shiftx)
-                xend = min(int(j) + self._shiftx, nx - 1)
+                xstart = max(0, i + self._shiftx)
+                xend = min(j + self._shiftx, nx - 1)
                 data[ysh][xstart:xend + 1] = self._rid
 
             y += 1
@@ -391,15 +392,18 @@ class Edge():
         v = edge._stop - edge._start
         w = self._start - edge._start
         D = np.cross(u, v)
+
+        if np.allclose(np.cross(u, v), 0, rtol=0,
+                       atol=1e2 * np.finfo(float).eps):
+            return np.array(self._start)
+
         return np.cross(v, w) / D * u + self._start
 
     def is_parallel(self, edge):
         u = self._stop - self._start
         v = edge._stop - edge._start
-        if np.cross(u, v):
-            return False
-        else:
-            return True
+        return np.allclose(np.cross(u, v), 0, rtol=0,
+                           atol=1e2 * np.finfo(float).eps)
 
 
 def _round_vertex(v):
