@@ -66,6 +66,14 @@ def get_ref_file_args(ref_files, transform):
     ovs = speckernel_ref.meta.spectral_oversampling
     n_pix = 2*speckernel_ref.meta.halfwidth + 1
 
+    # TODO This temporary fix may be removed eventually or put somewhere else?
+    # Temporary fix to make sure that the kernels can cover the wavelength maps
+    speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]
+    valid_wavemap = (speckernel_wv_range[0] <= wavemap_o1) & (wavemap_o1 <= speckernel_wv_range[1])
+    wavemap_o1 = np.where(valid_wavemap, wavemap_o1, 0.)
+    valid_wavemap = (speckernel_wv_range[0] <= wavemap_o2) & (wavemap_o2 <= speckernel_wv_range[1])
+    wavemap_o2 = np.where(valid_wavemap, wavemap_o2, 0.)
+    
     kernels_o1 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, wavemap_o1, ovs, n_pix)
     kernels_o2 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, wavemap_o2, ovs, n_pix)
 

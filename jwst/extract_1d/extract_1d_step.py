@@ -95,7 +95,7 @@ class Extract1dStep(Step):
     """
 
     # TODO add SOSS reference file types.
-    reference_file_types = ['extract1d', 'apcorr']
+    reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
 
     def process(self, input):
         """Execute the step.
@@ -166,11 +166,21 @@ class Extract1dStep(Step):
 
             # Load reference files.
             # TODO Local placeholders inserted, correct usage example: self.get_reference_file(input_model, 'apcorr')
-            soss_ref_path = 'ref_files/20210729/output'
-            spectrace_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_trace_table_SUBSTRIP256.fits.gz')  # SpecTraceModel
-            wavemap_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_wave_SUBSTRIP256.fits.gz')  # WaveMapModel
-            specprofile_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_profile_SUBSTRIP256.fits.gz')  # SpecProfileModel
-            speckernel_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_spectral_kernel.fits.gz')  # SpecKernelModel
+            # soss_ref_path = 'ref_files/20210729/output'
+            # spectrace_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_trace_table_SUBSTRIP256.fits.gz')  # SpecTraceModel
+            # wavemap_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_wave_SUBSTRIP256.fits.gz')  # WaveMapModel
+            # specprofile_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_profile_SUBSTRIP256.fits.gz')  # SpecProfileModel
+            # speckernel_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_spectral_kernel.fits.gz')  # SpecKernelModel
+
+            spectrace_ref_name = self.get_reference_file(input_model, 'spectrace')
+            wavemap_ref_name = self.get_reference_file(input_model, 'wavemap')
+            specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
+            speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
+
+            print('spectrace: ', spectrace_ref_name)
+            print('wavemap: ', wavemap_ref_name)
+            print('specprofile: ', specprofile_ref_name)
+            print('speckernel: ', speckernel_ref_name)
 
             # Build SOSS kwargs dictionary.
             soss_kwargs = dict()
