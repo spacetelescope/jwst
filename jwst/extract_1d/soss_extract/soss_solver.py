@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
@@ -8,8 +9,6 @@ import warnings
 
 from .soss_syscor import aperture_mask
 from .soss_centroids import get_centroids_com
-
-import matplotlib.pyplot as plt
 
 
 def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
@@ -294,48 +293,90 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         simple_transform[1:] = result.x
 
     if verbose:
-
-        # Calculate model positions.
-        ymod_o1 = evaluate_model(xdat_o1, simple_transform, xref_o1, yref_o1)
-        ymod_o2 = evaluate_model(xdat_o2, simple_transform, xref_o2, yref_o2)
-
-        # Make a figure showing the extracted and best-fit trace positions.
-        plt.figure(figsize=(16, 5))
-
-        ax = plt.subplot(221)
-        plt.plot(xdat_o1, ydat_o1, 'o')
-        plt.plot(xdat_o1, ymod_o1)
-
-        plt.xlabel('X [pix]')
-        plt.ylabel('Y [pix]')
-
-        plt.subplot(223, sharex=ax)
-        plt.plot(xdat_o1, ydat_o1 - ymod_o1, 'o')
-
-        plt.ylim(-5, 5)
-
-        plt.xlabel('X [pix]')
-        plt.ylabel('O - C')
-
-        ax = plt.subplot(222)
-        plt.plot(xdat_o2, ydat_o2, 'o')
-        plt.plot(xdat_o2, ymod_o2)
-
-        plt.xlabel('X [pix]')
-        plt.ylabel('Y [pix]')
-
-        plt.subplot(224, sharex=ax)
-        plt.plot(xdat_o2, ydat_o2 - ymod_o2, 'o')
-
-        plt.ylim(-5, 5)
-
-        plt.xlabel('X [pix]')
-        plt.ylabel('O - C')
-
-        plt.tight_layout()
-        plt.show()
+        _plot_transform(simple_transform, xdat_o1, ydat_o1, xdat_o2, ydat_o2,
+                        xref_o1, yref_o1, xref_o2, yref_o2)
 
     return simple_transform
+
+
+def _plot_transform(simple_transform, xdat_o1, ydat_o1, xdat_o2, ydat_o2,
+                   xref_o1, yref_o1, xref_o2, yref_o2):
+    """Utility function to plot the results of solve_transform when in debug
+    mode.
+
+    Parameters
+    ----------
+    simple_transform : array[float]
+        Array containing the angle, x-shift and y-shift needed to match
+        xref_o1 and yref_o1 to the image.
+    xdat_o1 : array[float]
+        Order 1 X-centroids extracted from the data frame.
+    ydat_o1 : array[float]
+        Order 1 Y-centroids extracted from the data frame.
+    xdat_o2 : array[float]
+        Order 2 X-centroids extracted from the data frame.
+    ydat_o2 : array[float]
+        Order 2 Y-centroids extracted from the data frame.
+    xref_o1 : array[float]
+        Order 1 X-centroids from the reference file.
+    yref_o1 : array[float]
+        Order 1 Y-centroids from the reference file.
+    xref_o2 : array[float]
+        Order 2 X-centroids from the reference file.
+    yref_o2 : array[float]
+        Order 2 Y-centroids from the reference file.
+    """
+
+    # Calculate model positions for the first order.
+    ymod_o1 = evaluate_model(xdat_o1, simple_transform, xref_o1, yref_o1)
+
+    # Make a figure showing the extracted and best-fit trace positions.
+    plt.figure(figsize=(16, 5))
+
+    # Order 1 data and model
+    ax1 = plt.subplot(221)
+    ax1.plot(xdat_o1, ydat_o1, 'o')
+    ax1.plot(xdat_o1, ymod_o1)
+
+    ax1.set_ylabel('Y [pix]', fontsize=16)
+    ax1.tick_params(labelbottom=False)
+    ax1.tick_params(axis='both', which='major', labelsize=14)
+    ax1.set_title('Order 1', fontsize=20)
+
+    # Order 1 data - model
+    ax2 = plt.subplot(223, sharex=ax1)
+    ax2.plot(xdat_o1, ydat_o1 - ymod_o1, 'o')
+
+    ax2.set_ylim(-5, 5)
+    ax2.set_ylabel('O - C', fontsize=16)
+    ax2.set_xlabel('X [pix]', fontsize=16)
+    ax2.tick_params(axis='both', which='major', labelsize=14)
+
+    if xdat_o2 is not None:
+        # Calculate model positions for the second order.
+        ymod_o2 = evaluate_model(xdat_o2, simple_transform, xref_o2, yref_o2)
+
+        # Order 2 data and model
+        ax3 = plt.subplot(222, sharey=ax1)
+        ax3.plot(xdat_o2, ydat_o2, 'o')
+        ax3.plot(xdat_o2, ymod_o2)
+
+        ax3.tick_params(labelleft=False)
+        ax3.tick_params(labelbottom=False)
+        ax3.set_title('Order 2', fontsize=20)
+
+        # Order 2 data - model
+        ax4 = plt.subplot(224, sharex=ax3, sharey=ax2)
+        ax4.plot(xdat_o2, ydat_o2 - ymod_o2, 'o')
+
+        ax4.set_xlabel('X [pix]', fontsize=16)
+        ax4.tick_params(labelleft=False)
+        ax4.tick_params(axis='both', which='major', labelsize=14)
+
+    plt.tight_layout()
+    plt.show()
+
+    return
 
 
 def rotate_image(image, angle, origin):
