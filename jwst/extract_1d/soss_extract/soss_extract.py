@@ -581,6 +581,12 @@ def run_extract1d(input_model: DataModel,
 
             else:
                 tracemodels = dict()
+                # Simply skipping the trace modelling produces a bug because no transform exists.
+                # Some assumption for the transform is required. Ideally, applying that of the CLEAR
+                # exposure. But that would mean linking two exposures... That is not currently our
+                # structure.
+                #    model_image returns: tracemodels, transform, tikfac, logl
+                soss_kwargs['transform'] = [0,0,0]
 
             # Use the trace models to perform a de-contaminated extraction.
             kwargs = dict()
