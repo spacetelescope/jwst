@@ -80,7 +80,7 @@ spaxel_dq : array
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_numpy_api    //WHAT IS THIS AND WHERE IS IT USED???
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_internal_numpy_api
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 
@@ -116,7 +116,8 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 
   // allocate memory to hold output 
   if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-    
+
+
   // loop over each valid point on detector and find match to IFU cube based
   // on along slice coordinate and wavelength
   for (ipixel= 0; ipixel< npt; ipixel++){
@@ -131,11 +132,11 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
     wave_corner[2] = lam3[ipixel];
     wave_corner[3] = lam4[ipixel];
 
-    along_min = 10000;
-    wave_min = 10000;
-    along_max = -10000;
-    wave_max = -10000;
-    for (j = 0; j< 4; j++){
+    along_min = along_corner[0];
+    wave_min = wave_corner[0];
+    along_max = along_min;
+    wave_max = wave_min;
+    for (j = 1; j< 4; j++){
       if(along_corner[j] < along_min) { along_min = along_corner[j];}
       if(along_corner[j] > along_max) { along_max = along_corner[j];}
       if(wave_corner[j] < wave_min) { wave_min = wave_corner[j];}
@@ -158,10 +159,11 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
     iz2 = round(MaxW);
 
     if(iz1 < 0){ iz1 = 0;}
+    if(iz2 < 0){ iz2 = iz1 +1;}
     if (iz2 >= nz){iz2 = nz - 1;}
 
      nplane = naxis1 * naxis2;
-    // loop over possible overlapping cube pixels      
+    // loop over possible overlapping cube pixels
     for(zz = iz1; zz < iz2+1; zz++){
       zcenter = zcoord[zz];
       istart = zz * nplane;
@@ -177,6 +179,7 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 					      cdelt_along, cdelt3,
 					      along_corner, wave_corner);
 
+
 	if (area_overlap > 0.0) {
 	  AreaRatio = area_overlap / Area;
 	  fluxv[cube_index] = fluxv[cube_index] + (AreaRatio * pixel_flux[ipixel]);
@@ -187,6 +190,7 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 	}
       }
     }
+    
   }
 
   *spaxel_flux = fluxv;

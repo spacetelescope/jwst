@@ -7,7 +7,6 @@ import numpy as np
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
 from jwst.lib.suffix import replace_suffix
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
@@ -23,8 +22,7 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
     rtdata.get_data('nirspec/tso/jw84600042001_02101_00001_nrs2_rateints.fits')
 
     # Run the calwebb_spec2 pipeline;
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=True",
             "--steps.extract_2d.save_results=True",
             "--steps.wavecorr.save_results=True",

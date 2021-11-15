@@ -20,6 +20,7 @@ from .extract1dimage import Extract1dImageModel
 from .extract1d_spec import Extract1dIFUModel
 from .flat import FlatModel
 from .fringe import FringeModel
+from .fringefreq import FringeFreqModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
 from .guider import GuiderRawModel, GuiderCalModel
@@ -42,7 +43,7 @@ from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
-from .pathloss import PathlossModel
+from .pathloss import PathlossModel, MirLrsPathlossModel
 from .persat import PersistenceSatModel
 from .photom import FgsImgPhotomModel
 from .photom import MirImgPhotomModel, MirLrsPhotomModel, MirMrsPhotomModel
@@ -58,11 +59,11 @@ from .readnoise import ReadnoiseModel
 from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
-from .residualfringe import ResidualFringeModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .segmap import SegmentationMapModel
 from .slit import SlitModel, SlitDataModel
+from .sossextractmodel import SossExtractModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .speckernel import SpecKernelModel
@@ -105,7 +106,7 @@ __all__ = [
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
-    'FringeModel', 'GainModel', 'GLS_RampFitModel',
+    'FringeModel', 'FringeFreqModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
@@ -119,7 +120,7 @@ __all__ = [
     'NIRCAMGrismModel', 'NIRISSGrismModel',
     'OTEModel',
     'OutlierParsModel',
-    'PathlossModel',
+    'PathlossModel', 'MirLrsPathlossModel',
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'FgsImgPhotomModel',
@@ -131,10 +132,11 @@ __all__ = [
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
-    'RegionsModel', 'ResetModel','ResidualFringeModel',
+    'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',
+    'SossExtractModel',
     'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',

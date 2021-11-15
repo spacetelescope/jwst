@@ -5,7 +5,6 @@ from astropy.io.fits.diff import FITSDiff
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst import datamodels
 
@@ -16,10 +15,8 @@ def run_detector1pipeline(jail, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jw42424001001_01101_00001_nrca5_uncal.fits")
 
-    collect_pipeline_cfgs("config")
-
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["config/calwebb_detector1.cfg", rtdata.input,
+    args = ["calwebb_detector1", rtdata.input,
             "--steps.dq_init.save_results=True",
             "--steps.saturation.save_results=True",
             "--steps.superbias.save_results=True",
@@ -37,7 +34,7 @@ def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_rate.fits"
-    args = ["config/calwebb_image2.cfg", rtdata.input,
+    args = ["calwebb_image2", rtdata.input,
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True",
             ]
@@ -60,13 +57,13 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
-        args = ["config/calwebb_image2.cfg", rtdata.input]
+        args = ["calwebb_image2", rtdata.input]
         Step.from_cmdline(args)
 
     # Get the level3 assocation json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
-    args = ["config/calwebb_image3.cfg", rtdata.input,
+    args = ["calwebb_image3", rtdata.input,
             "--steps.tweakreg.save_results=True",
             # "--steps.skymatch.save_results=True",
             "--steps.source_catalog.snr_threshold=20",
@@ -178,9 +175,7 @@ def run_image3_closedfile(rtdata, jail):
     """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
     rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
 
-    collect_pipeline_cfgs("config")
-
-    args = ["config/calwebb_image3.cfg", rtdata.input]
+    args = ["calwebb_image3", rtdata.input]
     Step.from_cmdline(args)
 
 
@@ -189,6 +184,23 @@ def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwarg
     """Ensure production of Image3Pipeline output with data having closed file issues"""
     rtdata.output = 'jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits'
     rtdata.get_truth('truth/test_nircam_image/jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits')
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
+    """Test optional frame-averaged darks output from DarkCurrentStep"""
+    rtdata.get_data("nircam/image/jw00312007001_02102_00001_nrcblong_ramp.fits")
+
+    args = ["jwst.dark_current.DarkCurrentStep", rtdata.input,
+            "--dark_output='frame_averaged_darks.fits'",
+            ]
+    Step.from_cmdline(args)
+    rtdata.output = "frame_averaged_darks.fits"
+
+    rtdata.get_truth("truth/test_nircam_image/frame_averaged_darks.fits")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

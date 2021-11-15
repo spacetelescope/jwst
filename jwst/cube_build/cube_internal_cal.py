@@ -11,10 +11,6 @@ def match_det2cube(instrument,
                    x, y, sliceno,
                    input_model,
                    transform,
-                   spaxel_flux,
-                   spaxel_weight,
-                   spaxel_iflux,
-                   spaxel_var,
                    acoord, zcoord,
                    crval_along, crval3,
                    cdelt_along, cdelt3,
@@ -51,7 +47,6 @@ def match_det2cube(instrument,
 
     x = _toindex(x)
     y = _toindex(y)
-
     pixel_dq = input_model.dq[y, x]
 
     all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE'])
@@ -61,7 +56,6 @@ def match_det2cube(instrument,
     # good data holds the location of pixels we want to map to cube
     x = x[good_data]
     y = y[good_data]
-
     coord1, coord2, lam = transform(x, y)
     valid = ~np.isnan(coord2)
     x = x[valid]
@@ -103,7 +97,6 @@ def match_det2cube(instrument,
 
     # we need the cases of only all corners valid numbers
     good = np.where(index_good2 & index_good3 & index_good4)
-
     a1 = a1[good]
     a2 = a2[good]
     a3 = a3[good]
@@ -128,16 +121,10 @@ def match_det2cube(instrument,
     if instrument == 'MIRI':
         ss = sliceno
         instrument_no = 0
-
     result = cube_wrapper_internal(instrument_no, naxis1, naxis2,
                                    crval_along, cdelt_along, crval3, cdelt3,
                                    a1, a2, a3, a4, lam1, lam2, lam3, lam4,
                                    acoord, zcoord, ss,
                                    pixel_flux, pixel_err)
 
-    spaxel_flux_slice, spaxel_weight_slice, spaxel_var_slice, spaxel_iflux_slice = result
-    spaxel_flux = spaxel_flux + np.asarray(spaxel_flux_slice, np.float64)
-    spaxel_weight = spaxel_weight + np.asarray(spaxel_weight_slice, np.float64)
-    spaxel_var = spaxel_var + np.asarray(spaxel_var_slice, np.float64)
-    spaxel_iflux = spaxel_iflux + np.asarray(spaxel_flux_slice,np.float64)
-    result = None
+    return result

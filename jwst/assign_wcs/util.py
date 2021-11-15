@@ -139,8 +139,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     yscale = np.abs(coords[0].separation(coords[2]).value)
 
     if pscale_ratio is not None:
-        xscale = xscale * pscale_ratio
-        yscale = yscale * pscale_ratio
+        xscale *= pscale_ratio
+        yscale *= pscale_ratio
 
     if spectral:
         # Assuming scale doesn't change with wavelength
@@ -194,7 +194,8 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
 
 
 def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None,
-                        pscale_ratio=None):
+                        pscale_ratio=None, pscale=None, rotation=None,
+                        shape=None, crpix=None, crval=None):
     """
     Create a WCS from a list of input data models.
 
@@ -225,8 +226,33 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     bounding_box : tuple, optional
         Bounding_box of the new WCS.
         If not supplied it is computed from the bounding_box of all inputs.
-    pscale_ratio : float, optional
-        Ratio of input to output pixel scale.
+    pscale_ratio : float, None, optional
+        Ratio of input to output pixel scale. Ignored when either
+        ``transform`` or ``pscale`` are provided.
+    pscale : float, None, optional
+        Absolute pixel scale in degrees. When provided, overrides
+        ``pscale_ratio``. Ignored when ``transform`` is provided.
+    rotation : float, None, optional
+        Position angle of output image’s Y-axis relative to North.
+        A value of 0.0 would orient the final output image to be North up.
+        The default of `None` specifies that the images will not be rotated,
+        but will instead be resampled in the default orientation for the camera
+        with the x and y axes of the resampled image corresponding
+        approximately to the detector axes. Ignored when ``transform`` is
+        provided.
+    shape : tuple of int, None, optional
+        Shape of the image (data array) using ``numpy.ndarray`` convention
+        (``ny`` first and ``nx`` second). This value will be assigned to
+        ``pixel_shape`` and ``array_shape`` properties of the returned
+        WCS object.
+    crpix : tuple of float, None, optional
+        Position of the reference pixel in the image array.  If ``crpix`` is not
+        specified, it will be set to the center of the bounding box of the
+        returned WCS object.
+    crval : tuple of float, None, optional
+        Right ascension and declination of the reference pixel. Automatically
+        computed if not provided.
+
     """
     bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]
@@ -244,6 +270,14 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
     fiducial = compute_fiducial(wcslist, bb)
+    if crval is not None:
+        # overwrite spatial axes with user-provided CRVAL:
+        i = 0
+        for k, axt in enumerate(wcslist[0].output_frame.axes_type):
+            if axt == 'SPATIAL':
+                fiducial[k] = crval[i]
+                i += 1
+
     ref_fiducial = compute_fiducial([refmodel.meta.wcs])
 
     prj = astmodels.Pix2Sky_TAN()
@@ -256,21 +290,26 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         # Need to put the rotation matrix (List[float, float, float, float])
         # returned from calc_rotation_matrix into the correct shape for
         # constructing the transformation
-        roll_ref = np.deg2rad(refmodel.meta.wcsinfo.roll_ref)
         v3yangle = np.deg2rad(refmodel.meta.wcsinfo.v3yangle)
         vparity = refmodel.meta.wcsinfo.vparity
+        if rotation is None:
+            roll_ref = np.deg2rad(refmodel.meta.wcsinfo.roll_ref)
+        else:
+            roll_ref = np.deg2rad(rotation) + (vparity * v3yangle)
+
         pc = np.reshape(
             calc_rotation_matrix(roll_ref, v3yangle, vparity=vparity),
             (2, 2)
         )
 
-        rotation = astmodels.AffineTransformation2D(pc)
+        rotation = astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix')
         transform.append(rotation)
 
         if sky_axes:
-            scale = compute_scale(refmodel.meta.wcs, ref_fiducial,
-                                  pscale_ratio=pscale_ratio)
-            transform.append(astmodels.Scale(scale) & astmodels.Scale(scale))
+            if not pscale:
+                pscale = compute_scale(refmodel.meta.wcs, ref_fiducial,
+                                       pscale_ratio=pscale_ratio)
+            transform.append(astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2'))
 
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)
@@ -292,13 +331,22 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         output_bounding_box.append((axis_min, axis_max))
 
     output_bounding_box = tuple(output_bounding_box)
-    ax1, ax2 = np.array(output_bounding_box)[sky_axes]
-    offset1 = (ax1[1] - ax1[0]) / 2
-    offset2 = (ax2[1] - ax2[0]) / 2
-    offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)
+    if crpix is None:
+        ax1, ax2 = np.array(output_bounding_box)[sky_axes]
+        offset1 = (ax1[1] - ax1[0]) / 2
+        offset2 = (ax2[1] - ax2[0]) / 2
+    else:
+        offset1, offset2 = crpix
+    offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
 
     wnew.insert_transform('detector', offsets, after=True)
     wnew.bounding_box = output_bounding_box
+
+    if shape is None:
+        shape = [int(axs[1] - axs[0] + 0.5) for axs in output_bounding_box[::-1]]
+
+    wnew.pixel_shape = shape[::-1]
+    wnew.array_shape = shape
 
     return wnew
 

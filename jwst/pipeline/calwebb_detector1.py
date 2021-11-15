@@ -24,7 +24,7 @@ from ..gain_scale import gain_scale_step
 __all__ = ['Detector1Pipeline']
 
 # Define logging
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
@@ -125,8 +125,8 @@ class Detector1Pipeline(Pipeline):
         # apply the ramp_fit step
         # This explicit test on self.ramp_fit.skip is a temporary workaround
         # to fix the problem that the ramp_fit step ordinarily returns two
-        # objects, but when the step is skipped due to `skip = True` in a
-        # cfg file, only the input is returned when the step is invoked.
+        # objects, but when the step is skipped due to `skip = True`,
+        # only the input is returned when the step is invoked.
         if self.ramp_fit.skip:
             result = self.ramp_fit(result)
             ints_model = None

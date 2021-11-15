@@ -44,7 +44,10 @@ class PathLossStep(Step):
                     return result
 
                 # Open the pathloss ref file data model
-                pathloss_model = datamodels.PathlossModel(self.pathloss_name)
+                if input_model.meta.exposure.type.upper() in ["MIR_LRS-FIXEDSLIT"]:
+                    pathloss_model = datamodels.MirLrsPathlossModel(self.pathloss_name)
+                else:
+                    pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 
             # Do the pathloss correction
             result, self.correction_pars = pathloss.do_correction(

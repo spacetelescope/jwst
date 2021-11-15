@@ -8,7 +8,6 @@ import numpy as np
 import jwst.datamodels as dm
 from jwst.lib.suffix import replace_suffix
 from jwst.pathloss import PathLossStep
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 file_roots = [
@@ -29,14 +28,11 @@ def run_pipeline(jail, rtdata_module, request):
 
     rtdata = rtdata_module
 
-    # Get the cfg files
-    collect_pipeline_cfgs("config")
-
     # Get the input exposure
     rtdata.get_data('nirspec/fs/' + request.param + 'rate.fits')
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["config/calwebb_spec2.cfg", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.wavecorr.save_results=true",

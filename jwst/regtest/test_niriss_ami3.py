@@ -1,7 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 from jwst.ami import AmiAnalyzeStep
@@ -14,8 +13,7 @@ def run_pipeline(jail, rtdata_module):
     rtdata.get_asn("niriss/ami/jw00793-c1014_20191210t203450_ami3_001_asn.json")
 
     # Run the calwebb_ami3 pipeline on the association
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_ami3.cfg", rtdata.input,
+    args = ["calwebb_ami3", rtdata.input,
             "--steps.ami_analyze.rotation=1.49",
             ]
     Step.from_cmdline(args)

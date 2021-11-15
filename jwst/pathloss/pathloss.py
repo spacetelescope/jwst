@@ -7,6 +7,7 @@ import numpy as np
 from gwcs import wcstools
 
 from jwst.assign_wcs import nirspec, util
+from jwst.lib.wcs_utils import get_wavelengths
 import jwst.datamodels as datamodels
 
 log = logging.getLogger(__name__)
@@ -41,6 +42,26 @@ def get_center(exp_type, input):
             ycenter = 0.0
         return (xcenter, ycenter)
 
+    elif exp_type in ["MIR_LRS-FIXEDSLIT"]:
+
+        # get slit reference point from wcs object
+        det_to_sky = input.meta.wcs.get_transform('detector', 'world')
+        sky_to_det = input.meta.wcs.get_transform('world', 'detector')
+        imx = -det_to_sky.offset_1  # aperture ref point from specwcs
+        imy = -det_to_sky.offset_2
+
+        # compute location of target on detector
+        ref_ra, ref_dec, ref_wave = det_to_sky(imx, imy)
+        xcenter, ycenter = sky_to_det(input.meta.target.ra,
+                                      input.meta.target.dec,
+                                      ref_wave)
+        log.debug(f"LRS target location from RA/Dec = {xcenter, ycenter}")
+
+        # compute location relative to LRS aperture reference point
+        xcenter -= imx
+        ycenter -= imy
+        return (xcenter, ycenter)
+
     else:
         log.warning(f'No method to get centering for exp_type {exp_type}')
         log.warning("Using (0.0, 0.0)")
@@ -72,7 +93,8 @@ def get_aperture_from_model(input_model, match):
 def calculate_pathloss_vector(pathloss_refdata,
                               pathloss_wcs,
                               xcenter,
-                              ycenter):
+                              ycenter,
+                              calc_wave=True):
     """
     Calculate the pathloss vectors from the pathloss model using the
     coordinates of the center of the target to interpolate the
@@ -126,11 +148,15 @@ def calculate_pathloss_vector(pathloss_refdata,
     # pointsource.data is 3-d, so we have to extract a wavelength vector
     # at the specified location.  We do this using bilinear interpolation
     else:
-        crpix3 = pathloss_wcs.crpix3
-        crval3 = pathloss_wcs.crval3
-        cdelt3 = pathloss_wcs.cdelt3
-        for i in np.arange(wavesize):
-            wavelength[i] = crval3 + (float(i + 1) - crpix3) * cdelt3
+
+        # If requested, calculate a wavelength vector from the ref file
+        # WCS info
+        if calc_wave:
+            crpix3 = pathloss_wcs.crpix3
+            crval3 = pathloss_wcs.crval3
+            cdelt3 = pathloss_wcs.cdelt3
+            for i in np.arange(wavesize):
+                wavelength[i] = crval3 + (float(i + 1) - crpix3) * cdelt3
 
         # Calculate python index of object center
         crpix1 = pathloss_wcs.crpix1
@@ -141,11 +167,13 @@ def calculate_pathloss_vector(pathloss_refdata,
         cdelt2 = pathloss_wcs.cdelt2
         object_colindex = crpix1 + (xcenter - crval1) / cdelt1 - 1
         object_rowindex = crpix2 + (ycenter - crval2) / cdelt2 - 1
+
+        # check whether target is inside slit boundaries
         if (object_colindex < 0 or object_colindex >= (ncols - 1) or
                 object_rowindex < 0 or object_rowindex >= (nrows - 1)):
             is_inside_slitlet = False
-        else:
 
+        else:
             # Do bilinear interpolation to get the array of
             # path loss vs wavelength
             dx1 = object_colindex - int(object_colindex)
@@ -180,7 +208,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
         pathloss correction data
 
     inverse : boolean
-        Invert the math operations used to apply the flat field.
+        Invert the math operations used to apply the pathloss correction.
 
     source_type : str or None
         Force processing using the specified source type.
@@ -213,6 +241,14 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
     elif exp_type == 'NRS_IFU':
         corrections = do_correction_ifu(output_model, pathloss_model,
                                         inverse, source_type, correction_pars)
+    elif exp_type == 'MIR_LRS-FIXEDSLIT':
+        # only apply correction to LRS fixed-slit if target is point source
+        if is_pointsource(output_model.meta.target.source_type):
+            corrections = do_correction_lrs(output_model, pathloss_model)
+        else:
+            log.warning('Not a point source; skipping correction for LRS.')
+            output_model.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
     elif exp_type == 'NIS_SOSS':
         if correction_pars:
             log.warning('Use of correction_pars with NIS_SOSS is not implemented. Skipping')
@@ -302,6 +338,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     numerator = wavelength_grid - extended_wavelength_vector[lower_indices]
     denominator = (extended_wavelength_vector[upper_indices]
                    - extended_wavelength_vector[lower_indices])
+
     fraction = numerator / denominator
 
     pathloss_grid = wavelength_grid * 0.0
@@ -326,18 +363,18 @@ def is_pointsource(srctype):
 def do_correction_mos(data, pathloss, inverse=False, source_type=None, correction_pars=None):
     """Path loss correction for NIRSpec MOS
 
-    Data is modified in-place.
+    Data are modified in-place.
 
     Parameters
     ----------
     data : jwst.datamodel.DataModel
         The NIRSpec MOS data to be corrected.
 
-    pathloss : jwst.datamodel.DataModel or None
+    pathloss : jwst.datamodel.PathlossModel or None
         The pathloss reference data.
 
     inverse : boolean
-        Invert the math operations used to apply the flat field.
+        Invert the math operations used to apply the pathloss correction.
 
     source_type : str or None
         Force processing using the specified source type.
@@ -389,7 +426,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
 def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, correction_pars=None):
     """Path loss correction for NIRSpec fixed-slit modes
 
-    Data is modified in-place.
+    Data are modified in-place.
 
     Parameters
     ----------
@@ -400,7 +437,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
         The pathloss reference data.
 
     inverse : boolean
-        Invert the math operations used to apply the flat field.
+        Invert the math operations used to apply the pathloss correction.
 
     source_type : str or None
         Force processing using the specified source type.
@@ -461,28 +498,28 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
 def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correction_pars=None):
     """Path loss correction for NIRSpec IFU
 
-    Data is modified in-place.
+    Data are modified in-place.
 
     Parameters
     ----------
     data : jwst.datamodel.DataModel
-        The NIRSpec fixed-slit data to be corrected.
+        The NIRSpec IFU data to be corrected.
 
     pathloss : jwst.datamodel.DataModel
         The pathloss reference data.
 
     inverse : boolean
-        Invert the math operations used to apply the flat field.
+        Invert the math operations used to apply the pathloss correction.
 
     source_type : str or None
         Force processing using the specified source type.
 
-    correction_pars : jwst.datamodels.MultiSlitModel or None
+    correction_pars : jwst.datamodels.DataModel or None
         The precomputed pathloss to apply instead of recalculation.
 
     Returns
     -------
-    corrections : jwst.datamodel.MultiSlitModel
+    corrections : jwst.datamodel.DataModel
         The pathloss corrections applied.
     """
     if correction_pars:
@@ -511,8 +548,45 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     return correction
 
 
+def do_correction_lrs(data, pathloss):
+    """Path loss correction for MIRI LRS fixed-slit
+
+    Data are modified in-place.
+
+    Parameters
+    ----------
+    data : jwst.datamodel.DataModel
+        The MIRI LRS fixed-slit data to be corrected.
+
+    pathloss : jwst.datamodel.DataModel
+        The pathloss reference data.
+    """
+    correction = _corrections_for_lrs(data, pathloss)
+
+    if not correction:
+        log.warning("No correction available; skipping step")
+        return
+
+    # LRS correction is multiplicative
+    data.data *= correction.data
+    data.err *= correction.data
+    data.var_poisson *= correction.data**2
+    data.var_rnoise *= correction.data**2
+    if data.var_flat is not None and np.size(data.var_flat) > 0:
+        data.var_flat *= correction.data**2
+    data.pathloss_point = correction.pathloss_point
+
+    # This might be useful to other steps
+    data.wavelength = correction.wavelength
+
+    # Set the step status to complete
+    data.meta.cal_step.pathloss = 'COMPLETE'
+
+    return
+
+
 def do_correction_soss(data, pathloss):
-    """Path loss correction for NIRSpec SOSS
+    """Path loss correction for NIRISS SOSS
 
     NIRISS SOSS pathloss correction is basically a correction for the
     flux from the 2nd and 3rd order dispersion that falls outside the
@@ -521,12 +595,12 @@ def do_correction_soss(data, pathloss):
     correction by column number, then the only interpolation needed is a
     1-d interpolation into the pupil wheel position dimension.
 
-    Data is modified in-place.
+    Data are modified in-place.
 
     Parameters
     ----------
     data : jwst.datamodel.DataModel
-        The NIRSpec SOSS data to be corrected.
+        The NIRISS SOSS data to be corrected.
 
     pathloss : jwst.datamodel.DataModel
         The pathloss reference data.
@@ -602,7 +676,7 @@ def do_correction_soss(data, pathloss):
 
 
 def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
-    """Calculate the correction arrasy for MOS slit
+    """Calculate the correction arrays for MOS slit
 
     Parameters
     ----------
@@ -691,7 +765,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
 
 
 def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
-    """Calculate the correction arrasy for Fixed-slit slit
+    """Calculate the correction arrays for Fixed-slit
 
     Parameters
     ----------
@@ -716,6 +790,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
 
     # Get centering
     xcenter, ycenter = get_center(exp_type, slit)
+
     # Calculate the 1-d wavelength and pathloss vectors for the source position
     # Get the aperture from the reference file that matches the slit
     aperture = get_aperture_from_model(pathloss, slit.name)
@@ -776,7 +851,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
 
 
 def _corrections_for_ifu(data, pathloss, source_type):
-    """Calculate the correction arrasy for MOS slit
+    """Calculate the correction arrays for IFU
 
     Parameters
     ----------
@@ -852,5 +927,64 @@ def _corrections_for_ifu(data, pathloss, source_type):
     correction.pathloss_point = pathloss_2d_ps
     correction.pathloss_uniform = pathloss_2d_un
     correction.wavelength = wavelength_array
+
+    return correction
+
+
+def _corrections_for_lrs(data, pathloss):
+    """Calculate the correction arrays for MIRI LRS slit
+
+    Parameters
+    ----------
+    data : jwst.datamodels.DataModel
+        The LRS data being operated on.
+
+    pathloss : jwst.datamodels.MirLrsPathlossModel
+        The pathloss reference data
+
+    Returns
+    -------
+    correction : jwst.datamodels.DataModel
+        The correction arrays
+    """
+    correction = None
+
+    # Get location of target
+    xcenter, ycenter = get_center(data.meta.exposure.type, data)
+
+    # Get 1-d wavelength vector from reference file data
+    wavelength_vector = pathloss.pathloss_table['wavelength']
+
+    # Calculate the 1-d pathloss vector for the source position
+    pathloss_data = pathloss.pathloss_table['pathloss']
+    pathloss_wcs = pathloss.meta.wcsinfo
+    _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
+                                                                   pathloss_wcs,
+                                                                   xcenter, ycenter,
+                                                                   calc_wave=False)
+
+    if is_inside_slit:
+
+        # Populate 2-D wavelength array from WCS info
+        wavelength_array = get_wavelengths(data)
+
+        # MIRI LRS pathloss reference file data are in reverse order,
+        # so flip them here
+        wavelength_vector = wavelength_vector[::-1]
+        pathloss_vector = pathloss_vector[::-1]
+
+        # Compute the point source pathloss 2D correction
+        pathloss_2d = interpolate_onto_grid(wavelength_array,
+                                            wavelength_vector,
+                                            pathloss_vector)
+
+        # Save the corrections. The `data` portion is the correction used.
+        # The individual ones will be saved in the respective attributes.
+        correction = type(data)(data=pathloss_2d)
+        correction.pathloss_point = pathloss_2d
+        correction.wavelength = wavelength_array
+
+    else:
+        log.warning('Source is outside slit. Skipping pathloss correction for LRS.')
 
     return correction

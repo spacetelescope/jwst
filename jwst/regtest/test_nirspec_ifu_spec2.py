@@ -20,7 +20,7 @@ def run_spec2(jail, rtdata_module):
     # Run the pipeline
     step_params = {
         'input_path': asn_path,
-        'step': 'calwebb_spec2.cfg',
+        'step': 'calwebb_spec2',
         'args': [
             '--steps.bkg_subtract.save_results=true',
             '--steps.assign_wcs.save_results=true',
@@ -69,7 +69,7 @@ def run_photom(jail, rtdata_module):
     # Run the step
     step_params = {
         'input_path': rate_path,
-        'step': 'photom.cfg',
+        'step': 'jwst.photom.PhotomStep',
         'args': ['--save_results=True', ]
     }
 

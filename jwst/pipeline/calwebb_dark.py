@@ -19,7 +19,7 @@ from ..linearity import linearity_step
 __all__ = ['DarkPipeline']
 
 # Define logging
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 

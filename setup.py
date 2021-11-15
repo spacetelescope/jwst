@@ -72,8 +72,16 @@ setup(
             define_macros=define_macros
         ),
         Extension(
-            'jwst.cube_build.cube_match_sky',
-            ['jwst/cube_build/src/cube_match_sky.c','jwst/cube_build/src/cube_utils.c'],
+            'jwst.cube_build.cube_match_sky_pointcloud',
+            ['jwst/cube_build/src/cube_match_sky_pointcloud.c','jwst/cube_build/src/cube_utils.c',
+             'jwst/cube_build/src/cube_dq_utils.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        ),
+        Extension(
+            'jwst.cube_build.cube_match_sky_driz',
+            ['jwst/cube_build/src/cube_match_sky_driz.c','jwst/cube_build/src/cube_utils.c',
+             'jwst/cube_build/src/cube_dq_utils.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         ),
