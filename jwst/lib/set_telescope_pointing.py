@@ -1091,7 +1091,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
 
 
 def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
-    """Modified COURSE calculation
+    """Modified COARSE calculation
 
     This implements equation 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 4:
@@ -1997,7 +1997,7 @@ def calc_wcs_from_matrix(m):
 
     Parameters
     ----------
-    m: np.array((3, 3))
+    m : np.array((3, 3))
         The DCM matrix to extract WCS information from
 
     Returns
