@@ -766,8 +766,12 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         #######################
 
         # Keep only kernels that fall on the detector.
-        kernels, wave_kernels = kernels[:, i_min:i_max + 1], wave_kernels[:, i_min:i_max + 1]
+        kernels = kernels[:, i_min:i_max + 1].copy()
+        wave_kernels = wave_kernels[:, i_min:i_max + 1].copy()
         wave_center = np.array(wave_kernels[0, :])
+
+        # Save minimum kernel value (greater than zero)
+        kernels_min = np.min(kernels[(kernels > 0.0)])
 
         # Then find the pixel closest to each kernel center
         # and use the surrounding pixels (columns)
@@ -817,6 +821,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         self.poly = np.array(poly)
         self.fill_value = fill_value
         self.bounds_error = bounds_error
+        self.min_value = kernels_min
 
         # 2d Interpolate
         self.f_ker = RectBivariateSpline(pixels, wave_center, kernels, bbox=bbox)
@@ -841,6 +846,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         n_wv_c = len(wave_center)
         f_ker = self.f_ker
         n_pix = self.n_pix
+        min_value = self.min_value
 
         # #################################
         # First, convert wv value in pixels
@@ -882,8 +888,10 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 
         webbker = f_ker(pix, wave_c, grid=False)
 
-        # Make sure it's not negative, and put out of range values to zero.
-        webbker[webbker < 0] = 0
+        # Make sure it's not negative and greater than the min value
+        webbker = np.clip(webbker, min_value, None)
+
+        # and put out-of-range values to zero.
         webbker[pix > n_pix//2] = 0
         webbker[pix < -(n_pix//2)] = 0
 
