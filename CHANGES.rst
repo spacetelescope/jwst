@@ -161,6 +161,8 @@ lib
 
 - Implement the MAST AUI interface to the Engineering Database. [#6288]
 
+- Fix ROLL_REF and angle_to_vector calculations [#6452]
+
 linearity
 --------
 
