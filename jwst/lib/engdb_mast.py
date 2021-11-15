@@ -99,17 +99,17 @@ class EngdbMast(EngdbABC):
 
         Parameters
         ----------
-        mnemonics: iterable
+        mnemonics : iterable
             List of mnemonics to retrieve
 
-        starttime: str or astropy.time.Time
+        starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime: str or astropy.time.Time
+        endttime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
-        cache_path: str or Path-like
-        Path of the cache directory.
+        cache_path : str or Path-like
+            Path of the cache directory.
         """
         cache_path = Path(cache_path)
         cache_path.mkdir(parents=True, exist_ok=True)
@@ -125,17 +125,17 @@ class EngdbMast(EngdbABC):
 
         Parameters
         ----------
-        mnemonics: iterable
+        mnemonics : iterable
             List of mnemonics to retrieve
 
-        starttime: str or astropy.time.Time
+        starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime: str or astropy.time.Time
+        endttime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
-        cache_path: str or Path-like
-        Path of the cache directory.
+        cache_path : str or Path-like
+            Path of the cache directory.
         """
         cache_path = Path(cache_path)
         cache_path.mkdir(parents=True, exist_ok=True)
