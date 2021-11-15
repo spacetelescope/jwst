@@ -107,6 +107,9 @@ datamodels
 
 - Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
 
+- Added new column 'reference_order' to 'planned_star_table' in
+  guider_raw and guider_cal schemas [#6368]
+  
 dark_current
 ------------
 
