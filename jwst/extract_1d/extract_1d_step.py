@@ -210,7 +210,7 @@ class Extract1dStep(Step):
             soss_kwargs['devname'] = self.soss_devname
 
             # Run the extraction.
-            result = soss_extract.run_extract1d(input_model,
+            result, ref_outputs = soss_extract.run_extract1d(input_model,
                                                 spectrace_ref_name,
                                                 wavemap_ref_name,
                                                 specprofile_ref_name,

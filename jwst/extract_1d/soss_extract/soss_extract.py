@@ -509,7 +509,7 @@ def run_extract1d(input_model: DataModel,
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
         result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], subarray, **kwargs)
-        wavelengths, fluxes, fluxerrs, npixels = result
+        wavelengths, fluxes, fluxerrs, npixels, box_weights = result
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for ImageModel input?
@@ -595,7 +595,7 @@ def run_extract1d(input_model: DataModel,
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
             result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], subarray, **kwargs)
-            wavelengths, fluxes, fluxerrs, npixels = result
+            wavelengths, fluxes, fluxerrs, npixels, box_weights = result
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
