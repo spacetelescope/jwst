@@ -134,7 +134,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-    elif exptype in ['MIR_MRS', 'NRS_IFU']:
+    elif exptype in ['MIR_MRS', 'NRS_IFU', 'NRS_LAMP']:
         # read in asdf file
         extract_model = datamodels.Extract1dIFUModel(refname)
         ref_dict = {}
