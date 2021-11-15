@@ -128,17 +128,21 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
         The chi-squared value of the model fit.
     """
 
-    # Interpolate rotated model onto same x scale as data.
+    # Interpolate rotated model of first order onto same x scale as data.
     ymod_o1 = evaluate_model(xdat_o1, transform, xref_o1, yref_o1)
 
     # Compute the chi-square.
     chisq_o1 = np.nansum((ydat_o1 - ymod_o1)**2)
 
+    # If second order centroids are provided, include them in the calculation.
     if xdat_o2 is not None:
+        # Interpolate rotated model onto same x scale as data.
         ymod_o2 = evaluate_model(xdat_o2, transform, xref_o2, yref_o2)
 
+        # Compute the chi-square and add to the first order.
         chisq_o2 = np.nansum((ydat_o2 - ymod_o2)**2)
         chisq = chisq_o1 + chisq_o2
+    # If not, use only the first order.
     else:
         chisq = chisq_o1
 
@@ -187,8 +191,8 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
-                    yref_o2 = None,
-                    halfwidth=30., rotation=True, verbose=False):
+                    yref_o2 = None, halfwidth=30., rotation=True,
+                    verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xref_o1 and yref_o1 to the image.
 
@@ -202,10 +206,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         A priori expectation of the order 1 trace x-positions.
     yref_o1 : array[float]
         A priori expectation of the order 1 trace y-positions.
-    xref_o2 : array[float]
-        A priori expectation of the order 2 trace x-positions.
-    yref_o2 : array[float]
-        A priori expectation of the order 2 trace y-positions.
+    xref_o2 : array[float] (optional)
+        A priori expectation of the order 2 trace x-positions. Providing these
+        will improve the accuracy of the solver.
+    yref_o2 : array[float] (optional)
+        A priori expectation of the order 2 trace y-positions. Providing these
+        will improve the accuracy of the solver.
     halfwidth : float (optional)
         Size of the aperture mask used when extracting the trace positions
         from the data.
@@ -222,6 +228,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         xref_o1 and yref_o1 to the image.
     """
 
+    # Start with order 1 centroids as they will be available for all subarrays.
     # Remove any NaNs used to pad the xref, yref coordinates.
     mask_o1 = np.isfinite(xref_o1) & np.isfinite(yref_o1)
     xref_o1 = xref_o1[mask_o1]
@@ -230,26 +237,38 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     # Get centroids from data.
     aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o1 | scimask
-    xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
+    xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask,
+                                            poly_order=None)
 
-    # Use only the clean range between x=800 and x=1700.
-    mask = (xdat_o1 >= 800) & (xdat_o1 <= 1700)
-    xdat_o1 = xdat_o1[mask]
-    ydat_o1 = ydat_o1[mask]
-
+    # If order 2 centroids are provided, include them in the analysis. The
+    # inclusion of the order 2 centroids will allow for a more accurate
+    # determination of the rotation and offset, as the addition of the second
+    # order provides an anchor in the spatial direction. However, there are
+    # instances (a SUBSTRIP96 observation for example) where the second order
+    # is not available. In this case, work only with order 1.
     if xref_o2 is not None and yref_o2 is not None:
+        # Remove any NaNs used to pad the xref, yref coordinates.
         mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
         xref_o2 = xref_o2[mask_o2]
         yref_o2 = yref_o2[mask_o2]
 
+        # Get centroids from data.
         aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata_bkg.shape)
         mask = aper_mask_o2 | scimask
-        xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
+        xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask,
+                                                poly_order=None)
+
+        # Use only the uncontaminated range between x=800 and x=1700.
+        mask = (xdat_o1 >= 800) & (xdat_o1 <= 1700)
+        xdat_o1 = xdat_o1[mask]
+        ydat_o1 = ydat_o1[mask]
 
         mask = (xdat_o2 >= 800) & (xdat_o2 <= 1700)
         xdat_o2 = xdat_o2[mask]
         ydat_o2 = ydat_o2[mask]
     else:
+        # As there is no order 2, use the entire first order to enable the
+        # maximum possible positional constraint.
         xdat_o2, ydat_o2 = None, None
 
     if rotation:
