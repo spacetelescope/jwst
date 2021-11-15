@@ -130,12 +130,17 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
     # Interpolate rotated model onto same x scale as data.
     ymod_o1 = evaluate_model(xdat_o1, transform, xref_o1, yref_o1)
-    ymod_o2 = evaluate_model(xdat_o2, transform, xref_o2, yref_o2)
 
     # Compute the chi-square.
     chisq_o1 = np.nansum((ydat_o1 - ymod_o1)**2)
-    chisq_o2 = np.nansum((ydat_o2 - ymod_o2)**2)
-    chisq = chisq_o1 + chisq_o2
+
+    if xdat_o2 is not None:
+        ymod_o2 = evaluate_model(xdat_o2, transform, xref_o2, yref_o2)
+
+        chisq_o2 = np.nansum((ydat_o2 - ymod_o2)**2)
+        chisq = chisq_o1 + chisq_o2
+    else:
+        chisq = chisq_o1
 
     return chisq
 
@@ -181,7 +186,8 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     return chisq
 
 
-def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
+def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
+                    yref_o2 = None,
                     halfwidth=30., rotation=True, verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xref_o1 and yref_o1 to the image.
@@ -221,27 +227,30 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     xref_o1 = xref_o1[mask_o1]
     yref_o1 = yref_o1[mask_o1]
 
-    mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
-    xref_o2 = xref_o2[mask_o2]
-    yref_o2 = yref_o2[mask_o2]
-
     # Get centroids from data.
     aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o1 | scimask
     xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
-
-    aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata_bkg.shape)
-    mask = aper_mask_o2 | scimask
-    xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
     # Use only the clean range between x=800 and x=1700.
     mask = (xdat_o1 >= 800) & (xdat_o1 <= 1700)
     xdat_o1 = xdat_o1[mask]
     ydat_o1 = ydat_o1[mask]
 
-    mask = (xdat_o2 >= 800) & (xdat_o2 <= 1700)
-    xdat_o2 = xdat_o2[mask]
-    ydat_o2 = ydat_o2[mask]
+    if xref_o2 is not None and yref_o2 is not None:
+        mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
+        xref_o2 = xref_o2[mask_o2]
+        yref_o2 = yref_o2[mask_o2]
+
+        aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata_bkg.shape)
+        mask = aper_mask_o2 | scimask
+        xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
+
+        mask = (xdat_o2 >= 800) & (xdat_o2 <= 1700)
+        xdat_o2 = xdat_o2[mask]
+        ydat_o2 = ydat_o2[mask]
+    else:
+        xdat_o2, ydat_o2 = None, None
 
     if rotation:
         # Set up the optimization problem.
