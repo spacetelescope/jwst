@@ -66,7 +66,7 @@ cube_build
 
 - Moved variable definitions to top of code in C extension to
   support changes in #6093. [#6255]
-- Added weighting option driz (3D drizzling) [#6297] 
+- Added weighting option driz (3D drizzling) [#6297]
 
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
   sky values mapped to each detector slice. [#6326]
@@ -113,7 +113,7 @@ datamodels
 
 - Updated data products documentation to indicate that variance and error arrays
   are now included in resampled products. [#6420]
-  
+
 - Added SOSS-specific extraction parameters to core schema; add new
   datamodel to store SOSS model traces and aperture weights [#6422]
 
@@ -243,6 +243,9 @@ skymatch
 
 - Improved reliability when matching sky in images with very close sky
   footprints. [#6421]
+
+- Updated code in ``skymatch.region.py`` with latest improvements and bug fixes
+  from ``stsci.skypac.regions.py``. [#6451]
 
 source_catalog
 --------------
