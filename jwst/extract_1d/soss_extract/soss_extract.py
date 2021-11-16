@@ -12,7 +12,7 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .atoca import ExtractionEngine
-from .atoca_utils import ThroughputSOSS, WebbKernel, grid_from_map
+from .atoca_utils import ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 
 # TODO remove once code is sufficiently tested.
@@ -45,6 +45,20 @@ def get_ref_file_args(ref_files, transform):
 
     wavemap_o1 = transform_wavemap(transform, wavemap_ref.map[0].data, ovs, pad)
     wavemap_o2 = transform_wavemap(transform, wavemap_ref.map[1].data, ovs, pad)
+
+    # Make sure all pixels follow the expected direction of the dispersion
+    # Here, the dispersion axis is given by the columns (dispersion_axis=1)
+    # and it is decreasing going from left to right (dwv_sign=-1)
+    kwargs = dict(dispersion_axis=1, dwv_sign=-1)
+    wavemap_o1, flag_o1 = mask_bad_dispersion_direction(wavemap_o1, **kwargs)
+    wavemap_o2, flag_o2 = mask_bad_dispersion_direction(wavemap_o2, **kwargs)
+
+    # Warn if not all pixels were corrected
+    msg_warning = 'Some pixels in order {} do not follow the expected dispersion axis'
+    if not flag_o1:
+        log.warning(msg_warning.format(1))
+    if not flag_o2:
+        log.warning(msg_warning.format(2))
 
     # The spectral profiles for order 1 and 2.
     specprofile_ref = ref_files['specprofile']

@@ -147,49 +147,162 @@ def unsparse(matrix, fill_value=np.nan):
 # ==============================================================================
 
 
-def get_wave_p_or_m(wave_map):
-    # TODO rename function?
-    """Compute lambda_plus and lambda_minus of pixel map, given the pixel
-    central value.
+def get_wave_p_or_m(wave_map, dispersion_axis=1):
+    """ Compute upper and lower boundaries of a pixel map,
+    given the pixel central value.
+    Parameters
+    ----------
+    wave_map: array[float]
+        2d-map of the pixel central wavelength
+    dispersion_axis: int, optional
+        Which axis is the dispersion axis (0 or 1)
 
-    :param wave_map: Array of the pixel wavelengths for a given order.
-
-    :type wave_map: array[float]
-
-    :returns: wave_plus, wave_minus - The wavelength edges of each pixel,
-        given the central value.
-    :rtype: Tuple(array[float], array[float])
+    Returns
+    -------
+    wave_upper, wave_lower
+    The wavelength upper and lower boundarie of each pixel, given the central value.
     """
-
-    wave_map = wave_map.T  # Simpler to use transpose
-
-    # Iniitialize arrays.
-    wave_left = np.zeros_like(wave_map)
-    wave_right = np.zeros_like(wave_map)
-
-    # Compute the change in wavelength.
-    delta_wave = np.diff(wave_map, axis=0)
-
-    # Compute the wavelength values on the left and right edges of each pixel.
-    wave_left[1:] = wave_map[:-1] + delta_wave/2  # TODO check this logic.
-    wave_left[0] = wave_map[0] - delta_wave[0]/2
-    wave_right[:-1] = wave_map[:-1] + delta_wave/2
-    wave_right[-1] = wave_map[-1] + delta_wave[-1]/2
+    # Get wavelength boundaries of each pixels
+    wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
 
     # The outputs depend on the direction of the spectral axis.
-    # TODO This is a good check to have, but it keeps failing. This might be
-    # TODO due to numerical precision issues with the solver. DEBUG.
-    # if (wave_right >= wave_left).all():
-    #     wave_plus, wave_minus = wave_right.T, wave_left.T
-    # elif (wave_right <= wave_left).all():
-    #     wave_plus, wave_minus = wave_left.T, wave_right.T
-    # else:
-    #     raise ValueError('Bad pixel values for wavelength.')
-
-    # TODO for DMS input this is the correct direction.
-    wave_plus, wave_minus = wave_left.T, wave_right.T
+    invalid = (wave_map == 0)
+    if ((wave_right >= wave_left) | invalid).all():
+        wave_plus, wave_minus = wave_right, wave_left
+    elif ((wave_right <= wave_left) | invalid).all():
+        wave_plus, wave_minus = wave_left, wave_right
+    else:
+        raise ValueError('Some pixels do not follow the expected dispersion axis')
 
     return wave_plus, wave_minus
+
+
+def get_wv_map_bounds(wave_map, dispersion_axis=1):
+    """ Compute boundaries of a pixel map, given the pixel central value.
+    Parameters
+    ----------
+    wave_map: array[float]
+        2d-map of the pixel central wavelength
+    dispersion_axis: int, optional
+        Which axis is the dispersion axis (0 or 1)
+
+    Returns
+    -------
+    wave_top, wave_bottom
+    The wavelength edges of each pixel, given the central value.
+    Top and bottom edges assuming a vertical dispersion axis.
+    """
+    if dispersion_axis == 1:
+        # Simpler to use transpose
+        wave_map = wave_map.T
+    elif dispersion_axis != 0:
+        raise ValueError('dispersion axis must be 0 or 1')
+
+    # Initialize arrays.
+    wave_top = np.zeros_like(wave_map)
+    wave_bottom = np.zeros_like(wave_map)
+
+    (n_row, n_col) = wave_map.shape
+    for idx in range(n_col):
+        wave_col = wave_map[:, idx]
+
+        # Compute the change in wavelength for valid cols
+        idx_valid = np.isfinite(wave_col)
+        idx_valid &= (wave_col > 0)
+        wv_col_valid = wave_col[idx_valid]
+        delta_wave = np.diff(wv_col_valid)
+
+        # Init values
+        wv_col_top = np.zeros_like(wv_col_valid)
+        wv_col_bottom = np.zeros_like(wv_col_valid)
+
+        # Compute the wavelength values on the top and bottom edges of each pixel.
+        wv_col_top[1:] = wv_col_valid[:-1] + delta_wave / 2  # TODO check this logic.
+        wv_col_top[0] = wv_col_valid[0] - delta_wave[0] / 2
+        wv_col_bottom[:-1] = wv_col_valid[:-1] + delta_wave / 2
+        wv_col_bottom[-1] = wv_col_valid[-1] + delta_wave[-1] / 2
+
+        wave_top[idx_valid, idx] = wv_col_top
+        wave_bottom[idx_valid, idx] = wv_col_bottom
+
+    # De-transpose if it was transposed for computation
+    if dispersion_axis == 1:
+        wave_top, wave_bottom = wave_top.T, wave_bottom.T
+
+    return wave_top, wave_bottom
+
+
+def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
+    """
+    Check that the dispersion axis is increasing in the good direction
+    given by `dwv_sign``
+    Parameters
+    ----------
+    wave_map: array[float]
+        2d-map of the pixel central wavelength
+    dispersion_axis: int, optional
+        Which axis is the dispersion axis (0 or 1)
+    dwv_sign: int, optional
+        Direction of increasing wavelengths (-1 or 1)
+
+    Returns
+    -------
+    boolean 2d map of the valid dispersion direction, same shape as `wave_map`
+    """
+
+    # Estimate the direction of increasing wavelength
+    wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
+    dwv = wave_right - wave_left
+
+    # Return bool map of pixels following the good direction
+    bool_map = (dwv_sign * dwv >= 0)
+
+    return bool_map
+
+
+def mask_bad_dispersion_direction(wave_map, n_max=10, fill_value=0, dispersion_axis=1, dwv_sign=-1):
+    """
+    Change value of the pixels in `wave_map` that do not follow the
+    general dispersion direction.
+    Parameters
+    ----------
+    wave_map: array[float]
+        2d-map of the pixel central wavelength
+    n_max: int
+        Maximum number of iterations
+    fill_value: float
+        Value use to replace pixels that do not follow the dispersion direction
+    dispersion_axis: int, optional
+        Which axis is the dispersion axis (0 or 1)
+    dwv_sign: int, optional
+        Direction of increasing wavelengths (-1 or 1)
+
+    Returns
+    -------
+    (wave_map, convergence flag): the corrected wave_map and a convergence flag
+    that tells if all the pixels are now valid.
+    """
+    # Do not modify the input
+    wave_map = wave_map.copy()
+
+    # Wrap inputs kwargs into a dict
+    kwargs = dict(dispersion_axis=dispersion_axis, dwv_sign=dwv_sign)
+
+    # Make the correction iteratively
+    for i_try in range(n_max):
+        # Check which pixels are good
+        is_good_direction = check_dispersion_direction(wave_map, **kwargs)
+        # Stop iteration if all good, or apply correction where needed.
+        if is_good_direction.all():
+            convergence_flag = True
+            break
+        else:
+            wave_map[~is_good_direction] = fill_value
+    else:
+        # Did not succeed! :(
+        convergence_flag = False
+
+    return wave_map, convergence_flag
 
 
 def oversample_grid(wave_grid, n_os=1):
