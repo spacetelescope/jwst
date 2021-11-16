@@ -140,7 +140,6 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
         ref_dict = {}
         ref_dict['ref_file_type'] = FILE_TYPE_ASDF
         ref_dict['ref_model'] = extract_model
-
     else:
         # Try reading the file as JSON.
         fd = open(refname)
