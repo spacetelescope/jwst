@@ -11,8 +11,7 @@ from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 
-from .engdb_lib import EngDB_Value, EngdbABC
-from .tests.engdb_mock import mnemonic_data_fname
+from .engdb_lib import EngDB_Value, EngdbABC, mnemonic_data_fname
 
 __all__ = ['EngdbMast']
 

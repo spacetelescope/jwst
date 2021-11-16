@@ -8,6 +8,7 @@ import re
 import requests_mock
 
 from jwst.lib import engdb_direct
+from jwst.lib.engdb_lib import mnemonic_data_fname
 
 __all__ = [
     'ENGDB_PATH',
@@ -262,23 +263,6 @@ class EngDB_Local():
 # #########
 # Utilities
 # #########
-def mnemonic_data_fname(mnemonic):
-    """
-    Construct the file name for the cached data of the specified mnemonic
-
-    Parameters
-    ----------
-    mnemonic
-        The mnemonic to refer to.
-
-    Returns
-    -------
-    file_name: str
-        The name of the file containing the menonic's cached data.
-    """
-    return mnemonic.lower() + DATA
-
-
 def cache_engdb(
         mnemonics=MNEMONICS_TO_CACHE,
         starttime='2016-01-18T15:40:00',
