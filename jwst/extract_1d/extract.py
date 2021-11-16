@@ -106,7 +106,7 @@ class ContinueError(Exception):
     pass
 
 
-def open_extract1d_ref(refname: str, exptype: str) -> dict:
+def open_extract1d_ref(refname: str, exptype: str, model_type: str) -> dict:
     """Open the extract1d reference file.
 
     Parameters
@@ -134,8 +134,8 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-    elif exptype in ['MIR_MRS', 'NRS_IFU', 'NRS_LAMP']:
-        # read in asdf file
+    elif model_type == 'IFUCubeModel':
+    # read in asdf file
         extract_model = datamodels.Extract1dIFUModel(refname)
         ref_dict = {}
         ref_dict['ref_file_type'] = FILE_TYPE_ASDF
@@ -2655,9 +2655,11 @@ def run_extract1d(
     """
     # Read and interpret the extract1d reference file.
     try:
-        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type,
+                                      input_model.meta.model_type)
     except AttributeError:  # Input is a ModelContainer of some type
-        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type)
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type,
+                                      input_model[0].meta.model_type)
 
     apcorr_ref_model = None
 
