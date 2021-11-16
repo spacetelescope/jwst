@@ -114,15 +114,11 @@ class AssignWcsStep(Step):
         except ValueError:
             return result
 
+        # update meta.wcs_info with fit keywords except for naxis*
+        del fit_sip_hdr['naxis*']
+
         # maintain convention of lowercase keys
         fit_sip_hdr = {k.lower(): v for k, v in fit_sip_hdr.items()}
-
-        # update meta.wcs_info with fit keywords except for naxis*
-        for key in ['naxis1', 'naxis2']:
-            del fit_sip_hdr[key]
-
-        # update meta.wcs_info with fit keywords
-        result.meta.wcsinfo.instance.update(fit_sip_hdr)
 
         # delete naxis, cdelt, pc from wcsinfo
         rm_keys = ['naxis', 'cdelt1', 'cdelt2',
@@ -130,5 +126,8 @@ class AssignWcsStep(Step):
         for key in rm_keys:
             if key in result.meta.wcsinfo.instance:
                 del result.meta.wcsinfo.instance[key]
+
+        # update meta.wcs_info with fit keywords
+        result.meta.wcsinfo.instance.update(fit_sip_hdr)
 
         return result

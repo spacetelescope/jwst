@@ -25,6 +25,9 @@ assign_wcs
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
   Also the x tolerance on finding slice elements was increased. [#6326]
 
+- Fix a bug due to which, under certain circumstances, ``PC``-matrix and
+  ``CDELT`` coefficients may be removed from FITS WCS of data products. [#6453]
+
 - Fixed bug in NIRSpec MOS slitlet meta data calculations for background slits
   consisting of multiple shutters. [#6454]
 
@@ -121,7 +124,7 @@ datamodels
 
 - Added new column 'reference_order' to 'planned_star_table' in
   guider_raw and guider_cal schemas [#6368]
-  
+
 dark_current
 ------------
 
