@@ -25,6 +25,9 @@ assign_wcs
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
   Also the x tolerance on finding slice elements was increased. [#6326]
 
+- Fixed bug in NIRSpec MOS slitlet meta data calculations for background slits
+  consisting of multiple shutters. [#6454]
+
 associations
 ------------
 
@@ -41,6 +44,15 @@ associations
 - Added constraint to Asn_Lv2ImageNonScience to prevent creation of asns
   for NRC_TACQ exposures with WFSC_LOS_JITTER in the DMS_NOTE. Also added
   new reduce method, Constraint.notall [#6404]
+
+barshadow
+---------
+
+- Modify computation of correction array to remove dependencies on the
+  centering of the source within the slitlet, because for extended/uniform
+  sources the centering is irrelevant. This fixes bugs encountered when
+  computing the correction for background signal contained within slits with
+  an off-center point source. [#6454]
 
 cube_build
 ----------

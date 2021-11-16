@@ -634,8 +634,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             else:
                 jmin = min([s['shutter_column'] for s in slitlets_sid])
                 jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = jmin + (jmax - jmin) // 2 + 1
-            ymax = 0.5 + margin + (jmax - j) * 1.15
+                j = jmin + (jmax - jmin) // 2
+            ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
             quadrant = slitlets_sid[0]['shutter_quadrant']
             ycen = j
