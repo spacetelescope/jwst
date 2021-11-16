@@ -4,7 +4,9 @@ slits in which the source is off center. The correction is applied
 only to point sources.
 
 The algorithm uses a reference file which is a look up table of
-wavelenght_correction as a function of slit_x_position and wavelength.
+wavelength_correction as a function of slit_x_position and wavelength.
+The ``x`` direction is the one parallel to dispersion/wavelength for
+both MOS and FS slits.
 
 The slit_x_position is determined in the following way.
 
@@ -279,7 +281,7 @@ def get_source_xpos(slit, slit_wcs, lam):
     log.debug("wcsinfo: {0}, {1}, {2}, {3}".format(v2ref, v3ref, v3idlyangle, vparity))
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
-    log.info(f'xoffset, yoffset, {xoffset}, {yoffset}, {lam}')
+    log.info(f'xoffset, yoffset, {xoffset}, {yoffset}')
 
     # Position in the virtual slit
     xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform('v2v3', 'slit_frame')(
@@ -288,6 +290,6 @@ def get_source_xpos(slit, slit_wcs, lam):
     slit.source_xpos = xpos_slit
     slit.source_ypos = ypos_slit
     log.debug('Source X/Y position in V2V3: {0}, {1}'.format(xv, yv))
-    log.info('Source X/Y position in the slit: {0}, {1}, {2}, {3}'.format(xpos_slit, ypos_slit, lam, lam_slit))
+    log.info('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
 
     return xpos_slit
