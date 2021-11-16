@@ -52,7 +52,7 @@ barshadow
   centering of the source within the slitlet, because for extended/uniform
   sources the centering is irrelevant. This fixes bugs encountered when
   computing the correction for background signal contained within slits with
-  an off-center point source. [#6454]
+  an off-center point source. [#6454, #6459]
 
 cube_build
 ----------
