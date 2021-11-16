@@ -130,12 +130,12 @@ def open_extract1d_ref(refname: str, exptype: str, model_type: str) -> dict:
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
         handle for the jwst.datamodels object for the extract1d file.
-    """
+t    """
 
     if refname == "N/A":
         ref_dict = None
     elif model_type == 'IFUCubeModel':
-    # read in asdf file
+        # read in asdf file
         extract_model = datamodels.Extract1dIFUModel(refname)
         ref_dict = {}
         ref_dict['ref_file_type'] = FILE_TYPE_ASDF
