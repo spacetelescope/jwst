@@ -133,9 +133,15 @@ def _calc_correction(slitlet, barshadow_model, source_type):
             # Use this transformation to calculate x, y, and wavelength
             xslit, yslit, wavelength = det2slit(x, y)
 
-            # Renormalize the yslit values so that it appears as if the source is always
-            # centered in the slitlet, which is appropriate for extended/uniform sources
-            yslit -= np.nanmean(yslit)
+            # If the source position is off-center in the slit, renormalize the yslit
+            # values so that it appears as if the source is centered, which is the appropriate
+            # way to compute the shadow correction for extended/uniform sources (doesn't
+            # depend on source location).
+            if len(shutter_status) > 1:
+                middle = (len(shutter_status) - 1) / 2.0
+                src_loc = shutter_status.find('x')
+                if src_loc != -1 and float(src_loc) != middle:
+                    yslit -= np.nanmean(yslit)
 
             # The returned y values are scaled to where the slit height is 1
             # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
