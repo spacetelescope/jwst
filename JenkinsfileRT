@@ -76,7 +76,7 @@ bc0.conda_packages = [
 ]
 bc0.pip_reqs_files = ['requirements-sdp.txt']
 bc0.build_cmds = [
-    "pip install -e .[test,ephem] --no-cache-dir",
+    "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
     "pip freeze",
 ]
