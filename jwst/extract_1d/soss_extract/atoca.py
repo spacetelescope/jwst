@@ -40,6 +40,10 @@ class _BaseOverlap:
     methods get_w which computes the 'k' associated to each pixel 'i'.
     These depends of the type of interpolation used.
     """
+
+    # The desired data-type for computations, e.g., 'float32'. 'float64' is recommended.
+    dtype = 'float64'
+
     def __init__(self, wave_map, trace_profile, throughput, kernels,
                  orders=None, global_mask=None,
                  wave_grid=None, wave_bounds=None, n_os=2,
@@ -72,6 +76,12 @@ class _BaseOverlap:
         global_mask : (N, M) array_like boolean, optional
             Boolean mask of the detector pixels to mask for every extraction.
         orders: list, optional
+            Boolean Mask of the detector pixels to mask for every extraction.
+        mask_aperture: (N_ord, N, M) list or array of 2-D arrays[bool], optional
+            A list or array of the pixel that need to be used for extraction,
+            for each order on the detector. It has to have the same (N_ord, N, M) as `aperture`.
+            If not given, `threshold` will be applied on spatial profiles to define the masks.
+        orders: list, optional:
             List of orders considered. Default is orders = [1, 2]
         wave_grid : (N_k) array_like, optional
             The grid on which f(lambda) will be projected.
@@ -85,7 +95,9 @@ class _BaseOverlap:
             generate a grid. Default is 2.
         threshold : float, optional:
             The pixels where the estimated spatial profile is less than
-            this value will be masked. Default is 1e-5.
+            this value will considered contaminated and will be masked.
+            If `mask_aperture` is not specified, the pixels where the spatial profile
+            is less than this value will define the mask. Default is 1e-5.
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
@@ -129,6 +141,12 @@ class _BaseOverlap:
         self.update_wave_map(wave_map)
         self.update_trace_profile(trace_profile)
 
+        # Set the mask based on apertures and save
+        if mask_aperture is None:
+            # Mask according to the spatial profile threshold.
+            mask_aperture = np.array([aperture_n < threshold for aperture_n in aperture])
+        self.mask_aperture = mask_aperture
+
         # Generate a wavelength grid if none was provided.
         if wave_grid is None:
             if self.n_orders == 2:
@@ -137,7 +155,7 @@ class _BaseOverlap:
                 wave_grid, _ = self.grid_from_map()
 
         # Set the wavelength grid and its size.
-        self.wave_grid = wave_grid.copy()
+        self.wave_grid = wave_grid.astype(self.dtype).copy()
         self.n_wavepoints = len(wave_grid)
 
         # Set the throughput for each order.
@@ -225,7 +243,8 @@ class _BaseOverlap:
         -------
         None
         """
-        self.wave_map = [wave_n.copy() for wave_n in wave_map]
+        dtype = self.dtype
+        self.wave_map = [wave_n.astype(dtype).copy() for wave_n in wave_map]
 
         return
 
@@ -240,9 +259,10 @@ class _BaseOverlap:
         -------
         None
         """
+        dtype = self.dtype
 
         # Update the trace_profile profile.
-        self.trace_profile = [trace_profile_n.copy() for trace_profile_n in trace_profile]
+        self.trace_profile = [trace_profile_n.astype(dtype).copy() for trace_profile_n in trace_profile]
 
         return
 
@@ -378,11 +398,12 @@ class _BaseOverlap:
         """
 
         # Get needed attributes
-        threshold, n_orders = self.get_attributes('threshold', 'n_orders')
-        throughput, trace_profile, wave_map = self.get_attributes('throughput', 'trace_profile', 'wave_map')
+        args = ('threshold', 'n_orders', 'throughput', 'mask_trace_profile', 'wave_map', 'trace_profile')
+        needed_attr = self.get_attributes(*args)
+        threshold, n_orders, throughput, mask_trace_profile, wave_map, trace_profile = needed_attr
 
-        # Mask according to the spatial profile.
-        mask_trace_profile = np.array([trace_profile_n < threshold for trace_profile_n in trace_profile])
+        # Convert mask_aperture from list to array (easier for coding)
+        mask_trace_profile = np.array(mask_trace_profile)
 
         # Mask pixels not covered by the wavelength grid.
         mask_wave = np.array([self.get_mask_wave(i_order) for i_order in range(n_orders)])
@@ -401,8 +422,9 @@ class _BaseOverlap:
         # This means that an order is contaminated by another
         # order, but the wavelength range does not cover this part
         # of the spectrum. Thus, it cannot be treated correctly.
+        is_contaminated = np.array([tr_profile_ord > threshold for tr_profile_ord in trace_profile])
         general_mask |= (np.any(mask_wave, axis=0)
-                         & np.all(~mask_trace_profile, axis=0))
+                         & np.all(is_contaminated, axis=0))
 
         # Apply this new general mask to each order.
         mask_ord = (mask_wave | general_mask[None, :, :])
@@ -573,82 +595,9 @@ class _BaseOverlap:
 
         wave_grid, icol = atoca_utils._grid_from_map(wave_map, trace_profile)
 
+        wave_grid = wave_grid.astype(self.dtype)
+
         return wave_grid, icol
-
-    def get_adapt_grid(self, spectrum=None, n_max=3, **kwargs):
-        """Return an irregular grid needed to reach a
-        given precision when integrating over each pixels.
-
-        Parameters
-        ----------
-        spectrum : 1D array-like, optional
-            Input flux in the integral to be optimized.
-        n_max : int, optional
-            Maximum number of nodes in each intervals of self.wave_grid.
-            Must be greater then zero.
-        kwargs : dict, optional
-            Arguments passed to the function get_n_nodes: tol, rtol and divmax.
-
-        Returns
-        -------
-        wave_grid : array[float]
-            Oversampled grid which minimizes the integration error based on
-            Romberg's method
-        See Also
-        --------
-        utils.get_n_nodes
-        scipy.integrate.quadrature.romberg
-        References
-        ----------
-        [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
-        """
-        # Generate the spectrum (f_k) if not given.
-        if spectrum is None:
-            spectrum = self.__call__()
-
-        # Init output oversampled grid
-        os_grid = []
-
-        # Iterate starting with the last order
-        for i_order in range(self.n_orders - 1, -1, -1):
-
-            # Grid covered by this order
-            grid_ord = self.wave_grid_c(i_order)
-
-            # Estimate the flux at this order
-            convolved_spectrum = self.kernels[i_order].dot(spectrum)
-            # Interpolate with a cubic spline
-            fct = interp1d(grid_ord, convolved_spectrum, kind='cubic')
-
-            # Find number of nodes to reach the precision
-            n_oversample, _ = atoca_utils.get_n_nodes(grid_ord, fct, **kwargs)
-
-            # Make sure n_oversample is not greater than
-            # user's define `n_max`
-            n_oversample = np.clip(n_oversample, 0, n_max)
-
-            # Generate oversampled grid
-            grid_ord = atoca_utils.oversample_grid(grid_ord, n_os=n_oversample)
-
-            # Keep only wavelength that are not already
-            # covered by os_grid.
-            if os_grid:
-                # Under or above os_grid
-                index = (grid_ord < np.min(os_grid))
-                index |= (grid_ord > np.max(os_grid))
-            else:
-                index = slice(None)
-
-            # Keep these values
-            os_grid.append(grid_ord[index])
-
-        # Convert os_grid to 1D array
-        os_grid = np.concatenate(os_grid)
-
-        # Return sorted and unique.
-        wave_grid = np.unique(os_grid)
-
-        return wave_grid
 
     def estimate_noise(self, i_order=0, data=None, error=None, mask=None):
         """Relative noise estimate over columns.
@@ -1506,6 +1455,9 @@ class ExtractionEngine(_BaseOverlap):
     This version models the pixels of the detector using an oversampled trapezoidal integration.
     """
 
+    # The desired data-type for computations, e.g., 'float32'. 'float64' is recommended.
+    dtype = 'float64'
+
     def __init__(self, wave_map, trace_profile, *args, **kwargs):
         """
         Parameters
@@ -1539,6 +1491,10 @@ class ExtractionEngine(_BaseOverlap):
             Estimate of the error on each pixel. Default is one everywhere.
         mask : (N, M) array_like boolean, optional
             Boolean mask of the bad pixels on the detector.
+        mask_aperture: (N_ord, N, M) list or array of 2-D arrays[bool], optional
+            A list or array of the pixel that need to be used for extraction,
+            for each order on the detector. It has to have the same (N_ord, N, M) as `aperture`.
+            If not given, `threshold` will be applied on spatial profiles to define the masks.
         orders: list, optional
             List of orders considered. Default is orders = [1, 2]
         wave_grid : (N_k) array_like, optional
@@ -1547,22 +1503,30 @@ class ExtractionEngine(_BaseOverlap):
         wave_bounds : list or array-like (N_ord, 2), optional
             Boundary wavelengths covered by each orders.
             Default is the wavelength covered by `wave_map`.
+        n_os  : int, optional
+            Oversampling rate. If `wave_grid`is None, it will be used to
+            generate a grid. Default is 2.
         threshold : float, optional:
             The pixels where the estimated spatial profile is less than
-            this value will be masked. Default is 1e-5.
+            this value will considered contaminated and will be masked.
+            If `mask_aperture` is not specified, the pixels where the spatial profile
+            is less than this value will define the mask. Default is 1e-5.
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
-            `convolution.get_c_matrix` function for each orders.
-            If dictionary, the same c_kwargs will be used for each orders.
+            `convolution.get_c_matrix` function for each order.
+            If dictionary, the same c_kwargs will be used for each order.
         """
 
         # Get wavelength at the boundary of each pixel
         wave_p, wave_m = [], []
         for wave in wave_map:  # For each order
             lp, lm = atoca_utils.get_wave_p_or_m(wave)  # Lambda plus or minus
-            wave_p.append(lp), wave_m.append(lm)
+            # Make sure it is the good precision
+            wave_p.append(lp.astype(self.dtype))
+            wave_m.append(lm.astype(self.dtype))
 
-        self.wave_p, self.wave_m = wave_p, wave_m  # Save values
+        # Save values
+        self.wave_p, self.wave_m = wave_p, wave_m
 
         # Init upper class
         super().__init__(wave_map, trace_profile, *args, **kwargs)
