@@ -148,10 +148,51 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     return chisq
 
 
+def _chi_squared_rot(transform, xref_o1, yref_o1, xref_o2, yref_o2,
+                     xdat_o1, ydat_o1, xdat_o2, ydat_o2):
+    """Compute the chi-squared statistic for fitting the reference positions
+    to the true positions neglecting any vertical/horizontal offsets.
+
+    Parameters
+    ----------
+    transform : Tuple, List, Array
+        The transformation parameters.
+    xref_o1 : array[float]
+        The order 1 reference x-positions.
+    yref_o1 : array[float]
+        The order 1 reference y-positions.
+    xref_o2 : array[float]
+        The order 2 reference x-positions.
+    yref_o2 : array[float]
+        The order 2 reference y-positions.
+    xdat_o1 : array[float]
+        The order 1 data x-positions.
+    ydat_o1 : array[float]
+        The order 1 data y-positions.
+    xdat_o2 : array[float]
+        The order 2 data x-positions.
+    ydat_o2 : array[float]
+        The order 2 data y-positions.
+
+    Returns
+    -------
+    chisq : float
+        The chi-squared value of the model fit.
+    """
+
+    transform_ = np.zeros(3)
+    transform_[0] = transform
+
+    chisq = _chi_squared(transform_, xref_o1, yref_o1, xref_o2, yref_o2,
+                         xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+
+    return chisq
+
+
 def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
                        xdat_o1, ydat_o1, xdat_o2, ydat_o2):
     """Compute the chi-squared statistic for fitting the reference positions
-    to the true positions.
+    to the true positions neglecting any rotation.
 
     Parameters
     ----------
@@ -190,8 +231,8 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
-                    yref_o2 = None, halfwidth=30., rotation=True,
-                    verbose=False):
+                    yref_o2 = None, halfwidth=30., rotation=True, shift=True,
+                    soss_filter='CLEAR', verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xref_o1 and yref_o1 to the image.
 
@@ -217,6 +258,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     rotation : bool (optional)
         If False, set rotation angle to zero and only fit horizontal and
         vertical offsets.
+    shift : bool (optional)
+        If False, set horizontal and vertical offsets to zero and only fit for
+        rotation angle.
+    soss_filter : str (optional)
+        Designator for the SOSS filter used in the observation. Either CLEAR
+        or F277W. Setting F277W here will force rotation to False.
     verbose : bool (optional)
         If True make a diagnostic image of the best-fit transformation.
 
@@ -243,9 +290,9 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     # inclusion of the order 2 centroids will allow for a more accurate
     # determination of the rotation and offset, as the addition of the second
     # order provides an anchor in the spatial direction. However, there are
-    # instances (a SUBSTRIP96 observation for example) where the second order
-    # is not available. In this case, work only with order 1.
-    if xref_o2 is not None and yref_o2 is not None:
+    # instances (a SUBSTRIP96, or F277W observation for example) where the
+    # second order is not available. In this case, work only with order 1.
+    if xref_o2 is not None and yref_o2 is not None and soss_filter == 'CLEAR':
         # Remove any NaNs used to pad the xref, yref coordinates.
         mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
         xref_o2 = xref_o2[mask_o2]
@@ -265,22 +312,27 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         mask = (xdat_o2 >= 800) & (xdat_o2 <= 1700)
         xdat_o2 = xdat_o2[mask]
         ydat_o2 = ydat_o2[mask]
+    elif soss_filter == 'F277W':
+        # If the exposure uses the F277W filter, there is no second order, and
+        # first order centroids are only useful redwards of ~2.5µm.
+        # Restrict centroids to lie within region lambda>~2.5µm, where the
+        # F277W filter response is strong.
+        mask = (xdat_o1 >= 25) & (xdat_o1 <= 425)
+        xdat_o1 = xdat_o1[mask]
+        ydat_o1 = ydat_o1[mask]
+        # Force rotation to False as there is not enough information to
+        # constrain dx, dy and dtheta simultaneously.
+        #rotation = False
+        # Second order centroids are not available.
+        xdat_o2, ydat_o2 = None, None
     else:
-        # As there is no order 2, use the entire first order to enable the
-        # maximum possible positional constraint.
+        # If the exposure is SUBSTRIP96 using the CLEAR filter, there is no
+        # order 2. Use the entire first order to enable the maximum possible
+        # positional constraint on the centroids.
         xdat_o2, ydat_o2 = None, None
 
-    if rotation:
-        # Set up the optimization problem.
-        guess_transform = np.array([0., 0., 0.])
-        min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
-                    xdat_o1, ydat_o1, xdat_o2, ydat_o2)
-
-        # Find the best-fit transformation.
-        result = minimize(_chi_squared, guess_transform, args=min_args)
-        simple_transform = result.x
-
-    else:
+    if rotation is False:
+        # If not considering rotation.
         # Set up the optimization problem.
         guess_transform = np.array([0., 0.])
         min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
@@ -291,6 +343,28 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
 
         simple_transform = np.zeros(3)
         simple_transform[1:] = result.x
+    elif shift is False:
+        # If not considering horizontal or vertical shifts.
+        # Set up the optimization problem.
+        guess_transform = np.array([0.])
+        min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
+                    xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+
+        # Find the best-fit transformation.
+        result = minimize(_chi_squared_rot, guess_transform, args=min_args)
+
+        simple_transform = np.zeros(3)
+        simple_transform[0] = result.x
+    else:
+        # If considering the full transformation.
+        # Set up the optimization problem.
+        guess_transform = np.array([0., 0., 0.])
+        min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
+                    xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+
+        # Find the best-fit transformation.
+        result = minimize(_chi_squared, guess_transform, args=min_args)
+        simple_transform = result.x
 
     if verbose:
         _plot_transform(simple_transform, xdat_o1, ydat_o1, xdat_o2, ydat_o2,
