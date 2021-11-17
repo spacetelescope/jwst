@@ -232,9 +232,12 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
                     yref_o2=None, halfwidth=30., rotation=True, shift=True,
-                    soss_filter='CLEAR', verbose=False):
+                    soss_filter='CLEAR', bounds_theta=[-1., 1.],
+                    bounds_x=[-10., 10.], bounds_y=[-10., 10.],
+                    verbose=False):
     """Given a science image, determine the centroids and find the simple
-    transformation needed to match xref_o1 and yref_o1 to the image.
+    transformation (rotation + vertical & horizonal offset, or some combination
+    thereof) needed to match xref_o1 and yref_o1 to the image.
 
     Parameters
     ----------
@@ -256,14 +259,23 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         Size of the aperture mask used when extracting the trace positions
         from the data.
     rotation : bool (optional)
-        If False, set rotation angle to zero and only fit horizontal and
+        If False, fix rotation angle to zero and only fit for horizontal and
         vertical offsets.
     shift : bool (optional)
-        If False, set horizontal and vertical offsets to zero and only fit for
+        If False, fix horizontal and vertical offsets to zero and only fit for
         rotation angle.
     soss_filter : str (optional)
         Designator for the SOSS filter used in the observation. Either CLEAR
         or F277W. Setting F277W here will force shift to False.
+    bounds_theta : array[float] (optional)
+        Boundaries on the rotation angle to consider in the Chi-squared
+        minimization.
+    bounds_x : array[float] (optional)
+        Boundaries on the horizontal offset to consider in the Chi-squared
+        minimization.
+    bounds_y : array[float] (optional)
+        Boundaries on the vertical offset to consider in the Chi-squared
+        minimization.
     verbose : bool (optional)
         If True make a diagnostic image of the best-fit transformation.
 
@@ -312,6 +324,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         mask = (xdat_o2 >= 800) & (xdat_o2 <= 1700)
         xdat_o2 = xdat_o2[mask]
         ydat_o2 = ydat_o2[mask]
+
     elif soss_filter == 'F277W':
         # If the exposure uses the F277W filter, there is no second order, and
         # first order centroids are only useful redwards of ~2.5µm.
@@ -325,12 +338,17 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         shift = False
         # Second order centroids are not available.
         xdat_o2, ydat_o2 = None, None
+
     else:
         # If the exposure is SUBSTRIP96 using the CLEAR filter, there is no
         # order 2. Use the entire first order to enable the maximum possible
         # positional constraint on the centroids.
         xdat_o2, ydat_o2 = None, None
 
+    # Find the simple transformation via a Chi-squared minimzation of the
+    # extracted and reference centroids. This transformation considers by
+    # default rotation as well as vertical and horizontal offsets, however it
+    # can be limited to consider only rotation or only offsets.
     if rotation is False:
         # If not considering rotation.
         # Set up the optimization problem.
@@ -338,9 +356,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
                     xdat_o1, ydat_o1, xdat_o2, ydat_o2)
 
-        # Find the best-fit transformation.
-        result = minimize(_chi_squared_shift, guess_transform, args=min_args)
+        # Define the boundaries
+        bounds = [bounds_x, bounds_y]
 
+        # Find the best-fit transformation.
+        result = minimize(_chi_squared_shift, guess_transform, bounds=bounds,
+                          args=min_args)
         simple_transform = np.zeros(3)
         simple_transform[1:] = result.x
 
@@ -351,9 +372,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
                     xdat_o1, ydat_o1, xdat_o2, ydat_o2)
 
-        # Find the best-fit transformation.
-        result = minimize(_chi_squared_rot, guess_transform, args=min_args)
+        # Define the boundaries
+        bounds = [bounds_theta]
 
+        # Find the best-fit transformation.
+        result = minimize(_chi_squared_rot, guess_transform, bounds=bounds,
+                          args=min_args)
         simple_transform = np.zeros(3)
         simple_transform[0] = result.x
 
@@ -364,8 +388,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
                     xdat_o1, ydat_o1, xdat_o2, ydat_o2)
 
+        # Define the boundaries
+        bounds = [bounds_theta, bounds_x, bounds_y]
+
         # Find the best-fit transformation.
-        result = minimize(_chi_squared, guess_transform, args=min_args)
+        result = minimize(_chi_squared, guess_transform, bounds=bounds,
+                          args=min_args)
         simple_transform = result.x
 
     if verbose:
