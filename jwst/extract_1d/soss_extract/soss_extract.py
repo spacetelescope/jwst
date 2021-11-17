@@ -12,7 +12,8 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .atoca import ExtractionEngine
-from .atoca_utils import ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction
+from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction,
+                          make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 
 log = logging.getLogger(__name__)
@@ -150,7 +151,7 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     return xtrace, ytrace, wavetrace
 
 
-def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
+def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_aperture, threshold=1e-2):
     """
     Parameters
     ----------
@@ -160,19 +161,21 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
         The uncertainties corresponding to the detector image.
     scimask : array
         Pixel mask to apply to the detector image.
-    ref_files : list
-        A list of list of the reference files for each order.
-    threshold : float
-        The threshold value for using pixels based on the spectral profile.
-
+    ref_file_args : tuple
+        A tuple of reference file arguments constructed by get_ref_file_args().
+    mask_aperture: array[bool]
+        Mask determining the aperture used for extraction. Set to False where the pixel should be extracted.
+    threshold : float, optional:
+        The pixels with an aperture[order 2] > `threshold` are considered contaminated
+        and will be masked. Default is 1e-4.
     Returns
     -------
     func
         A spline estimator that provides the underlying flux as a function of wavelength
     """
 
-    # Unpack ref_files
-    wave_maps, spat_pros, thrpts, _ = ref_files
+    # Unpack ref_file arguments
+    wave_maps, spat_pros, thrpts, _ = ref_file_args
 
     # Oversampling of 1 to make sure the solution will be stable
     n_os = 1
@@ -181,14 +184,13 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
     wave_grid = grid_from_map(wave_maps[0], spat_pros[0], n_os=n_os)
 
     # Mask parts contaminated by order 2 based on its spatial profile
-    mask = (spat_pros[1] >= threshold) | scimask
+    mask = ((spat_pros[1] >= threshold) | mask_aperture | scimask)
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
     ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [np.array([1.])]
     kwargs = {'wave_grid': wave_grid,
               'orders': [1],
-              'global_mask': mask,
-              'threshold': threshold}
+              'global_mask': mask}
     engine = ExtractionEngine(*ref_file_args, **kwargs)
 
     # Extract estimate
@@ -237,8 +239,80 @@ def _mask_wv_map_centroid_outside(wave_maps, ref_files, transform, y_max, orders
         wv_map[mask] = 0.
 
 
-def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=None,
-                tikfac=None, n_os=5, threshold=1e-4, soss_filter='CLEAR'):
+def get_grid_from_trace(ref_files, transform, spectral_order, n_os=1):
+    """
+    Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
+    based on the wavelength solution.
+    Parameters
+    ----------
+    ref_files: dict
+        A dictionary of the reference file DataModels.
+    transform: array_like
+        A 3-elemnt list or array describing the rotation and
+        translation to apply to the reference files in order to match the
+        observation.
+    spectral_order: int
+        The spectral order for which to return the trace parameters.
+    Returns
+    -------
+    Grid of the pixels boundaries at the native sampling (1d array)
+    """
+
+    # From wavelenght solution
+    col, _, wave = get_trace_1d(ref_files, transform, spectral_order)
+
+    # Keep only valid solution ...
+    idx_valid = np.isfinite(wave)
+    # ... and should correspond to subsequent columns
+    is_subsequent = (np.diff(col[idx_valid]) == 1)
+    if not is_subsequent.all():
+        msg = f'Wavelength solution for order {sp_ord} contains gaps.'
+        log.warning(msg)
+    wave = wave[idx_valid]
+    log.debug(f'Wavelength range for order {spectral_order}: ({wave[[0, -1]]})')
+
+    # Use pixel boundaries instead of the center values
+    wv_upper_bnd, wv_lower_bnd = get_wave_p_or_m(wave[None, :])
+    # `get_wave_p_or_m` returns 2d array, so keep only 1d
+    wv_upper_bnd, wv_lower_bnd = wv_upper_bnd[0], wv_lower_bnd[0]
+    # Each upper boundary should correspond the the lower boundary
+    # of the following pixel, so only need to add the last upper boundary to complete the grid
+    wv_upper_bnd, wv_lower_bnd = np.sort(wv_upper_bnd), np.sort(wv_lower_bnd)
+    wave_grid = np.append(wv_lower_bnd, wv_upper_bnd[-1])
+
+    # Oversample as needed
+    wave_grid = oversample_grid(wave_grid, n_os=n_os)
+
+    return wave_grid
+
+
+def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os, wv_range=None):
+
+    # Build native grid for each  orders.
+    # The list given to make_combined_grid must be ordered in increasing priority,
+    # so the second order is first since it has a higher resolution.
+    all_grids = []
+    spectral_orders = [2, 1]
+    for sp_ord in spectral_orders:
+        all_grids.append(get_grid_from_trace(ref_files, transform, sp_ord, n_os=n_os))
+
+    # TODO The wavelength range could be smaller (only the contaminated range needs to be modeled)
+    if wv_range is None:
+        # Only cover the range covered by order 1
+        # (no need to simulate the blue end of order 2 for decontamination)
+        wv_range = [np.min(all_grids[1]), np.max(all_grids[1])]
+
+    # Generate the combined grid
+    all_estimates = [estimate for _ in spectral_orders]
+    kwargs = dict(rtol=rtol, max_total_size=max_grid_size, max_iter=30, grid_range=wv_range)
+    combined_grid = make_combined_adaptive_grid(all_grids, all_estimates, **kwargs)
+
+    return combined_grid
+
+
+# TODO Update docstring
+def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, transform=None,
+                tikfac=None, threshold=1e-4, devname=None, n_os=2, wave_grid=None, rtol=1e-3, max_grid_size=1000000):
     """Perform the spectral extraction on a single image.
 
     Parameters
@@ -280,9 +354,42 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
     logl : float
         Log likelihood value associated with the Tikhonov factor selected.
     """
+    # TODO enlever _mask_wv_map_centroid_outside vue que la wave_grid devrait régler ce proobleme
+
+    # Orders to simulate
+    order_list = ['Order 1', 'Order 2']
+
+    # Prepare the reference file arguments.
+    ref_file_args = get_ref_file_args(ref_files, transform)
 
     # Some error values are 0, we need to mask those pixels for the extraction engine.
     scimask = scimask | ~(scierr > 0)
+
+    # Define mask based on box aperture (we want to model each contaminated pixels that will be extracted)
+    mask_aperture = [~(box_weights[order] > 0) for order in order_list]
+
+    # Rough estimate of the underlying flux
+    # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
+    #       dq mask caused issues here and this may need a try/except wrap.
+    #       Dev suggested np.logspace(-19, -10, 10)
+    estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_aperture[0])
+
+    # Generate grid based on estimate if not given
+    if wave_grid is None:
+        log.info(f'soss_wave_grid not given: generating grid based on rtol={rtol}')
+        wave_grid = make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os)
+        log.debug(f'soss_wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
+
+    # Use estimate to evaluate the contribution from each orders to pixels
+    # (Used to determine which pixel to model later)
+    ref_args_estimate = [ref_arg for ref_arg in ref_file_args]
+    # No convolution needed (so give equivalent of identity)
+    ref_args_estimate[3] = [np.array([1.]) for _ in order_list]
+    engine_for_estimate = ExtractionEngine(*ref_args_estimate, wave_grid=wave_grid, mask_aperture=mask_aperture)
+    models = {order: engine_for_estimate.rebuild(estimate, i_orders=[idx_ord], fill_value=np.nan)
+              for idx_ord, order in enumerate(order_list)}
+    total = np.nansum([models[order] for order in order_list], axis=0)
+    contribution = {order: models[order] / total for order in order_list}
 
     log.info('Extracting using transformation parameters {}'.format(transform))
 
@@ -290,21 +397,18 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
     c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
 
     # Initialize the Engine.
-    engine = ExtractionEngine(*ref_file_args, n_os=n_os, threshold=threshold, c_kwargs=c_kwargs)
+    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, mask_aperture=mask_aperture, c_kwargs=c_kwargs)
+
+    # Save mask for later
+    global_mask = engine.general_mask
 
     if tikfac is None:
 
         log.info('Solving for the optimal Tikhonov factor.')
 
-        # Need a rough estimate of the underlying flux to estimate the tikhonov factor
-        try:
-            estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, threshold)
-            # Initial pass 8 orders of magnitude with 10 grid points.
-            factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
-        except Exception as e:
-            log.warning(f"Error caught in first order flux estimation: {e}\n"
-                        f"Using pre-defined array for flux factor estimate.")
-            factors = np.logspace(-19, -10, 10)
+        # Find the tikhonov factor.
+        # Initial pass 8 orders of magnitude with 10 grid points.
+        factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
         # Find the tikhonov factor.
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
@@ -328,7 +432,6 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # Model the order 1 and order 2 trace separately.
-    order_list = ['Order 1', 'Order 2']
     tracemodels = dict()
     for i_order, order in enumerate(order_list):
 
@@ -351,21 +454,51 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
         # And give the identity kernel to the Engine (so no convolution)
         ref_file_order[3] = [np.array([1.])]
 
+        # Only model orders with contamination levels greater than threshold
+        idx = np.isfinite(contribution[order])  # To avoid warnings with invalid values...
+        is_contaminated = np.zeros_like(contribution[order], dtype=bool)
+        is_contaminated[idx] = (contribution[order][idx] > threshold)
+
         # Build model of the order
         model_kwargs = {'wave_grid': grid_order,
-                        'threshold': 1e-5,
-                        'global_mask': refmask,
+                        'mask_aperture': [~is_contaminated],
+                        'global_mask': refmask | global_mask,
                         'orders': [i_order + 1]}
         model = ExtractionEngine(*ref_file_order, **model_kwargs)
 
         # Project on detector and save in dictionary
         tracemodels[order] = model.rebuild(flux_order)
 
-    return tracemodels, tikfac, logl
+    return tracemodels, tikfac, logl, wave_grid
 
 
-def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
-                  transform, subarray, width=40., bad_pix='model'):
+def compute_box_weights(ref_files, transform, subarray, shape, width=40.):
+
+    # Which orders to compute (for modeling, different than extraction).
+    if subarray == 'SUBSTRIP96':
+        order_list = [1, 2]
+    else:
+        order_list = [1, 2, 3]
+
+    # Extract each order from order list
+    box_weights = dict()
+    wavelengths = dict()
+    order_str = {order: f'Order {order}' for order in order_list}
+    for order_integer in order_list:
+        # Order string-name is used more often than integer-name
+        order = order_str[order_integer]
+
+        log.debug(f'Compute box weights for order {order}.')
+
+        # Define the box aperture
+        xtrace, ytrace, wavelengths[order] = get_trace_1d(ref_files, transform, order_integer)
+        box_weights[order] = get_box_weights(ytrace, width, shape, cols=xtrace)
+
+    return box_weights, wavelengths
+
+
+# TODO Update docstring
+def extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, bad_pix='model'):
     """Perform the box-extraction on the image, while using the trace model to
     correct for contamination.
     Parameters
@@ -411,11 +544,9 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
     mod_order_list = tracemodels.keys()
 
     # Create dictionaries for the output spectra.
-    wavelengths = dict()
     fluxes = dict()
     fluxerrs = dict()
     npixels = dict()
-    box_weights = dict()
 
     log.info('Performing the decontaminated box extraction.')
 
@@ -427,8 +558,7 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
         log.debug(f'Extracting {order}.')
 
         # Define the box aperture
-        xtrace, ytrace, wavelengths[order] = get_trace_1d(ref_files, transform, order_integer)
-        box_w_ord = get_box_weights(ytrace, width, scidata_bkg.shape, cols=xtrace)
+        box_w_ord = box_weights[order]
 
         # Decontaminate using all other modeled orders
         decont = scidata_bkg
@@ -467,13 +597,11 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
             scierr_ord = scierr
             log.info(f'Bad pixels in {order} will be masked.')
 
-        # Save box weights
-        box_weights[order] = box_w_ord
         # Perform the box extraction and save
-        out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord, cols=xtrace)
+        out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord)
         _, fluxes[order], fluxerrs[order], npixels[order] = out
 
-    return wavelengths, fluxes, fluxerrs, npixels, box_weights
+    return fluxes, fluxerrs, npixels
 
 
 def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
@@ -547,8 +675,12 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                                            flip_bits=True)
 
         # Perform background correction.
-        bkg_mask = make_background_mask(scidata, width=40)
-        scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+        if soss_kwargs['subtract_background']:
+            bkg_mask = make_background_mask(scidata, width=40)
+            scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+        else:
+            scidata_bkg = scidata
+            col_bkg = np.zeros(scidata.shape[1])
 
         # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
         if transform is None:
@@ -572,12 +704,9 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
             transform[0], transform[1], transform[2]))
 
-        # Prepare the reference file arguments.
-        ref_file_args = get_ref_file_args(ref_files, transform)
-
-        # Make sure wavelength maps cover only parts where the centroid is inside the detector image
-        if subarray != 'SUBSTRIP96':
-            _mask_wv_map_centroid_outside(ref_file_args[0], ref_files, transform, scidata_bkg.shape[0])
+        # Pre-compute the weights for box extraction (used in modeling and extraction)
+        args = (ref_files, transform, subarray, scidata_bkg.shape)
+        box_weights, wavelengths = compute_box_weights(*args, width=soss_kwargs['width'])
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR':
@@ -586,17 +715,20 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             kwargs = dict()
             kwargs['transform'] = transform
             kwargs['tikfac'] = soss_kwargs['tikfac']
+            kwargs['max_grid_size'] = soss_kwargs['max_grid_size']
+            kwargs['rtol'] = soss_kwargs['rtol']
             kwargs['n_os'] = soss_kwargs['n_os']
+            kwargs['wave_grid'] = soss_kwargs['wave_grid']
             kwargs['threshold'] = soss_kwargs['threshold']
 
-            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, **kwargs)
-            tracemodels, soss_kwargs['tikfac'], logl = result
+            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, **kwargs)
+            tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'] = result
 
         else:
             # No model can be fit for F277W yet, missing throughput reference files.
             msg = f"No extraction possible for filter {soss_filter}."
             log.critical(msg)
-            return None, None
+            raise ValueError(msg)
 
         # Save trace models for output reference
         for order in tracemodels:
@@ -608,8 +740,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         kwargs['width'] = soss_kwargs['width']
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
-        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, transform, subarray, **kwargs)
-        wavelengths, fluxes, fluxerrs, npixels, box_weights = result
+        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, **kwargs)
+        fluxes, fluxerrs, npixels = result
 
         # Save box weights for output reference
         for order in box_weights:
@@ -617,7 +749,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             all_box_weights[order] = [box_weights[order]]
 
         # Copy spectral data for each order into the output model.
-        for order in wavelengths.keys():
+        for order in fluxes.keys():
 
             table_size = len(wavelengths[order])
 
@@ -666,8 +798,12 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                                                flip_bits=True)
 
             # Perform background correction.
-            bkg_mask = make_background_mask(scidata, width=40)
-            scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+            if soss_kwargs['subtract_background']:
+                bkg_mask = make_background_mask(scidata, width=40)
+                scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+            else:
+                scidata_bkg = scidata
+                col_bkg = np.zeros(scidata.shape[1])
 
             # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
             if transform is None:
@@ -691,11 +827,9 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
                      transform[0], transform[1], transform[2]))
 
-            # Prepare the reference file arguments.
-            ref_file_args = get_ref_file_args(ref_files, transform)
-
-            # Make sure wavelength maps cover only parts where the centroid is inside the detector image
-            _mask_wv_map_centroid_outside(ref_file_args[0], ref_files, transform, scidata_bkg.shape[0])
+            # Pre-compute the weights for box extraction (used in modeling and extraction)
+            args = (ref_files, transform, subarray, scidata_bkg.shape)
+            box_weights, wavelengths = compute_box_weights(*args, width=soss_kwargs['width'])
 
             # Model the traces based on optics filter configuration (CLEAR or F277W)
             if soss_filter == 'CLEAR':
@@ -704,17 +838,20 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 kwargs = dict()
                 kwargs['transform'] = transform
                 kwargs['tikfac'] = soss_kwargs['tikfac']
+                kwargs['max_grid_size'] = soss_kwargs['max_grid_size']
+                kwargs['rtol'] = soss_kwargs['rtol']
                 kwargs['n_os'] = soss_kwargs['n_os']
+                kwargs['wave_grid'] = soss_kwargs['wave_grid']
                 kwargs['threshold'] = soss_kwargs['threshold']
 
-                result = model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, **kwargs)
-                tracemodels, soss_kwargs['tikfac'], logl = result
+                result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, **kwargs)
+                tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'] = result
 
             else:
                 # No model can be fit for F277W yet, missing throughput reference files.
                 msg = f"No extraction possible for filter {soss_filter}."
                 log.critical(msg)
-                return None, None
+                raise ValueError(msg)
 
             # Save trace models for output reference
             for order in tracemodels:
@@ -725,11 +862,10 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
             # Use the trace models to perform a de-contaminated extraction.
             kwargs = dict()
-            kwargs['width'] = soss_kwargs['width']
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
-            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, transform, subarray, **kwargs)
-            wavelengths, fluxes, fluxerrs, npixels, box_weights = result
+            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, **kwargs)
+            fluxes, fluxerrs, npixels = result
 
             # Save box weights for output reference
             for order in box_weights:
@@ -739,7 +875,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 all_box_weights[order].append(box_weights[order])
 
             # Copy spectral data for each order into the output model.
-            for order in wavelengths.keys():
+            for order in fluxes.keys():
 
                 table_size = len(wavelengths[order])
 
@@ -770,7 +906,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
         log.critical(msg)
-        return None, None
+        raise ValueError(msg)
 
     # Save output references
     for order in all_tracemodels:
