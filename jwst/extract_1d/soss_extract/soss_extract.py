@@ -516,6 +516,9 @@ def run_extract1d(input_model: DataModel,
         bkg_mask = make_background_mask(scidata, width=40)
         scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
+        # TODO: remove this test to skip background subtraction
+        scidata_bkg = np.copy(scidata)
+
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR':
 
@@ -596,6 +599,9 @@ def run_extract1d(input_model: DataModel,
             # Perform background correction.
             bkg_mask = make_background_mask(scidata, width=40)
             scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+
+            # TODO: remove this test to skip background subtraction
+            scidata_bkg = np.copy(scidata)
 
             # Model the traces based on optics filter configuration (CLEAR or F277W)
             if soss_filter == 'CLEAR':
