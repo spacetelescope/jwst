@@ -256,6 +256,8 @@ def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
 
     # Return bool map of pixels following the good direction
     bool_map = (dwv_sign * dwv >= 0)
+    # The bad value could be from left or right so mask both
+    bool_map &= np.roll(bool_map, 1, axis=dispersion_axis)
 
     return bool_map
 
