@@ -204,7 +204,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
 
 
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None,
-                tikfac=None, n_os=5, threshold=1e-4, devname=None):
+                tikfac=None, n_os=5, threshold=1e-4, devname=None, soss_filter='CLEAR'):
     """Perform the spectral extraction on a single image.
 
     :param scidata_bkg: A single background subtracted NIRISS SOSS detector image.
@@ -254,7 +254,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
         yref_o2 = spectrace_ref.trace[1].data['Y']
 
         # Use the solver on the background subtracted image.
-        transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2)
+        transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
+                                    xref_o2, yref_o2, soss_filter=soss_filter)
 
     log.info('Using transformation parameters {}'.format(transform))
 
@@ -623,6 +624,9 @@ def run_extract1d(input_model: DataModel,
                 # Some assumption for the transform is required. Ideally, applying that of the CLEAR
                 # exposure. But that would mean linking two exposures... That is not currently our
                 # structure.
+                # MCR - solve_transform now takes a soss_filter argument, which if set to 'F277W'
+                # will allow the solver to handle an F277W. I have added a soss_filter kwarg to
+                # model_image to pass along this info to the solver
                 #    model_image returns: tracemodels, transform, tikfac, logl
                 soss_kwargs['transform'] = [0,0,0]
 
