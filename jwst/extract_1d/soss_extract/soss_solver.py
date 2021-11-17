@@ -231,7 +231,7 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
-                    yref_o2 = None, halfwidth=30., rotation=True, shift=True,
+                    yref_o2=None, halfwidth=30., rotation=True, shift=True,
                     soss_filter='CLEAR', verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xref_o1 and yref_o1 to the image.
@@ -263,7 +263,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         rotation angle.
     soss_filter : str (optional)
         Designator for the SOSS filter used in the observation. Either CLEAR
-        or F277W. Setting F277W here will force rotation to False.
+        or F277W. Setting F277W here will force shift to False.
     verbose : bool (optional)
         If True make a diagnostic image of the best-fit transformation.
 
@@ -320,9 +320,9 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         mask = (xdat_o1 >= 25) & (xdat_o1 <= 425)
         xdat_o1 = xdat_o1[mask]
         ydat_o1 = ydat_o1[mask]
-        # Force rotation to False as there is not enough information to
+        # Force shift to False as there is not enough information to
         # constrain dx, dy and dtheta simultaneously.
-        #rotation = False
+        shift = False
         # Second order centroids are not available.
         xdat_o2, ydat_o2 = None, None
     else:
@@ -343,6 +343,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
 
         simple_transform = np.zeros(3)
         simple_transform[1:] = result.x
+
     elif shift is False:
         # If not considering horizontal or vertical shifts.
         # Set up the optimization problem.
@@ -355,6 +356,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
 
         simple_transform = np.zeros(3)
         simple_transform[0] = result.x
+
     else:
         # If considering the full transformation.
         # Set up the optimization problem.
