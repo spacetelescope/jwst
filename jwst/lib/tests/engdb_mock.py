@@ -1,11 +1,13 @@
 """
 Tools to mock the JWST Engineering Database
 """
-from astropy.time import Time
+from functools import cache
 import json
 import os
 import re
 import requests_mock
+
+from astropy.time import Time
 
 from jwst.lib import engdb_direct
 from jwst.lib.engdb_lib import mnemonic_data_fname
@@ -156,6 +158,7 @@ class EngDB_Local():
     def __init__(self, db_path=''):
         self.db_path = db_path
 
+    @cache
     def fetch_data(self, mnemonic, starttime, endtime):
         """
         Get data for a mnemonic.
@@ -220,6 +223,7 @@ class EngDB_Local():
 
         return db_data
 
+    @cache
     def fetch_meta(self, mnemonic_substr=''):
         """
         Get the meta for the match to the mnemonic

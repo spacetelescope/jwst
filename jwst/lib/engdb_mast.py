@@ -6,6 +6,7 @@ import logging
 from os import getenv
 from pathlib import Path
 import requests
+from shutil import copy2
 
 from astropy.table import Table
 from astropy.time import Time
@@ -139,6 +140,7 @@ class EngdbMast(EngdbABC):
         cache_path = Path(cache_path)
         cache_path.mkdir(parents=True, exist_ok=True)
 
+        # Get mnemonic data.
         for mnemonic in mnemonics:
             records = self._get_records(mnemonic, starttime, endtime)
 
@@ -158,6 +160,11 @@ class EngdbMast(EngdbABC):
 
             with open(cache_path / mnemonic_data_fname(mnemonic), 'w') as fp:
                 json.dump(target, fp)
+
+        # When used with EngDB_Mocker, a `meta.json` needs to exist.
+        # A default is saved within the package.
+        metas_path = Path(__file__).parent / 'tests/data/meta_for_mock.json'
+        copy2(metas_path, cache_path / 'meta.json')
 
     def get_meta(self, *kwargs):
         """Get the menonics meta info
