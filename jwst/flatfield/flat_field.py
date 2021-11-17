@@ -1580,12 +1580,12 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     p = np.where(zero_denom, 0., (wl - image_wl[k]) / denom)
     q = 1. - p
     flat_2d = q * image_flat[k, iypixel, ixpixel] + \
-              p * image_flat[k + 1, iypixel, ixpixel]
+        p * image_flat[k + 1, iypixel, ixpixel]
     if len(image_err.shape) == 2:
         flat_err = image_err.copy()
     else:
         flat_err = q * image_err[k, iypixel, ixpixel] + \
-                   p * image_err[k + 1, iypixel, ixpixel]
+            p * image_err[k + 1, iypixel, ixpixel]
 
     if len(image_dq.shape) == 2:
         flat_dq = image_dq.copy()
