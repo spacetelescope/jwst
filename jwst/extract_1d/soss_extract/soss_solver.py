@@ -526,7 +526,7 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
 
     # Set NaNs to zero to prevent errors when shifting/rotating.
     mask = np.isnan(wavemap)
-    wavemap[mask] = 0.
+    wavemap = np.where(mask, 0., wavemap)
 
     # Apply the transformation to the wavelength map.
     trans_wavemap = apply_transform(simple_transform, wavemap, oversample,
