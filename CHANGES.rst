@@ -151,6 +151,9 @@ flatfield
 - Fixed a bug in flatfield for NIRSpec BrightObj mode where the S-flat cutout
   was calculated incorrectly by not accounting for the slit offset [#6332]
 
+- Added check to NRS_LAMP exposures that routes imaging exposures to the imaging
+  half of flatfield, where they will skip the step as expected [#6462]
+
 jump
 ----
 

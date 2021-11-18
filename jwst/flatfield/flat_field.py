@@ -9,14 +9,14 @@ import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
-from .. datamodels import dqflags
-from .. lib import reffile_utils
-from .. assign_wcs import nirspec
+from ..datamodels import dqflags
+from ..lib import reffile_utils
+from ..assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-MICRONS_100 = 1.e-4                     # 100 microns, in meters
+MICRONS_100 = 1.e-4  # 100 microns, in meters
 
 # This is for NIRSpec.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_AUTOWAVE", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
@@ -74,15 +74,21 @@ def do_correction(input_model,
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    if input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES:
+    if (input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and \
+            (input_model.meta.instrument.lamp_mode != 'IMAGE'):
         flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
                                              user_supplied_flat=user_supplied_flat,
                                              inverse=inverse)
     else:
         if user_supplied_flat is not None:
             flat = user_supplied_flat
-        do_flat_field(output_model, flat, inverse=inverse)
-        flat_applied = flat
+        if flat is None:
+            log.warning("No flat found or supplied; step will be skipped.")
+            output_model.meta.cal_step.flat_field = 'SKIPPED'
+            flat_applied = None
+        else:
+            do_flat_field(output_model, flat, inverse=inverse)
+            flat_applied = flat
 
     return output_model, flat_applied
 
@@ -114,7 +120,7 @@ def do_flat_field(output_model, flat_model, inverse=False):
 
     # Check to see if flat data array is smaller than science data
     if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
-       (output_model.data.shape[-2] > flat_model.data.shape[-2]):
+            (output_model.data.shape[-2] > flat_model.data.shape[-2]):
         log.warning('Reference data array is smaller than science data')
         log.warning('Step will be skipped')
 
@@ -202,14 +208,14 @@ def apply_flat_field(science, flat, inverse=False):
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
-        flat_data_squared = flat_data**2
+        flat_data_squared = flat_data ** 2
         science.var_poisson /= flat_data_squared
         science.var_rnoise /= flat_data_squared
-        science.var_flat = science.data**2 / flat_data_squared * flat_err**2
+        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
         science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
     else:
-        flat_data_squared = flat_data**2
-        science.var_flat = science.data**2 / flat_data_squared * flat_err**2
+        flat_data_squared = flat_data ** 2
+        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
         science.err = np.sqrt(science.var_flat)
 
     # Combine the science and flat DQ arrays
@@ -220,6 +226,7 @@ def apply_flat_field(science, flat, inverse=False):
     # in futher steps
     flag_nonsci = np.bitwise_and(science.dq, dqflags.pixel['NON_SCIENCE']).astype(bool)
     science.dq[flag_nonsci] = np.bitwise_or(science.dq[flag_nonsci], dqflags.pixel['DO_NOT_USE'])
+
 
 #
 # The following functions are for NIRSpec spectrographic data.
@@ -354,7 +361,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
     for slit_idx, slit in enumerate(output_model.slits):
         log.info("Working on slit %s", slit.name)
         if exposure_type == "NRS_MSASPEC":
-            slit_nt = slit                      # includes quadrant info
+            slit_nt = slit  # includes quadrant info
         else:
             slit_nt = None
 
@@ -362,7 +369,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
             if exposure_type == "NRS_FIXEDSLIT" and \
-               slit.name == primary_slit and slit.source_type.upper() == "POINT":
+                    slit.name == primary_slit and slit.source_type.upper() == "POINT":
 
                 # For fixed-slit exposures, if this is the primary slit
                 # and it contains a point source, compute the flat-field
@@ -416,10 +423,10 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             slit.data *= slit_flat.data
 
         # Update the variances using BASELINE algorithm
-        flat_data_squared = slit_flat.data**2
+        flat_data_squared = slit_flat.data ** 2
         slit.var_poisson /= flat_data_squared
         slit.var_rnoise /= flat_data_squared
-        slit.var_flat = slit.data**2 / flat_data_squared * slit_flat.err**2
+        slit.var_flat = slit.data ** 2 / flat_data_squared * slit_flat.err ** 2
         slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
 
         # Combine the science and flat DQ arrays
@@ -492,10 +499,10 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
     output_model.dq |= interpolated_flat.dq
 
     # Update the variances and uncertainty array using BASELINE algorithm
-    flat_data_squared = interpolated_flat.data**2
+    flat_data_squared = interpolated_flat.data ** 2
     output_model.var_poisson /= flat_data_squared
     output_model.var_rnoise /= flat_data_squared
-    output_model.var_flat = output_model.data**2 / flat_data_squared * interpolated_flat.err**2
+    output_model.var_flat = output_model.data ** 2 / flat_data_squared * interpolated_flat.err ** 2
     output_model.err = np.sqrt(
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
@@ -558,10 +565,10 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         output_model.dq |= flat_dq
 
         # Update the variances and uncertainty array using BASELINE algorithm
-        flat_data_squared = flat**2
+        flat_data_squared = flat ** 2
         output_model.var_poisson /= flat_data_squared
         output_model.var_rnoise /= flat_data_squared
-        output_model.var_flat = output_model.data**2 / flat_data_squared * flat_err**2
+        output_model.var_flat = output_model.data ** 2 / flat_data_squared * flat_err ** 2
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
@@ -651,13 +658,13 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     sum_var = np.zeros_like(flat_2d)
     if f_flat_err is not None:
         np.place(f_flat, f_flat == 0, 1.)
-        sum_var += f_flat_err**2 / f_flat**2
+        sum_var += f_flat_err ** 2 / f_flat ** 2
     if s_flat_err is not None:
         np.place(s_flat, s_flat == 0, 1.)
-        sum_var += s_flat_err**2 / s_flat**2
+        sum_var += s_flat_err ** 2 / s_flat ** 2
     if d_flat_err is not None:
         np.place(d_flat, d_flat == 0, 1.)
-        sum_var += d_flat_err**2 / d_flat**2
+        sum_var += d_flat_err ** 2 / d_flat ** 2
     flat_err = flat_2d * np.sqrt(sum_var)
 
     mask = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
@@ -712,7 +719,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     if slit_nt is None:
         quadrant = None
     else:
-        quadrant = slit_nt.quadrant - 1         # convert to zero indexed
+        quadrant = slit_nt.quadrant - 1  # convert to zero indexed
 
     (tab_wl, tab_flat) = read_flat_table(f_flat_model, exposure_type,
                                          slit_name, quadrant)
@@ -734,7 +741,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
         # This is an example to show what xcen and ycen mean:
         #       shutter_id = xcen + (ycen - 1) * 365
         msa_y, msa_x = slit_nt.ycen, slit_nt.xcen
-        msa_y -= 1              # convert to zero indexed
+        msa_y -= 1  # convert to zero indexed
         msa_x -= 1
         full_array_flat = f_flat_model.quadrants[quadrant].data
         full_array_err = f_flat_model.quadrants[quadrant].err
@@ -1048,7 +1055,7 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     if n_dq >= 2:
         iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
         flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT']
-    # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
+        # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
         flat_dq[iflag] = np.bitwise_or(flat_dq[iflag], dqflags.pixel['DO_NOT_USE'])
 
     return flat_dq
@@ -1078,7 +1085,7 @@ def read_image_wl(flat_model, quadrant=None):
         An array of wavelengths, one for each plane of the SCI array.
     """
 
-    if quadrant is not None:                    # NRS_MSASPEC
+    if quadrant is not None:  # NRS_MSASPEC
         wavelength = flat_model.quadrants[quadrant].wavelength["wavelength"]
     else:
         wavelength = flat_model.wavelength["wavelength"]
@@ -1099,7 +1106,7 @@ def read_image_wl(flat_model, quadrant=None):
     # becoming out of synch with the flat-field data.  In this case, it
     # will be necessary to also filter (along the first image axis) and
     # return the flat-field data.
-    filter1 = np.logical_not(np.isnan(wavelength))      # skip NaNs
+    filter1 = np.logical_not(np.isnan(wavelength))  # skip NaNs
     wavelength = wavelength[filter1]
     filter2 = (wavelength > 0.)
     wavelength = wavelength[filter2]
@@ -1139,7 +1146,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
         `tab_wl` and `tab_flat` should be the same length.
     """
 
-    if quadrant is not None:                    # NRS_MSASPEC
+    if quadrant is not None:  # NRS_MSASPEC
         data = flat_model.quadrants[quadrant].flat_table
     else:
         data = flat_model.flat_table
@@ -1174,7 +1181,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
             raise ValueError("{} not found in SLIT_NAME column (nor was 'ANY')"
                              .format(slit_name))
 
-    nelem = None                        # initial value
+    nelem = None  # initial value
     if row is not None:
         # Table contains arrays; use the row that was found above.
         tab_wl = wl_col[row].copy()
@@ -1194,13 +1201,13 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
             tab_wl = wl_col.copy()
             tab_flat = flat_col.copy()
             if nelem_col is not None:
-                nelem = nelem_col[0]            # arbitrary choice of row
+                nelem = nelem_col[0]  # arbitrary choice of row
     if nelem is not None:
         if len(tab_wl) < nelem:
             log.error("The fast_variation array size %d in "
                       "the data model is too small, and table data were "
                       "truncated.", len(tab_wl))
-            nelem = len(tab_wl)                 # truncated!
+            nelem = len(tab_wl)  # truncated!
         else:
             tab_wl = tab_wl[:nelem]
             tab_flat = tab_flat[:nelem]
@@ -1312,7 +1319,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
     wgt = np.array([5., 8., 5.]) / 18.
     for j in range(ny):
         for i in range(nx):
-            if wl[j, i] <= 0.:          # note:  wl, not wl_c
+            if wl[j, i] <= 0.:  # note:  wl, not wl_c
                 values[j, i] = 1.
             else:
                 # average the tabular data over the range of wavelengths
@@ -1348,7 +1355,7 @@ def clean_wl(wl, dispaxis):
         the cross-dispersion direction.
     """
 
-    wl_c = wl.copy()                    # so we can replace zeros
+    wl_c = wl.copy()  # so we can replace zeros
     wl_c[wl_c <= 0.] = np.nan
     shape = wl_c.shape
 
@@ -1359,8 +1366,8 @@ def clean_wl(wl, dispaxis):
             temp = wl_c[:, i]
             if np.any(np.isfinite(temp)):
                 if i0 is None:
-                    i0 = i              # first i with some non-zero wl
-                i1 = i                  # last i (so far) with some non-zero wl
+                    i0 = i  # first i with some non-zero wl
+                i1 = i  # last i (so far) with some non-zero wl
                 replacement_value = np.nanmean(temp)
                 temp[np.isnan(temp)] = replacement_value
         if i0 is not None and i0 > 0:
@@ -1376,8 +1383,8 @@ def clean_wl(wl, dispaxis):
             temp = wl_c[j, :]
             if np.any(np.isfinite(temp)):
                 if j0 is None:
-                    j0 = j              # first j with some non-zero wl
-                j1 = j                  # last j (so far) with some non-zero wl
+                    j0 = j  # first j with some non-zero wl
+                j1 = j  # last j (so far) with some non-zero wl
                 replacement_value = np.nanmean(temp)
                 temp[np.isnan(temp)] = replacement_value
         if j0 is not None and j0 > 0:
@@ -1428,7 +1435,7 @@ def g_average(wl0, dwl0, tab_wl, tab_flat, dx, wgt):
     sum = 0.
     for k in range(npts):
         value = wl_interpolate(wavelengths[k], tab_wl, tab_flat)
-        if value is None:               # wavelengths[k] was out of bounds
+        if value is None:  # wavelengths[k] was out of bounds
             return None
         sum += (value * wgt[k])
 
@@ -1794,7 +1801,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     # The wavelength of each pixel in a plane of the data.
     got_wl_attribute = True
     try:
-        wl = output_model.wavelength.copy()     # a 2-D array
+        wl = output_model.wavelength.copy()  # a 2-D array
     except AttributeError:
         got_wl_attribute = False
     if not got_wl_attribute or len(wl) == 0:
@@ -1915,7 +1922,7 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     # in preference to the wavelengths returned by the wcs function.
     got_wl_attribute = True
     try:
-        wl = slit.wavelength.copy()         # a 2-D array
+        wl = slit.wavelength.copy()  # a 2-D array
     except AttributeError:
         got_wl_attribute = False
     if not got_wl_attribute or len(wl) == 0:
