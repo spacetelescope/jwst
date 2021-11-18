@@ -125,7 +125,7 @@ datamodels
 - Added new column 'reference_order' to 'planned_star_table' in
   guider_raw and guider_cal schemas [#6368]
 
-- Moved new column `reference_order` in guider schemas' planned
+- Moved new column 'reference_order' in guider schemas' planned
   star table to second in order, after 'guide_star_order' [#6465]
 
 dark_current
