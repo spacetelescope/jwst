@@ -142,6 +142,7 @@ def diagnostic_plot(scidata, scierr, scimask, model_order1, model_order2, devnam
 
     plt.subplot(gs[2, 0], aspect=2)
     with np.errstate(divide='ignore'):
+        vlim2 = 5
         im = plt.pcolormesh(residual/scierr, vmin=-vlim2, vmax=vlim2, cmap=plt.cm.coolwarm)
 
     cax = plt.subplot(gs[3, 0])
