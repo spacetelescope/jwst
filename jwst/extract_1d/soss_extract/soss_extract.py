@@ -65,12 +65,6 @@ def get_ref_file_args(ref_files, transform):
     ovs = specprofile_ref.profile[0].oversampling
     pad = specprofile_ref.profile[0].padding
 
-    # TODO: remove this when debug is complete
-    if True:
-        from astropy.io import fits
-        hdu = fits.PrimaryHDU(specprofile_ref.profile[1].data)
-        hdu.writeto('/Users/albert/NIRISS/SOSSpipeline/dms_geertjan/test_prof_o2_startof_get_ref_file_args.fits', overwrite=True)
-
     # TODO unclear if norm should be True or False.
     specprofile_o1 = transform_profile(transform, specprofile_ref.profile[0].data, ovs, pad, norm=False)
     specprofile_o2 = transform_profile(transform, specprofile_ref.profile[1].data, ovs, pad, norm=False)

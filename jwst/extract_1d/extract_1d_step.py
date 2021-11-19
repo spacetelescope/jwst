@@ -200,11 +200,6 @@ class Extract1dStep(Step):
             #specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
             #speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
 
-            print('spectrace: ', spectrace_ref_name)
-            print('wavemap: ', wavemap_ref_name)
-            print('specprofile: ', specprofile_ref_name)
-            print('speckernel: ', speckernel_ref_name)
-
             # Build SOSS kwargs dictionary.
             soss_kwargs = dict()
             soss_kwargs['threshold'] = self.soss_threshold
