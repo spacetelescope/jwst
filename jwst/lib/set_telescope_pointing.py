@@ -124,7 +124,7 @@ class Methods(Enum):
     COARSE = COARSE_TR_202111
     #: Default algorithm for use by Operations.
     OPS = OPS_TR_202111
-    #: Default algorithm under PCS_MODE TRACK/FINEGUIDE.
+    #: Default algorithm under PCS_MODE TRACK/FINEGUIDE/MOVING.
     TRACK = TRACK_TR_202111
 
     def __new__(cls: object, value: str, func_name: str, calc_func: str):
@@ -1305,10 +1305,12 @@ def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
     """
     if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
         return Methods.COARSE_TR_202107.func(t_pars)
-    elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
+    elif t_pars.pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
         return Methods.TRACK_TR_202107.func(t_pars)
     else:
-        raise ValueError(f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be in ["NONE", "COARSE", "TRACK", "FINEGUIDE"]')
+        raise ValueError(
+            f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
+        )
 
 
 def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
@@ -1331,10 +1333,12 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
     """
     if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
         return Methods.COARSE_TR_202111.func(t_pars)
-    elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
+    elif t_pars.pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
         return Methods.TRACK_TR_202111.func(t_pars)
     else:
-        raise ValueError(f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be in ["NONE", "COARSE", "TRACK", "FINEGUIDE"]')
+        raise ValueError(
+            f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
+        )
 
 
 def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
