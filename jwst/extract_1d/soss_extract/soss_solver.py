@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +11,8 @@ import warnings
 from .soss_syscor import aperture_mask
 from .soss_centroids import get_centroids_com
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
     """Apply a rotation and shift to the trace centroids positions. This
@@ -234,10 +237,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
                     yref_o2=None, halfwidth=30., rotation=True, shift=True,
                     soss_filter='CLEAR', bounds_theta=[-1., 1.],
                     bounds_x=[-10., 10.], bounds_y=[-10., 10.],
-                    verbose=False):
+                    verbose=True):
     """Given a science image, determine the centroids and find the simple
     transformation (rotation + vertical & horizonal offset, or some combination
     thereof) needed to match xref_o1 and yref_o1 to the image.
+
+    # TODO: SHould not we use the refmask as well in input?
 
     Parameters
     ----------
@@ -304,8 +309,9 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     # order provides an anchor in the spatial direction. However, there are
     # instances (a SUBSTRIP96, or F277W observation for example) where the
     # second order is not available. In this case, work only with order 1.
-    if xref_o2 is not None and yref_o2 is not None and soss_filter == 'CLEAR':
+    if xref_o2 is not None and yref_o2 is not None and (soss_filter == 'CLEAR' or soss_filter == 'FULL'):
         # Remove any NaNs used to pad the xref, yref coordinates.
+        log.info('Measuring trace position for orders 1 and 2.')
         mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
         xref_o2 = xref_o2[mask_o2]
         yref_o2 = yref_o2[mask_o2]
@@ -330,6 +336,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         # first order centroids are only useful redwards of ~2.5µm.
         # Restrict centroids to lie within region lambda>~2.5µm, where the
         # F277W filter response is strong.
+        log.info('Measuring trace position for order 1 spanning the F277W pixels.')
         mask = (xdat_o1 >= 25) & (xdat_o1 <= 425)
         xdat_o1 = xdat_o1[mask]
         ydat_o1 = ydat_o1[mask]
@@ -343,6 +350,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         # If the exposure is SUBSTRIP96 using the CLEAR filter, there is no
         # order 2. Use the entire first order to enable the maximum possible
         # positional constraint on the centroids.
+        log.info('Measuring trace position for order 1 only.')
         xdat_o2, ydat_o2 = None, None
 
     # Find the simple transformation via a Chi-squared minimzation of the
@@ -378,6 +386,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         # Find the best-fit transformation.
         result = minimize(_chi_squared_rot, guess_transform, bounds=bounds,
                           args=min_args)
+
         simple_transform = np.zeros(3)
         simple_transform[0] = result.x
 

@@ -65,6 +65,12 @@ def get_ref_file_args(ref_files, transform):
     ovs = specprofile_ref.profile[0].oversampling
     pad = specprofile_ref.profile[0].padding
 
+    # TODO: remove this when debug is complete
+    if True:
+        from astropy.io import fits
+        hdu = fits.PrimaryHDU(specprofile_ref.profile[1].data)
+        hdu.writeto('/Users/albert/NIRISS/SOSSpipeline/dms_geertjan/test_prof_o2_startof_get_ref_file_args.fits', overwrite=True)
+
     # TODO unclear if norm should be True or False.
     specprofile_o1 = transform_profile(transform, specprofile_ref.profile[0].data, ovs, pad, norm=False)
     specprofile_o2 = transform_profile(transform, specprofile_ref.profile[1].data, ovs, pad, norm=False)
@@ -106,6 +112,12 @@ def get_ref_file_args(ref_files, transform):
     wavemap_o1 = np.where(valid_wavemap, wavemap_o1, 0.)
     valid_wavemap = (speckernel_wv_range[0] <= wavemap_o2) & (wavemap_o2 <= speckernel_wv_range[1])
     wavemap_o2 = np.where(valid_wavemap, wavemap_o2, 0.)
+
+    #TODO: remove these lines when debug is complete
+    if True:
+        from astropy.io import fits
+        hdu = fits.PrimaryHDU(specprofile_o2)
+        hdu.writeto('/Users/albert/NIRISS/SOSSpipeline/dms_geertjan/test_prof_o2_endof_get_ref_file_args.fits', overwrite=True)
 
     return [wavemap_o1, wavemap_o2], [specprofile_o1, specprofile_o2], [throughput_o1, throughput_o2], [kernels_o1, kernels_o2]
 
@@ -203,7 +215,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
     return estimate_spl
 
 
-def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None,
+def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=None,
                 tikfac=None, n_os=5, threshold=1e-4, devname=None, soss_filter='CLEAR'):
     """Perform the spectral extraction on a single image.
 
@@ -239,28 +251,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
     # Some error values are 0, we need to mask those pixels for the extraction engine.
     scimask = scimask | ~(scierr > 0)
 
-    # TODO add 1/f correction?
-
-    # TODO placing the tranform (and the call to get_ref_file_args()) in run_extract_1d might be better.
-    if transform is None:
-
-        log.info('Solving for the transformation parameters.')
-
-        # Unpack the expected order 1 & 2 positions.
-        spectrace_ref = ref_files['spectrace']
-        xref_o1 = spectrace_ref.trace[0].data['X']
-        yref_o1 = spectrace_ref.trace[0].data['Y']
-        xref_o2 = spectrace_ref.trace[1].data['X']
-        yref_o2 = spectrace_ref.trace[1].data['Y']
-
-        # Use the solver on the background subtracted image.
-        transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                    xref_o2, yref_o2, soss_filter=soss_filter)
-
-    log.info('Using transformation parameters {}'.format(transform))
-
-    # Prepare the reference file arguments.
-    ref_file_args = get_ref_file_args(ref_files, transform)
+    log.info('Extracting using transformation parameters {}'.format(transform))
 
     # Set the c_kwargs using the minimum value of the kernels
     c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
@@ -340,7 +331,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None
         dev_tools_args += (tracemodels['Order 1'], tracemodels['Order 2'])
         devtools.diagnostic_plot(*dev_tools_args, devname=devname)
 
-    return tracemodels, transform, tikfac, logl
+    return tracemodels, tikfac, logl
 
 
 def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
@@ -507,6 +498,10 @@ def run_extract1d(input_model: DataModel,
 
         log.info('Input is an ImageModel, processing a single integration.')
 
+        # Initialize the theta, dx, dy transform parameters
+        transform = None
+        # TODO: what if transform was passed in soss_kwargs???
+
         # Received a single 2D image set dtype to float64 and convert DQ to boolian mask.
         scidata = input_model.data.astype('float64')
         scierr = input_model.err.astype('float64')
@@ -517,26 +512,49 @@ def run_extract1d(input_model: DataModel,
         bkg_mask = make_background_mask(scidata, width=40)
         scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
-        # TODO: remove this test to skip background subtraction
-        scidata_bkg = np.copy(scidata)
+        # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
+        if transform is None:
+            log.info('Solving for the transformation parameters.')
+
+            # Unpack the expected order 1 & 2 positions.
+            spectrace_ref = ref_files['spectrace']
+            xref_o1 = spectrace_ref.trace[0].data['X']
+            yref_o1 = spectrace_ref.trace[0].data['Y']
+            xref_o2 = spectrace_ref.trace[1].data['X']
+            yref_o2 = spectrace_ref.trace[1].data['Y']
+
+            # Use the solver on the background subtracted image.
+            if subarray == 'SUBSTRIP96' or soss_filter == 'F277':
+                # Use only order 1 to solve theta, dx, dy
+                transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, soss_filter=soss_filter)
+            else:
+                transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
+                                            xref_o2, yref_o2, soss_filter=soss_filter)
+
+        log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
+            transform[0], transform[1], transform[2]))
+
+        # Prepare the reference file arguments.
+        ref_file_args = get_ref_file_args(ref_files, transform)
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR':
 
             # Model the image.
             kwargs = dict()
-            kwargs['transform'] = soss_kwargs['transform']
+            kwargs['transform'] = transform
             kwargs['tikfac'] = soss_kwargs['tikfac']
             kwargs['n_os'] = soss_kwargs['n_os']
             kwargs['threshold'] = soss_kwargs['threshold']
             kwargs['devname'] = soss_kwargs['devname']
 
-            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
-            tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, **kwargs)
+            tracemodels, soss_kwargs['tikfac'], logl = result
 
         else:
+            # No model can be fit
+            # TODO: Implement model fitting for the F277W. Needs a specific F277W throughput ref file
             tracemodels = dict()
-            # TODO: Should the tikfac (and other) kwargs be explicitely adapted here?
 
         # Use the trace models to perform a de-contaminated extraction.
         kwargs = dict()
@@ -544,7 +562,7 @@ def run_extract1d(input_model: DataModel,
         kwargs['devname'] = soss_kwargs['devname']
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
-        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], subarray, **kwargs)
+        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, transform, subarray, **kwargs)
         wavelengths, fluxes, fluxerrs, npixels, box_weights = result
 
         # Initialize the output model.
@@ -579,6 +597,10 @@ def run_extract1d(input_model: DataModel,
 
         log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
 
+        # Initialize the theta, dx, dy transform parameters
+        transform = None
+        # TODO: what if transform was passed in soss_kwargs???
+
         # Build deepstack out of max N images TODO OPTIONAL.
         # TODO making a deepstack could be used to get a more robust transform and tikfac, 1/f.
 
@@ -601,34 +623,49 @@ def run_extract1d(input_model: DataModel,
             bkg_mask = make_background_mask(scidata, width=40)
             scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
-            # TODO: remove this test to skip background subtraction
-            scidata_bkg = np.copy(scidata)
+            # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
+            if transform is None:
+                log.info('Solving for the transformation parameters.')
+
+                # Unpack the expected order 1 & 2 positions.
+                spectrace_ref = ref_files['spectrace']
+                xref_o1 = spectrace_ref.trace[0].data['X']
+                yref_o1 = spectrace_ref.trace[0].data['Y']
+                xref_o2 = spectrace_ref.trace[1].data['X']
+                yref_o2 = spectrace_ref.trace[1].data['Y']
+
+                # Use the solver on the background subtracted image.
+                if subarray == 'SUBSTRIP96' or soss_filter == 'F277':
+                    # Use only order 1 to solve theta, dx, dy
+                    transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, soss_filter=soss_filter)
+                else:
+                    transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
+                                                xref_o2, yref_o2, soss_filter=soss_filter)
+
+            log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
+                     transform[0], transform[1], transform[2]))
+
+            # Prepare the reference file arguments.
+            ref_file_args = get_ref_file_args(ref_files, transform)
 
             # Model the traces based on optics filter configuration (CLEAR or F277W)
             if soss_filter == 'CLEAR':
 
                 # Model the image.
                 kwargs = dict()
-                kwargs['transform'] = soss_kwargs['transform']
+                kwargs['transform'] = transform
                 kwargs['tikfac'] = soss_kwargs['tikfac']
                 kwargs['n_os'] = soss_kwargs['n_os']
                 kwargs['threshold'] = soss_kwargs['threshold']
                 kwargs['devname'] = soss_kwargs['devname']
 
-                result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
-                tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+                result = model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, **kwargs)
+                tracemodels, soss_kwargs['tikfac'], logl = result
 
             else:
+                # No model can be fit
+                # TODO: Implement model fitting for the F277W. Needs a specific F277W throughput ref file
                 tracemodels = dict()
-                # Simply skipping the trace modelling produces a bug because no transform exists.
-                # Some assumption for the transform is required. Ideally, applying that of the CLEAR
-                # exposure. But that would mean linking two exposures... That is not currently our
-                # structure.
-                # MCR - solve_transform now takes a soss_filter argument, which if set to 'F277W'
-                # will allow the solver to handle an F277W. I have added a soss_filter kwarg to
-                # model_image to pass along this info to the solver
-                #    model_image returns: tracemodels, transform, tikfac, logl
-                soss_kwargs['transform'] = [0,0,0]
 
             # Use the trace models to perform a de-contaminated extraction.
             kwargs = dict()
@@ -636,7 +673,7 @@ def run_extract1d(input_model: DataModel,
             kwargs['devname'] = soss_kwargs['devname']
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
-            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], subarray, **kwargs)
+            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, transform, subarray, **kwargs)
             wavelengths, fluxes, fluxerrs, npixels, box_weights = result
 
             # Copy spectral data for each order into the output model.
