@@ -107,12 +107,6 @@ def get_ref_file_args(ref_files, transform):
     valid_wavemap = (speckernel_wv_range[0] <= wavemap_o2) & (wavemap_o2 <= speckernel_wv_range[1])
     wavemap_o2 = np.where(valid_wavemap, wavemap_o2, 0.)
 
-    #TODO: remove these lines when debug is complete
-    if True:
-        from astropy.io import fits
-        hdu = fits.PrimaryHDU(specprofile_o2)
-        hdu.writeto('/Users/albert/NIRISS/SOSSpipeline/dms_geertjan/test_prof_o2_endof_get_ref_file_args.fits', overwrite=True)
-
     return [wavemap_o1, wavemap_o2], [specprofile_o1, specprofile_o2], [throughput_o1, throughput_o2], [kernels_o1, kernels_o2]
 
 
