@@ -270,14 +270,16 @@ wavecorr
 - Location of source in NIRSpec fixed slit updated
   (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243, #6261]
 
-- Changed method of loading input association from datamodels.load() to
-  Step.load_as_level3_asn() to prevent error when target acq exposure
-  not present [#6464]
-
 - Fixed the computation of ``model.slits[i].source_xpos``
   for Nirspec fixed slit data. [#6457]
 
+wfs_combine
+-----------
 
+- Changed method of loading input association from datamodels.load() to
+  Step.load_as_level3_asn() to prevent error when target acq exposure
+  not present [#6464]
+  
 wfss_contam
 -----------
 
