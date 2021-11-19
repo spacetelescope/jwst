@@ -242,8 +242,6 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     transformation (rotation + vertical & horizonal offset, or some combination
     thereof) needed to match xref_o1 and yref_o1 to the image.
 
-    # TODO: SHould not we use the refmask as well in input?
-
     Parameters
     ----------
     scidata_bkg : array[float]
