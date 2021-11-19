@@ -270,6 +270,9 @@ wavecorr
 - Location of source in NIRSpec fixed slit updated
   (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243, #6261]
 
+- Fixed the computation of ``model.slits[i].source_xpos``
+  for Nirspec fixed slit data. [#6457]
+
 wfs_combine
 -----------
 
