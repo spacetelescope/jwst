@@ -182,23 +182,10 @@ class Extract1dStep(Step):
                 return input_model
 
             # Load reference files.
-            # TODO Local placeholders inserted, correct usage example: self.get_reference_file(input_model, 'apcorr')
-            soss_ref_path = 'ref_files/20210729/output'
-            if subarray == 'SUBSTRIP256':
-                spectrace_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_trace_table_SUBSTRIP256.fits.gz')  # SpecTraceModel
-                wavemap_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_wave_SUBSTRIP256.fits.gz')  # WaveMapModel
-                specprofile_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_profile_SUBSTRIP256.fits.gz')  # SpecProfileModel
-                speckernel_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_spectral_kernel.fits.gz')  # SpecKernelModel
-            elif subarray == 'SUBSTRIP96':
-                spectrace_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_trace_table_SUBSTRIP96.fits.gz')  # SpecTraceModel
-                wavemap_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_wave_SUBSTRIP96.fits.gz')  # WaveMapModel
-                specprofile_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_profile_SUBSTRIP96.fits.gz')  # SpecProfileModel
-                speckernel_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_spectral_kernel.fits.gz')  # SpecKernelModel
-
-            #spectrace_ref_name = self.get_reference_file(input_model, 'spectrace')
-            #wavemap_ref_name = self.get_reference_file(input_model, 'wavemap')
-            #specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
-            #speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
+            spectrace_ref_name = self.get_reference_file(input_model, 'spectrace')
+            wavemap_ref_name = self.get_reference_file(input_model, 'wavemap')
+            specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
+            speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
 
             # Build SOSS kwargs dictionary.
             soss_kwargs = dict()
