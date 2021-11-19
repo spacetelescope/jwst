@@ -213,7 +213,8 @@ class Extract1dStep(Step):
 
             input_model.close()
 
-            return result
+            # TODO Is it ok to return 2 elements here? Otherwise I don't know how to return the ref_outputs
+            return result, ref_outputs
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
