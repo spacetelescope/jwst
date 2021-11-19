@@ -309,10 +309,10 @@ class _Value_Collection():
     def __init__(self, include_obstime=False, zip_results=True):
         self._include_obstime = include_obstime
         self._zip_results = zip_results
-        if zip_results:
-            self.collection = []
-        else:
+        if include_obstime and not zip_results:
             self.collection = EngDB_Value([], [])
+        else:
+            self.collection = []
 
     def append(self, obstime, value):
         """Append value to collection
