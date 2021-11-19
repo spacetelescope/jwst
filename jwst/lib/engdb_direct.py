@@ -8,6 +8,8 @@ from os import getenv
 import re
 import requests
 
+import numpy as np
+
 from .engdb_lib import EngDB_Value, EngdbABC
 
 # Configure logging
@@ -305,14 +307,26 @@ class _Value_Collection():
         Returns the list of values.
         See `include_obstime` and `zip_results` for modifications.
     """
-
     def __init__(self, include_obstime=False, zip_results=True):
         self._include_obstime = include_obstime
         self._zip_results = zip_results
-        if include_obstime and not zip_results:
-            self.collection = EngDB_Value([], [])
+
+        self.obstimes = []
+        self.values = []
+
+    @property
+    def collection(self):
+        if self._include_obstime:
+            obstimes = np.array(self.obstimes) / 1000.0
+            obstimes = Time(obstimes, format='unix')
+            obstimes.format = 'isot'
+            if self._zip_results:
+                collection = [EngDB_Value(t, v) for t, v in zip(obstimes, self.values)]
+            else:
+                collection = EngDB_Value(obstimes, self.values)
         else:
-            self.collection = []
+            collection = self.values
+        return collection
 
     def append(self, obstime, value):
         """Append value to collection
@@ -330,18 +344,8 @@ class _Value_Collection():
         -----
         The `obstime` is converted to an `astropy.time.Time`
         """
-        if self._include_obstime:
-            obstime = Time(obstime / 1000., format='unix')
-            obstime.format = 'isot'
-            if self._zip_results:
-                self.collection.append(
-                    EngDB_Value(obstime, value)
-                )
-            else:
-                self.collection.obstime.append(obstime)
-                self.collection.value.append(value)
-        else:
-            self.collection.append(value)
+        self.obstimes.append(obstime)
+        self.values.append(value)
 
 
 # #########
