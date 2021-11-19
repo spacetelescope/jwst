@@ -163,6 +163,10 @@ lib
 
 - Fix ROLL_REF and angle_to_vector calculations [#6452]
 
+- Fix bad implementation of ``angle_to_vector`` in ``set_telescope_pointing``. [#6452]
+
+- Use TRACK algorithms for moving target exposures. [#6452]
+
 linearity
 --------
 
