@@ -158,8 +158,7 @@ class EngDB_Local():
 
     def __init__(self, db_path=''):
         self.db_path = db_path
-        # self.json_load = lru_cache()(self.json_load)
-        # self.json_load.cache_clear()
+        self.json_load.cache_clear()
 
     def fetch_data(self, mnemonic, starttime, endtime):
         """
@@ -261,6 +260,7 @@ class EngDB_Local():
 
         return result
 
+    @lru_cache
     def json_load(self, mnemonic):
         with open(
                 os.path.join(
