@@ -8,8 +8,6 @@ from os import getenv
 import re
 import requests
 
-import numpy as np
-
 from .engdb_lib import EngDB_Value, EngdbABC
 
 # Configure logging
@@ -317,8 +315,7 @@ class _ValueCollection():
     @property
     def collection(self):
         if self._include_obstime:
-            obstimes = np.array(self.obstimes) / 1000.0
-            obstimes = Time(obstimes, format='unix')
+            obstimes = Time(self.obstimes, format='unix')
             obstimes.format = 'isot'
             if self._zip_results:
                 collection = [EngDB_Value(t, v) for t, v in zip(obstimes, self.values)]
@@ -344,7 +341,8 @@ class _ValueCollection():
         -----
         The `obstime` is converted to an `astropy.time.Time`
         """
-        self.obstimes.append(obstime)
+        # Convert from milliseconds to seconds before appending.
+        self.obstimes.append(obstime / 1000.)
         self.values.append(value)
 
 
