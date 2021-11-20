@@ -1,7 +1,8 @@
 """
 Tools to mock the JWST Engineering Database
 """
-from functools import cache
+from copy import copy
+from functools import lru_cache
 import json
 import os
 import re
@@ -157,14 +158,15 @@ class EngDB_Local():
 
     def __init__(self, db_path=''):
         self.db_path = db_path
+        # self.json_load = lru_cache()(self.json_load)
+        # self.json_load.cache_clear()
 
-    @cache
     def fetch_data(self, mnemonic, starttime, endtime):
         """
         Get data for a mnemonic.
 
         Parameters
-        mnemonic: str
+        mnemonic:z str
             The engineering mnemonic to retrieve
 
         starttime: str or astropy.time.Time
@@ -178,12 +180,7 @@ class EngDB_Local():
         mnemonic_data: dict
             The returned structure
         """
-        with open(
-                os.path.join(
-                    self.db_path,
-                    mnemonic_data_fname(mnemonic)),
-                'r') as fp:
-            db_data = json.load(fp)
+        db_data = self.json_load(mnemonic)
 
         # Find the range of data
         stime = Time(starttime, format='iso')
@@ -216,14 +213,14 @@ class EngDB_Local():
         ]
 
         # Construct the return structure
-        db_data['ReqSTime'] = '/Date({:013d}+0000)/'.format(stime_mil)
-        db_data['ReqETime'] = '/Date({:013d}+0000)/'.format(etime_mil)
-        db_data['Count'] = len(data_return)
-        db_data['Data'] = data_return
+        result = copy(db_data)
+        result['ReqSTime'] = '/Date({:013d}+0000)/'.format(stime_mil)
+        result['ReqETime'] = '/Date({:013d}+0000)/'.format(etime_mil)
+        result['Count'] = len(data_return)
+        result['Data'] = data_return
 
-        return db_data
+        return result
 
-    @cache
     def fetch_meta(self, mnemonic_substr=''):
         """
         Get the meta for the match to the mnemonic
@@ -251,17 +248,27 @@ class EngDB_Local():
 
         # Now look for only the requested mnemonic substring
         mnemonic_substr = mnemonic_substr.lower()
-        results = [
+        mnemonics = [
             tlmmnemonics[idx]
             for idx, mnemonic in enumerate(tlmmnemonics)
             if mnemonic_substr in mnemonic['TlmMnemonic'].lower()
         ]
 
         # Construct the return structure
-        meta['Count'] = len(results)
-        meta['TlmMnemonics'] = results
+        result = copy(meta)
+        result['Count'] = len(mnemonics)
+        result['TlmMnemonics'] = mnemonics
 
-        return meta
+        return result
+
+    def json_load(self, mnemonic):
+        with open(
+                os.path.join(
+                    self.db_path,
+                    mnemonic_data_fname(mnemonic)),
+                'r') as fp:
+            db_data = json.load(fp)
+        return db_data
 
 
 # #########
