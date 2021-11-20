@@ -227,7 +227,7 @@ class EngdbMast(EngdbABC):
             records = records[selection]
 
         # Reformat to the desired list formatting.
-        results = _Value_Collection(
+        results = _ValueCollection(
             include_obstime=include_obstime,
             zip_results=zip_results
         )
@@ -310,7 +310,7 @@ class EngdbMast(EngdbABC):
         return table
 
 
-class _Value_Collection:
+class _ValueCollection:
     """Engineering Value Collection
 
     Parameters

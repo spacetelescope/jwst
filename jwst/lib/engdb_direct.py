@@ -190,7 +190,7 @@ class EngdbDirect(EngdbABC):
         # observation time. So, need to filter further.
         db_starttime = extract_db_time(records['ReqSTime'])
         db_endttime = extract_db_time(records['ReqETime'])
-        results = _Value_Collection(
+        results = _ValueCollection(
             include_obstime=include_obstime,
             zip_results=zip_results
         )
@@ -286,7 +286,7 @@ class EngdbDirect(EngdbABC):
         return response.json()
 
 
-class _Value_Collection():
+class _ValueCollection():
     """Engineering Value Collection
 
     Parameters
