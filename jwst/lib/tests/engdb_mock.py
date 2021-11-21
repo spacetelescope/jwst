@@ -260,7 +260,7 @@ class EngDB_Local():
 
         return result
 
-    @lru_cache
+    @lru_cache(maxsize=128)
     def json_load(self, mnemonic):
         with open(
                 os.path.join(
