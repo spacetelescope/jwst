@@ -1,21 +1,25 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import numpy as np
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def zero_roll(a, shift):
     """Like np.roll but the wrapped around part is set to zero.
     Only works along the first axis of the array.
 
-    :param a: The input array.
-    :param shift: The number of rows to shift by.
+    Parameters
+    ----------
+    a : array
+        The input array.
+    shift : int
+        The number of rows to shift by.
 
-    :type a: array[any]
-    :type shift: int
-
-    :returns: result - the array with the rows shifted.
-    :rtype: array[any]
+    Returns
+    -------
+    result : array
+        The array with the rows shifted.
     """
 
     result = np.zeros_like(a)
@@ -30,20 +34,23 @@ def zero_roll(a, shift):
 def robust_polyfit(x, y, order, maxiter=5, nstd=3.):
     """Perform a robust polynomial fit.
 
-    :param x: x data to fit.
-    :param y: y data to fit.
-    :param order: polynomial order to use.
-    :param maxiter: number of iterations for rejecting outliers.
-    :param nstd: number of standard deviations to use when rejecting outliers.
+    Parameters
+    ----------
+    x : array[float]
+        x data to fit.
+    y : array[float]
+        y data to fit.
+    order : int
+        polynomial order to use.
+    maxiter : int
+        number of iterations for rejecting outliers.
+    nstd : float
+        number of standard deviations to use when rejecting outliers.
 
-    :type x: array[float]
-    :type y: array[float]
-    :type order: int
-    :type maxiter: int
-    :type nstd: float
-
-    :returns: param - best-fit polynomial parameters.
-    :rtype: array[float]
+    Returns
+    -------
+    param : array[float]
+        best-fit polynomial parameters.
     """
 
     mask = np.ones_like(x, dtype='bool')
@@ -53,38 +60,45 @@ def robust_polyfit(x, y, order, maxiter=5, nstd=3.):
         param = np.polyfit(x[mask], y[mask], order)
         yfit = np.polyval(param, x)
 
-        # Compute residuals and mask ouliers.
+        # Compute residuals and mask outliers.
         res = y - yfit
         stddev = np.std(res)
-        mask = np.abs(res) <= nstd*stddev
+        mask = np.abs(res) <= nstd * stddev
 
     return param
 
 
-def get_image_dim(image, header=None, verbose=False):
+def get_image_dim(image, header=None):
     """Determine the properties of the image array.
 
-    :param image: A 2D image of the detector.
-    :param header: The header from one of the SOSS reference files.
-    :param verbose: If set True some diagnostic plots will be made.
+    Parameters
+    ----------
+    image : array[float]
+        A 2D image of the detector.
+    header : astropy.io.fits.Header object
+        The header from one of the SOSS reference files.
+    verbose : bool
+        If set True some diagnostic plots will be made.
 
-    :type image: array[float]
-    :type header: astropy.io.fits.Header
-    :type verbose: bool
-
-    :returns:
-    dimx, dimy
-        The dimensions of the stack array.
-    xos, yos
-        The oversampling factors of the stack array.
-    xnative, ynative
-        The dimensions of the stack image, in native pixels.
-    padding
+    Returns
+    -------
+    dimx : int
+        X dimension of the stack array.
+    dimy : int
+        Y dimension of the stack array.
+    xos : int
+        Oversampling factor in x dimension of the stack array.
+    yos : int
+        Oversampling factor in y dimension of the stack array.
+    xnative : int
+        Size of stack image x dimension, in native pixels.
+    ynative : int
+        Size of stack image y dimension, in native pixels.
+    padding : int
         Amount of padding around the image, in native pixels.
-    refpix_mask
-        Boolean array indicating which pixels are lightsensitive (True) and which are reference pixels (False).
-
-    :rtype: Tuple(int, int, int, int, int, int, int, array[bool])
+    refpix_mask : array[bool]
+        Boolean array indicating which pixels are light-sensitive (True)
+        and which are reference pixels (False).
     """
 
     # Dimensions of the subarray.
@@ -111,19 +125,20 @@ def get_image_dim(image, header=None, verbose=False):
             xos = int(dimx // 2040)
 
         else:
-            msg = ('Stack X dimension has unrecognized size of {:}. '
-                   'Accepts 2048, 2040 or multiple of.')
-            raise ValueError(msg.format(dimx))
+            log_message = f'Stack X dimension has unrecognized size of {dimx}. Accepts 2048, 2040 or multiple of.'
+            log.critical(log_message)
+            raise ValueError(log_message)
 
         # Check if the y-axis is consistent with the x-axis.
-        if np.int(dimy/xos) in [96, 256, 252, 2040, 2048]:
+        if np.int(dimy / xos) in [96, 256, 252, 2040, 2048]:
             yos = np.copy(xos)
-            ynative = np.int(dimy/yos)
+            ynative = np.int(dimy / yos)
 
         else:
-            msg = ('Stack Y dimension ({:}) is inconsistent with '
-                   'stack X dimension ({:}) for acceptable SOSS arrays')
-            raise ValueError(msg.format(dimy, dimx))
+            log_message = f'Stack Y dimension ({dimy}) is inconsistent with stack X' \
+                          f'dimension ({dimx}) for acceptable SOSS arrays'
+            log.critical(log_message)
+            raise ValueError(log_message)
 
         # Create a boolean mask indicating which pixels are not reference pixels.
         refpix_mask = np.ones_like(image, dtype='bool')
@@ -147,34 +162,24 @@ def get_image_dim(image, header=None, verbose=False):
         xos, yos = int(header['OVERSAMP']), int(header['OVERSAMP'])
 
         # Check that the stack respects its intended format.
-        if (dimx/xos - 2*padding) not in [2048]:
-            raise ValueError('The header passed is inconsistent with the X dimension of the stack.')
+        if (dimx / xos - 2 * padding) not in [2048]:
+            log_message = 'The header passed is inconsistent with the X dimension of the stack.'
+            log.critical(log_message)
+            raise ValueError(log_message)
         else:
             xnative = 2048
 
-        if (dimy/yos - 2*padding) not in [96, 256, 2048]:
-            raise ValueError('The header passed is inconsistent with the Y dimension of the stack.')
+        if (dimy / yos - 2 * padding) not in [96, 256, 2048]:
+            log_message = 'The header passed is inconsistent with the Y dimension of the stack.'
+            log.critical(log_message)
+            raise ValueError(log_message)
         else:
-            ynative = np.int(dimy/yos - 2*padding)
+            ynative = np.int(dimy / yos - 2 * padding)
 
         # The trace file contains no reference pixels so all pixels are good.
         refpix_mask = np.ones_like(image, dtype='bool')
 
-    # If verbose print the output.
-    if verbose:
-        print('Data dimensions:')
-        str_args = dimx, dimy, xos, yos, xnative, ynative
-        msg = 'dimx={:}, dimy={:}, xos={:}, yos={:}, xnative={:}, ynative={:}'
-        print(msg.format(*str_args))
+    log.debug('Data dimensions:')
+    log.debug(f'dimx={dimx}, dimy={dimy}, xos={xos}, yos={yos}, xnative={xnative}, ynative={ynative}')
 
     return dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask
-
-
-def main():
-    """Placeholder for potential multiprocessing."""
-
-    return
-
-
-if __name__ == '__main__':
-    main()
