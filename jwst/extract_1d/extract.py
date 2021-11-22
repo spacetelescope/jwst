@@ -7,6 +7,7 @@ import numpy as np
 
 from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
+from astropy.io import fits
 from gwcs import WCS
 from stdatamodels import DataModel
 from stdatamodels.properties import ObjectNode
@@ -130,33 +131,33 @@ def open_extract1d_ref(refname: str, exptype: str, model_type: str) -> dict:
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
         handle for the jwst.datamodels object for the extract1d file.
-t    """
+    """
 
     if refname == "N/A":
         ref_dict = None
-    elif model_type == 'IFUCubeModel':
-        # read in asdf file
-        extract_model = datamodels.Extract1dIFUModel(refname)
-        ref_dict = {}
-        ref_dict['ref_file_type'] = FILE_TYPE_ASDF
-        ref_dict['ref_model'] = extract_model
     else:
-        # Try reading the file as JSON.
         fd = open(refname)
         try:
             ref_dict = json.load(fd)
             ref_dict['ref_file_type'] = FILE_TYPE_JSON
             fd.close()
         except (UnicodeDecodeError, JSONDecodeError):
+            # input file is not JSON so lets try fits and then asdf
             fd.close()
-            # Try opening the file as a reference image.
             try:
-                fd = datamodels.MultiExtract1dImageModel(refname)
-                ref_dict = {'ref_file_type': FILE_TYPE_IMAGE, 'ref_model': fd}
+                fd = fits.open(refname)
+                fits_present = 1
+                fd.close()
             except OSError:
-                log.info("The extract1d reference file should be JSON or FITS.")
-                log.error(f"Don't know how to read {refname}.")
-                raise
+                fits_present = 0
+            if fits_present:
+                extract_model = datamodels.MultiExtract1dImageModel(refname)
+                ref_dict = {'ref_file_type': FILE_TYPE_IMAGE, 'ref_model': extract_model}
+            else:
+                extract_model = datamodels.Extract1dIFUModel(refname)
+                ref_dict = dict()
+                ref_dict['ref_file_type'] = FILE_TYPE_ASDF
+                ref_dict['ref_model'] = extract_model
 
     return ref_dict
 
