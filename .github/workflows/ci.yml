@@ -26,6 +26,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: Python 3.10 Tests
+            python-version: '3.10'
+            os: ubuntu-latest
+            toxenv: py310
+
           - name: Latest dependency versions w/coverage
             os: ubuntu-latest
             python-version: 3.9
