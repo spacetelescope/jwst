@@ -107,7 +107,7 @@ class ContinueError(Exception):
     pass
 
 
-def open_extract1d_ref(refname: str, exptype: str, model_type: str) -> dict:
+def open_extract1d_ref(refname: str, exptype: str) -> dict:
     """Open the extract1d reference file.
 
     Parameters
@@ -2656,11 +2656,9 @@ def run_extract1d(
     """
     # Read and interpret the extract1d reference file.
     try:
-        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type,
-                                      input_model.meta.model_type)
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
     except AttributeError:  # Input is a ModelContainer of some type
-        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type,
-                                      input_model[0].meta.model_type)
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type)
 
     apcorr_ref_model = None
 
