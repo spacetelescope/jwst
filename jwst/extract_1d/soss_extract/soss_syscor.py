@@ -1,24 +1,25 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import numpy as np
-
+import logging
 from astropy.stats import SigmaClip
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def make_profile_mask(ref_2d_profile, threshold=1e-3):
     """Build a mask of the trace based on the 2D profile reference file.
 
-    :param ref_2d_profile: the 2d trace profile reference.
-    :param threshold: threshold value for excluding pixels based on
-        ref_2d_profile.
-    
-    :type ref_2d_profile: array[float]
-    :type threshold: float
+    Parameters
+    ----------
+    ref_2d_profile : array[float]
+        The 2d trace profile reference.
+    threshold : float
+        Threshold value for excluding pixels based on ref_2d_profile.
 
-    :returns: bkg_mask - Masks pixels in the trace based on the 2d profile
-        reference file.
-    :rtype: array[bool]
+    Returns
+    -------
+    bkg_mask : array[bool]
+        Pixel mask in the trace based on the 2d profile reference file.
     """
 
     bkg_mask = (ref_2d_profile > threshold)
@@ -29,20 +30,22 @@ def make_profile_mask(ref_2d_profile, threshold=1e-3):
 def aperture_mask(xref, yref, halfwidth, shape):
     """Build a mask of the trace based on the trace positions.
 
-    :param xref: The reference x-positions.
-    :param yref: The reference y-positions.
-    :param halfwidth: Size of the aperture mask used when extracting the trace
+    Parameters
+    ----------
+    xref : array[float]
+        The reference x-positions.
+    yref : array[float]
+        The reference y-positions.
+    halfwidth : float
+        Size of the aperture mask used when extracting the trace
         positions from the data.
-    :param shape: The shape of the array to be masked.
+    shape : Tuple(int, int)
+        The shape of the array to be masked.
 
-    :type xref: array[float]:
-    :type yref: array[float]:
-    :type halfwidth: float
-    :type shape: Tuple(int, int)
-
-    :returns: aper_mask - Masks pixels in the trace based on the given trace
-        positions.
-    :rtype: array[bool]
+    Returns
+    -------
+    aper_mask : array[bool]
+        Pixel mask in the trace based on the given trace positions.
     """
 
     # Create a coordinate grid.
@@ -63,18 +66,24 @@ def aperture_mask(xref, yref, halfwidth, shape):
 def soss_background(scidata, scimask, bkg_mask=None):
     """Compute a columnwise background for a SOSS observation.
 
-    :param scidata: the image of the SOSS trace.
-    :param scimask: a boolean mask of pixls to be excluded.
-    :param bkg_mask: a boolean mask of pixels to be excluded because they are in
-        the trace, use for example make_profile_mask to construct such a mask.
+    Parameters
+    ----------
+    scidata : array[float]
+        The image of the SOSS trace.
+    scimask : array[bool]
+        Boolean mask of pixels to be excluded.
+    bkg_mask : array[bool]
+        Boolean mask of pixels to be excluded because they are in
+        the trace, typically constructed with make_profile_mask.
 
-    :type scidata: array[float]
-    :type scimask: array[bool]
-    :type bkg_mask: array[bool]
-
-    :returns: scidata_bkg, col_bkg, npix_bkg - The background subtracted image,
-        columnwise background values, and number of pixels used in each column.
-    :rtype: Tuple(array[float], array[float], array[float])
+    Returns
+    -------
+    scidata_bkg : array[float]
+        Background-subtracted image
+    col_bkg : array[float]
+        Column-wise background values
+    npix_bkg : array[float]
+        Number of pixels used to calculate each column value in col_bkg
     """
 
     # Check the validity of the input.
@@ -82,12 +91,13 @@ def soss_background(scidata, scimask, bkg_mask=None):
 
     if scimask.shape != data_shape:
         msg = 'scidata and scimask must have the same shape.'
+        log.critical(msg)
         raise ValueError(msg)
 
     if bkg_mask is not None:
-
         if bkg_mask.shape != data_shape:
             msg = 'scidata and bkg_mask must have the same shape.'
+            log.critical(msg)
             raise ValueError(msg)
 
     # Combine the masks and create a masked array.
@@ -117,15 +127,19 @@ def make_background_mask(deepstack, width=28):
     """Build a mask of the pixels considered to contain the majority of the
     flux, and should therefore not be used to compute the background.
 
-    :param deepstack: a deep image of the trace constructed by combining
+    Parameters
+    ----------
+    deepstack : array[float]
+        Deep image of the trace constructed by combining
         individual integrations of the observation.
-    :param width: the width of the trace is used to set the fraction of pixels
-        to exclude with the mask (i.e. width/256 for a SUBSTRIP256 observation).
+    width : int
+        Width, in pixels, of the trace to exclude with the mask
+        (i.e. width/256 for a SUBSTRIP256 observation).
 
-    :type deepstack: array[float]
-    :type width: int
-
-    :returns: bkg_mask - Masks pixels in the trace based on the deepstack or
+    Returns
+    -------
+    bkg_mask : array[bool]
+        Pixel mask in the trace based on the deepstack or
         non-finite in the image.
     :rtype: array[bool]
     """
@@ -141,9 +155,10 @@ def make_background_mask(deepstack, width=28):
     elif nrows == 2048:  # FULL
         quantile = 100 * (1 - 2 * width / 2048)  # Mask 2 orders worth of pixels.
     else:
-        msg = ('Unexpected image dimensions, expected nrows = 96, 256 or 2048, '
-               'got nrows = {}.')
-        raise ValueError(msg.format(nrows))
+        msg = (f'Unexpected image dimensions, expected nrows = 96, 256 or 2048, '
+               f'got nrows = {nrows}.')
+        log.critical(msg)
+        raise ValueError(msg)
 
     # Find the threshold value associated with the quantile.
     threshold = np.nanpercentile(deepstack, quantile)
@@ -158,29 +173,35 @@ def make_background_mask(deepstack, width=28):
 def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
                              zero_bias=False):
     """Compute a columnwise correction to the 1/f noise on the difference image
-    of an inidividual SOSS integration (i.e. an individual integration - a deep
+    of an individual SOSS integration (i.e. an individual integration - a deep
     image of the same observation).
 
-    :param scidata: the image of the SOSS trace.
-    :param scimask: a boolean mask of pixels to be excluded based on the DQ
-        values.
-    :param deepstack: a deep image of the trace constructed by combining
+    Parameters
+    ----------
+    scidata : array[float]
+        Image of the SOSS trace.
+    scimask : array[boo]
+        Boolean mask of pixels to be excluded based on the DQ values.
+    deepstack : array[float]
+        Deep image of the trace constructed by combining
         individual integrations of the observation.
-    :param bkg_mask: a boolean mask of pixels to be excluded because they are in
-        the trace, use for example make_background_mask to construct such a mask.
-    :param zero_bias: if True the corrections to individual columns will be
+    bkg_mask : array[bool]
+        Boolean mask of pixels to be excluded because they are in the trace,
+        typically constructed with make_profile_mask.
+    zero_bias : bool
+        If True, the corrections to individual columns will be
         adjusted so that their mean is zero.
 
-    :type scidata: array[float]
-    :type scimask: array[bool]
-    :type deepstack: array[float]
-    :type bkg_mask: array[bool]
-    :type zero_bias: bool
-
-    :returns: scidata_cor, col_cor, npix_cor, bias - The 1/f corrected image,
-        columnwise correction values, number of pixels used in each column, and
-        the net change to the image if zero_bias was False.
-    :rtype: Tuple(array[float], array[float], array[float], float)
+    Returns
+    -------
+    scidata_cor : array[float]
+        The 1/f-corrected image
+    col_cor : array[float]
+        The column-wise correction values
+    npix_cor : array[float]
+        Number of pixels used in each column
+    bias : float
+        Net change to the image, if zero_bias was False
     """
 
     # Check the validity of the input.
@@ -188,23 +209,26 @@ def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
 
     if scimask.shape != data_shape:
         msg = 'scidata and scimask must have the same shape.'
+        log.critical(msg)
         raise ValueError(msg)
 
     if deepstack.shape != data_shape:
         msg = 'scidata and deepstack must have the same shape.'
+        log.critical(msg)
         raise ValueError(msg)
 
     if bkg_mask is not None:
 
         if bkg_mask.shape != data_shape:
             msg = 'scidata and bkg_mask must have the same shape.'
+            log.critical(msg)
             raise ValueError(msg)
 
     # Subtract the deep stack from the image.
     diffimage = scidata - deepstack
 
     # Combine the masks and create a masked array.
-    mask = scimask | ~np.isfinite(deepstack)  # TODO invalid values in deepstack?
+    mask = scimask | ~np.isfinite(deepstack)
 
     if bkg_mask is not None:
         mask = mask | bkg_mask
@@ -230,13 +254,3 @@ def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
     scidata_cor = scidata - col_cor
 
     return scidata_cor, col_cor, npix_cor, bias
-
-
-def main():
-    """Placeholder for potential multiprocessing."""
-
-    return
-
-
-if __name__ == '__main__':
-    main()

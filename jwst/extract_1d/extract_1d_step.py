@@ -1,9 +1,7 @@
-import os  # TODO temporary.
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
 from .soss_extract import soss_extract
-
 
 __all__ = ["Extract1dStep"]
 
@@ -35,7 +33,7 @@ class Extract1dStep(Step):
         If both `smoothing_length` and `bkg_order` are not None, the
         boxcar smoothing will be done first.
 
-    bkg_simga_clip : float
+    bkg_sigma_clip : float
         Background sigma clipping value to use on background to remove outliers
         and maximize the quality of the 1d spectrum
 
@@ -74,7 +72,7 @@ class Extract1dStep(Step):
 
     """
 
-    # TODO Consider optimal defaults.
+    #TODO : What is soss_devname? -TAP
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
@@ -86,15 +84,15 @@ class Extract1dStep(Step):
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
-    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modelling the trace. 
+    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace. 
     soss_transform = float_list(default=None, min=3, max=3)  # rotation angle applied to the reference files to match the observation.
     soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
+    soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     soss_devname = string(default=None)  # TODO temporray output name.
     """
 
-    # TODO add SOSS reference file types.
     reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
 
     def process(self, input):
@@ -114,7 +112,7 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
 
-        was_source_model = False                 # default value
+        was_source_model = False  # default value
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
@@ -144,7 +142,6 @@ class Extract1dStep(Step):
             return input_model
 
         # Data is NRISS SOSS observation.
-        # TODO should go in the else of ModelContainer? discuss with StSci.
         if input_model.meta.exposure.type == 'NIS_SOSS':
 
             self.log.info('Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
@@ -173,10 +170,12 @@ class Extract1dStep(Step):
                 subarray = 'FULL'
             elif input_model.meta.subarray.name == 'SUBSTRIP96':
                 self.log.info('Exposure is in the SUBSTRIP96 subarray.')
-                self.log.info('Traces of orders 1 and 2 will be modelled but only order 1 will be decontaminated before extraction.')
+                self.log.info('Traces of orders 1 and 2 will be modelled but only order 1'
+                              ' will be decontaminated before extraction.')
                 subarray = 'SUBSTRIP96'
             else:
-                self.log.error('The SOSS extraction is implemented for the SUBSTRIP256, SUBSTRIP96 and FULL subarray only.')
+                self.log.error('The SOSS extraction is implemented for the SUBSTRIP256,'
+                               ' SUBSTRIP96 and FULL subarray only.')
                 self.log.error('extract_1d will be skipped.')
                 input_model.meta.cal_step.extract_1d = 'SKIPPED'
                 return input_model
@@ -198,14 +197,15 @@ class Extract1dStep(Step):
             soss_kwargs['devname'] = self.soss_devname
 
             # Run the extraction.
-            result, ref_outputs = soss_extract.run_extract1d(input_model,
-                                                spectrace_ref_name,
-                                                wavemap_ref_name,
-                                                specprofile_ref_name,
-                                                speckernel_ref_name,
-                                                subarray,
-                                                soss_filter,
-                                                soss_kwargs)
+            result, ref_outputs = soss_extract.run_extract1d(
+                input_model,
+                spectrace_ref_name,
+                wavemap_ref_name,
+                specprofile_ref_name,
+                speckernel_ref_name,
+                subarray,
+                soss_filter,
+                soss_kwargs)
 
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
@@ -213,8 +213,14 @@ class Extract1dStep(Step):
 
             input_model.close()
 
-            # TODO Is it ok to return 2 elements here? Otherwise I don't know how to return the ref_outputs
-            return result, ref_outputs
+            if self.soss_modelname:
+                soss_modelname = self.make_output_path(
+                    basepath=self.soss_modelname,
+                    suffix='SossExtractModel'
+                )
+                ref_outputs.save(soss_modelname)
+
+            return result
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
@@ -262,8 +268,8 @@ class Extract1dStep(Step):
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
 
-                # --------------------------------------------------------------
-                # Data is a ModelContainer but is not WFSS
+                    # --------------------------------------------------------------
+                    # Data is a ModelContainer but is not WFSS
                     result.meta.filetype = '1d spectrum'
                 else:
                     result = datamodels.ModelContainer()

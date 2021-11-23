@@ -121,7 +121,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
         mask = np.zeros_like(scidata_bkg, dtype='bool')
 
     # Call the script that determines the dimensions of the stack.
-    result = get_image_dim(scidata_bkg, header=header, verbose=verbose)
+    result = get_image_dim(scidata_bkg, header=header)
     dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask = result
 
     # Replace masked pixel values with NaNs.
