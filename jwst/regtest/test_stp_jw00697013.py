@@ -38,42 +38,49 @@ EXPS = ['jw00697013001_03101_00001_nrcblong_uncal',
         'jw00697013006_03103_00001_nrca3_uncal']
 
 
+@pytest.mark.bigdata
 def test_aperture_ra(calc_wcs):
     """Compare aperture WCS information"""
     model, _,wcsinfo, _, _ = calc_wcs
     assert np.isclose(model.meta.wcsinfo.ra_ref, wcsinfo.ra)
 
 
+@pytest.mark.bigdata
 def test_aperture_dec(calc_wcs):
     """Compare aperture WCS information"""
     model, _,wcsinfo, _, _ = calc_wcs
     assert np.isclose(model.meta.wcsinfo.dec_ref, wcsinfo.dec)
 
 
+@pytest.mark.bigdata
 def test_aperture_pa(calc_wcs):
     """Compare aperture WCS information"""
     model, _,wcsinfo, _, _ = calc_wcs
     assert np.isclose(model.meta.aperture.position_angle, wcsinfo.pa)
 
 
+@pytest.mark.bigdata
 def test_v1_ra(calc_wcs):
     """Compare v1 WCS information"""
     model, _,_, vinfo, _ = calc_wcs
     assert np.isclose(model.meta.pointing.ra_v1, vinfo.ra)
 
 
+@pytest.mark.bigdata
 def test_v1_dec(calc_wcs):
     """Compare v1 WCS information"""
     model, _,_, vinfo, _ = calc_wcs
     assert np.isclose(model.meta.pointing.dec_v1, vinfo.dec)
 
 
+@pytest.mark.bigdata
 def test_v1_pa(calc_wcs):
     """Compare v1 WCS information"""
     model, _,_, vinfo, _ = calc_wcs
     assert np.isclose(model.meta.pointing.pa_v3, vinfo.pa)
 
 
+@pytest.mark.bigdata
 def test_roll_ref(calc_wcs):
     """Compare roll ref"""
     model, t_pars, wcsinfo, _, _ = calc_wcs
@@ -97,7 +104,6 @@ def calc_wcs(databases, request):
         return model, t_pars, wcsinfo, vinfo, transforms
 
 
-@pytest.mark.bigdata
 @pytest.fixture(scope='module')
 def databases(rtdata_module):
     """Create the necessary databases needed to run pointing code
