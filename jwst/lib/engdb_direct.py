@@ -188,7 +188,7 @@ class EngdbDirect(EngdbABC):
         # observation time. So, need to filter further.
         db_starttime = extract_db_time(records['ReqSTime'])
         db_endttime = extract_db_time(records['ReqETime'])
-        results = _Value_Collection(
+        results = _ValueCollection(
             include_obstime=include_obstime,
             zip_results=zip_results
         )
@@ -284,7 +284,7 @@ class EngdbDirect(EngdbABC):
         return response.json()
 
 
-class _Value_Collection():
+class _ValueCollection():
     """Engineering Value Collection
 
     Parameters
@@ -305,14 +305,25 @@ class _Value_Collection():
         Returns the list of values.
         See `include_obstime` and `zip_results` for modifications.
     """
-
     def __init__(self, include_obstime=False, zip_results=True):
         self._include_obstime = include_obstime
         self._zip_results = zip_results
-        if zip_results:
-            self.collection = []
+
+        self.obstimes = []
+        self.values = []
+
+    @property
+    def collection(self):
+        if self._include_obstime:
+            obstimes = Time(self.obstimes, format='unix')
+            obstimes.format = 'isot'
+            if self._zip_results:
+                collection = [EngDB_Value(t, v) for t, v in zip(obstimes, self.values)]
+            else:
+                collection = EngDB_Value(obstimes, self.values)
         else:
-            self.collection = EngDB_Value([], [])
+            collection = self.values
+        return collection
 
     def append(self, obstime, value):
         """Append value to collection
@@ -330,18 +341,9 @@ class _Value_Collection():
         -----
         The `obstime` is converted to an `astropy.time.Time`
         """
-        if self._include_obstime:
-            obstime = Time(obstime / 1000., format='unix')
-            obstime.format = 'isot'
-            if self._zip_results:
-                self.collection.append(
-                    EngDB_Value(obstime, value)
-                )
-            else:
-                self.collection.obstime.append(obstime)
-                self.collection.value.append(value)
-        else:
-            self.collection.append(value)
+        # Convert from milliseconds to seconds before appending.
+        self.obstimes.append(obstime / 1000.)
+        self.values.append(value)
 
 
 # #########

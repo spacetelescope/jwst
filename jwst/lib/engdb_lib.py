@@ -8,6 +8,9 @@ __all__ = ['EngDB_Value', 'EngdbABC']
 # Define the returned value tuple.
 EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 
+# Path templates
+DATA = '_data.json'
+
 
 class EngdbABC(abc.ABC):
     """Access the JWST Engineering Database
@@ -117,3 +120,20 @@ class EngdbABC(abc.ABC):
             Either a bad URL or non-existant mnemonic.
         """
         pass
+
+
+def mnemonic_data_fname(mnemonic):
+    """
+    Construct the file name for the cached data of the specified mnemonic
+
+    Parameters
+    ----------
+    mnemonic
+        The mnemonic to refer to.
+
+    Returns
+    -------
+    file_name: str
+        The name of the file containing the menonic's cached data.
+    """
+    return mnemonic.lower() + DATA

@@ -1,13 +1,17 @@
 """
 Tools to mock the JWST Engineering Database
 """
-from astropy.time import Time
+from copy import copy
+from functools import lru_cache
 import json
 import os
 import re
 import requests_mock
 
-from jwst.lib import engdb_direct, engdb_tools
+from astropy.time import Time
+
+from jwst.lib import engdb_direct
+from jwst.lib.engdb_lib import mnemonic_data_fname
 
 __all__ = [
     'ENGDB_PATH',
@@ -154,13 +158,14 @@ class EngDB_Local():
 
     def __init__(self, db_path=''):
         self.db_path = db_path
+        self.json_load.cache_clear()
 
     def fetch_data(self, mnemonic, starttime, endtime):
         """
         Get data for a mnemonic.
 
         Parameters
-        mnemonic: str
+        mnemonic:z str
             The engineering mnemonic to retrieve
 
         starttime: str or astropy.time.Time
@@ -174,12 +179,7 @@ class EngDB_Local():
         mnemonic_data: dict
             The returned structure
         """
-        with open(
-                os.path.join(
-                    self.db_path,
-                    mnemonic_data_fname(mnemonic)),
-                'r') as fp:
-            db_data = json.load(fp)
+        db_data = self.json_load(mnemonic)
 
         # Find the range of data
         stime = Time(starttime, format='iso')
@@ -212,12 +212,13 @@ class EngDB_Local():
         ]
 
         # Construct the return structure
-        db_data['ReqSTime'] = '/Date({:013d}+0000)/'.format(stime_mil)
-        db_data['ReqETime'] = '/Date({:013d}+0000)/'.format(etime_mil)
-        db_data['Count'] = len(data_return)
-        db_data['Data'] = data_return
+        result = copy(db_data)
+        result['ReqSTime'] = '/Date({:013d}+0000)/'.format(stime_mil)
+        result['ReqETime'] = '/Date({:013d}+0000)/'.format(etime_mil)
+        result['Count'] = len(data_return)
+        result['Data'] = data_return
 
-        return db_data
+        return result
 
     def fetch_meta(self, mnemonic_substr=''):
         """
@@ -246,39 +247,33 @@ class EngDB_Local():
 
         # Now look for only the requested mnemonic substring
         mnemonic_substr = mnemonic_substr.lower()
-        results = [
+        mnemonics = [
             tlmmnemonics[idx]
             for idx, mnemonic in enumerate(tlmmnemonics)
             if mnemonic_substr in mnemonic['TlmMnemonic'].lower()
         ]
 
         # Construct the return structure
-        meta['Count'] = len(results)
-        meta['TlmMnemonics'] = results
+        result = copy(meta)
+        result['Count'] = len(mnemonics)
+        result['TlmMnemonics'] = mnemonics
 
-        return meta
+        return result
+
+    @lru_cache(maxsize=128)
+    def json_load(self, mnemonic):
+        with open(
+                os.path.join(
+                    self.db_path,
+                    mnemonic_data_fname(mnemonic)),
+                'r') as fp:
+            db_data = json.load(fp)
+        return db_data
 
 
 # #########
 # Utilities
 # #########
-def mnemonic_data_fname(mnemonic):
-    """
-    Construct the file name for the cached data of the specified mnemonic
-
-    Parameters
-    ----------
-    mnemonic
-        The mnemonic to refer to.
-
-    Returns
-    -------
-    file_name: str
-        The name of the file containing the menonic's cached data.
-    """
-    return mnemonic.lower() + DATA
-
-
 def cache_engdb(
         mnemonics=MNEMONICS_TO_CACHE,
         starttime='2016-01-18T15:40:00',
@@ -309,7 +304,7 @@ def cache_engdb(
     if not os.path.exists(db_path):
         os.mkdir(db_path)
 
-    edb = engdb_tools.ENGDB_Service()
+    edb = engdb_direct.EngdbDirect()
 
     # Get the meta info for all mnemonics regardless.
     meta = edb.get_meta()
