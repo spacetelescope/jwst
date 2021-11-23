@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 import logging
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
@@ -13,6 +10,7 @@ from .soss_centroids import get_centroids_com
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
 
 def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
     """Apply a rotation and shift to the trace centroids positions. This
@@ -37,8 +35,10 @@ def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
 
     Returns
     -------
-    xrot, yrot : Tuple(array[float], array[float])
-        The rotated and shifted coordinates.
+    xrot : array[float]
+        The rotated and shifted x coordinate.
+    yrot : array[float]
+        The rotated and shifted y coordinate.
     """
 
     # Convert to numpy arrays.
@@ -70,7 +70,7 @@ def evaluate_model(xmod, transform, xref, yref):
     ----------
     xmod : array[float]
         The x-values at which to evaluate the transformed coordinates.
-    transform : Tuple, List, Array
+    transform : array[float]
         The transformation parameters.
     xref : array[float]
         The reference x-positions.
@@ -105,7 +105,7 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
     Parameters
     ----------
-    transform : Tuple, List, Array
+    transform : array[float]
         The transformation parameters.
     xref_o1 : array[float]
         The order 1 reference x-positions.
@@ -236,8 +236,7 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
                     yref_o2=None, halfwidth=30., rotation=True, shift=True,
                     soss_filter='CLEAR', bounds_theta=[-1., 1.],
-                    bounds_x=[-10., 10.], bounds_y=[-10., 10.],
-                    verbose=True):
+                    bounds_x=[-10., 10.], bounds_y=[-10., 10.]):
     """Given a science image, determine the centroids and find the simple
     transformation (rotation + vertical & horizonal offset, or some combination
     thereof) needed to match xref_o1 and yref_o1 to the image.
@@ -279,8 +278,6 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     bounds_y : array[float] (optional)
         Boundaries on the vertical offset to consider in the Chi-squared
         minimization.
-    verbose : bool (optional)
-        If True make a diagnostic image of the best-fit transformation.
 
     Returns
     -------
@@ -331,7 +328,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
 
     elif soss_filter == 'F277W':
         # If the exposure uses the F277W filter, there is no second order, and
-        # first order centroids are only useful redwards of ~2.5µm.
+        # first order centroids are only useful at wavelengths greater than 2.5µm.
         # Restrict centroids to lie within region lambda>~2.5µm, where the
         # F277W filter response is strong.
         log.info('Measuring trace position for order 1 spanning the F277W pixels.')
@@ -351,7 +348,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         log.info('Measuring trace position for order 1 only.')
         xdat_o2, ydat_o2 = None, None
 
-    # Find the simple transformation via a Chi-squared minimzation of the
+    # Find the simple transformation via a chi-squared minimization of the
     # extracted and reference centroids. This transformation considers by
     # default rotation as well as vertical and horizontal offsets, however it
     # can be limited to consider only rotation or only offsets.
@@ -403,91 +400,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
                           args=min_args)
         simple_transform = result.x
 
-    if verbose:
-        _plot_transform(simple_transform, xdat_o1, ydat_o1, xdat_o2, ydat_o2,
-                        xref_o1, yref_o1, xref_o2, yref_o2)
-
     return simple_transform
-
-
-def _plot_transform(simple_transform, xdat_o1, ydat_o1, xdat_o2, ydat_o2,
-                   xref_o1, yref_o1, xref_o2, yref_o2):
-    """Utility function to plot the results of solve_transform when in debug
-    mode.
-
-    Parameters
-    ----------
-    simple_transform : array[float]
-        Array containing the angle, x-shift and y-shift needed to match
-        xref_o1 and yref_o1 to the image.
-    xdat_o1 : array[float]
-        Order 1 X-centroids extracted from the data frame.
-    ydat_o1 : array[float]
-        Order 1 Y-centroids extracted from the data frame.
-    xdat_o2 : array[float]
-        Order 2 X-centroids extracted from the data frame.
-    ydat_o2 : array[float]
-        Order 2 Y-centroids extracted from the data frame.
-    xref_o1 : array[float]
-        Order 1 X-centroids from the reference file.
-    yref_o1 : array[float]
-        Order 1 Y-centroids from the reference file.
-    xref_o2 : array[float]
-        Order 2 X-centroids from the reference file.
-    yref_o2 : array[float]
-        Order 2 Y-centroids from the reference file.
-    """
-
-    # Calculate model positions for the first order.
-    ymod_o1 = evaluate_model(xdat_o1, simple_transform, xref_o1, yref_o1)
-
-    # Make a figure showing the extracted and best-fit trace positions.
-    plt.figure(figsize=(16, 5))
-
-    # Order 1 data and model
-    ax1 = plt.subplot(221)
-    ax1.plot(xdat_o1, ydat_o1, 'o')
-    ax1.plot(xdat_o1, ymod_o1)
-
-    ax1.set_ylabel('Y [pix]', fontsize=16)
-    ax1.tick_params(labelbottom=False)
-    ax1.tick_params(axis='both', which='major', labelsize=14)
-    ax1.set_title('Order 1', fontsize=20)
-
-    # Order 1 data - model
-    ax2 = plt.subplot(223, sharex=ax1)
-    ax2.plot(xdat_o1, ydat_o1 - ymod_o1, 'o')
-
-    ax2.set_ylim(-5, 5)
-    ax2.set_ylabel('O - C', fontsize=16)
-    ax2.set_xlabel('X [pix]', fontsize=16)
-    ax2.tick_params(axis='both', which='major', labelsize=14)
-
-    if xdat_o2 is not None:
-        # Calculate model positions for the second order.
-        ymod_o2 = evaluate_model(xdat_o2, simple_transform, xref_o2, yref_o2)
-
-        # Order 2 data and model
-        ax3 = plt.subplot(222, sharey=ax1)
-        ax3.plot(xdat_o2, ydat_o2, 'o')
-        ax3.plot(xdat_o2, ymod_o2)
-
-        ax3.tick_params(labelleft=False)
-        ax3.tick_params(labelbottom=False)
-        ax3.set_title('Order 2', fontsize=20)
-
-        # Order 2 data - model
-        ax4 = plt.subplot(224, sharex=ax3, sharey=ax2)
-        ax4.plot(xdat_o2, ydat_o2 - ymod_o2, 'o')
-
-        ax4.set_xlabel('X [pix]', fontsize=16)
-        ax4.tick_params(labelleft=False)
-        ax4.tick_params(axis='both', which='major', labelsize=14)
-
-    plt.tight_layout()
-    plt.show()
-
-    return
 
 
 def rotate_image(image, angle, origin):
@@ -526,7 +439,7 @@ def transform_image(angle, xshift, yshift, image, cenx=1024, ceny=50):
     """Apply the transformation found by solve_transform() to a 2D reference
      map.
 
-    Paremeters
+    Parameters
     ----------
     angle : float
         The angle by which to rotate the file, in degrees.
@@ -587,19 +500,18 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
     angle, xshift, yshift = simple_transform
 
     # Modify the transformation with the oversampling and padding.
-    xshift = ovs*xshift
-    yshift = ovs*yshift
-    cenx = ovs*(pad + 1024)
-    ceny = ovs*(pad + 50)
+    xshift = ovs * xshift
+    yshift = ovs * yshift
+    cenx = ovs * (pad + 1024)
+    ceny = ovs * (pad + 50)
 
     # Apply the transformation to the reference map.
     trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)
 
     if native:
-
         # Bin the transformed map down to native resolution.
         nrows, ncols = trans_map.shape
-        trans_map = trans_map.reshape(nrows//ovs, ovs, ncols//ovs, ovs)
+        trans_map = trans_map.reshape((nrows // ovs), ovs, (ncols // ovs), ovs)
         trans_map = trans_map.mean(1).mean(-1)
 
         # Remove the padding.
@@ -682,22 +594,11 @@ def transform_profile(simple_transform, profile, oversample, pad, native=True,
                                     pad, native=native)
 
     if norm:
-
         # Normalize so that the columns sum to 1.
         with warnings.catch_warnings():
             warnings.simplefilter(action="ignore", category=RuntimeWarning)
-            trans_profile = trans_profile/np.nansum(trans_profile, axis=0)
+            trans_profile = trans_profile / np.nansum(trans_profile, axis=0)
 
         trans_profile[~np.isfinite(trans_profile)] = 0.
 
     return trans_profile
-
-
-def main():
-    """Placeholder for potential multiprocessing."""
-
-    return
-
-
-if __name__ == '__main__':
-    main()

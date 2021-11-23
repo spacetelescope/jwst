@@ -1,59 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import warnings
-
+import logging
 import numpy as np
+import warnings
 
 from .soss_utils import robust_polyfit, get_image_dim
 
-from matplotlib import colors
-import matplotlib.pyplot as plt
-
-
-def _plot_centroid(image, xtrace, ytrace):
-    """Overplot the extracted trace positions on the image.
-
-    Parameters
-    ----------
-    image : array[float]
-        A 2D image of the detector.
-    xtrace : array[float]
-        The x coordinates of the trace to overplot on the image.
-    ytrace : array[float]
-        The y coordinates of the trace to overplot on the image.
-    """
-
-    nrows, ncols = image.shape
-
-    if nrows == ncols:
-        aspect = 1
-        figsize = ncols/64, nrows/64
-    else:
-        aspect = 2
-        figsize = ncols/64, nrows/32
-
-    plt.figure(figsize=figsize)
-
-    plt.title('Trace Centroids')
-
-    plt.imshow(image, origin='lower', cmap='inferno', norm=colors.LogNorm(),
-               aspect=aspect)
-    plt.plot(xtrace, ytrace, lw=2, ls='--', c='black', label='Centroids')
-
-    plt.xlabel('Spectral Pixel', fontsize=24)
-    plt.ylabel('Spatial Pixel', fontsize=24)
-    plt.legend(fontsize=24)
-
-    plt.xlim(-0.5, ncols - 0.5)
-    plt.ylim(-0.5, nrows - 0.5)
-
-    plt.tight_layout()
-
-    plt.show()
-    plt.close()
-
-    return
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def center_of_mass(column, ypos, halfwidth):
@@ -84,13 +36,13 @@ def center_of_mass(column, ypos, halfwidth):
 
     # Compute the center of mass on the window.
     with np.errstate(invalid='ignore'):
-        ycom = np.nansum(column[miny:maxy]*ypix[miny:maxy])/np.nansum(column[miny:maxy])
+        ycom = (np.nansum(column[miny:maxy] * ypix[miny:maxy]) /
+                np.nansum(column[miny:maxy]))
 
     return ycom
 
 
-def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
-                      verbose=False):
+def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
     """Determine the x, y coordinates of the trace using a center-of-mass
     analysis. Works for either order if there is no contamination, or for
     order 1 on a detector where the two orders are overlapping.
@@ -106,14 +58,15 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
         True values will be masked.
     poly_order : None or int
         Order of the polynomial to fit to the extracted trace positions.
-    verbose : bool
-        If set True some diagnostic plots will be made.
 
     Returns
     --------
-    xtrace, ytrace, param : Tuple(array[float], array[float], array[float])
-        The x, y coordinates of trace as computed from the best fit polynomial
-        and the best-fit polynomial parameters.
+    xtrace : array[float]
+        The x coordinates of trace as computed from the best fit polynomial.
+    ytrace : array[float]
+        The y coordinates of trace as computed from the best fit polynomial.
+    param : array[float]
+        The best-fit polynomial parameters.
     """
 
     # If no mask was given use all pixels.
@@ -121,8 +74,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
         mask = np.zeros_like(scidata_bkg, dtype='bool')
 
     # Call the script that determines the dimensions of the stack.
-    result = get_image_dim(scidata_bkg, header=header)
-    dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask = result
+    dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask = get_image_dim(scidata_bkg, header=header)
 
     # Replace masked pixel values with NaNs.
     scidata_bkg_masked = np.where(mask | ~refpix_mask, np.nan, scidata_bkg)
@@ -133,7 +85,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         maxvals = np.nanmax(scidata_bkg_masked, axis=0)
-    scidata_norm = scidata_bkg_masked/maxvals
+    scidata_norm = scidata_bkg_masked / maxvals
 
     # Create 2D Array of pixel positions.
     xpix = np.arange(dimx)
@@ -142,7 +94,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
 
     # CoM analysis to find initial positions using all rows.
     with np.errstate(invalid='ignore'):
-        ytrace = np.nansum(scidata_norm*ygrid, axis=0)/np.nansum(scidata_norm, axis=0)
+        ytrace = np.nansum(scidata_norm * ygrid, axis=0) / np.nansum(scidata_norm, axis=0)
 
     # Second pass - use a windowed CoM at the previous position.
     halfwidth = 30 * yos
@@ -156,6 +108,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
             continue
 
         # TODO - given the mask, not sure that this is entirely necessary
+        #      - Tests with jw00625 data indicate this is triggered frequently - TAP
         # If the pixel at the centroid is below the local mean we are likely
         # mid-way between orders and we should shift the window downward to
         # get a reliable centroid for order 1.
@@ -170,7 +123,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
             ytrace[icol] = np.nan
             continue
 
-        # Update the position if the above checks were succesfull.
+        # Update the position if the above checks were successful.
         ytrace[icol] = ycom
 
     # Third pass - fine tuning using a smaller window.
@@ -186,7 +139,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
 
     # For padded arrays ignore padding for consistency with real data
     if padding != 0:
-        mask = mask & (xtrace >= xos*padding) & (xtrace < (dimx - xos*padding))
+        mask = mask & (xtrace >= xos * padding) & (xtrace < (dimx - xos * padding))
 
     # If no polynomial order was given return the raw measurements.
     if poly_order is None:
@@ -195,18 +148,4 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11,
         param = robust_polyfit(xtrace[mask], ytrace[mask], poly_order)
         ytrace = np.polyval(param, xtrace)
 
-    # If verbose visualize the result.
-    if verbose is True:
-        _plot_centroid(scidata_bkg_masked, xtrace, ytrace)
-
     return xtrace, ytrace, param
-
-
-def main():
-    """Placeholder for potential multiprocessing."""
-
-    return
-
-
-if __name__ == '__main__':
-    main()
