@@ -4,13 +4,14 @@ import numpy.polynomial.polynomial as poly
 
 from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
-from BayesicFitting import SplinesModel
-from BayesicFitting import Fitter
 from BayesicFitting import SineModel
 from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
 
-from numpy.linalg.linalg import LinAlgError
+from astropy.modeling.models import Spline1D
+from astropy.modeling.fitting import SplineExactKnotsFitter
+
+from .fitter import ChiSqOutlierRejectionFitter
 
 import logging
 log = logging.getLogger(__name__)
@@ -444,25 +445,27 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     log.debug("fit_1d_background_complex: column has {} weighted fringe periods".format(nper_cor))
 
     # require at least 5 sine periods to fit
-    if nper_cor >= 5:
-        bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
-        bgknots = wavenum_scaled[bgindx].astype(float)
-        bg_model = SplinesModel(bgknots, order=order)
-        fitter = Fitter(wavenum_scaled, bg_model)
-    else:
+    if nper < 5:
         log.info(" not enough weighted data, no fit performed")
         return flux.copy(), np.zeros(flux.shape[0]), None
-    ftr = RobustShell(fitter, domain=10)
-    # sometimes the fits will fail for small segments because the model is too complex for the data,
-    # in this case return the original array
-    # NOTE: since iso-alpha no longer supported this shouldn't be an issue, but will leave here for now
-    try:
-        ftr.fit(flux.copy(), weights=weights.copy())
-    except LinAlgError:
-        return flux.copy(), np.zeros(flux.shape[0]), None
+
+    bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
+    bgknots = wavenum_scaled[bgindx].astype(float)
+
+    # Reverse (and clip) the fit data as scipy/astropy need monotone increasing data.
+    t = bgknots[::-1][1:-1]
+    x = wavenum_scaled[::-1]
+    y = flux[::-1]
+    w = weights[::-1]
+
+    # Fit the spline
+    spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
+    fitter = SplineExactKnotsFitter()
+    robust_fitter = ChiSqOutlierRejectionFitter(fitter)
+    bg_model = robust_fitter(spline_model, x, y, weights=w)
 
     # fit the background
-    bg_fit = bg_model.result(wavenum_scaled)
+    bg_fit = bg_model(wavenum_scaled)
     bg_fit *= np.where(weights.copy() > 1e-07, 1, 1e-08)
 
     # linearly interpolate over the feature gaps if possible, stops issues later
