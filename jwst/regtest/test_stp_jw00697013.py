@@ -25,6 +25,9 @@ from jwst.lib.file_utils import pushdir
 import jwst.lib.set_telescope_pointing as stp
 from jwst.lib.tests import engdb_mock
 
+# Requires pysiaf
+pytest.importorskip('pysiaf')
+
 EXPS = ['jw00697013001_03101_00001_nrcblong_uncal',
         'jw00697013004_03103_00001_nrcb1_uncal',
         'jw00697013007_03101_00001_nrca4_uncal',
