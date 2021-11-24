@@ -18,6 +18,13 @@ __all__ = ['v1_calculate_from_models', 'v1_calculate_over_time']
 def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwargs):
     """Calculate V1 over the time period for the given models
 
+    Returns a table of V1 pointings for all input models.
+    The table has the following columns:
+
+        - source (jwst.datamodel.DataModel): The model
+        - obstime (astropy.time.Time): The observation time
+        - v1 (float, float, float): 3-tuple or ra, dec, and position angle
+
     Parameters
     ----------
     sources : [File-like or jwst.datamodels.Datamodel[...]]
@@ -69,6 +76,15 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
 
 def v1_calculate_over_time(obsstart, obsend, siaf_path=None, **calc_wcs_from_time_kwargs):
     """Calculate V1 over the given time period
+
+    Returns a table of all V1 pointings that can be retrieved from the engineering database
+    that exist between, inclusively, the start and end times.
+
+    The table has the following columns:
+
+        - source (str): The string "time range"
+        - obstime (astropy.time.Time): The observation time
+        - v1 (float, float, float): 3-tuple or ra, dec, and position angle
 
     Parameters
     ----------
