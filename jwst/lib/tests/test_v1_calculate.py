@@ -15,6 +15,9 @@ import jwst.lib.v1_calculate as v1c
 
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
+# Requires pysiaf
+pytest.importorskip('pysiaf')
+
 DATA_PATH = Path(__file__).parent / 'data'
 
 # Engineering parameters
@@ -22,9 +25,6 @@ DATA_PATH = Path(__file__).parent / 'data'
 # Midpoint is about 2021-01-26T02:32:26.205
 GOOD_STARTTIME = Time('59240.10349754328', format='mjd')
 GOOD_ENDTIME = Time('59240.1082197338', format='mjd')
-
-# Requires pysiaf
-pytest.importorskip('pysiaf')
 
 
 @pytest.fixture
