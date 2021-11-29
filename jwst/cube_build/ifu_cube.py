@@ -1227,7 +1227,7 @@ class IFUCubeData():
                 world = False
                 if self.coord_system == 'skyalign':
                     world = True
-                # Do not use the spatial or spectral region found wcs if
+                # Do not use the default spatial or spectral region found in the wcs if
                 # 1. instrument is MIRI and
                 # 2. Output type is not multi and (not default calspec2) and
                 # 3. Channel is 1 or 3 - channel with smaller FOV on detector
