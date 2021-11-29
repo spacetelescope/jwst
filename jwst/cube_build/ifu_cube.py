@@ -1227,6 +1227,17 @@ class IFUCubeData():
                 world = False
                 if self.coord_system == 'skyalign':
                     world = True
+                # Do not use the spatial or spectral region found wcs if
+                # 1. instrument is MIRI and
+                # 2. Output type is not multi and (not default calspec2) and
+                # 3. Channel is 1 or 3 - channel with smaller FOV on detector
+                if self.instrument == 'MIRI' and self.output_type != 'multi':
+                    ch1 = '1'
+                    ch3 = '3'
+                    if ch1 in self.list_par1 or ch3 in self.list_par1:
+                        spatial_found = False
+                        spectral_found = False
+
                 if(spectral_found & spatial_found & world):
                     [lmin,lmax] = input_model.meta.wcsinfo.spectral_region
                     spatial_box = input_model.meta.wcsinfo.s_region
