@@ -173,6 +173,8 @@ lib
 
 - Use TRACK algorithms for moving target exposures. [#6452]
 
+- Move setting of the default method to calc_transforms. [#6482]
+
 linearity
 --------
 
