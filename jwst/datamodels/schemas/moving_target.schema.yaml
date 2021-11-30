@@ -10,9 +10,9 @@ properties:
     datatype:
     - name: time
       datatype: [ascii, 23]
-    - name: mt_detector_x
+    - name: mt_sci_x
       datatype:  float32
-    - name: mt_detector_y
+    - name: mt_sci_y
       datatype:  float32
     - name: ref_pixel_RA
       datatype: float64
