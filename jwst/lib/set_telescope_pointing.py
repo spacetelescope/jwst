@@ -333,7 +333,7 @@ class TransformParameters:
     #: The [DX, DY, DZ] barycentri velocity vector
     jwst_velocity: np.array = None
     #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
-    method: Methods = None
+    method: Methods = Methods.default
     #: Observation end time
     obsend: float = None
     #: Observation start time
