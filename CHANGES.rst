@@ -81,6 +81,8 @@ cube_build
 
 - Fix a bug when creating internal_cal type cubes [#6398]
 
+- Fix incorrect spatial footprint for single band MRS IFU cubes [#6478]
+
 dark_current
 ----------
 
