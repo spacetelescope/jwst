@@ -8,7 +8,7 @@ from BayesicFitting import SineModel
 from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
 
-from astropy.modeling.models import Spline1D, Cosine1D, Sine1D
+from astropy.modeling.models import Spline1D
 from astropy.modeling.fitting import SplineExactKnotsFitter
 
 from .fitter import ChiSqOutlierRejectionFitter
@@ -22,13 +22,8 @@ log.setLevel(logging.DEBUG)
 NUM_KNOTS = 80  # number of knots for bkg model if no other info provided
 
 
-class TooFewFringesException(Exception):
-    pass
-
-
 def find_nearest(array, value):
     """ Utility function to find the index of pixel with value in 'array' nearest to 'value'.
-
     Used by det_pixel_trace function
     """
     idx = (np.abs(array - value)).argmin()
@@ -82,17 +77,12 @@ def fill_wavenumbers(wnums):
     to estimate wavenumbers on the off-slice pixels.
     Note that these new values are physically meaningless but having them in the wavenum array
     stops the BayesicFitting package from crashing with a LinAlgErr.
-
     :Parameters:
-
     wnums: numpy array, required
         the wavenumber array
-
     :Returns:
-
     wnums_filled: numpy array
         the wavenumber array with off-slice pixels filled
-
     """
 
     # set the off-slice pixels to nans and get their indices
@@ -114,54 +104,22 @@ def fill_wavenumbers(wnums):
 
 def fit_quality_stats(stats):
     """Get simple statistics for the fits
-
     :Parameters:
-
     fit_stats: np.array
         the fringe contrast per fit
-
     :Returns:
-
    median, stddev, max of stat numpy array
-
     """
     return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
-
-
-def fourier_term_1d(frequency, phased=False):
-    sin_mdl = Sine1D(frequency=frequency)
-    sin_mdl.frequency.fixed = True
-
-    if phased:
-        return sin_mdl
-    else:
-        sin_mdl.phase.fixed = True
-
-        cos_mdl = Cosine1D(frequency=frequency)
-        cos_mdl.frequency.fixed = True
-        cos_mdl.phase.fixed = True
-
-        return cos_mdl + sin_mdl
-
-
-def fourier_series_1D(frequencies: np.ndarray, phased=False):
-    mdl = fourier_term_1d(frequencies[0], phased)
-
-    for frequency in frequencies[1:]:
-        mdl = mdl + fourier_term_1d(frequency, phased)
 
 
 def multi_sine(n):
     """
     Return a model composed of n sines
-
     :Parameters:
-
     n: int, required
         number of sines
-
     :Returns:
-
     mdl, BayesFitting model
         the model composed of n sines
     """
@@ -184,7 +142,6 @@ def multi_sine(n):
 
 def fit_envelope(wavenum, signal):
     """ Fit the upper and lower envelope of signal using a univariate spline
-
     :param wavenum:
     :param signal:
     :return:
@@ -221,7 +178,6 @@ def find_lines(signal, max_amp):
     """
     Take signal and max amp array, determine location of spectral
     features with amplitudes greater than max amp
-
     :param signal:
     :param max_amp:
     :return:
@@ -254,7 +210,6 @@ def find_lines(signal, max_amp):
 def check_res_fringes(res_fringe_fit, max_amp):
     """
     Check for regions where res fringe fit runs away, set to 0
-
     :param res_fringes:
     :return:
     """
@@ -296,18 +251,13 @@ def check_res_fringes(res_fringe_fit, max_amp):
 
 def interp_helper(mask):
     """Helper function to for interpolating in feature gaps.
-
     :Parameters:
-
     mask:  numpy array, required
         the 1D mask array (weights)
-
     :Returns:
-
         - logical indices of NaNs
         - index, a function, with signature indices= index(logical_indices),
           to convert logical indices to 'equivalent' indices
-
     """
     return mask < 1e-05, lambda z: z.nonzero()[0]
 
@@ -315,23 +265,16 @@ def interp_helper(mask):
 def make_knots(flux, nknots=20, weights=None):
     """Defines knot positions for piecewise models. This simply splits the array into sections. It does
     NOT take into account the shape of the data.
-
     :Parameters:
-
     flux: numpy array, required
         the flux array or any array of the same dimension
-
     nknots: int, optional, default=20
         the number of knots to create (excluding 0 and 1023)
-
     weights: numpy array, optional, default=None
         optionally supply a weights array. This will be used to add knots at the edge of bad pixels or features
-
     :Returns:
-
     knot_idx, numpy array
         the indices of the knots
-
     """
     log.debug("make_knots: creating {} knots on flux array".format(nknots))
 
@@ -414,36 +357,25 @@ def make_knots(flux, nknots=20, weights=None):
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
-
     :Parameters:
-
     flux:  numpy array, required
         the 1D array of fluxes
-
     weights: numpy array, required
         the 1D array of weights
-
     wavenum: numpy array, required
         the 1D array of wavenum
-
     order: int, optional, default=2
         the order of the Splines model
-
     ffreq: float, optional, default=None
         the expected fringe frequency, used to determine number of knots. If None,
         defaults to NUM_KNOTS constant
-
     :Returns:
-
     bg_fit: numpy array
         the fitted background
-
     bgindx: numpy array
         the location of the knots
-
     fitter: BayesicFitting object
         fitter object, mainly used for testing
-
     """
 
     # first get the weighted pixel fraction
@@ -508,31 +440,21 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
 
 def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False):
     """Determine the post correction fringe residual
-
     Fit a single sine model to the corrected array to get the post correction fringe residual
-
     :Parameters:
-
     wavenum: numpy array
         the wavenum array
-
     res_fringes: numpy array
         the residual fringe fit data
-
     weights: numpy array
         the weights array
-
     ffreq: float, required
         the central scan frequency
-
     dffreq:  float, required
         the one-sided interval of scan frequencies
-
     :Returns:
-
     fringe_res_amp: numpy array
         the post correction fringe residual amplitude
-
     """
     ffreq, dffreq = 2.8, 0.2
 
@@ -575,41 +497,27 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res):
 
     """Fit the residual fringe signal.
-
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
-
     :Parameters:
-
     res_fringes:  numpy array, required
         the 1D array with residual fringes
-
     weights: numpy array, required
         the 1D array of weights
-
     ffreq: float, required
         the central scan frequency
-
     dffreq:  float, required
         the one-sided interval of scan frequencies
-
     min_nfringes: int, required
         the minimum number of fringes to check
-
     max_nfringes: int, required
         the maximum number of fringes to check
-
     pgram_res: float, optional
         resolution of the periodogram scan in cm-1
-
     wavenum: numpy array, required
         the 1D array of wavenum
-
-
     :Returns:
-
     res_fringe_fit: numpy array
         the residual fringe fit data
-
     """
     # initialize output to none
     res_fringe_fit = None
@@ -681,10 +589,10 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         log.debug("fit_1d_fringes_bayes: fit {} freqs incrementally, check bayes evidence".format(freqs.shape[0]))
 
         evidence1 = 1e-5  # arbitrarily small
-        opt_nfringes = min_nfringes  # initialize
+        opt_nfringes = min_nfringes  # initialise
         if min_nfringes > freqs.shape[0]:
             warning = 'Number of fringes found is less then minimum number of required fringes for column'
-            raise TooFewFringesException(warning)
+            raise Exception(warning)
 
         for nfringes in np.arange(min_nfringes, freqs.shape[0]):
             # use the significant frequencies setup a multi-sine model of that number of sines
@@ -693,12 +601,10 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             # initialise some variables used in the fitting
             pars = []
             keep_dict = {}
-            frequencies = []
 
             # fill the variables with parameters to be frozen (freqs) and initialised (amps)
             for n in np.arange(nfringes):
                 pars.append(freqs[n])
-                frequencies.append(freqs[n])
                 pars.append(1.0)
                 pars.append(1.0)
                 keep_index = n * 3
