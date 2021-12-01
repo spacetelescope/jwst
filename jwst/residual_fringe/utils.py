@@ -9,7 +9,7 @@ from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
 
 from astropy.modeling.models import Spline1D, Cosine1D, Sine1D
-from astropy.modeling.fitting import SplineExactKnotsFitter
+from astropy.modeling.fitting import SplineExactKnotsFitter, LevMarLSQFitter
 
 from .fitter import ChiSqOutlierRejectionFitter
 
@@ -144,11 +144,22 @@ def fourier_term_1d(frequency, phased=False):
         return cos_mdl + sin_mdl
 
 
-def fourier_series_1D(frequencies: np.ndarray, phased=False):
+def fourier_series_1d(frequencies: np.ndarray, phased=False):
     mdl = fourier_term_1d(frequencies[0], phased)
 
     for frequency in frequencies[1:]:
         mdl = mdl + fourier_term_1d(frequency, phased)
+
+    return mdl
+
+
+def fit_nfringes(nfringes, freqs, wavenum, res_fringes):
+    frequencies = np.array(freqs[:nfringes])
+    mdl = fourier_series_1d(frequencies)
+    fitter = LevMarLSQFitter()
+    robust_fitter = ChiSqOutlierRejectionFitter(fitter)
+
+    return robust_fitter(mdl, wavenum, res_fringes)
 
 
 def multi_sine(n):
@@ -693,12 +704,10 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             # initialise some variables used in the fitting
             pars = []
             keep_dict = {}
-            frequencies = []
 
             # fill the variables with parameters to be frozen (freqs) and initialised (amps)
             for n in np.arange(nfringes):
                 pars.append(freqs[n])
-                frequencies.append(freqs[n])
                 pars.append(1.0)
                 pars.append(1.0)
                 keep_index = n * 3
@@ -707,6 +716,8 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             # fit the multi-sine model and get evidence
             fitter = LevenbergMarquardtFitter(wavenum, mdl_fit, verbose=0, keep=keep_dict)
             ftr = RobustShell(fitter, domain=10)
+
+            test = fit_nfringes(nfringes, freqs, wavenum, res_fringes)
             try:
                 ftr.fit(res_fringes, weights=weights)
 
@@ -752,6 +763,9 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         fitter = LevenbergMarquardtFitter(wavenum, mdl_fit, verbose=0, keep=keep_dict)
         ftr = RobustShell(fitter, domain=10)
         fr_par = ftr.fit(res_fringes, weights=weights)
+
+        test = fit_nfringes(opt_nfringes, freqs, wavenum, res_fringes)
+
         best_fringe_model = mdl_fit.copy()
         best_fringe_model.parameters = fr_par
         res_fringe_fit = best_fringe_model(wavenum)
