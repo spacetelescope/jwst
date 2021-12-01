@@ -256,6 +256,7 @@ resample
 residual_fringe
 ---------------
  - Added documentation on step [#6387]
+ - Fixed incorrect data model name []
 
 skymatch
 --------
