@@ -8,7 +8,7 @@ from BayesicFitting import SineModel
 from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
 
-from astropy.modeling.models import Spline1D
+from astropy.modeling.models import Spline1D, Cosine1D, Sine1D
 from astropy.modeling.fitting import SplineExactKnotsFitter
 
 from .fitter import ChiSqOutlierRejectionFitter
@@ -122,6 +122,29 @@ def fit_quality_stats(stats):
 
     """
     return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
+
+
+def fourier_term_1d(frequency, phased=False):
+    sin_mdl = Sine1D(frequency=frequency)
+    sin_mdl.frequency.fixed = True
+
+    if phased:
+        return sin_mdl
+    else:
+        sin_mdl.phase.fixed = True
+
+        cos_mdl = Cosine1D(frequency=frequency)
+        cos_mdl.frequency.fixed = True
+        cos_mdl.phase.fixed = True
+
+        return cos_mdl + sin_mdl
+
+
+def fourier_series_1D(frequencies: np.ndarray, phased=False):
+    mdl = fourier_term_1d(frequencies[0], phased)
+
+    for frequency in frequencies[1:]:
+        mdl = mdl + fourier_term_1d(frequency, phased)
 
 
 def multi_sine(n):
@@ -654,7 +677,7 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         log.debug("fit_1d_fringes_bayes: fit {} freqs incrementally, check bayes evidence".format(freqs.shape[0]))
 
         evidence1 = 1e-5  # arbitrarily small
-        opt_nfringes = min_nfringes  # initialise
+        opt_nfringes = min_nfringes  # initialize
         if min_nfringes > freqs.shape[0]:
             warning = 'Number of fringes found is less then minimum number of required fringes for column'
             raise Exception(warning)
