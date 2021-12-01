@@ -333,7 +333,7 @@ class TransformParameters:
     #: The [DX, DY, DZ] barycentri velocity vector
     jwst_velocity: np.array = None
     #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
-    method: Methods = None
+    method: Methods = Methods.default
     #: Observation end time
     obsend: float = None
     #: Observation start time
@@ -928,6 +928,8 @@ def calc_transforms(t_pars: TransformParameters):
     transforms : `Transforms`
         The list of coordinate matrix transformations
     """
+    t_pars.method = t_pars.method if t_pars.method else Methods.default
+
     transforms = t_pars.method.func(t_pars)
     return transforms
 
@@ -3249,7 +3251,6 @@ def t_pars_from_model(model, **t_pars_kwargs):
         The initialized parameters.
     """
     t_pars = TransformParameters(**t_pars_kwargs)
-    t_pars.method = t_pars.method if t_pars.method else Methods.default
 
     # Retrieve SIAF information
     if t_pars.siaf is None:
