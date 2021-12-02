@@ -726,20 +726,21 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
 
             try:
                 ftr.fit(res_fringes, weights=weights)
-                mdl_val = mdl_fit.result(wavenum)
-
-                err = np.sum(np.abs(test_val - mdl_val))
-                print(f"{err=}")
 
                 # try get evidence (may fail for large component fits to noisy data, set to very negative value
                 try:
                     evidence2 = fitter.getEvidence(limits=[-1, 1], noiseLimits=[0.001, 1])
-                except ValueError:
+                except ValueError as error:
+                    print(f"EVIDENCE: {error=}")
                     evidence2 = -1e9
-            except RuntimeError:
+            except RuntimeError as error:
+                print(f"FIT: {error=}")
                 evidence2 = -1e9
 
-            print(f"{test_evidence=}, {evidence2=}")
+            mdl_val = mdl_fit.result(wavenum)
+            err = np.sum(np.abs(test_val - mdl_val))
+
+            print(f"{err=}, {test_evidence=}, {evidence2=}\n")
 
             log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
 

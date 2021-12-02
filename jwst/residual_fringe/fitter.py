@@ -90,7 +90,10 @@ class ChiSqOutlierRejectionFitter:
 
         jacobian = self._jacobian(model, x, weights)
 
-        return 2 * np.inner(jacobian, jacobian)
+        if weights is None:
+            return 2 * np.inner(jacobian, jacobian)
+        else:
+            return 2 * np.inner(jacobian, jacobian * weights)
 
     def _log(self, value):
         err_state = np.seterr(invalid='raise')
