@@ -718,6 +718,9 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             ftr = RobustShell(fitter, domain=10)
 
             test = fit_nfringes(nfringes, freqs, wavenum, res_fringes)
+            test_fitter = ChiSqOutlierRejectionFitter(LevMarLSQFitter())
+            test_evidence = test_fitter.get_evidence(test, wavenum, res_fringes,
+                                                     limits=[-1, 1], noise_limits=[0.001, 1])
             try:
                 ftr.fit(res_fringes, weights=weights)
 
@@ -728,6 +731,8 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
                     evidence2 = -1e9
             except RuntimeError:
                 evidence2 = -1e9
+
+            print(f"{test_evidence=}, {evidence2=}")
 
             log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
 

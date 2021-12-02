@@ -129,7 +129,7 @@ class ChiSqOutlierRejectionFitter:
         if nparams == 0:
             return log_likelihood + log_occam
 
-        prior_range = np.log(np.array(limits[1]) - np.array(limits[0]))
+        prior_range = np.atleast_1d(np.log(np.array(limits[1]) - np.array(limits[0])))
 
         prior_length = len(prior_range)
         if prior_length == 1:
