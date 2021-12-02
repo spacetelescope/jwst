@@ -105,8 +105,8 @@ class ChiSqOutlierRejectionFitter:
 
         return log
 
-    def _get_log_z(self, model, x, y, limits,
-                   weights=None, noise_limits=None, fixed_scale=None):
+    def _get_log_z(self, model, x, y, weights,
+                   limits, noise_limits, fixed_scale):
         chi = self._chi(model, x, y, weights)
         nparams, deg_of_freedom = self._deg_of_freedom(model, x, weights)
 
@@ -145,16 +145,21 @@ class ChiSqOutlierRejectionFitter:
 
         log_occam += -spr + 0.5 * (nparams * self._log(2 * np.pi * var) - log_det)
 
-        return log_likelihood + log_occam
+        log_z = log_likelihood + log_occam
 
-    def get_evidence(self, model, x, y, limits,
-                     weights=None, noise_limits=None, fixed_scale=None):
-        return self._get_log_z(model, x, y, limits,
-                               weights=weights, noise_limits=noise_limits,
-                               fixed_scale=fixed_scale) / np.log(10)
+        return log_z
 
-    def __call__(self, model, x, y, weights=None, **kwargs):
+    def _get_evidence(self, model, x, y, weights,
+                      limits, noise_limits, fixed_scale):
+        return self._get_log_z(model, x, y, weights,
+                               limits, noise_limits, fixed_scale) / np.log(10)
+
+    def __call__(self, model, x, y, weights=None, get_evidence=False, **kwargs):
         # Assume equal weights if none are provided
+
+        limits = kwargs.pop('limits')
+        noise_limits = kwargs.pop('noise_limits', None)
+        fixed_scale = kwargs.pop('fixed_scale', None)
 
         new_model = model.copy()
 
@@ -171,11 +176,11 @@ class ChiSqOutlierRejectionFitter:
 
             # Calculate new weights
             resid = (y - new_model(x)) / (scale * self.domain)
-            new_w = self.kernel(resid, weights)
+            new_weights = self.kernel(resid, weights)
 
             # Fit new model and find chi
-            new_model = self.fitter(new_model, x, y, weights=new_w, **kwargs)
-            new_chi = self._chi(new_model, x, y, new_w)
+            new_model = self.fitter(new_model, x, y, weights=new_weights, **kwargs)
+            new_chi = self._chi(new_model, x, y, new_weights)
 
             # Check if fit has converged
             tol = self.tolerance if new_chi < 1 else self.tolerance * new_chi
@@ -185,4 +190,10 @@ class ChiSqOutlierRejectionFitter:
         else:
             raise RuntimeError("Bad fit, method should have converged")
 
-        return new_model
+        if get_evidence:
+            evidence = self._get_evidence(new_model, x, y, new_weights,
+                                          limits, noise_limits, fixed_scale)
+
+            return new_model, evidence
+        else:
+            return new_model

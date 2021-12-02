@@ -153,13 +153,16 @@ def fourier_series_1d(frequencies: np.ndarray, phased=False):
     return mdl
 
 
-def fit_nfringes(nfringes, freqs, wavenum, res_fringes):
+def fit_nfringes(nfringes, freqs, wavenum, res_fringes,
+                 limits=None, noise_limits=None):
     frequencies = np.array(freqs[:nfringes])
     mdl = fourier_series_1d(frequencies)
-    fitter = LevMarLSQFitter()
-    robust_fitter = ChiSqOutlierRejectionFitter(fitter)
+    robust_fitter = ChiSqOutlierRejectionFitter(LevMarLSQFitter())
 
-    return robust_fitter(mdl, wavenum, res_fringes)
+    get_evidence = limits is not None
+
+    return robust_fitter(mdl, wavenum, res_fringes, get_evidence=get_evidence,
+                         limits=limits, noise_limits=noise_limits)
 
 
 def multi_sine(n):
@@ -717,12 +720,16 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             fitter = LevenbergMarquardtFitter(wavenum, mdl_fit, verbose=0, keep=keep_dict)
             ftr = RobustShell(fitter, domain=10)
 
-            test = fit_nfringes(nfringes, freqs, wavenum, res_fringes)
-            test_fitter = ChiSqOutlierRejectionFitter(LevMarLSQFitter())
-            test_evidence = test_fitter.get_evidence(test, wavenum, res_fringes,
-                                                     limits=[-1, 1], noise_limits=[0.001, 1])
+            test, test_evidence = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
+                                               limits=[-1, 1], noise_limits=[0.001, 1])
+            test_val = test(wavenum)
+
             try:
                 ftr.fit(res_fringes, weights=weights)
+                mdl_val = mdl_fit.result(wavenum)
+
+                err = np.sum(np.abs(test_val - mdl_val))
+                print(f"{err=}")
 
                 # try get evidence (may fail for large component fits to noisy data, set to very negative value
                 try:
