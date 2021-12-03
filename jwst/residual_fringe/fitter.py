@@ -77,12 +77,9 @@ class ChiSqOutlierRejectionFitter:
     @staticmethod
     def _jacobian(model, x, weights=None):
         # A bunch of hacks for finite Fourier series
-        models = model._leaflist   # list each model of the series in order so fit_deriv can be found
         fitter = LevMarLSQFitter() # access to _wrap_deriv which filters out fixed parameters
 
-        jacobian = []
-        for mdl in models:
-            jacobian.append(fitter._wrap_deriv(mdl.parameters, mdl, weights, x, x)[0])
+        jacobian = fitter._wrap_deriv(model.parameters, model, weights, x, x)
 
         return np.array(jacobian)
 
@@ -200,8 +197,9 @@ class ChiSqOutlierRejectionFitter:
             raise RuntimeError("Bad fit, method should have converged")
 
         if get_evidence:
-            evidence = self._get_evidence(new_model, x, y, new_weights,
-                                          limits, noise_limits, fixed_scale)
+            evidence = None
+            # evidence = self._get_evidence(new_model, x, y, new_weights,
+            #                               limits, noise_limits, fixed_scale)
 
             return new_model, evidence
         else:

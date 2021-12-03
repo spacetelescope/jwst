@@ -41,13 +41,21 @@ class FourierSeries1D(Fittable1DModel):
         return tuple(names)
 
     @staticmethod
-    def _evaluate_term(x, freq, coeff_a, coeff_b):
-
+    def _fit_deriv_term(x, freq):
         argument = TWOPI * (freq * x)
         if isinstance(argument, Quantity):
             argument = argument.value
 
-        return coeff_a * np.sin(argument) + coeff_b * np.cos(argument)
+        d_coeff_a = np.sin(argument)
+        d_coeff_b = np.cos(argument)
+
+        return [d_coeff_a, d_coeff_b]
+
+    def _evaluate_term(self, x, freq, coeff_a, coeff_b):
+
+        d_coeff_a, d_coeff_b = self._fit_deriv_term(x, freq)
+
+        return coeff_a * d_coeff_a + coeff_b * d_coeff_b
 
     def evaluate(self, x, *coeffs):
         coefficients = list(coeffs)
@@ -60,3 +68,11 @@ class FourierSeries1D(Fittable1DModel):
             value += self._evaluate_term(x, self._frequencies[index], coeff_a, coeff_b)
 
         return value
+
+    def fit_deriv(self, x, *coeffs):
+
+        deriv = []
+        for index in range(self.n_terms):
+            deriv.extend(self._fit_deriv_term(x, self._frequencies[index]))
+
+        return deriv

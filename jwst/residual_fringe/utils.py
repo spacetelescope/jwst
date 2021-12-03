@@ -8,10 +8,11 @@ from BayesicFitting import SineModel
 from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
 
-from astropy.modeling.models import Spline1D, Cosine1D, Sine1D
+from astropy.modeling.models import Spline1D
 from astropy.modeling.fitting import SplineExactKnotsFitter, LevMarLSQFitter
 
 from .fitter import ChiSqOutlierRejectionFitter
+from .fourier import FourierSeries1D
 
 import logging
 log = logging.getLogger(__name__)
@@ -128,35 +129,10 @@ def fit_quality_stats(stats):
     return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
 
 
-def fourier_term_1d(frequency, phased=False):
-    sin_mdl = Sine1D(frequency=frequency)
-    sin_mdl.frequency.fixed = True
-
-    if phased:
-        return sin_mdl
-    else:
-        sin_mdl.phase.fixed = True
-
-        cos_mdl = Cosine1D(frequency=frequency)
-        cos_mdl.frequency.fixed = True
-        cos_mdl.phase.fixed = True
-
-        return cos_mdl + sin_mdl
-
-
-def fourier_series_1d(frequencies: np.ndarray, phased=False):
-    mdl = fourier_term_1d(frequencies[0], phased)
-
-    for frequency in frequencies[1:]:
-        mdl = mdl + fourier_term_1d(frequency, phased)
-
-    return mdl
-
-
 def fit_nfringes(nfringes, freqs, wavenum, res_fringes,
                  limits=None, noise_limits=None):
     frequencies = np.array(freqs[:nfringes])
-    mdl = fourier_series_1d(frequencies)
+    mdl = FourierSeries1D(frequencies)
     robust_fitter = ChiSqOutlierRejectionFitter(LevMarLSQFitter())
 
     get_evidence = limits is not None
@@ -700,8 +676,7 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             warning = 'Number of fringes found is less then minimum number of required fringes for column'
             raise TooFewFringesException(warning)
 
-        # for nfringes in np.arange(min_nfringes, freqs.shape[0]):
-        for nfringes in np.arange(min_nfringes, 2):
+        for nfringes in np.arange(min_nfringes, freqs.shape[0]):
             print(f"{nfringes=}")
             # use the significant frequencies setup a multi-sine model of that number of sines
             mdl_fit = multi_sine(nfringes)
@@ -723,10 +698,11 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             ftr = RobustShell(fitter, domain=10)
 
             print("START: JWST fit")
-            mdl, new_evidence = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
-                                             limits=[-1, 1], noise_limits=[0.001, 1])
+            mdl, _ = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
+                                  limits=[-1, 1], noise_limits=[0.001, 1])
             print("END: JWST fit")
             mdl_val = mdl(wavenum)
+            print(mdl)
 
             print("START: BayesicFitting fit")
             try:
@@ -734,25 +710,25 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
 
                 # try get evidence (may fail for large component fits to noisy data, set to very negative value
                 try:
-                    old_new_evidence = fitter.getEvidence(limits=[-1, 1], noiseLimits=[0.001, 1])
+                    new_evidence = fitter.getEvidence(limits=[-1, 1], noiseLimits=[0.001, 1])
                 except ValueError as error:
                     print(f"EVIDENCE: {error=}")
-                    old_new_evidence= -1e9
+                    new_evidence = -1e9
             except RuntimeError as error:
                 print(f"FIT: {error=}")
-                old_new_evidence = -1e9
+                new_evidence = -1e9
             print("END: BayesicFitting fit")
 
             mdl_fit_val = mdl_fit.result(wavenum)
             err = np.sum(np.abs(mdl_val - mdl_fit_val))
 
-            print(f"{err=}, {new_evidence=}, {old_new_evidence=}, {len(wavenum)=}")
+            print(f"{err=}, {evidence=}, {new_evidence=}, {len(wavenum)=}")
 
-            log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, old_new_evidence, fitter.chisq))
+            log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, new_evidence, fitter.chisq))
 
-            old_bayes_factor = old_new_evidence - evidence
             bayes_factor = new_evidence - evidence
-            print(f"{bayes_factor=}, {old_bayes_factor=}\n")
+            # bayes_factor = new_evidence - evidence
+            # print(f"{bayes_factor=}, {old_bayes_factor=}\n")
 
             log.debug(
                 "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
