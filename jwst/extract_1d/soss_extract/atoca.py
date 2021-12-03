@@ -501,7 +501,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         attrs = ['wave_map', 'aperture']
         wave_map, aperture = self.get_attributes(*attrs, i_order=i_order)
 
-        wave_grid, icol = atoca_utils._grid_from_map(wave_map, aperture, out_col=True)
+        wave_grid, icol = atoca_utils._grid_from_map(wave_map, aperture)
 
         return wave_grid, icol
 

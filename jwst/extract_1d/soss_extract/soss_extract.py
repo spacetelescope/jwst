@@ -15,9 +15,6 @@ from .atoca import ExtractionEngine
 from .atoca_utils import ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 
-# TODO remove once code is sufficiently tested.
-from . import devtools
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -220,7 +217,7 @@ def _mask_wv_map_centroid_outside(wave_maps, ref_files, transform, y_max, orders
 
 
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=None,
-                tikfac=None, n_os=5, threshold=1e-4, devname=None, soss_filter='CLEAR'):
+                tikfac=None, n_os=5, threshold=1e-4, soss_filter='CLEAR'):
     """Perform the spectral extraction on a single image.
 
     :param scidata_bkg: A single background subtracted NIRISS SOSS detector image.
@@ -333,17 +330,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
         # Project on detector and save in dictionary
         tracemodels[order] = model.rebuild(flux_order)
 
-    # TODO temporary debug plot.
-    if devname is not None:
-        dev_tools_args = (scidata_bkg, scierr, scimask)
-        dev_tools_args += (tracemodels['Order 1'], tracemodels['Order 2'])
-        devtools.diagnostic_plot(*dev_tools_args, devname=devname)
-
     return tracemodels, tikfac, logl
 
 
 def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
-                  transform, subarray, width=40., bad_pix='model', devname=None):
+                  transform, subarray, width=40., bad_pix='model'):
     """Perform the box-extraction on the image, while using the trace model to
     correct for contamination.
     Parameters
@@ -449,10 +440,6 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
         # Perform the box extraction and save
         out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord, cols=xtrace)
         _, fluxes[order], fluxerrs[order], npixels[order] = out
-
-    # TODO temporary debug plot.
-    if devname is not None:
-        devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs, npixels, devname)
 
     return wavelengths, fluxes, fluxerrs, npixels, box_weights
 
@@ -570,7 +557,6 @@ def run_extract1d(input_model: DataModel,
             kwargs['tikfac'] = soss_kwargs['tikfac']
             kwargs['n_os'] = soss_kwargs['n_os']
             kwargs['threshold'] = soss_kwargs['threshold']
-            kwargs['devname'] = soss_kwargs['devname']
 
             result = model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, **kwargs)
             tracemodels, soss_kwargs['tikfac'], logl = result
@@ -588,7 +574,6 @@ def run_extract1d(input_model: DataModel,
         # Use the trace models to perform a de-contaminated extraction.
         kwargs = dict()
         kwargs['width'] = soss_kwargs['width']
-        kwargs['devname'] = soss_kwargs['devname']
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
         result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, transform, subarray, **kwargs)
@@ -685,7 +670,6 @@ def run_extract1d(input_model: DataModel,
                 kwargs['tikfac'] = soss_kwargs['tikfac']
                 kwargs['n_os'] = soss_kwargs['n_os']
                 kwargs['threshold'] = soss_kwargs['threshold']
-                kwargs['devname'] = soss_kwargs['devname']
 
                 result = model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, **kwargs)
                 tracemodels, soss_kwargs['tikfac'], logl = result
@@ -705,7 +689,6 @@ def run_extract1d(input_model: DataModel,
             # Use the trace models to perform a de-contaminated extraction.
             kwargs = dict()
             kwargs['width'] = soss_kwargs['width']
-            kwargs['devname'] = soss_kwargs['devname']
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
             result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, transform, subarray, **kwargs)

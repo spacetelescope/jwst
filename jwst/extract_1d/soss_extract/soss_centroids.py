@@ -107,8 +107,6 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
             ytrace[icol] = np.nan
             continue
 
-        # TODO - given the mask, not sure that this is entirely necessary
-        #      - Tests with jw00625 data indicate this is triggered frequently - TAP
         # If the pixel at the centroid is below the local mean we are likely
         # mid-way between orders and we should shift the window downward to
         # get a reliable centroid for order 1.

@@ -165,14 +165,14 @@ def make_background_mask(deepstack, width=28):
 
     # Mask pixels above the threshold value.
     with np.errstate(invalid='ignore'):
-        bkg_mask = (deepstack > threshold) | ~np.isfinite(deepstack)  # TODO invalid values in deepstack?
+        bkg_mask = (deepstack > threshold) | ~np.isfinite(deepstack)
 
     return bkg_mask
 
 
 def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
                              zero_bias=False):
-    """Compute a columnwise correction to the 1/f noise on the difference image
+    """Compute a column-wise correction to the 1/f noise on the difference image
     of an individual SOSS integration (i.e. an individual integration - a deep
     image of the same observation).
 

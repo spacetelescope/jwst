@@ -1,4 +1,8 @@
 import numpy as np
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def get_box_weights(centroid, n_pix, shape, cols=None):
@@ -6,19 +10,22 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     the box in pixels. All pixels will have the same weights except at the ends
     of the box aperture.
 
-    :param centroid: Position of the centroid (in rows). Same shape as `cols`
-    :param n_pix: Width of the extraction box in pixels.
-    :param shape: Shape of the output image. (n_row, n_column)
-    :param cols: Column indices of good columns Used if the centroid is defined
-        for specific columns or a subrange of columns. # TODO not sure the cols argument adds usefull functionality, remove?
+    Parameters
+    ----------
+    centroid : array[float]
+        Position of the centroid (in rows). Same shape as `cols`
+    n_pix : float
+        Width of the extraction box in pixels.
+    shape : Tuple(int, int)
+        Shape of the output image. (n_row, n_column)
+    cols : array[int]
+        Column indices of good columns. Used if the centroid is defined
+        for specific columns or a sub-range of columns.
 
-    :type centroid: array[float]
-    :type n_pix: float
-    :type shape: Tuple(int, int)
-    :type cols: array[int]
-
-    :returns: weights - An array of pixel weights to use with the box extraction.
-    :rtype: array[float]
+    Returns
+    -------
+    weights : array[float]
+        An array of pixel weights to use with the box extraction.
     """
 
     nrows, ncols = shape
@@ -55,26 +62,28 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
 def box_extract(scidata, scierr, scimask, box_weights, cols=None):
     """ Perform a box extraction.
 
-    :param scidata: 2d array of shape (n_row, n_columns)
-        scidata
-    :param scierr: 2d array of shape (n_row, n_columns)
-        uncertainty map
-    :param scimask: 2d array, boolean, same shape as data
-        masked pixels
-    :param box_weights: 2d array, same shape as data
-        pre-computed weights for box extraction.
-    :param cols: 1d-array, integer
-        Which columns to extract
+    Parameters
+    ----------
+    scidata : array[float]
+        2d array of science data with shape (n_row, n_columns)
+    scierr : array[float]
+        2d array of uncertainty map with same shape as scidata
+    scimask : array[bool]
+        2d boolean array of masked pixels with same shape as scidata
+    box_weights : array[float]
+        2d array of pre-computed weights for box extraction,
+        with same shape as scidata
+    cols : array[int]
+        1d integer array of column numbers to extract
 
-    :type scidata: array[float]
-    :type scierr: array[float]
-    :type scimask: array[bool]
-    :type box_weights: array[float]
-    :type cols: array[int]
-
-    :returns: cols, flux, flux_var - The indices of the extracted columns, the
-        flux in each column, and the variance of each column.
-    :rtype: Tuple(array[int], array[float], array[float])
+    Returns
+    -------
+    cols : array[int]
+        Indices of extracted columns
+    flux : array[float]
+        The flux in each column
+    flux_var : array[float]
+        The variance of the flux in each column
     """
 
     nrows, ncols = scidata.shape
@@ -92,21 +101,23 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
     # Check that all invalid values are masked.
     if not np.isfinite(data[~mask]).all():
         message = 'scidata contains un-masked invalid values.'
+        log.critical(message)
         raise ValueError(message)
 
     if not np.isfinite(error[~mask]).all():
         message = 'scierr contains un-masked invalid values.'
+        log.critical(message)
         raise ValueError(message)
 
     # Set the weights of masked pixels to zero.
     box_weights[mask] = 0.
 
     # Extract total flux (sum over columns).
-    flux = np.nansum(box_weights*data, axis=0)
+    flux = np.nansum(box_weights * data, axis=0)
     npix = np.nansum(box_weights, axis=0)
 
     # Extract flux error (sum of variances).
-    flux_var = np.nansum(box_weights*error**2, axis=0)
+    flux_var = np.nansum(box_weights * error**2, axis=0)
     flux_err = np.sqrt(flux_var)
 
     # Set empty columns to NaN.
@@ -124,18 +135,18 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
 
     Parameters
     ----------
-    err: 2d array[float]
+    err : 2d array[float]
         Uncertainty map of the pixels.
-    data: 2d array[float]
+    data : 2d array[float]
         Pixel values.
-    pix_to_estim: 2d array[bool]
-        Map of the pixels where the uncertainty need to be estimated.
-    valid_pix: 2d array[bool]
+    pix_to_estim : 2d array[bool]
+        Map of the pixels where the uncertainty needs to be estimated.
+    valid_pix : 2d array[bool]
         Map of valid pixels to be used to find the error empirically.
     Returns
     -------
-    err_filled: 2d array[float]
-        same as `err`, but the pixel to be estimated are filled with the estimated values.
+    err_filled : 2d array[float]
+        same as `err`, but the pixels to be estimated are filled with the estimated values.
     """
     # Tranform to 1d arrays
     data_to_estim = data[pix_to_estim]
@@ -172,12 +183,3 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     err_out[pix_to_estim] = err_estimate
 
     return err_out
-
-
-def main():
-
-    return
-
-
-if __name__ == '__main__':
-    main()

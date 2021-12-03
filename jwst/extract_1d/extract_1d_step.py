@@ -72,7 +72,6 @@ class Extract1dStep(Step):
 
     """
 
-    #TODO : What is soss_devname? -TAP
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
@@ -90,7 +89,6 @@ class Extract1dStep(Step):
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
-    soss_devname = string(default=None)  # TODO temporray output name.
     """
 
     reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
@@ -194,7 +192,6 @@ class Extract1dStep(Step):
             soss_kwargs['width'] = self.soss_width
             soss_kwargs['bad_pix'] = self.soss_bad_pix
             soss_kwargs['transform'] = self.soss_transform
-            soss_kwargs['devname'] = self.soss_devname
 
             # Run the extraction.
             result, ref_outputs = soss_extract.run_extract1d(

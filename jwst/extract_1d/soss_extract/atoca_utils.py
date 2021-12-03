@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Utilities for the ATOCA (Darveau-Bernier 2021, in prep).
 ATOCA: Algorithm to Treat Order ContAmination (English)
@@ -9,7 +6,6 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
 
-# General imports.
 import numpy as np
 from warnings import warn
 from scipy.integrate import AccuracyWarning
@@ -17,11 +13,10 @@ from scipy.sparse import find, diags, identity, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
 from scipy.optimize import minimize_scalar, root_scalar
+import logging
 
-# Plotting.
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 # ==============================================================================
 # Code for generating indices on the oversampled wavelength grid.
@@ -32,17 +27,21 @@ def arange_2d(starts, stops, dtype=None):
     """Create a 2D array containing a series of ranges. The ranges do not have
     to be of equal length.
 
-    :param starts: start values for each range.
-    :param stops: end values for each range.
-    :param dtype: the type of the output values.
+    Parameters
+    ----------
+    starts : int or array[int]
+        Start values for each range.
+    stops : int or array[int]
+        End values for each range.
+    dtype : str
+        Type of the output values.
 
-    :type starts: int or array[int]
-    :type stops: int or array[int]
-    :type dtype: str
-
-    :returns: out, mask - 2D array of ranges and a mask indicating valid
-        elements.
-    :rtype: Tuple(array[int], array[bool])
+    Returns
+    -------
+    out : array[int]
+        2D array of ranges.
+    mask : array[bool]
+        Mask indicating valid elements.
     """
 
     # Ensure starts and stops are arrays.
@@ -53,10 +52,12 @@ def arange_2d(starts, stops, dtype=None):
     if (starts.shape != stops.shape) & (starts.shape != ()):
         msg = ('Shapes of starts and stops are not compatible, '
                'they must either have the same shape or starts must be scalar.')
+        log.critical(msg)
         raise ValueError(msg)
 
     if np.any(stops < starts):
         msg = 'stops must be everywhere greater or equal to starts.'
+        log.critical(msg)
         raise ValueError(msg)
 
     # If starts was given as a scalar match its shape to stops.
@@ -88,10 +89,21 @@ def arange_2d(starts, stops, dtype=None):
 def sparse_k(val, k, n_k):
     """
     Transform a 2D array `val` to a sparse matrix.
-    `k` is use for the position in the second axis
-    of the matrix. The resulting sparse matrix will
-    have the shape : ((len(k), n_k))
-    Set k elements to a negative value when not defined
+
+    Parameters
+    ----------
+    val : array
+        2D array to be transformed
+    k : array
+        2D array to set column position of values in sparse matrix.
+        Negative values used for undefined positions in val.
+    n_k : int
+        Number of columns in output sparse matrix.
+
+    Returns
+    -------
+    mat : array
+        Sparse matrix to be returned
     """
 
     # Length of axis 0
@@ -114,12 +126,19 @@ def unsparse(matrix, fill_value=np.nan):
     """
     Convert a sparse matrix to a 2D array of values and a 2D array of position.
 
+    Parameters
+    ----------
+    matrix : csr_matrix
+        The input sparse matrix.
+    fill_value : float
+        Value to fill 2D array for undefined positions; default to np.nan
+
     Returns
     ------
-    out: 2d array
+    out : 2d array
         values of the matrix. The shape of the array is given by:
         (matrix.shape[0], maximum number of defined value in a column).
-    col_out: 2d array
+    col_out : 2d array
         position of the columns. Same shape as `out`.
     """
 
@@ -152,15 +171,15 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     given the pixel central value.
     Parameters
     ----------
-    wave_map: array[float]
+    wave_map : array[float]
         2d-map of the pixel central wavelength
-    dispersion_axis: int, optional
+    dispersion_axis : int, optional
         Which axis is the dispersion axis (0 or 1)
 
     Returns
     -------
     wave_upper, wave_lower
-    The wavelength upper and lower boundarie of each pixel, given the central value.
+    The wavelength upper and lower boundaries of each pixel, given the central value.
     """
     # Get wavelength boundaries of each pixels
     wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
@@ -172,7 +191,9 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     elif ((wave_right <= wave_left) | invalid).all():
         wave_plus, wave_minus = wave_left, wave_right
     else:
-        raise ValueError('Some pixels do not follow the expected dispersion axis')
+        msg = 'Some pixels do not follow the expected dispersion axis!'
+        log.critical(msg)
+        raise ValueError(msg)
 
     return wave_plus, wave_minus
 
@@ -181,22 +202,25 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
     """ Compute boundaries of a pixel map, given the pixel central value.
     Parameters
     ----------
-    wave_map: array[float]
+    wave_map : array[float]
         2d-map of the pixel central wavelength
-    dispersion_axis: int, optional
+    dispersion_axis : int, optional
         Which axis is the dispersion axis (0 or 1)
 
     Returns
     -------
-    wave_top, wave_bottom
-    The wavelength edges of each pixel, given the central value.
-    Top and bottom edges assuming a vertical dispersion axis.
+    wave_top : array[float]
+        Wavelength of top edge for each pixel
+    wave_bottom : array[float]
+        Wavelength of bottom edge for each pixel
     """
     if dispersion_axis == 1:
         # Simpler to use transpose
         wave_map = wave_map.T
     elif dispersion_axis != 0:
-        raise ValueError('dispersion axis must be 0 or 1')
+        msg = 'Dispersion axis must be 0 or 1!'
+        log.critical(msg)
+        raise ValueError(msg)
 
     # Initialize arrays.
     wave_top = np.zeros_like(wave_map)
@@ -238,16 +262,17 @@ def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
     given by `dwv_sign``
     Parameters
     ----------
-    wave_map: array[float]
+    wave_map : array[float]
         2d-map of the pixel central wavelength
-    dispersion_axis: int, optional
+    dispersion_axis : int, optional
         Which axis is the dispersion axis (0 or 1)
-    dwv_sign: int, optional
+    dwv_sign : int, optional
         Direction of increasing wavelengths (-1 or 1)
 
     Returns
     -------
-    boolean 2d map of the valid dispersion direction, same shape as `wave_map`
+    bool_map : array[bool]
+        Boolean 2d map of the valid dispersion direction, same shape as `wave_map`
     """
 
     # Estimate the direction of increasing wavelength
@@ -266,34 +291,34 @@ def mask_bad_dispersion_direction(wave_map, n_max=10, fill_value=0, dispersion_a
     """
     Change value of the pixels in `wave_map` that do not follow the
     general dispersion direction.
+
     Parameters
     ----------
-    wave_map: array[float]
+    wave_map : array[float]
         2d-map of the pixel central wavelength
-    n_max: int
+    n_max : int
         Maximum number of iterations
-    fill_value: float
+    fill_value : float
         Value use to replace pixels that do not follow the dispersion direction
-    dispersion_axis: int, optional
+    dispersion_axis : int, optional
         Which axis is the dispersion axis (0 or 1)
-    dwv_sign: int, optional
+    dwv_sign : int, optional
         Direction of increasing wavelengths (-1 or 1)
 
     Returns
     -------
-    (wave_map, convergence flag): the corrected wave_map and a convergence flag
-    that tells if all the pixels are now valid.
+    wave_map : array[float]
+        The corrected wave_map.
+    convergence flag : bool
+        Boolean set to True if all the pixels are now valid, False otherwise.
     """
     # Do not modify the input
     wave_map = wave_map.copy()
 
-    # Wrap inputs kwargs into a dict
-    kwargs = dict(dispersion_axis=dispersion_axis, dwv_sign=dwv_sign)
-
     # Make the correction iteratively
     for i_try in range(n_max):
         # Check which pixels are good
-        is_good_direction = check_dispersion_direction(wave_map, **kwargs)
+        is_good_direction = check_dispersion_direction(wave_map, dispersion_axis, dwv_sign)
         # Stop iteration if all good, or apply correction where needed.
         if is_good_direction.all():
             convergence_flag = True
@@ -310,16 +335,19 @@ def mask_bad_dispersion_direction(wave_map, n_max=10, fill_value=0, dispersion_a
 def oversample_grid(wave_grid, n_os=1):
     """Create an oversampled version of the input 1D wavelength grid.
 
-    :param wave_grid: Wavelength grid to be oversampled.
-    :param n_os: Oversampling factor. If it is a scalar, take the same value for each
+    Parameters
+    ----------
+    wave_grid : array[float]
+        Wavelength grid to be oversampled.
+    n_os : int or array[int]
+        Oversampling factor. If it is a scalar, take the same value for each
         interval of the grid. If it is an array, n_os specifies the oversampling
         at each interval of the grid, so len(n_os) = len(wave_grid) - 1.
 
-    :type wave_grid: array[float]
-    :type n_os: int or array[int]
-
-    :returns: wave_grid_os - The oversampled wavelength grid.
-    :rtype: array[float]
+    Returns
+    -------
+    wave_grid_os : array[float]
+        The oversampled wavelength grid.
     """
 
     # Convert n_os to an array.
@@ -334,6 +362,7 @@ def oversample_grid(wave_grid, n_os=1):
     elif len(n_os) != (len(wave_grid) - 1):
         # An array of incorrect size was given.
         msg = 'n_os must be a scalar or an array of size len(wave_grid) - 1.'
+        log.critical(msg)
         raise ValueError(msg)
 
     # Grid intervals.
@@ -354,7 +383,7 @@ def oversample_grid(wave_grid, n_os=1):
         # Add the grid points to the oversampled wavelength grid.
         wave_grid_os = np.concatenate([wave_grid_os, sub_grid])
 
-    # Take only uniqyue values and sort them.
+    # Take only unique values and sort them.
     wave_grid_os = np.unique(wave_grid_os)
 
     return wave_grid_os
@@ -362,20 +391,22 @@ def oversample_grid(wave_grid, n_os=1):
 
 def extrapolate_grid(wave_grid, wave_range, poly_ord):
     """Extrapolate the given 1D wavelength grid to cover a given range of values
-    by fitting the derivate with a polynomial of a given order and using it to
+    by fitting the derivative with a polynomial of a given order and using it to
     compute subsequent values at both ends of the grid.
 
-    :param wave_grid: Wavelength grid to be extrapolated.
-    :param wave_range: Wavelength range the new grid should cover.
-    :param poly_ord: Order of the polynomial used to fit the derivative of
-        wave_grid.
+    Parameters
+    ----------
+    wave_grid : array[float]
+        Wavelength grid to be extrapolated.
+    wave_range : list[float]
+        Wavelength range the new grid should cover.
+    poly_ord : int
+        Order of the polynomial used to fit the derivative of wave_grid.
 
-    :type wave_grid: array[float]
-    :type wave_range: list[float]
-    :type poly_ord: int
-
-    :returns: wave_grid_ext - The extrapolated 1D wavelength grid.
-    :rtype: array[float]
+    Returns
+    -------
+    wave_grid_ext : array[float]
+        The extrapolated 1D wavelength grid.
     """
 
     # Define delta_wave as a function of wavelength by fitting a polynomial.
@@ -427,21 +458,23 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
     return wave_grid_ext
 
 
-def _grid_from_map(wave_map, aperture, out_col=False):
-    # TODO is out_col still needed.
+def _grid_from_map(wave_map, aperture):
     """Define a wavelength grid by taking the wavelength of each column at the
     center of mass of the spatial profile.
 
-    :param wave_map: Array of the pixel wavelengths for a given order.
-    :param aperture: Array of the spatial profile for a given order.
-    :param out_col:
+    Parameters
+    ----------
+    wave_map : array[float]
+        Array of the pixel wavelengths for a given order.
+    aperture : array[float]
+        Array of the spatial profile for a given order.
 
-    :type wave_map: array[float]
-    :type aperture: array[float]
-    :type out_col: bool
-
-    :returns:
-    :rtype:
+    Returns
+    -------
+    grid : array[float]
+        Output wavelength grid
+    cols : array[int]
+        Column indices used.
     """
 
     # Use only valid columns.
@@ -450,74 +483,62 @@ def _grid_from_map(wave_map, aperture, out_col=False):
     # Get central wavelength using PSF as weights.
     num = (aperture * wave_map).sum(axis=0)
     denom = aperture.sum(axis=0)
-    center_wv = num[mask]/denom[mask]
+    center_wv = num[mask] / denom[mask]
 
     # Make sure the wavelength values are in ascending order.
     sort = np.argsort(center_wv)
     grid = center_wv[sort]
 
-    if out_col:  # TODO I don't like this type of contruction much.
-        # Return index of columns if out_col is True.
-        icols, = np.where(mask)
-        return grid, icols[sort]
-    else:
-        # Return sorted and unique if out_col is False.
-        grid = np.unique(grid)
-        return grid
+    icols, = np.where(mask)
+    return grid, icols[sort]
 
 
-def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1,
-                  out_col=False):
-    # TODO is out_col still needed.
+def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1):
     """Define a wavelength grid by taking the central wavelength at each columns
     given by the center of mass of the spatial profile (so one wavelength per
     column). If wave_range is outside of the wave_map, extrapolate with a
     polynomial of order poly_ord.
 
-    :param wave_map: Array of the pixel wavelengths for a given order.
-    :param aperture: Array of the spatial profile for a given order.
-    :param wave_range: Minimum and maximum boundary of the grid to generate,
-        in microns. wave_range must include some wavelenghts of wave_map.
-    :param n_os: Oversampling of the grid compare to the pixel sampling. Can be
+    Parameters
+    ----------
+    wave_map : array[float]
+        Array of the pixel wavelengths for a given order.
+    aperture : array[float]
+        Array of the spatial profile for a given order.
+    wave_range : list[float]
+        Minimum and maximum boundary of the grid to generate, in microns.
+        Wave_range must include some wavelengths of wave_map.
+    n_os : int or list[int]
+        Oversampling of the grid compare to the pixel sampling. Can be
         specified for each order if a list is given. If a single value is given
         it will be used for all orders.
-    :param poly_ord: Order of the polynomial use to extrapolate the grid.
-        Default is 1.
-    :param out_col: Return columns. TODO It will be forced to False if extrapolation is needed.
+    poly_ord : int
+        Order of the polynomial use to extrapolate the grid.
 
-    :type wave_map: array[float]
-    :type aperture: array[float]
-    :type wave_range: List[float]
-    :type poly_ord: int
-    :type out_col: bool
-    :type n_os: int
-
-    :returns:
-    :rtype:
+    Returns
+    -------
+    grid_os : array[float]
+        Wavelength grid with oversampling applied
     """
 
-    # Different treatement if wave_range is given.
+    # Different treatment if wave_range is given.
     if wave_range is None:
-        out = _grid_from_map(wave_map, aperture, out_col=out_col)
+        out, _ = _grid_from_map(wave_map, aperture)
     else:
         # Get an initial estimate of the grid.
-        grid, icols = _grid_from_map(wave_map, aperture, out_col=True)
+        grid, icols = _grid_from_map(wave_map, aperture)
 
         # Check if extrapolation needed. If so, out_col must be False.
         extrapolate = (wave_range[0] < grid.min()) | (wave_range[1] > grid.max())
-        if extrapolate and out_col:
-            out_col = False
-            msg = ("Cannot extrapolate and return columns. "
-                   "Setting out_col = False.")
-            warn(msg)
 
         # Make sure grid is between the range
         mask = (wave_range[0] <= grid) & (grid <= wave_range[-1])
 
         # Check if grid and wv_range are compatible
         if not mask.any():
-            msg = "Invalid wave_map or wv_range. wv_range: {}"
-            raise ValueError(msg.format(wave_range))
+            msg = "Invalid wave_map or wv_range."
+            log.critical(msg)
+            raise ValueError(msg)
 
         grid, icols = grid[mask], icols[mask]
 
@@ -525,19 +546,12 @@ def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1,
         if extrapolate:
             grid = extrapolate_grid(grid, wave_range, poly_ord)
 
-        # Different output depending on `out_col`
-        if out_col:
-            out = grid, icols
-        else:
-            out = grid
+        out = grid
 
     # Apply oversampling
-    if out_col:
-        # Return grid and columns TODO this doesn't seem to do that? Would crash if out was a tuple?
-        return [oversample_grid(out_i, n_os=n_os) for out_i in out]
-    else:
-        # Only the grid
-        return oversample_grid(out, n_os=n_os)
+    grid_os = oversample_grid(out, n_os=n_os)
+
+    return grid_os
 
 
 def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
@@ -546,23 +560,24 @@ def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
 
     Parameters
     ----------
-    :param wave_maps: Array containing the pixel wavelengths for order 1 and 2.
-    :param apertures: Array containing the spatial profiles for order 1 and 2.
-    :param wave_min: Minimum wavelength the output grid should cover.
-    :param wave_max: Maximum wavelength the output grid should cover.
-    :param n_os: Oversampling of the grid compare to the pixel sampling. Can be
+    wave_maps : array[float]
+        Array containing the pixel wavelengths for order 1 and 2.
+    apertures : array[float]
+        Array containing the spatial profiles for order 1 and 2.
+    wave_min : float
+        Minimum wavelength the output grid should cover.
+    wave_max : float
+        Maximum wavelength the output grid should cover.
+    n_os : int or list[int]
+        Oversampling of the grid compared to the pixel sampling. Can be
         specified for each order if a list is given. If a single value is given
         it will be used for all orders.
 
-    :type wave_maps: array[float]
-    :type apertures: array[float]
-    :type wave_min: float
-    :type wave_max: float
-    :type n_os: int or List[int]
-
-    :returns: wave_grid_soss - A wavelength grid optimized for extracting SOSS
-        spectra across order 1 and order 2.
-    :rtype: array[float]
+    Returns
+    -------
+    wave_grid_soss : array[float]
+        Wavelength grid optimized for extracting SOSS spectra across
+        order 1 and order 2.
     """
 
     # Check n_os input, default value is 2 for all orders.
@@ -571,9 +586,10 @@ def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
     elif np.ndim(n_os) == 0:
         n_os = [n_os, n_os]
     elif len(n_os) != 2:
-        msg = ("n_os must be an integer or a 2 element list or array of "
-               "integers, got {} instead")
-        raise ValueError(msg.format(n_os))
+        msg = (f"n_os must be an integer or a 2 element list or array of "
+               f"integers, got {n_os} instead")
+        log.critical(msg)
+        raise ValueError(msg)
 
     # Generate a wavelength range for each order.
     # Order 1 covers the reddest part of the spectrum,
@@ -612,16 +628,19 @@ def _romberg_diff(b, c, k):
     """Compute the differences for the Romberg quadrature corrections.
     See Forman Acton's "Real Computing Made Real," p 143.
 
-    :param b: R(n-1, m-1) of Rombergs method.
-    :param c: R(n, m-1) of Rombergs method.
-    :param k: The parameter m of Rombergs method.
+    Parameters
+    ----------
+    b : float or array[float]
+        R(n-1, m-1) of Rombergs method.
+    c : float or array[float]
+        R(n, m-1) of Rombergs method.
+    k : int
+        The parameter m of Rombergs method.
 
-    :type b: float or array[float]
-    :type c: float or array[float]
-    :type k: int
-
-    :returns: R(n, m) of Rombergs method.
-    :rtype: float or array[float]
+    Returns
+    -------
+    R(n, m) : float or array[float]
+        of Rombergs method.
     """
 
     tmp = 4.0**k
@@ -1012,40 +1031,6 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 
         return webbker
 
-    def show(self):
-        """
-        Plot kernels.
-        The first figure is a 2d image of the kernels.
-        The second figure is a 1d image of the kernels
-        in the wavelength space.
-        """
-
-        # 2D figure of the kernels
-        fig1 = plt.figure()
-
-        # Log plot, so clip values <= 0
-        image = np.clip(self.kernels, np.min(self.kernels[self.kernels > 0]), np.inf)
-
-        # plot
-        plt.pcolormesh(self.wave_center, self.pixels, image, norm=LogNorm(), shading='nearest')
-
-        # Labels and others
-        plt.colorbar(label="Kernel")
-        plt.ylabel("Position relative to center [pixel]")
-        plt.xlabel(r"Center wavelength [$\mu m$]")
-        plt.tight_layout()
-
-        # 1D figure of all kernels
-        fig2 = plt.figure()
-        plt.plot(self.wave_kernels, self.kernels)
-
-        # Labels and others
-        plt.ylabel("Kernel")
-        plt.xlabel(r"Wavelength [$\mu m$]")
-        plt.tight_layout()
-
-        return fig1, fig2
-
 
 # ==============================================================================
 # Code for building the convolution matrix (c matrix).
@@ -1071,7 +1056,7 @@ def fwhm2sigma(fwhm):
     Convert a full width half max to a standard deviation, assuming a gaussian
     """
 
-    sigma = fwhm / np.sqrt(8 * np.log(2))
+    sigma = fwhm / np.sqrt(8. * np.log(2.))
 
     return sigma
 
