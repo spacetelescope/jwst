@@ -5,6 +5,10 @@ import numpy.polynomial.polynomial as poly
 from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
 
+from BayesicFitting import SineModel
+from BayesicFitting import LevenbergMarquardtFitter
+from BayesicFitting import RobustShell
+
 from astropy.modeling.models import Spline1D
 from astropy.modeling.fitting import SplineExactKnotsFitter, LevMarLSQFitter
 
@@ -136,37 +140,6 @@ def fit_nfringes(nfringes, freqs, wavenum, res_fringes,
 
     return fitter(mdl, wavenum, res_fringes, get_evidence=get_evidence,
                   limits=limits, noise_limits=noise_limits)
-
-
-def multi_sine(n):
-    """
-    Return a model composed of n sines
-
-    :Parameters:
-
-    n: int, required
-        number of sines
-
-    :Returns:
-
-    mdl, BayesFitting model
-        the model composed of n sines
-    """
-
-    # make the first sine
-    mdl = SineModel()
-
-    # make a copy
-    model = mdl.copy()
-
-    # add the copy n-1 times
-    for i in range(1, n):
-        mdl.addModel(model.copy())
-
-    # clean
-    del model
-
-    return mdl
 
 
 def fit_envelope(wavenum, signal):
