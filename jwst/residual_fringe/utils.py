@@ -4,9 +4,6 @@ import numpy.polynomial.polynomial as poly
 
 from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
-from BayesicFitting import SineModel
-from BayesicFitting import LevenbergMarquardtFitter
-from BayesicFitting import RobustShell
 
 from astropy.modeling.models import Spline1D
 from astropy.modeling.fitting import SplineExactKnotsFitter, LevMarLSQFitter
@@ -133,12 +130,12 @@ def fit_nfringes(nfringes, freqs, wavenum, res_fringes,
                  limits=None, noise_limits=None):
     frequencies = np.array(freqs[:nfringes])
     mdl = FourierSeries1D(frequencies)
-    robust_fitter = ChiSqOutlierRejectionFitter(LevMarLSQFitter())
+    fitter = ChiSqOutlierRejectionFitter(LevMarLSQFitter())
 
     get_evidence = limits is not None
 
-    return robust_fitter(mdl, wavenum, res_fringes, get_evidence=get_evidence,
-                         limits=limits, noise_limits=noise_limits)
+    return fitter(mdl, wavenum, res_fringes, get_evidence=get_evidence,
+                  limits=limits, noise_limits=noise_limits)
 
 
 def multi_sine(n):
@@ -671,76 +668,21 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         log.debug("fit_1d_fringes_bayes: fit {} freqs incrementally, check bayes evidence".format(freqs.shape[0]))
 
         evidence = 1e-5  # arbitrarily small
-        jwst_evidence = 1e-5
         opt_nfringes = min_nfringes  # initialize
         if min_nfringes > freqs.shape[0]:
             warning = 'Number of fringes found is less then minimum number of required fringes for column'
             raise TooFewFringesException(warning)
 
         for nfringes in np.arange(min_nfringes, freqs.shape[0]):
-            print(f"{nfringes=}")
-            # use the significant frequencies setup a multi-sine model of that number of sines
-            mdl_fit = multi_sine(nfringes)
-
-            # initialise some variables used in the fitting
-            pars = []
-            keep_dict = {}
-
-            # fill the variables with parameters to be frozen (freqs) and initialised (amps)
-            for n in np.arange(nfringes):
-                pars.append(freqs[n])
-                pars.append(1.0)
-                pars.append(1.0)
-                keep_index = n * 3
-                keep_dict[keep_index] = freqs[n]
-
-            # fit the multi-sine model and get evidence
-            fitter = LevenbergMarquardtFitter(wavenum, mdl_fit, verbose=0, keep=keep_dict)
-            ftr = RobustShell(fitter, domain=10)
-
-            print("START: BayesicFitting fit")
             try:
-                ftr.fit(res_fringes, weights=weights)
-
-                # try get evidence (may fail for large component fits to noisy data, set to very negative value
-                try:
-                    new_evidence = fitter.getEvidence(limits=[-1, 1], noiseLimits=[0.001, 1])
-                except ValueError as error:
-                    print(f"EVIDENCE: {error=}")
-                    new_evidence = -1e9
-            except RuntimeError as error:
-                print(f"FIT: {error=}")
+                _, new_evidence, chi = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
+                                                    limits=[-1, 1], noise_limits=[0.001, 1])
+                log.debug(f"fit_1d_fringes_bayes_evidence: nfringe={nfringes} ev={new_evidence} chi={chi}")
+            except DegenerateEvidenceError:
                 new_evidence = -1e9
-
-            mdl_fit_val = mdl_fit.result(wavenum)
-            print("END: BayesicFitting fit")
-
-            print("START: JWST fit")
-            try:
-                mdl, new_jwst_evidence = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
-                                                      limits=[-1, 1], noise_limits=[0.001, 1])
-                mdl_val = mdl(wavenum)
-                err = np.sum(np.abs(mdl_val - mdl_fit_val))
-            except DegenerateEvidenceError as error:
-                print(f"    RAISED: {error=}")
-                new_jwst_evidence = -1e9
-                err = 'Invalid'
-            print("END: JWST fit")
-
-            print(f"{err=}, {new_jwst_evidence=}, {new_evidence=}, {len(wavenum)=}")
-
-            log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, new_evidence, fitter.chisq))
+                log.debug(f"fit_1d_fringes_bayes_evidence: nfringe={nfringes} ev={new_evidence}")
 
             bayes_factor = new_evidence - evidence
-            print(f"{new_evidence=}, {evidence=}, {bayes_factor=}")
-            jwst_bayes_factor = new_jwst_evidence - jwst_evidence
-            print(f"{new_jwst_evidence=}, {jwst_evidence=}, {jwst_bayes_factor=}")
-
-            if jwst_bayes_factor > 1:
-                print("JWST UPDATE!!!!!!!!!!!!!")
-                jwst_evidence = new_jwst_evidence
-            else:
-                print("JWST FINISH !!!!!!!!!!!!!!!!!!!!")
 
             log.debug(
                 "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
@@ -749,45 +691,20 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
                 opt_nfringes = nfringes
                 log.debug(
                     "fit_1d_fringes_bayes_evidence: strong evidence for nfringes={} ".format(nfringes))
-                print("BayesicFitting UPDATE !!!")
             else:
                 log.debug(
                     "fit_1d_fringes_bayes_evidence: no evidence for nfringes={}".format(nfringes))
-                print("BayesicFitting Finish !!!")
                 break
 
-            print("\n")
+        mdl_fit = fit_nfringes(opt_nfringes, freqs, wavenum, res_fringes)
 
-        # mdl_fit = multi_sine(opt_nfringes)
-        # log.debug("fit_1d_fringes_bayes_evidence: optimal={} fringes".format(opt_nfringes))
+        best_fringe_model = mdl_fit.copy()
+        res_fringe_fit = best_fringe_model(wavenum)
 
-        # # initialise some variables used in the fitting
-        # pars = []
-        # keep_dict = {}
+        # create outputs to return
+        fitted_frequencies = (1 / freqs[:opt_nfringes + 1]) * factor
+        peak_freq = fitted_frequencies[0]
+        freq_min = np.amin(fitted_frequencies)
+        freq_max = np.amax(fitted_frequencies)
 
-        # # fill the variables with parameters to be frozen (freqs) and initialised (amps)
-        # for n in range(opt_nfringes):
-        #     pars.append(freqs[n])
-        #     pars.append(1.0)
-        #     pars.append(1.0)
-        #     keep_index = n * 3
-        #     keep_dict[keep_index] = freqs[n]
-
-        # # fit the optimal multi-sine model
-        # fitter = LevenbergMarquardtFitter(wavenum, mdl_fit, verbose=0, keep=keep_dict)
-        # ftr = RobustShell(fitter, domain=10)
-        # fr_par = ftr.fit(res_fringes, weights=weights)
-
-        # test = fit_nfringes(opt_nfringes, freqs, wavenum, res_fringes)
-
-        # best_fringe_model = mdl_fit.copy()
-        # best_fringe_model.parameters = fr_par
-        # res_fringe_fit = best_fringe_model(wavenum)
-
-        # # create outputs to return
-        # fitted_frequencies = (1 / freqs[:opt_nfringes + 1]) * factor
-        # peak_freq = fitted_frequencies[0]
-        # freq_min = np.amin(fitted_frequencies)
-        # freq_max = np.amax(fitted_frequencies)
-
-        # return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
+        return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max

@@ -86,7 +86,6 @@ class ChiSqOutlierRejectionFitter:
     def _hessian(self, model, x, weights=None):
 
         jacobian = self._jacobian(model, x, weights)
-        print(f"        {jacobian.shape=}")
 
         if weights is None:
             return 2 * np.inner(jacobian, jacobian)
@@ -108,7 +107,6 @@ class ChiSqOutlierRejectionFitter:
 
     def _get_log_z(self, model, x, y, weights,
                    limits, noise_limits, fixed_scale):
-        print("    START: _get_log_z")
         chi = self._chi(model, x, y, weights)
         nparams, deg_of_freedom = self._deg_of_freedom(model, x, weights)
 
@@ -143,15 +141,12 @@ class ChiSqOutlierRejectionFitter:
             spr += (nparams - prior_length) * prior_range[-1]
 
         det_hessian = np.linalg.det(self._hessian(model, x, weights))
-        print(f"        {det_hessian=}")
         log_det = self._log(det_hessian)
 
         log_occam += -spr + 0.5 * (nparams * self._log(2 * np.pi * var) - log_det)
 
         log_z = log_likelihood + log_occam
 
-        print(f"        {log_z=}")
-        print("    END: _get_log_z")
         return log_z
 
     def _get_evidence(self, model, x, y, weights,
@@ -199,6 +194,6 @@ class ChiSqOutlierRejectionFitter:
             evidence = self._get_evidence(new_model, x, y, new_weights,
                                           limits, noise_limits, fixed_scale)
 
-            return new_model, evidence
+            return new_model, evidence, chi
         else:
             return new_model
