@@ -41,21 +41,18 @@ class FourierSeries1D(Fittable1DModel):
         return tuple(names)
 
     @staticmethod
-    def _fit_deriv_term(x, freq):
+    def _terms(x, freq):
         argument = TWOPI * (freq * x)
         if isinstance(argument, Quantity):
             argument = argument.value
 
-        d_coeff_a = np.sin(argument)
-        d_coeff_b = np.cos(argument)
-
-        return [d_coeff_a, d_coeff_b]
+        return np.sin(argument), np.cos(argument)
 
     def _evaluate_term(self, x, freq, coeff_a, coeff_b):
 
-        d_coeff_a, d_coeff_b = self._fit_deriv_term(x, freq)
+        sin, cos = self._terms(x, freq)
 
-        return coeff_a * d_coeff_a + coeff_b * d_coeff_b
+        return coeff_a * sin + coeff_b * cos
 
     def evaluate(self, x, *coeffs):
         coefficients = list(coeffs)
@@ -73,6 +70,29 @@ class FourierSeries1D(Fittable1DModel):
 
         deriv = []
         for index in range(self.n_terms):
-            deriv.extend(self._fit_deriv_term(x, self._frequencies[index]))
+            deriv.extend(list(self._terms(x, self._frequencies[index])))
+
+        return deriv
+
+    def _jacobian_term(self, x, freq, coeff_a, coeff_b):
+        sin, cos = self._terms(x, freq)
+
+        coeff = TWOPI * freq
+        if isinstance(coeff, Quantity):
+            coeff = coeff.value
+
+        d_freq = coeff * (coeff_a * cos - coeff_b * sin)
+
+        return [sin, cos, d_freq]
+
+    def jacobian(self, x, *coeffs):
+        coefficients = list(coeffs)
+
+        deriv = []
+        for index in range(self.n_terms):
+            coeff_a = coefficients.pop(0)
+            coeff_b = coefficients.pop(0)
+
+            deriv.extend(self._jacobian_term(x, self._frequencies[index], coeff_a, coeff_b))
 
         return deriv

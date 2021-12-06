@@ -76,18 +76,17 @@ class ChiSqOutlierRejectionFitter:
 
     @staticmethod
     def _jacobian(model, x, weights=None):
-        # A bunch of hacks for finite Fourier series
-        fitter = LevMarLSQFitter() # access to _wrap_deriv which filters out fixed parameters
+        jacobian = np.array(model.jacobian(x, *model.parameters))
+        if weights is not None:
+            jacobian = np.array([np.ravel(this)
+                                 for this in np.array(weights) * jacobian])
 
-        jacobian = fitter._wrap_deriv(model.parameters, model, weights, x, x)
-
-        return np.array(jacobian)
+        return jacobian
 
     def _hessian(self, model, x, weights=None):
 
         jacobian = self._jacobian(model, x, weights)
         print(f"        {jacobian.shape=}")
-        np.save('jacobian.npy', jacobian)
 
         if weights is None:
             return 2 * np.inner(jacobian, jacobian)
@@ -95,7 +94,7 @@ class ChiSqOutlierRejectionFitter:
             return 2 * np.inner(jacobian, jacobian * weights)
 
     def _log(self, value):
-        err_state = np.seterr(invalid='raise')
+        err_state = np.seterr(all='raise')
         try:
             log = np.log(value)
         except FloatingPointError:
@@ -197,9 +196,8 @@ class ChiSqOutlierRejectionFitter:
             raise RuntimeError("Bad fit, method should have converged")
 
         if get_evidence:
-            evidence = None
-            # evidence = self._get_evidence(new_model, x, y, new_weights,
-            #                               limits, noise_limits, fixed_scale)
+            evidence = self._get_evidence(new_model, x, y, new_weights,
+                                          limits, noise_limits, fixed_scale)
 
             return new_model, evidence
         else:

@@ -11,7 +11,7 @@ from BayesicFitting import RobustShell
 from astropy.modeling.models import Spline1D
 from astropy.modeling.fitting import SplineExactKnotsFitter, LevMarLSQFitter
 
-from .fitter import ChiSqOutlierRejectionFitter
+from .fitter import ChiSqOutlierRejectionFitter, DegenerateEvidenceError
 from .fourier import FourierSeries1D
 
 import logging
@@ -671,6 +671,7 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         log.debug("fit_1d_fringes_bayes: fit {} freqs incrementally, check bayes evidence".format(freqs.shape[0]))
 
         evidence = 1e-5  # arbitrarily small
+        jwst_evidence = 1e-5
         opt_nfringes = min_nfringes  # initialize
         if min_nfringes > freqs.shape[0]:
             warning = 'Number of fringes found is less then minimum number of required fringes for column'
@@ -697,13 +698,6 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             fitter = LevenbergMarquardtFitter(wavenum, mdl_fit, verbose=0, keep=keep_dict)
             ftr = RobustShell(fitter, domain=10)
 
-            print("START: JWST fit")
-            mdl, _ = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
-                                  limits=[-1, 1], noise_limits=[0.001, 1])
-            print("END: JWST fit")
-            mdl_val = mdl(wavenum)
-            print(mdl)
-
             print("START: BayesicFitting fit")
             try:
                 ftr.fit(res_fringes, weights=weights)
@@ -717,18 +711,36 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             except RuntimeError as error:
                 print(f"FIT: {error=}")
                 new_evidence = -1e9
-            print("END: BayesicFitting fit")
 
             mdl_fit_val = mdl_fit.result(wavenum)
-            err = np.sum(np.abs(mdl_val - mdl_fit_val))
+            print("END: BayesicFitting fit")
 
-            print(f"{err=}, {evidence=}, {new_evidence=}, {len(wavenum)=}")
+            print("START: JWST fit")
+            try:
+                mdl, new_jwst_evidence = fit_nfringes(nfringes, freqs, wavenum, res_fringes,
+                                                      limits=[-1, 1], noise_limits=[0.001, 1])
+                mdl_val = mdl(wavenum)
+                err = np.sum(np.abs(mdl_val - mdl_fit_val))
+            except DegenerateEvidenceError as error:
+                print(f"    RAISED: {error=}")
+                new_jwst_evidence = -1e9
+                err = 'Invalid'
+            print("END: JWST fit")
+
+            print(f"{err=}, {new_jwst_evidence=}, {new_evidence=}, {len(wavenum)=}")
 
             log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, new_evidence, fitter.chisq))
 
             bayes_factor = new_evidence - evidence
-            # bayes_factor = new_evidence - evidence
-            # print(f"{bayes_factor=}, {old_bayes_factor=}\n")
+            print(f"{new_evidence=}, {evidence=}, {bayes_factor=}")
+            jwst_bayes_factor = new_jwst_evidence - jwst_evidence
+            print(f"{new_jwst_evidence=}, {jwst_evidence=}, {jwst_bayes_factor=}")
+
+            if jwst_bayes_factor > 1:
+                print("JWST UPDATE!!!!!!!!!!!!!")
+                jwst_evidence = new_jwst_evidence
+            else:
+                print("JWST FINISH !!!!!!!!!!!!!!!!!!!!")
 
             log.debug(
                 "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
@@ -737,10 +749,14 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
                 opt_nfringes = nfringes
                 log.debug(
                     "fit_1d_fringes_bayes_evidence: strong evidence for nfringes={} ".format(nfringes))
+                print("BayesicFitting UPDATE !!!")
             else:
                 log.debug(
                     "fit_1d_fringes_bayes_evidence: no evidence for nfringes={}".format(nfringes))
+                print("BayesicFitting Finish !!!")
                 break
+
+            print("\n")
 
         # mdl_fit = multi_sine(opt_nfringes)
         # log.debug("fit_1d_fringes_bayes_evidence: optimal={} fringes".format(opt_nfringes))
