@@ -4,7 +4,6 @@ from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
 from astropy.io import fits
-from asdf.tests import helpers
 from astropy.modeling.models import RotationSequence3D
 
 from gwcs.wcstools import grid_from_bounding_box
