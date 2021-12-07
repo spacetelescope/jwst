@@ -290,7 +290,7 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
     else:
         log.error("Reference file type %s not recognized",
                   ref_dict['ref_file_type'])
-        raise RuntimeError("extract1d reference file must be JSON or a FITS image.")
+        raise RuntimeError("extract1d reference file must be ASDF, JSON or  FITS image.")
 
     return extract_params
 

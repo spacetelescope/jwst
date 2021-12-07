@@ -149,6 +149,8 @@ extract_1d
 
 - Change INT_NUM assignment to 1-indexed. [#6388]
 
+- Added NRS_LAMP as an exp_type that has the extract1d ref file in asdf format [#6460]
+
 flatfield
 ---------
 
