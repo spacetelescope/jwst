@@ -221,7 +221,7 @@ ramp_fitting
 ------------
 
 - Fix issue with inappropriately including a flagged group at the beginning
-  of a ramp segment. [telescope/stcal#68]
+  of a ramp segment. [spacetelescope/stcal#68]
 
 - Pixels with negative median rates will have VAR_POISSON set to zero.
   [spacetelecope/stcal#59]
