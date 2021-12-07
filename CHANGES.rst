@@ -130,6 +130,8 @@ datamodels
 - Moved new column 'reference_order' in guider schemas' planned
   star table to second in order, after 'guide_star_order' [#6465]
 
+ - Updated moving_target schema changing mt_detector_x/y to mt_sci_x/y [#6485]
+
 dark_current
 ------------
 
