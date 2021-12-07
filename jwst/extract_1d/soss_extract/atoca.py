@@ -20,8 +20,10 @@ from scipy.interpolate import interp1d
 # Local imports.
 from . import atoca_utils
 
-# Plotting.
-import matplotlib.pyplot as plt
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class _BaseOverlap:  # TODO Merge with TrpzOverlap?

@@ -7,8 +7,6 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 """
 
 import numpy as np
-from warnings import warn
-from scipy.integrate import AccuracyWarning
 from scipy.sparse import find, diags, identity, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
@@ -378,7 +376,7 @@ def oversample_grid(wave_grid, n_os=1):
         mask = n_os > i_os
 
         # Compute the new grid points.
-        sub_grid = (wave_grid[:-1][mask] + i_os*delta_wave[mask]/n_os[mask])
+        sub_grid = wave_grid[:-1][mask] + (i_os * delta_wave[mask] / n_os[mask])
 
         # Add the grid points to the oversampled wavelength grid.
         wave_grid_os = np.concatenate([wave_grid_os, sub_grid])
@@ -640,7 +638,7 @@ def _romberg_diff(b, c, k):
     Returns
     -------
     R(n, m) : float or array[float]
-        of Rombergs method.
+        Difference between integral estimates of Rombergs method.
     """
 
     tmp = 4.0**k
@@ -659,20 +657,23 @@ def _difftrap(fct, intervals, numtraps):
     Note: This function is based on scipy.integrate.quadrature. Adapted to work
     with multiple intervals.
 
-    :param fct: Function to be integrated.
-    :param intervals: A 2D array of integration intervals of shape (Nx2) or a
+    Parameters
+    ----------
+    fct : callable
+        Function to be integrated.
+    intervals : array[float]
+        A 2D array of integration intervals of shape (Nx2) or a
         single interval of shape (2,).
-    :param numtraps: The number of trapezoids used to integrate the interval.
+    numtraps : int
+        The number of trapezoids used to integrate the interval.
         numtraps must be a power of 2.
 
-    :type fct: callable
-    :type intervals: array[float]
-    :type numtraps: int
-
-    :returns: s - The sum of function values at the new trapezoid boundaries
-    compared to numtraps = numtraps/2. When numtraps = 1 they are fivided by
-    two.
-    :rtype: float
+    Returns
+    -------
+    s : float
+        The sum of function values at the new trapezoid boundaries
+        compared to numtraps = numtraps/2. When numtraps = 1 they
+        are divided by two.
     """
 
     # Convert input intervals to numpy array
@@ -683,24 +684,30 @@ def _difftrap(fct, intervals, numtraps):
         intervals = intervals[:, np.newaxis]
 
     # Check the value of numtraps.
-    if numtraps <= 0:  # TODO check it is a power of 2? Or change input to log2(numtraps)?
-        raise ValueError("numtraps must be > 0 in difftrap().")
+    if numtraps <= 0:
+        err_msg = "numtraps must be > 0 in difftrap()."
+        log.critical(err_msg)
+        raise ValueError(err_msg)
 
     if numtraps == 1:
         # Return the function evaluations for a single trapezoid.
-        # Only points add the edge of the interval need to be halfed.
-        ordsum = 0.5*(fct(intervals[0]) + fct(intervals[1]))
+        # Only points at the edge of the interval need to be halved.
+        ordsum = 0.5 * (fct(intervals[0]) + fct(intervals[1]))
 
+    elif numtraps % 2:
+        err_msg = "numtraps must be a power of 2 in difftrap()."
+        log.critical(err_msg)
+        raise ValueError(err_msg)
     else:
         # Number of new points compared to lower 2**N multiple of trapezoids.
-        numtosum = numtraps/2
+        numtosum = numtraps / 2
 
         # Find coordinates of new points.
-        h = (intervals[1] - intervals[0])/numtosum
-        lox = intervals[0] + 0.5*h
-        points = lox[np.newaxis, :] + h*np.arange(numtosum)[:, np.newaxis]
+        h = (intervals[1] - intervals[0]) / numtosum
+        lox = intervals[0] + (h * 0.5)
+        points = lox[np.newaxis, :] + (h * np.arange(numtosum)[:, np.newaxis])
 
-        # Evalaute and sum the new points.
+        # Evaluate and sum the new points.
         ordsum = np.sum(fct(points), axis=0)
 
     return ordsum
@@ -714,29 +721,32 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
     of `fct` (a function of one variable).
 
     Note: This function is based on scipy.integrate.quadrature.romberg. The
-    difference between it and the scipy version is that it is vectorised to deal
+    difference between it and the scipy version is that it is vectorized to deal
     with multiple intervals separately. It also returns the number of nodes
     needed to reached the required precision instead of returning the value of
     the integral.
 
-    :param grid: Grid for integration. Each sections of this grid are treated
-        as separate integrals. So if grid has length N; N-1 integrals are
-        optimized.
-    :param fct: Function to be integrated.
-    :param tol: The desired absolute tolerance. Default is 1.48e-4.
-    :param rtol: The desired relative tolerance. Default is 1.48e-4.
-    :param divmax: Maximum order of extrapolation. Default is 10.
+    Parameters
+    ----------
+    grid : array[float]
+        Grid for integration. Each section of this grid is treated as a
+        separate integral; if grid has length N, N-1 integrals are optimized.
+    fct : callable
+        Function to be integrated.
+    divmax : int
+        Maximum order of extrapolation.
+    tol : float
+        The desired absolute tolerance.
+    rtol : float
+        The desired relative tolerance.
 
-    :type grid: array[float]
-    :type fct: callable
-    :type tol: float
-    :type rtol: float
-    :type divmax: int
-
-    :returns: n_grid - Number of nodes needed on each distinct intervals in the
-        grid to reach the specified tolerance. If out_res=True also returns
-        residual - Estimate of the error in each intervals. Same length as
-        n_grid.
+    Returns
+    -------
+    n_grid : array[int]
+        Number of nodes needed on each distinct intervals in the grid to reach
+        the specified tolerance.
+    residual : array[float]
+        Estimate of the error in each intervals. Same length as n_grid.
     """
 
     # Initialize some variables.
@@ -761,7 +771,7 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
         # Increase the number of trapezoids by factors of 2.
         numtraps *= 2
 
-        # Evaluate trpz integration for intervals that are not converged.
+        # Evaluate trapz integration for intervals that are not converged.
         ordsum += _difftrap(fct, intervals[:, i_bad], numtraps)
         row = [intrange[i_bad] * ordsum / numtraps]
 
@@ -800,13 +810,13 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
 
     else:
         # Warn that convergence is not reached everywhere.
-        msg = "divmax {%d} exceeded. Latest difference = {}"
-        warn(msg.format(divmax, err.max()), AccuracyWarning)
+        log.warning(f"divmax {divmax} exceeded. Latest difference = {err.max()}")
 
     # Make sure all values of n_grid where assigned during the process.
     if (n_grid == -1).any():
-        msg = "Values where not assigned at grid position: {}"
-        raise ValueError(msg.format(np.where(n_grid == -1)))
+        msg = f"Values where not assigned at grid position: {np.where(n_grid == -1)}"
+        log.critical(msg)
+        raise ValueError(msg)
 
     return n_grid, residual
 
@@ -822,12 +832,12 @@ class ThroughputSOSS(interp1d):
         """Create an instance of scipy.interpolate.interp1d to handle the
         throughput values.
 
-        :param wavelength: A wavelength array.
-        :param throughput: The throughput values corresponding to the
-            wavelengths.
-
-        :type wavelength: array[float]
-        :type throughput: array[float]
+        Parameters
+        ----------
+        wavelength : array[float]
+            A wavelength array.
+        throughput : array[float]
+            The throughput values corresponding to the wavelengths.
         """
 
         # Interpolate
@@ -841,26 +851,25 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
                  bounds_error=False, fill_value="extrapolate"):
         """A handler for the kernel values.
 
-        :param wave_kernels:
-        :param kernels:
-        :param wave_map: Wavelength map of the detector. Since WebbPSF returns
-            kernels in the pixel space, we need a wave_map to convert to
-            wavelength space.
-        :param n_os: Oversampling of the kernels.
-        :param n_pix: Length of the kernels in pixels.
-        :param bounds_error: If True, raise an error when trying to call the
-            function out of the interpolation range. If False, the values will
-            be extrapolated. Default is False
-        :param fill_value: How to extrapolate when needed. Default is
-            "extrapolate". No other options have been implemented.
-
-        :type wave_kernels: array[float]
-        :type kernels: array[float]
-        :type wave_map: array[float]
-        :type n_os: int
-        :type n_pix: int
-        :type bounds_error: bool
-        :type fill_value: str
+        Parameters
+        ----------
+        wave_kernels : array[float]
+            Kernels for wavelength array.
+        kernels : array[float]
+            Kernels for throughput array.
+        wave_map : array[float]
+            Wavelength map of the detector. Since WebbPSF returns kernels in
+            the pixel space, we need a wave_map to convert to wavelength space.
+        n_os : int
+            Oversampling of the kernels.
+        n_pix : int
+            Length of the kernels in pixels.
+        bounds_error : bool
+            If True, raise an error when trying to call the function out of the
+            interpolation range. If False, the values will be extrapolated.
+        fill_value : str
+            How to extrapolate when needed. Only default "extrapolate"
+            currently implemented.
         """
 
         # Mask where wv_map is equal to 0
@@ -874,8 +883,8 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         # Number of columns
         ncols = wave_map.shape[-1]
 
-        # Create oversampled pixel position array  # TODO easier to read form?
-        pixels = np.arange(-(n_pix//2), n_pix//2 + 1/n_os, 1/n_os)
+        # Create oversampled pixel position array
+        pixels = np.arange(-(n_pix // 2), n_pix // 2 + (1 / n_os), (1 / n_os))
 
         # `wave_kernel` has only the value of the central wavelength
         # of the kernel at each points because it's a function
@@ -910,11 +919,11 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         # Then find the pixel closest to each kernel center
         # and use the surrounding pixels (columns)
         # to get the wavelength. At the boundaries,
-        # wavelenght might not be defined or falls out of
+        # wavelength might not be defined or falls out of
         # the detector, so fit a 1-order polynomial to
         # extrapolate. The polynomial is also used to interpolate
         # for oversampling.
-        i_surround = np.arange(-(n_pix//2), n_pix//2 + 1)
+        i_surround = np.arange(-(n_pix // 2), n_pix // 2 + 1)
         poly = []
         for i_cen, wv_c in enumerate(wave_center):
             wv = np.ma.masked_all(i_surround.shape)
@@ -964,13 +973,16 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         """Returns the kernel value, given the wavelength and the kernel central
          wavelength.
 
-        :param wave: Wavelength where the kernel is projected.
-        :param wave_c: Central wavelength of the kernel.
-
-        :type wave: array[float]
-        :type wave_c: array[float]
-
-        :returns: out - The kernel value.
+        Parameters
+        ----------
+        wave : array[float]
+            Wavelength where the kernel is projected.
+        wave_c : array[float]
+            Central wavelength of the kernel.
+        Returns
+        -------
+        out : array[float]
+            The kernel value.
         """
 
         wave_center = self.wave_center
@@ -993,13 +1005,15 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         # Deal with values out of bounds
         if bounds_error:
             message = "Value of wv center out of interpolation range"
+            log.critical(message)
             raise ValueError(message)
         elif fill_value == "extrapolate":
             i_wv_c[i_wv_c < 0] = 0
             i_wv_c[i_wv_c >= (n_wv_c - 1)] = n_wv_c - 2
         else:
-            message = "`fill_value`={} is not an valid option."
-            raise ValueError(message.format(fill_value))
+            message = f"`fill_value`={fill_value} is not an valid option."
+            log.critical(message)
+            raise ValueError(message)
 
         # Compute coefficients that interpolate along wv_centers
         d_wv_c = wave_center[i_wv_c + 1] - wave_center[i_wv_c]
@@ -1026,8 +1040,8 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         webbker = np.clip(webbker, min_value, None)
 
         # and put out-of-range values to zero.
-        webbker[pix > n_pix//2] = 0
-        webbker[pix < -(n_pix//2)] = 0
+        webbker[pix > n_pix // 2] = 0
+        webbker[pix < -(n_pix // 2)] = 0
 
         return webbker
 
@@ -1040,13 +1054,29 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 def gaussians(x, x0, sig, amp=None):
     """
     Gaussian function
+
+    Parameters
+    ----------
+    x : array[float]
+        Array of points over which gaussian to be defined.
+    x0 : float
+        Center of the gaussian.
+    sig : float
+        Standard deviation of the gaussian.
+    amp : float
+        Value of the gaussian at the center.
+
+    Returns
+    -------
+    values : array[float]
+        Array of gaussian values for input x.
     """
 
     # Amplitude term
     if amp is None:
-        amp = 1/np.sqrt(2 * np.pi * sig**2)
+        amp = 1. / np.sqrt(2. * np.pi * sig**2.)
 
-    values = amp * np.exp(-0.5 * ((x - x0) / sig) ** 2)
+    values = amp * np.exp(-0.5 * ((x - x0) / sig) ** 2.)
 
     return values
 
@@ -1054,6 +1084,16 @@ def gaussians(x, x0, sig, amp=None):
 def fwhm2sigma(fwhm):
     """
     Convert a full width half max to a standard deviation, assuming a gaussian
+
+    Parameters
+    ----------
+    fwhm : float
+        Full-width half-max of a gaussian.
+
+    Returns
+    -------
+    sigma : float
+        Standard deviation of a gaussian.
     """
 
     sigma = fwhm / np.sqrt(8. * np.log(2.))
@@ -1061,8 +1101,22 @@ def fwhm2sigma(fwhm):
     return sigma
 
 
-def to_2d(kernel, grid, grid_range):  # TODO parameter grid unused, better name kernel_2d?
-    """ Build a 2d kernel array with a constant 1D kernel (input) """
+def to_2d(kernel, grid_range):
+    """ Build a 2d kernel array with a constant 1D kernel (input)
+
+    Parameters
+    ----------
+    kernel : array[float]
+        Input 1D kernel.
+    grid_range : list[int]
+        Indices over which convolution is defined on grid.
+
+    Returns
+    -------
+    kernel_2d : array[float]
+        2D array of input 1D kernel tiled over axis with
+        length equal to difference of grid_range values.
+    """
 
     # Assign range where the convolution is defined on the grid
     a, b = grid_range
@@ -1082,17 +1136,28 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
 
     Parameters
     ----------
-    fct: callable
+    fct : callable
         Function that returns the value of the kernel, given
         a grid value and the center of the kernel.
         fct(grid, center) = kernel
         grid and center have the same length.
-    grid: 1d array
+    grid : array[float]
         grid where the kernel is projected
-    i_a, i_b: int
-        index of the grid where to apply the convolution.
+    h_len : int
+        Half-length where we compute kernel value.
+    i_a : int
+        Index of grid axis 0 where to apply convolution.
         Once the convolution applied, the convolved grid will be
         equal to grid[i_a:i_b].
+    i_b : int
+        index of grid axis 1 where to apply convolution.
+
+    Returns
+    -------
+    left : array[float]
+        Kernel values at left wing.
+    right : array[float]
+        Kernel values at right wing.
     """
 
     # Save length of the non-convolved grid
@@ -1135,20 +1200,27 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
 
 def trpz_weight(grid, length, shape, i_a, i_b):
     """
-    Compute weights due to trapeze integration
+    Compute weights due to trapezoidal integration
 
     Parameters
     ----------
-    grid: 1d array
-        grid where the integration is proojected
-    length: int
+    grid : array[float]
+        grid where the integration is projected
+    length : int
         length of the kernel
-    shape: 2-elements tuple
+    shape : tuple[int]
         shape of the compact convolution 2d array
-    i_a, i_b: int
-        index of the grid where to apply the convolution.
+    i_a : int
+        Index of grid axis 0 where to apply convolution.
         Once the convolution applied, the convolved grid will be
         equal to grid[i_a:i_b].
+    i_b : int
+        index of grid axis 1 where to apply convolution.
+
+    Returns
+    -------
+    out : array[float]
+        2D array with shape according to input shape
     """
 
     # Index of each element on the convolution matrix
@@ -1165,7 +1237,7 @@ def trpz_weight(grid, length, shape, i_a, i_b):
     d_grid = np.diff(grid)
 
     # Compute weights from trapezoidal integration
-    weight = 1/2 * d_grid[i_grid]
+    weight = 0.5 * d_grid[i_grid]
     weight[i_bad] = 0
 
     # Fill output
@@ -1183,22 +1255,27 @@ def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
 
     Parameters
     ----------
-    fct: callable
+    fct : callable
         Function that returns the value of the kernel, given
         a grid value and the center of the kernel.
         fct(grid, center) = kernel
         grid and center have the same length.
-    grid: 1d array
-        grid where the kernel is projected
-    grid_range: 2 element list or tuple
-        index of the grid where to apply the convolution.
+    grid : array[float]
+        Grid where the kernel is projected
+    grid_range : list[int] or tuple[int]
+        Indices of the grid where to apply the convolution.
         Once the convolution applied, the convolved grid will be
         equal to grid[grid_range[0]:grid_range[1]].
-    thresh: float, optional
-        threshold to cut the kernel wings. If `length` is specified,
-        `thresh` will not be taken into account.
-    length: int, optional
-        length of the kernel. Needs to be odd.
+    thresh : float, optional
+        Threshold to cut the kernel wings. If `length` is specified,
+        `thresh` will be ignored.
+    length : int, optional
+        Length of the kernel. Must be odd.
+
+    Returns
+    -------
+    kern_array : array[float]
+        2D array of kernel projected onto grid.
     """
 
     # Assign range where the convolution is defined on the grid
@@ -1260,9 +1337,12 @@ def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
         weights = trpz_weight(grid, length, out.shape, i_a, i_b)
 
     else:
-        raise ValueError("`length` must be odd.")
+        msg = "`length` provided to `fct_to_array` must be odd."
+        log.critical(msg)
+        raise ValueError(msg)
 
-    return out*weights
+    kern_array = (out * weights)
+    return kern_array
 
 
 def cut_ker(ker, n_out=None, thresh=None):
@@ -1271,22 +1351,23 @@ def cut_ker(ker, n_out=None, thresh=None):
 
     Parameters
     ----------
-    ker: 2d array
+    ker : array[float]
         convolution kernel in compact form, so
         shape = (N_ker, N_k_convolved)
-    n_out: int or 2-element int object (list, tuple, etc.)
+    n_out : int, list[int] or tuple[int]
         Number of kernel's grid point to keep on the boundaries.
         If an int is given, the same number of points will be
         kept on each boundaries of the kernel (left and right).
         If 2 elements are given, it corresponds to the left and right
         boundaries.
-    thresh: float
+    thresh : float
         threshold used to determine the boundaries cut.
-        If n_out is specified, this has no effect.
+        If n_out is specified, this is ignored.
 
     Returns
     ------
-    the same kernel matrix has the input ker, but with the cut applied.
+    ker : array[float]
+        The same kernel matrix as the input ker, but with the cut applied.
     """
 
     # Assign kernel length and number of kernels
@@ -1347,13 +1428,18 @@ def sparse_c(ker, n_k, i_zero=0):
 
     Parameters
     ----------
-    ker : 2d array, (N_kernel, N_kc)
-        Convolution kernel in compact form.
-    n_k: int
-        length of the original grid
-    i_zero: int
-        position of the first element of the convolved grid
+    ker : array[float]
+        Convolution kernel in compact form, with shape (N_kernel, N_kc)
+    n_k : int
+        Length of the original grid
+    i_zero : int
+        Position of the first element of the convolved grid
         in the original grid.
+
+    Returns
+    -------
+    matrix : array[float]
+        Sparse form of the input convolution kernel
     """
 
     # Assign kernel length and convolved axis length
@@ -1361,7 +1447,9 @@ def sparse_c(ker, n_k, i_zero=0):
 
     # Algorithm works for odd kernel grid
     if n_ker % 2 != 1:
-        raise ValueError("length of the convolution kernel should be odd.")
+        err_msg = "Length of the convolution kernel given to sparse_c should be odd."
+        log.critical(err_msg)
+        raise ValueError(err_msg)
 
     # Assign half-length
     h_len = (n_ker - 1) // 2
@@ -1395,7 +1483,7 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
     will be applied, N_k_convolved is the length of the
     grid after convolution and N_ker is the maximum length of
     the kernel. If the default sparse matrix option is chosen,
-    the convolution can be apply on an array f | f = fct(grid)
+    the convolution can be applied on an array f | f = fct(grid)
     by a simple matrix multiplication:
     f_convolved = c_matrix.dot(f)
 
@@ -1459,11 +1547,13 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
     if callable(kernel):
         kernel = fct_to_array(kernel, grid, [a, b], **kwargs)
     elif kernel.ndim == 1:
-        kernel = to_2d(kernel, grid, [a, b])
-    else:
-        # TODO add other options.
-        pass
+        kernel = to_2d(kernel, [a, b])
 
+    if kernel.ndim != 2:
+        msg = ("Input kernel to get_c_matrix must be callable or"
+              " array with one or two dimensions.")
+        log.critical(msg)
+        raise ValueError(msg)
     # Kernel should now be a 2-D array (N_kernel x N_kc)
 
     # Normalize if specified
@@ -1488,7 +1578,7 @@ class NyquistKer:
     FWHM = n_sampling * (dx_(i-1) + dx_i) / 2.
     The FWHM is computed for each elements of the grid except
     the extremities (not defined). We can then generate FWHM as
-    a function of thegrid and interpolate/extrapolate to get
+    a function of the grid and interpolate/extrapolate to get
     the kernel as a function of its position relative to the grid.
     """
 
@@ -1497,13 +1587,14 @@ class NyquistKer:
         """
         Parameters
         ----------
-        grid : 1d array
+        grid : array[float]
             Grid used to define the kernels
-        n_sampling: int, optional
-            sampling of the grid. Default is 2, so we assume that
-            the grid is Nyquist sampled.
-        bounds_error, fill_value and kwargs:
-            `interp1d` kwargs used to get FWHM as a function of the grid.
+        n_sampling : int, optional
+            Sampling of the grid.
+        bounds_error : bool
+            Argument for `interp1d` to get FWHM as a function of the grid.
+        fill_value : str
+            Argument for `interp1d` to choose fill method to get FWHM.
         """
 
         # Delta grid
@@ -1527,17 +1618,17 @@ class NyquistKer:
         """
         Parameters
         ----------
-        x: 1d array
+        x : array[float]
             position where the kernel is evaluated
-        x0: 1d array (same shape as x)
+        x0 : array[float]
             position of the kernel center for each x.
 
         Returns
         -------
-        Value of the gaussian kernel for each sets of (x, x0)
+        Value of the gaussian kernel for each set of (x, x0)
         """
 
-        # Get the sigma of each gaussians
+        # Get the sigma of each gaussian
         sig = self.fct_sig(x0)
 
         return gaussians(x, x0, sig)
@@ -1551,10 +1642,16 @@ class NyquistKer:
 def finite_diff(x):
     """
     Returns the finite difference matrix operator based on x.
-    Input:
-        x: array-like
-    Output:
-        sparse matrix. When apply to x `diff_matrix.dot(x)`,
+
+    Parameters
+    ----------
+    x : array[float]
+        Input array
+
+    Returns
+    -------
+    diff_matrix : array[float]
+        Sparse matrix. When applied to x `diff_matrix.dot(x)`,
         the result is the same as np.diff(x)
     """
     n_x = len(x)
@@ -1569,13 +1666,15 @@ def finite_diff(x):
 def finite_second_d(grid):
     """
     Returns the second derivative operator based on grid
-    Inputs:
+
+    Parameters
+    ----------
+    grid : array[float]
+        1D array where the second derivative will be computed.
+
+    Returns
     -------
-    grid: 1d array-like
-        grid where the second derivative will be compute.
-    Ouputs:
-    -------
-    second_d: matrix
+    second_d : array[float]
         Operator to compute the second derivative, so that
         f" = second_d.dot(f), where f is a function
         projected on `grid`.
@@ -1588,13 +1687,13 @@ def finite_second_d(grid):
     d_grid = d_matrix.dot(grid)
 
     # First derivative operator
-    first_d = diags(1./d_grid).dot(d_matrix)
+    first_d = diags(1. / d_grid).dot(d_matrix)
 
     # Second derivative operator
     second_d = finite_diff(grid[:-1]).dot(first_d)
 
-    # don't forget the delta labda
-    second_d = diags(1./d_grid[:-1]).dot(second_d)
+    # don't forget the delta lambda
+    second_d = diags(1. / d_grid[:-1]).dot(second_d)
 
     return second_d
 
@@ -1602,13 +1701,15 @@ def finite_second_d(grid):
 def finite_first_d(grid):
     """
     Returns the first derivative operator based on grid
-    Inputs:
+
+    Parameters
+    ----------
+    grid : array[float]
+        Grid where the first derivative will be computed.
+
+    Returns
     -------
-    grid: 1d array-like, optional
-        grid where the first derivative will be compute.
-    Ouputs:
-    -------
-    first_d: matrix
+    first_d : array[float]
         Operator to compute the second derivative, so that
         f' = first_d.dot(f), where f is a function
         projected on `grid`.
@@ -1626,42 +1727,34 @@ def finite_first_d(grid):
     return first_d
 
 
-def finite_zeroth_d(grid):
-    """
-    Gives the zeroth derivative operator on the function
-    f(grid), so simply returns the identity matrix... XD
-    """
-    return identity(len(grid))
-
-
 def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0):
     """
     Wrapper to return the tikhonov matrix given a grid and the derivative degree.
+
     Parameters
     ----------
-    grid: 1d array-like
-        grid where the tikhonov matrix is projected
-    n_derivative: int, optional
-        degree of derivative. Possible values are 1 or 2
-    d_grid: bool, optional
+    grid : array[float]
+        1D grid where the Tikhonov matrix is projected
+    n_derivative : int, optional
+        Degree of derivative. Possible values are 1 or 2
+    d_grid : bool, optional
         Whether to divide the differential operator by the grid differences,
-        which corresponds to an actual approximation of the derivative,
-        or not.
-    estimate: callable (preferably scipy.interpolate.UnivariateSpline), optional
+        which corresponds to an actual approximation of the derivative or not.
+    estimate : callable (preferably scipy.interpolate.UnivariateSpline), optional
         Estimate of the solution on which the tikhonov matrix is applied.
         Must be a function of `grid`. If UnivariateSpline, then the derivatives
         are given directly (so best option), otherwise the tikhonov matrix will be
         applied to `estimate(grid)`. Note that it is better to use `d_grid=True`
     pwr_law: float, optional
-        Power law applied to the scale differentiated estimate,
-        so the estimate of tikhonov_matrix.dot(solution).
-        It will be applied as follow:
+        Power law applied to the scale differentiated estimate, so the estimate
+        of tikhonov_matrix.dot(solution). It will be applied as follows:
         norm_factor * scale_factor.dot(tikhonov_matrix)
         where scale_factor = 1/(estimate_derivative)**pwr_law
         and norm_factor = 1/sum(scale_factor)
     Returns
     -------
-    The tikhonov matrix
+    t_mat : array[float]
+        The tikhonov matrix.
     """
     if d_grid:
         input_grid = grid
@@ -1673,7 +1766,9 @@ def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0
     elif n_derivative == 2:
         t_mat = finite_second_d(input_grid)
     else:
-        raise ValueError('Mode not valid')
+        msg = "`n_derivative` must be 1 or 2."
+        log.critical(msg)
+        raise ValueError(msg)
 
     if estimate is not None:
         if hasattr(estimate, 'derivative'):
@@ -1711,21 +1806,25 @@ def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0
 
 
 def curvature_finite(factors, log_reg2, log_chi2):
-    '''
+    """
     Compute the curvature in log space using finite differences
 
-    Parameters:
-    -----------
-    factors: array_like
-        regularisation factors (not in log).
-    log_reg2: array_like
+    Parameters
+    ----------
+    factors : array[float]
+        Regularisation factors (not in log).
+    log_reg2 : array[float]
         norm-2 of the regularisation term (in log10).
-    log_chi2: array-like
+    log_chi2 : array[float]
         norm-2 of the chi2 term (in log10).
-    Return:
+
+    Returns
     -------
-    curvature
-    '''
+    factors : array[float]
+        Sorted and cut version of input factors array.
+    curvature : array[float]
+
+    """
     # Make sure it is sorted according to the factors
     idx = np.argsort(factors)
     factors, log_chi2, log_reg2 = factors[idx], log_chi2[idx], log_reg2[idx]
@@ -1742,7 +1841,7 @@ def curvature_finite(factors, log_reg2, log_chi2):
     # Denominator of the curvature
     denom = reg2_deriv[0] ** 2 + chi2_deriv[0] ** 2
     # Combined
-    curv = 2 * numerator / np.power(denom, 3 / 2)
+    curv = 2 * numerator / np.power(denom, 1.5)
 
     # Since the curvature is not define at the ends of the array,
     # cut the factors array
@@ -1752,8 +1851,21 @@ def curvature_finite(factors, log_reg2, log_chi2):
 
 
 def get_finite_derivatives(x_array, y_array):
-    """ Compute first and second finite derivatives """
+    """ Compute first and second finite derivatives
+    Parameters
+    ----------
+    x_array : array[float]
+        1D array of x values.
+    y_array : array[float]
+        1D array of y values.
 
+    Returns
+    -------
+    mean_first_d : array[float]
+        Mean of left and right finite derivatives
+    second_d : array[float]
+        Second finite derivative
+    """
     # Compute first finite derivative
     first_d = np.diff(y_array) / np.diff(x_array)
     # Take the mean of the left and right derivative
@@ -1768,7 +1880,7 @@ def get_finite_derivatives(x_array, y_array):
 def get_nyquist_matrix(grid, integrate=True, n_sampling=2,
                        thresh=1e-5, **kwargs):
     """
-    Get the tikhonov regularisation matrix based on
+    Get the Tikhonov regularization matrix based on
     a Nyquist convolution matrix (convolution with
     a kernel with a resolution given by the sampling
     of a grid). The Tikhonov matrix will be given by
@@ -1777,19 +1889,19 @@ def get_nyquist_matrix(grid, integrate=True, n_sampling=2,
 
     Parameters
     ----------
-    grid: 1d-array
-        Grid to project the kernel
-    integrate: bool, optional
-        If True, add integration weights to the tikhonov matrix, so
+    grid : array
+        1D grid to project the kernel
+    integrate : bool, optional
+        If True, add integration weights to the Tikhonov matrix, so
         when the squared norm is computed, the result is equivalent
         to the integral of the integrand squared.
-    n_sampling: int, optional
+    n_sampling : int, optional
         sampling of the grid. Default is 2, so we assume that
         the grid is Nyquist sampled.
-    thresh: float, optional
+    thresh : float, optional
         Used to define the maximum length of the kernel.
         Truncate when `kernel` < `thresh`
-    kwargs:
+    kwargs :
         `interp1d` kwargs used to get FWHM as a function of the grid.
     """
 
@@ -2155,254 +2267,6 @@ class TikhoTests(dict):
 
         # Return estimated best scale factor
         return best_fac
-
-    def _check_plot_inputs(self, fig, ax, label, tests):
-        """
-        Method to manage inputs for plots methods.
-        """
-
-        # Use ax or fig if given. Else, init the figure
-        if (fig is None) and (ax is None):
-            fig, ax = plt.subplots(1, 1, sharex=True)
-        elif ax is None:
-            ax = fig.subplots(1, 1, sharex=True)
-
-        # Use the type of regularisation as label if None is given
-        if label is None:
-            label = self.name
-
-        if tests is None:
-            tests = self
-
-        return fig, ax, label, tests
-
-    def error_plot(self, fig=None, ax=None, label=None, tests=None,
-                   test_key=None, y_val=None):
-        """
-        Plot error as a function of factors
-        The keyword 'factors' is needed either in `tests` test input
-        or in `self.tests`.
-        Parameters
-        ----------
-        fig: matplotlib figure, optional
-            Figure to use for plot
-            If not given and ax is None, new figure is initiated
-        ax: matplotlib axis, optional
-            axis to use for plot. If not given, a new axis is initiated.
-        label: str, optional
-            label too put in legend
-        tests: dictionnary or TikhoTests, optional
-            tests. If not specified, `self.tests` is used
-        test_key: str, optional
-            which key to use in self.tests or the input kwargs `tests`.
-            If not specified, the euclidian norm of the 'error' key will be used.
-        y_val: array-like, optional
-            y values to plot. Same length as factors.
-        Returns
-        ------
-        fig, ax
-        """
-
-        # Manage method's inputs
-        args = (fig, ax, label, tests)
-        fig, ax, label, tests = self._check_plot_inputs(*args)
-
-        # What y value do we plot?
-        if y_val is None:
-            # Use tests to plot y_val
-            if test_key is None:
-                # Default is euclidian norm of error.
-                # In other words, the chi^2.
-                y_val = self['chi2']
-            else:
-                y_val = tests[test_key]
-
-        # Take factors from test_dict
-        factors = tests['factors']
-
-        # Plot
-        ax.loglog(factors, y_val, label=label)
-
-        # Mark minimum value
-        i_min = np.argmin(y_val)
-        min_coord = factors[i_min], y_val[i_min]
-        ax.scatter(*min_coord, marker="x")
-        text = '{:2.1e}'.format(min_coord[0])
-        ax.text(*min_coord, text, va="top", ha="center")
-
-        # Show legend
-        ax.legend()
-
-        # Labels
-        ax.set_xlabel("Scale factor")
-        ylabel = r'System error '
-        ylabel += r'$\left(||\mathbf{Ax-b}||^2_2\right)$'
-        ax.set_ylabel(ylabel)
-
-        return fig, ax
-
-    def d_error_plot(self, fig=None, ax=None, label=None, tests=None,
-                     test_key=None, y_val=None):
-        """
-        Plot error derivative as a function of factors.
-        The keyword 'factors' is needed either in `tests` input
-        or in `self.tests`.
-        Parameters
-        ----------
-        fig: matplotlib figure, optional
-            Figure to use for plot
-            If not given and ax is None, new figure is initiated
-        ax: matplotlib axis, optional
-            axis to use for plot. If not given, a new axis is initiated.
-        label: str, optional
-            label too put in legend
-        tests: dictionnary or TikhoTests, optional
-            tests. If not specified, `self.tests` is used
-        test_key: str, optional
-            which key to use in self.tests or the input kwargs `tests`.
-            If not specified, the mean of the euclidian norm-2
-            of the 'error' key will be used. This corresponds to the reduced chi^2.
-        y_val: array-like, optional
-            y values to plot. Same length as factors.
-        Returns
-        ------
-        fig, ax
-        """
-
-        # Manage method's inputs and defaults
-        args = (fig, ax, label, tests)
-        fig, ax, label, tests = self._check_plot_inputs(*args)
-
-        # What y value do we plot?
-        if y_val is None:
-            # Use tests to plot y_val
-            if test_key is None:
-                # Default is euclidian norm of error.
-                # In other words, the chi^2.
-                y_val = self['chi2']
-            else:
-                y_val = tests[test_key]
-
-        # Take factors from test_dict
-        factors = tests['factors']
-
-        # Compute finite derivative
-        x_log = np.log10(factors)
-        y_val = np.diff(y_val) / np.diff(x_log)
-
-        # Update size of factors to fit derivatives
-        # Equivalent to derivative on the left side of the nodes
-        factors = factors[1:]
-
-        # Plot
-        ax.loglog(factors, y_val, label=label)
-
-        # Labels
-        ax.set_xlabel("Scale factor")
-        ylabel = r'System error derivative'
-        ax.set_ylabel(ylabel)
-
-        return fig, ax
-
-    def l_plot(self, fig=None, ax=None, label=None,
-               tests=None, text_label=True, factor_norm=False):
-        """
-        make an 'l curve'
-        The keywords 'factors', 'error' and 'reg' are needed either
-        in `tests` input or in `self.tests`.
-        Parameters
-        ----------
-        fig: matplotlib figure, optional
-            Figure to use for plot
-            If not given and ax is None, new figure is initiated
-        ax: matplotlib axis, optional
-            axis to use for plot. If not given, a new axis is initiated.
-        label: str, optional
-            label too put in legend
-        test: dictionnary or TikhoTests, optional
-            tests. If not specified, `self.tests` is used
-        text_label: bool, optional
-            If True, add label of the factor value to each points in the plot.
-        Returns
-        ------
-        fig, ax
-        """
-
-        # Manage method's inputs
-        args = (fig, ax, label, tests)
-        fig, ax, label, tests = self._check_plot_inputs(*args)
-
-        # Get factors from test_dict
-        factors = tests['factors']
-
-        # Compute euclidian norm of error (||A.x - b||).
-        # In other words, the chi^2.
-        err_norm = self['chi2']
-
-        # Compute norm of regularisation term
-        reg_norm = np.nansum(tests['reg'] ** 2, axis=-1)
-
-        # Factors
-        if factor_norm:
-            reg_norm *= factors ** 2
-
-        # Plot
-        ax.loglog(err_norm, reg_norm, '.:', label=label)
-
-        # Add factor values as text
-        if text_label:
-            for f, x, y in zip(factors, err_norm, reg_norm):
-                plt.text(x, y, "{:2.1e}".format(f), va="center", ha="right")
-
-        # Legend
-        ax.legend()
-
-        # Labels
-        xlabel = r'$\left(||\mathbf{Ax-b}||^2_2\right)$'
-        ylabel = r'$\left(||\mathbf{\Gamma.x}||^2_2\right)$'
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-
-        return fig, ax
-
-    def curvature_plot(self, factors, curv, fig=None, ax=None, label=None):
-        """
-        Plot curvature of the l_plot as a function of factors.
-        The keyword 'factors' is needed either in `tests` input
-        or in `self.tests`.
-        Parameters
-        ----------
-        factors: 1d array-like
-            tikhonov factors (x value for the plot)
-        curv: 1d array-like
-            curvature to plot (y value for the plot)
-        fig: matplotlib figure, optional
-            Figure to use for plot
-            If not given and ax is None, new figure is initiated
-        ax: matplotlib axis, optional
-            axis to use for plot. If not given, a new axis is initiated.
-        label: str, optional
-            label too put in legend
-        tests: dictionnary or TikhoTests, optional
-            tests. If not specified, `self.tests` is used
-        Returns
-        ------
-        fig, ax
-        """
-
-        # Manage method's inputs and defaults
-        args = (fig, ax, label, None)
-        fig, ax, label, _ = self._check_plot_inputs(*args)
-
-        # Plot
-        ax.semilogx(factors, curv, label=label)
-
-        # Labels
-        ax.set_xlabel("Scale factor")
-        ylabel = 'Curvature'
-        ax.set_ylabel(ylabel)
-
-        return fig, ax
 
 
 class Tikhonov:
