@@ -161,9 +161,6 @@ def test_frame_from_model_3d(tmpdir, create_model_3d):
     assert frame.frames[1].name == 'ALPHA1A_BETA1A'
     assert frame.frames[1].axes_names == ('ALPHA1A', 'BETA1A')
 
-    tree = {'frame': frame}
-    helpers.assert_roundtrip_tree(tree, tmpdir)
-
 
 def test_frame_from_model_2d(tmpdir, create_model_2d):
     """ Tests creating a frame from a data model. """
@@ -173,9 +170,6 @@ def test_frame_from_model_2d(tmpdir, create_model_2d):
 
     assert frame.name == "sky"
     assert frame.axes_names == ("RA", "DEC")
-
-    tree = {'frame': frame}
-    helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
 def test_create_fitswcs(tmpdir, create_model_3d):
@@ -194,10 +188,6 @@ def test_create_fitswcs(tmpdir, create_model_3d):
 
     # Check that astropy.wcs.WCS and gwcs.WCS give same result
     assert_allclose((ra, dec), (gra, gdec))
-
-    # test serialization
-    tree = {'wcs': w3d}
-    helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
 def test_sip_approx(tmpdir):
