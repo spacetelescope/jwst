@@ -49,7 +49,7 @@ def test_wavecorr():
     zero_point1 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos1, 'MOS', dispersion)
     zero_point2 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos2, 'MOS', dispersion)
     diff_correction = np.abs(zero_point1[1] - zero_point2[1])
-    assert_allclose(np.nanmean(diff_correction), 0.02, atol=0.01)
+    assert_allclose(np.nanmean(diff_correction), 0.49, atol=0.01)
 
 
 def test_ideal_to_v23_fs():
@@ -177,4 +177,4 @@ def test_wavecorr_fs():
     zero_point1 = wavecorr.compute_zero_point_correction(lam_before, freference, source_xpos1, 'S200A1', dispersion)
     zero_point2 = wavecorr.compute_zero_point_correction(lam_before, freference, source_xpos2, 'S200A1', dispersion)
     diff_correction = np.abs(zero_point1[1] - zero_point2[1])
-    assert_allclose(np.nanmean(diff_correction), 0.06, atol=0.01)
+    assert_allclose(np.nanmean(diff_correction), 0.45, atol=0.01)
