@@ -91,7 +91,7 @@ class ResidualFringeCorrection():
         output_data /= normalization_factor
 
         # Load the fringe reference file
-        residual_fringe_model = datamodels.ResidualFringeModel(self.residual_fringe_reference_file)
+        residual_fringe_model = datamodels.FringeFreqModel(self.residual_fringe_reference_file)
 
         # read in the band
         band = self.input_model.meta.instrument.band.lower()
