@@ -85,8 +85,7 @@ def arange_2d(starts, stops, dtype=None):
 
 
 def sparse_k(val, k, n_k):
-    """
-    Transform a 2D array `val` to a sparse matrix.
+    """Transform a 2D array `val` to a sparse matrix.
 
     Parameters
     ----------
@@ -121,8 +120,7 @@ def sparse_k(val, k, n_k):
 
 
 def unsparse(matrix, fill_value=np.nan):
-    """
-    Convert a sparse matrix to a 2D array of values and a 2D array of position.
+    """Convert a sparse matrix to a 2D array of values and a 2D array of position.
 
     Parameters
     ----------
@@ -255,8 +253,7 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
 
 
 def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
-    """
-    Check that the dispersion axis is increasing in the good direction
+    """Check that the dispersion axis is increasing in the good direction
     given by `dwv_sign``
     Parameters
     ----------
@@ -286,8 +283,7 @@ def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
 
 
 def mask_bad_dispersion_direction(wave_map, n_max=10, fill_value=0, dispersion_axis=1, dwv_sign=-1):
-    """
-    Change value of the pixels in `wave_map` that do not follow the
+    """Change value of the pixels in `wave_map` that do not follow the
     general dispersion direction.
 
     Parameters
@@ -1050,8 +1046,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 
 
 def gaussians(x, x0, sig, amp=None):
-    """
-    Gaussian function
+    """Gaussian function
 
     Parameters
     ----------
@@ -1080,8 +1075,7 @@ def gaussians(x, x0, sig, amp=None):
 
 
 def fwhm2sigma(fwhm):
-    """
-    Convert a full width half max to a standard deviation, assuming a gaussian
+    """Convert a full width half max to a standard deviation, assuming a gaussian
 
     Parameters
     ----------
@@ -1129,8 +1123,7 @@ def to_2d(kernel, grid_range):
 
 
 def _get_wings(fct, grid, h_len, i_a, i_b):
-    """
-    Compute values of the kernel at grid[+-h_len]
+    """Compute values of the kernel at grid[+-h_len]
 
     Parameters
     ----------
@@ -1197,8 +1190,7 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
 
 
 def trpz_weight(grid, length, shape, i_a, i_b):
-    """
-    Compute weights due to trapezoidal integration
+    """Compute weights due to trapezoidal integration
 
     Parameters
     ----------
@@ -1247,8 +1239,7 @@ def trpz_weight(grid, length, shape, i_a, i_b):
 
 
 def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
-    """
-    Build a compact kernel 2d array based on a kernel function
+    """Build a compact kernel 2d array based on a kernel function
     and a grid to project the kernel
 
     Parameters
@@ -1344,8 +1335,7 @@ def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
 
 
 def cut_ker(ker, n_out=None, thresh=None):
-    """
-    Apply a cut on the convolution matrix boundaries.
+    """Apply a cut on the convolution matrix boundaries.
 
     Parameters
     ----------
@@ -1420,8 +1410,7 @@ def cut_ker(ker, n_out=None, thresh=None):
 
 
 def sparse_c(ker, n_k, i_zero=0):
-    """
-    Convert a convolution kernel in compact form (N_ker, N_k_convolved)
+    """Convert a convolution kernel in compact form (N_ker, N_k_convolved)
     to sparse form (N_k_convolved, N_k)
 
     Parameters
@@ -1473,8 +1462,7 @@ def sparse_c(ker, n_k, i_zero=0):
 
 def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
                  sparse=True, n_out=None, thresh_out=None, **kwargs):
-    """
-    Return a convolution matrix
+    """Return a convolution matrix
     Can return a sparse matrix (N_k_convolved, N_k)
     or a matrix in the compact form (N_ker, N_k_convolved).
     N_k is the length of the grid on which the convolution
@@ -1569,8 +1557,7 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
 
 
 class NyquistKer:
-    """
-    Define a gaussian convolution kernel at the nyquist
+    """Define a gaussian convolution kernel at the nyquist
     sampling. For a given point on the grid x_i, the kernel
     is given by a gaussian with
     FWHM = n_sampling * (dx_(i-1) + dx_i) / 2.
@@ -1582,8 +1569,7 @@ class NyquistKer:
 
     def __init__(self, grid, n_sampling=2, bounds_error=False,
                  fill_value="extrapolate", **kwargs):
-        """
-        Parameters
+        """Parameters
         ----------
         grid : array[float]
             Grid used to define the kernels
@@ -1613,8 +1599,7 @@ class NyquistKer:
         self.fct_sig = sig
 
     def __call__(self, x, x0):
-        """
-        Parameters
+        """Parameters
         ----------
         x : array[float]
             position where the kernel is evaluated
@@ -1638,8 +1623,7 @@ class NyquistKer:
 
 
 def finite_diff(x):
-    """
-    Returns the finite difference matrix operator based on x.
+    """Returns the finite difference matrix operator based on x.
 
     Parameters
     ----------
@@ -1662,8 +1646,7 @@ def finite_diff(x):
 
 
 def finite_second_d(grid):
-    """
-    Returns the second derivative operator based on grid
+    """Returns the second derivative operator based on grid
 
     Parameters
     ----------
@@ -1697,8 +1680,7 @@ def finite_second_d(grid):
 
 
 def finite_first_d(grid):
-    """
-    Returns the first derivative operator based on grid
+    """Returns the first derivative operator based on grid
 
     Parameters
     ----------
@@ -1726,8 +1708,7 @@ def finite_first_d(grid):
 
 
 def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0):
-    """
-    Wrapper to return the tikhonov matrix given a grid and the derivative degree.
+    """Wrapper to return the tikhonov matrix given a grid and the derivative degree.
 
     Parameters
     ----------
@@ -1804,8 +1785,7 @@ def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0
 
 
 def curvature_finite(factors, log_reg2, log_chi2):
-    """
-    Compute the curvature in log space using finite differences
+    """Compute the curvature in log space using finite differences
 
     Parameters
     ----------
@@ -1875,73 +1855,26 @@ def get_finite_derivatives(x_array, y_array):
     return mean_first_d, second_d
 
 
-def get_nyquist_matrix(grid, integrate=True, n_sampling=2,
-                       thresh=1e-5, **kwargs):
-    """
-    Get the Tikhonov regularization matrix based on
-    a Nyquist convolution matrix (convolution with
-    a kernel with a resolution given by the sampling
-    of a grid). The Tikhonov matrix will be given by
-    the difference of the nominal solution and
-    the convolved solution.
-
-    Parameters
-    ----------
-    grid : array
-        1D grid to project the kernel
-    integrate : bool, optional
-        If True, add integration weights to the Tikhonov matrix, so
-        when the squared norm is computed, the result is equivalent
-        to the integral of the integrand squared.
-    n_sampling : int, optional
-        sampling of the grid. Default is 2, so we assume that
-        the grid is Nyquist sampled.
-    thresh : float, optional
-        Used to define the maximum length of the kernel.
-        Truncate when `kernel` < `thresh`
-    kwargs :
-        `interp1d` kwargs used to get FWHM as a function of the grid.
-    """
-
-    # Get nyquist kernel function
-    ker = NyquistKer(grid, n_sampling=n_sampling, **kwargs)
-
-    # Build convolution matrix
-    conv_matrix = get_c_matrix(ker, grid, thresh=thresh)
-
-    # Build tikhonov matrix
-    t_mat = conv_matrix - identity(conv_matrix.shape[0])
-
-    if integrate:
-        # The grid may not be evenly spaced, so
-        # add an integration weight
-        d_grid = np.diff(grid)
-        d_grid = np.concatenate([d_grid, [d_grid[-1]]])
-        t_mat = diags(np.sqrt(d_grid)).dot(t_mat)
-
-    return t_mat
-
-
 def tikho_solve(a_mat, b_vec, t_mat, verbose=True, factor=1.0):
-    """
-    Tikhonov solver to use as a function instead of a class.
+    """Tikhonov solver to use as a function instead of a class.
 
     Parameters
     ----------
-    a_mat: matrix-like object (2d)
+    a_mat : matrix-like object (2d)
         matrix A in the system to solve A.x = b
-    b_vec: vector-like object (1d)
+    b_vec : vector-like object (1d)
         vector b in the system to solve A.x = b
-    t_mat: matrix-like object (2d)
+    t_mat : matrix-like object (2d)
         Tikhonov regularisation matrix to be applied on b_vec.
-    verbose: bool
+    verbose : bool
         Print details or not
-    factor: float, optional
+    factor : float, optional
         multiplicative constant of the regularisation matrix
 
     Returns
-    ------
-    Solution of the system (1d array)
+    -------
+    array[float]
+        Solution of the system
     """
     tikho = Tikhonov(a_mat, b_vec, t_mat, verbose=verbose)
 
@@ -1949,7 +1882,22 @@ def tikho_solve(a_mat, b_vec, t_mat, verbose=True, factor=1.0):
 
 
 def _get_interp_idx_array(idx, relative_range, max_length):
-    """ Generate array given the relative range around an index."""
+    """ Generate array given the relative range around an index.
+
+    Parameters
+    ----------
+    idx : int
+        Center index value
+    relative_range : iterable[int]
+        relative bounds around center value to create new array
+    max_length : int
+        Upper bound on range of indices to provide
+
+    Returns
+    -------
+    array[int]
+        Output array of indices
+    """
 
     # Convert to absolute index range
     abs_range = [idx + d_idx for d_idx in relative_range]
@@ -1964,17 +1912,29 @@ def _get_interp_idx_array(idx, relative_range, max_length):
     return out
 
 
-def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None, ax=None):
-    """ Find minimum of a grid using akima spline interpolation to get a finer estimate """
+def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
+    """ Find minimum of a grid using akima spline interpolation to get a finer estimate
+
+    Parameters
+    ----------
+    factors : array[float]
+        1D array of Tikhonov factors for which value array is calculated
+    val_to_minimize : array[float]
+        1D array of values to be minimized, e.g. chi^2 or curvature.
+    interpolate: bool, optional
+        If True, use akima spline interpolation to find a finer minimum;
+        otherwise, return minimum value in array. Default is true.
+    interp_index : iterable[int], optional
+        Relative range of grid indices around the minimum value to interpolate
+        across. If not specified, defaults to [-2,4].
+    Returns
+    -------
+    min_fac : float
+        The factor with minimized error/curvature.
+    """
 
     if interp_index is None:
         interp_index = [-2, 4]
-
-    # The fit will be plot if required, so if ax is not None
-    if ax is None:
-        i_plot = False
-    else:
-        i_plot = True
 
     # Only keep finite values
     idx_finite = np.isfinite(val_to_minimize)
@@ -1990,7 +1950,6 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None, 
 
     if interpolate:
         # Interpolate to get a finer estimate
-        #
         # Une index only around the best value
         max_length = len(val_to_minimize)
         index = _get_interp_idx_array(idx_min, interp_index, max_length)
@@ -2007,18 +1966,6 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None, 
                     "method": "bounded"}
         min_fac = minimize_scalar(fct, **opt_args).x
 
-        # Plot the fit if required
-        if i_plot:
-            # Fitted sub-grid
-            ax.plot(10. ** x_val, y_val, ".")
-
-            # Show akima spline
-            x_new = np.linspace(*bounds, 100)
-            ax.plot(10. ** x_new, fct(x_new))
-
-            # Show minimum found
-            ax.plot(10. ** min_fac, fct(min_fac), "x")
-
         # Back to linear scale
         min_fac = 10. ** min_fac
 
@@ -2026,10 +1973,6 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None, 
         # Simply return the min value
         # if no interpolation required
         min_fac = factors[idx_min]
-
-        if i_plot:
-            # Show minimum found
-            ax.plot(min_fac, val_to_minimize[idx_min], "x")
 
     return min_fac
 
@@ -2181,7 +2124,7 @@ class TikhoTests(dict):
         return factors, curv
 
     def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
-                          i_plot=False, mode='curvature', thresh=0.01):
+                          mode='curvature', thresh=0.01):
         """Compute the best scale factor for Tikhonov regularisation.
         It is determine by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
@@ -2204,8 +2147,6 @@ class TikhoTests(dict):
             the minimum logL value and [i1, i2] = interp_index,
             then the interpolation will be perform between
             i_min + i1 and i_min + i2 - 1
-        i_plot: bool, optional
-            Plot the result of the minimization
         mode: string
             How to find the best factor: 'chi2', 'curvature' or 'd_chi2'.
         thresh: float
@@ -2220,32 +2161,21 @@ class TikhoTests(dict):
         if tests is None:
             tests = self
 
-        # Initiate ax to None
-        ax = None
-
         # Depending of the mode (what do we minimize?)
         if mode == 'curvature':
             # Compute the curvature
             factors, curv = tests.compute_curvature()
 
-            # Plot if needed
-            if i_plot:
-                fig, ax = self.curvature_plot(factors, curv)
-
             # Find min factor
-            best_fac = _minimize_on_grid(factors, curv, interpolate, interp_index, ax)
+            best_fac = _minimize_on_grid(factors, curv, interpolate, interp_index)
 
         elif mode == 'chi2':
             # Simply take the chi2 and factors
             factors = tests['factors']
             y_val = tests['chi2']
 
-            # Plot if needed
-            if i_plot:
-                fig, ax = self.error_plot()
-
             # Find min factor
-            best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index, ax)
+            best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index)
 
         elif mode == 'd_chi2':
             # Compute the derivative of the chi2
@@ -2253,12 +2183,6 @@ class TikhoTests(dict):
 
             # Find intersection with threshold
             best_fac = _find_intersect(factors, y_val, thresh, interpolate, interp_index)
-
-            # Plot if needed
-            if i_plot:
-                fig, ax = self.d_error_plot()
-                ax.axhline(thresh, linestyle='--')
-                ax.axvline(best_fac, linestyle='--')
 
         else:
             raise ValueError(f'`mode`={mode} is not valid.')

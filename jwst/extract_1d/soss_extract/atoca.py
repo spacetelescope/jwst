@@ -1090,7 +1090,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
         return tests
 
-    def best_tikho_factor(self, tests=None, i_plot=False, fit_mode='all', mode_kwargs=None):
+    def best_tikho_factor(self, tests=None, fit_mode='all', mode_kwargs=None):
         """
         Compute the best scale factor for Tikhonov regularisation.
         It is determine by taking the factor giving the lowest reduced chi2 on
@@ -1105,8 +1105,6 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
             Must have the keys "factors" and "-logl".
             If not specified, the tests from self.tikho.tests
             are used.
-        i_plot: bool, optional
-            Plot the result of the minimization
         fit_mode: string, optional
             Which mode is used to find the best tikhonov factor. Options are
             'all', 'curvature', 'chi2', 'd_chi2'. If 'all' is chosen, the best of the
@@ -1150,7 +1148,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         # Evaluate best factor with different methods
         results = dict()
         for mode in list_mode:
-            best_fac = tests.best_tikho_factor(mode=mode, i_plot=i_plot, **mode_kwargs[mode])
+            best_fac = tests.best_tikho_factor(mode=mode, **mode_kwargs[mode])
             results[mode] = best_fac
 
         if fit_mode == 'all':
@@ -1503,147 +1501,6 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
         # Convert to array and return with the pixel centers.
         return pix_center, np.array(bin_val)
-
-    @staticmethod
-    def _check_plot_inputs(fig, ax):
-        """Method to manage inputs for plots methods."""
-
-        # Use ax or fig if given. Else, init the figure
-        if (fig is None) and (ax is None):
-            fig, ax = plt.subplots(1, 1, sharex=True)
-        elif ax is None:
-            ax = fig.subplots(1, 1, sharex=True)
-
-        return fig, ax
-
-    def plot_tikho_factors(self):
-        """Plot results of tikhonov tests.
-
-        Returns
-        ------
-        figure and axes (for plot)
-        """
-
-        # Use tikhonov extraction from object
-        tikho_tests = self.tikho_tests
-
-        # Init figure
-        fig, ax = plt.subplots(2, 1, sharex=True, figsize=(8, 6))
-
-        # Chi2 plot
-        tikho_tests.error_plot(ax=ax[0])
-
-        # Derivative of the chi2
-        tikho_tests.d_error_plot(ax=ax[1])
-
-        # Other details
-        fig.tight_layout()
-
-        return fig, ax
-
-    def plot_sln(self, spectrum, fig=None, ax=None, i_order=0,
-                 ylabel='Flux', xlabel=r'Wavelength [$\mu$m]', **kwargs):
-        """Plot extracted spectrum
-
-        Parameters
-        ----------
-        spectrum (f_k): array-like
-            Flux projected on the wavelength grid
-        fig: matplotlib figure, optional
-            Figure to use for plot
-            If not given and ax is None, new figure is initiated
-        ax: matplotlib axis, optional
-            axis to use for plot. If not given, a new axis is initiated.
-        i_order: int, optional
-            index of the order to plot.
-            Default is 0 (so the first order given).
-        ylabel: str, optional
-            Label of y axis
-        xlabel: str, optional
-            Label of x axis
-        kwargs:
-            other kwargs to be passed to plt.plot
-
-        Returns
-        ------
-        fig, ax
-        """
-
-        # Manage method's inputs
-        fig, ax = self._check_plot_inputs(fig, ax)
-
-        # Set values to plot
-        x = self.wave_grid_c(i_order)
-        y = self.kernels[i_order].dot(spectrum)
-
-        # Plot
-        ax.plot(x, y, **kwargs)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-
-        return fig, ax
-
-    def plot_err(self, spectrum, f_th_ord, fig=None, ax=None,
-                 i_order=0, error='relative', ylabel='Error',
-                 xlabel=r'Wavelength [$\mu$m]', **kwargs):
-        """Plot error on extracted spectrum
-
-        Parameters
-        ----------
-        spectrum (f_k): array-like
-            Flux projected on the wavelength grid
-        f_th_ord: array-like
-            Injected flux projected on the wavelength grid
-            and convolved at `i_order` resolution
-        fig: matplotlib figure, optional
-            Figure to use for plot
-            If not given and ax is None, new figure is initiated
-        ax: matplotlib axis, optional
-            axis to use for plot. If not given, a new axis is initiated.
-        i_order: int, optional
-            index of the order to plot. Default is 0 (so the first order given)
-        error: str, optional
-            Which type of error to plot.
-            Possibilities: 'relative', 'absolute', 'to_noise'
-            Default is 'relative'. To noise is the error relative
-            to the expected Poisson noise error
-        ylabel: str, optional
-            Label of y axis
-        xlabel: str, optional
-            Label of x axis
-        kwargs:
-            other kwargs to be passed to plt.plot
-
-        Returns
-        ------
-        fig, ax
-        """
-
-        # Manage method's inputs
-        fig, ax = self._check_plot_inputs(fig, ax)
-
-        # Set values to plot
-        x = self.wave_grid_c(i_order)
-        convolved_spectrum = self.kernels[i_order].dot(spectrum)
-
-        if error == 'relative':
-            y = (convolved_spectrum - f_th_ord) / f_th_ord
-        elif error == 'absolute':
-            y = convolved_spectrum - f_th_ord
-        elif error == 'to_noise':
-            y = (convolved_spectrum - f_th_ord) / np.sqrt(f_th_ord)
-        else:
-            raise ValueError('`error` argument is not valid.')
-
-        # Add info to ylabel
-        ylabel += ' ({})'.format(error)
-
-        # Plot
-        ax.plot(x, y, **kwargs)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-
-        return fig, ax
 
 
 class ExtractionEngine(_BaseOverlap):  # TODO Merge with _BaseOverlap?
