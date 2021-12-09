@@ -2481,23 +2481,23 @@ properties:
           width:
             title: Aperture width used in extraction
             type: number
-            fits_keyword: SOSS_WDTH
+            fits_keyword: SOSSWDTH
           tikhonov_factor:
             title: Tikhonov factor used in extraction
             type: number
-            fits_keyword: TIKFAC
+            fits_keyword: TIKFACTR
           delta_x:
             title: X-shift used in extraction
             type: number
-            fits_keyword: SOSS_DLTX
+            fits_keyword: SOSSDLTX
           delta_y:
             title: Y-shift used in extraction
             type: number
-            fits_keyword: SOSS_DLTY
+            fits_keyword: SOSSDLTY
           theta:
             title: Rotation angle used in extraction
             type: number
-            fits_keyword: SOSS_ROTN
+            fits_keyword: SOSSROTN
           oversampling:
             title: Oversampling used in extraction
             type: number
