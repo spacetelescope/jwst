@@ -162,7 +162,8 @@ def test_NIRISSBackwardDispersion():
                        Polynomial1D(1, c0=0.75, c1=1.55)]
 
     forward_model = transforms.NIRISSForwardColumnGrismDispersion([1, 2], forward_lmodels,
-                                                                  forward_xmodels, forward_ymodels)
+                                                                  forward_xmodels, forward_ymodels,
+                                                                  theta=0)
 
     # NirissBackward model uses xmodels, ymodels and invlmodels
     lmodels = [Polynomial1D(1, c0=-0.48387097, c1=0.64516129),
@@ -170,7 +171,9 @@ def test_NIRISSBackwardDispersion():
                ]
 
     model = transforms.NIRISSBackwardGrismDispersion([1, 2], lmodels=lmodels,
-                                                     xmodels=forward_xmodels, ymodels=forward_ymodels)
+                                                     xmodels=forward_xmodels,
+                                                     ymodels=forward_ymodels,
+                                                     theta=0.0)
 
     wavelength = np.array(
         [[2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3],

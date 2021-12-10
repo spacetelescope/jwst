@@ -42,7 +42,7 @@ package_data = {
     "jwst.cube_build.src": ["*.c"],
 
     # Include the transforms schemas
-    "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
+    "jwst.transforms": ["resources/schemas/stsci.edu/jwst_pipeline/*.yaml"],
     "jwst.stpipe.resources": ["schemas/*.yaml"],
 }
 

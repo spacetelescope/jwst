@@ -1,0 +1,26 @@
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/niriss_soss-0.7.0"
+title: >
+  NIRISS SOSS transforms.
+
+description: |
+  This model is used by the NIRISS SOSS WCS pipeline.
+  It maps spectral orderto to transform
+
+allOf:
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
+  - type: object
+    properties:
+      spectral_orders:
+        type: array
+        items:
+          type: integer
+        description: |
+          An array with spectral order numbers.
+      models:
+        description: |
+          A compound model transferring pixel to worlds coordinates.
+        type: array
+        items:
+          $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
+    required: [spectral_orders, models]

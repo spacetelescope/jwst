@@ -1,0 +1,31 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/miri_ab2slice-1.0.0"
+title: >
+  MIRI MRS (alpha, beta) to slice number transform.
+
+description: |
+  This model is used by the MIRI MRS WCS pipeline.
+  Given a (beta, ) coordinate it computes the slice number
+  that the coordinate belongs to in detector coordinates.
+
+allOf:
+  - $ref: "http://stsci.edu/schemas/asdf/transform/transform-1.2.0"
+  - type: object
+    properties:
+      beta_zero:
+        description: |
+          Beta coordinate of the center of slice 1 in the MIRI MRS.
+        type: number
+      beta_del:
+        description: |
+          Slice width.
+        type: number
+      channel:
+        description: |
+          MIRI channel number.
+        type:
+          number
+        enum: [1, 2, 3, 4]
+    required: [beta_zero, beta_del, channel]

@@ -1,0 +1,41 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/v23tosky-0.7.0"
+title: >
+  A sequence of 3D rotations.
+
+description: |
+  A sequence of 3D rotations around different axes.
+  This represents JWST transform from the telescope
+  coordinate system (V2,V3) to ICRS.
+
+examples:
+  -
+    - JWST V2, V3 to sky transform.
+
+    - |
+        !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
+          angles: [-0.0193, -0.1432, -0.04, -65.60, 273.089]
+          axes_order: zyxyz
+
+allOf:
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
+  - type: object
+    properties:
+      angles:
+        description: |
+          The angles of rotation in units of deg.
+          The order of the angles is:
+          [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF]
+        type: array
+        items:
+          type: number
+      axes_order:
+        description: |
+          A sequence of "x", "y" or "z" characters representing an axis of rotation.
+          The number of characters must equal the number of angles.
+          For the JWST V23 to sky transform the axes are zyxyz.
+        type: string
+        pattern: "^[xyz]+$"
+    required: [angles, axes_order]

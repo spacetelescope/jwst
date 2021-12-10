@@ -4,12 +4,13 @@ from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
 from astropy.io import fits
-from asdf.tests import helpers
+from astropy.modeling.models import RotationSequence3D
+
+from gwcs.wcstools import grid_from_bounding_box
+from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 
 from jwst.assign_wcs import AssignWcsStep, pointing
-from jwst.transforms import models
 from jwst.datamodels import ImageModel, CubeModel, open
-from gwcs.wcstools import grid_from_bounding_box
 
 
 def create_hdul(wcskeys={
@@ -101,7 +102,7 @@ def create_model_3d():
 def test_roll_angle():
     """
     A sanity test - when V2_REF = 0 and V3_REF = 0,
-    for V2, V3 close to he origin
+    for V2, V3 close to the origin
     ROLL_REF should be approximately PA_V3 .
 
     (Test taken from SIAF report.)
@@ -131,9 +132,11 @@ def test_v23_to_sky():
     v2 = 210  # in deg
     v3 = -75  # in deg
     expected_ra_dec = (107.12810484789563, -35.97940247128502)  # in deg
-    angles = [-v2_ref, v3_ref, -r0, -dec_ref, ra_ref]
+    angles = [v2_ref, -v3_ref, r0, dec_ref, -ra_ref]
     axes = "zyxyz"
-    v2s = models.V23ToSky(angles, axes_order=axes)
+
+    rot = RotationSequence3D(angles, axes_order=axes)
+    v2s = SphericalToCartesian() | rot | CartesianToSpherical()
     radec = v2s(v2, v3)
     assert_allclose(radec, expected_ra_dec, atol=1e-10)
 
@@ -157,9 +160,6 @@ def test_frame_from_model_3d(tmpdir, create_model_3d):
     assert frame.frames[1].name == 'ALPHA1A_BETA1A'
     assert frame.frames[1].axes_names == ('ALPHA1A', 'BETA1A')
 
-    tree = {'frame': frame}
-    helpers.assert_roundtrip_tree(tree, tmpdir)
-
 
 def test_frame_from_model_2d(tmpdir, create_model_2d):
     """ Tests creating a frame from a data model. """
@@ -169,9 +169,6 @@ def test_frame_from_model_2d(tmpdir, create_model_2d):
 
     assert frame.name == "sky"
     assert frame.axes_names == ("RA", "DEC")
-
-    tree = {'frame': frame}
-    helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
 def test_create_fitswcs(tmpdir, create_model_3d):
@@ -190,10 +187,6 @@ def test_create_fitswcs(tmpdir, create_model_3d):
 
     # Check that astropy.wcs.WCS and gwcs.WCS give same result
     assert_allclose((ra, dec), (gra, gdec))
-
-    # test serialization
-    tree = {'wcs': w3d}
-    helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
 def test_sip_approx(tmpdir):
