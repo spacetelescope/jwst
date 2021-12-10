@@ -134,6 +134,8 @@ datamodels
 
 - Fixed names of NIRISS SOSS extract_1d parameter keywords to be legal FITS [#6499]
 
+- Update PATTTYPE enum values to match spellings used in keyword dictionary [#6501]
+
 dark_current
 ------------
 
