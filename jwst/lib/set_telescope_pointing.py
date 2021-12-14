@@ -2151,6 +2151,11 @@ def calc_eci2j_matrix(q):
 def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
     """Calculate the J-frame to FGS1 transformation
 
+    This implements Eq. 25 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    From Section 3.2.2:
+
+    The M_(J→FGS1ICS) DCM is derived from the transpose of the SC ACS telemetry
+
     Parameters
     ----------
     j2fgs_matrix : n.array((9,))
