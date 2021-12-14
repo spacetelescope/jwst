@@ -930,9 +930,13 @@ def calc_wcs_tr_202111(transforms: Transforms):
 def calc_transforms(t_pars: TransformParameters):
     """Calculate transforms  which determine reference point celestial WCS
 
-    Given the spacecraft pointing parameters and the
-    aperture-specific SIAF, calculate all the transforms
-    necessary to produce WCS information.
+    This implements Eq. 3 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    From Section 3:
+
+    The Direction Cosine Matrix (DCM) that provides the transformation of a
+    unit pointing vector defined in inertial frame (ECI J2000) coordinates to a
+    unit vector defined in the science aperture Ideal frame coordinates is
+    defined as [follows.]
 
     Parameters
     ----------
@@ -943,6 +947,7 @@ def calc_transforms(t_pars: TransformParameters):
     -------
     transforms : `Transforms`
         The list of coordinate matrix transformations
+
     """
     t_pars.method = t_pars.method if t_pars.method else Methods.default
 
