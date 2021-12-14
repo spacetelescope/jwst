@@ -1726,9 +1726,9 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     This implements Eq. 40 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.5:
 
-    The velocity aberration correction is applied in the direction of the of
-    the guide star. The matrix that translates from ECI to the apparent guide star
-    ICS frame is M_(ECI→GSAppICS), where the GS Apparent position vector is along
+    The velocity aberration correction is applied in the direction of the guide
+    star. The matrix that translates from ECI to the apparent guide star ICS
+    frame is M_(ECI→GSAppICS), where the GS Apparent position vector is along
     the z-axis in the guide star ICS frame.
 
     Parameters
