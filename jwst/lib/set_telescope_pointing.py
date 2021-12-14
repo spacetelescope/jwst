@@ -191,6 +191,7 @@ SIFOV2V_DEFAULT = np.array(
 # Define the transformation matrices to move between the Idealized Coordinate System (ICS)
 # and the Idealized Coordinate System (Idl). ICS is the spacecraft-centric system used by
 # all frames up through the V-frame. Idl is used by the instruments.
+# Reference: Eqs. 1 & 2 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
 M_idl2ics = MX2Z = np.array(
     [[0, 1, 0],
      [0, 0, 1],
