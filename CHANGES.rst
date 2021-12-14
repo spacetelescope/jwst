@@ -155,6 +155,9 @@ extract_1d
 
 - Added NRS_LAMP as an exp_type that has the extract1d ref file in asdf format [#6460]
 
+- Added the ``center_xy`` step argument to allow user-specified x/y
+  center of IFU extraction apertures [#6503]
+
 flatfield
 ---------
 

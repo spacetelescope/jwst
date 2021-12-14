@@ -60,6 +60,12 @@ class Extract1dStep(Step):
         make sense to apply aperture offsets for extended sources, so this
         parameter can be overriden (set to False) internally by the step.
 
+    center_xy : int or None
+        A list of 2 pixel coordinate values at which to place the center
+        of the IFU extraction aperture, overriding any centering done by the step.
+        Two values, in x,y order, are used for extraction from IFU cubes.
+        Default is None.
+
     apply_apcorr : bool
         Switch to select whether or not to apply an APERTURE correction during
         the Extract1dStep. Default is True
@@ -74,6 +80,7 @@ class Extract1dStep(Step):
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     """
 
@@ -165,6 +172,7 @@ class Extract1dStep(Step):
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
+                        self.center_xy,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -199,6 +207,7 @@ class Extract1dStep(Step):
                             self.log_increment,
                             self.subtract_background,
                             self.use_source_posn,
+                            self.center_xy,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -236,6 +245,7 @@ class Extract1dStep(Step):
                     self.log_increment,
                     self.subtract_background,
                     self.use_source_posn,
+                    self.center_xy,
                     was_source_model=was_source_model,
                 )
 
@@ -277,6 +287,7 @@ class Extract1dStep(Step):
                 self.log_increment,
                 self.subtract_background,
                 self.use_source_posn,
+                self.center_xy,
                 was_source_model=False,
             )
 
