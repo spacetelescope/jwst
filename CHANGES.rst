@@ -224,6 +224,8 @@ pipeline
 ramp_fitting
 ------------
 
+- Fix special handling for 2 group ramp. [spacetelescope/stcal#70]
+
 - Fix issue with inappropriately including a flagged group at the beginning
   of a ramp segment. [spacetelescope/stcal#68]
 
