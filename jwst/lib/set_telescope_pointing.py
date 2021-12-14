@@ -40,6 +40,18 @@ needed to perform the transformations.
 `~jwst.lib.set_telescope_pointing.Transforms` contains the calculated
 transformation matrices.
 
+Transformation Matrices
+-----------------------
+
+All the transformation matrices, as defined by
+`~jwst.lib.set_telescope_pointing.Transforms`, are Direction Cosine Matrices
+(DCM). A DCM contains the Euler rotation angles that represent the sky
+coordinates for a particular frame-of-reference. The initial DCM is provided
+through the engineering telemetry and represents where in the sky either the
+Fine Guidance Sensor (FGS) or star tracker is pointed to. Then, through a set
+of transformations, the DCM for the reference point of the target aperture
+is calculated.
+
 """
 import sys
 
@@ -176,12 +188,15 @@ SIFOV2V_DEFAULT = np.array(
      [-0.00226892608, 0., 0.99999742598]]
 )
 
-MX2Z = np.array(
+# Define the transformation matrices to move between the Idealized Coordinate System (ICS)
+# and the Idealized Coordinate System (Idl). ICS is the spacecraft-centric system used by
+# all frames up through the V-frame. Idl is used by the instruments.
+M_idl2ics = MX2Z = np.array(
     [[0, 1, 0],
      [0, 0, 1],
      [1, 0, 0]]
 )
-MZ2X = np.array(
+M_ics2idl = MZ2X = np.array(
     [[0, 0, 1],
      [1, 0, 0],
      [0, 1, 0]]
@@ -1010,7 +1025,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
     # Calculate ECI to SIFOV complete transformation
     t.m_eci2sifov = np.linalg.multi_dot([
-        MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
+        M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
     ])
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1079,7 +1094,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
-    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), MX2Z, t.m_eci2gs])
+    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs])
     logger.debug('M_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
@@ -1149,14 +1164,14 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
-    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), MX2Z, t.m_eci2gs])
+    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs])
     logger.debug('M_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate full transformation
-    t.m_eci2siaf = np.linalg.multi_dot([MZ2X, t.m_v2siaf, t.m_eci2v])
+    t.m_eci2siaf = np.linalg.multi_dot([M_ics2idl, t.m_v2siaf, t.m_eci2v])
     logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
@@ -1220,7 +1235,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.linalg.multi_dot([MZ2X, t.m_v2siaf, t.m_eci2v])
+    t.m_eci2siaf = np.linalg.multi_dot([M_ics2idl, t.m_v2siaf, t.m_eci2v])
     logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
@@ -1406,7 +1421,7 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_gs2gsapp, t.m_j2fgs1, t.m_eci2j]
+        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_gs2gsapp, t.m_j2fgs1, t.m_eci2j]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1482,7 +1497,7 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [t.m_sifov_fsm_delta, MZ2X, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
+        [t.m_sifov_fsm_delta, M_ics2idl, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1557,7 +1572,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
+        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1632,7 +1647,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
+        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1693,7 +1708,7 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
 
     logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
-    m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
+    m_eci2fgs1 = np.dot(M_idl2ics, m_gs_commanded)
 
     logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
     return m_eci2fgs1
@@ -1842,7 +1857,7 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
 
     logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
-    m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
+    m_eci2fgs1 = np.dot(M_idl2ics, m_gs_commanded)
 
     logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
     return m_eci2fgs1
@@ -3039,7 +3054,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
 
     # Put it all together
-    t.m_eci2gs = np.linalg.multi_dot([MZ2X, t.m_gs2gsapp, m_eci2gsics])
+    t.m_eci2gs = np.linalg.multi_dot([M_ics2idl, t.m_gs2gsapp, m_eci2gsics])
     logger.debug('m_eci2gs: %s', t.m_eci2gs)
 
     # That's all folks
