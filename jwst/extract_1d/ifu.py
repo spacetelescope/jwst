@@ -94,6 +94,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     # If the user supplied extraction center coords,
     # load them into extract_params for use later.
+    extract_params['x_center'] = None
+    extract_params['y_center'] = None
     if center_xy is not None:
         if len(center_xy) == 2:
             extract_params['x_center'] = int(center_xy[0])
@@ -101,9 +103,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
             log.info(f'Using user-supplied x_center={center_xy[0]}, y_center={center_xy[1]}')
         else:
             log.warning('Incorrect number of values in center_xy; should be two.')
-    else:
-        extract_params['x_center'] = None
-        extract_params['y_center'] = None
 
     if subtract_background is not None:
         if subtract_background and source_type == "EXTENDED":
