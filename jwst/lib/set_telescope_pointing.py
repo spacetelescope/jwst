@@ -1049,7 +1049,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for COARSE guiding
 
-    This implements equation 42 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
+    This implements Eq. 42 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 5:
 
     In COARSE mode the measured attitude of the J-frame of the spacecraft is
@@ -1116,7 +1116,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
 def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     """Modified COARSE calculation
 
-    This implements equation 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    This implements Eq. 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 4:
 
     In COARSE mode the measured attitude of the J-frame of the spacecraft is
@@ -1186,7 +1186,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
 def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
-    This implements equation 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C,  2021-11
+    This implements Eq. 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C,  2021-11
     From Section 5:
 
     Under guide star control the guide star position is measured relative to
@@ -1250,7 +1250,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
-    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
+    This implements Eq. 43 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 5:
 
     Under guide star control the guide star position is measured relative to
@@ -1723,7 +1723,7 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
 def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     """Calculate the Velocity Aberration correction
 
-    This implements equation 40 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 40 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.5:
 
     The velocity aberration correction is applied in the direction of the of
@@ -2303,7 +2303,7 @@ def calc_sifov2v_matrix():
 def calc_v2siaf_matrix(siaf):
     """Calculate the SIAF transformation matrix
 
-    This implements equation 12 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 12 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.1:
 
     The V to SIAF parameters V3IdlYang, V2Ref, V3Ref, and VIdlParity are
@@ -2450,7 +2450,7 @@ def get_pointing(obsstart, obsend, engdb_url=None,
 def vector_to_angle(v):
     """Returns tuple of spherical angles from unit direction Vector
 
-    This implements equations 10 & 11 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 10 & 11 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
 
     The Direction Cosine Matrix (DCM) that provides the transformation of a
@@ -2478,7 +2478,7 @@ def vector_to_angle(v):
 def angle_to_vector(alpha, delta):
     """Convert spherical angles to unit vector
 
-    This implements equation 9 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 9 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
 
     Parameters
@@ -2943,7 +2943,7 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
 def calc_estimated_gs_wcs(t_pars: TransformParameters):
     """Calculate the estimated guide star RA/DEC/Y-angle
 
-    This implements equation 18, 19, 20 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 18, 19, 20 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2:
 
     Parameters
@@ -2971,7 +2971,7 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
 def calc_v3pags(t_pars: TransformParameters):
     """Calculate the V3 Position Angle at the Guide Star
 
-    This implements equation 21 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 21 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
 
     Parameters
     ----------
@@ -3000,7 +3000,7 @@ def calc_v3pags(t_pars: TransformParameters):
 def calc_m_eci2gs(t_pars: TransformParameters):
     """Calculate the M_eci2gs matrix as per TR presented in 2021-07
 
-    This implements equations 16 & 17 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 16 & 17 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2:
 
     The equation is formed by inverting the equation in Section 5.9.1.2 of
@@ -3070,7 +3070,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 def calc_m_fgs12fgsx(fgsid, siaf_db):
     """Calculate the FGS1 to FGSx matrix
 
-    This implements equation 27 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 27 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.3:
 
     A selected guide star being used, could be in FGS 1 or FGS 2. The JWST ACS
@@ -3120,7 +3120,7 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
 def calc_m_fgsx2gs(gs_commanded):
     """Calculate the FGS1 to commanded Guide Star frame
 
-    This implements equation 29 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 29 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.4.
 
     Parameters
@@ -3143,7 +3143,7 @@ def calc_m_fgsx2gs(gs_commanded):
 def calc_m_gs2fgsx(gs_commanded):
     """Calculate the Guides Star frame to FGSx ICS frame
 
-    This implements equation 30 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 30 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.4.
 
     Parameters
@@ -3208,7 +3208,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
 def cart_to_vector(coord):
     """Convert Cartesian to a unit vector
 
-    This implements equation 6 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 6 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
 
     The Direction Cosine Matrix (DCM) that provides the transformation of a
