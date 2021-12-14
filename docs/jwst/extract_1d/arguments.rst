@@ -71,6 +71,14 @@ The ``extract_1d`` step has the following step-specific arguments.
   in the cross-dispersion direction is used to potentially offset the
   extraction regions in that direction.
 
+``--center_xy``
+  A list of two integer values giving the desired x/y location for the center
+  of the circular extraction aperture used for extracting spectra from 3-D
+  IFU cubes. Ignored for non-IFU modes and non-point sources. Must be given in
+  x,y order and in units of pixels along the x,y axes of the 3-D IFU cube, e.g.
+  ``--center_xy="27,28"``. If given, the values override any position derived
+  from the use of the ``use_source_posn`` argument. Default is None.
+
 ``--apply_apcorr``
   Switch to select whether or not to apply an APERTURE correction during the
   Extract1dStep processing. Default is ``True``

@@ -2594,6 +2594,7 @@ def run_extract1d(
         log_increment: int,
         subtract_background: Union[bool, None],
         use_source_posn: Union[bool, None],
+        center_xy: Union[int, None],
         was_source_model: bool = False,
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2640,6 +2641,12 @@ def run_extract1d(
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
 
+    center_xy : int or None
+        A list of 2 pixel coordinate values at which to place the center
+        of the extraction aperture for IFU data, overriding any centering
+        done by the step.  Two values, in x,y order, are used for extraction
+        from IFU cubes. Default is None.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2685,6 +2692,7 @@ def run_extract1d(
         log_increment,
         subtract_background,
         use_source_posn,
+        center_xy,
         was_source_model,
     )
 
@@ -2744,6 +2752,7 @@ def do_extract1d(
         log_increment: int = 50,
         subtract_background: Union[int, None] = None,
         use_source_posn: Union[bool, None] = None,
+        center_xy: Union[int, None] = None,
         was_source_model: bool = False
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2799,6 +2808,12 @@ def do_extract1d(
         If True, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
+
+    center_xy : int or None
+        A list of 2 pixel coordinate values at which to place the center
+        of the IFU extraction aperture, overriding any centering done by the step.
+        Two values, in x,y order, are used for extraction from IFU cubes.
+        Default is None.
 
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
@@ -3019,7 +3034,7 @@ def do_extract1d(
 
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model
+                bkg_sigma_clip, apcorr_ref_model, center_xy
             )
 
         else:

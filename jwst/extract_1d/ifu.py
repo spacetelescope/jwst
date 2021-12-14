@@ -31,7 +31,7 @@ HUGE_DIST = 1.e10
 
 
 def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
-                  bkg_sigma_clip, apcorr_ref_model=None):
+                  bkg_sigma_clip, apcorr_ref_model=None, center_xy=None):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -91,6 +91,19 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         slitname = "ANY"
 
     extract_params = get_extract_parameters(ref_dict, bkg_sigma_clip, slitname)
+
+    # If the user supplied extraction center coords,
+    # load them into extract_params for use later.
+    if center_xy is not None:
+        if len(center_xy) == 2:
+            extract_params['x_center'] = int(center_xy[0])
+            extract_params['y_center'] = int(center_xy[1])
+            log.info(f'Using user-supplied x_center={center_xy[0]}, y_center={center_xy[1]}')
+        else:
+            log.warning('Incorrect number of values in center_xy; should be two.')
+    else:
+        extract_params['x_center'] = None
+        extract_params['y_center'] = None
 
     if subtract_background is not None:
         if subtract_background and source_type == "EXTENDED":
@@ -410,24 +423,29 @@ def extract_ifu(input_model, source_type, extract_params):
 
     dq = np.zeros(shape[0], dtype=np.uint32)
 
-    # For an extended target, the entire aperture will be extracted, so
-    # it makes no sense to shift the extraction location.
-    if source_type != "EXTENDED":
+    # If the user supplied extraction center coords, use them and
+    # ignore all other source type and source position values
+    if extract_params['x_center'] is not None:
+        x_center = extract_params['x_center']
+        y_center = extract_params['y_center']
+        locn = None
+
+    # For a point source, try to compute the extraction center
+    # from the source location
+    elif source_type != "EXTENDED":
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
 
         if locn is None or np.isnan(locn[0]):
-            log.warning("Couldn't determine pixel location from WCS, so "
-                        "source offset correction will not be applied.")
-
+            log.warning("Couldn't determine source location from WCS, so "
+                        "extraction region will be centered.")
             x_center = float(shape[-1]) / 2.
             y_center = float(shape[-2]) / 2.
-
         else:
             (x_center, y_center) = locn
             log.info("Using x_center = %g, y_center = %g, based on "
-                     "TARG_RA and TARG_DEC.", x_center, y_center)
+                     "TARG_RA and TARG_DEC", x_center, y_center)
 
     method = extract_params['method']
     subpixels = extract_params['subpixels']
@@ -546,8 +564,8 @@ def extract_ifu(input_model, source_type, extract_params):
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
-        log.debug("aperture.area = %g; aperture_area = %g",
-                  aperture.area, aperture_area)
+        #log.debug("aperture.area = %g; aperture_area = %g",
+        #          aperture.area, aperture_area)
 
         if(aperture_area == 0 and aperture.area > 0):
             aperture_area = aperture.area
@@ -557,8 +575,8 @@ def extract_ifu(input_model, source_type, extract_params):
             phot_table = aperture_photometry(temp_weightmap, annulus,
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
-            log.debug("annulus.area = %g; annulus_area = %g",
-                      annulus.area, annulus_area)
+            #log.debug("annulus.area = %g; annulus_area = %g",
+            #          annulus.area, annulus_area)
 
             if(annulus_area == 0 and annulus.area > 0):
                 annulus_area = annulus.area
