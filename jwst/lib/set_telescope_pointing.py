@@ -2112,6 +2112,13 @@ def calc_aperture_wcs(m_eci2siaf):
 def calc_eci2j_matrix(q):
     """Calculate ECI to J-frame matrix from quaternions
 
+    This implements Eq. 24 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    From Section 3.2.1:
+
+    The M_(ECI→J) DCM is derived from the spacecraft Attitude Control System
+    (ACS) attitude quaternion telemetry using the transformation in SE-20,
+    Appendix B to transform the attitude quaternion into a DCM.
+
     Parameters
     ----------
     q : np.array(q1, q2, q3, q4)
@@ -2122,6 +2129,7 @@ def calc_eci2j_matrix(q):
     transform : np.array((3, 3))
         The transform matrix representing the transformation
         from observatory orientation to J-Frame
+
     """
     q1, q2, q3, q4 = q
     transform = np.array(
