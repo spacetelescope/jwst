@@ -1,6 +1,6 @@
 from ..stpipe import Step
 from .. import datamodels
-from . import dark_sub
+from stcal.dark_current import dark_sub
 
 
 __all__ = ["DarkCurrentStep"]

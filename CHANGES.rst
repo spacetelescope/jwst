@@ -86,6 +86,8 @@ cube_build
 dark_current
 ----------
 
+- Moved dark current code from JWST to STCAL. [spacetelecope/stcal#63] [#6444]
+
 - Refactored the code in preparation for moving the code to STCAL. [#6336]
 
 datamodels
