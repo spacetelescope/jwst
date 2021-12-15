@@ -1752,11 +1752,11 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
         return np.identity(3)
     velocity = -1 * jwst_velocity
 
-    # Eq. 31: Guide star position vector
+    # Eq. 35: Guide star position vector
     uz = np.array([0., 0., 1.])
     u_gseci = np.dot(np.transpose(m_eci2gsics), uz)
 
-    # Eq. 33: Compute the apparent shift due to velocity aberration.
+    # Eq. 36: Compute the apparent shift due to velocity aberration.
     try:
         scale_factor, u_gseci_app = compute_va_effects_vector(*velocity, u_gseci)
     except TypeError:
@@ -1764,10 +1764,10 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
         logger.warning('Exception: %s', sys.exc_info())
         return np.identity(3)
 
-    # Eq. 36: Rotate from ICS into the guide star frame.
+    # Eq. 39: Rotate from ICS into the guide star frame.
     u_gs_app = np.dot(m_eci2gsics, u_gseci_app)
 
-    # Eq. 37: Compute the M_gs2gsapp matrix
+    # Eq. 40: Compute the M_gs2gsapp matrix
     u_prod = np.cross(uz, u_gs_app)
     u_prod_mag = np.linalg.norm(u_prod)
     a_hat = u_prod / u_prod_mag
