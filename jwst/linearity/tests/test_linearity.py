@@ -56,6 +56,12 @@ def test_coeff_dq():
     ref_model.coeffs[:, 20, 50] = coeffs2
     im.data[0, 50, 20, 50] = 500.0
 
+    # test case where all coefficients are zero, the linearity reference file may
+    # not mark these pixels as NO_LIN_CORR. The code will mark these pixels as
+    # NO_LIN_COR
+    ref_model.coeffs[:, 25, 25] = 0.0
+    im.data[0, 50, 25, 25] = 600.0
+
     tgroup = 2.775
 
     # set pixel values (DN) for specific pixels up the ramp
@@ -75,6 +81,7 @@ def test_coeff_dq():
     ref_model.dq[35, 35] = dqflags.pixel['DO_NOT_USE']
     ref_model.dq[35, 36] = dqflags.pixel['NO_LIN_CORR']
     ref_model.dq[30, 50] = dqflags.pixel['GOOD']
+    ref_model.dq[25, 25] = dqflags.pixel['GOOD']
 
     # run through Linearity pipeline
     outfile = lincorr(im, ref_model)
@@ -86,10 +93,13 @@ def test_coeff_dq():
     # check that dq value was handled correctly
     assert outfile.pixeldq[35, 35] == dqflags.pixel['DO_NOT_USE']
     assert outfile.pixeldq[35, 36] == dqflags.pixel['NO_LIN_CORR']
+    assert outfile.pixeldq[25, 25] == dqflags.pixel['NO_LIN_CORR']
     # NO_LIN_CORR, sci value should not change
     assert outfile.data[0, 30, 35, 36] == 35
     # NaN coefficient should not change data value
     assert outfile.data[0, 50, 20, 50] == 500.0
+    # coefficients all zero should not change data value
+    assert outfile.data[0, 50, 25, 25] == 600.0
 
 
 def test_saturation():
