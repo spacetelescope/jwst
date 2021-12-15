@@ -262,7 +262,7 @@ def test_lin_subarray():
 
     ref_model = LinearityModel((numcoeffs, 1024, 1032))
     # set all the linear terms =1, so it does not trip the check if
-    # the linear terms = 0, which results in DQ of NON_LIN_CORR
+    # the linear terms = 0, which results in DQ of NO_LIN_CORR
     ref_model.coeffs[1,:,:] = 1
     ref_model.dq = dq
 
