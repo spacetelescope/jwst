@@ -7,7 +7,7 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 """
 
 import numpy as np
-from scipy.sparse import find, diags, identity, csr_matrix
+from scipy.sparse import find, diags, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
 from scipy.optimize import minimize_scalar, root_scalar
@@ -1537,7 +1537,7 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
 
     if kernel.ndim != 2:
         msg = ("Input kernel to get_c_matrix must be callable or"
-              " array with one or two dimensions.")
+               " array with one or two dimensions.")
         log.critical(msg)
         raise ValueError(msg)
     # Kernel should now be a 2-D array (N_kernel x N_kc)
@@ -1702,7 +1702,7 @@ def finite_first_d(grid):
     d_grid = d_matrix.dot(grid)
 
     # First derivative operator
-    first_d = diags(1./d_grid).dot(d_matrix)
+    first_d = diags(1. / d_grid).dot(d_matrix)
 
     return first_d
 
@@ -1855,32 +1855,6 @@ def get_finite_derivatives(x_array, y_array):
     return mean_first_d, second_d
 
 
-def tikho_solve(a_mat, b_vec, t_mat, verbose=True, factor=1.0):
-    """Tikhonov solver to use as a function instead of a class.
-
-    Parameters
-    ----------
-    a_mat : matrix-like object (2d)
-        matrix A in the system to solve A.x = b
-    b_vec : vector-like object (1d)
-        vector b in the system to solve A.x = b
-    t_mat : matrix-like object (2d)
-        Tikhonov regularisation matrix to be applied on b_vec.
-    verbose : bool
-        Print details or not
-    factor : float, optional
-        multiplicative constant of the regularisation matrix
-
-    Returns
-    -------
-    array[float]
-        Solution of the system
-    """
-    tikho = Tikhonov(a_mat, b_vec, t_mat, verbose=verbose)
-
-    return tikho.solve(factor=factor)
-
-
 def _get_interp_idx_array(idx, relative_range, max_length):
     """ Generate array given the relative range around an index.
 
@@ -1978,7 +1952,29 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
 
 
 def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
-    """ Find the root of y_val - thresh (so the intersection between thresh and y_val) """
+    """ Find the root of y_val - thresh (so the intersection between thresh and y_val)
+    Parameters
+    ----------
+    factors : array[float]
+        1D array of Tikhonov factors for which value array is calculated
+    y_val : array[float]
+        1D array of values.
+    thresh: float
+        Threshold use in 'd_chi2' mode. Find the highest factor where the
+        derivative of the chi2 derivative is below thresh.
+    interpolate: bool, optional
+        If True, use interpolation to find a finer minimum;
+        otherwise, return minimum value in array.
+    search_range : iterable[int], optional
+        Relative range of grid indices around the value to interpolate.
+        If not specified, defaults to [0,3].
+
+    Returns
+    -------
+    float
+        Factor corresponding to the best approximation of the intersection
+        point.
+    """
 
     if search_range is None:
         search_range = [0, 3]
@@ -2035,18 +2031,17 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
 
 class TikhoTests(dict):
     """
-    Class to save tikhonov tests for different factors.
-    Include plotting utilities like the `l_plot` which refers to
-    the l-curve used to find the optimal regularisation parameter
-    (here called `factors`).
-    All the tests are stored in the attribute `tests` as a dictionnary
+    Class to save Tikhonov tests for different factors.
+    All the tests are stored in the attribute `tests` as a dictionary
+
+    Parameters
+    ----------
+    test_dict : dict
+        Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
+        by default.
     """
 
-    def __init__(self, test_dict=None, name=None):
-        """
-        test_dict: dictionnary of tests.
-        name: string, name given to these tests
-        """
+    def __init__(self, test_dict=None):
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
         if test_dict is None:
@@ -2057,16 +2052,29 @@ class TikhoTests(dict):
 
         # Save attributes
         self.n_points = n_points
-        self.name = None
 
-        # Initialize so it behaves like a dictionnary
+        # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
 
         # Save the chi2
         self['chi2'] = self.compute_chi2()
 
     def compute_chi2(self, tests=None, n_points=None):
+        """ Calculates the reduced chi squared statistic
 
+        Parameters
+        ----------
+        tests : dict, optional
+            Dictionary from which we take the error array; if not provided,
+            self is used
+        n_points : int, optional
+            Number of data points; if not provided, self.n_points is used
+
+        Returns
+        -------
+        float
+            Sum of the squared error array divided by the number of data points
+        """
         # Get number of data points
         if n_points is None:
             n_points = self.n_points
@@ -2075,7 +2083,7 @@ class TikhoTests(dict):
         if tests is None:
             tests = self
 
-        # Compute the (reduced?) chi^2 for all tests
+        # Compute the reduced chi^2 for all tests
         chi2 = np.nansum(tests['error'] ** 2, axis=-1)
         # Remove residual dimensions
         chi2 = chi2.squeeze()
@@ -2086,21 +2094,25 @@ class TikhoTests(dict):
         return chi2
 
     def get_chi2_derivative(self):
-        """ Compute derivative of the chi2 with respect to log10(factors) """
+        """ Compute derivative of the chi2 with respect to log10(factors)
 
-        # Get factors and chi2
-        chi2 = self['chi2']
-        factors = self['factors']
+        Returns
+        -------
+        factors_leftd : array[float]
+            factors array, shortened to match length of derivative.
+        d_chi2 : array[float]
+            derivative of chi squared array with respect to log10(factors)
+        """
 
         # Compute finite derivative
-        fac_log = np.log10(factors)
-        d_chi2 = np.diff(chi2) / np.diff(fac_log)
+        fac_log = np.log10(self['factors'])
+        d_chi2 = np.diff(self['chi2']) / np.diff(fac_log)
 
         # Update size of factors to fit derivatives
         # Equivalent to derivative on the left side of the nodes
-        factors = factors[1:]
+        factors_leftd = self['factors'][1:]
 
-        return factors, d_chi2
+        return factors_leftd, d_chi2
 
     def compute_curvature(self, tests=None):
 
@@ -2108,60 +2120,51 @@ class TikhoTests(dict):
         if tests is None:
             tests = self
 
-        # Get relevant quantities from tests
-        factors = tests["factors"]
-
         # Compute the curvature...
-        # Get chi2 from TikhoTests method
-        chi2 = self['chi2']
         # Get the norm-2 of the regularisation term
         reg2 = np.nansum(tests['reg'] ** 2, axis=-1)
 
-        # Compute curvature in log space
-        args = (factors, np.log10(chi2), np.log10(reg2))
-        factors, curv = curvature_finite(*args)
+        factors, curv = curvature_finite(tests['factors'],
+                                         np.log10(self['chi2']),
+                                         np.log10(reg2))
 
         return factors, curv
 
     def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
                           mode='curvature', thresh=0.01):
         """Compute the best scale factor for Tikhonov regularisation.
-        It is determine by taking the factor giving the highest logL on
+        It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
         depending on the chosen mode.
         Parameters
         ----------
-        tests: dictionnary, optional
-            Results of tikhonov extraction tests
-            for different factors.
-            Must have the keys "factors" and "-logl".
-            If not specified, the tests from self.tikho.tests
-            are used.
-        interpolate: bool, optional
-            If True, use akima spline interpolation
-            to find a finer minimum. Default is true.
-        interp_index: 2 element list, optional
-            Index around the minimum value on the tested factors.
-            Will be used for the interpolation.
-            For example, if i_min is the position of
-            the minimum logL value and [i1, i2] = interp_index,
-            then the interpolation will be perform between
-            i_min + i1 and i_min + i2 - 1
-        mode: string
+        tests : dictionary, optional
+            Results of tikhonov extraction tests for different factors.
+            Must have the keys "factors" and "-logl". If not specified,
+            the tests from self.tikho.tests are used.
+        interpolate : bool, optional
+            If True, use spline interpolation to find a finer minimum.
+            Default is true.
+        interp_index : list, optional
+            Relative range of grid indices around the minimum value to
+            interpolate across. If not specified, defaults to [-2,4].
+        mode : string
             How to find the best factor: 'chi2', 'curvature' or 'd_chi2'.
-        thresh: float
-            Threshold use in 'd_chi2' mode. Find the highest factor where the
-            derivative of the chi2 derivative is below thresh.
+        thresh : float
+            Threshold for use in 'd_chi2' mode. Find the highest factor where
+            the derivative of the chi2 derivative is below thresh.
+
         Returns
         -------
-        Best scale factor (float)
+        float
+            Best scale factor as determined by the selected algorithm
         """
 
         # Use pre-run tests if not specified
         if tests is None:
             tests = self
 
-        # Depending of the mode (what do we minimize?)
+        # Determine the mode (what do we minimize?)
         if mode == 'curvature':
             # Compute the curvature
             factors, curv = tests.compute_curvature()
@@ -2185,7 +2188,10 @@ class TikhoTests(dict):
             best_fac = _find_intersect(factors, y_val, thresh, interpolate, interp_index)
 
         else:
-            raise ValueError(f'`mode`={mode} is not valid.')
+            msg =(f'`mode`={mode} is not a valid option for '
+                  f'TikhoTests.best_tikho_factor().')
+            log.critical(msg)
+            raise ValueError(msg)
 
         # Return estimated best scale factor
         return best_fac
@@ -2193,28 +2199,24 @@ class TikhoTests(dict):
 
 class Tikhonov:
     """
-    Tikhonov regularisation to solve the ill-condition problem:
-    A.x = b, where A is accidently singular or close to singularity.
-    Tikhonov regularisation adds a regularisation term in
-    the equation and aim to minimize the equation:
-    ||A.x - b||^2 + ||gamma.x||^2
-    Where gamma is the Tikhonov regularisation matrix.
+    Tikhonov regularization to solve the ill-posed problem A.x = b, where
+    A is accidentally singular or close to singularity. Tikhonov regularization
+    adds a regularization term in the equation and aim to minimize the
+    equation: ||A.x - b||^2 + ||gamma.x||^2
+    where gamma is the Tikhonov regularization matrix.
     """
 
-    def __init__(self, a_mat, b_vec, t_mat,
-                 verbose=True, valid=True):
+    def __init__(self, a_mat, b_vec, t_mat, valid=True):
         """
         Parameters
         ----------
-        a_mat: matrix-like object (2d)
+        a_mat : matrix-like object (2d)
             matrix A in the system to solve A.x = b
-        b_vec: vector-like object (1d)
+        b_vec : vector-like object (1d)
             vector b in the system to solve A.x = b
-        t_mat: matrix-like object (2d)
+        t_mat : matrix-like object (2d)
             Tikhonov regularisation matrix to be applied on b_vec.
-        verbose: bool
-            Print details or not
-        valid: bool, optional
+        valid : bool, optional
             If True, solve the system only for valid indices. The
             invalid values will be set to np.nan. Default is True.
         """
@@ -2238,16 +2240,7 @@ class Tikhonov:
 
         # Save other attributes
         self.valid = valid
-        self.verbose = verbose
         self.test = None
-
-        return
-
-    def verbose_print(self, *args, **kwargs):
-        """Print if verbose is True. Same as `print` function."""
-
-        if self.verbose:
-            print(*args, **kwargs)
 
         return
 
@@ -2259,12 +2252,13 @@ class Tikhonov:
 
         Parameters
         ----------
-        factor: float, optional
-            multiplicative constant of the regularisation matrix
+        factor : float, optional
+            multiplicative constant of the regularization matrix
 
         Returns
         ------
-        Solution of the system (1d array)
+        array
+            Solution of the system (1d array)
         """
         # Get needed attributes
         a_mat_2 = self.a_mat_2
@@ -2297,19 +2291,20 @@ class Tikhonov:
 
     def test_factors(self, factors):
         """
-        test multiple factors
+        Test multiple factors
 
         Parameters
         ----------
-        factors: 1d array-like
-            factors to test
+        factors : array[float]
+            1D array of factors to test
 
         Returns
         ------
-        dictionnary of test results
+        dict
+            Dictionary of test results
         """
 
-        self.verbose_print('Testing factors...')
+        log.info('Testing factors...')
 
         # Get relevant attributes
         b_vec = self.b_vec
@@ -2328,24 +2323,24 @@ class Tikhonov:
             # Save error A.x - b
             err.append(a_mat.dot(sln[-1]) - b_vec)
 
-            # Save regulatisation term
+            # Save regularization term
             reg_i = t_mat.dot(sln[-1])
             reg.append(reg_i)
 
             # Print
             message = '{}/{}'.format(i_fac, len(factors))
-            self.verbose_print(message, end='\r')
+            log.info(message)
 
         # Final print
         message = '{}/{}'.format(i_fac + 1, len(factors))
-        self.verbose_print(message)
+        log.info(message)
 
         # Convert to arrays
         sln = np.array(sln)
         err = np.array(err)
         reg = np.array(reg)
 
-        # Save in a dictionnary
+        # Save in a dictionary
 
         tests = TikhoTests({'factors': factors,
                             'solution': sln,
