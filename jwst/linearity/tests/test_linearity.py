@@ -187,7 +187,7 @@ def test_pixeldqprop():
 
     # Create reference file
     dq = np.zeros((ysize, xsize), dtype=int)
-    numcoeffs = 3
+    numcoeffs = 5
 
     # set PIXELDQ to 'NO_LIN_CORR'
     dq[500, 500] = dqflags.pixel['NO_LIN_CORR']
