@@ -61,7 +61,7 @@ def test_coeff_dq():
 
     # test case where all coefficients are zero, the linearity reference file may
     # not mark these pixels as NO_LIN_CORR. The code will mark these pixels as
-    # NO_LIN_COR
+    # NO_LIN_CORR
     ref_model.coeffs[:, 25, 25] = 0.0
     im.data[0, 50, 25, 25] = 600.0
 
