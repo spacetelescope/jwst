@@ -9,7 +9,6 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
 
-# TODO remove use of args and kwargs as much as possible for clearer code.
 
 # General imports.
 import numpy as np
@@ -135,11 +134,11 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         self.update_wave_map(wave_map)
         self.update_aperture(aperture)
 
-        # Generate a wavelength grid if none was provided. TODO Requires self.aperture self.wave_map
+        # Generate a wavelength grid if none was provided.
         if wave_grid is None:
 
-            if self.n_orders == 2:  # TODO should this be mandatory input.
-                wave_grid = atoca_utils.get_soss_grid(wave_map, aperture, n_os=n_os)  # TODO check difference between get_soss_grid and grid_from_map
+            if self.n_orders == 2:
+                wave_grid = atoca_utils.get_soss_grid(wave_map, aperture, n_os=n_os)
             else:
                 wave_grid, _ = self.grid_from_map()
 
@@ -148,14 +147,14 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         self.n_wavepoints = len(wave_grid)
 
         # Set the throughput for each order.
-        self.update_throughput(throughput)  # TODO requires self.wave_grid
+        self.update_throughput(throughput)
 
         ###################################
         # Build detector mask
         ###################################
 
         # Assign a first estimate of i_bounds to be able to compute mask.
-        self.i_bounds = [[0, len(wave_grid)] for _ in range(self.n_orders)]  # TODO double check how the i_bounds and mask interact.
+        self.i_bounds = [[0, len(wave_grid)] for _ in range(self.n_orders)]
 
         # First estimate of a global mask and masks for each orders
         self.mask, self.mask_ord = self._get_masks(global_mask)
@@ -173,7 +172,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         ####################################
         # Build convolution matrix
         ####################################
-        self.update_kernels(kernels, c_kwargs)  # TODO requires self.wave_grid self.i_bounds
+        self.update_kernels(kernels, c_kwargs)
 
         #############################
         # Compute integration weights
@@ -186,10 +185,6 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         #########################
         # Save remaining inputs
         #########################
-
-        # Set masked values to zero. TODO may not be necessary.
-        self.data[self.mask] = 0
-
         # Init the pixel mapping (b_n) matrices. Matrices that transforms the 1D spectrum to a the image pixels.
         self.pixel_mapping = [None for _ in range(self.n_orders)]
         self.i_grid = None
@@ -1067,7 +1062,7 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
 
         Returns
         ------
-        dictonary of the tests results
+        dictionary of the tests results
         """
 
         # Build the system to solve
