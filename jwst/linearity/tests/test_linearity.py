@@ -84,7 +84,7 @@ def test_coeff_dq():
     ref_model.dq[35, 35] = dqflags.pixel['DO_NOT_USE']
     ref_model.dq[35, 36] = dqflags.pixel['NO_LIN_CORR']
     ref_model.dq[30, 50] = dqflags.pixel['GOOD']
-    ref_model.dq[25, 25] = dqflags.pixel['GOOD']
+    ref_model.dq[25, 25] = dqflags.pixel['GOOD']  # Testing the linerity sets this to NO_LIN_CORR
 
     # run through Linearity pipeline
     outfile = lincorr(im, ref_model)
