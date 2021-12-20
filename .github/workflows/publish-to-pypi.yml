@@ -5,22 +5,12 @@ on:
     types: [released]
 
 jobs:
-  build:
-      name: Publish release to PyPI
-      env:
-        PYPI_USERNAME_STSCI_MAINTAINER: ${{ secrets.PYPI_USERNAME_STSCI_MAINTAINER }}
-        PYPI_PASSWORD_STSCI_MAINTAINER: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
-        PYPI_USERNAME_OVERRIDE: ${{ secrets.PYPI_USERNAME_OVERRIDE }}
-        PYPI_PASSWORD_OVERRIDE: ${{ secrets.PYPI_PASSWORD_OVERRIDE }}
-        PYPI_TEST: ${{ secrets.PYPI_TEST }}
-        INDEX_URL_OVERRIDE: ${{ secrets.INDEX_URL_OVERRIDE }}
-      runs-on: ubuntu-latest
-      steps:
-
-          # Check out the commit containing this workflow file.
-          - name: checkout repo
-            uses: actions/checkout@v2
-
-          - name: custom action
-            uses: spacetelescope/action-publish_to_pypi@master
-            id: custom_action_0
+  publish:
+    uses: spacetelescope/action-publish_to_pypi/.github/workflows/workflow.yml@master
+    with:
+      test: false
+      build_platform_wheels: true # Set to true if your package contains a C extension
+    secrets:
+      user: ${{ secrets.PYPI_USERNAME_STSCI_MAINTAINER }}
+      password: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }} # WARNING: Do not hardcode secret values here! If you want to use a different user or password, you can override this secret by creating one with the same name in your Github repository settings.
+      test_password: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER_TEST }}
