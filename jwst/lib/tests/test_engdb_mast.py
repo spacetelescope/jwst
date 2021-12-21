@@ -56,6 +56,7 @@ def test_aliveness(is_alive):
     engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL, token='dummytoken')
 
 
+@pytest.mark.xfail(reason='Test needs updating once MAST has actual data')
 def test_get_records(engdb):
     """Test getting records"""
     records = engdb._get_records(*QUERY)
@@ -63,6 +64,7 @@ def test_get_records(engdb):
     assert report_diff_values(records, EXPECTED_RECORDS)
 
 
+@pytest.mark.xfail(reason='Test needs updating once MAST has actual data')
 @pytest.mark.parametrize(
     'pars, expected',
     [

@@ -40,6 +40,18 @@ needed to perform the transformations.
 `~jwst.lib.set_telescope_pointing.Transforms` contains the calculated
 transformation matrices.
 
+Transformation Matrices
+-----------------------
+
+All the transformation matrices, as defined by
+`~jwst.lib.set_telescope_pointing.Transforms`, are Direction Cosine Matrices
+(DCM). A DCM contains the Euler rotation angles that represent the sky
+coordinates for a particular frame-of-reference. The initial DCM is provided
+through the engineering telemetry and represents where in the sky either the
+Fine Guidance Sensor (FGS) or star tracker is pointed to. Then, through a set
+of transformations, the DCM for the reference point of the target aperture
+is calculated.
+
 """
 import sys
 
@@ -176,12 +188,16 @@ SIFOV2V_DEFAULT = np.array(
      [-0.00226892608, 0., 0.99999742598]]
 )
 
-MX2Z = np.array(
+# Define the transformation matrices to move between the Idealized Coordinate System (ICS)
+# and the Idealized Coordinate System (Idl). ICS is the spacecraft-centric system used by
+# all frames up through the V-frame. Idl is used by the instruments.
+# Reference: Eqs. 1 & 2 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+M_idl2ics = MX2Z = np.array(
     [[0, 1, 0],
      [0, 0, 1],
      [1, 0, 0]]
 )
-MZ2X = np.array(
+M_ics2idl = MZ2X = np.array(
     [[0, 0, 1],
      [1, 0, 0],
      [0, 1, 0]]
@@ -914,9 +930,13 @@ def calc_wcs_tr_202111(transforms: Transforms):
 def calc_transforms(t_pars: TransformParameters):
     """Calculate transforms  which determine reference point celestial WCS
 
-    Given the spacecraft pointing parameters and the
-    aperture-specific SIAF, calculate all the transforms
-    necessary to produce WCS information.
+    This implements Eq. 3 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    From Section 3:
+
+    The Direction Cosine Matrix (DCM) that provides the transformation of a
+    unit pointing vector defined in inertial frame (ECI J2000) coordinates to a
+    unit vector defined in the science aperture Ideal frame coordinates is
+    defined as [follows.]
 
     Parameters
     ----------
@@ -927,6 +947,7 @@ def calc_transforms(t_pars: TransformParameters):
     -------
     transforms : `Transforms`
         The list of coordinate matrix transformations
+
     """
     t_pars.method = t_pars.method if t_pars.method else Methods.default
 
@@ -1010,7 +1031,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
     # Calculate ECI to SIFOV complete transformation
     t.m_eci2sifov = np.linalg.multi_dot([
-        MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
+        M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
     ])
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1028,7 +1049,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for COARSE guiding
 
-    This implements equation 42 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
+    This implements Eq. 42 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 5:
 
     In COARSE mode the measured attitude of the J-frame of the spacecraft is
@@ -1079,7 +1100,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
-    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), MX2Z, t.m_eci2gs])
+    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs])
     logger.debug('M_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
@@ -1095,7 +1116,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
 def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     """Modified COARSE calculation
 
-    This implements equation 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    This implements Eq. 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 4:
 
     In COARSE mode the measured attitude of the J-frame of the spacecraft is
@@ -1149,14 +1170,14 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
-    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), MX2Z, t.m_eci2gs])
+    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs])
     logger.debug('M_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate full transformation
-    t.m_eci2siaf = np.linalg.multi_dot([MZ2X, t.m_v2siaf, t.m_eci2v])
+    t.m_eci2siaf = np.linalg.multi_dot([M_ics2idl, t.m_v2siaf, t.m_eci2v])
     logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
@@ -1165,7 +1186,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
 def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
-    This implements equation 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C,  2021-11
+    This implements Eq. 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C,  2021-11
     From Section 5:
 
     Under guide star control the guide star position is measured relative to
@@ -1220,7 +1241,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.linalg.multi_dot([MZ2X, t.m_v2siaf, t.m_eci2v])
+    t.m_eci2siaf = np.linalg.multi_dot([M_ics2idl, t.m_v2siaf, t.m_eci2v])
     logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
@@ -1229,7 +1250,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding
 
-    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
+    This implements Eq. 43 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
     From Section 5:
 
     Under guide star control the guide star position is measured relative to
@@ -1406,7 +1427,7 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_gs2gsapp, t.m_j2fgs1, t.m_eci2j]
+        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_gs2gsapp, t.m_j2fgs1, t.m_eci2j]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1482,7 +1503,7 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [t.m_sifov_fsm_delta, MZ2X, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
+        [t.m_sifov_fsm_delta, M_ics2idl, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1557,7 +1578,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
+        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1632,7 +1653,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
+        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
     )
     logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
@@ -1693,7 +1714,7 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
 
     logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
-    m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
+    m_eci2fgs1 = np.dot(M_idl2ics, m_gs_commanded)
 
     logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
     return m_eci2fgs1
@@ -1702,12 +1723,12 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
 def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     """Calculate the Velocity Aberration correction
 
-    This implements equation 40 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 40 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.5:
 
-    The velocity aberration correction is applied in the direction of the of
-    the guide star. The matrix that translates from ECI to the apparent guide star
-    ICS frame is M_(ECI→GSAppICS), where the GS Apparent position vector is along
+    The velocity aberration correction is applied in the direction of the guide
+    star. The matrix that translates from ECI to the apparent guide star ICS
+    frame is M_(ECI→GSAppICS), where the GS Apparent position vector is along
     the z-axis in the guide star ICS frame.
 
     Parameters
@@ -1731,11 +1752,11 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
         return np.identity(3)
     velocity = -1 * jwst_velocity
 
-    # Eq. 31: Guide star position vector
+    # Eq. 35: Guide star position vector
     uz = np.array([0., 0., 1.])
     u_gseci = np.dot(np.transpose(m_eci2gsics), uz)
 
-    # Eq. 33: Compute the apparent shift due to velocity aberration.
+    # Eq. 36: Compute the apparent shift due to velocity aberration.
     try:
         scale_factor, u_gseci_app = compute_va_effects_vector(*velocity, u_gseci)
     except TypeError:
@@ -1743,10 +1764,10 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
         logger.warning('Exception: %s', sys.exc_info())
         return np.identity(3)
 
-    # Eq. 36: Rotate from ICS into the guide star frame.
+    # Eq. 39: Rotate from ICS into the guide star frame.
     u_gs_app = np.dot(m_eci2gsics, u_gseci_app)
 
-    # Eq. 37: Compute the M_gs2gsapp matrix
+    # Eq. 40: Compute the M_gs2gsapp matrix
     u_prod = np.cross(uz, u_gs_app)
     u_prod_mag = np.linalg.norm(u_prod)
     a_hat = u_prod / u_prod_mag
@@ -1842,7 +1863,7 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
 
     logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
-    m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
+    m_eci2fgs1 = np.dot(M_idl2ics, m_gs_commanded)
 
     logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
     return m_eci2fgs1
@@ -2091,6 +2112,13 @@ def calc_aperture_wcs(m_eci2siaf):
 def calc_eci2j_matrix(q):
     """Calculate ECI to J-frame matrix from quaternions
 
+    This implements Eq. 24 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    From Section 3.2.1:
+
+    The M_(ECI→J) DCM is derived from the spacecraft Attitude Control System
+    (ACS) attitude quaternion telemetry using the transformation in SE-20,
+    Appendix B to transform the attitude quaternion into a DCM.
+
     Parameters
     ----------
     q : np.array(q1, q2, q3, q4)
@@ -2101,6 +2129,7 @@ def calc_eci2j_matrix(q):
     transform : np.array((3, 3))
         The transform matrix representing the transformation
         from observatory orientation to J-Frame
+
     """
     q1, q2, q3, q4 = q
     transform = np.array(
@@ -2121,6 +2150,11 @@ def calc_eci2j_matrix(q):
 
 def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
     """Calculate the J-frame to FGS1 transformation
+
+    This implements Eq. 25 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
+    From Section 3.2.2:
+
+    The M_(J→FGS1ICS) DCM is derived from the transpose of the SC ACS telemetry
 
     Parameters
     ----------
@@ -2282,7 +2316,7 @@ def calc_sifov2v_matrix():
 def calc_v2siaf_matrix(siaf):
     """Calculate the SIAF transformation matrix
 
-    This implements equation 12 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 12 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.1:
 
     The V to SIAF parameters V3IdlYang, V2Ref, V3Ref, and VIdlParity are
@@ -2429,7 +2463,7 @@ def get_pointing(obsstart, obsend, engdb_url=None,
 def vector_to_angle(v):
     """Returns tuple of spherical angles from unit direction Vector
 
-    This implements equations 10 & 11 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 10 & 11 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
 
     The Direction Cosine Matrix (DCM) that provides the transformation of a
@@ -2457,7 +2491,7 @@ def vector_to_angle(v):
 def angle_to_vector(alpha, delta):
     """Convert spherical angles to unit vector
 
-    This implements equation 9 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 9 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
 
     Parameters
@@ -2922,7 +2956,7 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
 def calc_estimated_gs_wcs(t_pars: TransformParameters):
     """Calculate the estimated guide star RA/DEC/Y-angle
 
-    This implements equation 18, 19, 20 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 18, 19, 20 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2:
 
     Parameters
@@ -2950,7 +2984,7 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
 def calc_v3pags(t_pars: TransformParameters):
     """Calculate the V3 Position Angle at the Guide Star
 
-    This implements equation 21 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 21 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
 
     Parameters
     ----------
@@ -2979,7 +3013,7 @@ def calc_v3pags(t_pars: TransformParameters):
 def calc_m_eci2gs(t_pars: TransformParameters):
     """Calculate the M_eci2gs matrix as per TR presented in 2021-07
 
-    This implements equations 16 & 17 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 16 & 17 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2:
 
     The equation is formed by inverting the equation in Section 5.9.1.2 of
@@ -3039,7 +3073,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
 
     # Put it all together
-    t.m_eci2gs = np.linalg.multi_dot([MZ2X, t.m_gs2gsapp, m_eci2gsics])
+    t.m_eci2gs = np.linalg.multi_dot([M_ics2idl, t.m_gs2gsapp, m_eci2gsics])
     logger.debug('m_eci2gs: %s', t.m_eci2gs)
 
     # That's all folks
@@ -3049,7 +3083,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 def calc_m_fgs12fgsx(fgsid, siaf_db):
     """Calculate the FGS1 to FGSx matrix
 
-    This implements equation 27 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 27 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.3:
 
     A selected guide star being used, could be in FGS 1 or FGS 2. The JWST ACS
@@ -3099,7 +3133,7 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
 def calc_m_fgsx2gs(gs_commanded):
     """Calculate the FGS1 to commanded Guide Star frame
 
-    This implements equation 29 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 29 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.4.
 
     Parameters
@@ -3122,7 +3156,7 @@ def calc_m_fgsx2gs(gs_commanded):
 def calc_m_gs2fgsx(gs_commanded):
     """Calculate the Guides Star frame to FGSx ICS frame
 
-    This implements equation 30 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 30 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.4.
 
     Parameters
@@ -3187,7 +3221,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
 def cart_to_vector(coord):
     """Convert Cartesian to a unit vector
 
-    This implements equation 6 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
+    This implements Eq. 6 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
 
     The Direction Cosine Matrix (DCM) that provides the transformation of a
