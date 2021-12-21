@@ -452,7 +452,7 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
     return wave_grid_ext
 
 
-def _grid_from_map(wave_map, aperture):
+def _grid_from_map(wave_map, trace_profile):
     """Define a wavelength grid by taking the wavelength of each column at the
     center of mass of the spatial profile.
 
@@ -460,7 +460,7 @@ def _grid_from_map(wave_map, aperture):
     ----------
     wave_map : array[float]
         Array of the pixel wavelengths for a given order.
-    aperture : array[float]
+    trace_profile : array[float]
         Array of the spatial profile for a given order.
 
     Returns
@@ -472,11 +472,11 @@ def _grid_from_map(wave_map, aperture):
     """
 
     # Use only valid columns.
-    mask = (aperture > 0).any(axis=0) & (wave_map > 0).any(axis=0)
+    mask = (trace_profile > 0).any(axis=0) & (wave_map > 0).any(axis=0)
 
     # Get central wavelength using PSF as weights.
-    num = (aperture * wave_map).sum(axis=0)
-    denom = aperture.sum(axis=0)
+    num = (trace_profile * wave_map).sum(axis=0)
+    denom = trace_profile.sum(axis=0)
     center_wv = num[mask] / denom[mask]
 
     # Make sure the wavelength values are in ascending order.
@@ -487,7 +487,7 @@ def _grid_from_map(wave_map, aperture):
     return grid, icols[sort]
 
 
-def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1):
+def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
     """Define a wavelength grid by taking the central wavelength at each columns
     given by the center of mass of the spatial profile (so one wavelength per
     column). If wave_range is outside of the wave_map, extrapolate with a
@@ -497,7 +497,7 @@ def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1):
     ----------
     wave_map : array[float]
         Array of the pixel wavelengths for a given order.
-    aperture : array[float]
+    trace_profile : array[float]
         Array of the spatial profile for a given order.
     wave_range : list[float]
         Minimum and maximum boundary of the grid to generate, in microns.
@@ -517,10 +517,10 @@ def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1):
 
     # Different treatment if wave_range is given.
     if wave_range is None:
-        out, _ = _grid_from_map(wave_map, aperture)
+        out, _ = _grid_from_map(wave_map, trace_profile)
     else:
         # Get an initial estimate of the grid.
-        grid, icols = _grid_from_map(wave_map, aperture)
+        grid, icols = _grid_from_map(wave_map, trace_profile)
 
         # Check if extrapolation needed. If so, out_col must be False.
         extrapolate = (wave_range[0] < grid.min()) | (wave_range[1] > grid.max())
@@ -548,7 +548,7 @@ def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1):
     return grid_os
 
 
-def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
+def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=None):
     """Create a wavelength grid specific to NIRISS SOSS mode observations.
     Assumes 2 orders are given, use grid_from_map if only one order is needed.
 
@@ -556,7 +556,7 @@ def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
     ----------
     wave_maps : array[float]
         Array containing the pixel wavelengths for order 1 and 2.
-    apertures : array[float]
+    trace_profiles : array[float]
         Array containing the spatial profiles for order 1 and 2.
     wave_min : float
         Minimum wavelength the output grid should cover.
@@ -600,9 +600,9 @@ def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
                   [wave_min, wave_max_o2]]
 
     # Use grid_from_map to construct separate oversampled grids for both orders.
-    wave_grid_o1 = grid_from_map(wave_maps[0], apertures[0],
+    wave_grid_o1 = grid_from_map(wave_maps[0], trace_profiles[0],
                                  wave_range=range_list[0], n_os=n_os[0])
-    wave_grid_o2 = grid_from_map(wave_maps[1], apertures[1],
+    wave_grid_o2 = grid_from_map(wave_maps[1], trace_profiles[1],
                                  wave_range=range_list[1], n_os=n_os[1])
 
     # Keep only wavelengths in order 1 that aren't covered by order 2.

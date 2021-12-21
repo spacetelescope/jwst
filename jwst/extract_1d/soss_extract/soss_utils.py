@@ -42,9 +42,9 @@ def robust_polyfit(x, y, order, maxiter=5, nstd=3.):
         y data to fit.
     order : int
         polynomial order to use.
-    maxiter : int
+    maxiter : int, optional
         number of iterations for rejecting outliers.
-    nstd : float
+    nstd : float, optional
         number of standard deviations to use when rejecting outliers.
 
     Returns
@@ -75,25 +75,17 @@ def get_image_dim(image, header=None):
     ----------
     image : array[float]
         A 2D image of the detector.
-    header : astropy.io.fits.Header object
+    header : astropy.io.fits.Header object, optional
         The header from one of the SOSS reference files.
-    verbose : bool
-        If set True some diagnostic plots will be made.
 
     Returns
     -------
-    dimx : int
-        X dimension of the stack array.
-    dimy : int
-        Y dimension of the stack array.
-    xos : int
-        Oversampling factor in x dimension of the stack array.
-    yos : int
-        Oversampling factor in y dimension of the stack array.
-    xnative : int
-        Size of stack image x dimension, in native pixels.
-    ynative : int
-        Size of stack image y dimension, in native pixels.
+    dimx, dimy : int
+        X and Y dimensions of the stack array.
+    xos, yos : int
+        Oversampling factors in x and y dimensions of the stack array.
+    xnative, ynative : int
+        Size of stack image x and y dimensions, in native pixels.
     padding : int
         Amount of padding around the image, in native pixels.
     refpix_mask : array[bool]

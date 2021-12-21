@@ -3,8 +3,6 @@ import logging
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
-from stdatamodels import DataModel
-
 from ... import datamodels
 from ...datamodels.dqflags import pixel
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
@@ -192,7 +190,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_files, threshold):
     engine = ExtractionEngine(*ref_file_args, **kwargs)
 
     # Extract estimate
-    spec_estimate = engine.extract(data=scidata_bkg, error=scierr)
+    spec_estimate = engine.__call__(data=scidata_bkg, error=scierr)
 
     # Interpolate
     idx = np.isfinite(spec_estimate)
@@ -314,7 +312,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
     # Run the extract method of the Engine.
-    f_k = engine.extract(data=scidata_bkg, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
+    f_k = engine.__call__(data=scidata_bkg, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
 
     # Compute the log-likelihood of the best fit.
     logl = engine.compute_likelihood(f_k, same=False)
