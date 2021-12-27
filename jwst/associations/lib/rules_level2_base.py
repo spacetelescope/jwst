@@ -675,7 +675,7 @@ class Utility():
                 merged[idx] = asn
                 current_asn = asn
             for product in asn['products']:
-                merge_occured = False
+                merge_occurred = False
                 for current_product in current_asn['products']:
                     if product['name'] == current_product['name']:
                         member_names = set([
@@ -695,8 +695,8 @@ class Utility():
                             if member['expname'] in new_names
                         ]
                         current_product['members'].extend(new_members)
-                        merge_occured = True
-                if not merge_occured:
+                        merge_occurred = True
+                if not merge_occurred:
                     current_asn['products'].append(product)
 
         merged_asns = [

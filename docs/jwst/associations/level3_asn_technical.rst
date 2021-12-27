@@ -151,7 +151,7 @@ exptype *required*
     coronagraphic and AMI calibration.
 
 exposerr *optional*
-  If there was some issue the occured on the observatory that may have
+  If there was some issue the occurred on the observatory that may have
   affected this exposure, that condition is listed here. Otherwise the
   value is ``null``
 
