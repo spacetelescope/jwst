@@ -3867,7 +3867,7 @@ The 0.11.0 release is highlighted by the inclusion of steps for resampling
 spectral images and time series grism observations.   In addition, this
 release had 39 issues closed and a number of pull requests to improve PEP8
 compliance, improve performance, and enhance the testing.  The release also
-included updated documentation for acessing CRDS when running the JWST
+included updated documentation for accessing CRDS when running the JWST
 pipeline and updates to the reference file documentation.
 
 ami

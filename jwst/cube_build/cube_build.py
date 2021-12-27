@@ -114,7 +114,7 @@ class CubeData():
 # -------------------------------------------------------------------------------
         self.instrument_info = instrument_info
 # _______________________________________________________________________________
-# Set up values to return and acess for other parts of cube_build
+# Set up values to return and access for other parts of cube_build
 
         self.master_table = master_table
 
