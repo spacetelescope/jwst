@@ -524,7 +524,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1)
 
     # Setup various lists of indices that will be used in subsequent
-    # sections for keeping/shuffing reference pixels in various arrays
+    # sections for keeping/shuffling reference pixels in various arrays
     #
     # The comments are for scipix_n = 16, refpix_r = 4
     n0 = 512 // scipix_n
