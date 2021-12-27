@@ -319,7 +319,7 @@ def test_full_step(setup_nrc_cube):
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # set the entire array to a small non-zero value to avoid labeling
-    # almost everthing as low saturated
+    # almost everything as low saturated
     data.data[:, :, :, :] = 1
 
     # Add ramp values up to the saturation limit
