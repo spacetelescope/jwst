@@ -41,7 +41,7 @@ As an alternative to creating a model by initializing an object of the
 specific class, you can call the open function, which is in
 util.py. This function takes the same arguments as the __init_
 method. If it is called with the name of a FITS file, it looks in the
-primary header for a keyword named DATAMODL that conains the name of
+primary header for a keyword named DATAMODL that contains the name of
 the class to use to open the model. If that keyword is not found,
 checks the dimensionality of the image and uses a generic model type
 to open the image.
