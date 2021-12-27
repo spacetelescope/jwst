@@ -148,7 +148,7 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
     ctrs_asbuilt = ctrs_asdesigned.copy()
 
     # create 'live' hole centers in an ideal, orthogonal undistorted xy pupil space,
-    # eg maps open hole C5 in as_designed to C2 as_built, eg C4 unaffacted....
+    # eg maps open hole C5 in as_designed to C2 as_built, eg C4 unaffected....
     ctrs_asbuilt[:, 0] *= -1
 
     # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with

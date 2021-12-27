@@ -144,7 +144,7 @@ class NrmModel:
             # create 'live' hole centers in an ideal, orthogonal undistorted
             #    xy pupil space,
             # eg maps open hole C5 in as_designed to C2 as_built, eg C4
-            #    unaffacted....
+            #    unaffected....
             self.ctrs_asbuilt[:, 0] *= -1
 
             # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
