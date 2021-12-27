@@ -124,9 +124,9 @@ class Methods(Enum):
     TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs_orig')
     #: Observatory orientation with velocity correction, TR 2021-05
     TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_aberration_tr202105', 'calc_wcs_orig')
-    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
+    #: TRACK and FINEGUIDE mode algorithm, TR version 2021-07
     TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
-    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-11
+    #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
     TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111')
 
     # Aliases
