@@ -4,7 +4,7 @@
 Logging
 =======
 
-Log messages are emmitted from each Step at different levels of
+Log messages are emitted from each Step at different levels of
 importance.  The levels used are the standard ones for Python (from
 least important to most important:
 
