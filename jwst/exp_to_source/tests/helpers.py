@@ -12,6 +12,6 @@ def t_path(partial_path):
     return os.path.join(test_dir, partial_path)
 
 
-# Calcuate some extra constants
+# Calculate some extra constants
 INPUT_FILES_GLOB = t_path(INPUT_FILES_GLOB)
 INPUT_FILES = glob(t_path(INPUT_FILES_GLOB))
