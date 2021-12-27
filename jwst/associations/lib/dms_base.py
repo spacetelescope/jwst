@@ -158,7 +158,7 @@ NRS_FSS_VALID_OPTICAL_PATHS = (
     ('s200b1', 'g140m', 'f070lp', 'nrs2'),
 )
 
-# Key that uniquely identfies members.
+# Key that uniquely identifies members.
 MEMBER_KEY = 'expname'
 
 # Non-specified values found in DMS Association Pools
