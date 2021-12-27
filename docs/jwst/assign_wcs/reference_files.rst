@@ -19,7 +19,7 @@ REFTYPE                                           Description                   
 :ref:`COLLIMATOR <collimator_reffile>`            NIRSpec Collimator Model                              NIRSpec
 :ref:`DISPERSER <disperser_reffile>`              Disperser parameters                                  NIRSpec
 :ref:`DISTORTION <distortion_reffile>`            Spatial distortion model                              FGS, MIRI, NIRCam, NIRISS
-:ref:`FILTEROFFSET <filteroffset_reffile>`        MIRI Imager fiter offsets                             MIRI, NIRCAM, NIRISS
+:ref:`FILTEROFFSET <filteroffset_reffile>`        MIRI Imager filter offsets                            MIRI, NIRCAM, NIRISS
 :ref:`FORE <fore_reffile>`                        Transform through the NIRSpec FORE optics             NIRSpec
 :ref:`FPA <fpa_reffile>`                          Transform in the NIRSpec FPA plane                    NIRSpec
 :ref:`IFUFORE <ifufore_reffile>`                  Transform from the IFU slicer to the IFU entrance     NIRSpec
