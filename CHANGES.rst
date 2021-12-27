@@ -3942,7 +3942,7 @@ cube_build
   of spaxels [#2472]
 
 - In a test with MIRI data there was a 13% improvement in the speed of making IFUcubes. In the
-  NIRSPEC case there was a 40% improvment in the speed of creating IFUCubes.
+  NIRSPEC case there was a 40% improvement in the speed of creating IFUCubes.
 
 - Fixed bug in cube_build.blot_images that was failing for  NIRSPEC IFU images
   with the slide position defined in the WCS [#2345]
