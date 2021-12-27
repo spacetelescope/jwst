@@ -40,7 +40,7 @@ db_ngas_path = DATA_PATH / 'engdb_ngas'
 db_jw703_path = DATA_PATH / 'engdb_jw00703'
 siaf_path = DATA_PATH / 'siaf.db'
 
-# Some expected falues
+# Some expected values
 Q_EXPECTED = np.asarray(
     [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
 )
