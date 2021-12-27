@@ -31,7 +31,7 @@ class StraylightStep (Step):
             if detector == 'MIRIFUSHORT':
                 # If Modified Shepard  test  input parameters for weighting
                 if self.method == 'ModShepard':
-                    # reasonable power varible defined as: 0.1 < power < 5
+                    # reasonable power variable defined as: 0.1 < power < 5
                     if self.power < 0.1 or self.power > 5:
                         self.log.warning("The kernel power parameter is outside the reasonable range of"
                                          " 0.1 to 5. It is set to {}".format(self.power))

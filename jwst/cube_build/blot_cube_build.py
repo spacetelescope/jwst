@@ -15,7 +15,7 @@ log.setLevel(logging.DEBUG)
 class CubeBlot():
 
     def __init__(self, median_model, input_models):
-        """Class Blot holds the main varibles for blotting sky cube to detector
+        """Class Blot holds the main variables for blotting sky cube to detector
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These

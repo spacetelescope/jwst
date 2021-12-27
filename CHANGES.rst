@@ -1024,7 +1024,7 @@ associations
 cube_build
 ----------
 
-- Do not allow varibles defined in spec (part of the cube_build_step class) to
+- Do not allow variables defined in spec (part of the cube_build_step class) to
   be changed, to allow calspec2 to loop over a list of files and run the
   pipeline. [#5603]
 
