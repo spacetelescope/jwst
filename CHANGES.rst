@@ -673,7 +673,7 @@ general
 jump
 -----------------
 
-- Update the step to detect jumps in three and four group integations [#5915].
+- Update the step to detect jumps in three and four group integrations [#5915].
 
 - Change the default S/N ratio for not flagging neighbors to be a higher value to
   better reflect the correct IPC.
