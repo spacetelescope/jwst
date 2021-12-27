@@ -215,7 +215,7 @@ class ResampleSpecData(ResampleData):
         wavelength_array = np.unique(all_wave)
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
-        # dispersion direction matches the disperion direction on the detector.
+        # dispersion direction matches the dispersion direction on the detector.
         if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
             wavelength_array = np.flip(wavelength_array, axis=None)
 
