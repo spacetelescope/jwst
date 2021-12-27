@@ -514,7 +514,7 @@ def abl_to_v2v3l(input_model, reference_files):
         label_mapper is LabelMapperDict()
         {channel_wave_range (): channel_number}
         selector is {channel_number: ab2v2 & ab2v3}
-    bacward_transform
+    backward_transform
       RegionsSelector
         label_mapper is LabelMapperDict()
         {channel_wave_range (): channel_number}
