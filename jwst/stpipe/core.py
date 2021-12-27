@@ -109,7 +109,7 @@ class JwstStep(Step):
         else:
             datamodel.meta.cal_step._instance[cal_step] = status
 
-        # TODO: standardize cal_step naming to point to the offical step name
+        # TODO: standardize cal_step naming to point to the official step name
 
     def remove_suffix(self, name):
         return remove_suffix(name)
