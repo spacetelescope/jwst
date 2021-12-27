@@ -1528,7 +1528,7 @@ class Schema_editor:
             model_value = self.strip_blanks(model_schema.get(model_field))
 
             if model_field == "pattern" and model_value is not None:
-                # Pattern is inside innermost set of parentehses
+                # Pattern is inside innermost set of parentheses
                 patstart = model_value.rfind('(') + 1
                 patend = model_value.find(')')
                 model_value = model_value[patstart:patend].split('|')
