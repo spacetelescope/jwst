@@ -957,7 +957,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
     bkg_sigma_clip = extract_params['bkg_sigma_clip']
 
-    # Point Souce data 1. extract background and subtract 2. do not
+    # Point Source data 1. extract background and subtract 2. do not
     if source_type == 'POINT':
         if subtract_background and mask_bkg is not None:
             n_bkg[:] = (temp_weightmap * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
