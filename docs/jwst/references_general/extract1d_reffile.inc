@@ -124,7 +124,7 @@ jwst_niriss_extract1d_0003.json::
       "PEDIGREE": "GROUND",
       "DESCRIP": "NIRISS SOSS extraction params for ground testing",
       "AUTHOR": "M.Wolfe, H.Bushouse",
-      "HISTORY": "Build 7.1 of the JWST Calibraton pipeline. The regions are rectagular and do not follow the trace.",
+      "HISTORY": "Build 7.1 of the JWST Calibration pipeline. The regions are rectagular and do not follow the trace.",
       "USEAFTER": "2015-11-01T00:00:00",
       "apertures": [
         {

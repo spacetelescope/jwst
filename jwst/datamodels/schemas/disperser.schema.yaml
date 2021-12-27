@@ -25,7 +25,7 @@ allOf:
       properties:
         temperatures:
           description: |
-            Temperature where the GWA sensor calibraiton was obtained.
+            Temperature where the GWA sensor calibration was obtained.
           type: array
           items:
             type: number
@@ -51,7 +51,7 @@ allOf:
       properties:
         temperatures:
           description: |
-            Temperature where the GWA sensor calibraiton was obtained.
+            Temperature where the GWA sensor calibration was obtained.
           type: array
           items:
             type: number
