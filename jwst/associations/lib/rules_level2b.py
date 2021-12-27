@@ -776,7 +776,7 @@ class Asn_Lv2WFSS(
         Notes
         -----
         This is an override for the method in `DMSBaseMixin`.
-        The optical element is retieved from the chosen direct image
+        The optical element is retrieved from the chosen direct image
         found in `self.direct_image`, determined in the `self.finalize`
         method.
         """
