@@ -14,7 +14,7 @@ def mkpool(data, **kwargs):
 
     Parameters
     ----------
-    data : [dataum[, ...]]
+    data : [datum[, ...]]
         The data to get the pool parameters from.
         Can be pathnames or `astropy.io.fits.HDUL`
         or `astropy.io.fits.ImageHDU
