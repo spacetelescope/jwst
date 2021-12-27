@@ -25,7 +25,7 @@ REFTYPE                                           Description                   
 :ref:`IFUFORE <ifufore_reffile>`                  Transform from the IFU slicer to the IFU entrance     NIRSpec
 :ref:`IFUPOST <ifupost_reffile>`                  Transform from the IFU slicer to the back of the IFU  NIRSpec
 :ref:`IFUSLICER <ifuslicer_reffile>`              IFU Slicer geometric description                      NIRSpec
-:ref:`MSA <msa_reffile>`                          Transformin the NIRSpec MSA plane                     NIRSpec
+:ref:`MSA <msa_reffile>`                          Transforming the NIRSpec MSA plane                    NIRSpec
 :ref:`OTE <ote_reffile>`                          Transform through the Optical Telescope Element       NIRSpec
 :ref:`SPECWCS <specwcs_reffile>`                  Wavelength calibration models                         MIRI, NIRCam, NIRISS
 :ref:`REGIONS <regions_reffile>`                  Stores location of the regions on the detector        MIRI
