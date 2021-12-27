@@ -105,7 +105,7 @@ class EngdbMast(EngdbABC):
         starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime : str or astropy.time.Time
+        endtime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
         cache_path : str or Path-like
@@ -131,7 +131,7 @@ class EngdbMast(EngdbABC):
         starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime : str or astropy.time.Time
+        endtime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
         cache_path : str or Path-like
@@ -186,7 +186,7 @@ class EngdbMast(EngdbABC):
         starttime : str or `astropy.time.Time`
             The, inclusive, start time to retireve from.
 
-        endttime : str or `astropy.time.Time`
+        endtime : str or `astropy.time.Time`
             The, inclusive, end time to retireve from.
 
         time_format : str
@@ -257,7 +257,7 @@ class EngdbMast(EngdbABC):
         starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime : str or astropy.time.Time
+        endtime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
         result_format : str

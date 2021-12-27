@@ -146,7 +146,7 @@ class EngdbDirect(EngdbABC):
         starttime : str or `astropy.time.Time`
             The, inclusive, start time to retireve from.
 
-        endttime : str or `astropy.time.Time`
+        endtime : str or `astropy.time.Time`
             The, inclusive, end time to retireve from.
 
         time_format : str
@@ -187,7 +187,7 @@ class EngdbDirect(EngdbABC):
         # Records returned are apparent not strictly correlated with
         # observation time. So, need to filter further.
         db_starttime = extract_db_time(records['ReqSTime'])
-        db_endttime = extract_db_time(records['ReqETime'])
+        db_endtime = extract_db_time(records['ReqETime'])
         results = _ValueCollection(
             include_obstime=include_obstime,
             zip_results=zip_results
@@ -196,7 +196,7 @@ class EngdbDirect(EngdbABC):
             for record in records['Data']:
                 obstime = extract_db_time(record['ObsTime'])
                 if not include_bracket_values:
-                    if obstime < db_starttime or obstime > db_endttime:
+                    if obstime < db_starttime or obstime > db_endtime:
                         continue
                 value = record['EUValue']
                 results.append(obstime, value)
@@ -222,7 +222,7 @@ class EngdbDirect(EngdbABC):
         starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime : str or astropy.time.Time
+        endtime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
         result_format : str

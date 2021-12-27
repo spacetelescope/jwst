@@ -171,7 +171,7 @@ class EngDB_Local():
         starttime: str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime: str or astropy.time.Time
+        endtime: str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
         Returns
@@ -290,7 +290,7 @@ def cache_engdb(
     starttime: str or astropy.time.Time
         The, inclusive, start time to retireve from.
 
-    endttime: str or astropy.time.Time
+    endtime: str or astropy.time.Time
         The, inclusive, end time to retireve from.
 
     path: str

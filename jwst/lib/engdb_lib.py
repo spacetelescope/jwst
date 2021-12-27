@@ -88,7 +88,7 @@ class EngdbABC(abc.ABC):
         starttime : str or `astropy.time.Time`
             The, inclusive, start time to retireve from.
 
-        endttime : str or `astropy.time.Time`
+        endtime : str or `astropy.time.Time`
             The, inclusive, end time to retireve from.
 
         time_format : str
