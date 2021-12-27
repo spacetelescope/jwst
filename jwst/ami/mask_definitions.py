@@ -17,8 +17,8 @@ class NRM_mask_definitions():
     def __init__(self, maskname=None, rotdeg=None, holeshape="circ", rescale=False,
                  chooseholes=None):
         """
-        Short Summarry
-        --------------
+        Short Summary
+        -------------
         Set attributes of NRM_mask_definitions class.
 
         Parameters
@@ -67,8 +67,8 @@ class NRM_mask_definitions():
 
     def showmask(self):
         """
-        Short Summarry
-        --------------
+        Short Summary
+        -------------
         Calculate the diameter of the smallest centered circle (D)
         enclosing the live mask area
 
@@ -89,8 +89,8 @@ class NRM_mask_definitions():
 
 def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesigned
     """
-    Short Summarry
-    --------------
+    Short Summary
+    -------------
     Calculate hole centers with appropriate rotation
 
     Parameters
@@ -163,8 +163,8 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
 
 def jwst_g7s6c(chooseholes=None):
     """
-    Short Summarry
-    --------------
+    Short Summary
+    -------------
     Calculate hole centers with appropriate rotation
 
     Parameters
