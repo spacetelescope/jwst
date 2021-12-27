@@ -345,7 +345,7 @@ def make_knots(flux, nknots=20, weights=None):
         weights_diff = np.ediff1d(weights)
 
         # set edges where diff should be almost equal to the largest of the two datapoints used
-        # iteratate over the diffs and compare to the datapoints
+        # iterate over the diffs and compare to the datapoints
         edges_idx_list = []
         for n, wd in enumerate(weights_diff):
             # get the data points used for the diff
