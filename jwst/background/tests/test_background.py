@@ -121,7 +121,7 @@ def test_nirspec_gwa_xtilt(_jail, background, science_image):
     back_image.close()
 
 
-def test_nirspec_gwa_ytitl(_jail, background, science_image):
+def test_nirspec_gwa_ytilt(_jail, background, science_image):
     """Verify NIRSPEC GWA Ytilt must be the same in the science and background image"""
 
     # open the background to read in the GWA values
