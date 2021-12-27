@@ -677,7 +677,7 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     Get the overlap of the 2 images (based on the offsets), and
     calculate the two dimensional cross correlation image between 2 image subarrays.
     Then we slice on the a subarray around the peak of the cross correlation image and
-    find the first moment. The first momement provies a high S/N measurement of the offset
+    find the first moment. The first moment provies a high S/N measurement of the offset
     between the two images.
 
 
