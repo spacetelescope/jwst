@@ -51,7 +51,7 @@ class GWCSDrizzle:
             names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
             and "lanczos3". The square kernel is the default.
 
-        fillval : str, otional
+        fillval : str, optional
             The value a pixel is set to in the output if the input image does
             not overlap it. The default value of INDEF does not set a value.
         """
