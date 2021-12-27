@@ -1177,7 +1177,7 @@ def dms_to_sca(input_model):
     if ystart is None:
         ystart = 1
     # The SCA coordinates are in full frame
-    # The inputs are 1-based, remove -1 when'if they are 0-based
+    # The inputs are 1-based, remove -1 if/when they are 0-based
     # The outputs must be 1-based because this is what the model expects.
     # If xstart was 0-based and the inputs were 0-based ->
     # Shift(+1)
