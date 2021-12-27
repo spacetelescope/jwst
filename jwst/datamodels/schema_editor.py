@@ -1,5 +1,5 @@
 # The schema editor is designed to be run as a command line script. It can be
-# run either interactively or not. To run it non-inteactively, you must set
+# run either interactively or not. To run it non-interactively, you must set
 # the options when creating  a new editor object, as in the following
 # example. The options are listed in the __doc__ comment for the Schema_editor
 # class.
