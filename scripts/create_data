@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument(
         'directory', nargs=1,
         help="""A list of directories containing proposal files
-        to be processsed.""")
+        to be processed.""")
     parser.add_argument('-l', '--level', dest='level',
                         nargs=1, default='1b', choices=('1b', '2a'),
                         help="Level of data to produce: default='1b'")
