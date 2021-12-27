@@ -672,7 +672,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
 
     Notes
     -----
-    The evaluation here is lineaer because higher orders have not yet been
+    The evaluation here is linear because higher orders have not yet been
     defined for NIRCAM (NIRCAM polynomials currently do not have any field
     dependence)
     """
@@ -759,7 +759,7 @@ class NIRCAMBackwardGrismDispersion(Model):
 
     Notes
     -----
-    The evaluation here is lineaer because higher orders have not yet been defined for NIRCAM
+    The evaluation here is linear because higher orders have not yet been defined for NIRCAM
     (NIRCAM polynomials currently do not have any field dependence)
     """
     standard_broadcasting = False
