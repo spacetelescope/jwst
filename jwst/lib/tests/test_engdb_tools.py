@@ -62,7 +62,7 @@ def engdb():
         yield engdb
 
 
-def test_environmetal(jail_environ):
+def test_environmental(jail_environ):
     os.environ['ENG_BASE_URL'] = ALTERNATE_URL
     try:
         engdb = engdb_tools.ENGDB_Service()
@@ -71,7 +71,7 @@ def test_environmetal(jail_environ):
     assert engdb.base_url == ALTERNATE_URL
 
 
-def test_environmetal_bad(jail_environ):
+def test_environmental_bad(jail_environ):
     alternate = 'http://google.com/'
     did_except = False
     os.environ['ENG_BASE_URL'] = alternate
