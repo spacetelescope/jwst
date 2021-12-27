@@ -865,7 +865,7 @@ class IFUCubeData():
 
     def determine_cube_parameters(self):
         """Determine the spatial and wavelength roi size to use for
-        selecting point cloud elements around the spaxel centeres.
+        selecting point cloud elements around the spaxel centers.
 
         If the IFU cube covers more than 1 band - then use the rules to
         define the Spatial and Wavelength roi size to use for the cube
