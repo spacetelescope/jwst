@@ -608,7 +608,7 @@ def quadratic_extremum(p):
     Parameters
     ----------
     p: float, float, float
-        quadratic coefficents
+        quadratic coefficients
 
     Returns
     -------

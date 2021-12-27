@@ -51,7 +51,7 @@ The prism reference file has in addition the following fields:
 
 :angle: Angle between the front and back surface of the prosm (in degrees)
 :kcoef: K coefficients of Selmeir equation, describing the material
-:lcoef: L coeffficients describing the material
+:lcoef: L coefficients describing the material
 :tcoef: Six constants, describing the thermal behavior of the glass
 :tref: Temperature (in K), used to compute the change in temperature relative to the reference temperature of the glass
 :pref: Reference pressure (in ATM)
