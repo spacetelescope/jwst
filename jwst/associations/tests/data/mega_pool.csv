@@ -81,7 +81,7 @@
 # 
 # ########
 # Proposal 93065
-# Observataions: 1
+# Observations: 1
 # Mosaic: 1 row by 2 columns
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
@@ -135,7 +135,7 @@
 # 
 # 
 # ########
-# Observataions: 1
+# Observations: 1
 # Mode: SOSS
 # 
 # Pool.Spectrum.NIRSpec
@@ -147,7 +147,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Mode: Fixed Slit
@@ -212,7 +212,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -257,7 +257,7 @@
 # 
 # ########
 # Proposal 93065
-# Observataions: 1
+# Observations: 1
 # Mosaic: 1 row by 2 columns
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
@@ -363,7 +363,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -388,7 +388,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -418,7 +418,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -496,7 +496,7 @@
 # 
 # ########
 # Proposal 93065
-# Observataions: 1
+# Observations: 1
 # Mosaic: 1 row by 2 columns
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout

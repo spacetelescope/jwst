@@ -9,7 +9,7 @@ FILENAME|OBS_ID|PROGRAM|OBS_NUM|VISIT|VISIT_ID|VISITGRP|VISITYPE|SEQ_ID|ACT_ID|E
 #
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed IFU
 #
 # Initialize ACID. This is done with a dummy exposure that will not match any association

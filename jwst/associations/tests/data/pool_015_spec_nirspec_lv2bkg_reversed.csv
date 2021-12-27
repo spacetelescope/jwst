@@ -8,7 +8,7 @@ filename|obs_id|program|obs_num|visit|visit_id|visitgrp|visitype|seq_id|act_id|e
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
