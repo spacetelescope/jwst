@@ -2408,7 +2408,7 @@ barshadow
 combine_1d
 ----------
 
-- Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
+- Fixed the number of inputs to the spectral WCS - one expected, two were passed. [#3827]
 
 calwebb_tso3
 -------------
