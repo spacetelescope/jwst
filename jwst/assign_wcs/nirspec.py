@@ -1150,7 +1150,7 @@ def detector_to_gwa(reference_files, detector, disperser):
     As a consequence many steps have to be modified to provide 1-based coordinates
     to the WCS call if the instrument is Nirspec. This is not always easy, especially
     when the step has no knowledge of the instrument.
-    This is the reason the algorithm is modified to acccept 0-based coordinates.
+    This is the reason the algorithm is modified to accept 0-based coordinates.
     This will be discussed in the future with the INS and IDT teams and may be solved
     by changing the algorithm but for now
 
