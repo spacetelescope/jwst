@@ -2199,7 +2199,7 @@ class IFUCubeData():
             ifucube_model.meta.bunit_err = input.meta.bunit_err
 
         if self.interpolation == 'drizzle':
-            # stick in values of 0, otherwize it is NaN and
+            # stick in values of 0, otherwise it is NaN and
             # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
             ifucube_model.meta.ifu.weight_power = 0
@@ -2208,7 +2208,7 @@ class IFUCubeData():
             ifucube_model.meta.ifu.weighting = str(self.interpolation)
 
         if self.coord_system == 'internal_cal':
-            # stick in values of 0, otherwize it is NaN and
+            # stick in values of 0, otherwise it is NaN and
             # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
             ifucube_model.meta.ifu.weight_power = 0
