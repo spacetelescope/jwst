@@ -99,7 +99,7 @@ class SkyCube():
 
         id : anything
             The value of this parameter is simple stored within the `SkyCube`
-            object. While it can be of any type, it is prefereble that `id` be
+            object. While it can be of any type, it is preferable that `id` be
             of a type with nice string representation.
 
         meta : dict, None, optional

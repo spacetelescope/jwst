@@ -75,7 +75,7 @@ class SkyImage:
 
         id : anything
             The value of this parameter is simple stored within the `SkyImage`
-            object. While it can be of any type, it is prefereble that `id` be
+            object. While it can be of any type, it is preferable that `id` be
             of a type with nice string representation.
 
         skystat : callable, None, optional
@@ -146,7 +146,7 @@ class SkyImage:
     def id(self):
         """ Set or get `SkyImage`'s `id`.
 
-        While `id` can be of any type, it is prefereble that `id` be
+        While `id` can be of any type, it is preferable that `id` be
         of a type with nice string representation.
 
         """
@@ -636,7 +636,7 @@ class SkyGroup:
     def id(self):
         """ Set or get `SkyImage`'s `id`.
 
-            While `id` can be of any type, it is prefereble that `id` be
+            While `id` can be of any type, it is preferable that `id` be
             of a type with nice string representation.
 
         """
