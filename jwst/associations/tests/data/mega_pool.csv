@@ -545,7 +545,7 @@
 # Nod group 2, EXPSPCIN == 2
 # NIRSpec Fixed-slit with various nods and dithers
 # 
-# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# This examples works through a number of the Nod/Sub-pixel patterns
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -559,7 +559,7 @@
 # Primary Dither=2, Sub-pixel Pattern=Both, F290LP/G140M
 # NIRSpec Fixed-slit with various nods and dithers and off-target backgrounds
 # 
-# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# This examples works through a number of the Nod/Sub-pixel patterns
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -579,7 +579,7 @@
 # 
 # NIRSpec IFU with various nods and dithers
 # 
-# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# This examples works through a number of the Nod/Sub-pixel patterns
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
