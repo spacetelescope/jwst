@@ -295,7 +295,7 @@ class SkyImage:
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
-        #       points are not closed. Threfore we force it to be closed:
+        #       points are not closed. Therefore we force it to be closed:
         ra[-1] = ra[0]
         dec[-1] = dec[0]
 
