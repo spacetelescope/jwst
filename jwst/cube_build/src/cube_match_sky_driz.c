@@ -193,7 +193,7 @@ int match_driz(double *xc, double *yc, double *zc,
       cdelt1_half = cdelt1/2.0;
       cdelt2_half = cdelt2/2.0;
 
-      // find the area of the pixel (quadilateral) not needed now - keeping if needed later
+      // find the area of the pixel (quadrilateral) not needed now - keeping if needed later
       // area_quad = find_area_quad(xmin, ymin, xpixel, ypixel);
 
       // convert to integer values to get the approximate region to search
