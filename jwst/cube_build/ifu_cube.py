@@ -525,7 +525,7 @@ class IFUCubeData():
         the ifucube in created in the detector plane. The weighting function is based on
         the overlap of between the detector pixel and spaxel. This method is simplified
         to determine the overlap in the along slice-wavelength plane.
-        4. find_spaxel_flux: find the final flux assoicated with each spaxel
+        4. find_spaxel_flux: find the final flux associated with each spaxel
         5. setup_final_ifucube_model
         6. output_ifucube
 

@@ -243,7 +243,7 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 # cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data
-# and fill in master_table holding what files are associationed with each
+# and fill in master_table holding what files are associated with each
 # ch/sub-ch or grating/filter.
 # Fill in all_channel, all_subchannel,all_filter, all_grating and instrument
 
