@@ -64,7 +64,7 @@ class ParseState():
 
 class Object():
     """
-    The base class of all objects that form the FITS file heirarchy.
+    The base class of all objects that form the FITS file hierarchy.
     """
     def verify(self, value, error_collector, state):
         """
