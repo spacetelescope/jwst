@@ -123,7 +123,7 @@ class Methods(Enum):
     #: Observatory orientation without velocity correction, TR 2021-05
     TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs_orig')
     #: Observatory orientation with velocity correction, TR 2021-05
-    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105', 'calc_wcs_orig')
+    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_aberration_tr202105', 'calc_wcs_orig')
     #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
     TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
     #: TRACK and FINEGUIDE mode alorithm, TR version 2021-11
@@ -236,7 +236,7 @@ class Transforms:
     m_fgs12fgsx: np.array = None
     #: FGS1 to SIFOV
     m_fgs12sifov: np.array = None
-    #: Velocity abberation
+    #: Velocity aberration
     m_gs2gsapp: np.array = None
     #: J-Frame to FGS1
     m_j2fgs1: np.array = None
@@ -1364,7 +1364,7 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
         )
 
 
-def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
+def calc_transforms_velocity_aberration_tr202105(t_pars: TransformParameters):
     """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the aperture-specific SIAF,
