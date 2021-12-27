@@ -505,7 +505,7 @@ def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
     try:
         stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL)
     except ValueError as exception:
-        pytest.xfail(f'No telementry exists. Update test to use existing telemetry. Exception: {exception}')
+        pytest.xfail(f'No telemetry exists. Update test to use existing telemetry. Exception: {exception}')
 
     # Tests
     with datamodels.Level1bModel(data_file_fromsim) as model:
