@@ -897,7 +897,7 @@ class NIRISSBackwardGrismDispersion(Model):
         Notes
         -----
         There's spatial dependence for NIRISS so the forward transform
-        dependes on x,y as well as the filter wheel rotation. Theta is
+        depends on x,y as well as the filter wheel rotation. Theta is
         usu. taken to be the different between fwcpos_ref in the specwcs
         reference file and fwcpos from the input image.
 
