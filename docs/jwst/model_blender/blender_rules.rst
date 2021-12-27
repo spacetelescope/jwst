@@ -40,6 +40,4 @@ above.  This definition illustrates how several rules are simply interfaces for
 numpy array operations, while others are defined internally to `model_blender`.
 
 .. automodapi:: jwst.model_blender.blendrules
-   :skip: OrderedDict
-   :skip: Time
-   :skip: time
+  :no-inheritance-diagram:
