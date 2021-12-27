@@ -101,7 +101,7 @@ def add_wcs(filename):
     # WARNINGWARNINGWARNINGWARNINGWARNINGWARNING
     #
     # Get engineering parameters about scope pointing.
-    # In normal operations, if the paramters cannot be found
+    # In normal operations, if the parameters cannot be found
     # this should fail.
     # However, for prelaunch, we'll dummy out.
     try:

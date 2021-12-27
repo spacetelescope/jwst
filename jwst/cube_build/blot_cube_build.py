@@ -107,7 +107,7 @@ class CubeBlot():
     # **********************************************************************
 
     def blot_info(self):
-        """ Prints the basic paramters of the blot image and median sky cube
+        """ Prints the basic parameters of the blot image and median sky cube
         """
         log.info('Information on Blotting')
         log.info('Working with instrument %s', self.instrument)

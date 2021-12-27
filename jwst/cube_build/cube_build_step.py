@@ -350,7 +350,7 @@ class CubeBuildStep (Step):
     def read_user_input(self):
         """Read user input options for channel, subchannel, filter, or grating"""
 
-        # Determine if any of the input paramters channel, band, filter or
+        # Determine if any of the input parameters channel, band, filter or
         # grating have been set.
 
         # This routine updates the dictionary self.pars_input with any user

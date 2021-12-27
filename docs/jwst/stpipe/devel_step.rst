@@ -65,7 +65,7 @@ There are three ways a step's results can be written to a file:
 
 2. Explicitly by specifying the parameter `save_results`
 
-3. Explicitly by specifying a file name with the paremeter
+3. Explicitly by specifying a file name with the parameter
    `output_file`
 
 In all cases, the file, or files, is/are created with an added suffix

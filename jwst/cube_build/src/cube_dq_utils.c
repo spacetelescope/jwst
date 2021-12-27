@@ -584,7 +584,7 @@ int dq_nirspec(int overlap_partial,
     which is used for MIRI - an algorithm that determines the spaxels that
     the slice line intersects is used instead.
     
-    Paramteter
+    Parameter
     ---------
     overlap_partial - intermediate DQ flag
     coord1: xi coordinates of input data (~x coordinate in IFU space)

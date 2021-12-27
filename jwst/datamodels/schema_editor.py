@@ -773,7 +773,7 @@ class Options:
         """
         Check that the type of a new value agrees with the current type
         """
-        badtype = "Invalid paramater value for %s (%s)"
+        badtype = "Invalid parameter value for %s (%s)"
         if isinstance(parameters[name], str):
             if not isinstance(value, str):
                 raise ValueError(badtype % (name, value))
