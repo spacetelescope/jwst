@@ -33,7 +33,7 @@ To run a single step:
 
  from jwst.jump import JumpStep
 
- # Instantitate the step
+ # Instantiate the step
  step = JumpStep()
 
  # Set parameter values
