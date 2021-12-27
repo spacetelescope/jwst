@@ -16,7 +16,7 @@ history:
 meta:
   author: Karl Gordon
   date: '2019-02-30T01:02:03.456'
-  description: Tweakreg params for genreal JWST imaging
+  description: Tweakreg params for general JWST imaging
   instrument: {name: GENERIC}
   pedigree: GROUND
   reftype: pars-tweakreg
