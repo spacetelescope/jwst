@@ -228,7 +228,7 @@ class ResampleSpecData(ResampleData):
                                       name='pix2wavelength')
 
         # Tabular models need an inverse explicitly defined.
-        # If the wavelength array is decending instead of ascending, both
+        # If the wavelength array is descending instead of ascending, both
         # points and lookup_table need to be reversed in the inverse transform
         # for scipy.interpolate to work properly
         points = wavelength_array
@@ -376,7 +376,7 @@ class ResampleSpecData(ResampleData):
                                       name='pix2wavelength')
 
         # Tabular models need an inverse explicitly defined.
-        # If the wavelength array is decending instead of ascending, both
+        # If the wavelength array is descending instead of ascending, both
         # points and lookup_table need to be reversed in the inverse transform
         # for scipy.interpolate to work properly
         points = wavelength_array
