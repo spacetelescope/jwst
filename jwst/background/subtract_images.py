@@ -25,7 +25,7 @@ def subtract(model1, model2):
         subtracted data model
     """
 
-    # Create the ouput model as a copy of the first input
+    # Create the output model as a copy of the first input
     output = model1.copy()
 
     # Subtract the SCI arrays

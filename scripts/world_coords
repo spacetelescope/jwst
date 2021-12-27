@@ -381,7 +381,7 @@ With a single input and output filename.
 
 > world_coord input output
 
-With one or more input filenames. The ouput names are generated from
+With one or more input filenames. The output names are generated from
 the inputs.
 
 > world_coord input_1 input_2 ... input_n

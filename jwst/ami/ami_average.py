@@ -25,7 +25,7 @@ def average_LG(lg_products):
         Averaged fringe data
     """
 
-    # Create the ouput model as a copy of the first input model
+    # Create the output model as a copy of the first input model
     log.debug(' Create output as copy of %s', lg_products[0])
     output_model = datamodels.AmiLgModel(lg_products[0]).copy()
 

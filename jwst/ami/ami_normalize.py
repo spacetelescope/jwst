@@ -30,7 +30,7 @@ def normalize_LG(target_model, reference_model):
         Normalized fringe data for the target
     """
 
-    # Create the ouput model as a copy of the input target model
+    # Create the output model as a copy of the input target model
     output_model = target_model.copy()
 
     # Apply the normalizations to the target data

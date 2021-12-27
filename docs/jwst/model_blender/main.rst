@@ -67,7 +67,7 @@ Customizing the behavior
 ========================
 By default, `blendmodels` will not write out the updated product model to disk.
 This allows the user or calling program to revise or apply data-specific logic
-to redefine the output value for any of the ouput product's metadata attributes.
+to redefine the output value for any of the output product's metadata attributes.
 For example, when combining multiple images, the WCS information does not represent
 any combination of the input WCS attributes.  Instead, the user can have
 their own processing code replace the *blended* WCS attributes with one that was

@@ -142,7 +142,7 @@ class GWCSDrizzle:
 
         xmax : float, optional
             Sets the maximum value of the x dimension on the bounding box
-            of the ouput image. If the value is zero or less, no maximum will
+            of the output image. If the value is zero or less, no maximum will
             be set in the x dimension.
 
         ymin : float, optional
