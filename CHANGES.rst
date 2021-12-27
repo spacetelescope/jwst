@@ -1442,7 +1442,7 @@ assign_wcs
 
 - Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
 
-- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
+- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprints``. [#5120]
 
 - Improved calculation of bounding boxes in grism images. [#5122]
 
