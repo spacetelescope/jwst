@@ -73,7 +73,7 @@ class SkyCube():
         bkg_deg : int, array-like of shape (3,), optional
             Degree of the polynomial used to approximate the background level.
             Degree of 0 corresponds to a constant background and degree of 1
-            corrsponds to a tri-linear form. It is also possible to specify
+            corresponds to a tri-linear form. It is also possible to specify
             the maximum degree for each coordinate by providing an iterable
             of length 3 such as (Dx, Dy, Dz).
 
