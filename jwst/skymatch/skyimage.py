@@ -197,8 +197,8 @@ class SkyImage:
     @property
     def radec(self):
         """
-        Get RA and DEC of the verteces of the bounding polygon as a
-        `~numpy.ndarray` of shape (N, 2) where N is the number of verteces + 1.
+        Get RA and DEC of the vertices of the bounding polygon as a
+        `~numpy.ndarray` of shape (N, 2) where N is the number of vertices + 1.
         """
         return self._radec
 
@@ -662,8 +662,8 @@ class SkyGroup:
     @property
     def radec(self):
         """
-        Get RA and DEC of the verteces of the bounding polygon as a
-        `~numpy.ndarray` of shape (N, 2) where N is the number of verteces + 1.
+        Get RA and DEC of the vertices of the bounding polygon as a
+        `~numpy.ndarray` of shape (N, 2) where N is the number of vertices + 1.
 
         """
         return self._radec
