@@ -460,7 +460,7 @@ def subarray_transform(input_model):
     tr_xstart = astmodels.Identity(1)
     tr_ystart = astmodels.Identity(1)
 
-    # These quanities are 1-based
+    # These quantities are 1-based
     xstart = input_model.meta.subarray.xstart
     ystart = input_model.meta.subarray.ystart
 
