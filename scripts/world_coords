@@ -138,7 +138,7 @@ def build_output_files(filenames):
         if len(filenames) == 1:
             return [output]
         else:
-            # Let other code handle the mssing file error
+            # Let other code handle the missing file error
             filenames.append(output)
             outputs = []
     else:
