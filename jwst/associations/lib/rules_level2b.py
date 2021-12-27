@@ -598,7 +598,7 @@ class Asn_Lv2WFSS(
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
-        - Mutli-object science exposures
+        - Multi-object science exposures
         - Single science exposure
         - Require a source catalog from processing of the corresponding direct imagery.
     """

@@ -30,7 +30,7 @@ def get_center(exp_type, input):
 
     elif exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
 
-        # MSA centering is specified in the MiltiSlit model
+        # MSA centering is specified in the MultiSlit model
         # "input" treated as a slit object
         try:
             xcenter = input.source_xpos

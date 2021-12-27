@@ -173,7 +173,7 @@ either a `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, or
 `~jwst.datamodels.CubeModel`, matching the corresponding input data type.
 
 Of the data types that do go through :ref:`extract_2d <extract_2d_step>` processing,
-the output type will consist of either a single slit model or a mutli-slit model:
+the output type will consist of either a single slit model or a multi-slit model:
 
 - NIRSpec Bright-Object and NIRCam TSO Grism: `~jwst.datamodels.SlitModel`
 - NIRSpec Fixed Slit and MOS, as well as WFSS: `~jwst.datamodels.MultiSlitModel`
