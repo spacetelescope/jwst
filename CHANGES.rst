@@ -3892,7 +3892,7 @@ assign_wcs
 - Implemented support for reading and writing WCS information in the
   WAVE-TAB format [#2350]
 
-- Fixed bug in the ording of cube footprint [#2371]
+- Fixed bug in the ordering of cube footprint [#2371]
 
 associations
 ------------
