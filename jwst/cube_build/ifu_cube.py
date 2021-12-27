@@ -1391,7 +1391,7 @@ class IFUCubeData():
         softrad_det : numpy.ndarray
             weighting parameter association with coord1,coord2
         """
-        # intitalize alpha_det and beta_det to None. These are filled in
+        # initialize alpha_det and beta_det to None. These are filled in
         # if the instrument is MIRI and the weighting is miripsf
 
         wave_all = None
