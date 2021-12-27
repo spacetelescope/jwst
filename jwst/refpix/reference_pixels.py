@@ -116,7 +116,7 @@ class Dataset():
         flag that shows whether the dataset was created from subarray
         data
 
-    odd_even_columns: booolean
+    odd_even_columns: boolean
         flag that controls whether odd and even-numbered columns are
         processed separately (NIR only)
 
@@ -319,7 +319,7 @@ class NIRDataset(Dataset):
         flag that shows whether the dataset was created from subarray
         data
 
-    odd_even_columns: booolean
+    odd_even_columns: boolean
         flag that controls whether odd and even-numbered columns are
         processed separately
 
@@ -1638,7 +1638,7 @@ def create_dataset(input_model,
     input_model: data model object
         Science data model to be corrected
 
-    odd_even_columns: booolean
+    odd_even_columns: boolean
         flag that controls whether odd and even-numbered columns are
         processed separately (NIR only)
 
@@ -1785,7 +1785,7 @@ def correct_model(input_model, odd_even_columns,
     input_model: jwst.datamodels.model
         Model to be corrected
 
-    odd_even_columns: booolean
+    odd_even_columns: boolean
         flag that controls whether odd and even-numbered columns are
         processed separately (NIR only)
 
