@@ -81,7 +81,7 @@ saves the contents of extra_fits, and then the history. Finally, it
 serializes the asdf tree and writes it to the asdf extension.
 
 Items within a model are accessed as attribute, that is, with dot
-motation. The code which handles getting and setting attributes is
+notation. The code which handles getting and setting attributes is
 found in properties.py. Datamodels distinguishes between items at the
 endpoints of the asdf tree and subtrees within the asdf tree. The
 former are returned as scalars or numpy arrays, depending on whether
