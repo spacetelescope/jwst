@@ -161,7 +161,7 @@ class compare_cr_navg_files:
             print('  ')
 
         c_only_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)   # pixels with crs created but not found
-        f_only_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)   # pixels with crs foundd but not created
+        f_only_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)   # pixels with crs found but not created
         neither_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)  # pixels with no crs created or found
         both_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)     # pixels with crs both created and found
 
