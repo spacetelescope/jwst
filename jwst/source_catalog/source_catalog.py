@@ -947,7 +947,7 @@ class JWSTSourceCatalog:
     @lazyproperty
     def _ci_ee_indices(self):
         """
-        The EE indicies for the concentration indices.
+        The EE indices for the concentration indices.
         """
         # NOTE: the EE values are always in increasing order
         return ((0, 1), (1, 2), (0, 2))
@@ -963,7 +963,7 @@ class JWSTSourceCatalog:
     @lazyproperty
     def ci_colname_descriptions(self):
         """
-        The concentration indicies column descriptions.
+        The concentration indices column descriptions.
         """
         return ['Concentration index calculated as '
                 f'({self.aperture_flux_colnames[2*j]} / '
