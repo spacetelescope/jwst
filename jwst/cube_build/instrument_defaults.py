@@ -524,7 +524,7 @@ class InstrumentInfo():
         self.Info['4']['long-medium']['msm_power'] = None
 
 # ####################################################################
-# NIRSPEC Paramters
+# NIRSPEC Parameters
         self.Info['prism'] = {}
         self.Info['prism']['clear'] = {}
         self.Info['prism']['clear']['nslices'] = 30

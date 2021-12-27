@@ -396,7 +396,7 @@ int overlap_slice_with_spaxels(int overlap_partial,
      which IFU spaxels the slice falls on to set an initial dq flag.
      
      Parameters
-     ---------
+     ----------
      overlap_partial: intermediate dq flag
 
      wavelength: the wavelength bin of the IFU cube working with
