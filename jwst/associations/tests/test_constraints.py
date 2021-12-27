@@ -108,7 +108,7 @@ def test_constraint_reprocess_nomatch():
 
 
 def test_abc():
-    """Test ABC istelf"""
+    """Test ABC itself"""
     with pytest.raises(TypeError):
         SimpleConstraintABC()
 
