@@ -27,7 +27,7 @@ in image 1, and then the pixel indexes of those RA/Dec values are computed in im
 difference in the pixel indexes, rounded to the nearest whole pixel, is used as the nominal
 offsets in the x/y image axes.
 
-If the optional argument "--do_refine" is set to ``True``, the nominal offsets are emperically
+If the optional argument "--do_refine" is set to ``True``, the nominal offsets are empirically
 refined using a cross-correlation technique. The steps in the refinement are as follows:
 
 1. Create a smoothed version of image 1 using a Gaussian kernel.
