@@ -1972,7 +1972,7 @@ class IFUCubeData():
                 if(xcheck[ij] > 0 and xcheck[ij] < self.naxis1 and
                    ycheck[ij] > 0 and ycheck[ij] < self.naxis2):
                     index_check = iwave * nxy + ycheck[ij] * self.naxis1 + xcheck[ij]
-                    # If the nearby spaxel_dq contains overlap_no_covrage
+                    # If the nearby spaxel_dq contains overlap_no_coverage
                     # then unmark dq flag as hole. A hole has to have nearby
                     # pixels all in FOV.
                     check = (np.bitwise_and(self.spaxel_dq[index_check],
