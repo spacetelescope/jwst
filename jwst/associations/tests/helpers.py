@@ -154,7 +154,7 @@ def combine_pools(pools, **pool_kwargs):
         or an astropy.table.Table-like object.
 
     pool_kwargs: dict
-        Other keywoard arguments to pass to AssociationPool.read
+        Other keyword arguments to pass to AssociationPool.read
 
     Returns
     -------
