@@ -179,7 +179,7 @@ class DataSet:
             g = gauss_kern(self.blur_size, sizey=None)
             s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
 
-            # 2. Find approximate center of PSF in umsmoothed frame by taking
+            # 2. Find approximate center of PSF in unsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
             #    of the smoothed image, and taking the mean of the coordinates
             #    of these pixels. Add BLUR_SIZE to take smoothing into account
