@@ -1,5 +1,5 @@
 """ Routines for creating single band, single exposure IFU Cubes with
-the interoplation method = area , coord_system = internal_cal
+the interpolation method = area , coord_system = internal_cal
 """
 import numpy as np
 from ..datamodels import dqflags
