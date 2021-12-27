@@ -33,7 +33,7 @@ class MiriResolutionModel(ResolutionModel):
         A table with 5 columns. Column 1 gives the cutoff wavelength where the
         polynomials describing alpha FWHM change. Columns 2 and 3 give the
         polynomial coefficients (a,b) describing alpha FWHM for wavelengths
-        shorter than cuttoff. Columns 4 and 5 give the polynomial
+        shorter than cutoff. Columns 4 and 5 give the polynomial
         coefficients (a,b) describing alpha FWHM for wavelengths longer than the
         cutoff.
 
@@ -42,7 +42,7 @@ class MiriResolutionModel(ResolutionModel):
         A table with 5 columns. Column 1 gives the cutoff wavelength where the
         polynomials describing alpha FWHM change. Columns 2 and 3 give the
         polynomial coefficients (a,b) describing beta FWHM for wavelengths shorter
-        than cuttoff. Columns 4 and 5 give the polynomial coefficients (a,b)
+        than cutoff. Columns 4 and 5 give the polynomial coefficients (a,b)
         describing beta FWHM for wavelengths longer than the cutoff.
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_resolution.schema"
