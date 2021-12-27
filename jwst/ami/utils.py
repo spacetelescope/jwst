@@ -1148,7 +1148,7 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
                         == 0))
     filtered_array = data_array[wh_good]
 
-    # compute the median, exluding NaN's
+    # compute the median, excluding NaN's
     median_value = np.nanmedian(filtered_array)
 
     # check for bad result
