@@ -242,7 +242,7 @@ class SimpleConstraint(SimpleConstraintABC):
     >>> print(c)
     SimpleConstraint({'name': None, 'value': 'my_value'})
 
-    This behavior can be overriden by the `force_unique` paramter:
+    This behavior can be overridden by the `force_unique` paramter:
     >>> c = SimpleConstraint(value=None, force_unique=False)
     >>> matched, reprocess = c.check_and_set(item)
     >>> print(c)
