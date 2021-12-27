@@ -314,7 +314,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
 
 def slitlets_wcs(input_model, reference_files, open_slits_id):
     """
-    Create The WCS piepline for MOS and Fixed slits for the
+    Create The WCS pipeline for MOS and Fixed slits for the
     specific opened shutters/slits. ``slit_y_range`` is taken from
     ``slit.ymin`` and ``slit.ymax``.
 
