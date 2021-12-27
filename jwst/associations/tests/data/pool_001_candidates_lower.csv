@@ -12,7 +12,7 @@
 # Proposal 93065
 # Mosaic: 1 row by 2 columns
 # Filters: F090W/F227W
-# Notes: detectors within ACT_ID witin VISIT
+# Notes: detectors within ACT_ID within VISIT
 # 
 filename|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate|subarray
 #
