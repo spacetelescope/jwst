@@ -41,7 +41,7 @@ def is_nrs_linelamp(datamodel):
 
 
 def is_nrs_flatlamp(datamodel):
-    lamp_state = datamodel.meta.instrment.lamp_state.lower()
+    lamp_state = datamodel.meta.instrument.lamp_state.lower()
     return lamp_state[0:4] == 'flat'
 
 
