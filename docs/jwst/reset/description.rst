@@ -53,7 +53,7 @@ the reset corrections are subtracted, group-by-group, integration-by-
 integration. If the input science data contains more groups than the
 reset correction, then correction for those groups is zero. If the
 input science data contains more integrations than the reset correction
-then the correction corresponding to the last intergration in the reset file
+then the correction corresponding to the last integration in the reset file
 is used.
 
 There is a single, NCols X NRowss, DQ flag image for all the integrations.
