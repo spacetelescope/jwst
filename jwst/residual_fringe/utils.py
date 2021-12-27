@@ -384,7 +384,7 @@ def make_knots(flux, nknots=20, weights=None):
 
 
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
-    """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
+    """Fit the background signal using a piecewise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
     :Parameters:
