@@ -32,7 +32,7 @@ None. If init is a shape tuple the primary data array is initialized
 to its default value.
 
 Optional arguments to __init__  can give a schema which overrides the
-class schema, extensions to the schema, two flages pass_invalid_values
+class schema, extensions to the schema, two flags pass_invalid_values
 and strict_validation, which control the data validation, and numpy arrays
 which are used to initialized the model arrays by using parameters of the
 same name.
