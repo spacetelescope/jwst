@@ -171,7 +171,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         Initially, the footprint of a chip in an image is approximated by a
         2D planar rectangle representing the borders of chip's distorted
         image. After applying distortion model to this rectangle and
-        progecting it onto the celestial sphere, it is approximated by
+        projecting it onto the celestial sphere, it is approximated by
         spherical polygons. Footprints of exposures and mosaics are
         computed as unions of such spherical polygons while overlaps
         of image pairs are found by intersecting these spherical polygons.
