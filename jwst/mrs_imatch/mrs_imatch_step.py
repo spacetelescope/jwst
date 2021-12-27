@@ -318,7 +318,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         sigma_data.append(sigmas)
 
     # leaving in below commented out lines for
-    # Mihia to de-bug step when coefficients are NAN
+    # Mihai to de-bug step when coefficients are NAN
     # mask_array = np.asarray(mask_data)
     # image_array = np.asarray(image_data)
     # sigma_array = np.asarray(sigma_data)
