@@ -58,7 +58,7 @@ def test_imatch_background_subtracted(_jail, miri_dither_ch12):
     """ Test if data is already background subtracted - raise error"""
 
     all_models = datamodels.ModelContainer(miri_dither_ch12)
-    # modify the data set backgroud subtracted
+    # modify the data set background subtracted
     new_container = []
     for m in all_models:
         m.meta.background.subtracted = True
@@ -94,7 +94,7 @@ def test_imatch_background_reset(_jail, miri_dither_ch12):
         )
         new_container.append(m)
 
-    # test if reset backgound - removes background
+    # test if reset background - removes background
     step = MRSIMatchStep()
     step._reset_background(new_container)
 
@@ -107,7 +107,7 @@ def test_imatch_background_reset(_jail, miri_dither_ch12):
 def test_find_channel_index(_jail, miri_dither_ch12):
     """ Test if correct channel index is returned """
 
-    # channel 1 - model only has 1 bckground polynomial
+    # channel 1 - model only has 1 background polynomial
     input_model12 = datamodels.IFUImageModel((20, 20))
     input_model12.meta.instrument._instance.update(mirifushort_short)
     degree = (1, 1, 1,)

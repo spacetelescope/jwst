@@ -843,7 +843,7 @@ class JWSTSourceCatalog:
         Estimate the local background and error using a circular annulus
         aperture.
 
-        The local backround is the sigma-clipped median value in the
+        The local background is the sigma-clipped median value in the
         annulus.  The background error is the standard error of the
         median, sqrt(pi / 2N) * std.
         """
