@@ -65,7 +65,7 @@ class json():
         except Exception as err:
             logger.debug('Error unserializing: "{}"'.format(err))
             raise AssociationNotValidError(
-                'Containter is not JSON: "{}"'.format(serialized)
+                'Container is not JSON: "{}"'.format(serialized)
             )
 
         return asn

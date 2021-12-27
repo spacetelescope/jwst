@@ -33,7 +33,7 @@ class ResidualFringeStep(Step):
 
         input = datamodels.open(input)
 
-        # If single file, wrap in a ModelContainter
+        # If single file, wrap in a ModelContainer
         if isinstance(input, datamodels.IFUImageModel):
             input_models = datamodels.ModelContainer([input])
             self.input_container = False

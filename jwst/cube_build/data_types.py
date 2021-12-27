@@ -38,9 +38,9 @@ class DataTypes():
 
         Parameters
         ----------
-        input : datamodel or  ModelContainter
+        input : datamodel or  ModelContainer
            Input data to cube_build either a filename, single model,
-           association table, or a ModelContainter
+           association table, or a ModelContainer
         single : boolean
            If True then creating single mode IFUCubes for outlier detection
            or mrs_matching. If false then creating standard IFUcubes
