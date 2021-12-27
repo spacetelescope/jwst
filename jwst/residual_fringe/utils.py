@@ -95,14 +95,14 @@ def fill_wavenumbers(wnums):
     idx = np.isfinite(wnums)
 
     # fit the on-slice wavenumbers
-    coefs = poly.polyfit(np.arange(wnums.shape[0])[idx], wnums[idx], 3)
-    wnums_filled = poly.polyval(np.arange(wnums.shape[0]), coefs)
+    coeffs = poly.polyfit(np.arange(wnums.shape[0])[idx], wnums[idx], 3)
+    wnums_filled = poly.polyval(np.arange(wnums.shape[0]), coeffs)
 
     # keep the original wnums for the on-slice pixels
     wnums_filled[idx] = wnums[idx]
 
     # clean
-    del idx, coefs
+    del idx, coeffs
 
     return wnums_filled
 
