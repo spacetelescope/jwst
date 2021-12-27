@@ -62,7 +62,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     Parameters
     ----------
     sid : int
-        source identifed
+        source identified
     xcentroid : float
         x center of object in pixels
     ycentroid : float
