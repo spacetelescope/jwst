@@ -142,7 +142,7 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
     -----
     Returns
     -------
-    min and max spaxial coordinates and wavelength for slice.
+    min and max spatial coordinates and wavelength for slice.
 
     """
     nslices = 30
