@@ -186,7 +186,7 @@ def test_find_channel_index(_jail, miri_dither_ch12):
     index = _find_channel_bkg_index(input_model34, '3')
     assert index == 0
 
-    # set up a new model only have channe 4
+    # set up a new model only have channel 4
     # channel 4
     input_model34 = datamodels.IFUImageModel((20, 20))
     input_model34.meta.instrument._instance.update(mirifulong_long)

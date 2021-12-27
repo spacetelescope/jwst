@@ -47,7 +47,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 
      w : wavelength plane
      start_region : starting slice # for channel (slice # in nirspec) 
-     end_region : ending slice # for chanel      (slice # in nirspec)
+     end_region : ending slice # for channel     (slice # in nirspec)
      roiw_ave : average roiw for all wavelengths
      zc : array of wavelenths
      coord1 : point cloud xi values
