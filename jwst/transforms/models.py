@@ -449,7 +449,7 @@ class IdealToV2V3(Model):
         self.inputs = ('xidl', 'yidl')
         """ x and y coordinates in the telescope Ideal frame."""
         self.outputs = ('v2', 'v3')
-        """ coorinates in the telescope (V2,V3) frame."""
+        """ coordinates in the telescope (V2,V3) frame."""
 
     @staticmethod
     def evaluate(xidl, yidl, v3idlyangle, v2ref, v3ref, vparity):
@@ -503,7 +503,7 @@ class V2V3ToIdeal(Model):
                                           v3ref=v3ref, vparity=vparity, name=name,
                                           **kwargs)
         self.inputs = ('v2', 'v3')
-        """ ('v2', 'v3'): coorinates in the telescope (V2,V3) frame."""
+        """ ('v2', 'v3'): coordinates in the telescope (V2,V3) frame."""
         self.outputs = ('xidl', 'yidl')
         """ ('xidl', 'yidl'): x and y coordinates in the telescope Ideal frame."""
 
