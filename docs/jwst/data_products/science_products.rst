@@ -169,7 +169,7 @@ The FITS file structure for a ``rateints`` product is as follows:
    based on read noise only.
  - ADSF: The data model meta data.
 
-These FITS files are compatitable with the `~jwst.datamodels.CubeModel` data model.
+These FITS files are compatible with the `~jwst.datamodels.CubeModel` data model.
 
 The FITS file structure for a ``rate`` product is as follows:
 
