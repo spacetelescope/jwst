@@ -52,9 +52,9 @@ fringe frequencies and other parameters for each band to fit and remove residual
 
 The reference table descriptions:
 
-- **RFC_FREQ_SHORT** table contains the fringe frequences and parameters for the SHORT band.
-- **RFC_FREQ_MEDIUM** table contains the fringe frequences and parameters for the MEDIUM band.
-- **RFC_FREQ_LONG** table contains the fringe frequences and parameters for the LONG band.
+- **RFC_FREQ_SHORT** table contains the fringe frequencies and parameters for the SHORT band.
+- **RFC_FREQ_MEDIUM** table contains the fringe frequencies and parameters for the MEDIUM band.
+- **RFC_FREQ_LONG** table contains the fringe frequencies and parameters for the LONG band.
 - **MAX_AMP** table contains a wavelength dependent maximum amplitude which is use for feature identification and fit rejection. 
 
 
