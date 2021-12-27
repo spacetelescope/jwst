@@ -622,7 +622,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
         x : float
             input x pixel
         y : float
-            intput y pixel
+            input y pixel
         x0 : float
             input x-center of object
         y0 : float
@@ -707,7 +707,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
         x : float
             input x pixel
         y : float
-            intput y pixel
+            input y pixel
         x0 : float
             input x-center of object
         y0 : float
@@ -793,7 +793,7 @@ class NIRCAMBackwardGrismDispersion(Model):
         x : float
             input x pixel
         y : float
-            intput y pixel
+            input y pixel
         wavelength : float
             input wavelength in angstroms
         order : int
