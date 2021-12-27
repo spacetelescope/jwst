@@ -149,7 +149,7 @@ class NrmModel:
 
             # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
             # no affine2d transformations 8/2018 AS
-            # LG++ The above aligns the hole patern with the hex analytic FT,
+            # LG++ The above aligns the hole pattern with the hex analytic FT,
             # flat top & bottom as seen in DMS data. 8/2018 AS
             # overwrites attributes:
             self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi / 2.0)
