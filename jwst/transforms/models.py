@@ -1566,7 +1566,7 @@ class V23ToSky(Rotation3D):
         self._inputs = ("v2", "v3")
         """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
         self._outputs = ("ra", "dec")
-        """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
+        """ ("ra", "dec"): RA, DEC coordinates in ICRS."""
 
     @property
     def inputs(self):

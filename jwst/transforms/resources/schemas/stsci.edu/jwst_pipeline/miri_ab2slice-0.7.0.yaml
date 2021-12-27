@@ -7,7 +7,7 @@ title: >
 
 description: |
   This model is used by the MIRI MRS WCS pipeline.
-  Given a (beta, ) cooridnate it computes the slice number
+  Given a (beta, ) coordinate it computes the slice number
   that the coordinate belongs to in detector coordinates.
 
 allOf:

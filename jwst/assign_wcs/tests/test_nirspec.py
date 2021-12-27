@@ -181,7 +181,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     y, x = cond.nonzero()  # 0-based
 
     x, y = pyw.wcs_pix2world(x, y, 0)
-    # The pipeline accepts 0-based cooridnates
+    # The pipeline accepts 0-based coordinates
     x -= 1
     y -= 1
     sca2world = w0.get_transform('sca', 'msa_frame')
