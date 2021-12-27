@@ -29,7 +29,7 @@ class Image2Pipeline(Pipeline):
     class_alias = "calwebb_image2"
 
     spec = """
-        save_bsub = boolean(default=False) # Save background-subracted science
+        save_bsub = boolean(default=False) # Save background-subtracted science
     """
 
     # Define alias to steps
