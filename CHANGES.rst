@@ -2537,7 +2537,7 @@ group_scale
 ipc
 ---
 
-Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+Function is_irs2 has been removed from x_irs2.py.  The version of this function
 that is now in lib/pipe_utils.py is used instead. [#4054]
 
 lib
@@ -2583,7 +2583,7 @@ resample_spec
 saturation
 ----------
 
-Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+Function is_irs2 has been removed from x_irs2.py.  The version of this function
 that is now in lib/pipe_utils.py is used instead. [#4054]
 
 stpipe
