@@ -239,7 +239,7 @@ class Keyword_db:
 
     def combine_schemas(self, other_schema):
         """
-        Combine another schema into the keyword databse schema
+        Combine another schema into the keyword database schema
         """
         def combine_dictionaries(this_schema, other_schema):
             error_msg = "Unrecognized field in schema: "

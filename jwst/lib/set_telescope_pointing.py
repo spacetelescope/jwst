@@ -584,7 +584,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    # Open the SIAF dabase
+    # Open the SIAF database
     with SiafDb(siaf_path) as siaf_db:
 
         # If the type of exposure is not FGS, then attempt to get pointing
