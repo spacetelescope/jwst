@@ -71,7 +71,7 @@ def test_imatch_background_subtracted(_jail, miri_dither_ch12):
 
 
 def test_imatch_background_reset(_jail, miri_dither_ch12):
-    """ Test if background polynomail is already determined - reset it"""
+    """ Test if background polynomial is already determined - reset it"""
 
     all_models = datamodels.ModelContainer(miri_dither_ch12)
 
