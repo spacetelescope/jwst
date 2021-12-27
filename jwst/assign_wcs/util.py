@@ -599,7 +599,7 @@ def create_grism_bbox(input_model,
     wfss_extract_half_height : int, optional
         Cross-dispersion extraction half height in pixels, WFSS mode.
         Overwrites the computed extraction height in ``GrismObject.order_bounding.``
-        If ``None``, it's computed from the segementation map,
+        If ``None``, it's computed from the segmentation map,
         using the min and max wavelength for each of the orders that
         are available.
     wavelength_range : dict, optional
