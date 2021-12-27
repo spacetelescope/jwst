@@ -193,6 +193,8 @@ linearity
 
 - Use the common code in STCAL for linearity correction. [#6386]
 
+- Update of linearity test to support STCAL PR65 [#6509]
+
 outlier_detection
 -----------------
 

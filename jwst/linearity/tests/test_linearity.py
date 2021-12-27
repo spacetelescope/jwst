@@ -41,20 +41,29 @@ def test_coeff_dq():
     # Equation is DNcorr = L0 + L1*DN(i) + L2*DN(i)^2 + L3*DN(i)^3 + L4*DN(i)^4
     # DN(i) = signal in pixel, Ln = coefficient from ref file
     # L0 = 0 for all pixels for CDP6
+
+    coeffs = np.asfarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16])
+
+    # pixels to test using default coeffs
+    ref_model.coeffs[:, 30, 50] = coeffs
+    ref_model.coeffs[:, 35, 35] = coeffs
+    ref_model.coeffs[:, 35, 36] = coeffs
     L0 = 0
     L1 = 0.85
     L2 = 4.62E-6
     L3 = -6.16E-11
     L4 = 7.23E-16
 
-    coeffs = np.asfarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16])
-
-    ref_model.coeffs[:, 30, 50] = coeffs
-
     # check behavior with NaN coefficients: should not alter pixel values
     coeffs2 = np.asfarray([L0, np.nan, L2, L3, L4])
     ref_model.coeffs[:, 20, 50] = coeffs2
     im.data[0, 50, 20, 50] = 500.0
+
+    # test case where all coefficients are zero, the linearity reference file may
+    # not mark these pixels as NO_LIN_CORR. The code will mark these pixels as
+    # NO_LIN_CORR
+    ref_model.coeffs[:, 25, 25] = 0.0
+    im.data[0, 50, 25, 25] = 600.0
 
     tgroup = 2.775
 
@@ -75,6 +84,7 @@ def test_coeff_dq():
     ref_model.dq[35, 35] = dqflags.pixel['DO_NOT_USE']
     ref_model.dq[35, 36] = dqflags.pixel['NO_LIN_CORR']
     ref_model.dq[30, 50] = dqflags.pixel['GOOD']
+    ref_model.dq[25, 25] = dqflags.pixel['GOOD']  # Testing the linerity sets this to NO_LIN_CORR
 
     # run through Linearity pipeline
     outfile = lincorr(im, ref_model)
@@ -86,10 +96,13 @@ def test_coeff_dq():
     # check that dq value was handled correctly
     assert outfile.pixeldq[35, 35] == dqflags.pixel['DO_NOT_USE']
     assert outfile.pixeldq[35, 36] == dqflags.pixel['NO_LIN_CORR']
+    assert outfile.pixeldq[25, 25] == dqflags.pixel['NO_LIN_CORR']
     # NO_LIN_CORR, sci value should not change
     assert outfile.data[0, 30, 35, 36] == 35
     # NaN coefficient should not change data value
     assert outfile.data[0, 50, 20, 50] == 500.0
+    # coefficients all zero should not change data value
+    assert outfile.data[0, 50, 25, 25] == 600.0
 
 
 def test_saturation():
@@ -174,7 +187,7 @@ def test_pixeldqprop():
 
     # Create reference file
     dq = np.zeros((ysize, xsize), dtype=int)
-    numcoeffs = 3
+    numcoeffs = 5
 
     # set PIXELDQ to 'NO_LIN_CORR'
     dq[500, 500] = dqflags.pixel['NO_LIN_CORR']
@@ -185,6 +198,14 @@ def test_pixeldqprop():
 
     ref_model = LinearityModel((numcoeffs, ysize, xsize))
     ref_model.dq = dq
+
+    coeffs = np.asfarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16])
+
+    # pixels to test using default coeffs.
+    ref_model.coeffs[:, 550, 550] = coeffs
+    ref_model.coeffs[:, 560, 550] = coeffs
+    ref_model.coeffs[:, 550, 560] = coeffs
+    ref_model.coeffs[:, 500, 300] = coeffs
 
     ref_model.meta.instrument.name = 'MIRI'
     ref_model.meta.instrument.detector = 'MIRIMAGE'
@@ -240,6 +261,9 @@ def test_lin_subarray():
     dq[542, 100:105] = 1
 
     ref_model = LinearityModel((numcoeffs, 1024, 1032))
+    # set all the linear terms =1, so it does not trip the check if
+    # the linear terms = 0, which results in DQ of NO_LIN_CORR
+    ref_model.coeffs[1,:,:] = 1
     ref_model.dq = dq
 
     ref_model.meta.instrument.name = 'MIRI'
