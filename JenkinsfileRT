@@ -45,7 +45,7 @@ jobconfig.publish_env_filter = "spacetelescope/master"
 // Define python version for conda
 python_version = "3.9"
 
-// Define environement variables needed for the regression tests
+// Define environment variables needed for the regression tests
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_CONTEXT=jwst-edit",
