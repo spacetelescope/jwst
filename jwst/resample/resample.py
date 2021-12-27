@@ -208,7 +208,7 @@ class ResampleData:
         """Resample variance arrays from self.input_models to the output_model
 
         Resample the ``name`` variance array to the same name in output_model,
-        using a cummulative sum.
+        using a cumulative sum.
 
         This modifies output_model in-place.
         """
