@@ -140,7 +140,7 @@ class Observation:
                         if sum_seg != 0:
                             dimage[vg] /= sum_seg
                     else:
-                        log.debug("not renormlazing sources to unity")
+                        log.debug("not renormalizing sources to unity")
 
                 self.fluxes["sed"] = []
                 for i in range(len(self.IDs)):
