@@ -8,7 +8,7 @@ from jwst.regtest.regtestdata import RegtestData
 
 
 class SDPPoolsSource(RegtestData):
-    """Retreive the SDP pools from the test data source
+    """Retrieve the SDP pools from the test data source
 
     This class defines a common relationship between test collection, via
     `jwst.regtest.conftest.pool_path_fixture` and the test using said fixture,

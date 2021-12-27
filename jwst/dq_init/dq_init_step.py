@@ -58,7 +58,7 @@ class DQInitStep(Step):
             self.log.error("Can't open input")
             raise
 
-        # Retreive the mask reference file name
+        # Retrieve the mask reference file name
         self.mask_filename = self.get_reference_file(input_model, 'mask')
         self.log.info('Using MASK reference file %s', self.mask_filename)
 

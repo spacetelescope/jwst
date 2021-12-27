@@ -3,7 +3,7 @@ from ..stpipe import Step
 
 
 class EngDBLogStep(Step):
-    """Pipeline step to retreive selected engineering mnemonic values
+    """Pipeline step to retrieve selected engineering mnemonic values
 
     Notes
     -----

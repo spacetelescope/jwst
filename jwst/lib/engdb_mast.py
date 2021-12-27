@@ -103,10 +103,10 @@ class EngdbMast(EngdbABC):
             List of mnemonics to retrieve
 
         starttime : str or astropy.time.Time
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
         endtime : str or astropy.time.Time
-            The, inclusive, end time to retireve from.
+            The, inclusive, end time to retrieve from.
 
         cache_path : str or Path-like
             Path of the cache directory.
@@ -129,10 +129,10 @@ class EngdbMast(EngdbABC):
             List of mnemonics to retrieve
 
         starttime : str or astropy.time.Time
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
         endtime : str or astropy.time.Time
-            The, inclusive, end time to retireve from.
+            The, inclusive, end time to retrieve from.
 
         cache_path : str or Path-like
             Path of the cache directory.
@@ -184,10 +184,10 @@ class EngdbMast(EngdbABC):
             The engineering mnemonic to retrieve
 
         starttime : str or `astropy.time.Time`
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
         endtime : str or `astropy.time.Time`
-            The, inclusive, end time to retireve from.
+            The, inclusive, end time to retrieve from.
 
         time_format : str
             The format of the input time used if the input times
@@ -255,10 +255,10 @@ class EngdbMast(EngdbABC):
             The engineering mnemonic to retrieve
 
         starttime : str or astropy.time.Time
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
         endtime : str or astropy.time.Time
-            The, inclusive, end time to retireve from.
+            The, inclusive, end time to retrieve from.
 
         result_format : str
             The format to request from the service.

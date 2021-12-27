@@ -104,7 +104,7 @@ def artifactory_get_breadcrumbs(build_number, job_name, suffix):
     """
     build_name = f"RT :: {job_name}"
 
-    # Retreive all the okify specfiles for failed tests.
+    # Retrieve all the okify specfiles for failed tests.
     args = list(["jfrog", "rt", "dl"]
                 + [f"{ARTIFACTORY_REPO}/*/*{suffix}"]
                 + [f'--build={build_name}/{build_number}']
@@ -148,7 +148,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmpdir:
         print(f"Downloading test logs to {tmpdir}")
         with pushd(tmpdir):
-            # Retreive all the okify specfiles for failed tests.
+            # Retrieve all the okify specfiles for failed tests.
             specfiles, asdffiles = artifactory_get_build_artifacts(build, name)
 
             number_failed_tests = len(specfiles)

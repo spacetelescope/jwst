@@ -380,7 +380,7 @@ def get_pointing(obsstart, obsend, result_type='first'):
             )
         except Exception as exception:
             raise ValueError(
-                'Cannot retrive {} from engineering.'
+                'Cannot retrieve {} from engineering.'
                 '\nFailure was {}'.format(
                     param,
                     exception

@@ -169,10 +169,10 @@ class EngDB_Local():
             The engineering mnemonic to retrieve
 
         starttime: str or astropy.time.Time
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
         endtime: str or astropy.time.Time
-            The, inclusive, end time to retireve from.
+            The, inclusive, end time to retrieve from.
 
         Returns
         -------
@@ -288,10 +288,10 @@ def cache_engdb(
         List of mnemonics to retrieve
 
     starttime: str or astropy.time.Time
-        The, inclusive, start time to retireve from.
+        The, inclusive, start time to retrieve from.
 
     endtime: str or astropy.time.Time
-        The, inclusive, end time to retireve from.
+        The, inclusive, end time to retrieve from.
 
     path: str
         Path of the cache directory.

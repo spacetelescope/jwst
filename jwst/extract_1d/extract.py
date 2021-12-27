@@ -2890,7 +2890,7 @@ def do_extract1d(
                 slits = input_model
 
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
-            # attributes are retreived from input_model, so set this to allow that to work.
+            # attributes are retrieved from input_model, so set this to allow that to work.
             if not isinstance(input_model, datamodels.SlitModel):
                 input_model = input_model[0]
 
