@@ -128,7 +128,7 @@ class GWCSDrizzle:
 
         inwht : array, optional
             A 2d numpy array containing the pixel by pixel weighting.
-            Must have the same dimenstions as insci. If none is supplied,
+            Must have the same dimensions as insci. If none is supplied,
             the weghting is set to one.
 
         xmin : float, optional
