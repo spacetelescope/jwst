@@ -91,7 +91,7 @@ int alloc_blot_arrays(int nelem, double **fluxv, double **weightv) {
 // Match the median cube mapped to detector space with detector pixels
 // Match occurs when x distance or y distance < roi size (set to 1 pixel)
 // The combined flux for the blotted image is determined using a modified
-// shepard weighting methos. 
+// shepard weighting methods. 
 
 // return values: blot_flux, blot_weight
 
