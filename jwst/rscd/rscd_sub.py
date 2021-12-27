@@ -115,7 +115,7 @@ def correction_decay_function(input_model, param):
     The last frame value from the previous integration is calculated two ways:
     1. using second and third to last frames to extrapolated to the last frame
     2. using the non saturating data, fit the data and extrapolate to last frame
-    Because of the uncertainity of how well effects in th early part of the
+    Because of the uncertainty of how well effects in th early part of the
     integration are corrected in the previous integration (reset anomaly, rscd
     effects, persistence) the lastframe determined from the second and third to
     last frames is considered a better estimate than that derived from a fit to
