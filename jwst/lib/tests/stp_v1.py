@@ -317,8 +317,8 @@ def get_pointing(obstart, obsend, result_type='first'):
 
     result_type: str
         What to return. Possible options are:
-            `first`: Return the first non-zero matricies
-            `all`: Return all non-zero matricies within
+            `first`: Return the first non-zero matrices
+            `all`: Return all non-zero matrices within
                    the given range.
 
     Returns
@@ -399,7 +399,7 @@ def get_pointing(obstart, obsend, result_type='first'):
             # The tagged obstime will come from the SA_ZATTEST1 mneunonic
             obstime = params['SA_ZATTEST1'][idx].obstime
 
-            # Fill out the matricies
+            # Fill out the matrices
             q = np.array([
                 params['SA_ZATTEST1'][idx].value,
                 params['SA_ZATTEST2'][idx].value,

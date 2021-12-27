@@ -169,7 +169,7 @@ J3IDLYANGLE = -1.25  # Degrees
 # Conversion from seconds to MJD
 SECONDS2MJD = 1 / 24 / 60 / 60
 
-# Default transformation matricies
+# Default transformation matrices
 FGS12SIFOV_DEFAULT = np.array(
     [[0.9999994955442, 0.0000000000000, 0.0010044457459],
      [0.0000011174826, 0.9999993811310, -0.0011125359826],
@@ -2686,7 +2686,7 @@ def all_pointings(mnemonics):
     filled = fill_mnemonics_chronologically(mnemonics)
     for obstime, mnemonics_at_time in filled.items():
 
-        # Fill out the matricies
+        # Fill out the matrices
         q = np.array([
             mnemonics_at_time['SA_ZATTEST1'].value,
             mnemonics_at_time['SA_ZATTEST2'].value,
