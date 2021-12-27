@@ -4009,7 +4009,7 @@ fits_generator
 
 - Updated pyparsing to v 2.2.0 [#2382]
 
-- Updated fits_generator to ignore files begining with '.' [#2333]
+- Updated fits_generator to ignore files beginning with '.' [#2333]
 
 flatfield
 ---------

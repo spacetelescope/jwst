@@ -43,7 +43,7 @@ The details are as follows:
    integrations, such as the point at which a pixel becomes saturated within a given integration.
  - ERR: 4-D data array containing uncertainty estimates on a per-group and per-integration basis.
  - GROUP: A table of meta data for some (or all) of the data groups.
- - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+ - INT_TIMES: A table of beginning, middle, and end time stamps for each integration in the
    exposure.
  - ZEROFRAME: 3-D data array containing the pixel values of the zero-frame for each
    integration in the exposure, where each plane of the cube corresponds to a given integration.
