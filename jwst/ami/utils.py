@@ -522,7 +522,7 @@ def min_distance_to_edge(img, cntrimg=True):
     """
     if cntrimg is True:
         # Only look for the peak pixel at the center of the image
-        ann = makedisk(img.shape[0], 31)  # search radius around array centery
+        ann = makedisk(img.shape[0], 31)  # search radius around array center
     else:
         # Peak of the image can be anywhere
         ann = np.ones((img.shape[0], img.shape[1]))
