@@ -1,5 +1,5 @@
 #
-#  Module for defning mask geometry in pupil space
+#  Module for defining mask geometry in pupil space
 #
 
 import numpy as np
