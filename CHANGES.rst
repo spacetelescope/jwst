@@ -1826,7 +1826,7 @@ associations
 cmdline
 -------
 
-- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+- Re-enable exception tracebacks from strun for issues outside step processing [#4761]
 
 coron
 -----
@@ -1995,7 +1995,7 @@ stpipe
 strun
 -----
 
-- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+- Re-enable exception tracebacks from strun for issues outside step processing [#4761]
 
 tweakreg
 --------
