@@ -1280,7 +1280,7 @@ class Snell(Model):
 
     @staticmethod
     def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
-        """Calculate and retrun the refraction index."""
+        """Calculate and return the refraction index."""
 
         # Convert to microns
         lam = np.asarray(lam * 1e6)
