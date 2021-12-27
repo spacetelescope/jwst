@@ -201,7 +201,7 @@ outlier_detection
 -----------------
 
 - Revert back to using 'linear' interpolation method as default for ``blot``.
-  The bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  The bug in the implementation of the bilinear interpolator in the ``drizzle``
   package is now fixed. [#6146]
 
 - Log number of flagged outliers in ``outlier_detection`` [#6260]
@@ -493,7 +493,7 @@ outlier_detection
 -----------------
 
 - Avoid using 'linear' interpolation method as default for ``blot`` due to
-  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  a bug in the implementation of the bilinear interpolator in the ``drizzle``
   package. Now the default value will be 'poly5'. [#6116]
 
 ramp_fitting

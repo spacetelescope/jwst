@@ -797,7 +797,7 @@ class Constraint:
         for constraint in chain(*map(iter, self.constraints)):
             yield constraint
 
-    # Index implementaion
+    # Index implementation
     def __getitem__(self, key):
         """Retrieve a named constraint"""
         for constraint in self.constraints:
