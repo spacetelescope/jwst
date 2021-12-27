@@ -1942,7 +1942,7 @@ def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
         The transformation matrix
     """
 
-    # Define the individal rotations
+    # Define the individual rotations
     def r1(a):
         r = np.array([
             [1, 0, 0],
