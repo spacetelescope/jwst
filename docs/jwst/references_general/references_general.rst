@@ -39,7 +39,7 @@ Most reference files have a one-to-one relationship with calibration steps, e.g.
 there is one step that uses one type of reference file. Some steps, however, use
 several types of reference files and some reference file types are used by more
 than one step. The tables below show the correspondence between pipeline steps and
-refernece file types. The first table is ordered by pipeline step, while the second
+reference file types. The first table is ordered by pipeline step, while the second
 is ordered by reference file type. Links to the reference file types provide detailed
 documentation on each reference file.
 

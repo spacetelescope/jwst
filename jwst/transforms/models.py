@@ -1249,9 +1249,9 @@ class Snell(Model):
     tcoef : list
         Thermal coefficients of glass.
     tref : float
-        Refernce temperature in K.
+        Reference temperature in K.
     pref : float
-        Refernce pressure in ATM.
+        Reference pressure in ATM.
     temperature : float
         System temperature during observation in K
     pressure : float

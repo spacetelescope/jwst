@@ -2069,7 +2069,7 @@ def calc_aperture_wcs(m_eci2siaf):
     """
 
     # Calculate point on sky.
-    # Note, the SIAF referenct point is hardcoded to
+    # Note, the SIAF reference point is hardcoded to
     # (0, 0). The calculation is left here in case
     # this is not desired.
 
