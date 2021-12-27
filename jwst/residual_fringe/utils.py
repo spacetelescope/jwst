@@ -251,7 +251,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
-        log.debug("check_res_fringes: {} data points exceed threhold".format(len(runaway_rfc)))
+        log.debug("check_res_fringes: {} data points exceed threshold".format(len(runaway_rfc)))
         log.debug("check_res_fringes: resetting fits to related beats")
         for i in runaway_rfc:
             # find where the index is compared to the nodes

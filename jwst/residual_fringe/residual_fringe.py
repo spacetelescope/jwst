@@ -112,7 +112,7 @@ class ResidualFringeCorrection():
         self.transmission_level = int(self.transmission_level / 10)
 
         slice_map = (allregions.regions)[self.transmission_level - 1, :, :].copy()
-        log.info(" Using {} throughput threshhold.".format(self.transmission_level))
+        log.info(" Using {} throughput threshold.".format(self.transmission_level))
 
         self.slice_map = slice_map
 

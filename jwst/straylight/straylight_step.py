@@ -59,7 +59,7 @@ class StraylightStep (Step):
                             self.roi = self.roi - 2
 
                 # Check for a valid reference file
-                # Use the Regions reference file set to 20% throughput threshhold
+                # Use the Regions reference file set to 20% throughput threshold
                 self.straylight_name = self.get_reference_file(input_model,
                                                                'regions')
                 self.log.info('Using regions reference file %s',
@@ -74,7 +74,7 @@ class StraylightStep (Step):
                 allregions = datamodels.RegionsModel(self.straylight_name)
                 # Use 20% throughput array
                 regions = (allregions.regions)[2, :, :].copy()
-                self.log.info(' Using 20% throughput threshhold.')
+                self.log.info(' Using 20% throughput threshold.')
                 allregions.close()
 
                 if self.method == 'Nearest':
