@@ -129,7 +129,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3Coron(AsnMixin_Science):
-    """Level 3 Coronography Association
+    """Level 3 Coronagraphy Association
 
     Characteristics:
         - Association type: ``coron3``
@@ -138,7 +138,7 @@ class Asn_Lv3Coron(AsnMixin_Science):
 
     Notes
     -----
-    Coronography is nearly completely defined by the association candidates
+    Coronagraphy is nearly completely defined by the association candidates
     produced by APT.
     Tracking Issues:
 
