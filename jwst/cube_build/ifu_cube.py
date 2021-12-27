@@ -1098,7 +1098,7 @@ class IFUCubeData():
             raise IncorrectParameter("An essential parameter is = nan, refer to apply error message")
 
         # catch where self.weight_power = nan weighting = msm written to header
-        # TODO update writting to header scalerad if weighting = emsm
+        # TODO update writing to header scalerad if weighting = emsm
 
         if self.weight_power is not None:
             if np.isnan(self.weight_power):
