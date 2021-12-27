@@ -94,7 +94,7 @@ of the attribute is set to None. If it is in the schema and the schema
 has a default value, the code creates the item with the default value
 and then returns it. The functions that do this are _make_default and
 _make_default_array, which it calls. If not only the item, but the
-subtree containg the item is missing, the code throws an
+subtree containing the item is missing, the code throws an
 AttributeError. When an attribute representing an array is accessed,
 the type of the array is compared to the type in the schema and if
 they are different, the array is cast to the type in the schema. The
