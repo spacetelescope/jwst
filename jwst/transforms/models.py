@@ -786,7 +786,7 @@ class NIRCAMBackwardGrismDispersion(Model):
         self.outputs = ("x", "y", "x0", "y0", "order")
 
     def evaluate(self, x, y, wavelength, order):
-        """Return the tranfrom from image to grism for the given spectral order.
+        """Return the transform from image to grism for the given spectral order.
 
         Parameters
         ----------

@@ -819,7 +819,7 @@ def ifuslit_to_slicer(slits, reference_files, input_model):
 
 def slicer_to_msa(reference_files):
     """
-    Trasform from slicer coordinates to MSA entrance.
+    Transform from slicer coordinates to MSA entrance.
 
     Applies the IFUFORE transform.
 
