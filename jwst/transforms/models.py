@@ -1243,9 +1243,9 @@ class Snell(Model):
     angle : float
         Prism angle in deg.
     kcoef : list
-        K coefficients in Sellmeir equation.
+        K coefficients in Sellmeier equation.
     lcoef : list
-        L coefficients in Sellmeir equation.
+        L coefficients in Sellmeier equation.
     tcoef : list
         Thermal coefficients of glass.
     tref : float

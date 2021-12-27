@@ -24,7 +24,7 @@ allOf:
         type: number
       kcoef:
         description: |
-          K coefficients in Sellmeir equation.
+          K coefficients in Sellmeier equation.
         type: array
         items:
           type: number
@@ -32,7 +32,7 @@ allOf:
         maxItems: 3
       lcoef:
         description: |
-          L coefficients in Sellmeir equation.
+          L coefficients in Sellmeier equation.
         type: array
         items:
           type: number
