@@ -257,7 +257,7 @@ class CubeBlot():
             ycenter = np.arange(blot_ysize)
             xcenter = np.arange(blot_xsize)
 
-            # for NIRSPEC wcs information accessed seperately for each slice
+            # for NIRSPEC wcs information accessed separately for each slice
             nslices = 30
             log.info('Blotting 30 slices on NIRSPEC detector')
             roi_det = 1.0  # Just large enough that we don't get holes

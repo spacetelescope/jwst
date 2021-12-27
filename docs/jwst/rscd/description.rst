@@ -102,7 +102,7 @@ Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchang
     All fourteen  parameters :math:`tau`, :math:`b{1}`, :math:`b{2}`, :math:`b{3}`, :math:`illum_{zpt}`,
     :math:`illum_{slope}`, :math:`illum2`, :math:`Crossover Point`, :math:`sat_{zp}`, :math:`sat_{slope}`, :math:`sat_2`,
     :math:`sat_{scale}`, :math:`sat_\text{mzp}`, and :math:`evenrow_{corrections}` are found in the RSCD reference files.
-    There is a seperate set for even and odd rows for each readout (READPATT) mode and subarray type.
+    There is a separate set for even and odd rows for each readout (READPATT) mode and subarray type.
 
     Subarrays
     ----------

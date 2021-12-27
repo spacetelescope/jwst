@@ -25,7 +25,7 @@ blot_ysize : int
 xstart : int
    Only valid for MIRI. For NIRSpec = 0
    The left most x detector pixel number the median image is being blotted to
-   Blotting occurs seperately for each channel. We need to know which side
+   Blotting occurs separately for each channel. We need to know which side
    of the detector the median image is being blotted to
 xsize2 : int
    If MIRI xsize2 = x size of the detector side the medina image is being blotted to

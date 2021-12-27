@@ -1725,7 +1725,7 @@ class IFUCubeData():
 
         across_width = abs(slice_loc1 - slice_loc3)
         # for NIRSPEC each file has 30 slices
-        # wcs information access seperately for each slice
+        # wcs information access separately for each slice
         nslices = 30
         log.info("Mapping each NIRSpec slice to sky for input file")
 

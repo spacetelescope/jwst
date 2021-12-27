@@ -353,7 +353,7 @@ def components(s):
 
 
 def separate_products(asn):
-    """Seperate products into individual associations
+    """Separate products into individual associations
 
     Parameters
     ----------
