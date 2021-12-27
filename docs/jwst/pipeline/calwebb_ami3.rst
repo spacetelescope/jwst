@@ -101,7 +101,7 @@ Fringe parameter tables
 :Data model: `~jwst.datamodels.AmiLgModel`
 :File suffix: _ami
 
-For every input exposure, the fringe parameters and closure phases caculated
+For every input exposure, the fringe parameters and closure phases calculated
 by the :ref:`ami_analyze <ami_analyze_step>` step are saved to an "_ami" product file, which
 is a FITS table containing the fringe parameters and closure phases. Product names
 use the input "_cal" exposure-based file name, with the association candidate ID
