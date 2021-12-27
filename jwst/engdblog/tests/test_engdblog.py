@@ -55,7 +55,7 @@ def test_novalues(caplog, engdb):
 
 def test_all(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
-    cfg_file_name = 'engdblogste.cfg'
+    cfg_file_name = 'engdblogstep.cfg'
     with TemporaryDirectory() as cfg_dir:
         cfg_path = os.path.join(cfg_dir, cfg_file_name)
         with open(cfg_path, 'w') as cfg:
