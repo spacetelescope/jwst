@@ -168,7 +168,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         flat-fielded images thus avoiding the need to perform distortion
         correction of input images.
 
-        Initially, the footprint of a chip in an image is aproximated by a
+        Initially, the footprint of a chip in an image is approximated by a
         2D planar rectangle representing the borders of chip's distorted
         image. After applying distortion model to this rectangle and
         progecting it onto the celestial sphere, it is approximated by
