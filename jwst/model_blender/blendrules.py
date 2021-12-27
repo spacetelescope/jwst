@@ -20,6 +20,11 @@ from . import blender
 # with this code
 __rules_version__ = 2.1
 
+__all__ = ['find_keywords_in_section', 'first', 'float_one', 'int_one',
+           'interpret_attr_line', 'interpret_entry', 'last', 'maxdate',
+           'maxdatetime', 'maxtime', 'mindate', 'mindatetime', 'mintime',
+           'multi', 'multi1', 'zero', 'KeywordRules', 'KwRule']
+
 
 # Custom blending functions
 def multi(vals):
