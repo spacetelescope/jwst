@@ -1026,7 +1026,7 @@ class Schema_editor:
             with open(omit_path, 'w') as fh:
                 yaml.safe_dump(list(self.omit), fh)
 
-        # Write the opject attributes back to disk
+        # Write the object attributes back to disk
         if self.options is not None:
             self.options.write(self)
 
