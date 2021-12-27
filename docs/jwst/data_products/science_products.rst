@@ -131,7 +131,7 @@ These products contain 3-D data arrays, where each plane of the data cube contai
 countrate image for a given integration.
 
 The results for each integration are also averaged together to form a single 2-D countrate
-image for the entire exposure. These resuls are stored in a ``rate`` product.
+image for the entire exposure. These results are stored in a ``rate`` product.
 
 The FITS file structure for a ``rateints`` product is as follows:
 
