@@ -269,6 +269,10 @@ resample
 
 - Make ``output_shape`` to be in the "normal" (``nx, ny``) order. [#6417]
 
+- Updated ``drizzle`` version to ``1.13.4`` which contains a fix for the
+  bug due to which some 0-weight input pixels may contribute to the output
+  image. [#6517]
+
 residual_fringe
 ---------------
  - Added documentation on step [#6387]
