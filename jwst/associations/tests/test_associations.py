@@ -70,7 +70,7 @@ def test_multi_rules():
         assert rule in rule_names
 
 
-def test_base_instatiation():
+def test_base_instantiation():
     """Create an association without any initialization"""
     assert Association()
 
