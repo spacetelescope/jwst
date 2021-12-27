@@ -572,7 +572,7 @@ class NrmModel:
         Parameters
         ----------
         pixel_rad: float
-            Ddetector pixel scale
+            Detector pixel scale
 
         Returns
         -------
