@@ -1838,7 +1838,7 @@ def calc_gs2gsapp_tr_202105(m_eci2fgs1, jwst_velocity):
 
 
 def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
-    """Calculate full ECI to FGS1 matrix based on commanded guidestar information andd V3PA@GS
+    """Calculate full ECI to FGS1 matrix based on commanded guidestar information and V3PA@GS
 
     Parameters
     ----------
