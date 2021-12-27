@@ -4241,7 +4241,7 @@ datamodels
 
 - Enable and improved tests for datamodel schemas using the ASDF schema checker [#2240, #2241]
 
-- Update IRS2 data model and add regredssion tests [#2295]
+- Update IRS2 data model and add regression tests [#2295]
 
 
 dq_init
