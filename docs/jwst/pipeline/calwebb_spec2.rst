@@ -5,7 +5,7 @@ calwebb_spec2: Stage 2 Spectroscopic Processing
 ===============================================
 
 :Class: `jwst.pipeline.Spec2Pipeline`
-:Aliass: calwebb_spec2
+:Alias: calwebb_spec2
 
 The ``Spec2Pipeline`` applies additional instrumental corrections and
 calibrations to countrate products that result in a fully calibrated individual
