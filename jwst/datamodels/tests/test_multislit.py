@@ -133,7 +133,7 @@ def test_multislit_copy(tmp_path):
         assert len(output.slits) == 4
 
 
-def test_copy_multslit():
+def test_copy_multislit():
     model1 = MultiSlitModel()
     model2 = MultiSlitModel()
 
