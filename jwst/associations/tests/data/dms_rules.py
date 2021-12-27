@@ -25,7 +25,7 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
         self.data['members'].append(item)
 
     def finalize(self):
-        """Peform finalization steps"""
+        """Perform finalization steps"""
         return [self]
 
 

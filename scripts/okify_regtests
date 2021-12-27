@@ -71,7 +71,7 @@ def artifactory_folder_copy(specfile, dry_run=False):
 
 
 def artifactory_dispatch(okify_op, specfile, dry_run):
-    """Peform the indicated artifactory operation
+    """Perform the indicated artifactory operation
 
     Parameters
     ----------

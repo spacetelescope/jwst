@@ -431,7 +431,7 @@ class Association(MutableMapping):
     def finalize(self):
         """Finalize association
 
-        Finalize or close-off this association. Peform validations,
+        Finalize or close-off this association. Perform validations,
         modifications, etc. to ensure that the association is
         complete.
 
