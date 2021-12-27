@@ -341,7 +341,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
     primary_beam; float 2D array
         array of primary beam,
 
-    ffmodel: list of fringe arays
+    ffmodel: list of fringe arrays
         list of fringe arrays
     """
     nholes = ctrs.shape[0]
