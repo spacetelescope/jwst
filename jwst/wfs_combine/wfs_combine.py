@@ -215,7 +215,7 @@ class DataSet:
             # 5. Around this nominal alignment, get refined (delta) offsets
             ref_del_off_x, ref_del_off_y = calc_refined_offsets(sci_nai_1, sci_nai_2, 0, 0, self.psf_size)
             log.info('From the refined offsets calculation,'
-                     'the x,y changes in ofsets are: %s %s',
+                     'the x,y changes in offsets are: %s %s',
                      round(ref_del_off_x, 2), round(ref_del_off_y, 2))
 
             # 6. Add the refined delta offsets to the nominal offsets
