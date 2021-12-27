@@ -334,7 +334,7 @@ parameter reference. Even then, nearly all cases will involve changing a subset
 of a pipeline or step parameters.
 
 Keeping this sparse-population philosophy in mind, for most parameter
-references, only those parameters that are explicilty changed should be
+references, only those parameters that are explicitly changed should be
 specified in the reference. If adhered to, when a pipeline/step default value
 for a particular parameter needs to change, the change will be immediately
 available. Otherwise, all references that mistakenly set said parameter will
