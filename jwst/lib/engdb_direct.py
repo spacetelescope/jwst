@@ -94,7 +94,7 @@ class EngdbDirect(EngdbABC):
         self._default_format = result_format
 
     def get_meta(self, mnemonic='', result_format=None):
-        """Get the menonics meta info
+        """Get the mnemonics meta info
 
         Parameters
         ----------

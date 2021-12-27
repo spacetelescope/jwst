@@ -396,7 +396,7 @@ def get_pointing(obstart, obsend, result_type='first'):
         ]
         if any(values):
 
-            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
+            # The tagged obstime will come from the SA_ZATTEST1 mnemonic
             obstime = params['SA_ZATTEST1'][idx].obstime
 
             # Fill out the matrices

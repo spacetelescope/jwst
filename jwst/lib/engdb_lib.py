@@ -56,7 +56,7 @@ class EngdbABC(abc.ABC):
 
     @abc.abstractmethod
     def get_meta(self, mnemonic='', **service_kwargs):
-        """Get the menonics meta info
+        """Get the mnemonics meta info
 
         Parameters
         ----------
@@ -134,6 +134,6 @@ def mnemonic_data_fname(mnemonic):
     Returns
     -------
     file_name: str
-        The name of the file containing the menonic's cached data.
+        The name of the file containing the mnemonic's cached data.
     """
     return mnemonic.lower() + DATA

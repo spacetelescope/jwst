@@ -167,7 +167,7 @@ class EngdbMast(EngdbABC):
         copy2(metas_path, cache_path / 'meta.json')
 
     def get_meta(self, *kwargs):
-        """Get the menonics meta info
+        """Get the mnemonics meta info
 
         The MAST interface does not provide any meta.
         """
