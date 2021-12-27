@@ -23,7 +23,9 @@ def run_pipeline(rtdata_module):
             "--steps.extract_2d.save_results=true",
             "--steps.flat_field.save_results=true",
             # The pars file skips resampling by default.  We want to test it.
-            "--steps.resample_spec.skip=False",]
+            "--steps.resample_spec.skip=False",
+            # Skip extract_1d until the APCORR ref file issue is fixed.
+            "--steps.extract_1d.skip=True",]
     Step.from_cmdline(args)
 
     return rtdata

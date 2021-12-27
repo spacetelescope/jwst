@@ -21,7 +21,9 @@ def run_pipeline(rtdata_module):
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
             "--steps.extract_2d.save_results=true",
-            "--steps.flat_field.save_results=true"]
+            "--steps.flat_field.save_results=true",
+            # Turn off extract_1d until APCORR ref file issue is fixed
+            "--steps.extract_1d.skip=true"]
     Step.from_cmdline(args)
 
     return rtdata
