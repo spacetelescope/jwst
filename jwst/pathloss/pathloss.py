@@ -306,7 +306,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     """
 
     # Need to set the pathloss correction of pixels whose wavelength is outside
-    # the wavelength range of the reference file to NaN.  This trick will acomplish
+    # the wavelength range of the reference file to NaN.  This trick will accomplish
     # that while still allowing the use of array linear interpolation
     #
     # Pad out the wavelength and pathloss vectors by adding another element
