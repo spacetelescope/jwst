@@ -544,7 +544,7 @@ Patterns appear in a slightly different form in rmaps than they do in ``P_`` key
 
 Currently all ``P_`` keywords correspond to basic keywords found only in the primary headers of reference files and are typically only valid for FITS format..
 
-The traslation from these ``P_`` pattern keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to
+The translation from these ``P_`` pattern keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to
 be reserved whether a particular type uses them or not. Defining non-pattern keywords with the prefix ``P_`` is strongly discouraged.
 
 .. _`Data Quality Flags`:
