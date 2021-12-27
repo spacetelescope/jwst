@@ -103,7 +103,7 @@ with all inputs and the operator is applied to the results, e.g. ``model = m1 + 
 Create the reference file
 -------------------------
 
-The DictortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validaiton of the file structure.
+The DistortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validaiton of the file structure.
 
 >>> from jwst.datamodels import DistortionModel
 >>> dist = DistortionModel(model=model, strict_validation=True)
