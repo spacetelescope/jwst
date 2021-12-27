@@ -1,7 +1,7 @@
 Step Arguments
 ==============
 
-The ``flat_field`` step has the followig optional arguments to control
+The ``flat_field`` step has the following optional arguments to control
 the behavior of the processing.
 
 ``--save_interpolated_flat`` (boolean, default=False)
