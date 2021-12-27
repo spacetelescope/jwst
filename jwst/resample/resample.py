@@ -293,7 +293,7 @@ class ResampleData:
         inwht : 2d array
             A 2d numpy array containing the pixel by pixel weighting.
             Must have the same dimensions as insci. If none is supplied,
-            the weghting is set to one.
+            the weighting is set to one.
 
         input_wcs : gwcs.WCS object
             The world coordinate system of the input image.

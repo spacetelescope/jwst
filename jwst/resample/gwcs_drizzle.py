@@ -129,7 +129,7 @@ class GWCSDrizzle:
         inwht : array, optional
             A 2d numpy array containing the pixel by pixel weighting.
             Must have the same dimensions as insci. If none is supplied,
-            the weghting is set to one.
+            the weighting is set to one.
 
         xmin : float, optional
             This and the following three parameters set a bounding rectangle
@@ -230,7 +230,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     inwht : 2d array
         A 2d numpy array containing the pixel by pixel weighting.
         Must have the same dimensions as insci. If none is supplied,
-        the weghting is set to one.
+        the weighting is set to one.
 
     output_wcs : gwcs.WCS object
         The world coordinate system of the output image.
