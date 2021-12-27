@@ -126,7 +126,7 @@ class AssociationRegistry(dict):
             An item, like from a Pool, to find assocations for.
 
         version_id : str
-            If specified, a string appened to association names.
+            If specified, a string appended to association names.
             If None, nothing is used.
 
         allow : [type(Association), ...]
