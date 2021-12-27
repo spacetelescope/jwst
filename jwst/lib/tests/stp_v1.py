@@ -306,13 +306,13 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     return wcsinfo, vinfo
 
 
-def get_pointing(obstart, obsend, result_type='first'):
+def get_pointing(obsstart, obsend, result_type='first'):
     """
     Get telescope pointing engineering data.
 
     Parameters
     ----------
-    obstart, obsend: float
+    obsstart, obsend: float
         MJD observation start/end times
 
     result_type: str
@@ -341,8 +341,8 @@ def get_pointing(obstart, obsend, result_type='first'):
     """
     logger.info(
         'Determining pointing between observations times (mjd):'
-        '\n\tobstart = {}'
-        '\n\tobsend = {}'.format(obstart, obsend)
+        '\n\tobsstart = {}'
+        '\n\tobsend = {}'.format(obsstart, obsend)
     )
     try:
         engdb = ENGDB_Service()
@@ -376,7 +376,7 @@ def get_pointing(obstart, obsend, result_type='first'):
     for param in params:
         try:
             params[param] = engdb.get_values(
-                param, obstart, obsend, time_format='mjd', include_obstime=True
+                param, obsstart, obsend, time_format='mjd', include_obstime=True
             )
         except Exception as exception:
             raise ValueError(
@@ -439,7 +439,7 @@ def get_pointing(obstart, obsend, result_type='first'):
     if not len(results):
         raise ValueError(
             'No non-zero quanternion found '
-            'in the DB between MJD {} and {}'.format(obstart, obsend)
+            'in the DB between MJD {} and {}'.format(obsstart, obsend)
         )
 
     if result_type == 'first':
@@ -448,7 +448,7 @@ def get_pointing(obstart, obsend, result_type='first'):
         return results
 
 
-def get_pointing_stub(obstart, obsend):
+def get_pointing_stub(obsstart, obsend):
     '''
     For the time being this simply returns the same damn values regardless of
     the input time (awaiting the time that these parameters are actually
