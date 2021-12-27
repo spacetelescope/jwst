@@ -83,7 +83,7 @@ tags:
   title: A grating equation model.
   description: |-
     Supports two models:
-    - given incident angle and wavelength compute the refraction/difraction angle
+    - given incident angle and wavelength compute the refraction/diffraction angle
     - given an incident angle and a refraction angle compute the wavelength
 - tag_uri: "tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0"
   schema_uri: http://stsci.edu/schemas/jwst_pipeline/v23tosky-0.7.0
