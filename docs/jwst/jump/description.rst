@@ -7,7 +7,7 @@ We assume that the ``saturation`` step has already been applied to the input
 science exposure, so that saturated values are appropriately flagged in the
 input GROUPDQ array. We also assume that steps such as the reference pixel
 correction (``refpix``) and non-linearity correction (``linearity``) have been applied, so
-that the input data ramps do not have any non-linearities or noise above the modeled Poission
+that the input data ramps do not have any non-linearities or noise above the modeled Poisson
 and read noise due to instrumental effects. The absence of any of these preceding corrections
 or residual non-linearities or noise can lead to the false detection of jumps in the ramps,
 due to departure from linearity.

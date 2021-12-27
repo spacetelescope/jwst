@@ -72,7 +72,7 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
         corrections.slits.append(correction)
 
         # Apply the correction by dividing into the science and uncertainty arrays:
-        #     var_poission and var_rnoise are divided by correction**2,
+        #     var_poisson and var_rnoise are divided by correction**2,
         #     because they're variance, while err is standard deviation
         if not inverse:
             slitlet.data /= correction.data
