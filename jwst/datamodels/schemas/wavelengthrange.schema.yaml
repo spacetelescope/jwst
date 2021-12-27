@@ -43,7 +43,7 @@ allOf:
           items:
           - $ref: "#/definitions/slit-wavelengthrange"
     order:
-      desrription: |
+      description: |
         For WFSS, this is the list of orders that are available for this file
       type: array
       items:
