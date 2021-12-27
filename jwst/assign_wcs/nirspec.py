@@ -939,7 +939,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
         gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)  # TODO: Use model sets here
 
-        # The commnts below list the input coordinates.
+        # The comments below list the input coordinates.
         bgwa2msa = (
             # (alpha_out, beta_out, gamma_out), angles at the GWA, coming from the camera
             # (0, - beta_out, alpha_out, beta_out)
