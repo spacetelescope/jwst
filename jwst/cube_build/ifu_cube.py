@@ -521,7 +521,7 @@ class IFUCubeData():
         a. src/cube_match_sky: This routine uses the modified
         shepard method to determining the weighting function, which weights the detector
         fluxes based on the distance between the detector center and spaxel center.
-        b. src/cube_match_internalis only for single exposure, single band cubes and
+        b. src/cube_match_internal is only for single exposure, single band cubes and
         the ifucube in created in the detector plane. The weighting function is based on
         the overlap of between the detector pixel and spaxel. This method is simplified
         to determine the overlap in the along slice-wavelength plane.
