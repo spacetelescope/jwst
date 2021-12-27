@@ -278,7 +278,7 @@ class IFUCubeData():
         # ________________________________________________________________________________
         # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
         # to find location of center abs of min values is how many pixels
-        # we want a systemtric cube centered on xi,eta = 0
+        # we want a symmetric cube centered on xi,eta = 0
         xilimit = max(np.abs(xi_min), np.abs(xi_max))
         etalimit = max(np.abs(eta_min), np.abs(eta_max))
 
