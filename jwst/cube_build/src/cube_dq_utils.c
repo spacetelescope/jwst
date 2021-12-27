@@ -49,7 +49,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
      start_region : starting slice # for channel (slice # in nirspec) 
      end_region : ending slice # for channel     (slice # in nirspec)
      roiw_ave : average roiw for all wavelengths
-     zc : array of wavelenths
+     zc : array of wavelengths
      coord1 : point cloud xi values
      coord2 : point cloud eta values
      wave : point cloud wavelength values
@@ -246,7 +246,7 @@ int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
           IFU naxis 1 array of xi values
 	ycenters : double array
           IFU naxis 2 array of eta values 
-        xi_corner: xi coordinates of the 4 corners of the FOV on the wavelenghth plane
+        xi_corner: xi coordinates of the 4 corners of the FOV on the wavelength plane
         eta_corner: eta coordinates of the 4 corners of the FOV on the wavelength plane
 
 
@@ -326,7 +326,7 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
      w : wavelength plane
      slicevalue : slice # 1 to 30 
      roiw_ave : average roiw for all wavelengths
-     zc : array of wavelenths
+     zc : array of wavelengths
      coord1 : point cloud xi values
      coord2 : point cloud eta values
      wave : point cloud wavelength values
@@ -530,7 +530,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
     status =  corner_wave_plane_miri( w, start_region, end_region, roiw_ave, zc,
 					  coord1, coord2, wave, sliceno, ncube, npt,
 					  corner1, corner2, corner3, corner4);
-    if( status == 0){ // found min and max slice on wavelengh plane
+    if( status == 0){ // found min and max slice on wavelength plane
 
       xi_corner[0] = corner1[0];
       xi_corner[1] = corner2[0];

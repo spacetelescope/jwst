@@ -55,7 +55,7 @@ coord1 : double array
 coord2 : double array
    size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
 wave : double array
-   size: point cloud elements. Wavelegnth of each point cloud member
+   size: point cloud elements. Wavelength of each point cloud member
 rois_pixel : double array
    size: point cloud elements. Roi in spatial dimension to use for point cloud member
 roiw_pixel : double array

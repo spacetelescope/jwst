@@ -52,7 +52,7 @@ coord1 : double array
 coord2 : double array
    size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
 wave : double array
-   size: point cloud elements. Wavelegnth of each point cloud member
+   size: point cloud elements. Wavelength of each point cloud member
 cdelt3: double array
    size: point cloud elements. Spectral scale to use at wavelength of point cloud member
 cdelt1 : double

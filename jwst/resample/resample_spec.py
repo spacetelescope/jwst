@@ -100,7 +100,7 @@ class ResampleSpecData(ResampleData):
         # use center of appended ra and dec arrays to set up
         # center of final ra,dec
         # append all ra,dec, wavelength array for each slit
-        # use first model to initialize wavelenth array
+        # use first model to initialize wavelength array
         # append wavelengths that fall outside the endpoint of
         # of wavelength array when looping over additional data
 

@@ -389,7 +389,7 @@ def add_first_half_shutter(shadow, shadow_element):
         The bar shadow array.
 
     shadow_element: nddata array
-        the shutter_elements['first'] array.  Should be 501 rows (Y) by 101 columns (wavelenth)
+        the shutter_elements['first'] array.  Should be 501 rows (Y) by 101 columns (wavelength)
 
     Returns:
 

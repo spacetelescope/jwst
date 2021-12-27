@@ -3058,7 +3058,7 @@ master_background
   that come from nodded exposures of the source. [#3311]
 
 - Updated the DQFlags of the background subtracted data to be DO_NOT_USE
-  for the pixels that have wavelenghts outside the master background [#3326]
+  for the pixels that have wavelengths outside the master background [#3326]
 
 - Modified ``expand_to_2d`` to loop over pixels for WFSS data. [#3408]
 

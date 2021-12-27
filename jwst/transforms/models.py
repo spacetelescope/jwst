@@ -88,7 +88,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     Notes
     -----
     The object bounding box is computed from the segmentation map,
-    using the min and max wavelegnth for each of the orders that
+    using the min and max wavelength for each of the orders that
     are available. The order_bounding member is a dictionary of
     bounding boxes for the object keyed by order
 

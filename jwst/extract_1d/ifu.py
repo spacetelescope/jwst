@@ -786,7 +786,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     =  1 (only the source region is used). The default procedure of using the extract 1d
     asdf reference files extracts the entire region for EXTENDED source data. However,
     if the user supplies the reference image it is assumed they have defined a specific
-    region to be extracted instead of the entire field. At each wavelenght bin sigma
+    region to be extracted instead of the entire field. At each wavelength bin sigma
     clipping is performed on the extraction region and is store in the background column of
     spec table to be used in masterbackground subtraction. In the extended source case
     pixels flagged as background (-1) in the reference image are ignored.
