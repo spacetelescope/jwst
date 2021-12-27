@@ -853,7 +853,7 @@ class NIRDataset(Dataset):
         --------
 
         corrected_group: NDArray
-            Corredted group
+            Corrected group
 
         """
 
