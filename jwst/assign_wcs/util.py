@@ -206,7 +206,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     If ``refmodel`` is None, the first WCS object in the list is considered
     a reference. The output coordinate frame and projection (for celestial frames)
     is taken from ``refmodel``.
-    If ``transform`` is not suplied, a compound transform is created using
+    If ``transform`` is not supplied, a compound transform is created using
     CDELTs and PC.
     If ``bounding_box`` is not supplied, the bounding_box of the new WCS is computed
     from bounding_box of all input WCSs.
