@@ -780,7 +780,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     source extraction region, 0 for pixels not to include in source or background,
     and -1 for the background region.
     For SRCTYPE=POINT the source extraction region is defined by pixels in the ref
-    image = 1 and the background region is defiend by pixels in the ref image with
+    image = 1 and the background region is defined by pixels in the ref image with
     -1.
     For SRCTYPE=EXTENDED the extraction region is defined by pixels in the ref image
     =  1 (only the source region is used). The default procedure of using the extract 1d
