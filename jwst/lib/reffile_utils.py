@@ -405,7 +405,7 @@ def find_row(ldict, match_keys):
     Parameters
     ----------
     ldict : list of dict
-        A list of dictinaries, The dictionaries may have any number
+        A list of dictionaries, The dictionaries may have any number
         of items but must include all keys in ``match_keys``.
     match_keys : dict
         {key: value} pairs are matched against all items in ``ldict``
