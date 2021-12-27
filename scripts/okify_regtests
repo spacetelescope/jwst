@@ -95,7 +95,7 @@ def artifactory_dispatch(okify_op, specfile, dry_run):
 
 
 def artifactory_get_breadcrumbs(build_number, job_name, suffix):
-    """Download specfiles or other breadcrump from Artifactory associated with
+    """Download specfiles or other breadcrumb from Artifactory associated with
     a build number and return a list of their locations on the local file system
 
     An example search would be:
