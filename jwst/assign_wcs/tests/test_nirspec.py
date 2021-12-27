@@ -508,7 +508,7 @@ def test_functional_fs_msa(mode):
     assert_allclose(colx, ins_tab['xcoll'])
     assert_allclose(coly, ins_tab['ycoll'])
 
-    # After applying direcitonal cosines
+    # After applying directional cosines
     dircos = trmodels.Unitless2DirCos()
     xcolDircosi, ycolDircosi, z = dircos(colx, coly)
     assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
@@ -681,7 +681,7 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     assert_allclose(colx, ins_tab['xcoll'])
     assert_allclose(coly, ins_tab['ycoll'])
 
-    # After applying direcitonal cosines
+    # After applying directional cosines
     dircos = trmodels.Unitless2DirCos()
     xcolDircosi, ycolDircosi, z = dircos(colx, coly)
     assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
@@ -798,7 +798,7 @@ def test_functional_ifu_prism():
     assert_allclose(colx, ins_tab['xcoll'])
     assert_allclose(coly, ins_tab['ycoll'])
 
-    # After applying direcitonal cosines
+    # After applying directional cosines
     dircos = trmodels.Unitless2DirCos()
     xcolDircosi, ycolDircosi, z = dircos(colx, coly)
     assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
