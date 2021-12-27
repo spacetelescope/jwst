@@ -625,7 +625,7 @@ class Utility():
 
     @staticmethod
     def resequence(*args, **kwargs):
-        """Resquence the numbers to conform to level 3 asns"""
+        """Resequence the numbers to conform to level 3 asns"""
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
