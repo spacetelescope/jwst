@@ -173,7 +173,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     im, refs = wcs_ifu_grating("G140M", "OPAQUE")
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
-    # get positions within the slit and the coresponding lambda
+    # get positions within the slit and the corresponding lambda
     slit1 = ref['SLITY1'].data  # y offset on the slit
     lam = ref['LAMBDA1'].data
     # filter out locations outside the slit
@@ -210,7 +210,7 @@ def test_nirspec_fs_esa():
     ref = fits.open(get_file_path('Trace_SLIT_A_200_1_V84600010001P0000000002101_39547_JLAB88.fits'))
     pyw = astwcs.WCS(ref[1].header)
 
-    # get positions within the slit and the coresponding lambda
+    # get positions within the slit and the corresponding lambda
     slit1 = ref[5].data  # y offset on the slit
     lam = ref[4].data
 

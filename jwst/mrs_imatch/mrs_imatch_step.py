@@ -396,7 +396,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
 
 def _find_channel_bkg_index(model2d, channel):
     """
-    Return the index of the background subschema corrsponding to a given
+    Return the index of the background subschema corresponding to a given
     channel.
 
     """

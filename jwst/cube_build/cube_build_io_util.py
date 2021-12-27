@@ -18,7 +18,7 @@ def read_cubepars(par_filename,
 
     Based on the instrument and channel/subchannels (MIRI) or
     grating/filter(NIRSPEC), read in the appropriate columns in the
-    cube parameter reference file and fill in the cooresponding dicitionary in
+    cube parameter reference file and fill in the corresponding dicitionary in
     instrument_info
 
     Parameters
