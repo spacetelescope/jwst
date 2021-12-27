@@ -287,7 +287,7 @@ def create_closed_open(shadow1x1):
 def create_closed_closed():
     """Create the two half shutters obtained from two closed shutters
     Uses 0.01 somewhat arbitrarily, although this case shouldn't occur
-    very often, only when there are 2 or more consecutuve closed shutters
+    very often, only when there are 2 or more consecutive closed shutters
     in a slitlet
 
     Parameters:
