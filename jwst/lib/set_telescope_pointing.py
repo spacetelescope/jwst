@@ -777,7 +777,7 @@ def update_s_region(model, siaf):
     model : `~jwst.datamodels.DataModel`
         The model to update in-place.
     siaf : namedtuple
-        The ``SIAF`` tuple withg values populated from the PRD database.
+        The ``SIAF`` tuple with values populated from the PRD database.
     """
     vertices = siaf.vertices_idl
     xvert = vertices[:4]
