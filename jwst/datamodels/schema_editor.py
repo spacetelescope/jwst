@@ -543,7 +543,7 @@ class Options:
 
         Parameters
         ----------
-        filename: The name of the file stroing options from the previous run
+        filename: The name of the file string options from the previous run
                   If set to None, no file will be read or written.
         """
         self.batch = len(sys.argv) > 1
