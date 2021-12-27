@@ -234,7 +234,7 @@ class SimpleConstraint(SimpleConstraintABC):
     SimpleConstraint({'name': None, 'value': 'my_value'})
 
     If the value to check is `None`, the `SimpleConstraint` will
-    succesfully match whatever object given. However, a new `SimpleConstraint`
+    successfully match whatever object given. However, a new `SimpleConstraint`
     will be returned where the `value` is now set to whatever the attribute
     was of the object.
     >>> c = SimpleConstraint(value=None)
