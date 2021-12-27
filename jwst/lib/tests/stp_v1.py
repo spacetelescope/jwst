@@ -438,7 +438,7 @@ def get_pointing(obsstart, obsend, result_type='first'):
 
     if not len(results):
         raise ValueError(
-            'No non-zero quanternion found '
+            'No non-zero quaternion found '
             'in the DB between MJD {} and {}'.format(obsstart, obsend)
         )
 

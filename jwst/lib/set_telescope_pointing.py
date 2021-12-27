@@ -975,7 +975,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =       # Complete transformation
@@ -1071,7 +1071,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =
@@ -1141,7 +1141,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =
@@ -1210,7 +1210,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =       # Complete transformation
@@ -1271,7 +1271,7 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =       # Complete transformation
@@ -1384,7 +1384,7 @@ def calc_transforms_velocity_aberration_tr202105(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =           # The complete transformation
@@ -1465,7 +1465,7 @@ def calc_transforms_original(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =           # The complete transformation
@@ -1547,7 +1547,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     and FGS1 J-frame telemetry. Instead use the commanded guide star telemetry.
 
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =                    # The complete transformation
@@ -2732,7 +2732,7 @@ def all_pointings(mnemonics):
         pointings.append(pointing)
 
     if not len(pointings):
-        raise ValueError('No non-zero quanternion found.')
+        raise ValueError('No non-zero quaternion found.')
 
     return pointings
 
