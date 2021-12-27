@@ -34,7 +34,7 @@ from jwst.datamodels import make_header
 
 long_description = """
 Create an image the contains the header keywords needed to run
-the JWST pipeline for a sepcified instrument, observing mode, and
+the JWST pipeline for a specified instrument, observing mode, and
 pipeline level. These three are specified by the first three arguments
 to the command. The fourth and final argument is the filename that the
 image will be saved as.
