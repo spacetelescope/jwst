@@ -22,7 +22,7 @@ jw12345aaabbb_cccdd_eeeee_DATATYPE_uncal.fits.
 
 The numbers that fill in the other letter spaces come from the structure
 of the proposal file, which is a sequence of nested levels.  As each
-level is repeated, the number assigned to repesent that level increments
+level is repeated, the number assigned to represent that level increments
 by 1.
 
 
