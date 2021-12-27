@@ -519,7 +519,7 @@ class IFUCubeData():
         interest. There are two different routines to do this step, both of which use a c extension
         to combine the detector fluxes that fall within a region of influence from the spaxel center
         a. src/cube_match_sky: This routine uses the modified
-        shepard method to determing the weighting function, which weights the detector
+        shepard method to determining the weighting function, which weights the detector
         fluxes based on the distance between the detector center and spaxel center.
         b. src/cube_match_internalis only for single exposure, single band cubes and
         the ifucube in created in the detector plane. The weighting function is based on
