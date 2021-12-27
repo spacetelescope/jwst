@@ -24,7 +24,7 @@ from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
 )
 @pytest.mark.skip(reason="modifying reference_file_types caused other tests to fail")
 def test_flatfield_step_interface(instrument, exptype):
-    """Test that the basic inferface works for data requiring a FLAT reffile"""
+    """Test that the basic interface works for data requiring a FLAT reffile"""
 
     shape = (20, 20)
 
