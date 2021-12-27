@@ -472,7 +472,7 @@
 # Set ACID to how many have been used.
 # Pool.niriss.wfss
 # 
-# Dummy-uped pool to mimic expected NIRISS WFSS exposures.
+# Dummy-upped pool to mimic expected NIRISS WFSS exposures.
 # 
 # Proposal: Loosely based off of 95050
 # 
@@ -506,7 +506,7 @@
 # VISIT == 2
 # Pool.tso
 # 
-# Dummy-uped pool to mimic basic Time-Series exposures
+# Dummy-upped pool to mimic basic Time-Series exposures
 # 
 # Proposal: Completely fabricated
 # 
@@ -521,7 +521,7 @@
 # Set ACID to how many have been used.
 # Pool.tso
 # 
-# Dummy-uped pool to mimic basic Time-Series exposures
+# Dummy-upped pool to mimic basic Time-Series exposures
 # 
 # Proposal: Completely fabricated
 # 
