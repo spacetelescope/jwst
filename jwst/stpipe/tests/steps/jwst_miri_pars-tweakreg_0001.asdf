@@ -9,7 +9,7 @@ history:
   entries:
   - !core/history_entry-1.0.0 {description: Baseline configuration file., time: !!timestamp '2019-07-18
       20:01:09'}
-  - !core/history_entry-1.0.0 {description: Update kernal size for MIRI.,
+  - !core/history_entry-1.0.0 {description: Update kernel size for MIRI.,
     time: !!timestamp '2019-07-18 20:01:10'}
   extensions:
   - !core/extension_metadata-1.0.0
