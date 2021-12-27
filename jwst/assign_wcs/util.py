@@ -1122,7 +1122,7 @@ def velocity_correction(velosys):
     """
     correction = (1 / (1 + velosys / c.value))
     model = astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
-    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
+    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correction")
 
     return model
 

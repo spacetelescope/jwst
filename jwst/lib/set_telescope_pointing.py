@@ -991,7 +991,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
         M_eci_to_sifov =
             M_z_to_x          *  # Rotate from Z out to X out
-            M_sifov_fsm_delta *  # SIFOV correstion due to Fast Steering Mirror offsets
+            M_sifov_fsm_delta *  # SIFOV correction due to Fast Steering Mirror offsets
             M_fgs1_to_sifov   *  # FGS1 to SIFOV
             M_j_to_fgs1       *  # J-frame to FGS1
             M_eci_to_j           # ECI to J-Frame
@@ -1798,7 +1798,7 @@ def calc_gs2gsapp_tr_202105(m_eci2fgs1, jwst_velocity):
     Returns
     -------
     m_gs2gsapp : numpy.array(3, 3)
-        The corection matrix
+        The correction matrix
 
     Notes
     -----
