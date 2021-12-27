@@ -68,8 +68,8 @@ class DataTypes():
         self.output_name = None
 
         # open the input with datamodels
-        # if input is filename or model when it is openned it is a model
-        # if input if an association name or ModelContainer then it is openned as a container
+        # if input is filename or model when it is opened it is a model
+        # if input if an association name or ModelContainer then it is opened as a container
         # print('***input type***',type(input))
         input_try = datamodels.open(input)
 
