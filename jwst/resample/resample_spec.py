@@ -113,7 +113,7 @@ class ResampleSpecData(ResampleData):
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
-            # Handle veritical (MIRI) or horizontal (NIRSpec) dispersion.  The
+            # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
             # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
@@ -337,7 +337,7 @@ class ResampleSpecData(ResampleData):
         bbox = wcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
         x_msa, y_msa, lam = np.array(wcs(*grid))
-        # Handle veritical (MIRI) or horizontal (NIRSpec) dispersion.  The
+        # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
         # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
         spectral_axis = find_dispersion_axis(model)
         spatial_axis = spectral_axis ^ 1
