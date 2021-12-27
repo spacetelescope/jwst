@@ -61,7 +61,7 @@ class CubeBlot():
             self.par_median_select1 = self.grating
         # ________________________________________________________________
         # set up x,y,z of Median Cube
-        # Median cube shoud have linear wavelength
+        # Median cube should have linear wavelength
         xcube, ycube, zcube = wcstools.grid_from_bounding_box(
             self.median_skycube.meta.wcs.bounding_box,
             step=(1, 1, 1))

@@ -271,7 +271,7 @@ class Polygon(Region):
         return AET
 
     def __contains__(self, px):
-        """even-odd algorithm or smth else better sould be used"""
+        """even-odd algorithm or smth else better should be used"""
         # minx = self._vertices[:,0].min()
         # maxx = self._vertices[:,0].max()
         # miny = self._vertices[:,1].min()
