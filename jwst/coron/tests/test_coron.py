@@ -373,5 +373,5 @@ def test_klip():
         ]
     )
 
-    # psf_fit is cuurrently not used in the code, co not compared here
+    # psf_fit is currently not used in the code, co not compared here
     npt.assert_allclose(psf_sub.data, truth_psf_sub_data, atol=1e-6)
