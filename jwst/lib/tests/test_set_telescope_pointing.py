@@ -52,7 +52,7 @@ J2FGS_MATRIX_EXPECTED = np.asarray(
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
-# Meta attributes for test comparisions
+# Meta attributes for test comparisons
 METAS_EQALITY = ['meta.visit.engdb_pointing_quality',
                  'meta.pointing.ra_v1',
                  'meta.pointing.dec_v1',
@@ -444,7 +444,7 @@ def test_add_wcs_default(data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
@@ -476,7 +476,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
@@ -510,7 +510,7 @@ def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file_fromsim) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
@@ -534,7 +534,7 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
@@ -560,7 +560,7 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
@@ -585,7 +585,7 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     # Test
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:

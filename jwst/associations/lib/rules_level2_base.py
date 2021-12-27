@@ -648,7 +648,7 @@ class Utility():
         sorting:
         aXXXX > cXXXX > oXXX
 
-        If this changes, a comparision function will need be implemented
+        If this changes, a comparison function will need be implemented
         """
         return sorted(asns, key=lambda asn: asn['asn_id'])
 
