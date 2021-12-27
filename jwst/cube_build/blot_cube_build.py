@@ -34,7 +34,7 @@ class CubeBlot():
 
         Returns
         -------
-        CubeBlot class initialzied
+        CubeBlot class initialized
         """
 
         # Pull out the needed information from the Median IFUCube
