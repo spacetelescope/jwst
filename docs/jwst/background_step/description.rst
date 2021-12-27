@@ -66,7 +66,7 @@ image.
 
 The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file
-that gives the wavelength range (based on filter and grism) that is relavant
+that gives the wavelength range (based on filter and grism) that is relevant
 to the target data. All regions of the image that are free of source spectra
 are used for scaling the background reference image. Robust mean values are
 obtained for the background regions in the target image and for the same
