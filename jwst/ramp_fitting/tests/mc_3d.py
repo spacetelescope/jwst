@@ -83,7 +83,7 @@ class cr_add_3d:
         @type solar_env: string
         @param m_flux: multiplicative factor for flux
         @type m_flux: float
-        @param old_cr_file: file of previously generatedd GCR/SPs to add to the input data cube
+        @param old_cr_file: file of previously generated GCR/SPs to add to the input data cube
         @type old_cr_file: string
         @param verb: verbosity level
         @type verb: integer
