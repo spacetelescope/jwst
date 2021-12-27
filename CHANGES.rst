@@ -4310,7 +4310,7 @@ linearity
 model_blender
 -------------
 
-- An example has been added to the model_blener documentation for how to blend meta information [#2206]
+- An example has been added to the model_blender documentation for how to blend meta information [#2206]
 
 mrs_imatch
 ----------
