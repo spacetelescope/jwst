@@ -49,7 +49,7 @@ The following fields are common for all gratings and the prism:
 
 The prism reference file has in addition the following fields:
 
-:angle: Angle between the front and back surface of the prosm (in degrees)
+:angle: Angle between the front and back surface of the prism (in degrees)
 :kcoef: K coefficients of Selmeir equation, describing the material
 :lcoef: L coefficients describing the material
 :tcoef: Six constants, describing the thermal behavior of the glass
