@@ -314,7 +314,7 @@ def extract_grism_objects(input_model,
     GrismObject is a named tuple which contains distilled
     information about each catalog object. It can be created
     by calling jwst.assign_wcs.util.create_grism_bbox() which
-    will return a list of GrismObjects that countain the bounding
+    will return a list of GrismObjects that contain the bounding
     boxes that will be used to define the 2d extraction area.
 
     For each spectral order, the configuration file contains a
