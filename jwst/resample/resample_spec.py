@@ -137,7 +137,7 @@ class ResampleSpecData(ResampleData):
             #    represent the tangent point
             # 4. Convert ra,dec -> tangent plane projection: x_tan,y_tan
             # 5. using x_tan, y_tan perform a linear fit to find spatial sampling
-            # first input model sets intializes wavelength array and defines
+            # first input model sets initializes wavelength array and defines
             # the spatial scale of the output wcs
             if im == 0:
                 all_wavelength = np.append(all_wavelength, wavelength_array)
