@@ -129,7 +129,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return self.data['products'][-1]
 
     def __eq__(self, other):
-        """Compare equality of two assocaitions"""
+        """Compare equality of two associations"""
         if isinstance(other, DMS_Level3_Base):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
@@ -514,7 +514,7 @@ class Utility():
             the suffix.
 
         member_exptype: str
-            The assocition member exposure type, such as "science".
+            The association member exposure type, such as "science".
 
         Returns
         -------

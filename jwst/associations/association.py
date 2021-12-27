@@ -53,7 +53,7 @@ class Association(MutableMapping):
 
     data : dict
         The association. The format of this data structure
-        is determined by the individual assocations and, if
+        is determined by the individual associations and, if
         defined, validated against their specified schema.
 
     schema_file : str
@@ -429,7 +429,7 @@ class Association(MutableMapping):
         return True, reprocess
 
     def finalize(self):
-        """Finalize assocation
+        """Finalize association
 
         Finalize or close-off this association. Peform validations,
         modifications, etc. to ensure that the association is
@@ -472,7 +472,7 @@ class Association(MutableMapping):
     def _add(self, item):
         """Add a item, association-specific"""
         raise NotImplementedError(
-            'Association._add must be implemented by a specific assocation rule.'
+            'Association._add must be implemented by a specific association rule.'
         )
 
     def _add_items(self, items, **kwargs):

@@ -64,7 +64,7 @@ def test_file_ext():
 
 
 def test_level2_from_cmdline(tmpdir):
-    """Create a level2 assocaition from the command line"""
+    """Create a level2 association from the command line"""
     rule = 'DMSLevel2bBase'
     path = tmpdir.join('test_asn.json')
     inlist = ['a', 'b', 'c']

@@ -5,7 +5,7 @@ asn_from_list
 
 Create an association using either the command line tool
 ``asn_from_list`` or through the Python API using either
-:class:`jwst.associatons.asn_from_list.Main` or
+:class:`jwst.associations.asn_from_list.Main` or
 :func:`jwst.associations.asn_from_list.asn_from_list`
 
 Command Line

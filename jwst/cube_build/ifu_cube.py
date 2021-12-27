@@ -1387,9 +1387,9 @@ class IFUCubeData():
         roiw_det: numpy.ndarray
            spectral roi size associated with coord1,coord2
         weight_det : numpy.ndarray
-            weighting parameter assocation with coord1,coord2
+            weighting parameter association with coord1,coord2
         softrad_det : numpy.ndarray
-            weighting parameter assocation with coord1,coord2
+            weighting parameter association with coord1,coord2
         """
         # intitalize alpha_det and beta_det to None. These are filled in
         # if the instrument is MIRI and the weighting is miripsf

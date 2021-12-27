@@ -152,7 +152,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return limit_reached
 
     def __eq__(self, other):
-        """Compare equality of two assocaitions"""
+        """Compare equality of two associations"""
         if isinstance(other, DMSLevel2bBase):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
@@ -504,7 +504,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         result.append('        {:s}'.format(str(self.constraints)))
 
-        # Products of the assocation
+        # Products of the association
         for product in self.data['products']:
             result.append(
                 '\t{} with {} members'.format(
@@ -569,7 +569,7 @@ class Utility():
 
         Returns
         -------
-        associatons : [association(, ...)]
+        associations : [association(, ...)]
             List of associations, some of which may be merged.
         """
         others = []
@@ -663,7 +663,7 @@ class Utility():
 
         Returns
         -------
-        associatons : [association(, ...)]
+        associations : [association(, ...)]
             List of associations, some of which may be merged.
         """
         merged = {}

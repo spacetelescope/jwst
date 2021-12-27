@@ -5,7 +5,7 @@ from jwst.associations.tests import helpers
 from jwst.associations import generate
 from jwst.associations.main import constrain_on_candidates
 
-# Generate Level3 assocations
+# Generate Level3 associations
 all_candidates = constrain_on_candidates(None)
 rules = helpers.registry_level3_only(global_constraints=all_candidates)
 pool = helpers.combine_pools(

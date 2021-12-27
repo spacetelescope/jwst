@@ -22,7 +22,7 @@ def run_pipelines(jail, rtdata_module):
             ]
     Step.from_cmdline(args)
 
-    # Get the level3 assocation json file (though not its members) and run
+    # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("nircam/tsgrism/jw00721-o012_20191119t043909_tso3_001_asn.json")
     args = ["calwebb_tso3", rtdata.input,

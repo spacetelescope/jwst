@@ -28,7 +28,7 @@ def run_tso_spec2(jail, rtdata_module):
 def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
     """Run stage 3 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
-    # Get the level3 assocation json file (though not its members) and run
+    # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("niriss/soss/jw00625-o023_20191210t204036_tso3_001_asn.json")
     args = ["calwebb_tso3", rtdata.input,

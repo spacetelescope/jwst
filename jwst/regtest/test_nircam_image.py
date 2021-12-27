@@ -60,7 +60,7 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
         args = ["calwebb_image2", rtdata.input]
         Step.from_cmdline(args)
 
-    # Get the level3 assocation json file (though not its members) and run
+    # Get the level3 association json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
     args = ["calwebb_image3", rtdata.input,

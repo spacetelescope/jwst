@@ -657,7 +657,7 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
         super(Asn_Lv3SpectralTarget, self).__init__(*args, **kwargs)
 
     def finalize(self):
-        """Finalize assocation
+        """Finalize association
 
         For NRS Fixed-slit, finalization means creating new members for the
         background nods.
