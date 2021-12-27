@@ -75,7 +75,7 @@ class Affine2d():
         using a pupil distortion from optical modelling such as ray tracing.
         Or it could be broken by requiring the detector tilt effect to be
         derived from optical models and known solid body models or metrology of
-        the instrument/relescope, and the optical pupil distortion found from
+        the instrument/telescope, and the optical pupil distortion found from
         fitting on-sky data.
 
     Jean Baptiste Joseph Fourier 1768-1830
