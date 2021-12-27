@@ -1051,7 +1051,7 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
 
     # if flats is a combination of 2 or more flats:
     # only flag DO_NOT_USE if all the flats had do not other
-    # otherwise flat as UNRELIALBLE_FLAT
+    # otherwise flat as UNRELIABLE_FLAT
     if n_dq >= 2:
         iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
         flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT']
