@@ -276,7 +276,7 @@ class EngdbDirect(EngdbABC):
         # Make our request
         response = requests.get(query)
         logger.debug('Response: %s', response)
-        logger.debug('Respone: %s', response.json())
+        logger.debug('Response: %s', response.json())
         response.raise_for_status()
 
         # That's all folks
