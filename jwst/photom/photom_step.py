@@ -9,7 +9,7 @@ __all__ = ["PhotomStep"]
 
 class PhotomStep(Step):
     """
-    PhotomStep: Module for loading photometric conversion infomation from
+    PhotomStep: Module for loading photometric conversion information from
         reference files and attaching or applying them to the input science
         data model
     """
