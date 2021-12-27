@@ -266,7 +266,7 @@ class SiafDbSqlite:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        logger.info("Quering SIAF for aperture "
+        logger.info("Querying SIAF for aperture "
                     "%s with USEAFTER %s", aperture, useafter)
         RESULT = {}
         try:
