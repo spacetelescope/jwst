@@ -42,9 +42,9 @@ ycoord : double array
 zcoord : double array
    size of naxis3. This array holds the center x axis values of the ifu cube 
 flux : double array
-   size: point cloud elements. Flux of each point cloud memeber
+   size: point cloud elements. Flux of each point cloud member
 err : double array
-   size: point cloud elements. err of each point cloud memeber
+   size: point cloud elements. err of each point cloud member
 slice_no: int
    slice number of point cloud member to be in dq flagging
 coord1 : double array
@@ -52,7 +52,7 @@ coord1 : double array
 coord2 : double array
    size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
 wave : double array
-   size: point cloud elements. Wavelegnth of each point cloud memeber
+   size: point cloud elements. Wavelegnth of each point cloud member
 cdelt3: double array
    size: point cloud elements. Spectral scale to use at wavelength of point cloud member
 cdelt1 : double
