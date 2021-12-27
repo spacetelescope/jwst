@@ -15,7 +15,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     """ For MIRI channel data find the foot of this data on the sky
 
     For a specific channel on an exposure find the min and max of the
-    spatial coordinates, either in  alpha,beta or ra,dec dedpending
+    spatial coordinates, either in alpha,beta or ra,dec depending
     on the type of cube being build. Also find the min and max of
     wavelength this channel covers.
 

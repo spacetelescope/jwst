@@ -160,7 +160,7 @@ step. If the input is a "_rate" product, this will be a "_bsub" product, while
 :File suffix: _cal or _calints
 
 The output is a fully calibrated, but unrectified, exposure, using the product
-type suffix "_cal" or "_calints", dependening on the type of input,
+type suffix "_cal" or "_calints", depending on the type of input,
 e.g. "jw80600012001_02101_00003_mirimage_cal.fits." This is the output of the
 :ref:`photom <photom_step>` step, or whichever step is performed last before applying
 either :ref:`resample_spec <resample_step>`, :ref:`cube_build <cube_build_step>`, or
