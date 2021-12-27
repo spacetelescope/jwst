@@ -542,7 +542,7 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             ),
-            # Constaint to prevent calibration data from level 3 processing
+            # Constraint to prevent calibration data from level 3 processing
             Constraint(
                 [
                     DMSAttrConstraint(

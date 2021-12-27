@@ -551,7 +551,7 @@ class Constraint:
     Attributes
     ----------
     constraints : [Constraint[,...]]
-        List of `Constraint` or `SimpleConstaint` that
+        List of `Constraint` or `SimpleConstraint` that
         make this constraint.
 
     matched : bool
@@ -620,7 +620,7 @@ class Constraint:
         else:
             raise TypeError(
                 'Invalid initialization value type {}.'
-                '\nValid types are `SimpleConstaint`, `Constraint`,'
+                '\nValid types are `SimpleConstraint`, `Constraint`,'
                 '\nor subclass.'.format(type(init))
             )
 
