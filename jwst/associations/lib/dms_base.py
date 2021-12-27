@@ -19,7 +19,7 @@ PRODUCT_NAME_DEFAULT = 'undefined'
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
-# Acquistions and Confirmation images
+# Acquisition and Confirmation images
 ACQ_EXP_TYPES = (
     'mir_tacq',
     'mir_taconfirm',
@@ -333,7 +333,7 @@ class DMSBaseMixin(ACIDMixin):
             Exposure type. Can be one of
 
                 - 'science': Item contains science data
-                - 'target_aquisition': Item contains target acquisition data.
+                - 'target_acquisition': Item contains target acquisition data.
                 - 'autoflat': NIRSpec AUTOFLAT
                 - 'autowave': NIRSpec AUTOWAVE
                 - 'psf': PSF
@@ -400,7 +400,7 @@ class DMSBaseMixin(ACIDMixin):
         is_item_tso : bool
             Item represents a TSO exposure.
         """
-        # If not a science exposure, such as target aquisitions,
+        # If not a science exposure, such as target acquisitions,
         # then other TSO indicators do not apply.
         if item['pntgtype'] != 'science':
             return False
@@ -754,7 +754,7 @@ def get_exposure_type(item, default='science', association=None):
         Exposure type. Can be one of
 
         - 'science': Item contains science data
-        - 'target_aquisition': Item contains target acquisition data.
+        - 'target_acquisition': Item contains target acquisition data.
         - 'autoflat': NIRSpec AUTOFLAT
         - 'autowave': NIRSpec AUTOWAVE
         - 'psf': PSF
