@@ -1155,7 +1155,7 @@ class IFUCubeData():
 # Define the rotation angle between the ra-dec and alpha beta coord system using
 # the first input model. Use first file in first band to set up rotation angle
 
-# Compute the rotation angle between local IFU sysetem  and RA-DEC
+# Compute the rotation angle between local IFU system  and RA-DEC
 
         if self.coord_system == 'ifualign':
             this_a = parameter1[0]  # 0 is first band - this_a is channel
