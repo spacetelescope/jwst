@@ -208,7 +208,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
     v3_ref : float
        v3 coordinate of reference point given in arc seconds
     ra : float
-       ra coordinate given in degress
+       ra coordinate given in degrees
     dec :  float
        dec coordinate given in degrees
 

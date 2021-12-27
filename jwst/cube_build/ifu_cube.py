@@ -1139,7 +1139,7 @@ class IFUCubeData():
         For NIRSPEC the units along/across slice dimension are meters
 
         If the coordinate system is skyalign/ifualign then the min and max of
-        ra(degress), dec (degrees) and lambda (microns) is returned.
+        ra(degrees), dec (degrees) and lambda (microns) is returned.
 
         """
 # _____________________________________________________________________________

@@ -3103,7 +3103,7 @@ set_telescope_pointing
 ----------------------
 
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
-  arcsec to degress for CDELTn keywords. [#3248]
+  arcsec to degrees for CDELTn keywords. [#3248]
 
 - Updates to prevent crashes when SIAF values needed for crpix or
   cdelt keywords are missing. [#3316]

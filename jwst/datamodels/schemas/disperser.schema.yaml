@@ -16,7 +16,7 @@ allOf:
       type: number
     angle:
       description: |
-        Prism angle (in degerees) between the front surface and the back surface.
+        Prism angle (in degrees) between the front surface and the back surface.
       type: number
     gwa_tiltx:
       type: object

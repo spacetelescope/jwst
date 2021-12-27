@@ -262,7 +262,7 @@ class ResampleSpecData(ResampleData):
         # The final transform
         # redefine the ra, dec center tangent point to include all data
 
-        # check if all_ra crosses 0 degress - this makes it hard to
+        # check if all_ra crosses 0 degrees - this makes it hard to
         # define the min and max ra correctly
         all_ra = wrap_ra(all_ra)
         ra_min = np.amin(all_ra)
