@@ -886,7 +886,7 @@ class Constraint_Single_Science(SimpleConstraint):
 
 
 class Constraint_Special(DMSAttrConstraint):
-    """Select on backgrounds and other auxilliary images"""
+    """Select on backgrounds and other auxiliary images"""
 
     def __init__(self):
         super(Constraint_Special, self).__init__(
