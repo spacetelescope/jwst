@@ -313,7 +313,7 @@ def test_change_engdb_url_fail():
         stp.get_pointing(
             Time('2019-06-03T17:25:40', format='isot').mjd,
             Time('2019-06-03T17:25:56', format='isot').mjd,
-            engdb_url='http://nonexistant.fake.example'
+            engdb_url='http://nonexistent.fake.example'
         )
 
 
