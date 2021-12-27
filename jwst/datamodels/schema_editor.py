@@ -1505,7 +1505,7 @@ class Schema_editor:
 
     def update_schema_fields(self, keyword_schema, model_schema, path):
         """
-        Compare the fields of a sinlgle item between the datamodels schema
+        Compare the fields of a single item between the datamodels schema
         and the keyword database and update when they differ
         """
         p_name = path[-1][0:2] == "p_"
