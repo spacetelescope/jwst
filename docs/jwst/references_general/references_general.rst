@@ -535,7 +535,7 @@ can be used to specify the intent “use for NIS or for NISRAPID”.
 
 Only or-ed combinations of the values used in ordinary keywords are valid for pattern keywords.
 
-Patterns appear in a slightly different form in rmaps than they do in ``P_`` keywords. The value of a ``P_ keyword`` always ends with a trailing or-bar. In rmaps, no trailing or-bar is used so the equivalient of the above in an rmap is:
+Patterns appear in a slightly different form in rmaps than they do in ``P_`` keywords. The value of a ``P_ keyword`` always ends with a trailing or-bar. In rmaps, no trailing or-bar is used so the equivalent of the above in an rmap is:
 
     ‘NIS|NISRAPID’
 
