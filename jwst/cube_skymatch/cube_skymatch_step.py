@@ -54,7 +54,7 @@ class CubeSkyMatchStep(Step):
         models2d = datamodels.ModelContainer(input2)
         dqbits = interpret_bit_flags(self.dqbits)
 
-        # set sky stattistics:
+        # set sky statistics:
         self._skystat = SkyStats(
             skystat=self.skystat,
             lower=self.lower,
