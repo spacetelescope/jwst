@@ -630,7 +630,7 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     assert_allclose(x_msa_exit, ins_tab['xmsapos'])
     assert_allclose(y_msa_exit, ins_tab['ymaspos'])
 
-    # Computations are done using the eact form of the equations in the reports
+    # Computations are done using the exact form of the equations in the reports
     # Part I of the Forward IFU-POST transform - the linear transform
     xc_out = 0.0487158154447
     yc_out = 0.00856211956976
