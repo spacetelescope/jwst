@@ -121,7 +121,7 @@ def test_lastframe_single_group():
 
 def test_lastframe_add1_groupdq():
     """
-    Test if the lasttframe code set the groupdq flag on the first
+    Test if the lastframe code set the groupdq flag on the first
     group to 'do_not_use' by adding 1 to the flag, not overwriting to 1
     """
 

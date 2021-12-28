@@ -430,7 +430,7 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     -------------
     sat: the previous integration for this pixel saturated: yes/no
     dn_lastframe_23: extrapolated last frame using 2nd and 3rd to last frames
-    dn_lastfrane_fit: extrapolated last frame using the fit to the entire ramp
+    dn_lastframe_fit: extrapolated last frame using the fit to the entire ramp
     """
 
     nrows = input_model.data.shape[2]
