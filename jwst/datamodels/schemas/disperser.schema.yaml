@@ -116,7 +116,7 @@ allOf:
       type: number
     tilt_y:
       description: |
-        Angle n deg between the fromn surface and the reference
+        Angle n deg between the front surface and the reference
         surface (MIRROR).
       type: number
     tref:

@@ -8,11 +8,11 @@ title: >
 description: |
   This model does all transforms through the NIRSpec prism:
   - computes the refraction index as a function of lambda.
-  - Applies Snell's law through fromt surface.
+  - Applies Snell's law through front surface.
   - Rotates to back surface.
   - Applies reflection from back surface.
   - Rotates to front surface
-  - Applies Snell's law through fromt surface.
+  - Applies Snell's law through front surface.
 
 allOf:
   - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
