@@ -34,11 +34,11 @@ xcenter : double array
    x center pixel values of the detector values. Size xsize2.
 ycenter : double array
    y center pixel values of the detector values. Size ysize
-x_cube : doube array
+x_cube : double array
    x coordinate of median cube mapped back to detector
-y_cube : doube array
+y_cube : double array
    y coordinate of median cube mapped back to detector
-flux_cube : doube array
+flux_cube : double array
    flux of median cube
 
 Returns
