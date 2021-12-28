@@ -232,7 +232,7 @@ class Gwa2Slit(Model):
     ----------
     slits : list
         A list of open slits.
-        A slit is a namedtupe of type `~jwst.transforms.models.Slit`
+        A slit is a namedtuple of type `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos",
@@ -285,7 +285,7 @@ class Slit2Msa(Model):
     ----------
     slits : list
         A list of open slits.
-        A slit is a namedtupe, `~jwst.transforms.models.Slit`
+        A slit is a namedtuple, `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos",
