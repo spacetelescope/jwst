@@ -118,7 +118,7 @@ class CubeBuildStep (Step):
             self.interpolation = 'area'
 
         # if interpolation is point cloud then weighting can be
-        # 1. MSM: modified shepard method
+        # 1. MSM: modified Shepard method
         # 2. EMSM
 
         if self.coord_system == 'skyalign':
