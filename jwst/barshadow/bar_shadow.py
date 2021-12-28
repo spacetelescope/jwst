@@ -449,7 +449,7 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     Returns:
 
     shadow: nddata array
-        The bar shadow array with the lastt half shutter inserted
+        The bar shadow array with the last half shutter inserted
 
     """
     #
