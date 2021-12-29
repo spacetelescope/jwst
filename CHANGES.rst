@@ -86,9 +86,11 @@ cube_build
 dark_current
 ----------
 
+- Refactored the code in preparation for moving the code to STCAL. [#6336]
+
 - Moved dark current code from JWST to STCAL. [spacetelecope/stcal#63] [#6444]
 
-- Refactored the code in preparation for moving the code to STCAL. [#6336]
+- Updated step docs to explain unique form of MIRI dark reference data [#6529]
 
 datamodels
 ----------
@@ -276,6 +278,9 @@ resample
 - Updated ``drizzle`` version to ``1.13.4`` which contains a fix for the
   bug due to which some 0-weight input pixels may contribute to the output
   image. [#6517]
+
+- Updated step docs to indicate that the default weighting type is
+  now "ivm" [#6529]
 
 residual_fringe
 ---------------

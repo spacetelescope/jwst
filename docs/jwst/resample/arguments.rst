@@ -32,7 +32,7 @@ image.
     approximately to the detector axes. Ignored when ``transform`` is
     provided.
 
-``--shape`` (tuple of int, default=None)
+``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
     second (as opposite to the ``numpy.ndarray`` convention - ``ny`` first and
     ``nx`` second). This value will be assigned to
@@ -55,10 +55,14 @@ image.
   The value to assign to output pixels that have zero weight or do not
   receive any flux from any input pixels during drizzling.
 
-``--weight_type`` (str, default='exptime')
-  The weighting type for each input image. If `weight_type=exptime`,
-  the scaling value will be set equal to the exposure time found in
-  the image header.
+``--weight_type`` (str, default='ivm')
+  The weighting type for each input image.
+  If `weight_type=ivm` (the default), the scaling value
+  will be determined per-pixel using the inverse of the read noise
+  (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
+  not exist, the variance is set to 1 for all pixels (equal weighting).
+  If `weight_type=exptime`, the scaling value will be set equal to the exposure
+  time found in the image header.
 
 ``--single`` (bool, default=False)
   If set to `True`, resample each input image into a separate output.  If
