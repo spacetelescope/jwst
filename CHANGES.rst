@@ -90,7 +90,7 @@ dark_current
 
 - Moved dark current code from JWST to STCAL. [spacetelecope/stcal#63] [#6444]
 
-- Updates step docs to explain unique form of MIRI dark reference data [#6529]
+- Updated step docs to explain unique form of MIRI dark reference data [#6529]
 
 datamodels
 ----------
