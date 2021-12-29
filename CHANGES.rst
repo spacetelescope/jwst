@@ -304,6 +304,9 @@ source_catalog
 - Fixed the documentation for ``bkg_boxsize`` to reflect that its data
   type should be integer. [#6300]
 
+- Renamed ``filter_kernel`` to ``kernel`` in the call to ``detect_sources``
+  to match the new name of the argument in photutils. [#6527]
+
 wavecorr
 --------
 

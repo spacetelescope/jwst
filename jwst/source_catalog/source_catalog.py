@@ -420,7 +420,7 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
         are found then `None` is returned.
     """
     connectivity = 8
-    segm = detect_sources(data, threshold, npixels, filter_kernel=kernel,
+    segm = detect_sources(data, threshold, npixels, kernel=kernel,
                           mask=mask, connectivity=connectivity)
     if segm is None:
         return None
