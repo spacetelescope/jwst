@@ -1,5 +1,5 @@
 #
-#  Module for defning mask geometry in pupil space
+#  Module for defining mask geometry in pupil space
 #
 
 import numpy as np
@@ -17,8 +17,8 @@ class NRM_mask_definitions():
     def __init__(self, maskname=None, rotdeg=None, holeshape="circ", rescale=False,
                  chooseholes=None):
         """
-        Short Summarry
-        --------------
+        Short Summary
+        -------------
         Set attributes of NRM_mask_definitions class.
 
         Parameters
@@ -67,8 +67,8 @@ class NRM_mask_definitions():
 
     def showmask(self):
         """
-        Short Summarry
-        --------------
+        Short Summary
+        -------------
         Calculate the diameter of the smallest centered circle (D)
         enclosing the live mask area
 
@@ -89,8 +89,8 @@ class NRM_mask_definitions():
 
 def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesigned
     """
-    Short Summarry
-    --------------
+    Short Summary
+    -------------
     Calculate hole centers with appropriate rotation
 
     Parameters
@@ -148,12 +148,12 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
     ctrs_asbuilt = ctrs_asdesigned.copy()
 
     # create 'live' hole centers in an ideal, orthogonal undistorted xy pupil space,
-    # eg maps open hole C5 in as_designed to C2 as_built, eg C4 unaffacted....
+    # eg maps open hole C5 in as_designed to C2 as_built, eg C4 unaffected....
     ctrs_asbuilt[:, 0] *= -1
 
     # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
     # no affine2d transformations 8/2018 AS
-    # LG++ The above aligns the hole patern with the hex analytic FT,
+    # LG++ The above aligns the hole pattern with the hex analytic FT,
     # flat top & bottom as seen in DMS data. 8/2018 AS
     ctrs_asbuilt = rotate2dccw(ctrs_asbuilt, np.pi / 2.0)  # overwrites attributes
 
@@ -163,8 +163,8 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
 
 def jwst_g7s6c(chooseholes=None):
     """
-    Short Summarry
-    --------------
+    Short Summary
+    -------------
     Calculate hole centers with appropriate rotation
 
     Parameters

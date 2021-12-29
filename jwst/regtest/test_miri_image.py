@@ -57,7 +57,7 @@ def run_image2(run_detector1, rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_image3(run_image2, rtdata_module):
-    """Get the level3 assocation json file (though not its members) and run
+    """Get the level3 association json file (though not its members) and run
     image3 pipeline on all _cal files listed in association"""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/det_dithered_5stars_image3_asn.json")

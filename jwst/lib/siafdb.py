@@ -204,10 +204,10 @@ class SiafDbPySiaf:
         aperture = siaf[aperture.upper()]
 
         # Fill out the Siaf
-        verticies = tuple(getattr(aperture, key) for key in SIAF_VERTICIES)
+        vertices = tuple(getattr(aperture, key) for key in SIAF_VERTICIES)
         siaf = SIAF(v2_ref=aperture.V2Ref, v3_ref=aperture.V3Ref, v3yangle=aperture.V3IdlYAngle, vparity=aperture.VIdlParity,
                     crpix1=aperture.XSciRef, crpix2=aperture.YSciRef, cdelt1=aperture.XSciScale, cdelt2=aperture.YSciScale,
-                    vertices_idl=verticies)
+                    vertices_idl=vertices)
 
         return siaf
 
@@ -266,7 +266,7 @@ class SiafDbSqlite:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        logger.info("Quering SIAF for aperture "
+        logger.info("Querying SIAF for aperture "
                     "%s with USEAFTER %s", aperture, useafter)
         RESULT = {}
         try:

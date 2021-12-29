@@ -122,7 +122,7 @@ def create_coordinate_arrays(image_shape, center=None, image2world=None,
     else:
         if len(center) != len(image_shape):
             raise ValueError("Number of coordinates of the 'center' must "
-                             "match the dimentionality of the image.")
+                             "match the dimensionality of the image.")
 
         if center_cs == 'world' and image2world is None:
             raise ValueError("'center_cs' cannot be 'world' when 'image2world'"

@@ -123,10 +123,10 @@ class Methods(Enum):
     #: Observatory orientation without velocity correction, TR 2021-05
     TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs_orig')
     #: Observatory orientation with velocity correction, TR 2021-05
-    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105', 'calc_wcs_orig')
-    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
+    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_aberration_tr202105', 'calc_wcs_orig')
+    #: TRACK and FINEGUIDE mode algorithm, TR version 2021-07
     TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
-    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-11
+    #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
     TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111')
 
     # Aliases
@@ -169,7 +169,7 @@ J3IDLYANGLE = -1.25  # Degrees
 # Conversion from seconds to MJD
 SECONDS2MJD = 1 / 24 / 60 / 60
 
-# Default transformation matricies
+# Default transformation matrices
 FGS12SIFOV_DEFAULT = np.array(
     [[0.9999994955442, 0.0000000000000, 0.0010044457459],
      [0.0000011174826, 0.9999993811310, -0.0011125359826],
@@ -236,7 +236,7 @@ class Transforms:
     m_fgs12fgsx: np.array = None
     #: FGS1 to SIFOV
     m_fgs12sifov: np.array = None
-    #: Velocity abberation
+    #: Velocity aberration
     m_gs2gsapp: np.array = None
     #: J-Frame to FGS1
     m_j2fgs1: np.array = None
@@ -584,7 +584,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    # Open the SIAF dabase
+    # Open the SIAF database
     with SiafDb(siaf_path) as siaf_db:
 
         # If the type of exposure is not FGS, then attempt to get pointing
@@ -777,7 +777,7 @@ def update_s_region(model, siaf):
     model : `~jwst.datamodels.DataModel`
         The model to update in-place.
     siaf : namedtuple
-        The ``SIAF`` tuple withg values populated from the PRD database.
+        The ``SIAF`` tuple with values populated from the PRD database.
     """
     vertices = siaf.vertices_idl
     xvert = vertices[:4]
@@ -975,7 +975,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =       # Complete transformation
@@ -991,7 +991,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
         M_eci_to_sifov =
             M_z_to_x          *  # Rotate from Z out to X out
-            M_sifov_fsm_delta *  # SIFOV correstion due to Fast Steering Mirror offsets
+            M_sifov_fsm_delta *  # SIFOV correction due to Fast Steering Mirror offsets
             M_fgs1_to_sifov   *  # FGS1 to SIFOV
             M_j_to_fgs1       *  # J-frame to FGS1
             M_eci_to_j           # ECI to J-Frame
@@ -1071,7 +1071,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =
@@ -1141,7 +1141,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =
@@ -1210,7 +1210,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =       # Complete transformation
@@ -1271,7 +1271,7 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =       # Complete transformation
@@ -1364,7 +1364,7 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
         )
 
 
-def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
+def calc_transforms_velocity_aberration_tr202105(t_pars: TransformParameters):
     """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the aperture-specific SIAF,
@@ -1384,7 +1384,7 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =           # The complete transformation
@@ -1465,7 +1465,7 @@ def calc_transforms_original(t_pars: TransformParameters):
     Notes
     -----
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =           # The complete transformation
@@ -1547,7 +1547,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     and FGS1 J-frame telemetry. Instead use the commanded guide star telemetry.
 
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =                    # The complete transformation
@@ -1798,7 +1798,7 @@ def calc_gs2gsapp_tr_202105(m_eci2fgs1, jwst_velocity):
     Returns
     -------
     m_gs2gsapp : numpy.array(3, 3)
-        The corection matrix
+        The correction matrix
 
     Notes
     -----
@@ -1838,7 +1838,7 @@ def calc_gs2gsapp_tr_202105(m_eci2fgs1, jwst_velocity):
 
 
 def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
-    """Calculate full ECI to FGS1 matrix based on commanded guidestar information andd V3PA@GS
+    """Calculate full ECI to FGS1 matrix based on commanded guidestar information and V3PA@GS
 
     Parameters
     ----------
@@ -1942,7 +1942,7 @@ def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
         The transformation matrix
     """
 
-    # Define the individal rotations
+    # Define the individual rotations
     def r1(a):
         r = np.array([
             [1, 0, 0],
@@ -2069,7 +2069,7 @@ def calc_aperture_wcs(m_eci2siaf):
     """
 
     # Calculate point on sky.
-    # Note, the SIAF referenct point is hardcoded to
+    # Note, the SIAF reference point is hardcoded to
     # (0, 0). The calculation is left here in case
     # this is not desired.
 
@@ -2452,7 +2452,7 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics)
 
-    logger.log(DEBUG_FULL, 'Memonics found:')
+    logger.log(DEBUG_FULL, 'Mnemonics found:')
     logger.log(DEBUG_FULL, '%s', mnemonics)
     logger.info('Reduced set of pointings:')
     logger.info('%s', reduced)
@@ -2686,7 +2686,7 @@ def all_pointings(mnemonics):
     filled = fill_mnemonics_chronologically(mnemonics)
     for obstime, mnemonics_at_time in filled.items():
 
-        # Fill out the matricies
+        # Fill out the matrices
         q = np.array([
             mnemonics_at_time['SA_ZATTEST1'].value,
             mnemonics_at_time['SA_ZATTEST2'].value,
@@ -2732,7 +2732,7 @@ def all_pointings(mnemonics):
         pointings.append(pointing)
 
     if not len(pointings):
-        raise ValueError('No non-zero quanternion found.')
+        raise ValueError('No non-zero quaternion found.')
 
     return pointings
 

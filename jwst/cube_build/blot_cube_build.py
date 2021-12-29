@@ -15,7 +15,7 @@ log.setLevel(logging.DEBUG)
 class CubeBlot():
 
     def __init__(self, median_model, input_models):
-        """Class Blot holds the main varibles for blotting sky cube to detector
+        """Class Blot holds the main variables for blotting sky cube to detector
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
@@ -34,7 +34,7 @@ class CubeBlot():
 
         Returns
         -------
-        CubeBlot class initialzied
+        CubeBlot class initialized
         """
 
         # Pull out the needed information from the Median IFUCube
@@ -61,7 +61,7 @@ class CubeBlot():
             self.par_median_select1 = self.grating
         # ________________________________________________________________
         # set up x,y,z of Median Cube
-        # Median cube shoud have linear wavelength
+        # Median cube should have linear wavelength
         xcube, ycube, zcube = wcstools.grid_from_bounding_box(
             self.median_skycube.meta.wcs.bounding_box,
             step=(1, 1, 1))
@@ -107,7 +107,7 @@ class CubeBlot():
     # **********************************************************************
 
     def blot_info(self):
-        """ Prints the basic paramters of the blot image and median sky cube
+        """ Prints the basic parameters of the blot image and median sky cube
         """
         log.info('Information on Blotting')
         log.info('Working with instrument %s', self.instrument)
@@ -257,7 +257,7 @@ class CubeBlot():
             ycenter = np.arange(blot_ysize)
             xcenter = np.arange(blot_xsize)
 
-            # for NIRSPEC wcs information accessed seperately for each slice
+            # for NIRSPEC wcs information accessed separately for each slice
             nslices = 30
             log.info('Blotting 30 slices on NIRSPEC detector')
             roi_det = 1.0  # Just large enough that we don't get holes

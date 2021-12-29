@@ -101,7 +101,7 @@ def add_wcs(filename):
     # WARNINGWARNINGWARNINGWARNINGWARNINGWARNING
     #
     # Get engineering parameters about scope pointing.
-    # In normal operations, if the paramters cannot be found
+    # In normal operations, if the parameters cannot be found
     # this should fail.
     # However, for prelaunch, we'll dummy out.
     try:
@@ -306,19 +306,19 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     return wcsinfo, vinfo
 
 
-def get_pointing(obstart, obsend, result_type='first'):
+def get_pointing(obsstart, obsend, result_type='first'):
     """
     Get telescope pointing engineering data.
 
     Parameters
     ----------
-    obstart, obsend: float
+    obsstart, obsend: float
         MJD observation start/end times
 
     result_type: str
         What to return. Possible options are:
-            `first`: Return the first non-zero matricies
-            `all`: Return all non-zero matricies within
+            `first`: Return the first non-zero matrices
+            `all`: Return all non-zero matrices within
                    the given range.
 
     Returns
@@ -341,8 +341,8 @@ def get_pointing(obstart, obsend, result_type='first'):
     """
     logger.info(
         'Determining pointing between observations times (mjd):'
-        '\n\tobstart = {}'
-        '\n\tobsend = {}'.format(obstart, obsend)
+        '\n\tobsstart = {}'
+        '\n\tobsend = {}'.format(obsstart, obsend)
     )
     try:
         engdb = ENGDB_Service()
@@ -376,11 +376,11 @@ def get_pointing(obstart, obsend, result_type='first'):
     for param in params:
         try:
             params[param] = engdb.get_values(
-                param, obstart, obsend, time_format='mjd', include_obstime=True
+                param, obsstart, obsend, time_format='mjd', include_obstime=True
             )
         except Exception as exception:
             raise ValueError(
-                'Cannot retrive {} from engineering.'
+                'Cannot retrieve {} from engineering.'
                 '\nFailure was {}'.format(
                     param,
                     exception
@@ -396,10 +396,10 @@ def get_pointing(obstart, obsend, result_type='first'):
         ]
         if any(values):
 
-            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
+            # The tagged obstime will come from the SA_ZATTEST1 mnemonic
             obstime = params['SA_ZATTEST1'][idx].obstime
 
-            # Fill out the matricies
+            # Fill out the matrices
             q = np.array([
                 params['SA_ZATTEST1'][idx].value,
                 params['SA_ZATTEST2'][idx].value,
@@ -438,8 +438,8 @@ def get_pointing(obstart, obsend, result_type='first'):
 
     if not len(results):
         raise ValueError(
-            'No non-zero quanternion found '
-            'in the DB between MJD {} and {}'.format(obstart, obsend)
+            'No non-zero quaternion found '
+            'in the DB between MJD {} and {}'.format(obsstart, obsend)
         )
 
     if result_type == 'first':
@@ -448,7 +448,7 @@ def get_pointing(obstart, obsend, result_type='first'):
         return results
 
 
-def get_pointing_stub(obstart, obsend):
+def get_pointing_stub(obsstart, obsend):
     '''
     For the time being this simply returns the same damn values regardless of
     the input time (awaiting the time that these parameters are actually

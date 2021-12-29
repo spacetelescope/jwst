@@ -62,7 +62,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     Parameters
     ----------
     sid : int
-        source identifed
+        source identified
     xcentroid : float
         x center of object in pixels
     ycentroid : float
@@ -87,8 +87,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
 
     Notes
     -----
-    The object bounding box is computed from the segementation map,
-    using the min and max wavelegnth for each of the orders that
+    The object bounding box is computed from the segmentation map,
+    using the min and max wavelength for each of the orders that
     are available. The order_bounding member is a dictionary of
     bounding boxes for the object keyed by order
 
@@ -232,7 +232,7 @@ class Gwa2Slit(Model):
     ----------
     slits : list
         A list of open slits.
-        A slit is a namedtupe of type `~jwst.transforms.models.Slit`
+        A slit is a namedtuple of type `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos",
@@ -285,7 +285,7 @@ class Slit2Msa(Model):
     ----------
     slits : list
         A list of open slits.
-        A slit is a namedtupe, `~jwst.transforms.models.Slit`
+        A slit is a namedtuple, `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos",
@@ -449,7 +449,7 @@ class IdealToV2V3(Model):
         self.inputs = ('xidl', 'yidl')
         """ x and y coordinates in the telescope Ideal frame."""
         self.outputs = ('v2', 'v3')
-        """ coorinates in the telescope (V2,V3) frame."""
+        """ coordinates in the telescope (V2,V3) frame."""
 
     @staticmethod
     def evaluate(xidl, yidl, v3idlyangle, v2ref, v3ref, vparity):
@@ -503,7 +503,7 @@ class V2V3ToIdeal(Model):
                                           v3ref=v3ref, vparity=vparity, name=name,
                                           **kwargs)
         self.inputs = ('v2', 'v3')
-        """ ('v2', 'v3'): coorinates in the telescope (V2,V3) frame."""
+        """ ('v2', 'v3'): coordinates in the telescope (V2,V3) frame."""
         self.outputs = ('xidl', 'yidl')
         """ ('xidl', 'yidl'): x and y coordinates in the telescope Ideal frame."""
 
@@ -622,7 +622,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
         x : float
             input x pixel
         y : float
-            intput y pixel
+            input y pixel
         x0 : float
             input x-center of object
         y0 : float
@@ -672,7 +672,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
 
     Notes
     -----
-    The evaluation here is lineaer because higher orders have not yet been
+    The evaluation here is linear because higher orders have not yet been
     defined for NIRCAM (NIRCAM polynomials currently do not have any field
     dependence)
     """
@@ -707,7 +707,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
         x : float
             input x pixel
         y : float
-            intput y pixel
+            input y pixel
         x0 : float
             input x-center of object
         y0 : float
@@ -759,7 +759,7 @@ class NIRCAMBackwardGrismDispersion(Model):
 
     Notes
     -----
-    The evaluation here is lineaer because higher orders have not yet been defined for NIRCAM
+    The evaluation here is linear because higher orders have not yet been defined for NIRCAM
     (NIRCAM polynomials currently do not have any field dependence)
     """
     standard_broadcasting = False
@@ -786,14 +786,14 @@ class NIRCAMBackwardGrismDispersion(Model):
         self.outputs = ("x", "y", "x0", "y0", "order")
 
     def evaluate(self, x, y, wavelength, order):
-        """Return the tranfrom from image to grism for the given spectral order.
+        """Return the transform from image to grism for the given spectral order.
 
         Parameters
         ----------
         x : float
             input x pixel
         y : float
-            intput y pixel
+            input y pixel
         wavelength : float
             input wavelength in angstroms
         order : int
@@ -897,7 +897,7 @@ class NIRISSBackwardGrismDispersion(Model):
         Notes
         -----
         There's spatial dependence for NIRISS so the forward transform
-        dependes on x,y as well as the filter wheel rotation. Theta is
+        depends on x,y as well as the filter wheel rotation. Theta is
         usu. taken to be the different between fwcpos_ref in the specwcs
         reference file and fwcpos from the input image.
 
@@ -1243,15 +1243,15 @@ class Snell(Model):
     angle : float
         Prism angle in deg.
     kcoef : list
-        K coefficients in Sellmeir equation.
+        K coefficients in Sellmeier equation.
     lcoef : list
-        L coefficients in Sellmeir equation.
+        L coefficients in Sellmeier equation.
     tcoef : list
         Thermal coefficients of glass.
     tref : float
-        Refernce temperature in K.
+        Reference temperature in K.
     pref : float
-        Refernce pressure in ATM.
+        Reference pressure in ATM.
     temperature : float
         System temperature during observation in K
     pressure : float
@@ -1280,11 +1280,11 @@ class Snell(Model):
 
     @staticmethod
     def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
-        """Calculate and retrun the refraction index."""
+        """Calculate and return the refraction index."""
 
         # Convert to microns
         lam = np.asarray(lam * 1e6)
-        KtoC = 273.15  # kelvin to celcius conversion
+        KtoC = 273.15  # kelvin to celsius conversion
         temp -= KtoC
         tref -= KtoC
         delt = temp - tref
@@ -1566,7 +1566,7 @@ class V23ToSky(Rotation3D):
         self._inputs = ("v2", "v3")
         """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
         self._outputs = ("ra", "dec")
-        """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
+        """ ("ra", "dec"): RA, DEC coordinates in ICRS."""
 
     @property
     def inputs(self):

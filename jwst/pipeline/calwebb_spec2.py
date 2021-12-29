@@ -52,7 +52,7 @@ class Spec2Pipeline(Pipeline):
     class_alias = "calwebb_spec2"
 
     spec = """
-        save_bsub = boolean(default=False)        # Save background-subracted science
+        save_bsub = boolean(default=False)        # Save background-subtracted science
         fail_on_exception = boolean(default=True) # Fail if any product fails.
     """
 

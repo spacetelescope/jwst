@@ -29,7 +29,7 @@ periods.
 When *CRDS_SERVER_URL* and *CRDS_PATH* are properly configured, CRDS will
 download and locally cache the minimal set of references required to calibrate
 specific data using a particular pipeline.  This configuration supports remote
-processing for users with no access or ineffecient access to the STScI local
+processing for users with no access or inefficient access to the STScI local
 network.
 
 The pre-fetch also enables CRDS to report on all reference file assignment and

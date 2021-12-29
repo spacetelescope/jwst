@@ -5,7 +5,7 @@ calwebb_spec2: Stage 2 Spectroscopic Processing
 ===============================================
 
 :Class: `jwst.pipeline.Spec2Pipeline`
-:Aliass: calwebb_spec2
+:Alias: calwebb_spec2
 
 The ``Spec2Pipeline`` applies additional instrumental corrections and
 calibrations to countrate products that result in a fully calibrated individual
@@ -160,7 +160,7 @@ step. If the input is a "_rate" product, this will be a "_bsub" product, while
 :File suffix: _cal or _calints
 
 The output is a fully calibrated, but unrectified, exposure, using the product
-type suffix "_cal" or "_calints", dependening on the type of input,
+type suffix "_cal" or "_calints", depending on the type of input,
 e.g. "jw80600012001_02101_00003_mirimage_cal.fits." This is the output of the
 :ref:`photom <photom_step>` step, or whichever step is performed last before applying
 either :ref:`resample_spec <resample_step>`, :ref:`cube_build <cube_build_step>`, or
@@ -173,7 +173,7 @@ either a `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, or
 `~jwst.datamodels.CubeModel`, matching the corresponding input data type.
 
 Of the data types that do go through :ref:`extract_2d <extract_2d_step>` processing,
-the output type will consist of either a single slit model or a mutli-slit model:
+the output type will consist of either a single slit model or a multi-slit model:
 
 - NIRSpec Bright-Object and NIRCam TSO Grism: `~jwst.datamodels.SlitModel`
 - NIRSpec Fixed Slit and MOS, as well as WFSS: `~jwst.datamodels.MultiSlitModel`

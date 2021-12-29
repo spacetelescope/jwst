@@ -15,7 +15,7 @@
 #include 'nirspec_msa_supporting_files.gen.inc'
 #include 'lamp_configuration.gen.inc'
 #include 'guide_star_information.gen.inc'
-#include 'nirspec_wfs_engineering'gen.inc'
+#include 'nirspec_wfs_engineering.gen.inc'
 #include 'jwst_ephemeris_information.gen.inc'
 #include 'spacecraft_pointing_information.gen.inc'
 #include 'aperture_pointing_information.gen.inc'

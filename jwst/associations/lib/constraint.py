@@ -234,7 +234,7 @@ class SimpleConstraint(SimpleConstraintABC):
     SimpleConstraint({'name': None, 'value': 'my_value'})
 
     If the value to check is `None`, the `SimpleConstraint` will
-    succesfully match whatever object given. However, a new `SimpleConstraint`
+    successfully match whatever object given. However, a new `SimpleConstraint`
     will be returned where the `value` is now set to whatever the attribute
     was of the object.
     >>> c = SimpleConstraint(value=None)
@@ -242,7 +242,7 @@ class SimpleConstraint(SimpleConstraintABC):
     >>> print(c)
     SimpleConstraint({'name': None, 'value': 'my_value'})
 
-    This behavior can be overriden by the `force_unique` paramter:
+    This behavior can be overridden by the `force_unique` parameter:
     >>> c = SimpleConstraint(value=None, force_unique=False)
     >>> matched, reprocess = c.check_and_set(item)
     >>> print(c)
@@ -551,7 +551,7 @@ class Constraint:
     Attributes
     ----------
     constraints : [Constraint[,...]]
-        List of `Constraint` or `SimpleConstaint` that
+        List of `Constraint` or `SimpleConstraint` that
         make this constraint.
 
     matched : bool
@@ -620,7 +620,7 @@ class Constraint:
         else:
             raise TypeError(
                 'Invalid initialization value type {}.'
-                '\nValid types are `SimpleConstaint`, `Constraint`,'
+                '\nValid types are `SimpleConstraint`, `Constraint`,'
                 '\nor subclass.'.format(type(init))
             )
 
@@ -797,7 +797,7 @@ class Constraint:
         for constraint in chain(*map(iter, self.constraints)):
             yield constraint
 
-    # Index implementaion
+    # Index implementation
     def __getitem__(self, key):
         """Retrieve a named constraint"""
         for constraint in self.constraints:

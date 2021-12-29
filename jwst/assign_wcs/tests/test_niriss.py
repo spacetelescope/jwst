@@ -131,7 +131,7 @@ def test_traverse_wfss_grisms():
         traverse_wfss_trace(f)
 
 
-def test_fiter_rotation(theta=[-0.1, 0, 0.5, 20]):
+def test_filter_rotation(theta=[-0.1, 0, 0.5, 20]):
     """Make sure that the filter rotation is reversable."""
     for f in niriss_grisms:
         wcsobj = create_wfss_wcs(f)

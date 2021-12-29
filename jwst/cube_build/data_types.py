@@ -38,9 +38,9 @@ class DataTypes():
 
         Parameters
         ----------
-        input : datamodel or  ModelContainter
+        input : datamodel or  ModelContainer
            Input data to cube_build either a filename, single model,
-           association table, or a ModelContainter
+           association table, or a ModelContainer
         single : boolean
            If True then creating single mode IFUCubes for outlier detection
            or mrs_matching. If false then creating standard IFUcubes
@@ -68,8 +68,8 @@ class DataTypes():
         self.output_name = None
 
         # open the input with datamodels
-        # if input is filename or model when it is openned it is a model
-        # if input if an assocation name or ModelContainer then it is openned as a container
+        # if input is filename or model when it is opened it is a model
+        # if input if an association name or ModelContainer then it is opened as a container
         # print('***input type***',type(input))
         input_try = datamodels.open(input)
 

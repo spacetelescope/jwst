@@ -392,7 +392,7 @@ class InstrumentInfo():
         self.Info['2']['medium-long']['softrad'] = None
         self.Info['2']['medium-long']['scalerad'] = None
         self.Info['2']['medium-long']['msm_power'] = None
-        self.Info['2']['medium-long']['rp_wave_cuttoff'] = None
+        self.Info['2']['medium-long']['rp_wave_cutoff'] = None
         self.Info['2']['medium-long']['rp_a_low'] = None
         self.Info['2']['medium-long']['rp_b_low'] = None
         self.Info['2']['medium-long']['rp_c_low'] = None
@@ -524,7 +524,7 @@ class InstrumentInfo():
         self.Info['4']['long-medium']['msm_power'] = None
 
 # ####################################################################
-# NIRSPEC Paramters
+# NIRSPEC Parameters
         self.Info['prism'] = {}
         self.Info['prism']['clear'] = {}
         self.Info['prism']['clear']['nslices'] = 30

@@ -212,7 +212,7 @@ class Main():
 
         # Determine mode of operation. Options are
         #  1) Only specified candidates
-        #  2) Only discovered assocations that do not match
+        #  2) Only discovered associations that do not match
         #     candidate associations
         #  3) Both discovered and all candidate associations.
         logger.info('Reading rules.')
@@ -423,7 +423,7 @@ def filter_discovered_only(
     candidate_list = asn_by_ruleset[candidate_ruleset]
     discover_list = asn_by_ruleset[discover_ruleset]
 
-    # Filter out the non-unique discovereds.
+    # Filter out the non-unique discovered.
     for candidate in candidate_list:
         if len(discover_list) == 0:
             break

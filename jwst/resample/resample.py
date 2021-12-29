@@ -208,7 +208,7 @@ class ResampleData:
         """Resample variance arrays from self.input_models to the output_model
 
         Resample the ``name`` variance array to the same name in output_model,
-        using a cummulative sum.
+        using a cumulative sum.
 
         This modifies output_model in-place.
         """
@@ -293,7 +293,7 @@ class ResampleData:
         inwht : 2d array
             A 2d numpy array containing the pixel by pixel weighting.
             Must have the same dimensions as insci. If none is supplied,
-            the weghting is set to one.
+            the weighting is set to one.
 
         input_wcs : gwcs.WCS object
             The world coordinate system of the input image.

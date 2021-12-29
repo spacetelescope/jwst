@@ -21,7 +21,7 @@ class CallbackRegistry():
         self.registry[event] = signal
 
     def reduce(self, event, *args):
-        """Peform a reduction on the event args
+        """Perform a reduction on the event args
 
         Parameters
         ----------

@@ -27,7 +27,7 @@ guiding functions and the related value of the EXP_TYPE keyword.
 +                +---------------+-----------------------------------------------------+
 |                | FGS_ID-STACK  | jw<pppppooovvv>_gs-id_<m>_stacked-uncal.fits        |
 +----------------+---------------+-----------------------------------------------------+
-| Acquistion     | FGS_ACQ1      | jw<pppppooovvv>_gs-acq1_<yyyydddhhmmss>_uncal.fits  |
+| Acquisition    | FGS_ACQ1      | jw<pppppooovvv>_gs-acq1_<yyyydddhhmmss>_uncal.fits  |
 +                +---------------+-----------------------------------------------------+
 |                | FGS_ACQ2      | jw<pppppooovvv>_gs-acq2_<yyyydddhhmmss>_uncal.fits  |
 +----------------+---------------+-----------------------------------------------------+
@@ -219,7 +219,7 @@ The structure and content of the Planned Reference Stars table is as follows.
 
 ACQ1 mode
 ^^^^^^^^^
-The "Acquistion" guiding function ACQ1 performs 128 x 128 pixel subarray readouts of the
+The "Acquisition" guiding function ACQ1 performs 128 x 128 pixel subarray readouts of the
 detector, using 2 groups per integration and a total of 6 integrations.
 The FITS file structure for ACQ1 uncalibrated products is as follows:
 

@@ -114,14 +114,14 @@ def correction_decay_function(input_model, param):
     Applies rscd correction to science arrays
     The last frame value from the previous integration is calculated two ways:
     1. using second and third to last frames to extrapolated to the last frame
-    2. using the non saturating data, fit the data and expolate to last frame
-    Because of the uncertainity of how well effects in th early part of the
+    2. using the non saturating data, fit the data and extrapolate to last frame
+    Because of the uncertainty of how well effects in th early part of the
     integration are corrected in the previous integration (reset anomaly, rscd
     effects, persistence) the lastframe determined from the second and third to
     last frames is considered a better estimate than that derived from a fit to
     the ramp.
     The last frame derived from fitting the non-saturating data is used in the
-    correction if the previous integration saturated. This fit is expolated
+    correction if the previous integration saturated. This fit is extrapolated
     past saturation to estimate what the total number of electrons would have
     been.
 
@@ -430,7 +430,7 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     -------------
     sat: the previous integration for this pixel saturated: yes/no
     dn_lastframe_23: extrapolated last frame using 2nd and 3rd to last frames
-    dn_lastfrane_fit: extrapolated last frame using the fit to the entire ramp
+    dn_lastframe_fit: extrapolated last frame using the fit to the entire ramp
     """
 
     nrows = input_model.data.shape[2]

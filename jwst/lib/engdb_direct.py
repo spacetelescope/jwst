@@ -94,7 +94,7 @@ class EngdbDirect(EngdbABC):
         self._default_format = result_format
 
     def get_meta(self, mnemonic='', result_format=None):
-        """Get the menonics meta info
+        """Get the mnemonics meta info
 
         Parameters
         ----------
@@ -144,10 +144,10 @@ class EngdbDirect(EngdbABC):
             The engineering mnemonic to retrieve
 
         starttime : str or `astropy.time.Time`
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
-        endttime : str or `astropy.time.Time`
-            The, inclusive, end time to retireve from.
+        endtime : str or `astropy.time.Time`
+            The, inclusive, end time to retrieve from.
 
         time_format : str
             The format of the input time used if the input times
@@ -187,7 +187,7 @@ class EngdbDirect(EngdbABC):
         # Records returned are apparent not strictly correlated with
         # observation time. So, need to filter further.
         db_starttime = extract_db_time(records['ReqSTime'])
-        db_endttime = extract_db_time(records['ReqETime'])
+        db_endtime = extract_db_time(records['ReqETime'])
         results = _ValueCollection(
             include_obstime=include_obstime,
             zip_results=zip_results
@@ -196,7 +196,7 @@ class EngdbDirect(EngdbABC):
             for record in records['Data']:
                 obstime = extract_db_time(record['ObsTime'])
                 if not include_bracket_values:
-                    if obstime < db_starttime or obstime > db_endttime:
+                    if obstime < db_starttime or obstime > db_endtime:
                         continue
                 value = record['EUValue']
                 results.append(obstime, value)
@@ -220,10 +220,10 @@ class EngdbDirect(EngdbABC):
             The engineering mnemonic to retrieve
 
         starttime : str or astropy.time.Time
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
-        endttime : str or astropy.time.Time
-            The, inclusive, end time to retireve from.
+        endtime : str or astropy.time.Time
+            The, inclusive, end time to retrieve from.
 
         result_format : str
             The format to request from the service.
@@ -276,7 +276,7 @@ class EngdbDirect(EngdbABC):
         # Make our request
         response = requests.get(query)
         logger.debug('Response: %s', response)
-        logger.debug('Respone: %s', response.json())
+        logger.debug('Response: %s', response.json())
         response.raise_for_status()
 
         # That's all folks

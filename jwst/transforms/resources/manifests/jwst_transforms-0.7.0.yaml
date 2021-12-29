@@ -60,7 +60,7 @@ tags:
   title: MIRI MRS (alpha, beta) to slice number transform.
   description: |-
     This model is used by the MIRI MRS WCS pipeline.
-    Given a (beta, ) cooridnate it computes the slice number
+    Given a (beta, ) coordinate it computes the slice number
     that the coordinate belongs to in detector coordinates.
 - tag_uri: "tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0"
   schema_uri: http://stsci.edu/schemas/jwst_pipeline/rotation_sequence-0.7.0
@@ -83,7 +83,7 @@ tags:
   title: A grating equation model.
   description: |-
     Supports two models:
-    - given incident angle and wavelength compute the refraction/difraction angle
+    - given incident angle and wavelength compute the refraction/diffraction angle
     - given an incident angle and a refraction angle compute the wavelength
 - tag_uri: "tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0"
   schema_uri: http://stsci.edu/schemas/jwst_pipeline/v23tosky-0.7.0

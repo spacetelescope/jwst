@@ -6,7 +6,7 @@ The input images are aligned with one another and then combined using a pixel
 replacement technique, described in detail below. The images are aligned to only the nearest
 integer pixel in each direction. No sub-pixel resampling is done.
 
-Due to the WFS dither patterns osscilating between two locations, the first image of the pair
+Due to the WFS dither patterns oscillating between two locations, the first image of the pair
 will oscillate between the two dither locations. Because the WSS software works in pixel space,
 we need to change which input image is "image 1" to get star to have the same pixel location in
 the output image. When the input parameter "flip_dithers" is set to True (the default)
@@ -27,7 +27,7 @@ in image 1, and then the pixel indexes of those RA/Dec values are computed in im
 difference in the pixel indexes, rounded to the nearest whole pixel, is used as the nominal
 offsets in the x/y image axes.
 
-If the optional argument "--do_refine" is set to ``True``, the nominal offsets are emperically
+If the optional argument "--do_refine" is set to ``True``, the nominal offsets are empirically
 refined using a cross-correlation technique. The steps in the refinement are as follows:
 
 1. Create a smoothed version of image 1 using a Gaussian kernel.

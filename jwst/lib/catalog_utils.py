@@ -100,7 +100,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
     Parameters
     ----------
     label : int
-        source identifed
+        source identified
     xcentroid : float
         x center of object in pixels
     ycentroid : float

@@ -50,7 +50,7 @@ background subtraction. The list of options includes:
 
 The following table shows the list of image-from-image and master background
 subtraction methods available for various spectroscopic observation modes, and
-indicates the pipeline and step in which the subtraction operation occurrs.
+indicates the pipeline and step in which the subtraction operation occurs.
 The table also shows which method is applied by default in the operational pipeline
 when the available data support multiple methods.
 

@@ -156,7 +156,7 @@ def niriss_soss(input_model, reference_files):
         log.info(f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
-    # Consider changing it in modelng ?
+    # Consider changing it in modeling ?
     cm_order1 = (Mapping((0, 1, 1, 0)) |
                  (Const1D(target_ra) & Const1D(target_dec) & wl1)
                  ).rename('Order1')

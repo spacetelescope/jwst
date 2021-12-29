@@ -119,7 +119,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
     - The ``'match'`` algorithm is somewhat similar to the traditional sky
       subtraction method (`skymethod` = `'local'`) in the sense that it
-      measures the sky indipendently in input images (or groups). The major
+      measures the sky independently in input images (or groups). The major
       differences are that, unlike the traditional method,
 
         #. ``'match'`` algorithm computes *relative* (delta) sky values with
@@ -168,10 +168,10 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         flat-fielded images thus avoiding the need to perform distortion
         correction of input images.
 
-        Initially, the footprint of a chip in an image is aproximated by a
+        Initially, the footprint of a chip in an image is approximated by a
         2D planar rectangle representing the borders of chip's distorted
         image. After applying distortion model to this rectangle and
-        progecting it onto the celestial sphere, it is approximated by
+        projecting it onto the celestial sphere, it is approximated by
         spherical polygons. Footprints of exposures and mosaics are
         computed as unions of such spherical polygons while overlaps
         of image pairs are found by intersecting these spherical polygons.

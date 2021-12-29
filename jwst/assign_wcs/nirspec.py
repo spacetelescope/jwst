@@ -314,7 +314,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
 
 def slitlets_wcs(input_model, reference_files, open_slits_id):
     """
-    Create The WCS piepline for MOS and Fixed slits for the
+    Create The WCS pipeline for MOS and Fixed slits for the
     specific opened shutters/slits. ``slit_y_range`` is taken from
     ``slit.ymin`` and ``slit.ymax``.
 
@@ -819,7 +819,7 @@ def ifuslit_to_slicer(slits, reference_files, input_model):
 
 def slicer_to_msa(reference_files):
     """
-    Trasform from slicer coordinates to MSA entrance.
+    Transform from slicer coordinates to MSA entrance.
 
     Applies the IFUFORE transform.
 
@@ -939,7 +939,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
         gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)  # TODO: Use model sets here
 
-        # The commnts below list the input coordinates.
+        # The comments below list the input coordinates.
         bgwa2msa = (
             # (alpha_out, beta_out, gamma_out), angles at the GWA, coming from the camera
             # (0, - beta_out, alpha_out, beta_out)
@@ -1150,7 +1150,7 @@ def detector_to_gwa(reference_files, detector, disperser):
     As a consequence many steps have to be modified to provide 1-based coordinates
     to the WCS call if the instrument is Nirspec. This is not always easy, especially
     when the step has no knowledge of the instrument.
-    This is the reason the algorithm is modified to acccept 0-based coordinates.
+    This is the reason the algorithm is modified to accept 0-based coordinates.
     This will be discussed in the future with the INS and IDT teams and may be solved
     by changing the algorithm but for now
 
@@ -1177,7 +1177,7 @@ def dms_to_sca(input_model):
     if ystart is None:
         ystart = 1
     # The SCA coordinates are in full frame
-    # The inputs are 1-based, remove -1 when'if they are 0-based
+    # The inputs are 1-based, remove -1 if/when they are 0-based
     # The outputs must be 1-based because this is what the model expects.
     # If xstart was 0-based and the inputs were 0-based ->
     # Shift(+1)

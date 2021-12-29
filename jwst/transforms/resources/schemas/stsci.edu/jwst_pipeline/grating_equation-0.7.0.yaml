@@ -7,7 +7,7 @@ title: >
   A grating equation model.
 description: |
   Supports two models:
-   - given incident angle and wavelength compute the refraction/difraction angle
+   - given incident angle and wavelength compute the refraction/diffraction angle
    - given an incident angle and a refraction angle compute the wavelength
 
 examples:

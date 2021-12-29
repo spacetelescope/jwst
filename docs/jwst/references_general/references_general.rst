@@ -39,7 +39,7 @@ Most reference files have a one-to-one relationship with calibration steps, e.g.
 there is one step that uses one type of reference file. Some steps, however, use
 several types of reference files and some reference file types are used by more
 than one step. The tables below show the correspondence between pipeline steps and
-refernece file types. The first table is ordered by pipeline step, while the second
+reference file types. The first table is ordered by pipeline step, while the second
 is ordered by reference file type. Links to the reference file types provide detailed
 documentation on each reference file.
 
@@ -535,7 +535,7 @@ can be used to specify the intent “use for NIS or for NISRAPID”.
 
 Only or-ed combinations of the values used in ordinary keywords are valid for pattern keywords.
 
-Patterns appear in a slightly different form in rmaps than they do in ``P_`` keywords. The value of a ``P_ keyword`` always ends with a trailing or-bar. In rmaps, no trailing or-bar is used so the equivalient of the above in an rmap is:
+Patterns appear in a slightly different form in rmaps than they do in ``P_`` keywords. The value of a ``P_ keyword`` always ends with a trailing or-bar. In rmaps, no trailing or-bar is used so the equivalent of the above in an rmap is:
 
     ‘NIS|NISRAPID’
 
@@ -544,7 +544,7 @@ Patterns appear in a slightly different form in rmaps than they do in ``P_`` key
 
 Currently all ``P_`` keywords correspond to basic keywords found only in the primary headers of reference files and are typically only valid for FITS format..
 
-The traslation from these ``P_`` pattern keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to
+The translation from these ``P_`` pattern keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to
 be reserved whether a particular type uses them or not. Defining non-pattern keywords with the prefix ``P_`` is strongly discouraged.
 
 .. _`Data Quality Flags`:

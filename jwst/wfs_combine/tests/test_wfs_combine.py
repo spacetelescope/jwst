@@ -204,7 +204,7 @@ def test_refine_no_error(wfs_association, xshift, yshift, xerror, yerror, flip_d
     path_asn, path1, path2 = wfs_association
     nircam_pixel_size = 0.031 / 3600.
     delta_x_pixel = xshift
-    # postive y pixel changes are negative declination changes
+    # positive y pixel changes are negative declination changes
     delta_y_pixel = -1.0 * yshift
     with datamodels.open(path1) as im1:
         im1.data = np.zeros(shape=(data_size, data_size), dtype=np.float32)
@@ -233,7 +233,7 @@ def test_refine_no_error(wfs_association, xshift, yshift, xerror, yerror, flip_d
         assert wfs.off_y == delta_y_pixel - yerror
     else:  # Order of exposures and sign of shifts have switched to always align the dithers
         assert wfs.off_x == abs(delta_x_pixel + xerror)
-        # Postive y pixel errors are negative in declination
+        # Positive y pixel errors are negative in declination
         assert wfs.off_y == -1.0 * (delta_y_pixel - yerror)
     wfs.input_1.close()
     wfs.input_2.close()

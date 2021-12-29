@@ -42,9 +42,9 @@ ycoord : double array
 zcoord : double array
    size of naxis3. This array holds the center x axis values of the ifu cube 
 flux : double array
-   size: point cloud elements. Flux of each point cloud memeber
+   size: point cloud elements. Flux of each point cloud member
 err : double array
-   size: point cloud elements. err of each point cloud memeber
+   size: point cloud elements. err of each point cloud member
 slice_no: int
    slice number of point cloud member to be in dq flagging
 coord1 : double array
@@ -52,7 +52,7 @@ coord1 : double array
 coord2 : double array
    size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
 wave : double array
-   size: point cloud elements. Wavelegnth of each point cloud memeber
+   size: point cloud elements. Wavelength of each point cloud member
 cdelt3: double array
    size: point cloud elements. Spectral scale to use at wavelength of point cloud member
 cdelt1 : double
@@ -193,7 +193,7 @@ int match_driz(double *xc, double *yc, double *zc,
       cdelt1_half = cdelt1/2.0;
       cdelt2_half = cdelt2/2.0;
 
-      // find the area of the pixel (quadilateral) not needed now - keeping if needed later
+      // find the area of the pixel (quadrilateral) not needed now - keeping if needed later
       // area_quad = find_area_quad(xmin, ymin, xpixel, ypixel);
 
       // convert to integer values to get the approximate region to search

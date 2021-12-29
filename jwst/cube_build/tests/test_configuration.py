@@ -210,7 +210,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     pars_input['filter'] = []
     pars_input['grating'] = []
     weighting = 'msm'
-    output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 chanels
+    output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 channels
     single = False
     par_filename = 'None'
 

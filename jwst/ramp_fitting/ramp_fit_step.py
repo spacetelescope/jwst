@@ -219,7 +219,7 @@ class RampFitStep(Step):
                 if gain_model.meta.exposure.gain_factor is not None:
                     input_model.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
 
-                # Get gain arrays, subrrays if desired.
+                # Get gain arrays, subarrays if desired.
                 frames_per_group = input_model.meta.exposure.nframes
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
                     input_model, readnoise_model, gain_model, frames_per_group)

@@ -75,7 +75,7 @@ class SkyImage:
 
         id : anything
             The value of this parameter is simple stored within the `SkyImage`
-            object. While it can be of any type, it is prefereble that `id` be
+            object. While it can be of any type, it is preferable that `id` be
             of a type with nice string representation.
 
         skystat : callable, None, optional
@@ -146,7 +146,7 @@ class SkyImage:
     def id(self):
         """ Set or get `SkyImage`'s `id`.
 
-        While `id` can be of any type, it is prefereble that `id` be
+        While `id` can be of any type, it is preferable that `id` be
         of a type with nice string representation.
 
         """
@@ -197,8 +197,8 @@ class SkyImage:
     @property
     def radec(self):
         """
-        Get RA and DEC of the verteces of the bounding polygon as a
-        `~numpy.ndarray` of shape (N, 2) where N is the number of verteces + 1.
+        Get RA and DEC of the vertices of the bounding polygon as a
+        `~numpy.ndarray` of shape (N, 2) where N is the number of vertices + 1.
         """
         return self._radec
 
@@ -295,7 +295,7 @@ class SkyImage:
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
-        #       points are not closed. Threfore we force it to be closed:
+        #       points are not closed. Therefore we force it to be closed:
         ra[-1] = ra[0]
         dec[-1] = dec[0]
 
@@ -636,7 +636,7 @@ class SkyGroup:
     def id(self):
         """ Set or get `SkyImage`'s `id`.
 
-            While `id` can be of any type, it is prefereble that `id` be
+            While `id` can be of any type, it is preferable that `id` be
             of a type with nice string representation.
 
         """
@@ -662,8 +662,8 @@ class SkyGroup:
     @property
     def radec(self):
         """
-        Get RA and DEC of the verteces of the bounding polygon as a
-        `~numpy.ndarray` of shape (N, 2) where N is the number of verteces + 1.
+        Get RA and DEC of the vertices of the bounding polygon as a
+        `~numpy.ndarray` of shape (N, 2) where N is the number of vertices + 1.
 
         """
         return self._radec

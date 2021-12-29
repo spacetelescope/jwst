@@ -2,7 +2,7 @@
 ---
 $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
 id: "http://stsci.edu/schemas/jwst_datamodel/outlierpars.schema"
-title: Default Oulier Detection parameters data model
+title: Default Outlier Detection parameters data model
 allOf:
 - $ref: referencefile.schema
 - type: object

@@ -38,7 +38,7 @@ _ASN_RULE = 'association_rules.py'
 
 
 class AssociationRegistry(dict):
-    """The available assocations
+    """The available associations
 
     Parameters
     ----------
@@ -123,10 +123,10 @@ class AssociationRegistry(dict):
         Parameters
         ----------
         item : dict
-            An item, like from a Pool, to find assocations for.
+            An item, like from a Pool, to find associations for.
 
         version_id : str
-            If specified, a string appened to association names.
+            If specified, a string appended to association names.
             If None, nothing is used.
 
         allow : [type(Association), ...]

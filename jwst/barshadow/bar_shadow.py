@@ -72,7 +72,7 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
         corrections.slits.append(correction)
 
         # Apply the correction by dividing into the science and uncertainty arrays:
-        #     var_poission and var_rnoise are divided by correction**2,
+        #     var_poisson and var_rnoise are divided by correction**2,
         #     because they're variance, while err is standard deviation
         if not inverse:
             slitlet.data /= correction.data
@@ -287,7 +287,7 @@ def create_closed_open(shadow1x1):
 def create_closed_closed():
     """Create the two half shutters obtained from two closed shutters
     Uses 0.01 somewhat arbitrarily, although this case shouldn't occur
-    very often, only when there are 2 or more consecutuve closed shutters
+    very often, only when there are 2 or more consecutive closed shutters
     in a slitlet
 
     Parameters:
@@ -389,7 +389,7 @@ def add_first_half_shutter(shadow, shadow_element):
         The bar shadow array.
 
     shadow_element: nddata array
-        the shutter_elements['first'] array.  Should be 501 rows (Y) by 101 columns (wavelenth)
+        the shutter_elements['first'] array.  Should be 501 rows (Y) by 101 columns (wavelength)
 
     Returns:
 
@@ -449,7 +449,7 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     Returns:
 
     shadow: nddata array
-        The bar shadow array with the lastt half shutter inserted
+        The bar shadow array with the last half shutter inserted
 
     """
     #

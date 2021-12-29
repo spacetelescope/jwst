@@ -25,7 +25,7 @@ blot_ysize : int
 xstart : int
    Only valid for MIRI. For NIRSpec = 0
    The left most x detector pixel number the median image is being blotted to
-   Blotting occurs seperately for each channel. We need to know which side
+   Blotting occurs separately for each channel. We need to know which side
    of the detector the median image is being blotted to
 xsize2 : int
    If MIRI xsize2 = x size of the detector side the medina image is being blotted to
@@ -34,11 +34,11 @@ xcenter : double array
    x center pixel values of the detector values. Size xsize2.
 ycenter : double array
    y center pixel values of the detector values. Size ysize
-x_cube : doube array
+x_cube : double array
    x coordinate of median cube mapped back to detector
-y_cube : doube array
+y_cube : double array
    y coordinate of median cube mapped back to detector
-flux_cube : doube array
+flux_cube : double array
    flux of median cube
 
 Returns
@@ -91,7 +91,7 @@ int alloc_blot_arrays(int nelem, double **fluxv, double **weightv) {
 // Match the median cube mapped to detector space with detector pixels
 // Match occurs when x distance or y distance < roi size (set to 1 pixel)
 // The combined flux for the blotted image is determined using a modified
-// shepard weighting methos. 
+// Shepard weighting methods. 
 
 // return values: blot_flux, blot_weight
 

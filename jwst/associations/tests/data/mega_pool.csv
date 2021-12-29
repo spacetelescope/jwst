@@ -5,14 +5,14 @@
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
 # 
 # Columns are the minimum necessary, so as to more easily edit.
-# Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
+# Based on NIRCam Mosaic where any single observation produces a minimum of two associations: one for the short and long channels.
 # The basic exposure set will be repeated as needed to create other observations and candidates.
 # 
 # ########
-# Prposal 93065
+# Proposal 93065
 # Mosaic: 1 row by 2 columns
 # Filters: F090W/F227W
-# Notes: detectors within ACT_ID witin VISIT
+# Notes: detectors within ACT_ID within VISIT
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -42,14 +42,14 @@
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
 # 
 # Columns are the minimum necessary, so as to more easily edit.
-# Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
+# Based on NIRCam Mosaic where any single observation produces a minimum of two associations: one for the short and long channels.
 # The basic exposure set will be repeated as needed to create other observations and candidates.
 # 
 # ########
-# Prposal 93065
+# Proposal 93065
 # Mosaic: 1 row by 2 columns
 # Filters: F090W/F227W
-# Notes: detectors within ACT_ID witin VISIT
+# Notes: detectors within ACT_ID within VISIT
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -81,7 +81,7 @@
 # 
 # ########
 # Proposal 93065
-# Observataions: 1
+# Observations: 1
 # Mosaic: 1 row by 2 columns
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
@@ -97,12 +97,12 @@
 # 
 # 
 # ########
-# Porposal 93065
+# Proposal 93065
 # Observations: 2
 # Mosaic: 1 row by 2 columns
 # Dithers: None
 # Filters: F090W/F227W
-# Notes: detectors within ACT_ID witin VISIT
+# Notes: detectors within ACT_ID within VISIT
 # 
 # VISIT == 1 ACT_ID == 1
 # VISIT == 1 ACT_ID == 2
@@ -135,7 +135,7 @@
 # 
 # 
 # ########
-# Observataions: 1
+# Observations: 1
 # Mode: SOSS
 # 
 # Pool.Spectrum.NIRSpec
@@ -147,7 +147,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Mode: Fixed Slit
@@ -212,7 +212,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -257,7 +257,7 @@
 # 
 # ########
 # Proposal 93065
-# Observataions: 1
+# Observations: 1
 # Mosaic: 1 row by 2 columns
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
@@ -363,7 +363,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -388,7 +388,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed Slit, MOS, IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -418,7 +418,7 @@
 # 
 # ########
 # Proposal 84500
-# Observataions: 3
+# Observations: 3
 # Mode: Fixed IFU
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -472,7 +472,7 @@
 # Set ACID to how many have been used.
 # Pool.niriss.wfss
 # 
-# Dummy-uped pool to mimic expected NIRISS WFSS exposures.
+# Dummy-upped pool to mimic expected NIRISS WFSS exposures.
 # 
 # Proposal: Loosely based off of 95050
 # 
@@ -496,7 +496,7 @@
 # 
 # ########
 # Proposal 93065
-# Observataions: 1
+# Observations: 1
 # Mosaic: 1 row by 2 columns
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
@@ -506,7 +506,7 @@
 # VISIT == 2
 # Pool.tso
 # 
-# Dummy-uped pool to mimic basic Time-Series exposures
+# Dummy-upped pool to mimic basic Time-Series exposures
 # 
 # Proposal: Completely fabricated
 # 
@@ -521,7 +521,7 @@
 # Set ACID to how many have been used.
 # Pool.tso
 # 
-# Dummy-uped pool to mimic basic Time-Series exposures
+# Dummy-upped pool to mimic basic Time-Series exposures
 # 
 # Proposal: Completely fabricated
 # 
@@ -545,7 +545,7 @@
 # Nod group 2, EXPSPCIN == 2
 # NIRSpec Fixed-slit with various nods and dithers
 # 
-# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# This examples works through a number of the Nod/Sub-pixel patterns
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -559,7 +559,7 @@
 # Primary Dither=2, Sub-pixel Pattern=Both, F290LP/G140M
 # NIRSpec Fixed-slit with various nods and dithers and off-target backgrounds
 # 
-# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# This examples works through a number of the Nod/Sub-pixel patterns
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association
@@ -579,7 +579,7 @@
 # 
 # NIRSpec IFU with various nods and dithers
 # 
-# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# This examples works through a number of the Nod/Sub-pixel patterns
 # 
 # 
 # Initialize ACID. This is done with a dummy exposure that will not match any association

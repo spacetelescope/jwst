@@ -45,7 +45,7 @@ The combined source catalog derived in the first step
 then gets cross-matched and fit to this astrometric reference catalog.
 The pipeline initially supports fitting to the
 GAIADR2 catalog, with the option to select the GAIADR1 instead.
-The results of this one fit then gets back-propogated to all the
+The results of this one fit then gets back-propagated to all the
 input images to align them all to the astrometric reference frame while
 maintaining the relative alignment between the images.
 

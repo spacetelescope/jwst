@@ -24,7 +24,7 @@ __doctest_skip__ = ['blendmodels']
 
 def blendmodels(product, inputs=None, output=None, verbose=False):
     """
-    Run main interface for blending metatdata from multiple models.
+    Run main interface for blending metadata from multiple models.
 
     Blend models that went into creating the original drzfile into a
     new metadata instance with a table that contains attribute values from

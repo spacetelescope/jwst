@@ -84,7 +84,7 @@ class MultiExposureModel(JwstDataModel):
         )
 
     def _build_schema(self):
-        """Build the schema, encorporating the core."""
+        """Build the schema, incorporating the core."""
         # Get the schemas
         schema = asdf_schema.load_schema(
             self.schema_url,

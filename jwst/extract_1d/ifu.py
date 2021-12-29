@@ -780,14 +780,14 @@ def image_extract_ifu(input_model, source_type, extract_params):
     source extraction region, 0 for pixels not to include in source or background,
     and -1 for the background region.
     For SRCTYPE=POINT the source extraction region is defined by pixels in the ref
-    image = 1 and the background region is defiend by pixels in the ref image with
+    image = 1 and the background region is defined by pixels in the ref image with
     -1.
     For SRCTYPE=EXTENDED the extraction region is defined by pixels in the ref image
     =  1 (only the source region is used). The default procedure of using the extract 1d
     asdf reference files extracts the entire region for EXTENDED source data. However,
     if the user supplies the reference image it is assumed they have defined a specific
-    region to be extracted instead of the entire field. At each wavelenght bin sigma
-    clipping is performed on the extration region and is store in the background column of
+    region to be extracted instead of the entire field. At each wavelength bin sigma
+    clipping is performed on the extraction region and is store in the background column of
     spec table to be used in masterbackground subtraction. In the extended source case
     pixels flagged as background (-1) in the reference image are ignored.
 
@@ -957,7 +957,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
     bkg_sigma_clip = extract_params['bkg_sigma_clip']
 
-    # Point Souce data 1. extract background and subtract 2. do not
+    # Point Source data 1. extract background and subtract 2. do not
     if source_type == 'POINT':
         if subtract_background and mask_bkg is not None:
             n_bkg[:] = (temp_weightmap * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)

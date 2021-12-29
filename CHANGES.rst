@@ -201,7 +201,7 @@ outlier_detection
 -----------------
 
 - Revert back to using 'linear' interpolation method as default for ``blot``.
-  The bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  The bug in the implementation of the bilinear interpolator in the ``drizzle``
   package is now fixed. [#6146]
 
 - Log number of flagged outliers in ``outlier_detection`` [#6260]
@@ -237,7 +237,7 @@ ramp_fitting
   of a ramp segment. [spacetelescope/stcal#68]
 
 - Pixels with negative median rates will have VAR_POISSON set to zero.
-  [spacetelecope/stcal#59]
+  [spacetelescope/stcal#59]
 
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
@@ -493,7 +493,7 @@ outlier_detection
 -----------------
 
 - Avoid using 'linear' interpolation method as default for ``blot`` due to
-  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  a bug in the implementation of the bilinear interpolator in the ``drizzle``
   package. Now the default value will be 'poly5'. [#6116]
 
 ramp_fitting
@@ -673,7 +673,7 @@ general
 jump
 -----------------
 
-- Update the step to detect jumps in three and four group integations [#5915].
+- Update the step to detect jumps in three and four group integrations [#5915].
 
 - Change the default S/N ratio for not flagging neighbors to be a higher value to
   better reflect the correct IPC.
@@ -1024,7 +1024,7 @@ associations
 cube_build
 ----------
 
-- Do not allow varibles defined in spec (part of the cube_build_step class) to
+- Do not allow variables defined in spec (part of the cube_build_step class) to
   be changed, to allow calspec2 to loop over a list of files and run the
   pipeline. [#5603]
 
@@ -1442,7 +1442,7 @@ assign_wcs
 
 - Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
 
-- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
+- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprints``. [#5120]
 
 - Improved calculation of bounding boxes in grism images. [#5122]
 
@@ -1821,12 +1821,12 @@ associations
 
 - Update rules so exclude dark files from associations [#4668]
 
-- Update association rules so that nodded observations procduce level 3 asn's [#4675]
+- Update association rules so that nodded observations produce level 3 asn's [#4675]
 
 cmdline
 -------
 
-- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+- Re-enable exception tracebacks from strun for issues outside step processing [#4761]
 
 coron
 -----
@@ -1880,7 +1880,7 @@ extract_2d
 ----------
 
 - Change the source type for NIRSpec MOS sources with stellarity = -1 from
-  UNKOWN to POINT. [#4686]
+  UNKNOWN to POINT. [#4686]
 
 master_background
 -----------------
@@ -1995,7 +1995,7 @@ stpipe
 strun
 -----
 
-- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+- Re-enable exception tracebacks from strun for issues outside step processing [#4761]
 
 tweakreg
 --------
@@ -2248,7 +2248,7 @@ tso_photometry
 associations
 ------------
 
-- Refactor target acquistion handling [#4254]
+- Refactor target acquisition handling [#4254]
 
 emission
 --------
@@ -2408,7 +2408,7 @@ barshadow
 combine_1d
 ----------
 
-- Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
+- Fixed the number of inputs to the spectral WCS - one expected, two were passed. [#3827]
 
 calwebb_tso3
 -------------
@@ -2537,7 +2537,7 @@ group_scale
 ipc
 ---
 
-Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+Function is_irs2 has been removed from x_irs2.py.  The version of this function
 that is now in lib/pipe_utils.py is used instead. [#4054]
 
 lib
@@ -2583,7 +2583,7 @@ resample_spec
 saturation
 ----------
 
-Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+Function is_irs2 has been removed from x_irs2.py.  The version of this function
 that is now in lib/pipe_utils.py is used instead. [#4054]
 
 stpipe
@@ -3058,7 +3058,7 @@ master_background
   that come from nodded exposures of the source. [#3311]
 
 - Updated the DQFlags of the background subtracted data to be DO_NOT_USE
-  for the pixels that have wavelenghts outside the master background [#3326]
+  for the pixels that have wavelengths outside the master background [#3326]
 
 - Modified ``expand_to_2d`` to loop over pixels for WFSS data. [#3408]
 
@@ -3103,7 +3103,7 @@ set_telescope_pointing
 ----------------------
 
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
-  arcsec to degress for CDELTn keywords. [#3248]
+  arcsec to degrees for CDELTn keywords. [#3248]
 
 - Updates to prevent crashes when SIAF values needed for crpix or
   cdelt keywords are missing. [#3316]
@@ -3531,7 +3531,7 @@ assign_wcs
 - Added unit tests for grism modes [#2649]
 
 - Augmented the logic for choosing a Nirspec WCS mode to include a check for the value
-  of ``GRATING``. If ``GRATING=MIRROR`` imaging mode is chosen reegardless of ``EXP_TYPE``. [#2761]
+  of ``GRATING``. If ``GRATING=MIRROR`` imaging mode is chosen regardless of ``EXP_TYPE``. [#2761]
 
 - Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA to be
   assigned an imaging WCS. Removed NRS_BOTA. [#2781]
@@ -3867,7 +3867,7 @@ The 0.11.0 release is highlighted by the inclusion of steps for resampling
 spectral images and time series grism observations.   In addition, this
 release had 39 issues closed and a number of pull requests to improve PEP8
 compliance, improve performance, and enhance the testing.  The release also
-included updated documentation for acessing CRDS when running the JWST
+included updated documentation for accessing CRDS when running the JWST
 pipeline and updates to the reference file documentation.
 
 ami
@@ -3892,7 +3892,7 @@ assign_wcs
 - Implemented support for reading and writing WCS information in the
   WAVE-TAB format [#2350]
 
-- Fixed bug in the ording of cube footprint [#2371]
+- Fixed bug in the ordering of cube footprint [#2371]
 
 associations
 ------------
@@ -3942,7 +3942,7 @@ cube_build
   of spaxels [#2472]
 
 - In a test with MIRI data there was a 13% improvement in the speed of making IFUcubes. In the
-  NIRSPEC case there was a 40% improvment in the speed of creating IFUCubes.
+  NIRSPEC case there was a 40% improvement in the speed of creating IFUCubes.
 
 - Fixed bug in cube_build.blot_images that was failing for  NIRSPEC IFU images
   with the slide position defined in the WCS [#2345]
@@ -4009,7 +4009,7 @@ fits_generator
 
 - Updated pyparsing to v 2.2.0 [#2382]
 
-- Updated fits_generator to ignore files begining with '.' [#2333]
+- Updated fits_generator to ignore files beginning with '.' [#2333]
 
 flatfield
 ---------
@@ -4241,7 +4241,7 @@ datamodels
 
 - Enable and improved tests for datamodel schemas using the ASDF schema checker [#2240, #2241]
 
-- Update IRS2 data model and add regredssion tests [#2295]
+- Update IRS2 data model and add regression tests [#2295]
 
 
 dq_init
@@ -4310,7 +4310,7 @@ linearity
 model_blender
 -------------
 
-- An example has been added to the model_blener documentation for how to blend meta information [#2206]
+- An example has been added to the model_blender documentation for how to blend meta information [#2206]
 
 mrs_imatch
 ----------

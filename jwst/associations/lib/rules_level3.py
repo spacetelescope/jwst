@@ -129,7 +129,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3Coron(AsnMixin_Science):
-    """Level 3 Coronography Association
+    """Level 3 Coronagraphy Association
 
     Characteristics:
         - Association type: ``coron3``
@@ -138,7 +138,7 @@ class Asn_Lv3Coron(AsnMixin_Science):
 
     Notes
     -----
-    Coronography is nearly completely defined by the association candidates
+    Coronagraphy is nearly completely defined by the association candidates
     produced by APT.
     Tracking Issues:
 
@@ -542,7 +542,7 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             ),
-            # Constaint to prevent calibration data from level 3 processing
+            # Constraint to prevent calibration data from level 3 processing
             Constraint(
                 [
                     DMSAttrConstraint(
@@ -657,7 +657,7 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
         super(Asn_Lv3SpectralTarget, self).__init__(*args, **kwargs)
 
     def finalize(self):
-        """Finalize assocation
+        """Finalize association
 
         For NRS Fixed-slit, finalization means creating new members for the
         background nods.

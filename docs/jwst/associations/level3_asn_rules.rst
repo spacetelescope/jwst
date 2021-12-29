@@ -71,7 +71,7 @@ Along with the base class, a number of mixin classes are defined.
 These mixins define some basic constraints that are found in a number
 of rules. An example is the :class:`AsnMixin_Base
 <jwst.associations.lib.rules_level3_base.AsnMixin_Base>`, which
-provides the constraints that ensure that the program identificaiton
+provides the constraints that ensure that the program identification
 and instrument are the same in each association.
 
 The rules themselves are subclasses of :class:`AsnMixin_Base

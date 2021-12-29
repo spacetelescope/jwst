@@ -133,14 +133,14 @@ def test_multislit_copy(tmp_path):
         assert len(output.slits) == 4
 
 
-def test_copy_multslit():
+def test_copy_multislit():
     model1 = MultiSlitModel()
     model2 = MultiSlitModel()
 
     model1.slits.append(ImageModel(np.ones((1024, 1024))))
     model2.slits.append(ImageModel(np.ones((1024, 1024)) * 2))
 
-    # Create the ouput model as a copy of the first input
+    # Create the output model as a copy of the first input
     output = model1.copy()
 
     assert len(model1.slits) == 1

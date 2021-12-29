@@ -16,7 +16,7 @@ POOL_PATH = 'pool_018_all_exptypes.csv'
 
 @pytest.fixture(scope='module')
 def pool():
-    """Retreive pool path"""
+    """Retrieve pool path"""
     pool_path = t_path(os.path.join('data', POOL_PATH))
     pool = combine_pools(pool_path)
 

@@ -79,7 +79,7 @@ class _KeywordMapping:
 def metablender(input_models, spec):
     """
     Given a list of datamodels, aggregate metadata attribute values and
-    create a table made up of values from a number of metadata instancs,
+    create a table made up of values from a number of metadata instances,
     according to the given specification.
 
     **Parameters:**

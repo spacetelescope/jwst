@@ -93,7 +93,7 @@ def test_scale_value(make_rampmodel):
     # by the pipeline.
     assert(len(scale_from_data) == 1)
 
-    # Make sure the scale calculated manually from the data model aboved matched what the
+    # Make sure the scale calculated manually from the data model above matched what the
     # pipeline calculated.
     assert(scale == scale_from_data[0])
 

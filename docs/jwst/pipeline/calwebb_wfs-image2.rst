@@ -17,7 +17,7 @@ Stage 2 processing of Wavefront Sensing and Control (WFS&C) images duplicates th
 processing applied to regular science imaging, with the exception of image resampling.
 The ``calwebb_wfs-image2.cfg`` configuration utilizes the regular ``Image2Pipeline``
 module, with the :ref:`resample <resample_step>` step set to be skipped, because the
-analyis of WFS&C data must be done in the original unrectified image space.
+analysis of WFS&C data must be done in the original unrectified image space.
 The list of steps is shown in the table below.
 
 .. |check| unicode:: U+2713 .. checkmark

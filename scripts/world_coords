@@ -119,7 +119,7 @@ def build_output_files(filenames):
     Parameters
     ----------
     filenames : list of strings
-        A list of imput and output filesnames
+        A list of imput and output filenames
 
     returns a list of output file names
     removes output file from filenames
@@ -138,7 +138,7 @@ def build_output_files(filenames):
         if len(filenames) == 1:
             return [output]
         else:
-            # Let other code handle the mssing file error
+            # Let other code handle the missing file error
             filenames.append(output)
             outputs = []
     else:
@@ -152,7 +152,7 @@ def build_output_files(filenames):
 
     # Build an output filename for each input
     for filename in filenames:
-        # Build output base and extensiona
+        # Build output base and extensions
         dirname, root = os.path.split(filename)
         base, ext = os.path.splitext(root)
         if ext != ".fits":
@@ -381,7 +381,7 @@ With a single input and output filename.
 
 > world_coord input output
 
-With one or more input filenames. The ouput names are generated from
+With one or more input filenames. The output names are generated from
 the inputs.
 
 > world_coord input_1 input_2 ... input_n

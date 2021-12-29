@@ -56,7 +56,7 @@ class EngdbABC(abc.ABC):
 
     @abc.abstractmethod
     def get_meta(self, mnemonic='', **service_kwargs):
-        """Get the menonics meta info
+        """Get the mnemonics meta info
 
         Parameters
         ----------
@@ -86,10 +86,10 @@ class EngdbABC(abc.ABC):
             The engineering mnemonic to retrieve
 
         starttime : str or `astropy.time.Time`
-            The, inclusive, start time to retireve from.
+            The, inclusive, start time to retrieve from.
 
-        endttime : str or `astropy.time.Time`
-            The, inclusive, end time to retireve from.
+        endtime : str or `astropy.time.Time`
+            The, inclusive, end time to retrieve from.
 
         time_format : str
             The format of the input time used if the input times
@@ -134,6 +134,6 @@ def mnemonic_data_fname(mnemonic):
     Returns
     -------
     file_name: str
-        The name of the file containing the menonic's cached data.
+        The name of the file containing the mnemonic's cached data.
     """
     return mnemonic.lower() + DATA

@@ -218,7 +218,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
         # wrap the processing in a context manager that restores all parameters.
         with preserve_step_pars(self):
 
-            # When this step is called from another step/pipeliine,
+            # When this step is called from another step/pipeline,
             # retrieve the matching substep parameters from the parent.
             # This permits the substeps to perform similarly to what is
             # specified in the parent's substeps, such as skipping.

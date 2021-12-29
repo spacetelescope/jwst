@@ -8,11 +8,11 @@ title: >
 description: |
   This model does all transforms through the NIRSpec prism:
   - computes the refraction index as a function of lambda.
-  - Applies Snell's law through fromt surface.
+  - Applies Snell's law through front surface.
   - Rotates to back surface.
   - Applies reflection from back surface.
   - Rotates to front surface
-  - Applies Snell's law through fromt surface.
+  - Applies Snell's law through front surface.
 
 allOf:
   - $ref: "http://stsci.edu/schemas/asdf/transform/transform-1.2.0"
@@ -24,7 +24,7 @@ allOf:
         type: number
       kcoef:
         description: |
-          K coefficients in Sellmeir equation.
+          K coefficients in Sellmeier equation.
         type: array
         items:
           type: number
@@ -32,7 +32,7 @@ allOf:
         maxItems: 3
       lcoef:
         description: |
-          L coefficients in Sellmeir equation.
+          L coefficients in Sellmeier equation.
         type: array
         items:
           type: number

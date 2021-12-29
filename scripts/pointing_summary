@@ -42,7 +42,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--extra-meta', type=str, nargs='+',
-        help='Extra meta information from the exposoures to add to the result table'
+        help='Extra meta information from the exposures to add to the result table'
     )
 
     args = parser.parse_args()

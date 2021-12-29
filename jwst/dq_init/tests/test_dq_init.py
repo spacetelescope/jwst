@@ -278,7 +278,7 @@ def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_
     # run the full step
     outfile = DQInitStep.call(dm_ramp)
 
-    # test that a pixeldq frame has been initlialized
+    # test that a pixeldq frame has been initialized
     if instrument == "FGS":
         assert outfile.dq.ndim == 2
     else:

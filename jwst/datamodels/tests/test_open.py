@@ -44,10 +44,10 @@ def test_mirirampmodel_deprecation(tmp_path):
 @pytest.fixture
 def mock_get_available_memory(monkeypatch):
     def mock(include_swap=True):
-        avaliable = MEMORY
+        available = MEMORY
         if include_swap:
-            avaliable *= 2
-        return avaliable
+            available *= 2
+        return available
     monkeypatch.setattr(util, 'get_available_memory', mock)
 
 

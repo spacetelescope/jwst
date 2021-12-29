@@ -39,7 +39,7 @@ def correct_mrs(input_model, slice_map):
 
     """
 
-    # Save some data parameterss for easy use later
+    # Save some data parameters for easy use later
     nrows, ncols = input_model.data.shape
 
     # The slice mask has values of 0 and nonzero, values of 0 present pixel
@@ -202,7 +202,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
     """
 
-    # Save some data parameterss for easy use later
+    # Save some data parameters for easy use later
     nrows, ncols = input_model.data.shape
 
     # The slice mask has values of 0 and nonzero, values of 0 present pixel

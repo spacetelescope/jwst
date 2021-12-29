@@ -7,7 +7,7 @@ Main function for Python: get_clipped_pixels.
 
 Python signature: get_clipped_pixels(x, y, padding, nx, ny, w, h)
 
-Verices of the rectangles to be clipped are formed by adding or subtracting
+Vertices of the rectangles to be clipped are formed by adding or subtracting
 w/2 to(from) x and h/2 to(from) y coordinates (so x, y are at the center of
 the rectangles to be clipped). The clipping window is an intersection of two
 windows: a large one representing image boundary [0, nx] and [0, ny] and a

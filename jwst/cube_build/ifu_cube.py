@@ -278,7 +278,7 @@ class IFUCubeData():
         # ________________________________________________________________________________
         # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
         # to find location of center abs of min values is how many pixels
-        # we want a systemtric cube centered on xi,eta = 0
+        # we want a symmetric cube centered on xi,eta = 0
         xilimit = max(np.abs(xi_min), np.abs(xi_max))
         etalimit = max(np.abs(eta_min), np.abs(eta_max))
 
@@ -519,13 +519,13 @@ class IFUCubeData():
         interest. There are two different routines to do this step, both of which use a c extension
         to combine the detector fluxes that fall within a region of influence from the spaxel center
         a. src/cube_match_sky: This routine uses the modified
-        shepard method to determing the weighting function, which weights the detector
+        Shepard method to determining the weighting function, which weights the detector
         fluxes based on the distance between the detector center and spaxel center.
-        b. src/cube_match_internalis only for single exposure, single band cubes and
+        b. src/cube_match_internal is only for single exposure, single band cubes and
         the ifucube in created in the detector plane. The weighting function is based on
         the overlap of between the detector pixel and spaxel. This method is simplified
         to determine the overlap in the along slice-wavelength plane.
-        4. find_spaxel_flux: find the final flux assoicated with each spaxel
+        4. find_spaxel_flux: find the final flux associated with each spaxel
         5. setup_final_ifucube_model
         6. output_ifucube
 
@@ -865,7 +865,7 @@ class IFUCubeData():
 
     def determine_cube_parameters(self):
         """Determine the spatial and wavelength roi size to use for
-        selecting point cloud elements around the spaxel centeres.
+        selecting point cloud elements around the spaxel centers.
 
         If the IFU cube covers more than 1 band - then use the rules to
         define the Spatial and Wavelength roi size to use for the cube
@@ -1098,7 +1098,7 @@ class IFUCubeData():
             raise IncorrectParameter("An essential parameter is = nan, refer to apply error message")
 
         # catch where self.weight_power = nan weighting = msm written to header
-        # TODO update writting to header scalerad if weighting = emsm
+        # TODO update writing to header scalerad if weighting = emsm
 
         if self.weight_power is not None:
             if np.isnan(self.weight_power):
@@ -1139,7 +1139,7 @@ class IFUCubeData():
         For NIRSPEC the units along/across slice dimension are meters
 
         If the coordinate system is skyalign/ifualign then the min and max of
-        ra(degress), dec (degrees) and lambda (microns) is returned.
+        ra(degrees), dec (degrees) and lambda (microns) is returned.
 
         """
 # _____________________________________________________________________________
@@ -1155,7 +1155,7 @@ class IFUCubeData():
 # Define the rotation angle between the ra-dec and alpha beta coord system using
 # the first input model. Use first file in first band to set up rotation angle
 
-# Compute the rotation angle between local IFU sysetem  and RA-DEC
+# Compute the rotation angle between local IFU system  and RA-DEC
 
         if self.coord_system == 'ifualign':
             this_a = parameter1[0]  # 0 is first band - this_a is channel
@@ -1387,11 +1387,11 @@ class IFUCubeData():
         roiw_det: numpy.ndarray
            spectral roi size associated with coord1,coord2
         weight_det : numpy.ndarray
-            weighting parameter assocation with coord1,coord2
+            weighting parameter association with coord1,coord2
         softrad_det : numpy.ndarray
-            weighting parameter assocation with coord1,coord2
+            weighting parameter association with coord1,coord2
         """
-        # intitalize alpha_det and beta_det to None. These are filled in
+        # initialize alpha_det and beta_det to None. These are filled in
         # if the instrument is MIRI and the weighting is miripsf
 
         wave_all = None
@@ -1725,7 +1725,7 @@ class IFUCubeData():
 
         across_width = abs(slice_loc1 - slice_loc3)
         # for NIRSPEC each file has 30 slices
-        # wcs information access seperately for each slice
+        # wcs information access separately for each slice
         nslices = 30
         log.info("Mapping each NIRSpec slice to sky for input file")
 
@@ -1972,7 +1972,7 @@ class IFUCubeData():
                 if(xcheck[ij] > 0 and xcheck[ij] < self.naxis1 and
                    ycheck[ij] > 0 and ycheck[ij] < self.naxis2):
                     index_check = iwave * nxy + ycheck[ij] * self.naxis1 + xcheck[ij]
-                    # If the nearby spaxel_dq contains overlap_no_covrage
+                    # If the nearby spaxel_dq contains overlap_no_coverage
                     # then unmark dq flag as hole. A hole has to have nearby
                     # pixels all in FOV.
                     check = (np.bitwise_and(self.spaxel_dq[index_check],
@@ -2199,7 +2199,7 @@ class IFUCubeData():
             ifucube_model.meta.bunit_err = input.meta.bunit_err
 
         if self.interpolation == 'drizzle':
-            # stick in values of 0, otherwize it is NaN and
+            # stick in values of 0, otherwise it is NaN and
             # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
             ifucube_model.meta.ifu.weight_power = 0
@@ -2208,7 +2208,7 @@ class IFUCubeData():
             ifucube_model.meta.ifu.weighting = str(self.interpolation)
 
         if self.coord_system == 'internal_cal':
-            # stick in values of 0, otherwize it is NaN and
+            # stick in values of 0, otherwise it is NaN and
             # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
             ifucube_model.meta.ifu.weight_power = 0

@@ -50,7 +50,7 @@ The FITS file structure is as follows.
    integration stored along the 3rd axis, and the multiple integrations (NINTS) stored along
    the 4th axis.
  - GROUP: A table of meta data for some (or all) of the data groups.
- - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+ - INT_TIMES: A table of beginning, middle, and end time stamps for each integration in the
    exposure.
  - ZEROFRAME: 3-D data array containing the pixel values of the zero-frame for each
    integration in the exposure, where each plane of the cube corresponds to a given integration.
@@ -112,7 +112,7 @@ also added to the product. The FITS file layout is as follows:
    integration in the exposure, where each plane of the cube corresponds to a given integration.
    Only appears if the zero-frame data were requested to be downlinked separately.
  - GROUP: A table of meta data for some (or all) of the data groups.
- - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+ - INT_TIMES: A table of beginning, middle, and end time stamps for each integration in the
    exposure.
  - REFOUT: The MIRI detector reference output values. Only appears in MIRI exposures.
  - ADSF: The data model meta data.
@@ -131,7 +131,7 @@ These products contain 3-D data arrays, where each plane of the data cube contai
 countrate image for a given integration.
 
 The results for each integration are also averaged together to form a single 2-D countrate
-image for the entire exposure. These resuls are stored in a ``rate`` product.
+image for the entire exposure. These results are stored in a ``rate`` product.
 
 The FITS file structure for a ``rateints`` product is as follows:
 
@@ -161,7 +161,7 @@ The FITS file structure for a ``rateints`` product is as follows:
    are based on the combined VAR_POISSON and VAR_RNOISE data (see below), given as
    standard deviation.
  - DQ: 3-D data array containing DQ flags. Each plane of the cube corresponds to a given integration.
- - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+ - INT_TIMES: A table of beginning, middle, and end time stamps for each integration in the
    exposure.
  - VAR_POISSON: 3-D data array containing the per-integration variance estimates for each pixel,
    based on Poisson noise only.
@@ -169,7 +169,7 @@ The FITS file structure for a ``rateints`` product is as follows:
    based on read noise only.
  - ADSF: The data model meta data.
 
-These FITS files are compatitable with the `~jwst.datamodels.CubeModel` data model.
+These FITS files are compatible with the `~jwst.datamodels.CubeModel` data model.
 
 The FITS file structure for a ``rate`` product is as follows:
 
@@ -274,7 +274,7 @@ The FITS file structure for a ``calints`` product is as follows:
    These values are based on the combined VAR_POISSON and VAR_RNOISE data (see below),
    given as standard deviation.
  - DQ: 3-D data array containing DQ flags for each pixel, for each integration.
- - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+ - INT_TIMES: A table of beginning, middle, and end time stamps for each integration in the
    exposure.
  - VAR_POISSON: 3-D data array containing the variance estimate for each pixel,
    based on Poisson noise only, for each integration.
@@ -750,7 +750,7 @@ structure shown below.
  - ERR: 3-D data array containing a stack of 2-D uncertainty estimates for each science target
    integration.
  - DQ: 3-D data array containing DQ flags for each science target integration.
- - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+ - INT_TIMES: A table of beginning, middle, and end time stamps for each integration in the
    exposure.
  - VAR_POISSON: 3-D data array containing the per-integration variance estimates for each pixel,
    based on Poisson noise only.

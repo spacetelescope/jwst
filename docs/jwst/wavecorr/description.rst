@@ -46,5 +46,5 @@ dispersion direction) is then used in the same manner as described above
 for MOS slitlets to compute offsets to be added to the nominal wavelength
 grid for the primary slit.
 
-Upon successfull completion of the step, the status keyword "S_WAVCOR"
+Upon successful completion of the step, the status keyword "S_WAVCOR"
 is set to "COMPLETE".

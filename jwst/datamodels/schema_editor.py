@@ -1,5 +1,5 @@
-# The schema editor is desgned to be run as a command line script. It can be
-# run either interactively or not. To run it non-inteactively, you must set
+# The schema editor is designed to be run as a command line script. It can be
+# run either interactively or not. To run it non-interactively, you must set
 # the options when creating  a new editor object, as in the following
 # example. The options are listed in the __doc__ comment for the Schema_editor
 # class.
@@ -239,7 +239,7 @@ class Keyword_db:
 
     def combine_schemas(self, other_schema):
         """
-        Combine another schema into the keyword databse schema
+        Combine another schema into the keyword database schema
         """
         def combine_dictionaries(this_schema, other_schema):
             error_msg = "Unrecognized field in schema: "
@@ -543,7 +543,7 @@ class Options:
 
         Parameters
         ----------
-        filename: The name of the file stroing options from the previous run
+        filename: The name of the file string options from the previous run
                   If set to None, no file will be read or written.
         """
         self.batch = len(sys.argv) > 1
@@ -773,7 +773,7 @@ class Options:
         """
         Check that the type of a new value agrees with the current type
         """
-        badtype = "Invalid paramater value for %s (%s)"
+        badtype = "Invalid parameter value for %s (%s)"
         if isinstance(parameters[name], str):
             if not isinstance(value, str):
                 raise ValueError(badtype % (name, value))
@@ -873,7 +873,7 @@ class Schema_editor:
         _builtin_regexes = [
             '', 'NAXIS[0-9]{0,3}', 'BITPIX', 'XTENSION', 'PCOUNT', 'GCOUNT',
             'EXTEND', 'BSCALE', 'BUNIT', 'BZERO', 'BLANK', 'DATAMAX', 'DATAMIN',
-            'EXTNAME', 'EXTVER', 'EXTLEVEL', 'GROUPS', 'PYTPE[0-9]',
+            'EXTNAME', 'EXTVER', 'EXTLEVEL', 'GROUPS', 'PTYPE[0-9]',
             'PSCAL[0-9]', 'PZERO[0-9]', 'SIMPLE', 'TFIELDS',
             'TBCOL[0-9]{1,3}', 'TFORM[0-9]{1,3}', 'TTYPE[0-9]{1,3}',
             'TUNIT[0-9]{1,3}', 'TSCAL[0-9]{1,3}', 'TZERO[0-9]{1,3}',
@@ -1026,7 +1026,7 @@ class Schema_editor:
             with open(omit_path, 'w') as fh:
                 yaml.safe_dump(list(self.omit), fh)
 
-        # Write the opject attributes back to disk
+        # Write the object attributes back to disk
         if self.options is not None:
             self.options.write(self)
 
@@ -1505,7 +1505,7 @@ class Schema_editor:
 
     def update_schema_fields(self, keyword_schema, model_schema, path):
         """
-        Compare the fields of a sinlgle item bteween the datamodels schema
+        Compare the fields of a single item between the datamodels schema
         and the keyword database and update when they differ
         """
         p_name = path[-1][0:2] == "p_"
@@ -1528,7 +1528,7 @@ class Schema_editor:
             model_value = self.strip_blanks(model_schema.get(model_field))
 
             if model_field == "pattern" and model_value is not None:
-                # Pattern is inside innermost set of parentehses
+                # Pattern is inside innermost set of parentheses
                 patstart = model_value.rfind('(') + 1
                 patend = model_value.find(')')
                 model_value = model_value[patstart:patend].split('|')

@@ -536,7 +536,7 @@ class Calibrate:
         """
         Short Summary
         -------------
-        Save calibrated quantities to oifits files, with updated metdata
+        Save calibrated quantities to oifits files, with updated metadata
         (not yet supported).
 
         Parameters

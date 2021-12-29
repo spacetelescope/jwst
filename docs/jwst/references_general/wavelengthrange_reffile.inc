@@ -9,7 +9,7 @@ maximum wavelengths of various spectroscopic modes, which can be
 order-dependent. The reference data are used to construct bounding boxes
 around the spectral traces produced by each object in the NIRCam and NIRISS
 WFSS modes.
-If a list of ``GrismObject`` is supplied, then no reference file is neccessary.
+If a list of ``GrismObject`` is supplied, then no reference file is necessary.
 
 .. include:: ../references_general/wavelengthrange_selection.inc
 

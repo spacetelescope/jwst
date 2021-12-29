@@ -19,7 +19,7 @@ For MIRI exposures, the initial groups in each integration suffer from two
 effects related to the resetting of the detectors. The first effect is that the
 first few groups after a reset do not fall
 on the expected linear accumulation of signal.
-The most significant deviations ocurr in groups 1 and 2.
+The most significant deviations occur in groups 1 and 2.
 This behavior is relatively uniform detector-wide. The second effect,
 on the other hand, is the appearance of
 significant extra spatial structure in these initial
@@ -53,7 +53,7 @@ the reset corrections are subtracted, group-by-group, integration-by-
 integration. If the input science data contains more groups than the
 reset correction, then correction for those groups is zero. If the
 input science data contains more integrations than the reset correction
-then the correction corresponding to the last intergration in the reset file
+then the correction corresponding to the last integration in the reset file
 is used.
 
 There is a single, NCols X NRowss, DQ flag image for all the integrations.

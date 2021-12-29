@@ -43,7 +43,7 @@ The following convention was adopted:
 
 
 Internally the WCS pipeline works with 0-based coordinates.
-When FITS header keywords are used, the 1 pixel offset in FITS coordinates is accounterd for
+When FITS header keywords are used, the 1 pixel offset in FITS coordinates is accounted for
 internally in the pipeline.
 
 The model is a combination of polynomials.

@@ -144,12 +144,12 @@ class NrmModel:
             # create 'live' hole centers in an ideal, orthogonal undistorted
             #    xy pupil space,
             # eg maps open hole C5 in as_designed to C2 as_built, eg C4
-            #    unaffacted....
+            #    unaffected....
             self.ctrs_asbuilt[:, 0] *= -1
 
             # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
             # no affine2d transformations 8/2018 AS
-            # LG++ The above aligns the hole patern with the hex analytic FT,
+            # LG++ The above aligns the hole pattern with the hex analytic FT,
             # flat top & bottom as seen in DMS data. 8/2018 AS
             # overwrites attributes:
             self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi / 2.0)
@@ -572,7 +572,7 @@ class NrmModel:
         Parameters
         ----------
         pixel_rad: float
-            Ddetector pixel scale
+            Detector pixel scale
 
         Returns
         -------

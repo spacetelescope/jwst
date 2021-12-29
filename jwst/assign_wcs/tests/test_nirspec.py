@@ -173,7 +173,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     im, refs = wcs_ifu_grating("G140M", "OPAQUE")
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
-    # get positions within the slit and the coresponding lambda
+    # get positions within the slit and the corresponding lambda
     slit1 = ref['SLITY1'].data  # y offset on the slit
     lam = ref['LAMBDA1'].data
     # filter out locations outside the slit
@@ -181,7 +181,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     y, x = cond.nonzero()  # 0-based
 
     x, y = pyw.wcs_pix2world(x, y, 0)
-    # The pipeline accepts 0-based cooridnates
+    # The pipeline accepts 0-based coordinates
     x -= 1
     y -= 1
     sca2world = w0.get_transform('sca', 'msa_frame')
@@ -210,7 +210,7 @@ def test_nirspec_fs_esa():
     ref = fits.open(get_file_path('Trace_SLIT_A_200_1_V84600010001P0000000002101_39547_JLAB88.fits'))
     pyw = astwcs.WCS(ref[1].header)
 
-    # get positions within the slit and the coresponding lambda
+    # get positions within the slit and the corresponding lambda
     slit1 = ref[5].data  # y offset on the slit
     lam = ref[4].data
 
@@ -508,7 +508,7 @@ def test_functional_fs_msa(mode):
     assert_allclose(colx, ins_tab['xcoll'])
     assert_allclose(coly, ins_tab['ycoll'])
 
-    # After applying direcitonal cosines
+    # After applying directional cosines
     dircos = trmodels.Unitless2DirCos()
     xcolDircosi, ycolDircosi, z = dircos(colx, coly)
     assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
@@ -630,7 +630,7 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     assert_allclose(x_msa_exit, ins_tab['xmsapos'])
     assert_allclose(y_msa_exit, ins_tab['ymaspos'])
 
-    # Computations are done using the eact form of the equations in the reports
+    # Computations are done using the exact form of the equations in the reports
     # Part I of the Forward IFU-POST transform - the linear transform
     xc_out = 0.0487158154447
     yc_out = 0.00856211956976
@@ -681,7 +681,7 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     assert_allclose(colx, ins_tab['xcoll'])
     assert_allclose(coly, ins_tab['ycoll'])
 
-    # After applying direcitonal cosines
+    # After applying directional cosines
     dircos = trmodels.Unitless2DirCos()
     xcolDircosi, ycolDircosi, z = dircos(colx, coly)
     assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
@@ -798,7 +798,7 @@ def test_functional_ifu_prism():
     assert_allclose(colx, ins_tab['xcoll'])
     assert_allclose(coly, ins_tab['ycoll'])
 
-    # After applying direcitonal cosines
+    # After applying directional cosines
     dircos = trmodels.Unitless2DirCos()
     xcolDircosi, ycolDircosi, z = dircos(colx, coly)
     assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])

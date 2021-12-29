@@ -16,7 +16,7 @@ Edit Association File
 This script adds or removes filenames from an association file. The
 first argument is the name of the association file. Subsequent
 arguments are the filenames. Options determine which operation is
-perdormed: --add or --remove. If adding files the --type option sets
+performed: --add or --remove. If adding files the --type option sets
 the exposure type for the new files. If removing file, the --ignore
 option will not use the filename suffix when matching the filenames for
 removal. Normally the output association file is the same as the input.

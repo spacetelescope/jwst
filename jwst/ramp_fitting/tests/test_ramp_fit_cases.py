@@ -625,7 +625,7 @@ def test_miri_3():
 def assert_pri(p_true, new_info, pix):
     """
     Compare true and fit values of primary output for extensions
-    SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
+    SCI, DQ, ERR, VAR_POISSON, VAR_RNOISE.
     """
 
     data, dq, var_poisson, var_rnoise, err = new_info
@@ -642,7 +642,7 @@ def assert_pri(p_true, new_info, pix):
 def assert_opt(o_true, opt_info, pix):
     """
     Compare true and fit values of optional output for extensions SLOPE,
-    SIGSLOPE, VAR_POISSSON, VAR_RNOISE, YINT, SIGYINT, PEDESTAL, and WEIGHTS.
+    SIGSLOPE, VAR_POISSON, VAR_RNOISE, YINT, SIGYINT, PEDESTAL, and WEIGHTS.
     Selecting the particular (and only) ramp in the optional output, which is
     [0,:,0,0]
     """

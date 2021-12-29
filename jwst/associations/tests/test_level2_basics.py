@@ -13,7 +13,6 @@ from jwst.associations import (
 )
 from jwst.associations.main import Main
 
-NONSSCIENCE = ['background']
 REGEX_LEVEL2A = r'(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
 
 

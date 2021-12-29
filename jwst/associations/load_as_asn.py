@@ -194,7 +194,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         Returns
         -------
         product_name : str
-            The concatentation of basename, '_', idx
+            The concatenation of basename, '_', idx
 
         Notes
         -----

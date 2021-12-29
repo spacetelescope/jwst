@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Generate a requirements-min.txt file based on install_requres
+Generate a requirements-min.txt file based on install_requires
 """
 import pkg_resources
 import urllib.request

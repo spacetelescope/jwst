@@ -251,7 +251,7 @@ The following are available in the namespace:
 
   - ``output``: A fits HDUList object containing the content of the
     output FITS file.  Note that the output FITS file may only be
-    partially contructed.  Importantly, higher-number HDUs will not
+    partially constructed.  Importantly, higher-number HDUs will not
     yet exist.
 
 A complete example

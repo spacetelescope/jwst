@@ -78,7 +78,7 @@ numbers for the template.
 MIRI Imaging
 ------------
 
-Chapter 9 in the JWST Proposal Instrunctions.
+Chapter 9 in the JWST Proposal Instructions.
 
 Choose:
 

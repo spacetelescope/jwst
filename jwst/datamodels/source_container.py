@@ -4,7 +4,7 @@ from . import ModelContainer, MultiExposureModel, SlitModel
 __all__ = ['SourceModelContainer']
 
 
-# Models that can initiliaze into a SourceModelContainer
+# Models that can initialize into a SourceModelContainer
 VALID_INITS = (
     MultiExposureModel,
 )

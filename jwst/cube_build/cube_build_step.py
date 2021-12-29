@@ -118,7 +118,7 @@ class CubeBuildStep (Step):
             self.interpolation = 'area'
 
         # if interpolation is point cloud then weighting can be
-        # 1. MSM: modified shepard method
+        # 1. MSM: modified Shepard method
         # 2. EMSM
 
         if self.coord_system == 'skyalign':
@@ -243,7 +243,7 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 # cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data
-# and fill in master_table holding what files are associationed with each
+# and fill in master_table holding what files are associated with each
 # ch/sub-ch or grating/filter.
 # Fill in all_channel, all_subchannel,all_filter, all_grating and instrument
 
@@ -350,7 +350,7 @@ class CubeBuildStep (Step):
     def read_user_input(self):
         """Read user input options for channel, subchannel, filter, or grating"""
 
-        # Determine if any of the input paramters channel, band, filter or
+        # Determine if any of the input parameters channel, band, filter or
         # grating have been set.
 
         # This routine updates the dictionary self.pars_input with any user

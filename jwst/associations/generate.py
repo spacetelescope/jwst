@@ -24,7 +24,7 @@ def generate(pool, rules, version_id=None):
         The pool to generate from.
 
     rules : AssociationRegistry
-        The associaton rule set.
+        The association rule set.
 
     version_id : None, True, or str
         The string to use to tag associations and products.
@@ -100,7 +100,7 @@ def generate_from_item(
         associations,
         rules,
         process_list):
-    """Either match or generate a new assocation
+    """Either match or generate a new association
 
     Parameters
     ----------
@@ -161,7 +161,7 @@ def generate_from_item(
             item, associations
         )
 
-    # Now see if this item will create new associatons.
+    # Now see if this item will create new associations.
     # By default, a item will not be allowed to create
     # an association based on rules of existing associations.
     reprocess = []

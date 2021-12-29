@@ -20,7 +20,7 @@ The ``calwebb_wfs-image3`` pipeline has one optional argument::
   --do_refine  boolean  default=False
 
 If set to ``True``, offsets between the dithered images computed from the WCS will be
-refined emperically using a cross-correlation technique.
+refined empirically using a cross-correlation technique.
 See :ref:`wfs_combine <wfs_combine_step>` for details.
 
 Inputs

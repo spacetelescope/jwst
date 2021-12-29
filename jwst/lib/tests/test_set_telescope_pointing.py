@@ -40,7 +40,7 @@ db_ngas_path = DATA_PATH / 'engdb_ngas'
 db_jw703_path = DATA_PATH / 'engdb_jw00703'
 siaf_path = DATA_PATH / 'siaf.db'
 
-# Some expected falues
+# Some expected values
 Q_EXPECTED = np.asarray(
     [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
 )
@@ -52,27 +52,27 @@ J2FGS_MATRIX_EXPECTED = np.asarray(
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
-# Meta attributes for test comparisions
-METAS_EQALITY = ['meta.visit.engdb_pointing_quality',
-                 'meta.pointing.ra_v1',
-                 'meta.pointing.dec_v1',
-                 'meta.pointing.pa_v3',
-                 'meta.wcsinfo.wcsaxes',
-                 'meta.wcsinfo.crpix1',
-                 'meta.wcsinfo.crpix2',
-                 'meta.wcsinfo.crval1',
-                 'meta.wcsinfo.crval2',
-                 'meta.wcsinfo.ctype1',
-                 'meta.wcsinfo.ctype2',
-                 'meta.wcsinfo.cunit1',
-                 'meta.wcsinfo.cunit2',
-                 'meta.wcsinfo.v2_ref',
-                 'meta.wcsinfo.v3_ref',
-                 'meta.wcsinfo.vparity',
-                 'meta.wcsinfo.v3yangle',
-                 'meta.wcsinfo.ra_ref',
-                 'meta.wcsinfo.dec_ref',
-                 ]
+# Meta attributes for test comparisons
+METAS_EQUALITY = ['meta.visit.engdb_pointing_quality',
+                  'meta.pointing.ra_v1',
+                  'meta.pointing.dec_v1',
+                  'meta.pointing.pa_v3',
+                  'meta.wcsinfo.wcsaxes',
+                  'meta.wcsinfo.crpix1',
+                  'meta.wcsinfo.crpix2',
+                  'meta.wcsinfo.crval1',
+                  'meta.wcsinfo.crval2',
+                  'meta.wcsinfo.ctype1',
+                  'meta.wcsinfo.ctype2',
+                  'meta.wcsinfo.cunit1',
+                  'meta.wcsinfo.cunit2',
+                  'meta.wcsinfo.v2_ref',
+                  'meta.wcsinfo.v3_ref',
+                  'meta.wcsinfo.vparity',
+                  'meta.wcsinfo.v3yangle',
+                  'meta.wcsinfo.ra_ref',
+                  'meta.wcsinfo.dec_ref',
+                  ]
 METAS_ISCLOSE = ['meta.wcsinfo.cdelt1',
                  'meta.wcsinfo.cdelt2',
                  'meta.wcsinfo.pc1_1',
@@ -313,7 +313,7 @@ def test_change_engdb_url_fail():
         stp.get_pointing(
             Time('2019-06-03T17:25:40', format='isot').mjd,
             Time('2019-06-03T17:25:56', format='isot').mjd,
-            engdb_url='http://nonexistant.fake'
+            engdb_url='http://nonexistent.fake.example'
         )
 
 
@@ -444,11 +444,11 @@ def test_add_wcs_default(data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQALITY:
+            for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f'{meta} has changed'
 
             for meta in METAS_ISCLOSE:
@@ -476,11 +476,11 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQALITY:
+            for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
             for meta in METAS_ISCLOSE:
@@ -505,16 +505,16 @@ def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
     try:
         stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL)
     except ValueError as exception:
-        pytest.xfail(f'No telementry exists. Update test to use existing telemetry. Exception: {exception}')
+        pytest.xfail(f'No telemetry exists. Update test to use existing telemetry. Exception: {exception}')
 
     # Tests
     with datamodels.Level1bModel(data_file_fromsim) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQALITY:
+            for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
             for meta in METAS_ISCLOSE:
@@ -534,11 +534,11 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQALITY:
+            for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f'{meta} has changed'
 
             for meta in METAS_ISCLOSE:
@@ -560,11 +560,11 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
     # Tests
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQALITY:
+            for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
             for meta in METAS_ISCLOSE:
@@ -585,11 +585,11 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     # Test
     with datamodels.Level1bModel(data_file) as model:
 
-        # Save for post-test comparision and update
+        # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQALITY:
+            for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
             for meta in METAS_ISCLOSE:

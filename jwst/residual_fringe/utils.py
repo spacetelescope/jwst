@@ -95,14 +95,14 @@ def fill_wavenumbers(wnums):
     idx = np.isfinite(wnums)
 
     # fit the on-slice wavenumbers
-    coefs = poly.polyfit(np.arange(wnums.shape[0])[idx], wnums[idx], 3)
-    wnums_filled = poly.polyval(np.arange(wnums.shape[0]), coefs)
+    coeffs = poly.polyfit(np.arange(wnums.shape[0])[idx], wnums[idx], 3)
+    wnums_filled = poly.polyval(np.arange(wnums.shape[0]), coeffs)
 
     # keep the original wnums for the on-slice pixels
     wnums_filled[idx] = wnums[idx]
 
     # clean
-    del idx, coefs
+    del idx, coeffs
 
     return wnums_filled
 
@@ -251,7 +251,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
-        log.debug("check_res_fringes: {} data points exceed threhold".format(len(runaway_rfc)))
+        log.debug("check_res_fringes: {} data points exceed threshold".format(len(runaway_rfc)))
         log.debug("check_res_fringes: resetting fits to related beats")
         for i in runaway_rfc:
             # find where the index is compared to the nodes
@@ -345,7 +345,7 @@ def make_knots(flux, nknots=20, weights=None):
         weights_diff = np.ediff1d(weights)
 
         # set edges where diff should be almost equal to the largest of the two datapoints used
-        # iteratate over the diffs and compare to the datapoints
+        # iterate over the diffs and compare to the datapoints
         edges_idx_list = []
         for n, wd in enumerate(weights_diff):
             # get the data points used for the diff
@@ -384,7 +384,7 @@ def make_knots(flux, nknots=20, weights=None):
 
 
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
-    """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
+    """Fit the background signal using a piecewise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
     :Parameters:

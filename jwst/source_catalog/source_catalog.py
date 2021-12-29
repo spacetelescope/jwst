@@ -843,7 +843,7 @@ class JWSTSourceCatalog:
         Estimate the local background and error using a circular annulus
         aperture.
 
-        The local backround is the sigma-clipped median value in the
+        The local background is the sigma-clipped median value in the
         annulus.  The background error is the standard error of the
         median, sqrt(pi / 2N) * std.
         """
@@ -947,7 +947,7 @@ class JWSTSourceCatalog:
     @lazyproperty
     def _ci_ee_indices(self):
         """
-        The EE indicies for the concentration indices.
+        The EE indices for the concentration indices.
         """
         # NOTE: the EE values are always in increasing order
         return ((0, 1), (1, 2), (0, 2))
@@ -963,7 +963,7 @@ class JWSTSourceCatalog:
     @lazyproperty
     def ci_colname_descriptions(self):
         """
-        The concentration indicies column descriptions.
+        The concentration indices column descriptions.
         """
         return ['Concentration index calculated as '
                 f'({self.aperture_flux_colnames[2*j]} / '

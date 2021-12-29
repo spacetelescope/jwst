@@ -335,7 +335,7 @@ def pytest_generate_tests(metafunc):
 def pool_path_fixture(metafunc):
     """Define the pool_path fixture
 
-    This is needed to build a list during test colleciton for the test
+    This is needed to build a list during test collection for the test
     `jwst.regtest.test_associations_sdp_pools.test_against_standard`
 
     Parameters

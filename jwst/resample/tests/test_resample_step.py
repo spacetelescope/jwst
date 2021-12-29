@@ -459,8 +459,8 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
 
     # test rotation
     pc = t['pc_rotation_matrix'].matrix.value
-    orientat = np.rad2deg(np.arctan2(pc[0, 1], pc[1, 1]))
-    assert np.allclose(rotation, orientat)
+    orientation = np.rad2deg(np.arctan2(pc[0, 1], pc[1, 1]))
+    assert np.allclose(rotation, orientation)
 
     # test CRPIX
     assert np.allclose(

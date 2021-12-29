@@ -1,5 +1,5 @@
 """ Routines for creating single band, single exposure IFU Cubes with
-the interoplation method = area , coord_system = internal_cal
+the interpolation method = area , coord_system = internal_cal
 """
 import numpy as np
 from ..datamodels import dqflags
@@ -72,7 +72,7 @@ def match_det2cube(instrument,
         b3, a3, lam3 = transform(xx_right, yy_top)
         b4, a4, lam4 = transform(xx_left, yy_top)
         # check if units are in microns or meters, if meters convert to microns
-        # only need to check one of the wavelenghts
+        # only need to check one of the wavelengths
         lmax = np.nanmax(lam1.flatten())
         if lmax < 0.0001:
             lam1 = lam1 * 1.0e6

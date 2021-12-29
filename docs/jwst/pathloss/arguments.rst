@@ -1,6 +1,6 @@
 Step Arguments
 ==============
-The ``pathloss`` step has the followig optional arguments to control
+The ``pathloss`` step has the following optional arguments to control
 the behavior of the processing.
 
 ``--inverse`` (boolean, default=False)

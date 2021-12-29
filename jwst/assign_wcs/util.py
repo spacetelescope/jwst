@@ -206,7 +206,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     If ``refmodel`` is None, the first WCS object in the list is considered
     a reference. The output coordinate frame and projection (for celestial frames)
     is taken from ``refmodel``.
-    If ``transform`` is not suplied, a compound transform is created using
+    If ``transform`` is not supplied, a compound transform is created using
     CDELTs and PC.
     If ``bounding_box`` is not supplied, the bounding_box of the new WCS is computed
     from bounding_box of all input WCSs.
@@ -460,7 +460,7 @@ def subarray_transform(input_model):
     tr_xstart = astmodels.Identity(1)
     tr_ystart = astmodels.Identity(1)
 
-    # These quanities are 1-based
+    # These quantities are 1-based
     xstart = input_model.meta.subarray.xstart
     ystart = input_model.meta.subarray.ystart
 
@@ -599,7 +599,7 @@ def create_grism_bbox(input_model,
     wfss_extract_half_height : int, optional
         Cross-dispersion extraction half height in pixels, WFSS mode.
         Overwrites the computed extraction height in ``GrismObject.order_bounding.``
-        If ``None``, it's computed from the segementation map,
+        If ``None``, it's computed from the segmentation map,
         using the min and max wavelength for each of the orders that
         are available.
     wavelength_range : dict, optional
@@ -1122,7 +1122,7 @@ def velocity_correction(velosys):
     """
     correction = (1 / (1 + velosys / c.value))
     model = astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
-    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
+    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correction")
 
     return model
 

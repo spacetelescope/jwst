@@ -73,7 +73,7 @@ FLAG_TO_EXPTYPE = {
 _DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
-# Key that uniquely identfies items.
+# Key that uniquely identifies items.
 KEY = 'expname'
 
 
@@ -152,7 +152,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return limit_reached
 
     def __eq__(self, other):
-        """Compare equality of two assocaitions"""
+        """Compare equality of two associations"""
         if isinstance(other, DMSLevel2bBase):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
@@ -504,7 +504,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         result.append('        {:s}'.format(str(self.constraints)))
 
-        # Products of the assocation
+        # Products of the association
         for product in self.data['products']:
             result.append(
                 '\t{} with {} members'.format(
@@ -569,7 +569,7 @@ class Utility():
 
         Returns
         -------
-        associatons : [association(, ...)]
+        associations : [association(, ...)]
             List of associations, some of which may be merged.
         """
         others = []
@@ -625,7 +625,7 @@ class Utility():
 
     @staticmethod
     def resequence(*args, **kwargs):
-        """Resquence the numbers to conform to level 3 asns"""
+        """Resequence the numbers to conform to level 3 asns"""
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
@@ -648,7 +648,7 @@ class Utility():
         sorting:
         aXXXX > cXXXX > oXXX
 
-        If this changes, a comparision function will need be implemented
+        If this changes, a comparison function will need be implemented
         """
         return sorted(asns, key=lambda asn: asn['asn_id'])
 
@@ -663,7 +663,7 @@ class Utility():
 
         Returns
         -------
-        associatons : [association(, ...)]
+        associations : [association(, ...)]
             List of associations, some of which may be merged.
         """
         merged = {}
@@ -675,7 +675,7 @@ class Utility():
                 merged[idx] = asn
                 current_asn = asn
             for product in asn['products']:
-                merge_occured = False
+                merge_occurred = False
                 for current_product in current_asn['products']:
                     if product['name'] == current_product['name']:
                         member_names = set([
@@ -695,8 +695,8 @@ class Utility():
                             if member['expname'] in new_names
                         ]
                         current_product['members'].extend(new_members)
-                        merge_occured = True
-                if not merge_occured:
+                        merge_occurred = True
+                if not merge_occurred:
                     current_asn['products'].append(product)
 
         merged_asns = [
@@ -886,7 +886,7 @@ class Constraint_Single_Science(SimpleConstraint):
 
 
 class Constraint_Special(DMSAttrConstraint):
-    """Select on backgrounds and other auxilliary images"""
+    """Select on backgrounds and other auxiliary images"""
 
     def __init__(self):
         super(Constraint_Special, self).__init__(

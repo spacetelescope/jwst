@@ -29,7 +29,7 @@ def dms_asns(dms_registry):
 
 
 def test_asn_name(dms_asns):
-    """Test for generating an associaton name"""
+    """Test for generating an association name"""
     asns, _ = dms_asns
     asn = asns[0]
 
@@ -38,7 +38,7 @@ def test_asn_name(dms_asns):
 
 
 def test_asn_name_override(dms_asns):
-    """Test for generating an associaton name"""
+    """Test for generating an association name"""
     asns, _ = dms_asns
     asn = asns[0]
     asn.asn_name = 'new_name'
@@ -52,7 +52,7 @@ def test_registry(dms_registry):
 
 
 def test_asn(dms_asns):
-    """Test basic associaiton creation"""
+    """Test basic association creation"""
     asns, orphaned = dms_asns
     assert len(asns) == 1
     assert len(orphaned) == 0

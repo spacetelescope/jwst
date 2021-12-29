@@ -75,7 +75,7 @@ class Affine2d():
         using a pupil distortion from optical modelling such as ray tracing.
         Or it could be broken by requiring the detector tilt effect to be
         derived from optical models and known solid body models or metrology of
-        the instrument/relescope, and the optical pupil distortion found from
+        the instrument/telescope, and the optical pupil distortion found from
         fitting on-sky data.
 
     Jean Baptiste Joseph Fourier 1768-1830
@@ -522,7 +522,7 @@ def min_distance_to_edge(img, cntrimg=True):
     """
     if cntrimg is True:
         # Only look for the peak pixel at the center of the image
-        ann = makedisk(img.shape[0], 31)  # search radius around array centery
+        ann = makedisk(img.shape[0], 31)  # search radius around array center
     else:
         # Peak of the image can be anywhere
         ann = np.ones((img.shape[0], img.shape[1]))
@@ -608,7 +608,7 @@ def quadratic_extremum(p):
     Parameters
     ----------
     p: float, float, float
-        quadratic coefficents
+        quadratic coefficients
 
     Returns
     -------
@@ -1148,7 +1148,7 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
                         == 0))
     filtered_array = data_array[wh_good]
 
-    # compute the median, exluding NaN's
+    # compute the median, excluding NaN's
     median_value = np.nanmedian(filtered_array)
 
     # check for bad result

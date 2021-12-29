@@ -33,7 +33,7 @@ class ResidualFringeStep(Step):
 
         input = datamodels.open(input)
 
-        # If single file, wrap in a ModelContainter
+        # If single file, wrap in a ModelContainer
         if isinstance(input, datamodels.IFUImageModel):
             input_models = datamodels.ModelContainer([input])
             self.input_container = False
@@ -96,7 +96,7 @@ class ResidualFringeStep(Step):
 
             # Open the regions reference file
             self.regions_filename = self.get_reference_file(model,'regions')
-            self.log.info('Using MRS regrions reference file: {}'.
+            self.log.info('Using MRS regions reference file: {}'.
                           format(self.regions_filename))
 
             # Check for a valid reference files. If they are not found skip step

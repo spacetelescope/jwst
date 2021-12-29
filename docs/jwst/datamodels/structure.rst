@@ -32,7 +32,7 @@ None. If init is a shape tuple the primary data array is initialized
 to its default value.
 
 Optional arguments to __init__  can give a schema which overrides the
-class schema, extensions to the schema, two flages pass_invalid_values
+class schema, extensions to the schema, two flags pass_invalid_values
 and strict_validation, which control the data validation, and numpy arrays
 which are used to initialized the model arrays by using parameters of the
 same name.
@@ -41,7 +41,7 @@ As an alternative to creating a model by initializing an object of the
 specific class, you can call the open function, which is in
 util.py. This function takes the same arguments as the __init_
 method. If it is called with the name of a FITS file, it looks in the
-primary header for a keyword named DATAMODL that conains the name of
+primary header for a keyword named DATAMODL that contains the name of
 the class to use to open the model. If that keyword is not found,
 checks the dimensionality of the image and uses a generic model type
 to open the image.
@@ -81,7 +81,7 @@ saves the contents of extra_fits, and then the history. Finally, it
 serializes the asdf tree and writes it to the asdf extension.
 
 Items within a model are accessed as attribute, that is, with dot
-motation. The code which handles getting and setting attributes is
+notation. The code which handles getting and setting attributes is
 found in properties.py. Datamodels distinguishes between items at the
 endpoints of the asdf tree and subtrees within the asdf tree. The
 former are returned as scalars or numpy arrays, depending on whether
@@ -94,7 +94,7 @@ of the attribute is set to None. If it is in the schema and the schema
 has a default value, the code creates the item with the default value
 and then returns it. The functions that do this are _make_default and
 _make_default_array, which it calls. If not only the item, but the
-subtree containg the item is missing, the code throws an
+subtree containing the item is missing, the code throws an
 AttributeError. When an attribute representing an array is accessed,
 the type of the array is compared to the type in the schema and if
 they are different, the array is cast to the type in the schema. The

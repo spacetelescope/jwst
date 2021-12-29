@@ -132,7 +132,7 @@ def std2radec(crval1, crval2, xi, eta):
 
 
 def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
-    """ Estimation of ra and dec from the v2, v3 coordiantes
+    """ Estimation of ra and dec from the v2, v3 coordinates
 
     This routine is used for debugging purposes. It is not actually used
     in the cube_build step for routine IFU cube building.
@@ -208,7 +208,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
     v3_ref : float
        v3 coordinate of reference point given in arc seconds
     ra : float
-       ra coordinate given in degress
+       ra coordinate given in degrees
     dec :  float
        dec coordinate given in degrees
 

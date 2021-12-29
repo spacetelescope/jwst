@@ -100,7 +100,7 @@ class ResampleSpecData(ResampleData):
         # use center of appended ra and dec arrays to set up
         # center of final ra,dec
         # append all ra,dec, wavelength array for each slit
-        # use first model to initialize wavelenth array
+        # use first model to initialize wavelength array
         # append wavelengths that fall outside the endpoint of
         # of wavelength array when looping over additional data
 
@@ -113,7 +113,7 @@ class ResampleSpecData(ResampleData):
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
-            # Handle veritical (MIRI) or horizontal (NIRSpec) dispersion.  The
+            # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
             # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
@@ -137,7 +137,7 @@ class ResampleSpecData(ResampleData):
             #    represent the tangent point
             # 4. Convert ra,dec -> tangent plane projection: x_tan,y_tan
             # 5. using x_tan, y_tan perform a linear fit to find spatial sampling
-            # first input model sets intializes wavelength array and defines
+            # first input model sets initializes wavelength array and defines
             # the spatial scale of the output wcs
             if im == 0:
                 all_wavelength = np.append(all_wavelength, wavelength_array)
@@ -215,7 +215,7 @@ class ResampleSpecData(ResampleData):
         wavelength_array = np.unique(all_wave)
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
-        # dispersion direction matches the disperion direction on the detector.
+        # dispersion direction matches the dispersion direction on the detector.
         if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
             wavelength_array = np.flip(wavelength_array, axis=None)
 
@@ -228,7 +228,7 @@ class ResampleSpecData(ResampleData):
                                       name='pix2wavelength')
 
         # Tabular models need an inverse explicitly defined.
-        # If the wavelength array is decending instead of ascending, both
+        # If the wavelength array is descending instead of ascending, both
         # points and lookup_table need to be reversed in the inverse transform
         # for scipy.interpolate to work properly
         points = wavelength_array
@@ -262,7 +262,7 @@ class ResampleSpecData(ResampleData):
         # The final transform
         # redefine the ra, dec center tangent point to include all data
 
-        # check if all_ra crosses 0 degress - this makes it hard to
+        # check if all_ra crosses 0 degrees - this makes it hard to
         # define the min and max ra correctly
         all_ra = wrap_ra(all_ra)
         ra_min = np.amin(all_ra)
@@ -337,7 +337,7 @@ class ResampleSpecData(ResampleData):
         bbox = wcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
         x_msa, y_msa, lam = np.array(wcs(*grid))
-        # Handle veritical (MIRI) or horizontal (NIRSpec) dispersion.  The
+        # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
         # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
         spectral_axis = find_dispersion_axis(model)
         spatial_axis = spectral_axis ^ 1
@@ -376,7 +376,7 @@ class ResampleSpecData(ResampleData):
                                       name='pix2wavelength')
 
         # Tabular models need an inverse explicitly defined.
-        # If the wavelength array is decending instead of ascending, both
+        # If the wavelength array is descending instead of ascending, both
         # points and lookup_table need to be reversed in the inverse transform
         # for scipy.interpolate to work properly
         points = wavelength_array

@@ -30,7 +30,7 @@ def get_center(exp_type, input):
 
     elif exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
 
-        # MSA centering is specified in the MiltiSlit model
+        # MSA centering is specified in the MultiSlit model
         # "input" treated as a slit object
         try:
             xcenter = input.source_xpos
@@ -306,7 +306,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     """
 
     # Need to set the pathloss correction of pixels whose wavelength is outside
-    # the wavelength range of the reference file to NaN.  This trick will acomplish
+    # the wavelength range of the reference file to NaN.  This trick will accomplish
     # that while still allowing the use of array linear interpolation
     #
     # Pad out the wavelength and pathloss vectors by adding another element

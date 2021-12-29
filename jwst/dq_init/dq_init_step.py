@@ -14,7 +14,7 @@ class DQInitStep(Step):
 
     The dq_init step initializes the pixeldq attribute of the
     input datamodel using the MASK reference file.  For some
-    FGS exp_types, initalize the dq attribute of the input model
+    FGS exp_types, initialize the dq attribute of the input model
     instead.  The dq attribute of the MASK model is bitwise OR'd
     with the pixeldq (or dq) attribute of the input model.
     """
@@ -58,7 +58,7 @@ class DQInitStep(Step):
             self.log.error("Can't open input")
             raise
 
-        # Retreive the mask reference file name
+        # Retrieve the mask reference file name
         self.mask_filename = self.get_reference_file(input_model, 'mask')
         self.log.info('Using MASK reference file %s', self.mask_filename)
 

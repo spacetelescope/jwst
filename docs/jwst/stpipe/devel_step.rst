@@ -63,9 +63,9 @@ There are three ways a step's results can be written to a file:
 1. Implicitly when a step is run from the command line or with
    `Step.from_cmdline` 
 
-2. Explicity by specifying the parameter `save_results`
+2. Explicitly by specifying the parameter `save_results`
 
-3. Explicity by specifying a file name with the paremeter
+3. Explicitly by specifying a file name with the parameter
    `output_file`
 
 In all cases, the file, or files, is/are created with an added suffix

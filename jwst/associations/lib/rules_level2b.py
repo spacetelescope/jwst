@@ -598,7 +598,7 @@ class Asn_Lv2WFSS(
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
-        - Mutli-object science exposures
+        - Multi-object science exposures
         - Single science exposure
         - Require a source catalog from processing of the corresponding direct imagery.
     """
@@ -776,7 +776,7 @@ class Asn_Lv2WFSS(
         Notes
         -----
         This is an override for the method in `DMSBaseMixin`.
-        The optical element is retieved from the chosen direct image
+        The optical element is retrieved from the chosen direct image
         found in `self.direct_image`, determined in the `self.finalize`
         method.
         """

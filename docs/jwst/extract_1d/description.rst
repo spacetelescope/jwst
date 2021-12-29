@@ -165,7 +165,7 @@ Background Extraction Regions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 One or more background extraction regions for a given aperture instance can
 be specified using the ``bkg_coeff`` parameter in the EXTRACT1D reference file.
-This is directly analogous to the use of ``src_coeff`` for specifiying source
+This is directly analogous to the use of ``src_coeff`` for specifying source
 extraction regions and functions in exactly the same way. More details on the
 use of polynomial coefficients is given in the next section.
 Background subtraction will be done if and only if ``bkg_coeff`` is given in

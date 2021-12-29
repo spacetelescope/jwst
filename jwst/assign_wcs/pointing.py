@@ -166,7 +166,7 @@ def frame_from_model(wcsinfo):
     Parameters
     ----------
     wcsinfo : `~stdatamodels.DataModel` or dict
-        Either one of the JWST data moels or a dict with model.meta.wcsinfo.
+        Either one of the JWST data models or a dict with model.meta.wcsinfo.
 
     Returns
     -------

@@ -43,7 +43,7 @@ class HlspStep(Step):
 
         # Save the Contrast curve file
         contrast.meta.cal_step.hlsp = 'COMPLETE'
-        self.save_model(contrast, 'constrast')
+        self.save_model(contrast, 'contrast')
         contrast.close()
 
         return

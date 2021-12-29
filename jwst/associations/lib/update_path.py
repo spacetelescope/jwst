@@ -11,7 +11,7 @@ def update_path(asn, file_path, target='expname'):
         An association. The association is modified in-place.
 
     file_path : str
-        New path to prepaend to each member
+        New path to prepend to each member
 
     target : str
         Key to replace

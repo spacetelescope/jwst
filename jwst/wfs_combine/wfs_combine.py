@@ -179,7 +179,7 @@ class DataSet:
             g = gauss_kern(self.blur_size, sizey=None)
             s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
 
-            # 2. Find approximate center of PSF in umsmoothed frame by taking
+            # 2. Find approximate center of PSF in unsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
             #    of the smoothed image, and taking the mean of the coordinates
             #    of these pixels. Add BLUR_SIZE to take smoothing into account
@@ -215,7 +215,7 @@ class DataSet:
             # 5. Around this nominal alignment, get refined (delta) offsets
             ref_del_off_x, ref_del_off_y = calc_refined_offsets(sci_nai_1, sci_nai_2, 0, 0, self.psf_size)
             log.info('From the refined offsets calculation,'
-                     'the x,y changes in ofsets are: %s %s',
+                     'the x,y changes in offsets are: %s %s',
                      round(ref_del_off_x, 2), round(ref_del_off_y, 2))
 
             # 6. Add the refined delta offsets to the nominal offsets
@@ -677,7 +677,7 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     Get the overlap of the 2 images (based on the offsets), and
     calculate the two dimensional cross correlation image between 2 image subarrays.
     Then we slice on the a subarray around the peak of the cross correlation image and
-    find the first moment. The first momement provies a high S/N measurement of the offset
+    find the first moment. The first moment provides a high S/N measurement of the offset
     between the two images.
 
 

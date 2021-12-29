@@ -116,7 +116,7 @@ class Signal():
         arguments are required, each slot should return a tuple that
         can then be passed as arguments to the next function.
 
-        The keywoard arguments are simply passed to each slot unchanged.
+        The keyword arguments are simply passed to each slot unchanged.
 
         There is no guarantee on order which the slots are invoked.
 

@@ -18,7 +18,7 @@ def read_cubepars(par_filename,
 
     Based on the instrument and channel/subchannels (MIRI) or
     grating/filter(NIRSPEC), read in the appropriate columns in the
-    cube parameter reference file and fill in the cooresponding dicitionary in
+    cube parameter reference file and fill in the corresponding dictionary in
     instrument_info
 
     Parameters
@@ -70,7 +70,7 @@ def read_cubepars(par_filename,
                         instrument_info.SetSpectralStep(table_spectralstep, this_channel, this_sub)
                         instrument_info.SetWaveMin(table_wavemin, this_channel, this_sub)
                         instrument_info.SetWaveMax(table_wavemax, this_channel, this_sub)
-                #  modified shepard method 1/r weighting
+                #  modified Shepard method 1/r weighting
                 if weighting == 'msm':
                     for tabdata in ptab.ifucubepars_msm_table:
                         table_channel = tabdata['channel']
@@ -85,7 +85,7 @@ def read_cubepars(par_filename,
                                                    table_sroi, table_wroi,
                                                    table_power, table_softrad)
 
-                #  modified shepard method e^-r weighting
+                #  modified Shepard method e^-r weighting
                 elif weighting == 'emsm':
                     for tabdata in ptab.ifucubepars_emsm_table:
                         table_channel = tabdata['channel']
@@ -110,7 +110,7 @@ def read_cubepars(par_filename,
                     instrument_info.SetMultiChannelTable(table_wave, table_sroi,
                                                          table_wroi, table_power,
                                                          table_softrad)
-            #  read in wavelength table for modified shepard method 1/r weighting
+            #  read in wavelength table for modified Shepard method 1/r weighting
             elif weighting == 'emsm':
                 for tabdata in ptab.ifucubepars_multichannel_emsm_wavetable:
                     table_wave = tabdata['WAVELENGTH']
@@ -146,7 +146,7 @@ def read_cubepars(par_filename,
                         instrument_info.SetWaveMin(table_wavemin, this_gwa, this_filter)
                         instrument_info.SetWaveMax(table_wavemax, this_gwa, this_filter)
 
-                #  modified shepard method 1/r weighting
+                #  modified Shepard method 1/r weighting
                 if weighting == 'msm':
                     for tabdata in ptab.ifucubepars_msm_table:
                         table_grating = tabdata['DISPERSER'].lower()
@@ -160,7 +160,7 @@ def read_cubepars(par_filename,
                             instrument_info.SetMSM(this_gwa, this_filter,
                                                    table_sroi, table_wroi,
                                                    table_power, table_softrad)
-                #  modified shepard method e^-r weighting
+                #  modified Shepard method e^-r weighting
                 elif weighting == 'emsm':
                     for tabdata in ptab.ifucubepars_emsm_table:
                         table_grating = tabdata['DISPERSER'].lower()

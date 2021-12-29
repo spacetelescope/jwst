@@ -58,7 +58,7 @@ class Extract1dStep(Step):
         reference file will be used. Aperture offset is determined by computing
         the pixel location of the source based on its RA and Dec. It does not
         make sense to apply aperture offsets for extended sources, so this
-        parameter can be overriden (set to False) internally by the step.
+        parameter can be overridden (set to False) internally by the step.
 
     center_xy : int or None
         A list of 2 pixel coordinate values at which to place the center

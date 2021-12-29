@@ -108,7 +108,7 @@ def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
     data.data[0, 3, 5, 5] = 40
     data.data[0, 4, 5, 5] = 61000  # Signal above the saturation threshold
 
-    # framest hat should be flagged as ad_floor
+    # frames that should be flagged as ad_floor
     floorindxs = [0, 1]
     # frames that should be flagged as saturation
     satindxs = [4]
@@ -319,7 +319,7 @@ def test_full_step(setup_nrc_cube):
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # set the entire array to a small non-zero value to avoid labeling
-    # almost everthing as low saturated
+    # almost everything as low saturated
     data.data[:, :, :, :] = 1
 
     # Add ramp values up to the saturation limit

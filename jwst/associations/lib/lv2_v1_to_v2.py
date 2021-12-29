@@ -81,7 +81,7 @@ def product_name(expname):
 # ################
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Convert old style Level2 associatons to new style'
+        description='Convert old style Level2 associations to new style'
     )
 
     parser.add_argument(

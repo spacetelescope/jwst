@@ -5,14 +5,14 @@
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
 #
 # Columns are the minimum necessary, so as to more easily edit.
-# Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
+# Based on NIRCam Mosaic where any single observation produces a minimum of two associations: one for the short and long channels.
 # The basic exposure set will be repeated as needed to create other observations and candidates.
 # 
 # ########
-# Prposal 93065
+# Proposal 93065
 # Mosaic: 1 row by 2 columns
 # Filters: F090W/F227W
-# Notes: detectors within ACT_ID witin VISIT
+# Notes: detectors within ACT_ID within VISIT
 # 
 FILENAME|PROGRAM|OBS_NUM|VISITYPE|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|ASN_CANDIDATE|TSOVISIT|SUBARRAY
 #

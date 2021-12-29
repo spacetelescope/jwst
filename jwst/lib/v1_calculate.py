@@ -126,7 +126,7 @@ def simplify_table(v1_table):
     """Convert pure object-based table to ASCII/Human-friendly
 
     The tables as produced by the `v1_calculate` functions use native objects.
-    For instance, the "obstime" column contains `astopy.time.Time` objects and
+    For instance, the "obstime" column contains `astropy.time.Time` objects and
     "v1" is the `jwst.lib.set_telescope_pointing.WCSREF` object
 
     This routine converts such objects to strings or Python-native builtin objects.

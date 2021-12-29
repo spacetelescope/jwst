@@ -88,7 +88,7 @@ def test_firstframe_single_group():
 def test_firstframe_add1_groupdq():
     """
     Test if the firstframe code set the groupdq flag on the first
-    group to 'do_not_use' by adding 1 to the flag, not overwritting to 1
+    group to 'do_not_use' by adding 1 to the flag, not overwriting to 1
     """
 
     # size of integration

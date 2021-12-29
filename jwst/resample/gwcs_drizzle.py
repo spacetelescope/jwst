@@ -51,7 +51,7 @@ class GWCSDrizzle:
             names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
             and "lanczos3". The square kernel is the default.
 
-        fillval : str, otional
+        fillval : str, optional
             The value a pixel is set to in the output if the input image does
             not overlap it. The default value of INDEF does not set a value.
         """
@@ -128,8 +128,8 @@ class GWCSDrizzle:
 
         inwht : array, optional
             A 2d numpy array containing the pixel by pixel weighting.
-            Must have the same dimenstions as insci. If none is supplied,
-            the weghting is set to one.
+            Must have the same dimensions as insci. If none is supplied,
+            the weighting is set to one.
 
         xmin : float, optional
             This and the following three parameters set a bounding rectangle
@@ -142,7 +142,7 @@ class GWCSDrizzle:
 
         xmax : float, optional
             Sets the maximum value of the x dimension on the bounding box
-            of the ouput image. If the value is zero or less, no maximum will
+            of the output image. If the value is zero or less, no maximum will
             be set in the x dimension.
 
         ymin : float, optional
@@ -230,7 +230,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     inwht : 2d array
         A 2d numpy array containing the pixel by pixel weighting.
         Must have the same dimensions as insci. If none is supplied,
-        the weghting is set to one.
+        the weighting is set to one.
 
     output_wcs : gwcs.WCS object
         The world coordinate system of the output image.

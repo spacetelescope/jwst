@@ -515,7 +515,7 @@ def find_keywords_in_section(hdr, title):
     The list will be derived from the section
         with the specified section title identified in the hdr.
     """
-    # Indentify card indices of start and end of specified section
+    # Identify card indices of start and end of specified section
     sect_start = None
     sect_end = None
     for i, kw in enumerate(hdr.cards):

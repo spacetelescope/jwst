@@ -16,7 +16,7 @@ allOf:
       type: number
     angle:
       description: |
-        Prism angle (in degerees) between the front surface and the back surface.
+        Prism angle (in degrees) between the front surface and the back surface.
       type: number
     gwa_tiltx:
       type: object
@@ -25,7 +25,7 @@ allOf:
       properties:
         temperatures:
           description: |
-            Temperature where the GWA sensor calibraiton was obtained.
+            Temperature where the GWA sensor calibration was obtained.
           type: array
           items:
             type: number
@@ -51,7 +51,7 @@ allOf:
       properties:
         temperatures:
           description: |
-            Temperature where the GWA sensor calibraiton was obtained.
+            Temperature where the GWA sensor calibration was obtained.
           type: array
           items:
             type: number
@@ -116,7 +116,7 @@ allOf:
       type: number
     tilt_y:
       description: |
-        Angle n deg between the fromn surface and the reference
+        Angle n deg between the front surface and the reference
         surface (MIRROR).
       type: number
     tref:

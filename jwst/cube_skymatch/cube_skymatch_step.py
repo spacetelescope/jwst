@@ -54,7 +54,7 @@ class CubeSkyMatchStep(Step):
         models2d = datamodels.ModelContainer(input2)
         dqbits = interpret_bit_flags(self.dqbits)
 
-        # set sky stattistics:
+        # set sky statistics:
         self._skystat = SkyStats(
             skystat=self.skystat,
             lower=self.lower,
@@ -301,7 +301,7 @@ def _find_associated_2d_image(cube, models2d):
 
 def _find_channel_bkg_index(model2d, channel):
     """
-    Return the index of the background subschema corrsponding to a given
+    Return the index of the background subschema corresponding to a given
     channel.
 
     """

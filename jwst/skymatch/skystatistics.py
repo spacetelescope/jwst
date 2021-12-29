@@ -117,7 +117,7 @@ cgi-bin/gethelp.cgi?gstatistics>`_
             A tuple of two values: (`skyvalue`, `npix`), where `skyvalue` is the statistics
             specified by the `skystat` parameter during the initialization
             of the `SkyStats` object and `npix` is the number of pixels used
-            in comuting the statistics reported in `skyvalue`.
+            in computing the statistics reported in `skyvalue`.
 
         """
         imstat = ImageStats(image=data, fields=self._fields,

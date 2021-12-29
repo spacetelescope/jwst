@@ -33,7 +33,7 @@ def full_pool_rules(request):
 
 @pytest.fixture
 def mk_tmp_dirs():
-    """Create a set of temporary directorys and change to one of them."""
+    """Create a set of temporary directories and change to one of them."""
     tmp_current_path = tempfile.mkdtemp()
     tmp_data_path = tempfile.mkdtemp()
     tmp_config_path = tempfile.mkdtemp()

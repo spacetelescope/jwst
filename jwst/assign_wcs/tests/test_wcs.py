@@ -262,7 +262,7 @@ def test_sip_approx(tmpdir):
         else:
             assert_allclose(true_wcs[key], wcs_info[key], rtol=5e-7)
 
-    # evaulate fits wcs and gwcs, make sure they agree
+    # evaluate fits wcs and gwcs, make sure they agree
     grid = grid_from_bounding_box(result.meta.wcs.bounding_box)
     gwcs_ra, gwcs_dec = result.meta.wcs(*grid)
     fits_wcs = wcs.WCS(wcs_info)

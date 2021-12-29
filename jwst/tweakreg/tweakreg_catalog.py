@@ -36,10 +36,10 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
         The upper bound on sharpness for object detection.
 
     roundlo : float, optional
-        The lower bound on roundess for object detection.
+        The lower bound on roundness for object detection.
 
     roundhi : float, optional
-        The upper bound on roundess for object detection.
+        The upper bound on roundness for object detection.
 
     brightest : int, None, optional
         Number of brightest objects to keep after sorting the full object list.
