@@ -26,50 +26,50 @@ jobs:
       fail-fast: false
       matrix:
         include:
-#          - name: Python 3.10 Tests
-#            python-version: '3.10'
-#            os: ubuntu-latest
-#            toxenv: py310
+          - name: Python 3.10 Tests
+            python-version: '3.10'
+            os: ubuntu-latest
+            toxenv: py310
 
-#          - name: Latest dependency versions w/coverage
-#            os: ubuntu-latest
-#            python-version: 3.9
-#            toxenv: py39-cov
+          - name: Latest dependency versions w/coverage
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: py39-cov
 
           - name: Oldest dependency versions
             os: ubuntu-latest
             python-version: 3.7
             toxenv: py37-oldestdeps-cov
 
-#          - name: SDP dependencies in requirements-sdp.txt
-#            os: ubuntu-latest
-#            python-version: 3.9
-#            toxenv: sdpdeps
+          - name: SDP dependencies in requirements-sdp.txt
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: sdpdeps
 
-#          - name: Installed package with --pyargs
-#            os: ubuntu-latest
-#            python-version: 3.9
-#            toxenv: pyargs
+          - name: Installed package with --pyargs
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: pyargs
 
-#          - name: Verify install_requires in setup.py
-#            os: ubuntu-latest
-#            python-version: 3.9
-#            toxenv: verify-install-requires
+          - name: Verify install_requires in setup.py
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: verify-install-requires
 
-#         - name: Build distribution
-#          os: ubuntu-latest
-#           python-version: 3.9
-#           toxenv: twine
+          - name: Build distribution
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: twine
 
-#          - name: Code style check
-#            os: ubuntu-latest
-#            python-version: 3.9
-#            toxenv: style
+          - name: Code style check
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: style
 
-#          - name: Security audit
-#            os: ubuntu-latest
-#            python-version: 3.9
-#            toxenv: security
+          - name: Security audit
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: security
 
           # MacOS job is flaky on Github actions and fails routinely.
           # Re-enable when things get more reliable.
