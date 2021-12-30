@@ -49,8 +49,8 @@ custom model is as below::
   |--- setup.py
 
 The main pieces are the new schema in ``bad_pixel_mask.schema.yaml``,
-the custom model class in ``bad_pixel_mask.py``, a distutils-based
-`setup.py` file to install the package, and some unit tests and
+the custom model class in ``bad_pixel_mask.py``, a
+``setup.py`` file to install the package, and some unit tests and
 associated data.  Normally, you would also have some code that *uses*
 the custom model included in the package, but that isn't included in
 this minimal example.
@@ -354,9 +354,9 @@ right before saving also happen.
 The `setup.py` script
 ---------------------
 
-Writing a distutils `setup.py` script is beyond the scope of this
+Writing a ``setup.py`` script is beyond the scope of this
 tutorial but it's worth noting one thing.  Since the schema files are
-not Python files, they are not automatically picked up by distutils,
+not Python files, they are not automatically picked up by ``setuptools``,
 and must be included in the ``package_data`` option.  A complete, yet
 minimal, ``setup.py`` is presented below:
 
@@ -364,7 +364,7 @@ minimal, ``setup.py`` is presented below:
 
   #!/usr/bin/env python
 
-  from distutils.core import setup
+  from setuptools import setup
 
   setup(
       name='custom_model',
@@ -445,4 +445,3 @@ simple:
         A data model for NIRISS SOSS photom reference files.
         """
         schema_url = "nissoss_photom.schema"
-
