@@ -12,9 +12,9 @@ The latest public release can be installed via pip.
 	$ pip install jwst
 
 To work with the absolute most up-to-date version of the pipeline, the `main`
-branch of the Github repository can be installed. 
+branch of the Github repository can be installed.
 
-:: 
+::
 
 	$ pip install git+https://github.com/spacetelescope/jwst
 
@@ -27,9 +27,8 @@ How do I run the JWST pipeline?
 There are two options for running the JWST pipeline or individual pipeline steps.
 
 1. In Python. Pipelines and steps can be imported, configured, and run in a
-Python session. See `here <https://jwst-pipeline.readthedocs.io/en/latest/jwst/introduction.html#running-from-within-python>`__ for more information.
-
-2. Using the command line interface ``stpipe`` - ``strun`` is an alias for ``stpipe run``. 
+   Python session. See `here <https://jwst-pipeline.readthedocs.io/en/latest/jwst/introduction.html#running-from-within-python>`__ for more information.
+2. Using the command line interface ``stpipe`` - ``strun`` is an alias for ``stpipe run``.
 
 Both of these options access the same underlying code, the choice of which to
 use is a matter of personal preference and convenience.
@@ -61,7 +60,7 @@ What are the naming convention for fits file suffixes (i.e 'uncal.fits' 'i2d.fit
 Separate from the JWST data `naming conventions <https://jwst-pipeline.readthedocs.io/en/latest/jwst/associations/jwst_conventions.html>`_, the suffix of each file (e.g 'uncal', 'rate')
 provides information about which processing steps were performed to produce that file.
 See `here <https://jwst-pipeline.readthedocs.io/en/latest/jwst/data_products/science_products.html>`_ for a
-description of each possible file suffix that the pipeline can produce. 
+description of each possible file suffix that the pipeline can produce.
 
 How do I save the results from running the pipeline to a fits file?
 -------------------------------------------------------------------
@@ -69,11 +68,11 @@ How do I save the results from running the pipeline to a fits file?
 When running the pipeline in Python, the default behavior for pipelines/steps
 that have a single output is to only return the final resulting `DataModel` in memory. For example, running
 
-:: 
-	
+::
+
 	result = Detector1Pipeline.call('jw42424001001_01101_00001_nrca5_uncal.fits')
 
-will not write out a ``rate.fits`` file - that file is represented by the returned ``result`` which is a ``DataModel``. 
+will not write out a ``rate.fits`` file - that file is represented by the returned ``result`` which is a ``DataModel``.
 
 If you want to write out the result as well, the `save_results` argument can be used.
 
@@ -83,7 +82,7 @@ If you want to write out the result as well, the `save_results` argument can be 
 
 By default, the base filename of the input file (jw42424001001_01101_00001_nrca5)
 will be the base name of the output file. The name of the output file can be
-customized with the ``output_file`` argument. 
+customized with the ``output_file`` argument.
 
 
 When running the pipeline in Python, what is the difference between the 'pipe.run' and 'pipe.call' methods?
@@ -122,7 +121,7 @@ individually as an attribute on the pipeline instance you created before running
 For example, if you wanted to use `.run` and configure and call the `tweakreg` step,
 that would be done like this:
 
-:: 
+::
 
 	pipe3 = Image3Pipeline()
 
@@ -142,10 +141,10 @@ Wheras if you used `call`, you could just modify these values in a parameter fil
 If you wanted to change only one or two of these parameters, it is much easier to
 do so with a parameter file - if you set them directly you will have to set ALL of
 the parameters for that step to the default value in the parameter file, then you
-can change the ones you desire. 
+can change the ones you desire.
 
-In short, `call` is the reccomended way to use the pipeline and it uses parameter
-files to direct processing, while `run` requires you to do all that set up yourself. 
+In short, **``call``** is the reccomended way to use the pipeline and it uses parameter
+files to direct processing, while ``run`` requires you to do all that set up yourself.
 
 What is a parameter file?
 -------------------------
@@ -188,4 +187,3 @@ manages these intricacies and is the interface for obtaining and managing pipeli
 reference files.
 
 See `reference files <https://jwst-pipeline.readthedocs.io/en/latest/jwst/introduction.html#reference-files>`_ for more information.
-
