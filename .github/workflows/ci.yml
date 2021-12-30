@@ -39,7 +39,7 @@ jobs:
           - name: Oldest dependency versions
             os: ubuntu-latest
             python-version: 3.8
-            toxenv: py37-oldestdeps-cov
+            toxenv: py38-oldestdeps-cov
 
           - name: SDP dependencies in requirements-sdp.txt
             os: ubuntu-latest
