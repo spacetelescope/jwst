@@ -251,13 +251,10 @@ class ResampleSpecData(ResampleData):
         # mapping.inverse uses pix_to_ytan.inverse.  The auto definition
         # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
 
-        if np.isclose(pix_to_ytan.slope, 0, atol=1e-8):
-            mapping_tuple = (0, 1)
+        swap_xy = np.isclose(pix_to_xtan.slope, 0, atol=1e-8)
+        if swap_xy:
             # Account for vertical or horizontal dispersion on detector
-            if spatial_axis:
-                mapping.inverse = Mapping(mapping_tuple[::-1])
-            else:
-                mapping.inverse = Mapping(mapping_tuple)
+            mapping.inverse = Mapping((2, 1) if spatial_axis else (1, 2))
 
         # The final transform
         # redefine the ra, dec center tangent point to include all data
@@ -282,10 +279,16 @@ class ResampleSpecData(ResampleData):
         native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
         undist2sky = tan | native2celestial
         # find the spatial size of the output - same in x,y
-        x_tan_all, _ = undist2sky.inverse(all_ra, all_dec)
+        if swap_xy:
+            _, x_tan_all = undist2sky.inverse(all_ra, all_dec)
+            pix_to_tan_slope = pix_to_ytan.slope
+        else:
+            x_tan_all, _ = undist2sky.inverse(all_ra, all_dec)
+            pix_to_tan_slope = pix_to_xtan.slope
+
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
-        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_xtan.slope)))
+        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_tan_slope)))
 
         # single model use size of x_tan_array
         # to be consistent with method before
@@ -311,6 +314,7 @@ class ResampleSpecData(ResampleData):
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
         output_array_size[spatial_axis] = int(np.ceil(x_size / self.pscale_ratio))
+
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
