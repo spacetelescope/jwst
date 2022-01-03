@@ -139,10 +139,11 @@ To get to the history::
       pass
 
 To add an entry to the history, first create the entry by calling
-`util.create_history_entry` and appending the entry to the model
+`stdatamodels.util.create_history_entry` and appending the entry to the model
 history::
 
-    entry =  util.create_history_entry("Processed through the frobulator step")
+    import stdatamodels
+    entry = stdatamodels.util.create_history_entry("Processed through the frobulator step")
     model.history.append(entry)
 
 These history entries are stored in ``HISTORY`` keywords when saving
@@ -158,7 +159,7 @@ following keys:
 The calling sequence to create  a history entry with the software
 description is::
 
-  entry =  util.create_history_entry(description, software=software_dict)
+  entry =  stdatamodels.util.create_history_entry(description, software=software_dict)
 
 where the second argument is the dictionary with the keywords
 mentioned.
