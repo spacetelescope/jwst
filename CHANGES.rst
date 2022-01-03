@@ -140,6 +140,9 @@ datamodels
 
 - Update PATTTYPE enum values to match spellings used in keyword dictionary [#6501]
 
+- Updated documentation to point to stdatamodels.util
+  for calls to create_history_entry [#6537]
+
 dark_current
 ------------
 
