@@ -3,7 +3,7 @@
 .. _filteroffset_reffile:
 
 
-FILTEROFFSET Reference File (MIRI only)
+FILTEROFFSET Reference File
 ---------------------------------------
 
 :REFTYPE: FILTEROFFSET
@@ -15,11 +15,12 @@ CRDS selects appropriate FILTEROFFSET references based on the following keywords
 FILTEROFFSET is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
-========== ================================================
+========== ===============================================================
 Instrument Keywords
-========== ================================================
+========== ===============================================================
 MIRI       INSTRUME, DETECTOR, EXP_TYPE, DATE-OBS, TIME-OBS
-========== ================================================
+NIRCam     INSTRUME, DETECTOR, FILTER, PUPIL, EXP_TYPE, DATE-OBS, TIME-OBS
+========== ===============================================================
 
 .. include:: ../includes/standard_keywords.inc
 
