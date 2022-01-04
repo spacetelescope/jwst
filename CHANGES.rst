@@ -95,8 +95,6 @@ dark_current
 datamodels
 ----------
 
-- Updated read-the-docs FilteroffsetModel Reference File adding NIRCam Instrument. [#6530]
-
 - Remove astropy.io registration of JwstDataModel. [#6179]
 
 - Update VELOSYS keyword comment [#6298]
@@ -144,6 +142,8 @@ datamodels
 
 - Updated documentation to point to stdatamodels.util
   for calls to create_history_entry [#6537]
+
+- Updated FILTEROFFSET reference file docs to add NIRCam information. [#6541]
 
 dark_current
 ------------
