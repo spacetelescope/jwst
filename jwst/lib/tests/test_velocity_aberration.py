@@ -25,9 +25,9 @@ def test_compute_va_effects_valid():
 
 def test_compute_va_effects_zero_velocity():
     scale_factor, va_ra, va_dec = compute_va_effects(0.0, 0.0, 0.0, *GOOD_POS)
-    assert scale_factor == 1.0
-    assert va_ra == GOOD_POS[0]
-    assert va_dec == GOOD_POS[1]
+    assert isclose(scale_factor, 1.0, atol=1e-16)
+    assert isclose(va_ra, GOOD_POS[0], atol=1e-16)
+    assert isclose(va_dec, GOOD_POS[1], atol=1e-16)
 
 
 def test_velocity_aberration_script(tmpdir):
