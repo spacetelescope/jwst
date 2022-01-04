@@ -30,7 +30,7 @@ The filteroffset reference file is an ASDF file that contains a list
 called ``filters``. Every item in the list contains one or more entries that
 are used as selectors, as well as the column and row offset values to be applied.
 For the MIRI instrument, there is one selector "filter", which is the name of
-filter to which the offsets apply. For NIRCam, the selectors are "filter" and
+the filter to which the offsets apply. For NIRCam, the selectors are "filter" and
 "pupil". The offsets, in pixels, are applied in the image science frame.
 
 :filters:
