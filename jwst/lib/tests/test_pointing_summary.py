@@ -62,11 +62,12 @@ def test_calc_deltas(engdb, data_path):
     with ImageModel(data_path) as model:
         deltas = ps.calc_deltas([model])
 
+    truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
+
+    # round the delta values to a reasonable level
     deltas[0][4] = round(deltas[0][4], 8)
     deltas[0][5] = round(deltas[0][5], 8)
-
-    truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
     truth[0][4] = round(truth[0][4], 8)
     truth[0][5] = round(truth[0][5], 8)
-    
+
     assert report_diff_values(truth, deltas, fileobj=sys.stderr)

@@ -26,11 +26,11 @@ Examples
 >>> print(t["delta_v1"])
           delta_v1
     -------------------
-    0.13712727164010646
+    0.13712727164010
 >>> print(t["delta_refpoint"])
         delta_refpoint
     -------------------
-    0.04044314761499765
+    0.04044314761500
 """
 from collections import defaultdict, namedtuple
 import logging
