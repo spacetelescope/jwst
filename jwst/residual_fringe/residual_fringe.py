@@ -163,7 +163,7 @@ class ResidualFringeCorrection():
             y, x = np.mgrid[:ysize, :xsize]
             _, _, wave_map = self.input_model.meta.wcs(x,y)
 
-            # if the user wants to ignore some values use the wave_map array to set the corresponds
+            # if the user wants to ignore some values use the wave_map array to set the corresponding
             # weight values to 0
             if self.ignore_regions['num'] > 0:
                 for r in range(self.ignore_regions['num']):

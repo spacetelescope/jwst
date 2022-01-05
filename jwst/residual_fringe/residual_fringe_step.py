@@ -56,6 +56,7 @@ class ResidualFringeStep(Step):
 
         if min_num > 0:
             self.log.info('Ignoring {} wavelength regions'.format(min_num))
+            raise IncorrectIgnoreRegions("Number of ignore_region_min does not match ignore_region_max")
         self.ignore_regions = ignore_regions
 
         input = datamodels.open(input)
@@ -158,3 +159,10 @@ class ResidualFringeStep(Step):
             self.output_models.append(result)
 
         return self.output_models
+
+
+class IncorrectIgnoreRegions(Exception):
+    """ Raises an exception if the number of ignore_region_min values does not equal
+    number of ignore_region_max
+   """
+    pass
