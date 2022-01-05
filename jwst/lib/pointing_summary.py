@@ -23,14 +23,12 @@ Examples
 >>> t = calc_deltas([im])
 >>> print(t.columns)
     <TableColumns names=('exposure','target','v1','refpoint','delta_v1','delta_refpoint')>
->>> print(t["delta_v1"])
-    delta_v1
--------------------
-0.13712727164010646
->>> print(t["delta_refpoint"])
-    delta_refpoint
--------------------
-0.04044314761499765
+>>> delta_v1 = t["delta_v1"][0]
+>>> "%.13f" % delta_v1
+0.137127271640
+>>> delta_refpoint = t["delta_refpoint"][0]
+>>> "%.13f" % delta_refpoint
+0.040443147615
 """
 from collections import defaultdict, namedtuple
 import logging
