@@ -33,6 +33,7 @@ properties:
     title: Slitlet ID
     type: integer
     default: 0
+    
     fits_keyword: SLITID
     fits_hdu: SCI
   shutter_id:
