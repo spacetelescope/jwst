@@ -33,6 +33,7 @@ class ResidualFringeStep(Step):
         self.transmission_level = 80  # sets the transmission level to use in the regions file
         # 80% is what other steps use.
 
+        # set up the dictionary to ignore wavelength regions in the residual fringe correction
         ignore_regions = {}
         ignore_regions['num'] = 0
         ignore_regions['min'] = []
