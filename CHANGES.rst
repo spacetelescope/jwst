@@ -287,6 +287,11 @@ resample
 - Updated step docs to indicate that the default weighting type is
   now "ivm" [#6529]
 
+- Fixed a bug in the ``ResampleSpecData.build_interpolated_output_wcs()``
+  due to which, under cerain circumstances, computed output image shape
+  could be very large resulting in (very) large memory usage and/or
+  incorrect output WCS. [#6533]
+
 residual_fringe
 ---------------
  - Added documentation on step [#6387]
