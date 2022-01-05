@@ -21,6 +21,8 @@ class ResidualFringeStep(Step):
     spec = """
         save_intermediate_results  = boolean(default = False)
         search_output_file = boolean(default = False)
+        ignore_region_min = list(default = None)
+        ignore_region_max = list(default = None)
         suffix = string(default = 'residual_fringe')
     """
 
@@ -30,6 +32,30 @@ class ResidualFringeStep(Step):
 
         self.transmission_level = 80  # sets the transmission level to use in the regions file
         # 80% is what other steps use.
+
+        ignore_regions = {}
+        ignore_regions['num'] = 0
+        ignore_regions['min'] = []
+        ignore_regions['max'] = []
+        if self.ignore_region_min is not None:
+            for region in self.ignore_region_min:
+                ignore_regions['min'].append(float(region))
+
+        min_num = len(ignore_regions['min'])
+
+        if self.ignore_region_max is not None:
+            for region in self.ignore_region_max:
+                ignore_regions['max'].append(float(region))
+        max_num = len(ignore_regions['max'])
+
+        if max_num != min_num:
+            self.log.error("Number of minimum and maximum wavelengths to ignore are not the same")
+
+        ignore_regions['num'] = min_num
+
+        if min_num > 0:
+            self.log.info('Ignoring {} wavelength regions'.format(min_num))
+        self.ignore_regions = ignore_regions
 
         input = datamodels.open(input)
 
@@ -124,6 +150,7 @@ class ResidualFringeStep(Step):
             rfc = residual_fringe.ResidualFringeCorrection(model,
                                                            self.residual_fringe_filename,
                                                            self.regions_filename,
+                                                           self.ignore_regions,
                                                            **pars)
             result = rfc.do_correction()
             result.meta.cal_step.residual_fringe = 'COMPLETE'
