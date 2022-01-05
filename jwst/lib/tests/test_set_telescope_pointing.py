@@ -539,7 +539,10 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta], f'{meta} has changed'
+                if isinstance(model[meta], str):
+                    assert model[meta] == expected[meta], f'{meta} has changed'
+                else:
+                    assert np.isclose(model[meta], expected[meta], atol=1e-13), f'{meta} has changed'
 
             for meta in METAS_ISCLOSE:
                 assert np.isclose(model[meta], expected[meta]), f'{meta} has changed'
@@ -590,7 +593,10 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                if isinstance(model[meta], str):
+                    assert model[meta] == expected[meta]
+                else:
+                    assert np.isclose(model[meta], expected[meta], atol=1e-13)
 
             for meta in METAS_ISCLOSE:
                 assert np.isclose(model[meta], expected[meta])

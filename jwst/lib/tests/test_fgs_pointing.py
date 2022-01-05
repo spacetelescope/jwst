@@ -2,6 +2,7 @@
 import os.path
 import logging
 from numpy import array
+from numpy import isclose
 
 from jwst.datamodels import Level1bModel
 from jwst.lib import set_telescope_pointing as stp
@@ -36,10 +37,10 @@ def test_fgs_pointing():
     model = make_level1b()
     stp.update_wcs(model, siaf_path=siaf_db)
 
-    assert model.meta.wcsinfo.pc1_1 == -0.9997617158628777
-    assert model.meta.wcsinfo.pc1_2 == -0.021829143247382235
-    assert model.meta.wcsinfo.pc2_1 == -0.021829143247382235
-    assert model.meta.wcsinfo.pc2_2 == 0.9997617158628777
+    assert isclose(model.meta.wcsinfo.pc1_1, -0.9997617158628777, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc1_2, -0.021829143247382235, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc2_1, -0.021829143247382235, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc2_2, 0.9997617158628777, atol=1e-15)
 
 
 # ---------

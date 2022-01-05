@@ -32,12 +32,12 @@ def data_path(jail):
     """Create data file with needed header parameters"""
     model = ImageModel()
 
-    model.meta.target.ra = 90.75541666666666
-    model.meta.target.dec = -66.56055555555554
-    model.meta.pointing.ra_v1 = 91.08142004561715
-    model.meta.pointing.dec_v1 = -66.60547868904696
-    model.meta.wcsinfo.ra_ref = 90.70377653291781
-    model.meta.wcsinfo.dec_ref = -66.59540223936895
+    model.meta.target.ra = 90.75541667
+    model.meta.target.dec = -66.56055556
+    model.meta.pointing.ra_v1 = 91.08142005
+    model.meta.pointing.dec_v1 = -66.60547869
+    model.meta.wcsinfo.ra_ref = 90.70377653
+    model.meta.wcsinfo.dec_ref = -66.59540224
 
     model.save('data.fits')
     return model.meta.filename
@@ -63,4 +63,11 @@ def test_calc_deltas(engdb, data_path):
         deltas = ps.calc_deltas([model])
 
     truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
+
+    # round the delta values to a reasonable level
+    deltas[0][4] = round(deltas[0][4], 8)
+    deltas[0][5] = round(deltas[0][5], 8)
+    truth[0][4] = round(truth[0][4], 8)
+    truth[0][5] = round(truth[0][5], 8)
+
     assert report_diff_values(truth, deltas, fileobj=sys.stderr)
