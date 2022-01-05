@@ -172,12 +172,12 @@ the outcome of the matching (sky subtraction in general) algorithm:
 
 * Because sky subtraction is performed on *flat-fielded* but
   *not distortion corrected* images, it is important to keep in mind
-  that flat-fielding is performed to obtain uniform surface brightness
-  and not flux. This distinction is important for images that have
-  not been distortion corrected. As a consequence, it is advisable that
-  point-like sources be masked through the user-supplied mask files.
-  Values different from zero in user-supplied masks indicate good data
-  pixels. Alternatively, one can use the ``upper`` parameter to limit the use of
+  that flat-fielding is performed to obtain correct surface brightnesses.
+  As the surface brightness of a pixel containing a point-like source will
+  change inversely with a change to the pixel area, it is advisable that
+  point-like sources be masked through the user-supplied mask files. Values
+  different from zero in user-supplied masks indicate good data pixels.
+  Alternatively, one can use the ``upper`` parameter to limit the use of
   pixels containing bright objects in the sky computations.
 
 * The input images may contain cosmic rays. This

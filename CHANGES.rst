@@ -306,6 +306,9 @@ skymatch
 - Updated code in ``skymatch.region.py`` with latest improvements and bug fixes
   from ``stsci.skypac.regions.py``. [#6451]
 
+- Updated documentation to clarify details of flat-fielding versus distortion
+  corrections [#6546]
+
 source_catalog
 --------------
 
