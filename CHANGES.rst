@@ -283,7 +283,7 @@ resample
   now "ivm" [#6529]
 
 - Fixed a bug in the ``ResampleSpecData.build_interpolated_output_wcs()``
-  due to which, under cerain circumstances, computed output image shame
+  due to which, under cerain circumstances, computed output image shape
   could be very large resulting in (very) large memory usage and/or
   incorrect output WCS. [#6533]
 
