@@ -24,13 +24,13 @@ Examples
 >>> print(t.columns)
     <TableColumns names=('exposure','target','v1','refpoint','delta_v1','delta_refpoint')>
 >>> print(t["delta_v1"])
-          delta_v1
-    -------------------
-    0.13712727164010
+    delta_v1
+-------------------
+0.13712727164010646
 >>> print(t["delta_refpoint"])
-        delta_refpoint
-    -------------------
-    0.04044314761500
+    delta_refpoint
+-------------------
+0.04044314761499765
 """
 from collections import defaultdict, namedtuple
 import logging
