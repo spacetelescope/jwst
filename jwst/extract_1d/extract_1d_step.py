@@ -83,8 +83,8 @@ class Extract1dStep(Step):
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
-    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace. 
-    soss_transform = float_list(default=None, min=3, max=3)  # rotation angle applied to the reference files to match the observation.
+    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace.
+    soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
     soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels

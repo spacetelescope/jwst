@@ -2188,8 +2188,8 @@ class TikhoTests(dict):
             best_fac = _find_intersect(factors, y_val, thresh, interpolate, interp_index)
 
         else:
-            msg =(f'`mode`={mode} is not a valid option for '
-                  f'TikhoTests.best_tikho_factor().')
+            msg = (f'`mode`={mode} is not a valid option for '
+                   f'TikhoTests.best_tikho_factor().')
             log.critical(msg)
             raise ValueError(msg)
 
@@ -2348,4 +2348,3 @@ class Tikhonov:
                             'reg': reg})
 
         return tests
-
