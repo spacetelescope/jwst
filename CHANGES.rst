@@ -167,7 +167,7 @@ extract_1d
 - Added the ``center_xy`` step argument to allow user-specified x/y
   center of IFU extraction apertures [#6503]
 
-- Delivery of new algorithm for SOSS extraction, along with four new reference
+- Delivery of new algorithm `ATOCA` for SOSS extraction, along with four new reference
   files: speckernel, specprofile, spectrace and wavemap. [#6467]
 
 flatfield
