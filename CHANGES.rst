@@ -31,6 +31,8 @@ assign_wcs
 - Fixed bug in NIRSpec MOS slitlet meta data calculations for background slits
   consisting of multiple shutters. [#6454]
 
+- Enabled spectral order as input to WCS for NIRISS SOSS mode. [#6496]
+
 associations
 ------------
 
