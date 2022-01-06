@@ -143,6 +143,8 @@ datamodels
 - Updated documentation to point to stdatamodels.util
   for calls to create_history_entry [#6537]
 
+- Added keyword EXP_TYPE to PsfMaskModel schema [#6540]
+  
 - Updated FILTEROFFSET reference file docs to add NIRCam information. [#6541]
 
 dark_current
