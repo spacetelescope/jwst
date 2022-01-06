@@ -4,6 +4,7 @@ import asdf
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import Const1D, Mapping, Identity, Shift
+from astropy.modeling.bounding_box import CompoundBoundingBox
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
@@ -86,6 +87,28 @@ def niriss_soss_set_input(model, order_number):
                 ]
 
     return wcs.WCS(pipeline)
+
+
+def _niriss_order_bounding_box(input_model, order):
+    import numpy as np
+    bbox_y = np.array([-0.5, input_model.meta.subarray.ysize - 0.5])
+    bbox_x = np.array([-0.5, input_model.meta.subarray.xsize - 0.5])
+
+    if order == 1:
+        return (tuple(bbox_y), tuple(bbox_x))
+    elif order == 2:
+        return (tuple(bbox_y), tuple(bbox_x))
+    elif order == 3:
+        return (tuple(bbox_y), tuple(bbox_x))
+    else:
+        raise ValueError(f'Invalid spectral order: {order} provided. Spectral order must be 1, 2, or 3.')
+
+
+def niriss_bounding_box(input_model):
+    bbox = {(order,): _niriss_order_bounding_box(input_model, order)
+            for order in [1, 2, 3]}
+    model = input_model.meta.wcs.forward_transform
+    return CompoundBoundingBox.validate(model, bbox, slice_args=[('spectral_order', True)], order='F')
 
 
 def niriss_soss(input_model, reference_files):
