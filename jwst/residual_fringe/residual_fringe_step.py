@@ -160,5 +160,3 @@ class ResidualFringeStep(Step):
             self.output_models.append(result)
 
         return self.output_models
-
-
