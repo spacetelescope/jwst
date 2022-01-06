@@ -24,13 +24,14 @@ class ResidualFringeCorrection():
                  input_model,
                  residual_fringe_reference_file,
                  regions_reference_file,
+                 ignore_regions,
                  **pars):
 
         self.input_model = input_model.copy()
         self.model = input_model.copy()
         self.residual_fringe_reference_file = residual_fringe_reference_file
         self.regions_reference_file = regions_reference_file
-
+        self.ignore_regions = ignore_regions
         self.save_intermediate_results = pars['save_intermediate_results']
         self.transmission_level = int(pars['transmission_level'])
         # define how filenames are created
@@ -52,9 +53,7 @@ class ResidualFringeCorrection():
         self.band = None
         self.channel = None
 
-        # remove after tested code - tries to make some plots and  store some output
-        # output can be binary output - TODO need organize what data is saved.
-
+        # used to create additional data that can be plotted outside of step
         self.diagnostic_mode = True
 
     def do_correction(self):
@@ -163,6 +162,14 @@ class ResidualFringeCorrection():
             xsize = self.input_model.data.shape[1]
             y, x = np.mgrid[:ysize, :xsize]
             _, _, wave_map = self.input_model.meta.wcs(x,y)
+
+            # if the user wants to ignore some values use the wave_map array to set the corresponding
+            # weight values to 0
+            if self.ignore_regions['num'] > 0:
+                for r in range(self.ignore_regions['num']):
+                    min_wave = self.ignore_regions['min'][r]
+                    max_wave = self.ignore_regions['max'][r]
+                    self.input_weights[((wave_map > min_wave) & (wave_map < max_wave))] = 0
 
             for n, ss in enumerate(slices_in_band):
 
@@ -378,7 +385,7 @@ class ResidualFringeCorrection():
 
                 del ss_data, ss_wmap, ss_weight  # end on column
 
-                # asses the fit quality statistics and make plot if in diagnostic mode
+                # asses the fit quality statistics and set up data to make plot outside of step
                 log.debug(" analysing fit statistics")
                 if len(correction_quality) > 0:
                     contrasts = np.asarray(correction_quality)[:,0]
@@ -464,7 +471,6 @@ class ResidualFringeCorrection():
         # replace infs and nans in weights with 0
         weights[weights == np.inf] = 0
         weights[np.isnan(weights)] = 0
-
         return weights
 
 

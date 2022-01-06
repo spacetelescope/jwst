@@ -298,6 +298,7 @@ residual_fringe
 ---------------
  - Added documentation on step [#6387]
  - Fixed incorrect data model name [#6487]
+ - Added user option to give wavelength range that no correction will be applied [#6545]
 
 skymatch
 --------
