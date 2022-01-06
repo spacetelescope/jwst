@@ -1,7 +1,7 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
-
+from .soss_extract import soss_extract
 
 __all__ = ["Extract1dStep"]
 
@@ -33,7 +33,7 @@ class Extract1dStep(Step):
         If both `smoothing_length` and `bkg_order` are not None, the
         boxcar smoothing will be done first.
 
-    bkg_simga_clip : float
+    bkg_sigma_clip : float
         Background sigma clipping value to use on background to remove outliers
         and maximize the quality of the 1d spectrum
 
@@ -82,9 +82,16 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
+    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace.
+    soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
+    soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
+    soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
+    soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
+    soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr']
+    reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
 
     def process(self, input):
         """Execute the step.
@@ -103,7 +110,7 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
 
-        was_source_model = False                 # default value
+        was_source_model = False  # default value
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
@@ -178,8 +185,8 @@ class Extract1dStep(Step):
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
 
-                # --------------------------------------------------------------
-                # Data is a ModelContainer but is not WFSS
+                    # --------------------------------------------------------------
+                    # Data is a ModelContainer but is not WFSS
                     result.meta.filetype = '1d spectrum'
                 else:
                     result = datamodels.ModelContainer()
@@ -260,40 +267,120 @@ class Extract1dStep(Step):
         # ______________________________________________________________________
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
-            # Get the reference file names
-            if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
-                extract_ref = 'N/A'
-                self.log.info('No EXTRACT1D reference file will be used')
+            # Data is NRISS SOSS observation.
+            if input_model.meta.exposure.type == 'NIS_SOSS':
+
+                self.log.info(
+                    'Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
+
+                # Set the filter configuration
+                if input_model.meta.instrument.filter == 'CLEAR':
+                    self.log.info('Exposure is through the GR700XD + CLEAR (science).')
+                    soss_filter = 'CLEAR'
+                elif input_model.meta.instrument.filter == 'F277W':
+                    self.log.info('Exposure is through the GR700XD + F277W (calibration).')
+                    soss_filter = 'F277W'
+                else:
+                    self.log.error('The SOSS extraction is implemented for the CLEAR or F277W filters only.')
+                    self.log.error('extract_1d will be skipped.')
+                    input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                    return input_model
+
+                # Set the subarray mode being processed
+                if input_model.meta.subarray.name == 'SUBSTRIP256':
+                    self.log.info('Exposure is in the SUBSTRIP256 subarray.')
+                    self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
+                    subarray = 'SUBSTRIP256'
+                elif input_model.meta.subarray.name == 'FULL':
+                    self.log.info('Exposure is in the FULL subarray.')
+                    self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
+                    subarray = 'FULL'
+                elif input_model.meta.subarray.name == 'SUBSTRIP96':
+                    self.log.info('Exposure is in the SUBSTRIP96 subarray.')
+                    self.log.info('Traces of orders 1 and 2 will be modelled but only order 1'
+                                  ' will be decontaminated before extraction.')
+                    subarray = 'SUBSTRIP96'
+                else:
+                    self.log.error('The SOSS extraction is implemented for the SUBSTRIP256,'
+                                   ' SUBSTRIP96 and FULL subarray only.')
+                    self.log.error('extract_1d will be skipped.')
+                    input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                    return input_model
+
+                # Load reference files.
+                spectrace_ref_name = self.get_reference_file(input_model, 'spectrace')
+                wavemap_ref_name = self.get_reference_file(input_model, 'wavemap')
+                specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
+                speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
+
+                # Build SOSS kwargs dictionary.
+                soss_kwargs = dict()
+                soss_kwargs['threshold'] = self.soss_threshold
+                soss_kwargs['n_os'] = self.soss_n_os
+                soss_kwargs['tikfac'] = self.soss_tikfac
+                soss_kwargs['width'] = self.soss_width
+                soss_kwargs['bad_pix'] = self.soss_bad_pix
+                soss_kwargs['transform'] = self.soss_transform
+
+                # Run the extraction.
+                result, ref_outputs = soss_extract.run_extract1d(
+                    input_model,
+                    spectrace_ref_name,
+                    wavemap_ref_name,
+                    specprofile_ref_name,
+                    speckernel_ref_name,
+                    subarray,
+                    soss_filter,
+                    soss_kwargs)
+
+                # Set the step flag to complete
+                result.meta.cal_step.extract_1d = 'COMPLETE'
+                result.meta.filetype = '1d spectrum'
+
+                input_model.close()
+
+                if self.soss_modelname:
+                    soss_modelname = self.make_output_path(
+                        basepath=self.soss_modelname,
+                        suffix='SossExtractModel'
+                    )
+                    ref_outputs.save(soss_modelname)
+
             else:
-                extract_ref = self.get_reference_file(input_model, 'extract1d')
-                self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+                # Get the reference file names
+                if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
+                    extract_ref = 'N/A'
+                    self.log.info('No EXTRACT1D reference file will be used')
+                else:
+                    extract_ref = self.get_reference_file(input_model, 'extract1d')
+                    self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
-            apcorr_ref = self.get_reference_file(input_model, 'apcorr') if self.apply_apcorr is True else 'N/A'
+                apcorr_ref = self.get_reference_file(input_model, 'apcorr') if self.apply_apcorr is True else 'N/A'
 
-            if apcorr_ref == 'N/A':
-                self.log.info('APCORR reference file name is "N/A"')
-                self.log.info('APCORR will NOT be applied')
-            else:
-                self.log.info(f'Using APCORR file {apcorr_ref}')
+                if apcorr_ref == 'N/A':
+                    self.log.info('APCORR reference file name is "N/A"')
+                    self.log.info('APCORR will NOT be applied')
+                else:
+                    self.log.info(f'Using APCORR file {apcorr_ref}')
 
-            result = extract.run_extract1d(
-                input_model,
-                extract_ref,
-                apcorr_ref,
-                self.smoothing_length,
-                self.bkg_fit,
-                self.bkg_order,
-                self.bkg_sigma_clip,
-                self.log_increment,
-                self.subtract_background,
-                self.use_source_posn,
-                self.center_xy,
-                was_source_model=False,
-            )
+                result = extract.run_extract1d(
+                    input_model,
+                    extract_ref,
+                    apcorr_ref,
+                    self.smoothing_length,
+                    self.bkg_fit,
+                    self.bkg_order,
+                    self.bkg_sigma_clip,
+                    self.log_increment,
+                    self.subtract_background,
+                    self.use_source_posn,
+                    self.center_xy,
+                    was_source_model=False,
+                )
 
-            # Set the step flag to complete
-            result.meta.cal_step.extract_1d = 'COMPLETE'
-            result.meta.filetype = '1d spectrum'
+                # Set the step flag to complete
+                result.meta.cal_step.extract_1d = 'COMPLETE'
+                result.meta.filetype = '1d spectrum'
 
         input_model.close()
 
