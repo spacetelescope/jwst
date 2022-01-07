@@ -157,6 +157,11 @@ dark_current
 - Fixed bug during save of optional averaged darks output, bug with
   providing step a file instead of a datamodel, added regression test [#6450]
 
+documentation
+-------------
+
+- Update text to point to the JWST CRDS website. [#6549]
+
 extract_1d
 ----------
 
@@ -175,6 +180,9 @@ extract_1d
 
 - Delivery of new algorithm `ATOCA` for SOSS extraction, along with four new reference
   files: speckernel, specprofile, spectrace and wavemap. [#6467]
+
+- Added step parameter `soss_atoca` to turn ATOCA algorithm on, with box extraction
+  the default algorithm [#6551]
 
 flatfield
 ---------

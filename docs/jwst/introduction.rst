@@ -54,10 +54,10 @@ desired project mapping version, e.g.
 
 $ export CRDS_CONTEXT='jwst_0421.pmap'
 
-Within STScI, the current storage location for all JWST CRDS reference files is:
-::
+For all information about CRDS, including context lists, see the JWST CRDS
+website:
 
-/grp/crds/jwst/references/jwst/
+    `https://jwst-crds.stsci.edu/ <https://jwst-crds.stsci.edu/>`_
 
 Each pipeline step records the reference file that it used in the value of
 a header keyword in the output data file. The keyword names use the syntax

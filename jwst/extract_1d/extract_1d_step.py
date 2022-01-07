@@ -70,6 +70,37 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply an APERTURE correction during
         the Extract1dStep. Default is True
 
+    soss_atoca : bool, default=False
+        Switch to toggle extraction of SOSS data with the ATOCA algorithm.
+        WARNING: ATOCA results not fully validated, and require the photom step
+        be turned off. Default is False, meaning SOSS data use box extraction.
+
+    soss_threshold : float
+        Threshold value above which a pixel will be included when modeling the SOSS
+        trace in ATOCA. Default is 0.01.
+
+    soss_n_os : int
+        Oversampling factor of the underlying wavelength grid when modeling the SOSS
+        trace in ATOCA. Default is 2.
+
+    soss_transform : list[float]
+        Rotation applied to the reference files to match the observation orientation.
+        Default is None.
+
+    soss_tikfac : float
+        The regularization factor used for extraction in ATOCA. If left to default
+        value of None, ATOCA will find an optimized value.
+
+    soss_width : float
+        Aperture width used to extract the SOSS spectrum from the decontaminated
+        trace in ATOCA. Default is 40.
+
+    soss_bad_pix : str
+        Method used to handle bad pixels, accepts either "model" or "masking". Default
+        method is "model".
+
+    soss_modelname : str
+        Filename for optional model output of ATOCA traces and pixel weights.
     """
 
     spec = """
@@ -82,10 +113,11 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    soss_atoca = boolean(default=False)  # use ATOCA algorithm - should have photom off and not fully tested
     soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
     soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace.
     soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
-    soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
+    soss_tikfac = float(default=None)  # regularization factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
@@ -268,7 +300,7 @@ class Extract1dStep(Step):
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
             # Data is NRISS SOSS observation.
-            if input_model.meta.exposure.type == 'NIS_SOSS':
+            if input_model.meta.exposure.type == 'NIS_SOSS' and self.soss_atoca:
 
                 self.log.info(
                     'Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
@@ -336,6 +368,7 @@ class Extract1dStep(Step):
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
                 result.meta.filetype = '1d spectrum'
+                result.meta.target.source_type = None
 
                 input_model.close()
 
