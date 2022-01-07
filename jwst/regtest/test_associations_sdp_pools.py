@@ -57,6 +57,11 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': True,
     },
+    'jw00675_20211225t181823_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
     'jw00676_20210403t114320_c1007_pool': {
         'args': [],
         'xfail': None,
