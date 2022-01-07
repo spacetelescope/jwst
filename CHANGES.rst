@@ -157,6 +157,11 @@ dark_current
 - Fixed bug during save of optional averaged darks output, bug with
   providing step a file instead of a datamodel, added regression test [#6450]
 
+documentation
+-------------
+
+- Update text to point to the JWST CRDS website. [#6549]
+
 extract_1d
 ----------
 
