@@ -36,6 +36,8 @@ assign_wcs
 associations
 ------------
 
+- Remove MIR_FLATMRS from Asn_Lv3MIRMRS rule. [#6548]
+
 - Fix bug causing ``pytest`` to encounter an error in test collection when
   running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
 
