@@ -294,11 +294,7 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value=(
-                    'mir_mrs'
-                    '|mir_flatmrs'
-                ),
-                force_unique=False
+                value=('mir_mrs'),
             ),
             Constraint(
                 [
@@ -336,11 +332,7 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value=(
-                    'mir_mrs'
-                    '|mir_flatmrs'
-                ),
-                force_unique=False
+                value=('mir_mrs'),
             ),
             Constraint(
                 [
