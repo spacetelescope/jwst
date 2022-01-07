@@ -193,6 +193,12 @@ jump
 
 - Updated jump detection step to use common code moved to stcal [#6089]
 
+- In stcal (pr #72), several changes were made to fix existing bugs in the
+  twopoint difference routine for jump detection. Some of these issues
+  resulted in jumps erroneously being flagged for pixels with only two
+  usable groups (i.e one usable difference). This PR on the JWST side
+  fixes one of the unit tests to account for this. [#6552]
+
 lib
 ---
 
