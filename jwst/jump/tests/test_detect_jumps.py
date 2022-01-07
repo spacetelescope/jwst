@@ -248,49 +248,49 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
     assert_array_equal(out_model.groupdq[0, :, 4, 4], [1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
 
-# def test_nirspec_saturated_pix(setup_inputs):
-#     """
-#     This test is based on an actual NIRSpec exposure that has some pixels
-#     flagged as saturated in one or more groups, which the jump step is
-#     supposed to ignore, but an old version of the code was setting JUMP flags
-#     for some of the saturated groups. This is to verify that the saturated
-#     groups are no longer flagged with jumps.
-#     """
-#     grouptime = 3.0
-#     ingain = 1.0
-#     inreadnoise = 10.7
-#     ngroups = 7
-#     nrows = 6
-#     ncols = 6
+def test_nirspec_saturated_pix(setup_inputs):
+    """
+    This test is based on an actual NIRSpec exposure that has some pixels
+    flagged as saturated in one or more groups, which the jump step is
+    supposed to ignore, but an old version of the code was setting JUMP flags
+    for some of the saturated groups. This is to verify that the saturated
+    groups are no longer flagged with jumps.
+    """
+    grouptime = 3.0
+    ingain = 1.0
+    inreadnoise = 10.7
+    ngroups = 7
+    nrows = 6
+    ncols = 6
 
-#     model, rnoise, gain = setup_inputs(ngroups=ngroups, nints=1, nrows=nrows,
-#                                        ncols=ncols, gain=ingain,
-#                                        readnoise=inreadnoise, deltatime=grouptime)
+    model, rnoise, gain = setup_inputs(ngroups=ngroups, nints=1, nrows=nrows,
+                                       ncols=ncols, gain=ingain,
+                                       readnoise=inreadnoise, deltatime=grouptime)
 
-#     # Setup the needed input pixel and DQ values
-#     model.data[0, :, 1, 1] = [639854.75, 4872.451, -17861.791, 14022.15, 22320.176,
-#                               1116.3828, 1936.9746]
-#     model.groupdq[0, :, 1, 1] = [0, 0, 0, 0, 0, 2, 2]
-#     model.data[0, :, 2, 2] = [8.25666812e+05, -1.10471914e+05, 1.95755371e+02, 1.83118457e+03,
-#                               1.72250879e+03, 1.81733496e+03, 1.65188281e+03]
-#     # 2 non-sat groups means only 1 non-sat diff, so no jumps should be flagged
-#     model.groupdq[0, :, 2, 2] = [0, 0, 2, 2, 2, 2, 2]
-#     model.data[0, :, 3, 3] = [1228767., 46392.234, -3245.6553, 7762.413,
-#                               37190.76, 266611.62, 5072.4434]
-#     model.groupdq[0, :, 3, 3] = [0, 0, 0, 0, 0, 0, 2]
+    # Setup the needed input pixel and DQ values
+    model.data[0, :, 1, 1] = [639854.75, 4872.451, -17861.791, 14022.15, 22320.176,
+                              1116.3828, 1936.9746]
+    model.groupdq[0, :, 1, 1] = [0, 0, 0, 0, 0, 2, 2]
+    model.data[0, :, 2, 2] = [8.25666812e+05, -1.10471914e+05, 1.95755371e+02, 1.83118457e+03,
+                              1.72250879e+03, 1.81733496e+03, 1.65188281e+03]
+    # 2 non-sat groups means only 1 non-sat diff, so no jumps should be flagged
+    model.groupdq[0, :, 2, 2] = [0, 0, 2, 2, 2, 2, 2]
+    model.data[0, :, 3, 3] = [1228767., 46392.234, -3245.6553, 7762.413,
+                              37190.76, 266611.62, 5072.4434]
+    model.groupdq[0, :, 3, 3] = [0, 0, 0, 0, 0, 0, 2]
 
-#     # run jump detection
-#     out_model = run_detect_jumps(model, gain, rnoise, rejection_thresh=200.0, three_grp_thresh=200,
-#                                  four_grp_thresh=200,
-#                                  max_cores=None, max_jump_to_flag_neighbors=200,
-#                                  min_jump_to_flag_neighbors=10, flag_4_neighbors=False)
+    # run jump detection
+    out_model = run_detect_jumps(model, gain, rnoise, rejection_thresh=200.0, three_grp_thresh=200,
+                                 four_grp_thresh=200,
+                                 max_cores=None, max_jump_to_flag_neighbors=200,
+                                 min_jump_to_flag_neighbors=10, flag_4_neighbors=True)
 
-#     # Check the results. There should not be any pixels with DQ values of 6, which
-#     # is saturated (2) plus jump (4). All the DQ's should be either just 2 or just 4.
-#     assert_array_equal(out_model.groupdq[0, :, 1, 1], [0, 4, 4, 4, 0, 2, 2])
-#     # no groups are flagged when theres only 1 non-sat. grp
-#     assert_array_equal(out_model.groupdq[0, :, 2, 2], [0, 0, 2, 2, 2, 2, 2])
-#     assert_array_equal(out_model.groupdq[0, :, 3, 3], [0, 4, 4, 0, 0, 4, 2])
+    # Check the results. There should not be any pixels with DQ values of 6, which
+    # is saturated (2) plus jump (4). All the DQ's should be either just 2 or just 4.
+    assert_array_equal(out_model.groupdq[0, :, 1, 1], [0, 4, 4, 4, 0, 2, 2])
+    # assert that no groups are flagged when theres only 1 non-sat. grp
+    assert_array_equal(out_model.groupdq[0, :, 2, 2], [0, 0, 2, 2, 2, 2, 2])
+    assert_array_equal(out_model.groupdq[0, :, 3, 3], [0, 4, 4, 0, 0, 4, 2])
 
 
 @pytest.mark.skip(reason='multiprocessing temporarily disabled')
