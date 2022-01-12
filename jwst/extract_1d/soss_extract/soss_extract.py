@@ -151,7 +151,7 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     return xtrace, ytrace, wavetrace
 
 
-def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_aperture, threshold=1e-2):
+def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-2):
     """
     Parameters
     ----------
@@ -163,7 +163,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_ape
         Pixel mask to apply to the detector image.
     ref_file_args : tuple
         A tuple of reference file arguments constructed by get_ref_file_args().
-    mask_aperture: array[bool]
+    mask_trace_profile: array[bool]
         Mask determining the aperture used for extraction. Set to False where the pixel should be extracted.
     threshold : float, optional:
         The pixels with an aperture[order 2] > `threshold` are considered contaminated
@@ -184,7 +184,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_ape
     wave_grid = grid_from_map(wave_maps[0], spat_pros[0], n_os=n_os)
 
     # Mask parts contaminated by order 2 based on its spatial profile
-    mask = ((spat_pros[1] >= threshold) | mask_aperture | scimask)
+    mask = ((spat_pros[1] >= threshold) | mask_trace_profile | scimask)
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
     ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [np.array([1.])]
@@ -296,7 +296,7 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
     for sp_ord in spectral_orders:
         all_grids.append(get_grid_from_trace(ref_files, transform, sp_ord, n_os=n_os))
 
-    # TODO The wavelength range could be smaller (only the contaminated range needs to be modeled)
+    # Set wavelength range (only the contaminated range needs to be modeled)
     if wv_range is None:
         # Only cover the range covered by order 1
         # (no need to simulate the blue end of order 2 for decontamination)
@@ -366,13 +366,13 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     scimask = scimask | ~(scierr > 0)
 
     # Define mask based on box aperture (we want to model each contaminated pixels that will be extracted)
-    mask_aperture = [~(box_weights[order] > 0) for order in order_list]
+    mask_trace_profile = [~(box_weights[order] > 0) for order in order_list]
 
     # Rough estimate of the underlying flux
     # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
     #       dq mask caused issues here and this may need a try/except wrap.
     #       Dev suggested np.logspace(-19, -10, 10)
-    estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_aperture[0])
+    estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile[0])
 
     # Generate grid based on estimate if not given
     if wave_grid is None:
@@ -385,7 +385,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     ref_args_estimate = [ref_arg for ref_arg in ref_file_args]
     # No convolution needed (so give equivalent of identity)
     ref_args_estimate[3] = [np.array([1.]) for _ in order_list]
-    engine_for_estimate = ExtractionEngine(*ref_args_estimate, wave_grid=wave_grid, mask_aperture=mask_aperture)
+    engine_for_estimate = ExtractionEngine(*ref_args_estimate, wave_grid=wave_grid, mask_trace_profile=mask_trace_profile)
     models = {order: engine_for_estimate.rebuild(estimate, i_orders=[idx_ord], fill_value=np.nan)
               for idx_ord, order in enumerate(order_list)}
     total = np.nansum([models[order] for order in order_list], axis=0)
@@ -397,7 +397,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
 
     # Initialize the Engine.
-    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, mask_aperture=mask_aperture, c_kwargs=c_kwargs)
+    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, mask_trace_profile=mask_trace_profile, c_kwargs=c_kwargs)
 
     # Save mask for later
     global_mask = engine.general_mask
@@ -461,7 +461,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
 
         # Build model of the order
         model_kwargs = {'wave_grid': grid_order,
-                        'mask_aperture': [~is_contaminated],
+                        'mask_trace_profile': [~is_contaminated],
                         'global_mask': refmask | global_mask,
                         'orders': [i_order + 1]}
         model = ExtractionEngine(*ref_file_order, **model_kwargs)
@@ -737,7 +737,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
         # Use the trace models to perform a decontaminated extraction.
         kwargs = dict()
-        kwargs['width'] = soss_kwargs['width']
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
 
         result = extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, **kwargs)
@@ -768,7 +767,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
             output_model.spec.append(spec)
 
-        output_model.meta.soss_extract1d.width = kwargs['width']
+        output_model.meta.soss_extract1d.width = soss_kwargs['width']
         output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
         output_model.meta.soss_extract1d.delta_x = transform[1]
         output_model.meta.soss_extract1d.delta_y = transform[2]
@@ -895,7 +894,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
                 output_model.spec.append(spec)
 
-            output_model.meta.soss_extract1d.width = kwargs['width']
+            output_model.meta.soss_extract1d.width = soss_kwargs['width']
             output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
             output_model.meta.soss_extract1d.delta_x = transform[1]
             output_model.meta.soss_extract1d.delta_y = transform[2]
