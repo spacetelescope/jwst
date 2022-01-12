@@ -11,6 +11,9 @@ group zero of the dark reference data will effectively be zero-valued.
 
 Algorithm
 ---------
+The algorithm for this step is called from the external package ``stcal``, an STScI
+effort to unify common calibration processing algorithms for use by multiple observatories.
+
 The dark current step removes dark current from an exposure by subtracting
 dark current data stored in a dark reference file in CRDS.
 

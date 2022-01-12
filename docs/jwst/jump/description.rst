@@ -18,6 +18,9 @@ differences to work.
 
 Algorithm
 ---------
+The algorithm for this step is called from the external package ``stcal``, an STScI
+effort to unify common calibration processing algorithms for use by multiple observatories.
+
 This routine detects jumps in an exposure by looking for outliers
 in the up-the-ramp signal for each pixel in each integration within
 an input exposure. On output, the GROUPDQ array is updated with the DQ flag

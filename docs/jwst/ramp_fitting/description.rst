@@ -1,5 +1,7 @@
 Description
 ============
+The algorithm for this step is called from the external package ``stcal``, an STScI
+effort to unify common calibration processing algorithms for use by multiple observatories.
 
 This step determines the mean count rate, in units of counts per second, for
 each pixel by performing a linear fit to the data in the input file.  The fit
