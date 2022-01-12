@@ -45,7 +45,7 @@ class _BaseOverlap:
     dtype = 'float64'
 
     def __init__(self, wave_map, trace_profile, throughput, kernels,
-                 orders=None, global_mask=None,
+                 orders=None, global_mask=None, mask_trace_profile=None, 
                  wave_grid=None, wave_bounds=None, n_os=2,
                  threshold=1e-5, c_kwargs=None):
         """
@@ -142,10 +142,10 @@ class _BaseOverlap:
         self.update_trace_profile(trace_profile)
 
         # Set the mask based on apertures and save
-        if mask_aperture is None:
+        if mask_trace_profile is None:
             # Mask according to the spatial profile threshold.
-            mask_aperture = np.array([aperture_n < threshold for aperture_n in aperture])
-        self.mask_aperture = mask_aperture
+            mask_trace_profile = np.array([tr_pro_ord < threshold for tr_pro_ord in trace_profile])
+        self.mask_trace_profile = mask_trace_profile
 
         # Generate a wavelength grid if none was provided.
         if wave_grid is None:

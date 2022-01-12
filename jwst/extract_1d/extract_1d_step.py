@@ -354,6 +354,10 @@ class Extract1dStep(Step):
                 soss_kwargs['width'] = self.soss_width
                 soss_kwargs['bad_pix'] = self.soss_bad_pix
                 soss_kwargs['transform'] = self.soss_transform
+                soss_kwargs['subtract_background'] = self.subtract_background
+                soss_kwargs['rtol'] = self.soss_rtol
+                soss_kwargs['max_grid_size'] = self.soss_max_grid_size
+                soss_kwargs['wave_grid'] = self.soss_wave_grid
 
                 # Run the extraction.
                 result, ref_outputs = soss_extract.run_extract1d(
