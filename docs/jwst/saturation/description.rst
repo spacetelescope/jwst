@@ -1,5 +1,7 @@
 Description
 ============
+The algorithm for this step is called from the external package ``stcal``, an STScI
+effort to unify common calibration processing algorithms for use by multiple observatories.
 
 The ``saturation`` step flags pixels at or below the A/D floor or above the
 saturation threshold.  Pixels values are flagged as saturated if the pixel value

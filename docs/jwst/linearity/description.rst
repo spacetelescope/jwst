@@ -18,6 +18,9 @@ the input science data.
 
 Algorithm
 ---------
+The algorithm for this step is called from the external package ``stcal``, an STScI
+effort to unify common calibration processing algorithms for use by multiple observatories.
+
 The linearity step applies the "classic" linearity correction adapted from
 the HST WFC3/IR linearity correction routine, correcting science data values
 for detector non-linearity. The correction is applied pixel-by-pixel,

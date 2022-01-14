@@ -1,7 +1,30 @@
 1.4.1 (unreleased)
 ==================
 
+dark_current
+------------
 
+- Added docs mention of external algorithm in ``stcal`` [#6566]
+
+jump
+----
+
+- Added docs mention of external algorithm in ``stcal`` [#6566]
+
+linearity
+---------
+
+- Added docs mention of external algorithm in ``stcal`` [#6566]
+
+ramp_fitting
+------------
+
+- Added docs mention of external algorithm in ``stcal`` [#6566]
+
+saturation
+----------
+
+- Added docs mention of external algorithm in ``stcal`` [#6566]
 
 1.4.0 (2022-01-10)
 ==================
