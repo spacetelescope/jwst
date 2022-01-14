@@ -153,7 +153,7 @@ that would be done like this:
 
 	pipe3.run('jw42424001001_01101_00001_nrca5_cal.fits')
 
-Wheras if you used `call`, you could just modify these values in a parameter file.
+Whereas if you used `call`, you could just modify these values in a parameter file.
 If you wanted to change only one or two of these parameters, it is much easier to
 do so with a parameter file - if you set them directly you will have to set ALL of
 the parameters for that step to the default value in the parameter file, then you
