@@ -6,6 +6,11 @@ dark_current
 
 - Added docs mention of external algorithm in ``stcal`` [#6566]
 
+datamodels
+----------
+
+- Update names of MIRI coronagraphic flats dither patterns [#6573]
+
 jump
 ----
 
