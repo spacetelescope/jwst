@@ -11,12 +11,19 @@ The latest public release can be installed via pip.
 
 	$ pip install jwst
 
-To work with the absolute most up-to-date version of the pipeline, the `main`
+To work with the absolute most up-to-date version of the pipeline, the ``main``
 branch of the Github repository can be installed.
 
 ::
 
 	$ pip install git+https://github.com/spacetelescope/jwst
+
+To work with a different branch in the Github repository, install
+that branch using its name, e.g. ``patch1``.
+
+::
+
+	$ pip install git+https://github.com/spacetelescope/jwst@patch1
 
 See the `Github README <https://github.com/spacetelescope/jwst>`_ for more
 detailed installation instructions.
@@ -26,12 +33,20 @@ How do I run the JWST pipeline?
 
 There are two options for running the JWST pipeline or individual pipeline steps.
 
-1. In Python. Pipelines and steps can be imported, configured, and run in a
-   Python session. See `here <https://jwst-pipeline.readthedocs.io/en/latest/jwst/introduction.html#running-from-within-python>`__ for more information.
-2. Using the command line interface ``stpipe`` - ``strun`` is an alias for ``stpipe run``.
+In Python
+^^^^^^^^^
+Pipelines and steps can be imported, configured, and run in a Python session.
+See `here <https://jwst-pipeline.readthedocs.io/en/latest/jwst/introduction.html#running-from-within-python>`__ for more information.
+
+On the command line
+^^^^^^^^^^^^^^^^^^^
+
+Use the `strun<strun_command_line>` command.
 
 Both of these options access the same underlying code, the choice of which to
 use is a matter of personal preference and convenience.
+
+.. _stpipe_list:
 
 How do I find out which pipelines and steps exist and are available to run?
 ---------------------------------------------------------------------------
@@ -57,7 +72,8 @@ file which represents a group of related exposures, as input to process.
 What are the naming convention for fits file suffixes (i.e 'uncal.fits' 'i2d.fits')?
 ------------------------------------------------------------------------------------
 
-Separate from the JWST data `naming conventions <https://jwst-pipeline.readthedocs.io/en/latest/jwst/associations/jwst_conventions.html>`_, the suffix of each file (e.g 'uncal', 'rate')
+Separate from the JWST data `naming conventions <https://jwst-pipeline.readthedocs.io/en/latest/jwst/associations/jwst_conventions.html>`_,
+the suffix of each file (e.g 'uncal', 'rate')
 provides information about which processing steps were performed to produce that file.
 See `here <https://jwst-pipeline.readthedocs.io/en/latest/jwst/data_products/science_products.html>`_ for a
 description of each possible file suffix that the pipeline can produce.
@@ -66,7 +82,7 @@ How do I save the results from running the pipeline to a fits file?
 -------------------------------------------------------------------
 
 When running the pipeline in Python, the default behavior for pipelines/steps
-that have a single output is to only return the final resulting `DataModel` in memory. For example, running
+that have a single output is to only return the final resulting ```DataModel`` in memory. For example, running
 
 ::
 
@@ -74,7 +90,7 @@ that have a single output is to only return the final resulting `DataModel` in m
 
 will not write out a ``rate.fits`` file - that file is represented by the returned ``result`` which is a ``DataModel``.
 
-If you want to write out the result as well, the `save_results` argument can be used.
+If you want to write out the result as well, the ``save_results`` argument can be used.
 
 ::
 
@@ -88,7 +104,7 @@ customized with the ``output_file`` argument.
 When running the pipeline in Python, what is the difference between the 'pipe.run' and 'pipe.call' methods?
 -----------------------------------------------------------------------------------------------------------
 
-When you create a pipeline or step instance in Python, you will notice that there
+When you create a pipeline or step instance in Python, you will notice that there are
 seemingly multiple methods available to call the pipeline. For example,
 
 ::
@@ -97,13 +113,11 @@ seemingly multiple methods available to call the pipeline. For example,
 
 	pipe.run('input_file.fits')
 
-	pipe('input_file.fits')
+	Detector1Pipeline.call('input_file.fits')
 
-	pipe.call('input_file.fits')
+** The recommended way to execute the pipeline is to use the :meth:`~jwst.stpipe.core.Step.call` method.**
 
-
-The first two options - `.run` and calling the instance directly - are equivalent.
-The `.call` method however, which is the reccomended way to run the pipeline,
+The `.call` method however, which is the recommended way to run the pipeline,
 is slightly different and involves some additional setup internally to allow it
 to seamlessly work with parameter files.
 
@@ -112,6 +126,8 @@ pipeline is created internally. The values in the parameter file are set as
 attributes on this new instance, the pipeline is run with these values, and
 then it is disposed of and the final result is returned. This is the reccomended
 way to run the pipeline since it is intended to be configured via parameter files.
+
+The first two options - `.run` and calling the instance directly - are equivalent.
 
 When 'pipe.run' or simply 'pipe()' are called, the instance you created is directly
 used. So, any attributes set on that pipeline will be the ones used to direct the processing.
@@ -143,8 +159,18 @@ do so with a parameter file - if you set them directly you will have to set ALL 
 the parameters for that step to the default value in the parameter file, then you
 can change the ones you desire.
 
-In short, **``call``** is the reccomended way to use the pipeline and it uses parameter
+In short, **``call``** is the recommended way to use the pipeline and it uses parameter
 files to direct processing, while ``run`` requires you to do all that set up yourself.
+
+How to skip a step in the pipeline?
+-----------------------------------
+
+See ref:`Skipping a step<skip>`
+
+How to override a reference file when calling the pipeline?
+-----------------------------------------------------------
+
+See ref:`Overriding a reference file<override_ref>`
 
 What is a parameter file?
 -------------------------

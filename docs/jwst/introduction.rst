@@ -243,7 +243,7 @@ running. To change this, use the ``output_dir`` parameter. For example, to
 have all output from ``calwebb_detector1``, including any saved
 intermediate steps, appear in the sub-directory ``calibrated``, use
 ::
-   
+
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
 
@@ -298,6 +298,7 @@ In this situation, using the default configuration, three files are created:
   - ``stage1_processed_rate.fits``
   - ``stage1_processed_rateints.fits``
 
+.. _override_ref:
 
 Override Reference File
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -316,6 +317,8 @@ you would use:
 
   $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.linearity.override_linearity='my_lin.fits'
+
+.. _skip:
 
 Skip
 ^^^^
