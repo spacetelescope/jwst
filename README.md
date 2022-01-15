@@ -8,7 +8,7 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.7 or above and a C compiler for dependencies.**
+**JWST requires Python 3.8 or above and a C compiler for dependencies.**
 
 **Linux and MacOS platforms are tested and supported.  Windows is not currently supported.**
 
@@ -69,7 +69,7 @@ Github master branch:
     conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
- 
+
 
 ### Installing a DMS Operational Build
 
@@ -188,6 +188,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  1.4.1   | B7.9rc2   | 0786*        | 2022-01-15 | Second release candidate for B7.9              |
 |  1.4.0   | B7.9rc1   | 0786*        | 2022-01-10 | First release candidate for B7.9              |
 |  1.3.3   | B7.8.2    | 0764         | 2021-10-05 | Same as 1.3.2, but with installation bug fix  |
 |  1.3.2   | B7.8.2    | 0764         | 2021-09-03 | Final release candidate for B7.8.2            |
