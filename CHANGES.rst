@@ -1,4 +1,4 @@
-1.4.1 (unreleased)
+1.4.1 (2022-01-15)
 ==================
 
 dark_current
@@ -15,6 +15,10 @@ jump
 ----
 
 - Added docs mention of external algorithm in ``stcal`` [#6566]
+
+- Fix issue in jump detection that occurred when there were only 2 usable
+  differences with no other groups flagged. This PR also added tests and
+  fixed some of the logging statements in two-point difference. [spacetelescope/stcal#74]
 
 linearity
 ---------
@@ -181,7 +185,7 @@ datamodels
   for calls to create_history_entry [#6537]
 
 - Added keyword EXP_TYPE to PsfMaskModel schema [#6540]
-  
+
 - Updated FILTEROFFSET reference file docs to add NIRCam information. [#6541]
 
 dark_current
