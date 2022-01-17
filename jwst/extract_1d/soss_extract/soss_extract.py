@@ -312,7 +312,7 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
 
 # TODO Update docstring
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, transform=None,
-                tikfac=None, threshold=1e-4, devname=None, n_os=2, wave_grid=None, rtol=1e-3, max_grid_size=1000000):
+                tikfac=None, threshold=1e-4, n_os=2, wave_grid=None, rtol=1e-3, max_grid_size=1000000):
     """Perform the spectral extraction on a single image.
 
     Parameters
@@ -410,6 +410,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
         # Initial pass 8 orders of magnitude with 10 grid points.
         factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
         # Find the tikhonov factor.
+        # TODO check if scimask should be given before
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
 
@@ -497,20 +498,152 @@ def compute_box_weights(ref_files, transform, subarray, shape, width=40.):
     return box_weights, wavelengths
 
 
+def decontaminate_image(scidata_bkg, tracemodels, subarray):
+    """Perform decontamination of the image based on the trace models"""
+
+    # Which orders to extract.
+    if subarray == 'SUBSTRIP96':
+        order_list = [1]
+    else:
+        order_list = [1, 2, 3]
+
+    order_str = {order: f'Order {order}' for order in order_list}
+
+    # List of modeled orders
+    mod_order_list = tracemodels.keys()
+
+    # Create dictionaries for the output images.
+    decontaminated_data = dict()
+
+    log.debug('Performing the decontamination.')
+
+    # Extract each order from order list
+    for order_integer in order_list:
+        # Order string-name is used more often than integer-name
+        order = order_str[order_integer]
+
+        # Decontaminate using all other modeled orders
+        decont = scidata_bkg
+        for mod_order in mod_order_list:
+            if mod_order != order:
+                log.debug(f'Decontaminating {order} from {mod_order} using model.')
+                decont = decont - tracemodels[mod_order]
+
+        # Save results
+        decontaminated_data[order] = decont
+
+    return decontaminated_data
+
+
+def model_bad_pixels(decontaminated_data, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None):
+    """Model bad pixels using ATOCA on individual decontaminated orders."""
+
+    # Which orders to extract.
+    if subarray == 'SUBSTRIP96':
+        order_list = ['Order 1']
+    else:
+        # Note: eventually, order 3 should be included here, when available in ref_file_args
+        order_list = ['Order 1', 'Order 2']
+
+    # Prepare and unpack needed reference file arguments
+    wave_maps_list, trace_profiles_list, _, _ = get_ref_file_args(ref_files, transform)
+    # Move them to a dictionary for easier manipulation
+    wave_maps, trace_profiles = dict(), dict()
+    for idx, order in enumerate(order_list):
+        wave_maps[order] = wave_maps_list[idx]
+        trace_profiles[order] = trace_profiles_list[idx]
+
+    # The throughput and kernel is not needed here; set them so they have no effect on the extraction.
+    def throughput(wavelength):
+        return np.ones_like(wavelength)
+    kernel = np.array([1.])
+
+    # Some error values are 0, we need to mask those pixels for the extraction engine.
+    scimask = scimask | ~(scierr > 0)
+
+    # Create dictionaries for the output models.
+    bad_pix_models = dict()
+
+    # Model each order from order list
+    for order in order_list:
+
+        log.info(f'Generate bad pixel model for {order}')
+
+        # Decontaminated order image to model
+        scidata = decontaminated_data[order]
+
+        # Define mask based on box aperture (we want to model the pixels that will be extracted)
+        mask_trace_profile = ~(box_weights[order] > 0)
+        mask = (mask_trace_profile | scimask)
+
+        # Set reference file arguments for this order
+        ref_file_args = [wave_maps[order]], [trace_profiles[order]], [throughput], [kernel]
+
+        # ###########################
+        # First, generate an estimate
+        # ###########################
+        # Define wavelength grid with oversampling of 1 to make sure the solution will be stable
+        wave_grid = grid_from_map(wave_maps[order], trace_profiles[order], n_os=1)
+
+        # Initialize the engine
+        engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask)
+
+        # Extract estimate
+        spec_estimate = engine.__call__(data=scidata, error=scierr)
+
+        # Interpolate
+        idx = np.isfinite(spec_estimate)
+        estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
+
+        # ##################################################
+        # Second, do the extraction to get the best estimate
+        # ##################################################
+        # Define wavelength grid with oversampling of 5 (should be enough)
+        wave_grid = grid_from_map(wave_maps[order], trace_profiles[order], n_os=5)
+
+        # Initialize the Engine.
+        engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask)
+
+        # Find the tikhonov factor.
+        # Initial pass 8 orders of magnitude with 10 grid points.
+        factors = engine.estimate_tikho_factors(estimate_spl, log_range=[-4, 4], n_points=10)
+        tiktests = engine.get_tikho_tests(factors, data=scidata, error=scierr)
+        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
+
+        # Refine across 4 orders of magnitude.
+        tikfac = np.log10(tikfac)
+        factors = np.logspace(tikfac - 2, tikfac + 2, 20)
+        tiktests = engine.get_tikho_tests(factors, data=scidata, error=scierr)
+        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
+
+        # Run the extract method of the Engine.
+        f_k = engine.__call__(data=scidata, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
+
+        # ##########################################
+        # Third, rebuild trace, including bad pixels
+        # ##########################################
+        # Initialize the Engine.
+        engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=refmask)
+
+        # Project on detector and save in dictionary
+        model_order = engine.rebuild(f_k)
+        bad_pix_models[order] = np.where(np.isfinite(model_order), model_order, 0.)
+
+    return bad_pix_models
+
+
 # TODO Update docstring
-def extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, bad_pix='model'):
+def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='model', tracemodels=None):
     """Perform the box-extraction on the image, while using the trace model to
     correct for contamination.
     Parameters
     ----------
-    scidata_bkg : array[float]
+    decontaminated_data : array[float]
         A single backround subtracted NIRISS SOSS detector image.
     scierr : array[float]
         The uncertainties corresponding to the detector image.
     scimask : array[float]
         Pixel mask to apply to the detector image.
-    tracemodels : dict
-        Dictionary of the modeled detector images for each order.
     ref_files : dict
         A dictionary of the reference file DataModels.
     transform : array_like
@@ -526,22 +659,19 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarr
         'masking' will simply mask the bad pixels, such that the number of pixels
         in each column in the box extraction will not be constant, while the
         'model' option uses `tracemodels` to replace the bad pixels.
-
+    tracemodels : dict
+        Dictionary of the modeled detector images for each order.
     Returns
     -------
     wavelengths, fluxes, fluxerrs, npixels, box_weights : dict
         Each output is a dictionary, with each extracted order as a key.
     """
-    # Which orders to extract.
-    if subarray == 'SUBSTRIP96':
-        order_list = [1]
-    else:
-        order_list = [1, 2, 3]
+    # Init models with an empty dictionary if not given
+    if tracemodels is None:
+        tracemodels = dict()
 
-    order_str = {order: f'Order {order}' for order in order_list}
-
-    # List of modeled orders
-    mod_order_list = tracemodels.keys()
+    # Which orders to extract (extract the ones with given box aperture).
+    order_list = box_weights.keys()
 
     # Create dictionaries for the output spectra.
     fluxes = dict()
@@ -551,9 +681,7 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarr
     log.info('Performing the decontaminated box extraction.')
 
     # Extract each order from order list
-    for order_integer in order_list:
-        # Order string-name is used more often than integer-name
-        order = order_str[order_integer]
+    for order in order_list:
 
         log.debug(f'Extracting {order}.')
 
@@ -561,11 +689,7 @@ def extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarr
         box_w_ord = box_weights[order]
 
         # Decontaminate using all other modeled orders
-        decont = scidata_bkg
-        for mod_order in mod_order_list:
-            if mod_order != order:
-                log.debug(f'Decontaminating {order} from {mod_order} using model.')
-                decont = decont - tracemodels[mod_order]
+        decont = decontaminated_data[order]
 
         # Deal with bad pixels if required.
         if bad_pix == 'model':
@@ -730,17 +854,27 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             log.critical(msg)
             raise ValueError(msg)
 
+        # Decontaminate the data using trace models
+        decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
+
+        if soss_kwargs['bad_pix'] == 'model':
+            # Generate new trace models for each individual decontaminated orders
+            bad_pix_models = model_bad_pixels(decontaminated_data, scierr, scimask, refmask,
+                                              ref_files, box_weights, subarray, transform)
+        else:
+            bad_pix_models = None
+
+        # Use the bad pixel models to perform a de-contaminated extraction.
+        kwargs = dict()
+        kwargs['bad_pix'] = soss_kwargs['bad_pix']
+        kwargs['tracemodels'] = tracemodels
+        result = extract_image(decontaminated_data, scierr, scimask, box_weights, **kwargs)
+        fluxes, fluxerrs, npixels = result
+
         # Save trace models for output reference
         for order in tracemodels:
             # Save as a list (convert to array at the end)
             all_tracemodels[order] = [tracemodels[order]]
-
-        # Use the trace models to perform a decontaminated extraction.
-        kwargs = dict()
-        kwargs['bad_pix'] = soss_kwargs['bad_pix']
-
-        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, **kwargs)
-        fluxes, fluxerrs, npixels = result
 
         # Save box weights for output reference
         for order in box_weights:
@@ -852,19 +986,29 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 log.critical(msg)
                 raise ValueError(msg)
 
+            # Decontaminate the data using trace models
+            decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
+
+            if soss_kwargs['bad_pix'] == 'model':
+                # Generate new trace models for each individual decontaminated orders
+                bad_pix_models = model_bad_pixels(decontaminated_data, scierr, scimask, refmask,
+                                                  ref_files, box_weights, subarray, transform)
+            else:
+                bad_pix_models = None
+
+            # Use the bad pixel models to perform a de-contaminated extraction.
+            kwargs = dict()
+            kwargs['bad_pix'] = soss_kwargs['bad_pix']
+            kwargs['tracemodels'] = tracemodels
+            result = extract_image(decontaminated_data, scierr, scimask, box_weights, **kwargs)
+            fluxes, fluxerrs, npixels = result
+
             # Save trace models for output reference
             for order in tracemodels:
                 # Initialize a list for first integration
                 if i == 0:
                     all_tracemodels[order] = []
                 all_tracemodels[order].append(tracemodels[order])
-
-            # Use the trace models to perform a de-contaminated extraction.
-            kwargs = dict()
-            kwargs['bad_pix'] = soss_kwargs['bad_pix']
-
-            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, box_weights, subarray, **kwargs)
-            fluxes, fluxerrs, npixels = result
 
             # Save box weights for output reference
             for order in box_weights:
