@@ -10,7 +10,7 @@ import numpy as np
 from scipy.sparse import find, diags, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
-from scipy.optimize import minimize_scalar, newton
+from scipy.optimize import minimize_scalar, brentq
 import logging
 
 log = logging.getLogger(__name__)
@@ -2264,8 +2264,8 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
         index = _get_interp_idx_array(idx_below, search_range, max_length)
 
         # Find the root
-        bracket = [x_val[index[0]], x_val[index[-1]]]
-        best_val = newton(d_chi2_spl, bracket=bracket).root
+        bracket = (x_val[index[0]], x_val[index[-1]])
+        best_val = brentq(d_chi2_spl, *bracket)
 
         # Back to linear scale
         best_val = 10. ** best_val
