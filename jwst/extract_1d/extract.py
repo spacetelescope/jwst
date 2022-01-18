@@ -463,7 +463,7 @@ def log_initial_parameters(extract_params: dict):
 
 
 def get_aperture(
-        im_shape: tuple, wcs: WCS, verbose: bool, extract_params: dict
+        im_shape: tuple, wcs: WCS, extract_params: dict
 ) -> Union[Aperture, dict]:
     """Get the extraction limits xstart, xstop, ystart, ystop.
 
@@ -475,9 +475,6 @@ def get_aperture(
 
     wcs : a WCS object, or None
         The wcs (if any) for the input data or slit.
-
-    verbose : bool
-        If True, log messages.
 
     extract_params : dict
         Parameters read from the reference file.
@@ -493,17 +490,17 @@ def get_aperture(
     ap_ref = aperture_from_ref(extract_params, im_shape)
     ap_ref, truncated = update_from_shape(ap_ref, im_shape)
 
-    if truncated and verbose:
-        log.warning("Extraction limits extended outside image borders; limits have been truncated.")
+    if truncated:
+        log.debug("Extraction limits extended outside image borders; limits have been truncated.")
 
     if wcs is not None:
-        ap_wcs = aperture_from_wcs(wcs, verbose)
+        ap_wcs = aperture_from_wcs(wcs)
     else:
         ap_wcs = None
 
     # If the xstart, etc., values were not specified for the dispersion direction, the extraction region should be
     # centered within the WCS bounding box (domain).
-    ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"], extract_params["dispaxis"], verbose)
+    ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"], extract_params["dispaxis"])
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"], extract_params["dispaxis"])
 
     return ap_ref
@@ -663,16 +660,13 @@ def update_from_shape(
     return ap_shape, truncated
 
 
-def aperture_from_wcs(wcs: WCS, verbose: bool) -> Union[NamedTuple, None]:
+def aperture_from_wcs(wcs: WCS) -> Union[NamedTuple, None]:
     """Get the limits over which the WCS is defined.
 
     Parameters
     ----------
     wcs : WCS
         The world coordinate system interface.
-
-    verbose : bool
-        If True, log messages.
 
     Returns
     -------
@@ -686,8 +680,7 @@ def aperture_from_wcs(wcs: WCS, verbose: bool) -> Union[NamedTuple, None]:
         bounding_box = wcs.bounding_box
         got_bounding_box = True
     except AttributeError:
-        if verbose:
-            log.info("wcs.bounding_box not found; using wcs.domain instead.")
+        log.info("wcs.bounding_box not found; using wcs.domain instead.")
 
         bounding_box = (
             (wcs.domain[0]['lower'], wcs.domain[0]['upper']),
@@ -695,14 +688,12 @@ def aperture_from_wcs(wcs: WCS, verbose: bool) -> Union[NamedTuple, None]:
         )
 
     if got_bounding_box and bounding_box is None:
-        if verbose:
-            log.warning("wcs.bounding_box is None")
+        log.warning("wcs.bounding_box is None")
         return None
 
     # bounding_box should be a tuple of tuples, each of the latter consisting of (lower, upper) limits.
     if len(bounding_box) < 2:
-        if verbose:
-            log.warning("wcs.bounding_box has the wrong shape")
+        log.warning("wcs.bounding_box has the wrong shape")
         return None
 
     # These limits are float, and they are inclusive.
@@ -721,7 +712,6 @@ def update_from_wcs(
         ap_wcs: Union[Aperture, None],
         extract_width: int,
         direction: int,
-        verbose: bool
 ) -> Aperture:
     """Limit the extraction region to the WCS bounding box.
 
@@ -744,9 +734,6 @@ def update_from_wcs(
         horizontal.  VERTICAL (2) if the dispersion direction is
         predominantly vertical.
 
-    verbose : bool
-        If True, log messages.
-
     Returns
     -------
     ap : namedtuple
@@ -756,7 +743,8 @@ def update_from_wcs(
         return ap_ref
 
     # If the wcs limits don't pass the sanity test, ignore the bounding box.
-    if not sanity_check_limits(ap_ref, ap_wcs, verbose):
+    if not sanity_check_limits(ap_ref, ap_wcs):
+        log.debug("Sanity check on WCS limits failed - using ap_ref")
         return ap_ref
 
     # ap_wcs has the limits over which the WCS transformation is defined; take those as the outer limits over which we
@@ -773,8 +761,7 @@ def update_from_wcs(
             width = xstop - xstart + 1
 
         if width < extract_width:
-            if verbose:
-                log.warning(f"extract_width was truncated from {extract_width} to {width}")
+            log.debug(f"extract_width was truncated from {extract_width} to {width}")
 
     ap = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
 
@@ -782,7 +769,7 @@ def update_from_wcs(
 
 
 def sanity_check_limits(
-        ap_ref: Aperture, ap_wcs: Aperture, verbose: bool
+        ap_ref: Aperture, ap_wcs: Aperture,
 ) -> bool:
     """Sanity check.
 
@@ -796,9 +783,6 @@ def sanity_check_limits(
     ap_wcs : namedtuple
         These are the bounding box limits.
 
-    verbose : bool
-        If True, log messages.
-
     Returns
     -------
     flag : boolean
@@ -810,13 +794,12 @@ def sanity_check_limits(
             or ap_wcs.ystart >= ap_ref.ystop
             or ap_wcs.ystop <= ap_ref.ystart
     ):
-        if verbose:
-            log.warning(
-                f"The WCS bounding box is outside the aperture:\n\t"
-                f"aperture: {ap_ref.xstart}, {ap_ref.xstop}, {ap_ref.ystart}, {ap_ref.ystop}\n\t"
-                f"wcs: {ap_wcs.xstart}, {ap_wcs.xstop}, {ap_wcs.ystart}, {ap_wcs.ystop}\n"
-                f"so the wcs bounding box will be ignored."
-            )
+        log.warning(
+            f"The WCS bounding box is outside the aperture:\n\t"
+            f"aperture: {ap_ref.xstart}, {ap_ref.xstop}, {ap_ref.ystart}, {ap_ref.ystop}\n\t"
+            f"wcs: {ap_wcs.xstart}, {ap_wcs.xstop}, {ap_wcs.ystart}, {ap_wcs.ystop}\n"
+            f"so the wcs bounding box will be ignored."
+        )
 
         flag = False
     else:
@@ -1225,7 +1208,7 @@ class ExtractBase(abc.ABC):
     def update_extraction_limits(self, ap):
         pass
 
-    def assign_polynomial_limits(self, verbose):
+    def assign_polynomial_limits(self):
         pass
 
     @staticmethod
@@ -1285,7 +1268,7 @@ class ExtractBase(abc.ABC):
         return targ_ra, targ_dec
 
     def offset_from_offset(
-            self, input_model: DataModel, slit: DataModel, verbose: bool
+            self, input_model: DataModel, slit: DataModel,
     ) -> Tuple[float, Union[float, None]]:
         """Get position offset from the target coordinates.
 
@@ -1297,9 +1280,6 @@ class ExtractBase(abc.ABC):
         slit : SlitModel or None
             One slit from a MultiSlitModel (or similar), or None if
             there are no slits.
-
-        verbose : bool
-            If True, log messages.
 
         Returns
         -------
@@ -1322,14 +1302,14 @@ class ExtractBase(abc.ABC):
 
         # Use the WCS function to find the cross-dispersion (XD) location that is closest to the target coordinates.
         # This is the "actual" location of the spectrum, so the extraction region should be centered here.
-        locn_info = self.locn_from_wcs(input_model, slit, targ_ra, targ_dec, verbose)
+        locn_info = self.locn_from_wcs(input_model, slit, targ_ra, targ_dec)
 
         if locn_info is None:
             middle = middle_wl = locn = locn_info
         else:
             middle, middle_wl, locn = locn_info
 
-        if middle is not None and verbose:
+        if middle is not None:
             log.debug(f"Spectrum location from WCS used column/row {middle}")
 
         # Find the nominal extraction location, i.e. the XD location specified in the reference file prior to adding any
@@ -1340,21 +1320,17 @@ class ExtractBase(abc.ABC):
         if middle is not None and locn is not None:
             nominal_location = self.nominal_locn(middle, middle_wl)
 
-            if verbose:
-                log.debug(f"Target spectrum is at {locn:.2f} in the cross-dispersion direction")
+            log.debug(f"Target spectrum is at {locn:.2f} in the cross-dispersion direction")
 
             if nominal_location is not None:
-                if verbose:
-                    log.debug(f"and the nominal XD location of the spectrum is {nominal_location:.2f}")
+                log.debug(f"and the nominal XD location of the spectrum is {nominal_location:.2f}")
 
                 offset = locn - nominal_location
             else:
-                if verbose:
-                    log.debug("but couldn't determine the nominal XD location.")
+                log.debug("but couldn't determine the nominal XD location.")
 
         if np.isnan(offset):
-            if verbose:
-                log.warning("Source position offset is NaN; setting it to 0")
+            log.warning("Source position offset is NaN; setting it to 0")
             offset = 0.
 
         self.position_correction = offset
@@ -1367,7 +1343,6 @@ class ExtractBase(abc.ABC):
             slit: Union[DataModel, None],
             targ_ra: Union[float, None],
             targ_dec: Union[float, None],
-            verbose: bool
     ) -> Union[Tuple[int, float, float], None]:
         """Get the location of the spectrum, based on the WCS.
 
@@ -1386,9 +1361,6 @@ class ExtractBase(abc.ABC):
 
         targ_dec : float or None
             The declination of the target, or None
-
-        verbose : bool
-            If True, log messages.
 
         Returns
         -------
@@ -1481,15 +1453,13 @@ class ExtractBase(abc.ABC):
                 # Subtracting 360 from the right ascension worked!
                 locn = temp_locn
 
-                if verbose:
-                    log.warning(f"targ_ra changed from {targ_ra} to {targ_ra - 360.}")
+                log.debug(f"targ_ra changed from {targ_ra} to {targ_ra - 360.}")
 
         # If the target is at the edge of the image or at the edge of the non-NaN area, we can't use the WCS to find the
         # location of the target spectrum.
         if locn < lower or locn > upper:
-            if verbose:
-                log.warning(f"WCS implies the target is at {locn:.2f}, which is outside the bounding box,")
-                log.warning("so we can't get spectrum location using the WCS")
+            log.warning(f"WCS implies the target is at {locn:.2f}, which is outside the bounding box,")
+            log.warning("so we can't get spectrum location using the WCS")
             locn = None
 
         return middle, middle_wl, locn
@@ -1503,7 +1473,7 @@ class ExtractBase(abc.ABC):
 class ExtractModel(ExtractBase):
     """The extraction region was specified in a JSON file."""
 
-    def __init__(self, verbose, *base_args, **base_kwargs):
+    def __init__(self, *base_args, **base_kwargs):
         """Create a polynomial model from coefficients.
 
         Extended summary
@@ -1513,15 +1483,10 @@ class ExtractModel(ExtractBase):
 
         Parameters
         ----------
-        verbose : bool
-            If True, log messages.
-
         *base_args, **base_kwargs :
             see ExtractBase parameters for more information.
 
         """
-        self.verbosity = verbose
-
         super().__init__(*base_args, **base_kwargs)
 
         # The independent variable for functions for the lower and upper limits of target and background regions can be
@@ -1542,16 +1507,14 @@ class ExtractModel(ExtractBase):
                 # were specified, turn it off
                 if self.bkg_coeff is None:
                     self.subtract_background = False
-                    if self.verbosity:
-                        log.info("Skipping background subtraction because background regions are not defined.")
+                    log.info("Skipping background subtraction because background regions are not defined.")
             else:
                 # If background subtraction was NOT requested, even though background region(s)
                 # were specified, blank out the bkg region info
                 if self.bkg_coeff is not None:
                     self.bkg_coeff = None
-                    if self.verbosity:
-                        log.info("Background subtraction was specified in the reference file,")
-                        log.info("but has been overridden by the step parameter.")
+                    log.info("Background subtraction was specified in the reference file,")
+                    log.info("but has been overridden by the step parameter.")
 
     def nominal_locn(self, middle: int, middle_wl: float) -> Union[float, None]:
         """Find the nominal cross-dispersion location of the target spectrum.
@@ -1593,7 +1556,7 @@ class ExtractModel(ExtractBase):
             # Create the polynomial functions.
             # We'll do this again later, after adding the position offset to the coefficients, but we need to evaluate
             # them at x now in order to get the nominal location of the spectrum.
-            self.assign_polynomial_limits(verbose=False)
+            self.assign_polynomial_limits()
 
             n_srclim = len(self.p_src)
             sum_data = 0.
@@ -1613,7 +1576,7 @@ class ExtractModel(ExtractBase):
 
         return location
 
-    def add_position_correction(self, verbose: bool, shape: tuple):
+    def add_position_correction(self, shape: tuple):
         """Add the position offset to the extraction location (in-place).
 
         Extended summary
@@ -1629,9 +1592,6 @@ class ExtractModel(ExtractBase):
 
         Parameters
         ----------
-        verbose : bool
-            If True, messages can be logged.
-
         shape : tuple
             The shape of the data array (may be just the last two axes).
             This is used for truncating a shifted limit at the image edge.
@@ -1659,13 +1619,12 @@ class ExtractModel(ExtractBase):
             self.xstart = min(self.xstart, shape[-1] - 1)
             self.xstop = min(self.xstop, shape[-1] - 1)  # inclusive limit
 
-        if self.src_coeff is None and verbose:
+        if self.src_coeff is None:
             log.info(
                 f"Applying position offset of {self.position_correction:.2f} to {direction}start and {direction}stop")
 
         if self.src_coeff is not None or self.bkg_coeff is not None:
-            if verbose:
-                log.info(f"Applying position offset of {self.position_correction:.2f} to polynomial coefficients")
+            log.info(f"Applying position offset of {self.position_correction:.2f} to polynomial coefficients")
 
         if self.src_coeff is not None:
             self._apply_position_corr(self.src_coeff)
@@ -1727,7 +1686,7 @@ class ExtractModel(ExtractBase):
         if self.bkg_coeff is not None:
             log.debug(f"bkg_coeff = {self.bkg_coeff}")
 
-    def assign_polynomial_limits(self, verbose: bool):
+    def assign_polynomial_limits(self):
         """Create polynomial functions for extraction limits.
 
         Extended summary
@@ -1765,12 +1724,6 @@ class ExtractModel(ExtractBase):
 -           fcn_upper1 is 3 + 4 * x + 5 * x**2
 -           fcn_lower2 is 6
 -           fcn_upper2 is 7 + 8 * x
-
-        Parameters
-        ----------
-        verbose : bool
-            If True, messages can be logged.
-
         """
         if self.src_coeff is None:
             # Create constant functions.
@@ -1782,8 +1735,7 @@ class ExtractModel(ExtractBase):
                 lower = float(self.xstart) - 0.5
                 upper = float(self.xstop) + 0.5
 
-            if verbose:
-                log.debug(f"Converting extraction limits to [[{lower}], [{upper}]]")
+            log.debug(f"Converting extraction limits to [[{lower}], [{upper}]]")
 
             self.p_src = [[create_poly([lower]), create_poly([upper])]]
         else:
@@ -1823,7 +1775,6 @@ class ExtractModel(ExtractBase):
             var_rnoise: np.ndarray,
             var_flat: np.ndarray,
             wl_array: Union[np.ndarray, None],
-            verbose: bool
     ) -> Tuple[
         float, float, np.ndarray,
         np.ndarray, np.ndarray, np.ndarray, np.ndarray,
@@ -1854,9 +1805,6 @@ class ExtractModel(ExtractBase):
         wl_array : ndarray, 2-D, or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
             extension was found in the input file.
-
-        verbose : bool
-            If True, log messages.
 
         Returns
         -------
@@ -1981,8 +1929,7 @@ class ExtractModel(ExtractBase):
                 max_dec = dec2.max()
                 dec = (min_dec + max_dec) / 2.
             else:
-                if verbose:
-                    log.warning("All wavelength values are NaN; assigning dummy value -999 to RA and Dec.")
+                log.warning("All wavelength values are NaN; assigning dummy value -999 to RA and Dec.")
                 ra = -999.
                 dec = -999.
         else:
@@ -2000,8 +1947,7 @@ class ExtractModel(ExtractBase):
             var_flat = np.transpose(var_flat, (1, 0))
 
         if wavelength is None:
-            if verbose:
-                log.warning("Wavelengths could not be determined.")
+            log.warning("Wavelengths could not be determined.")
 
             if slice0 <= 0:
                 wavelength = np.arange(1, slice1 - slice0 + 1, dtype=np.float64)
@@ -2013,8 +1959,7 @@ class ExtractModel(ExtractBase):
         n_nan = nan_mask.sum(dtype=np.intp)
 
         if n_nan > 0:
-            if verbose:
-                log.debug(f"{n_nan} NaNs in wavelength array")
+            log.debug(f"{n_nan} NaNs in wavelength array")
 
             temp_wl = np.nan_to_num(temp_wl, nan=0.01)  # NaNs in the wavelength array cause problems; replace them.
 
@@ -2032,7 +1977,7 @@ class ExtractModel(ExtractBase):
         dq = np.zeros(temp_flux.shape, dtype=np.uint32)
 
         if n_nan > 0:
-            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq, verbose)
+            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq)
             temp_flux = temp_flux[nan_slc]
             background = background[nan_slc]
             npixels = npixels[nan_slc]
@@ -2063,21 +2008,16 @@ class ImageExtractModel(ExtractBase):
     by the reference image.
     """
 
-    def __init__(self, verbose, *base_args, **base_kwargs):
+    def __init__(self, *base_args, **base_kwargs):
         """Extract using a reference image to define the extraction and
            background regions.
 
         Parameters
         ----------
-        verbose : bool
-            If True, log messages.
-
         *base_args, **base_kwargs :
             See ExtractionBase for more.
 
         """
-        self.verbosity = verbose
-
         super().__init__(*base_args, **base_kwargs)
 
     def nominal_locn(
@@ -2138,14 +2078,11 @@ class ImageExtractModel(ExtractBase):
 
         return location
 
-    def add_position_correction(self, verbose: bool, shape: tuple):
+    def add_position_correction(self, shape: tuple):
         """Shift the reference image (in-place).
 
         Parameters
         ----------
-        verbose : bool
-            If True, messages can be logged.
-
         shape : tuple
             Not sure if needed yet?
 
@@ -2153,8 +2090,7 @@ class ImageExtractModel(ExtractBase):
         if self.position_correction == 0:
             return
 
-        if verbose:
-            log.info(f"Applying source offset of {self.position_correction:.2f}")
+        log.info(f"Applying source offset of {self.position_correction:.2f}")
 
         # Shift the image in the cross-dispersion direction.
         ref = self.ref_image.data.copy()
@@ -2162,13 +2098,11 @@ class ImageExtractModel(ExtractBase):
         ishift = round(shift)
 
         if ishift != shift:
-            if verbose:
-                log.info(f"Rounding source offset of {shift} to {ishift}")
+            log.info(f"Rounding source offset of {shift} to {ishift}")
 
         if self.dispaxis == HORIZONTAL:
             if abs(ishift) >= ref.shape[0]:
-                if verbose:
-                    log.warning(f"Nod offset {ishift} is too large, skipping ...")
+                log.warning(f"Nod offset {ishift} is too large, skipping ...")
 
                 return
 
@@ -2181,8 +2115,7 @@ class ImageExtractModel(ExtractBase):
                 self.ref_image.data[:-ishift, :] = ref[ishift:, :]
         else:
             if abs(ishift) >= ref.shape[1]:
-                if verbose:
-                    log.warning(f"Nod offset {ishift} is too large, skipping ...")
+                log.warning(f"Nod offset {ishift} is too large, skipping ...")
 
                 return
 
@@ -2208,7 +2141,6 @@ class ImageExtractModel(ExtractBase):
                 var_rnoise: np.ndarray,
                 var_flat: np.ndarray,
                 wl_array: np.ndarray,
-                verbose: bool
                 ) -> \
             Tuple[
                 float, float, np.ndarray,
@@ -2236,9 +2168,6 @@ class ImageExtractModel(ExtractBase):
         wl_array : ndarray, 2-D, or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
             extension was found in the input file.
-
-        verbose : bool
-            If True, log messages.
 
         Returns
         -------
@@ -2321,11 +2250,11 @@ class ImageExtractModel(ExtractBase):
 
         if self.subtract_background is not None:
             if not self.subtract_background:
-                if verbose and mask_bkg is not None:
+                if mask_bkg is not None:
                     log.info("Background subtraction was turned off - skipping it.")
                 mask_bkg = None
             else:
-                if verbose and mask_bkg is None:
+                if mask_bkg is None:
                     log.info("Skipping background subtraction because background regions are not defined.")
 
         # Extract the background.
@@ -2440,22 +2369,17 @@ class ImageExtractModel(ExtractBase):
             not_nan = np.logical_not(mask)
 
             if not_nan[middle]:
-                if verbose:
-                    log.debug("Using midpoint of spectral trace for RA and Dec.")
+                log.debug("Using midpoint of spectral trace for RA and Dec.")
 
                 ra = ra[middle]
             else:
                 if np.any(not_nan):
-                    if verbose:
-                        log.warning(
-                            "Midpoint of coordinate array is NaN; using the average of non-NaN min and max values."
-                        )
+                    log.warning("Midpoint of coordinate array is NaN; "
+                                "using the average of non-NaN min and max values.")
 
                     ra = (np.nanmin(ra) + np.nanmax(ra)) / 2.
                 else:
-                    if verbose:
-                        log.warning("All right ascension values are NaN; assigning dummy value -999.")
-
+                    log.warning("All right ascension values are NaN; assigning dummy value -999.")
                     ra = -999.
 
             mask = np.isnan(dec)
@@ -2467,9 +2391,7 @@ class ImageExtractModel(ExtractBase):
                 if np.any(not_nan):
                     dec = (np.nanmin(dec) + np.nanmax(dec)) / 2.
                 else:
-                    if verbose:
-                        log.warning("All declination values are NaN; assigning dummy value -999.")
-
+                    log.warning("All declination values are NaN; assigning dummy value -999.")
                     dec = -999.
 
         if not got_wavelength:
@@ -2488,10 +2410,9 @@ class ImageExtractModel(ExtractBase):
         n_nan = nan_mask.sum(dtype=np.intp)
 
         if n_nan > 0:
-            if verbose:
-                log.warning(f"{n_nan} NaNs in wavelength array")
+            log.info(f"{n_nan} NaNs in wavelength array")
 
-            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq, verbose)
+            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq)
             temp_flux = temp_flux[nan_slc]
             background = background[nan_slc]
             npixels = npixels[nan_slc]
@@ -2880,13 +2801,14 @@ def do_extract1d(
 
         is_multiple_slits = True
         if was_source_model:  # SourceContainer has a single list of SlitModels
-            log.warning("Input is a Source Model.")
+            log.debug("Input is a Source Model.")
             if isinstance(input_model, datamodels.SlitModel):
                 # If input is a single SlitModel, as opposed to a list of SlitModels,
                 # put it into a list so that it's iterable later on
+                log.debug("Input SourceContainer holds one SlitModel.")
                 slits = [input_model]
             else:
-                log.warning("INput is not just a SlitModel")
+                log.debug("Input SourceContainer holds a list of SlitModels.")
                 slits = input_model
 
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
@@ -2903,7 +2825,7 @@ def do_extract1d(
 
         for slit in slits:  # Loop over the slits in the input model
             log.info(f'Working on slit {slit.name}')
-            log.info(f'Slit is of type {type(slit)}')
+            log.debug(f'Slit is of type {type(slit)}')
 
             slitname = slit.name
             prev_offset = OFFSET_NOT_ASSIGNED_YET
@@ -3348,7 +3270,6 @@ def extract_one_slit(
         slit: SlitModel,
         integ: int,
         prev_offset: Union[float, str],
-        verbose: bool,
         extract_params: dict
 ) -> Tuple[float, float, np.ndarray,
            np.ndarray, np.ndarray, np.ndarray, np.ndarray,
@@ -3378,9 +3299,6 @@ def extract_one_slit(
         previously computed offset or a value (a string) indicating that
         the offset hasn't been computed yet.  In the latter case, method
         `offset_from_offset` will be called to determine the offset.
-
-    verbose : boolean
-        If True, log more info (extraction parameters, for example).
 
     extract_params : dict
         Parameters read from the extract1d reference file.
@@ -3446,8 +3364,7 @@ def extract_one_slit(
 
     """
 
-    if verbose:
-        log_initial_parameters(extract_params)
+    log_initial_parameters(extract_params)
 
     try:
         exp_type = input_model.meta.exposure.type
@@ -3488,21 +3405,20 @@ def extract_one_slit(
     data = replace_bad_values(data, input_dq, wl_array)
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:  # The reference file is an image.
-        extract_model = ImageExtractModel(input_model=input_model, slit=slit, verbose=verbose, **extract_params)
+        extract_model = ImageExtractModel(input_model=input_model, slit=slit, **extract_params)
         ap = None
     else:
         # If there is an extract1d reference file (there doesn't have to be), it's in JSON format.
-        extract_model = ExtractModel(input_model=input_model, slit=slit, verbose=verbose, **extract_params)
-        ap = get_aperture(data.shape, extract_model.wcs, verbose, extract_params)
+        extract_model = ExtractModel(input_model=input_model, slit=slit, **extract_params)
+        ap = get_aperture(data.shape, extract_model.wcs, extract_params)
         extract_model.update_extraction_limits(ap)
 
     if extract_model.use_source_posn:
         if prev_offset == OFFSET_NOT_ASSIGNED_YET:  # Only call this method for the first integration.
-            offset, locn = extract_model.offset_from_offset(input_model, slit, verbose)
+            offset, locn = extract_model.offset_from_offset(input_model, slit)
 
-            if verbose:
-                if offset is not None and locn is not None:
-                    log.debug(f"Computed source offset={offset:.2f}, source location={locn:.2f}")
+            if offset is not None and locn is not None:
+                log.debug(f"Computed source offset={offset:.2f}, source location={locn:.2f}")
 
             if not extract_model.use_source_posn:
                 offset = 0.
@@ -3515,39 +3431,34 @@ def extract_one_slit(
 
     # Add the source position offset to the polynomial coefficients, or shift the reference image
     # (depending on the type of reference file).
-    extract_model.add_position_correction(verbose, data.shape)
+    extract_model.add_position_correction(data.shape)
+    extract_model.log_extraction_parameters()
+    extract_model.assign_polynomial_limits()
 
-    if verbose:
-        extract_model.log_extraction_parameters()
-
-    extract_model.assign_polynomial_limits(verbose)
-
-    # Log the extraction limits being used; verbose flag is used to
-    # turn off logging for loops over multiple integrations
-    if verbose:
-        log.info("Using extraction limits: ")
-        if extract_model.src_coeff is not None:
-            # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
-            if extract_model.dispaxis == HORIZONTAL:
-                # Only print xstart/xstop, because ystart/ystop are not used
-                log.info(f"xstart={extract_model.xstart}, "
-                         f"xstop={extract_model.xstop}, and src_coeff")
-            else:
-                # Only print ystart/ystop, because xstart/xstop are not used
-                log.info(f"ystart={extract_model.ystart}, "
-                         f"ystop={extract_model.ystop}, and src_coeff")
+    # Log the extraction limits being used
+    log.info("Using extraction limits: ")
+    if extract_model.src_coeff is not None:
+        # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
+        if extract_model.dispaxis == HORIZONTAL:
+            # Only print xstart/xstop, because ystart/ystop are not used
+            log.info(f"xstart={extract_model.xstart}, "
+                     f"xstop={extract_model.xstop}, and src_coeff")
         else:
-            # No src_coeff, so print all xstart/xstop and ystart/ystop values
-            log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
-                     f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
+            # Only print ystart/ystop, because xstart/xstop are not used
+            log.info(f"ystart={extract_model.ystart}, "
+                     f"ystop={extract_model.ystop}, and src_coeff")
+    else:
+        # No src_coeff, so print all xstart/xstop and ystart/ystop values
+        log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
+                 f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
 
-        if extract_params['subtract_background']:
-            log.info("with background subtraction")
+    if extract_params['subtract_background']:
+        log.info("with background subtraction")
 
     ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
         background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq = \
         extract_model.extract(data, var_poisson, var_rnoise, var_flat,
-                              wl_array, verbose)
+                              wl_array)
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset)
@@ -3600,7 +3511,6 @@ def replace_bad_values(
 def nans_at_endpoints(
         wavelength: np.ndarray,
         dq: np.ndarray,
-        verbose: bool
 ) -> Tuple[np.ndarray, np.ndarray, slice]:
     """Flag NaNs in the wavelength array.
 
@@ -3619,9 +3529,6 @@ def nans_at_endpoints(
 
     dq : ndarray
         Data quality array.
-
-    verbose : bool
-        If True and the arrays were trimmed, log a message.
 
     Returns
     -------
@@ -3648,8 +3555,7 @@ def nans_at_endpoints(
         n_trimmed = flag[0][0] + nelem - (flag[0][-1] + 1)
 
         if n_trimmed > 0:
-            if verbose:
-                log.info(f"Output arrays have been trimmed by {n_trimmed} elements")
+            log.debug(f"Output arrays have been trimmed by {n_trimmed} elements")
 
             slc = slice(flag[0][0], flag[0][-1] + 1)
             new_wl = new_wl[slc]
@@ -3770,7 +3676,6 @@ def create_extraction(extract_ref_dict,
         raise ContinueError()
 
     # Loop over each integration in the input model
-    verbose = True  # for just the first integration
     shape = meta_source.data.shape
 
     if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
@@ -3788,7 +3693,6 @@ def create_extraction(extract_ref_dict,
                     slit,
                     integ,
                     prev_offset,
-                    verbose,
                     extract_params
                 )
         except InvalidSpectralOrderNumberError as e:
@@ -3926,8 +3830,6 @@ def create_extraction(extract_ref_dict,
             progress_msg_printed = True
         else:
             progress_msg_printed = False
-
-        verbose = False
 
     if not progress_msg_printed:
         if input_model.data.shape[0] == 1:

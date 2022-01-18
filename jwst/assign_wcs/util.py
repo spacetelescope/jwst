@@ -769,7 +769,7 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
                     ll = np.array([0, 0])
                     ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])
-                    inidx = np.all(np.logical_and(ll <= pts, pts <= ur), axis=1)
+                    inidx = np.all(np.logical_and(ll < pts, pts < (ur-1)), axis=1)
                     contained = len(pts[inidx])
 
                     if contained == 0:
