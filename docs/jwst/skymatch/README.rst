@@ -90,7 +90,7 @@ The ``skymatch`` step has the following optional arguments:
 * ``skymethod`` (str):
   The sky computation algorithm to be used.
   Allowed values: {``local``, ``global``, ``match``, ``global+match``}
-  (Default = ``global+match``)
+  (Default = ``match``)
 
 * ``match_down`` (boolean):
   Specifies whether the sky *differences* should

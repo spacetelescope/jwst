@@ -1,6 +1,10 @@
 1.4.2 (Unreleased)
 ==================
 
+skymatch
+--------
+
+- Changed default value of ``skymethod`` step parameter to 'match' [#6580]
 
 1.4.1 (2022-01-15)
 ==================
