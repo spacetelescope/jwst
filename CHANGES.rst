@@ -1,6 +1,17 @@
 1.4.2 (Unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Modified requirements for grism bounding box location to have
+  width greater than one pixel [#6579]
+
+extract_1d
+----------
+
+- Removed unnecessary verbose parameter being passed amongst
+  extract_1d functions, but not user-accessible [#6579]
 
 1.4.1 (2022-01-15)
 ==================
