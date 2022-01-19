@@ -4,14 +4,13 @@ import numpy.polynomial.polynomial as poly
 
 from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
+from BayesicFitting import SplinesModel
+from BayesicFitting import Fitter
 from BayesicFitting import SineModel
 from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
 
-from astropy.modeling.models import Spline1D
-from astropy.modeling.fitting import SplineExactKnotsFitter
-
-from .fitter import ChiSqOutlierRejectionFitter
+from numpy.linalg.linalg import LinAlgError
 
 import logging
 log = logging.getLogger(__name__)
@@ -24,7 +23,6 @@ NUM_KNOTS = 80  # number of knots for bkg model if no other info provided
 
 def find_nearest(array, value):
     """ Utility function to find the index of pixel with value in 'array' nearest to 'value'.
-
     Used by det_pixel_trace function
     """
     idx = (np.abs(array - value)).argmin()
@@ -78,17 +76,12 @@ def fill_wavenumbers(wnums):
     to estimate wavenumbers on the off-slice pixels.
     Note that these new values are physically meaningless but having them in the wavenum array
     stops the BayesicFitting package from crashing with a LinAlgErr.
-
     :Parameters:
-
     wnums: numpy array, required
         the wavenumber array
-
     :Returns:
-
     wnums_filled: numpy array
         the wavenumber array with off-slice pixels filled
-
     """
 
     # set the off-slice pixels to nans and get their indices
@@ -110,16 +103,11 @@ def fill_wavenumbers(wnums):
 
 def fit_quality_stats(stats):
     """Get simple statistics for the fits
-
     :Parameters:
-
     fit_stats: np.array
         the fringe contrast per fit
-
     :Returns:
-
    median, stddev, max of stat numpy array
-
     """
     return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
 
@@ -127,14 +115,10 @@ def fit_quality_stats(stats):
 def multi_sine(n):
     """
     Return a model composed of n sines
-
     :Parameters:
-
     n: int, required
         number of sines
-
     :Returns:
-
     mdl, BayesFitting model
         the model composed of n sines
     """
@@ -157,7 +141,6 @@ def multi_sine(n):
 
 def fit_envelope(wavenum, signal):
     """ Fit the upper and lower envelope of signal using a univariate spline
-
     :param wavenum:
     :param signal:
     :return:
@@ -194,7 +177,6 @@ def find_lines(signal, max_amp):
     """
     Take signal and max amp array, determine location of spectral
     features with amplitudes greater than max amp
-
     :param signal:
     :param max_amp:
     :return:
@@ -227,7 +209,6 @@ def find_lines(signal, max_amp):
 def check_res_fringes(res_fringe_fit, max_amp):
     """
     Check for regions where res fringe fit runs away, set to 0
-
     :param res_fringes:
     :return:
     """
@@ -269,18 +250,13 @@ def check_res_fringes(res_fringe_fit, max_amp):
 
 def interp_helper(mask):
     """Helper function to for interpolating in feature gaps.
-
     :Parameters:
-
     mask:  numpy array, required
         the 1D mask array (weights)
-
     :Returns:
-
         - logical indices of NaNs
         - index, a function, with signature indices= index(logical_indices),
           to convert logical indices to 'equivalent' indices
-
     """
     return mask < 1e-05, lambda z: z.nonzero()[0]
 
@@ -288,23 +264,16 @@ def interp_helper(mask):
 def make_knots(flux, nknots=20, weights=None):
     """Defines knot positions for piecewise models. This simply splits the array into sections. It does
     NOT take into account the shape of the data.
-
     :Parameters:
-
     flux: numpy array, required
         the flux array or any array of the same dimension
-
     nknots: int, optional, default=20
         the number of knots to create (excluding 0 and 1023)
-
     weights: numpy array, optional, default=None
         optionally supply a weights array. This will be used to add knots at the edge of bad pixels or features
-
     :Returns:
-
     knot_idx, numpy array
         the indices of the knots
-
     """
     log.debug("make_knots: creating {} knots on flux array".format(nknots))
 
@@ -387,36 +356,25 @@ def make_knots(flux, nknots=20, weights=None):
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
-
     :Parameters:
-
     flux:  numpy array, required
         the 1D array of fluxes
-
     weights: numpy array, required
         the 1D array of weights
-
     wavenum: numpy array, required
         the 1D array of wavenum
-
     order: int, optional, default=2
         the order of the Splines model
-
     ffreq: float, optional, default=None
         the expected fringe frequency, used to determine number of knots. If None,
         defaults to NUM_KNOTS constant
-
     :Returns:
-
     bg_fit: numpy array
         the fitted background
-
     bgindx: numpy array
         the location of the knots
-
     fitter: BayesicFitting object
         fitter object, mainly used for testing
-
     """
 
     # first get the weighted pixel fraction
@@ -445,29 +403,27 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     log.debug("fit_1d_background_complex: column has {} weighted fringe periods".format(nper_cor))
 
     # require at least 5 sine periods to fit
-    if nper < 5:
+    if nper_cor >= 5:
+        bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
+        bgknots = wavenum_scaled[bgindx].astype(float)
+        bg_model = SplinesModel(bgknots, order=order)
+        fitter = Fitter(wavenum_scaled, bg_model)
+    else:
         log.info(" not enough weighted data, no fit performed")
         return flux.copy(), np.zeros(flux.shape[0]), None
-
-    bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
-    bgknots = wavenum_scaled[bgindx].astype(float)
-
-    # Reverse (and clip) the fit data as scipy/astropy need monotone increasing data.
-    t = bgknots[::-1][1:-1]
-    x = wavenum_scaled[::-1]
-    y = flux[::-1]
-    w = weights[::-1]
-
-    # Fit the spline
-    spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
-    fitter = SplineExactKnotsFitter()
-    robust_fitter = ChiSqOutlierRejectionFitter(fitter)
-    bg_model = robust_fitter(spline_model, x, y, weights=w)
+    ftr = RobustShell(fitter, domain=10)
+    # sometimes the fits will fail for small segments because the model is too complex for the data,
+    # in this case return the original array
+    # NOTE: since iso-alpha no longer supported this shouldn't be an issue, but will leave here for now
+    try:
+        ftr.fit(flux.copy(), weights=weights.copy())
+    except LinAlgError:
+        return flux.copy(), np.zeros(flux.shape[0]), None
 
     # fit the background
-    bg_fit = bg_model(wavenum_scaled)
+    bg_fit = bg_model.result(wavenum_scaled)
     bg_fit *= np.where(weights.copy() > 1e-07, 1, 1e-08)
-
+    
     # linearly interpolate over the feature gaps if possible, stops issues later
     try:
         nz, z = interp_helper(weights)
@@ -476,37 +432,26 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     except ValueError:
         pass
 
-
-    return bg_fit, bgindx, fitter, x, y
+    return bg_fit, bgindx, fitter
 
 
 def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False):
     """Determine the post correction fringe residual
-
     Fit a single sine model to the corrected array to get the post correction fringe residual
-
     :Parameters:
-
     wavenum: numpy array
         the wavenum array
-
     res_fringes: numpy array
         the residual fringe fit data
-
     weights: numpy array
         the weights array
-
     ffreq: float, required
         the central scan frequency
-
     dffreq:  float, required
         the one-sided interval of scan frequencies
-
     :Returns:
-
     fringe_res_amp: numpy array
         the post correction fringe residual amplitude
-
     """
     ffreq, dffreq = 2.8, 0.2
 
@@ -549,41 +494,27 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res):
 
     """Fit the residual fringe signal.
-
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
-
     :Parameters:
-
     res_fringes:  numpy array, required
         the 1D array with residual fringes
-
     weights: numpy array, required
         the 1D array of weights
-
     ffreq: float, required
         the central scan frequency
-
     dffreq:  float, required
         the one-sided interval of scan frequencies
-
     min_nfringes: int, required
         the minimum number of fringes to check
-
     max_nfringes: int, required
         the maximum number of fringes to check
-
     pgram_res: float, optional
         resolution of the periodogram scan in cm-1
-
     wavenum: numpy array, required
         the 1D array of wavenum
-
-
     :Returns:
-
     res_fringe_fit: numpy array
         the residual fringe fit data
-
     """
     # initialize output to none
     res_fringe_fit = None
@@ -735,3 +666,4 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         freq_max = np.amax(fitted_frequencies)
 
         return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
+
