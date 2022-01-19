@@ -112,7 +112,7 @@ class Asn_Lv2ImageNonScience(
                     DMSAttrConstraint(
                         name='exp_type',
                         sources=['exp_type'],
-                        value='nrc_tacq'
+                        value='nrc_image'
                     ),
 
                 ],
