@@ -6,6 +6,11 @@ skymatch
 
 - Changed default value of ``skymethod`` step parameter to 'match' [#6580]
 
+outlier_detection
+-----------------
+
+- Added MIRI MRS cross bands to options for the type of IFU cubes being created [#6666]
+
 1.4.1 (2022-01-15)
 ==================
 
