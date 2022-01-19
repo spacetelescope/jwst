@@ -7,6 +7,12 @@ assign_wcs
 - Modified requirements for grism bounding box location to have
   width greater than one pixel [#6579]
 
+associations
+------------
+
+- Changed restriction on Level2b creation for ``NRC_TACQ`` exposures
+  to ``NRC_IMAGE`` to allow asn creation for tacq but not science [#6681]
+
 extract_1d
 ----------
 
