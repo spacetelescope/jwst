@@ -34,7 +34,7 @@ class CubeBuildStep (Step):
 
     spec = """
          channel = option('1','2','3','4','all',default='all') # Channel
-         band = option('short','medium','long','all',default='all') # Band
+         band = option('short','medium','long','short-medium','short-long','medium-short','medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
          output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
