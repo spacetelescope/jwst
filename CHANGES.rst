@@ -1,6 +1,10 @@
 1.4.2 (Unreleased)
 ==================
 
+outlier_detection
+-----------------
+
+- Added MIRI MRS cross bands to options for the type of ifu cubes being created [#6666]
 
 1.4.1 (2022-01-15)
 ==================
