@@ -79,7 +79,6 @@ class OutlierDetectionIFU(OutlierDetection):
                 nc = len(this_channel)
                 for k in range(nc):
                     self.band_name.append('ch' + this_channel[k] + '_' + this_subchannel)
-
             elif self.instrument == 'NIRSPEC':
                 self.gratings.append(self.input_models[i].meta.instrument.grating.lower())
             else:
@@ -87,7 +86,7 @@ class OutlierDetectionIFU(OutlierDetection):
                 raise ErrorWrongInstrument('Instrument must be MIRI or NIRSPEC')
         if self.instrument == 'MIRI':
             band_no_repeat = list(set(self.band_name))
-            bands = ['short','medium','long']
+            bands = ['short','medium','long','short-medium','short-long','medium-short','medium-long','long-short','long-medium']
             channels = ['1','2','3','4']
             for this_band in band_no_repeat:
                 for j in channels:
@@ -95,11 +94,11 @@ class OutlierDetectionIFU(OutlierDetection):
                     if check_channel in this_band:
                         self.channels.append(j)
                 for k in bands:
-                    if k in this_band:
+                    compare_band = this_band[4:]  # remove the channel part of the name to see which band we have
+                    if k == compare_band:
                         self.subchannels.append(k)
             self.ifu_band1 = self.channels
             self.ifu_band2 = self.subchannels
-
         elif self.instrument == 'NIRSPEC':
             self.gratings = list(set(self.gratings))
             self.ifu_band1 = self.gratings
