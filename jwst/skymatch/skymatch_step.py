@@ -34,7 +34,7 @@ class SkyMatchStep(Step):
 
     spec = """
         # General sky matching parameters:
-        skymethod = option('local', 'global', 'match', 'global+match', default='global+match') # sky computation method
+        skymethod = option('local', 'global', 'match', 'global+match', default='match') # sky computation method
         match_down = boolean(default=True) # adjust sky to lowest measured value?
         subtract = boolean(default=False) # subtract computed sky from image data?
 

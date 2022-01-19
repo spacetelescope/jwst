@@ -7,6 +7,11 @@ associations
 - Changed restriction on Level2b creation for ``NRC_TACQ`` exposures
   to ``NRC_IMAGE`` to allow asn creation for tacq but not science [#6681]
 
+skymatch
+--------
+
+- Changed default value of ``skymethod`` step parameter to 'match' [#6580]
+
 outlier_detection
 -----------------
 
