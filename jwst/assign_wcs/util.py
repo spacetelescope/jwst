@@ -772,8 +772,8 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     # placed into the subarray extent.
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
                     subarr_extent = np.array([[0, 0],
-                                            [input_model.meta.subarray.ysize - 1,
-                                             input_model.meta.subarray.xsize - 1]])
+                                             [input_model.meta.subarray.ysize - 1,
+                                              input_model.meta.subarray.xsize - 1]])
 
                     if input_model.meta.wcsinfo.dispersion_direction == 1:
                         # X-axis is dispersion direction
@@ -784,10 +784,10 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                         disp_col = 0
                         xdisp_col = 1
 
-                    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and (
-                                    subarr_extent[1, disp_col] - pts[0, disp_col] > 0)
-                    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and (
-                                    subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0)
+                    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and \
+                                     (subarr_extent[1, disp_col] - pts[0, disp_col] > 0)
+                    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and \
+                                      (subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0)
 
                     contained = dispaxis_check and xdispaxis_check
 
