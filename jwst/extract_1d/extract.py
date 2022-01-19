@@ -680,7 +680,7 @@ def aperture_from_wcs(wcs: WCS) -> Union[NamedTuple, None]:
         bounding_box = wcs.bounding_box
         got_bounding_box = True
     except AttributeError:
-        log.info("wcs.bounding_box not found; using wcs.domain instead.")
+        log.debug("wcs.bounding_box not found; using wcs.domain instead.")
 
         bounding_box = (
             (wcs.domain[0]['lower'], wcs.domain[0]['upper']),
@@ -1507,14 +1507,14 @@ class ExtractModel(ExtractBase):
                 # were specified, turn it off
                 if self.bkg_coeff is None:
                     self.subtract_background = False
-                    log.info("Skipping background subtraction because background regions are not defined.")
+                    log.debug("Skipping background subtraction because background regions are not defined.")
             else:
                 # If background subtraction was NOT requested, even though background region(s)
                 # were specified, blank out the bkg region info
                 if self.bkg_coeff is not None:
                     self.bkg_coeff = None
-                    log.info("Background subtraction was specified in the reference file,")
-                    log.info("but has been overridden by the step parameter.")
+                    log.debug("Background subtraction was specified in the reference file,")
+                    log.debug("but has been overridden by the step parameter.")
 
     def nominal_locn(self, middle: int, middle_wl: float) -> Union[float, None]:
         """Find the nominal cross-dispersion location of the target spectrum.
@@ -2410,7 +2410,7 @@ class ImageExtractModel(ExtractBase):
         n_nan = nan_mask.sum(dtype=np.intp)
 
         if n_nan > 0:
-            log.info(f"{n_nan} NaNs in wavelength array")
+            log.debug(f"{n_nan} NaNs in wavelength array")
 
             wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq)
             temp_flux = temp_flux[nan_slc]
