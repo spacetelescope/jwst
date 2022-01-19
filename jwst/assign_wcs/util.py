@@ -766,13 +766,34 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     exclude = False
                     ispartial = False
 
+                    # Here we check to ensure that the extraction region `pts`
+                    # has at least two pixels of width in the dispersion
+                    # direction, and one in the cross-dispersed direction when
+                    # placed into the subarray extent.
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
-                    ll = np.array([0, 0])
-                    ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])
-                    inidx = np.all(np.logical_and(ll <= pts, pts <= ur), axis=1)
-                    contained = len(pts[inidx])
+                    subarr_extent = np.array([[0, 0],
+                                             [input_model.meta.subarray.ysize - 1,
+                                              input_model.meta.subarray.xsize - 1]])
 
-                    if contained == 0:
+                    if input_model.meta.wcsinfo.dispersion_direction == 1:
+                        # X-axis is dispersion direction
+                        disp_col = 1
+                        xdisp_col = 0
+                    else:
+                        # Y-axis is dispersion direction
+                        disp_col = 0
+                        xdisp_col = 1
+
+                    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and \
+                                     (subarr_extent[1, disp_col] - pts[0, disp_col] > 0)
+                    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and \
+                                      (subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0)
+
+                    contained = dispaxis_check and xdispaxis_check
+
+                    inidx = np.all(np.logical_and(subarr_extent[0] <= pts, pts <= subarr_extent[1]), axis=1)
+
+                    if not contained:
                         exclude = True
                         log.info("Excluding off-image object: {}, order {}".format(obj.label, order))
                     elif contained >= 1:

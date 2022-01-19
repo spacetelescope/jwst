@@ -1,21 +1,33 @@
 1.4.2 (Unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Modified requirements for grism bounding box location to have
+  width greater than one pixel [#6579]
+
 associations
 ------------
 
 - Changed restriction on Level2b creation for ``NRC_TACQ`` exposures
   to ``NRC_IMAGE`` to allow asn creation for tacq but not science [#6681]
 
-skymatch
---------
+extract_1d
+----------
 
-- Changed default value of ``skymethod`` step parameter to 'match' [#6580]
+- Removed unnecessary verbose parameter being passed amongst
+  extract_1d functions, but not user-accessible [#6579]
 
 outlier_detection
 -----------------
 
 - Added MIRI MRS cross bands to options for the type of IFU cubes being created [#6666]
+
+skymatch
+--------
+
+- Changed default value of ``skymethod`` step parameter to 'match' [#6580]
 
 1.4.1 (2022-01-15)
 ==================
