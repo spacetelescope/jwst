@@ -13,6 +13,16 @@ extract_1d
 - Removed unnecessary verbose parameter being passed amongst
   extract_1d functions, but not user-accessible [#6579]
 
+outlier_detection
+-----------------
+
+- Added MIRI MRS cross bands to options for the type of IFU cubes being created [#6666]
+
+skymatch
+--------
+
+- Changed default value of ``skymethod`` step parameter to 'match' [#6580]
+
 1.4.1 (2022-01-15)
 ==================
 
