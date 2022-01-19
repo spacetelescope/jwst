@@ -1,6 +1,12 @@
 1.4.2 (Unreleased)
 ==================
 
+associations
+------------
+
+- Changed restriction on Level2b creation for ``NRC_TACQ`` exposures
+  to ``NRC_IMAGE`` to allow asn creation for tacq but not science [#6681]
+
 outlier_detection
 -----------------
 
