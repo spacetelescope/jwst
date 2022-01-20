@@ -117,7 +117,6 @@ def test_miri_mrs_12A():
 
 def test_miri_mrs_12B():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="MEDIUM")
-    print(hdul[0].header)
     im = create_datamodel(hdul)
     run_test(im)
 
