@@ -20,10 +20,9 @@ def run_pipeline(rtdata_module):
     args = ["jwst.pipeline.Spec2Pipeline", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
-            "--steps.extract_2d.save_results=true",
             "--steps.flat_field.save_results=true",
-            # Turn off extract_1d until APCORR ref file issue is fixed
-            "--steps.extract_1d.skip=true"]
+            # Hardwire extract1d ref file selection until CRDS-525 is implemented
+            "--steps.extract_1d.override_extract1d=/grp/crds/jwst/references/jwst/jwst_nirspec_extract1d_0001.asdf"]
     Step.from_cmdline(args)
 
     return rtdata
@@ -31,7 +30,7 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "msa_flagging", "flat_field", "cal"])
+    "assign_wcs", "msa_flagging", "flat_field", "cal", "s3d", "x1d"])
 def test_nirspec_lamp_ifu_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
        NIRSpec lamp exposure in IFU mode."""

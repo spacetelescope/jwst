@@ -19,13 +19,8 @@ def run_pipeline(rtdata_module):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["jwst.pipeline.Spec2Pipeline", rtdata.input,
             "--steps.assign_wcs.save_results=true",
-            "--steps.msa_flagging.save_results=true",
             "--steps.extract_2d.save_results=true",
-            "--steps.flat_field.save_results=true",
-            # The pars file skips resampling by default.  We want to test it.
-            "--steps.resample_spec.skip=False",
-            # Skip extract_1d until the APCORR ref file issue is fixed.
-            "--steps.extract_1d.skip=True",]
+            "--steps.flat_field.save_results=true",]
     Step.from_cmdline(args)
 
     return rtdata
@@ -33,7 +28,7 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "extract_2d", "flat_field", "cal", "s2d"])
+    "assign_wcs", "extract_2d", "flat_field", "cal", "s2d", "x1d"])
 def test_nirspec_lamp_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
        NIRSpec lamp exposure in Fixed-Slit mode."""
