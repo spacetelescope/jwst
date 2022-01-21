@@ -12,7 +12,6 @@ from astropy.io import fits
 
 from . import utils
 from . import old_utils
-import matplotlib.pyplot as plt
 # import astropy.units as u
 
 import logging
@@ -195,8 +194,8 @@ class ResidualFringeCorrection():
                 ffreq = slice_row['ffreq'][0]
                 dffreq = slice_row['dffreq'][0]
                 min_nfringes = slice_row['min_nfringes'][0]
-                min_nfringes[:] = 1
                 max_nfringes = slice_row['max_nfringes'][0]
+                min_nfringes[:] = 1
                 min_snr = slice_row['min_snr'][0]
                 pgram_res = slice_row['pgram_res'][0]
 
@@ -288,26 +287,9 @@ class ResidualFringeCorrection():
                                         # check if snr criteria is met for fringe component, should always be true for fringe 1
                                         if snr2 > min_snr[fn]:
                                             log.debug(" fitting spectral baseline")
-
-                                            #bg_fit, bgindx, fitter, x,y = \
-                                            #    utils.fit_1d_background_complex(proc_data, weights_feat,
-                                            #                                    col_wnum, ffreq=ffreq[fn])
-                                            #old_bg_fit, old_bgindx, old_fitter = \
                                             bg_fit, bgindx, fitter = \
                                                 old_utils.fit_1d_background_complex(proc_data, weights_feat,
                                                                                 col_wnum, ffreq=ffreq[fn])
-                                            #plot = False
-                                            #if (col == 128 or col == 129):
-                                            #    plot = True
-                                            #if  plot: 
-                                            #    plt.figure(figsize=(8,8))
-                                            #    plt.xlabel("Wavenum")
-                                            #    plt.ylabel("Flux")
-                                            #    plt.title("Column = " + str(col) )
-                                            #    plt.scatter(x,proc_data)
-                                            #    plt.plot(x,bg_fit,color='green')
-                                            #    plt.plot(x,old_bg_fit,color='red',linestyle="dotted")
-                                            #    plt.show()
 
                                             # get the residual fringes as fraction of signal
                                             res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
