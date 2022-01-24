@@ -102,22 +102,6 @@ class Asn_Lv2ImageNonScience(
             Constraint_Base(),
             Constraint_Image_Nonscience(),
             Constraint_Single_Science(self.has_science),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='dms_note',
-                        sources=['dms_note'],
-                        value=['wfsc_los_jitter'],
-                    ),
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrc_image'
-                    ),
-
-                ],
-                reduce=Constraint.notall
-            )
         ])
 
         # Now check and continue initialization.
@@ -984,6 +968,22 @@ class Asn_Lv2WFSC(
             Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science),
             Constraint_WFSC(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='dms_note',
+                        sources=['dms_note'],
+                        value=['wfsc_los_jitter'],
+                    ),
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrc_image'
+                    ),
+
+                ],
+                reduce=Constraint.notall
+            )
         ])
 
         # Now check and continue initialization.
