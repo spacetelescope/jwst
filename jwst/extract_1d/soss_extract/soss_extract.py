@@ -436,6 +436,10 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # Model the order 1 and order 2 trace separately.
     tracemodels = dict()
+
+    # Only model pixel that will be extracted (inside box aperture)
+    global_mask = np.all(mask_trace_profile, axis=0) | refmask
+
     for i_order, order in enumerate(order_list):
 
         log.debug('Building the model image of {}.'.format(order))
@@ -457,20 +461,16 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
         # And give the identity kernel to the Engine (so no convolution)
         ref_file_order[3] = [np.array([1.])]
 
-        # TODO Not useful?
-        # Only model orders with contamination levels greater than threshold
-        idx = np.isfinite(contribution[order])  # To avoid warnings with invalid values...
-        is_contaminated = np.zeros_like(contribution[order], dtype=bool)
-        is_contaminated[idx] = (contribution[order][idx] > threshold)
-
-        # And make sure the full aperture is modeled
-        mask_order = (mask_trace_profile[i_order] & ~is_contaminated)
+#         # TODO Not useful?
+#         # Only model orders with contamination levels greater than threshold
+#         idx = np.isfinite(contribution[order])  # To avoid warnings with invalid values...
+#         is_contaminated = np.zeros_like(contribution[order], dtype=bool)
+#         is_contaminated[idx] = (contribution[order][idx] > threshold)
 
         # Build model of the order
         model = ExtractionEngine(*ref_file_order,
                                  wave_grid=grid_order,
-                                 mask_trace_profile=[mask_order],
-                                 global_mask=refmask,
+                                 global_mask=global_mask,
                                  orders=[i_order + 1])
 
         # Project on detector and save in dictionary
