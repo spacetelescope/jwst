@@ -389,6 +389,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     models = {order: engine_for_estimate.rebuild(estimate, i_orders=[idx_ord], fill_value=np.nan)
               for idx_ord, order in enumerate(order_list)}
     total = np.nansum([models[order] for order in order_list], axis=0)
+    total = np.where((total != 0), total, np.nan)
     contribution = {order: models[order] / total for order in order_list}
 
     log.info('Extracting using transformation parameters {}'.format(transform))
@@ -397,10 +398,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
 
     # Initialize the Engine.
-    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, mask_trace_profile=mask_trace_profile, c_kwargs=c_kwargs)
-
-    # Save mask for later
-    global_mask = engine.general_mask
+    engine = ExtractionEngine(*ref_file_args,
+                              wave_grid=wave_grid,
+                              mask_trace_profile=mask_trace_profile,
+                              global_mask=scimask,
+                              c_kwargs=c_kwargs)
 
     if tikfac is None:
 
@@ -411,19 +413,19 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
         factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
         # Find the tikhonov factor.
         # TODO check if scimask should be given before
-        tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
+        tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-        tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
+        tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
     # Run the extract method of the Engine.
-    f_k = engine.__call__(data=scidata_bkg, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
+    f_k = engine.__call__(data=scidata_bkg, error=scierr, tikhonov=True, factor=tikfac)
 
     # Compute the log-likelihood of the best fit.
     logl = engine.compute_likelihood(f_k, same=False)
@@ -455,17 +457,21 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
         # And give the identity kernel to the Engine (so no convolution)
         ref_file_order[3] = [np.array([1.])]
 
+        # TODO Not useful?
         # Only model orders with contamination levels greater than threshold
         idx = np.isfinite(contribution[order])  # To avoid warnings with invalid values...
         is_contaminated = np.zeros_like(contribution[order], dtype=bool)
         is_contaminated[idx] = (contribution[order][idx] > threshold)
 
+        # And make sure the full aperture is modeled
+        mask_order = (mask_trace_profile[i_order] & ~is_contaminated)
+
         # Build model of the order
-        model_kwargs = {'wave_grid': grid_order,
-                        'mask_trace_profile': [~is_contaminated],
-                        'global_mask': refmask | global_mask,
-                        'orders': [i_order + 1]}
-        model = ExtractionEngine(*ref_file_order, **model_kwargs)
+        model = ExtractionEngine(*ref_file_order,
+                                 wave_grid=grid_order,
+                                 mask_trace_profile=[mask_order],
+                                 global_mask=refmask,
+                                 orders=[i_order + 1])
 
         # Project on detector and save in dictionary
         tracemodels[order] = model.rebuild(flux_order)
