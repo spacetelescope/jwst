@@ -311,7 +311,7 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
 
 
 # TODO Update docstring
-def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, transform=None,
+def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
                 tikfac=None, threshold=1e-4, n_os=2, wave_grid=None, rtol=1e-3, max_grid_size=1000000):
     """Perform the spectral extraction on a single image.
 
@@ -354,7 +354,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
     logl : float
         Log likelihood value associated with the Tikhonov factor selected.
     """
-    # TODO enlever _mask_wv_map_centroid_outside vue que la wave_grid devrait régler ce proobleme
+    # TODO enlever _mask_wv_map_centroid_outside vue que la wave_grid devrait régler ce probleme
 
     # Orders to simulate
     order_list = ['Order 1', 'Order 2']
@@ -470,11 +470,38 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, t
         # Build model of the order
         model = ExtractionEngine(*ref_file_order,
                                  wave_grid=grid_order,
-                                 global_mask=global_mask,
+                                 mask_trace_profile=[global_mask],
                                  orders=[i_order + 1])
 
         # Project on detector and save in dictionary
         tracemodels[order] = model.rebuild(flux_order)
+
+    # ###############################
+    # Model remaining part of order 2
+    # ###############################
+    if subarray != 'SUBSTRIP96':
+        idx_order2 = 1
+        order = 'Order 2'
+        log.info(f'Generate model for bluemost part of order 2')
+
+        # Take only the second order's specific ref_files
+        ref_file_order = [[ref_f[idx_order2]] for ref_f in ref_file_args]
+
+        # Mask for the fit. All valid pixels inside box aperture
+        mask_fit = mask_trace_profile[idx_order2] | scimask
+        # and extract only what was not already modeled
+        mask_fit |= (tracemodels[order] != 0)
+
+        # Mask for what we want to model (or rebuild),
+        # being all pixels that will be extracted (both orders)
+        # and that order 2 contribution is not already modeled.
+        mask_rebuild = global_mask | (tracemodels[order] != 0)
+
+        # Model
+        model = model_single_order(scidata_bkg, scierr, ref_file_order, mask_fit, mask_rebuild, order)
+
+        # Add to tracemodels
+        tracemodels[order] += model
 
     return tracemodels, tikfac, logl, wave_grid
 
@@ -509,7 +536,7 @@ def decontaminate_image(scidata_bkg, tracemodels, subarray):
 
     # Which orders to extract.
     if subarray == 'SUBSTRIP96':
-        order_list = [1]
+        order_list = [1, 2]
     else:
         order_list = [1, 2, 3]
 
@@ -541,101 +568,74 @@ def decontaminate_image(scidata_bkg, tracemodels, subarray):
     return decontaminated_data
 
 
-def model_bad_pixels(decontaminated_data, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None):
-    """Model bad pixels using ATOCA on individual decontaminated orders."""
-
-    # Which orders to extract.
-    if subarray == 'SUBSTRIP96':
-        order_list = ['Order 1']
-    else:
-        # Note: eventually, order 3 should be included here, when available in ref_file_args
-        order_list = ['Order 1', 'Order 2']
-
-    # Prepare and unpack needed reference file arguments
-    wave_maps_list, trace_profiles_list, _, _ = get_ref_file_args(ref_files, transform)
-    # Move them to a dictionary for easier manipulation
-    wave_maps, trace_profiles = dict(), dict()
-    for idx, order in enumerate(order_list):
-        wave_maps[order] = wave_maps_list[idx]
-        trace_profiles[order] = trace_profiles_list[idx]
+# TODO Add docstring
+# TODO Add threshold like in model_image? TO use with the rough (but stable) estimate
+def model_single_order(data_order, err_order, ref_file_args, mask_fit, mask_rebuild, order):
 
     # The throughput and kernel is not needed here; set them so they have no effect on the extraction.
     def throughput(wavelength):
         return np.ones_like(wavelength)
     kernel = np.array([1.])
 
-    # Some error values are 0, we need to mask those pixels for the extraction engine.
-    scimask = scimask | ~(scierr > 0)
+    # Set reference file arguments
+    ref_file_args[2] = [throughput]
+    ref_file_args[3] = [kernel]
 
-    # Create dictionaries for the output models.
-    bad_pix_models = dict()
+    # ###########################
+    # First, generate an estimate
+    # ###########################
+    # Define wavelength grid with oversampling of 1 to make sure the solution will be stable
+    wave_grid = grid_from_map(ref_file_args[0][0], ref_file_args[1][0], n_os=1)
 
-    # Model each order from order list
-    for order in order_list:
+    # Initialize the engine
+    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask_fit)
 
-        log.info(f'Generate bad pixel model for {order}')
+    # Extract estimate
+    spec_estimate = engine.__call__(data=data_order, error=err_order)
 
-        # Decontaminated order image to model
-        scidata = decontaminated_data[order]
+    # Interpolate
+    idx = np.isfinite(spec_estimate)
+    estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
 
-        # Define mask based on box aperture (we want to model the pixels that will be extracted)
-        mask_trace_profile = ~(box_weights[order] > 0)
-        mask = (mask_trace_profile | scimask)
+    # ##################################################
+    # Second, do the extraction to get the best estimate
+    # ##################################################
+    # Define wavelength grid with oversampling of 5 (should be enough)
+    wave_grid = grid_from_map(ref_file_args[0][0], ref_file_args[1][0], n_os=5)
 
-        # Set reference file arguments for this order
-        ref_file_args = [wave_maps[order]], [trace_profiles[order]], [throughput], [kernel]
+    # Initialize the Engine.
+    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask_fit)
 
-        # ###########################
-        # First, generate an estimate
-        # ###########################
-        # Define wavelength grid with oversampling of 1 to make sure the solution will be stable
-        wave_grid = grid_from_map(wave_maps[order], trace_profiles[order], n_os=1)
+    # Find the tikhonov factor.
+    # Initial pass 8 orders of magnitude with 10 grid points.
+    factors = engine.estimate_tikho_factors(estimate_spl, log_range=[-4, 4], n_points=10)
+    tiktests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
+    tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
 
-        # Initialize the engine
-        engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask)
+    # Refine across 4 orders of magnitude.
+    tikfac = np.log10(tikfac)
+    factors = np.logspace(tikfac - 2, tikfac + 2, 20)
+    tiktests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
+    tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
 
-        # Extract estimate
-        spec_estimate = engine.__call__(data=scidata, error=scierr)
+    # Run the extract method of the Engine.
+    f_k = engine.__call__(data=data_order, error=err_order, tikhonov=True, factor=tikfac)
 
-        # Interpolate
-        idx = np.isfinite(spec_estimate)
-        estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
+    # ##########################################
+    # Third, rebuild trace, including bad pixels
+    # ##########################################
+    # Initialize the Engine.
+    engine = ExtractionEngine(*ref_file_args,
+                              wave_grid=wave_grid,
+                              orders=[order],
+                              mask_trace_profile=[mask_rebuild])
 
-        # ##################################################
-        # Second, do the extraction to get the best estimate
-        # ##################################################
-        # Define wavelength grid with oversampling of 5 (should be enough)
-        wave_grid = grid_from_map(wave_maps[order], trace_profiles[order], n_os=5)
+    # Project on detector and save in dictionary
+    model = engine.rebuild(f_k)
+    # Check all values are valid (set to zero if not)
+    model = np.where(np.isfinite(model), model, 0.)
 
-        # Initialize the Engine.
-        engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask)
-
-        # Find the tikhonov factor.
-        # Initial pass 8 orders of magnitude with 10 grid points.
-        factors = engine.estimate_tikho_factors(estimate_spl, log_range=[-4, 4], n_points=10)
-        tiktests = engine.get_tikho_tests(factors, data=scidata, error=scierr)
-        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
-
-        # Refine across 4 orders of magnitude.
-        tikfac = np.log10(tikfac)
-        factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-        tiktests = engine.get_tikho_tests(factors, data=scidata, error=scierr)
-        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
-
-        # Run the extract method of the Engine.
-        f_k = engine.__call__(data=scidata, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
-
-        # ##########################################
-        # Third, rebuild trace, including bad pixels
-        # ##########################################
-        # Initialize the Engine.
-        engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=refmask)
-
-        # Project on detector and save in dictionary
-        model_order = engine.rebuild(f_k)
-        bad_pix_models[order] = np.where(np.isfinite(model_order), model_order, 0.)
-
-    return bad_pix_models
+    return model
 
 
 # TODO Update docstring
@@ -851,7 +851,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             kwargs['wave_grid'] = soss_kwargs['wave_grid']
             kwargs['threshold'] = soss_kwargs['threshold']
 
-            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, **kwargs)
+            result = model_image(scidata_bkg, scierr, scimask, refmask,
+                                 ref_files, box_weights, subarray, **kwargs)
             tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'] = result
 
         else:
@@ -864,16 +865,15 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
 
         if soss_kwargs['bad_pix'] == 'model':
-            # Generate new trace models for each individual decontaminated orders
-            bad_pix_models = model_bad_pixels(decontaminated_data, scierr, scimask, refmask,
-                                              ref_files, box_weights, subarray, transform)
+            # Use the same tracemodels to model bad pixels
+            bad_pix_models = tracemodels
         else:
             bad_pix_models = None
 
         # Use the bad pixel models to perform a de-contaminated extraction.
         kwargs = dict()
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
-        kwargs['tracemodels'] = tracemodels
+        kwargs['tracemodels'] = bad_pix_models
         result = extract_image(decontaminated_data, scierr, scimask, box_weights, **kwargs)
         fluxes, fluxerrs, npixels = result
 
@@ -983,7 +983,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 kwargs['wave_grid'] = soss_kwargs['wave_grid']
                 kwargs['threshold'] = soss_kwargs['threshold']
 
-                result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, **kwargs)
+                result = model_image(scidata_bkg, scierr, scimask, refmask,
+                                     ref_files, box_weights, subarray, **kwargs)
                 tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'] = result
 
             else:
@@ -997,15 +998,14 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
             if soss_kwargs['bad_pix'] == 'model':
                 # Generate new trace models for each individual decontaminated orders
-                bad_pix_models = model_bad_pixels(decontaminated_data, scierr, scimask, refmask,
-                                                  ref_files, box_weights, subarray, transform)
+                bad_pix_models = tracemodels
             else:
                 bad_pix_models = None
 
             # Use the bad pixel models to perform a de-contaminated extraction.
             kwargs = dict()
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
-            kwargs['tracemodels'] = tracemodels
+            kwargs['tracemodels'] = bad_pix_models
             result = extract_image(decontaminated_data, scierr, scimask, box_weights, **kwargs)
             fluxes, fluxerrs, npixels = result
 
