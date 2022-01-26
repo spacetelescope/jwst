@@ -6,8 +6,8 @@ from .. import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+def set_source_type(input_model, source_type=None):
 
-def set_source_type(input_model, source_type):
     """
     Set source_type based on APT input, user specification, exposure type,
     or default values.
@@ -20,7 +20,7 @@ def set_source_type(input_model, source_type):
                   or `~jwst.datamodels.SlitModel`
         The data model to be processed.
 
-    source_type : string ['POINT'|'EXTENDED']
+    source_type : string ['POINT'|'EXTENDED']; optional
         User-requested value for source type
 
     Returns

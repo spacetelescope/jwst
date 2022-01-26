@@ -14,7 +14,7 @@ class SourceTypeStep(Step):
     methods to use. Input comes from either the SRCTYAPT keyword value, which
     is populated from user info in the APT, or the NIRSpec MSA planning tool.
     The source type can be also specified on the command line for exposures
-    containing a single pre-defined target.  
+    containing a single pre-defined target.
     """
 
     spec = """
