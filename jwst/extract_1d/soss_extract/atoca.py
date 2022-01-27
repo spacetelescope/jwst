@@ -47,7 +47,7 @@ class _BaseOverlap:
     def __init__(self, wave_map, trace_profile, throughput, kernels,
                  orders=None, global_mask=None, mask_trace_profile=None, 
                  wave_grid=None, wave_bounds=None, n_os=2,
-                 threshold=1e-5, c_kwargs=None):
+                 threshold=1e-3, c_kwargs=None):
         """
         Parameters
         ----------
@@ -76,10 +76,11 @@ class _BaseOverlap:
         global_mask : (N, M) array_like boolean, optional
             Boolean mask of the detector pixels to mask for every extraction.
         orders: list, optional
-            Boolean Mask of the detector pixels to mask for every extraction.
-        mask_aperture: (N_ord, N, M) list or array of 2-D arrays[bool], optional
+            Boolean Mask of the detector pixels to mask for every extraction. 
+            Should not be related to a specific order (if so, use `mask_trace_profile` instead).
+        mask_trace_profile: (N_ord, N, M) list or array of 2-D arrays[bool], optional
             A list or array of the pixel that need to be used for extraction,
-            for each order on the detector. It has to have the same (N_ord, N, M) as `aperture`.
+            for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
             If not given, `threshold` will be applied on spatial profiles to define the masks.
         orders: list, optional:
             List of orders considered. Default is orders = [1, 2]
@@ -94,10 +95,10 @@ class _BaseOverlap:
             Oversampling rate. If `wave_grid`is None, it will be used to
             generate a grid. Default is 2.
         threshold : float, optional:
-            The pixels where the estimated spatial profile is less than
-            this value will considered contaminated and will be masked.
-            If `mask_aperture` is not specified, the pixels where the spatial profile
-            is less than this value will define the mask. Default is 1e-5.
+            The contribution of any order on a pixel is considered significant if
+            its estimated spatial profile is greater than this threshold value.
+            If it is not properly modeled (not covered by the wavelength grid), 
+            it will be masked. Default is 1e-3.
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
@@ -141,10 +142,11 @@ class _BaseOverlap:
         self.update_wave_map(wave_map)
         self.update_trace_profile(trace_profile)
 
-        # Set the mask based on apertures and save
+        # Set the mask based on trace profiles and save
         if mask_trace_profile is None:
-            # Mask according to the spatial profile threshold.
-            mask_trace_profile = np.array([tr_pro_ord < threshold for tr_pro_ord in trace_profile])
+            # No mask (False everywhere)
+            log.warning('`mask_trace_profile` was not given. Not optimal.')
+            mask_trace_profile = np.array([np.zeros(self.data_shape, dtype=bool) for _ in orders])
         self.mask_trace_profile = mask_trace_profile
 
         # Generate a wavelength grid if none was provided.
@@ -402,7 +404,7 @@ class _BaseOverlap:
         needed_attr = self.get_attributes(*args)
         threshold, n_orders, throughput, mask_trace_profile, wave_map, trace_profile = needed_attr
 
-        # Convert mask_aperture from list to array (easier for coding)
+        # Convert list to array (easier for coding)
         mask_trace_profile = np.array(mask_trace_profile)
 
         # Mask pixels not covered by the wavelength grid.
@@ -1490,10 +1492,11 @@ class ExtractionEngine(_BaseOverlap):
         error : (N, M) array_like, optional
             Estimate of the error on each pixel. Default is one everywhere.
         mask : (N, M) array_like boolean, optional
-            Boolean mask of the bad pixels on the detector.
-        mask_aperture: (N_ord, N, M) list or array of 2-D arrays[bool], optional
+            Boolean Mask of the detector pixels to mask for every extraction. 
+            Should not be related to a specific order (if so, use `mask_trace_profile` instead).
+        mask_trace_profile: (N_ord, N, M) list or array of 2-D arrays[bool], optional
             A list or array of the pixel that need to be used for extraction,
-            for each order on the detector. It has to have the same (N_ord, N, M) as `aperture`.
+            for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
             If not given, `threshold` will be applied on spatial profiles to define the masks.
         orders: list, optional
             List of orders considered. Default is orders = [1, 2]
@@ -1507,10 +1510,10 @@ class ExtractionEngine(_BaseOverlap):
             Oversampling rate. If `wave_grid`is None, it will be used to
             generate a grid. Default is 2.
         threshold : float, optional:
-            The pixels where the estimated spatial profile is less than
-            this value will considered contaminated and will be masked.
-            If `mask_aperture` is not specified, the pixels where the spatial profile
-            is less than this value will define the mask. Default is 1e-5.
+            The contribution of any order on a pixel is considered significant if
+            its estimated spatial profile is greater than this threshold value.
+            If it is not properly modeled (not covered by the wavelength grid), 
+            it will be masked. Default is 1e-3.
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
