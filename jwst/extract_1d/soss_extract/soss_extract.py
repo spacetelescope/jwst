@@ -190,7 +190,7 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tra
     ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [np.array([1.])]
     kwargs = {'wave_grid': wave_grid,
               'orders': [1],
-              'global_mask': mask}
+              'mask_trace_profile': [mask]}
     engine = ExtractionEngine(*ref_file_args, **kwargs)
 
     # Extract estimate
@@ -310,6 +310,7 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
     return combined_grid
 
 
+# TODO Model order 2 for decontamination (wider estimate)
 # TODO Update docstring
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
                 tikfac=None, threshold=1e-4, n_os=2, wave_grid=None, rtol=1e-3, max_grid_size=1000000):
@@ -402,6 +403,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
                               wave_grid=wave_grid,
                               mask_trace_profile=mask_trace_profile,
                               global_mask=scimask,
+                              threshold=threshold,
                               c_kwargs=c_kwargs)
 
     if tikfac is None:
@@ -638,6 +640,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit, mask_rebu
     return model
 
 
+# Remove bad pixels that are not modeled for pixel number
 # TODO Update docstring
 def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='model', tracemodels=None):
     """Perform the box-extraction on the image, while using the trace model to
