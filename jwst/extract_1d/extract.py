@@ -2887,7 +2887,7 @@ def do_extract1d(
                     log.info("Spectral order 0 is a direct image, skipping ...")
                     continue
 
-                log.info(f'Processing spectral order {sp_order}')
+                log.debug(f'Processing spectral order {sp_order}')
 
                 try:
                     output_model = create_extraction(
@@ -2932,7 +2932,7 @@ def do_extract1d(
                         log.info("Spectral order 0 is a direct image, skipping ...")
                         continue
 
-                log.info(f'Processing spectral order {sp_order}')
+                log.debug(f'Processing spectral order {sp_order}')
 
                 try:
                     output_model = create_extraction(
@@ -3372,6 +3372,7 @@ def extract_one_slit(
         exp_type = slit.meta.exposure.type
 
     if integ > -1:
+        log.info(f"Extracting integration {integ}")
         data = input_model.data[integ]
         var_poisson = input_model.var_poisson[integ]
         var_rnoise = input_model.var_rnoise[integ]
