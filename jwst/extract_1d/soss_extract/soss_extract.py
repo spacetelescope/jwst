@@ -476,7 +476,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
                                  orders=[i_order + 1])
 
         # Project on detector and save in dictionary
-        tracemodels[order] = model.rebuild(flux_order)
+        tracemodels[order] = model.rebuild(flux_order, fill_value=np.nan)
 
     # ###############################
     # Model remaining part of order 2
@@ -492,18 +492,19 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         # Mask for the fit. All valid pixels inside box aperture
         mask_fit = mask_trace_profile[idx_order2] | scimask
         # and extract only what was not already modeled
-        mask_fit |= (tracemodels[order] != 0)
+        already_modeled = np.isfinite(tracemodels[order])
+        mask_fit |= already_modeled
 
         # Mask for what we want to model (or rebuild),
         # being all pixels that will be extracted (both orders)
         # and that order 2 contribution is not already modeled.
-        mask_rebuild = global_mask | (tracemodels[order] != 0)
+        mask_rebuild = global_mask | already_modeled
 
         # Model
         model = model_single_order(scidata_bkg, scierr, ref_file_order, mask_fit, mask_rebuild, order)
 
         # Add to tracemodels
-        tracemodels[order] += model
+        tracemodels[order] = np.nansum([tracemodels[order], model], axis=0)
 
     return tracemodels, tikfac, logl, wave_grid
 
@@ -562,7 +563,8 @@ def decontaminate_image(scidata_bkg, tracemodels, subarray):
         for mod_order in mod_order_list:
             if mod_order != order:
                 log.debug(f'Decontaminating {order} from {mod_order} using model.')
-                decont = decont - tracemodels[mod_order]
+                is_valid = np.isfinite(tracemodels[mod_order])
+                decont = decont - np.where(is_valid, tracemodels[mod_order], 0.)
 
         # Save results
         decontaminated_data[order] = decont
@@ -590,7 +592,10 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit, mask_rebu
     wave_grid = grid_from_map(ref_file_args[0][0], ref_file_args[1][0], n_os=1)
 
     # Initialize the engine
-    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask_fit)
+    engine = ExtractionEngine(*ref_file_args,
+                              wave_grid=wave_grid,
+                              orders=[order],
+                              mask_trace_profile=[mask_fit])
 
     # Extract estimate
     spec_estimate = engine.__call__(data=data_order, error=err_order)
@@ -633,9 +638,9 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit, mask_rebu
                               mask_trace_profile=[mask_rebuild])
 
     # Project on detector and save in dictionary
-    model = engine.rebuild(f_k)
-    # Check all values are valid (set to zero if not)
-    model = np.where(np.isfinite(model), model, 0.)
+    model = engine.rebuild(f_k, fill_value=np.nan)
+#     # Check all values are valid (set to zero if not)
+#     model = np.where(np.isfinite(model), model, 0.)
 
     return model
 
@@ -704,19 +709,22 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
         if bad_pix == 'model':
             # Model the bad pixels decontaminated image when available
             try:
+                # Some pixels might not be modeled by the bad pixel models
+                is_modeled = np.isfinite(tracemodels[order])
                 # Replace bad pixels
-                decont = np.where(scimask, tracemodels[order], decont)
-                # Update the mask for the modeled order, so all the pixels are usable.
-                scimask_ord = np.zeros_like(scimask)
+                decont = np.where(scimask & is_modeled, tracemodels[order], decont)
+                # Update the mask for the modeled order, so all the modeled pixels are used.
+                scimask_ord = scimask & ~is_modeled
 
                 log.debug(f'Bad pixels in {order} are replaced with trace model.')
 
                 # Replace error estimate of the bad pixels using other valid pixels of similar value.
                 # The pixel to be estimate are the masked pixels in the region of extraction
+                # with available model.
                 extraction_region = (box_w_ord > 0)
-                pix_to_estim = (extraction_region & scimask)
+                pix_to_estim = (extraction_region & scimask & is_modeled)
                 # Use only valid pixels (not masked) in the extraction region for the empirical estimation
-                valid_pix = (extraction_region & ~scimask)
+                valid_pix = (extraction_region & ~scimask_ord)
                 scierr_ord = estim_error_nearest_data(scierr, decont, pix_to_estim, valid_pix)
 
             except KeyError:
@@ -882,8 +890,11 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
         # Save trace models for output reference
         for order in tracemodels:
+            # Put NaNs to zero
+            model_ord = tracemodels[order]
+            model_ord = np.where(np.isfinite(model_ord), model_ord, 0.)
             # Save as a list (convert to array at the end)
-            all_tracemodels[order] = [tracemodels[order]]
+            all_tracemodels[order] = [model_ord]
 
         # Save box weights for output reference
         for order in box_weights:
@@ -1017,7 +1028,12 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 # Initialize a list for first integration
                 if i == 0:
                     all_tracemodels[order] = []
-                all_tracemodels[order].append(tracemodels[order])
+                # Put NaNs to zero
+                # TODO Save to Nans or zeros and mark bad pixels in the apertures instead?
+                model_ord = tracemodels[order]
+                model_ord = np.where(np.isfinite(model_ord), model_ord, 0.)
+                # Save as a list (convert to array at the end)
+                all_tracemodels[order].append(model_ord)
 
             # Save box weights for output reference
             for order in box_weights:
