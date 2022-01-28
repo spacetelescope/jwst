@@ -52,7 +52,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     # Calculate the median value using only good pixels
     filtered_array = data_array[np.bitwise_and(dq_array, bad_bitvalue) == 0]
-    median_value = np.median(filtered_array)
+    median_value = np.nanmedian(filtered_array)
 
     if np.isnan(median_value):
         # If the median fails return 0
