@@ -119,8 +119,9 @@ def set_source_type(input_model, source_type=None):
 
             # Check if requested type is one of the 2 allowed types
             if source_type != 'POINT' and source_type != 'EXTENDED':
-                log.warning(f'EXP_TYPE {exptype} not applicable to this \
-                            operation')
+                log.warning(f'Requested source type {source_type} not \
+                            applicable to this operation')
+
                 src_type = 'UNKNOWN'
 
             # Check if the exposure type is a mode that allows setting
