@@ -1,7 +1,11 @@
 1.4.3 (unreleased)
 ==================
 
+associations
+------------
 
+- Include filename extension for `asn_pool` entry, to maintain consistency
+  with `asntable` entry [#6695]
 
 1.4.2 (2022-01-20)
 ==================
