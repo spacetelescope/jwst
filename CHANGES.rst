@@ -1,7 +1,11 @@
 1.4.3 (unreleased)
 ==================
 
+associations
+------------
 
+- Added valid optical paths for NRS_LAMP observations to generate
+  or exclude associations [#6695]
 
 1.4.2 (2022-01-20)
 ==================
