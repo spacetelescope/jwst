@@ -5,7 +5,7 @@ associations
 ------------
 
 - Include filename extension for `asn_pool` entry, to maintain consistency
-  with `asntable` entry [#6695]
+  with `asntable` entry [#6699]
 
 1.4.2 (2022-01-20)
 ==================
