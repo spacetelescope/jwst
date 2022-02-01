@@ -158,6 +158,45 @@ NRS_FSS_VALID_OPTICAL_PATHS = (
     ('s200b1', 'g140m', 'f070lp', 'nrs2'),
 )
 
+NRS_FSS_VALID_LAMP_OPTICAL_PATHS = (
+    ('prism', 'line4', 'nrs1'),
+    ('prism', 'line4', 'nrs2'),
+    ('prism', 'flat5', 'nrs1'),
+    ('prism', 'flat5', 'nrs2'),
+    ('prism', 'test', 'nrs1'),
+    ('prism', 'test', 'nrs2'),
+    ('g395h', 'flat3', 'nrs1'),
+    ('g395h', 'flat3', 'nrs2'),
+    ('g395h', 'line3', 'nrs1'),
+    ('g395h', 'line3', 'nrs2'),
+    ('g235h', 'flat2', 'nrs1'),
+    ('g235h', 'flat2', 'nrs2'),
+    ('g235h', 'line2', 'nrs1'),
+    ('g235h', 'line2', 'nrs2'),
+    ('g140h', 'flat1', 'nrs1'),
+    ('g140h', 'flat1', 'nrs2'),
+    ('g140h', 'ref', 'nrs1'),
+    ('g140h', 'ref', 'nrs2'),
+    ('g140h', 'line1', 'nrs1'),
+    ('g140h', 'line1', 'nrs2'),
+    ('g140h', 'flat4', 'nrs1'),
+    ('g140h', 'flat4', 'nrs2'),
+    ('g395m', 'flat3', 'nrs1'),
+    ('g395m', 'flat3', 'nrs2'),
+    ('g395m', 'line3', 'nrs1'),
+    ('g395m', 'line3', 'nrs2'),
+    ('g235m', 'flat2', 'nrs1'),
+    ('g235m', 'flat2', 'nrs2'),
+    ('g235m', 'line2', 'nrs1'),
+    ('g235m', 'line2', 'nrs2'),
+    ('g140m', 'flat1', 'nrs1'),
+    ('g140m', 'flat1', 'nrs2'),
+    ('g140m', 'line1', 'nrs1'),
+    ('g140m', 'line1', 'nrs2'),
+    ('g140m', 'flat4', 'nrs1'),
+    ('g140m', 'flat4', 'nrs2'),
+)
+
 # Key that uniquely identifies members.
 MEMBER_KEY = 'expname'
 
@@ -933,7 +972,12 @@ def nrslamp_valid_detector(item):
 
     elif opmode in ['fixedslit']:
         # All slits illuminated by lamps, regardless of grating or subarray
-        return True
+        try:
+            _, lamp = item_getattr(item, ['lamp'])
+        except KeyError:
+            return False
+
+        return (grating, lamp, detector) in NRS_FSS_VALID_LAMP_OPTICAL_PATHS
 
     # Nothing has matched. Not valid.
     return False

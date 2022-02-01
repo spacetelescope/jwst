@@ -4,6 +4,9 @@
 associations
 ------------
 
+- Added valid optical paths for NRS_LAMP observations to generate
+  or exclude associations using lamp, disperser and detector [#6695]
+
 - Include filename extension for `asn_pool` entry, to maintain consistency
   with `asntable` entry [#6699]
   
