@@ -608,10 +608,13 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit, mask_rebu
     # Second, do the extraction to get the best estimate
     # ##################################################
     # Define wavelength grid with oversampling of 5 (should be enough)
-    wave_grid = grid_from_map(ref_file_args[0][0], ref_file_args[1][0], n_os=5)
+    wave_grid = grid_from_map(ref_file_args[0][0], ref_file_args[1][0], n_os=3)
 
     # Initialize the Engine.
-    engine = ExtractionEngine(*ref_file_args, wave_grid=wave_grid, orders=[order], global_mask=mask_fit)
+    engine = ExtractionEngine(*ref_file_args,
+                              wave_grid=wave_grid,
+                              orders=[order],
+                              mask_trace_profile=[mask_fit])
 
     # Find the tikhonov factor.
     # Initial pass 8 orders of magnitude with 10 grid points.
