@@ -506,16 +506,21 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
     ceny = ovs * (pad + 50)
 
     # Apply the transformation to the reference map.
-    trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)
+    if (angle==0 and xshift==0 and yshift==0):
+        trans_map = ref_map
+    else:
+        trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)
 
     if native:
-        # Bin the transformed map down to native resolution.
-        nrows, ncols = trans_map.shape
-        trans_map = trans_map.reshape((nrows // ovs), ovs, (ncols // ovs), ovs)
-        trans_map = trans_map.mean(1).mean(-1)
+        if ovs > 1:
+            # Bin the transformed map down to native resolution.
+            nrows, ncols = trans_map.shape
+            trans_map = trans_map.reshape((nrows // ovs), ovs, (ncols // ovs), ovs)
+            trans_map = trans_map.mean(1).mean(-1)
 
         # Remove the padding.
-        trans_map = trans_map[pad:-pad, pad:-pad]
+        if pad != 0:
+            trans_map = trans_map[pad:-pad, pad:-pad]
 
     return trans_map
 
