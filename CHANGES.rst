@@ -1,7 +1,11 @@
 1.4.3 (unreleased)
 ==================
 
+extract_1d
+----------
 
+- Clean the logging statements made by `extract_1d` to make the log
+  more useful [#6696]
 
 1.4.2 (2022-01-20)
 ==================
