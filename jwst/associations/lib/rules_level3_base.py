@@ -244,7 +244,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                     item.meta['pool_file']
                 )
                 parsed_name = re.search(
-                    _DMS_POOLNAME_REGEX, self.data['asn_pool'].split()[0]
+                    _DMS_POOLNAME_REGEX, self.data['asn_pool'].split('.')[0]
                 )
                 if parsed_name is not None:
                     pool_meta = {
