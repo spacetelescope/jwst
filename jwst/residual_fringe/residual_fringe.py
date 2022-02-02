@@ -13,6 +13,8 @@ from astropy.io import fits
 from . import utils
 from . import old_utils
 # import astropy.units as u
+import matplotlib.pyplot as plt
+from astropy.io import fits
 
 import logging
 log = logging.getLogger(__name__)
@@ -153,16 +155,28 @@ class ResidualFringeCorrection():
                            units=('', ''),
                            dtype=('i4', '(3,{})f8'.format(n_wav_samples)))
 
+        ysize = self.input_model.data.shape[0]
+        xsize = self.input_model.data.shape[1]
+        save_proc = np.zeros((ysize,xsize))
+        save_weights = np.zeros((ysize,xsize))
+        save_bgfit = np.zeros((ysize,xsize))
+        save_old_bgfit = np.zeros((ysize,xsize))
+        save_res_fringe = np.zeros((ysize,xsize))
+        save_old_res_fringe = np.zeros((ysize,xsize))
+        save_bgindx = np.zeros((ysize,xsize))
+        save_old_bgindx = np.zeros((ysize,xsize))
         for c in self.channels:
             num_corrected = 0
             log.info("Processing channel {}".format(c))
             (slices_in_band, xrange_channel, slice_x_ranges, all_slice_masks) = \
                 utils.slice_info(slice_map,c)
-
+            print(slice_x_ranges)
+            
             ysize = self.input_model.data.shape[0]
             xsize = self.input_model.data.shape[1]
             y, x = np.mgrid[:ysize, :xsize]
             _, _, wave_map = self.input_model.meta.wcs(x,y)
+
 
             # if the user wants to ignore some values use the wave_map array to set the corresponding
             # weight values to 0
@@ -265,17 +279,28 @@ class ResidualFringeCorrection():
                             # given signal in mod find location of lines > col_max_amp * 2
                             weight_factors = utils.find_lines(mod, col_max_amp * 2)
                             weights_feat = col_weight * weight_factors
+                            # jane addded this
+                            weights_feat[weights_feat <= 0.003] = 1e-08
 
-                            # iterate over the fringe components to fit, initialise pre-contrast, other output arrays
+                            # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
                             # in case fit fails
                             proc_data = col_data.copy()
                             proc_factors = np.ones(col_data.shape)
                             pre_contrast = 0.0
                             bg_fit = col_data.copy()
                             res_fringes = np.zeros(col_data.shape)
+                            old_res_fringes = np.zeros(col_data.shape)
                             res_fringe_fit = np.zeros(col_data.shape)
                             res_fringe_fit_flag = np.zeros(col_data.shape)
                             wpix_num = 1024
+                            col_print = 282
+                            test_col = False
+                            if(col == col_print):
+                                test_col = True
+                                for ipp in range (20):
+                                    print('col weight',col_weight[ipp], weights_feat[ipp], weight_factors[ipp])
+                                                        
+
                             # the reference file is set up with 2 values for ffreq but currently one one is used. The other value
                             # is a place holder and set to a small value
                             try:
@@ -287,15 +312,96 @@ class ResidualFringeCorrection():
                                         # check if snr criteria is met for fringe component, should always be true for fringe 1
                                         if snr2 > min_snr[fn]:
                                             log.debug(" fitting spectral baseline")
-                                            bg_fit, bgindx, fitter = \
+                                            old_bg_fit, old_bgindx, old_fitter = \
                                                 old_utils.fit_1d_background_complex(proc_data, weights_feat,
-                                                                                col_wnum, ffreq=ffreq[fn])
+                                                                                    col_wnum, ffreq=ffreq[fn], test=test_col)
+
+                                            if col == col_print:
+                                                print('old proc old bg fit',proc_data[0],old_bg_fit[0])
+
+                                            old_res_fringes = np.divide(proc_data, old_bg_fit, out=np.zeros_like(proc_data),
+                                                                        where=old_bg_fit != 0)
+                                            if col == col_print:
+                                                print(old_res_fringes[0])
+                                            old_res_fringes = np.subtract(old_res_fringes, 1, where=old_res_fringes != 0)
+                                            if col == col_print:
+                                                print(old_res_fringes[0])
+                                            old_res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
+                                            if col == col_print:
+                                                print(old_res_fringes[0])
+                                                
+                                            bg_fit, bgindx, fitter, x, y = \
+                                                utils.fit_1d_background_complex(proc_data, weights_feat,
+                                                                                col_wnum, ffreq=ffreq[fn], test= test_col)
+
 
                                             # get the residual fringes as fraction of signal
+
+                                            if col == col_print:
+                                                print('new proc bg_fit',proc_data[0],bg_fit[0])
                                             res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
                                                                     where=bg_fit != 0)
+                                            if col == col_print:
+                                                print(res_fringes[0])
                                             res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
+                                            if col == col_print:
+                                                print(res_fringes[0])
                                             res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
+                                            if col == col_print:
+                                                print(res_fringes[0:100])
+                                                
+                                            plot = False
+                                            if (col == col_print):
+                                                plot = True
+                                            if  plot:
+                                                print(bgindx.shape, old_bgindx.shape)
+                                                fig1 = plt.figure(figsize=(10,10))
+                                                ax1 = fig1.add_subplot(221)
+                                                ax1.set_xlabel("Wavenum")
+                                                ax1.set_ylabel("Flux")
+                                                ax1.set_title("Column = " + str(col+1) )
+                                                ax1.scatter(x,proc_data)
+                                                ax1.plot(x,bg_fit,color='green')
+                                                ax1.plot(x,old_bg_fit,color='red',linestyle="dotted")
+                                            
+                                                ax2 = fig1.add_subplot(222)
+                                                ax2.set_xlabel("Wavenum")
+                                                ax2.set_ylabel("res fringe")
+                                                ax2.set_title("Column = " + str(col+1) )
+                                                ax2.plot(x,res_fringes,color='green')
+                                                ax2.plot(x,old_res_fringes,color='red',linestyle="dotted")
+                                                ax2.plot(x,weights_feat,color = 'black',marker='o',ms=3)
+
+                                                ax3 = fig1.add_subplot(223)
+                                                ax3.set_xlabel("Wavenum")
+                                                ax3.set_ylabel("res fringe")
+                                                ax3.set_title("Column = " + str(col+1) )
+                                                ax3.plot(x[250:500],res_fringes[250:500],color='green',marker='o', ms=5)
+                                                ax3.plot(x[250:500],old_res_fringes[250:500],color='red',marker='o', ms=2)
+                                                ax3.plot(x[250:500],weights_feat[250:500],color = 'black',marker='o',ms=5)
+
+                                                ax4 = fig1.add_subplot(224)
+                                                ax4.set_xlabel("Wavenum")
+                                                ax4.set_ylabel("Difference in res fringe values")
+                                                ax4.set_title("Column = " + str(col+1) )
+                                                
+                                                ax4.plot(x,res_fringes-old_res_fringes,color='green',marker='o', ms=2)
+                                                # ax4.set(xlim =(1.0,1.175),ylim=(-0.02, 0.01))
+
+
+                                                print('data, weights, new fit, old fit, new fringe, old fringe, new fringe - old fringe')
+                                                print('first 10 points')
+                                                for ipp in range(10):
+                                                    print(proc_data[ipp], weights_feat[ipp], bg_fit[ipp], old_bg_fit[ipp], res_fringes[ipp], old_res_fringes[ipp],
+                                                          res_fringes[ipp] - old_res_fringes[ipp], bg_fit[ipp] - old_bg_fit[ipp],bgindx[ipp], old_bgindx[ipp])
+                                                    
+                                                print('last 10 values')
+
+                                                for ipp in range(10):
+                                                    print(proc_data[-ipp],weights_feat[-ipp], bg_fit[-ipp], old_bg_fit[-ipp], res_fringes[-ipp], old_res_fringes[-ipp],
+                                                          res_fringes[-ipp] - old_res_fringes[-ipp], bg_fit[-ipp] - old_bg_fit[-ipp])
+                                                    
+                                                plt.show()
                                             # get the pre-correction contrast using fringe component 1
                                             if fn == 0:
                                                 pre_contrast, quality = utils.fit_quality(col_wnum,
@@ -344,7 +450,12 @@ class ResidualFringeCorrection():
 
                                 # get the new fringe contrast
                                 log.debug(" analysing fit quality")
-                                pbg_fit, pbgindx, pfitter = old_utils.fit_1d_background_complex(fringe_sub,
+                                old_pbg_fit, old_pbgindx, old_pfitter = old_utils.fit_1d_background_complex(fringe_sub,
+                                                                                            weights_feat,
+                                                                                            col_wnum,
+                                                                                            ffreq=ffreq[0])
+
+                                pbg_fit, pbgindx, pfitter, x, y  = utils.fit_1d_background_complex(fringe_sub,
                                                                                             weights_feat,
                                                                                             col_wnum,
                                                                                             ffreq=ffreq[0])
@@ -369,6 +480,14 @@ class ResidualFringeCorrection():
                                 correction_quality.append([contrast, pre_contrast])
                                 log.debug(" residual contrast = {}".format(contrast))
 
+                                save_weights[:,col]  = weights_feat
+                                save_old_bgfit[:,col]  = old_bg_fit
+                                save_bgfit[:,col]  = bg_fit
+                                save_res_fringe[:,col]  = res_fringes
+                                save_old_res_fringe[:,col]  = old_res_fringes
+                                save_bgindx[:bgindx.shape[0], col] = bgindx
+                                save_old_bgindx[:old_bgindx.shape[0], col] = old_bgindx
+                                
                                 # replace the corrected in-slice column pixels in the data_cor array
                                 log.debug(" updating the trace pixels in the output")
                                 output_data[idx, col] = fringe_sub[idx]
@@ -387,6 +506,23 @@ class ResidualFringeCorrection():
 
                 del ss_data, ss_wmap, ss_weight  # end on column
 
+                hdu0 = fits.PrimaryHDU()
+                hdu1 = fits.ImageHDU()
+                hdu2 = fits.ImageHDU()
+                hdu3 = fits.ImageHDU()
+                hdu4 = fits.ImageHDU()
+                hdu5 = fits.ImageHDU()
+                hdu6 = fits.ImageHDU()
+                hdu0.data = save_weights
+                hdu1.data = save_bgfit
+                hdu2.data = save_old_bgfit
+                hdu3.data = save_res_fringe
+                hdu4.data = save_old_res_fringe
+                hdu5.data = save_bgindx
+                hdu6.data = save_old_bgindx
+                hdu = fits.HDUList([hdu0,hdu1,hdu2,hdu3,hdu4,hdu5,hdu6])
+                hdu.writeto('test.fits', overwrite=True)
+                hdu.close()
                 # asses the fit quality statistics and set up data to make plot outside of step
                 log.debug(" analysing fit statistics")
                 if len(correction_quality) > 0:

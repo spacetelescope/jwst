@@ -353,7 +353,7 @@ def make_knots(flux, nknots=20, weights=None):
     return knot_idx.astype(int)
 
 
-def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
+def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=False):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
     :Parameters:
@@ -418,12 +418,15 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     try:
         ftr.fit(flux.copy(), weights=weights.copy())
     except LinAlgError:
+        print('return small segment error')
         return flux.copy(), np.zeros(flux.shape[0]), None
 
     # fit the background
     bg_fit = bg_model.result(wavenum_scaled)
     bg_fit *= np.where(weights.copy() > 1e-07, 1, 1e-08)
-    
+
+    if test:
+        print('in old utils bg_fit',bg_fit[0], bg_fit[-1])
     # linearly interpolate over the feature gaps if possible, stops issues later
     try:
         nz, z = interp_helper(weights)
