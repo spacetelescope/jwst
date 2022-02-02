@@ -1157,8 +1157,14 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
             M_eci_to_gs = ECI to Guide star
 
     """
-    logger.info('Calculating transforms using TR 202107 COARSE Tracking with SIAF modification method...')
+    logger.info('Calculating transforms using TR 202111 COARSE Tracking with SIAF modification method...')
     t_pars.method = Methods.COARSE_TR_202111
+
+    # What FGS is irrelevant for this mode. Default to 1.
+    logger.info('FGS ID is defaulted to 1')
+    pointing_new = {field: getattr(t_pars.pointing, field) for field in t_pars.pointing._fields}
+    pointing_new['fgsid'] = 1
+    t_pars.pointing = Pointing(**pointing_new)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
