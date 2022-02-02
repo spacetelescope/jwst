@@ -2725,9 +2725,6 @@ def all_pointings(mnemonics):
         ])
 
         fgsid = mnemonics_at_time['SA_ZFGDETID'].value
-        if fgsid not in [1, 2]:
-            logger.warning('SA_ZFGDETID %s is not in [1, 2]. Presuming 1', fgsid)
-            fgsid = 1
 
         pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
                             fsmcorr=fsmcorr, gs_commanded=gs_commanded,
@@ -2841,7 +2838,7 @@ def pointing_from_average(mnemonics):
         ]
         # Weed out mnemonic entries that are zero, though some are OK to be zero.
         if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY', 'SA_ZFGGSCMDX', 'SA_ZFGGSCMDY',
-                            'SA_ZFGGSPOSX', 'SA_ZFGGSPOSY', 'SA_ZFGDETID']:
+                            'SA_ZFGGSPOSX', 'SA_ZFGGSPOSY']:
             good_mnemonic = []
             for this_value in values:
                 if this_value != 0.0:
@@ -2899,9 +2896,6 @@ def pointing_from_average(mnemonics):
 
     # For FGS ID, just take the first one.
     fgsid = mnemonics['SA_ZFGDETID'][0].value
-    if fgsid not in [1, 2]:
-        logger.warning('SA_ZFGDETID %s is not in [1, 2]. Presuming 1', fgsid)
-        fgsid = 1
 
     pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
                         fsmcorr=fsmcorr, gs_commanded=gs_commanded,
