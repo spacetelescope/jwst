@@ -798,11 +798,11 @@ class Constraint_Mode(Constraint):
                 [
                     DMSAttrConstraint(
                         sources=['detector'],
-                        value='nrcb1|nrcb2|nrcb3|nrcb4|nrcblong'
+                        value='nrcblong'
                     ),
                     DMSAttrConstraint(
                         sources=['exp_type'],
-                        value='nrc_tsgrism|nrc_tsimage'
+                        value='nrc_tsgrism'
                     )
                 ],
                 reduce=Constraint.notall

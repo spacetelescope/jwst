@@ -715,12 +715,12 @@ class Asn_Lv3TSO(AsnMixin_Science):
                         DMSAttrConstraint(
                             name='restricted_ts',
                             sources=['exp_type'],
-                            value = 'nrc_tsgrism|nrc_tsimage'
+                            value = 'nrc_tsgrism'
                         ),
                         DMSAttrConstraint(
                             name='module',
                             sources=['detector'],
-                            value='nrcb1|nrcb2|nrcb3|nrcb4|nrcblong'
+                            value='nrcblong'
                         ),
                     ]),
                 ],
