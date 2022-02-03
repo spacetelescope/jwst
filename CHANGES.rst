@@ -1,4 +1,4 @@
-1.4.3 (unreleased)
+1.4.4 (unreleased)
 ==================
 
 associations
@@ -9,17 +9,20 @@ associations
 
 - Include filename extension for `asn_pool` entry, to maintain consistency
   with `asntable` entry [#6699]
-  
+
 extract_1d
 ----------
 
 - Clean the logging statements made by `extract_1d` to make the log
   more useful [#6696]
 
+1.4.3 (2022-02-03)
+==================
+
 set_telescope_pointing
 ----------------------
 
--  JP-2509 Update COARSE algorithm to use FGS1 exclusively [#6700]
+-  JP-2509 Update COARSE algorithm to use FGS1 exclusively. [#6700]
 
 1.4.2 (2022-01-20)
 ==================
