@@ -1,7 +1,10 @@
 1.4.3 (unreleased)
 ==================
 
+srctype
+-------
 
+- Add command line option to override source type [#6692]
 
 1.4.2 (2022-01-20)
 ==================

@@ -18,12 +18,16 @@ class SourceTypeStep(Step):
     """
 
     spec = """
-         source_type = string(default=None) # user-supplied source type
+        source_type = option('POINT','EXTENDED', default=None)  # user-supplied source type
     """
 
     def process(self, input):
 
+        if (self.source_type is not None):
+            self.source_type = self.source_type.upper()
+
         source_type = self.source_type  # retrieve command line override
+
         input_model = datamodels.open(input)
 
         # Call the source selection routine

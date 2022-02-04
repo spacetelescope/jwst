@@ -30,8 +30,17 @@ well as other rules that can override the "SRCTYAPT" values.
 The ``srctype`` step first checks to see if the "SRCTYAPT" keyword
 is present and has already been populated. If "SRCTYAPT" is not present or
 is set to "UNKNOWN", the step determines a suitable value based on the
-observing mode and other characteristics of the exposure.
-The following choices are used, in order of priority:
+observing mode, command line input, and other characteristics of the
+exposure. The following choices are used, in order of priority:
+
+ - The source type can be specified by the user on the command line.
+   Exposure types for which this is permitted contain a single pre-defined
+   target, i.e. MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_MRS,NRC_TSGRISM,
+   NRS_FIXEDSLIT, NRS_BRIGHTOBJ, and NRS_IFU. Other EXP_TYPEs will be
+   ignored.  For NRS_FIXEDSLIT exposures, a user-supplied value can replace
+   the value for the target in the primary slit only, while the other slits
+   will retain their default settings of "EXTENDED" (which is appropriate
+   for sky background).
 
  - Background target exposures default to a source type of "EXTENDED."
    Background exposures are identified by the keyword "BKGDTARG" set
