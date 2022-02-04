@@ -26,6 +26,9 @@ saturation flags are found. Pixels are processed simultaneously in blocks
 using the array-based functionality of numpy.  The size of the block depends
 on the image size and the number of groups.
 
+Upon successful completion of this step, the status keyword S_RAMP will be set
+to "COMPLETE".
+
 Multiprocessing
 ===============
 This step has the option of running in multiprocessing mode. In that mode it will
@@ -151,12 +154,12 @@ The signal-to-noise ratio :math:`S` used for weighting selection is calculated f
 last sample as:
 
 .. math::
-    S = \frac{data \times gain} { \sqrt{(read\_noise)^2 + (data \times gain) } } \,,
+   S = \frac{data \times gain} { \sqrt{(read\_noise)^2 + (data \times gain) } } \,,
 
 The weighting for a sample :math:`i` is given as:
 
 .. math::
-    w_i = (i - i_{midpoint})^P \,,
+   w_i = (i - i_{midpoint})^P \,,
 
 where :math:`i_{midpoint}` is the the sample number of the midpoint of the sequence, and
 :math:`P` is the exponent applied to weights, determined by the value of :math:`S`. Fixsen
@@ -183,7 +186,7 @@ Segment-specific Computations:
 ------------------------------
 The variance of the slope of a segment due to read noise is:
 
-.. math::  
+.. math::
    var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,
 
 where :math:`R` is the noise in the difference between 2 frames, 
@@ -192,7 +195,7 @@ time in seconds (from the keyword TGROUP).
 
 The variance of the slope in a segment due to Poisson noise is: 
 
-.. math::  
+.. math::
    var^P_{s} = \frac{ slope_{est} }{  tgroup \times gain\ (ngroups_{s} -1)}  \,,
 
 where :math:`gain` is the gain for the pixel (from the GAIN reference file),
@@ -204,7 +207,7 @@ for short segments.
 
 The combined variance of the slope of a segment is the sum of the variances: 
 
-.. math::  
+.. math::
    var^C_{s} = var^R_{s} + var^P_{s}
 
 
@@ -212,25 +215,25 @@ Integration-specific computations:
 ----------------------------------  
 The variance of the slope for an integration due to read noise is:
 
-.. math::  
+.. math::
    var^R_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} }}  \,,
 
 where the sum is over all segments in the integration.
 
 The variance of the slope for an integration due to Poisson noise is: 
 
-.. math::  
+.. math::
    var^P_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^P_{s}}}  
 
 The combined variance of the slope for an integration due to both Poisson and read
 noise is: 
 
-.. math::  
+.. math::
    var^C_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} + var^P_{s}}}
 
 The slope for an integration depends on the slope and the combined variance of each segment's slope:
 
-.. math::  
+.. math::
    slope_{i} = \frac{ \sum_{s}{ \frac{slope_{s}} {var^C_{s}}}} { \sum_{s}{ \frac{1} {var^C_{s}}}}
 
 Exposure-level computations:
@@ -238,17 +241,17 @@ Exposure-level computations:
 
 The variance of the slope due to read noise depends on a sum over all integrations: 
 
-.. math::  
+.. math::
    var^R_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^R_{i}}} 
 
 The variance of the slope due to Poisson noise is: 
 
-.. math::  
+.. math::
    var^P_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^P_{i}}}
 
 The combined variance of the slope is the sum of the variances: 
 
-.. math::  
+.. math::
    var^C_{o} = var^R_{o} + var^P_{o}
 
 The square root of the combined variance is stored in the ERR array of the primary output.
@@ -256,31 +259,27 @@ The square root of the combined variance is stored in the ERR array of the prima
 The overall slope depends on the slope and the combined variance of the slope of each integration's
 segments, so is a sum over integrations and segments:
 
-.. math::    
-    slope_{o} = \frac{ \sum_{i,s}{ \frac{slope_{i,s}} {var^C_{i,s}}}} { \sum_{i,s}{ \frac{1} {var^C_{i,s}}}}
+.. math::
+   slope_{o} = \frac{ \sum_{i,s}{ \frac{slope_{i,s}} {var^C_{i,s}}}} { \sum_{i,s}{ \frac{1} {var^C_{i,s}}}}
 
 
-Upon successful completion of this step, the status keyword S_RAMP will be set
-to "COMPLETE".
+Variances in Output Products
+----------------------------
 
-Error Propagation
-=================
-
-Error propagation in the ramp fitting step is implemented by storing the
-square-root of the exposure-level combined variance in the ERR array of the primary
-output product. This combined variance of the exposure-level slope is the sum
-of the variance of the slope due to the Poisson noise and the variance of the 
-slope due to the read noise. These two variances are also separately written
-to the extensions VAR_POISSON and VAR_RNOISE in the primary output.
+If the user requests creation of the optional output product, the variances of
+segment-specific slopes due to Poisson noise, :math:`var^P_{s}`, and read noise,
+:math:`var^R_{s}`, are stored in the VAR_POISSON and VAR_RNOISE file extensions,
+respectively.
 
 At the integration-level, the variance of the per-integration slope due to
-Poisson noise is written to the VAR_POISSON extension in the
-integration-specific product, and the variance of the per-integration slope
-due to read noise is written to the VAR_RNOISE extension. The square-root of
-the combined variance of the slope due to both Poisson and read noise
-is written to the ERR extension. 
+Poisson noise, :math:`var^P_{i}`, is written to the VAR_POISSON extension of the
+per-integration ("rateints") product, and the variance of the per-integration slope
+due to read noise, :math:`var^R_{i}`, is written to the VAR_RNOISE extension.
+The square-root of the combined variance per integration due to both Poisson and
+read noise, :math:`var^C_{i}`, is written to the ERR extension. 
 
-For the optional output product, the variance of the slope due to the Poisson
-noise of the segment-specific slope is written to the VAR_POISSON extension.
-Similarly, the variance of the slope due to the read noise of the
-segment-specific slope  is written to the VAR_RNOISE extension.
+For the exposure-level ("rate") product, the overall variance in slope due to Poisson
+noise, :math:`var^P_{o}`, is stored in the VAR_POISSON extension, the variance due
+to read noise, :math:`var^R_{o}`, is stored in the VAR_RNOISE extension, and the
+square-root of the combined variance, :math:`var^C_{o}`, is stored in the ERR
+extension.
