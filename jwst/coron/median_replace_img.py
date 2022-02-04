@@ -47,7 +47,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
         dq_array = input_dq_array[xc - hbox:xc + hbox + 1, yc - hbox: yc + hbox + 1]
     except IndexError:
         # If the box is outside the data return 0
-        log.warning('Box for median filter is outside the data.')
+        # log.warning('Box for median filter is outside the data.')
         return 0.
 
     # Calculate the median value using only good pixels
@@ -56,7 +56,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     if np.isnan(median_value):
         # If the median fails return 0
-        log.warning('Median filter returned NaN setting value to 0.')
+        # log.warning('Median filter returned NaN setting value to 0.')
         median_value = 0.
 
     return median_value
@@ -89,7 +89,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
         img_int = img_model.data[nimage]
         img_dq = img_model.dq[nimage]
         bad_locations = np.where(np.bitwise_and(img_dq, bad_bitvalue))
-
+        print(f"img {nimage} bad_locations ({np.shape(bad_locations)}): ", bad_locations )
         # Fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):
             x_box_pos = bad_locations[0][i_pos]
@@ -100,4 +100,4 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
         img_model.data[nimage] = img_int
 
-    return img_model
+    return img_model, bad_locations
