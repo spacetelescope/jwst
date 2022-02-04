@@ -183,6 +183,32 @@ def test_transform_serialize(calc_transforms, tmp_path):
     assert str(transforms) == str(from_asdf)
 
 
+def _test_methods(calc_transforms, matrix, truth_ext=''):
+    """Private function to ensure expected calculate of the specified matrix
+
+    Parameters
+    ----------
+    transforms, t_pars : Transforms, TransformParameters
+        The transforms and the parameters used to generate the transforms
+
+    matrix : str
+        The matrix to compare
+
+    truth_ext : str
+        Arbitrary extension to add to the truth file name.
+    """
+    transforms, t_pars = calc_transforms
+
+    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}{truth_ext}.asdf')
+    expected_value = getattr(expected_tforms, matrix)
+
+    value = getattr(transforms, matrix)
+    if expected_value is None:
+        assert value is None
+    else:
+        assert np.allclose(value, expected_value)
+
+
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
 def test_methods(calc_transforms, matrix):
     """Ensure expected calculate of the specified matrix
@@ -195,16 +221,30 @@ def test_methods(calc_transforms, matrix):
     matrix : str
         The matrix to compare
     """
-    transforms, t_pars = calc_transforms
+    _test_methods(calc_transforms, matrix)
 
-    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}.asdf')
-    expected_value = getattr(expected_tforms, matrix)
 
-    value = getattr(transforms, matrix)
-    if expected_value is None:
-        assert value is None
-    else:
-        assert np.allclose(value, expected_value)
+@pytest.fixture(scope='module')
+def calc_coarse_202111_fgs2(tmp_path_factory):
+    """Calculate the transforms for COARSE_202111 using FGS2"""
+    t_pars = make_t_pars()
+    t_pars.method = stp.Methods.COARSE_TR_202111
+    t_pars.fgsid = stp.FgsId.FGS2.value
+    transforms = stp.calc_transforms(t_pars)
+
+    # Save transforms for later examination
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_coarse_tr_202111_fgs2.asdf')
+
+    try:
+        return transforms, t_pars
+    finally:
+        t_pars.siaf_db.close()
+
+
+@pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
+def test_coarse_202111_fgs2(calc_coarse_202111_fgs2, matrix):
+    """Test COARSE_202111 using FGS2"""
+    _test_methods(calc_coarse_202111_fgs2, matrix, truth_ext='_fgs2')
 
 
 def test_j3pa_at_gs():

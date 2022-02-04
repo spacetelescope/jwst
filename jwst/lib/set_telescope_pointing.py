@@ -345,7 +345,7 @@ class TransformParameters:
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
     #: FGS to use when running in COARSE mode
-    fgsid: FgsId = FgsId.FGS1
+    fgsid: FgsId = FgsId.FGS1.value
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
@@ -1171,7 +1171,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     # What FGS is irrelevant for this mode. Default to 1.
     logger.info('FGS ID is defaulted to 1')
     pointing_new = {field: getattr(t_pars.pointing, field) for field in t_pars.pointing._fields}
-    pointing_new['fgsid'] = 1
+    pointing_new['fgsid'] = t_pars.fgsid
     t_pars.pointing = Pointing(**pointing_new)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
