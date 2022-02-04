@@ -390,7 +390,7 @@ class TransformParameters:
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
-            tolerance=60, allow_default=False, reduce_func=None,
+            fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, save_transforms=None, **transform_kwargs):
     """Add WCS information to a FITS file.
 
@@ -414,6 +414,10 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
+
+    fgsid : int or None
+        The FGS to use in the COARSE mode calculations.
+        If None, FGS1 will be used by default.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -477,6 +481,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
             default_pa_v3=default_pa_v3,
             siaf_path=siaf_path,
             engdb_url=engdb_url,
+            fgsid=fgsid,
             tolerance=tolerance,
             allow_default=allow_default,
             reduce_func=reduce_func,
@@ -539,7 +544,7 @@ def update_mt_kwds(model):
 
 
 def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, engdb_url=None,
-               tolerance=60, allow_default=False,
+               fgsid=None, tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
@@ -567,6 +572,10 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
+
+    fgsid : int or None
+        The FGS to use in the COARSE mode calculations.
+        If None, FGS1 will be used by default.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -624,6 +633,10 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
                 reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
                 **transform_kwargs
             )
+
+            if fgsid:
+                t_pars.fgsid = fgsid
+
             transforms = update_wcs_from_telem(model, t_pars)
 
     return t_pars, transforms
@@ -1168,11 +1181,11 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     logger.info('Calculating transforms using TR 202111 COARSE Tracking with SIAF modification method...')
     t_pars.method = Methods.COARSE_TR_202111
 
-    # What FGS is irrelevant for this mode. Default to 1.
-    logger.info('FGS ID is defaulted to 1')
+    # Choose the FGS to use.
     pointing_new = {field: getattr(t_pars.pointing, field) for field in t_pars.pointing._fields}
     pointing_new['fgsid'] = t_pars.fgsid
     t_pars.pointing = Pointing(**pointing_new)
+    logger.info('Using FGS%s.', t_pars.pointing.fgsid)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required

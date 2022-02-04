@@ -298,18 +298,19 @@ def data_file(tmp_path):
 def data_file_fromsim(tmp_path):
     """Create data using times that were executed during a simulation using the OTB Simulator"""
     model = datamodels.Level1bModel()
-    model.meta.exposure.start_time = Time('2021-05-22T00:00:00').mjd
-    model.meta.exposure.end_time = Time('2021-05-22T00:00:01').mjd
+    model.meta.exposure.start_time = Time('2022-02-02T22:24:58.942').mjd
+    model.meta.exposure.end_time = Time('2022-02-02T22:26:24.836').mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
     model.meta.guidestar.gs_ra = TARG_RA + 0.0001
     model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.guidestar.gs_pcs_mode = 'COARSE'
     model.meta.aperture.name = "MIRIM_FULL"
     model.meta.observation.date = '2017-01-01'
     model.meta.exposure.type = "MIR_IMAGE"
-    model.meta.ephemeris.velocity_x = -25.021
-    model.meta.ephemeris.velocity_y = -16.507
-    model.meta.ephemeris.velocity_z = -7.187
+    model.meta.ephemeris.velocity_x_bary = -25.021
+    model.meta.ephemeris.velocity_y_bary = -16.507
+    model.meta.ephemeris.velocity_z_bary = -7.187
 
     file_path = tmp_path / 'file_fromsim.fits'
     model.save(file_path)
@@ -531,9 +532,10 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
+@pytest.mark.parametrize('fgsid', [1, 2])
+def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
     """Test using the database"""
-    expected_name = 'add_wcs_with_mast.fits'
+    expected_name = f'add_wcs_with_mast_fgs{fgsid}.fits'
 
     # See if access to MAST is available.
     try:
@@ -543,7 +545,8 @@ def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
 
     # Execute the operation.
     try:
-        stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL)
+        stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL,
+                    fgsid=fgsid)
     except ValueError as exception:
         pytest.xfail(f'No telemetry exists. Update test to use existing telemetry. Exception: {exception}')
 
