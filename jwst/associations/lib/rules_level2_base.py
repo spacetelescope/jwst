@@ -227,7 +227,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['program'] = '{:0>5s}'.format(item['program'])
         self.data['asn_pool'] = basename(
             item.meta['pool_file']
-        ).split('.')[0]
+        )
         self.data['constraints'] = str(self.constraints)
         self.data['asn_id'] = self.acid.id
         self.new_product(self.dms_product_name())

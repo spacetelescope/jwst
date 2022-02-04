@@ -1,10 +1,32 @@
-1.4.3 (unreleased)
+1.4.4 (unreleased)
 ==================
-
 srctype
 -------
 
 - Add command line option to override source type [#6692]
+=======
+associations
+------------
+
+- Added valid optical paths for NRS_LAMP observations to generate
+  or exclude associations using lamp, disperser and detector [#6695]
+
+- Include filename extension for `asn_pool` entry, to maintain consistency
+  with `asntable` entry [#6699]
+
+extract_1d
+----------
+
+- Clean the logging statements made by `extract_1d` to make the log
+  more useful [#6696]
+
+1.4.3 (2022-02-03)
+==================
+
+set_telescope_pointing
+----------------------
+
+-  JP-2509 Update COARSE algorithm to use FGS1 exclusively. [#67
 
 1.4.2 (2022-01-20)
 ==================

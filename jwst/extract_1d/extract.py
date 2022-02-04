@@ -2817,6 +2817,7 @@ def do_extract1d(
                 input_model = input_model[0]
 
         elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
+            log.debug("Input is a MultiSlitModel.")
             slits = input_model.slits
 
         # Save original use_source_posn value, because it can get
@@ -2909,11 +2910,7 @@ def do_extract1d(
             # single SlitModel, which typically includes data from a single resampled/combined slit
             # instance from level-3 processing of NIRSpec fixed slits and MOS modes.
 
-            # Define source of meta attributes
-            meta_source = input_model
-
             # Replace the default value for slitname with a more accurate value, if possible.
-
             # For NRS_BRIGHTOBJ, the slit name comes from the slit model info
             if input_model.meta.exposure.type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
                 slitname = input_model.name
@@ -3372,6 +3369,7 @@ def extract_one_slit(
         exp_type = slit.meta.exposure.type
 
     if integ > -1:
+        log.info(f"Extracting integration {integ + 1}")
         data = input_model.data[integ]
         var_poisson = input_model.var_poisson[integ]
         var_rnoise = input_model.var_rnoise[integ]
@@ -3436,24 +3434,24 @@ def extract_one_slit(
     extract_model.assign_polynomial_limits()
 
     # Log the extraction limits being used
-    log.info("Using extraction limits: ")
-    if extract_model.src_coeff is not None:
-        # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
-        if extract_model.dispaxis == HORIZONTAL:
-            # Only print xstart/xstop, because ystart/ystop are not used
-            log.info(f"xstart={extract_model.xstart}, "
-                     f"xstop={extract_model.xstop}, and src_coeff")
+    if integ < 1:
+        log.info("Using extraction limits: ")
+        if extract_model.src_coeff is not None:
+            # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
+            if extract_model.dispaxis == HORIZONTAL:
+                # Only print xstart/xstop, because ystart/ystop are not used
+                log.info(f"xstart={extract_model.xstart}, "
+                         f"xstop={extract_model.xstop}, and src_coeff")
+            else:
+                # Only print ystart/ystop, because xstart/xstop are not used
+                log.info(f"ystart={extract_model.ystart}, "
+                         f"ystop={extract_model.ystop}, and src_coeff")
         else:
-            # Only print ystart/ystop, because xstart/xstop are not used
-            log.info(f"ystart={extract_model.ystart}, "
-                     f"ystop={extract_model.ystop}, and src_coeff")
-    else:
-        # No src_coeff, so print all xstart/xstop and ystart/ystop values
-        log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
-                 f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
-
-    if extract_params['subtract_background']:
-        log.info("with background subtraction")
+            # No src_coeff, so print all xstart/xstop and ystart/ystop values
+            log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
+                     f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
+        if extract_params['subtract_background']:
+            log.info("with background subtraction")
 
     ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
         background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq = \
