@@ -35,7 +35,7 @@ exposure. The following choices are used, in order of priority:
 
  - The source type can be specified by the user on the command line.
    Exposure types for which this is permitted contain a single pre-defined
-   target, i.e. MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_MRS,NRC_TSGRISM,
+   target, i.e. MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_MRS, NRC_TSGRISM,
    NRS_FIXEDSLIT, NRS_BRIGHTOBJ, and NRS_IFU. Other EXP_TYPEs will be
    ignored.  For NRS_FIXEDSLIT exposures, a user-supplied value can replace
    the value for the target in the primary slit only, while the other slits
