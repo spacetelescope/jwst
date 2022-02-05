@@ -247,7 +247,7 @@ The slope for an integration depends on the slope and the combined variance of e
    slope_{i} = \frac{ \sum_{s}{ \frac{slope_{s}} {var^C_{s}}}} { \sum_{s}{ \frac{1} {var^C_{s}}}}
 
 
-Exposure-level computations
+Exposure-level Computations
 +++++++++++++++++++++++++++
 The variance of the slope due to read noise depends on a sum over all integrations: 
 
@@ -264,7 +264,7 @@ The combined variance of the slope is the sum of the variances:
 .. math::
    var^C_{o} = var^R_{o} + var^P_{o}
 
-The square root of the combined variance is stored in the ERR array of the primary output.
+The square-root of the combined variance is stored in the ERR array of the primary output.
 
 The overall slope depends on the slope and the combined variance of the slope of each integration's
 segments, so is a sum over integrations and segments:
@@ -287,8 +287,8 @@ due to read noise, :math:`var^R_{i}`, is written to the VAR_RNOISE extension.
 The square-root of the combined variance per integration due to both Poisson and
 read noise, :math:`var^C_{i}`, is written to the ERR extension. 
 
-For the exposure-level ("rate") product, the overall variance in slope due to Poisson
-noise, :math:`var^P_{o}`, is stored in the VAR_POISSON extension, the variance due
-to read noise, :math:`var^R_{o}`, is stored in the VAR_RNOISE extension, and the
+For the primary exposure-level ("rate") product, the overall variance in slope due to
+Poisson noise, :math:`var^P_{o}`, is stored in the VAR_POISSON extension, the variance
+due to read noise, :math:`var^R_{o}`, is stored in the VAR_RNOISE extension, and the
 square-root of the combined variance, :math:`var^C_{o}`, is stored in the ERR
 extension.
