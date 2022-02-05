@@ -160,12 +160,6 @@ class Methods(Enum):
         return self.value
 
 
-# FGS identifiers
-class FgsId(Enum):
-    FGS1 = 1
-    FGS2 = 2
-
-
 # FGS id to aperture name
 FGSId2Aper = {1: 'FGS1_FULL_OSS', 2: 'FGS2_FULL_OSS'}
 
@@ -345,7 +339,7 @@ class TransformParameters:
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
     #: FGS to use when running in COARSE mode
-    fgsid: FgsId = FgsId.FGS1.value
+    fgsid: int = 1
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`

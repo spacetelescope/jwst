@@ -229,7 +229,7 @@ def calc_coarse_202111_fgs2(tmp_path_factory):
     """Calculate the transforms for COARSE_202111 using FGS2"""
     t_pars = make_t_pars()
     t_pars.method = stp.Methods.COARSE_TR_202111
-    t_pars.fgsid = stp.FgsId.FGS2.value
+    t_pars.fgsid = 2
     transforms = stp.calc_transforms(t_pars)
 
     # Save transforms for later examination
