@@ -163,6 +163,9 @@ class Methods(Enum):
 # FGS id to aperture name
 FGSId2Aper = {1: 'FGS1_FULL_OSS', 2: 'FGS2_FULL_OSS'}
 
+# FGS Ids
+FGSIDS = [1, 2]
+
 # Definition of th J3 Ideal Y-Angle
 J3IDLYANGLE = -1.25  # Degrees
 
