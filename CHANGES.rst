@@ -10,6 +10,8 @@ associations
 - Include filename extension for `asn_pool` entry, to maintain consistency
   with `asntable` entry [#6699]
 
+- Add fgsid option to set_telescope_pointing [#6717]
+
 extract_1d
 ----------
 
