@@ -4,6 +4,8 @@
 import logging
 import numpy as np
 
+from pysiaf import Siaf
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -81,6 +83,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     Returns
     -------
     img_model : image model
+
         The updated image model with the bad pixels replaced
     """
 
@@ -89,7 +92,10 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
         img_int = img_model.data[nimage]
         img_dq = img_model.dq[nimage]
         bad_locations = np.where(np.bitwise_and(img_dq, bad_bitvalue))
-        print(f"img {nimage} bad_locations ({np.shape(bad_locations)}): ", bad_locations )
+        # if it's MIRI, only use the bad locations that are in the science aperture
+        # set the others to 0 with no logging message
+        bad_locations, zero_locations = filter_bad_locations(img_model, bad_locations)
+        img_model.data[nimage, zero_locations[0], zero_locations[1]] = 0
         # Fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):
             x_box_pos = bad_locations[0][i_pos]
@@ -100,4 +106,72 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
         img_model.data[nimage] = img_int
 
-    return img_model, bad_locations
+    return img_model
+
+
+def check_coord(x, y, subarray, coron):
+    """
+    Check if a pixel whose coordinates are given in the subarray science frame
+    is located within the coronagraph science aperture
+
+    Parameters
+    ----------
+    x, y : pixel coordinate arrays
+    subarray: relevant Siaf aperture object (.e.g MIRIM_MASK1550)
+    coron: relevant Siaf aperture object (.e.g MIRIM_CORON1550)
+
+    Output
+    ------
+    True if pixel is in the coronagraph science aperture, False otherwise
+    """
+    # convert from subarray to detector coordinates
+    xy_det = subarray.convert(x, y, 'sci', 'det')
+    # convert from detector to coronagraph science coordinates, because
+    # the science coordinates aren't rotated
+    xy_coron = coron.convert(*xy_det, 'det', 'sci')
+    # get the limits
+    xy_max = (np.max(coron.corners('sci'), axis=1)+0.5).astype(int)
+    # make sure it's in the bounds, with some fancy array indexing for speed
+    above_llim = np.array(xy_coron) >= 0 
+    below_ulim = np.array(xy_coron) <= xy_max[:, None]
+    is_inside  = np.concatenate([above_llim, below_ulim], axis=0).all(axis=0)
+    return list(is_inside)
+
+
+def filter_bad_locations(img_model, bad_locations):
+    """
+    Only use the bad locations that are in the science aperture. The rest, set to 0
+    MIRI's coronagraphy readout subarrays have large regions of contiguous
+    DO_NOT_USE pixels that can cause significant delays in the median filter
+    if they are not handled intelligently.
+    What we're going to do is only apply the median filter if the flagged pixel
+    is in the MIRI coronagraphy science aperture; all flagged pixels outside
+    science aperture simply get zeroed.
+
+    Parameters
+    ----------
+    model : the datamodel
+
+    Output
+    ------
+    bad_locations : locations to median filter
+    ignore : locations to set to 0
+
+    """
+    # make sure you're only calling this on MIRI images
+    name = img_model.meta.instrument.name
+    coronagraph = img_model.meta.instrument.coronagraph.split("_")[0]
+    try:
+        assert(name == "MIRI")
+        assert(coronagraph == "4QPM" or coronagraph == "LYOT")
+    except:
+        ignore = (np.array([], dtype=int), np.array([], dtype=int))
+        return bad_locations, ignore
+    coron_id = img_model.meta.instrument.coronagraph.split("_")[1]
+    subarray_aper = Siaf("MIRI")[f'MIRIM_MASK{coron_id}']
+    coron_aper = Siaf("MIRI")[f'MIRIM_CORON{coron_id}']
+    is_in = check_coord(bad_locations[0], bad_locations[1], subarray_aper, coron_aper)
+    # is_in = [check_coord(x, y, subarray_aper, coron_aper) for x,y in zip(*bad_locations)]
+    still_bad = tuple(b[np.array(is_in)] for b in bad_locations)
+    ignore = tuple(b[~np.array(is_in)] for b in bad_locations)
+    return still_bad, ignore
