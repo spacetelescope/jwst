@@ -21,10 +21,14 @@ pytest.importorskip('pysiaf')
 DATA_PATH = Path(__file__).parent / 'data'
 
 # Engineering parameters
-# Time range corresponds to simulation producing exposure jw00624028002_02101_00001_nrca1_uncal.fits
-# Midpoint is about 2021-01-26T02:32:26.205
-GOOD_STARTTIME = Time('59240.10349754328', format='mjd')
-GOOD_ENDTIME = Time('59240.1082197338', format='mjd')
+# Time range corresponds to OTE-1 exposure jw01134001037_03107_00001_nrcb1_uncal.fits
+# Midpoint is about 2022-02-02T22:25:00
+MAST_GOOD_STARTTIME = Time('59612.93401553055', format='mjd')
+MAST_GOOD_ENDTIME = Time('59612.93500967592', format='mjd')
+
+# Time range for the mock database
+MOCK_GOOD_STARTTIME = Time('59240.10349754328', format='mjd')
+MOCK_GOOD_ENDTIME = Time('59240.1082197338', format='mjd')
 
 
 @pytest.fixture
@@ -37,10 +41,10 @@ def engdb_service():
 def test_from_models(engdb_service, tmp_path):
     """Test v1_calculate_from_models for basic running"""
     model = ImageModel()
-    model.meta.exposure.start_time = GOOD_STARTTIME.mjd
-    model.meta.exposure.end_time = GOOD_ENDTIME.mjd
+    model.meta.exposure.start_time = MOCK_GOOD_STARTTIME.mjd
+    model.meta.exposure.end_time = MOCK_GOOD_ENDTIME.mjd
 
-    v1_table = v1c.v1_calculate_from_models([model], method=stp.Methods.COARSE_TR_202107, engdb_url=engdb_service.base_url)
+    v1_table = v1c.v1_calculate_from_models([model], method=stp.Methods.COARSE_TR_202111, engdb_url=engdb_service.base_url)
     v1_formatted = v1c.simplify_table(v1_table)
 
     # Save for post-test examination
@@ -54,8 +58,8 @@ def test_from_models(engdb_service, tmp_path):
 
 def test_over_time(engdb_service, tmp_path):
     """Test v1_calculate_over_time for basic running"""
-    v1_table = v1c.v1_calculate_over_time(GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd,
-                                          method=stp.Methods.COARSE_TR_202107,
+    v1_table = v1c.v1_calculate_over_time(MOCK_GOOD_STARTTIME.mjd, MOCK_GOOD_ENDTIME.mjd,
+                                          method=stp.Methods.COARSE_TR_202111,
                                           engdb_url=engdb_service.base_url)
     v1_formatted = v1c.simplify_table(v1_table)
 
@@ -71,11 +75,11 @@ def test_over_time(engdb_service, tmp_path):
 def test_from_models_mast(tmp_path):
     """Test v1_calculate_from_models for basic running"""
     model = ImageModel()
-    model.meta.exposure.start_time = GOOD_STARTTIME.mjd
-    model.meta.exposure.end_time = GOOD_ENDTIME.mjd
+    model.meta.exposure.start_time = MAST_GOOD_STARTTIME.mjd
+    model.meta.exposure.end_time = MAST_GOOD_ENDTIME.mjd
 
     try:
-        v1_table = v1c.v1_calculate_from_models([model], method=stp.Methods.COARSE_TR_202107, engdb_url=engdb_mast.MAST_BASE_URL)
+        v1_table = v1c.v1_calculate_from_models([model], method=stp.Methods.COARSE_TR_202111, engdb_url=engdb_mast.MAST_BASE_URL)
     except ValueError as exception:
         pytest.xfail(f'MAST engineering database not available, possibly no token specified: {exception}')
     v1_formatted = v1c.simplify_table(v1_table)
@@ -92,8 +96,8 @@ def test_from_models_mast(tmp_path):
 def test_over_time_mast(tmp_path):
     """Test v1_calculate_over_time for basic running"""
     try:
-        v1_table = v1c.v1_calculate_over_time(GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd,
-                                              method=stp.Methods.COARSE_TR_202107, engdb_url=engdb_mast.MAST_BASE_URL)
+        v1_table = v1c.v1_calculate_over_time(MAST_GOOD_STARTTIME.mjd, MAST_GOOD_ENDTIME.mjd,
+                                              method=stp.Methods.COARSE_TR_202111, engdb_url=engdb_mast.MAST_BASE_URL)
     except ValueError as exception:
         pytest.xfail(f'MAST engineering database not available, possibly no token specified: {exception}')
     v1_formatted = v1c.simplify_table(v1_table)
