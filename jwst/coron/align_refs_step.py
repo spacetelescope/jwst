@@ -53,9 +53,6 @@ class AlignRefsStep(Step):
             # Get the bit value of bad pixels. A value of 0 treats all pixels as good.
             bad_bitvalue = self.bad_bits
             bad_bitvalue = interpret_bit_flags(bad_bitvalue, mnemonic_map=pixel)
-            # start Aguilar debugging
-            print('bad_bitvalue: ', bad_bitvalue)
-            # end Aguilar debugging
             if bad_bitvalue is None:
                 bad_bitvalue = 0
 
