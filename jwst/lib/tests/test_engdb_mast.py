@@ -67,18 +67,19 @@ def test_get_records(engdb):
     'pars, expected',
     [
         ({}, [-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368]),
-        ({'include_obstime': True}, [EngDB_Value(obstime=Time('2022-02-02T22:24:58.053', scale='utc', format='isot'), value=-0.7914494276),
-                                     EngDB_Value(obstime=Time('2022-02-02T22:24:58.309', scale='utc', format='isot'), value=-0.7914494276),
-                                     EngDB_Value(obstime=Time('2022-02-02T22:24:58.565', scale='utc', format='isot'), value=-0.7914494276),
-                                     EngDB_Value(obstime=Time('2022-02-02T22:24:58.821', scale='utc', format='isot'), value=-0.791449368)]),
+        ({'include_obstime': True},
+         [EngDB_Value(obstime=Time('2022-02-02T22:24:58.053', scale='utc', format='isot'), value=-0.7914494276),
+          EngDB_Value(obstime=Time('2022-02-02T22:24:58.309', scale='utc', format='isot'), value=-0.7914494276),
+          EngDB_Value(obstime=Time('2022-02-02T22:24:58.565', scale='utc', format='isot'), value=-0.7914494276),
+          EngDB_Value(obstime=Time('2022-02-02T22:24:58.821', scale='utc', format='isot'), value=-0.791449368)]),
         ({'include_obstime': True, 'zip_results': False}, EngDB_Value(
             obstime=[Time('2022-02-02T22:24:58.053', scale='utc', format='isot'),
                      Time('2022-02-02T22:24:58.309', scale='utc', format='isot'),
                      Time('2022-02-02T22:24:58.565', scale='utc', format='isot'),
                      Time('2022-02-02T22:24:58.821', scale='utc', format='isot')],
-            value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368])
-        ),
-        ({'include_bracket_values': True}, [-0.791449368, -0.7914494276, -0.7914494276, -0.7914494276, -0.791449368, -0.791449368])
+            value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368])),
+        ({'include_bracket_values': True},
+         [-0.791449368, -0.7914494276, -0.7914494276, -0.7914494276, -0.791449368, -0.791449368])
     ])
 def test_get_values(engdb, pars, expected):
     values = engdb.get_values(*QUERY, **pars)
