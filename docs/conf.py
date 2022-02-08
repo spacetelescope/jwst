@@ -61,8 +61,8 @@ def check_sphinx_version(expected_version):
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'numpy': ('https://numpy.org/devdocs', None),
+    'scipy': ('http://scipy.github.io/devdocs', None),
     'matplotlib': ('http://matplotlib.org/', None),
     }
 

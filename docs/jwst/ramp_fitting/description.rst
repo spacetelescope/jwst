@@ -1,30 +1,41 @@
-Description
-============
-The algorithm for this step is called from the external package ``stcal``, an STScI
-effort to unify common calibration processing algorithms for use by multiple observatories.
-
+Overview
+========
 This step determines the mean count rate, in units of counts per second, for
 each pixel by performing a linear fit to the data in the input file.  The fit
 is done using the "ordinary least squares" method.
 The fit is performed independently for each pixel.  There can be up to three
-output files created by the step. The primary output file ("rate") contains the
-slope at each pixel averaged over all integrations.
-Slope images from each integration are stored as a data cube in a second output
-data product ("rateints").
-A third, optional output product is also available, containing detailed fit
-information for each pixel. The three types of output files are described in
-more detail below.
+output files created by the step:
+
+ - The primary output file ("rate") contains slope and other results at
+   each pixel averaged over all integrations in the exposure.
+ - The secondary product ("rateints") contains slope and other results for
+   each integration, stored as data cubes.
+ - A third, and optional, output product is also available, containing detailed
+   fit information for each ramp segment for each pixel.
+
+The three types of output products are described in more detail below.
 
 The count rate for each pixel is determined by a linear fit to the
-cosmic-ray-free and saturation-free ramp intervals for each pixel; hereafter
-this interval will be referred to as a "segment." The fitting algorithm uses an 
+cosmic-ray-free and saturation-free ramp intervals for each pixel. Hereafter
+such intervals will be referred to as a "segment." The fitting algorithm uses an 
 'optimal' weighting scheme, as described by Fixsen et al, PASP, 112, 1350.
-Segments are determined using
-the 4-D GROUPDQ array of the input data set, under the assumption that the jump
-step will have already flagged CR's. Segments are terminated where
-saturation flags are found. Pixels are processed simultaneously in blocks 
-using the array-based functionality of numpy.  The size of the block depends
-on the image size and the number of groups.
+Details of the computations are given below.
+
+Segments are determined using the 4-D GROUPDQ array of the input data set,
+under the assumption that the :ref:`saturation detection <saturation_step>`
+and :ref:`jump detection <jump_step>` steps have already been applied, in order
+to flag occurrences of both saturation and cosmic-ray (CR) hits.
+Segments are terminated where saturation flags are found. Pixels are processed
+simultaneously in blocks using the array-based functionality of numpy.
+The size of the block depends on the image size and the number of groups per
+integration.
+
+Upon successful completion of this step, the status keyword S_RAMP will be set
+to "COMPLETE".
+
+Note that the core algorithms for this step are called from the external package
+``stcal``, an STScI effort to unify common calibration processing algorithms
+for use by multiple observatories.
 
 Multiprocessing
 ===============
@@ -37,9 +48,11 @@ a reduction in the elapsed time for the step proportional to the number of real
 cores used. Using the virtual cores also reduces the elapsed time but at a slightly
 lower rate than the real cores.
 
-Special Cases
-+++++++++++++
+Detailed Algorithms
+===================
 
+Special Cases
+-------------
 If the input dataset has only a single group in each integration, the count rate
 for all unsaturated pixels in that integration will be calculated as the
 value of the science data in that group divided by the group time.  If the
@@ -76,7 +89,7 @@ The ramp fitting will only fit data if there are at least 2 good groups
 of data and will log a warning otherwise.
 
 All Cases
-+++++++++
+---------
 For all input datasets, including the special cases described above, arrays for
 the primary output (rate) product are computed as follows.
 
@@ -123,7 +136,7 @@ which all the values are 0 for pixels having at least one group with a non-zero
 magnitude. The order of the cosmic rays within the ramp is preserved.
 
 Slope and Variance Calculations
-+++++++++++++++++++++++++++++++
+-------------------------------
 Slopes and their variances are calculated for each segment, for each integration,
 and for the entire exposure. As defined above, a segment is a set of contiguous
 groups where none of the groups are saturated or cosmic ray-affected.  The 
@@ -136,7 +149,7 @@ and the form of the data will appear as the subscript: ‘s’, ‘i’, ‘o’
 integration, or overall (for the entire dataset), respectively.
 
 Optimal Weighting Algorithm
----------------------------
++++++++++++++++++++++++++++
 The slope of each segment is calculated using the least-squares method with optimal
 weighting, as described by Fixsen et al. 2000, PASP, 112, 1350; Regan 2007,
 JWST-STScI-001212. Optimal weighting determines the relative weighting of each sample
@@ -151,12 +164,12 @@ The signal-to-noise ratio :math:`S` used for weighting selection is calculated f
 last sample as:
 
 .. math::
-    S = \frac{data \times gain} { \sqrt{(read\_noise)^2 + (data \times gain) } } \,,
+   S = \frac{data \times gain} { \sqrt{(read\_noise)^2 + (data \times gain) } } \,,
 
 The weighting for a sample :math:`i` is given as:
 
 .. math::
-    w_i = (i - i_{midpoint})^P \,,
+   w_i = (i - i_{midpoint})^P \,,
 
 where :math:`i_{midpoint}` is the the sample number of the midpoint of the sequence, and
 :math:`P` is the exponent applied to weights, determined by the value of :math:`S`. Fixsen
@@ -179,11 +192,11 @@ sufficient; they are given as:
 | 100               |                        | 10       |
 +-------------------+------------------------+----------+
 
-Segment-specific Computations:
-------------------------------
+Segment-specific Computations
++++++++++++++++++++++++++++++
 The variance of the slope of a segment due to read noise is:
 
-.. math::  
+.. math::
    var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,
 
 where :math:`R` is the noise in the difference between 2 frames, 
@@ -192,7 +205,7 @@ time in seconds (from the keyword TGROUP).
 
 The variance of the slope in a segment due to Poisson noise is: 
 
-.. math::  
+.. math::
    var^P_{s} = \frac{ slope_{est} }{  tgroup \times gain\ (ngroups_{s} -1)}  \,,
 
 where :math:`gain` is the gain for the pixel (from the GAIN reference file),
@@ -204,83 +217,78 @@ for short segments.
 
 The combined variance of the slope of a segment is the sum of the variances: 
 
-.. math::  
+.. math::
    var^C_{s} = var^R_{s} + var^P_{s}
 
 
-Integration-specific computations:
-----------------------------------  
+Integration-specific Computations
++++++++++++++++++++++++++++++++++  
 The variance of the slope for an integration due to read noise is:
 
-.. math::  
+.. math::
    var^R_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} }}  \,,
 
 where the sum is over all segments in the integration.
 
 The variance of the slope for an integration due to Poisson noise is: 
 
-.. math::  
+.. math::
    var^P_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^P_{s}}}  
 
 The combined variance of the slope for an integration due to both Poisson and read
 noise is: 
 
-.. math::  
+.. math::
    var^C_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} + var^P_{s}}}
 
 The slope for an integration depends on the slope and the combined variance of each segment's slope:
 
-.. math::  
+.. math::
    slope_{i} = \frac{ \sum_{s}{ \frac{slope_{s}} {var^C_{s}}}} { \sum_{s}{ \frac{1} {var^C_{s}}}}
 
-Exposure-level computations:
-----------------------------
 
+Exposure-level Computations
++++++++++++++++++++++++++++
 The variance of the slope due to read noise depends on a sum over all integrations: 
 
-.. math::  
+.. math::
    var^R_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^R_{i}}} 
 
 The variance of the slope due to Poisson noise is: 
 
-.. math::  
+.. math::
    var^P_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^P_{i}}}
 
 The combined variance of the slope is the sum of the variances: 
 
-.. math::  
+.. math::
    var^C_{o} = var^R_{o} + var^P_{o}
 
-The square root of the combined variance is stored in the ERR array of the primary output.
+The square-root of the combined variance is stored in the ERR array of the primary output.
 
 The overall slope depends on the slope and the combined variance of the slope of each integration's
 segments, so is a sum over integrations and segments:
 
-.. math::    
-    slope_{o} = \frac{ \sum_{i,s}{ \frac{slope_{i,s}} {var^C_{i,s}}}} { \sum_{i,s}{ \frac{1} {var^C_{i,s}}}}
+.. math::
+   slope_{o} = \frac{ \sum_{i,s}{ \frac{slope_{i,s}} {var^C_{i,s}}}} { \sum_{i,s}{ \frac{1} {var^C_{i,s}}}}
 
 
-Upon successful completion of this step, the status keyword S_RAMP will be set
-to "COMPLETE".
-
-Error Propagation
-=================
-
-Error propagation in the ramp fitting step is implemented by storing the
-square-root of the exposure-level combined variance in the ERR array of the primary
-output product. This combined variance of the exposure-level slope is the sum
-of the variance of the slope due to the Poisson noise and the variance of the 
-slope due to the read noise. These two variances are also separately written
-to the extensions VAR_POISSON and VAR_RNOISE in the primary output.
+Variances in Output Products
+++++++++++++++++++++++++++++
+If the user requests creation of the optional output product, the variances of
+segment-specific slopes due to Poisson noise, :math:`var^P_{s}`, and read noise,
+:math:`var^R_{s}`, are stored in the VAR_POISSON and VAR_RNOISE file extensions,
+respectively.
 
 At the integration-level, the variance of the per-integration slope due to
-Poisson noise is written to the VAR_POISSON extension in the
-integration-specific product, and the variance of the per-integration slope
-due to read noise is written to the VAR_RNOISE extension. The square-root of
-the combined variance of the slope due to both Poisson and read noise
-is written to the ERR extension. 
+Poisson noise, :math:`var^P_{i}`, is written to the VAR_POISSON extension of the
+per-integration ("rateints") product, and the variance of the per-integration slope
+due to read noise, :math:`var^R_{i}`, is written to the VAR_RNOISE extension.
+The square-root of the combined variance per integration due to both Poisson and
+read noise, :math:`var^C_{i}`, is written to the ERR extension. 
 
-For the optional output product, the variance of the slope due to the Poisson
-noise of the segment-specific slope is written to the VAR_POISSON extension.
-Similarly, the variance of the slope due to the read noise of the
-segment-specific slope  is written to the VAR_RNOISE extension.
+For the primary exposure-level ("rate") product, the overall variance in slope due to
+Poisson noise, :math:`var^P_{o}`, is stored in the VAR_POISSON extension, the variance
+due to read noise, :math:`var^R_{o}`, is stored in the VAR_RNOISE extension, and the
+square-root of the combined variance, :math:`var^C_{o}`, is stored in the ERR
+extension.

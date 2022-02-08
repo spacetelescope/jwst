@@ -263,14 +263,14 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
 
             if bkg_npts == 0:
                 bkg_model = None
-                log.warning(f"Not enough valid pixels to determine background "
-                            f"for lambda={lam:.6f} (column {x:d})")
+                log.debug(f"Not enough valid pixels to determine background "
+                          f"for lambda={lam:.6f} (column {x:d})")
 
             elif len(bkg_model) < bkg_order:
-                log.warning(f"Not enough valid pixels to determine background "
-                            f"with the required order for lambda={lam:.6f} "
-                            f"(column {x:d})\n"
-                            f"Lowering background order to {len(bkg_model)}")
+                log.debug(f"Not enough valid pixels to determine background "
+                          f"with the required order for lambda={lam:.6f} "
+                          f"(column {x:d})\n"
+                          f"Lowering background order to {len(bkg_model)}")
 
         # Extract the source, and optionally subtract background using the
         # fit to the background for this column.  Even if
