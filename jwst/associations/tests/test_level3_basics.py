@@ -21,7 +21,7 @@ def test_meta():
     assert data['target'] == 't001'
     assert data['asn_type'] == 'image3'
     assert data['asn_id'] == 'a3001'
-    assert data['asn_pool'] == 'pool_002_image_miri'
+    assert data['asn_pool'] == 'pool_002_image_miri.csv'
     assert data['asn_rule'] == 'Asn_Lv3Image'
     assert data['degraded_status'] == 'No known degraded exposures in association.'
     assert data['version_id'] is None

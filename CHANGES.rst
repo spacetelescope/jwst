@@ -1,7 +1,37 @@
-1.4.3 (unreleased)
+1.4.4 (unreleased)
 ==================
 
+associations
+------------
 
+- Added valid optical paths for NRS_LAMP observations to generate
+  or exclude associations using lamp, disperser and detector [#6695]
+
+- Include filename extension for `asn_pool` entry, to maintain consistency
+  with `asntable` entry [#6699]
+
+- Add fgsid option to set_telescope_pointing [#6717]
+
+extract_1d
+----------
+
+- Clean the logging statements made by `extract_1d` to make the log
+  more useful [#6696]
+
+ramp_fitting
+------------
+
+- Updated step docs to clarify exactly what calculations are used for
+  the various flavors of variance and ERR stored in the output
+  products [#6715]
+
+1.4.3 (2022-02-03)
+==================
+
+set_telescope_pointing
+----------------------
+
+- JP-2509 Update COARSE algorithm to use FGS1 exclusively. [#6700]
 
 1.4.2 (2022-01-20)
 ==================
