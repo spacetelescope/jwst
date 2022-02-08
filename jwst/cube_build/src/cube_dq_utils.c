@@ -534,7 +534,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
       eta_corner[2] = corner3[1];
       eta_corner[3] = corner4[1];
 	
-      status= overlap_fov_with_spaxels(overlap_partial, overlap_full,
+      status = overlap_fov_with_spaxels(overlap_partial, overlap_full,
 					cdelt1,cdelt2,
 					nx, ny,
 					xc, yc,
@@ -594,7 +594,7 @@ int dq_nirspec(int overlap_partial,
 
   */
   
-  int w, islice, status,status_wave, nxy, j;
+  int w, islice, status, status_wave, nxy, j;
   long istart, in, iend, ii;
   double c1_min, c2_min, c1_max, c2_max;
   int *idqv ;  // int vector for spaxel
@@ -613,7 +613,7 @@ int dq_nirspec(int overlap_partial,
 	wave_slice_dq[j] = 0;
       }
       status_wave = 0;
-      c1_min= 0;
+      c1_min = 0;
       c1_max = 0;
       c2_min = 0;
       c2_max = 0;
