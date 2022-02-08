@@ -58,7 +58,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     if np.isnan(median_value):
         # If the median fails return 0
-        # log.warning('Median filter returned NaN setting value to 0.')
+        log.warning('Median filter returned NaN setting value to 0.')
         median_value = 0.
 
     return median_value
@@ -109,7 +109,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     return img_model
 
 
-def check_coord(x, y, subarray, coron):
+def check_coord_aperture(x, y, subarray, coron):
     """
     Check if a pixel whose coordinates are given in the subarray science frame
     is located within the coronagraph science aperture
@@ -170,8 +170,7 @@ def filter_bad_locations(img_model, bad_locations):
     coron_id = img_model.meta.instrument.coronagraph.split("_")[1]
     subarray_aper = Siaf("MIRI")[f'MIRIM_MASK{coron_id}']
     coron_aper = Siaf("MIRI")[f'MIRIM_CORON{coron_id}']
-    is_in = check_coord(bad_locations[0], bad_locations[1], subarray_aper, coron_aper)
-    # is_in = [check_coord(x, y, subarray_aper, coron_aper) for x,y in zip(*bad_locations)]
+    is_in = check_coord_aperture(bad_locations[0], bad_locations[1], subarray_aper, coron_aper)
     still_bad = tuple(b[np.array(is_in)] for b in bad_locations)
     ignore = tuple(b[~np.array(is_in)] for b in bad_locations)
     return still_bad, ignore
