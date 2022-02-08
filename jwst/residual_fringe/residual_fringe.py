@@ -12,6 +12,7 @@ from astropy.io import fits
 
 from . import utils
 from . import old_utils
+
 # import astropy.units as u
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -334,7 +335,9 @@ class ResidualFringeCorrection():
                                                 utils.fit_1d_background_complex(proc_data, weights_feat,
                                                                                 col_wnum, ffreq=ffreq[fn], test= test_col)
 
-
+                                            #bg_fit  = old_bg_fit
+                                            #bgindx = old_bgindx
+                                            #fitter = old_fitter
                                             # get the residual fringes as fraction of signal
 
                                             if col == col_print:
@@ -376,30 +379,36 @@ class ResidualFringeCorrection():
                                                 ax3.set_xlabel("Wavenum")
                                                 ax3.set_ylabel("res fringe")
                                                 ax3.set_title("Column = " + str(col+1) )
-                                                ax3.plot(x[250:500],res_fringes[250:500],color='green',marker='o', ms=5)
-                                                ax3.plot(x[250:500],old_res_fringes[250:500],color='red',marker='o', ms=2)
-                                                ax3.plot(x[250:500],weights_feat[250:500],color = 'black',marker='o',ms=5)
-
+                                                ax3.plot(x[680:800],res_fringes[680:800],color='green',marker='o', ms=5)
+                                                ax3.plot(x[680:800],old_res_fringes[680:800],color='red',marker='o', ms=2)
+                                                ax3.plot(x[680:800],weights_feat[680:800],color = 'black',marker='o',ms=5)
+                                                
                                                 ax4 = fig1.add_subplot(224)
                                                 ax4.set_xlabel("Wavenum")
-                                                ax4.set_ylabel("Difference in res fringe values")
+                                                ax4.set_ylabel("Ratio res fringe values (new/old)")
                                                 ax4.set_title("Column = " + str(col+1) )
-                                                
-                                                ax4.plot(x,res_fringes-old_res_fringes,color='green',marker='o', ms=2)
-                                                # ax4.set(xlim =(1.0,1.175),ylim=(-0.02, 0.01))
+                                                ratio = res_fringes/old_res_fringes
+                                                ax4.plot(x,ratio,color='green',marker='o', ms=2)
+                                                index = np.where(np.absolute(ratio) > 10)
+                                                print('index',index)
+                                                print('res_fringe',res_fringes[680:700])
+                                                print('old_fringe',old_res_fringes[680:700])
+                                                print('ratio',res_fringe[680:700]/old_res_fringe[680:700])
+                                                print(proc_data[680:700])
+                                                print('bg_fit',bg_fit[680:700])
+                                                print('old_fit',old_bg_fit[680:700])
 
-
-                                                print('data, weights, new fit, old fit, new fringe, old fringe, new fringe - old fringe')
-                                                print('first 10 points')
-                                                for ipp in range(10):
-                                                    print(proc_data[ipp], weights_feat[ipp], bg_fit[ipp], old_bg_fit[ipp], res_fringes[ipp], old_res_fringes[ipp],
-                                                          res_fringes[ipp] - old_res_fringes[ipp], bg_fit[ipp] - old_bg_fit[ipp],bgindx[ipp], old_bgindx[ipp])
+                                                #print('data, weights, new fit, old fit, new fringe, old fringe, new fringe - old fringe')
+                                                #print('first 10 points')
+                                                #for ipp in range(10):
+                                                #    print(proc_data[ipp], weights_feat[ipp], bg_fit[ipp], old_bg_fit[ipp], res_fringes[ipp], old_res_fringes[ipp],
+                                                #          res_fringes[ipp] - old_res_fringes[ipp], bg_fit[ipp] - old_bg_fit[ipp],bgindx[ipp], old_bgindx[ipp])
                                                     
-                                                print('last 10 values')
+                                                #print('last 10 values')
 
-                                                for ipp in range(10):
-                                                    print(proc_data[-ipp],weights_feat[-ipp], bg_fit[-ipp], old_bg_fit[-ipp], res_fringes[-ipp], old_res_fringes[-ipp],
-                                                          res_fringes[-ipp] - old_res_fringes[-ipp], bg_fit[-ipp] - old_bg_fit[-ipp])
+                                                #for ipp in range(10):
+                                                #    print(proc_data[-ipp],weights_feat[-ipp], bg_fit[-ipp], old_bg_fit[-ipp], res_fringes[-ipp], old_res_fringes[-ipp],
+                                                #          res_fringes[-ipp] - old_res_fringes[-ipp], bg_fit[-ipp] - old_bg_fit[-ipp])
                                                     
                                                 plt.show()
                                             # get the pre-correction contrast using fringe component 1
@@ -415,7 +424,7 @@ class ResidualFringeCorrection():
                                             # fit the residual fringes
                                             log.debug(" set up bayes ")
                                             res_fringe_fit, wpix_num, opt_nfringe, peak_freq, freq_min, freq_max = \
-                                                utils.fit_1d_fringes_bayes_evidence(res_fringes,
+                                                utils.new_fit_1d_fringes_bayes_evidence(res_fringes,
                                                                                     weights_feat,
                                                                                     col_wnum,
                                                                                     ffreq[fn],
@@ -506,23 +515,6 @@ class ResidualFringeCorrection():
 
                 del ss_data, ss_wmap, ss_weight  # end on column
 
-                hdu0 = fits.PrimaryHDU()
-                hdu1 = fits.ImageHDU()
-                hdu2 = fits.ImageHDU()
-                hdu3 = fits.ImageHDU()
-                hdu4 = fits.ImageHDU()
-                hdu5 = fits.ImageHDU()
-                hdu6 = fits.ImageHDU()
-                hdu0.data = save_weights
-                hdu1.data = save_bgfit
-                hdu2.data = save_old_bgfit
-                hdu3.data = save_res_fringe
-                hdu4.data = save_old_res_fringe
-                hdu5.data = save_bgindx
-                hdu6.data = save_old_bgindx
-                hdu = fits.HDUList([hdu0,hdu1,hdu2,hdu3,hdu4,hdu5,hdu6])
-                hdu.writeto('test.fits', overwrite=True)
-                hdu.close()
                 # asses the fit quality statistics and set up data to make plot outside of step
                 log.debug(" analysing fit statistics")
                 if len(correction_quality) > 0:
@@ -538,6 +530,24 @@ class ResidualFringeCorrection():
             log.info('Number of columns corrected for channel {}'.format(num_corrected))
         log.info("Processing complete")
 
+        #move here
+        hdu0 = fits.PrimaryHDU()
+        hdu1 = fits.ImageHDU()
+        hdu2 = fits.ImageHDU()
+        hdu3 = fits.ImageHDU()
+        hdu4 = fits.ImageHDU()
+        hdu5 = fits.ImageHDU()
+        hdu6 = fits.ImageHDU()
+        hdu0.data = save_weights
+        hdu1.data = save_bgfit
+        hdu2.data = save_old_bgfit
+        hdu3.data = save_res_fringe
+        hdu4.data = save_old_res_fringe
+        hdu5.data = save_bgindx
+        hdu6.data = save_old_bgindx
+        hdu = fits.HDUList([hdu0,hdu1,hdu2,hdu3,hdu4,hdu5,hdu6])
+        hdu.writeto('test.fits', overwrite=True)
+        hdu.close()        
         # add units back to output data
         log.info(" adding units back to output array")
         output_data *= normalization_factor

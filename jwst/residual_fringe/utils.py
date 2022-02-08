@@ -7,6 +7,8 @@ from astropy.timeseries import LombScargle
 from BayesicFitting import SineModel
 from BayesicFitting import LevenbergMarquardtFitter
 from BayesicFitting import RobustShell
+from BayesicFitting import ConstantModel
+from BayesicFitting import Fitter
 
 from astropy.modeling.models import Spline1D
 from astropy.modeling.fitting import SplineExactKnotsFitter
@@ -459,7 +461,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
     w = weights[::-1]
 
     # Fit the spline
-    spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
+    spline_model = Spline1D(knots=t, degree=3, bounds=[x[0], x[-1]])
     fitter = SplineExactKnotsFitter()
     robust_fitter = ChiSqOutlierRejectionFitter(fitter)
     bg_model = robust_fitter(spline_model, x, y, weights=w)
@@ -737,3 +739,147 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         freq_max = np.amax(fitted_frequencies)
 
         return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
+
+    
+def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res):
+    """Fit the residual fringe signal.
+    Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
+    :Parameters:
+    res_fringes:  numpy array, required
+        the 1D array with residual fringes
+    weights: numpy array, required
+        the 1D array of weights
+    ffreq: float, required
+        the central scan frequency
+    dffreq:  float, required
+        the one-sided interval of scan frequencies
+    min_nfringes: int, required
+        the minimum number of fringes to check
+    max_nfringes: int, required
+        the maximum number of fringes to check
+    pgram_res: float, optional
+        resolution of the periodogram scan in cm-1
+    wavenum: numpy array, required
+        the 1D array of wavenum
+    :Returns:
+    res_fringe_fit: numpy array
+        the residual fringe fit data
+    """
+    # initialize output to none
+    res_fringe_fit = None
+    weighted_pix_num = None
+    peak_freq = None
+    freq_min = None
+    freq_max = None
+
+    # get the number of weighted pixels
+    weighted_pix_num = (weights > 1e-05).sum()
+    # set the maximum array size, always 1024
+    max_arr_size = int(res_fringes.shape[0])
+
+    # get scan res
+    res = np.around((2 * dffreq) / pgram_res).astype(int)
+    log.debug("fit_1d_fringes_bayes: scan res = {}".format(res))
+
+    factor = np.amin(wavenum)
+    wavenum = wavenum.copy() / factor
+    ffreq = ffreq / factor
+    dffreq = dffreq / factor
+
+    # setup frequencies to scan
+    freq = np.linspace(ffreq - dffreq, ffreq + dffreq, res)
+
+    # handle out of slice pixels
+    res_fringes = np.nan_to_num(res_fringes)
+
+    # initialise some parameters
+    res_fringes_proc = res_fringes.copy()
+    nfringes = 0
+    keep_dict = {}
+    best_pars = None
+    best_mdl = None
+    fitted_frequencies = []
+
+    # get the initial evidence from ConstantModel
+    sdml = ConstantModel(values=1.0)
+    sftr = Fitter(wavenum, sdml)
+    _ = sftr.fit(res_fringes, weights=weights)
+    evidence1 = sftr.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
+    log.debug(
+        "fit_1d_fringes_bayes_evidence: Initial Evidence: {}".format(evidence1))
+
+    for f in np.arange(max_nfringes):
+        log.debug(
+            "Starting fringe {}".format(f + 1))
+
+        # get the scan arrays
+        res_fringe_scan = res_fringes_proc[np.where(weights > 1e-05)]
+        wavenum_scan = wavenum[np.where(weights > 1e-05)]
+
+        # use a Lomb-Scargle periodogram to get PSD and identify the strongest frequency
+        log.debug("fit_1d_fringes_bayes_evidence: get the periodogram")
+        pgram = LombScargle(wavenum_scan[::-1], res_fringe_scan[::-1]).power(1 / freq)
+
+        log.debug("fit_1d_fringes_bayes_evidence: get the most significant frequency in the periodogram")
+        peak = np.argmax(pgram)
+        freqs = 1. / freq[peak]
+
+        # fix the most significant frequency in the fixed dict that is passed to fitter
+        keep_ind = nfringes * 3
+        keep_dict[keep_ind] = freqs
+
+        log.debug("fit_1d_fringes_bayes_evidence: creating multisine model of {} freqs".format(nfringes + 1))
+        mdl = multi_sine(nfringes + 1)
+
+        # fit the multi-sine model and get evidence
+        fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0, keep=keep_dict)
+        ftr = RobustShell(fitter, domain=10)
+        try:
+            pars = ftr.fit(res_fringes, weights=weights)
+
+            # free the parameters and refit
+            mdl = multi_sine(nfringes + 1)
+            mdl.parameters = pars
+            fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0)
+            ftr = RobustShell(fitter, domain=10)
+            pars = ftr.fit(res_fringes, weights=weights)
+
+            # try get evidence (may fail for large component fits to noisy data, set to very negative value
+            try:
+                evidence2 = fitter.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
+            except ValueError:
+                evidence2 = -1e9
+        except RuntimeError:
+            evidence2 = -1e9
+
+        log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
+
+        bayes_factor = evidence2 - evidence1
+        log.debug(
+            "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
+        if bayes_factor > 1:  # strong evidence thresh (log(bayes factor)>1, Kass and Raftery 1995)
+            evidence1 = evidence2
+            best_pars = pars.copy()
+            best_mdl = mdl.copy()
+            fitted_frequencies.append(freqs)
+            log.debug(
+                "fit_1d_fringes_bayes_evidence: strong evidence for nfringes={} ".format(nfringes + 1))
+        else:
+            log.debug(
+                "fit_1d_fringes_bayes_evidence: no evidence for nfringes={}".format(nfringes + 1))
+            break
+
+        # subtract the fringes for this frequency
+        res_fringe_fit = best_mdl(wavenum)
+        res_fringes_proc = res_fringes.copy() - res_fringe_fit
+        nfringes += 1
+
+    log.debug("fit_1d_fringes_bayes_evidence: optimal={} fringes".format(nfringes))
+
+    # create outputs to return
+    fitted_frequencies = (1 / np.asarray(fitted_frequencies)) * factor
+    peak_freq = fitted_frequencies[0]
+    freq_min = np.amin(fitted_frequencies)
+    freq_max = np.amax(fitted_frequencies)
+
+    return res_fringe_fit, weighted_pix_num, nfringes, peak_freq, freq_min, freq_max
