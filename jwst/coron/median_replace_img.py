@@ -3,8 +3,7 @@
 
 import logging
 import numpy as np
-
-from pysiaf import Siaf
+from jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -54,7 +53,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     # Calculate the median value using only good pixels
     filtered_array = data_array[np.bitwise_and(dq_array, bad_bitvalue) == 0]
-    median_value = np.nanmedian(filtered_array)
+    median_value = np.median(filtered_array)
 
     if np.isnan(median_value):
         # If the median fails return 0
@@ -94,10 +93,13 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
         bad_locations = np.where(np.bitwise_and(img_dq, bad_bitvalue))
         # if it's MIRI, only use the bad locations that are in the science aperture
         # set the others to 0 with no logging message
-        bad_locations, zero_locations = filter_bad_locations(img_model, bad_locations)
-        img_model.data[nimage, zero_locations[0], zero_locations[1]] = 0
+        # bad_locations, zero_locations = filter_bad_locations(img_model, bad_locations)
+        bad_locations, non_science = separate_non_science_pixels(img_dq, bad_locations)
+        img_model.data[nimage, non_science[0], non_science[1]] = 0
         # Fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):
+            # note: x and y are switched here but median_fill_value is
+            # consistent with their usage here so it's all OK
             x_box_pos = bad_locations[0][i_pos]
             y_box_pos = bad_locations[1][i_pos]
             median_fill = median_fill_value(img_int, img_dq, box_size,
@@ -109,68 +111,32 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     return img_model
 
 
-def check_coord_aperture(x, y, subarray, coron):
+def separate_non_science_pixels(img_dq, bad_locations):
     """
-    Check if a pixel whose coordinates are given in the subarray science frame
-    is located within the coronagraph science aperture
+    For the median filter, we don't care about the NON_SCIENCE pixels, but they
+    produce a ton of warnings that clog up the alignment algorithm and make it
+    run really slowly. In this function, we take all the bad pixels and pull out
+    the ones with NON_SCIENCE flags so we can set them to 0 without running the
+    median filter.
 
     Parameters
     ----------
-    x, y : pixel coordinate arrays
-    subarray: relevant Siaf aperture object (.e.g MIRIM_MASK1550)
-    coron: relevant Siaf aperture object (.e.g MIRIM_CORON1550)
+    img_dq: 2-D dq image
+    bad_locations: 2xN array of flagged pixel indices
 
     Output
     ------
-    True if pixel is in the coronagraph science aperture, False otherwise
-    """
-    # convert from subarray to detector coordinates
-    xy_det = subarray.convert(x, y, 'sci', 'det')
-    # convert from detector to coronagraph science coordinates, because
-    # the science coordinates aren't rotated
-    xy_coron = coron.convert(*xy_det, 'det', 'sci')
-    # get the limits
-    xy_max = (np.max(coron.corners('sci'), axis=1)+0.5).astype(int)
-    # make sure it's in the bounds, with some fancy array indexing for speed
-    above_llim = np.array(xy_coron) >= 0 
-    below_ulim = np.array(xy_coron) <= xy_max[:, None]
-    is_inside  = np.concatenate([above_llim, below_ulim], axis=0).all(axis=0)
-    return list(is_inside)
-
-
-def filter_bad_locations(img_model, bad_locations):
-    """
-    Only use the bad locations that are in the science aperture. The rest, set to 0
-    MIRI's coronagraphy readout subarrays have large regions of contiguous
-    DO_NOT_USE pixels that can cause significant delays in the median filter
-    if they are not handled intelligently.
-    What we're going to do is only apply the median filter if the flagged pixel
-    is in the MIRI coronagraphy science aperture; all flagged pixels outside
-    science aperture simply get zeroed.
-
-    Parameters
-    ----------
-    model : the datamodel
-
-    Output
-    ------
-    bad_locations : locations to median filter
-    ignore : locations to set to 0
+    Tuple of (bad_locations, non_science) pixels
 
     """
-    # make sure you're only calling this on MIRI images
-    name = img_model.meta.instrument.name
-    coronagraph = img_model.meta.instrument.coronagraph.split("_")[0]
-    try:
-        assert(name == "MIRI")
-        assert(coronagraph == "4QPM" or coronagraph == "LYOT")
-    except:
-        ignore = (np.array([], dtype=int), np.array([], dtype=int))
-        return bad_locations, ignore
-    coron_id = img_model.meta.instrument.coronagraph.split("_")[1]
-    subarray_aper = Siaf("MIRI")[f'MIRIM_MASK{coron_id}']
-    coron_aper = Siaf("MIRI")[f'MIRIM_CORON{coron_id}']
-    is_in = check_coord_aperture(bad_locations[0], bad_locations[1], subarray_aper, coron_aper)
-    still_bad = tuple(b[np.array(is_in)] for b in bad_locations)
-    ignore = tuple(b[~np.array(is_in)] for b in bad_locations)
-    return still_bad, ignore
+    def is_science(pix):
+        # return True if pixel is for science, False if flagged NON_SCIENCE
+        val = img_dq[pix[0], pix[1]]
+        flags = dqflags.dqflags_to_mnemonics(val, dqflags.pixel)
+        if "NON_SCIENCE" in flags:
+            return False
+        else:
+            return True
+    indexer = np.array(list(map(is_science, list(zip(*bad_locations)))))
+    bad_locations = np.array(bad_locations)
+    return tuple(bad_locations[:, indexer]), tuple(bad_locations[:, ~indexer])
