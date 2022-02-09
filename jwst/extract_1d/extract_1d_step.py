@@ -120,7 +120,7 @@ class Extract1dStep(Step):
     soss_wave_grid = input_file(default = None)  # Wavelength grid used to model the detector
     soss_rtol = float(default=1.0e-4)
     soss_max_grid_size = integer(default=20000)
-    soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
+    soss_transform = list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
     soss_tikfac = float(default=None)  # regularization factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
