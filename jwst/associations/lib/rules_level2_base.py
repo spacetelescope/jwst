@@ -797,6 +797,19 @@ class Constraint_Mode(Constraint):
             Constraint(
                 [
                     DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nrcblong'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['exp_type'],
+                        value='nrc_tsgrism'
+                    )
+                ],
+                reduce=Constraint.notall
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
                         sources=['visitype'],
                         value='.+wfsc.+',
                     ),
