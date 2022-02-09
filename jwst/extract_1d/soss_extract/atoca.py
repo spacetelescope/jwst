@@ -995,6 +995,8 @@ class _BaseOverlap:
         # Estimate of the factor
         factor_guess = (n_pixels / reg_estimate) ** 0.5
 
+        log.info(f'First guess of tikhonov factor: {factor_guess}')
+
         # Make the grid
         factor_guess = np.log10(factor_guess)
         factors = np.logspace(factor_guess + log_range[0], factor_guess + log_range[1], n_points)

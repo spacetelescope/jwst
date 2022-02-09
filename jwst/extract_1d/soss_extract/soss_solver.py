@@ -235,8 +235,8 @@ def _chi_squared_shift(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
                     yref_o2=None, halfwidth=30., rotation=True, shift=True,
-                    soss_filter='CLEAR', bounds_theta=[-1., 1.],
-                    bounds_x=[-10., 10.], bounds_y=[-10., 10.]):
+                    soss_filter='CLEAR', bounds_theta=[-5., 5.],
+                    bounds_x=[-3, 3], bounds_y=[-3., 3.]):
     """Given a science image, determine the centroids and find the simple
     transformation (rotation + vertical & horizonal offset, or some combination
     thereof) needed to match xref_o1 and yref_o1 to the image.
