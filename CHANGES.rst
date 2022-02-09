@@ -12,6 +12,11 @@ associations
 
 - Add fgsid option to set_telescope_pointing [#6717]
 
+cube_build
+----------
+
+- Fixed a bug in how the dq plane of NIRspec data is set [#6718]
+
 extract_1d
 ----------
 
