@@ -960,6 +960,11 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     output_references = datamodels.SossExtractModel()
     output_references.update(input_model)
 
+    # Initialize the theta, dx, dy transform parameters
+    transform = soss_kwargs.pop('transform')
+    if transform is None:
+        transform = [None, None, None]
+
     all_tracemodels = dict()
     all_box_weights = dict()
 
@@ -967,9 +972,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     if isinstance(input_model, datamodels.ImageModel):
 
         log.info('Input is an ImageModel, processing a single integration.')
-
-        # Initialize the theta, dx, dy transform parameters
-        transform = soss_kwargs.pop('transform')
 
         # Received a single 2D image; set dtype to float64 and convert DQ to boolean mask.
         scidata = input_model.data.astype('float64')
@@ -988,7 +990,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             col_bkg = np.zeros(scidata.shape[1])
 
         # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
-        if transform is None:
+        if None in transform:
             log.info('Solving for the transformation parameters.')
 
             # Unpack the expected order 1 & 2 positions.
@@ -998,13 +1000,28 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             xref_o2 = spectrace_ref.trace[1].data['X']
             yref_o2 = spectrace_ref.trace[1].data['Y']
 
+            # Set bounds to fix specified parameters
+            bounds_kwargs = dict()
+            key_for_log = ['theta', 'dx', 'dy']
+            msg = ''
+            for idx, key in enumerate(['bounds_theta', 'bounds_x', 'bounds_y']):
+                value = transform[idx]
+                if value is not None:
+                    bounds_kwargs[key] = [value * (1 - 1e-5), value * (1 + 1e-5)]
+                    msg += f'{key_for_log[idx]} is fixed to {value}. '
+                else:
+                    msg += f'{key_for_log[idx]} is fitted. '
+            log.info(msg)
+
             # Use the solver on the background subtracted image.
             if subarray == 'SUBSTRIP96' or soss_filter == 'F277W':
                 # Use only order 1 to solve theta, dx, dy
-                transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, soss_filter=soss_filter)
+                transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
+                                            soss_filter=soss_filter, **bounds_kwargs)
             else:
                 transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                            xref_o2, yref_o2, soss_filter=soss_filter)
+                                            xref_o2, yref_o2,
+                                            soss_filter=soss_filter, **bounds_kwargs)
 
         log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
             transform[0], transform[1], transform[2]))
@@ -1105,9 +1122,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
         log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
 
-        # Initialize the theta, dx, dy transform parameters
-        transform = soss_kwargs.pop('transform')
-
         # Loop over images.
         for i in range(nimages):
 
@@ -1129,7 +1143,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 col_bkg = np.zeros(scidata.shape[1])
 
             # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
-            if transform is None:
+            if None in transform:
                 log.info('Solving for the transformation parameters.')
 
                 # Unpack the expected order 1 & 2 positions.
@@ -1139,13 +1153,28 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 xref_o2 = spectrace_ref.trace[1].data['X']
                 yref_o2 = spectrace_ref.trace[1].data['Y']
 
+                # Set bounds to fix specified parameters
+                bounds_kwargs = dict()
+                key_for_log = ['theta', 'dx', 'dy']
+                msg = ''
+                for idx, key in enumerate(['bounds_theta', 'bounds_x', 'bounds_y']):
+                    value = transform[idx]
+                    if value is not None:
+                        bounds_kwargs[key] = [value * (1 - 1e-5), value * (1 + 1e-5)]
+                        msg += f'{key_for_log[idx]} is fixed to {value}. '
+                    else:
+                        msg += f'{key_for_log[idx]} is fitted. '
+                log.info(msg)
+
                 # Use the solver on the background subtracted image.
                 if subarray == 'SUBSTRIP96' or soss_filter == 'F277W':
                     # Use only order 1 to solve theta, dx, dy
-                    transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, soss_filter=soss_filter)
+                    transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
+                                                soss_filter=soss_filter, **bounds_kwargs)
                 else:
                     transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                                xref_o2, yref_o2, soss_filter=soss_filter)
+                                                xref_o2, yref_o2,
+                                                soss_filter=soss_filter, **bounds_kwargs)
 
             log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
                      transform[0], transform[1], transform[2]))
