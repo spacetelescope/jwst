@@ -621,7 +621,6 @@ class IFUCubeData():
                                               roiw_ave, self.cdelt1, self.cdelt2)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-
                         self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
                         self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
@@ -1727,7 +1726,7 @@ class IFUCubeData():
         # for NIRSPEC each file has 30 slices
         # wcs information access separately for each slice
         nslices = 30
-        log.info("Mapping each NIRSpec slice to sky for input file")
+        log.info("Mapping each NIRSpec slice to sky for input file: %s", input_model.meta.filename)
 
         for ii in range(nslices):
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)

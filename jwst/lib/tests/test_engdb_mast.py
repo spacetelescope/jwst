@@ -11,16 +11,16 @@ from jwst.lib.engdb_lib import EngDB_Value
 from jwst.lib import engdb_mast
 
 # Test query
-QUERY = ('sa_zattest2', '2021-05-22T00:00:00', '2021-05-22T00:00:01')
+QUERY = ('sa_zattest2', '2022-02-02T22:24:58', '2022-02-02T22:24:59')
 
 # Expected return from query
 EXPECTED_RESPONSE = ('theTime,MJD,euvalue,sqldataType\r\n'
-                     '2021-05-21 23:59:59.816000,59355.9999978704,0.4641213417,real\r\n'
-                     '2021-05-22 00:00:00.072000,59356.0000008333,0.4641213417,real\r\n'
-                     '2021-05-22 00:00:00.328000,59356.0000037963,0.4641213417,real\r\n'
-                     '2021-05-22 00:00:00.584000,59356.0000067593,0.4641213119,real\r\n'
-                     '2021-05-22 00:00:00.840000,59356.0000097222,0.4641213119,real\r\n'
-                     '2021-05-22 00:00:01.096000,59356.0000126852,0.4641212821,real\r\n')
+                     '2022-02-02 22:24:57.797000,59612.9340022801,-0.7914493680,real\r\n'
+                     '2022-02-02 22:24:58.053000,59612.9340052431,-0.7914494276,real\r\n'
+                     '2022-02-02 22:24:58.309000,59612.9340082060,-0.7914494276,real\r\n'
+                     '2022-02-02 22:24:58.565000,59612.9340111690,-0.7914494276,real\r\n'
+                     '2022-02-02 22:24:58.821000,59612.9340141319,-0.7914493680,real\r\n'
+                     '2022-02-02 22:24:59.077000,59612.9340170949,-0.7914493680,real\r\n')
 EXPECTED_RECORDS = Table.read(EXPECTED_RESPONSE, format='ascii.csv')
 
 
@@ -56,7 +56,6 @@ def test_aliveness(is_alive):
     engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL, token='dummytoken')
 
 
-@pytest.mark.xfail(reason='Test needs updating once MAST has actual data')
 def test_get_records(engdb):
     """Test getting records"""
     records = engdb._get_records(*QUERY)
@@ -64,27 +63,27 @@ def test_get_records(engdb):
     assert report_diff_values(records, EXPECTED_RECORDS)
 
 
-@pytest.mark.xfail(reason='Test needs updating once MAST has actual data')
 @pytest.mark.parametrize(
     'pars, expected',
     [
-        ({}, [0.4641213417, 0.4641213417, 0.4641213119, 0.4641213119]),
-        ({'include_obstime': True}, [EngDB_Value(obstime=Time(59356.0000008333, scale='utc', format='mjd'), value=0.4641213417),
-                                     EngDB_Value(obstime=Time(59356.0000037963, scale='utc', format='mjd'), value=0.4641213417),
-                                     EngDB_Value(obstime=Time(59356.0000067593, scale='utc', format='mjd'), value=0.4641213119),
-                                     EngDB_Value(obstime=Time(59356.0000097222, scale='utc', format='mjd'), value=0.4641213119)]),
+        ({}, [-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368]),
+        ({'include_obstime': True},
+         [EngDB_Value(obstime=Time('2022-02-02T22:24:58.053', scale='utc', format='isot'), value=-0.7914494276),
+          EngDB_Value(obstime=Time('2022-02-02T22:24:58.309', scale='utc', format='isot'), value=-0.7914494276),
+          EngDB_Value(obstime=Time('2022-02-02T22:24:58.565', scale='utc', format='isot'), value=-0.7914494276),
+          EngDB_Value(obstime=Time('2022-02-02T22:24:58.821', scale='utc', format='isot'), value=-0.791449368)]),
         ({'include_obstime': True, 'zip_results': False}, EngDB_Value(
-            obstime=[Time(59356.0000008333, scale='utc', format='mjd'),
-                     Time(59356.0000037963, scale='utc', format='mjd'),
-                     Time(59356.0000067593, scale='utc', format='mjd'),
-                     Time(59356.0000097222, scale='utc', format='mjd')],
-            value=[0.4641213417, 0.4641213417, 0.4641213119, 0.4641213119]
-        )),
-        ({'include_bracket_values': True}, [0.4641213417, 0.4641213417, 0.4641213417, 0.4641213119, 0.4641213119, 0.4641212821])
+            obstime=[Time('2022-02-02T22:24:58.053', scale='utc', format='isot'),
+                     Time('2022-02-02T22:24:58.309', scale='utc', format='isot'),
+                     Time('2022-02-02T22:24:58.565', scale='utc', format='isot'),
+                     Time('2022-02-02T22:24:58.821', scale='utc', format='isot')],
+            value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368])),
+        ({'include_bracket_values': True},
+         [-0.791449368, -0.7914494276, -0.7914494276, -0.7914494276, -0.791449368, -0.791449368])
     ])
 def test_get_values(engdb, pars, expected):
     values = engdb.get_values(*QUERY, **pars)
-    assert values == expected
+    assert str(values) == str(expected)
 
 
 def test_negative_aliveness():
