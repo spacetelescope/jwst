@@ -48,7 +48,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
         dq_array = input_dq_array[xc - hbox:xc + hbox + 1, yc - hbox: yc + hbox + 1]
     except IndexError:
         # If the box is outside the data return 0
-        # log.warning('Box for median filter is outside the data.')
+        log.warning('Box for median filter is outside the data.')
         return 0.
 
     # Calculate the median value using only good pixels
@@ -82,7 +82,6 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     Returns
     -------
     img_model : image model
-
         The updated image model with the bad pixels replaced
     """
 
@@ -95,7 +94,8 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
         # set the others to 0 with no logging message
         # bad_locations, zero_locations = filter_bad_locations(img_model, bad_locations)
         bad_locations, non_science = separate_non_science_pixels(img_dq, bad_locations)
-        img_model.data[nimage, non_science[0], non_science[1]] = 0
+        # skip the median filter for non-science pixels
+        img_int[non_science[0], non_science[1]] = 0
         # Fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):
             # note: x and y are switched here but median_fill_value is
@@ -121,22 +121,30 @@ def separate_non_science_pixels(img_dq, bad_locations):
 
     Parameters
     ----------
-    img_dq: 2-D dq image
-    bad_locations: 2xN array of flagged pixel indices
+    img_dq : ndarray
+        input data quality array
+    bad_locations : tuple
+        2xN (row, col) tuple of flagged pixel indices
 
-    Output
+    Returns
     ------
-    Tuple of (bad_locations, non_science) pixels
-
+    science_pixels : tuple
+        2xN tuple of (row, col) flagged science pixels
+    non_science_pixels : tuple
+        2xN tuple of (row, col) flagged non_science pixels
     """
+
     def is_science(pix):
         # return True if pixel is for science, False if flagged NON_SCIENCE
         val = img_dq[pix[0], pix[1]]
-        flags = dqflags.dqflags_to_mnemonics(val, dqflags.pixel)
-        if "NON_SCIENCE" in flags:
-            return False
-        else:
-            return True
+        # check for the NON_SCIENCE flag
+        flagged = np.bitwise_and(val, dqflags.pixel['NON_SCIENCE'])
+        # if `flagged` is 0, it's a science pixel so return True.
+        science_pixel = ~flagged.any()
+        return science_pixel
+
     indexer = np.array(list(map(is_science, list(zip(*bad_locations)))))
     bad_locations = np.array(bad_locations)
-    return tuple(bad_locations[:, indexer]), tuple(bad_locations[:, ~indexer])
+    science_pixels = tuple(bad_locations[:, indexer])
+    non_science_pixels = tuple(bad_locations[:, ~indexer])
+    return science_pixels, non_science_pixels
