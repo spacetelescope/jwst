@@ -9,6 +9,9 @@ associations
 
 - Include filename extension for `asn_pool` entry, to maintain consistency
   with `asntable` entry [#6699]
+
+- Add constraint on NIRCam TSGRISM exposures, preventing level 2 and 3
+  associations for detector NRCBLONG [#6709]
   
 extract_1d
 ----------
