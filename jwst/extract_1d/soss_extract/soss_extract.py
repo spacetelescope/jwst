@@ -329,12 +329,22 @@ def tiktests_to_spec_list(tiktests, wave_grid, sp_ord=1):
     return output_list
 
 
-def f_k_to_spec(f_k, wave_grid, sp_ord=0):
+def f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord=0):
+
+    # Build 1d spectrum integrated over pixels
+    pixel_grid = pixel_grid[np.newaxis, :]
+    ref_file_order[0] = [pixel_grid]  # Wavelength map
+    ref_file_order[1] = [np.ones_like(pixel_grid)]  # No spatial profile
+    model = ExtractionEngine(*ref_file_args,
+                             wave_grid=grid_order,
+                             mask_trace_profile=[mask],
+                             orders=[sp_ord])
+    f_binned = model.rebuild(f_order, fill_value=np.nan)
 
     table_size = len(wave_grid)
     out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
     out_table['WAVELENGTH'] = wave_grid
-    out_table['FLUX'] = f_k
+    out_table['FLUX'] = f_binned
     spec = datamodels.SpecModel(spec_table=out_table)
     spec.spectral_order = sp_ord
 
@@ -522,17 +532,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 
         # Build 1d spectrum integrated over pixels
         pixel_grid = get_grid_from_trace(ref_files, transform, sp_ord, n_os=1)
-        pixel_grid = pixel_grid[np.newaxis, :]
-        ref_file_order[0] = [pixel_grid]  # Wavelength map
-        ref_file_order[1] = [np.ones_like(pixel_grid)]  # No spatial profile
-        model = ExtractionEngine(*ref_file_order,
-                                 wave_grid=grid_order,
-                                 mask_trace_profile=[np.all(global_mask)],
-                                 orders=[sp_ord])
-        f_binned = model.rebuild(flux_order, fill_value=np.nan)
+        spec_ord = f_to_spec(flux_order, grid_order, ref_file_order,
+                             pixel_grid, np.all(global_mask), sp_ord=sp_ord)
 
         # Add the result to spec_list
-        spec_list.append(f_k_to_spec(f_binned, pixel_grid, sp_ord=sp_ord))
+        spec_list.append(spec_ord)
 
     # ###############################
     # Model remaining part of order 2
