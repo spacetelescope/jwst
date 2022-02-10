@@ -317,7 +317,7 @@ def tiktests_to_spec_list(tiktests, wave_grid, sp_ord=1):
         table_size = len(wave_grid)
         out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
         out_table['WAVELENGTH'] = wave_grid
-        out_table['FLUX'] = tiktests['solution'][:, idx]
+        out_table['FLUX'] = tiktests['solution'][idx, :]
         spec = datamodels.SpecModel(spec_table=out_table)
         spec.spectral_order = sp_ord
         spec.chi2 = tiktests['chi2'][idx]
