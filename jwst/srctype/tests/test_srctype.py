@@ -191,8 +191,23 @@ def test_nrs_fixedslit():
     assert result.slits[2].source_type == 'EXTENDED'
 
 
-@pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
-                                     "MIR_LRS-SLITLESS"])
+def test_valid_user_spec():
+    """ Overwrite source_type with valid user-specified value
+    """
+    input = datamodels.ImageModel((10, 10))
+
+    input.meta.exposure.type = 'NRS_IFU'
+    input.meta.target.source_type = 'POINT'
+
+    # User sets to valid value "EXTENDED"
+    output = srctype.set_source_type(input, "EXTENDED")
+
+    # Result should be match user override value
+    assert output.meta.target.source_type == 'EXTENDED'
+
+
+@pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM",
+                                     "NIS_SOSS", "MIR_LRS-SLITLESS"])
 def test_tso_types(exptype):
     """ Test for when visit is tso.
     """

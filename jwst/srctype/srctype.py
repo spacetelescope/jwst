@@ -7,9 +7,10 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def set_source_type(input_model):
+def set_source_type(input_model, source_type=None):
     """
-    Set the source_type, based on APT input or default values.
+    Set source_type based on APT input, user specification, exposure type,
+    or default values.
 
     Parameters
     ----------
@@ -17,6 +18,9 @@ def set_source_type(input_model):
                   `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
                   or `~jwst.datamodels.SlitModel`
         The data model to be processed.
+
+    source_type : str,  {POINT, EXTENDED}
+        User-requested value for source type.
 
     Returns
     -------
@@ -65,7 +69,21 @@ def set_source_type(input_model):
             user_type = input_model.meta.target.source_type
             input_model.meta.target.source_type_apt = user_type
 
-        if bkg_target:
+        # Check to see if the user specified a source type
+        if source_type is not None:
+            source_type = str(source_type).upper()
+
+            # Check if the exposure type is a mode that allows setting
+            if exptype in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS',
+                           'MIR_MRS', 'NRC_TSGRISM', 'NRS_FIXEDSLIT',
+                           'NRS_BRIGHTOBJ', 'NRS_IFU']:
+
+                src_type = source_type
+
+            log.warning(f'Based on user-input, setting SRCTYPE = {src_type}')
+            input_model.meta.target.source_type = src_type
+
+        elif bkg_target:
 
             # If this image is flagged as a BACKGROUND target, set the
             # source type to EXTENDED regardless of any other settings
@@ -155,7 +173,7 @@ def set_source_type(input_model):
         log.info(f'Input is a TSO exposure; setting default SRCTYPE = {src_type}')
         input_model.meta.target.source_type = src_type
 
-        # FOR WFSS modes check slit values of is_extended to set SRCTYPE
+    # For WFSS modes check slit values of is_extended to set SRCTYPE
     elif exptype in ['NIS_WFSS', 'NRC_WFSS']:
         for slit in input_model.slits:
             if slit.is_extended:
