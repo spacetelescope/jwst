@@ -360,7 +360,7 @@ class Extract1dStep(Step):
                 soss_kwargs['wave_grid'] = self.soss_wave_grid
 
                 # Run the extraction.
-                result, ref_outputs = soss_extract.run_extract1d(
+                result, ref_outputs, atoca_outputs = soss_extract.run_extract1d(
                     input_model,
                     spectrace_ref_name,
                     wavemap_ref_name,
@@ -386,6 +386,12 @@ class Extract1dStep(Step):
                         )
                         ref_outputs.save(soss_modelname)
 
+                if self.soss_modelname:
+                    soss_modelname = self.make_output_path(
+                        basepath=self.soss_modelname,
+                        suffix='AtocaSpectra'
+                    )
+                    atoca_outputs.save(soss_modelname)
             else:
                 # Get the reference file names
                 if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
