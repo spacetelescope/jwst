@@ -310,6 +310,35 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
     return combined_grid
 
 
+def tiktests_to_spec_list(tiktests, wave_grid, sp_ord=1):
+
+    output_list = []
+    for idx, fac in enumerate(tiktests['factors']):
+        table_size = len(wave_grid)
+        out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+        out_table['WAVELENGTH'] = wave_grid
+        out_table['FLUX'] = tiktests['solution'][idx, :]
+        spec = datamodels.SpecModel(spec_table=out_table)
+        spec.spectral_order = sp_ord
+        spec.chi2 = tiktests['chi2'][idx]
+        spec.reg = tiktests['reg'][idx]
+
+        output_list.append(spec)
+    return output_list
+
+
+def f_k_to_spec(f_k, wave_grid, sp_ord=0):
+
+    table_size = len(wave_grid)
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table['WAVELENGTH'] = wave_grid
+    out_table['FLUX'] = f_k
+    spec = datamodels.SpecModel(spec_table=out_table)
+    spec.spectral_order = sp_ord
+
+    return spec
+
+
 # TODO Model order 2 for decontamination (wider estimate)
 # TODO Update docstring
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
@@ -356,6 +385,9 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         Log likelihood value associated with the Tikhonov factor selected.
     """
     # TODO enlever _mask_wv_map_centroid_outside vue que la wave_grid devrait régler ce probleme
+
+    # Init list of atoca 1d spectra
+    spec_list = []
 
     # Orders to simulate
     order_list = ['Order 1', 'Order 2']
@@ -417,17 +449,25 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         # TODO check if scimask should be given before
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
+        # Add all theses tests results to the spec_list
+        spec_list += tiktests_to_spec_list(tiktests, wave_grid, sp_ord=1)
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
+        # Add all theses tests results to the spec_list
+        spec_list += tiktests_to_spec_list(tiktests, wave_grid, sp_ord=1)
+
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
     # Run the extract method of the Engine.
     f_k = engine.__call__(data=scidata_bkg, error=scierr, tikhonov=True, factor=tikfac)
+
+    # Add the result to spec_list
+    spec_list.append(f_k_to_spec(f_k, wave_grid, sp_ord=1))
 
     # Compute the log-likelihood of the best fit.
     logl = engine.compute_likelihood(f_k, same=False)
@@ -506,7 +546,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         # Add to tracemodels
         tracemodels[order] = np.nansum([tracemodels[order], model], axis=0)
 
-    return tracemodels, tikfac, logl, wave_grid
+    return tracemodels, tikfac, logl, wave_grid, spec_list
 
 
 def compute_box_weights(ref_files, transform, subarray, shape, width=40.):
@@ -792,10 +832,15 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     ref_files['specprofile'] = specprofile_ref
     ref_files['speckernel'] = speckernel_ref
 
-    # Initialize the output model and output references (model of the detector and box aperture weights).
+    # Initialize the output model.
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)  # Copy meta data from input to output.
 
+    # Initialize output spectra returned by ATOCA
+    output_atoca = datamodels.MultiSpecModel()
+    output_model.update(input_model)
+
+    # Initialize output references (model of the detector and box aperture weights).
     output_references = datamodels.SossExtractModel()
     output_references.update(input_model)
 
@@ -867,13 +912,17 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
             result = model_image(scidata_bkg, scierr, scimask, refmask,
                                  ref_files, box_weights, subarray, **kwargs)
-            tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'] = result
+            tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'], spec_list = result
 
         else:
             # No model can be fit for F277W yet, missing throughput reference files.
             msg = f"No extraction possible for filter {soss_filter}."
             log.critical(msg)
             raise ValueError(msg)
+
+        # Add atoca spectra to multispec for output
+        for spec in spec_list:
+            output_atoca.spec.append(spec)
 
         # Decontaminate the data using trace models
         decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
@@ -1002,13 +1051,18 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
                 result = model_image(scidata_bkg, scierr, scimask, refmask,
                                      ref_files, box_weights, subarray, **kwargs)
-                tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'] = result
+                tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'], spec_list = result
 
             else:
                 # No model can be fit for F277W yet, missing throughput reference files.
                 msg = f"No extraction possible for filter {soss_filter}."
                 log.critical(msg)
                 raise ValueError(msg)
+
+            # Add atoca spectra to multispec for output
+            for spec in spec_list:
+                spec.int_num = i + 1
+                output_atoca.spec.append(spec)
 
             # Decontaminate the data using trace models
             decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
@@ -1099,4 +1153,4 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         populate_time_keywords(input_model, output_model)
         output_model.int_times = input_model.int_times.copy()
 
-    return output_model, output_references
+    return output_model, output_references, output_atoca
