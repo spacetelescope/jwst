@@ -33,6 +33,12 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+srctype
+-------
+
+- Add command line option to override source type [#6720]
+
+  
 1.4.3 (2022-02-03)
 ==================
 
