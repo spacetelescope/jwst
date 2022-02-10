@@ -333,8 +333,8 @@ def f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord=0):
 
     # Build 1d spectrum integrated over pixels
     pixel_grid = pixel_grid[np.newaxis, :]
-    ref_file_order[0] = [pixel_grid]  # Wavelength map
-    ref_file_order[1] = [np.ones_like(pixel_grid)]  # No spatial profile
+    ref_file_args[0] = [pixel_grid]  # Wavelength map
+    ref_file_args[1] = [np.ones_like(pixel_grid)]  # No spatial profile
     model = ExtractionEngine(*ref_file_args,
                              wave_grid=grid_order,
                              mask_trace_profile=[mask],
