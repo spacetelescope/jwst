@@ -323,6 +323,7 @@ def tiktests_to_spec_list(tiktests, wave_grid, sp_ord=1):
         spec.chi2 = tiktests['chi2'][idx]
         spec.reg = np.nansum(tiktests['reg'][idx] ** 2)
         spec.factor = fac
+        spec.int_num = 0
 
         output_list.append(spec)
     return output_list
@@ -467,9 +468,6 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     # Run the extract method of the Engine.
     f_k = engine.__call__(data=scidata_bkg, error=scierr, tikhonov=True, factor=tikfac)
 
-    # Add the result to spec_list
-    spec_list.append(f_k_to_spec(f_k, wave_grid, sp_ord=1))
-
     # Compute the log-likelihood of the best fit.
     logl = engine.compute_likelihood(f_k, same=False)
 
@@ -510,14 +508,31 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 #         is_contaminated = np.zeros_like(contribution[order], dtype=bool)
 #         is_contaminated[idx] = (contribution[order][idx] > threshold)
 
+        # Spectral order
+        sp_ord = i_order + 1
+
         # Build model of the order
         model = ExtractionEngine(*ref_file_order,
                                  wave_grid=grid_order,
                                  mask_trace_profile=[global_mask],
-                                 orders=[i_order + 1])
+                                 orders=[sp_ord])
 
         # Project on detector and save in dictionary
         tracemodels[order] = model.rebuild(flux_order, fill_value=np.nan)
+
+        # Build 1d spectrum integrated over pixels
+        pixel_grid = get_grid_from_trace(ref_files, transform, sp_ord, n_os=1)
+        pixel_grid = pixel_grid[np.newaxis, :]
+        ref_file_order[0] = [pixel_grid]  # Wavelength map
+        ref_file_order[1] = [np.ones_like(pixel_grid)]  # No spatial profile
+        model = ExtractionEngine(*ref_file_order,
+                                 wave_grid=grid_order,
+                                 mask_trace_profile=[np.all(global_mask)],
+                                 orders=[sp_ord])
+        f_binned = model.rebuild(flux_order, fill_value=np.nan)
+
+        # Add the result to spec_list
+        spec_list.append(f_k_to_spec(f_binned, pixel_grid, sp_ord=sp_ord))
 
     # ###############################
     # Model remaining part of order 2
@@ -923,6 +938,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
         # Add atoca spectra to multispec for output
         for spec in spec_list:
+            if not hasattr(spec, 'int_num'):
+                spec.int_num = 1  # Only one integration
             output_atoca.spec.append(spec)
 
         # Decontaminate the data using trace models
@@ -1062,7 +1079,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
             # Add atoca spectra to multispec for output
             for spec in spec_list:
-                spec.int_num = i + 1
+                if not hasattr(spec, 'int_num'):
+                    spec.int_num = i + 1
                 output_atoca.spec.append(spec)
 
             # Decontaminate the data using trace models
