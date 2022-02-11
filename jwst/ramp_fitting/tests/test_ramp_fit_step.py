@@ -3,9 +3,12 @@ import numpy as np
 
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 
+from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
+test_dq_flags = dqflags.pixel
+DO_NOT_USE = test_dq_flags["DO_NOT_USE"]
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles():
@@ -246,3 +249,118 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     assert cube_model is not None
 
     assert(len(cube_model.int_times) == nints)
+
+
+def one_group_suppressed(suppress, setup_inputs):
+    """
+    Tests three pixel ramps.
+    The first ramp has no good groups.
+    The second ramp has one good groups.
+    The third ramp has all good groups.
+
+    Sets up the models to be used by the tests for the one 
+    group suppression flag.
+    """
+    # Define the data.
+    nints, ngroups, nrows, ncols = 2, 5, 1, 3
+    dims = nints, ngroups, nrows, ncols
+    rnoise, gain = 10, 1
+    group_time, frame_time = 5.0, 1
+    rampmodel, gdq, rnModel, pixdq, err, gmodel = setup_inputs(
+        ngroups=ngroups, readnoise=rnoise, nints=nints, nrows=nrows,
+        ncols=ncols, gain=gain, deltatime=group_time)
+
+    rampmodel.meta.exposure.frame_time = frame_time
+
+    # Setup the ramp data.
+    arr = [k for k in range(ngroups)]
+    dnu = DO_NOT_USE
+    dq = [dnu, dnu, 0, dnu, dnu]
+
+    rampmodel.data[0, :, 0, 0] = np.array(arr, dtype=float)
+    rampmodel.data[0, :, 0, 1] = np.array(arr, dtype=float)
+    rampmodel.data[0, :, 0, 2] = np.array(arr, dtype=float)
+
+    rampmodel.data[1, :, 0, 0] = np.array(arr, dtype=float)
+    rampmodel.data[1, :, 0, 1] = np.array(arr, dtype=float)
+    rampmodel.data[1, :, 0, 2] = np.array(arr, dtype=float)
+
+    # Make the zero good group ramp and the one good group ramp.
+    rampmodel.groupdq[0, :, 0, 0] = np.array([dnu] * ngroups, dtype=np.uint32)
+    rampmodel.groupdq[0, :, 0, 1] = np.array(dq, dtype=np.uint32)
+
+    # Call ramp fit through the step class
+    slopes, cube_model = RampFitStep.call(
+        rampmodel,
+        override_gain=gmodel,
+        override_readnoise=rnModel,
+        suppress_one_group=suppress,
+        maximum_cores="none")
+
+    return slopes, cube_model, dims
+
+
+def test_one_group_not_suppressed(setup_inputs):
+    """
+    Tests three pixel ramps.
+    The first ramp has no good groups.
+    The second ramp has one good groups.
+    The third ramp has all good groups.
+
+    Verify that when the suppress switch is turned off the second ramp is
+    treated as a one group ramp.
+    """
+    slopes, cube_model, dims = one_group_suppressed(False, setup_inputs)
+    nints, ngroups, nrows, ncols = dims
+    tol = 1e-5
+
+    # Check slopes information
+    sdata_check = np.zeros((nrows, ncols), dtype=np.float32)
+    sdata_check[0, :] = np.array([1.0000001, 0.9505884, 1.0000002])
+    np.testing.assert_allclose(slopes.data, sdata_check, tol)
+
+    svp_check = np.zeros((nrows, ncols), dtype=np.float32)
+    svp_check[0, :] = np.array([0.01, 0.008, 0.005])
+    np.testing.assert_allclose(slopes.var_poisson, svp_check, tol)
+
+    svr_check = np.zeros((nrows, ncols), dtype=np.float32)
+    svr_check[0, :] = np.array([0.19999999, 0.19047618, 0.09999999])
+    np.testing.assert_allclose(slopes.var_rnoise, svr_check, tol)
+
+    serr_check = np.zeros((nrows, ncols), dtype=np.float32)
+    serr_check[0, :] = np.array([0.45825756, 0.44550666, 0.32403702])
+    np.testing.assert_allclose(slopes.err, serr_check, tol)
+
+    cdata_check = np.zeros((nints, nrows, ncols), dtype=np.float32)
+    cdata_check[0, 0, :] = np.array([np.nan, 0., 1.0000001])
+    cdata_check[1, 0, :] = np.array([1.0000001, 1.0000001, 1.0000001])
+    np.testing.assert_allclose(cube_model.data, cdata_check, tol)
+
+
+def test_one_group_suppressed(setup_inputs):
+    """
+    Tests three pixel ramps.
+    The first ramp has no good groups.
+    The second ramp has one good groups.
+    The third ramp has all good groups.
+
+    Verify that when the suppress switch is turned off the second ramp is
+    treated as a one group ramp.
+    """
+    slopes, cube_model, dims = one_group_suppressed(True, setup_inputs)
+    nints, ngroups, nrows, ncols = dims
+    tol = 1e-5
+
+
+    # Check slopes information
+    sdata_check = np.zeros((nrows, ncols), dtype=np.float32)
+    sdata_check[0, :] = np.array([1.0000001, 1.0000001, 1.0000001])
+    np.testing.assert_allclose(slopes.data, sdata_check, tol)
+
+    svp_check = np.zeros((nrows, ncols), dtype=np.float32)
+    svp_check[0, :] = np.array([0.01, 0.01, 0.005])
+    np.testing.assert_allclose(slopes.var_poisson, svp_check, tol)
+
+    svr_check = np.zeros((nrows, ncols), dtype=np.float32)
+    svr_check[0, :] = np.array([0.19999999, 0.19999999, 0.09999999])
+    np.testing.assert_allclose(slopes.var_rnoise, svr_check, tol)
