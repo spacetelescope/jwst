@@ -33,6 +33,9 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+- Added a switch to suppress computations for ramps that have only one
+  good group. [#6727]
+
 srctype
 -------
 
