@@ -33,6 +33,12 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+skymatch
+--------
+
+- Updated the step docs to clarify the details of the various global,
+  match, and global+match methods. [#6726]
+
 srctype
 -------
 
