@@ -10,6 +10,7 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 test_dq_flags = dqflags.pixel
 DO_NOT_USE = test_dq_flags["DO_NOT_USE"]
 
+
 @pytest.fixture(scope="module")
 def generate_miri_reffiles():
     ingain = 6
@@ -258,7 +259,7 @@ def one_group_suppressed(suppress, setup_inputs):
     The second ramp has one good groups.
     The third ramp has all good groups.
 
-    Sets up the models to be used by the tests for the one 
+    Sets up the models to be used by the tests for the one
     group suppression flag.
     """
     # Define the data.
@@ -350,7 +351,6 @@ def test_one_group_suppressed(setup_inputs):
     slopes, cube_model, dims = one_group_suppressed(True, setup_inputs)
     nints, ngroups, nrows, ncols = dims
     tol = 1e-5
-
 
     # Check slopes information
     sdata_check = np.zeros((nrows, ncols), dtype=np.float32)
