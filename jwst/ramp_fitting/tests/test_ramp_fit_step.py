@@ -254,9 +254,9 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
 def one_group_suppressed(suppress, setup_inputs):
     """
-    Tests three pixel ramps.
+    Creates three pixel ramps.
     The first ramp has no good groups.
-    The second ramp has one good groups.
+    The second ramp has one good group.
     The third ramp has all good groups.
 
     Sets up the models to be used by the tests for the one
@@ -305,7 +305,7 @@ def test_one_group_not_suppressed(setup_inputs):
     """
     Tests three pixel ramps.
     The first ramp has no good groups.
-    The second ramp has one good groups.
+    The second ramp has one good group.
     The third ramp has all good groups.
 
     Verify that when the suppress switch is turned off the second ramp is
@@ -342,7 +342,7 @@ def test_one_group_suppressed(setup_inputs):
     """
     Tests three pixel ramps.
     The first ramp has no good groups.
-    The second ramp has one good groups.
+    The second ramp has one good group.
     The third ramp has all good groups.
 
     Verify that when the suppress switch is turned off the second ramp is
