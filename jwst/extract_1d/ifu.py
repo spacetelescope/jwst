@@ -631,32 +631,34 @@ def extract_ifu(input_model, source_type, extract_params):
             # the edge data that is zero to define the statistics on clipping
             bkg_stat_data = bkg_data[temp_weightmap == 1]
 
-            bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
-                                                                sigma=bkg_sigma_clip, maxiters=5)
-            low = bkg_mean - bkg_sigma_clip * bkg_stddev
-            high = bkg_mean + bkg_sigma_clip * bkg_stddev
+            # If there are good data, work out the statistics
+            if (len(bkg_stat_data) > 0):
+                bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
+                                                                    sigma=bkg_sigma_clip, maxiters=5)
+                low = bkg_mean - bkg_sigma_clip * bkg_stddev
+                high = bkg_mean + bkg_sigma_clip * bkg_stddev
 
-            # set up the mask to flag data that should not be used in aperture photometry
-            maskclip = np.logical_or(bkg_data < low, bkg_data > high)
+                # set up the mask to flag data that should not be used in aperture photometry
+                maskclip = np.logical_or(bkg_data < low, bkg_data > high)
 
-            bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
-                                            method=method, subpixels=subpixels)
-            background[k] = float(bkg_table['aperture_sum'][0])
-            phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
-                                             method=method, subpixels=subpixels)
-            npixels_bkg[k] = float(phot_table['aperture_sum'][0])
-
-            var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture, mask=maskclip,
-                                                    method=method, subpixels=subpixels)
-            b_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
-
-            var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture, mask=maskclip,
-                                                   method=method, subpixels=subpixels)
-            b_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
-
-            var_flat_table = aperture_photometry(var_flat[k, :, :], aperture, mask=maskclip,
+                bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
+                                                method=method, subpixels=subpixels)
+                background[k] = float(bkg_table['aperture_sum'][0])
+                phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
                                                  method=method, subpixels=subpixels)
-            b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
+                npixels_bkg[k] = float(phot_table['aperture_sum'][0])
+
+                var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture, mask=maskclip,
+                                                        method=method, subpixels=subpixels)
+                b_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
+
+                var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture, mask=maskclip,
+                                                       method=method, subpixels=subpixels)
+                b_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
+
+                var_flat_table = aperture_photometry(var_flat[k, :, :], aperture, mask=maskclip,
+                                                     method=method, subpixels=subpixels)
+                b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
         del temp_weightmap
         # done looping over wavelength bins
