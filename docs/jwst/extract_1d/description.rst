@@ -278,3 +278,9 @@ in a pixel will be included if its center is within the aperture; or "subsample"
 which means pixels will be subsampled N x N and the "center" option will be used
 for each sub-pixel. When ``method`` is "subsample", the parameter ``subpixels``
 is used to set the resampling value. The default value is 10.
+
+For IFU cubes the error information is contained entirely in the ERR array, and is not broken out into the
+VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only propagates this
+non-differentiated error term.  Note that while covariance is also extremely important for IFU data cubes
+(as the IFUs themselves are significantly undersampled) this term is not presently computed or taken
+into account in the ``extract_1d`` step.

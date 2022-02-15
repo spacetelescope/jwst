@@ -36,6 +36,8 @@ extract_1d
 - Check for non-zero array size before computing sigma-clipped
   statistics in IFU mode [#6728]
 
+- Propagate non-differentiated errors for IFU mode observations [#6732]
+
 ramp_fitting
 ------------
 
