@@ -406,7 +406,7 @@ def extract_ifu(input_model, source_type, extract_params):
         var_flat = input_model.var_flat
     except AttributeError:
         log.info("Input model does not break out variance information. Passing only generalized errors.")
-        var_poisson = np.sqrt(input_model.err)
+        var_poisson = input_model.err * input_model.err
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
     weightmap = input_model.weightmap
@@ -885,7 +885,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
         var_flat = input_model.var_flat
     except AttributeError:
         log.info("Input model does not break out variance information. Passing only generalized errors.")
-        var_poisson = np.sqrt(input_model.err)
+        var_poisson = input_model.err * input_model.err
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
     # The axes are (z, y, x) in the sense that (x, y) are the ordinary
