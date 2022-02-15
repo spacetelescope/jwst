@@ -7,8 +7,7 @@ from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
-test_dq_flags = dqflags.pixel
-DO_NOT_USE = test_dq_flags["DO_NOT_USE"]
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 
 
 @pytest.fixture(scope="module")

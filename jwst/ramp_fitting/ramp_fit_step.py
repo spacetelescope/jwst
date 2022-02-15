@@ -182,7 +182,7 @@ class RampFitStep(Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
-        suppress_one_group = boolean(default=False) # Suppress ramps with only one good group
+        suppress_one_group = boolean(default=True) # Suppress ramps with only one good group
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
     """
 
