@@ -13,6 +13,8 @@ import logging
 
 from ..stpipe import Step
 from .. import datamodels
+from ..datamodels.dqflags import pixel
+
 
 from astropy.nddata.bitmask import (
     bitfield_to_boolean_mask,
@@ -43,7 +45,7 @@ class SkyMatchStep(Step):
 
         # Sky statistics parameters:
         skystat = option('median', 'midpt', 'mean', 'mode', default='mode') # sky statistics
-        dqbits = string(default=0) # "good" DQ bits
+        dqbits = string(default='~DO_NOT_USE+NON_SCIENCE') # "good" DQ bits
         lower = float(default=None) # Lower limit of "good" pixel values
         upper = float(default=None) # Upper limit of "good" pixel values
         nclip = integer(min=0, default=5) # number of sky clipping iterations
@@ -58,7 +60,7 @@ class SkyMatchStep(Step):
         self.log.setLevel(logging.DEBUG)
         img = datamodels.ModelContainer(input)
 
-        self._dqbits = interpret_bit_flags(self.dqbits)
+        self._dqbits = interpret_bit_flags(self.dqbits, mnemonic_map=pixel)
 
         # set sky statistics:
         self._skystat = SkyStats(
