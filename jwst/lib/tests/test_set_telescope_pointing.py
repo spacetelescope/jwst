@@ -145,7 +145,7 @@ def test_method_string(method):
 def test_override_calc_wcs():
     """Test matrix override in the full calculation"""
     t_pars = make_t_pars()
-    t_pars.method = stp.Methods.TR_202105
+    t_pars.method = stp.Methods.OPS_TR_202111
     wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
 
     override = stp.Transforms(m_eci2j=np.array([[0.80583682, 0.51339893, 0.29503999],
@@ -245,15 +245,6 @@ def calc_coarse_202111_fgs2(tmp_path_factory):
 def test_coarse_202111_fgs2(calc_coarse_202111_fgs2, matrix):
     """Test COARSE_202111 using FGS2"""
     _test_methods(calc_coarse_202111_fgs2, matrix, truth_ext='_fgs2')
-
-
-def test_j3pa_at_gs():
-    """Ensure J3PA@GS is as expected"""
-    t_pars = make_t_pars()
-    t_pars.method = stp.Methods.GSCMD_J3PAGS
-    _ = stp.calc_transforms(t_pars)
-
-    assert np.allclose(t_pars.guide_star_wcs.pa, 297.3522435208429)
 
 
 @pytest.fixture()
@@ -566,42 +557,15 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
-def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
-    """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    expected_name = 'add_wcs_method_gscmd.fits'
-    # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.GSCMD_J3PAGS, engdb_url='http://localhost')
-
-    # Tests
-    with datamodels.Level1bModel(data_file) as model:
-
-        # Save for post-test comparison and update
-        model.save(tmp_path / expected_name)
-
-        with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQUALITY:
-                if isinstance(model[meta], str):
-                    assert model[meta] == expected[meta], f'{meta} has changed'
-                else:
-                    assert np.isclose(model[meta], expected[meta], atol=1e-13), f'{meta} has changed'
-
-            for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta]), f'{meta} has changed'
-
-            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
-
-
 def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
-    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    """Test using the database"""
     # Only run if `pysiaf` is installed.
     pytest.importorskip('pysiaf')
 
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, method=stp.Methods.TR_202105, engdb_url='http://localhost')
+    stp.add_wcs(data_file, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -622,11 +586,11 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
-    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    """Test using the database and a specified siaf db"""
     expected_name = 'add_wcs_method_full_siafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.TR_202105, engdb_url='http://localhost')
+    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
 
     # Test
     with datamodels.Level1bModel(data_file) as model:
