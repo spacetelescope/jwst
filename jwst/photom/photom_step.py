@@ -32,10 +32,11 @@ class PhotomStep(Step):
         model_type = input_model.__class__.__name__
         self.log.debug("Input is {}".format(model_type))
         if model_type not in ('CubeModel', 'ImageModel', 'SlitModel',
-                              'IFUImageModel', 'MultiSlitModel'):
+                              'IFUImageModel', 'MultiSlitModel',
+                              'MultiSpecModel', 'SpecModel'):
             self.log.warning("Input is not one of the supported model types: "
-                             "CubeModel, ImageModel, IFUImageModel or "
-                             "MultiSlitModel.")
+                             "CubeModel, ImageModel, IFUImageModel, "
+                             "MultiSlitModel, MultiSpecModel or SpecModel.")
 
         # Setup reference files and whether previous correction information
         # should be used.

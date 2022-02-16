@@ -247,6 +247,8 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_grism(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
+        elif exp_type == 'NIS_SOSS':
+            calibrated = self._process_niriss_soss(calibrated)
         else:
             calibrated = self._process_common(calibrated)
 
@@ -285,6 +287,14 @@ class Spec2Pipeline(Pipeline):
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
         x1d = self.extract_1d(resampled)
+
+        if exp_type == 'NIS_SOSS':
+            if multi_int:
+                self.photom.suffix = 'x1dints'
+            else:
+                self.photom.suffix = 'x1d'
+            self.photom.save_results = self.save_results
+            x1d = self.photom(x1d)
 
         resampled.close()
         x1d.close()
@@ -446,6 +456,22 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.photom(calibrated)
 
         return calibrated
+
+    def _process_niriss_soss(self, data):
+        """Process SOSS
+
+        New SOSS extraction requires input to extract_1d step in units
+        of DN/s, with photom step to be run afterwards.
+        """
+        calibrated = self.srctype(data)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+
+        return calibrated
+
 
     def _process_common(self, data):
         """Common spectral processing"""
