@@ -148,7 +148,7 @@ class Methods(Enum):
 FGSId2Aper = {1: 'FGS1_FULL_OSS', 2: 'FGS2_FULL_OSS'}
 
 # FGS Ids
-FGSIDS = [1, 2]
+FGSIDS = [None, 1, 2]
 
 # Definition of th J3 Ideal Y-Angle
 J3IDLYANGLE = -1.25  # Degrees
@@ -325,8 +325,8 @@ class TransformParameters:
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
-    #: FGS to use when running in COARSE mode
-    fgsid: int = 1
+    #: FGS used for guiding. If None, use what telemetry provides.
+    fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
@@ -397,8 +397,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         URL of the engineering telemetry database REST interface.
 
     fgsid : int or None
-        The FGS to use in the COARSE mode calculations.
-        If None, FGS1 will be used by default.
+        The FGS to use as the guider reference.
+        If None, use what is provided in telemetry.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -555,8 +555,8 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         URL of the engineering telemetry database REST interface.
 
     fgsid : int or None
-        The FGS to use in the COARSE mode calculations.
-        If None, FGS1 will be used by default.
+        The FGS to use as the guider reference.
+        If None, use what is provided in telemetry.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -978,10 +978,10 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t_pars.method = Methods.COARSE_TR_202111
 
     # Choose the FGS to use.
-    pointing_new = {field: getattr(t_pars.pointing, field) for field in t_pars.pointing._fields}
-    pointing_new['fgsid'] = t_pars.fgsid
-    t_pars.pointing = Pointing(**pointing_new)
-    logger.info('Using FGS%s.', t_pars.pointing.fgsid)
+    # Default to using FGS1 if not specified and FGS1 is not the science instrument.
+    if t_pars.fgsid is None:
+        t_pars.fgsid = 1
+    logger.info('Using FGS%s.', t_pars.fgsid)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
@@ -989,7 +989,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t = calc_m_eci2gs(t_pars)
 
     # Determine the M_fgsx_to_v matrix
-    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid])
+    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid])
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
@@ -1049,12 +1049,17 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     t_pars.method = Methods.TRACK_TR_202111
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
+    # If the guiding FGS has not been determined, use what telemetry has provided
+    if t_pars.fgsid is None:
+        t_pars.fgsid = t_pars.pointing.fgsid
+    logger.info(f'Using FGS{t_pars.fgsid} as the guider reference.')
+
     # Determine V3PA@GS
     v3pags = calc_v3pags(t_pars)
     t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
 
     # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
-    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
+    gs_pos_v23 = trans_fgs2v(t_pars.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
 
     # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
     # relative to the guide star.
@@ -2111,7 +2116,7 @@ def calc_v3pags(t_pars: TransformParameters):
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
     # Retrieve the Ideal Y-angle for the desired FGS
-    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid], useafter=t_pars.useafter)
+    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid], useafter=t_pars.useafter)
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
@@ -2172,7 +2177,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
-    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_db)
+    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     # Apply the Velocity Aberration. To do so, the M_eci2gsics matrix must be created. This
