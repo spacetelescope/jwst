@@ -477,13 +477,23 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
 # ######################
 # Utilities and fixtures
 # ######################
-def make_t_pars():
+def make_t_pars(fgsid_telem=1, fgsid_user=None):
     """Setup initial Transforms Parameters
 
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
+
+    Parameters
+    ==========
+    fgsid_telem : [1, 2]
+        The FGS reference guider to report from telemetry.
+
+    fgsid_user : [None, 1, 2]
+        The user-specified FGS to use as the reference guider.
     """
     t_pars = stp.TransformParameters()
+
+    t_pars.fgsid = fgsid_user
 
     t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
     t_pars.pointing = stp.Pointing(
@@ -495,7 +505,7 @@ def make_t_pars():
         obstime=Time(1611628160.325, format='unix'),
         gs_commanded=np.array([-22.40031242, -8.17869377]),
         gs_position=np.array([-22.4002638, -8.1786461]),
-        fgsid=1,
+        fgsid=fgsid_telem,
     )
     t_pars.siaf = siafdb.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                               crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
