@@ -472,7 +472,6 @@ class Spec2Pipeline(Pipeline):
 
         return calibrated
 
-
     def _process_common(self, data):
         """Common spectral processing"""
         calibrated = self.srctype(data)
