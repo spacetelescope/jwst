@@ -133,32 +133,6 @@ def test_transform_serialize(calc_transforms, tmp_path):
     assert str(transforms) == str(from_asdf)
 
 
-def _test_methods(calc_transforms, matrix, truth_ext=''):
-    """Private function to ensure expected calculate of the specified matrix
-
-    Parameters
-    ----------
-    transforms, t_pars : Transforms, TransformParameters
-        The transforms and the parameters used to generate the transforms
-
-    matrix : str
-        The matrix to compare
-
-    truth_ext : str
-        Arbitrary extension to add to the truth file name.
-    """
-    transforms, t_pars = calc_transforms
-
-    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}{truth_ext}.asdf')
-    expected_value = getattr(expected_tforms, matrix)
-
-    value = getattr(transforms, matrix)
-    if expected_value is None:
-        assert value is None
-    else:
-        assert np.allclose(value, expected_value)
-
-
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
 def test_methods(calc_transforms, matrix):
     """Ensure expected calculate of the specified matrix
@@ -529,6 +503,32 @@ def make_t_pars():
     t_pars.siaf_db = siafdb.SiafDb(siaf_path)
 
     return t_pars
+
+
+def _test_methods(calc_transforms, matrix, truth_ext=''):
+    """Private function to ensure expected calculate of the specified matrix
+
+    Parameters
+    ----------
+    transforms, t_pars : Transforms, TransformParameters
+        The transforms and the parameters used to generate the transforms
+
+    matrix : str
+        The matrix to compare
+
+    truth_ext : str
+        Arbitrary extension to add to the truth file name.
+    """
+    transforms, t_pars = calc_transforms
+
+    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}{truth_ext}.asdf')
+    expected_value = getattr(expected_tforms, matrix)
+
+    value = getattr(transforms, matrix)
+    if expected_value is None:
+        assert value is None
+    else:
+        assert np.allclose(value, expected_value)
 
 
 @pytest.fixture(scope='module')
