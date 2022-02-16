@@ -287,105 +287,6 @@ def interp_helper(mask):
     return mask < 1e-05, lambda z: z.nonzero()[0]
 
 
-def make_knots(flux, nknots=20, weights=None):
-    """Defines knot positions for piecewise models. This simply splits the array into sections. It does
-    NOT take into account the shape of the data.
-
-    :Parameters:
-
-    flux: numpy array, required
-        the flux array or any array of the same dimension
-
-    nknots: int, optional, default=20
-        the number of knots to create (excluding 0 and 1023)
-
-    weights: numpy array, optional, default=None
-        optionally supply a weights array. This will be used to add knots at the edge of bad pixels or features
-
-    :Returns:
-
-    knot_idx, numpy array
-        the indices of the knots
-
-    """
-    log.debug("make_knots: creating {} knots on flux array".format(nknots))
-
-    # create an array of indices
-    npoints = flux.shape[0]
-
-    # kstep is the number of points / number of knots
-    knot_step = npoints // nknots  # + 1
-
-    # define an initial knot index array
-    init_knot_idx = np.zeros(nknots + 1)
-    for n in range(nknots):
-        init_knot_idx[n] = n * knot_step
-    init_knot_idx[-1] = npoints - 1
-
-    # get difference between the indices
-    knot_split = np.ediff1d(init_knot_idx)
-
-    # the last diff will always be different than the others
-    last_split = knot_split[-1]
-
-    # create new knot array with knots at 0 and 1023, then inital and final splits = last_split/2
-    knot_idx = np.ones(nknots + 2)
-    for n in range(nknots):
-        knot_idx[n + 1] = (n * knot_step) + (last_split / 2)
-    knot_idx[0] = 0
-    knot_idx[-1] = npoints - 1
-
-    # if the weights array is supplied, determine the edges of good data and set knots there
-    if weights is not None:
-
-        log.debug("make_knots: adding knots at edges of bad pixels in weights array")
-
-        # if there are bad pixels in the flux array with flux~0,
-        # add these to weights array if not already there
-        weights *= (flux > 1e-03).astype(int)
-
-        # use a two-point difference method
-        weights_diff = np.ediff1d(weights)
-
-        # set edges where diff should be almost equal to the largest of the two datapoints used
-        # iteratate over the diffs and compare to the datapoints
-        edges_idx_list = []
-        for n, wd in enumerate(weights_diff):
-            # get the data points used for the diff
-            datapoints = np.array([weights[n], weights[n + 1]])
-
-            # get the value and index of the larges
-            largest = np.amax(datapoints)
-            largest_idx = np.argmax(datapoints)
-
-            # we don't need knots in the bad pixels so ignore these
-            if largest > 1e-03:
-
-                # check if the absolute values are almost equal
-                if math.isclose(largest, np.abs(wd), rel_tol=1e-01):
-                    # if so, set the index and adjust depending on whether the
-                    # first or second datapoint is the largest
-                    idx = n + largest_idx
-
-                    # check if this is right next to another index already defined
-                    # causes problems in fitting, minimal difference
-                    if (idx - 1 in knot_idx) | (idx + 1 in knot_idx):
-                        pass
-                    else:
-                        # append to the index list
-                        edges_idx_list.append(idx)
-
-                else:
-                    pass
-
-        # convert the list to array, add to the knot_idx array, remove duplicates and sort
-        edges_idx = np.asarray(edges_idx_list)
-        knot_idx = np.sort(np.concatenate((knot_idx, edges_idx), axis=0), axis=0)
-        knot_idx = np.unique(knot_idx.astype(int))
-
-    return knot_idx.astype(int)
-
-
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=False):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
@@ -451,7 +352,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
         log.info(" not enough weighted data, no fit performed")
         return flux.copy(), np.zeros(flux.shape[0]), None
 
-    bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
+    bgindx = new_make_knots(flux.copy(), int(nknots), weights=weights.copy())
     bgknots = wavenum_scaled[bgindx].astype(float)
 
     # Reverse (and clip) the fit data as scipy/astropy need monotone increasing data.
@@ -461,7 +362,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
     w = weights[::-1]
 
     # Fit the spline
-    spline_model = Spline1D(knots=t, degree=3, bounds=[x[0], x[-1]])
+    spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
     fitter = SplineExactKnotsFitter()
     robust_fitter = ChiSqOutlierRejectionFitter(fitter)
     bg_model = robust_fitter(spline_model, x, y, weights=w)
@@ -883,3 +784,102 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
     freq_max = np.amax(fitted_frequencies)
 
     return res_fringe_fit, weighted_pix_num, nfringes, peak_freq, freq_min, freq_max
+
+
+def new_make_knots(flux, nknots=20, weights=None):
+    """Defines knot positions for piecewise models. This simply splits the array into sections. It does
+    NOT take into account the shape of the data.
+
+    :Parameters:
+
+    flux: numpy array, required
+        the flux array or any array of the same dimension
+
+    nknots: int, optional, default=20
+        the number of knots to create (excluding 0 and 1023)
+
+    weights: numpy array, optional, default=None
+        optionally supply a weights array. This will be used to add knots at the edge of bad pixels or features
+
+    :Returns:
+
+    knot_idx, numpy array
+        the indices of the knots
+
+    """
+    log.debug("new_make_knots: creating {} knots on flux array".format(nknots))
+
+    # create an array of indices
+    npoints = flux.shape[0]
+
+    # kstep is the number of points / number of knots
+    knot_step = npoints / nknots
+
+    # define an initial knot index array
+    init_knot_idx = np.zeros(nknots + 1)
+    for n in range(nknots):
+        init_knot_idx[n] = round(n * knot_step)
+    init_knot_idx[-1] = npoints - 1
+
+    # get difference between the indices
+    knot_split = np.ediff1d(init_knot_idx)
+
+    # the last diff will sometimes be different than the others
+    last_split = knot_split[-1]
+
+    # create new knot array with knots at 0 and 1023, then inital and final splits = last_split/2
+    knot_idx = np.ones(nknots + 2)
+    for n in range(nknots):
+        knot_idx[n + 1] = (n * knot_step) + (last_split / 2)
+    knot_idx[0] = 0
+    knot_idx[-1] = npoints - 1
+
+    # if the weights array is supplied, determine the edges of good data and set knots there
+    if weights is not None:
+
+        log.debug("make_knots: adding knots at edges of bad pixels in weights array")
+
+        # if there are bad pixels in the flux array with flux~0,
+        # add these to weights array if not already there
+        weights *= (flux > 1e-03).astype(int)
+
+        # use a two-point difference method
+        weights_diff = np.ediff1d(weights)
+
+        # set edges where diff should be almost equal to the largest of the two datapoints used
+        # iterate over the diffs and compare to the datapoints
+        edges_idx_list = []
+        for n, wd in enumerate(weights_diff):
+            # get the data points used for the diff
+            datapoints = np.array([weights[n], weights[n + 1]])
+
+            # get the value and index of the larges
+            largest = np.amax(datapoints)
+            largest_idx = np.argmax(datapoints)
+
+            # we don't need knots in the bad pixels so ignore these
+            if largest > 1e-03:
+
+                # check if the absolute values are almost equal
+                if math.isclose(largest, np.abs(wd), rel_tol=1e-01):
+                    # if so, set the index and adjust depending on whether the
+                    # first or second datapoint is the largest
+                    idx = n + largest_idx
+
+                    # check if this is right next to another index already defined
+                    # causes problems in fitting, minimal difference
+                    if (idx - 1 in knot_idx) | (idx + 1 in knot_idx):
+                        pass
+                    else:
+                        # append to the index list
+                        edges_idx_list.append(idx)
+
+                else:
+                    pass
+
+        # convert the list to array, add to the knot_idx array, remove duplicates and sort
+        edges_idx = np.asarray(edges_idx_list)
+        knot_idx = np.sort(np.concatenate((knot_idx, edges_idx), axis=0), axis=0)
+        knot_idx = np.unique(knot_idx.astype(int))
+
+    return knot_idx.astype(int)

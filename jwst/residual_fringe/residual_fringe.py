@@ -158,8 +158,9 @@ class ResidualFringeCorrection():
 
         ysize = self.input_model.data.shape[0]
         xsize = self.input_model.data.shape[1]
-        save_proc = np.zeros((ysize,xsize))
+
         save_weights = np.zeros((ysize,xsize))
+        save_proc = np.zeros((ysize,xsize))
         save_bgfit = np.zeros((ysize,xsize))
         save_old_bgfit = np.zeros((ysize,xsize))
         save_res_fringe = np.zeros((ysize,xsize))
@@ -286,6 +287,8 @@ class ResidualFringeCorrection():
                             # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
                             # in case fit fails
                             proc_data = col_data.copy()
+                            save_proc[:,col]  = proc_data.copy()
+                            
                             proc_factors = np.ones(col_data.shape)
                             pre_contrast = 0.0
                             bg_fit = col_data.copy()
@@ -294,7 +297,7 @@ class ResidualFringeCorrection():
                             res_fringe_fit = np.zeros(col_data.shape)
                             res_fringe_fit_flag = np.zeros(col_data.shape)
                             wpix_num = 1024
-                            col_print = 282
+                            col_print = 230
                             test_col = False
                             if(col == col_print):
                                 test_col = True
@@ -341,7 +344,7 @@ class ResidualFringeCorrection():
                                             # get the residual fringes as fraction of signal
 
                                             if col == col_print:
-                                                print('new proc bg_fit',proc_data[0],bg_fit[0])
+                                                print('new proc bg_fit',proc_data[0],bg_fit[0],bgindx[0:20])
                                             res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
                                                                     where=bg_fit != 0)
                                             if col == col_print:
@@ -350,38 +353,41 @@ class ResidualFringeCorrection():
                                             if col == col_print:
                                                 print(res_fringes[0])
                                             res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
-                                            if col == col_print:
-                                                print(res_fringes[0:100])
                                                 
                                             plot = False
                                             if (col == col_print):
                                                 plot = True
                                             if  plot:
-                                                print(bgindx.shape, old_bgindx.shape)
-                                                fig1 = plt.figure(figsize=(10,10))
+                                                print('index shape',bgindx.shape, old_bgindx.shape)
+                                                fig1 = plt.figure(figsize=(12,10))
                                                 ax1 = fig1.add_subplot(221)
                                                 ax1.set_xlabel("Wavenum")
                                                 ax1.set_ylabel("Flux")
                                                 ax1.set_title("Column = " + str(col+1) )
-                                                ax1.scatter(x,proc_data)
-                                                ax1.plot(x,bg_fit,color='green')
-                                                ax1.plot(x,old_bg_fit,color='red',linestyle="dotted")
-                                            
+                                                ax1.plot(x,proc_data,label='signal',color='red')
+                                                ax1.plot(x,bg_fit,color='green',label='bg_fit')
+                                                ax1.scatter(x[bgindx],bg_fit[bgindx],color = 'black',label= 'knots',marker='o', s= 3)
+                                                ax1.legend()
+                                                print('number of knots', len(bgindx))
+                                                print(bgindx[0:-1])
                                                 ax2 = fig1.add_subplot(222)
                                                 ax2.set_xlabel("Wavenum")
-                                                ax2.set_ylabel("res fringe")
+                                                ax2.set_ylabel("Flux")
                                                 ax2.set_title("Column = " + str(col+1) )
-                                                ax2.plot(x,res_fringes,color='green')
-                                                ax2.plot(x,old_res_fringes,color='red',linestyle="dotted")
-                                                ax2.plot(x,weights_feat,color = 'black',marker='o',ms=3)
+                                                ax2.plot(x,proc_data,label='signal',color='red')
+                                                ax2.plot(x,old_bg_fit,color='green',label='old_bg_fit')
 
+                                                ax2.scatter(x[old_bgindx],old_bg_fit[old_bgindx],color = 'blue',label= 'knots',marker='o',s= 3)
+                                                ax2.legend()
+                                                
                                                 ax3 = fig1.add_subplot(223)
                                                 ax3.set_xlabel("Wavenum")
                                                 ax3.set_ylabel("res fringe")
                                                 ax3.set_title("Column = " + str(col+1) )
-                                                ax3.plot(x[680:800],res_fringes[680:800],color='green',marker='o', ms=5)
-                                                ax3.plot(x[680:800],old_res_fringes[680:800],color='red',marker='o', ms=2)
-                                                ax3.plot(x[680:800],weights_feat[680:800],color = 'black',marker='o',ms=5)
+                                                ax3.plot(x,res_fringes,color='green',label='res fringes')
+                                                ax3.plot(x,old_res_fringes,color='red',linestyle="dotted", label= 'old_res_fringes')
+                                                ax3.plot(x,weights_feat,color = 'black',marker='o',ms=3)
+                                                ax3.legend()
                                                 
                                                 ax4 = fig1.add_subplot(224)
                                                 ax4.set_xlabel("Wavenum")
@@ -389,26 +395,7 @@ class ResidualFringeCorrection():
                                                 ax4.set_title("Column = " + str(col+1) )
                                                 ratio = res_fringes/old_res_fringes
                                                 ax4.plot(x,ratio,color='green',marker='o', ms=2)
-                                                index = np.where(np.absolute(ratio) > 10)
-                                                print('index',index)
-                                                print('res_fringe',res_fringes[680:700])
-                                                print('old_fringe',old_res_fringes[680:700])
-                                                print('ratio',res_fringe[680:700]/old_res_fringe[680:700])
-                                                print(proc_data[680:700])
-                                                print('bg_fit',bg_fit[680:700])
-                                                print('old_fit',old_bg_fit[680:700])
 
-                                                #print('data, weights, new fit, old fit, new fringe, old fringe, new fringe - old fringe')
-                                                #print('first 10 points')
-                                                #for ipp in range(10):
-                                                #    print(proc_data[ipp], weights_feat[ipp], bg_fit[ipp], old_bg_fit[ipp], res_fringes[ipp], old_res_fringes[ipp],
-                                                #          res_fringes[ipp] - old_res_fringes[ipp], bg_fit[ipp] - old_bg_fit[ipp],bgindx[ipp], old_bgindx[ipp])
-                                                    
-                                                #print('last 10 values')
-
-                                                #for ipp in range(10):
-                                                #    print(proc_data[-ipp],weights_feat[-ipp], bg_fit[-ipp], old_bg_fit[-ipp], res_fringes[-ipp], old_res_fringes[-ipp],
-                                                #          res_fringes[-ipp] - old_res_fringes[-ipp], bg_fit[-ipp] - old_bg_fit[-ipp])
                                                     
                                                 plt.show()
                                             # get the pre-correction contrast using fringe component 1
@@ -538,6 +525,7 @@ class ResidualFringeCorrection():
         hdu4 = fits.ImageHDU()
         hdu5 = fits.ImageHDU()
         hdu6 = fits.ImageHDU()
+        hdu7 = fits.ImageHDU()
         hdu0.data = save_weights
         hdu1.data = save_bgfit
         hdu2.data = save_old_bgfit
@@ -545,7 +533,8 @@ class ResidualFringeCorrection():
         hdu4.data = save_old_res_fringe
         hdu5.data = save_bgindx
         hdu6.data = save_old_bgindx
-        hdu = fits.HDUList([hdu0,hdu1,hdu2,hdu3,hdu4,hdu5,hdu6])
+        hdu7.data = save_proc
+        hdu = fits.HDUList([hdu0,hdu1,hdu2,hdu3,hdu4,hdu5,hdu6,hdu7])
         hdu.writeto('test.fits', overwrite=True)
         hdu.close()        
         # add units back to output data
