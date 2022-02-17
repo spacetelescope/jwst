@@ -522,7 +522,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     total = np.where((total != 0), total, np.nan)
     contribution = {order: models[order] / total for order in order_list}
 
-    log.info('Extracting using transformation parameters {}'.format(transform))
+    log.debug('Extracting using transformation parameters {}'.format(transform))
 
     # Set the c_kwargs using the minimum value of the kernels
     c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
@@ -964,6 +964,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     transform = soss_kwargs.pop('transform')
     if transform is None:
         transform = [None, None, None]
+    # Save names for logging
+    param_name = np.array(['theta', 'x-offset', 'y-offset'])
 
     all_tracemodels = dict()
     all_box_weights = dict()
@@ -1000,31 +1002,26 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             xref_o2 = spectrace_ref.trace[1].data['X']
             yref_o2 = spectrace_ref.trace[1].data['Y']
 
-            # Set bounds to fix specified parameters
-            bounds_kwargs = dict()
-            key_for_log = ['theta', 'dx', 'dy']
-            msg = ''
-            for idx, key in enumerate(['bounds_theta', 'bounds_x', 'bounds_y']):
-                value = transform[idx]
-                if value is not None:
-                    bounds_kwargs[key] = [value * (1 - 1e-5), value * (1 + 1e-5)]
-                    msg += f'{key_for_log[idx]} is fixed to {value}. '
-                else:
-                    msg += f'{key_for_log[idx]} is fitted. '
-            log.info(msg)
+            # Define which parameters to fit
+            is_fitted = np.array([value is None for value in transform])
+
+            # Show which parameters are fitted in log
+            log.info('Parameters used for fit: ' + ', '.join(param_name[is_fitted]))
+            log.info('Fixed parameters: ' + ', '.join(param_name[~is_fitted]))
 
             # Use the solver on the background subtracted image.
             if subarray == 'SUBSTRIP96' or soss_filter == 'F277W':
                 # Use only order 1 to solve theta, dx, dy
                 transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                            soss_filter=soss_filter, **bounds_kwargs)
+                                            soss_filter=soss_filter, is_fitted=is_fitted,
+                                            guess_transform=transform)
             else:
                 transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                            xref_o2, yref_o2,
-                                            soss_filter=soss_filter, **bounds_kwargs)
+                                            xref_o2, yref_o2, is_fitted=is_fitted,
+                                            soss_filter=soss_filter, guess_transform=transform)
 
-        log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
-            transform[0], transform[1], transform[2]))
+        string_list = [f'{name}={value}' for name, value in zip(param_name, transform)]
+        log.info('Measured to Reference trace position transform: ' + ', '.join(string_list))
 
         # Pre-compute the weights for box extraction (used in modeling and extraction)
         args = (ref_files, transform, subarray, scidata_bkg.shape)
@@ -1153,31 +1150,26 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 xref_o2 = spectrace_ref.trace[1].data['X']
                 yref_o2 = spectrace_ref.trace[1].data['Y']
 
-                # Set bounds to fix specified parameters
-                bounds_kwargs = dict()
-                key_for_log = ['theta', 'dx', 'dy']
-                msg = ''
-                for idx, key in enumerate(['bounds_theta', 'bounds_x', 'bounds_y']):
-                    value = transform[idx]
-                    if value is not None:
-                        bounds_kwargs[key] = [value * (1 - 1e-5), value * (1 + 1e-5)]
-                        msg += f'{key_for_log[idx]} is fixed to {value}. '
-                    else:
-                        msg += f'{key_for_log[idx]} is fitted. '
-                log.info(msg)
+                # Define which parameters to fit
+                is_fitted = np.array([value is None for value in transform])
+                
+                # Show which parameters are fitted in log
+                log.info('Parameters used for fit: ' + ', '.join(param_name[is_fitted]))
+                log.info('Fixed parameters: ' + ', '.join(param_name[~is_fitted]))
 
                 # Use the solver on the background subtracted image.
                 if subarray == 'SUBSTRIP96' or soss_filter == 'F277W':
                     # Use only order 1 to solve theta, dx, dy
                     transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                                soss_filter=soss_filter, **bounds_kwargs)
+                                                soss_filter=soss_filter, is_fitted=is_fitted,
+                                                guess_transform=transform)
                 else:
                     transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                                xref_o2, yref_o2,
-                                                soss_filter=soss_filter, **bounds_kwargs)
+                                                xref_o2, yref_o2, is_fitted=is_fitted,
+                                                soss_filter=soss_filter, guess_transform=transform)
 
-            log.info('Measured to Reference trace position transform: theta={:.4f}, dx={:.4f}, dy={:.4f}'.format(
-                     transform[0], transform[1], transform[2]))
+            string_list = [f'{name}={value}' for name, value in zip(param_name, transform)]
+            log.info('Measured to Reference trace position transform: ' + ', '.join(string_list))
 
             # Pre-compute the weights for box extraction (used in modeling and extraction)
             args = (ref_files, transform, subarray, scidata_bkg.shape)
