@@ -149,9 +149,15 @@ def test_methods(calc_transforms, matrix):
 
 
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
-def test_coarse_202111_fgs2(calc_coarse_202111_fgs2, matrix):
-    """Test COARSE_202111 using FGS2"""
-    _test_methods(calc_coarse_202111_fgs2, matrix, truth_ext='_fgs2')
+def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
+    """Test COARSE_202111 matrices using various FGS settings
+
+    If an FGS is specifically used for science, the other FGS is the guider.
+    For all other instruments, the assumption is that FGS1 is the guider, but
+    that can be overridden.
+    """
+    transforms, t_pars, truth_ext, fgs_expected = calc_coarse_202111_fgsid
+    _test_methods((transforms, t_pars), matrix, truth_ext=truth_ext)
 
 
 def test_change_engdb_url():
@@ -176,6 +182,9 @@ def test_change_engdb_url_fail():
             engdb_url='http://nonexistent.fake.example'
         )
 
+
+def test_coaurse_fgsid():
+    """Test setting of FGS id for coarse mode"""
 
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
@@ -541,19 +550,29 @@ def _test_methods(calc_transforms, matrix, truth_ext=''):
         assert np.allclose(value, expected_value)
 
 
-@pytest.fixture(scope='module')
-def calc_coarse_202111_fgs2(tmp_path_factory):
-    """Calculate the transforms for COARSE_202111 using FGS2"""
-    t_pars = make_t_pars()
+@pytest.fixture(scope='module',
+                params=(('any', None, 1), ('any', 1, 1), ('any', 2, 2),
+                        ('guider1', None, 2), ('guider1', 1, 2), ('guider1', 2, 2),
+                        ('guider2', None, 1), ('guider2', 1, 1), ('guider2', 2, 1)))
+def calc_coarse_202111_fgsid(request, tmp_path_factory):
+    """Calculate the transforms for COARSE_202111 with various FGS specifications
+    """
+    detector, fgsid_user, fgs_expected = request.param
+
+    # Create transform parameters.
+    # FGS from telemetry is set to None because, for COARSE mode,
+    # telemetry is unreliable.
+    t_pars = make_t_pars(fgsid_telem=None, fgsid_user=fgsid_user)
     t_pars.method = stp.Methods.COARSE_TR_202111
-    t_pars.fgsid = 2
     transforms = stp.calc_transforms(t_pars)
 
+    truth_ext = f'_{detector}-{fgsid_user}'
+
     # Save transforms for later examination
-    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_coarse_tr_202111_fgs2.asdf')
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{t_pars.method}{truth_ext}.asdf')
 
     try:
-        return transforms, t_pars
+        return transforms, t_pars, truth_ext, fgs_expected
     finally:
         t_pars.siaf_db.close()
 

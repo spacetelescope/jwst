@@ -4,12 +4,12 @@
 %TAG ! tag:stsci.edu:asdf/
 --- !core/asdf-1.1.0
 asdf_library: !core/software-1.0.0 {author: The ASDF Developers, homepage: 'http://github.com/asdf-format/asdf',
-  name: asdf, version: 2.9.1}
+  name: asdf, version: 2.9.2}
 history:
   extensions:
   - !core/extension_metadata-1.0.0
     extension_class: asdf.extension.BuiltinExtension
-    software: !core/software-1.0.0 {name: asdf, version: 2.9.1}
+    software: !core/software-1.0.0 {name: asdf, version: 2.9.2}
 transforms:
   m_eci2fgs1: null
   m_eci2gs: !core/ndarray-1.0.0
