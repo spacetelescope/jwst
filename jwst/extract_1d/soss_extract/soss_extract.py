@@ -543,7 +543,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         # Initial pass 8 orders of magnitude with 10 grid points.
         factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
         all_tests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
-        tikfac, mode, _ = engine.best_tikho_factor(tests=all_tests, fit_mode='chi2')
+        tikfac, mode, _ = engine.best_tikho_factor(tests=all_tests, fit_mode='all')
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
@@ -793,7 +793,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
     model = engine.rebuild(f_k_final, fill_value=np.nan)
 
     # Build 1d spectrum integrated over pixels
-    spec_ord = f_to_spec(f_k, wave_grid_os, ref_file_args, wave_grid,
+    spec_ord = f_to_spec(f_k_final, wave_grid_os, ref_file_args, wave_grid,
                          np.all(mask_rebuild, axis=0)[valid_cols], sp_ord=order)
     spec_ord.meta.soss_extract1d.factor = tikfac
     spec_ord.meta.soss_extract1d.type = 'OBSERVATION'

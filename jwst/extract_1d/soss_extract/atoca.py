@@ -1098,6 +1098,15 @@ class _BaseOverlap:
         # Use pre-run tests if not specified
         if tests is None:
             tests = self.tikho_tests
+            
+        # Remove all bad factors that are most likely unstable
+        min_factor = tests.best_tikho_factor(mode='d_chi2', thresh=1e-8)
+        idx_to_keep = min_factor <= tests['factors']
+        new_tests = dict()
+        for key in tests:
+            if key != 'grid':
+                new_tests[key] = tests[key][idx_to_keep]
+        tests = atoca_utils.TikhoTests(new_tests)
 
         # Modes to be tested
         if fit_mode == 'all':
