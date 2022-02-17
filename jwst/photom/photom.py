@@ -972,12 +972,29 @@ class DataSet():
         # Get the 2D wavelength array corresponding to the input
         # image pixel values
         wl_array = model.spec_table['WAVELENGTH']
+
+        flip_wl = False
+        if (np.nanargmax(wl_array) - np.nanargmin(wl_array)) < 0:
+            # Need monotonically increasing wavelengths for interp
+            # Bool flag to flip fit if True
+            flip_wl = True
+            wl_array = wl_array[::-1]
+
         wl_array[np.isnan(wl_array)] = -1.
+
+        if (np.nanargmax(waves) - np.nanargmin(waves)) < 0:
+            # Need monotonically increasing wavelengths for interp
+            # This shouldn't have effects external to method.
+            waves = waves[::-1]
+            relresps = relresps[::-1]
 
         # Interpolate the photometric response values onto the
         # 1D wavelength grid
         conv_1d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
 
+        if flip_wl:
+            # If wl_array was flipped, flip the conversion before returning it.
+            conv_1d = conv_1d[::-1]
         # Combine the scalar and 1D conversion factors
         conversion = conversion * conv_1d
         no_cal = np.isnan(conv_1d)
