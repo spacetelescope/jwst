@@ -2379,7 +2379,7 @@ class TikhoTests(dict):
         return factors, curv
 
     def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
-                          mode='curvature', thresh=0.01):
+                          mode='curvature', thresh=1e-5):
         """Compute the best scale factor for Tikhonov regularisation.
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
