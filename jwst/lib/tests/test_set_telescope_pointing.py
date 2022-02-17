@@ -148,6 +148,21 @@ def test_methods(calc_transforms, matrix):
     _test_methods(calc_transforms, matrix)
 
 
+def test_coarse_202111_fgsid(calc_coarse_202111_fgsid):
+    """Test COARSE_202111 to ensure correct FGS id is used.
+
+    If an FGS is specifically used for science, the other FGS is the guider.
+    For all other instruments, the assumption is that FGS1 is the guider, but
+    that can be overridden.
+
+    This tests that the correct FGS id was used in the calculations
+    """
+    transforms, t_pars, truth_ext, fgs_expected = calc_coarse_202111_fgsid
+
+    fgsid_used = t_pars.fgsid
+    assert fgsid_used == fgs_expected
+
+
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
 def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
     """Test COARSE_202111 matrices using various FGS settings
@@ -155,6 +170,8 @@ def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
     If an FGS is specifically used for science, the other FGS is the guider.
     For all other instruments, the assumption is that FGS1 is the guider, but
     that can be overridden.
+
+    This tests that the appropriate transformations were calculated.
     """
     transforms, t_pars, truth_ext, fgs_expected = calc_coarse_202111_fgsid
     _test_methods((transforms, t_pars), matrix, truth_ext=truth_ext)
@@ -524,6 +541,12 @@ def make_t_pars(fgsid_telem=1, fgsid_user=None):
     return t_pars
 
 
+def _calc_coarse_202111_fgsid_idfunc(value):
+    """Created test IDS for calc_coarse_202111_fgsid"""
+    detector, fgsid_user, fgs_expected = value
+    return f'{detector}-{fgsid_user}'
+
+
 def _test_methods(calc_transforms, matrix, truth_ext=''):
     """Private function to ensure expected calculate of the specified matrix
 
@@ -553,7 +576,8 @@ def _test_methods(calc_transforms, matrix, truth_ext=''):
 @pytest.fixture(scope='module',
                 params=(('any', None, 1), ('any', 1, 1), ('any', 2, 2),
                         ('guider1', None, 2), ('guider1', 1, 2), ('guider1', 2, 2),
-                        ('guider2', None, 1), ('guider2', 1, 1), ('guider2', 2, 1)))
+                        ('guider2', None, 1), ('guider2', 1, 1), ('guider2', 2, 1)),
+                ids=_calc_coarse_202111_fgsid_idfunc)
 def calc_coarse_202111_fgsid(request, tmp_path_factory):
     """Calculate the transforms for COARSE_202111 with various FGS specifications
     """
