@@ -15,6 +15,13 @@ associations
   
 - Add fgsid option to set_telescope_pointing [#6717]
 
+align_refs
+----------
+- Fixed behavior generating many unnecessary and slow logging warnings on
+  MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
+  pixels [#6722]
+
+
 cube_build
 ----------
 
@@ -25,6 +32,9 @@ extract_1d
 
 - Clean the logging statements made by `extract_1d` to make the log
   more useful [#6696]
+
+- Check for non-zero array size before computing sigma-clipped
+  statistics in IFU mode [#6728]
 
 ramp_fitting
 ------------
