@@ -48,6 +48,9 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+- Adding feature to turn off calculations of ramps with good 0th group,
+  but all other groups are saturated. [#]
+
 skymatch
 --------
 
