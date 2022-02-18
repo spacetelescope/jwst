@@ -805,8 +805,8 @@ class DataSet():
                                                                    waves, relresps, order)
             elif isinstance(self.input, datamodels.MultiSpecModel):
 
-                # This input does not require a 2d conversion, just an application of the
-                # relresponse to the DN/s input.
+                # This input does not require a 2d conversion, but a 1d interpolation on the
+                # input wavelength vector to find the relresponse.
                 conversion, no_cal = self.create_1d_conversion(self.input.spec[self.specnum],
                                                                conversion, waves, relresps)
             else:
@@ -964,9 +964,9 @@ class DataSet():
         Returns
         -------
         conversion : float
-            2D array of computed photometric conversion values
+            1D array of computed photometric conversion values
         no_cal : int
-            2D mask indicating where no conversion is available
+            1D mask indicating where no conversion is available
         """
 
         # Get the 2D wavelength array corresponding to the input
@@ -1195,6 +1195,8 @@ class DataSet():
 
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
+        # SOSS data are in a MultiSpecModel, which will not allow for
+        # saving the area info.
         if self.exptype != 'NIS_SOSS':
             self.save_area_info(ftab, area_fname)
 
