@@ -148,7 +148,7 @@ class Methods(Enum):
 FGSId2Aper = {1: 'FGS1_FULL_OSS', 2: 'FGS2_FULL_OSS'}
 
 # FGS Ids
-FGSIDS = [None, 1, 2]
+FGSIDS = [1, 2]
 
 # Definition of th J3 Ideal Y-Angle
 J3IDLYANGLE = -1.25  # Degrees
@@ -1049,10 +1049,18 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     t_pars.method = Methods.TRACK_TR_202111
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
-    # If the guiding FGS has not been determined, use what telemetry has provided
-    if t_pars.fgsid is None:
-        t_pars.fgsid = t_pars.pointing.fgsid
-    logger.info(f'Using FGS{t_pars.fgsid} as the guider reference.')
+    # Check on telemetry for FGS ID. If invalid, use either user-specified or default to 1.
+    fgsid = t_pars.pointing.fgsid
+    if fgsid not in FGSIDS:
+        logger.warning(f'Method {t_pars.method} requires a valid FGS ID in telementry.'
+                       '\nHowever telemetry reports an invalid id of {fgsid}')
+        if t_pars.fgsid in FGSIDS:
+            fgsid = t_pars.fgsid
+            logger.warning(f'Using user-specified ID of {fgsid}')
+        else:
+            fgsid = 1
+            logger.warning(f'Using FGS{fgsid} as the default for the guiding FGS')
+    t_pars.fgsid = fgsid
 
     # Determine V3PA@GS
     v3pags = calc_v3pags(t_pars)

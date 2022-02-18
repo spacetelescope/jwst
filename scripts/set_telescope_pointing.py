@@ -78,7 +78,7 @@ if __name__ == '__main__':
         help='Transform matrices to use instead of calculated'
     )
     parser.add_argument(
-        '--fgsid', type=int, default=None, choices=stp.FGSIDS,
+        '--fgsid', type=int, default=1, choices=stp.FGSIDS,
         help='FGS to use for COARSE mode calculations. Default: %(default)s Choices: %(choices)s'
     )
     parser.add_argument(
