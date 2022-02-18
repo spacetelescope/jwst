@@ -48,6 +48,11 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+set_telescope_pointing
+----------------------
+
+- Update COARSE handling of FGS, psyiaf importing, model opening, and removal of stale code. [#6735]
+
 skymatch
 --------
 
