@@ -9,7 +9,9 @@ SkyMatch
 .. toctree::
    :maxdepth: 2
 
-   README.rst
+   description.rst
+   arguments.rst
+   reference_files.rst
 
    skymatch_step
    skymatch

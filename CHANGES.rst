@@ -21,7 +21,6 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
-
 cube_build
 ----------
 
@@ -30,7 +29,8 @@ cube_build
 cube_skymatch
 -------------
 
-- Enabled support for mnemonic DQ codes in the ``cube_skymatch`` step. [#6733]
+- Enabled support for mnemonic DQ codes in the ``cube_skymatch`` step.
+  [#6733, #6736]
 
 extract_1d
 ----------
@@ -51,9 +51,12 @@ ramp_fitting
 skymatch
 --------
 
+- Updated the step docs to clarify the details of the various global,
+  match, and global+match methods. [#6726]
+
 - Enabled support for mnemonic DQ codes in the ``skymatch`` step. Also
   changed default value for ``dqbits`` from 0 (exclude ALL flagged in DQ
-  pixels) to ``'~DO_NOT_USE+NON_SCIENCE'``. [#6733]
+  pixels) to ``'~DO_NOT_USE+NON_SCIENCE'``. [#6733, #6736]
 
 srctype
 -------
