@@ -321,6 +321,8 @@ class TransformParameters:
     allow_default: bool = False
     #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
+    #: Detector in use.
+    detector: str = None
     #: Do not write out the modified file.
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
@@ -979,8 +981,17 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
 
     # Choose the FGS to use.
     # Default to using FGS1 if not specified and FGS1 is not the science instrument.
-    if t_pars.fgsid is None:
-        t_pars.fgsid = 1
+    fgsid = t_pars.fgsid
+    if t_pars.detector is not None:
+        detector = t_pars.detector.lower()
+        if detector in ['guider1', 'guider2']:
+            fgsid = 1
+            if detector == 'guider1':
+                fgsid = 2
+            logger.info(f'COARSE mode using detector {detector} implies use of FGS{fgsid}')
+    if fgsid not in FGSIDS:
+        fgsid = 1
+    t_pars.fgsid = fgsid
     logger.info('Using FGS%s.', t_pars.fgsid)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
@@ -2424,6 +2435,9 @@ def t_pars_from_model(model, **t_pars_kwargs):
         t_pars.siaf = siaf
         t_pars.useafter = useafter
     logger.debug('SIAF: %s', t_pars.siaf)
+
+    # Instrument details
+    t_pars.detector = model.meta.instrument.detector
 
     # observation parameters
     t_pars.obsstart = model.meta.exposure.start_time

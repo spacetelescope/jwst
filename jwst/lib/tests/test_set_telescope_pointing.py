@@ -503,7 +503,7 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
 # ######################
 # Utilities and fixtures
 # ######################
-def make_t_pars(fgsid_telem=1, fgsid_user=None):
+def make_t_pars(detector='any', fgsid_telem=1, fgsid_user=None):
     """Setup initial Transforms Parameters
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -519,6 +519,7 @@ def make_t_pars(fgsid_telem=1, fgsid_user=None):
     """
     t_pars = stp.TransformParameters()
 
+    t_pars.detector = detector
     t_pars.fgsid = fgsid_user
 
     t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
@@ -586,7 +587,7 @@ def calc_coarse_202111_fgsid(request, tmp_path_factory):
     # Create transform parameters.
     # FGS from telemetry is set to None because, for COARSE mode,
     # telemetry is unreliable.
-    t_pars = make_t_pars(fgsid_telem=None, fgsid_user=fgsid_user)
+    t_pars = make_t_pars(detector=detector, fgsid_telem=None, fgsid_user=fgsid_user)
     t_pars.method = stp.Methods.COARSE_TR_202111
     transforms = stp.calc_transforms(t_pars)
 
