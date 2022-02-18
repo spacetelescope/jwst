@@ -285,10 +285,6 @@ def one_group_suppressed(nints, suppress, setup_inputs):
     rampmodel.groupdq[0, 0, 0, 1] = 0
     rampmodel.groupdq[0, :, 0, 2] = zdq     # All groups good
 
-    print("-" * 80)
-    print(f"rampmodel.groupdq = \n{rampmodel.groupdq}")
-    print("-" * 80)
-
     if nints > 1:
         rampmodel.data[1, :, 0, 0] = arr
         rampmodel.data[1, :, 0, 1] = arr
@@ -313,6 +309,15 @@ def one_group_suppressed(nints, suppress, setup_inputs):
 
 
 def test_one_group_not_suppressed_one_integration(setup_inputs):
+    """
+    This tests a one integration with three pixel ramps, with the
+    one group suppression switch turned off.
+    1. The fully saturated ramp should have no computed data with the
+       DO_NOT_USE flag set in the final DQ.
+    2. The one group ramp will have data computed and the SATURATED
+       flag set in the final DQ.
+    3. The good ramp is fully computed.
+    """
     slopes, cube, dims = one_group_suppressed(1, False, setup_inputs)
     nints, ngroups, nrows, ncols = dims
     tol = 1e-5
@@ -320,10 +325,6 @@ def test_one_group_not_suppressed_one_integration(setup_inputs):
     # Check slopes information
     check = np.array([[0., 1., 1.0000002]])
     np.testing.assert_allclose(slopes.data, check, tol)
-
-    print("-" * 80)
-    print(f"Test DQ: \n{slopes.dq}")
-    print("-" * 80)
 
     check = np.array([[3, 2, 0]])
     np.testing.assert_allclose(slopes.dq, check, tol)
@@ -355,6 +356,15 @@ def test_one_group_not_suppressed_one_integration(setup_inputs):
 
 
 def test_one_group_suppressed_one_integration(setup_inputs):
+    """
+    This tests a one integration with three pixel ramps, with the
+    one group suppression switch turned on.
+    1. The fully saturated ramp should have no computed data with the
+       DO_NOT_USE flag set in the final DQ.
+    2. The one group ramp will be computed as a fully saturated ramp,
+       but the DO_NOT_USE flag will not be set in the final DQ.
+    3. The good ramp is fully computed.
+    """
     slopes, cube, dims = one_group_suppressed(1, True, setup_inputs)
     nints, ngroups, nrows, ncols = dims
     tol = 1e-5
@@ -393,6 +403,17 @@ def test_one_group_suppressed_one_integration(setup_inputs):
 
 
 def test_one_group_not_suppressed_two_integration(setup_inputs):
+    """
+    This tests three pixel ramps with two integrations and the
+    one group suppression switch turned off.  The second integration
+    for all ramps are good, so all pixels will have usable data in
+    the final image model.
+    1. A fully saturated first integration.  Usable data is obtained
+       from the second integration.
+    2. A one group ramp in the first integration.  Data from both
+       integrations is combeined for the final image model.
+    3. Good data from both integrations.
+    """
     slopes, cube, dims = one_group_suppressed(2, False, setup_inputs)
     nints, ngroups, nrows, ncols = dims
     tol = 1e-5
@@ -436,6 +457,17 @@ def test_one_group_not_suppressed_two_integration(setup_inputs):
 
 
 def test_one_group_suppressed_two_integration(setup_inputs):
+    """
+    This tests three pixel ramps with two integrations and the
+    one group suppression switch turned on.  The key differences
+    for this test are in the cube data.
+    1. A fully saturated first integration.  Usable data is obtained
+       from the second integration.
+    2. A one group ramp in the first integration.  No data from the
+       first integration is used, but DO_NOT_USE flag is not set for
+       the first integration.
+    3. Good data from both integrations.
+    """
     slopes, cube, dims = one_group_suppressed(2, True, setup_inputs)
     nints, ngroups, nrows, ncols = dims
     tol = 1e-5

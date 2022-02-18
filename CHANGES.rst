@@ -46,7 +46,7 @@ ramp_fitting
 
 - Updated step docs to clarify exactly what calculations are used for
   the various flavors of variance and ERR stored in the output
-  products [#6715]
+  products [#6737]
 
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#]
