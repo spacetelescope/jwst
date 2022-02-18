@@ -1,5 +1,4 @@
 import math
-import warnings
 
 import pytest
 import numpy as np
@@ -114,8 +113,8 @@ def mk_soss_spec(settings, speclen):
     for i, inspec in enumerate(settings):
         # Make number of columns equal to length of SpecModel's spec_table dtype, then assign
         # dtype to each column. Use to initialize SpecModel for entry into output MultiSpecModel
-        otab = np.array(list(zip(*([np.linspace(0.6, 4.0, speclen[i])]+
-                                   [np.ones(speclen[i]) for _ in range(len(SpecModel().spec_table.dtype)-1)]))),
+        otab = np.array(list(zip(*([np.linspace(0.6, 4.0, speclen[i])] +
+                                   [np.ones(speclen[i]) for _ in range(len(SpecModel().spec_table.dtype) - 1)]))),
                         dtype=SpecModel().spec_table.dtype)
         specmodel = datamodels.SpecModel(spec_table=otab)
         model.meta.instrument.filter = inspec['filter']
