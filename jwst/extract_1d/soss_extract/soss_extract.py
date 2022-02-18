@@ -565,6 +565,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 
                 # Add the result to spec_list
                 spec_list.append(spec_ord)
+    else:
+        save_tiktests = False
 
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
