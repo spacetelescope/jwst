@@ -327,7 +327,7 @@ class TransformParameters:
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
-    #: FGS used for guiding. If None, use what telemetry provides.
+    #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
     fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
@@ -399,7 +399,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         URL of the engineering telemetry database REST interface.
 
     fgsid : int or None
-        The FGS to use as the guider reference.
+        When in COARSE mode, the FGS to use as the guider reference.
         If None, use what is provided in telemetry.
 
     tolerance : int
@@ -557,7 +557,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         URL of the engineering telemetry database REST interface.
 
     fgsid : int or None
-        The FGS to use as the guider reference.
+        When in COARSE mode, the FGS to use as the guider reference.
         If None, use what is provided in telemetry.
 
     tolerance : int
@@ -2230,8 +2230,8 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
 
     Parameters
     ----------
-    fgsid : int
-        The id of the FGS in actually in use. 1 or 2
+    fgsid : [1, 2]
+        The id of the FGS in use.
 
     siaf_db : SiafDb
         The SIAF database.
@@ -2326,7 +2326,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
 
     Parameters
     ----------
-    fgsid : int
+    fgsid : [1, 2]
         The FGS in use.
 
     ideal : numpy.array(2)
