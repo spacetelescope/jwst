@@ -200,9 +200,6 @@ def test_change_engdb_url_fail():
         )
 
 
-def test_coaurse_fgsid():
-    """Test setting of FGS id for coarse mode"""
-
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
