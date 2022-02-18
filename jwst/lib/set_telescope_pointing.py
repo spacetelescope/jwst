@@ -458,7 +458,11 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     in the header other than what is required by the standard.
     """
     logger.info('Updating WCS info for file %s', filename)
-    with datamodels.Level1bModel(filename) as model:
+    with datamodels.open(filename) as model:
+        if type(model) not in (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel):
+            logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)'
+                           '\n    Updating pointing may have no effect or detrimental effects on the WCS information,'
+                           '\n    especially if the input is the result of Level2b or higher calibration.')
         t_pars, transforms = update_wcs(
             model,
             default_pa_v3=default_pa_v3,
