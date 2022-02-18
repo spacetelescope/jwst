@@ -12,7 +12,7 @@ associations
 
 - Add constraint on NIRCam TSGRISM exposures, preventing level 2 and 3
   associations for detector NRCBLONG [#6709]
-  
+
 - Add fgsid option to set_telescope_pointing [#6717]
 
 align_refs
@@ -26,6 +26,11 @@ cube_build
 ----------
 
 - Fixed a bug in how the dq plane of NIRspec data is set [#6718]
+
+cube_skymatch
+-------------
+
+- Enabled support for mnemonic DQ codes in the ``cube_skymatch`` step. [#6733]
 
 extract_1d
 ----------
@@ -43,12 +48,20 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+skymatch
+--------
+
+- Enabled support for mnemonic DQ codes in the ``skymatch`` step. Also
+  changed default value for ``dqbits`` from 0 (exclude ALL flagged in DQ
+  pixels) to ``'~DO_NOT_USE+NON_SCIENCE'``. [#6733]
+
 srctype
 -------
 
 - Add command line option to override source type [#6720]
 
-  
+
+
 1.4.3 (2022-02-03)
 ==================
 
