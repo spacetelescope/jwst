@@ -156,6 +156,7 @@ class ResidualFringeCorrection():
         xsize = self.input_model.data.shape[1]
 
         save_weights = np.zeros((ysize, xsize))
+        save_weights2 = np.zeros((ysize, xsize))
         save_proc = np.zeros((ysize, xsize))
         save_bgfit = np.zeros((ysize, xsize))
         save_res_fringe = np.zeros((ysize, xsize))
@@ -271,8 +272,6 @@ class ResidualFringeCorrection():
                             # given signal in mod find location of lines > col_max_amp * 2
                             weight_factors = utils.find_lines(mod, col_max_amp * 2)
                             weights_feat = col_weight * weight_factors
-                            # jane addded this
-                            # weights_feat[weights_feat <= 0.003] = 1e-08
 
 
                             # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
@@ -288,12 +287,7 @@ class ResidualFringeCorrection():
                             res_fringe_fit_flag = np.zeros(col_data.shape)
                             wpix_num = 1024
 
-                            if col == -346:
-                                print('data 0 to 100',proc_data[0:100])
-                                print(weights_feat[0:100])
-                                print('data end 100',proc_data[-100:])
-                                print(weights_feat[-100:])
-
+                            #weights_feat[weights_feat <= 0.003] = 1e-08                            
                             # check the end points
                             index = np.where(weights_feat != 0.0)
                             length = np.diff(index[0])
@@ -307,6 +301,10 @@ class ResidualFringeCorrection():
 
                             if weights_feat[-1] !=0 and length[-1] > 1:
                                 weights_feat[-1] =  1e-08
+
+                            # jane addded this
+                            save_weights2[:,col] = weights_feat
+                            weights_feat[weights_feat <= 0.003] = 1e-08
 
                             save_weights[:, col] = weights_feat
                             # the reference file is set up with 2 values for ffreq but currently one one is used. The other value
@@ -452,7 +450,8 @@ class ResidualFringeCorrection():
         hdu6 = fits.ImageHDU()
         hdu7 = fits.ImageHDU()
         hdu0.data = save_weights
-        hdu1.data = save_bgfit
+        hdu1.data = save_weights2
+        #hdu1.data = save_bgfit
         hdu2.data = save_bgfit
         hdu3.data = save_res_fringe
         hdu4.data = save_res_fringe
