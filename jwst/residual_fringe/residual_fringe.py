@@ -309,6 +309,8 @@ class ResidualFringeCorrection():
                             save_weights[:, col] = weights_feat
                             # the reference file is set up with 2 values for ffreq but currently one one is used. The other value
                             # is a place holder and set to a small value
+                            #testing = True
+                            #if testing: 
                             try:
                                 for fn, ff in enumerate(ffreq):
                                     # ignore place holder fringes
