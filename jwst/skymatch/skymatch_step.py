@@ -15,7 +15,6 @@ from ..stpipe import Step
 from .. import datamodels
 from ..datamodels.dqflags import pixel
 
-
 from astropy.nddata.bitmask import (
     bitfield_to_boolean_mask,
     interpret_bit_flags,
@@ -60,7 +59,7 @@ class SkyMatchStep(Step):
         self.log.setLevel(logging.DEBUG)
         img = datamodels.ModelContainer(input)
 
-        self._dqbits = interpret_bit_flags(self.dqbits, mnemonic_map=pixel)
+        self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
         # set sky statistics:
         self._skystat = SkyStats(
@@ -197,5 +196,6 @@ class SkyMatchStep(Step):
         return sky_im
 
     def _set_sky_background(self, image, sky):
+        image.meta.background.method = str(self.skymethod)
         image.meta.background.level = sky
         image.meta.background.subtracted = self.subtract

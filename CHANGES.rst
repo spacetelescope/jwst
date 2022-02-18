@@ -17,6 +17,7 @@ associations
 
 align_refs
 ----------
+
 - Fixed behavior generating many unnecessary and slow logging warnings on
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
@@ -31,6 +32,12 @@ cube_skymatch
 
 - Enabled support for mnemonic DQ codes in the ``cube_skymatch`` step.
   [#6733, #6736]
+
+datamodels
+----------
+
+- Added the new keyword "BKGMETH" for use in the ``skymatch`` step.
+  [#6736]
 
 extract_1d
 ----------
@@ -57,6 +64,8 @@ skymatch
 - Enabled support for mnemonic DQ codes in the ``skymatch`` step. Also
   changed default value for ``dqbits`` from 0 (exclude ALL flagged in DQ
   pixels) to ``'~DO_NOT_USE+NON_SCIENCE'``. [#6733, #6736]
+
+- Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
 srctype
 -------
