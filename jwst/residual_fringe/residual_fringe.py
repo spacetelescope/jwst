@@ -155,12 +155,6 @@ class ResidualFringeCorrection():
         ysize = self.input_model.data.shape[0]
         xsize = self.input_model.data.shape[1]
 
-        save_weights = np.zeros((ysize, xsize))
-        save_weights2 = np.zeros((ysize, xsize))
-        save_proc = np.zeros((ysize, xsize))
-        save_bgfit = np.zeros((ysize, xsize))
-        save_res_fringe = np.zeros((ysize, xsize))
-        save_bgindx = np.zeros((ysize, xsize))
         for c in self.channels:
             num_corrected = 0
             log.info("Processing channel {}".format(c))
@@ -273,11 +267,9 @@ class ResidualFringeCorrection():
                             weight_factors = utils.find_lines(mod, col_max_amp * 2)
                             weights_feat = col_weight * weight_factors
 
-
                             # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
                             # in case fit fails
                             proc_data = col_data.copy()
-                            save_proc[:, col] = proc_data.copy()
                             proc_factors = np.ones(col_data.shape)
                             pre_contrast = 0.0
                             bg_fit = col_data.copy()
@@ -287,35 +279,30 @@ class ResidualFringeCorrection():
                             res_fringe_fit_flag = np.zeros(col_data.shape)
                             wpix_num = 1024
 
-                            #weights_feat[weights_feat <= 0.003] = 1e-08                            
-                            # check the end points
+                            # check the end points. A single value followed by gap of zero can cause
+                            # problems in the fitting.
                             index = np.where(weights_feat != 0.0)
                             length = np.diff(index[0])
 
-                            if(weights_feat[0] !=0 and weights_feat[1] !=0 and weights_feat[2] ==0):
-                                print('Check this column out',col)
-                                print(index)
-                                print(length)
-                            if weights_feat[0] !=0 and length[0] > 1:
-                                weights_feat[0] =  1e-08
+                            if weights_feat[0] != 0 and length[0] > 1:
+                                weights_feat[0] = 1e-08
 
-                            if weights_feat[-1] !=0 and length[-1] > 1:
-                                weights_feat[-1] =  1e-08
+                            if weights_feat[-1] != 0 and length[-1] > 1:
+                                weights_feat[-1] = 1e-08
 
-                            # jane addded this
-                            save_weights2[:,col] = weights_feat
+                            # jane addded this - fit can fail in evidence function.
+                            # once we replace evidence funtion with astropy routine - we can test
+                            # removing setting wights < 0.003 to zero (1e-08)
+
                             weights_feat[weights_feat <= 0.003] = 1e-08
 
-                            save_weights[:, col] = weights_feat
                             # the reference file is set up with 2 values for ffreq but currently one one is used. The other value
                             # is a place holder and set to a small value
-                            #testing = True
-                            #if testing: 
+
                             try:
                                 for fn, ff in enumerate(ffreq):
                                     # ignore place holder fringes
                                     if ff > 1e-03:
-                                        
                                         log.debug(' starting ffreq = {}'.format(ff))
 
                                         # check if snr criteria is met for fringe component, should always be true for fringe 1
@@ -405,11 +392,6 @@ class ResidualFringeCorrection():
                                 correction_quality.append([contrast, pre_contrast])
                                 log.debug(" residual contrast = {}".format(contrast))
 
-
-                                save_bgfit[:, col] = bg_fit
-                                save_res_fringe[:, col] = res_fringes
-                                save_bgindx[:bgindx.shape[0], col] = bgindx
-
                                 # replace the corrected in-slice column pixels in the data_cor array
                                 log.debug(" updating the trace pixels in the output")
                                 output_data[idx, col] = fringe_sub[idx]
@@ -443,26 +425,6 @@ class ResidualFringeCorrection():
             log.info('Number of columns corrected for channel {}'.format(num_corrected))
         log.info("Processing complete")
 
-        hdu0 = fits.PrimaryHDU()
-        hdu1 = fits.ImageHDU()
-        hdu2 = fits.ImageHDU()
-        hdu3 = fits.ImageHDU()
-        hdu4 = fits.ImageHDU()
-        hdu5 = fits.ImageHDU()
-        hdu6 = fits.ImageHDU()
-        hdu7 = fits.ImageHDU()
-        hdu0.data = save_weights
-        hdu1.data = save_weights2
-        #hdu1.data = save_bgfit
-        hdu2.data = save_bgfit
-        hdu3.data = save_res_fringe
-        hdu4.data = save_res_fringe
-        hdu5.data = save_bgindx
-        hdu6.data = save_bgindx
-        hdu7.data = save_proc
-        hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5, hdu6, hdu7])
-        hdu.writeto('test.fits', overwrite=True)
-        hdu.close()
         # add units back to output data
         log.info(" adding units back to output array")
         output_data *= normalization_factor
@@ -504,8 +466,6 @@ class ResidualFringeCorrection():
             hdu.writeto(fit_results_name, overwrite=True)
             hdu.close()
 
-        # garbage collect when finished
-        # gc.collect()
         return self.model
 
     def calc_weights(self):
