@@ -198,6 +198,8 @@ class ResidualFringeCorrection():
                 dffreq = slice_row['dffreq'][0]
                 min_nfringes = slice_row['min_nfringes'][0]
                 max_nfringes = slice_row['max_nfringes'][0]
+                # TODO until an updated reference file is delivered set the min_nfinges to 1
+                # this value was set too high in reference file
                 min_nfringes[:] = 1
                 min_snr = slice_row['min_snr'][0]
                 pgram_res = slice_row['pgram_res'][0]
