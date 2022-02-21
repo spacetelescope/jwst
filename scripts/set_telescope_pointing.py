@@ -115,6 +115,7 @@ if __name__ == '__main__':
     logger.setLevel(level)
     if level <= logging.DEBUG:
         logger_handler.setFormatter(logger_format_debug)
+    logger.info('set_telescope_pointing called with args %s', args)
 
     override_transforms = args.override_transforms
     if override_transforms:

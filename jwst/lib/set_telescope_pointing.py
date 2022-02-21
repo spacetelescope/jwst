@@ -57,11 +57,11 @@ import sys
 
 import asdf
 from collections import defaultdict, namedtuple
-from copy import copy, deepcopy
+from copy import copy
 import dataclasses
 from enum import Enum
 import logging
-from math import (asin, atan2, cos, sin, sqrt)
+from math import (cos, sin, sqrt)
 import typing
 
 from astropy.time import Time
@@ -106,26 +106,10 @@ class Methods(Enum):
     Current state-of-art is OPS_TR_202111. This method chooses either COARSE_TR_202111 or
     TRACK_TR_202111 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
-    #: COARSE tracking mode algorithm, TR version 2021-07
-    COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107', 'calc_wcs_orig')
     #: COARSE tracking mode algorithm, TR version 2021-11.
     COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111')
-    #: Guides Star commanded algorithm using the J3 position angle, TR version 2021-05
-    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags', 'calc_wcs_orig')
-    #: Guides Star commanded algorithm using the V3 position angle, TR version 2021-05
-    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags', 'calc_wcs_orig')
-    #: Method to use in OPS to use TR version 2021-07
-    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107', 'calc_wcs_orig')
     #: Method to use in OPS to use TR version 2021-11
     OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111')
-    #: Original algorithm, pre-JSOCINT-555 work.
-    ORIGINAL = ('original', 'calc_transforms_original', 'calc_wcs_orig')
-    #: Observatory orientation without velocity correction, TR 2021-05
-    TR_202105 = ('tr_202105', 'calc_transforms_tr202105', 'calc_wcs_orig')
-    #: Observatory orientation with velocity correction, TR 2021-05
-    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_aberration_tr202105', 'calc_wcs_orig')
-    #: TRACK and FINEGUIDE mode algorithm, TR version 2021-07
-    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107', 'calc_wcs_orig')
     #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
     TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111')
 
@@ -337,12 +321,14 @@ class TransformParameters:
     allow_default: bool = False
     #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
+    #: Detector in use.
+    detector: str = None
     #: Do not write out the modified file.
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
-    #: FGS to use when running in COARSE mode
-    fgsid: int = 1
+    #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
+    fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
@@ -413,8 +399,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         URL of the engineering telemetry database REST interface.
 
     fgsid : int or None
-        The FGS to use in the COARSE mode calculations.
-        If None, FGS1 will be used by default.
+        When in COARSE mode, the FGS to use as the guider reference.
+        If None, use what is provided in telemetry.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -472,7 +458,11 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     in the header other than what is required by the standard.
     """
     logger.info('Updating WCS info for file %s', filename)
-    with datamodels.Level1bModel(filename) as model:
+    with datamodels.open(filename) as model:
+        if type(model) not in (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel):
+            logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)'
+                           '\n    Updating pointing may have no effect or detrimental effects on the WCS information,'
+                           '\n    especially if the input is the result of Level2b or higher calibration.')
         t_pars, transforms = update_wcs(
             model,
             default_pa_v3=default_pa_v3,
@@ -571,8 +561,8 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         URL of the engineering telemetry database REST interface.
 
     fgsid : int or None
-        The FGS to use in the COARSE mode calculations.
-        If None, FGS1 will be used by default.
+        When in COARSE mode, the FGS to use as the guider reference.
+        If None, use what is provided in telemetry.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -892,33 +882,6 @@ def calc_wcs(t_pars: TransformParameters):
     return wcsinfo, vinfo, transforms
 
 
-def calc_wcs_orig(transforms: Transforms):
-    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
-
-    This implements the original algorithm, as inherited from a prototype codebase.
-    The main difference from `calc_wcs_standard` is the use of `calc_aperture_wcs` for the aperture WCS.
-
-    Parameters
-    ----------
-    transforms : Transforms
-        The transformation matrices.
-
-    Returns
-    -------
-    wcsinfo, vinfo: WCSRef, WCSRef
-        A 2-tuple is returned with the WCS pointing for
-        the aperture and the V1 axis.
-    """
-    # Calculate the V1 WCS information
-    vinfo = calc_wcs_from_matrix(transforms.m_eci2v)
-
-    # Calculate the Aperture WCS
-    wcsinfo = calc_aperture_wcs(transforms.m_eci2siaf)
-
-    # That's all folks
-    return wcsinfo, vinfo
-
-
 def calc_wcs_tr_202111(transforms: Transforms):
     """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
 
@@ -973,164 +936,6 @@ def calc_transforms(t_pars: TransformParameters):
     return transforms
 
 
-def calc_transforms_tr202105(t_pars: TransformParameters):
-    """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
-
-    Given the spacecraft pointing parameters and the aperture-specific SIAF,
-    calculate all the transforms necessary to produce the celestial World
-    Coordinate system information.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =       # Complete transformation
-            M_v_to_siaf    *  # V to SIAF
-            M_eci_to_v        # ECI to V
-
-        where
-
-        M_eci_to_v =
-            M_sifov_to_v   *  # SIFOV to V
-            M_z_to_j       *  # ICS-frame to SIAF-frame
-            M_eci_to_sifov    # ECI to SIFOV
-
-        M_eci_to_sifov =
-            M_z_to_x          *  # Rotate from Z out to X out
-            M_sifov_fsm_delta *  # SIFOV correction due to Fast Steering Mirror offsets
-            M_fgs1_to_sifov   *  # FGS1 to SIFOV
-            M_j_to_fgs1       *  # J-frame to FGS1
-            M_eci_to_j           # ECI to J-Frame
-
-    """
-    logger.info('Calculating transforms using FULL quaternion method...')
-    t_pars.method = Methods.TR_202105
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
-
-    # ---
-    # Calculate base matrices from telemetry, siaf database, and/or constants
-    # ___
-
-    # Determine the ECI to J-frame matrix
-    t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-
-    # Calculate the J-frame to FGS1 ICS matrix
-    t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_db, t_pars.useafter)
-
-    # Calculate the FSM corrections to the SI_FOV frame
-    t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
-    )
-
-    # Calculate SI FOV to V1 matrix
-    t.m_sifov2v = calc_sifov2v_matrix()
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # ---
-    # Calculate matrices based on previously computed matrices
-    # ---
-
-    # Calculate ECI to SIFOV complete transformation
-    t.m_eci2sifov = np.linalg.multi_dot([
-        M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
-    ])
-    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
-
-    # Calculate the complete transform to the V1 reference
-    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
-    logger.debug('m_eci2v: %s', t.m_eci2v)
-
-    # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
-def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms for COARSE guiding
-
-    This implements Eq. 42 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
-    From Section 5:
-
-    In COARSE mode the measured attitude of the J-frame of the spacecraft is
-    determined by the star tracker and inertial gyroscopes attitude measurements
-    and is converted to an estimated guide star inertial attitude using the
-    equations in section 3.2. The V-frame attitude then is determined using the
-    equation below.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =
-            transpose(M_v_to_fgsx)  *
-            transpose(M_fgsx_to_gs) *
-            M_x_to_z                *
-            M_eci_to_gs
-
-        where
-
-            M_fgsx_to_v = FGSx to V-frame
-            M_gs_to_fgsx = Guide star to FGSx
-            M_eci_to_gs = ECI to Guide star
-
-    """
-    logger.info('Calculating transforms using TR 202107 COARSE Tracking method...')
-    t_pars.method = Methods.COARSE_TR_202107
-
-    # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
-    # is returned as part of the full Transforms object. Many of the required
-    # matrices are already determined as part of this calculation.
-    t = calc_m_eci2gs(t_pars)
-
-    # Determine the M_fgsx_to_v matrix
-    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid])
-    t.m_v2fgsx = calc_v2siaf_matrix(siaf)
-
-    # Determine M_eci_to_v frame.
-    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs])
-    logger.debug('M_eci2v: %s', t.m_eci2v)
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # Calculate full transformation
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
 def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     """Modified COARSE calculation
 
@@ -1179,10 +984,19 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t_pars.method = Methods.COARSE_TR_202111
 
     # Choose the FGS to use.
-    pointing_new = {field: getattr(t_pars.pointing, field) for field in t_pars.pointing._fields}
-    pointing_new['fgsid'] = t_pars.fgsid
-    t_pars.pointing = Pointing(**pointing_new)
-    logger.info('Using FGS%s.', t_pars.pointing.fgsid)
+    # Default to using FGS1 if not specified and FGS1 is not the science instrument.
+    fgsid = t_pars.fgsid
+    if t_pars.detector is not None:
+        detector = t_pars.detector.lower()
+        if detector in ['guider1', 'guider2']:
+            fgsid = 1
+            if detector == 'guider1':
+                fgsid = 2
+            logger.info(f'COARSE mode using detector {detector} implies use of FGS{fgsid}')
+    if fgsid not in FGSIDS:
+        fgsid = 1
+    t_pars.fgsid = fgsid
+    logger.info('Using FGS%s.', t_pars.fgsid)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
@@ -1190,7 +1004,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t = calc_m_eci2gs(t_pars)
 
     # Determine the M_fgsx_to_v matrix
-    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid])
+    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid])
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
@@ -1250,12 +1064,25 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     t_pars.method = Methods.TRACK_TR_202111
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
+    # Check on telemetry for FGS ID. If invalid, use either user-specified or default to 1.
+    fgsid = t_pars.pointing.fgsid
+    if fgsid not in FGSIDS:
+        logger.warning(f'Method {t_pars.method} requires a valid FGS ID in telementry.'
+                       '\nHowever telemetry reports an invalid id of {fgsid}')
+        if t_pars.fgsid in FGSIDS:
+            fgsid = t_pars.fgsid
+            logger.warning(f'Using user-specified ID of {fgsid}')
+        else:
+            fgsid = 1
+            logger.warning(f'Using FGS{fgsid} as the default for the guiding FGS')
+    t_pars.fgsid = fgsid
+
     # Determine V3PA@GS
     v3pags = calc_v3pags(t_pars)
     t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
 
     # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
-    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
+    gs_pos_v23 = trans_fgs2v(t_pars.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
 
     # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
     # relative to the guide star.
@@ -1269,95 +1096,6 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
-
-
-def calc_transforms_track_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms for TRACK/FINEGUIDE guiding
-
-    This implements Eq. 43 from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
-    From Section 5:
-
-    Under guide star control the guide star position is measured relative to
-    the V-frame. The V3 position angle at the guide star is derived from the
-    measured J-frame attitude. Then the corrected guide star catalog position
-    is used to determine the inertial V-frame attitude on the sky.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =       # Complete transformation
-            M_v_to_siaf    *  # V to SIAF
-            M_eci_to_v        # ECI to V
-
-        where
-
-            M_eci_to_v = Conversion of the attitude to a DCM
-
-    """
-    logger.info('Calculating transforms using TR 202107 TRACK/FINEGUIDE Tracking method...')
-    t_pars.method = Methods.TRACK_TR_202107
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
-
-    # Determine V3PA@GS
-    v3pags = calc_v3pags(t_pars)
-    t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
-
-    # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
-    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
-
-    # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
-    # relative to the guide star.
-    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, gs_pos_v23)
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
-def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms in OPS using TR 2021-07
-
-    This implements the ECI-to-SIAF transformation from Technical Report JWST-STScI-003222, SM-12, Rev. B, 2021-07
-    The actual implementation depends on the guide star mode, represented by the header keyword PCS_MODE.
-    For COARSE or NONE, the method COARSE is used.
-    For TRACK or FINEGUIDE, the method TRACK is used.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-    """
-    if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
-        return Methods.COARSE_TR_202107.func(t_pars)
-    elif t_pars.pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
-        return Methods.TRACK_TR_202107.func(t_pars)
-    else:
-        raise ValueError(
-            f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
-        )
 
 
 def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
@@ -1386,362 +1124,6 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
         raise ValueError(
             f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
         )
-
-
-def calc_transforms_velocity_aberration_tr202105(t_pars: TransformParameters):
-    """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
-
-    Given the spacecraft pointing parameters and the aperture-specific SIAF,
-    calculate all the transforms necessary to produce the celestial World
-    Coordinate system information.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =           # The complete transformation
-            M_v1_to_siaf      *   # V1 to SIAF
-            M_sifov_to_v1     *   # Science Instruments Aperture to V1
-            M_sifov_fsm_delta *   # Fine Steering Mirror correction
-            M_z_to_x          *   # Transposition
-            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
-            M_gs2gsapp        *   # Apply Velocity Aberration
-            M_j_to_fgs1       *   # J-Frame to FGS1
-            M_eci_to_j        *   # ECI to J-Frame
-
-    """
-    logger.info('Calculating transforms using FULLVA quaternion method with velocity aberration...')
-    t_pars.method = Methods.TR_202105_VA
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
-
-    # Determine the ECI to J-frame matrix
-    t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-
-    # Calculate the J-frame to FGS1 ICS matrix
-    t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-
-    t.m_eci2fgs1 = np.dot(t.m_j2fgs1, t.m_eci2j)
-    logger.debug('m_eci2fgs1: %s', t.m_eci2fgs1)
-
-    # Calculate Velocity Aberration corrections
-    t.m_gs2gsapp = calc_gs2gsapp_tr_202105(t.m_eci2fgs1, t_pars.jwst_velocity)
-
-    # Calculate the FSM corrections to the SI_FOV frame
-    t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
-    )
-
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_db, t_pars.useafter)
-
-    # Calculate SI FOV to V1 matrix
-    t.m_sifov2v = calc_sifov2v_matrix()
-
-    # Calculate ECI to SI FOV
-    t.m_eci2sifov = np.linalg.multi_dot(
-        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_gs2gsapp, t.m_j2fgs1, t.m_eci2j]
-    )
-    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
-
-    # Calculate the complete transform to the V1 reference
-    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
-    logger.debug('m_eci2v: %s', t.m_eci2v)
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
-def calc_transforms_original(t_pars: TransformParameters):
-    """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
-
-    Given the spacecraft pointing parameters and the aperture-specific SIAF,
-    calculate all the transforms necessary to produce the celestial World
-    Coordinate system information.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =           # The complete transformation
-            M_v1_to_siaf      *   # V1 to SIAF
-            M_sifov_to_v1     *   # Science Instruments Aperture to V1
-            M_sifov_fsm_delta *   # Fine Steering Mirror correction
-            M_z_to_x          *   # Transposition
-            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
-            M_j_to_fgs1       *   # J-Frame to FGS1
-            M_eci_to_j        *   # ECI to J-Frame
-
-    """
-    logger.info('Calculating transforms using ORIGINAL method...')
-    t_pars.method = Methods.ORIGINAL
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
-
-    # Determine the ECI to J-frame matrix
-    t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-
-    # Calculate the J-frame to FGS1 ICS matrix
-    t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-
-    # Calculate the FSM corrections to the SI_FOV frame
-    t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
-    )
-
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    # The SIAF is explicitly not used because this was not accounted for in
-    # the original specification.
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_db=None, useafter=None)
-
-    # Calculate SI FOV to V1 matrix
-    t.m_sifov2v = calc_sifov2v_matrix()
-
-    # Calculate ECI to SI FOV
-    t.m_eci2sifov = np.linalg.multi_dot(
-        [t.m_sifov_fsm_delta, M_ics2idl, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
-    )
-    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
-
-    # Calculate the complete transform to the V1 reference
-    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
-    logger.debug('m_eci2v: %s', t.m_eci2v)
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
-def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
-    """Calculate transforms which determine reference point celestial WCS using the JSOCINT-555 fix and J3PA@GS
-
-    Given the spacecraft pointing parameters and the
-    aperture-specific SIAF, calculate all the transforms
-    necessary to produce WCS information. This is using a modified
-    algorithm to fix a documentation error and to override a shift
-    being introduced by the OTB simulator.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    This algorithm is in response to an apparent misbehavior of the OTB simulator.
-    See JSOCINT-555 for full details. The workaround is to ignore the quaternion
-    and FGS1 J-frame telemetry. Instead use the commanded guide star telemetry.
-
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =                    # The complete transformation
-            M_v1_to_siaf               *   # V1 to SIAF
-            M_sifov_to_v1              *   # Science Instruments Aperture to V1
-            M_z_to_x                   *   # Transposition
-            M_sifov_fsm_delta          *   # Fine Steering Mirror correction
-            M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
-            M_eci_to_fgs1                  # ECI to FGS1 using commanded information
-    """
-    logger.info('Calculating transforms using GSCMD with J3PA@GS method...')
-    t_pars.method = Methods.GSCMD_J3PAGS
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
-
-    # Determine the ECI to FGS1 ICS using guide star telemetry.
-    t.m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
-
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_db=t_pars.siaf_db, useafter=t_pars.useafter)
-
-    # Calculate the FSM corrections to the SI_FOV frame
-    t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
-    )
-
-    # Calculate SI FOV to V1 matrix
-    t.m_sifov2v = calc_sifov2v_matrix()
-
-    # Calculate ECI to SI FOV
-    t.m_eci2sifov = np.linalg.multi_dot(
-        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
-    )
-    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
-
-    # Calculate the complete transform to the V1 reference
-    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
-    logger.debug('m_eci2v: %s', t.m_eci2v)
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
-def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
-    """Calculate transforms which determine reference point celestial WCS using the JSOCINT-555 fix
-
-    Given the spacecraft pointing parameters and the
-    aperture-specific SIAF, calculate all the transforms
-    necessary to produce WCS information. This is using a modified
-    algorithm to fix a documentation error and to override a shift
-    being introduced by the OTB simulator.
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    transforms : Transforms
-        The list of coordinate matrix transformations
-
-    Notes
-    -----
-    This algorithm is in response to an apparent misbehavior of the OTB simulator.
-    See JSOCINT-555 for full details. The workaround is to ignore the quaternion
-    and FGS1 J-frame telemetry. Instead use the commanded guide star telemetry.
-
-    The matrix transform pipeline to convert from ECI J2000 observatory
-    quaternion pointing to aperture ra/dec/roll information
-    is given by the following formula. Each term is a 3x3 matrix:
-
-        M_eci_to_siaf =                    # The complete transformation
-            M_v1_to_siaf               *   # V1 to SIAF
-            M_sifov_to_v1              *   # Science Instruments Aperture to V1
-            M_z_to_x                   *   # Transposition
-            M_sifov_fsm_delta          *   # Fine Steering Mirror correction
-            M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
-            M_eci_to_fgs1                  # ECI to FGS1 using commanded information
-    """
-    logger.info('Calculating transforms using GSCMD using V3PA@GS method...')
-    t_pars.method = Methods.GSCMD_V3PAGS
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
-
-    # Determine the ECI to FGS1 ICS using guide star telemetry.
-    t.m_eci2fgs1 = calc_eci2fgs1_v3pags(t_pars)
-
-    # Calculate the FSM corrections to the SI_FOV frame
-    t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
-    )
-
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_db=t_pars.siaf_db, useafter=t_pars.useafter)
-
-    # Calculate SI FOV to V1 matrix
-    t.m_sifov2v = calc_sifov2v_matrix()
-
-    # Calculate ECI to SI FOV
-    t.m_eci2sifov = np.linalg.multi_dot(
-        [M_ics2idl, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
-    )
-    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
-
-    # Calculate the complete transform to the V1 reference
-    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
-    logger.debug('m_eci2v: %s', t.m_eci2v)
-
-    # Calculate the SIAF transform matrix
-    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
-
-    # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
-
-    return t
-
-
-def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
-    """Calculate full ECI to FGS1 matrix based on commanded guidestar information and J3PA@GS
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters
-
-    Return
-    ------
-    m_eci2fgs1 : numpy.array
-        The ECI to FGS1ics matrix
-
-    Modifies
-    --------
-    t_pars.guide_star_wcs
-        Update PA to calculated if originally None.
-    """
-    # Calculate J3 position.
-    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    j3_ra, j3_dec = vector_to_angle(m_eci2j[2])
-    j3wcs = WCSRef(j3_ra, j3_dec, None)
-    logger.debug('j3wcs: %s', j3wcs)
-
-    # Calculate J3PA@GS
-    logger.debug('Incoming guide_star_wcs: %s', t_pars.guide_star_wcs)
-    if not t_pars.guide_star_wcs.pa:
-        gs_wcs_ra = WCSRef(t_pars.guide_star_wcs.ra * D2R,
-                           t_pars.guide_star_wcs.dec * D2R, None)
-        pa = calc_position_angle(gs_wcs_ra, j3wcs)
-        pa *= R2D
-        t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
-
-    logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
-    logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
-
-    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, J3IDLYANGLE, t_pars.pointing.gs_commanded)
-
-    # Need to invert the martrix
-    m_gs_commanded = np.linalg.inv(m_gs_commanded)
-
-    logger.debug('m_gs_commanded: %s', m_gs_commanded)
-
-    m_eci2fgs1 = np.dot(M_idl2ics, m_gs_commanded)
-
-    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
-    return m_eci2fgs1
 
 
 def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
@@ -1808,91 +1190,6 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     return m_gs2gsapp
 
 
-def calc_gs2gsapp_tr_202105(m_eci2fgs1, jwst_velocity):
-    """Calculate the Velocity Aberration correction
-
-    Parameters
-    ----------
-    m_eci2fgs : numpy.array(3, 3)
-        The matrix defining the FGS1, guide star, position
-
-    jwst_velocity : numpy.array([dx, dy, dz])
-        The barycentric velocity of JWST
-
-    Returns
-    -------
-    m_gs2gsapp : numpy.array(3, 3)
-        The correction matrix
-
-    Notes
-    -----
-    The algorithm is from an NGAS memo describing the procedure. The steps referred
-    to in the commentary are in direct relation to the memo's text.
-
-    Step 1 is the calculation of the Meci2fgs1 matrix, which is the input.
-    """
-    ux = np.array([1., 0., 0.])
-
-    # Step 2: Compute guide star unit vector
-    u = np.dot(np.transpose(m_eci2fgs1), ux)
-
-    # Step 3: Apply VA
-    try:
-        scale_factor, u_j2000 = compute_va_effects_vector(*jwst_velocity, u)
-    except TypeError:
-        logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
-        logger.warning('Exception: %s', sys.exc_info())
-        return np.identity(3)
-
-    # Step 4: Transform to guide star attitude frame
-    u_gs = np.dot(m_eci2fgs1, u_j2000)
-
-    # Step 5: Compute apparent attitude correction
-    u_prod = np.cross(ux, u_gs)
-    a_hat = u_prod / np.linalg.norm(u_prod)
-    a_hat_sym = np.array([[0., -a_hat[2], a_hat[1]],
-                          [a_hat[2], 0., -a_hat[0]],
-                          [-a_hat[1], a_hat[0], 0.]])
-    theta = np.arccos(np.dot(ux, u_gs) / np.linalg.norm(u_gs))
-
-    m_gs2gsapp = np.identity(3) - a_hat_sym * np.sin(theta) + 2 * a_hat_sym**2 * np.sin(theta / 2.)**2
-
-    logger.debug('m_gs2gsapp: %s', m_gs2gsapp)
-    return m_gs2gsapp
-
-
-def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
-    """Calculate full ECI to FGS1 matrix based on commanded guidestar information and V3PA@GS
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-    """
-    fgs1_siaf = t_pars.siaf_db.get_wcs('FGS1_FULL_OSS', useafter=t_pars.useafter)
-    logger.debug('fgs1_siaf: %s', fgs1_siaf)
-
-    logger.debug('Incoming guide_star_wcs: %s', t_pars.guide_star_wcs)
-    if not t_pars.guide_star_wcs.pa:
-        pa = calc_v3pa_at_gs_from_original(t_pars)
-        t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
-
-    logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
-    logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
-
-    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
-
-    # Need to invert the martrix
-    m_gs_commanded = np.linalg.inv(m_gs_commanded)
-
-    logger.debug('m_gs_commanded: %s', m_gs_commanded)
-
-    m_eci2fgs1 = np.dot(M_idl2ics, m_gs_commanded)
-
-    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
-    return m_eci2fgs1
-
-
 def calc_attitude_matrix(wcs, yangle, position):
     """Calculate the DCM attitude from known positions and roll angles.
 
@@ -1946,103 +1243,6 @@ def calc_attitude_matrix(wcs, yangle, position):
     return m
 
 
-def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
-    """Calculate the guide star matrix
-
-    Parameters
-    ----------
-    guide_star_wcs : WCSRef
-        The guide star position
-
-    yangle : float
-        The IdlYangle of the point in question.
-
-    gs_commanded : numpy.array(2)
-        The commanded position from telemetry
-
-    Returns
-    -------
-    m_gs_commanded : np.array(3,3)
-        The transformation matrix
-    """
-
-    # Define the individual rotations
-    def r1(a):
-        r = np.array([
-            [1, 0, 0],
-            [0, cos(a), -sin(a)],
-            [0, sin(a), cos(a)]
-        ])
-        return r
-
-    def r2(a):
-        r = np.array([
-            [cos(a), 0, sin(a)],
-            [0, 1, 0],
-            [-sin(a), 0, cos(a)]
-        ])
-        return r
-
-    def r3(a):
-        r = np.array([
-            [cos(a), -sin(a), 0],
-            [sin(a), cos(a), 0],
-            [0, 0, 1]
-        ])
-        return r
-
-    # Convert to radians
-    ra = guide_star_wcs.ra * D2R
-    dec = guide_star_wcs.dec * D2R
-    pa = guide_star_wcs.pa * D2R
-    yangle_ra = yangle * D2R
-    gs_commanded_rads = gs_commanded * A2R
-
-    # Calculate
-    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + yangle_ra)), r2(gs_commanded_rads[1]), r3(-gs_commanded_rads[0])])
-
-    logger.debug('m: %s', m)
-    return m
-
-
-def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
-    """Calculate V3PA@GS by precomputing V1 using original method
-
-    Parameters
-    ----------
-    t_pars : TransformParameters
-        The transformation parameters. Parameters are updated during processing.
-
-    Returns
-    -------
-    v3pa_at_gs : float
-    """
-
-    # Calculate V1 using ORIGINAL method
-    tforms = calc_transforms_original(deepcopy(t_pars))
-    vinfo = calc_wcs_from_matrix(tforms.m_eci2v)
-
-    # Convert to radians
-    ra_v1 = vinfo.ra * D2R
-    dec_v1 = vinfo.dec * D2R
-    pa_v3 = vinfo.pa * D2R
-    ra_gs = t_pars.guide_star_wcs.ra * D2R
-    dec_gs = t_pars.guide_star_wcs.dec * D2R
-
-    # Calculate
-    x = -sin(ra_v1) * sin(pa_v3) - cos(ra_v1) * sin(dec_v1) * cos(pa_v3)
-    y = cos(ra_v1) * sin(pa_v3) - sin(ra_v1) * sin(dec_v1) * cos(pa_v3)
-
-    ra_v3 = atan2(y, x)
-    dec_v3 = asin(cos(dec_v1) * cos(pa_v3))
-
-    v3pa_at_gs = calc_position_angle(WCSRef(ra_gs, dec_gs, None), WCSRef(ra_v3, dec_v3, None))
-    v3pa_at_gs *= R2D
-
-    logger.debug('v3pa_at_gs: %s', v3pa_at_gs)
-    return v3pa_at_gs
-
-
 def calc_wcs_from_matrix(m):
     """Calculate the WCS information from a DCM.
 
@@ -2076,61 +1276,6 @@ def calc_wcs_from_matrix(m):
 
     logger.debug('wcs: %s', wcs)
     return wcs
-
-
-def calc_aperture_wcs(m_eci2siaf):
-    """Calculate the aperture WCS
-
-    Parameters
-    ----------
-    m_eci2siaf : np.array((3, 3))
-        The ECI to SIAF transformation matrix
-
-    Returns
-    -------
-    wcsinfo : WCSRef
-        The aperturn wcs information
-    """
-
-    # Calculate point on sky.
-    # Note, the SIAF reference point is hardcoded to
-    # (0, 0). The calculation is left here in case
-    # this is not desired.
-
-    siaf_x = 0. * A2R
-    siaf_y = 0. * A2R
-    refpos = np.array(
-        [siaf_x,
-         siaf_y,
-         np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)]
-    )
-    msky = np.dot(m_eci2siaf.transpose(), refpos)
-    wcs_ra, wcs_dec = vector_to_angle(msky)
-
-    # Calculate the position angle
-    vysiaf = np.array([0., 1., 0.])
-    myeci = np.dot(m_eci2siaf.transpose(), vysiaf)
-
-    # The Y axis of the aperture is given by
-    vy_ra, vy_dec = vector_to_angle(myeci)
-
-    # The VyPA @ xref,yref is given by
-    y = cos(vy_dec) * sin(vy_ra - wcs_ra)
-    x = sin(vy_dec) * cos(wcs_dec) - \
-        cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
-    wcs_pa = np.arctan2(y, x)
-    if wcs_pa < 0.:
-        wcs_pa += PI2
-
-    # Convert all WCS to degrees
-    wcsinfo = WCSRef(
-        ra=wcs_ra * R2D,
-        dec=wcs_dec * R2D,
-        pa=wcs_pa * R2D
-    )
-
-    logger.debug('wcsinfo: %s', wcsinfo)
-    return wcsinfo
 
 
 def calc_eci2j_matrix(q):
@@ -2294,37 +1439,6 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
 
     logger.debug('fsm_delta_matrix: %s', transform)
     return transform
-
-
-def calc_fgs1_to_sifov_matrix(siaf_db=None, useafter=None):
-    """
-    Calculate the FGS1 to SI-FOV matrix
-
-    Based on algorithm determined in JSOCINT-555 for a more
-    accurate determination of the matrix using the SIAF.
-    """
-    if siaf_db is None:
-        logger.warning('No SIAF database specified. Using the default FGS1_to_SIFOV matrix')
-        return FGS12SIFOV_DEFAULT
-
-    try:
-        fgs1_siaf = siaf_db.get_wcs('FGS1_FULL_OSS', useafter)
-    except (KeyError, OSError, TypeError, RuntimeError):
-        logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
-        return FGS12SIFOV_DEFAULT
-
-    v2 = fgs1_siaf.v2_ref * A2R
-    v3 = (fgs1_siaf.v3_ref + 7.8 * 60.0) * A2R
-    y = fgs1_siaf.v3yangle * D2R
-
-    m = np.array([
-        [cos(v2) * cos(y) + sin(v2) * sin(v3) * sin(y), cos(v2) * sin(y) - sin(v2) * sin(v3) * cos(y), sin(v2) * cos(v3)],
-        [-cos(v3) * sin(y), cos(v3) * cos(y), sin(v3)],
-        [-sin(v2) * cos(y) + cos(v2) * sin(v3) * sin(y), -sin(v2) * sin(y) - cos(v2) * sin(v3) * cos(y), cos(v2) * cos(v3)]
-    ])
-
-    logger.debug('FGS1_to_SIFOV from siaf is %s', m)
-    return m
 
 
 def calc_sifov2v_matrix():
@@ -3025,7 +2139,7 @@ def calc_v3pags(t_pars: TransformParameters):
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
     # Retrieve the Ideal Y-angle for the desired FGS
-    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid], useafter=t_pars.useafter)
+    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid], useafter=t_pars.useafter)
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
@@ -3086,7 +2200,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
-    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_db)
+    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     # Apply the Velocity Aberration. To do so, the M_eci2gsics matrix must be created. This
@@ -3120,8 +2234,8 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
 
     Parameters
     ----------
-    fgsid : int
-        The id of the FGS in actually in use. 1 or 2
+    fgsid : [1, 2]
+        The id of the FGS in use.
 
     siaf_db : SiafDb
         The SIAF database.
@@ -3216,7 +2330,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
 
     Parameters
     ----------
-    fgsid : int
+    fgsid : [1, 2]
         The FGS in use.
 
     ideal : numpy.array(2)
@@ -3325,6 +2439,9 @@ def t_pars_from_model(model, **t_pars_kwargs):
         t_pars.siaf = siaf
         t_pars.useafter = useafter
     logger.debug('SIAF: %s', t_pars.siaf)
+
+    # Instrument details
+    t_pars.detector = model.meta.instrument.detector
 
     # observation parameters
     t_pars.obsstart = model.meta.exposure.start_time
