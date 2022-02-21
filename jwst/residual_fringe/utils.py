@@ -483,7 +483,6 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
     # get the number of weighted pixels
     weighted_pix_num = (weights > 1e-05).sum()
     # set the maximum array size, always 1024
-    max_arr_size = int(res_fringes.shape[0])
 
     # get scan res
     res = np.around((2 * dffreq) / pgram_res).astype(int)
@@ -504,7 +503,6 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
     res_fringes_proc = res_fringes.copy()
     nfringes = 0
     keep_dict = {}
-    best_pars = None
     best_mdl = None
     fitted_frequencies = []
 
@@ -567,7 +565,6 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
             "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
         if bayes_factor > 1:  # strong evidence thresh (log(bayes factor)>1, Kass and Raftery 1995)
             evidence1 = evidence2
-            best_pars = pars.copy()
             best_mdl = mdl.copy()
             fitted_frequencies.append(freqs)
             log.debug(

@@ -9,9 +9,7 @@ from .. import datamodels
 from astropy.table import Table
 from astropy.io import ascii
 from astropy.io import fits
-
 from . import utils
-from astropy.io import fits
 
 import logging
 log = logging.getLogger(__name__)
@@ -276,7 +274,6 @@ class ResidualFringeCorrection():
                             pre_contrast = 0.0
                             bg_fit = col_data.copy()
                             res_fringes = np.zeros(col_data.shape)
-                            old_res_fringes = np.zeros(col_data.shape)
                             res_fringe_fit = np.zeros(col_data.shape)
                             res_fringe_fit_flag = np.zeros(col_data.shape)
                             wpix_num = 1024
