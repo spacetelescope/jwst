@@ -9,7 +9,7 @@ from . import AssociationPool
 IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
 
 
-def mkpool(data, **kwargs):
+def mkpool(data, asn_candidate=None, **kwargs):
     """Make a pool from data
 
     Parameters
@@ -19,6 +19,11 @@ def mkpool(data, **kwargs):
         Can be pathnames or `astropy.io.fits.HDUL`
         or `astropy.io.fits.ImageHDU
 
+    asn_candidate : ['(type, id)'[,...]] or None
+        Association candidates to add to each exposure.
+        These are added to the default ('observation', 'oXXX') candidate
+        created from header information.
+
     kwargs : dict
         Other keyword arguments to pass to the
         `astropy.io.fits.getheader` call.
@@ -26,17 +31,26 @@ def mkpool(data, **kwargs):
     params = set()
     for datum in data:
         params.update(getheader(datum))
+    params.add('asn_candidate')
 
     params = params.difference(IGNORE_KEYS)
+    params = [item.lower() for item in params]
 
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     for datum in data:
+        header = getheader(datum, **kwargs)
         valid_params = {
-            keyword: value
-            for keyword, value in getheader(datum, **kwargs).items()
+            keyword.lower(): value
+            for keyword, value in header.items()
             if keyword not in IGNORE_KEYS
         }
+
+        # Setup association candidates
+        combinded_asn_candidates = [f"('observation', 'o{header['observtn']}')"]
+        if asn_candidate is not None:
+            combinded_asn_candidates += asn_candidate
+        valid_params['asn_candidate'] = '[' + ','.join(combinded_asn_candidates) + ']'
         pool.add_row(valid_params)
 
     return pool
@@ -79,5 +93,5 @@ def getheader(datum, **kwargs):
         return header
 
     header = fits_getheader(datum, **kwargs)
-    header['FILENAME'] = datum
+    header['FILENAME'] = str(datum)
     return header
