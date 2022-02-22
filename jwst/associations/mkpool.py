@@ -10,7 +10,7 @@ IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
 
 # Non-header columns that need to be defined
 NON_HEADER_COLS = {
-    'asn_candidate': 'discovered',
+    'asn_candidate': None,
     'dms_note': '',
     'is_imprt': 'f',
     'is_psf': 'f',
@@ -19,7 +19,11 @@ NON_HEADER_COLS = {
 }
 
 
-def mkpool(data, asn_candidate=None, dms_note='', is_imprt='f', is_psf='f', pntgtype='science', **kwargs):
+def mkpool(data,
+           asn_candidate=NON_HEADER_COLS['asn_candidate'], dms_note=NON_HEADER_COLS['dms_note'],
+           is_imprt=NON_HEADER_COLS['is_imprt'], is_psf=NON_HEADER_COLS['is_psf'],
+           pntgtype=NON_HEADER_COLS['pntgtype'],
+           **kwargs):
     """Make a pool from data
 
     A number of columns used by the Association rules cannot be derived from the header
