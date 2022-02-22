@@ -243,10 +243,6 @@ class RampFitStep(Step):
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
                 self.weighting, max_cores, dqflags.pixel, suppress_one_group=self.suppress_one_group)
 
-            print("-" * 80)
-            print(f"image_info[1] = \n{image_info[1]}")
-            print("-" * 80)
-
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
             opt_model = create_optional_results_model(input_model, opt_info)
