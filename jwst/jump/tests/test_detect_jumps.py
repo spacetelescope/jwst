@@ -30,7 +30,8 @@ def test_exec_time_0_crs(setup_inputs):
                                        grouptime=2.775, deltatime=2.775)
 
     tstart = time.time()
-    out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 1, 200, 4, True)
+    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
+    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 1, 200, 4, True)
     tstop = time.time()
 
     t_elapsed = tstop - tstart
@@ -54,7 +55,8 @@ def test_exec_time_many_crs(setup_inputs):
     model = add_crs(model, crs_frac)  # add desired fraction of CRs
 
     tstart = time.time()
-    out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 1, 200, 4, True)
+    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
+    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 1, 200, 4, True)
     tstop = time.time()
 
     t_elapsed = tstop - tstart
