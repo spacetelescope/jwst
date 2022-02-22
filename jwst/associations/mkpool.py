@@ -99,7 +99,7 @@ def mkpool(data,
     for datum in data:
         header = getheader(datum, **kwargs)
         valid_params = {
-            keyword.lower(): value
+            keyword.lower(): str(value)
             for keyword, value in header.items()
             if keyword not in IGNORE_KEYS
         }
@@ -117,7 +117,7 @@ def mkpool(data,
         if valid_params['targname'] not in target_names:
             target_names.add(valid_params['targname'])
             targetid += 1
-        valid_params['targetid'] = targetid
+        valid_params['targetid'] = str(targetid)
 
         # Add the exposure
         pool.add_row(valid_params)
