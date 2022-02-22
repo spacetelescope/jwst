@@ -6,11 +6,44 @@ import numpy as np
 
 from . import AssociationPool
 
+# Header keywords to ignore
 IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
 
+# Non-header columns that need to be defined
+NON_HEADER_COLS = {
+    'dms_note': '',
+    'is_imprt': 'f',
+    'is_psf': 'f',
+    'pntgtype': 'science',
+}
 
-def mkpool(data, asn_candidate=None, **kwargs):
+
+def mkpool(data, asn_candidate=None, dms_note='', is_imprt='f', is_psf='f', pntgtype='science', **kwargs):
     """Make a pool from data
+
+    A number of columns used by the Association rules cannot be derived from the header
+    keywords. The columns, and typical other values, are as follows:
+
+    - asn_candidate
+      The observation candidate is always defined in table creation. However, higher level
+      associations can be created by specifying a list of candidate definitions. An example
+      of adding both background and coronographic candidates would be:
+      ["('c1000', 'background')", "('c1001', 'coronographic')"]
+
+    - dms_note
+      Notes from upstream processing of the downlinked data that may be pertinent
+      to the quality of the data. Currently the value "wfsc_los_jitter" is used
+      by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
+
+    - is_imprt
+      A 't' indicates the exposure is an imprint exposure.
+
+    - is_psf
+      A 't' indicate a PSF exposure.
+
+    - pntgtype
+      The general class of exposure. The default value is "science".
+      For target acquisition, the value is "target_acquisition".
 
     Parameters
     ----------
@@ -24,6 +57,18 @@ def mkpool(data, asn_candidate=None, **kwargs):
         These are added to the default ('observation', 'oXXX') candidate
         created from header information.
 
+    dms_note : str
+        Value for the dms_note column.
+
+    is_imprt : 't' or 'f'
+        Indicator whether exposures are imprint/leakcal exposures.
+
+    is_psf : 't' ro 'f'
+        Indicator whether exposures are PSF's.
+
+    pntgtype : 'science', 'target_acquisition'
+        General exposure type.
+
     kwargs : dict
         Other keyword arguments to pass to the
         `astropy.io.fits.getheader` call.
@@ -31,6 +76,7 @@ def mkpool(data, asn_candidate=None, **kwargs):
     params = set()
     for datum in data:
         params.update(getheader(datum))
+    params.update(NON_HEADER_COLS)
     params.add('asn_candidate')
 
     params = params.difference(IGNORE_KEYS)
@@ -38,6 +84,7 @@ def mkpool(data, asn_candidate=None, **kwargs):
 
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
+    non_header_params = {'dms_note': dms_note, 'is_imprt': is_imprt, 'is_psf': is_psf, 'pntgtype': pntgtype}
     for datum in data:
         header = getheader(datum, **kwargs)
         valid_params = {
@@ -46,11 +93,16 @@ def mkpool(data, asn_candidate=None, **kwargs):
             if keyword not in IGNORE_KEYS
         }
 
+        # Update non-header parameters
+        valid_params.update(non_header_params)
+
         # Setup association candidates
-        combinded_asn_candidates = [f"('observation', 'o{header['observtn']}')"]
+        combinded_asn_candidates = [f"('o{header['observtn']}', 'observation')"]
         if asn_candidate is not None:
             combinded_asn_candidates += asn_candidate
         valid_params['asn_candidate'] = '[' + ','.join(combinded_asn_candidates) + ']'
+
+        # Add the exposure
         pool.add_row(valid_params)
 
     return pool
