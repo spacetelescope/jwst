@@ -2,7 +2,6 @@
 Tools for pool creation
 """
 from astropy.io.fits import getheader as fits_getheader
-import numpy as np
 
 from . import AssociationPool
 
@@ -11,10 +10,12 @@ IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
 
 # Non-header columns that need to be defined
 NON_HEADER_COLS = {
+    'asn_candidate': 'discovered',
     'dms_note': '',
     'is_imprt': 'f',
     'is_psf': 'f',
     'pntgtype': 'science',
+    'targetid': '1',
 }
 
 
@@ -77,14 +78,20 @@ def mkpool(data, asn_candidate=None, dms_note='', is_imprt='f', is_psf='f', pntg
     for datum in data:
         params.update(getheader(datum))
     params.update(NON_HEADER_COLS)
-    params.add('asn_candidate')
 
     params = params.difference(IGNORE_KEYS)
     params = [item.lower() for item in params]
 
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
+    # Set default values for user-settable non-header parameters
     non_header_params = {'dms_note': dms_note, 'is_imprt': is_imprt, 'is_psf': is_psf, 'pntgtype': pntgtype}
+
+    # Setup for target id calculation
+    targetid = 0  # Start off with no target id.
+    target_names = set()
+
+    # Create the table.
     for datum in data:
         header = getheader(datum, **kwargs)
         valid_params = {
@@ -101,6 +108,12 @@ def mkpool(data, asn_candidate=None, dms_note='', is_imprt='f', is_psf='f', pntg
         if asn_candidate is not None:
             combinded_asn_candidates += asn_candidate
         valid_params['asn_candidate'] = '[' + ','.join(combinded_asn_candidates) + ']'
+
+        # Calculate target id.
+        if valid_params['targname'] not in target_names:
+            target_names.add(valid_params['targname'])
+            targetid += 1
+        valid_params['targetid'] = targetid
 
         # Add the exposure
         pool.add_row(valid_params)
