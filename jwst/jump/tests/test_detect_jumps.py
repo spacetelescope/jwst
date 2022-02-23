@@ -60,7 +60,7 @@ def test_exec_time_many_crs(setup_inputs):
     tstop = time.time()
 
     t_elapsed = tstop - tstart
-    MAX_TIME = 1500  # takes ~600 sec on my Mac for this crs_frac
+    MAX_TIME = 3000  # takes ~600 sec on my Mac for this crs_frac; takes 1792 in CI test
 
     assert t_elapsed < MAX_TIME
 
