@@ -58,9 +58,9 @@ class EngDB_Mocker(requests_mock.Mocker):
     Setup a mock of the JWST Engineering DB.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, real_http=True, **kwargs):
         db_path = kwargs.pop('db_path', ENGDB_PATH)
-        super(EngDB_Mocker, self).__init__(*args, **kwargs)
+        super(EngDB_Mocker, self).__init__(*args, real_http=real_http, **kwargs)
 
         # Setup the local engineering cache
         self.cache = EngDB_Local(db_path)
