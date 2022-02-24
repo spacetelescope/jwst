@@ -21,7 +21,7 @@ NO_GAIN_VALUE = dqflags.pixel["NO_GAIN_VALUE"]
 def test_exec_time_0_crs(setup_inputs):
     """"
     Set up with dimension similar to simulated MIRI datasets, Dataset has no
-    Ecosmic rays. Test only the execution time of run_detect_jumps() for
+    cosmic rays. Test only the execution time of run_detect_jumps() for
     comparison with nominal time; hopefully indicative of faults with newly
     added code.
     """
@@ -47,11 +47,14 @@ def test_exec_time_many_crs(setup_inputs):
     time of run_detect_jumps() for comparison with nominal time; hopefully
     indicative of faults with newly added code.
     """
-    model, rnoise, gain = setup_inputs(ngroups=10, nrows=1024, ncols=1032,
+    nrows = 350
+    ncols = 400
+
+    model, rnoise, gain = setup_inputs(ngroups=10, nrows=nrows, ncols=ncols,
                                        nints=2, readnoise=6.5, gain=5.5,
                                        grouptime=2.775, deltatime=2.775)
 
-    crs_frac = 0.25  # fraction of groups having a CR, 726 secs on my Mac
+    crs_frac = 0.25  # fraction of groups having a CR
     model = add_crs(model, crs_frac)  # add desired fraction of CRs
 
     tstart = time.time()
@@ -60,7 +63,7 @@ def test_exec_time_many_crs(setup_inputs):
     tstop = time.time()
 
     t_elapsed = tstop - tstart
-    MAX_TIME = 3000  # takes ~600 sec on my Mac for this crs_frac; takes 1792 in CI test
+    MAX_TIME = 600  # takes ~100 sec on my Mac
 
     assert t_elapsed < MAX_TIME
 
