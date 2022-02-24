@@ -35,6 +35,9 @@ Use the ``resample_spec`` step for spectroscopic data.  The dispersion
 direction is needed for this case, and this is obtained from the
 DISPAXIS keyword.
 
-A full description of the drizzling algorithm, and parameters for
-drizzling, can be found in the
-`DrizzlePac Handbook <http://drizzlepac.stsci.edu>`_.
+A full description of the drizzling algorithm can be found in
+`Fruchter and Hook, PASP 2002 <https://doi.org/10.1086/338393>`_.
+A description of the inverse variance map method can be found in
+`Casertano et al., AJ 2000 <https://doi.org/10.1086/316851>`_, see Appendix A2.
+A description of the drizzle parameters and other useful drizzle-related
+resources can be found at `DrizzlePac Handbook <http://drizzlepac.stsci.edu>`_.
