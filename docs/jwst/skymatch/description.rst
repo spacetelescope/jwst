@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.skymatch.SkymatchStep`
+:Alias: skymatch
+
 Overview
 --------
 The ``skymatch`` step can be used to compute sky values in a collection of input

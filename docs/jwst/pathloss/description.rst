@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.pathloss.PathlossStep`
+:Alias: pathloss
+
 Overview
 --------
 The ``pathloss`` step calculates and applies corrections that are

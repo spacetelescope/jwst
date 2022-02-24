@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Classes: `jwst.master_background.MasterBackgroundStep`, `jwst.master_background.MasterBackgroundMosStep`
+:Aliases: master_background, master_background_mos
+
 Master background subtraction is one form of background subtraction available for
 spectroscopic data. See :ref:`Background Subtraction <background_subtraction>` for an
 overview of all the available methods and where they occur within the various stages

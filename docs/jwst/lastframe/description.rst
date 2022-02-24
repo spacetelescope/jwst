@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.lastframe.LastFrameStep`
+:Alias: lastframe
+
 The last frame correction step is only applied to MIRI data and flags the
 final group in each integration as bad (the "DO_NOT_USE" bit is set in the
 GROUPDQ flag array), but only if the total number of groups in each

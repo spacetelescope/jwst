@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.background.BackgroundStep`
+:Alias: background
+
 The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background
 signal. The step takes as input one target exposure, to which the

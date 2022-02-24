@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.persistence.PersistenceStep`
+:Alias: persistence
+
 Based on a model, this step computes the number of traps that are
 expected to have captured or released a charge during an exposure.
 The released charge is proportional to the persistence signal, and

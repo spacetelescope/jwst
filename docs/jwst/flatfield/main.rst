@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.flatfield.FlatFieldStep`
+:Alias: flat_field
+
 At its basic level this step flat-fields an input science dataset by dividing
 by a flat-field reference image. In particular, the SCI array from the
 flat-field reference file is divided into the SCI array of the

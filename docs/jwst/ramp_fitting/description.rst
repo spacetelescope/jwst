@@ -1,5 +1,9 @@
-Overview
-========
+Description
+===========
+
+:Class: `jwst.ramp_fitting.RampFitStep`
+:Alias: ramp_fit
+
 This step determines the mean count rate, in units of counts per second, for
 each pixel by performing a linear fit to the data in the input file.  The fit
 is done using the "ordinary least squares" method.
@@ -38,7 +42,7 @@ Note that the core algorithms for this step are called from the external package
 for use by multiple observatories.
 
 Multiprocessing
-===============
+---------------
 This step has the option of running in multiprocessing mode. In that mode it will
 split the input data cube into a number of row slices based on the number of available
 cores on the host computer and the value of the max_cores input parameter. By

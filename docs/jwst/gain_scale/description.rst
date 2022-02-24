@@ -1,6 +1,9 @@
 Description
 ============
 
+:Class: `jwst.gain_scale.GainScaleStep`
+:Alias: gain_scale
+
 The ``gain_scale`` step rescales pixel values in JWST countrate
 science data products in order to correct for the effect of using
 a non-standard detector gain setting. The countrate data are

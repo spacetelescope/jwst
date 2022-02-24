@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.cube_build.CubeBuildStep`
+:Alias: cube_build
+
 The ``cube_build`` step takes MIRI or NIRSpec IFU calibrated 2-D images and produces
 3-D spectral cubes. The 2-D disjointed IFU slice spectra are corrected
 for distortion and assembled into a rectangular cube with three orthogonal axes: two

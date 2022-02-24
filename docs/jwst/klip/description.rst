@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.coron.KlipStep`
+:Alias: klip
+
 The ``klip`` step is one of the coronagraphic-specific steps in the ``coron``
 sub-package and is used in Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` processing.
 It applies the Karhunen-Loeve Image Plane (KLIP) algorithm to coronagraphic

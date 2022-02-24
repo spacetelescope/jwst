@@ -1,6 +1,6 @@
 .. _outlier-detection-ifu:
 
-OutlierDetection for IFU Data
+Outlier Detection for IFU Data
 ==============================
 
 This module serves as the interface for applying ``outlier_detection`` to IFU
