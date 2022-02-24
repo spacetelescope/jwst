@@ -11,7 +11,7 @@ from jwst.associations.tests import helpers
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.mkpool import mkpool
 
-REQUIRED_PARAMS = set(('PROGRAM', 'FILENAME'))
+REQUIRED_PARAMS = set(('program', 'filename'))
 
 
 @pytest.fixture(scope='module')
@@ -32,7 +32,7 @@ def test_mkpool(env):
     assert len(pool) == len(exposures)
     filenames = [
         filename
-        for filename in pool['FILENAME']
+        for filename in pool['filename']
     ]
     assert set(exposures) == set(filenames)
 

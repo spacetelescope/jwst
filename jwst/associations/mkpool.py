@@ -1,9 +1,17 @@
 """
 Tools for pool creation
 """
+import logging
+
 from astropy.io.fits import getheader as fits_getheader
 
 from . import AssociationPool
+
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Header keywords to ignore
 IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
@@ -123,6 +131,69 @@ def mkpool(data,
         pool.add_row(valid_params)
 
     return pool
+
+
+def from_cmdline(args=None):
+    """Collect command-line options and run mkpool
+
+    Parameters
+    ----------
+    args : [str[,...]]
+        List of arguments to parse
+
+    Returns : dict
+        Dict of the arguments and their values.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Create an Association Pool file from a list of exposures'
+    )
+
+    parser.add_argument(
+        'pool',
+        help='Name of the pool file to save to.'
+    )
+    parser.add_argument(
+        'data', nargs='+',
+        help='List of exposures to create the Association Pool with.'
+    )
+
+    parser.add_argument(
+        'asn-candidate', default=NON_HEADER_COLS['asn_candidate'],
+        help='Additional candidate information.'
+    )
+    parser.add_argument(
+        'dms-note', default=NON_HEADER_COLS['dms_note'],
+        help='Added notes that may be relevant to association creation.'
+    )
+    parser.add_argument(
+        'is-imprt', default=NON_HEADER_COLS['is_imprt'],
+        help='A "t" indicates the exposure is an imprint exposure.'
+    )
+    parser.add_argument(
+        'is-psf', default=NON_HEADER_COLS['is_psf'],
+        help='A "t" indicate a PSF exposure.'
+    )
+    parser.add_argument(
+        'pntgtype', default=NON_HEADER_COLS['pntgtype'],
+        help='The general class of exposure.'
+    )
+    parser.add_argument(
+        '-v', '--verbose', action='count', default=0,
+        help='Increase verbosity. Specifying multiple times adds more output.'
+    )
+
+    parsed = parser.parse_args(args)
+
+    # Set output detail.
+    level = LogLevels[min(len(LogLevels) - 1, parsed.verbose)]
+    logger.setLevel(level)
+
+    # That's all folks.
+    mkpool_args = vars(parsed)
+    del mkpool_args['verbose']
+    return mkpool_args
 
 
 def getheader(datum, **kwargs):
