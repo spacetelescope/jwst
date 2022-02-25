@@ -3676,7 +3676,9 @@ def create_extraction(extract_ref_dict,
     # Loop over each integration in the input model
     shape = meta_source.data.shape
 
-    if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
+    if len(shape) == 3 and shape[0] == 1:
+        integrations = [0]
+    elif len(shape) == 2:
         integrations = [-1]
     else:
         log.info(f"Beginning loop over {shape[0]} integrations ...")
