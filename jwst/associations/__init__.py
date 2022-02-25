@@ -30,7 +30,6 @@ from .exceptions import *
 from .generate import *
 from .lib.process_list import *
 from .pool import *
-from .mkpool import *
 from .registry import *
 from .load_asn import load_asn
 from .main import *
