@@ -68,10 +68,10 @@ plain text CRDS rules files.
 CRDS rules and references are organized into a 4 tiered hierarchical network of
 versioned files consisting of:
 
-- .pmap  - The overall context for the pipeline (i.e. all instruments)
-- .imap  - The rules for all reference types of one instrument
-- .rmap  - The rules for all reference files of one type of one instrument
-- .fits,.asdf,.json - Individual reference files assigned by .rmaps
++ .pmap  - The overall context for the pipeline (i.e. all instruments)
++ .imap  - The rules for all reference types of one instrument
++ .rmap  - The rules for all reference files of one type of one instrument
++ .fits,.asdf,.json - Individual reference files assigned by .rmaps
 
 Based on dataset parameters, CRDS traverses the hierarchy of rules files,
 generally starting from the .pmap and descending until a particular reference
