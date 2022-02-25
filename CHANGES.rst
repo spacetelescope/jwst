@@ -15,6 +15,8 @@ associations
 
 - Add fgsid option to set_telescope_pointing [#6717]
 
+- Formalize the mkpool utility [#6746]
+
 align_refs
 ----------
 - Fixed behavior generating many unnecessary and slow logging warnings on
