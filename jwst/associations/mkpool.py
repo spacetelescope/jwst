@@ -7,6 +7,7 @@ from astropy.io.fits import getheader as fits_getheader
 
 from . import AssociationPool
 
+__all__ = ['mkpool']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -32,38 +33,44 @@ def mkpool(data,
            is_imprt=NON_HEADER_COLS['is_imprt'], is_psf=NON_HEADER_COLS['is_psf'],
            pntgtype=NON_HEADER_COLS['pntgtype'],
            **kwargs):
-    """Make a pool from data
+    """Create an association pool from a list of FITS files.
+
+    Normally, association pools and the associations generated from those pools
+    are created by the automatic ground system process. Users should download
+    and modify those pools if need be. If desired, this function can be used to
+    create pools from scratch using a list of FITS files. Once created, the
+    :py:func:`~jwst.associations.generate` can be used to create associations
+    from these pools.
 
     A number of columns used by the Association rules cannot be derived from the header
     keywords. The columns, and typical other values, are as follows:
 
     - asn_candidate
-      The observation candidate is always defined in table creation. However, higher level
-      associations can be created by specifying a list of candidate definitions. An example
-      of adding both background and coronographic candidates would be:
-      ["('c1000', 'background')", "('c1001', 'coronographic')"]
+        The observation candidate is always defined in table
+        creation, based on the observation id of each exposure.
 
+        However, higher level associations can be created by specifying a list
+        of candidate definitions. An example of adding both background and
+        coronographic candidates would be: ["('c1000', 'background')",
+        "('c1001', 'coronographic')"]
     - dms_note
-      Notes from upstream processing of the downlinked data that may be pertinent
-      to the quality of the data. Currently the value "wfsc_los_jitter" is used
-      by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
-
+          Notes from upstream processing of the downlinked data that may be pertinent
+          to the quality of the data. Currently the value "wfsc_los_jitter" is used
+          by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
     - is_imprt
-      A 't' indicates the exposure is an imprint exposure.
-
+          A 't' indicates the exposure is an imprint exposure.
     - is_psf
-      A 't' indicate a PSF exposure.
-
+          A 't' indicate a PSF exposure.
     - pntgtype
-      The general class of exposure. The default value is "science".
-      For target acquisition, the value is "target_acquisition".
+          The general class of exposure. The default value is "science".
+          For target acquisition, the value is "target_acquisition".
 
     Parameters
     ----------
-    data : [datum[, ...]]
+    data : int
         The data to get the pool parameters from.
         Can be pathnames or `astropy.io.fits.HDUL`
-        or `astropy.io.fits.ImageHDU
+        or `astropy.io.fits.ImageHDU`.
 
     asn_candidate : ['(type, id)'[,...]] or None
         Association candidates to add to each exposure.
@@ -76,7 +83,7 @@ def mkpool(data,
     is_imprt : 't' or 'f'
         Indicator whether exposures are imprint/leakcal exposures.
 
-    is_psf : 't' ro 'f'
+    is_psf : 't' or 'f'
         Indicator whether exposures are PSF's.
 
     pntgtype : 'science', 'target_acquisition'
@@ -85,6 +92,12 @@ def mkpool(data,
     kwargs : dict
         Other keyword arguments to pass to the
         `astropy.io.fits.getheader` call.
+
+    Returns
+    -------
+    pool : `jwst.associations.AssociationPool`
+        The association pool.
+
     """
     params = set()
     for datum in data:
