@@ -173,23 +173,23 @@ def from_cmdline(args=None):
     )
 
     parser.add_argument(
-        'asn-candidate', default=NON_HEADER_COLS['asn_candidate'],
+        '--asn-candidate', default=NON_HEADER_COLS['asn_candidate'],
         help='Additional candidate information.'
     )
     parser.add_argument(
-        'dms-note', default=NON_HEADER_COLS['dms_note'],
+        '--dms-note', default=NON_HEADER_COLS['dms_note'],
         help='Added notes that may be relevant to association creation.'
     )
     parser.add_argument(
-        'is-imprt', default=NON_HEADER_COLS['is_imprt'],
+        '--is-imprt', default=NON_HEADER_COLS['is_imprt'],
         help='A "t" indicates the exposure is an imprint exposure.'
     )
     parser.add_argument(
-        'is-psf', default=NON_HEADER_COLS['is_psf'],
+        '--is-psf', default=NON_HEADER_COLS['is_psf'],
         help='A "t" indicate a PSF exposure.'
     )
     parser.add_argument(
-        'pntgtype', default=NON_HEADER_COLS['pntgtype'],
+        '--pntgtype', default=NON_HEADER_COLS['pntgtype'],
         help='The general class of exposure.'
     )
     parser.add_argument(
