@@ -72,9 +72,9 @@ def mkpool(data,
         Can be pathnames or `astropy.io.fits.HDUL`
         or `astropy.io.fits.ImageHDU`.
 
-    asn_candidate : ['(type, id)'[,...]] or None
+    asn_candidate : ['(id, type)'[,...]] or None
         Association candidates to add to each exposure.
-        These are added to the default ('observation', 'oXXX') candidate
+        These are added to the default ('oXXX', 'observation') candidate
         created from header information.
 
     dms_note : str
