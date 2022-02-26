@@ -47,6 +47,7 @@ def test_hdu(exposures):
     assert REQUIRED_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
 
+
 # ####################
 # Fixtures & Utilities
 # ####################
