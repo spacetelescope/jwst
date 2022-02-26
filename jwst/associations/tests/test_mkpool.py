@@ -14,15 +14,6 @@ from jwst.associations.mkpool import mkpool
 REQUIRED_PARAMS = set(('program', 'filename'))
 
 
-@pytest.fixture(scope='module')
-def exposures():
-    exposure_path = helpers.t_path(
-        'data/exposures'
-    )
-    exposures = glob(os.path.join(exposure_path, '*.fits'))
-    return exposures
-
-
 def test_mkpool(exposures):
     pool = mkpool(exposures)
     assert isinstance(pool, AssociationPool)
@@ -55,3 +46,14 @@ def test_hdu(exposures):
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
+
+# ####################
+# Fixtures & Utilities
+# ####################
+@pytest.fixture(scope='module')
+def exposures():
+    exposure_path = helpers.t_path(
+        'data/exposures'
+    )
+    exposures = glob(os.path.join(exposure_path, '*.fits'))
+    return exposures
