@@ -8,24 +8,22 @@ import pytest
 from astropy.io import fits
 
 from jwst.associations.tests import helpers
-from jwst.associations import (AssociationRegistry, AssociationPool)
+from jwst.associations import AssociationPool
 from jwst.associations.mkpool import mkpool
 
 REQUIRED_PARAMS = set(('program', 'filename'))
 
 
 @pytest.fixture(scope='module')
-def env():
-    rules = AssociationRegistry()
+def exposures():
     exposure_path = helpers.t_path(
         'data/exposures'
     )
     exposures = glob(os.path.join(exposure_path, '*.fits'))
-    return rules, exposures
+    return exposures
 
 
-def test_mkpool(env):
-    rules, exposures = env
+def test_mkpool(exposures):
     pool = mkpool(exposures)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
@@ -37,8 +35,7 @@ def test_mkpool(env):
     assert set(exposures) == set(filenames)
 
 
-def test_hdulist(env):
-    rules, exposures = env
+def test_hdulist(exposures):
     hduls = [
         fits.open(exposure)
         for exposure in exposures
@@ -49,8 +46,7 @@ def test_hdulist(env):
     assert len(pool) == len(exposures)
 
 
-def test_hdu(env):
-    rules, exposures = env
+def test_hdu(exposures):
     hdus = [
         fits.open(exposure)[0]
         for exposure in exposures
