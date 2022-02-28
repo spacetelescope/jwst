@@ -9,7 +9,7 @@ from astropy.io import fits
 
 from jwst.associations.tests import helpers
 from jwst.associations import AssociationPool
-from jwst.associations.mkpool import mkpool
+from jwst.associations.mkpool import from_cmdline, mkpool
 
 # Optional column settings
 OPT_COLS = [('asn_candidate', [('a3001', 'coron')]),
@@ -59,10 +59,13 @@ def test_mkpool(exposures):
 @pytest.mark.parametrize('opt_cols', OPT_COLS)
 def test_opt_cols(mkpool_with_args, opt_cols):
     """Ensure that optional arguments are properly used"""
-    column, expected = opt_cols
-    if column == 'asn_candidate':
-        expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
-    assert mkpool_with_args[0][column] == expected
+    _test_opt_cols(mkpool_with_args, opt_cols)
+
+
+@pytest.mark.parametrize('opt_cols', OPT_COLS)
+def test_opt_cols_cmdline(mkpool_cmdline, opt_cols):
+    """Ensure that the command line with optional arguments are properly used"""
+    _test_opt_cols(mkpool_cmdline, opt_cols)
 
 
 # ####################
@@ -78,9 +81,32 @@ def exposures():
 
 
 @pytest.fixture(scope='module')
+def mkpool_cmdline(exposures):
+    """Create a pool with optional arguments from the commandline"""
+    args = ['pool.csv']
+    for column, value in OPT_COLS:
+        args.append(f'--{column.replace("_", "-")}')
+        args.append(f'{value}')
+    for exposure in exposures:
+        args.append(exposure)
+
+    mkpool_args = from_cmdline(args)
+    pool = mkpool(**mkpool_args)
+    return pool
+
+
+@pytest.fixture(scope='module')
 def mkpool_with_args(exposures):
     """Create a pool with all optional arguments specified"""
     kargs = {column: value for column, value in OPT_COLS}
     pool = mkpool(exposures, **kargs)
 
     return pool
+
+
+def _test_opt_cols(mkpool_with_args, opt_cols):
+    """Ensure that optional arguments are properly used"""
+    column, expected = opt_cols
+    if column == 'asn_candidate':
+        expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
+    assert mkpool_with_args[0][column] == expected

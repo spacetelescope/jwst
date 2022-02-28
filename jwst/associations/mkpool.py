@@ -51,8 +51,13 @@ def mkpool(data,
 
         However, higher level associations can be created by specifying a list
         of candidate definitions. An example of adding both background and
-        coronographic candidates would be: ["('c1000', 'background')",
-        "('c1001', 'coronographic')"]
+        coronographic candidates would be: [('c1000', 'background'),
+        ('c1001', 'coronographic')]
+
+        The specification can be either as a list of 2-tuples, as presented above, or
+        as a single string representation of the list. Using the previous example, the
+        following is also a valid input:
+        "[('c1000', 'background'), ('c1001', 'coronographic')]"
     - dms_note
           Notes from upstream processing of the downlinked data that may be pertinent
           to the quality of the data. Currently the value "wfsc_los_jitter" is used
@@ -131,8 +136,12 @@ def mkpool(data,
         # Setup association candidates
         combined_asn_candidates = [(f"o{header['observtn']}", "observation")]
         if asn_candidate is not None:
-            combined_asn_candidates += asn_candidate
-        valid_params['asn_candidate'] = str(combined_asn_candidates)
+            if isinstance(asn_candidate, str):
+                combined_asn_candidates = f'[{combined_asn_candidates[0]}, {asn_candidate[1:]}'
+            else:
+                combined_asn_candidates += asn_candidate
+                combined_asn_candidates = str(combined_asn_candidates)
+            valid_params['asn_candidate'] = combined_asn_candidates
 
         # Calculate target id.
         if valid_params['targname'] not in target_names:
