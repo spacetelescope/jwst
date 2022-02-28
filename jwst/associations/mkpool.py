@@ -2,6 +2,7 @@
 Tools for pool creation
 """
 import logging
+from copy import copy
 
 from astropy.io.fits import getheader as fits_getheader
 
@@ -112,6 +113,7 @@ def mkpool(data,
 
     params = params.difference(IGNORE_KEYS)
     params = [item.lower() for item in params]
+    defaults = {param: 'null' for param in params}
 
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
@@ -151,7 +153,9 @@ def mkpool(data,
         valid_params['targetid'] = str(targetid)
 
         # Add the exposure
-        pool.add_row(valid_params)
+        final_params = copy(defaults)
+        final_params.update(valid_params)
+        pool.add_row(final_params)
 
     return pool
 
