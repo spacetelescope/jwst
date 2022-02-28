@@ -23,10 +23,10 @@ def create_slit(model, x0, y0, order):
     xmin = 0
     # ymax = 58
     # xmax = 1323
-    model = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
-                                        Const1D(x0) & Const1D(y0) & Const1D(order)) | model
+    # model = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
+    #                                     Const1D(x0) & Const1D(y0) & Const1D(order)) | model
     wcsobj = wcs.WCS([('det', model), ('world', None)])
-    wcsobj.bounding_box = ((20, 25), (800, 805))
+    #wcsobj.bounding_box = ((20, 25), (800, 805))
     slit = SlitModel()
     slit.meta.wcs = wcsobj
     slit.source_xpos = x0
@@ -146,29 +146,29 @@ def test_NIRCAMBackwardDispersion():
 
 
 def test_NIRISSBackwardDispersion():
-    forward_ymodels = [[Polynomial2D(2, c0_0=-1.876215, c1_0=-5.179793e-04, c2_0=2.116366e-08,
-                                     c0_1=-2.259297e-04, c0_2=-2.502127e-12, c1_1=4.771951e-08),
 
-                        Polynomial2D(2, c0_0=-3.089115, c1_0=3.063270e-03, c2_0=-9.786785e-07,
-                                     c0_1=1.237905e-03, c0_2=-1.510774e-11, c1_1=-5.405480e-09)]]
+    forward_xmodels = [[Polynomial2D(2, c0_0=-1.338054, c1_0=0.00032695, c2_0=-0.00000001,
+                                    c0_1=-0.00004967, c0_2=-0., c1_1=0.00000014),
+                       Polynomial2D(2, c0_0=0.459184, c1_0=-0.00139661, c2_0=-0.00000001,
+                                    c0_1=0.00042472, c0_2=0., c1_1=-0.00000089),
+                       Polynomial2D(2, c0_0=-0.07182395, c1_0=0.00013792, c2_0=0., c0_1=-0.00000358,
+                                    c0_2=-0., c1_1=0.00000001)]]
 
-    forward_xmodels = [[Polynomial2D(2, c0_0=63.55173, c1_0=3.846599e-06, c2_0=-7.173816e-10,
-                                     c0_1=8.158127e-07, c0_2=-1.274281e-09, c1_1=4.098804e-11),
+    forward_ymodels = [[Polynomial2D(2, c0_0=59.01527, c1_0=0.00000235, c2_0=-0., c0_1=0.00000127,
+                                    c0_2=-0., c1_1=-0.),
+                       Polynomial2D(2, c0_0=-331.1461, c1_0=-0.00001381, c2_0=0.00000001,
+                                    c0_1=-0.00000618, c0_2=0., c1_1=0.00000001),
+                       Polynomial2D(2, c0_0=-0.00053518, c1_0=0.00000116, c2_0=-0., c0_1=0.00000069,
+                                    c0_2=-0., c1_1=-0.)]]
 
-                        Polynomial2D(2, c0_0=-331.8532, c1_0=-1.24494e-05, c2_0=4.210112e-10,
-                                     c0_1=-1.615311e-06, c0_2=6.665276e-09, c1_1=1.43762e-10)]]
-
-    forward_lmodels = [Polynomial1D(1, c0=0.75, c1=1.55),
-                       Polynomial1D(1, c0=0.75, c1=1.55)]
+    forward_lmodels = [Polynomial1D(1, c0=0.75, c1=1.55)]
 
     forward_model = transforms.NIRISSForwardColumnGrismDispersion([1, 2], forward_lmodels,
                                                                   forward_xmodels, forward_ymodels,
                                                                   theta=0)
 
     # NirissBackward model uses xmodels, ymodels and invlmodels
-    lmodels = [Polynomial1D(1, c0=-0.48387097, c1=0.64516129),
-               Polynomial1D(1, c0=-0.48387097, c1=0.64516129)
-               ]
+    lmodels = [Polynomial1D(1, c0=-0.48387097, c1=0.64516129)]
 
     model = transforms.NIRISSBackwardGrismDispersion([1, 2], lmodels=lmodels,
                                                      xmodels=forward_xmodels,
