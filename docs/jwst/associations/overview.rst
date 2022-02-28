@@ -129,5 +129,5 @@ as their respective DataModels.
 Utilities
 =========
 
-There are a number of utilities to create user-specific associations which are
+There are a number of utilities to create user-specific associations that are
 documented under :ref:`Association Commands<association-commands>`.

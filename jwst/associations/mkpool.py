@@ -42,8 +42,9 @@ def mkpool(data,
     :py:func:`~jwst.associations.generate` can be used to create associations
     from these pools.
 
-    A number of columns used by the Association rules cannot be derived from the header
-    keywords. The columns, and typical other values, are as follows:
+    A number of pool columns used by the Association rules cannot be derived
+    from the header keywords. The columns, and typical other values, are as
+    follows:
 
     - asn_candidate
         The observation candidate is always defined in table
@@ -63,7 +64,7 @@ def mkpool(data,
           to the quality of the data. Currently the value "wfsc_los_jitter" is used
           by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
     - is_imprt
-          A 't' indicates the exposure is an imprint exposure.
+          A 't' indicates the exposure is a NIRSpec imprint exposure.
     - is_psf
           A 't' indicate a PSF exposure.
     - pntgtype
