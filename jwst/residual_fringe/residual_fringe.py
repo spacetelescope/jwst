@@ -131,8 +131,7 @@ class ResidualFringeCorrection():
         self.rejected_fit = np.zeros(self.input_model.data.shape)
 
         self.background_fit = np.zeros(self.input_model.data.shape)
-        self.knot_locations = np.empty(self.input_model.data.shape)
-        self.knot_locations[:, :] = np.NaN
+        self.knot_locations = np.full_like(self.input_model.data, np.NaN) 
         allregions.close()
 
         # intermediate output product - Table
