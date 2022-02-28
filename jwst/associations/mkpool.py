@@ -72,7 +72,7 @@ def mkpool(data,
         Can be pathnames or `astropy.io.fits.HDUL`
         or `astropy.io.fits.ImageHDU`.
 
-    asn_candidate : ['(id, type)'[,...]] or None
+    asn_candidate : [(id, type)[,...]] or None
         Association candidates to add to each exposure.
         These are added to the default ('oXXX', 'observation') candidate
         created from header information.
@@ -129,10 +129,10 @@ def mkpool(data,
         valid_params.update(non_header_params)
 
         # Setup association candidates
-        combinded_asn_candidates = [f"('o{header['observtn']}', 'observation')"]
+        combined_asn_candidates = [(f"o{header['observtn']}", "observation")]
         if asn_candidate is not None:
-            combinded_asn_candidates += asn_candidate
-        valid_params['asn_candidate'] = '[' + ','.join(combinded_asn_candidates) + ']'
+            combined_asn_candidates += asn_candidate
+        valid_params['asn_candidate'] = str(combined_asn_candidates)
 
         # Calculate target id.
         if valid_params['targname'] not in target_names:

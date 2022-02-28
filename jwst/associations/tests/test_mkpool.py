@@ -12,7 +12,7 @@ from jwst.associations import AssociationPool
 from jwst.associations.mkpool import mkpool
 
 # Optional column settings
-OPT_COLS = [('asn_candidate', "('a3001', 'coron')"),
+OPT_COLS = [('asn_candidate', [('a3001', 'coron')]),
             ('dms_note', 'a note from dms'),
             ('is_imprt', 't'),
             ('is_psf', 't'),
@@ -59,8 +59,10 @@ def test_mkpool(exposures):
 @pytest.mark.parametrize('opt_cols', OPT_COLS)
 def test_opt_cols(mkpool_with_args, opt_cols):
     """Ensure that optional arguments are properly used"""
-    column, value = opt_cols
-    assert mkpool_with_args[0][column] == value
+    column, expected = opt_cols
+    if column == 'asn_candidate':
+        expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
+    assert mkpool_with_args[0][column] == expected
 
 
 # ####################
