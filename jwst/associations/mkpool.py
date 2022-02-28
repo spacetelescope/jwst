@@ -113,6 +113,7 @@ def mkpool(data,
 
     params = params.difference(IGNORE_KEYS)
     params = [item.lower() for item in params]
+    params.sort()
     defaults = {param: 'null' for param in params}
 
     pool = AssociationPool(names=params, dtype=[object] * len(params))
