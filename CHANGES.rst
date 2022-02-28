@@ -48,7 +48,7 @@ extract_1d
 - Check for non-zero array size before computing sigma-clipped
   statistics in IFU mode [#6728]
 
-- Added separate behavior for 2D vs (3D data with only one image)
+- Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
 ramp_fitting
