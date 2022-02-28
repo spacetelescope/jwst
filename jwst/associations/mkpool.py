@@ -136,13 +136,13 @@ def mkpool(data,
 
         # Setup association candidates
         combined_asn_candidates = [(f"o{header['observtn']}", "observation")]
-        if asn_candidate is not None:
-            if isinstance(asn_candidate, str):
-                combined_asn_candidates = f'[{combined_asn_candidates[0]}, {asn_candidate[1:]}'
-            else:
+        if isinstance(asn_candidate, str):
+            combined_asn_candidates = f'[{combined_asn_candidates[0]}, {asn_candidate[1:]}'
+        else:
+            if asn_candidate is not None:
                 combined_asn_candidates += asn_candidate
-                combined_asn_candidates = str(combined_asn_candidates)
-            valid_params['asn_candidate'] = combined_asn_candidates
+            combined_asn_candidates = str(combined_asn_candidates)
+        valid_params['asn_candidate'] = combined_asn_candidates
 
         # Calculate target id.
         if valid_params['targname'] not in target_names:
