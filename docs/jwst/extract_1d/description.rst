@@ -283,4 +283,5 @@ For IFU cubes the error information is contained entirely in the ERR array, and 
 VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only propagates this
 non-differentiated error term.  Note that while covariance is also extremely important for IFU data cubes
 (as the IFUs themselves are significantly undersampled) this term is not presently computed or taken
-into account in the ``extract_1d`` step.
+into account in the ``extract_1d`` step.  As such, the error estimates should be taken as a rough
+approximation that will be characterized and improved as flight data become available.
