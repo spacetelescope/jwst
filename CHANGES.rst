@@ -70,7 +70,14 @@ reset
 
 - Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
   shape of the data to define these values [#6749]
-  
+
+
+residual_fringe
+---------------
+
+- Replaced fitting the background with an astropy fitting package [#6739]
+
+
 set_telescope_pointing
 ----------------------
 
