@@ -1,5 +1,4 @@
 git+https://github.com/asdf-format/asdf
-git+https://github.com/asdf-format/asdf-standard
 git+https://github.com/asdf-format/asdf-transform-schemas
 git+https://github.com/asdf-format/asdf-coordinates-schemas
 git+https://github.com/asdf-format/asdf-wcs-schemas
