@@ -481,6 +481,30 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         assert model.meta.wcsinfo.cdelt2 == 3.090061944444444e-05
 
 
+@pytest.mark.skipif(sys.version_info.major < 3,
+                    reason="No URI support in sqlite3")
+def test_guider_add_wcs_with_db(eng_db_ngas, data_file_guider, tmp_path):
+    """Test adding WCS to guider using the database"""
+    expected_name = 'guider_add_wcs_with_db.fits'
+
+    stp.add_wcs(data_file, siaf_path=siaf_path, engdb_url='http://localhost')
+
+    # Tests
+    with datamodels.Level1bModel(data_file) as model:
+
+        # Save for post-test comparison and update
+        model.save(tmp_path / expected_name)
+
+        with datamodels.open(DATA_PATH / expected_name) as expected:
+            for meta in METAS_EQUALITY:
+                assert model[meta] == expected[meta]
+
+            for meta in METAS_ISCLOSE:
+                assert np.isclose(model[meta], expected[meta])
+
+            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
+
+
 def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
     """
     Test that FITS WCS default values were set.
@@ -644,23 +668,6 @@ def data_file(tmp_path):
 
 
 @pytest.fixture
-def data_file_nosiaf():
-    model = datamodels.Level1bModel()
-    model.meta.exposure.start_time = STARTTIME.mjd
-    model.meta.exposure.end_time = ENDTIME.mjd
-    model.meta.target.ra = TARG_RA
-    model.meta.target.dec = TARG_DEC
-    model.meta.aperture.name = "UNKNOWN"
-    model.meta.observation.date = '2017-01-01'
-
-    with TemporaryDirectory() as path:
-        file_path = os.path.join(path, 'fits_nosiaf.fits')
-        model.save(file_path)
-        model.close()
-        yield file_path
-
-
-@pytest.fixture
 def data_file_fromsim(tmp_path):
     """Create data using times that were executed during a simulation using the OTB Simulator"""
     model = datamodels.Level1bModel()
@@ -679,6 +686,43 @@ def data_file_fromsim(tmp_path):
     model.meta.ephemeris.velocity_z_bary = -7.187
 
     file_path = tmp_path / 'file_fromsim.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
+def data_file_nosiaf():
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "UNKNOWN"
+    model.meta.observation.date = '2017-01-01'
+
+    with TemporaryDirectory() as path:
+        file_path = os.path.join(path, 'fits_nosiaf.fits')
+        model.save(file_path)
+        model.close()
+        yield file_path
+
+
+@pytest.fixture
+def data_file_guider(tmp_path):
+    model = datamodels.GuiderStreamModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.guidestar.gs_ra = TARG_RA
+    model.meta.guidestar.gs_dec = TARG_DEC
+    model.meta.aperture.name = "FGS2_FULL"
+    model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "FGS_ACQ1"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file.fits'
     model.save(file_path)
     model.close()
     yield file_path
