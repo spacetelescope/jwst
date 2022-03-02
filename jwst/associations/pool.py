@@ -23,6 +23,9 @@ class AssociationPool(Table):
     - ASCII tables with a default delimiter of `|`
     - All values are read in as strings
     """
+    def __init__(self, *args, **kwargs):
+        super(AssociationPool, self).__init__(*args, **kwargs)
+        self.meta['pool_file'] = self.meta.get('pool_file', 'in-memory')
 
     @classmethod
     def read(
