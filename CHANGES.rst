@@ -41,6 +41,8 @@ datamodels
 - Added the new keyword "BKGMETH" for use in the ``skymatch`` step.
   [#6736]
 
+- Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
+
 extract_1d
 ----------
 
@@ -60,6 +62,12 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+reset
+-----
+
+- Reading nints and ngroups from  model.meta for reset reference file and data instead of using the
+  shape of the data to define these values [#6749]
+  
 set_telescope_pointing
 ----------------------
 
