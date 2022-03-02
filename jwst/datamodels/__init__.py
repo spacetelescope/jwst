@@ -23,7 +23,7 @@ from .fringe import FringeModel
 from .fringefreq import FringeFreqModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
-from .guider import GuiderRawModel, GuiderCalModel
+from .guider import GuiderRawModel, GuiderCalModel, GuiderStreamModel
 from .ifucube import IFUCubeModel
 from .ifucubepars import NirspecIFUCubeParsModel, MiriIFUCubeParsModel
 from .ifuimage import IFUImageModel
@@ -107,7 +107,7 @@ __all__ = [
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
     'FringeModel', 'FringeFreqModel', 'GainModel', 'GLS_RampFitModel',
-    'GuiderRawModel', 'GuiderCalModel',
+    'GuiderRawModel', 'GuiderCalModel', 'GuiderStreamModel',
     'IFUCubeModel',
     'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',

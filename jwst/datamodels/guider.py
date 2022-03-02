@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['GuiderRawModel', 'GuiderCalModel']
+__all__ = ['GuiderRawModel', 'GuiderCalModel', 'GuiderStreamModel']
 
 
 class GuiderRawModel(JwstDataModel):
@@ -86,3 +86,25 @@ class GuiderCalModel(JwstDataModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
+
+
+class GuiderStreamModel(JwstDataModel):
+    """
+    A data model for Guide Star pipeline stream files.
+
+    Parameters
+    __________
+    data : numpy uint16
+         The science data
+
+    groupdq : numpy uint8 array
+         Data quality array for each plane
+
+    planned_star_table : numpy table
+         Planned reference star table
+
+    flight_star_table : numpy table
+         Flight reference star table
+    """
+
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/guider_stream.schema"

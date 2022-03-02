@@ -1,0 +1,61 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/guider_raw.schema"
+allOf:
+- $ref: core.schema
+- $ref: guider_meta.schema
+- $ref: bunit.schema
+- $ref: wcsinfo.schema
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0
+      ndim: 3
+      datatype: uint16
+    groupdq:
+      title: Data quality array for each plane
+      fits_hdu: GROUPDQ
+      default: 0
+      ndim: 3
+      datatype: uint8
+    planned_star_table:
+      title: Planned reference star table
+      fits_hdu: Planned Reference Stars
+      datatype:
+      - name: guide_star_order
+        datatype: int32
+      - name: reference_order
+        datatype: int32
+      - name: reference_star_id
+        datatype: [ascii, 12]
+      - name: ra
+        datatype: float64
+      - name: dec
+        datatype: float64
+      - name: id_x
+        datatype: float64
+      - name: id_y
+        datatype: float64
+      - name: fgs_mag
+        datatype: float64
+      - name: fgs_mag_uncert
+        datatype: float64
+      - name: count_rate
+        datatype: float64
+      - name: count_rate_uncert
+        datatype: float64
+    flight_star_table:
+      title: Flight reference star table
+      fits_hdu: Flight Reference Stars
+      datatype:
+      - name: reference_star_id
+        datatype: [ascii, 2]
+      - name: id_x
+        datatype: float64
+      - name: id_y
+        datatype: float64
+      - name: count_rate
+        datatype: float64
