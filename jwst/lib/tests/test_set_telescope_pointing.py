@@ -487,10 +487,10 @@ def test_guider_add_wcs_with_db(eng_db_ngas, data_file_guider, tmp_path):
     """Test adding WCS to guider using the database"""
     expected_name = 'guider_add_wcs_with_db.fits'
 
-    stp.add_wcs(data_file, siaf_path=siaf_path, engdb_url='http://localhost')
+    stp.add_wcs(data_file_guider, siaf_path=siaf_path, engdb_url='http://localhost')
 
     # Tests
-    with datamodels.Level1bModel(data_file) as model:
+    with datamodels.Level1bModel(data_file_guider) as model:
 
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)

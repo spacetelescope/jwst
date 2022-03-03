@@ -21,7 +21,7 @@ from stdatamodels import s3_utils
 from stdatamodels.model_base import _FileReference
 
 from ..lib.basic_utils import bytes2human
-
+from ..lib.exposure_types import FGS_GUIDE_EXP_TYPES
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -321,6 +321,7 @@ def _class_from_shape(hdulist, shape):
     """
     Get the class name from the shape
     """
+    exp_type = hdulist[0].header.get('exp_type')
     if len(shape) == 0:
         from . import model_base
         new_class = model_base.JwstDataModel
@@ -328,8 +329,12 @@ def _class_from_shape(hdulist, shape):
         from . import quad
         new_class = quad.QuadModel
     elif len(shape) == 3:
-        from . import cube
-        new_class = cube.CubeModel
+        if exp_type.lower() in FGS_GUIDE_EXP_TYPES:
+            from . import guider
+            new_class = guider.GuiderStreamModel
+        else:
+            from . import cube
+            new_class = cube.CubeModel
     elif len(shape) == 2:
         try:
             hdulist[('SCI', 2)]
