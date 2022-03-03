@@ -634,8 +634,10 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 
     For Fine Guidance guiding observations, nearly everything
     in the `wcsinfo` meta information is already populated,
-    except for the PC matrix. This function updates the PC
+    except for the PC matrix and CRVAL*. This function updates the PC
     matrix based on the rest of the `wcsinfo`.
+
+    CRVAL* values are taken from GS_RA/GS_DEC.
 
     Parameters
     ----------
@@ -683,6 +685,10 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
         model.meta.wcsinfo.pc2_1,
         model.meta.wcsinfo.pc2_2
     ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
+
+    # Set CRVAL as the guide star coordinates.
+    model.meta.wcsinfo.crval1 = model.meta.guidestar.gs_ra
+    model.meta.wcsinfo.crval2 = model.meta.guidestar.gs_dec
 
 
 def update_wcs_from_telem(model, t_pars: TransformParameters):
