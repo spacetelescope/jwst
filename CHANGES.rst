@@ -1,3 +1,11 @@
+1.4.5 (2022-03-23)
+==================
+
+datamodels
+----------
+
+- Added the new keyword "BKGMETH" for use in the ``skymatch`` step. [#6736]
+
 1.4.4 (2022-03-16)
 ==================
 
