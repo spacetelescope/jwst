@@ -36,18 +36,16 @@ def do_correction(input_model, reset_model):
     """
 
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]           # number of integrations in input data
-
-    sci_ngroups = input_model.data.shape[1]           # number of groups in input data
+    sci_nints = input_model.meta.exposure.nints        # number of integrations in input data
+    sci_ngroups = input_model.meta.exposure.ngroups           # number of groups in input data
     # could also grab this information from input_model.meta.exposure.nints (ngroups)
 
-    reset_nints = reset_model.data.shape[0]           # number of integrations in reset reference file
-    reset_ngroups = reset_model.data.shape[1]         # number of groups
+    reset_nints = reset_model.meta.exposure.nints           # number of integrations in reset reference file
+    reset_ngroups = reset_model.meta.exposure.ngroups         # number of groups
 
     # Replace NaN's in the reset with zeros (should not happen but just in case)
     reset_model.data[np.isnan(reset_model.data)] = 0.0
-    log.debug("Reset Sub using: nints=%d, ngroups=%d" %
-              (sci_nints, sci_ngroups))
+    log.debug("Reset Sub using: nints = {}, ngroups = {}".format(sci_nints, sci_ngroups))
 
     # Create output as a copy of the input science data model
     output = input_model.copy()

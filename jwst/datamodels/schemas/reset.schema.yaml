@@ -5,6 +5,10 @@ id: "http://stsci.edu/schemas/jwst_datamodel/reset.schema"
 title: Reset Correction data model
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_readpatt.schema
+- $ref: keyword_ngroups.schema
+- $ref: keyword_nints.schema
+- $ref: subarray.schema
 - type: object
   properties:
     data:

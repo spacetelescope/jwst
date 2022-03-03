@@ -27,7 +27,7 @@ def test_correction(make_rampmodel, make_resetmodel):
 
     refgroups = 12
     # create reset reference file model with frames less than science data
-    reset = make_resetmodel(refgroups, ysize, xsize)
+    reset = make_resetmodel(nints, refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups):
@@ -69,7 +69,7 @@ def test_nan(make_rampmodel, make_resetmodel):
 
     # create reset reference file model with more frames than science data
     refgroups = 15
-    reset = make_resetmodel(refgroups, ysize, xsize)
+    reset = make_resetmodel(nints, refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
@@ -104,7 +104,7 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
 
     # create reset reference file model with more frames than science data
     refgroups = 12
-    reset = make_resetmodel(refgroups, ysize, xsize)
+    reset = make_resetmodel(nints, refgroups, ysize, xsize)
 
     jump_det = dqflags.pixel['JUMP_DET']
     saturated = dqflags.pixel['SATURATED']
@@ -146,7 +146,7 @@ def test_2_int(make_rampmodel, make_resetmodel):
 
     # create reset reference file model with more frames than science data
     refgroups = 10
-    reset = make_resetmodel(refgroups, ysize, xsize)
+    reset = make_resetmodel(nints, refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
@@ -183,6 +183,8 @@ def make_rampmodel():
         dm_ramp.meta.subarray.xsize = xsize
         dm_ramp.meta.subarray.ystart = 1
         dm_ramp.meta.subarray.ysize = ysize
+        dm_ramp.meta.exposure.nints = nints
+        dm_ramp.meta.exposure.ngroups = ngroups
         dm_ramp.meta.description = 'Fake data.'
 
         return dm_ramp
@@ -193,7 +195,7 @@ def make_rampmodel():
 @pytest.fixture(scope='function')
 def make_resetmodel():
     '''Make MIRI Reset model for testing'''
-    def _reset(ngroups, ysize, xsize):
+    def _reset(nints, ngroups, ysize, xsize):
         # create the data and groupdq arrays
         nints = 2
         csize = (nints, ngroups, ysize, xsize)
@@ -201,6 +203,8 @@ def make_resetmodel():
 
         # create a JWST datamodel for MIRI data
         reset = ResetModel(data=data)
+        reset.meta.exposure.nints = nints
+        reset.meta.exposure.ngroups = ngroups
         reset.meta.instrument.name = 'MIRI'
         reset.meta.date = '2018-01-01'
         reset.meta.time = '00:00:00'
