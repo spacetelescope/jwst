@@ -290,7 +290,7 @@ class ResidualFringeCorrection():
 
                             # jane addded this - fit can fail in evidence function.
                             # once we replace evidence funtion with astropy routine - we can test
-                            # removing setting wights < 0.003 to zero (1e-08)
+                            # removing setting weights < 0.003 to zero (1e-08)
 
                             weights_feat[weights_feat <= 0.003] = 1e-08
 
