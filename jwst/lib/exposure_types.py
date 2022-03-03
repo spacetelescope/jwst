@@ -18,6 +18,7 @@ FGS_GUIDE_EXP_TYPES = [
     'fgs_fineguide',
     'fgs_id-image',
     'fgs_id-stack',
+    'fgs_id-stream',
     'fgs_track',
 ]
 
