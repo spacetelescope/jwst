@@ -459,7 +459,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     """
     logger.info('Updating WCS info for file %s', filename)
     with datamodels.open(filename) as model:
-        if type(model) not in (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel):
+        if type(model) not in (datamodels.CubeModel, datamodels.GuiderStreamModel,
+                               datamodels.ImageModel, datamodels.Level1bModel):
             logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)'
                            '\n    Updating pointing may have no effect or detrimental effects on the WCS information,'
                            '\n    especially if the input is the result of Level2b or higher calibration.')
@@ -656,12 +657,14 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     logger.info('Updating WCS for Fine Guidance.')
 
     # Get position angle
+    roll_ref = None
     try:
-        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
+        roll_ref = model.meta.wcsinfo.roll_ref
     except AttributeError:
+        pass
+    if roll_ref is None:
         logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
         roll_ref = default_roll_ref
-
     roll_ref = np.deg2rad(roll_ref)
 
     # Get VIdlParity

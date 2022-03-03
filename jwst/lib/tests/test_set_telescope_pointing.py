@@ -500,7 +500,8 @@ def test_guider_add_wcs_with_db(eng_db_ngas, data_file_guider, tmp_path):
                 assert model[meta] == expected[meta]
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                if (model[meta] is not None) and (expected[meta] is not None):
+                    assert np.isclose(model[meta], expected[meta])
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
