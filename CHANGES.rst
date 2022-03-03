@@ -43,6 +43,9 @@ datamodels
 
 - Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
 
+- Drop references to transform-1.2.0 from datamodel schemas to prevent
+  issues with schema features not supported by stdatamodels. [#6752]
+
 extract_1d
 ----------
 

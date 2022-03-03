@@ -10,30 +10,35 @@ definitions:
       The Nirspec IFUPOST transform for one slice.
     properties:
       linear:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
         description: |
           The linear part of the transform per slice.
           It has an analytical inverse.
+          An instance of astropy.modeling.Model.
       xpoly:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
         description: |
           The forward polynomial in X.
           The backward polynomial should be assigned when creating the model.
+          An instance of astropy.modeling.Model.
       xpoly_distortion:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
         description: |
           The wavelength dependent distortion polynomial in X.
           The backward polynomial is assigned as inverse.
+          An instance of astropy.modeling.Model.
       ypoly:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
         description: |
           The forward polynomial in Y.
           The backward polynomial should be assigned when creating the model.
+          An instance of astropy.modeling.Model.
       ypoly_distortion:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
         description: |
           The wavelength dependent distortion polynomial in X.
           The backward polynomial is assigned as inverse.
+          An instance of astropy.modeling.Model.
 allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema

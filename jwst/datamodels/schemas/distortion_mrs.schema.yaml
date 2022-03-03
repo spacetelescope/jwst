@@ -19,36 +19,40 @@ allOf:
     x_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
       description: |
         Transform from (alpha, beta) to detector x coordinate.
         The transform is a Polynomial as a function of alpha and lambda.
         The transform is defined for each slice.
-        The beta coordinate defines the slice number
+        The beta coordinate defines the slice number.
+        Each element is an instance of astropy.modeling.Model.
     y_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
       description: |
         Transform from (alpha, beta) to detector y coordinate.
         The transform is a Polynomial as a function of alpha and lambda.
         The transform is defined for each slice.
         The beta coordinate defines the slice number.
+        Each element is an instance of astropy.modeling.Model.
     alpha_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
       description: |
         Transform from detector (x, y) coordinates to alpha coordinate
         in a subchannel cube. The transform is a Polynomial as a function of x and y.
         The transform is defined for each slice.
+        Each element is an instance of astropy.modeling.Model.
     beta_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
       description: |
         Transform from detector (x, y) coordinates to a beta coordinate
         in a subchannel cube.
+        Each element is an instance of astropy.modeling.Model.
     bzero:
       type: object
       properties:
@@ -89,9 +93,11 @@ allOf:
           items:
             type: string
         model:
+          description: |
+            Each element is an instance of astropy.modeling.Model.
           type: array
           items:
-            $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+            type: object
     meta:
       type: object
       properties:
