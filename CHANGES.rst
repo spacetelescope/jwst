@@ -65,6 +65,8 @@ set_telescope_pointing
 
 - Update COARSE handling of FGS, psyiaf importing, model opening, and removal of stale code. [#6735]
 
+- Set CRVAL* from GS_* for guider exposures. [#6751]
+
 skymatch
 --------
 
