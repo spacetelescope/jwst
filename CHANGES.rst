@@ -4,9 +4,11 @@
 set_telescope_pointing
 ----------------------
 
+- Set CRVAL* from GS_* for guider exposures. [#6751]
+
 - Add fgsid option to set_telescope_pointing [#6717]
 
-- Update COARSE handling of FGS, pysiaf importing, model opening, 
+- Update COARSE handling of FGS, pysiaf importing, model opening,
   and removal of stale code. [#6735]
 
 1.4.3 (2022-02-03)
