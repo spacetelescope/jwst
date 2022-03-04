@@ -307,9 +307,10 @@ class ResidualFringeCorrection():
                                         if snr2 > min_snr[fn]:
                                             log.debug(" fitting spectral baseline")
 
-                                            bg_fit, bgindx, fitter = \
+                                            bg_fit, bgindx = \
                                                 utils.fit_1d_background_complex(proc_data, weights_feat,
                                                                                 col_wnum, ffreq=ffreq[fn])
+                                            print(ffreq[fn])
 
                                             # get the residual fringes as fraction of signal
                                             res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
@@ -365,10 +366,10 @@ class ResidualFringeCorrection():
                                 # get the new fringe contrast
                                 log.debug(" analysing fit quality")
 
-                                pbg_fit, pbgindx, pfitter = utils.fit_1d_background_complex(fringe_sub,
-                                                                                            weights_feat,
-                                                                                            col_wnum,
-                                                                                            ffreq=ffreq[0])
+                                pbg_fit, pbgindx = utils.fit_1d_background_complex(fringe_sub,
+                                                                                   weights_feat,
+                                                                                   col_wnum,
+                                                                                   ffreq=ffreq[0])
 
                                 # get the residual fringes as fraction of signal
                                 fit_res = np.divide(fringe_sub, pbg_fit, out=np.zeros_like(fringe_sub),

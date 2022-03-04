@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 from ..stpipe import Step
 from .. import datamodels
-from . import residual_fringe_write_unitdata
+from . import residual_fringe
 from functools import partial
 
 __all__ = ["ResidualFringeStep"]
@@ -150,7 +150,7 @@ class ResidualFringeStep(Step):
                 return self.output_models
 
             # Do the correction
-            rfc = residual_fringe_write_unitdata.ResidualFringeCorrection(model,
+            rfc = residual_fringe.ResidualFringeCorrection(model,
                                                            self.residual_fringe_filename,
                                                            self.regions_filename,
                                                            self.ignore_regions,

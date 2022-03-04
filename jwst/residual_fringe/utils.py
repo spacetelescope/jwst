@@ -379,7 +379,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
     except ValueError:
         pass
 
-    return bg_fit, bgindx, fitter
+    return bg_fit, bgindx
 
 
 def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False):
