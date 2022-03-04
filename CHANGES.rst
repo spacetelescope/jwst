@@ -55,6 +55,11 @@ extract_1d
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
+pipeline
+--------
+
+- Improve memory performance of calwebb_detector1 pipeline
+
 ramp_fitting
 ------------
 
