@@ -25,19 +25,17 @@ def read_fit_column(file):
     col_wnum = hdu[3].data
     bg_fit = hdu[4].data
     store_freq = hdu[0].header['FFREQ']
-    results = (col_data, col_weight, col_wnum, bg_fit, store_freq)
-    return results 
+
+    return col_data, col_weight, col_wnum, bg_fit, store_freq
 
 
 @pytest.mark.parametrize("file", ['good_col.fits', 'edge_col.fits'])
 def test_background_fit(file):
     """ test fit_1d_background_complex"""
 
-    results = read_fit_column(file)
-    (col_data, col_weight, col_wnum, bg_fit, store_freq) = results 
-    
-    bg_fit2, bgindx2 = utils.fit_1d_background_complex(col_data, col_weight,
-                                                       col_wnum, ffreq=store_freq)
-    
+    (col_data, col_weight, col_wnum, bg_fit, store_freq) = read_fit_column(file)
+
+    bg_fit2, _ = utils.fit_1d_background_complex(col_data, col_weight,
+                                                 col_wnum, ffreq=store_freq)
 
     assert_allclose(bg_fit, bg_fit2, atol=0.001)
