@@ -2,6 +2,8 @@
 Unit test for Residual Fringe Correction fitting of the background
 """
 
+from pathlib import Path
+
 from jwst.residual_fringe import utils
 from numpy.testing import assert_allclose
 from astropy.io import fits
@@ -13,7 +15,10 @@ def read_fit_column(file):
     # Data was pulled out of an exposure by modifying residual_fringe.py to write out a column of data
     # The function we are testing is fit_1d_background_complex.
 
-    hdu = fits.open(file)
+    file_dir = Path(__file__).parent.resolve()
+    file_path = str(file_dir / file)
+
+    hdu = fits.open(file_path)
     col_data = hdu[1].data
     col_weight = hdu[2].data
     col_wnum = hdu[3].data
