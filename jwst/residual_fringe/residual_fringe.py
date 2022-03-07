@@ -310,7 +310,6 @@ class ResidualFringeCorrection():
                                             bg_fit, bgindx = \
                                                 utils.fit_1d_background_complex(proc_data, weights_feat,
                                                                                 col_wnum, ffreq=ffreq[fn])
-                                            print(ffreq[fn])
 
                                             # get the residual fringes as fraction of signal
                                             res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
