@@ -28,14 +28,6 @@ allOf:
 - $ref: dq_def.schema
 - type: object
   properties:
-    pixsiz:
-      title: Pixel size array
-      fits_hdu: PIXSIZ
-      default: 1.0
-      ndim: 2
-      datatype: float64
-- type: object
-  properties:
     tracor_table:
       title: IFU across slice transmission correction
       fits_hdu: TRACOR

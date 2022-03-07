@@ -27,10 +27,6 @@ class MiriIFUPtCorrModel(ReferenceFileModel):
     dq_def : numpy array
         A table-like object containing the data quality definitions table.
 
-    pixsiz : numpy array
-        An array-like object containing pixel-by-pixel size values, in units of
-        square arcseconds (arcsec^2).
-
     tracor_table : numpy table
          IFU across slice transmission correction
 
