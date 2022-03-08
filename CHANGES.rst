@@ -36,6 +36,8 @@ cube_skymatch
 datamodels
 ----------
 
+- Create new datamodel GuiderStreamModel, for stream-format guider data. [#6760]
+
 - Added the new keyword "BKGMETH" for use in the ``skymatch`` step.
   [#6736]
 
@@ -60,6 +62,8 @@ ramp_fitting
 
 set_telescope_pointing
 ----------------------
+
+- Enable adding WCS information to stream-format guider data. [#6760]
 
 - Update COARSE handling of FGS, psyiaf importing, model opening, and removal of stale code. [#6735]
 
