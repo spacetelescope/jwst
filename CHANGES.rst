@@ -75,7 +75,7 @@ reset
 residual_fringe
 ---------------
 
-- Replaced fitting the background with an astropy fitting package [#6739]
+- Replaced fitting the background with an astropy fitting package [#6761]
 
 
 set_telescope_pointing
