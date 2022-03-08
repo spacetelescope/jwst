@@ -34,6 +34,7 @@ from .lastframe import LastFrameModel
 from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
+from .msatargacq import MSATargAcqModel
 from .ramp import MIRIRampModel
 from .multicombinedspec import MultiCombinedSpecModel
 from .multiexposure import MultiExposureModel
@@ -113,6 +114,7 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
+    'MSATargAcqModel',
     'MultiCombinedSpecModel', 'MultiExposureModel',
     'MultiExtract1dImageModel', 'MultiSlitModel',
     'MultiProductModel',
