@@ -58,7 +58,7 @@ extract_1d
 pipeline
 --------
 
-- Improve memory performance of calwebb_detector1 pipeline
+- Improve memory performance of calwebb_detector1 pipeline [#6758]
 
 ramp_fitting
 ------------
