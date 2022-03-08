@@ -321,7 +321,11 @@ def _class_from_shape(hdulist, shape):
     """
     Get the class name from the shape
     """
-    exp_type = hdulist[0].header.get('exp_type')
+    try:
+        exp_type = hdulist[0].header.get('exp_type', '')
+    except KeyError:
+        exp_type = ''
+
     if len(shape) == 0:
         from . import model_base
         new_class = model_base.JwstDataModel
