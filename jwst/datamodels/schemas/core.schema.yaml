@@ -2513,6 +2513,11 @@ properties:
         title: Background information
         type: object
         properties:
+          method:
+            title: Background computation method
+            type: string
+            fits_keyword: BKGMETH
+            blend_table: True
           level:
             title: Computed/Matched constant background level
             type: number

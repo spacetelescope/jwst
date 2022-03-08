@@ -53,7 +53,7 @@ class CubeSkyMatchStep(Step):
     def process(self, input1, input2):
         cube_models = datamodels.ModelContainer(input1)
         models2d = datamodels.ModelContainer(input2)
-        dqbits = interpret_bit_flags(self.dqbits, mnemonic_map=pixel)
+        dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
         # set sky statistics:
         self._skystat = SkyStats(

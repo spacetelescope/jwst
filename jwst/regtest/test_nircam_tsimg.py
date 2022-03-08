@@ -1,8 +1,12 @@
+from pathlib import Path
 import pytest
+
 from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
 
+from jwst.lib import engdb_tools
 from jwst.lib.set_telescope_pointing import add_wcs
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
 from jwst.stpipe import Step
 
 
@@ -61,7 +65,7 @@ def test_nircam_tsimage_stage3_phot(run_pipelines):
 
 
 @pytest.mark.bigdata
-def test_nircam_setpointing_tsimg(_jail, rtdata, fitsdiff_default_kwargs):
+def test_nircam_setpointing_tsimg(_jail, rtdata, engdb, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b
     NIRCam TSO imaging file.
@@ -74,7 +78,7 @@ def test_nircam_setpointing_tsimg(_jail, rtdata, fitsdiff_default_kwargs):
 
     # Call the WCS routine, using the ENGDB_Service
     try:
-        add_wcs(rtdata.input, siaf_path=siaf_path)
+        add_wcs(rtdata.input, engdb_url='http://localhost', siaf_path=siaf_path)
     except ValueError:
         pytest.skip('Engineering Database not available.')
 
@@ -83,3 +87,15 @@ def test_nircam_setpointing_tsimg(_jail, rtdata, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs['rtol'] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+# ########
+# Fixtures
+# ########
+@pytest.fixture
+def engdb():
+    """Setup the mock engineering database"""
+    db_path = Path(__file__).parents[1] / 'lib' / 'tests' / 'data' / 'engdb'
+    with EngDB_Mocker(db_path=db_path):
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
+        yield engdb

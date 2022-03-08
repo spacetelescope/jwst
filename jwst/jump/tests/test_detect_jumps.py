@@ -8,12 +8,64 @@ from jwst.jump.jump import run_detect_jumps
 from jwst.datamodels import dqflags
 import multiprocessing
 
+import time
+import random
 
 JUMP_DET = dqflags.group["JUMP_DET"]
 DO_NOT_USE = dqflags.group["DO_NOT_USE"]
 GOOD = dqflags.group["GOOD"]
 SATURATED = dqflags.group["SATURATED"]
 NO_GAIN_VALUE = dqflags.pixel["NO_GAIN_VALUE"]
+
+
+def test_exec_time_0_crs(setup_inputs):
+    """"
+    Set up with dimension similar to simulated MIRI datasets, Dataset has no
+    cosmic rays. Test only the execution time of run_detect_jumps() for
+    comparison with nominal time; hopefully indicative of faults with newly
+    added code.
+    """
+    model, rnoise, gain = setup_inputs(ngroups=10, nrows=1024, ncols=1032,
+                                       nints=2, readnoise=6.5, gain=5.5,
+                                       grouptime=2.775, deltatime=2.775)
+
+    tstart = time.time()
+    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
+    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 1, 200, 4, True)
+    tstop = time.time()
+
+    t_elapsed = tstop - tstart
+    MAX_TIME = 10  # takes 1.6 sec on my Mac
+
+    assert t_elapsed < MAX_TIME
+
+
+def test_exec_time_many_crs(setup_inputs):
+    """"
+    Set up with dimension similar to simulated MIRI datasets, Dataset has
+    many cosmic rays; approximately one CR per 4 groups. Test only the execution
+    time of run_detect_jumps() for comparison with nominal time; hopefully
+    indicative of faults with newly added code.
+    """
+    nrows = 350
+    ncols = 400
+
+    model, rnoise, gain = setup_inputs(ngroups=10, nrows=nrows, ncols=ncols,
+                                       nints=2, readnoise=6.5, gain=5.5,
+                                       grouptime=2.775, deltatime=2.775)
+
+    crs_frac = 0.25  # fraction of groups having a CR
+    model = add_crs(model, crs_frac)  # add desired fraction of CRs
+
+    tstart = time.time()
+    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
+    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 1, 200, 4, True)
+    tstop = time.time()
+
+    t_elapsed = tstop - tstart
+    MAX_TIME = 600  # takes ~100 sec on my Mac
+
+    assert t_elapsed < MAX_TIME
 
 
 def test_nocrs_noflux(setup_inputs):
@@ -293,6 +345,35 @@ def test_nirspec_saturated_pix(setup_inputs):
     assert_array_equal(out_model.groupdq[0, :, 3, 3], [0, 4, 4, 0, 0, 4, 2])
 
 
+def add_crs(model, crs_frac):
+    """"
+    Randomly add a cosmic ray of magnitude CR_MAG to a fraction (crs_frac)
+    of the groups in the model's SCI array
+    """
+
+    num_ints = model.data.shape[0]
+    num_groups = model.data.shape[1]
+    num_rows = model.data.shape[2]
+    num_cols = model.data.shape[3]
+
+    tot_cr = 0  # counter
+    CR_MAG = 1000.  # consider making a variable ?
+
+    random.seed(0)  # to generate same CRs
+
+    # Add to the model's data, in all but the 0th group
+    for ii_int in range(num_ints):  # loop over integrations
+        for ii_col in range(num_cols):
+            for ii_row in range(num_rows):
+                for ii_group in range(1, num_groups):
+                    cr_rand = random.random()
+                    if cr_rand < crs_frac:
+                        tot_cr += 1
+                        model.data[ii_int, ii_group:, ii_row, ii_col] += CR_MAG
+
+    return model
+
+
 @pytest.mark.skip(reason='multiprocessing temporarily disabled')
 def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
     """"
@@ -335,7 +416,7 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
         model.data[1, 7, yincrement, 25] = 160.0
         model.data[1, 8, yincrement, 25] = 170.0
         model.data[1, 9, yincrement, 25] = 180.0
-        out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0,  max_cores, 200, 4, True)
+        out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, max_cores, 200, 4, True)
 
         # check that the neighbors of the CR on the last row were flagged
         assert out_model.groupdq[0, 5, yincrement - 1, 5] == JUMP_DET
@@ -387,7 +468,7 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     model.data[1, 7, 15, 5] = 160.0
     model.data[1, 8, 15, 5] = 170.0
     model.data[1, 9, 15, 5] = 180.0
-    out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0,  'half', 200, 4, True)
+    out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'half', 200, 4, True)
 
     assert np.max(out_model.groupdq[0, 5, 5, 5]) == JUMP_DET
     assert out_model.groupdq[0, 5, 5, 6] == JUMP_DET
