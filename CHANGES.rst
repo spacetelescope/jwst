@@ -62,10 +62,13 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
+- Adding feature to turn off calculations of ramps with good 0th group,
+  but all other groups are saturated. [#6737]
+
 reset
 -----
 
-- Reading nints and ngroups from  model.meta for reset reference file and data instead of using the
+- Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
   shape of the data to define these values [#6749]
   
 set_telescope_pointing
