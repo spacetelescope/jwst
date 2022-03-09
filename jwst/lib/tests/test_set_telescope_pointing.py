@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
+from astropy.io import fits
 from astropy.time import Time
 
 from jwst import datamodels
@@ -81,6 +82,57 @@ METAS_ISCLOSE = ['meta.wcsinfo.cdelt1',
                  'meta.wcsinfo.pc2_2',
                  'meta.wcsinfo.roll_ref',
                  ]
+
+
+@pytest.fixture(params=[('good_model', True), ('bad_model', False), ('fits_nomodel', False)])
+def file_case(request, tmp_path):
+    """Generate files with different model states"""
+    case, allow = request.param
+
+    if case == 'good_model':
+        # Make a model that will always succeed
+        model = datamodels.Level1bModel((10, 10, 10, 10))
+        path = tmp_path / 'level1bmodel.fits'
+        model.save(path)
+    elif case == 'bad_model':
+        # Make a model that will fail if not allowed
+        model = datamodels.ImageModel((10, 10))
+        path = tmp_path / 'image.fits'
+        model.save(path)
+    elif case == 'fits_nomodel':
+        # Create just a plain anything FITS
+        hdu = fits.PrimaryHDU()
+        hdul = fits.HDUList([hdu])
+        path = tmp_path / 'empty.fits'
+        hdul.writeto(path)
+    else:
+        assert False, f'Cannot produce a file for {case}'
+
+    return path, allow
+
+
+@pytest.mark.parametrize('allow_any_file', [None, True, False])
+def test_allow_any_file(file_case, allow_any_file):
+    """Test various files against whether they should be allowed or not
+
+    Parameters
+    ----------
+    file_case : (Path-like, allow)
+        File to test and whether it should always be allowed.
+        If not `allow`, the file should be usable only when `allow_any_file`.
+
+    allow_any_file : bool or None
+        Value of `allow_any_file` to try
+    """
+    path, allow = file_case
+    if not allow and not allow_any_file:
+        with pytest.raises(TypeError):
+            stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
+    else:
+        # Expected error when trying to actually add the wcs.
+        # The provided files do not have sufficient info to do the calculations.
+        with pytest.raises(AttributeError):
+            stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
 
 
 @pytest.mark.parametrize(
