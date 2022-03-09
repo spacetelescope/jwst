@@ -1,10 +1,10 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['MsaTargAcqModel']
+__all__ = ['MSATargAcqModel']
 
 
-class MsaTargAcqModel(JwstDataModel):
+class MSATargAcqModel(JwstDataModel):
     """
     A data model for MSA Target Acquisition
 
