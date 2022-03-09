@@ -364,10 +364,10 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f'META {meta} fail'
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                assert np.isclose(model[meta], expected[meta]), f'META {meta} fail'
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
@@ -400,10 +400,10 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f'META {meta} fail'
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                assert np.isclose(model[meta], expected[meta], f'META {meta} fail')
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
@@ -426,10 +426,10 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f'META {meta} fail'
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                assert np.isclose(model[meta], expected[meta]), f'META {meta} fail'
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
@@ -452,12 +452,12 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
                 if isinstance(model[meta], str):
-                    assert model[meta] == expected[meta]
+                    assert model[meta] == expected[meta], f'META {meta} fail'
                 else:
                     assert np.isclose(model[meta], expected[meta], atol=1e-13)
 
             for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
+                assert np.isclose(model[meta], expected[meta]), f'META {meta} fail'
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
@@ -497,11 +497,11 @@ def test_guider_add_wcs_with_db(eng_db_ngas, data_file_guider, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f'META {meta} fail'
 
             for meta in METAS_ISCLOSE:
                 if (model[meta] is not None) and (expected[meta] is not None):
-                    assert np.isclose(model[meta], expected[meta])
+                    assert np.isclose(model[meta], expected[meta]), f'META {meta} fail'
 
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
