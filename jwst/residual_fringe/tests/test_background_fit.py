@@ -25,7 +25,6 @@ def read_fit_column(file):
     col_wnum = hdu[3].data
     bg_fit = hdu[4].data
     store_freq = hdu[0].header['FFREQ']
-
     return col_data, col_weight, col_wnum, bg_fit, store_freq
 
 
