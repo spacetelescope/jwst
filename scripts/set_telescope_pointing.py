@@ -54,7 +54,9 @@ logger_format_debug = logging.Formatter('%(levelname)s:%(filename)s::%(funcName)
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description='Update basic WCS information in JWST exposures from the engineering database.'
+        description=('Update basic WCS information in JWST exposures from the engineering database.'
+                     ' For detailed information, see'
+                     ' https://jwst-pipeline.readthedocs.io/en/latest/jwst/lib/set_telescope_pointing.html')
     )
     parser.add_argument(
         'exposure', type=str, nargs='+',
@@ -67,6 +69,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--allow-any-file', action='store_true', default=False,
         help='Attempt to update WCS for any file or model. Default: False'
+    )
+    parser.add_argument(
+        '--allow-default', action='store_true',
+        help='If pointing information cannot be determine, use header information.'
+    )
+    parser.add_argument(
+        '--dry-run', action='store_true',
+        help='Perform all actions but do not save the results'
     )
     parser.add_argument(
         '--method',
@@ -88,14 +98,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--tolerance', type=int, default=60,
         help='Seconds beyond the observation time to search for telemetry. Default: %(default)s'
-    )
-    parser.add_argument(
-        '--allow-default', action='store_true',
-        help='If pointing information cannot be determine, use header information.'
-    )
-    parser.add_argument(
-        '--dry-run', action='store_true',
-        help='Perform all actions but do not save the results'
     )
     parser.add_argument(
         '--siaf', type=str, default=None,
