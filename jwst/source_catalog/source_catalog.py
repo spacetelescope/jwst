@@ -17,7 +17,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 from scipy import __version__ as scipy_version
 from scipy import ndimage
-from scipy.spatial import cKDTree
+from scipy.spatial import KDTree
 
 from photutils import __version__ as photutils_version
 from photutils.background import Background2D, MedianBackground
@@ -1150,14 +1150,14 @@ class JWSTSourceCatalog:
         return 2.0 * sum2 / sum4
 
     @lazyproperty
-    def _ckdtree_query(self):
+    def _kdtree_query(self):
         """
         The distance in pixels to the nearest neighbor and its index.
         """
         if self.xypos.shape[0] == 1:  # only one detected source
             return [np.nan], [np.nan]
         else:
-            tree = cKDTree(self.xypos)
+            tree = KDTree(self.xypos)
             qdist, qidx = tree.query(self.xypos, k=2)
             return np.transpose(qdist)[1], np.transpose(qidx)[1]
 
@@ -1166,10 +1166,10 @@ class JWSTSourceCatalog:
         """
         The label number of the nearest neighbor.
         """
-        if len(self._ckdtree_query[1]) == 1:  # only one detected source
+        if len(self._kdtree_query[1]) == 1:  # only one detected source
             return np.nan
 
-        idx = self._ckdtree_query[1].copy()
+        idx = self._kdtree_query[1].copy()
         mask = idx >= len(self.label)
         idx[mask] = 0
         return np.where(mask, self.label, self.label[idx])
@@ -1179,8 +1179,8 @@ class JWSTSourceCatalog:
         """
         The distance in pixels to the nearest neighbor.
         """
-        # self._ckdtree_query[0] is NaN if only one detected source
-        return self._ckdtree_query[0] * u.pixel
+        # self._kdtree_query[0] is NaN if only one detected source
+        return self._kdtree_query[0] * u.pixel
 
     @lazyproperty
     def aper_total_flux(self):
