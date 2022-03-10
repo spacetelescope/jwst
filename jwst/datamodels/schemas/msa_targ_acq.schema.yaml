@@ -174,12 +174,12 @@ allOf:
           fits_keyword: NUMREFST
           fits_hdu: MSA_TARG_ACQ
         msa_half_facet_offset_V2:
-          title: "MSA V2 half-facet offset (arcsec)",
+          title: "MSA V2 half-facet offset (arcsec)"
           type: number
           fits_keyword: V2HFOFFS
           fits_hdu: MSA_TARG_ACQ
         msa_half_facet_offset_V3:
-          title: "MSA V3 half-facet offset (arcsec)",
+          title: "MSA V3 half-facet offset (arcsec)"
           type: number
           fits_keyword: V3HFOFFS
           fits_hdu: MSA_TARG_ACQ
