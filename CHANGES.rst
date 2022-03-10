@@ -104,11 +104,13 @@ source_catalog
 - Fixed the KDTree calculation to use only finite source positions to
   prevent memory issues on Linux systems. [#6765]
 
+- Updated the roundness and sharpness properties to use the source
+  centroid position instead of the peak position. [#6766]
+
 srctype
 -------
 
 - Add command line option to override source type [#6720]
-
 
 
 1.4.3 (2022-02-03)

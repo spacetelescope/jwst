@@ -8,7 +8,7 @@ import warnings
 
 from astropy import __version__ as astropy_version
 from astropy.convolution import Gaussian2DKernel
-from astropy.nddata.utils import extract_array
+from astropy.nddata.utils import extract_array, NoOverlapError
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import QTable
 import astropy.units as u
@@ -1079,11 +1079,15 @@ class JWSTSourceCatalog:
         which has odd dimensions.
         """
         cutout = []
-        for xpeak, ypeak in zip(self._xpeak, self._ypeak):
-            cutout.append(extract_array(self.model.data,
+        for xcen, ycen in zip(*np.transpose(self._xypos_finite)):
+            try:
+                cutout_ = extract_array(self.model.data,
                                         self._daofind_kernel.shape,
-                                        (ypeak, xpeak),
-                                        fill_value=0.0))
+                                        (ycen, xcen), fill_value=0.0)
+            except NoOverlapError:
+                cutout_ = np.zeros(self._daofind_kernel.shape)
+            cutout.append(cutout_)
+
         return np.array(cutout)  # all cutouts are the same size
 
     @lazyproperty
@@ -1096,11 +1100,15 @@ class JWSTSourceCatalog:
         which has odd dimensions.
         """
         cutout = []
-        for xpeak, ypeak in zip(self._xpeak, self._ypeak):
-            cutout.append(extract_array(self._daofind_convolved_data,
+        for xcen, ycen in zip(*np.transpose(self._xypos_finite)):
+            try:
+                cutout_ = extract_array(self._daofind_convolved_data,
                                         self._daofind_kernel.shape,
-                                        (ypeak, xpeak),
-                                        fill_value=0.0))
+                                        (ycen, xcen), fill_value=0.0)
+            except NoOverlapError:
+                cutout_ = np.zeros(self._daofind_kernel.shape)
+            cutout.append(cutout_)
+
         return np.array(cutout)  # all cutouts are the same size
 
     @lazyproperty
@@ -1125,7 +1133,10 @@ class JWSTSourceCatalog:
         data_mean = ((np.sum(data_masked, axis=(1, 2)) -
                       data_peak) / npixels)
 
-        return (data_peak - data_mean) / conv_peak
+        with warnings.catch_warnings():
+            # ignore 0 / 0 for non-finite xypos
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            return (data_peak - data_mean) / conv_peak
 
     @lazyproperty
     def roundness(self):
@@ -1157,7 +1168,10 @@ class JWSTSourceCatalog:
         sum4 = np.abs(cutout).sum(axis=axis)
         sum4[sum4 == 0] = np.nan
 
-        return 2.0 * sum2 / sum4
+        with warnings.catch_warnings():
+            # ignore 0 / 0 for non-finite xypos
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            return 2.0 * sum2 / sum4
 
     @lazyproperty
     def _kdtree_query(self):
