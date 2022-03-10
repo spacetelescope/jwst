@@ -77,8 +77,6 @@ from .. import datamodels
 from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso
 
-TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
-
 __all__ = [
     'Methods',
     'TransformParameters',
@@ -97,6 +95,9 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 DEBUG_FULL = logging.DEBUG - 1
 LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
+
+EXPECTED_MODELS = (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel)
+TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 
 
 # The available methods for transformation
@@ -372,21 +373,26 @@ class TransformParameters:
         return r
 
 
-def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
+def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, engdb_url=None,
             fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, save_transforms=None, **transform_kwargs):
-    """Add WCS information to a FITS file.
+    """Add WCS information to a JWST DataModel.
 
     Telescope orientation is attempted to be obtained from
     the engineering database. Failing that, a default pointing
     is used based on proposal target.
 
-    The FITS file is updated in-place.
+    The file is updated in-place.
 
     Parameters
     ----------
     filename : str
         The path to a data file.
+
+    allow_any_file : bool
+        Attempt to add the WCS information to any type of file.
+        The default, `False`, only allows modifications of files that contain
+        known datamodels of `Level1bmodel`, `ImageModel`, or `CubeModel`.
 
     default_pa_v3 : float
         The V3 position angle to use if the pointing information
@@ -425,7 +431,14 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     Notes
     -----
-    This function adds absolute pointing information to the JWST datamodels provided.
+
+    This function adds absolute pointing information to the JWST
+    datamodels provided. By default, only Stage 1 and Stage 2a exposures are
+    allowed to be updated. These have the suffixes of "uncal", "rate", and
+    "rateints" representing datamodels Level1bModel, ImageModel, and CubeModel.
+    Any higher level product, from Stage 2b and beyond, that has had the
+    `assign_wcs` step applied, have improved WCS information. Running
+    this task on such files will potentially corrupt the WCS.
 
     It starts by populating the headers with values from the SIAF database.
     It adds the following keywords to all files:
@@ -456,13 +469,18 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     It does not currently place the new keywords in any particular location
     in the header other than what is required by the standard.
+
     """
     logger.info('Updating WCS info for file %s', filename)
-    with datamodels.open(filename) as model:
-        if type(model) not in (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel):
+    with datamodels.open(filename, guess=allow_any_file) as model:
+        if type(model) not in EXPECTED_MODELS:
             logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)'
                            '\n    Updating pointing may have no effect or detrimental effects on the WCS information,'
                            '\n    especially if the input is the result of Level2b or higher calibration.')
+            if not allow_any_file:
+                raise TypeError(f'Input model {model} is not one of {EXPECTED_MODELS} and `allow_any_file` is `False`.'
+                                '\n\tFailing WCS processing.')
+
         t_pars, transforms = update_wcs(
             model,
             default_pa_v3=default_pa_v3,

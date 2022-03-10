@@ -93,6 +93,8 @@ set_telescope_pointing
 
 - Set CRVAL* from GS_* for guider exposures. [#6751]
 
+- Further restrict default models that can be updated. [#6767]
+
 skymatch
 --------
 
