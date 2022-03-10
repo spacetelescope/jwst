@@ -1,0 +1,200 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/msatargacq.schema"
+title: MSA target acquisition data model
+allOf:
+- $ref: core.schema
+- type: object
+  properties:
+    msa_targ_acq_table:
+      title: MSA target aquisition table
+      fits_hdu: MSA_TARG_ACQ
+      datatype:
+      - name: exposure_id
+        datatype: int16
+      - name: order_number
+        datatype: int16
+      - name: reference_star_number
+        datatype: int16
+      - name: reference_star_name
+        datatype: [ascii, 31]
+      - name: reference_star_ra
+        datatype: float32
+        unit: degrees
+      - name: reference_star_dec
+        datatype: float32
+        unit: degrees
+      - name: reference_star_mag
+        datatype: float32
+        unit: magnitude
+      - name: catalog_name
+        datatype: [ascii, 30]
+      - name: planned_v2
+        datatype: float32
+        unit: arcseconds
+      - name: planned_v3
+        datatype: float32
+        unit: arcseconds
+      - name: desired_v2
+        datatype: float32
+        unit: arcseconds
+      - name: desired_v3
+        datatype: float32
+        unit: arcseconds
+      - name: extract_col_start
+        datatype: int16
+        unit: pixels
+      - name: extract_row_start
+        datatype: int16
+        unit: pixels
+      - name: ref_star_detector
+        datatype: [ascii, 4]
+      - name: background_value
+        datatype: float32
+        unit: counts
+      - name: box_peak_value
+        datatype: float32
+        unit: counts
+      - name: box_peak_col
+        datatype: int16
+        unit: pixels
+      - name: box_peak_row
+        datatype: int16
+        unit: pixels
+      - name: box_total_value
+        datatype: float32
+        unit: counts
+      - name: iterations
+        datatype: int16
+      - name: final_iter_col_diff
+        datatype: float32
+        unit: pixels
+      - name: final_iter_row_diff
+        datatype: float32
+        unit: pixels
+      - name: corrected_col
+        datatype: int16
+        unit: pixels
+      - name: corrected_row
+        datatype: int16
+        unit: pixels
+      - name: image_centroid_col
+        datatype: float32
+        unit: pixels
+      - name: image_centroid_row
+        datatype: float32
+        unit: pixels
+      - name: detector_centroid_col
+        datatype: float32
+        unit: pixels
+      - name: detector_centroid_row
+        datatype: float32
+        unit: pixels
+      - name: sci_x_centroid
+        datatype: float32
+        unit: pixels
+      - name: sci_y_centroid
+        datatype: float32
+        unit: pixels
+      - name: col_second_moment
+        datatype: float32
+        unit: pixels^2
+      - name: row_second_moment
+        datatype: float32
+        unit: pixels^2
+      - name: col_third_moment
+        datatype: float32
+        unit: pixels^3
+      - name: row_third_moment
+        datatype: float32
+        unit: pixels^3
+      - name: convergence_status
+        datatype: [ascii, 20]
+      - name: found_status
+        datatype: [ascii, 10]
+      - name: found_v2
+        datatype: float32
+        unit: arcseconds
+      - name: found_v3
+        datatype: float32
+        unit: arcseconds
+      - name: found_msa_x
+        datatype: float32
+        unit: arcseconds
+      - name: found_msa_y
+        datatype: float32
+        unit: arcseconds
+      - name: lsf_removed_status
+        datatype: [ascii, 20]
+      - name: lsf_removed_reason
+        datatype: [ascii, 14]
+      - name: lsf_removed_x
+        datatype: float32
+        unit: arcseconds
+      - name: lsf_removed_y
+        datatype: float32
+        unit: arcseconds
+      - name: fit_offset_v2
+        datatype: float32
+        unit: arcseconds
+      - name: fit_offset_v3
+        datatype: float32
+        unit: arcseconds
+      - name: x_rel
+        datatype: float32
+        unit: arcseconds
+      - name: y_rel
+        datatype: float32
+        unit: arcseconds
+      - name: xrot_rel
+        datatype: float32
+        unit: arcseconds
+      - name: yrot_rel
+        datatype: float32
+        unit: arcseconds
+      - name: v2_new_from_fit
+        datatype: float32
+        unit: arcseconds
+      - name: v3_new_from_fit
+        datatype: float32
+        unit: arcseconds
+      - name: v2_fit_residual
+        datatype: float32
+        unit: arcseconds
+      - name: v3_fit_residual
+        datatype: float32
+        unit: arcseconds
+    meta:
+      type: object
+      properties:
+        msa_targ_ref_stars_number:
+          title: "number of MSATA reference stars"
+          type: integer
+          fits_keyword: NUMREFST
+          fits_hdu: MSA_TARG_ACQ
+        msa_half_facet_offset_V2:
+          title: "MSA V2 half-facet offset (arcsec)"
+          type: number
+          fits_keyword: V2HFOFFS
+          fits_hdu: MSA_TARG_ACQ
+        msa_half_facet_offset_V3:
+          title: "MSA V3 half-facet offset (arcsec)"
+          type: number
+          fits_keyword: V3HFOFFS
+          fits_hdu: MSA_TARG_ACQ
+        v2msactr:
+          title: "Center of MSA in V2 (arcsec)"
+          type: number
+          fits_keyword: V2MSACTR
+          fits_hdu: MSA_TARG_ACQ
+        v3msactr:
+          title: "Center of MSA in V3 (arcsec)"
+          type: number
+          fits_keyword: V3MSACTR
+          fits_hdu: MSA_TARG_ACQ
+        offstmag:
+          title: "least squares fit offset magnitude (arcsec)"
+          type: number
+          fits_keyword: OFFSTMAG
+          fits_hdu: MSA_TARG_ACQ
