@@ -376,13 +376,13 @@ class TransformParameters:
 def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, engdb_url=None,
             fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, save_transforms=None, **transform_kwargs):
-    """Add WCS information to a FITS file.
+    """Add WCS information to a JWST DataModel.
 
     Telescope orientation is attempted to be obtained from
     the engineering database. Failing that, a default pointing
     is used based on proposal target.
 
-    The FITS file is updated in-place.
+    The file is updated in-place.
 
     Parameters
     ----------
@@ -431,7 +431,14 @@ def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, en
 
     Notes
     -----
-    This function adds absolute pointing information to the JWST datamodels provided.
+
+    This function adds absolute pointing information to the JWST
+    datamodels provided. By default, only Stage 1 and Stage 2a exposures are
+    allowed to be updated. These have the suffixes of "uncal", "rate", and
+    "rateints" representing datamodels Level1bModel, ImageModel, and CubeModel.
+    Any higher level product, from Stage 2b and beyond, that has had the
+    `assign_wcs` step applied, have improved WCS information. Running
+    this task on such files will potentially corrupt the WCS.
 
     It starts by populating the headers with values from the SIAF database.
     It adds the following keywords to all files:
@@ -462,6 +469,7 @@ def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, en
 
     It does not currently place the new keywords in any particular location
     in the header other than what is required by the standard.
+
     """
     logger.info('Updating WCS info for file %s', filename)
     with datamodels.open(filename, guess=allow_any_file) as model:
