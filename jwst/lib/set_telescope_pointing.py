@@ -471,7 +471,7 @@ def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, en
                            '\n    especially if the input is the result of Level2b or higher calibration.')
             if not allow_any_file:
                 raise TypeError(f'Input model {model} is not one of {EXPECTED_MODELS} and `allow_any_file` is `False`.'
-                                '\tFailing WCS processing.')
+                                '\n\tFailing WCS processing.')
 
         t_pars, transforms = update_wcs(
             model,

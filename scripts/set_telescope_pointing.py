@@ -65,6 +65,10 @@ if __name__ == '__main__':
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
     parser.add_argument(
+        '--allow-any-file', action='store_true', default=False,
+        help='Attempt to update WCS for any file or model. Default: False'
+    )
+    parser.add_argument(
         '--method',
         type=stp.Methods, choices=list(stp.Methods), default=stp.Methods.default,
         help='Algorithmic method to use. Default: %(default)s'
@@ -137,6 +141,7 @@ if __name__ == '__main__':
         try:
             stp.add_wcs(
                 filename,
+                allow_any_file=args.allow_any_file,
                 siaf_path=args.siaf,
                 engdb_url=args.engdb_url,
                 fgsid=args.fgsid,
