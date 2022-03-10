@@ -4,7 +4,10 @@
 datamodels
 ----------
 
-- Added the new keyword "BKGMETH" for use in the ``skymatch`` step. [#6736]
+- Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
+
+- Update reset model to include keyword_preadpatt.schema [#6769]
+
 
 1.4.4 (2022-03-16)
 ==================
