@@ -17,7 +17,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 from scipy import __version__ as scipy_version
 from scipy import ndimage
-from scipy.spatial import cKDTree
+from scipy.spatial import KDTree
 
 from photutils import __version__ as photutils_version
 from photutils.background import Background2D, MedianBackground
@@ -496,6 +496,7 @@ class JWSTSourceCatalog:
         self.model = model  # background was subtracted in SourceDetection
 
         self.segment_img = segment_img
+        self.n_sources = len(self.segment_img.labels)
         if len(ci_star_thresholds) != 2:
             raise ValueError('ci_star_thresholds must contain only 2 '
                              'items')
@@ -657,6 +658,14 @@ class JWSTSourceCatalog:
         nanmask = ~np.isfinite(xypos)
         xypos[nanmask] = -1000.
         return xypos
+
+    @lazyproperty
+    def _xypos_nonfinite_mask(self):
+        """
+        A 1D boolean mask where `True` values denote sources where
+        either the xcentroid or the ycentroid is not finite.
+        """
+        return ~np.isfinite(self.xypos).all(axis=1)
 
     @lazyproperty
     def _isophotal_abmag(self):
@@ -868,10 +877,11 @@ class JWSTSourceCatalog:
                 bkg_median.append(np.median(values))
                 bkg_std.append(np.std(values))
 
-        nvalues = np.array(nvalues)
-        bkg_median = np.array(bkg_median)
-        # standard error of the median
-        bkg_median_err = np.sqrt(np.pi / (2. * nvalues)) * np.array(bkg_std)
+            nvalues = np.array(nvalues)
+            bkg_median = np.array(bkg_median)
+            # standard error of the median
+            bkg_median_err = (np.sqrt(np.pi / (2. * nvalues))
+                              * np.array(bkg_std))
 
         bkg_median <<= self.model.data.unit
         bkg_median_err <<= self.model.data.unit
@@ -1150,37 +1160,48 @@ class JWSTSourceCatalog:
         return 2.0 * sum2 / sum4
 
     @lazyproperty
-    def _ckdtree_query(self):
+    def _kdtree_query(self):
         """
         The distance in pixels to the nearest neighbor and its index.
         """
-        if self.xypos.shape[0] == 1:  # only one detected source
+        if self.n_sources == 1:
             return [np.nan], [np.nan]
-        else:
-            tree = cKDTree(self.xypos)
-            qdist, qidx = tree.query(self.xypos, k=2)
-            return np.transpose(qdist)[1], np.transpose(qidx)[1]
+
+        # non-finite xypos causes memory errors on linux, but not MacOS
+        tree = KDTree(self._xypos_finite)
+        qdist, qidx = tree.query(self._xypos_finite, k=[2])
+        return np.transpose(qdist)[0], np.transpose(qidx)[0]
 
     @lazyproperty
     def nn_label(self):
         """
         The label number of the nearest neighbor.
-        """
-        if len(self._ckdtree_query[1]) == 1:  # only one detected source
-            return np.nan
 
-        idx = self._ckdtree_query[1].copy()
-        mask = idx >= len(self.label)
-        idx[mask] = 0
-        return np.where(mask, self.label, self.label[idx])
+        A label value of -1 is returned if there is only one detected
+        source and for sources with a non-finite xcentroid or ycentroid.
+        """
+        if self.n_sources == 1:
+            return -1
+
+        nn_label = self.label[self._kdtree_query[1]]
+        # assign a label of -1 for non-finite xypos
+        nn_label[self._xypos_nonfinite_mask] = -1
+
+        return nn_label
 
     @lazyproperty
     def nn_dist(self):
         """
         The distance in pixels to the nearest neighbor.
         """
-        # self._ckdtree_query[0] is NaN if only one detected source
-        return self._ckdtree_query[0] * u.pixel
+        nn_dist = self._kdtree_query[0]
+        if self.n_sources == 1:
+            # NaN if only one detected source
+            return nn_dist * u.pixel
+
+        # assign a distance of np.nan for non-finite xypos
+        nn_dist[self._xypos_nonfinite_mask] = np.nan
+        return nn_dist * u.pixel
 
     @lazyproperty
     def aper_total_flux(self):
