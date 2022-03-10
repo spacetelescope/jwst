@@ -15,11 +15,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Attempt imports of pysiaf and sqlite3 and flag whether there are fails.
-try:
-    import pysiaf
-except ModuleNotFoundError:
-    pysiaf = False
+# Attempt import of sqlite3 and flag whether there are fails.
 try:
     import sqlite3
 except ModuleNotFoundError:
@@ -164,8 +160,11 @@ class SiafDbPySiaf:
     Otherwise, fail.
     """
     def __init__(self, source=None):
-        if not pysiaf:
-            raise ValueError('Package "psyaif" is not installed. Cannot use the psyaif api')
+        try:
+            import pysiaf
+        except ImportError:
+            raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
+        self.pysiaf = pysiaf
 
         if source is not None:
             source = Path(source)
@@ -200,7 +199,7 @@ class SiafDbPySiaf:
             The SIAF namedtuple with values from the PRD database.
         """
         instrument = INSTRUMENT_MAP[aperture[:3].lower()]
-        siaf = pysiaf.Siaf(instrument, basepath=self._source)
+        siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
         aperture = siaf[aperture.upper()]
 
         # Fill out the Siaf

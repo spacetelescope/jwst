@@ -711,6 +711,18 @@ class Asn_Lv3TSO(AsnMixin_Science):
                             value = ('clear')
                         ),
                     ]),
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='restricted_ts',
+                            sources=['exp_type'],
+                            value = 'nrc_tsgrism'
+                        ),
+                        DMSAttrConstraint(
+                            name='module',
+                            sources=['detector'],
+                            value='nrcblong'
+                        ),
+                    ]),
                 ],
                 reduce=Constraint.notany
             )

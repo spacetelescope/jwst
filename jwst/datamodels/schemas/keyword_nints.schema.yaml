@@ -1,0 +1,16 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/keyword_nints.schema"
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      exposure:
+        type: object
+        properties:
+          nints:
+            title: Number of integrations
+            type: integer
+            fits_keyword: NINTS

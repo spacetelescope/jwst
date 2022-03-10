@@ -48,30 +48,30 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
           .. note::
             This setting is recommended when regions of overlap between images
-            are dominated by "pure" sky (as opposite to extended, diffuse
+            are dominated by "pure" sky (as opposed to extended, diffuse
             sources).
 
-        * **'global'** : compute a common sky value for all input image and
-          groups of images. In this setting `match` will compute
+        * **'global'** : compute a common sky value for all input images and
+          groups of images. With this setting `match` will compute
           sky values for each input image/group, find the minimum sky value,
-          and then it will set (and/or subtract) sky value of each input image
+          and then it will set (and/or subtract) the sky value of each input image
           to this minimum value. This method *may* be
-          useful when input images have been already matched.
+          useful when the input images have been already matched.
 
         * **'match'** : compute differences in sky values between images
           and/or groups in (pair-wise) common sky regions. In this case
-          computed sky values will be relative (delta) to the sky computed
+          the computed sky values will be relative (delta) to the sky computed
           in one of the input images whose sky value will be set to
           (reported to be) 0. This setting will "equalize" sky values between
           the images in large mosaics. However, this method is not recommended
           when used in conjunction with
           `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_
           because it computes relative sky values while `astrodrizzle` needs
-          "measured" sky values for median image generation and CR rejection.
+          "absolute" sky values for median image generation and CR rejection.
 
-        * **'global+match'** : first use **'match'** method to
+        * **'global+match'** : first use the **'match'** method to
           equalize sky values between images and then find a minimum
-          "global" sky value in all input images.
+          "global" sky value amongst all input images.
 
           .. note::
             This is the *recommended* setting for images
@@ -86,7 +86,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         highest sky value (`match_down` = `False`).
 
         .. note::
-          This setting applies *only* when `skymethod` parameter is
+          This setting applies *only* when the `skymethod` parameter is
           either `'match'` or `'global+match'`.
 
     subtract : bool (Default = False)
@@ -126,10 +126,10 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
            regard to the sky in a reference image chosen from the input list
            of images; *and*
 
-        #. Sky statistics is computed only in the part of the image
+        #. Sky statistics are computed only in the part of the image
            that intersects other images.
 
-      This makes ``'match'`` sky computation algorithm particularly useful
+      This makes the ``'match'`` sky computation algorithm particularly useful
       for "equalizing" sky values in large mosaics in which one may have
       only (at least) pair-wise intersection of images without having
       a common intersection region (on the sky) in all images.
@@ -142,9 +142,9 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
       .. warning::
 
-        Current algorithm is not capable of detecting cases when some subsets
+        The current algorithm is not capable of detecting cases where some subsets
         of intersecting images (from the input list of images) do not intersect
-        at all other subsets of intersecting images (except for the simple
+        at all with other subsets of intersecting images (except for the simple
         case when *single* images do not intersect any other images). In these
         cases the algorithm will find equalizing sky values for each
         intersecting subset of images and/or groups of images.
@@ -155,9 +155,9 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         Users are responsible for detecting such cases and adjusting processing
         accordingly.
 
-    - The ``'global+match'`` algorithm combines ``'match'`` and
+    - The ``'global+match'`` algorithm combines the ``'match'`` and
       ``'global'`` methods in order to overcome the limitation of the
-      ``'match'`` method described in the note above: it uses ``'global'``
+      ``'match'`` method described in the note above: it uses the ``'global'``
       algorithm to find a baseline sky value common to all input images
       and the ``'match'`` algorithm to "equalize" sky values in the mosaic.
       Thus, the sky value of the "reference" image will be equal to the
@@ -166,7 +166,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
     **Remarks:**
       * :py:func:`match` works directly on *geometrically distorted*
         flat-fielded images thus avoiding the need to perform distortion
-        correction of input images.
+        correction on the input images.
 
         Initially, the footprint of a chip in an image is approximated by a
         2D planar rectangle representing the borders of chip's distorted

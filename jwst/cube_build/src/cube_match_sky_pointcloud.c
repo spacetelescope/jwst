@@ -245,9 +245,7 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 	    index_xy = iy* nx + ix;
 	    for (iw = iwstart; iw< iwend; iw++){
 	      index_cube = iw*nxy + index_xy;
-	      if( index_xy == -1727 && iw == 0){
-		printf("found a match %i %i %i %f %f \n ",ix,iy,k,xdist,ydist);
-	      }
+
 	      d1 = xdist/cdelt1;
 	      d2 = ydist/cdelt2;
 	      dxy = (d1 * d1) + (d2 * d2);

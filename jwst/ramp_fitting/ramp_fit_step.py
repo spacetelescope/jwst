@@ -182,6 +182,7 @@ class RampFitStep(Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
+        suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
     """
 
@@ -240,7 +241,7 @@ class RampFitStep(Step):
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                self.weighting, max_cores, dqflags.pixel)
+                self.weighting, max_cores, dqflags.pixel, suppress_one_group=self.suppress_one_group)
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:

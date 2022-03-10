@@ -83,56 +83,6 @@ METAS_ISCLOSE = ['meta.wcsinfo.cdelt1',
                  ]
 
 
-def make_t_pars():
-    """Setup initial Transforms Parameters
-
-    This set was derived from the first valid group of engineering parameters for exposure
-    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
-    """
-    t_pars = stp.TransformParameters()
-
-    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
-    t_pars.pointing = stp.Pointing(
-        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
-        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
-                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
-                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
-        fsmcorr=np.array([0.00584114, -0.00432878]),
-        obstime=Time(1611628160.325, format='unix'),
-        gs_commanded=np.array([-22.40031242, -8.17869377]),
-        gs_position=np.array([-22.4002638, -8.1786461]),
-        fgsid=1,
-    )
-    t_pars.siaf = siafdb.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
-                              crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
-                              vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
-    t_pars.siaf_db = siafdb.SiafDb(siaf_path)
-
-    return t_pars
-
-
-@pytest.fixture(scope='module',
-                params=[method for method in stp.Methods])
-def calc_transforms(request, tmp_path_factory):
-    """Calculate matrices for specified method method
-    """
-    t_pars = make_t_pars()
-
-    # Set the method
-    t_pars.method = request.param
-
-    # Calculate the transforms
-    transforms = stp.calc_transforms(t_pars)
-
-    # Save transforms for later examination
-    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{request.param}.asdf')
-
-    try:
-        return transforms, t_pars
-    finally:
-        t_pars.siaf_db.close()
-
-
 @pytest.mark.parametrize(
     'method',
     [method for method in stp.Methods]
@@ -145,7 +95,7 @@ def test_method_string(method):
 def test_override_calc_wcs():
     """Test matrix override in the full calculation"""
     t_pars = make_t_pars()
-    t_pars.method = stp.Methods.TR_202105
+    t_pars.method = stp.Methods.OPS_TR_202111
     wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
 
     override = stp.Transforms(m_eci2j=np.array([[0.80583682, 0.51339893, 0.29503999],
@@ -183,32 +133,6 @@ def test_transform_serialize(calc_transforms, tmp_path):
     assert str(transforms) == str(from_asdf)
 
 
-def _test_methods(calc_transforms, matrix, truth_ext=''):
-    """Private function to ensure expected calculate of the specified matrix
-
-    Parameters
-    ----------
-    transforms, t_pars : Transforms, TransformParameters
-        The transforms and the parameters used to generate the transforms
-
-    matrix : str
-        The matrix to compare
-
-    truth_ext : str
-        Arbitrary extension to add to the truth file name.
-    """
-    transforms, t_pars = calc_transforms
-
-    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}{truth_ext}.asdf')
-    expected_value = getattr(expected_tforms, matrix)
-
-    value = getattr(transforms, matrix)
-    if expected_value is None:
-        assert value is None
-    else:
-        assert np.allclose(value, expected_value)
-
-
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
 def test_methods(calc_transforms, matrix):
     """Ensure expected calculate of the specified matrix
@@ -224,115 +148,33 @@ def test_methods(calc_transforms, matrix):
     _test_methods(calc_transforms, matrix)
 
 
-@pytest.fixture(scope='module')
-def calc_coarse_202111_fgs2(tmp_path_factory):
-    """Calculate the transforms for COARSE_202111 using FGS2"""
-    t_pars = make_t_pars()
-    t_pars.method = stp.Methods.COARSE_TR_202111
-    t_pars.fgsid = 2
-    transforms = stp.calc_transforms(t_pars)
+def test_coarse_202111_fgsid(calc_coarse_202111_fgsid):
+    """Test COARSE_202111 to ensure correct FGS id is used.
 
-    # Save transforms for later examination
-    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_coarse_tr_202111_fgs2.asdf')
+    If an FGS is specifically used for science, the other FGS is the guider.
+    For all other instruments, the assumption is that FGS1 is the guider, but
+    that can be overridden.
 
-    try:
-        return transforms, t_pars
-    finally:
-        t_pars.siaf_db.close()
+    This tests that the correct FGS id was used in the calculations
+    """
+    transforms, t_pars, truth_ext, fgs_expected = calc_coarse_202111_fgsid
+
+    fgsid_used = t_pars.fgsid
+    assert fgsid_used == fgs_expected
 
 
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
-def test_coarse_202111_fgs2(calc_coarse_202111_fgs2, matrix):
-    """Test COARSE_202111 using FGS2"""
-    _test_methods(calc_coarse_202111_fgs2, matrix, truth_ext='_fgs2')
+def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
+    """Test COARSE_202111 matrices using various FGS settings
 
+    If an FGS is specifically used for science, the other FGS is the guider.
+    For all other instruments, the assumption is that FGS1 is the guider, but
+    that can be overridden.
 
-def test_j3pa_at_gs():
-    """Ensure J3PA@GS is as expected"""
-    t_pars = make_t_pars()
-    t_pars.method = stp.Methods.GSCMD_J3PAGS
-    _ = stp.calc_transforms(t_pars)
-
-    assert np.allclose(t_pars.guide_star_wcs.pa, 297.3522435208429)
-
-
-@pytest.fixture()
-def eng_db_ngas():
-    """Setup the test engineering database"""
-    with EngDB_Mocker(db_path=db_ngas_path):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
-
-
-@pytest.fixture()
-def eng_db_jw703():
-    """Setup the test engineering database"""
-    with EngDB_Mocker(db_path=db_jw703_path):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
-
-
-@pytest.fixture
-def data_file(tmp_path):
-    model = datamodels.Level1bModel()
-    model.meta.exposure.start_time = STARTTIME.mjd
-    model.meta.exposure.end_time = ENDTIME.mjd
-    model.meta.target.ra = TARG_RA
-    model.meta.target.dec = TARG_DEC
-    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
-    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
-    model.meta.aperture.name = "MIRIM_FULL"
-    model.meta.observation.date = '2017-01-01'
-    model.meta.exposure.type = "MIR_IMAGE"
-    model.meta.ephemeris.velocity_x = -25.021
-    model.meta.ephemeris.velocity_y = -16.507
-    model.meta.ephemeris.velocity_z = -7.187
-
-    file_path = tmp_path / 'file.fits'
-    model.save(file_path)
-    model.close()
-    yield file_path
-
-
-@pytest.fixture
-def data_file_fromsim(tmp_path):
-    """Create data using times that were executed during a simulation using the OTB Simulator"""
-    model = datamodels.Level1bModel()
-    model.meta.exposure.start_time = Time('2022-02-02T22:24:58.942').mjd
-    model.meta.exposure.end_time = Time('2022-02-02T22:26:24.836').mjd
-    model.meta.target.ra = TARG_RA
-    model.meta.target.dec = TARG_DEC
-    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
-    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
-    model.meta.guidestar.gs_pcs_mode = 'COARSE'
-    model.meta.aperture.name = "MIRIM_FULL"
-    model.meta.observation.date = '2017-01-01'
-    model.meta.exposure.type = "MIR_IMAGE"
-    model.meta.ephemeris.velocity_x_bary = -25.021
-    model.meta.ephemeris.velocity_y_bary = -16.507
-    model.meta.ephemeris.velocity_z_bary = -7.187
-
-    file_path = tmp_path / 'file_fromsim.fits'
-    model.save(file_path)
-    model.close()
-    yield file_path
-
-
-@pytest.fixture
-def data_file_nosiaf():
-    model = datamodels.Level1bModel()
-    model.meta.exposure.start_time = STARTTIME.mjd
-    model.meta.exposure.end_time = ENDTIME.mjd
-    model.meta.target.ra = TARG_RA
-    model.meta.target.dec = TARG_DEC
-    model.meta.aperture.name = "UNKNOWN"
-    model.meta.observation.date = '2017-01-01'
-
-    with TemporaryDirectory() as path:
-        file_path = os.path.join(path, 'fits_nosiaf.fits')
-        model.save(file_path)
-        model.close()
-        yield file_path
+    This tests that the appropriate transformations were calculated.
+    """
+    transforms, t_pars, truth_ext, fgs_expected = calc_coarse_202111_fgsid
+    _test_methods((transforms, t_pars), matrix, truth_ext=truth_ext)
 
 
 def test_change_engdb_url():
@@ -566,42 +408,15 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
-def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
-    """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    expected_name = 'add_wcs_method_gscmd.fits'
-    # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.GSCMD_J3PAGS, engdb_url='http://localhost')
-
-    # Tests
-    with datamodels.Level1bModel(data_file) as model:
-
-        # Save for post-test comparison and update
-        model.save(tmp_path / expected_name)
-
-        with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQUALITY:
-                if isinstance(model[meta], str):
-                    assert model[meta] == expected[meta], f'{meta} has changed'
-                else:
-                    assert np.isclose(model[meta], expected[meta], atol=1e-13), f'{meta} has changed'
-
-            for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta]), f'{meta} has changed'
-
-            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
-
-
 def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
-    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    """Test using the database"""
     # Only run if `pysiaf` is installed.
     pytest.importorskip('pysiaf')
 
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, method=stp.Methods.TR_202105, engdb_url='http://localhost')
+    stp.add_wcs(data_file, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -622,11 +437,11 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
-    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    """Test using the database and a specified siaf db"""
     expected_name = 'add_wcs_method_full_siafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.TR_202105, engdb_url='http://localhost')
+    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
 
     # Test
     with datamodels.Level1bModel(data_file) as model:
@@ -680,3 +495,206 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
         assert model.meta.wcsinfo.siaf_xref_sci == 952
         assert model.meta.wcsinfo.siaf_yref_sci == 35
+
+
+# ######################
+# Utilities and fixtures
+# ######################
+def make_t_pars(detector='any', fgsid_telem=1, fgsid_user=None):
+    """Setup initial Transforms Parameters
+
+    This set was derived from the first valid group of engineering parameters for exposure
+    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
+
+    Parameters
+    ==========
+    fgsid_telem : [1, 2]
+        The FGS reference guider to report from telemetry.
+
+    fgsid_user : [None, 1, 2]
+        The user-specified FGS to use as the reference guider.
+    """
+    t_pars = stp.TransformParameters()
+
+    t_pars.detector = detector
+    t_pars.fgsid = fgsid_user
+
+    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
+    t_pars.pointing = stp.Pointing(
+        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
+        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
+                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
+                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
+        fsmcorr=np.array([0.00584114, -0.00432878]),
+        obstime=Time(1611628160.325, format='unix'),
+        gs_commanded=np.array([-22.40031242, -8.17869377]),
+        gs_position=np.array([-22.4002638, -8.1786461]),
+        fgsid=fgsid_telem,
+    )
+    t_pars.siaf = siafdb.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
+                              crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
+                              vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+    t_pars.siaf_db = siafdb.SiafDb(siaf_path)
+
+    return t_pars
+
+
+def _calc_coarse_202111_fgsid_idfunc(value):
+    """Created test IDS for calc_coarse_202111_fgsid"""
+    detector, fgsid_user, fgs_expected = value
+    return f'{detector}-{fgsid_user}'
+
+
+def _test_methods(calc_transforms, matrix, truth_ext=''):
+    """Private function to ensure expected calculate of the specified matrix
+
+    Parameters
+    ----------
+    transforms, t_pars : Transforms, TransformParameters
+        The transforms and the parameters used to generate the transforms
+
+    matrix : str
+        The matrix to compare
+
+    truth_ext : str
+        Arbitrary extension to add to the truth file name.
+    """
+    transforms, t_pars = calc_transforms
+
+    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}{truth_ext}.asdf')
+    expected_value = getattr(expected_tforms, matrix)
+
+    value = getattr(transforms, matrix)
+    if expected_value is None:
+        assert value is None
+    else:
+        assert np.allclose(value, expected_value)
+
+
+@pytest.fixture(scope='module',
+                params=(('any', None, 1), ('any', 1, 1), ('any', 2, 2),
+                        ('guider1', None, 2), ('guider1', 1, 2), ('guider1', 2, 2),
+                        ('guider2', None, 1), ('guider2', 1, 1), ('guider2', 2, 1)),
+                ids=_calc_coarse_202111_fgsid_idfunc)
+def calc_coarse_202111_fgsid(request, tmp_path_factory):
+    """Calculate the transforms for COARSE_202111 with various FGS specifications
+    """
+    detector, fgsid_user, fgs_expected = request.param
+
+    # Create transform parameters.
+    # FGS from telemetry is set to None because, for COARSE mode,
+    # telemetry is unreliable.
+    t_pars = make_t_pars(detector=detector, fgsid_telem=None, fgsid_user=fgsid_user)
+    t_pars.method = stp.Methods.COARSE_TR_202111
+    transforms = stp.calc_transforms(t_pars)
+
+    truth_ext = f'_{detector}-{fgsid_user}'
+
+    # Save transforms for later examination
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{t_pars.method}{truth_ext}.asdf')
+
+    try:
+        return transforms, t_pars, truth_ext, fgs_expected
+    finally:
+        t_pars.siaf_db.close()
+
+
+@pytest.fixture(scope='module',
+                params=[method for method in stp.Methods])
+def calc_transforms(request, tmp_path_factory):
+    """Calculate matrices for specified method method
+    """
+    t_pars = make_t_pars()
+
+    # Set the method
+    t_pars.method = request.param
+
+    # Calculate the transforms
+    transforms = stp.calc_transforms(t_pars)
+
+    # Save transforms for later examination
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{request.param}.asdf')
+
+    try:
+        return transforms, t_pars
+    finally:
+        t_pars.siaf_db.close()
+
+
+@pytest.fixture
+def data_file(tmp_path):
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
+def data_file_nosiaf():
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "UNKNOWN"
+    model.meta.observation.date = '2017-01-01'
+
+    with TemporaryDirectory() as path:
+        file_path = os.path.join(path, 'fits_nosiaf.fits')
+        model.save(file_path)
+        model.close()
+        yield file_path
+
+
+@pytest.fixture
+def data_file_fromsim(tmp_path):
+    """Create data using times that were executed during a simulation using the OTB Simulator"""
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = Time('2022-02-02T22:24:58.942').mjd
+    model.meta.exposure.end_time = Time('2022-02-02T22:26:24.836').mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.guidestar.gs_pcs_mode = 'COARSE'
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x_bary = -25.021
+    model.meta.ephemeris.velocity_y_bary = -16.507
+    model.meta.ephemeris.velocity_z_bary = -7.187
+
+    file_path = tmp_path / 'file_fromsim.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture()
+def eng_db_jw703():
+    """Setup the test engineering database"""
+    with EngDB_Mocker(db_path=db_jw703_path):
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
+        yield engdb
+
+
+@pytest.fixture()
+def eng_db_ngas():
+    """Setup the test engineering database"""
+    with EngDB_Mocker(db_path=db_ngas_path):
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
+        yield engdb
