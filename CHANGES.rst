@@ -43,6 +43,8 @@ datamodels
 
 - Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
 
+- Update reset model to include keyword_preadpatt.schema [#6769]
+
 extract_1d
 ----------
 
@@ -70,6 +72,7 @@ reset
 
 - Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
   shape of the data to define these values [#6749]
+
   
 set_telescope_pointing
 ----------------------
