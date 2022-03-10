@@ -74,53 +74,54 @@ class Detector1Pipeline(Pipeline):
         self.dark_current.output_dir = self.output_dir
         self.ramp_fit.output_dir = self.output_dir
 
-        if input.meta.instrument.name == 'MIRI':
+        instrument = input.meta.instrument.name
+        if instrument == 'MIRI':
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            result = self.group_scale(input)
-            result = self.dq_init(result)
-            result = self.saturation(result)
-            result = self.ipc(result)
-            result = self.firstframe(result)
-            result = self.lastframe(result)
-            result = self.reset(result)
-            result = self.linearity(result)
-            result = self.rscd(result)
-            result = self.dark_current(result)
-            result = self.refpix(result)
+            input = self.group_scale(input)
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.firstframe(input)
+            input = self.lastframe(input)
+            input = self.reset(input)
+            input = self.linearity(input)
+            input = self.rscd(input)
+            input = self.dark_current(input)
+            input = self.refpix(input)
 
             # skip until MIRI team has figured out an algorithm
-            # result = self.persistence(result)
+            # input = self.persistence(input)
 
         else:
 
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            result = self.group_scale(input)
-            result = self.dq_init(result)
-            result = self.saturation(result)
-            result = self.ipc(result)
-            result = self.superbias(result)
-            result = self.refpix(result)
-            result = self.linearity(result)
+            input = self.group_scale(input)
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.superbias(input)
+            input = self.refpix(input)
+            input = self.linearity(input)
 
             # skip persistence for NIRSpec
-            if result.meta.instrument.name != 'NIRSPEC':
-                result = self.persistence(result)
+            if instrument != 'NIRSPEC':
+                input = self.persistence(input)
 
-            result = self.dark_current(result)
+            input = self.dark_current(input)
 
         # apply the jump step
-        result = self.jump(result)
+        input = self.jump(input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
-            result.meta.filetype = 'calibrated ramp'
-            self.save_model(result, 'ramp')
+            input.meta.filetype = 'calibrated ramp'
+            self.save_model(input, 'ramp')
 
         # apply the ramp_fit step
         # This explicit test on self.ramp_fit.skip is a temporary workaround
@@ -128,14 +129,14 @@ class Detector1Pipeline(Pipeline):
         # objects, but when the step is skipped due to `skip = True`,
         # only the input is returned when the step is invoked.
         if self.ramp_fit.skip:
-            result = self.ramp_fit(result)
+            input = self.ramp_fit(input)
             ints_model = None
         else:
-            result, ints_model = self.ramp_fit(result)
+            input, ints_model = self.ramp_fit(input)
 
         # apply the gain_scale step to the exposure-level product
         self.gain_scale.suffix = 'gain_scale'
-        result = self.gain_scale(result)
+        input = self.gain_scale(input)
 
         # apply the gain scale step to the multi-integration product,
         # if it exists, and then save it
@@ -146,12 +147,12 @@ class Detector1Pipeline(Pipeline):
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
-        self.setup_output(result)
-        result.meta.filetype = 'countrate'
+        self.setup_output(input)
+        input.meta.filetype = 'countrate'
 
         log.info('... ending calwebb_detector1')
 
-        return result
+        return input
 
     def setup_output(self, input):
         # Determine the proper file name suffix to use later
