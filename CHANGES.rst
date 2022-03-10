@@ -71,12 +71,10 @@ reset
 - Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
   shape of the data to define these values [#6749]
 
-
 residual_fringe
 ---------------
 
 - Replaced fitting the background with an astropy fitting package [#6739]
-
 
 set_telescope_pointing
 ----------------------
@@ -96,6 +94,12 @@ skymatch
   pixels) to ``'~DO_NOT_USE+NON_SCIENCE'``. [#6733, #6736]
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
+
+source_catalog
+--------------
+
+- Fixed the KDTree calculation to use only finite source positions to
+  prevent memory issues on Linux systems. [#6765]
 
 srctype
 -------
