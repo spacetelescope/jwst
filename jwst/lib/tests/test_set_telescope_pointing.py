@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
+import warnings
 
 import pytest
 
@@ -96,7 +97,7 @@ def file_case(request, tmp_path):
         model.save(path)
     elif case == 'bad_model':
         # Make a model that will fail if not allowed
-        model = datamodels.ImageModel((10, 10))
+        model = datamodels.IFUCubeModel((10, 10, 10))
         path = tmp_path / 'image.fits'
         model.save(path)
     elif case == 'fits_nomodel':
@@ -111,7 +112,7 @@ def file_case(request, tmp_path):
     return path, allow
 
 
-@pytest.mark.parametrize('allow_any_file', [None, True, False])
+@pytest.mark.parametrize('allow_any_file', [True, False])
 def test_allow_any_file(file_case, allow_any_file):
     """Test various files against whether they should be allowed or not
 
@@ -121,18 +122,20 @@ def test_allow_any_file(file_case, allow_any_file):
         File to test and whether it should always be allowed.
         If not `allow`, the file should be usable only when `allow_any_file`.
 
-    allow_any_file : bool or None
+    allow_any_file : bool
         Value of `allow_any_file` to try
     """
     path, allow = file_case
-    if not allow and not allow_any_file:
-        with pytest.raises(TypeError):
-            stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
-    else:
-        # Expected error when trying to actually add the wcs.
-        # The provided files do not have sufficient info to do the calculations.
-        with pytest.raises(AttributeError):
-            stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        if not allow and not allow_any_file:
+            with pytest.raises(TypeError):
+                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
+        else:
+            # Expected error when trying to actually add the wcs.
+            # The provided files do not have sufficient info to do the calculations.
+            with pytest.raises(AttributeError):
+                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
 
 
 @pytest.mark.parametrize(
