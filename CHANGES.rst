@@ -45,6 +45,9 @@ datamodels
 
 - Update reset model to include keyword_preadpatt.schema [#6769]
 
+- Drop references to transform-1.2.0 from datamodel schemas to prevent
+  issues with schema features not supported by stdatamodels. [#6752]
+
 extract_1d
 ----------
 
@@ -56,6 +59,11 @@ extract_1d
 
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
+
+pipeline
+--------
+
+- Improve memory performance of calwebb_detector1 pipeline [#6758]
 
 ramp_fitting
 ------------
@@ -73,7 +81,11 @@ reset
 - Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
   shape of the data to define these values [#6749]
 
-  
+residual_fringe
+---------------
+
+- Replaced fitting the background with an astropy fitting package [#6739]
+
 set_telescope_pointing
 ----------------------
 
@@ -93,11 +105,19 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+source_catalog
+--------------
+
+- Fixed the KDTree calculation to use only finite source positions to
+  prevent memory issues on Linux systems. [#6765]
+
+- Updated the roundness and sharpness properties to use the source
+  centroid position instead of the peak position. [#6766]
+
 srctype
 -------
 
 - Add command line option to override source type [#6720]
-
 
 
 1.4.3 (2022-02-03)
