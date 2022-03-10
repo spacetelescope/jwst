@@ -8,6 +8,8 @@ set_telescope_pointing
 
 - Add fgsid option to set_telescope_pointing [#6717]
 
+- Further restrict default models that can be updated. [#6767]
+
 - Update COARSE handling of FGS, pysiaf importing, model opening,
   and removal of stale code. [#6735]
 
