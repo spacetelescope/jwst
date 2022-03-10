@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.outlier_detection import flag_cr
