@@ -130,12 +130,12 @@ def test_allow_any_file(file_case, allow_any_file):
         warnings.filterwarnings("ignore", "model_type not found")
         if not allow and not allow_any_file:
             with pytest.raises(TypeError):
-                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
+                stp.add_wcs(path, siaf_path=siaf_path, allow_any_file=allow_any_file, dry_run=True)
         else:
             # Expected error when trying to actually add the wcs.
             # The provided files do not have sufficient info to do the calculations.
             with pytest.raises(AttributeError):
-                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
+                stp.add_wcs(path, siaf_path=siaf_path, allow_any_file=allow_any_file, dry_run=True)
 
 
 @pytest.mark.parametrize(
