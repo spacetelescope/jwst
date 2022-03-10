@@ -24,6 +24,7 @@ import asdf
 # Define artificial memory size
 MEMORY = 100  # 100 bytes
 
+
 @pytest.mark.parametrize('guess', [True, False])
 def test_guess(guess):
     """Test the guess parameter to the open func"""
