@@ -877,10 +877,11 @@ class JWSTSourceCatalog:
                 bkg_median.append(np.median(values))
                 bkg_std.append(np.std(values))
 
-        nvalues = np.array(nvalues)
-        bkg_median = np.array(bkg_median)
-        # standard error of the median
-        bkg_median_err = np.sqrt(np.pi / (2. * nvalues)) * np.array(bkg_std)
+            nvalues = np.array(nvalues)
+            bkg_median = np.array(bkg_median)
+            # standard error of the median
+            bkg_median_err = (np.sqrt(np.pi / (2. * nvalues))
+                              * np.array(bkg_std))
 
         bkg_median <<= self.model.data.unit
         bkg_median_err <<= self.model.data.unit
