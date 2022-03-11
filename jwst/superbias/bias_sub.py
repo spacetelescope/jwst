@@ -79,4 +79,9 @@ def subtract_bias(input, bias):
     # of the science data
     output.data -= bias.data
 
+    if input.meta.exposure.zero_frame:
+        wh_zero = np.where(output.zeroframe == 0.)
+        output.zeroframe -= bias.data
+        output.zeroframe[wh_zero] = 0.  # Zero values indicate unusable data
+
     return output

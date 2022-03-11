@@ -11,6 +11,12 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
+ramp_fitting
+----------
+
+- Adding feature to use ZEROFRAME for ramps that are fully saturated, but
+  the ZEROFRAME data for that ramp is good. [#6782]
+
 1.5.0 (2022-05-05)
 ==================
 

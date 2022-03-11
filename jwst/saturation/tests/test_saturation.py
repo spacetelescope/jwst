@@ -56,6 +56,34 @@ def test_nirspec_irs2_saturation_flagging(setup_nrs_irs2_cube):
     assert np.all(output.groupdq[0, 3:, pixx - 1: pixx + 1, pixy - 1: pixy + 1] == dqflags.group['SATURATED'])
 
 
+def test_irs2_zero_frame(setup_nrs_irs2_cube):
+    """
+    Tests IRS2 ZEROFRAME processing.
+
+    This ensures ZEROFRAME data that is outside saturation and AD floor
+    boundaries get zeroed out.
+    """
+    ramp, sat = setup_nrs_irs2_cube()
+
+    # XXX ZEROFRAME dimensions correction (will get fixed with JP-2506).
+    nints, ngroups, nrows, ncols = ramp.data.shape
+    dims = (nints, nrows, ncols)
+    if ramp.zeroframe.shape != dims:
+        ramp.zeroframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
+
+    nint, row, col = 0, 1000, 1000
+    ramp.meta.exposure.zero_frame = True
+    ramp.zeroframe[nint, row, col] = 65000.
+    ramp.zeroframe[nint, row + 1, col + 1] = -100.
+
+    output = irs2_flag_saturation(ramp, sat)
+    check_zframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
+    check_zframe[nint, row, col] = 0.
+    check_zframe[nint, row + 1, col + 1] = 0.
+    tol = 1.e-5
+    np.testing.assert_allclose(output.zeroframe, check_zframe, tol)
+
+
 def test_ad_floor_flagging(setup_nrc_cube):
     """Check that the ad_floor flag is set when a pixel value is zero or
     negative."""
