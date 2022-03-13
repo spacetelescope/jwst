@@ -358,6 +358,8 @@ def populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.spectral_order = sp_ord
     spec.meta.soss_extract1d.type = 'TEST'
     spec.meta.soss_extract1d.chi2 = tiktests['chi2'][idx]
+    spec.meta.soss_extract1d.chi2_soft_l1 = tiktests['chi2_soft_l1'][idx]
+    spec.meta.soss_extract1d.chi2_cauchy = tiktests['chi2_cauchy'][idx]
     spec.meta.soss_extract1d.reg = np.nansum(tiktests['reg'][idx] ** 2)
     spec.meta.soss_extract1d.factor = tiktests['factors'][idx]
     spec.int_num = 0
@@ -754,7 +756,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
 
     # Find the tikhonov factor.
     # Initial pass 8 orders of magnitude with 10 grid points.
-    factors = engine.estimate_tikho_factors(estimate_spl, log_range=[-4, 4], n_points=10)
+    factors = engine.estimate_tikho_factors(estimate_spl, log_range=[-2, 8], n_points=10)
     all_tests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
     tikfac, mode, _ = engine.best_tikho_factor(tests=all_tests, fit_mode='all')
 

@@ -2277,6 +2277,18 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
     return best_val
 
 
+def soft_l1(z):
+    return 2 * ((1 + z)**0.5 - 1)
+
+def cauchy(z):
+    return np.log(1 + z)
+
+def linear(z):
+    return z
+
+LOSS_FUNCTIONS = {'soft_l1': soft_l1, 'cauchy': cauchy, 'linear': linear}
+
+
 class TikhoTests(dict):
     """
     Class to save Tikhonov tests for different factors.
@@ -2289,7 +2301,20 @@ class TikhoTests(dict):
         by default.
     """
 
-    def __init__(self, test_dict=None):
+    DEFAULT_TRESH_DERIVATIVE = (('chi2', 1e-5),
+                                ('chi2_soft_l1', 1e-4),
+                                ('chi2_cauchy', 1e-3))
+
+    def __init__(self, test_dict=None, default_chi2='chi2_cauchy'):
+        """
+        Parameters
+        ----------
+        test_dict : dict
+            Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
+            by default.
+        default_chi2: string
+            Type of chi2 loss used by default. Options are chi2, chi2_soft_l1, chi2_cauchy.
+        """
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
         if test_dict is None:
@@ -2300,6 +2325,10 @@ class TikhoTests(dict):
 
         # Save attributes
         self.n_points = n_points
+        self.default_chi2 = default_chi2
+        self.default_thresh = {chi2_type: thresh 
+                               for (chi2_type, thresh)
+                               in self.DEFAULT_TRESH_DERIVATIVE}
 
         # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
@@ -2307,7 +2336,11 @@ class TikhoTests(dict):
         # Save the chi2
         self['chi2'] = self.compute_chi2()
 
-    def compute_chi2(self, tests=None, n_points=None):
+        # Save different loss function for chi2
+        self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
+        self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
+
+    def compute_chi2(self, tests=None, n_points=None, loss='linear'):
         """ Calculates the reduced chi squared statistic
 
         Parameters
@@ -2323,26 +2356,35 @@ class TikhoTests(dict):
         float
             Sum of the squared error array divided by the number of data points
         """
-        # Get number of data points
-        if n_points is None:
-            n_points = self.n_points
-
         # If not given, take the tests from the object
         if tests is None:
             tests = self
 
+        # Get the loss function
+        if isinstance(loss, str):
+            try:
+                loss = LOSS_FUNCTIONS[loss]
+            except KeyError as e:
+                keys = [key for key in LOSS_FUNCTIONS.keys()]
+                msg = f'loss={loss} not a valid key. Must be one of {keys} or callable.'
+                raise e(msg)
+        elif not callable(loss):
+            raise ValueError('Invalid value for loss.')
+
         # Compute the reduced chi^2 for all tests
-        chi2 = np.nansum(tests['error'] ** 2, axis=-1)
+        chi2 = np.nanmean(loss(tests['error']**2), axis=-1)
         # Remove residual dimensions
         chi2 = chi2.squeeze()
 
-        # Normalize by the number of data points
-        chi2 /= n_points
-
         return chi2
 
-    def get_chi2_derivative(self):
+    def get_chi2_derivative(self, key=None):
         """ Compute derivative of the chi2 with respect to log10(factors)
+
+        Parameters
+        ----------
+        key: str
+            which chi2 is used for computations. Default is self.default_chi2.
 
         Returns
         -------
@@ -2351,10 +2393,12 @@ class TikhoTests(dict):
         d_chi2 : array[float]
             derivative of chi squared array with respect to log10(factors)
         """
+        if key is None:
+            key = self.default_chi2
 
         # Compute finite derivative
         fac_log = np.log10(self['factors'])
-        d_chi2 = np.diff(self['chi2']) / np.diff(fac_log)
+        d_chi2 = np.diff(self[key]) / np.diff(fac_log)
 
         # Update size of factors to fit derivatives
         # Equivalent to derivative on the left side of the nodes
@@ -2362,7 +2406,10 @@ class TikhoTests(dict):
 
         return factors_leftd, d_chi2
 
-    def compute_curvature(self, tests=None):
+    def compute_curvature(self, tests=None, key=None):
+
+        if key is None:
+            key = self.default_chi2
 
         # If not given, take the tests from the object
         if tests is None:
@@ -2373,13 +2420,13 @@ class TikhoTests(dict):
         reg2 = np.nansum(tests['reg'] ** 2, axis=-1)
 
         factors, curv = curvature_finite(tests['factors'],
-                                         np.log10(self['chi2']),
+                                         np.log10(self[key]),
                                          np.log10(reg2))
 
         return factors, curv
 
     def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
-                          mode='curvature', thresh=1e-5):
+                          mode='curvature', key=None, thresh=None):
         """Compute the best scale factor for Tikhonov regularisation.
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
@@ -2407,6 +2454,11 @@ class TikhoTests(dict):
         float
             Best scale factor as determined by the selected algorithm
         """
+        if key is None:
+            key = self.default_chi2
+
+        if thresh is None:
+            thresh = self.default_thresh[key]
 
         # Use pre-run tests if not specified
         if tests is None:
@@ -2423,7 +2475,7 @@ class TikhoTests(dict):
         elif mode == 'chi2':
             # Simply take the chi2 and factors
             factors = tests['factors']
-            y_val = tests['chi2']
+            y_val = tests[key]
 
             # Find min factor
             best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index)
