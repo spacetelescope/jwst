@@ -2248,8 +2248,8 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
             # ... no need to interpolate
             interpolate = False
     else:
-        # Take the lowest factor value
-        idx_below = 0
+        # Take the highest factor value
+        idx_below = -1
         # No interpolation needed
         interpolate = False
 
@@ -2464,8 +2464,11 @@ class TikhoTests(dict):
         if tests is None:
             tests = self
 
+        # Number of factors
+        n_fac = len(tests['factors'])
+
         # Determine the mode (what do we minimize?)
-        if mode == 'curvature':
+        if mode == 'curvature' and n_fac > 2:
             # Compute the curvature
             factors, curv = tests.compute_curvature()
 
@@ -2480,12 +2483,18 @@ class TikhoTests(dict):
             # Find min factor
             best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index)
 
-        elif mode == 'd_chi2':
+        elif mode == 'd_chi2' and n_fac > 1:
             # Compute the derivative of the chi2
             factors, y_val = tests.get_chi2_derivative()
 
             # Find intersection with threshold
             best_fac = _find_intersect(factors, y_val, thresh, interpolate, interp_index)
+
+        elif mode in ['curvature', 'd_chi2', 'chi2']:
+            best_fac = np.max(tests['factors'])
+            msg = (f'Could not computer {mode} because number of factor={n_fac}. '
+                   f'Setting best factor to max factor: {best_fac:.5e}')
+            log.warning(msg)
 
         else:
             msg = (f'`mode`={mode} is not a valid option for '
