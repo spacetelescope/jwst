@@ -1104,6 +1104,10 @@ class _BaseOverlap:
         # Remove all bad factors that are most likely unstable
         min_factor = tests.best_tikho_factor(mode='d_chi2', thresh=1e-8)
         idx_to_keep = min_factor <= tests['factors']
+        # Keep at least the max factor
+        idx_max = np.argmax(tests['factors'])
+        idx_to_keep[idx_max] = True
+        # Make new tests with remaining factors
         new_tests = dict()
         for key in tests:
             if key != 'grid':
