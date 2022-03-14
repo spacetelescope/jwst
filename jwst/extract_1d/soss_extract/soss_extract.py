@@ -320,23 +320,45 @@ def get_grid_from_trace(ref_files, transform, spectral_order, n_os=1):
 
 
 def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os, wv_range=None):
+    ''' Create the grid use for the simultaneous extraction of order 1 and 2.
+    The grid is made by:
+    1) requiring that it satifsfies the oversampling n_os
+    2) trying to reach the specified tolerance for the spectral range shared between order 1 and 2
+    3) trying to reach the specified tolerance in the rest of spectral range
+    The max_grid_size overrules steps 2) and 3), so the precision may not be reached if
+    the grid size needed is too large.
+    '''
 
     # Build native grid for each  orders.
-    # The list given to make_combined_grid must be ordered in increasing priority,
-    # so the second order is first since it has a higher resolution.
-    all_grids = []
     spectral_orders = [2, 1]
+    grids_ord = dict()
     for sp_ord in spectral_orders:
-        all_grids.append(get_grid_from_trace(ref_files, transform, sp_ord, n_os=n_os))
+        grids_ord[sp_ord] = get_grid_from_trace(ref_files, transform, sp_ord, n_os=n_os)
 
-    # Set wavelength range (only the contaminated range needs to be modeled)
+    # Build the list of grids given to make_combined_grid.
+    # It must be ordered in increasing priority.
+    # 1rst priority: shared wavelengths with order 1 and 2.
+    # 2nd priority: remaining red part of order 1
+    # 3rd priority: remaining blue part of order 2
+    # So, split order 2 in 2 parts, the shared wavelenght and the bluemost part
+    is_shared = grids_ord[2] >= np.max(grids_ord[1])
+    # And make grid list
+    all_grids = [grids_ord[2][is_shared], grids_ord[1], grids_ord[2][~is_shared]]
+
+    # Set wavelength range if not given
     if wv_range is None:
-        # Only cover the range covered by order 1
-        # (no need to simulate the blue end of order 2 for decontamination)
-        wv_range = [np.min(all_grids[1]), np.max(all_grids[1])]
+        # Cut order 2 at 0.77 (not smaller than that)
+        # because there is no contamination there. Can be extracted afterward.
+        # In the red, no cut.
+        wv_range = [0.77, np.max(grids_ord[1])]
+
+    # Finally, build the list of corresponding estimates.
+    # The estimate for the overlapping part is the order 1 estimate.
+    # There is no estimate yet for the blue part of order 2, so give a flat spectrum.
+    flat_fct = lambda wv: np.ones_like(wv)
+    all_estimates = [estimate, estimate, flat_fct]
 
     # Generate the combined grid
-    all_estimates = [estimate for _ in spectral_orders]
     kwargs = dict(rtol=rtol, max_total_size=max_grid_size, max_iter=30, grid_range=wv_range)
     combined_grid = make_combined_adaptive_grid(all_grids, all_estimates, **kwargs)
 
