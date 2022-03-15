@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/msatargacq.schema"
 title: MSA target acquisition data model
 allOf:
 - $ref: core.schema
+- $ref: keyword_msatargacq.schema
 - type: object
   properties:
     msa_targ_acq_table:
