@@ -2492,7 +2492,7 @@ class TikhoTests(dict):
 
         elif mode in ['curvature', 'd_chi2', 'chi2']:
             best_fac = np.max(tests['factors'])
-            msg = (f'Could not computer {mode} because number of factor={n_fac}. '
+            msg = (f'Could not compute {mode} because number of factor={n_fac}. '
                    f'Setting best factor to max factor: {best_fac:.5e}')
             log.warning(msg)
 
