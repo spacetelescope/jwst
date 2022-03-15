@@ -573,7 +573,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
-        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
+        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
         # Add all theses tests to previous ones
         all_tests = append_tiktests(all_tests, tiktests)
 
@@ -786,7 +786,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
     tikfac = np.log10(tikfac)
     factors = np.logspace(tikfac - 2, tikfac + 2, 20)
     tiktests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
-    tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode=mode)
+    tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
     all_tests = append_tiktests(all_tests, tiktests)
 
     # Run the extract method of the Engine.
