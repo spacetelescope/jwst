@@ -4,7 +4,7 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
-
+@pytest.mark.slow
 @pytest.mark.bigdata
 def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
     """Run residual fringe correction on MIRI IFUShort """
