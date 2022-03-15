@@ -40,17 +40,17 @@ properties:
         fits_hdu: MSA_TARG_ACQ
       guiderid:
         title: "guider that is reference for ideal coordinates"
-        type: int
+        type: integer
         fits_keyword: GUIDERID
         fits_hdu: MSA_TARG_ACQ
       fittargs:
         title: "number of ref. stars used in final iteration"
-        type: int
+        type: integer
         fits_keyword: FITTARGS
         fits_hdu: MSA_TARG_ACQ
       iteratns:
         title: "number of least squares iterations performed"
-        type: int
+        type: integer
         fits_keyword: ITERATNS
         fits_hdu: MSA_TARG_ACQ
       fitysigm:
@@ -85,12 +85,12 @@ properties:
         fits_hdu: MSA_TARG_ACQ
       cenboxrw:
         title: "number of rows in TA box"
-        type: int
+        type: integer
         fits_keyword: CENBOXRW
         fits_hdu: MSA_TARG_ACQ
       cenboxcl:
         title: "number of columns in TA box"
-        type: int
+        type: integer
         fits_keyword: CENBOXCL
         fits_hdu: MSA_TARG_ACQ
       imagetyp:
