@@ -1146,7 +1146,7 @@ class _BaseOverlap:
             # In a well behave case, the results should be ordered as 'chi2', 'd_chi2', 'curvature'
             # and 'd_chi2' will be the best criterion determine the best factor.
             # 'chi2' usually overfitting the solution and 'curvature' may oversmooth the solution
-            if results['curvature'] < results['chi2'] or results['d_chi2'] < results['chi2']:
+            if results['curvature'] <= results['chi2'] or results['d_chi2'] <= results['chi2']:
                 # In this case, 'chi2' is likely to not overfit the solution, so must be favored
                 best_mode = 'chi2'
             elif results['curvature'] < results['d_chi2']:
