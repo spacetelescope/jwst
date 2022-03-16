@@ -2333,12 +2333,18 @@ class TikhoTests(dict):
         # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
 
-        # Save the chi2
-        self['chi2'] = self.compute_chi2()
-
-        # Save different loss function for chi2
-        self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
-        self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
+        chi2_loss = {'chi2': 'linear',
+                     'chi2_soft_l1': 'soft_l1',
+                     'chi2_cauchy': 'cauchy'}
+        for chi2_type, loss in chi2_loss.items():
+            try:
+                # Save the chi2
+                self[chi2_type]
+            except KeyError:
+                self[chi2_type] = self.compute_chi2(loss=loss)
+#         # Save different loss function for chi2
+#         self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
+#         self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
 
     def compute_chi2(self, tests=None, n_points=None, loss='linear'):
         """ Calculates the reduced chi squared statistic
