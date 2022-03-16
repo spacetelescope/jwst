@@ -54,8 +54,6 @@ class GuiderPipeline(Pipeline):
         input = self.guider_cds(input)
         input = self.flat_field(input)
 
-        input.meta.filetype = 'countrate'
-
         log.info('... ending calwebb_guider')
 
         return input

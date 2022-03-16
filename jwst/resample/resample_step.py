@@ -110,7 +110,6 @@ class ResampleStep(Step):
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
             self.update_phot_keywords(model)
-            model.meta.filetype = 'resampled'
 
         if len(result) == 1:
             result = result[0]

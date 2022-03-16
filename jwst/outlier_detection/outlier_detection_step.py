@@ -160,10 +160,8 @@ class OutlierDetectionStep(Step):
             if self.input_container:
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
-                    model.meta.filetype = 'cosmic-ray flagged'
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
-                self.input_models.meta.filetype = 'cosmic-ray flagged'
 
             return self.input_models
 

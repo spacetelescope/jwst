@@ -217,9 +217,8 @@ class Extract1dStep(Step):
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
 
-                    # --------------------------------------------------------------
-                    # Data is a ModelContainer but is not WFSS
-                    result.meta.filetype = '1d spectrum'
+                # --------------------------------------------------------------
+                # Data is a ModelContainer but is not WFSS
                 else:
                     result = datamodels.ModelContainer()
                     for model in input_model:
@@ -251,7 +250,6 @@ class Extract1dStep(Step):
                         )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
-                        temp.meta.filetype = '1d spectrum'
                         result.append(temp)
                         del temp
             # ------------------------------------------------------------------------
@@ -290,7 +288,6 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.filetype = '1d spectrum'
             else:
                 self.log.error('Input model is empty;')
                 self.log.error('extract_1d will be skipped.')
@@ -367,7 +364,6 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.filetype = '1d spectrum'
                 result.meta.target.source_type = None
 
                 input_model.close()
@@ -413,7 +409,6 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.filetype = '1d spectrum'
 
         input_model.close()
 

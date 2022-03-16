@@ -120,7 +120,6 @@ class Detector1Pipeline(Pipeline):
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
-            input.meta.filetype = 'calibrated ramp'
             self.save_model(input, 'ramp')
 
         # apply the ramp_fit step
@@ -143,12 +142,10 @@ class Detector1Pipeline(Pipeline):
         if ints_model is not None:
             self.gain_scale.suffix = 'gain_scaleints'
             ints_model = self.gain_scale(ints_model)
-            ints_model.meta.filetype = 'countrate'
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
         self.setup_output(input)
-        input.meta.filetype = 'countrate'
 
         log.info('... ending calwebb_detector1')
 

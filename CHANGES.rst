@@ -48,6 +48,8 @@ datamodels
 - Drop references to transform-1.2.0 from datamodel schemas to prevent
   issues with schema features not supported by stdatamodels. [#6752]
 
+- Remove FILETYPE keyword from core schema, and all assignments to it [#6772]
+
 extract_1d
 ----------
 
