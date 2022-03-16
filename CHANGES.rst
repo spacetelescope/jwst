@@ -60,6 +60,11 @@ extract_1d
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
+regtest
+-------
+
+- Added a residual fringe correction test [#6771]
+
 pipeline
 --------
 
