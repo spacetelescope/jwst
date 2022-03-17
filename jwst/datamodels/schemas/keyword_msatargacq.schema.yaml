@@ -40,7 +40,7 @@ properties:
         fits_hdu: MSA_TARG_ACQ
       guiderid:
         title: "guider that is reference for ideal coordinates"
-        type: integer
+        type: string
         fits_keyword: GUIDERID
         fits_hdu: MSA_TARG_ACQ
       fittargs:
