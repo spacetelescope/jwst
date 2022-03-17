@@ -1,4 +1,4 @@
-1.4.4 (unreleased)
+1.4.5 (unreleased)
 ==================
 
 associations
@@ -95,15 +95,6 @@ residual_fringe
 
 - Replaced fitting the background with an astropy fitting package [#6739]
 
-set_telescope_pointing
-----------------------
-
-- Update COARSE handling of FGS, psyiaf importing, model opening, and removal of stale code. [#6735]
-
-- Set CRVAL* from GS_* for guider exposures. [#6751]
-
-- Further restrict default models that can be updated. [#6767]
-
 skymatch
 --------
 
@@ -129,6 +120,20 @@ srctype
 -------
 
 - Add command line option to override source type [#6720]
+  
+1.4.4 (2022-03-16)
+==================
+
+set_telescope_pointing
+----------------------
+- Set CRVAL* from GS_* for guider exposures. [#6751]
+
+- Add fgsid option to set_telescope_pointing [#6717]
+
+- Further restrict default models that can be updated. [#6767]
+
+- Update COARSE handling of FGS, pysiaf importing, model opening,
+  and removal of stale code. [#6735]
 
 
 1.4.3 (2022-02-03)
