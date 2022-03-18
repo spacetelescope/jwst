@@ -8,6 +8,13 @@ datamodels
 
 - Update reset model to include keyword_preadpatt.schema [#6769]
 
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
+reset
+-----
+
+- Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
+  shape of the data to define these values [#6749]
 
 1.4.4 (2022-03-16)
 ==================
