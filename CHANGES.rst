@@ -50,6 +50,8 @@ datamodels
 
 - Remove FILETYPE keyword from core schema, and all assignments to it [#6772]
 
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
 extract_1d
 ----------
 
