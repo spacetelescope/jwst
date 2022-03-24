@@ -1,4 +1,4 @@
-1.4.4 (unreleased)
+1.4.6 (unreleased)
 ==================
 
 associations
@@ -41,10 +41,6 @@ datamodels
 - Added the new keyword "BKGMETH" for use in the ``skymatch`` step.
   [#6736]
 
-- Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
-
-- Update reset model to include keyword_preadpatt.schema [#6769]
-
 - Drop references to transform-1.2.0 from datamodel schemas to prevent
   issues with schema features not supported by stdatamodels. [#6752]
 
@@ -86,25 +82,10 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
-reset
------
-
-- Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
-  shape of the data to define these values [#6749]
-
 residual_fringe
 ---------------
 
 - Replaced fitting the background with an astropy fitting package [#6739]
-
-set_telescope_pointing
-----------------------
-
-- Update COARSE handling of FGS, psyiaf importing, model opening, and removal of stale code. [#6735]
-
-- Set CRVAL* from GS_* for guider exposures. [#6751]
-
-- Further restrict default models that can be updated. [#6767]
 
 skymatch
 --------
@@ -131,6 +112,38 @@ srctype
 -------
 
 - Add command line option to override source type [#6720]
+
+1.4.5 (2022-03-23)
+==================
+
+datamodels
+----------
+
+- Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
+
+- Update reset model to include keyword_preadpatt.schema [#6769]
+
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
+reset
+-----
+
+- Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
+  shape of the data to define these values [#6749]
+
+1.4.4 (2022-03-16)
+==================
+
+set_telescope_pointing
+----------------------
+- Set CRVAL* from GS_* for guider exposures. [#6751]
+
+- Add fgsid option to set_telescope_pointing [#6717]
+
+- Further restrict default models that can be updated. [#6767]
+
+- Update COARSE handling of FGS, pysiaf importing, model opening,
+  and removal of stale code. [#6735]
 
 
 1.4.3 (2022-02-03)
