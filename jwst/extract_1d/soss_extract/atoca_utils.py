@@ -618,6 +618,59 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     return wave_grid_soss
 
 
+def _trim_grids(all_grids, grid_range=None):
+    """ Remove all parts of the grids that are not in range
+    or that are already covered by grids with higher priority,
+    i.e. preceding in the list.
+    """
+    grids_trimmed = []
+    for grid in all_grids:
+        # Remove parts of the grid that are not in the wavelength range
+        if grid_range is not None:
+            # Find where the limit values fall on the grid
+            i_min = np.searchsorted(grid, grid_range[0], side='right')
+            i_max = np.searchsorted(grid, grid_range[1], side='left')
+            # Make sure it is a valid value and take one grid point past the limit
+            # since the oversampling could squeeze some nodes near the limits
+            i_min = np.max([i_min - 1, 0])
+            i_max = np.min([i_max, len(grid) - 1])
+            # Trim the grid
+            grid = grid[i_min:i_max + 1]
+
+        # Remove parts of the grid that are already covered 
+        if len(grids_trimmed) > 0:
+            # Use all grids already trimmed (so higher in priority)
+            conca_grid = np.concatenate(grids_trimmed)
+            # Find values below or above
+            is_below = grid < np.min(conca_grid)
+            is_above = grid > np.max(conca_grid)
+
+            # Do nothing yet if it surrounds the previous grid
+            if is_below.any() and is_above.any():
+                msg = 'Grid surrounds another grid, better to split in 2 parts.'
+                log.warning(msg)
+
+            # Remove values already covered, but keep one
+            # index past the limit
+            elif is_below.any():
+                idx = np.max(np.nonzero(is_below))
+                idx = np.min([idx + 1, len(grid) - 1])
+                grid = grid[:idx + 1]
+            elif is_above.any():
+                idx = np.min(np.nonzero(is_above))
+                idx = np.max([idx - 1, 0])
+                grid = grid[idx:]
+
+            # If all is covered, no need to do it again, so empty grid.
+            else:
+                grid = np.array([])
+
+        # Save trimmed grid
+        grids_trimmed.append(grid)
+
+    return grids_trimmed
+
+
 def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
                                 max_iter=10, rtol=10e-6, tol=0.0, max_total_size=1000000):
     """Return an irregular oversampled grid needed to reach a
@@ -654,11 +707,13 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
     # Save parameters for adapt_grid
     kwargs = dict(max_iter=max_iter, rtol=rtol, tol=tol)
 
+    # Remove unneeded parts of the grids
+    all_grids = _trim_grids(all_grids, grid_range=grid_range)
+
     # Save native size of each grids (use later to adjust max_grid_size)
     all_sizes = [len(grid) for grid in all_grids]
 
     # Iterate over grids to build the combined grid
-    covered_range = None
     combined_grid = np.array([])  # Init with empty array
     for i_grid, grid in enumerate(all_grids):
 
@@ -674,18 +729,6 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
         # Make sure it is at least the size of the native grid.
         kwargs['max_grid_size'] = np.max([max_grid_size, all_sizes[i_grid]])
 
-        # Remove parts of the grid that are not in the wavelength range
-        if grid_range is not None:
-            # Find where the limit values fall on the grid
-            i_min = np.searchsorted(grid, grid_range[0], side='right')
-            i_max = np.searchsorted(grid, grid_range[1], side='left')
-            # Make sure it is a valid value and take one grid point past the limit
-            # since the oversampling could squeeze some nodes near the limits
-            i_min = np.max([i_min - 1, 0])
-            i_max = np.min([i_max, len(grid) - 1])
-            # Trim the grid
-            grid = grid[i_min:i_max + 1]
-
         # Oversample the grid based on tolerance required
         grid, is_converged = adapt_grid(grid, estimate, **kwargs)
 
@@ -696,16 +739,17 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
         if not is_converged:
             msg = 'Precision cannot be garanteed:'
             if grid.size < kwargs['max_grid_size']:
-                msg += f' smallest subdivision 1/{2 ** kwargs["max_iter"]:2.1e} was reached for all_grid[{i_grid}]'
+                msg += (f' smallest subdivision 1/{2 ** kwargs["max_iter"]:2.1e}'
+                        f' was reached for grid index = {i_grid}')
             else:
                 total_size = np.sum(all_sizes)
                 msg += f' max grid size of '
                 msg += ' + '.join([f'{size}' for size in all_sizes])
-                msg += f' = {total_size} was reached for all_grid[{i_grid}].'
+                msg += f' = {total_size} was reached for grid index = {i_grid}.'
             log.warning(msg)
 
         # Remove regions already covered in the output grid
-        if covered_range is not None:
+        if len(combined_grid) > 0:
             idx_covered = (np.min(combined_grid) <= grid)
             idx_covered &= (grid <= np.max(combined_grid))
             grid = grid[~idx_covered]
@@ -2248,8 +2292,8 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
             # ... no need to interpolate
             interpolate = False
     else:
-        # Take the highest factor value
-        idx_below = -1
+        # Take the lowest factor value
+        idx_below = 0
         # No interpolation needed
         interpolate = False
 
@@ -2493,8 +2537,27 @@ class TikhoTests(dict):
             # Compute the derivative of the chi2
             factors, y_val = tests.get_chi2_derivative()
 
+            # Remove values for the higher factors that
+            # are not already below thresh. If not _find_intersect
+            # would just return the last value of factors.
+            i_last = -1
+            while abs(i_last) <= len(y_val) :
+                # Check derivative
+                if y_val[i_last] > thresh:
+                    # Save index in slice
+                    idx = slice(0, i_last)
+                    # break so `else` will be skipped
+                    break
+                # Update index
+                i_last -= 1
+
+            # If all the values were passed without breaking,
+            # do not remove any values
+            else:
+                idx = slice(None)
+
             # Find intersection with threshold
-            best_fac = _find_intersect(factors, y_val, thresh, interpolate, interp_index)
+            best_fac = _find_intersect(factors[idx], y_val[idx], thresh, interpolate, interp_index)
 
         elif mode in ['curvature', 'd_chi2', 'chi2']:
             best_fac = np.max(tests['factors'])
