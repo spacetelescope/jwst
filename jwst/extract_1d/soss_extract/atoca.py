@@ -1100,19 +1100,25 @@ class _BaseOverlap:
         # Use pre-run tests if not specified
         if tests is None:
             tests = self.tikho_tests
-            
-        # Remove all bad factors that are most likely unstable
-        min_factor = tests.best_tikho_factor(mode='d_chi2', thresh=1e-8)
-        idx_to_keep = min_factor <= tests['factors']
-        # Keep at least the max factor
-        idx_max = np.argmax(tests['factors'])
-        idx_to_keep[idx_max] = True
-        # Make new tests with remaining factors
-        new_tests = dict()
-        for key in tests:
-            if key != 'grid':
-                new_tests[key] = tests[key][idx_to_keep]
-        tests = atoca_utils.TikhoTests(new_tests)
+
+        # TODO Find a way to identify when the solution becomes unstable
+        # and do nnot use these in the search for the best tikhonov factor.
+        # The follwing commented bloc was an attemp to do it, but problems
+        # occur if the chi2 reaches a maximum at large factors.
+#         # Remove all bad factors that are most likely unstable
+#         min_factor = tests.best_tikho_factor(mode='d_chi2', thresh=1e-8)
+#         idx_to_keep = min_factor <= tests['factors']
+#         print(idx_to_keep)
+# #         # Keep at least the max factor if None are found
+# #         if not idx_to_keep.any():
+# #             idx_max = np.argmax(tests['factors'])
+# #             idx_to_keep[idx_max] = True
+#         # Make new tests with remaining factors
+#         new_tests = dict()
+#         for key in tests:
+#             if key != 'grid':
+#                 new_tests[key] = tests[key][idx_to_keep]
+#         tests = atoca_utils.TikhoTests(new_tests)
 
         # Modes to be tested
         if fit_mode == 'all':
@@ -1163,6 +1169,8 @@ class _BaseOverlap:
 
         # Get the factor of the chosen mode
         best_fac = results[best_mode]
+
+        log.debug(f'mode chosen to find regularization factor is {best_mode}')
 
         return best_fac, best_mode, results
 
