@@ -82,6 +82,11 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+resample
+--------
+
+- Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS fixed-slit. [#6777]
+
 residual_fringe
 ---------------
 
