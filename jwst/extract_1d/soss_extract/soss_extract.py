@@ -341,7 +341,10 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
     # 2nd priority: remaining red part of order 1
     # 3rd priority: remaining blue part of order 2
     # So, split order 2 in 2 parts, the shared wavelenght and the bluemost part
-    is_shared = grids_ord[2] >= np.max(grids_ord[1])
+    is_shared = grids_ord[2] >= np.min(grids_ord[1])
+    # Make sure order 1 is not more in the blue than order 2
+    cond = grids_ord[1] > np.min(grids_ord[2][is_shared])
+    grids_ord[1] = grids_ord[1][cond]
     # And make grid list
     all_grids = [grids_ord[2][is_shared], grids_ord[1], grids_ord[2][~is_shared]]
 
@@ -573,7 +576,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
-        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
+        tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='d_chi2')
         # Add all theses tests to previous ones
         all_tests = append_tiktests(all_tests, tiktests)
 
@@ -638,26 +641,28 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 
         # Mask for the fit. All valid pixels inside box aperture
         mask_fit = mask_trace_profile[idx_order2] | scimask
-        # and extract only what was not already modeled
-        already_modeled = np.isfinite(tracemodels[order_str])
-        mask_fit |= already_modeled
-
-        # Mask for what we want to model (or rebuild),
-        # being all pixels that will be extracted (both orders)
-        # and that order 2 contribution is not already modeled.
-        mask_rebuild = global_mask | already_modeled
+#         # and extract only what was not already modeled
+#         already_modeled = np.isfinite(tracemodels[order_str])
+#         mask_fit |= already_modeled
 
         # Build 1d spectrum integrated over pixels
         pixel_wave_grid, valid_cols = get_native_grid_from_trace(ref_files, transform, order)
-
-        # Hardcode wavelength boundaries as well
-        is_in_wv_range = (pixel_wave_grid < 1.1)
+        
+        # Hardcode wavelength highest boundary as well.
+        # Must overlap with lower limit in make_decontamination_grid
+        is_in_wv_range = (pixel_wave_grid < 0.95)
         pixel_wave_grid, valid_cols = pixel_wave_grid[is_in_wv_range], valid_cols[is_in_wv_range]
 
         # Model
+        scidata_order2_decont = scidata_bkg - tracemodels['Order 1']
         model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
-                                             mask_fit, mask_rebuild, order,
+                                             mask_fit, global_mask, order,
                                              pixel_wave_grid, valid_cols, save_tiktests)
+
+        # Keep only pixels from which order 2 contribution
+        # is not already modeled.
+        already_modeled = np.isfinite(tracemodels[order_str])
+        model = np.where(already_modeled, 0., model)
 
         # Add to tracemodels
         tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
@@ -786,7 +791,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
     tikfac = np.log10(tikfac)
     factors = np.logspace(tikfac - 2, tikfac + 2, 20)
     tiktests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
-    tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='all')
+    tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='d_chi2')
     all_tests = append_tiktests(all_tests, tiktests)
 
     # Run the extract method of the Engine.
