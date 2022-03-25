@@ -994,6 +994,9 @@ class _BaseOverlap:
 
         # Estimate of the factor
         factor_guess = (n_pixels / reg_estimate) ** 0.5
+        
+        # TODO: REturn directly the factor, not a grid around the factor.
+        # Then the user can build the grid. It's only one line!
 
         log.info(f'First guess of tikhonov factor: {factor_guess}')
 
