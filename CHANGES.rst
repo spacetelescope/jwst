@@ -118,6 +118,14 @@ srctype
 
 - Add command line option to override source type [#6720]
 
+1.4.6 (2022-03-25)
+==================
+
+set_telescope_pointing
+----------------------
+
+- Add option --force-level1bmodel. [#6778]
+
 1.4.5 (2022-03-23)
 ==================
 
