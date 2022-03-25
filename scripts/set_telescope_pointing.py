@@ -71,6 +71,10 @@ if __name__ == '__main__':
         help='Attempt to update WCS for any file or model. Default: False'
     )
     parser.add_argument(
+        '--force-level1bmodel', action='store_true', default=False,
+        help='Force unrecognized files to be opened as Level1bModel. Default: False'
+    )
+    parser.add_argument(
         '--allow-default', action='store_true',
         help='If pointing information cannot be determine, use header information.'
     )
@@ -144,6 +148,7 @@ if __name__ == '__main__':
             stp.add_wcs(
                 filename,
                 allow_any_file=args.allow_any_file,
+                force_level1bmodel=args.force_level1bmodel,
                 siaf_path=args.siaf,
                 engdb_url=args.engdb_url,
                 fgsid=args.fgsid,
