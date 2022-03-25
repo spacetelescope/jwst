@@ -373,7 +373,8 @@ class TransformParameters:
         return r
 
 
-def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, engdb_url=None,
+def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
+            default_pa_v3=0., siaf_path=None, engdb_url=None,
             fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, save_transforms=None, **transform_kwargs):
     """Add WCS information to a JWST DataModel.
@@ -393,6 +394,10 @@ def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, en
         Attempt to add the WCS information to any type of file.
         The default, `False`, only allows modifications of files that contain
         known datamodels of `Level1bmodel`, `ImageModel`, or `CubeModel`.
+
+    force_level1bmodel : bool
+        If not `allow_any_file`, and the input file model is unknown,
+        open the input file as a Level1bModel regardless.
 
     default_pa_v3 : float
         The V3 position angle to use if the pointing information
@@ -472,7 +477,16 @@ def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, en
 
     """
     logger.info('Updating WCS info for file %s', filename)
-    with datamodels.open(filename, guess=allow_any_file) as model:
+    try:
+        model = datamodels.open(filename, guess=allow_any_file)
+    except TypeError:
+        if force_level1bmodel:
+            logger.warning(f'Input {filename} is an unknown model, opening as a Level1bModel.')
+            model = datamodels.Level1bModel(filename)
+        else:
+            raise
+
+    try:
         if type(model) not in EXPECTED_MODELS:
             logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)'
                            '\n    Updating pointing may have no effect or detrimental effects on the WCS information,'
@@ -509,6 +523,8 @@ def add_wcs(filename, allow_any_file=False, default_pa_v3=0., siaf_path=None, en
             if transforms and save_transforms:
                 logger.info('Saving transform matrices to %s', save_transforms)
                 transforms.write_to_asdf(save_transforms)
+    finally:
+        model.close()
 
     logger.info('...update completed')
 
