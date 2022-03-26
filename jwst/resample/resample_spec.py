@@ -116,7 +116,7 @@ class ResampleSpecData(ResampleData):
         lam = 1e-6 * ref_lam
 
         # Find the spatial pixel scale:
-        y_slit_min, y_slit_max = self._max_virtual_slit_extent(all_wcs, refwcs)
+        y_slit_min, y_slit_max = self._max_virtual_slit_extent(all_wcs, targ_ra, targ_dec)
 
         xy_min = s2d(
             5 * [0],
@@ -210,16 +210,26 @@ class ResampleSpecData(ResampleData):
 
         return output_wcs
 
-    def _max_virtual_slit_extent(self, wcs_list, refwcs):
-        """Compute min & max slit coordinates for all nods in the "virtual" slit frame
+    def _max_virtual_slit_extent(self, wcs_list, target_ra, target_dec):
+        """
+        Compute min & max slit coordinates for all nods in the "virtual"
+        slit frame.
+
+        NOTE: this code, potentially, might have troubles dealing
+              with large dithers such that ``target_ra`` and ``target_dec``
+              may not be converted to slit frame (i.e., result in ``NaN``).
+
+              A more sophisticated algorithm may be needed to "stitch" large
+              dithers. But then distortions may come into play.
         """
         y_slit_min = np.inf
         y_slit_max = -np.inf
 
-        # w2s_ref = refwcs.get_transform('world', 'slit_frame')
+        t0 = 0
 
         for wcs in wcs_list:
             d2s = wcs.get_transform('detector', 'slit_frame')
+            w2s = wcs.get_transform('world', 'slit_frame')
 
             x, y = wcstools.grid_from_bounding_box(wcs.bounding_box)
             ra, dec, lam = wcs(x, y)
@@ -227,12 +237,19 @@ class ResampleSpecData(ResampleData):
             good = np.logical_and(np.isfinite(ra), np.isfinite(dec))
             x = x[good]
             y = y[good]
+            lm = lam[good]
 
-            # _, yslit, _ = w2s_ref(ra[good], dec[good], lam[good])
             _, yslit, _ = d2s(x, y)
 
-            y_slit_min_i = np.min(yslit)
-            y_slit_max_i = np.max(yslit)
+            # position of the target in the slit relative to its position
+            # for the refence image:
+            ts = w2s(target_ra, target_dec, np.mean(lm))[1] - t0
+
+            if wcs is wcs_list[0]:
+                t0 = ts
+
+            y_slit_min_i = np.min(yslit) - ts
+            y_slit_max_i = np.max(yslit) - ts
 
             if y_slit_min_i < y_slit_min:
                 y_slit_min = y_slit_min_i

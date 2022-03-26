@@ -18,7 +18,7 @@ def nirspec_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.var_rnoise += 1
-    im.meta.target = {'ra': 100, 'dec': 40}
+    im.meta.target = {'ra': 100.1237, 'dec': 39.86}
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
