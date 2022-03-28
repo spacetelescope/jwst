@@ -72,6 +72,12 @@ pipeline
 
 - Improve memory performance of calwebb_detector1 pipeline [#6758]
 
+resample
+--------
+
+- Re-designed algorithm for computation of the output WCS for the
+  ``resemple_spec`` step for ``NIRSpec`` data. [#6747]
+
 ramp_fitting
 ------------
 
@@ -166,6 +172,7 @@ set_telescope_pointing
 ----------------------
 
 - JP-2509 Update COARSE algorithm to use FGS1 exclusively. [#6700]
+
 
 1.4.2 (2022-01-20)
 ==================
