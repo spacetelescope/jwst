@@ -85,6 +85,8 @@ ramp_fitting
 resample
 --------
 
+- Restrict fix from #6777 to "vertical" spectra (i.e., MIRI LRS) only. [#6779]
+
 - Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS fixed-slit. [#6777]
 
 residual_fringe

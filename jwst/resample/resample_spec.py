@@ -289,9 +289,7 @@ class ResampleSpecData(ResampleData):
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
         x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_tan_slope)))
-        if swap_xy:
-            pix_to_ytan.intercept = -0.5 * (x_size - 1) * pix_to_ytan.slope
-        else:
+        if not swap_xy:
             pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
 
         # single model use size of x_tan_array
