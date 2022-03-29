@@ -4,8 +4,6 @@ $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
 id: "http://stsci.edu/schemas/jwst_datamodel/msatargacq.schema"
 title: MSA target acquisition data model
 allOf:
-- $ref: core.schema
-- $ref: keyword_msatargacq.schema
 - type: object
   properties:
     msa_targ_acq_table:
@@ -175,27 +173,137 @@ allOf:
           fits_keyword: NUMREFST
           fits_hdu: MSA_TARG_ACQ
         msa_half_facet_offset_V2:
-          title: "MSA V2 half-facet offset (arcsec)"
+          title: "[arcsec] MSA V2 half-facet offset"
           type: number
           fits_keyword: V2HFOFFS
           fits_hdu: MSA_TARG_ACQ
         msa_half_facet_offset_V3:
-          title: "MSA V3 half-facet offset (arcsec)"
+          title: "[arcsec] MSA V3 half-facet offset"
           type: number
           fits_keyword: V3HFOFFS
           fits_hdu: MSA_TARG_ACQ
         v2msactr:
-          title: "Center of MSA in V2 (arcsec)"
+          title: "[arcsec] Center of MSA in V2"
           type: number
           fits_keyword: V2MSACTR
           fits_hdu: MSA_TARG_ACQ
         v3msactr:
-          title: "Center of MSA in V3 (arcsec)"
+          title: "[arcsec] Center of MSA in V3"
           type: number
           fits_keyword: V3MSACTR
           fits_hdu: MSA_TARG_ACQ
         offstmag:
-          title: "least squares fit offset magnitude (arcsec)"
+          title: "[arcsec] least squares fit offset magnitude"
           type: number
           fits_keyword: OFFSTMAG
+          fits_hdu: MSA_TARG_ACQ
+        sam_roll :
+          title: "[arcsec] Calculated small angle maneuver roll comp"
+          type: number
+          fits_keyword: SAM_ROLL
+          fits_hdu: MSA_TARG_ACQ
+        sam_y:
+          title: "[arcsec] Calculated small angle maneuver y comp"
+          type: number
+          fits_keyword: SAM_Y
+          fits_hdu: MSA_TARG_ACQ
+        sam_x:
+          title: "[arcsec] Calculated small angle maneuver x comp"
+          type: number
+          fits_keyword: SAM_X
+          fits_hdu: MSA_TARG_ACQ
+        idl_roll:
+          title: "[arcsec] TA start targ roll angle in Idl coord"
+          type: number
+          fits_keyword: IDL_ROLL
+          fits_hdu: MSA_TARG_ACQ
+        ideal_y:
+          title: "[arcsec] target y ideal coord. at start of TA"
+          type: number
+          fits_keyword: IDEAL_Y
+          fits_hdu: MSA_TARG_ACQ
+        ideal_x:
+          title: "[arcsec] target x ideal coord. at start of TA"
+          type: number
+          fits_keyword: IDEAL_X
+          fits_hdu: MSA_TARG_ACQ
+        guiderid:
+          title: "guider that is reference for ideal coordinates"
+          type: string
+          fits_keyword: GUIDERID
+          fits_hdu: MSA_TARG_ACQ
+        fittargs:
+          title: "number of ref. stars used in final iteration"
+          type: integer
+          fits_keyword: FITTARGS
+          fits_hdu: MSA_TARG_ACQ
+        iteratns:
+          title: "number of least squares iterations performed"
+          type: integer
+          fits_keyword: ITERATNS
+          fits_hdu: MSA_TARG_ACQ
+        fitysigm:
+          title: "[arcsec] sigma value for the Y offset value"
+          type: number
+          fits_keyword: FITYSIGM
+          fits_hdu: MSA_TARG_ACQ
+        fitxsigm:
+          title: "[arcsec] sigma value for the X offset value"
+          type: number
+          fits_keyword: FITXSIGM
+          fits_hdu: MSA_TARG_ACQ
+        fitroffs:
+          title: "[arcsec] roll offset from the least squares fit"
+          type: number
+          fits_keyword: FITROFFS
+          fits_hdu: MSA_TARG_ACQ
+        fityoffs:
+          title: "[arcsec] y offset of the least squares fit"
+          type: number
+          fits_keyword: FITYOFFS
+          fits_hdu: MSA_TARG_ACQ
+        fitxoffs:
+          title: "[arcsec] x offset of the least squares fit"
+          type: number
+          fits_keyword: FITXOFFS
+          fits_hdu: MSA_TARG_ACQ
+        convthrs:
+          title: "[pixels] col/row convergence change threshold"
+          type: number
+          fits_keyword: CONVTHRS
+          fits_hdu: MSA_TARG_ACQ
+        cenboxrw:
+          title: "number of rows in TA box"
+          type: integer
+          fits_keyword: CENBOXRW
+          fits_hdu: MSA_TARG_ACQ
+        cenboxcl:
+          title: "number of columns in TA box"
+          type: integer
+          fits_keyword: CENBOXCL
+          fits_hdu: MSA_TARG_ACQ
+        imagetyp:
+          title: "type of centroid image"
+          type: string
+          fits_keyword: IMAGETYP
+          fits_hdu: MSA_TARG_ACQ
+        bckgmeth:
+          title: "algorithm used for background subtraction"
+          type: string
+          fits_keyword: BCKGMETH
+          fits_hdu: MSA_TARG_ACQ
+        crmethod:
+          title: "algorithm used for cosmic ray rejection"
+          type: string
+          fits_keyword: CRMETHOD
+          fits_hdu: MSA_TARG_ACQ
+        stat_rsn:
+          title: "reason for an unsuccessful target acquisition"
+          type: string
+          fits_keyword: STAT_RSN
+          fits_hdu: MSA_TARG_ACQ
+        tastatus:
+          title: "acquisition status"
+          type: string
+          fits_keyword: TASTATUS
           fits_hdu: MSA_TARG_ACQ
