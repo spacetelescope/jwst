@@ -96,11 +96,26 @@ class ResampleSpecData(ResampleData):
         refwcs = refmodel.meta.wcs
 
         s2d = refwcs.get_transform('slit_frame', 'detector')
+        d2s = refwcs.get_transform('detector', 'slit_frame')
         s2w = refwcs.get_transform('slit_frame', 'world')
 
-        # find Y-coord of the target in the reference image in the first column:
-        targ_ra = refmodel.meta.target.ra
-        targ_dec = refmodel.meta.target.dec
+        # estimate position of the target without relying in the meta.target:
+        bbox = refwcs.bounding_box
+
+        grid = wcstools.grid_from_bounding_box(bbox)
+        _, s, lam = np.array(d2s(*grid))
+        sd = s * refmodel.data
+        ld = lam * refmodel.data
+        good_s = np.isfinite(sd)
+        if np.any(good_s):
+            total = np.sum(refmodel.data[good_s])
+            wmean_s = np.sum(sd[good_s]) / total
+            wmean_l = np.sum(ld[good_s]) / total
+        else:
+            wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
+            wmean_l = d2s(*np.mean(bbox, axis=1))[3]
+
+        targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
 
         ref_lam = _find_nirspec_output_sampling_wavelengths(
             all_wcs,
@@ -118,16 +133,18 @@ class ResampleSpecData(ResampleData):
         # Find the spatial pixel scale:
         y_slit_min, y_slit_max = self._max_virtual_slit_extent(all_wcs, targ_ra, targ_dec)
 
+        nsampl = 50
         xy_min = s2d(
-            5 * [0],
-            5 * [y_slit_min],
-            lam[((0, n_lam // 4, n_lam // 2, (3 * n_lam) // 4, n_lam - 1), )]
+            nsampl * [0],
+            nsampl * [y_slit_min],
+            lam[(tuple((i * n_lam) // nsampl for i in range(nsampl)), )]
         )
         xy_max = s2d(
-            5 * [0],
-            5 * [y_slit_max],
-            lam[((0, n_lam // 4, n_lam // 2, (3 * n_lam) // 4, n_lam - 1), )]
+            nsampl * [0],
+            nsampl * [y_slit_max],
+            lam[(tuple((i * n_lam) // nsampl for i in range(nsampl)), )]
         )
+
         good = np.logical_and(np.isfinite(xy_min), np.isfinite(xy_max))
         if not np.any(good):
             raise ValueError("Error estimating output WCS pixel scale.")
@@ -152,7 +169,7 @@ class ResampleSpecData(ResampleData):
         else:
             y_slit_model = Linear1D(
                 slope=-pscale / self.pscale_ratio,
-                intercept=y_slit_min + (ny - border) * pscale * self.pscale_ratio
+                intercept=y_slit_max + border * pscale * self.pscale_ratio
             )
 
         # extrapolate 1/2 pixel at the edges and make tabular model w/inverse:
@@ -247,6 +264,7 @@ class ResampleSpecData(ResampleData):
 
             if wcs is wcs_list[0]:
                 t0 = ts
+                ts = 0
 
             y_slit_min_i = np.min(yslit) - ts
             y_slit_max_i = np.max(yslit) - ts
