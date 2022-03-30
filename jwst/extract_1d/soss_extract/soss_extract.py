@@ -505,7 +505,6 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     logl : float
         Log likelihood value associated with the Tikhonov factor selected.
     """
-    # TODO enlever _mask_wv_map_centroid_outside vue que la wave_grid devrait régler ce probleme
 
     # Init list of atoca 1d spectra
     spec_list = []
@@ -964,6 +963,12 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     output_model : DataModel
         DataModel containing the extracted spectra.
     """
+    # TODO: Read soss_kwargs['wave_grid'] if it is given. For now, we always build it based on rtol,
+    # TODO: (suite) but if the flux is known, an input wave grid in the form of a datamodels.SpecModel maybe
+    # TODO: (suite) would be the best.
+    # TODO: In fact, if the flux is know approximately, the estimate could also be an input. Could be the same input,
+    # TODO: for example soss_kwargs['spec_estimate_file'], a datamodels.SpecModel, with the grid and the estimate
+
     # Map the order integer names to the string names
     order_str_2_int = {f'Order {order}': order for order in [1, 2, 3]}
 
