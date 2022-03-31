@@ -1,6 +1,3 @@
-import copy
-import asdf
-
 import numpy as np
 from astropy.io import fits
 from astropy import table
@@ -50,13 +47,19 @@ def _make_gwcs_wcs(fits_hdr):
             if key in hdr:
                 b_coeff[key] = hdr[key]
 
-    distortion = polynomial.SIP(
-        fw.wcs.crpix,
-        fw.sip.a_order,
-        fw.sip.b_order,
-        a_coeff,
-        b_coeff
-    ) + Identity(2)
+    cx = {"c" + k[2:]: v for k, v in a_coeff.items()}
+    cy = {"c" + k[2:]: v for k, v in b_coeff.items()}
+    sip_distortion = (
+        (Shift(-fw.wcs.crpix[0]) & Shift(-fw.wcs.crpix[1]))
+        | Mapping((0, 1, 0, 1))
+        | (
+            polynomial.Polynomial2D(a_order, **cx, c1_0=1)
+            & polynomial.Polynomial2D(b_order, **cy, c0_1=1)
+        )
+        | (Shift(fw.wcs.crpix[0]) & Shift(fw.wcs.crpix[1]))
+    )
+
+    y, x = np.indices(fw.array_shape)
 
     unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
     unit_conv = unit_conv & unit_conv
@@ -88,7 +91,7 @@ def _make_gwcs_wcs(fits_hdr):
     s = 5e-6
     scale = Scale(s) & Scale(s)
 
-    distortion |= (offx & offy) | scale | tan2c | c2s | unit_conv_inv
+    sip_distortion |= (offx & offy) | scale | tan2c | c2s | unit_conv_inv
 
     taninv = s2c | c2tan
     tan = Pix2Sky_TAN()
@@ -103,17 +106,19 @@ def _make_gwcs_wcs(fits_hdr):
         axes_names=('x', 'y'),
         axes_order=(0, 1)
     )
-    pipeline = [(det_frm, distortion), (v2v3_frm, wcslin), (sky_frm, None)]
+    pipeline = [(det_frm, sip_distortion), (v2v3_frm, wcslin), (sky_frm, None)]
 
     gw = gwcs.WCS(input_frame=det_frm, output_frame=sky_frm,
                   forward_transform=pipeline)
     gw.crpix = fw.wcs.crpix
     gw.crval = fw.wcs.crval
+    gw.bounding_box = ((-0.5, fw.pixel_shape[0] - 0.5),
+                       (-0.5, fw.pixel_shape[1] - 0.5))
 
     # sanity check:
     for _ in range(100):
         x = np.random.randint(1, fw.pixel_shape[0])
-        y = np.random.randint(1, fw.pixel_shape[0])
+        y = np.random.randint(1, fw.pixel_shape[1])
         assert np.allclose(gw(x, y), fw.all_pix2world(x, y, 1),
                            rtol=0, atol=1e-11)
 
@@ -175,6 +180,8 @@ def _make_reference_gwcs_wcs(fits_hdr):
                   forward_transform=pipeline)
     gw.crpix = fw.wcs.crpix
     gw.crval = fw.wcs.crval
+    gw.bounding_box = ((-0.5, fw.pixel_shape[0] - 0.5),
+                       (-0.5, fw.pixel_shape[1] - 0.5))
 
     return gw
 
@@ -206,25 +213,6 @@ def _align_wcs(imcats, **kwargs):
 
 
 tweakreg_step.align_wcs = _align_wcs
-
-
-class _CustomImageModel(ImageModel):
-    @staticmethod
-    def clone(target, source, deepcopy=False, memo=None):
-        if deepcopy:
-            instance = copy.deepcopy(source._instance, memo=memo)
-            target._asdf = asdf.AsdfFile()  # avoid crash due to unserializable SIP
-            target._instance = instance
-            target._iscopy = source._iscopy
-        else:
-            target._asdf = source._asdf
-            target._instance = source._instance
-            target._iscopy = True
-
-        target._files_to_close = []
-        target._shape = source._shape
-        target._ctx = target
-        target._no_asdf_extension = source._no_asdf_extension
 
 
 def test_multichip_jwst_alignment():
@@ -304,7 +292,7 @@ def test_multichip_alignment_step():
     # image 1
     w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
 
-    m1 = _CustomImageModel(np.zeros((100, 100)))
+    m1 = ImageModel(np.zeros((100, 100)))
     m1.meta.filename = 'ext1'
     m1.meta.observation.observation_number = '1'
     m1.meta.observation.program_number = '1'
@@ -332,7 +320,7 @@ def test_multichip_alignment_step():
     # image 2
     w2 = _make_gwcs_wcs('data/wfc3_uvis2.hdr')
 
-    m2 = _CustomImageModel(np.zeros((100, 100)))
+    m2 = ImageModel(np.zeros((100, 100)))
     m2.meta.filename = 'ext4'
 
     m2.meta.observation.observation_number = '1'
@@ -360,7 +348,8 @@ def test_multichip_alignment_step():
 
     # refcat
     wr = _make_reference_gwcs_wcs('data/wfc3_uvis1.hdr')
-    mr = _CustomImageModel(np.zeros((100, 100)))
+
+    mr = ImageModel(np.zeros((100, 100)))
     mr.meta.filename = 'refcat'
     mr.meta.observation.observation_number = '0'
     mr.meta.observation.program_number = '0'
@@ -385,12 +374,24 @@ def test_multichip_alignment_step():
     refcat['y'] = y
     mr.tweakreg_catalog = refcat
 
+    # update bounding box of the reference WCS to include all test sources:
+    mr.meta.wcs.bounding_box = ((x.min() - 0.5, x.max() + 0.5),
+                                (y.min() - 0.5, y.max() + 0.5))
+
     mc = ModelContainer([mr, m1, m2])
     mc.models_grouped
 
     step = tweakreg_step.TweakRegStep()
     step.fitgeometry = 'general'
     step.nclip = 0
+    # Increase matching tolerance to pass 'fit_quality_is_good' test.
+    # This test would detect large corrections and therefore
+    # would flag the quality of the fit as "bad" and therefore, it will not
+    # apply computed corrections ('fit_quality_is_good' test was designed by
+    # Warren for evaluating "quality of fit" for HAP).
+    step.tolerance = 2
+    # Alternatively, disable this 'fit_quality_is_good' test:
+    # step.fit_quality_is_good = lambda x, y: True
 
     mr, m1, m2 = step.process(mc)
 
