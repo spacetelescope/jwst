@@ -3,6 +3,7 @@ from collections import defaultdict
 import os.path as op
 import traceback
 import numpy as np
+from astropy.stats import sigma_clipped_stats
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
@@ -235,33 +236,6 @@ class Spec2Pipeline(Pipeline):
                     else:
                         raise RuntimeError('Cannot determine WCS.')
 
-        # Create and save a WFSS e-/sec image, if requested
-        if exp_type in WFSS_TYPES and self.save_wfss_esec:
-            self.log.info('Creating WFSS e-/sec product')
-
-            # Find and load the gain reference file that we need
-            gain_filename = self.get_reference_file(calibrated, 'gain')
-            self.log.info('Using GAIN reference file %s', gain_filename)
-            with datamodels.GainModel(gain_filename) as gain_model:
-                if reffile_utils.ref_matches_sci(calibrated, gain_model):
-                    gain_image = gain_model.data
-                else:
-                    self.log.info('Extracting gain subarray to match science data')
-                    gain_image = reffile_utils.get_subarray_data(calibrated, gain_model)
-
-                # Apply the gain image to the WFSS image
-                gain_image_squared = gain_image * gain_image
-                wfss_esec = calibrated.copy()
-                wfss_esec.data *= gain_image
-                wfss_esec.var_poisson *= gain_image_squared
-                wfss_esec.var_rnoise *= gain_image_squared
-                wfss_esec.var_flat *= gain_image_squared
-                wfss_esec.err = np.sqrt(wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat)
-
-                # Save the WFSS e-/sec image
-                self.save_model(wfss_esec, suffix='esec', force=True)
-                del wfss_esec
-
         # Steps whose order is the same for all types of input.
         calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
         calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
@@ -273,7 +247,6 @@ class Spec2Pipeline(Pipeline):
         # srctype and wavecorr before flat_field.
         if exp_type in GRISM_TYPES:
             calibrated = self._process_grism(calibrated)
-            # Apply flat-field correction
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         else:
@@ -409,7 +382,51 @@ class Spec2Pipeline(Pipeline):
 
         WFSS/Grism data need flat_field before extract_2d.
         """
+
+        # Apply flat-field correction
         calibrated = self.flat_field(data)
+
+        # Create and save a WFSS e-/sec image, if requested
+        if self.save_wfss_esec:
+            self.log.info('Creating WFSS e-/sec product')
+
+            # Find and load the gain reference file that we need
+            gain_filename = self.get_reference_file(calibrated, 'gain')
+            self.log.info('Using GAIN reference file %s', gain_filename)
+            with datamodels.GainModel(gain_filename) as gain_model:
+
+                # WFSS images should always be full-frame, but check for subarrays
+                # anyway, just in case
+                if reffile_utils.ref_matches_sci(calibrated, gain_model):
+                    gain_image = gain_model.data
+                else:
+                    self.log.info('Extracting gain subarray to match science data')
+                    gain_image = reffile_utils.get_subarray_data(calibrated, gain_model)
+
+                # Compute the sigma-clipped mean of the gain image.
+                # The gain ref file doesn't have a DQ array that can be used to
+                # mask bad values, so manually exclude NaN's and gain <= 0.
+                # The clipping does a good job of automatically removing off-nominal
+                # values for the reference pixels around the perimeter.
+                mask = np.bitwise_or(np.isnan(gain_image), gain_image <= 0.)
+                mean_gain, _, _ = sigma_clipped_stats(gain_image, mask=mask)
+                self.log.debug(' mean gain = %s', mean_gain)
+
+                # Apply gain to the intermediate WFSS image
+                wfss_esec = calibrated.copy()
+                mean_gain_sqr = mean_gain ** 2
+                wfss_esec.data *= mean_gain
+                wfss_esec.var_poisson *= mean_gain_sqr
+                wfss_esec.var_rnoise *= mean_gain_sqr
+                wfss_esec.var_flat *= mean_gain_sqr
+                wfss_esec.err = np.sqrt(wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat)
+
+                # Save the WFSS e-/sec image
+                self.save_model(wfss_esec, suffix='esec', force=True)
+                del wfss_esec
+
+        # Continue with remaining calibration steps, using the original
+        # DN/sec image
         calibrated = self.extract_2d(calibrated)
         calibrated = self.srctype(calibrated)
         calibrated = self.straylight(calibrated)
