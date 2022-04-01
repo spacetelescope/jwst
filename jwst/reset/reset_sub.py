@@ -38,11 +38,25 @@ def do_correction(input_model, reset_model):
     # Save some data params for easy use later
     sci_nints = input_model.meta.exposure.nints        # number of integrations in input data
     sci_ngroups = input_model.meta.exposure.ngroups           # number of groups in input data
+    sci_integration_start = input_model.meta.exposure.integration_start
+    sci_integration_end = input_model.meta.exposure.integration_end
+    istart = 0
+    iend = sci_nints
+
+    if sci_integration_start is not None:
+        istart = sci_integration_start-1
+    if sci_integration_end is not None:
+        iend = sci_integration_end
+
+    print('Start and end integration ',istart,iend)
+    
+        
     # could also grab this information from input_model.meta.exposure.nints (ngroups)
 
     reset_nints = reset_model.meta.exposure.nints           # number of integrations in reset reference file
     reset_ngroups = reset_model.meta.exposure.ngroups         # number of groups
 
+    
     # Replace NaN's in the reset with zeros (should not happen but just in case)
     reset_model.data[np.isnan(reset_model.data)] = 0.0
     log.debug("Reset Sub using: nints = {}, ngroups = {}".format(sci_nints, sci_ngroups))
@@ -53,10 +67,16 @@ def do_correction(input_model, reset_model):
     # loop over all integrations
 
     print('sci_nints', sci_nints)
-    print('reset nints',reset_nints)
     print('sci_ngroups', sci_ngroups)
-    
-    for i in range(sci_nints):
+    print('reset nints',reset_nints)
+    print('reset ngroups',reset_ngroups)
+
+    # find out how many groups  we are correcting
+    # the maximum number of groups to correct is reset_ngroups
+    igroup = sci_ngroups
+    if reset_ngroups < sci_ngroups:
+        igroup = reset_ngroups
+    for i in range(istart, iend):
         # check if integration # > reset_nints
         ir = i
 
@@ -66,14 +86,15 @@ def do_correction(input_model, reset_model):
         # combine the science and reset DQ arrays
         output.pixeldq = np.bitwise_or(input_model.pixeldq, reset_model.dq)
 
-        # loop over groups in input science data:
-        for j in range(sci_ngroups):
-            jr = j
-            if j <= (reset_ngroups - 1):
+        # we are only correcting the first reset_ngroups
+        for j in range(igroup):
+            #jr = j
+            #if j <= (reset_ngroups - 1):
                 # subtract the SCI arrays for the groups = < reset_ngroups
-                print(i,j,ir,jr)
-                
-                output.data[i, j] -= reset_model.data[ir, jr]
+            #    print(i,j,ir,jr)
+
+            #print(i,j,ir,i-istart)
+            output.data[i-istart, j] -= reset_model.data[ir, j]
 
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
