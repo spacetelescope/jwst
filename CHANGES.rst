@@ -72,12 +72,6 @@ pipeline
 
 - Improve memory performance of calwebb_detector1 pipeline [#6758]
 
-resample
---------
-
-- Re-designed algorithm for computation of the output WCS for the
-  ``resemple_spec`` step for ``NIRSpec`` data. [#6747]
-
 ramp_fitting
 ------------
 
@@ -91,7 +85,11 @@ ramp_fitting
 resample
 --------
 
-- Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS fixed-slit. [#6777]
+- Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS
+  fixed-slit. [#6777]
+
+- Re-designed algorithm for computation of the output WCS for the
+  ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
 
 residual_fringe
 ---------------
