@@ -98,25 +98,24 @@ the :ref:`extract_1d <extract_1d_step>` step.
 
 Arguments
 ---------
-The ``calwebb_spec2`` pipeline has two optional arguments::
+The ``calwebb_spec2`` pipeline has two optional arguments.
 
-  --save_bsub  boolean  default=False
+``--save_bsub`` (boolean, default=False)
+  If set to ``True``, the results of the background subtraction step will be saved
+  to an intermediate file, using a product type of "_bsub" or "_bsubints", depending on
+  whether the data are 2D (averaged over integrations) or 3D (per-integration results).
 
-If set to ``True``, the results of the background subtraction step will be saved
-to an intermediate file, using a product type of "_bsub" or "_bsubints", depending on
-whether the data are 2D (averaged over integrations) or 3D (per-integration results).
-
-  --save_wfss_esec  boolean  default=False
-
-If set to ``True``, an intermediate image product is created for WFSS exposures that
-is in units of electrons/sec, instead of the normal DN/sec units that are used throughout
-the rest of processing. This product can be useful for doing off-line specialized
-processing of WFSS images. This product is created after the :ref:`background <background_step>`
-and :ref:`flat-field <flatfield_step>` steps have been applied, but before the
-:ref:`extract_2d <extract_2d_step>` step, so that it is the full WFSS image. The conversion
-to units of electrons/sec is accomplished by loading the :ref:`GAIN <gain_reffile>` reference file,
-computing the sigma-clipped mean gain across all pixels, and multiplying the WFSS image by the
-mean gain.  The intermediate file will have a product type of "_esec".
+``--save_wfss_esec`` (boolean, default=False)
+  If set to ``True``, an intermediate image product is created for WFSS exposures that
+  is in units of electrons/sec, instead of the normal DN/sec units that are used throughout
+  the rest of processing. This product can be useful for doing off-line specialized
+  processing of WFSS images. This product is created after the :ref:`background <background_step>`
+  and :ref:`flat-field <flatfield_step>` steps have been applied, but before the
+  :ref:`extract_2d <extract_2d_step>` step, so that it is the full WFSS image. The conversion
+  to units of electrons/sec is accomplished by loading the :ref:`GAIN <gain_reffile>` reference file,
+  computing the sigma-clipped mean gain across all pixels, and multiplying the WFSS image by the
+  mean gain.  The intermediate file will have a product type of "_esec". Only applies to
+  WFSS exposures.
 
 Inputs
 ------
