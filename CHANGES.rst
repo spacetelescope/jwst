@@ -1,4 +1,4 @@
-1.4.4 (unreleased)
+1.4.6 (unreleased)
 ==================
 
 associations
@@ -41,8 +41,15 @@ datamodels
 - Added the new keyword "BKGMETH" for use in the ``skymatch`` step.
   [#6736]
 
-- Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
+- Drop references to transform-1.2.0 from datamodel schemas to prevent
+  issues with schema features not supported by stdatamodels. [#6752]
 
+- Remove FILETYPE keyword from core schema, and all assignments to it [#6772]
+
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
+- Create MSA_TARG_ACQ schema [#6757]
+  
 extract_1d
 ----------
 
@@ -52,8 +59,20 @@ extract_1d
 - Check for non-zero array size before computing sigma-clipped
   statistics in IFU mode [#6728]
 
+- Propagate non-differentiated errors for IFU mode observations [#6732]
+
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
+
+regtest
+-------
+
+- Added a residual fringe correction test [#6771]
+
+pipeline
+--------
+
+- Improve memory performance of calwebb_detector1 pipeline [#6758]
 
 ramp_fitting
 ------------
@@ -62,18 +81,22 @@ ramp_fitting
   the various flavors of variance and ERR stored in the output
   products [#6715]
 
-reset
------
+- Adding feature to turn off calculations of ramps with good 0th group,
+  but all other groups are saturated. [#6737]
 
-- Reading nints and ngroups from  model.meta for reset reference file and data instead of using the
-  shape of the data to define these values [#6749]
-  
-set_telescope_pointing
-----------------------
+resample
+--------
 
-- Update COARSE handling of FGS, psyiaf importing, model opening, and removal of stale code. [#6735]
+- Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS
+  fixed-slit. [#6777]
 
-- Set CRVAL* from GS_* for guider exposures. [#6751]
+- Re-designed algorithm for computation of the output WCS for the
+  ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
+
+residual_fringe
+---------------
+
+- Replaced fitting the background with an astropy fitting package [#6739]
 
 skymatch
 --------
@@ -87,11 +110,59 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+source_catalog
+--------------
+
+- Fixed the KDTree calculation to use only finite source positions to
+  prevent memory issues on Linux systems. [#6765]
+
+- Updated the roundness and sharpness properties to use the source
+  centroid position instead of the peak position. [#6766]
+
 srctype
 -------
 
 - Add command line option to override source type [#6720]
 
+1.4.6 (2022-03-25)
+==================
+
+set_telescope_pointing
+----------------------
+
+- Add option --force-level1bmodel. [#6778]
+
+1.4.5 (2022-03-23)
+==================
+
+datamodels
+----------
+
+- Updated reset model to include NINTS, NGROUPS keywords and the subarray.schema [#6749]
+
+- Update reset model to include keyword_preadpatt.schema [#6769]
+
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
+reset
+-----
+
+- Read NINTS and NGROUPS from model.meta for reset reference file and data instead of using the
+  shape of the data to define these values [#6749]
+
+1.4.4 (2022-03-16)
+==================
+
+set_telescope_pointing
+----------------------
+- Set CRVAL* from GS_* for guider exposures. [#6751]
+
+- Add fgsid option to set_telescope_pointing [#6717]
+
+- Further restrict default models that can be updated. [#6767]
+
+- Update COARSE handling of FGS, pysiaf importing, model opening,
+  and removal of stale code. [#6735]
 
 
 1.4.3 (2022-02-03)
@@ -101,6 +172,7 @@ set_telescope_pointing
 ----------------------
 
 - JP-2509 Update COARSE algorithm to use FGS1 exclusively. [#6700]
+
 
 1.4.2 (2022-01-20)
 ==================
