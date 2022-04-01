@@ -51,6 +51,11 @@ def do_correction(input_model, reset_model):
     output = input_model.copy()
 
     # loop over all integrations
+
+    print('sci_nints', sci_nints)
+    print('reset nints',reset_nints)
+    print('sci_ngroups', sci_ngroups)
+    
     for i in range(sci_nints):
         # check if integration # > reset_nints
         ir = i
@@ -66,6 +71,8 @@ def do_correction(input_model, reset_model):
             jr = j
             if j <= (reset_ngroups - 1):
                 # subtract the SCI arrays for the groups = < reset_ngroups
+                print(i,j,ir,jr)
+                
                 output.data[i, j] -= reset_model.data[ir, jr]
 
             # combine the ERR arrays in quadrature
