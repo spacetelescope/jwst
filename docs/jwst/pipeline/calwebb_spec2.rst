@@ -112,7 +112,7 @@ If set to ``True``, an intermediate image product is created for WFSS exposures 
 is in units of electrons/sec, instead of the normal DN/sec units that are used throughout
 the rest of processing. This product can be useful for doing off-line specialized
 processing of WFSS images. This product is created after the :ref:`background <background_step>`
-and :ref:`flat-field <flat_field_step>` steps have been applied, but before the
+and :ref:`flat-field <flatfield_step>` steps have been applied, but before the
 :ref:`extract_2d <extract_2d_step>` step, so that it is the full WFSS image. The conversion
 to units of electrons/sec is accomplished by loading the :ref:`GAIN <gain_reffile>` reference file,
 computing the sigma-clipped mean gain across all pixels, and multiplying the WFSS image by the
