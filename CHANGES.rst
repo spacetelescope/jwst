@@ -1,4 +1,4 @@
-1.4.6 (unreleased)
+1.4.7 (unreleased)
 ==================
 
 associations
@@ -70,7 +70,10 @@ regtest
 pipeline
 --------
 
-- Improve memory performance of calwebb_detector1 pipeline [#6758]
+- Improve memory performance of `calwebb_detector1` pipeline [#6758]
+
+- Update the `calwebb_spec2` pipeline to allow for the creation of an
+  optional WFSS product that's in units of e-/sec [#6783]
 
 ramp_fitting
 ------------
