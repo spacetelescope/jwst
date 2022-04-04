@@ -36,50 +36,38 @@ def do_correction(input_model, reset_model):
     """
 
     # Save some data params for easy use later
-    sci_nints = input_model.meta.exposure.nints        # number of integrations in input data
-    sci_ngroups = input_model.meta.exposure.ngroups           # number of groups in input data
+    sci_nints = input_model.meta.exposure.nints      # num ints in input data
+    sci_ngroups = input_model.meta.exposure.ngroups  # num groups in input data
     sci_integration_start = input_model.meta.exposure.integration_start
     sci_integration_end = input_model.meta.exposure.integration_end
     istart = 0
     iend = sci_nints
 
     if sci_integration_start is not None:
-        istart = sci_integration_start-1
+        istart = sci_integration_start - 1
     if sci_integration_end is not None:
         iend = sci_integration_end
 
-    print('Start and end integration ',istart,iend)
-    
-        
-    # could also grab this information from input_model.meta.exposure.nints (ngroups)
+    reset_nints = reset_model.meta.exposure.nints      # num of int in ref file
+    reset_ngroups = reset_model.meta.exposure.ngroups  # num of groups
 
-    reset_nints = reset_model.meta.exposure.nints           # number of integrations in reset reference file
-    reset_ngroups = reset_model.meta.exposure.ngroups         # number of groups
-
-    
-    # Replace NaN's in the reset with zeros (should not happen but just in case)
+    # Replace NaN's in the reset with zeros(should not happen but just in case)
     reset_model.data[np.isnan(reset_model.data)] = 0.0
     log.debug("Reset Sub using: nints = {}, ngroups = {}".format(sci_nints, sci_ngroups))
 
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
-    # loop over all integrations
-
-    print('sci_nints', sci_nints)
-    print('sci_ngroups', sci_ngroups)
-    print('reset nints',reset_nints)
-    print('reset ngroups',reset_ngroups)
-
     # find out how many groups  we are correcting
     # the maximum number of groups to correct is reset_ngroups
     igroup = sci_ngroups
     if reset_ngroups < sci_ngroups:
         igroup = reset_ngroups
+
+    # loop over all integrations in science image
     for i in range(istart, iend):
         # check if integration # > reset_nints
         ir = i
-
         if i >= reset_nints:
             ir = reset_nints - 1
 
@@ -88,13 +76,7 @@ def do_correction(input_model, reset_model):
 
         # we are only correcting the first reset_ngroups
         for j in range(igroup):
-            #jr = j
-            #if j <= (reset_ngroups - 1):
-                # subtract the SCI arrays for the groups = < reset_ngroups
-            #    print(i,j,ir,jr)
-
-            #print(i,j,ir,i-istart)
-            output.data[i-istart, j] -= reset_model.data[ir, j]
+            output.data[i - istart, j] -= reset_model.data[ir, j]
 
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
