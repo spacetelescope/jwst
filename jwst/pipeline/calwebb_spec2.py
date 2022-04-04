@@ -3,11 +3,9 @@ from collections import defaultdict
 import os.path as op
 import traceback
 import numpy as np
-from astropy.stats import sigma_clipped_stats
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
-from ..lib import reffile_utils
 from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from ..stpipe import Pipeline
 
@@ -395,22 +393,16 @@ class Spec2Pipeline(Pipeline):
             self.log.info('Using GAIN reference file %s', gain_filename)
             with datamodels.GainModel(gain_filename) as gain_model:
 
-                # WFSS images should always be full-frame, but check for subarrays
-                # anyway, just in case
-                if reffile_utils.ref_matches_sci(calibrated, gain_model):
-                    gain_image = gain_model.data
-                else:
-                    self.log.info('Extracting gain subarray to match science data')
-                    gain_image = reffile_utils.get_subarray_data(calibrated, gain_model)
+                # Always use the full-frame version of the gain ref file,
+                # even the science data are taken with a subarray
+                gain_image = gain_model.data
 
-                # Compute the sigma-clipped mean of the gain image.
+                # Compute the simple mean of the gain image, excluding reference pixels.
                 # The gain ref file doesn't have a DQ array that can be used to
                 # mask bad values, so manually exclude NaN's and gain <= 0.
-                # The clipping does a good job of automatically removing off-nominal
-                # values for the reference pixels around the perimeter.
-                mask = np.bitwise_or(np.isnan(gain_image), gain_image <= 0.)
-                mean_gain, _, _ = sigma_clipped_stats(gain_image, mask=mask)
-                self.log.debug(' mean gain = %s', mean_gain)
+                gain_image[gain_image <= 0.] = np.NaN
+                mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
+                self.log.info('mean gain = %s', mean_gain)
 
                 # Apply gain to the intermediate WFSS image
                 wfss_esec = calibrated.copy()

@@ -113,9 +113,9 @@ The ``calwebb_spec2`` pipeline has two optional arguments.
   and :ref:`flat-field <flatfield_step>` steps have been applied, but before the
   :ref:`extract_2d <extract_2d_step>` step, so that it is the full WFSS image. The conversion
   to units of electrons/sec is accomplished by loading the :ref:`GAIN <gain_reffile>` reference file,
-  computing the sigma-clipped mean gain across all pixels, and multiplying the WFSS image by the
-  mean gain.  The intermediate file will have a product type of "_esec". Only applies to
-  WFSS exposures.
+  computing the mean gain across all pixels (excluding reference pixels), and multiplying the WFSS
+  image by the mean gain.  The intermediate file will have a product type of "_esec".
+  Only applies to WFSS exposures.
 
 Inputs
 ------
