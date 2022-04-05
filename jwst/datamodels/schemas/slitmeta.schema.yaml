@@ -107,3 +107,9 @@ properties:
     type: number
     fits_keyword: SRCDEC
     fits_hdu: SCI
+  slit_ymin:
+     title: Bottom of slit in slit_frame relative to (0, 0) center
+     type: number
+  slit_ymax:
+     title: Top of slit in slit_frame relative to (0, 0) center
+     type: number

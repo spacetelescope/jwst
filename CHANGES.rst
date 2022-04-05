@@ -1,4 +1,4 @@
-1.4.6 (unreleased)
+1.4.7 (unreleased)
 ==================
 
 associations
@@ -70,7 +70,10 @@ regtest
 pipeline
 --------
 
-- Improve memory performance of calwebb_detector1 pipeline [#6758]
+- Improve memory performance of `calwebb_detector1` pipeline [#6758]
+
+- Update the `calwebb_spec2` pipeline to allow for the creation of an
+  optional WFSS product that's in units of e-/sec [#6783]
 
 ramp_fitting
 ------------
@@ -85,7 +88,11 @@ ramp_fitting
 resample
 --------
 
-- Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS fixed-slit. [#6777]
+- Fixed ``resample_spec`` output spectrum centering issue for MIRI LRS
+  fixed-slit. [#6777]
+
+- Re-designed algorithm for computation of the output WCS for the
+  ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
 
 residual_fringe
 ---------------
@@ -166,6 +173,7 @@ set_telescope_pointing
 ----------------------
 
 - JP-2509 Update COARSE algorithm to use FGS1 exclusively. [#6700]
+
 
 1.4.2 (2022-01-20)
 ==================

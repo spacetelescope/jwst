@@ -28,6 +28,7 @@ def run_nis_wfss_spec2(jail, rtdata_module):
             '--steps.resample_spec.save_results=true',
             '--steps.cube_build.save_results=true',
             '--steps.extract_1d.save_results=true',
+            '--save_wfss_esec=true',
         ]
     }
 
@@ -37,7 +38,7 @@ def run_nis_wfss_spec2(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
-    ['assign_wcs', 'bsub', 'cal', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
+    ['assign_wcs', 'bsub', 'cal', 'esec', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
 )
 def test_nis_wfss_spec2(run_nis_wfss_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""
