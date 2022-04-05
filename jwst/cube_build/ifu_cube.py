@@ -2021,27 +2021,27 @@ class IFUCubeData():
         # Do this by looking for how many good spaxels there are at each wavelength and finding outliers
         # from the trend.
         if self.instrument == 'MIRI':
-            nz=flux.shape[0]
+            nz = flux.shape[0]
             # Create a vector of the number of good spaxels at each wavelength
             ngood = np.zeros(nz)
-            for zz in range(0,nz):
-                dqvec = dq[zz,:,:].ravel()
+            for zz in range(0, nz):
+                dqvec = dq[zz, :, :].ravel()
                 good = np.where(dqvec == 0)
                 ngood[zz] = len(good[0])
             # Find where this vector is non-zero, and compute 1% threshold of those good values
             good = np.where(ngood > 0)
             if (len(good[0]) > 0):
-                pctile=np.percentile(ngood[good],1)
+                pctile = np.percentile(ngood[good], 1)
                 # Figure out where the number of good values were less than 1/2 of threshold,
                 # and zero out those arrays.
-                lowcov=(np.where((ngood > 0) & (ngood < pctile/2.)))[0]
-                nlowcov=len(lowcov)
+                lowcov = (np.where((ngood > 0) & (ngood < pctile/2.)))[0]
+                nlowcov = len(lowcov)
                 log.info('Number of spectral tear planes adjusted: %i', nlowcov)
-                for zz in range(0,nlowcov):
-                    flux[lowcov[zz],:,:] = 0
-                    wmap[lowcov[zz],:,:] = 0
-                    var[lowcov[zz],:,:] = 0
-                    dq[lowcov[zz],:,:] = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE']
+                for zz in range(0, nlowcov):
+                    flux[lowcov[zz], :, :] = 0
+                    wmap[lowcov[zz], :, :] = 0
+                    var[lowcov[zz], :, :] = 0
+                    dq[lowcov[zz], :, :] = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE']
 
         # clean up empty wavelength planes except for single case
         if self.output_type != 'single':

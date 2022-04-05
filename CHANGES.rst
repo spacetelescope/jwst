@@ -29,6 +29,11 @@ cube_build
 
 - Fixed a bug in how the dq plane of NIRspec data is set [#6718]
 
+cube_build
+----------
+
+- Fix for residual spectral tearing in MIRI MRS multiband cubes [#2567]
+
 cube_skymatch
 -------------
 
