@@ -127,6 +127,13 @@ srctype
 
 - Add command line option to override source type [#6720]
 
+tweakreg
+--------
+
+- Make ``fit_quality_is_good()`` member private and rename it to
+  ``_is_wcs_correction_small()``. [#6781]
+
+
 1.4.6 (2022-03-25)
 ==================
 
@@ -2293,6 +2300,7 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
 
 wfs_combine
 -----------
