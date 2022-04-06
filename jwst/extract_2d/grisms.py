@@ -367,7 +367,7 @@ def extract_grism_objects(input_model,
     if len(grism_objects) == 0:
         raise ValueError("No grism objects created from source catalog")
 
-    log.info("Extracting grism objects into MultiSlitModel")
+    log.info("Extracting %d grism objects", len(grism_objects))
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 

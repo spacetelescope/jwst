@@ -820,6 +820,8 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                                                      xcentroid=xcenter,
                                                      ycentroid=ycenter,
                                                      is_extended=obj.is_extended))
+
+    log.info("Total of %d grism objects defined", len(grism_objects))
     if len(grism_objects) == 0:
         log.warning("No grism objects saved, check catalog")
     return grism_objects
