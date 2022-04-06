@@ -944,9 +944,7 @@ class DataSet():
         return conversion, no_cal
 
     def create_1d_conversion(self, model, conversion, waves, relresps):
-        """Is this function a good idea?
-
-        Create a 1D array of photometric conversion values based on
+        """Create a 1D array of photometric conversion values based on
         wavelength array of input spectrum and response as a function of wavelength.
 
         Parameters

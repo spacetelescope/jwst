@@ -64,15 +64,11 @@ extract_1d
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
-regtest
--------
+photom
+------
 
-- Added a residual fringe correction test [#6771]
-
-reset
------
-
-- Fix bug in how segemented data is corrected [#6784]
+- Allow SOSS input as MultiSpecModel, and do correction on extracted 1d
+  spectra [#6734]
 
 pipeline
 --------
@@ -81,6 +77,9 @@ pipeline
 
 - Update the `calwebb_spec2` pipeline to allow for the creation of an
   optional WFSS product that's in units of e-/sec [#6783]
+
+- Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
+  step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
 
 ramp_fitting
 ------------
@@ -92,6 +91,11 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+regtest
+-------
+
+- Added a residual fringe correction test [#6771]
+
 resample
 --------
 
@@ -100,6 +104,14 @@ resample
 
 - Re-designed algorithm for computation of the output WCS for the
   ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
+
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
+
+- Remove temporary `soss_atoca` parameter and make ATOCA the default
+  algorithm for SOSS data [#6734]
 
 residual_fringe
 ---------------
