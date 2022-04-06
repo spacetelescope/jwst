@@ -24,10 +24,22 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+background
+----------
+
+- Added the step parameter ``mmag_extract`` to allow for setting the
+  minimum magnitude of source catalog objects to be used in the WFSS
+  background subtraction process [#6788]
+
+- Added a check to make sure that a sufficient number of background
+  (source-free) pixels are available in a WFSS image before attempting
+  to compute statistics and scale the WFSS background reference image
+  [#6788]
+
 cube_build
 ----------
 
-- Fixed a bug in how the dq plane of NIRspec data is set [#6718]
+- Fixed a bug in how the DQ plane of NIRSpec data is set [#6718]
 
 cube_skymatch
 -------------
