@@ -195,26 +195,23 @@ modes. For NIRSpec observations there is one applicable argument:
   name [string value] of a specific slit region to extract. The default value of None
   will cause all known slits for the instrument mode to be extracted.
 
-For NIRCam and NIRISS WFSS, the ``extract_2d`` step has three optional arguments:
+For NIRCam and NIRISS WFSS, the ``extract_2d`` step has four optional arguments:
+
+``--wfss_extract_half_height``
+    int. The cross-dispersion half size of the extraction region, in pixels.
+
+``--mmag_extract``
+  float (default is 99.) The minimum magnitude object to extract, based on the value
+  of `isophotal_abmag` in the source catalog.
+
+``--extract_orders``
+  list. The list of spectral orders to extract. The default is taken from the
+  ``wavelengthrange`` reference file.
 
 ``--grism_objects``
   list (default is empty). A list of ``jwst.transforms.models.GrismObject``.
 
-``--mmag_extract``
-  float (default is 99.) The minimum magnitude object to extract.
-
-``--extract_orders``
-  list. The list of orders to extract. The default is taken from the
-  ``wavelengthrange`` reference file.
-
-
 For NIRCam TSGRISM, the ``extract_2d`` step has one optional argument:
 
 ``--tsgrism_extract_height``
-  int The cross-dispersion size (in units of pixels) to extract.
-
-
-For NIRCam and NIRISS WFSS mode, the ``extract_2d`` step has one optional argument:
-
-  ``--wfss_extract_half_height``
-    int. The cross-dispersion half size, in pixels.
+  int. The cross-dispersion extraction size, in units of pixels.

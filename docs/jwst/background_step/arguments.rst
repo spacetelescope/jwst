@@ -23,5 +23,5 @@ control the sigma clipping, and are passed as arguments to the astropy
 ``--mmag_extract``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
   Sets the minimum magnitude limit to use when selecting sources from the
-  WFSS source catalog, which is used to exclude source-impacted pixels
-  from the WFSS image when computing a scaling value. Defaults to 99.
+  WFSS source catalog, based on the value of `isophotal_abmag` in the
+  source catalog. Defaults to 99.
