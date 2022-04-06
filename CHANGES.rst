@@ -4,6 +4,8 @@
 associations
 ------------
 
+- Implement PoolRow to avoid deep copy of the AssociationPool table [#6787]
+
 - Added valid optical paths for NRS_LAMP observations to generate
   or exclude associations using lamp, disperser and detector [#6695]
 
