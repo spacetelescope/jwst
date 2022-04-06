@@ -203,7 +203,7 @@ def no_NaN(model, fill_value=0.):
         return temp
 
 
-def mask_from_source_cat(input_model, wl_range_name, mmag_extract):
+def mask_from_source_cat(input_model, wl_range_name, mmag_extract=99.):
     """Create a mask that is False within bounding boxes of sources.
 
     Parameters
