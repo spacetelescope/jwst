@@ -370,12 +370,15 @@ def compute_fiducial(wcslist, bounding_box=None):
     if spatial_footprint.any():
         lon, lat = spatial_footprint
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
-        x_mean = np.mean(np.cos(lat) * np.cos(lon))
-        y_mean = np.mean(np.cos(lat) * np.sin(lon))
-        z_mean = np.mean(np.sin(lat))
-        lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 + y_mean ** 2)))
+        x_mid = (np.max(np.cos(lat) * np.cos(lon)) +
+                 np.min(np.cos(lat) * np.cos(lon))) / 2.
+        y_mid = (np.max(np.cos(lat) * np.sin(lon)) +
+                 np.min(np.cos(lat) * np.sin(lon))) / 2.
+        z_mid = (np.max(np.sin(lat)) + np.min(np.sin(lat))) / 2.
+        lon_fiducial = np.rad2deg(np.arctan2(y_mid, x_mid)) % 360.0
+        lat_fiducial = np.rad2deg(np.arctan2(z_mid, np.sqrt(x_mid ** 2 + y_mid ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
+        log.info(f"Spatial fiducial point: {fiducial[spatial_axes]}")
     if spectral_footprint.any():
         fiducial[spectral_axes] = spectral_footprint.min()
     return fiducial
