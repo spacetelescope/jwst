@@ -16,7 +16,7 @@ class BackgroundStep(Step):
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
-        mmag_extract = float(default=99.)  # WFSS minimum abmag to extract
+        wfss_mmag_extract = float(default=99.)  # WFSS minimum abmag to extract
     """
 
     # These reference files are only used for WFSS/GRISM data.
@@ -59,7 +59,7 @@ class BackgroundStep(Step):
 
                 # Do the background subtraction for WFSS/GRISM data
                 result = background_sub.subtract_wfss_bkg(
-                    input_model, bkg_name, wlrange_name, self.mmag_extract)
+                    input_model, bkg_name, wlrange_name, self.wfss_mmag_extract)
                 if result is None:
                     result = input_model
                     result.meta.cal_step.back_sub = 'SKIPPED'

@@ -571,7 +571,8 @@ def create_grism_bbox(input_model,
                       mmag_extract=99.0,
                       extract_orders=None,
                       wfss_extract_half_height=None,
-                      wavelength_range=None):
+                      wavelength_range=None,
+                      nbright=999):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -605,6 +606,8 @@ def create_grism_bbox(input_model,
     wavelength_range : dict, optional
         Pairs of {spectral_order: (wave_min, wave_max)} for each order.
         If ``None``, the default one in the wavelengthrange reference file is used.
+    nbright : int, optional
+        The number of brightest objects to extract from the catalog.
 
     Returns
     -------
@@ -675,11 +678,12 @@ def create_grism_bbox(input_model,
 
     log.info(f"Getting objects from {input_model.meta.source_catalog}")
 
-    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range)
+    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range,
+                              nbright)
 
 
-def _create_grism_bbox(input_model, mmag_extract=99.0,
-                       wfss_extract_half_height=None, wavelength_range=None):
+def _create_grism_bbox(input_model, mmag_extract=99.0, wfss_extract_half_height=None,
+                       wavelength_range=None, nbright=999):
 
     log.debug(f'Extracting with wavelength_range {wavelength_range}')
 
@@ -819,12 +823,32 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                                                      sky_bbox_ur=obj.sky_bbox_ur,
                                                      xcentroid=xcenter,
                                                      ycentroid=ycenter,
-                                                     is_extended=obj.is_extended))
+                                                     is_extended=obj.is_extended,
+                                                     isophotal_abmag=obj.isophotal_abmag))
 
-    log.info("Total of %d grism objects defined", len(grism_objects))
-    if len(grism_objects) == 0:
-        log.warning("No grism objects saved, check catalog")
-    return grism_objects
+    # At this point we have a list of grism objects limited to
+    # isophotal_abmag < mmag_extract. We now need to further restrict
+    # the list to the N brightest objects, as given by nbright.
+    #
+    # grism_objects is a list of objects, so it's not easy or practical
+    # to sort it directly. So create a list of the isophotal_abmags, which
+    # we'll then use to find the N brightest objects.
+    mags = []
+    for obj in grism_objects:
+        mags.append(obj.isophotal_abmag)
+    indxs = np.argsort(mags)
+
+    # Create a final grism object list containing only the N brightest objects
+    final_objects = []
+    for i in list(indxs[:nbright]):
+        final_objects.append(grism_objects[i])
+    del grism_objects
+
+    log.info(f"Total of {len(final_objects)} grism objects defined")
+    if len(final_objects) == 0:
+        log.warning("No grism objects saved; check catalog or step params")
+
+    return final_objects
 
 
 def get_num_msa_open_shutters(shutter_state):
