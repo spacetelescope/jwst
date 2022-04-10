@@ -93,8 +93,8 @@ setup(
             define_macros=define_macros
         ),
         Extension(
-            'jwst.straylight.straylight_xartifact',
-            ['jwst/straylight/src/straylight_xartifact.c'],
+            'jwst.straylight.calc_xart',
+            ['jwst/straylight/src/calc_xart.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         )

@@ -37,7 +37,7 @@ class StraylightStep (Step):
             #                                               'regions')
             # Read in the hacked new reference file
             # (to be replace with a proper ref file read from CRDS)
-            self.mrsxart_name = os.path.join(os.path.expandvars('$MIRI3D_DATA_DIR'),'mrsxacor/temp/miri-mrsxacor-59660.fits')
+            self.mrsxart_name = os.path.join(os.path.expandvars('$MIRI3D_DATA_DIR'),'mrsxartcor/temp/miri-mrsxartcor-59663.fits')
 
             self.log.info('Using mrsxart reference file %s',
                           self.mrsxart_name)
