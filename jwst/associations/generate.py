@@ -1,12 +1,11 @@
 import logging
 
-from .association import (
-    make_timestamp
-)
+from .association import make_timestamp
 from .lib.process_list import (
     ProcessList,
     ProcessQueueSorted
 )
+from .pool import PoolRow
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -61,6 +60,8 @@ def generate(pool, rules, version_id=None):
         #     f'\n\trules {process_list.rules}'
         # )
         for item in process_list.items:
+            item = PoolRow(item)
+
             # logger.debug(f'Processing item {item}')
             existing_asns, new_asns, to_process = generate_from_item(
                 item,

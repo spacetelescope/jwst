@@ -4,6 +4,8 @@
 associations
 ------------
 
+- Implement PoolRow to avoid deep copy of the AssociationPool table [#6787]
+
 - Added valid optical paths for NRS_LAMP observations to generate
   or exclude associations using lamp, disperser and detector [#6695]
 
@@ -67,6 +69,11 @@ regtest
 
 - Added a residual fringe correction test [#6771]
 
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
+
 pipeline
 --------
 
@@ -124,6 +131,13 @@ srctype
 -------
 
 - Add command line option to override source type [#6720]
+
+tweakreg
+--------
+
+- Make ``fit_quality_is_good()`` member private and rename it to
+  ``_is_wcs_correction_small()``. [#6781]
+
 
 1.4.6 (2022-03-25)
 ==================
@@ -406,6 +420,9 @@ documentation
 -------------
 
 - Update text to point to the JWST CRDS website. [#6549]
+
+- Update to calwebb_detector documentation to include the reset step as one of the steps applied
+  to MIRI data [#6785]
 
 extract_1d
 ----------
@@ -2291,6 +2308,7 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
 
 wfs_combine
 -----------
