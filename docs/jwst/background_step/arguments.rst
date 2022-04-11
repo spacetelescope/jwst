@@ -20,8 +20,8 @@ control the sigma clipping, and are passed as arguments to the astropy
   Saves the combined, averaged background image used for background
   subtraction. Defaults to ``False``.
 
-``--mmag_extract``
+``--wfss_mmag_extract``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
-  Sets the minimum magnitude limit to use when selecting sources from the
-  WFSS source catalog, based on the value of `isophotal_abmag` in the
+  Sets the minimum (faintest) magnitude limit to use when selecting sources
+  from the WFSS source catalog, based on the value of `isophotal_abmag` in the
   source catalog. Defaults to 99.

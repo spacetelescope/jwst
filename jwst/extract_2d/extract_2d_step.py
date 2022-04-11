@@ -20,7 +20,7 @@ class Extract2dStep(Step):
         tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
         wfss_extract_half_height =  integer(default=5)  # extraction half height in pixels, WFSS mode
         wfss_mmag_extract = float(default=99.)  # minimum abmag to extract, WFSS mode
-        wfss_nbright = integer(default=300)  # number of brightest objects to extract
+        wfss_nbright = integer(default=300)  # number of brightest objects to extract, WFSS mode
     """
 
     reference_file_types = ['wavelengthrange']

@@ -62,8 +62,8 @@ corresponding to the FITS keywords "SLTNAME", "SLTSTRT1", "SLTSIZE1",
 will be copied from the input file to each of the output cutout images.
 
 
-NIRCam WFSS and NIRISS WFSS
-+++++++++++++++++++++++++++
+NIRCam and NIRISS WFSS
+++++++++++++++++++++++
 
 If the step parameter ``grism_objects`` is left unspecified, the default behavior
 is to use the source catalog that is specified in the input model's meta information,
@@ -78,13 +78,34 @@ of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported
 The dispersion direction will be documented by copying keyword "DISPAXIS"
 (1 = horizontal, 2 = vertical) from the input file to the output cutout.
 
+The ``wfss_mmag_extract`` and ``wfss_nbright`` parameters both affect which objects
+from a source catalog will be retained for extraction. The rejection or retention of
+objects proceeds as follows:
+
+* As each object is read from the source catalog, they are immediately rejected if 
+  their isophotal_abmag > ``wfss_mmag_extract``, meaning that only objects brighter than
+  ``wfss_mmag_extract`` will be retained. The default ``wfss_mmag_extract`` value of 99
+  effectively retains all objects.
+
+* If the computed footprint (bounding box) of the spectral trace of an object lies
+  completely outside the field of view of the grism image, it is rejected.
+
+* The list of objects retained after the above two filtering steps have been applied is
+  sorted based on ``isophotal_abmag`` (listed for each source in the source catalog) and
+  only the brightest ``wfss_nbright`` objects are retained. The default value of
+  ``wfss_nbright`` is currently 300.
+
+All remaining objects are then extracted from the grism image.
+
+WFSS Examples
+^^^^^^^^^^^^^
 Following are examples of how to customize the list of grism objects used in extract_2d.
 The input file must have a WCS assigned to it by running ``assign_wcs``. The default values
 for  wavelength range and the spectral orders are stored in the ``wavelengthrange``
-reference file which can be retrieved from CRDS. A user may supply a different
+reference file, which can be retrieved from CRDS. A user may supply a different
 wavelength range by passing `None` to ``reference_files``. In this case the spectral
 orders to be extracted and their corresponding wavelength range will be taken
-from the ``wavelength_range`` parameter which is a dictionary ``{spectral_order: (lam_min, lam_max)}``.
+from the ``wavelength_range`` parameter, which is a dictionary ``{spectral_order: (lam_min, lam_max)}``.
 
 .. doctest-skip::
 
@@ -111,7 +132,7 @@ point sources.
 .. doctest-skip::
 
   >>> from jwst.assign_wcs.util import create_grism_bbox
-  >>> grism_objects = create_grism_bbox(im, refs, mmag_extract=17,
+  >>> grism_objects = create_grism_bbox(im, refs, wfss_mmag_extract=17,
   ... extract_orders=[1], wfss_extract_half_height=10)
   >>> print(len(grism_objects))
   6
@@ -130,7 +151,7 @@ The computed extraction limits are in the ``order_bounding`` attribute ordered `
 .. doctest-skip::
 
   >>> from jwst.assign_wcs.util import create_grism_bbox
-  >>> grism_objects = create_grism_bbox(im, mmag_extract=17, wavelength_range={1: (3.01, 4.26)})
+  >>> grism_objects = create_grism_bbox(im, wfss_mmag_extract=17, wavelength_range={1: (3.01, 4.26)})
   >>> print([obj.sid for obj in grism_objects])
   [12, 26, 31, 37, 57]
   >>> print(grism_objects[-1])
@@ -195,23 +216,28 @@ modes. For NIRSpec observations there is one applicable argument:
   name [string value] of a specific slit region to extract. The default value of None
   will cause all known slits for the instrument mode to be extracted.
 
-For NIRCam and NIRISS WFSS, the ``extract_2d`` step has four optional arguments:
+There are several arguments available for Wide-Field Slitless Spectroscopy (WFSS) and
+Time-Series (TSO) grism spectroscopy:
+
+``--tsgrism_extract_height``
+  int. The cross-dispersion extraction size, in units of pixels. Only applies to TSO
+  mode.
 
 ``--wfss_extract_half_height``
-    int. The cross-dispersion half size of the extraction region, in pixels.
+  int. The cross-dispersion half size of the extraction region, in pixels, applied to
+  point sources. Only applies to WFSS mode.
 
-``--mmag_extract``
-  float (default is 99.) The minimum magnitude object to extract, based on the value
-  of `isophotal_abmag` in the source catalog.
+``--wfss_mmag_extract``
+  float (default is 99). The minimum (faintest) magnitude object to extract, based on
+  the value of `isophotal_abmag` in the source catalog. Only applies to WFSS mode.
+
+``--wfss_nbright``
+  int (default is 300). The number of brightest source catalog objects to extract.
+  Can be used in conjunction with ``wfss_mmag_extract``. Only applies to WFSS mode.
 
 ``--extract_orders``
   list. The list of spectral orders to extract. The default is taken from the
-  ``wavelengthrange`` reference file.
+  ``wavelengthrange`` reference file. Applies to both WFSS and TSO modes.
 
 ``--grism_objects``
   list (default is empty). A list of ``jwst.transforms.models.GrismObject``.
-
-For NIRCam TSGRISM, the ``extract_2d`` step has one optional argument:
-
-``--tsgrism_extract_height``
-  int. The cross-dispersion extraction size, in units of pixels.
