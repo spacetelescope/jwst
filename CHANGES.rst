@@ -32,7 +32,7 @@ cube_build
 cube_build
 ----------
 
-- Fix for residual spectral tearing in MIRI MRS multiband cubes [#2567]
+- Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
 
 cube_skymatch
 -------------
