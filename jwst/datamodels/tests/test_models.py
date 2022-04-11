@@ -444,6 +444,9 @@ def test_ramp_model_zero_frame_open_file(tmpdir):
     # Check opening a file doesn't change the dimensions
     with datamodels.RampModel(fname) as ramp1:
         assert ramp1.zeroframe.shape == ramp.zeroframe.shape
+        zframe0 = ramp.zeroframe
+        zframe1 = ramp1.zeroframe
+        np.testing.assert_allclose(zframe0, zframe1, 1.e-5)
 
 
 def test_ramp_model_zero_frame_by_dimensions():
