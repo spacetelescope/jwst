@@ -1,17 +1,16 @@
 # Module for  applying straylight correction.
 #
 # The routine correct_xartifact applies a cross-artifact correction to MRS
-# science slope images.  This new routine entirely replaces previous routines
-# which treated the cross-artifact as if it were traditional stray light
-# rather than a manifestation of internal reflections within the detector
-# substrate (i.e., a 'detector' PSF).
+# science slope images.  After computing this correction based on reference
+# model parameters applied to the observed detector image it will be subtracted
+# from the detector image.  This effectively removes unpleasant 'detector'
+# PSF effects that are non-local on the sky.
 
 import numpy as np
 import logging
 from ..datamodels import dqflags
 from astropy.io import fits
-import pdb
-#from .straylight_xartifact import xartifact_wrapper  # c extension
+#import pdb
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ def makemodel_ccode(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_a
     g_std = g_fwhm / (2 * np.sqrt(2. * np.log(2)))
 
     xsize, ysize = 1032, 1024
-    print('Entering C code')
+    print('Running C version')
 
     result = xart_wrapper(imin, imax, xsize, ysize,
                  xvec, fuse1d, gamma, lor_amp, g_std, g_dx, g1_amp, g2_amp)
@@ -148,8 +147,8 @@ def correct_xartifact(input_model, modelpars):
                                          param['LOR_SCALE'], param['GAU_FWHM'],
                                          param['GAU_XOFF'], param['GAU_SCALE1'],
                                          param['GAU_SCALE2'])
-        hdu=fits.PrimaryHDU(left_model)
-        hdu.writeto('test_c.fits',overwrite=True)
+        #hdu=fits.PrimaryHDU(left_model)
+        #hdu.writeto('test_c.fits',overwrite=True)
     except:
         log.info("No parameters for left detector half, not applying Cross-Artifact correction.")
 
@@ -159,7 +158,7 @@ def correct_xartifact(input_model, modelpars):
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 516, 1024
         fimg = output.data * mask
-        right_model = makemodel_composite(fimg, xvec, istart, istop, param['LOR_FWHM'],
+        right_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                          param['LOR_SCALE'], param['GAU_FWHM'],
                                          param['GAU_XOFF'], param['GAU_SCALE1'],
                                          param['GAU_SCALE2'])
@@ -173,8 +172,8 @@ def correct_xartifact(input_model, modelpars):
     output.data = output.data - model
 
     # Test
-    hdu=fits.PrimaryHDU(model)
-    hdu.writeto('pipemodel.fits',overwrite=True)
+    #hdu=fits.PrimaryHDU(model)
+    #hdu.writeto('pipemodel.fits',overwrite=True)
 
     log.info("Cross-artifact model complete.")
     return output

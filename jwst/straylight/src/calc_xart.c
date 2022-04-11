@@ -1,52 +1,58 @@
 /*
  
-Main function for Python: blot_wrapper
+Main function for Python: xart_wrapper
 
 Python signature: 
-            result = blot_wrapper(roi_det, blot_xsize, blot_ysize, xstart, xsize2,
-                                  xcenter, ycenter,
-                                  x_cube, y_cube, flux_cube)
+            result = xart_wrapper(imin, imax, xsize, ysize,
+                 xvec, fimg, gamma, lor_amp, g_std, g_dx, g1_amp, g2_amp)
 
-This module is used in outlier detection. Each file is mapped to the sky to create a single type
-IFU cube. Using the set of single IFUs a median IFU is determined. This median image is then
-mapped (blotted) back to the detector plane. This routine determines the overlap between
-the median blotted back image and the detector plane.
+This module is used in MRS straylight subtraction.  'Straylight' is actually caused by the
+detector cross-artifact arising from internal reflections within the detector substrate; in
+the MIRI imager this manifests as a clear cross-shaped pattern, but in the MIRI MRS the
+dispersed spectrum smears this pattern into additional traces and effectively broadens
+the along-slice profile.  We fit this with a combination of a broad lorentzian profile
+and four narrow gaussian profile corresponding to the cross-artifact peaks.
 
-The output of this function is a tuple of 2 arrays:(blot_flux, blot_weight)
+The parameters of these functions have been entirely determined from test data and are
+encoded within a reference file; this function uses those parameters in conjunction
+with the observed detector image to model the cross-artifact contribution.
+
+The output of this function is a single array: (xart_flux) giving the 1d detector
+representation of the cross-artifact model.
 
 Parameters
 ----------
-roi : double
-   Region of interest size for matching median image to detector pixels
-blot_xsize : int
+imin : int
+   Starting column to fit (1/2 detector at a time)
+imax : int
+   Ending column to fit
+xsize : int
    X axis detector size
-blot_ysize : int
+ysize : int
    Y axis detector size
-xstart : int
-   Only valid for MIRI. For NIRSpec = 0
-   The left most x detector pixel number the median image is being blotted to
-   Blotting occurs separately for each channel. We need to know which side
-   of the detector the median image is being blotted to
-xsize2 : int
-   If MIRI xsize2 = x size of the detector side the medina image is being blotted to
-   If NIRSpec, xsize2 = xsize
-xcenter : double array
-   x center pixel values of the detector values. Size xsize2.
-ycenter : double array
-   y center pixel values of the detector values. Size ysize
-x_cube : double array
-   x coordinate of median cube mapped back to detector
-y_cube : double array
-   y coordinate of median cube mapped back to detector
-flux_cube : double array
-   flux of median cube
+xvec : double array
+   Vector of X pixel values across the detector.
+fimg : double array
+   Detector flux values mapped to a single 1d array.
+gamma : double array
+   Gamma parameter of the Lorenztian for each detector row.
+lor_amp : double array
+   Amplitude of the Lorenztian for each detector row.
+g_std : double array
+   Standard deviation width of the gaussians for each detector row
+   1x for inner gaussian pair, 2x for outer gaussian pair.
+g_dx : double array
+   Linear offset of the gaussians for each detector row
+   1x for inner gaussian pair, 2x for outer gaussian pair.
+g1_amp : double array
+    Amplitude of the inner gaussians for each detector row.
+g2_amp : double array
+    Amplitude of the outer gaussians for each detector row.
 
 Returns
 -------
-blot_flux : numpy.ndarray
-  IFU spaxel cflux
-blot_weight : numpy.ndarray
-  IFU spaxel weight 
+xart_flux : numpy.ndarray
+  1d cross-artifact detector model
 */
 
 #include <stdlib.h>
@@ -81,11 +87,8 @@ int alloc_xart_arrays(int nelem, double **fluxv) {
    
 }
 
-
 // Do the computation of the cross-artifact values.
-
 // return values: xart_flux
-
 int xart_model(int imin, int imax, int xsize_det, int ysize_det,
 		 double *xvec,
 		 double *fimg, double *gamma, double *lor_amp,
@@ -103,16 +106,16 @@ int xart_model(int imin, int imax, int xsize_det, int ysize_det,
 
   for (j = 0; j < ysize_det; j++) {
     for (i = imin; i < imax; i++) {
-      for (k = imin; k < imax; k++) {
+      for (k = 0; k < xsize_det; k++) {
         fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * lor_amp[j] * gamma[j] * gamma[j])
            / (gamma[j] * gamma[j] + (xvec[k] - i) * (xvec[k] - i));
         fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * g1_amp[j]
            * exp(-((xvec[k] - i - g_dx[j]) * (xvec[k] - i - g_dx[j])) / (2 * g_std[j] * g_std[j])));
         fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * g1_amp[j]
            * exp(-((xvec[k] - i + g_dx[j]) * (xvec[k] - i + g_dx[j])) / (2 * g_std[j] * g_std[j])));
-        fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * g1_amp[j]
+        fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * g2_amp[j]
            * exp(-((xvec[k] - i - 2*g_dx[j]) * (xvec[k] - i - 2*g_dx[j])) / (8 * g_std[j] * g_std[j])));
-        fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * g1_amp[j]
+        fluxv[xsize_det * j + k] += (fimg[j * xsize_det + i] * g2_amp[j]
            * exp(-((xvec[k] - i + 2*g_dx[j]) * (xvec[k] - i + 2*g_dx[j])) / (8 * g_std[j] * g_std[j])));
       }
     }
@@ -126,7 +129,6 @@ int xart_model(int imin, int imax, int xsize_det, int ysize_det,
 
 
 //  set up the C extension
-
 PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) &&
         PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -142,7 +144,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     }
 }
 
-
+//  Main wrapper function interface to Python code
 static PyObject *xart_wrapper(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xveco, *fimgo, *gammao, *lor_ampo, *g_stdo, *g_dxo, *g1_ampo, *g2_ampo;
 
@@ -198,7 +200,6 @@ static PyObject *xart_wrapper(PyObject *module, PyObject *args) {
 			(double *) PyArray_DATA(g1_amp),
 			(double *) PyArray_DATA(g2_amp),
 			&xart_flux );
-
 
   if (status) {
     goto fail;
