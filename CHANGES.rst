@@ -92,6 +92,8 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+- Correcting the default ZEROFRAME allocation. [#6791]
+
 resample
 --------
 
