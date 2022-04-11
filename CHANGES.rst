@@ -69,6 +69,11 @@ regtest
 
 - Added a residual fringe correction test [#6771]
 
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
+
 pipeline
 --------
 
