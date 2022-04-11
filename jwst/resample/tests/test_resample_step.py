@@ -18,6 +18,7 @@ def nirspec_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.var_rnoise += 1
+    im.meta.target = {'ra': 100.1237, 'dec': 39.86}
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -203,8 +204,8 @@ def test_nirspec_wcs_roundtrip(nirspec_rate):
         ra, dec, lam = slit.meta.wcs(x, y)
         xp, yp = slit.meta.wcs.invert(ra, dec, lam)
 
-        assert_allclose(x, xp, atol=1e-8)
-        assert_allclose(y, yp, atol=1e-8)
+        assert_allclose(x, xp, rtol=0, atol=1e-8)
+        assert_allclose(y, yp, rtol=0, atol=3e-4)
 
 
 def test_miri_wcs_roundtrip(miri_rate):
