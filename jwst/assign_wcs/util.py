@@ -366,22 +366,28 @@ def compute_fiducial(wcslist, bounding_box=None):
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
 
-    wcs_init = wcslist[0]
-    domain_bounds = np.hstack([wcs_init.backward_transform(
-        *w.footprint(bounding_box=bounding_box).T) for w in wcslist])
-
-    output_bounding_box = []
-    for axis in wcslist[0].output_frame.axes_order:
-        axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
-        output_bounding_box.append((axis_min, axis_max))
-
-    sky_bounds = np.array(wcs_init.forward_transform(*output_bounding_box))
-    fiducial_new = np.mean(sky_bounds, axis=1)
-    return fiducial_new
-
+    n_input = len(wcslist)
     fiducial = np.empty(len(axes_types))
+    lon = np.empty(n_input * 2)
+    lat = np.empty(n_input * 2)
     if spatial_footprint.any():
-        lon, lat = spatial_footprint
+        for i in range(n_input):
+            wcs_init = wcslist[i]
+            domain_bounds = np.hstack([wcs_init.backward_transform(
+                *w.footprint(bounding_box=bounding_box).T) for w in wcslist])
+
+            output_bounding_box = []
+            for axis in wcslist[i].output_frame.axes_order:
+                axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
+                output_bounding_box.append((axis_min, axis_max))
+
+            sky_bounds = np.array(wcs_init.forward_transform(*output_bounding_box))
+            lon[i * 2:(i + 1) * 2] = sky_bounds[0]
+            lat[i * 2:(i + 1) * 2] = sky_bounds[1]
+        log.warning(f"Min, max of lon: {np.min(lon)} {np.max(lon)}")
+        log.warning(f"Min, max of lat: {np.min(lat)} {np.max(lat)}")
+        log.warning(f"Min+max/2 of lon, lat: {(np.min(lon)+np.max(lon)) / 2.}"
+                    f"{(np.min(lat)+np.max(lat)) / 2.}")
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
         x_mid = (np.max(np.cos(lat) * np.cos(lon)) +
                  np.min(np.cos(lat) * np.cos(lon))) / 2.
