@@ -384,10 +384,6 @@ def compute_fiducial(wcslist, bounding_box=None):
             sky_bounds = np.array(wcs_init.forward_transform(*output_bounding_box))
             lon[i * 2:(i + 1) * 2] = sky_bounds[0]
             lat[i * 2:(i + 1) * 2] = sky_bounds[1]
-        log.warning(f"Min, max of lon: {np.min(lon)} {np.max(lon)}")
-        log.warning(f"Min, max of lat: {np.min(lat)} {np.max(lat)}")
-        log.warning(f"Min+max/2 of lon, lat: {(np.min(lon)+np.max(lon)) / 2.}"
-                    f"{(np.min(lat)+np.max(lat)) / 2.}")
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
         x_mid = (np.max(np.cos(lat) * np.cos(lon)) +
                  np.min(np.cos(lat) * np.cos(lon))) / 2.
