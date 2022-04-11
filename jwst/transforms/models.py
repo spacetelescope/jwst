@@ -20,7 +20,7 @@ from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
 
-__all__ = ['Gwa2Slit','Slit2Msa', 'Logical', 'NirissSOSSModel', 'Slit',
+__all__ = ['Gwa2Slit', 'Slit2Msa', 'Logical', 'NirissSOSSModel', 'Slit',
            'NIRCAMForwardRowGrismDispersion', 'NIRCAMForwardColumnGrismDispersion',
            'NIRCAMBackwardGrismDispersion', 'MIRI_AB2Slice', 'GrismObject',
            'NIRISSForwardRowGrismDispersion', 'NIRISSForwardColumnGrismDispersion',
@@ -163,8 +163,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                         self.ycentroid,
                         str(self.partial_order),
                         str(self.waverange),
-                        str(is_extended),
-                        str(isophotal_abmag)))
+                        str(self.is_extended),
+                        str(self.isophotal_abmag)))
 
 
 class MIRI_AB2Slice(Model):
