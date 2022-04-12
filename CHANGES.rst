@@ -26,6 +26,11 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+assign_wcs
+----------
+
+Corrected computation of crpix by backward transform of fiducial [#6789]
+
 cube_build
 ----------
 
