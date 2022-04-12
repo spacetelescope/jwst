@@ -278,7 +278,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
                 fiducial[k] = crval[i]
                 i += 1
 
-    ref_fiducial = compute_fiducial([refmodel.meta.wcs])
+    ref_fiducial = np.array([refmodel.meta.wcsinfo.ra_ref, refmodel.meta.wcsinfo.dec_ref])
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -314,6 +314,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)
 
+    print(fiducial, ref_fiducial)
     out_frame = refmodel.meta.wcs.output_frame
     input_frame = refmodel.meta.wcs.input_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
