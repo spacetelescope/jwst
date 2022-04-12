@@ -223,7 +223,7 @@ class Spec3Pipeline(Pipeline):
                     result = self.photom(result)
                 else:
                     result = self.extract_1d(result)
-                self.combine_1d.exptime_key = 'unit_weight'
+
                 result = self.combine_1d(result)
 
             elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
