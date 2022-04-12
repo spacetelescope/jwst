@@ -69,6 +69,11 @@ regtest
 
 - Added a residual fringe correction test [#6771]
 
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
+
 pipeline
 --------
 
@@ -415,6 +420,9 @@ documentation
 -------------
 
 - Update text to point to the JWST CRDS website. [#6549]
+
+- Update to calwebb_detector documentation to include the reset step as one of the steps applied
+  to MIRI data [#6785]
 
 extract_1d
 ----------
