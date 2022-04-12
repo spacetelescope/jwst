@@ -366,24 +366,9 @@ def compute_fiducial(wcslist, bounding_box=None):
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
 
-    n_input = len(wcslist)
     fiducial = np.empty(len(axes_types))
-    lon = np.empty(n_input * 2)
-    lat = np.empty(n_input * 2)
     if spatial_footprint.any():
-        for i in range(n_input):
-            wcs_init = wcslist[i]
-            domain_bounds = np.hstack([wcs_init.backward_transform(
-                *w.footprint(bounding_box=bounding_box).T) for w in wcslist])
-
-            output_bounding_box = []
-            for axis in wcslist[i].output_frame.axes_order:
-                axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
-                output_bounding_box.append((axis_min, axis_max))
-
-            sky_bounds = np.array(wcs_init.forward_transform(*output_bounding_box))
-            lon[i * 2:(i + 1) * 2] = sky_bounds[0]
-            lat[i * 2:(i + 1) * 2] = sky_bounds[1]
+        lon, lat = spatial_footprint
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
         x_mid = (np.max(np.cos(lat) * np.cos(lon)) +
                  np.min(np.cos(lat) * np.cos(lon))) / 2.
