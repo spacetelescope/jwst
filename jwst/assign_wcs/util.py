@@ -132,7 +132,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     delta[spatial_idx[0]] = 1
 
     crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
+    crval_with_offsets = wcs(*crpix_with_offsets)
 
     coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)

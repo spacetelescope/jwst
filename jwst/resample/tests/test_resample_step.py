@@ -152,9 +152,9 @@ def nircam_rate():
         'name': 'FULL',
         'slowaxis': 2,
         'xsize': xsize,
-        'xstart': 1,
+        'xstart': 920,
         'ysize': ysize,
-        'ystart': 1}
+        'ystart': 920}
     im.meta.observation = {
         'activity_id': '01',
         'date': '2021-10-25',
