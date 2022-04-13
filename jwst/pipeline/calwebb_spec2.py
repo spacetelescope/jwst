@@ -286,15 +286,21 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
-        x1d = self.extract_1d(resampled)
 
+        # SOSS data need to run photom on x1d products and optionally save the photom
+        # output, while all other exptypes simply run extract_1d.
         if exp_type == 'NIS_SOSS':
             if multi_int:
                 self.photom.suffix = 'x1dints'
             else:
                 self.photom.suffix = 'x1d'
+            self.extract_1d.save_results = False
+            x1d = self.extract_1d(resampled)
+
             self.photom.save_results = self.save_results
             x1d = self.photom(x1d)
+        else:
+            x1d = self.extract_1d(resampled)
 
         resampled.close()
         x1d.close()
