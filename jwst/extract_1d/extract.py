@@ -338,50 +338,45 @@ def get_extract_parameters(
                     # Note: extract_params['dispaxis'] is not assigned. This is done later, possibly slit by slit.
 
                     if meta.target.source_type == "EXTENDED":
-                        log.info("Target is extended, so the entire region will be extracted.")
                         shape = input_model.data.shape
-                        extract_params['src_coeff'] = None
-                        extract_params['bkg_coeff'] = None
-                        extract_params['bkg_fit'] = None
-                        extract_params['bkg_order'] = 0
-                        extract_params['subtract_background'] = False
-                        extract_params['use_source_posn'] = False
-                        extract_params['xstart'] = 0
-                        extract_params['xstop'] = shape[-1] - 1
-                        extract_params['ystart'] = 0
-                        extract_params['ystop'] = shape[-2] - 1
-                        extract_params['extract_width'] = None
-                        extract_params['independent_var'] = 'pixel'
-                        extract_params['position_correction'] = 0  # default value
+                        extract_params['xstart'] = aper.get('xstart', 0)
+                        extract_params['xstop'] = aper.get('xstop', shape[-1] - 1)
+                        extract_params['ystart'] = aper.get('ystart', 0)
+                        extract_params['ystop'] = aper.get('ystop', shape[-2] - 1)
                     else:
-                        extract_params['src_coeff'] = aper.get('src_coeff')
-                        extract_params['bkg_coeff'] = aper.get('bkg_coeff')
-                        if extract_params['bkg_coeff'] is not None:
-                            extract_params['subtract_background'] = True
-                            extract_params['bkg_fit'] = aper.get('bkg_fit', 'poly')
-                        else:
-                            extract_params['bkg_fit'] = None
-                            extract_params['subtract_background'] = False
-                        extract_params['independent_var'] = aper.get('independent_var', 'pixel').lower()
-
-                        if bkg_order is None:
-                            extract_params['bkg_order'] = aper.get('bkg_order', 0)
-                        else:
-                            # If the user supplied a value, use that value.
-                            extract_params['bkg_order'] = bkg_order
-
-                        if use_source_posn is None:
-                            extract_params['use_source_posn'] = aper.get('use_source_posn', False)
-                        else:
-                            # If the user supplied a value, use that value.
-                            extract_params['use_source_posn'] = use_source_posn
-
                         extract_params['xstart'] = aper.get('xstart')
                         extract_params['xstop'] = aper.get('xstop')
                         extract_params['ystart'] = aper.get('ystart')
                         extract_params['ystop'] = aper.get('ystop')
-                        extract_params['extract_width'] = aper.get('extract_width')
-                        extract_params['position_correction'] = 0  # default value
+
+                    extract_params['src_coeff'] = aper.get('src_coeff')
+                    extract_params['bkg_coeff'] = aper.get('bkg_coeff')
+                    if extract_params['bkg_coeff'] is not None:
+                        extract_params['subtract_background'] = True
+                        if bkg_fit is not None:
+                            extract_params['bkg_fit'] = bkg_fit
+                        else:
+                            extract_params['bkg_fit'] = aper.get('bkg_fit', 'poly')
+                    else:
+                        extract_params['bkg_fit'] = None
+                        extract_params['subtract_background'] = False
+
+                    extract_params['independent_var'] = aper.get('independent_var', 'pixel').lower()
+
+                    if bkg_order is None:
+                        extract_params['bkg_order'] = aper.get('bkg_order', 0)
+                    else:
+                        # If the user supplied a value, use that value.
+                        extract_params['bkg_order'] = bkg_order
+
+                    if use_source_posn is None:
+                        extract_params['use_source_posn'] = aper.get('use_source_posn', False)
+                    else:
+                        # If the user supplied a value, use that value.
+                        extract_params['use_source_posn'] = use_source_posn
+
+                    extract_params['extract_width'] = aper.get('extract_width')
+                    extract_params['position_correction'] = 0  # default value
 
                     if smoothing_length is None:
                         extract_params['smoothing_length'] = aper.get('smoothing_length', 0)
