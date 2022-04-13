@@ -152,9 +152,9 @@ def nircam_rate():
         'name': 'FULL',
         'slowaxis': 2,
         'xsize': xsize,
-        'xstart': 920,
+        'xstart': 1,
         'ysize': ysize,
-        'ystart': 920}
+        'ystart': 1}
     im.meta.observation = {
         'activity_id': '01',
         'date': '2021-10-25',
@@ -274,7 +274,7 @@ def test_weight_type(nircam_rate, _jail):
     # assert_allclose(result1.data, result2.data)
     # assert_allclose(result1.wht, result2.wht)
     assert_allclose(result1.data[100:105, 100:105], 7.5, rtol=1e-2)
-    assert_allclose(result1.wht[100:105, 100:105], 20, rtol=1e-2)
+    assert_allclose(result1.wht[100:105, 100:105], 19.5, rtol=1e-2)
 
     result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
 
