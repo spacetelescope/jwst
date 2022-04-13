@@ -50,6 +50,8 @@ datamodels
 
 - Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
 
+- Correcting the default ZEROFRAME allocation. [#6791]
+
 extract_1d
 ----------
 
@@ -91,8 +93,6 @@ ramp_fitting
 
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
-
-- Correcting the default ZEROFRAME allocation. [#6791]
 
 resample
 --------
