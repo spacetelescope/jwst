@@ -29,7 +29,8 @@ align_refs
 assign_wcs
 ----------
 
-Corrected computation of crpix by backward transform of fiducial [#6789]
+Corrected computation of crpix by backward transform of fiducial, allow
+for reference outside of detector frame [#6789]
 
 cube_build
 ----------
