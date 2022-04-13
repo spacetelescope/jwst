@@ -413,3 +413,50 @@ def test_meta_date_management(tmp_path):
 def test_model_container_ind_asn_exptype(container):
     ind = container.ind_asn_type('science')
     assert ind == [0, 1]
+
+
+def test_ramp_model_zero_frame_open_file(tmpdir):
+    """
+    Ensures opening a FITS with ZEROFRAME results in a good ZEROFRAME.
+    """
+    nints, ngroups, nrows, ncols = 2, 10, 5, 5
+    dims = nints, ngroups, nrows, ncols
+    zdims = (nints, nrows, ncols)
+
+    dbase = 1000.
+    zbase = dbase * .75
+
+    data = np.ones(dims, dtype=float) * dbase
+    err = np.zeros(dims, dtype=float)
+    pdq = np.zeros(dims[-2:], dtype=np.uint32)
+    gdq = np.zeros(dims, dtype=np.uint8)
+
+    # Test default exposure zero_frame
+    ramp = datamodels.RampModel(data=data, err=err, pixeldq=pdq, groupdq=gdq)
+
+    ramp.meta.exposure.zero_frame = True
+    ramp.zeroframe = np.ones(zdims, dtype=ramp.data.dtype) * zbase
+
+    ofile = "my_temp_ramp.fits"
+    fname = os.path.join(tmpdir, ofile)
+    ramp.save(fname)
+
+    # Check opening a file doesn't change the dimensions
+    with datamodels.RampModel(fname) as ramp1:
+        assert ramp1.zeroframe.shape == ramp.zeroframe.shape
+        zframe0 = ramp.zeroframe
+        zframe1 = ramp1.zeroframe
+        np.testing.assert_allclose(zframe0, zframe1, 1.e-5)
+
+
+def test_ramp_model_zero_frame_by_dimensions():
+    """
+    Ensures creating a RampModel by dimensions results in the correct
+    dimensions for ZEROFRAME.
+    """
+    nints, ngroups, nrows, ncols = 2, 10, 5, 5
+    dims = (nints, ngroups, nrows, ncols)
+    zdims = (nints, nrows, ncols)
+
+    with datamodels.RampModel(dims) as ramp:
+        assert ramp.zeroframe.shape == zdims
