@@ -538,7 +538,9 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         scidata = input_model.data.astype('float64')
         scierr = input_model.err.astype('float64')
         scimask = input_model.dq > 0  # Mask bad pixels with True.
-        refmask = bitfield_to_boolean_mask(input_model.dq, ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
+        refmask = bitfield_to_boolean_mask(input_model.dq,
+                                           ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
+                                           flip_bits=True)
 
         # Perform background correction.
         bkg_mask = make_background_mask(scidata, width=40)
