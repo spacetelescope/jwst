@@ -61,6 +61,9 @@ extract_1d
 
 - Propagate non-differentiated errors for IFU mode observations [#6732]
 
+- Remove temporary `soss_atoca` parameter and make ATOCA the default
+  algorithm for SOSS data [#6734]
+
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
@@ -109,9 +112,6 @@ reset
 -----
 
 - Fix bug in how segemented data is corrected [#6784]
-
-- Remove temporary `soss_atoca` parameter and make ATOCA the default
-  algorithm for SOSS data [#6734]
 
 residual_fringe
 ---------------
