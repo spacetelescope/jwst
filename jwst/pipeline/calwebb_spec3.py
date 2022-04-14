@@ -18,6 +18,7 @@ from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 from ..combine_1d import combine_1d_step
+from ..photom import photom_step
 
 
 __all__ = ['Spec3Pipeline']
@@ -40,6 +41,7 @@ class Spec3Pipeline(Pipeline):
     2-D spectroscopic resampling (resample_spec)
     3-D spectroscopic resampling (cube_build)
     1-D spectral extraction (extract_1d)
+    Absolute Photometric Calibration (photom)
     1-D spectral combination (combine_1d)
     """
 
@@ -57,6 +59,7 @@ class Spec3Pipeline(Pipeline):
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep,
+        'photom': photom_step.PhotomStep,
         'combine_1d': combine_1d_step.Combine1dStep
     }
 
@@ -211,10 +214,16 @@ class Spec3Pipeline(Pipeline):
 
                 if exptype in ['NIS_SOSS']:
                     # For NIRISS SOSS, don't save the extract_1d results,
-                    # they're identical to the calwebb_spec2 x1d products
+                    # instead run photom on the extract_1d results and save
+                    # those instead.
                     self.extract_1d.save_results = False
+                    self.photom.save_results = self.save_results
+                    self.photom.suffix = 'x1d'
+                    result = self.extract_1d(result)
+                    result = self.photom(result)
+                else:
+                    result = self.extract_1d(result)
 
-                result = self.extract_1d(result)
                 result = self.combine_1d(result)
 
             elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
