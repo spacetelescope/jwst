@@ -336,7 +336,6 @@ def get_extract_parameters(
                     extract_params['match'] = EXACT
                     extract_params['spectral_order'] = sp_order
                     # Note: extract_params['dispaxis'] is not assigned. This is done later, possibly slit by slit.
-
                     if meta.target.source_type == "EXTENDED":
                         shape = input_model.data.shape
                         extract_params['xstart'] = aper.get('xstart', 0)
