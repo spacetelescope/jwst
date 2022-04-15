@@ -1032,19 +1032,17 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
         dq_list.append(d_flat_dq)
     n_dq = len(dq_list)
 
-    # When a combination of flats are used the pixel dq flag is set to DO_NOTUSE
-    # if any of the component flags have DO_NOT_USE for that pixel
-
+    # Combine the component flat dq arrays.  If there are none, make a
+    # dq array with all BADFLAT bits set
     flat_dq = np.zeros(default_shape, dtype=np.uint32)
-    if n_dq == 1:
-        flat_dq = dq_list[0].copy()
-    elif n_dq == 2:
-        flat_dq = np.bitwise_or(dq_list[0], dq_list[1])
-    elif n_dq == 3:
-        temp = np.bitwise_or(dq_list[0], dq_list[1])
-        flat_dq = np.bitwise_or(temp, dq_list[2])
+    if n_dq == 0:
+        flat_dq = np.bitwise_or(flat_dq, BADFLAT)
+    else:
+        for dq_component in dq_list:
+            flat_dq = np.bitwise_or(flat_dq, dq_component)
 
-    # flag DO_NOT_USE and NO_FLAT_FIELD if some or all the flats had DO_NOT_USE
+    # Flag DO_NOT_USE, NO_FLAT_FIELD and UNRELIABLE_FLAT where some or all the
+    # flats had DO_NOT_USE set
     iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
     flat_dq[iloc] = np.bitwise_or(flat_dq[iloc], BADFLAT)
 
