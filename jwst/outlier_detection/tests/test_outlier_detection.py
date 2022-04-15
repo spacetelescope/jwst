@@ -111,6 +111,8 @@ def we_many_sci(
     sci1.meta.wcsinfo.cdelt1 = 3e-6
     sci1.meta.wcsinfo.cdelt2 = 3e-6
     sci1.meta.wcsinfo.roll_ref = 0
+    sci1.meta.wcsinfo.ra_ref = 1.5e-5
+    sci1.meta.wcsinfo.dec_ref = 1.5e-5
     sci1.meta.wcsinfo.v3yangle = 0
     sci1.meta.wcsinfo.vparity = -1
     sci1.meta.wcsinfo.pc1_1 = 1
