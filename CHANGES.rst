@@ -92,6 +92,8 @@ pipeline
 - Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
   step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
 
+- Added ResetStep back into `calwebb_dark` for MIRI exposures [#6798]
+
 ramp_fitting
 ------------
 
