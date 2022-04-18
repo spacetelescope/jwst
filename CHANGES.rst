@@ -75,6 +75,12 @@ extract_1d
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
+flatfield
+---------
+
+- Change DQ flags for NIRSpec flatfield where one or more component flats
+  (fflat, dflat, sflat) is bad (#6794)
+
 photom
 ------
 
