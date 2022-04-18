@@ -78,17 +78,18 @@ class ResampleStep(Step):
         if ref_filename != 'N/A':
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
-
         else:
             # If there is no drizpars reffile
             self.log.info("No DRIZPARS reffile")
             kwargs = self._set_spec_defaults()
 
+        kwargs['allowed_memory'] = self.allowed_memory
+        kwargs['weight_type'] = str(self.weight_type)
+
         # Issue a warning about the use of exptime weighting
         if self.weight_type == 'exptime':
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
-        kwargs['allowed_memory'] = self.allowed_memory
 
         # Custom output WCS parameters.
         # Modify get_drizpars if any of these get into reference files:
