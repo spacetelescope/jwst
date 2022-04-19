@@ -1,5 +1,4 @@
 import math
-import warnings
 
 import pytest
 import numpy as np
@@ -7,6 +6,7 @@ import numpy as np
 from astropy import units as u
 
 from jwst import datamodels
+from jwst.datamodels import SpecModel, MultiSpecModel
 from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
@@ -90,6 +90,41 @@ def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):
     return wl
 
 
+def mk_soss_spec(settings, speclen):
+    """Create a 2-D array of wavelengths, linearly spaced in one axis.
+
+    Parameters
+    ----------
+    settings : list
+        Each entry in the list should be a dict of settings to match
+        to photom reference file entries - filter, pupil, and order.
+
+    speclen : list
+        Length of spectrum for each entry in settings; list lengths
+        must match
+
+    Returns
+    -------
+    model : MultiSpecModel
+        The simulated output of extract_1d to be calibrated; this is
+        the SOSS-specific ordering to be tested.
+    """
+    model = MultiSpecModel()
+    for i, inspec in enumerate(settings):
+        # Make number of columns equal to length of SpecModel's spec_table dtype, then assign
+        # dtype to each column. Use to initialize SpecModel for entry into output MultiSpecModel
+        otab = np.array(list(zip(*([np.linspace(0.6, 4.0, speclen[i])] +
+                                   [np.ones(speclen[i]) for _ in range(len(SpecModel().spec_table.dtype) - 1)]))),
+                        dtype=SpecModel().spec_table.dtype)
+        specmodel = datamodels.SpecModel(spec_table=otab)
+        model.meta.instrument.filter = inspec['filter']
+        model.meta.instrument.pupil = inspec['pupil']
+        specmodel.spectral_order = inspec['order']
+        model.spec.append(specmodel)
+
+    return model
+
+
 def create_input(instrument, detector, exptype,
                  filter=None, pupil=None, grating=None, band=None):
     """Create dummy data (an open model) of the appropriate type.
@@ -156,19 +191,12 @@ def create_input(instrument, detector, exptype,
                 slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         elif exptype == 'NIS_SOSS':
-            shape = (96, 2048)
-            (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
-            input_model = datamodels.ImageModel(data=data, dq=dq, err=err)
-            # There is no wavelength attribute for ImageModel, but this
-            # should work anyway.
-            wl = mk_wavelength(shape, 0.6, 4.0, dispaxis=1)
-            input_model.meta.target.source_type = 'POINT'  # output will be MJy
-            input_model.wavelength = wl.copy()
-            input_model.var_poisson = var_p
-            input_model.var_rnoise = var_r
-            input_model.var_flat = var_f
-            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
-            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
+            settings = [
+                {'filter': filter, 'pupil': pupil, 'order': 1},
+                {'filter': filter, 'pupil': pupil, 'order': 2},
+            ]
+            speclen = [200, 200]
+            input_model = mk_soss_spec(settings, speclen)
         else:                                   # NIS_IMAGE
             shape = (96, 128)
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
@@ -1244,8 +1272,8 @@ def test_niriss_soss():
     ftab = create_photom_niriss_soss(min_r=8.0, max_r=9.0)
     ds.calc_niriss(ftab)
 
-    input = save_input.data
-    output = ds.input.data                      # ds.input is the output
+    input = save_input.spec[0].spec_table['FLUX']
+    output = ds.input.spec[0].spec_table['FLUX']                      # ds.input is the output
     sp_order = 1                                # to agree with photom.py
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
                               slitname=None, order=sp_order)
@@ -1253,15 +1281,13 @@ def test_niriss_soss():
     nelem = ftab.phot_table['nelem'][rownum]
     wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
     relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
-    shape = input.shape
-    ix = shape[1] // 2
-    iy = shape[0] // 2
-    wl = input_model.wavelength[iy, ix]
+    test_ind = len(input) // 2
+    wl = input_model.spec[0].spec_table['WAVELENGTH'][test_ind]
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
     compare = photmj * rel_resp
     # Compare the values at the center pixel.
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[test_ind] / input[test_ind]
     assert(np.allclose(ratio, compare, rtol=1.e-7))
 
 
@@ -1589,7 +1615,5 @@ def test_find_row():
     ind = photom.find_row(ftab.phot_table, {'filter': 'F444W', 'pupil': 'GRISMR', 'order': 1})
     assert ind == 4
 
-    with warnings.catch_warnings(record=True) as caught:
-        ind = photom.find_row(ftab.phot_table, {'filter': 'F444W', 'pupil': 'GRISMR', 'order': 2})
-        assert ind is None
-        assert len(caught) == 1
+    ind = photom.find_row(ftab.phot_table, {'filter': 'F444W', 'pupil': 'GRISMR', 'order': 2})
+    assert ind is None

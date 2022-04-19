@@ -26,6 +26,12 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+assign_wcs
+----------
+
+Corrected computation of crpix by backward transform of fiducial, allow
+for reference outside of detector frame [#6789]
+
 cube_build
 ----------
 
@@ -50,6 +56,8 @@ datamodels
 
 - Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
 
+- Correcting the default ZEROFRAME allocation. [#6791]
+
 extract_1d
 ----------
 
@@ -61,18 +69,23 @@ extract_1d
 
 - Propagate non-differentiated errors for IFU mode observations [#6732]
 
+- Remove temporary `soss_atoca` parameter and make ATOCA the default
+  algorithm for SOSS data [#6734]
+
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
-regtest
--------
+flatfield
+---------
 
-- Added a residual fringe correction test [#6771]
+- Change DQ flags for NIRSpec flatfield where one or more component flats
+  (fflat, dflat, sflat) is bad (#6794)
 
-reset
------
+photom
+------
 
-- Fix bug in how segemented data is corrected [#6784]
+- Allow SOSS input as MultiSpecModel, and do correction on extracted 1d
+  spectra [#6734]
 
 pipeline
 --------
@@ -81,6 +94,9 @@ pipeline
 
 - Update the `calwebb_spec2` pipeline to allow for the creation of an
   optional WFSS product that's in units of e-/sec [#6783]
+
+- Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
+  step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
 
 ramp_fitting
 ------------
@@ -92,6 +108,11 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+regtest
+-------
+
+- Added a residual fringe correction test [#6771]
+
 resample
 --------
 
@@ -100,6 +121,14 @@ resample
 
 - Re-designed algorithm for computation of the output WCS for the
   ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
+
+- Fixed handling of user-supplied ``weight_type`` parameter value for
+  ``resample_spec``. [#6796]
+
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
 
 residual_fringe
 ---------------

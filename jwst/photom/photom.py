@@ -63,7 +63,7 @@ def find_row(fits_table, match_fields):
     if len(row) > 1:
         raise MatchFitsTableRowError(f"Expected to find one matching row in table, found {len(row)}.")
     if len(row) == 0:
-        warnings.warn("Expected to find one matching row in table, found 0.")
+        log.warning("Expected to find one matching row in table, found 0.")
         return None
     return row[0]
 
@@ -133,6 +133,7 @@ class DataSet():
 
         # Initialize other non-correction pars attributes.
         self.slitnum = -1
+        self.specnum = -1
         self.inverse = inverse
         self.source_type = source_type
         if self.source_type is None and model.meta.target.source_type is not None:
@@ -391,14 +392,14 @@ class DataSet():
                 self.photom_io(ftab.phot_table[row])
 
         elif self.exptype in ['NIS_SOSS']:
-            # NIRISS SOSS
-            # Hardwire the science data order number to 1 for now
-            order = 1
-            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
-            row = find_row(ftab.phot_table, fields_to_match)
-            if row is None:
-                return
-            self.photom_io(ftab.phot_table[row], order)
+            for spec in self.input.spec:
+                self.specnum += 1
+                self.order = spec.spectral_order
+                fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': self.order}
+                row = find_row(ftab.phot_table, fields_to_match)
+                if row is None:
+                    return
+                self.photom_io(ftab.phot_table[row], self.order)
         else:
             fields_to_match = {'filter': self.filter, 'pupil': self.pupil}
             row = find_row(ftab.phot_table, fields_to_match)
@@ -701,6 +702,9 @@ class DataSet():
                         conversion /= slit.meta.photometry.pixelarea_steradians
                 else:
                     unit_is_surface_brightness = False
+            elif isinstance(self.input, datamodels.MultiSpecModel):
+                # MultiSpecModel output from extract1d should not require this area conversion?
+                unit_is_surface_brightness = False
             else:
                 if self.source_type is None or self.source_type != 'POINT':
                     if self.input.meta.photometry.pixelarea_steradians is None:
@@ -720,6 +724,9 @@ class DataSet():
                 conversion
             self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = \
                 conversion * MJSR_TO_UJA2
+        elif isinstance(self.input, datamodels.MultiSpecModel):
+            # No place in MultiSpecModel schema to store photometry info
+            pass
         else:
             self.input.meta.photometry.conversion_megajanskys = conversion
             self.input.meta.photometry.conversion_microjanskys = conversion * MJSR_TO_UJA2
@@ -796,6 +803,12 @@ class DataSet():
                     conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
                                                                    self.exptype, conversion,
                                                                    waves, relresps, order)
+            elif isinstance(self.input, datamodels.MultiSpecModel):
+
+                # This input does not require a 2d conversion, but a 1d interpolation on the
+                # input wavelength vector to find the relresponse.
+                conversion, no_cal = self.create_1d_conversion(self.input.spec[self.specnum],
+                                                               conversion, waves, relresps)
             else:
                 conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
                                                                waves, relresps, order)
@@ -827,7 +840,31 @@ class DataSet():
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
-
+        elif isinstance(self.input, datamodels.MultiSpecModel):
+            # Does this block need to address SB columns as well, or will
+            # they (presumably) never be populated for SOSS?
+            # It appears flux_error is the only error column populated?
+            spec = self.input.spec[self.specnum]
+            spec.spec_table.FLUX *= conversion
+            spec.spec_table.FLUX_ERROR *= conversion
+            spec.spec_table.FLUX_VAR_POISSON *= conversion ** 2.
+            spec.spec_table.FLUX_VAR_RNOISE *= conversion ** 2.
+            spec.spec_table.FLUX_VAR_FLAT *= conversion ** 2.
+            spec.spec_table.BACKGROUND *= conversion
+            spec.spec_table.BKGD_ERROR *= conversion
+            spec.spec_table.BKGD_VAR_POISSON *= conversion ** 2.
+            spec.spec_table.BKGD_VAR_RNOISE *= conversion ** 2.
+            spec.spec_table.BKGD_VAR_FLAT *= conversion ** 2.
+            spec.spec_table.columns['FLUX'].unit = 'Jy'
+            spec.spec_table.columns['FLUX_ERROR'].unit = 'Jy'
+            spec.spec_table.columns['FLUX_VAR_POISSON'].unit = 'Jy^2'
+            spec.spec_table.columns['FLUX_VAR_RNOISE'].unit = 'Jy^2'
+            spec.spec_table.columns['FLUX_VAR_FLAT'].unit = 'Jy^2'
+            spec.spec_table.columns['BACKGROUND'].unit = 'Jy'
+            spec.spec_table.columns['BKGD_ERROR'].unit = 'Jy'
+            spec.spec_table.columns['BKGD_VAR_POISSON'].unit = 'Jy^2'
+            spec.spec_table.columns['BKGD_VAR_RNOISE'].unit = 'Jy^2'
+            spec.spec_table.columns['BKGD_VAR_FLAT'].unit = 'Jy^2'
         else:
             if not self.inverse:
                 self.input.data *= conversion
@@ -902,6 +939,63 @@ class DataSet():
         # Combine the scalar and 2D conversion factors
         conversion = conversion * conv_2d
         no_cal = np.isnan(conv_2d)
+        conversion[no_cal] = 0.
+
+        return conversion, no_cal
+
+    def create_1d_conversion(self, model, conversion, waves, relresps):
+        """Create a 1D array of photometric conversion values based on
+        wavelength array of input spectrum and response as a function of wavelength.
+
+        Parameters
+        ----------
+        model : `~jwst.datamodels.DataModel`
+            Input data model containing the necessary wavelength information
+        conversion : float
+            Initial scalar photometric conversion value
+        waves : float
+            1D wavelength vector on which relative response values are
+            sampled
+        relresps : float
+            1D photometric response values, as a function of waves
+
+        Returns
+        -------
+        conversion : float
+            1D array of computed photometric conversion values
+        no_cal : int
+            1D mask indicating where no conversion is available
+        """
+
+        # Get the 2D wavelength array corresponding to the input
+        # image pixel values
+        wl_array = model.spec_table['WAVELENGTH']
+
+        flip_wl = False
+        if (np.nanargmax(wl_array) - np.nanargmin(wl_array)) < 0:
+            # Need monotonically increasing wavelengths for interp
+            # Bool flag to flip fit if True
+            flip_wl = True
+            wl_array = wl_array[::-1]
+
+        wl_array[np.isnan(wl_array)] = -1.
+
+        if (np.nanargmax(waves) - np.nanargmin(waves)) < 0:
+            # Need monotonically increasing wavelengths for interp
+            # This shouldn't have effects external to method.
+            waves = waves[::-1]
+            relresps = relresps[::-1]
+
+        # Interpolate the photometric response values onto the
+        # 1D wavelength grid
+        conv_1d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
+
+        if flip_wl:
+            # If wl_array was flipped, flip the conversion before returning it.
+            conv_1d = conv_1d[::-1]
+        # Combine the scalar and 1D conversion factors
+        conversion = conversion * conv_1d
+        no_cal = np.isnan(conv_1d)
         conversion[no_cal] = 0.
 
         return conversion, no_cal
@@ -1099,7 +1193,10 @@ class DataSet():
 
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
-        self.save_area_info(ftab, area_fname)
+        # SOSS data are in a MultiSpecModel, which will not allow for
+        # saving the area info.
+        if self.exptype != 'NIS_SOSS':
+            self.save_area_info(ftab, area_fname)
 
         if self.instrument == 'NIRISS':
             self.calc_niriss(ftab)

@@ -103,7 +103,9 @@ with all inputs and the operator is applied to the results, e.g. ``model = m1 + 
 Create the reference file
 -------------------------
 
-The DistortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validation of the file structure.
+The DistortionModel in jwst.datamodels is used as an example of how to create a reference file.
+Similarly data models should be used to create other types of reference files as this process provides
+validation of the file structure.
 
 >>> from jwst.datamodels import DistortionModel
 >>> dist = DistortionModel(model=model, strict_validation=True)
@@ -124,7 +126,8 @@ Save a transform to an ASDF file
 --------------------------------
 
 `asdf <http://asdf.readthedocs.io/en/latest/>`__ is used to read and write reference files in
-`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model is create using the rules in the above section, it needs to be assigned to the ASDF tree.
+`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model has been created using the rules
+in the above section, it needs to be assigned to the ASDF tree.
 
 >>> import asdf
 >>> from asdf import AsdfFile

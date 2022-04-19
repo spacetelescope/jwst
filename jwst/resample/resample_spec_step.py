@@ -54,12 +54,18 @@ class ResampleSpecStep(ResampleStep):
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
             # Deal with NIRSpec, which currently has no default drizpars reffile
-            self.log.info("No NIRSpec DIRZPARS reffile")
+            self.log.info("No DRIZPARS reffile")
             kwargs = self._set_spec_defaults()
             kwargs['blendheaders'] = self.blendheaders
 
         kwargs['allowed_memory'] = self.allowed_memory
+        kwargs['weight_type'] = str(self.weight_type)
         kwargs['output'] = output
+
+        # Issue a warning about the use of exptime weighting
+        if self.weight_type == 'exptime':
+            self.log.warning("Use of EXPTIME weighting will result in incorrect")
+            self.log.warning("propagated errors in the resampled product")
 
         # Call resampling
         self.drizpars = kwargs
