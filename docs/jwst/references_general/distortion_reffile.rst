@@ -14,14 +14,14 @@ CRDS selects appropriate DISTORTION references based on the following keywords.
 DISTORTION is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
-========== =================================================================
+========== ========================================================================
 Instrument Keywords
-========== =================================================================
+========== ========================================================================
 FGS        INSTRUME, DETECTOR, EXP_TYPE, DATE-OBS, TIME-OBS
 MIRI       INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, BAND, DATE-OBS, TIME-OBS
-NIRCam     INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, FILTER, DATE-OBS, TIME-OBS
+NIRCam     INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, FILTER, PUPIL, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, PUPIL, DATE-OBS, TIME-OBS
-========== =================================================================
+========== ========================================================================
 
 .. include:: ../includes/standard_keywords.inc
 

@@ -113,7 +113,6 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
-    soss_atoca = boolean(default=False)  # use ATOCA algorithm - should have photom off and not fully tested
     soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
     soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace.
     soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
@@ -217,9 +216,8 @@ class Extract1dStep(Step):
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
 
-                    # --------------------------------------------------------------
-                    # Data is a ModelContainer but is not WFSS
-                    result.meta.filetype = '1d spectrum'
+                # --------------------------------------------------------------
+                # Data is a ModelContainer but is not WFSS
                 else:
                     result = datamodels.ModelContainer()
                     for model in input_model:
@@ -251,7 +249,6 @@ class Extract1dStep(Step):
                         )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
-                        temp.meta.filetype = '1d spectrum'
                         result.append(temp)
                         del temp
             # ------------------------------------------------------------------------
@@ -290,7 +287,6 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.filetype = '1d spectrum'
             else:
                 self.log.error('Input model is empty;')
                 self.log.error('extract_1d will be skipped.')
@@ -300,7 +296,7 @@ class Extract1dStep(Step):
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
             # Data is NRISS SOSS observation.
-            if input_model.meta.exposure.type == 'NIS_SOSS' and self.soss_atoca:
+            if input_model.meta.exposure.type == 'NIS_SOSS':
 
                 self.log.info(
                     'Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
@@ -367,7 +363,6 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.filetype = '1d spectrum'
                 result.meta.target.source_type = None
 
                 input_model.close()
@@ -413,7 +408,6 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.filetype = '1d spectrum'
 
         input_model.close()
 

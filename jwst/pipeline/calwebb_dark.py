@@ -86,7 +86,4 @@ class DarkPipeline(Pipeline):
 
         log.info('... ending calwebb_dark')
 
-        # reset FILETYPE in the output
-        input.meta.filetype = 'calibrated ramp'
-
         return input

@@ -25,6 +25,24 @@ import asdf
 MEMORY = 100  # 100 bytes
 
 
+@pytest.mark.parametrize('guess', [True, False])
+def test_guess(guess):
+    """Test the guess parameter to the open func"""
+    path = Path(t_path('test.fits'))
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        if guess is None or guess:
+            # Default is to guess at the model type.
+            with datamodels.open(path, guess=guess) as model:
+                assert isinstance(model, JwstDataModel)
+        else:
+            # Without guessing, the call should fail.
+            with pytest.raises(TypeError):
+                with datamodels.open(path, guess=guess) as model:
+                    pass
+
+
 def test_mirirampmodel_deprecation(tmp_path):
     """Test that a deprecated MIRIRampModel can be opened"""
     path = str(tmp_path / "ramp.fits")

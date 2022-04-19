@@ -14,6 +14,7 @@ from .utilities import (
     getattr_from_list,
     is_iterable
 )
+from ..pool import PoolRow
 
 __all__ = [
     'AttrConstraint',
@@ -468,7 +469,7 @@ class AttrConstraint(SimpleConstraintABC):
             if is_iterable(evaled):
                 reprocess_items = []
                 for avalue in evaled:
-                    new_item = deepcopy(item)
+                    new_item = PoolRow(item)
                     new_item[source] = str(avalue)
                     reprocess_items.append(new_item)
                 reprocess.append(ProcessList(

@@ -26,7 +26,7 @@ class ResidualFringeStep(Step):
         suffix = string(default = 'residual_fringe')
     """
 
-    reference_file_types = ['fringefreq','regions']
+    reference_file_types = ['fringefreq', 'regions']
 
     def process(self, input):
 
@@ -124,7 +124,7 @@ class ResidualFringeStep(Step):
                           format(self.residual_fringe_filename))
 
             # Open the regions reference file
-            self.regions_filename = self.get_reference_file(model,'regions')
+            self.regions_filename = self.get_reference_file(model, 'regions')
             self.log.info('Using MRS regions reference file: {}'.
                           format(self.regions_filename))
 
