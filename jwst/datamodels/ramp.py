@@ -44,7 +44,7 @@ class RampModel(JwstDataModel):
         self.groupdq = self.groupdq
         self.err = self.err
 
-        if isinstance(init, tuple) or self.meta.exposure.zero_frame == True:
+        if isinstance(init, tuple) or self.meta.exposure.zero_frame is True:
             try:
                 self.getarray_noinit("zeroframe")
             except AttributeError:
