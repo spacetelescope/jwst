@@ -203,19 +203,13 @@ def _make_tweakreg_catalog(model, *args, **kwargs):
     return model.tweakreg_catalog
 
 
-tweakreg_step.make_tweakreg_catalog = _make_tweakreg_catalog
-
-
 def _align_wcs(imcats, **kwargs):
     new_kwargs = {k: v for k, v in kwargs.items() if k != 'match'}
     new_kwargs['match'] = _match
     return align_wcs(imcats, **new_kwargs)
 
 
-tweakreg_step.align_wcs = _align_wcs
-
-
-def test_multichip_jwst_alignment():
+def test_multichip_jwst_alignment(monkeypatch):
     # this test is fundamentally equivalent to test_multichip_alignment_step()
     # with the following differences:
     # 1. test_multichip_alignment_step() test includes parts of the JWST
@@ -223,6 +217,9 @@ def test_multichip_jwst_alignment():
     # 2. test_multichip_alignment_step() does not have access to 'fit_info'
     #    in the meta data and so test_multichip_jwst_alignment() can test
     #    the fit more extensively.
+    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
+
     w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
     imcat1 = tweakwcs.JWSTgWCS(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat1.meta['catalog'] = table.Table.read(
@@ -288,7 +285,10 @@ def test_multichip_jwst_alignment():
     assert rmse_dec < _REF_RMSE_DEC
 
 
-def test_multichip_alignment_step():
+def test_multichip_alignment_step(monkeypatch):
+    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
+
     # image 1
     w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
 
