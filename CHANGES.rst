@@ -29,7 +29,7 @@ align_refs
 ami
 ---
 
-- Added functionality for AmiAverageStep use in CLI environment [#6797]
+- Allow AmiAverageStep to be run on list in command line interface [#6797]
 
 assign_wcs
 ----------
