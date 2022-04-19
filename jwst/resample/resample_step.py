@@ -146,7 +146,6 @@ class ResampleStep(Step):
             drizpars_table = drpt.data
 
         num_groups = len(input_models.group_names)
-        log.warning(f"num_groups: {num_groups} {input_models.group_names}")
         filtname = input_models[0].meta.instrument.filter
         row = None
         filter_match = False
@@ -181,17 +180,17 @@ class ResampleStep(Step):
             fillval=self.fillval,
             pscale_ratio=self.pixel_scale_ratio,
         )
-        log.warning(f"default drizpars: {drizpars}")
+
         # For parameters that are set in drizpars table but not set by the
         # user, use these.  Otherwise, use values set by user.
-        reffile_drizpars = {k: v for k, v in drizpars.items()}
+        reffile_drizpars = {k: v for k, v in drizpars.items() if v is None}
         user_drizpars = {k: v for k, v in drizpars.items() if v is not None}
 
         # read in values from that row for each parameter
         for k in reffile_drizpars:
             if k in drizpars_table.names:
                 reffile_drizpars[k] = drizpars_table[k][row]
-        log.warning(f"reffile_drizpars pixfrac: {reffile_drizpars}")
+
         # Convert the strings in the FITS binary table from np.bytes_ to str
         for k, v in reffile_drizpars.items():
             if isinstance(v, np.bytes_):
@@ -210,7 +209,6 @@ class ResampleStep(Step):
         for k, v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
 
-        log.warning(f"kwargs pixfrac: {kwargs['pixfrac']}")
         return kwargs
 
     def _set_spec_defaults(self):
