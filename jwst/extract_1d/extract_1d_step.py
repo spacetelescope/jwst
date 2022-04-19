@@ -113,7 +113,6 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
-    soss_atoca = boolean(default=False)  # use ATOCA algorithm - should have photom off and not fully tested
     soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
     soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace.
     soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
@@ -297,7 +296,7 @@ class Extract1dStep(Step):
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
             # Data is NRISS SOSS observation.
-            if input_model.meta.exposure.type == 'NIS_SOSS' and self.soss_atoca:
+            if input_model.meta.exposure.type == 'NIS_SOSS':
 
                 self.log.info(
                     'Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
