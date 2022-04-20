@@ -5,6 +5,8 @@ id: "http://stsci.edu/schemas/jwst_datamodel/miri_mrsxartcorr.schema"
 title: MIRI MRS Cross Artifact Corrections
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
 - type: object
   properties:
     ch1a_table:
