@@ -1,9 +1,9 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['MiriMrsXArtCorrModel']
+__all__ = ['MirMrsXArtCorrModel']
 
 
-class MiriMrsXArtCorrModel(ReferenceFileModel):
+class MirMrsXArtCorrModel(ReferenceFileModel):
     """
     A data model for MIRI MRS cross-artifact corrections file.
 
@@ -22,4 +22,4 @@ class MiriMrsXArtCorrModel(ReferenceFileModel):
          Cross artifact correction parameters for Channel 1C
 
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_mrsxartcor.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_mrsxartcorr.schema"

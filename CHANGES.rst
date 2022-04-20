@@ -59,7 +59,7 @@ datamodels
 - Correcting the default ZEROFRAME allocation. [#6791]
 
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
-  MiriMrsXArtCorrModel [#6800]
+  MirMrsXArtCorrModel [#6800]
 
 extract_1d
 ----------

@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
-id: "http://stsci.edu/schemas/jwst_datamodel/miri_mrsxartcor.schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/miri_mrsxartcorr.schema"
 title: MIRI MRS Cross Artifact Corrections
 allOf:
 - $ref: referencefile.schema
