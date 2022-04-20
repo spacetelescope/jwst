@@ -113,7 +113,7 @@ class ResampleSpecData(ResampleData):
             wmean_l = np.sum(ld[good_s]) / total
         else:
             wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
-            wmean_l = d2s(*np.mean(bbox, axis=1))[3]
+            wmean_l = d2s(*np.mean(bbox, axis=1))[2]
 
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
 
