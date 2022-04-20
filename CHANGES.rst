@@ -80,6 +80,10 @@ extract_1d
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
+- Allow reference files to specify extraction region for extended
+  sources, modify `bkg_fit` default to None while retaining `poly`
+  as default mode [#6793]
+
 flatfield
 ---------
 

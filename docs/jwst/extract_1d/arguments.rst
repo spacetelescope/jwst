@@ -16,8 +16,10 @@ The ``extract_1d`` step has the following step-specific arguments.
 
 ``--bkg_fit``
   The type of fit to perform to the background data in each image column
-  (or row, if the dispersion is vertical). There are three allowed values:
-  "poly" (the default), "mean", and "median". If set to "poly", the background
+  (or row, if the dispersion is vertical). There are four allowed values:
+  "poly", "mean", and "median", and None (the default value). If left as None,
+  the step will search the reference file for a value - if none is found,
+  ``bkg_fit`` will be set to "poly". If set to "poly", the background
   values for each pixel within all background regions in a given column (or
   row) will be fit with a polynomial of order "bkg_order" (see below).
   Values of "mean" and "median" compute the simple average and median,
