@@ -26,6 +26,11 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+ami
+---
+
+- Allow AmiAverageStep to be run on list in command line interface [#6797]
+
 assign_wcs
 ----------
 
