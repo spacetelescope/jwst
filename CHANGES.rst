@@ -58,8 +58,8 @@ datamodels
 
 - Correcting the default ZEROFRAME allocation. [#6791]
 
-- Add the new MIRI IFU point source correction reference file data model
-  of type ifuptcor. [#6762]
+- Add the new MIRI MRS point source correction reference file data model
+  MirMrsPtCorrModel. [#6762]
 
 extract_1d
 ----------

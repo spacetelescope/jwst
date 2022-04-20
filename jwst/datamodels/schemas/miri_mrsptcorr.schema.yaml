@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
-id: "http://stsci.edu/schemas/jwst_datamodel/miri_ifuptcor.schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/miri_mrsptcorr.schema"
 title: MIRI IFU Point Source Spectral Corrections
 allOf:
 - $ref: referencefile.schema

@@ -1,9 +1,9 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['MiriIFUPtCorrModel']
+__all__ = ['MirMrsPtCorrModel']
 
 
-class MiriIFUPtCorrModel(ReferenceFileModel):
+class MirMrsPtCorrModel(ReferenceFileModel):
     """
     A data model for MIRI mrs IFU across-slice corrections file.
 
@@ -40,4 +40,4 @@ class MiriIFUPtCorrModel(ReferenceFileModel):
          IFU across slice wavelength offset table 3
 
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_ifuptcor.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_mrsptcorr.schema"
