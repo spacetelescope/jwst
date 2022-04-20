@@ -24,7 +24,7 @@ allOf:
       fits_hdu: DQ
       default: 0
       ndim: 2
-      datatype: int64
+      datatype: int32
 - $ref: dq_def.schema
 - type: object
   properties:
