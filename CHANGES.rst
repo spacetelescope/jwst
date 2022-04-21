@@ -26,6 +26,11 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+ami
+---
+
+- Allow AmiAverageStep to be run on list in command line interface [#6797]
+
 assign_wcs
 ----------
 
@@ -61,6 +66,9 @@ datamodels
 - Add the new MIRI MRS point source correction reference file data model
   MirMrsPtCorrModel. [#6762]
 
+- Add new datamodel and schema for MIRI MRS cross-artifact reference file
+  MirMrsXArtCorrModel [#6800]
+
 extract_1d
 ----------
 
@@ -77,6 +85,10 @@ extract_1d
 
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
+
+- Allow reference files to specify extraction region for extended
+  sources, modify `bkg_fit` default to None while retaining `poly`
+  as default mode [#6793]
 
 flatfield
 ---------
@@ -100,6 +112,8 @@ pipeline
 
 - Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
   step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
+
+- Added ResetStep back into `calwebb_dark` for MIRI exposures [#6798]
 
 ramp_fitting
 ------------
@@ -127,6 +141,8 @@ resample
 
 - Fixed handling of user-supplied ``weight_type`` parameter value for
   ``resample_spec``. [#6796]
+
+- Fixed an issue with axis number for the spectral axis in ``resample_spec``. [#6802]
 
 reset
 -----

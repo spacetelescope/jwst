@@ -27,7 +27,9 @@ pipeline, the order of steps is a bit different for MIRI exposures.
 +---------------------------------------+-----------------------------------------+
 | :ref:`refpix <refpix_step>`           | :ref:`lastframe <lastframe_step>`       |
 +---------------------------------------+-----------------------------------------+
-| :ref:`linearity <linearity_step>`     | :ref:`linearity <linearity_step>`       |
+| :ref:`linearity <linearity_step>`     | :ref:`reset <reset_step>`               |
++---------------------------------------+-----------------------------------------+
+|                                       | :ref:`linearity <linearity_step>`       |
 +---------------------------------------+-----------------------------------------+
 |                                       | :ref:`rscd <rscd_step>`                 |
 +---------------------------------------+-----------------------------------------+
