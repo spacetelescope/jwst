@@ -10,6 +10,7 @@ from ..outlier_detection import outlier_detection_step
 from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
+from ..photom import photom_step
 
 from ..lib.pipe_utils import is_tso
 
@@ -26,6 +27,7 @@ class Tso3Pipeline(Pipeline):
         * outlier_detection
         * tso_photometry
         * extract_1d
+        * photom
         * white_light
     """
 
@@ -40,6 +42,7 @@ class Tso3Pipeline(Pipeline):
                  outlier_detection_step.OutlierDetectionStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
+                 'photom': photom_step.PhotomStep,
                  'white_light': white_light_step.WhiteLightStep
                  }
     reference_file_types = ['gain', 'readnoise']
@@ -159,6 +162,12 @@ class Tso3Pipeline(Pipeline):
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
                 result = self.extract_1d(cube)
+
+                if input_exptype == 'NIS_SOSS':
+                    # SOSS data have yet to be photometrically calibrated
+                    # Calibrate 1D spectra here.
+                    result = self.photom(result)
+
                 x1d_result.spec.extend(result.spec)
 
                 # perform white-light photometry on 1d extracted data

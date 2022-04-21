@@ -16,8 +16,10 @@ The ``extract_1d`` step has the following step-specific arguments.
 
 ``--bkg_fit``
   The type of fit to perform to the background data in each image column
-  (or row, if the dispersion is vertical). There are three allowed values:
-  "poly" (the default), "mean", and "median". If set to "poly", the background
+  (or row, if the dispersion is vertical). There are four allowed values:
+  "poly", "mean", and "median", and None (the default value). If left as None,
+  the step will search the reference file for a value - if none is found,
+  ``bkg_fit`` will be set to "poly". If set to "poly", the background
   values for each pixel within all background regions in a given column (or
   row) will be fit with a polynomial of order "bkg_order" (see below).
   Values of "mean" and "median" compute the simple average and median,
@@ -37,6 +39,10 @@ The ``extract_1d`` step has the following step-specific arguments.
   unavailable to construct the polynomial fit, the fit will be forced to
   0 for that particular column (or row). If "bkg_fit" is not "poly", this
   parameter will be ignored.
+
+``--bkg_sigma_clip``
+  The background values will be sigma-clipped to remove outlier values from
+  the determination of the background. The default value is a 3.0 sigma clip.
 
 ``--log_increment``
   Most log messages are suppressed while looping over integrations, i.e. when
@@ -82,3 +88,40 @@ The ``extract_1d`` step has the following step-specific arguments.
 ``--apply_apcorr``
   Switch to select whether or not to apply an APERTURE correction during the
   Extract1dStep processing. Default is ``True``
+
+``soss_threshold``
+  This is a NIRISS-SOSS algorithm-specific parameter; this sets the threshold
+  value for a pixel to be included when modelling the spectral trace. The default
+  value is 0.01.
+
+``soss_n_os``
+  This is a NIRISS-SOSS algorithm-specific parameter; this is an integer that sets]
+  the oversampling factor of the underlying wavelength grid used when modeling the
+  trace. The default value is 2.
+
+``soss_transform``
+  This is a NIRISS-SOSS algorithm-specific parameter; this defines a rotation to
+  apply to the reference files to match the observation. It should be specified as
+  a list of three floats, with default values of None.
+
+``soss_tikfac``
+  This is a NIRISS-SOSS algorithm-specific parameter; this is the regularization
+  factor used in the SOSS extraction. If not specified, ATOCA will calculate a
+  best-fit value for the Tikhonov factor.
+
+``soss_width``
+  This is a NIRISS-SOSS algorithm-specific parameter; this specifies the aperture
+  width used to extract the 1D spectrum from the decontaminated trace. The default
+  value is 40.0 pixels.
+
+``soss_bad_pix``
+  This is a NIRISS-SOSS algorithm-specific parameter; this parameter sets the method
+  used to handle bad pixels. There are currently two options: "model" will replace
+  the bad pixel values with a modeled value, while "masking" will omit those pixels
+  from the spectrum. The default value is "model".
+
+``soss_modelname``
+  This is a NIRISS-SOSS algorithm-specific parameter; if set, this will provide
+  the optional ATOCA model output of traces and pixel weights, with the filename
+  set by this parameter. By default this is set to None and this output is
+  not provided.

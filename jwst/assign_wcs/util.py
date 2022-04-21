@@ -132,7 +132,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     delta[spatial_idx[0]] = 1
 
     crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets)
+    crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
 
     coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
@@ -278,7 +278,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
                 fiducial[k] = crval[i]
                 i += 1
 
-    ref_fiducial = compute_fiducial([refmodel.meta.wcs])
+    ref_fiducial = np.array([refmodel.meta.wcsinfo.ra_ref, refmodel.meta.wcsinfo.dec_ref])
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -315,15 +315,14 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     out_frame = refmodel.meta.wcs.output_frame
-    input_frame = dmodels[0].meta.wcs.input_frame
+    input_frame = refmodel.meta.wcs.input_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
                              transform=transform, input_frame=input_frame)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
-
-    for axs in domain_bounds:
-        axs -= (axs.min() + .5)
+    axis_min_values = np.min(domain_bounds, axis=1)
+    domain_bounds = (domain_bounds.T - axis_min_values).T
 
     output_bounding_box = []
     for axis in out_frame.axes_order:
@@ -332,9 +331,9 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     output_bounding_box = tuple(output_bounding_box)
     if crpix is None:
-        ax1, ax2 = np.array(output_bounding_box)[sky_axes]
-        offset1 = (ax1[1] - ax1[0]) / 2
-        offset2 = (ax2[1] - ax2[0]) / 2
+        offset1, offset2 = wnew.backward_transform(*fiducial)
+        offset1 -= axis_min_values[0]
+        offset2 -= axis_min_values[1]
     else:
         offset1, offset2 = crpix
     offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
@@ -370,11 +369,15 @@ def compute_fiducial(wcslist, bounding_box=None):
     if spatial_footprint.any():
         lon, lat = spatial_footprint
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
-        x_mean = np.mean(np.cos(lat) * np.cos(lon))
-        y_mean = np.mean(np.cos(lat) * np.sin(lon))
-        z_mean = np.mean(np.sin(lat))
-        lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 + y_mean ** 2)))
+        x = np.cos(lat) * np.cos(lon)
+        y = np.cos(lat) * np.sin(lon)
+        z = np.sin(lat)
+
+        x_mid = (np.max(x) + np.min(x)) / 2.
+        y_mid = (np.max(y) + np.min(y)) / 2.
+        z_mid = (np.max(z) + np.min(z)) / 2.
+        lon_fiducial = np.rad2deg(np.arctan2(y_mid, x_mid)) % 360.0
+        lat_fiducial = np.rad2deg(np.arctan2(z_mid, np.sqrt(x_mid ** 2 + y_mid ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
     if spectral_footprint.any():
         fiducial[spectral_axes] = spectral_footprint.min()

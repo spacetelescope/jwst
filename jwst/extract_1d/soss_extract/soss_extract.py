@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 
 from ... import datamodels
-from ...datamodels.dqflags import pixel
+from ...datamodels import dqflags
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
@@ -295,11 +295,13 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
         log.info('Solving for the optimal Tikhonov factor.')
 
         # Need a rough estimate of the underlying flux to estimate the tikhonov factor
+        # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
+        #       dq mask caused issues here and this may need a try/except wrap.
+        #       Dev suggested np.logspace(-19, -10, 10)
         estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, threshold)
-
-        # Find the tikhonov factor.
         # Initial pass 8 orders of magnitude with 10 grid points.
         factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
+        # Find the tikhonov factor.
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
 
@@ -536,7 +538,9 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         scidata = input_model.data.astype('float64')
         scierr = input_model.err.astype('float64')
         scimask = input_model.dq > 0  # Mask bad pixels with True.
-        refmask = bitfield_to_boolean_mask(input_model.dq, ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
+        refmask = bitfield_to_boolean_mask(input_model.dq,
+                                           ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
+                                           flip_bits=True)
 
         # Perform background correction.
         bkg_mask = make_background_mask(scidata, width=40)
@@ -652,8 +656,9 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             # Unpack the i-th image, set dtype to float64 and convert DQ to boolean mask.
             scidata = input_model.data[i].astype('float64')
             scierr = input_model.err[i].astype('float64')
-            scimask = input_model.dq[i] > 0
-            refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
+            scimask = np.bitwise_and(input_model.dq[i], dqflags.pixel['DO_NOT_USE']).astype(bool)
+            refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
+                                               flip_bits=True)
 
             # Perform background correction.
             bkg_mask = make_background_mask(scidata, width=40)
