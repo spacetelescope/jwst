@@ -139,6 +139,8 @@ resample
 - Fixed handling of user-supplied ``weight_type`` parameter value for
   ``resample_spec``. [#6796]
 
+- Fixed an issue with axis number for the spectral axis in ``resample_spec``. [#6802]
+
 reset
 -----
 
