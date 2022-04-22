@@ -16,7 +16,7 @@ from ..lib.suffix import remove_suffix
 class JwstStep(Step):
 
     spec = """
-    output_ext         = string(default='.fits')     # Default type of output
+    output_ext = string(default='.fits')  # Default output suffix, not output type
     """
 
     @classmethod
