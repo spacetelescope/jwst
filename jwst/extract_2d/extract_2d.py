@@ -18,8 +18,8 @@ def extract2d(input_model,
               tsgrism_extract_height=None,
               wfss_extract_half_height=None,
               extract_orders=None,
-              mmag_extract=99.,
-              nbright=999):
+              mmag_extract=None,
+              nbright=None):
     """
     The main extract_2d function
 
@@ -43,7 +43,7 @@ def extract2d(input_model,
     extract_orders : list
         A list of spectral orders to be extracted.
     mmag_extract : float
-        Minimum abmag to extract for WFSS mode.
+        Minimum (faintest) abmag to extract for WFSS mode.
     nbright : float
         Number of brightest objects to extract, WFSS mode.
 

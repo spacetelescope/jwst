@@ -571,11 +571,11 @@ def get_object_info(catalog_name=None):
 
 def create_grism_bbox(input_model,
                       reference_files=None,
-                      mmag_extract=99.0,
+                      mmag_extract=None,
                       extract_orders=None,
                       wfss_extract_half_height=None,
                       wavelength_range=None,
-                      nbright=999):
+                      nbright=None):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -669,9 +669,12 @@ def create_grism_bbox(input_model,
 
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
 
+    if mmag_extract is None:
+        mmag_extract = 999.  # extract all objects, regardless of magnitude
+    else:
+        log.info("Extracting objects < abmag = {0}".format(mmag_extract))
     if not isinstance(mmag_extract, (int, float)):
         raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
-    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
 
     # extract the catalog objects
     if input_model.meta.source_catalog is None:
@@ -685,8 +688,8 @@ def create_grism_bbox(input_model,
                               nbright)
 
 
-def _create_grism_bbox(input_model, mmag_extract=99.0, wfss_extract_half_height=None,
-                       wavelength_range=None, nbright=999):
+def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=None,
+                       wavelength_range=None, nbright=None):
 
     log.debug(f'Extracting with wavelength_range {wavelength_range}')
 
@@ -832,20 +835,23 @@ def _create_grism_bbox(input_model, mmag_extract=99.0, wfss_extract_half_height=
     # At this point we have a list of grism objects limited to
     # isophotal_abmag < mmag_extract. We now need to further restrict
     # the list to the N brightest objects, as given by nbright.
-    #
-    # grism_objects is a list of objects, so it's not easy or practical
-    # to sort it directly. So create a list of the isophotal_abmags, which
-    # we'll then use to find the N brightest objects.
-    mags = []
-    for obj in grism_objects:
-        mags.append(obj.isophotal_abmag)
-    indxs = np.argsort(mags)
+    if nbright is None:
+        # Include all objects, regardless of brightness
+        final_objects = grism_objects
+    else:
+        # grism_objects is a list of objects, so it's not easy or practical
+        # to sort it directly. So create a list of the isophotal_abmags, which
+        # we'll then use to find the N brightest objects.
+        mags = []
+        for obj in grism_objects:
+            mags.append(obj.isophotal_abmag)
+        indxs = np.argsort(mags)
 
-    # Create a final grism object list containing only the N brightest objects
-    final_objects = []
-    for i in list(indxs[:nbright]):
-        final_objects.append(grism_objects[i])
-    del grism_objects
+        # Create a final grism object list containing only the N brightest objects
+        final_objects = []
+        for i in list(indxs[:nbright]):
+            final_objects.append(grism_objects[i])
+        del grism_objects
 
     log.info(f"Total of {len(final_objects)} grism objects defined")
     if len(final_objects) == 0:

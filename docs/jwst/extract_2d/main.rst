@@ -82,18 +82,18 @@ The ``wfss_mmag_extract`` and ``wfss_nbright`` parameters both affect which obje
 from a source catalog will be retained for extraction. The rejection or retention of
 objects proceeds as follows:
 
-* As each object is read from the source catalog, they are immediately rejected if 
+- As each object is read from the source catalog, they are immediately rejected if 
   their isophotal_abmag > ``wfss_mmag_extract``, meaning that only objects brighter than
-  ``wfss_mmag_extract`` will be retained. The default ``wfss_mmag_extract`` value of 99
-  effectively retains all objects.
+  ``wfss_mmag_extract`` will be retained. The default ``wfss_mmag_extract`` value of
+  ``None`` retains all objects.
 
-* If the computed footprint (bounding box) of the spectral trace of an object lies
+- If the computed footprint (bounding box) of the spectral trace of an object lies
   completely outside the field of view of the grism image, it is rejected.
 
-* The list of objects retained after the above two filtering steps have been applied is
+- The list of objects retained after the above two filtering steps have been applied is
   sorted based on ``isophotal_abmag`` (listed for each source in the source catalog) and
   only the brightest ``wfss_nbright`` objects are retained. The default value of
-  ``wfss_nbright`` is currently 300.
+  ``wfss_nbright`` is currently 1000.
 
 All remaining objects are then extracted from the grism image.
 
@@ -228,11 +228,11 @@ Time-Series (TSO) grism spectroscopy:
   point sources. Only applies to WFSS mode.
 
 ``--wfss_mmag_extract``
-  float (default is 99). The minimum (faintest) magnitude object to extract, based on
+  float (default is ``None``). The minimum (faintest) magnitude object to extract, based on
   the value of `isophotal_abmag` in the source catalog. Only applies to WFSS mode.
 
 ``--wfss_nbright``
-  int (default is 300). The number of brightest source catalog objects to extract.
+  int (default is 1000). The number of brightest source catalog objects to extract.
   Can be used in conjunction with ``wfss_mmag_extract``. Only applies to WFSS mode.
 
 ``--extract_orders``

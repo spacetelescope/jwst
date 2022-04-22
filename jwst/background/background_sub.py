@@ -103,7 +103,7 @@ def average_background(bkg_list, sigma, maxiters):
     return avg_bkg
 
 
-def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=99.):
+def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=None):
     """Scale and subtract a background reference image from WFSS/GRISM data.
 
     Parameters
@@ -203,7 +203,7 @@ def no_NaN(model, fill_value=0.):
         return temp
 
 
-def mask_from_source_cat(input_model, wl_range_name, mmag_extract=99.):
+def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     """Create a mask that is False within bounding boxes of sources.
 
     Parameters

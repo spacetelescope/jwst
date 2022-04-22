@@ -69,10 +69,10 @@ by the primary header keyword SCATFILE), in conjunction with a reference file
 that gives the wavelength range (based on filter and grism) that is relevant
 to the WFSS image. All regions of the image that are free of source spectra
 are used for scaling the background reference image. The step argument
-``wfss_mmag_extract`` can be used, if desired, to set the minimum abmag of the
-source catalog objects used to define the background regions. The default is
-to use all source catalog entries that result in a spectrum falling within
-the WFSS image.
+``wfss_mmag_extract`` can be used, if desired, to set the minimum (faintest)
+abmag of the source catalog objects used to define the background regions.
+The default is to use all source catalog entries that result in a spectrum
+falling within the WFSS image.
 
 Robust mean values are obtained for the background regions in the WFSS image and
 for the same regions in the background reference image, and the ratio of those two

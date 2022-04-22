@@ -271,10 +271,10 @@ def extract_grism_objects(input_model,
                           grism_objects=None,
                           reference_files=None,
                           extract_orders=None,
-                          mmag_extract=99.,
+                          mmag_extract=None,
                           compute_wavelength=True,
                           wfss_extract_half_height=None,
-                          nbright=999):
+                          nbright=None):
     """
     Extract 2d boxes around each objects spectra for each order.
 
