@@ -842,15 +842,11 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
         # grism_objects is a list of objects, so it's not easy or practical
         # to sort it directly. So create a list of the isophotal_abmags, which
         # we'll then use to find the N brightest objects.
-        mags = []
-        for obj in grism_objects:
-            mags.append(obj.isophotal_abmag)
-        indxs = np.argsort(mags)
+        indxs = np.argsort([obj.isophotal_abmag for obj in grism_objects])
 
         # Create a final grism object list containing only the N brightest objects
         final_objects = []
-        for i in list(indxs[:nbright]):
-            final_objects.append(grism_objects[i])
+        final_objects = [grism_objects[i] for i in indxs[:nbright]]
         del grism_objects
 
     log.info(f"Total of {len(final_objects)} grism objects defined")
