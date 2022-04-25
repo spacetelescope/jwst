@@ -166,6 +166,8 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+- Increased tolerance value for considering two sky polygons identical. [#6805]
+
 source_catalog
 --------------
 
