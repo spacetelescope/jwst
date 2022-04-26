@@ -1,3 +1,5 @@
+import numpy as np
+
 from .model_base import JwstDataModel
 from ..lib.basic_utils import deprecate_class
 
@@ -41,6 +43,16 @@ class RampModel(JwstDataModel):
         self.pixeldq = self.pixeldq
         self.groupdq = self.groupdq
         self.err = self.err
+
+        if isinstance(init, tuple) or self.meta.exposure.zero_frame is True:
+            try:
+                self.getarray_noinit("zeroframe")
+            except AttributeError:
+                # If "zeroframe" is not in the instance, create a zero array with
+                # the correct dimensions.
+                nints, ngroups, nrows, ncols = self.data.shape
+                dims = (nints, nrows, ncols)
+                self.zeroframe = np.zeros(dims, dtype=self.data.dtype)
 
 
 @deprecate_class(RampModel)

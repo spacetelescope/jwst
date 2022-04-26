@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from scipy.ndimage.filters import convolve1d
+from scipy.ndimage import convolve1d
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -54,7 +54,9 @@ logger_format_debug = logging.Formatter('%(levelname)s:%(filename)s::%(funcName)
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description='Update basic WCS information in JWST exposures from the engineering database.'
+        description=('Update basic WCS information in JWST exposures from the engineering database.'
+                     ' For detailed information, see'
+                     ' https://jwst-pipeline.readthedocs.io/en/latest/jwst/lib/set_telescope_pointing.html')
     )
     parser.add_argument(
         'exposure', type=str, nargs='+',
@@ -63,6 +65,22 @@ if __name__ == '__main__':
     parser.add_argument(
         '-v', '--verbose', action='count', default=0,
         help='Increase verbosity. Specifying multiple times adds more output.'
+    )
+    parser.add_argument(
+        '--allow-any-file', action='store_true', default=False,
+        help='Attempt to update WCS for any file or model. Default: False'
+    )
+    parser.add_argument(
+        '--force-level1bmodel', action='store_true', default=False,
+        help='Force unrecognized files to be opened as Level1bModel. Default: False'
+    )
+    parser.add_argument(
+        '--allow-default', action='store_true',
+        help='If pointing information cannot be determine, use header information.'
+    )
+    parser.add_argument(
+        '--dry-run', action='store_true',
+        help='Perform all actions but do not save the results'
     )
     parser.add_argument(
         '--method',
@@ -84,14 +102,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--tolerance', type=int, default=60,
         help='Seconds beyond the observation time to search for telemetry. Default: %(default)s'
-    )
-    parser.add_argument(
-        '--allow-default', action='store_true',
-        help='If pointing information cannot be determine, use header information.'
-    )
-    parser.add_argument(
-        '--dry-run', action='store_true',
-        help='Perform all actions but do not save the results'
     )
     parser.add_argument(
         '--siaf', type=str, default=None,
@@ -137,6 +147,8 @@ if __name__ == '__main__':
         try:
             stp.add_wcs(
                 filename,
+                allow_any_file=args.allow_any_file,
+                force_level1bmodel=args.force_level1bmodel,
                 siaf_path=args.siaf,
                 engdb_url=args.engdb_url,
                 fgsid=args.fgsid,
@@ -148,5 +160,6 @@ if __name__ == '__main__':
                 save_transforms=transform_path,
                 override_transforms=override_transforms
             )
-        except ValueError as exception:
-            logger.info('Cannot determine pointing information', exc_info=exception)
+        except (TypeError, ValueError) as exception:
+            logger.warning('Cannot determine pointing information: %s', str(exception))
+            logger.debug('Full exception:', exc_info=exception)

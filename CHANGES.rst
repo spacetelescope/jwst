@@ -1,8 +1,10 @@
-1.4.6 (unreleased)
+1.4.7 (unreleased)
 ==================
 
 associations
 ------------
+
+- Implement PoolRow to avoid deep copy of the AssociationPool table [#6787]
 
 - Added valid optical paths for NRS_LAMP observations to generate
   or exclude associations using lamp, disperser and detector [#6695]
@@ -23,6 +25,17 @@ align_refs
 - Fixed behavior generating many unnecessary and slow logging warnings on
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
+
+ami
+---
+
+- Allow AmiAverageStep to be run on list in command line interface [#6797]
+
+assign_wcs
+----------
+
+Corrected computation of crpix by backward transform of fiducial, allow
+for reference outside of detector frame [#6789]
 
 cube_build
 ----------
@@ -48,6 +61,16 @@ datamodels
 
 - Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
 
+- Correcting the default ZEROFRAME allocation. [#6791]
+
+- Add the new MIRI MRS point source correction reference file data model
+  MirMrsPtCorrModel. [#6762]
+
+- Add new datamodel and schema for MIRI MRS cross-artifact reference file
+  MirMrsXArtCorrModel [#6800]
+
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
 - Create MSA_TARG_ACQ schema [#6757]
   
 extract_1d
@@ -61,18 +84,40 @@ extract_1d
 
 - Propagate non-differentiated errors for IFU mode observations [#6732]
 
+- Remove temporary `soss_atoca` parameter and make ATOCA the default
+  algorithm for SOSS data [#6734]
+
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
-regtest
--------
+- Allow reference files to specify extraction region for extended
+  sources, modify `bkg_fit` default to None while retaining `poly`
+  as default mode [#6793]
 
-- Added a residual fringe correction test [#6771]
+flatfield
+---------
+
+- Change DQ flags for NIRSpec flatfield where one or more component flats
+  (fflat, dflat, sflat) is bad (#6794)
+
+photom
+------
+
+- Allow SOSS input as MultiSpecModel, and do correction on extracted 1d
+  spectra [#6734]
 
 pipeline
 --------
 
-- Improve memory performance of calwebb_detector1 pipeline [#6758]
+- Improve memory performance of `calwebb_detector1` pipeline [#6758]
+
+- Update the `calwebb_spec2` pipeline to allow for the creation of an
+  optional WFSS product that's in units of e-/sec [#6783]
+
+- Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
+  step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
+
+- Added ResetStep back into `calwebb_dark` for MIRI exposures [#6798]
 
 ramp_fitting
 ------------
@@ -84,6 +129,11 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+regtest
+-------
+
+- Added a residual fringe correction test [#6771]
+
 resample
 --------
 
@@ -92,6 +142,16 @@ resample
 
 - Re-designed algorithm for computation of the output WCS for the
   ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
+
+- Fixed handling of user-supplied ``weight_type`` parameter value for
+  ``resample_spec``. [#6796]
+
+- Fixed an issue with axis number for the spectral axis in ``resample_spec``. [#6802]
+
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
 
 residual_fringe
 ---------------
@@ -110,6 +170,8 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+- Increased tolerance value for considering two sky polygons identical. [#6805]
+
 source_catalog
 --------------
 
@@ -123,6 +185,13 @@ srctype
 -------
 
 - Add command line option to override source type [#6720]
+
+tweakreg
+--------
+
+- Make ``fit_quality_is_good()`` member private and rename it to
+  ``_is_wcs_correction_small()``. [#6781]
+
 
 1.4.6 (2022-03-25)
 ==================
@@ -405,6 +474,9 @@ documentation
 -------------
 
 - Update text to point to the JWST CRDS website. [#6549]
+
+- Update to calwebb_detector documentation to include the reset step as one of the steps applied
+  to MIRI data [#6785]
 
 extract_1d
 ----------
@@ -2290,6 +2362,7 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
 
 wfs_combine
 -----------

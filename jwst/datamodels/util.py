@@ -31,7 +31,7 @@ class NoTypeWarning(Warning):
     pass
 
 
-def open(init=None, memmap=False, **kwargs):
+def open(init=None, guess=True, memmap=False, **kwargs):
     """
     Creates a DataModel from a number of different types
 
@@ -55,6 +55,10 @@ def open(init=None, memmap=False, **kwargs):
           to what was passed in.
 
         - dict: The object model tree for the data model
+
+    guess : bool
+        Guess as to the model type if the model type is not specifically known from the file.
+        If not guess and the model type is not explicit, raise a TypeError.
 
     memmap : bool
         Turn memmap of file on or off.  (default: False).
@@ -184,6 +188,8 @@ def open(init=None, memmap=False, **kwargs):
     # First try to get the class name from the primary header
     new_class = _class_from_model_type(hdulist)
     has_model_type = new_class is not None
+    if not guess and not has_model_type:
+        raise TypeError('Model type is not specifically defined and guessing has been disabled.')
 
     # Special handling for ramp files for backwards compatibility
     if new_class is None:

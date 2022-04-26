@@ -18,6 +18,7 @@ def nirspec_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.var_rnoise += 1
+    im.meta.target = {'ra': 100.1237, 'dec': 39.86}
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -203,8 +204,8 @@ def test_nirspec_wcs_roundtrip(nirspec_rate):
         ra, dec, lam = slit.meta.wcs(x, y)
         xp, yp = slit.meta.wcs.invert(ra, dec, lam)
 
-        assert_allclose(x, xp, atol=1e-8)
-        assert_allclose(y, yp, atol=1e-8)
+        assert_allclose(x, xp, rtol=0, atol=1e-8)
+        assert_allclose(y, yp, rtol=0, atol=3e-4)
 
 
 def test_miri_wcs_roundtrip(miri_rate):
@@ -273,7 +274,7 @@ def test_weight_type(nircam_rate, _jail):
     # assert_allclose(result1.data, result2.data)
     # assert_allclose(result1.wht, result2.wht)
     assert_allclose(result1.data[100:105, 100:105], 7.5, rtol=1e-2)
-    assert_allclose(result1.wht[100:105, 100:105], 20, rtol=1e-2)
+    assert_allclose(result1.wht[100:105, 100:105], 19.5, rtol=1e-2)
 
     result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
 
@@ -441,7 +442,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
 @pytest.mark.parametrize('ratio', [0.7, 1.2])
 @pytest.mark.parametrize('rotation', [0, 15, 135])
 @pytest.mark.parametrize('crpix', [(256, 488), (700, 124)])
-@pytest.mark.parametrize('crval', [(50, 77), (250, -30)])
+@pytest.mark.parametrize('crval', [(50, 77), (20, -30)])
 @pytest.mark.parametrize('shape', [(1205, 1100)])
 def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval, shape):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)

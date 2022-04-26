@@ -176,6 +176,16 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
+    # If we only used the Poisson variance array as a vehicle to pass through
+    # non-differentiated errors, clear it again here so that only the total
+    # errors pass out into the 1d spectra files.
+    try:
+        input_model.var_poisson
+    except AttributeError:
+        f_var_poisson *= 0
+        sb_var_poisson *= 0
+        b_var_poisson *= 0
+
     otab = np.array(
         list(
             zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
@@ -395,8 +405,8 @@ def extract_ifu(input_model, source_type, extract_params):
         var_rnoise = input_model.var_rnoise
         var_flat = input_model.var_flat
     except AttributeError:
-        log.info("Input model has no variance information. Creating zero-filled arrays.")
-        var_poisson = np.zeros_like(input_model.data)
+        log.info("Input model does not break out variance information. Passing only generalized errors.")
+        var_poisson = input_model.err * input_model.err
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
     weightmap = input_model.weightmap
@@ -874,8 +884,8 @@ def image_extract_ifu(input_model, source_type, extract_params):
         var_rnoise = input_model.var_rnoise
         var_flat = input_model.var_flat
     except AttributeError:
-        log.info("Input model has no variance information. Creating zero-filled arrays.")
-        var_poisson = np.zeros_like(input_model.data)
+        log.info("Input model does not break out variance information. Passing only generalized errors.")
+        var_poisson = input_model.err * input_model.err
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
     # The axes are (z, y, x) in the sense that (x, y) are the ordinary

@@ -212,7 +212,9 @@ class TweakRegStep(Step):
         for imcat in imcats:
             wcs = imcat.meta['image_model'].meta.wcs
             twcs = imcat.wcs
-            if not self.fit_quality_is_good(wcs, twcs):
+            if not self._is_wcs_correction_small(wcs, twcs):
+                # Large corrections are typically a result of source
+                # mis-matching or poorly-conditioned fit. Skip such models.
                 self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
                 self.log.warning("Skipping 'TweakRegStep'...")
                 self.skip = True
@@ -313,7 +315,7 @@ class TweakRegStep(Step):
 
         return images
 
-    def fit_quality_is_good(self, wcs, twcs):
+    def _is_wcs_correction_small(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
         tolerance = 10.0 * self.tolerance * u.arcsec
 

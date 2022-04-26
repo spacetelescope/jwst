@@ -336,7 +336,6 @@ class CubeBuildStep (Step):
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
-            cube.meta.filetype = '3d ifu cube'
 
             # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
             for key in rm_keys:

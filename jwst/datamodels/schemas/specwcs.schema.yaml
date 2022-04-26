@@ -20,11 +20,12 @@ allOf:
     model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+        type: object
       description: |
         Transform from detector (x, y) coordinate to lambda.
         The transform is a Polynomial as a function of x and y.
         The transform is defined for each slice.
+        Each element is an instance of astropy.modeling.Model.
     meta:
       type: object
       properties:

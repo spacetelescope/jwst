@@ -14,7 +14,7 @@ allOf:
           NIRISS Grism wavelength dispersion model, instance of astropy.modeling.Model
         type: array
         items:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          type: object
     dispx:
         description: |
           NIRISS Grism row dispersion model, instance of astropy.modeling.Model
@@ -22,7 +22,7 @@ allOf:
         items:
           type: array
           items:
-            $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+            type: object
     dispy:
         description: |
           NIRISS Grism column dispersion model, instance of astropy.modeling.Model
@@ -30,13 +30,13 @@ allOf:
         items:
           type: array
           items:
-            $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+            type: object
     invdispl:
         description: |
           NIRISS Grism inverse wavelength dispersion model, instance of astropy.modeling.Model
         type: array
         items:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          type: object
     orders:
         description: |
           NIRISS Grism orders, matched to the array locations of the dispersion models

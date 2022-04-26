@@ -85,7 +85,6 @@ class Ami3Pipeline(Pipeline):
             # Save the LG analysis results to a file
             result.meta.asn.pool_name = asn['asn_pool']
             result.meta.asn.table_name = op.basename(asn.filename)
-            result.meta.filetype = 'ami'
             self.save_model(result, output_file=input_file, suffix='ami', asn_id=asn_id)
 
             # Save the result for use as input to ami_average
@@ -102,7 +101,6 @@ class Ami3Pipeline(Pipeline):
             # Save the LG analysis results to a file
             result.meta.asn.pool_name = asn['asn_pool']
             result.meta.asn.table_name = op.basename(asn.filename)
-            result.meta.filetype = 'ami'
             self.save_model(result, output_file=input_file, suffix='ami', asn_id=asn_id)
 
             # Save the result for use as input to ami_average
@@ -123,7 +121,6 @@ class Ami3Pipeline(Pipeline):
                 # output file
                 self.log.info('Blending metadata for averaged psf')
                 blendmeta.blendmodels(psf_avg, inputs=psf_lg)
-                psf_avg.meta.filetype = 'ami averaged'
                 self.save_model(psf_avg, suffix='psf-amiavg')
                 del psf_lg
 
@@ -141,7 +138,6 @@ class Ami3Pipeline(Pipeline):
                 # output file
                 self.log.info('Blending metadata for averaged target')
                 blendmeta.blendmodels(targ_avg, inputs=targ_lg)
-                targ_avg.meta.filetype = 'ami averaged'
                 self.save_model(targ_avg, suffix='amiavg')
                 del targ_lg
 
@@ -159,7 +155,6 @@ class Ami3Pipeline(Pipeline):
             # Perform blending of metadata for all inputs to this output file
             self.log.info('Blending metadata for PSF normalized target')
             blendmeta.blendmodels(result, inputs=[targ_avg, psf_avg])
-            result.meta.filetype = 'ami normalized'
             self.save_model(result, suffix='aminorm')
             result.close()
             del psf_avg

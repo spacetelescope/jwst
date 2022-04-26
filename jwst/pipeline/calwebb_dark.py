@@ -11,6 +11,7 @@ from ..saturation import saturation_step
 from ..ipc import ipc_step
 from ..superbias import superbias_step
 from ..refpix import refpix_step
+from ..reset import reset_step
 from ..rscd import rscd_step
 from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
@@ -42,6 +43,7 @@ class DarkPipeline(Pipeline):
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
+                 'reset': reset_step.ResetStep,
                  'rscd': rscd_step.RscdStep,
                  'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
@@ -68,6 +70,7 @@ class DarkPipeline(Pipeline):
             input = self.ipc(input)
             input = self.firstframe(input)
             input = self.lastframe(input)
+            input = self.reset(input)
             input = self.linearity(input)
             input = self.rscd(input)
 
@@ -85,8 +88,5 @@ class DarkPipeline(Pipeline):
             input = self.linearity(input)
 
         log.info('... ending calwebb_dark')
-
-        # reset FILETYPE in the output
-        input.meta.filetype = 'calibrated ramp'
 
         return input

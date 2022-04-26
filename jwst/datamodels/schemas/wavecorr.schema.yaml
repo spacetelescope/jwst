@@ -11,13 +11,12 @@ definitions:
         type: string
         enum: [S200A1, S200A2, S400A1, S1600A1, S200B1, MOS]
       zero_point_offset:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         title: Zero-point offset
         description: |
           Zero-point offset (in units of detector pixel) as a function of wavelength (in m)
           and source offset within the aperture (in units of fraction of the aperture width
-          [SLIT] or pitch [MOS])
-        datatype: float32
+          [SLIT] or pitch [MOS]).  An instance of astropy.modeling.Model.
+        type: object
       variance:
         $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
         title: Variance of the zero-point offset

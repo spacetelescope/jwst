@@ -2,6 +2,7 @@ import os
 from collections import defaultdict
 import os.path as op
 import traceback
+import numpy as np
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
@@ -54,6 +55,7 @@ class Spec2Pipeline(Pipeline):
     spec = """
         save_bsub = boolean(default=False)        # Save background-subtracted science
         fail_on_exception = boolean(default=True) # Fail if any product fails.
+        save_wfss_esec = boolean(default=False)   # Save WFSS e-/sec image
     """
 
     # Define aliases to steps
@@ -243,9 +245,10 @@ class Spec2Pipeline(Pipeline):
         # srctype and wavecorr before flat_field.
         if exp_type in GRISM_TYPES:
             calibrated = self._process_grism(calibrated)
-            # Apply flat-field correction
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
+        elif exp_type == 'NIS_SOSS':
+            calibrated = self._process_niriss_soss(calibrated)
         else:
             calibrated = self._process_common(calibrated)
 
@@ -253,7 +256,6 @@ class Spec2Pipeline(Pipeline):
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
         calibrated.meta.filename = self.make_output_path(suffix=suffix)
-        calibrated.meta.filetype = 'calibrated'
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
@@ -284,7 +286,21 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
-        x1d = self.extract_1d(resampled)
+
+        # SOSS data need to run photom on x1d products and optionally save the photom
+        # output, while all other exptypes simply run extract_1d.
+        if exp_type == 'NIS_SOSS':
+            if multi_int:
+                self.photom.suffix = 'x1dints'
+            else:
+                self.photom.suffix = 'x1d'
+            self.extract_1d.save_results = False
+            x1d = self.extract_1d(resampled)
+
+            self.photom.save_results = self.save_results
+            x1d = self.photom(x1d)
+        else:
+            x1d = self.extract_1d(resampled)
 
         resampled.close()
         x1d.close()
@@ -380,7 +396,45 @@ class Spec2Pipeline(Pipeline):
 
         WFSS/Grism data need flat_field before extract_2d.
         """
+
+        # Apply flat-field correction
         calibrated = self.flat_field(data)
+
+        # Create and save a WFSS e-/sec image, if requested
+        if self.save_wfss_esec:
+            self.log.info('Creating WFSS e-/sec product')
+
+            # Find and load the gain reference file that we need
+            gain_filename = self.get_reference_file(calibrated, 'gain')
+            self.log.info('Using GAIN reference file %s', gain_filename)
+            with datamodels.GainModel(gain_filename) as gain_model:
+
+                # Always use the full-frame version of the gain ref file,
+                # even the science data are taken with a subarray
+                gain_image = gain_model.data
+
+                # Compute the simple mean of the gain image, excluding reference pixels.
+                # The gain ref file doesn't have a DQ array that can be used to
+                # mask bad values, so manually exclude NaN's and gain <= 0.
+                gain_image[gain_image <= 0.] = np.NaN
+                mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
+                self.log.info('mean gain = %s', mean_gain)
+
+                # Apply gain to the intermediate WFSS image
+                wfss_esec = calibrated.copy()
+                mean_gain_sqr = mean_gain ** 2
+                wfss_esec.data *= mean_gain
+                wfss_esec.var_poisson *= mean_gain_sqr
+                wfss_esec.var_rnoise *= mean_gain_sqr
+                wfss_esec.var_flat *= mean_gain_sqr
+                wfss_esec.err = np.sqrt(wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat)
+
+                # Save the WFSS e-/sec image
+                self.save_model(wfss_esec, suffix='esec', force=True)
+                del wfss_esec
+
+        # Continue with remaining calibration steps, using the original
+        # DN/sec image
         calibrated = self.extract_2d(calibrated)
         calibrated = self.srctype(calibrated)
         calibrated = self.straylight(calibrated)
@@ -406,6 +460,21 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
+
+        return calibrated
+
+    def _process_niriss_soss(self, data):
+        """Process SOSS
+
+        New SOSS extraction requires input to extract_1d step in units
+        of DN/s, with photom step to be run afterwards.
+        """
+        calibrated = self.srctype(data)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
 
         return calibrated
 

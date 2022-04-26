@@ -11,7 +11,9 @@ allOf:
 - type: object
   properties:
     model:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+      description: |
+        An instance of astropy.modeling.Model.
+      type: object
     meta:
       type: object
       properties:

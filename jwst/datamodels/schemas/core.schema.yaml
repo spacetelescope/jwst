@@ -32,11 +32,6 @@ properties:
         type: string
         fits_keyword: FILENAME
         blend_table: True
-      filetype:
-        title: Type of data in the file
-        type: string
-        fits_keyword: FILETYPE
-        blend_table: True
       data_processing_software_version:
         title: Data processing software version number
         type: string

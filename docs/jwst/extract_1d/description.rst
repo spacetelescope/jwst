@@ -182,12 +182,17 @@ Parameters related to background subtraction are ``smoothing_length``,
   smoothing of the input 2D image data is performed.
 
 * ``bkg_fit`` specifies the type of background computation to be performed
-  within each column (or row). The default is "poly", in which case a
-  polynomial of order ``bkg_order`` is fit to the background values within
+  within each column (or row). The default value is None; if not set by
+  the user, the step will search the reference file for a value. If no value
+  is found, ``bkg_fit`` will be set to "poly". The "poly" mode fits a
+  polynomial of order ``bkg_order`` to the background values within
   the column (or row). Alternatively, values of "mean" or "median" can be
   specified in order to compute the simple mean or median of the background
   values in each column (or row). Note that using "bkg_fit=mean" is
-  mathematically equivalent to "bkg_fit=poly" with "bkg_order=0".
+  mathematically equivalent to "bkg_fit=poly" with "bkg_order=0". If ``bkg_fit``
+  is provided both by a reference file and by the user, e.g.
+  ``steps.extract_1d.bkg_fit='poly'``, the user-supplied value will override
+  the reference file value.
 
 * If ``bkg_fit=poly`` is specified, ``bkg_order`` is used to indicate the
   polynomial order to be used. The default value is zero, i.e. a constant.
@@ -278,3 +283,10 @@ in a pixel will be included if its center is within the aperture; or "subsample"
 which means pixels will be subsampled N x N and the "center" option will be used
 for each sub-pixel. When ``method`` is "subsample", the parameter ``subpixels``
 is used to set the resampling value. The default value is 10.
+
+For IFU cubes the error information is contained entirely in the ERR array, and is not broken out into the
+VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only propagates this
+non-differentiated error term.  Note that while covariance is also extremely important for IFU data cubes
+(as the IFUs themselves are significantly undersampled) this term is not presently computed or taken
+into account in the ``extract_1d`` step.  As such, the error estimates should be taken as a rough
+approximation that will be characterized and improved as flight data become available.

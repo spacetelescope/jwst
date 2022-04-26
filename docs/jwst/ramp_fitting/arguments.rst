@@ -11,6 +11,11 @@ The ramp fitting step has three optional arguments that can be set by the user:
 * ``--int_name``: A string that can be used to override the default name
   for the per-integration product.
 
+* ``--suppress_one_group``: A boolean to suppress computations for saturated ramps
+  with good 0th group.  The default is set to true to suppress these computations,
+  which will compute all values for the ramp the same as if the entire ramp were
+  saturated.
+
 * ``--maximum_cores``: The fraction of available cores that will be
   used for multi-processing in this step. The default value is 'none' which does not use
   multi-processing. The other options are 'quarter', 'half', and 'all'. Note that these

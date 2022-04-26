@@ -14,35 +14,45 @@ allOf:
       type: object
       properties:
         model:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          description: |
+            An instance of astropy.modeling.Model.
+          type: object
         data:
           $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
     Q2:
       type: object
       properties:
         model:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          description: |
+            An instance of astropy.modeling.Model.
+          type: object
         data:
           $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
     Q3:
       type: object
       properties:
         model:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          description: |
+            An instance of astropy.modeling.Model.
+          type: object
         data:
           $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
     Q4:
       type: object
       properties:
         model:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          description: |
+            An instance of astropy.modeling.Model.
+          type: object
         data:
           $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
     Q5:
       type: object
       properties:
         model:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+          description: |
+            An instance of astropy.modeling.Model.
+          type: object
         data:
           $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
     meta:
