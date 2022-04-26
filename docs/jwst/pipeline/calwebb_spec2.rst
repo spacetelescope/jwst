@@ -121,7 +121,7 @@ Inputs
 ------
 
 2D or 3D countrate data
-^^^^^^^^^^^^^^^^^^^^^^^
++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`,
              or `~jwst.datamodels.CubeModel`
@@ -151,7 +151,7 @@ Outputs
 -------
 
 2D or 3D background-subtracted data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++++++++++++++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`,
               or `~jwst.datamodels.CubeModel`
@@ -163,7 +163,7 @@ step. If the input is a "_rate" product, this will be a "_bsub" product, while
 "_rateints" inputs will be saved as "_bsubints."
 
 2D or 3D calibrated data
-^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`,
              `~jwst.datamodels.CubeModel`,
@@ -196,7 +196,7 @@ tuples of SCI, ERR, DQ, WAVELENGTH, etc. arrays; one for each of the
 extracted slits/sources.
 
 2D resampled data
-^^^^^^^^^^^^^^^^^
++++++++++++++++++
 
 :Data model: `~jwst.datamodels.SlitModel` or `~jwst.datamodels.MultiSlitModel`
 :File suffix: _s2d
@@ -213,7 +213,7 @@ then the resampled output will be in the form of a
 one per slit. Otherwise the output will be a single `~jwst.datamodels.SlitModel`.
 
 3D resampled (IFU cube) data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.IFUCubeModel`
 :File suffix: _s3d
@@ -225,7 +225,7 @@ product only. The 2D unresampled, calibrated ("_cal") products are passed along 
 input to subsequent Stage 3 processing.
 
 1D extracted spectral data
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.MultiSpecModel`
 :File suffix: _x1d or _x1dints
@@ -238,3 +238,5 @@ data for one or more slits/sources. TSO modes, such as MIRI LRS slitless, NIRCam
 TSO grism, NIRISS SOSS, and NIRSpec Bright Object, for which the data are 3D
 stacks of integrations, result in "_x1dints" products containing extracted
 spectral data for each integration with the exposure.
+
+.. include:: ../references_general/pars-spec2pipeline_reffile.inc
