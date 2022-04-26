@@ -145,4 +145,4 @@ stacked along the 3rd axis of the data cubes (ncols x nrows x nints). This
 output file will be of type "_rateints". The 3D "_rateints" product is passed along
 to subsequent pipeline modules for all TSO and Coronagraphic exposures.
 
-.. include:: ../references_general/pars-detector1pipeline.inc
+.. include:: ../references_general/pars-detector1pipeline_reffile.inc

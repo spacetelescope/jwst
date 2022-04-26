@@ -54,7 +54,7 @@ Inputs
 ------
 
 2D or 3D countrate data
-^^^^^^^^^^^^^^^^^^^^^^^
++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
 :File suffix: _rate or _rateints
@@ -74,7 +74,7 @@ Outputs
 -------
 
 2D or 3D background-subtracted data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++++++++++++++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
 :File suffix: _bsub or _bsubints
@@ -86,7 +86,7 @@ If the input is a "_rate" product, this will be a "_bsub" product, while
 "_rateints" inputs will be saved as "_bsubints."
 
 2D or 3D calibrated data
-^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
 :File suffix: _cal or _calints
@@ -96,7 +96,7 @@ the product type suffix "_cal" or "_calints", depending on the type of
 input, e.g. "jw80600012001_02101_00003_mirimage_cal.fits".
 
 2D resampled image
-^^^^^^^^^^^^^^^^^^
+++++++++++++++++++
 
 :Data model: `~jwst.datamodels.ImageModel`
 :File suffix: _i2d
@@ -109,3 +109,4 @@ intended for quick-look use only and is not passed along as input to Stage 3
 processing. Calibrated, but unrectified (_cal) products are used as input to
 Stage 3.
 
+.. include:: ../references_general/pars-image2pipeline_reffile.inc
