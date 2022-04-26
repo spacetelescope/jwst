@@ -154,4 +154,7 @@ https://tweakwcs.readthedocs.io/en/latest/
 
 Reference Files
 ===============
-This step does not require any reference files.
+The ``tweakreg`` step uses the PARS-TWEAKREGSTEP parameter reference file.
+
+.. include:: ../references_general/pars-tweakregstep_reffile.inc
+
