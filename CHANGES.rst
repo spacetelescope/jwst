@@ -99,8 +99,7 @@ flatfield
 general
 -------
 
-- Added aliases to all steps, following step_defs conventions where
-  possible [#6740]
+- Added aliases to all steps, following step_defs naming conventions [#6740]
 
 lib
 ---
