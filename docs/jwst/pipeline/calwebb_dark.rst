@@ -67,9 +67,4 @@ Result of applying all pipeline steps listed above.
 Will have the same data dimensions as the
 input raw 4D data (ncols x nints x ngroups x nints).
 
-Reference Files
----------------
-
-The `~jwst.pipeline.DarkPipeline` uses the PARS-DARKPIPELINE parameter reference file.
-
 .. include:: ../references_general/pars-darkpipeline_reffile.inc
