@@ -69,6 +69,10 @@ datamodels
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
   MirMrsXArtCorrModel [#6800]
 
+- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
+
+- Create MSA_TARG_ACQ schema [#6757]
+  
 extract_1d
 ----------
 
