@@ -8,7 +8,16 @@ PARS-DARKPIPELINE Reference File
 
 Reference Selection Keywords
 ++++++++++++++++++++++++++++
-There are no selection criteria. All uses of the `~jwst.pipeline.DarkPipeline` will retrieve
-the same reference file.
+CRDS selects appropriate pars-whitelightstep references based on the following keywords.
+
+========== ====================================
+Instrument Keywords
+========== ====================================
+FGS        INSTRUME
+MIRI       INSTRUME
+NIRCAM     INSTRUME
+NIRISS     INSTRUME
+NIRSPEC    INSTRUME
+========== ====================================
 
 .. include:: ../includes/standard_keywords.inc
