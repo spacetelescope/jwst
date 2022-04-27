@@ -5,7 +5,6 @@ Module for the source catalog step.
 import os
 import warnings
 
-from crds.core.exceptions import CrdsLookupError
 import numpy as np
 from photutils.utils.exceptions import NoDetectionsWarning
 
@@ -43,21 +42,18 @@ class SourceCatalogStep(Step):
 
     reference_file_types = ['apcorr', 'abvegaoffset']
 
+    def _get_reffile_paths(self, model):
+        filepaths = []
+        for reffile_type in self.reference_file_types:
+            filepath = self.get_reference_file(model, reffile_type)
+            self.log.info(f'Using {reffile_type.upper()} reference file: '
+                          f'{filepath}')
+            filepaths.append(filepath)
+        return filepaths
+
     def process(self, input_model):
         with datamodels.open(input_model) as model:
-            try:
-                apcorr_fn = self.get_reference_file(input_model, 'apcorr')
-            except CrdsLookupError:
-                apcorr_fn = None
-            self.log.info(f'Using APCORR reference file {apcorr_fn}')
-
-            try:
-                abvegaoffset_fn = self.get_reference_file(input_model,
-                                                          'abvegaoffset')
-            except CrdsLookupError:
-                abvegaoffset_fn = None
-            self.log.info('Using ABVEGAOFFSET reference file '
-                          f'{abvegaoffset_fn}')
+            apcorr_fn, abvegaoffset_fn = self._get_reffile_paths(model)
 
             aperture_ee = (self.aperture_ee1, self.aperture_ee2,
                            self.aperture_ee3)
