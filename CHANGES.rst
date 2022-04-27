@@ -69,8 +69,6 @@ datamodels
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
   MirMrsXArtCorrModel [#6800]
 
-- Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
-
 - Create MSA_TARG_ACQ schema [#6757]
   
 documentation
@@ -133,6 +131,9 @@ ramp_fitting
 
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
+
+- Fix for handling jumps in the first good group following dropped groups.
+  [spacetelescope/stcal#84]
 
 regtest
 -------
