@@ -73,6 +73,11 @@ datamodels
 
 - Create MSA_TARG_ACQ schema [#6757]
   
+documentation
+-------------
+
+- Document parameter reference files in the same manor as other references [#6806]
+
 extract_1d
 ----------
 
