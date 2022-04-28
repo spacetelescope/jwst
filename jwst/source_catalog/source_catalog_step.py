@@ -8,8 +8,9 @@ import warnings
 import numpy as np
 from photutils.utils.exceptions import NoDetectionsWarning
 
-from .source_catalog import (ReferenceData, Background, make_kernel,
-                             make_segment_img, JWSTSourceCatalog)
+from .reference_data import ReferenceData
+from .source_catalog import (Background, make_kernel, make_segment_img,
+                             JWSTSourceCatalog)
 from .. import datamodels
 from ..stpipe import Step
 
@@ -53,20 +54,12 @@ class SourceCatalogStep(Step):
 
     def process(self, input_model):
         with datamodels.open(input_model) as model:
-            apcorr_fn, abvegaoffset_fn = self._get_reffile_paths(model)
-
+            reffile_paths = self._get_reffile_paths(model)
             aperture_ee = (self.aperture_ee1, self.aperture_ee2,
                            self.aperture_ee3)
-            try:
-                refdata = ReferenceData(model, aperture_ee=aperture_ee,
-                                        apcorr_filename=apcorr_fn,
-                                        abvegaoffset_filename=abvegaoffset_fn)
-                aperture_params = refdata.aperture_params
-                abvega_offset = refdata.abvega_offset
-            except RuntimeError as err:
-                msg = f'{err} Source catalog will not be created.'
-                self.log.warning(msg)
-                return
+            refdata = ReferenceData(input_model, reffile_paths, aperture_ee)
+            aperture_params = refdata.aperture_params
+            abvega_offset = refdata.abvega_offset
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
             if coverage_mask.all():
