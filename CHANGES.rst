@@ -58,6 +58,12 @@ datamodels
 
 - Correcting the default ZEROFRAME allocation. [#6791]
 
+documentation
+-------------
+
+- Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
+  description [#2579]
+
 extract_1d
 ----------
 
