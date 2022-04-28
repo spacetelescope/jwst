@@ -81,6 +81,13 @@ datamodels
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
   MirMrsXArtCorrModel [#6800]
 
+- Create MSA_TARG_ACQ schema [#6757]
+
+documentation
+-------------
+
+- Document parameter reference files in the same manor as other references [#6806]
+
 extract_1d
 ----------
 
@@ -137,6 +144,9 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+- Fix for handling jumps in the first good group following dropped groups.
+  [spacetelescope/stcal#84]
+
 regtest
 -------
 
@@ -178,6 +188,8 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+- Increased tolerance value for considering two sky polygons identical. [#6805]
+
 source_catalog
 --------------
 
@@ -197,6 +209,8 @@ tweakreg
 
 - Make ``fit_quality_is_good()`` member private and rename it to
   ``_is_wcs_correction_small()``. [#6781]
+
+- Change default value of ``brightest`` parameter in the ``tweakreg`` step. [#6810]
 
 
 1.4.6 (2022-03-25)
