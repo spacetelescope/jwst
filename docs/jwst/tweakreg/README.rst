@@ -101,14 +101,14 @@ The ``tweakreg`` step has the following optional arguments:
   for matching. (Default=15)
 
 * ``searchrad``: A `float` indicating the search radius in arcsec for a match.
-  (Default=1.0)
+  (Default=2.0)
 
 * ``use2dhist``: A boolean indicating whether to use 2D histogram to find
   initial offset. (Default=True)
 
-* ``separation``: Minimum object separation in arcsec. (Default=0.5)
+* ``separation``: Minimum object separation in arcsec. (Default=1.0)
 
-* ``tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=1.0)
+* ``tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
 
 * ``xoffset``: Initial guess for X offset in arcsec. (Default=0.0)
 
