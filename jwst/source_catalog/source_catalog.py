@@ -20,193 +20,18 @@ from scipy import ndimage
 from scipy.spatial import KDTree
 
 from photutils import __version__ as photutils_version
-from photutils.background import Background2D, MedianBackground
-from photutils.segmentation import (detect_sources, deblend_sources,
-                                    SourceCatalog)
+from photutils.segmentation import SourceCatalog
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 aperture_photometry)
 
 from jwst import __version__ as jwst_version
 
 from ..datamodels import ImageModel
+from .detection import make_kernel
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-class Background:
-    """
-    Class to estimate a 2D background and background RMS noise in an
-    image.
-
-    Parameters
-    ----------
-    data : 2D `~numpy.ndarray`
-        The input 2D array.
-
-    box_size : int or array_like (int)
-        The box size along each axis.  If ``box_size`` is a scalar then
-        a square box of size ``box_size`` will be used.  If ``box_size``
-        has two elements, they should be in ``(ny, nx)`` order.
-
-    mask : array_like (bool), optional
-        A boolean mask, with the same shape as ``data``, where a `True`
-        value indicates the corresponding element of ``data`` is masked.
-        Masked data are excluded from calculations.
-
-    Attributes
-    ----------
-    background : 2D `~numpy.ndimage`
-        The estimated 2D background image.
-
-    background_rms : 2D `~numpy.ndimage`
-        The estimated 2D background RMS image.
-    """
-
-    def __init__(self, data, box_size=100, mask=None):
-        self.data = data
-        self.box_size = np.asarray(box_size).astype(int)  # must be integer
-        self.mask = mask
-
-    @lazyproperty
-    def _background2d(self):
-        """
-        Estimate the 2D background and background RMS noise in an image.
-
-        Returns
-        -------
-        background : `photutils.background.Background2D`
-            A Background2D object containing the 2D background and
-            background RMS noise estimates.
-        """
-        sigma_clip = SigmaClip(sigma=3.)
-        bkg_estimator = MedianBackground()
-        filter_size = (3, 3)
-
-        try:
-            bkg = Background2D(self.data, self.box_size,
-                               filter_size=filter_size, mask=self.mask,
-                               sigma_clip=sigma_clip,
-                               bkg_estimator=bkg_estimator)
-        except ValueError:
-            # use the entire unmasked array
-            bkg = Background2D(self.data, self.data.shape,
-                               filter_size=filter_size, mask=self.mask,
-                               sigma_clip=sigma_clip,
-                               bkg_estimator=bkg_estimator,
-                               exclude_percentile=100.)
-            log.info('Background could not be estimated in meshes. '
-                     'Using the entire unmasked array for background '
-                     f'estimation:  bkg_boxsize={self.data.shape}.')
-
-        # apply the coverage mask
-        bkg.background *= np.logical_not(self.mask)
-        bkg.background_rms *= np.logical_not(self.mask)
-
-        return bkg
-
-    @lazyproperty
-    def background(self):
-        """
-        The 2D background image.
-        """
-        return self._background2d.background
-
-    @lazyproperty
-    def background_rms(self):
-        """
-        The 2D background RMS image.
-        """
-        return self._background2d.background_rms
-
-
-def make_kernel(kernel_fwhm):
-    """
-    Make a 2D Gaussian smoothing kernel that is used to filter the image
-    before thresholding.
-
-    Filtering the image will smooth the noise and maximize detectability
-    of objects with a shape similar to the kernel.
-
-    The kernel must have odd sizes in both X and Y, be centered in the
-    central pixel, and normalized to sum to 1.
-
-    Parameters
-    ----------
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-
-    Returns
-    -------
-    kernel : `astropy.convolution.Kernel2D`
-        The output smoothing kernel, normalized such that it sums to 1.
-    """
-    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
-    kernel = Gaussian2DKernel(sigma)
-    kernel.normalize(mode='integral')
-    return kernel
-
-
-def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
-                     deblend=False):
-    """
-    Detect sources in an image, including deblending.
-
-    Parameters
-    ----------
-    data : 2D `~numpy.ndarray`
-        The input 2D array.
-
-    threshold : float
-        The data value or pixel-wise data values to be used for the
-        detection threshold. A 2D threshold must have the same shape as
-        ``data``.
-
-    npixels : int
-        The number of connected pixels, each greater than ``threshold``
-        that an object must have to be detected.  ``npixels`` must be a
-        positive integer.
-
-    kernel : `astropy.convolution.Kernel2D`
-        The filtering kernel.  Filtering the image will smooth the noise
-        and maximize detectability of objects with a shape similar to
-        the kernel.
-
-    mask : array_like of bool, optional
-        A boolean mask, with the same shape as the input ``data``, where
-        `True` values indicate masked pixels.  Masked pixels will not be
-        included in any source.
-
-    deblend : bool, optional
-        Whether to deblend overlapping sources.  Source deblending
-        requires scikit-image.
-
-    Returns
-    -------
-    segment_image : `~photutils.segmentation.SegmentationImage` or `None`
-        A 2D segmentation image, with the same shape as the input data,
-        where sources are marked by different positive integer values.
-        A value of zero is reserved for the background.  If no sources
-        are found then `None` is returned.
-    """
-    connectivity = 8
-    segm = detect_sources(data, threshold, npixels, kernel=kernel,
-                          mask=mask, connectivity=connectivity)
-    if segm is None:
-        return None
-
-    # source deblending requires scikit-image
-    if deblend:
-        nlevels = 32
-        contrast = 0.001
-        mode = 'exponential'
-        segm = deblend_sources(data, segm, npixels=npixels,
-                               filter_kernel=kernel, nlevels=nlevels,
-                               contrast=contrast, mode=mode,
-                               connectivity=connectivity, relabel=True)
-
-    return segm
 
 
 class JWSTSourceCatalog:
@@ -234,12 +59,6 @@ class JWSTSourceCatalog:
         extended if both concentration indices are greater than the
         corresponding thresholds, otherwise it is considered a star.
 
-    kernel : array-like (2D) or `~astropy.convolution.Kernel2D`, optional
-        The 2D array of the kernel used to filter the data prior to
-        calculating the source centroid and morphological parameters.
-        The kernel should be the same one used in defining the source
-        segments.
-
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
 
@@ -259,7 +78,7 @@ class JWSTSourceCatalog:
     and have the same shape and units as the science data array.
     """
 
-    def __init__(self, model, segment_img, ci_star_thresholds, kernel=None,
+    def __init__(self, model, segment_img, ci_star_thresholds,
                  kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
 
         if not isinstance(model, ImageModel):
@@ -272,7 +91,7 @@ class JWSTSourceCatalog:
             raise ValueError('ci_star_thresholds must contain only 2 '
                              'items')
         self.ci_star_thresholds = ci_star_thresholds
-        self.kernel = kernel
+        self.kernel = make_kernel(kernel_fwhm)
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
 
         self.aperture_params = aperture_params
@@ -300,8 +119,6 @@ class JWSTSourceCatalog:
         unit = u.Jy
         self.model.data <<= unit
         self.model.err <<= unit
-
-        return
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):
@@ -405,8 +222,6 @@ class JWSTSourceCatalog:
             except AttributeError:
                 value = getattr(self, prop_name)
             setattr(self, column, value)
-
-        return
 
     @lazyproperty
     def xypos(self):
@@ -776,7 +591,6 @@ class JWSTSourceCatalog:
         """
         for name, value in zip(self.ci_colnames, self.concentration_indices):
             setattr(self, name, value)
-        return
 
     @lazyproperty
     def is_extended(self):

@@ -3,14 +3,10 @@ Module for the source catalog step.
 """
 
 import os
-import warnings
 
-import numpy as np
-from photutils.utils.exceptions import NoDetectionsWarning
-
+from .detection import JWSTSourceFinder
 from .reference_data import ReferenceData
-from .source_catalog import (Background, make_kernel, make_segment_img,
-                             JWSTSourceCatalog)
+from .source_catalog import JWSTSourceCatalog
 from .. import datamodels
 from ..stpipe import Step
 
@@ -61,36 +57,16 @@ class SourceCatalogStep(Step):
             aperture_params = refdata.aperture_params
             abvega_offset = refdata.abvega_offset
 
-            coverage_mask = np.isnan(model.err) | (model.wht == 0)
-            if coverage_mask.all():
-                self.log.warning('There are no valid pixels. Source catalog '
-                                 'will not be created.')
-                return
-
-            bkg = Background(model.data, box_size=self.bkg_boxsize,
-                             mask=coverage_mask)
-            model.data -= bkg.background
-
-            threshold = self.snr_threshold * bkg.background_rms
-            kernel = make_kernel(self.kernel_fwhm)
-            with warnings.catch_warnings():
-                # suppress NoDetectionsWarning from photutils
-                warnings.filterwarnings('ignore',
-                                        category=NoDetectionsWarning)
-                segment_img = make_segment_img(model.data, threshold,
-                                               npixels=self.npixels,
-                                               kernel=kernel,
-                                               mask=coverage_mask,
-                                               deblend=self.deblend)
+            finder = JWSTSourceFinder(self.bkg_boxsize, self.kernel_fwhm,
+                                      self.snr_threshold, self.npixels,
+                                      deblend=self.deblend)
+            segment_img = finder(model)
             if segment_img is None:
-                self.log.warning('No sources were found. Source catalog '
-                                 'will not be created.')
                 return
-            self.log.info(f'Detected {segment_img.nlabels} sources')
 
             ci_star_thresholds = (self.ci1_star_threshold,
                                   self.ci2_star_threshold)
-            catobj = JWSTSourceCatalog(model, segment_img, kernel=kernel,
+            catobj = JWSTSourceCatalog(model, segment_img,
                                        kernel_fwhm=self.kernel_fwhm,
                                        aperture_params=aperture_params,
                                        abvega_offset=abvega_offset,
@@ -110,6 +86,7 @@ class SourceCatalogStep(Step):
                 segm_model.meta.wcsinfo = model.meta.wcsinfo
                 self.save_model(segm_model, suffix='segm')
                 model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info(f'Wrote segmentation map: {segm_model.meta.filename}')
+                self.log.info('Wrote segmentation map: '
+                              f'{segm_model.meta.filename}')
 
         return catalog
