@@ -40,10 +40,10 @@ class TweakRegStep(Step):
         enforce_user_order = boolean(default=False) # Align images in user specified order?
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=1.0) # The search radius in arcsec for a match
+        searchrad = float(default=2.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
-        separation = float(default=0.5) # Minimum object separation in arcsec
-        tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
+        separation = float(default=1.0) # Minimum object separation in arcsec
+        tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec
         xoffset = float(default=0.0), # Initial guess for X offset in arcsec
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
         fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='general') # Fitting geometry
