@@ -70,7 +70,7 @@ datamodels
   MirMrsXArtCorrModel [#6800]
 
 - Create MSA_TARG_ACQ schema [#6757]
-  
+
 documentation
 -------------
 
@@ -197,6 +197,8 @@ tweakreg
 
 - Make ``fit_quality_is_good()`` member private and rename it to
   ``_is_wcs_correction_small()``. [#6781]
+
+- Change default value of ``brightest`` parameter in the ``tweakreg`` step. [#6810]
 
 
 1.4.6 (2022-03-25)
