@@ -27,7 +27,9 @@ pipeline, the order of steps is a bit different for MIRI exposures.
 +---------------------------------------+-----------------------------------------+
 | :ref:`refpix <refpix_step>`           | :ref:`lastframe <lastframe_step>`       |
 +---------------------------------------+-----------------------------------------+
-| :ref:`linearity <linearity_step>`     | :ref:`linearity <linearity_step>`       |
+| :ref:`linearity <linearity_step>`     | :ref:`reset <reset_step>`               |
++---------------------------------------+-----------------------------------------+
+|                                       | :ref:`linearity <linearity_step>`       |
 +---------------------------------------+-----------------------------------------+
 |                                       | :ref:`rscd <rscd_step>`                 |
 +---------------------------------------+-----------------------------------------+
@@ -64,3 +66,5 @@ Outputs
 Result of applying all pipeline steps listed above.
 Will have the same data dimensions as the
 input raw 4D data (ncols x nints x ngroups x nints).
+
+.. include:: ../references_general/pars-darkpipeline_reffile.inc

@@ -26,6 +26,11 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+ami
+---
+
+- Allow AmiAverageStep to be run on list in command line interface [#6797]
+
 assign_wcs
 ----------
 
@@ -58,11 +63,21 @@ datamodels
 
 - Correcting the default ZEROFRAME allocation. [#6791]
 
+- Add the new MIRI MRS point source correction reference file data model
+  MirMrsPtCorrModel. [#6762]
+
+- Add new datamodel and schema for MIRI MRS cross-artifact reference file
+  MirMrsXArtCorrModel [#6800]
+
+- Create MSA_TARG_ACQ schema [#6757]
+
 documentation
 -------------
 
 - Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
   description [#2579]
+
+- Document parameter reference files in the same manor as other references [#6806]
 
 extract_1d
 ----------
@@ -81,6 +96,16 @@ extract_1d
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
+- Allow reference files to specify extraction region for extended
+  sources, modify `bkg_fit` default to None while retaining `poly`
+  as default mode [#6793]
+
+flatfield
+---------
+
+- Change DQ flags for NIRSpec flatfield where one or more component flats
+  (fflat, dflat, sflat) is bad (#6794)
+
 photom
 ------
 
@@ -98,6 +123,8 @@ pipeline
 - Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
   step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
 
+- Added ResetStep back into `calwebb_dark` for MIRI exposures [#6798]
+
 ramp_fitting
 ------------
 
@@ -107,6 +134,9 @@ ramp_fitting
 
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
+
+- Fix for handling jumps in the first good group following dropped groups.
+  [spacetelescope/stcal#84]
 
 regtest
 -------
@@ -121,6 +151,11 @@ resample
 
 - Re-designed algorithm for computation of the output WCS for the
   ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
+
+- Fixed handling of user-supplied ``weight_type`` parameter value for
+  ``resample_spec``. [#6796]
+
+- Fixed an issue with axis number for the spectral axis in ``resample_spec``. [#6802]
 
 reset
 -----
@@ -144,6 +179,8 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+- Increased tolerance value for considering two sky polygons identical. [#6805]
+
 source_catalog
 --------------
 
@@ -163,6 +200,8 @@ tweakreg
 
 - Make ``fit_quality_is_good()`` member private and rename it to
   ``_is_wcs_correction_small()``. [#6781]
+
+- Change default value of ``brightest`` parameter in the ``tweakreg`` step. [#6810]
 
 
 1.4.6 (2022-03-25)

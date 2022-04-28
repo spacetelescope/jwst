@@ -51,4 +51,6 @@ of JWST data.
 Reference Files
 ===============
 
-The ``outlier_detection`` step does not use any reference files.
+The ``outlier_detection`` step uses the PARS-OUTLIERDETECTIONSTEP parameter reference file.
+
+.. include:: ../references_general/pars-outlierdetectionstep_reffile.inc

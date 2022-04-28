@@ -27,6 +27,7 @@ from .guider import GuiderRawModel, GuiderCalModel
 from .ifucube import IFUCubeModel
 from .ifucubepars import NirspecIFUCubeParsModel, MiriIFUCubeParsModel
 from .ifuimage import IFUImageModel
+from .mrsptcorr import MirMrsPtCorrModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
@@ -35,6 +36,7 @@ from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .ramp import MIRIRampModel
+from .mrsxartcorr import MirMrsXArtCorrModel
 from .multicombinedspec import MultiCombinedSpecModel
 from .multiexposure import MultiExposureModel
 from .multiextract1d import MultiExtract1dImageModel
@@ -109,7 +111,8 @@ __all__ = [
     'FringeModel', 'FringeFreqModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
-    'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
+    'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel', 'MirMrsPtCorrModel',
+    'MirMrsXArtCorrModel',
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
