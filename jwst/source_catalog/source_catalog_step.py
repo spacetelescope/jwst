@@ -4,7 +4,9 @@ Module for the source catalog step.
 
 import os
 
-from .detection import JWSTSourceFinder
+import numpy as np
+
+from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
 from .reference_data import ReferenceData
 from .source_catalog import JWSTSourceCatalog
 from .. import datamodels
@@ -57,20 +59,26 @@ class SourceCatalogStep(Step):
             aperture_params = refdata.aperture_params
             abvega_offset = refdata.abvega_offset
 
-            finder = JWSTSourceFinder(self.bkg_boxsize, self.kernel_fwhm,
-                                      self.snr_threshold, self.npixels,
+            coverage_mask = np.isnan(model.err) | (model.wht == 0)
+            bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize,
+                                 coverage_mask=coverage_mask)
+            model.data -= bkg.background
+
+            threshold = self.snr_threshold * bkg.background_rms
+            finder = JWSTSourceFinder(threshold, self.npixels,
                                       deblend=self.deblend)
-            segment_img = finder(model)
+
+            convolved_data = convolve_data(model.data, self.kernel_fwhm,
+                                           mask=coverage_mask)
+            segment_img = finder(convolved_data, mask=coverage_mask)
             if segment_img is None:
-                return
+                return None
 
             ci_star_thresholds = (self.ci1_star_threshold,
                                   self.ci2_star_threshold)
-            catobj = JWSTSourceCatalog(model, segment_img,
-                                       kernel_fwhm=self.kernel_fwhm,
-                                       aperture_params=aperture_params,
-                                       abvega_offset=abvega_offset,
-                                       ci_star_thresholds=ci_star_thresholds)
+            catobj = JWSTSourceCatalog(model, segment_img, convolved_data,
+                                       self.kernel_fwhm, aperture_params,
+                                       abvega_offset, ci_star_thresholds)
             catalog = catobj.catalog
 
             if self.save_results:

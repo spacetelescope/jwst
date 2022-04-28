@@ -27,7 +27,6 @@ from photutils.aperture import (CircularAperture, CircularAnnulus,
 from jwst import __version__ as jwst_version
 
 from ..datamodels import ImageModel
-from .detection import make_kernel
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
@@ -49,6 +48,23 @@ class JWSTSourceCatalog:
         where sources are marked by different positive integer values.
         A value of zero is reserved for the background.
 
+    convolved_data : data : 2D `~numpy.ndarray`
+        The 2D array used to calculate the source centroid and
+        morphological properties.
+
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+        This is needed to calculate the DAOFind sharpness and roundness
+        properties (DAOFind uses a special kernel that sums to zero).
+
+    aperture_params : `dict`
+        A dictionary containing the aperture parameters (radii, aperture
+        corrections, and background annulus inner and outer radii).
+
+    abvega_offset : float
+        Offset to convert from AB to Vega magnitudes.  The value
+        represents m_AB - m_Vega.
+
     ci_star_thresholds : array-like of 2 floats
         The concentration index thresholds for determining whether
         a source is a star. The first threshold corresponds to the
@@ -59,17 +75,6 @@ class JWSTSourceCatalog:
         extended if both concentration indices are greater than the
         corresponding thresholds, otherwise it is considered a star.
 
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-
-    aperture_params : `dict`
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
-
-    abvega_offset : float
-        Offset to convert from AB to Vega magnitudes.  The value
-        represents m_AB - m_Vega.
-
     Notes
     -----
     ``model.err`` is assumed to be the total error array corresponding
@@ -78,30 +83,28 @@ class JWSTSourceCatalog:
     and have the same shape and units as the science data array.
     """
 
-    def __init__(self, model, segment_img, ci_star_thresholds,
-                 kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
+    def __init__(self, model, segment_img, convolved_data, kernel_fwhm,
+                 aperture_params, abvega_offset, ci_star_thresholds):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
-        self.model = model  # background was subtracted in SourceDetection
+        self.model = model  # background was previously subtracted
 
         self.segment_img = segment_img
-        self.n_sources = len(self.segment_img.labels)
-        if len(ci_star_thresholds) != 2:
-            raise ValueError('ci_star_thresholds must contain only 2 '
-                             'items')
-        self.ci_star_thresholds = ci_star_thresholds
-        self.kernel = make_kernel(kernel_fwhm)
+        self.convolved_data = convolved_data
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
-
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
 
-        self.aperture_ee = aperture_params['aperture_ee']
-        self.n_aper = len(self.aperture_ee)
-        self.column_desc = {}
+        if len(ci_star_thresholds) != 2:
+            raise ValueError('ci_star_thresholds must contain only 2 items')
+        self.ci_star_thresholds = ci_star_thresholds
 
+        self.n_sources = len(self.segment_img.labels)
+        self.aperture_ee = self.aperture_params['aperture_ee']
+        self.n_aper = len(self.aperture_ee)
         self.wcs = self.model.meta.wcs
+        self.column_desc = {}
         self._xpeak = None
         self._ypeak = None
 
@@ -112,8 +115,8 @@ class JWSTSourceCatalog:
         """
         if self.model.meta.bunit_data != 'MJy/sr':
             raise ValueError('data is expected to be in units of MJy/sr')
-        self.model.data *= (1.e6 *
-                            self.model.meta.photometry.pixelarea_steradians)
+        self.model.data *= (1.e6
+                            * self.model.meta.photometry.pixelarea_steradians)
         self.model.meta.bunit_data = 'Jy'
 
         unit = u.Jy
@@ -202,9 +205,8 @@ class JWSTSourceCatalog:
         The values are set as dynamic attributes.
         """
         segm_cat = SourceCatalog(self.model.data, self.segment_img,
-                                 error=self.model.err, kernel=self.kernel,
-                                 wcs=self.wcs)
-
+                                 convolved_data=self.convolved_data << u.Jy,
+                                 error=self.model.err, wcs=self.wcs)
         self._xpeak = segm_cat.maxval_xindex
         self._ypeak = segm_cat.maxval_yindex
 
@@ -650,9 +652,8 @@ class JWSTSourceCatalog:
         """
         The DAOFind convolved data.
         """
-        return ndimage.convolve(self.model.data.value,
-                                self._daofind_kernel, mode='constant',
-                                cval=0.0)
+        return ndimage.convolve(self.model.data.value, self._daofind_kernel,
+                                mode='constant', cval=0.0)
 
     @lazyproperty
     def _daofind_cutout(self):
@@ -715,8 +716,8 @@ class JWSTSourceCatalog:
         conv_peak = self._daofind_cutout_conv[:, self._kernel_center,
                                               self._kernel_center]
 
-        data_mean = ((np.sum(data_masked, axis=(1, 2)) -
-                      data_peak) / npixels)
+        data_mean = ((np.sum(data_masked, axis=(1, 2))
+                      - data_peak) / npixels)
 
         with warnings.catch_warnings():
             # ignore 0 / 0 for non-finite xypos
@@ -746,8 +747,8 @@ class JWSTSourceCatalog:
         quad4 = cutout[:, self._kernel_center + 1:, self._kernel_center:]
 
         axis = (1, 2)
-        sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis) -
-                quad3.sum(axis=axis) + quad4.sum(axis=axis))
+        sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis)
+                - quad3.sum(axis=axis) + quad4.sum(axis=axis))
         sum2[sum2 == 0] = 0.0
 
         sum4 = np.abs(cutout).sum(axis=axis)
@@ -812,8 +813,8 @@ class JWSTSourceCatalog:
         unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
-        flux = (self.aperture_params['aperture_corrections'][idx] *
-                getattr(self, self.aperture_flux_colnames[idx * 2]))
+        flux = (self.aperture_params['aperture_corrections'][idx]
+                * getattr(self, self.aperture_flux_colnames[idx * 2]))
         return flux
 
     @lazyproperty
@@ -826,8 +827,8 @@ class JWSTSourceCatalog:
         unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
-        flux_err = (self.aperture_params['aperture_corrections'][idx] *
-                    getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
+        flux_err = (self.aperture_params['aperture_corrections'][idx]
+                    * getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
         return flux_err
 
     @lazyproperty
