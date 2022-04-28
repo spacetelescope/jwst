@@ -5,7 +5,6 @@ Module to calculate the source catalog.
 import logging
 import warnings
 
-from astropy import __version__ as astropy_version
 from astropy.convolution import Gaussian2DKernel
 from astropy.nddata.utils import extract_array, NoOverlapError
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
@@ -14,11 +13,9 @@ import astropy.units as u
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
-from scipy import __version__ as scipy_version
 from scipy import ndimage
 from scipy.spatial import KDTree
 
-from photutils import __version__ as photutils_version
 from photutils.segmentation import SourceCatalog
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 aperture_photometry)
@@ -106,6 +103,7 @@ class JWSTSourceCatalog:
         self.column_desc = {}
         self._xpeak = None
         self._ypeak = None
+        self.meta = {}
 
     def convert_to_jy(self):
         """
@@ -208,6 +206,10 @@ class JWSTSourceCatalog:
                                  error=self.model.err, wcs=self.wcs)
         self._xpeak = segm_cat.maxval_xindex
         self._ypeak = segm_cat.maxval_yindex
+
+        self.meta.update(segm_cat.meta)
+        for key in ('sklearn', 'matplotlib'):
+            self.meta['version'].pop(key)
 
         # rename some columns in the output catalog
         prop_names = {}
@@ -920,21 +922,6 @@ class JWSTSourceCatalog:
         return catalog
 
     @lazyproperty
-    def catalog_metadata(self):
-        """
-        The catalog metadata, include package version numbers.
-        """
-        meta = {}
-        meta['jwst version'] = jwst_version
-        meta['numpy version'] = np.__version__
-        meta['scipy version'] = scipy_version
-        meta['astropy version'] = astropy_version
-        meta['photutils version'] = photutils_version
-        meta['aperture_params'] = self.aperture_params
-        meta['abvega_offset'] = self.abvega_offset
-        return meta
-
-    @lazyproperty
     def catalog(self):
         """
         The final source catalog.
@@ -950,6 +937,11 @@ class JWSTSourceCatalog:
             catalog[column].info.description = self.column_desc[column]
 
         catalog = self.format_columns(catalog)
-        catalog.meta.update(self.catalog_metadata)
+
+        # update metadata
+        self.meta['version']['jwst'] = jwst_version
+        self.meta['aperture_params'] = self.aperture_params
+        self.meta['abvega_offset'] = self.abvega_offset
+        catalog.meta.update(self.meta)
 
         return catalog
