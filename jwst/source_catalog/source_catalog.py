@@ -2,7 +2,6 @@
 Module to calculate the source catalog.
 """
 
-from collections import OrderedDict
 import logging
 import warnings
 
@@ -158,7 +157,7 @@ class JWSTSourceCatalog:
         A dictionary of the output table column names and descriptions
         for the segment catalog.
         """
-        desc = OrderedDict()
+        desc = {}
         desc['label'] = 'Unique source identification label number'
         desc['xcentroid'] = 'X pixel value of the source centroid'
         desc['ycentroid'] = 'Y pixel value of the source centroid'
@@ -416,7 +415,7 @@ class JWSTSourceCatalog:
         A dictionary of the output table column names and descriptions
         for the aperture catalog.
         """
-        desc = OrderedDict()
+        desc = {}
         desc['aper_bkg_flux'] = ('The local background value calculated as '
                                  'the sigma-clipped median value in the '
                                  'background annulus aperture')
@@ -529,7 +528,7 @@ class JWSTSourceCatalog:
         A dictionary of the output table column names and descriptions
         for the additional catalog values.
         """
-        desc = OrderedDict()
+        desc = {}
         for idx, colname in enumerate(self.ci_colnames):
             desc[colname] = self.ci_colname_descriptions[idx]
 
