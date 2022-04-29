@@ -37,10 +37,22 @@ assign_wcs
 Corrected computation of crpix by backward transform of fiducial, allow
 for reference outside of detector frame [#6789]
 
+background
+----------
+
+- Added the step parameter ``wfss_mmag_extract`` to allow for setting the
+  minimum magnitude of source catalog objects to be used in the WFSS
+  background subtraction process [#6788]
+
+- Added a check to make sure that a sufficient number of background
+  (source-free) pixels are available in a WFSS image before attempting
+  to compute statistics and scale the WFSS background reference image
+  [#6788]
+
 cube_build
 ----------
 
-- Fixed a bug in how the dq plane of NIRspec data is set [#6718]
+- Fixed a bug in how the DQ plane of NIRSpec data is set [#6718]
 
 cube_skymatch
 -------------
@@ -1039,6 +1051,11 @@ extract_2d
 - In NRC_TSGRISM mode replaced FITS WCS keywords with JWST specific ones. [#6005]
 
 - Added ``specsys`` to slits. [#6005]
+
+- Added the step parameter ``wfss_nbright`` to allow for only the N brightest
+  objects to be extracted from WFSS exposures. Also changed the name of the
+  ``mmag_extract`` param to ``wfss_mmag_extract``, for consistency with other
+  WFSS-specific params. [#6788]
 
 general
 -------

@@ -3429,20 +3429,22 @@ def extract_one_slit(
 
     # Log the extraction limits being used
     if integ < 1:
-        log.info("Using extraction limits: ")
         if extract_model.src_coeff is not None:
             # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
             if extract_model.dispaxis == HORIZONTAL:
                 # Only print xstart/xstop, because ystart/ystop are not used
-                log.info(f"xstart={extract_model.xstart}, "
+                log.info("Using extraction limits: "
+                         f"xstart={extract_model.xstart}, "
                          f"xstop={extract_model.xstop}, and src_coeff")
             else:
                 # Only print ystart/ystop, because xstart/xstop are not used
-                log.info(f"ystart={extract_model.ystart}, "
+                log.info("Using extraction limits: "
+                         f"ystart={extract_model.ystart}, "
                          f"ystop={extract_model.ystop}, and src_coeff")
         else:
             # No src_coeff, so print all xstart/xstop and ystart/ystop values
-            log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
+            log.info("Using extraction limits: "
+                     f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
                      f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
         if extract_params['subtract_background']:
             log.info("with background subtraction")
