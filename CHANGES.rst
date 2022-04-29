@@ -210,6 +210,9 @@ tweakreg
 - Make ``fit_quality_is_good()`` member private and rename it to
   ``_is_wcs_correction_small()``. [#6781]
 
+- Change default settings for ``searchrad``, ``tolerance``, and ``separation``
+  parameters for the ``tweakreg`` step. [#6809]
+
 - Change default value of ``brightest`` parameter in the ``tweakreg`` step. [#6810]
 
 
