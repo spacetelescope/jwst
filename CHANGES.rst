@@ -40,7 +40,7 @@ for reference outside of detector frame [#6789]
 background
 ----------
 
-- Added the step parameter ``mmag_extract`` to allow for setting the
+- Added the step parameter ``wfss_mmag_extract`` to allow for setting the
   minimum magnitude of source catalog objects to be used in the WFSS
   background subtraction process [#6788]
 
@@ -1038,6 +1038,11 @@ extract_2d
 - In NRC_TSGRISM mode replaced FITS WCS keywords with JWST specific ones. [#6005]
 
 - Added ``specsys`` to slits. [#6005]
+
+- Added the step parameter ``wfss_nbright`` to allow for only the N brightest
+  objects to be extracted from WFSS exposures. Also changed the name of the
+  ``mmag_extract`` param to ``wfss_mmag_extract``, for consistency with other
+  WFSS-specific params. [#6788]
 
 general
 -------
