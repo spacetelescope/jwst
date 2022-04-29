@@ -45,6 +45,9 @@ def nircam_model():
         'module': 'A',
         'name': 'NIRCAM',
         'pupil': 'CLEAR'}
+    model.meta.exposure.type = 'NRC_IMAGE'
+    model.meta.observation.date = '2021-01-01'
+    model.meta.observation.time = '00:00:00'
 
     return model
 

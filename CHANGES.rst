@@ -187,6 +187,8 @@ source_catalog
 - Updated the roundness and sharpness properties to use the source
   centroid position instead of the peak position. [#6766]
 
+- Updated the catalog metadata. [#6813]
+
 srctype
 -------
 
