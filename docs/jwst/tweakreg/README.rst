@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.tweakreg.TweakRegStep`
+:Alias: tweakreg
+
 Overview
 --------
 This step creates image catalogs of point-like sources whose

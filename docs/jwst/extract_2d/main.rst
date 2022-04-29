@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.extract_2d.Extract2dStep`
+:Alias: extract_2d
+
 Overview
 --------
 The ``extract_2d`` step extracts 2D arrays from spectral images. The extractions

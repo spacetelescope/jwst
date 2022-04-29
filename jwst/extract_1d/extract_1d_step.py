@@ -103,6 +103,8 @@ class Extract1dStep(Step):
         Filename for optional model output of ATOCA traces and pixel weights.
     """
 
+    class_alias = "extract_1d"
+
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type

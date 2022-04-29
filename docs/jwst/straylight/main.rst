@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.straylight.StraylightStep`
+:Alias: refpix
+
 Assumption
 ----------
 The ``straylight`` correction is only valid for MIRI MRS channel 1 and 2 data.

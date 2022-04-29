@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.barshadow.BarShadowStep`
+:Alias: barshadow
+
 Overview
 --------
 The ``barshadow`` step calculates the correction to be applied to

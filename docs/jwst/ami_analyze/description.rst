@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.ami.AmiAnalyzeStep`
+:Alias: ami_analyze
+
 The ``ami_analyze`` step is one of the AMI-specific steps in the ``ami``
 sub-package that is part of Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>`
 processing. It applies the Lacour-Greenbaum (LG) image plane

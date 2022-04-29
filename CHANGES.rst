@@ -103,6 +103,17 @@ flatfield
 - Change DQ flags for NIRSpec flatfield where one or more component flats
   (fflat, dflat, sflat) is bad (#6794)
 
+general
+-------
+
+- Added aliases to all steps, following step_defs naming conventions [#6740]
+
+lib
+---
+
+- Updated default suffix names for RampFit and GuiderCDS steps to
+  'ramp_fit' and 'guider_cds' to match alias convention [#6740]
+
 photom
 ------
 

@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.extract_1d.Extract1dStep`
+:Alias: extract_1d
+
 Overview
 --------
 The ``extract_1d`` step extracts a 1D signal from a 2D or 3D dataset and

@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.tso_photometry.TSOPhotometryStep`
+:Alias: tso_photometry
+
 The ``tso_photometry`` step does aperture photometry with a circular aperture
 for the target.  Background is computed as the mean within a circular annulus.
 The output is a table (ASCII ecsv format) containing the time at the

@@ -12,6 +12,8 @@ class BackgroundStep(Step):
     BackgroundStep:  Subtract background exposures from target exposures.
     """
 
+    class_alias = "background"
+
     spec = """
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold

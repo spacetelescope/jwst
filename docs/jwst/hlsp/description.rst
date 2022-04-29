@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.coron.HlspStep`
+:Alias: hlsp
+
 The ``hlsp`` step is one of the coronagraphic-specific steps in the ``coron``
 sub-package. It produces high-level science products for KLIP-processed
 (PSF-subtracted) coronagraphic images. The step is currently a prototype and

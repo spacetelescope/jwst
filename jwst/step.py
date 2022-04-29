@@ -28,7 +28,7 @@ from .jump.jump_step import JumpStep
 from .lastframe.lastframe_step import LastFrameStep
 from .linearity.linearity_step import LinearityStep
 from .master_background.master_background_step import MasterBackgroundStep
-from .master_background.master_background_nrs_slits_step import MasterBackgroundNrsSlitsStep
+from .master_background.master_background_mos_step import MasterBackgroundMosStep
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
@@ -44,7 +44,6 @@ from .resample.resample_spec_step import ResampleSpecStep
 from .reset.reset_step import ResetStep
 from .residual_fringe.residual_fringe_step import ResidualFringeStep
 from .rscd.rscd_step import RscdStep
-from .rscd.rscd_step import RSCD_Step
 from .saturation.saturation_step import SaturationStep
 from .skymatch.skymatch_step import SkyMatchStep
 from .source_catalog.source_catalog_step import SourceCatalogStep
@@ -90,7 +89,7 @@ __all__ = [
     "LastFrameStep",
     "LinearityStep",
     "MasterBackgroundStep",
-    "MasterBackgroundNrsSlitsStep",
+    "MasterBackgroundMosStep",
     "MRSIMatchStep",
     "MSAFlagOpenStep",
     "OutlierDetectionStep",
@@ -106,7 +105,6 @@ __all__ = [
     "ResetStep",
     "ResidualFringeStep",
     "RscdStep",
-    "RSCD_Step",
     "SaturationStep",
     "SkyMatchStep",
     "SourceCatalogStep",

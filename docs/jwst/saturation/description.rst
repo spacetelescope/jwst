@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.saturation.SaturationStep`
+:Alias: saturation
+
 The algorithm for this step is called from the external package ``stcal``, an STScI
 effort to unify common calibration processing algorithms for use by multiple observatories.
 

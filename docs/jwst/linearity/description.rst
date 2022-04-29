@@ -1,6 +1,9 @@
 Description
 ============
 
+:Class: `jwst.linearity.LinearityStep`
+:Alias: linearity
+
 Assumptions
 -----------
 It is assumed that the input science exposure data for near-IR instruments
