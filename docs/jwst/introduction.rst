@@ -40,8 +40,8 @@ Information about all the reference files used by the Calibration Pipeline can b
 :ref:`reference_file_information`,
 as well as in the documentation for each Calibration Step that uses a reference file.
 Information on reference file types and their correspondence to calibration steps is
-described within the table for Reference File Types at
-:ref:`reference_file_information`.
+described within the table at
+:ref:`reference_file_types`.
 
 
 CRDS

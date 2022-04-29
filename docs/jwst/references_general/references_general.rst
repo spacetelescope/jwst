@@ -32,6 +32,8 @@ An example NIRCam GAIN reference file name would be "jwst_nircam_gain_0042.fits"
 The HISTORY header keyword of each reference file includes details on specific processing
 undergone by the files before being ingested in CRDS.
 
+.. _reference_file_types:
+
 Reference File Types
 ====================
 
