@@ -11,23 +11,22 @@ def run_pipeline(rtdata_module):
 
     rtdata = rtdata_module
 
-    # Get the custom pars-spec2pipeline ref file needed to run the pipeline
-    rtdata.get_data("nircam/wfss/jwst_nircam_pars-spec2pipeline_custom.asdf")
-
     # Get the input data; load individual data files first, load ASN file last
     rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_cat.ecsv")
     rtdata.get_data("nircam/wfss/jw01076101001_02101_00003_nrcalong_rate.fits")
     rtdata.get_data("nircam/wfss/jw01076-o101_20220403t120233_spec2_002_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    # use "disable-crds-steppars" to exclude pars-spec2pipeline from CRDS
-    args = ["jwst_nircam_pars-spec2pipeline_custom.asdf", rtdata.input,
+    args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
+            "--steps.bkg_subtract.skip=False",
+            "--steps.bkg_subtract.wfss_mmag_extract=20.0",
             "--steps.bkg_subtract.save_results=true",
             "--steps.extract_2d.save_results=true",
+            "--steps.extract_2d.wfss_mmag_extract=19.0",
+            "--steps.extract_2d.wfss_nbright=20",
             "--steps.srctype.save_results=true",
-            "--steps.flat_field.save_results=true",
-            "--disable-crds-steppars"]
+            "--steps.flat_field.save_results=true"]
     Step.from_cmdline(args)
 
     return rtdata
