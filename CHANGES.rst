@@ -120,6 +120,9 @@ general
 
 - Added aliases to all steps, following step_defs naming conventions [#6740]
 
+- Require scikit-image as a dependency (for source catalog deblending).
+  [#6816]
+
 lib
 ---
 
