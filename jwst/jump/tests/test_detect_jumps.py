@@ -18,26 +18,30 @@ SATURATED = dqflags.group["SATURATED"]
 NO_GAIN_VALUE = dqflags.pixel["NO_GAIN_VALUE"]
 
 
-def test_exec_time_0_crs(setup_inputs):
+def test_multi_vs_single_process(setup_inputs):
     """"
-    Set up with dimension similar to simulated MIRI datasets, Dataset has no
-    cosmic rays. Test only the execution time of run_detect_jumps() for
-    comparison with nominal time; hopefully indicative of faults with newly
-    added code.
+    A comparison of processing in single processing mode vs multiprocessing. The results in the
+    GROUPDQ arrays should be excactly the same. The number of cores is set to all to maximize
+    the number of slices since this is where the problems could occur. It's actually a little slower
+    with almost all CPUs since the overhead is higher and the extra virtual cores don't help.
     """
-    model, rnoise, gain = setup_inputs(ngroups=10, nrows=1024, ncols=1032,
+    #An odd number of rows is used to make sure the last slice is a different size than the others.
+    model, rnoise, gain = setup_inputs(ngroups=10, nrows=315, ncols=215,
                                        nints=2, readnoise=6.5, gain=5.5,
                                        grouptime=2.775, deltatime=2.775)
 
-    tstart = time.time()
-    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
-    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-    tstop = time.time()
+    crs_frac = 0.2  # fraction of groups having a CR
+    model = add_crs(model, crs_frac)  # add desired fraction of CRs
+    tstart_single = time.time()
+    single = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
+    tstop_single = time.time()
+    tstart_multi = time.time()
+    multi = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
+    tstop_multi = time.time()
+    t_elapsed_single = tstop_single - tstart_single
+    t_elapsed_multi = tstop_multi - tstart_multi
 
-    t_elapsed = tstop - tstart
-    MAX_TIME = 10  # takes 1.6 sec on my Mac
-
-    assert t_elapsed < MAX_TIME
+    assert_array_equal(single.groupdq, multi.groupdq)
 
 @pytest.mark.skip(reason='speed up testing during development')
 def test_exec_time_many_crs(setup_inputs):
@@ -67,6 +71,30 @@ def test_exec_time_many_crs(setup_inputs):
 
     assert t_elapsed < MAX_TIME
 
+def test_exec_time_multi_many_crs(setup_inputs):
+    """"
+    Setup identical to previous test but using multiprocessing with half of the total processors.
+    This should be all of the real processors.
+    """
+    nrows = 350
+    ncols = 400
+
+    model, rnoise, gain = setup_inputs(ngroups=10, nrows=nrows, ncols=ncols,
+                                       nints=2, readnoise=6.5, gain=5.5,
+                                       grouptime=2.775, deltatime=2.775)
+
+    crs_frac = 0.25  # fraction of groups having a CR
+    model = add_crs(model, crs_frac)  # add desired fraction of CRs
+
+    tstart = time.time()
+    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
+    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
+    tstop = time.time()
+
+    t_elapsed = tstop - tstart
+    MAX_TIME = 600  # takes ~100 sec on my Mac
+
+    assert t_elapsed < MAX_TIME
 
 def test_exec_time_multi_many_crs(setup_inputs):
     """"
