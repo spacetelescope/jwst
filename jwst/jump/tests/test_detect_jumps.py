@@ -45,7 +45,7 @@ def test_multi_vs_single_process(setup_inputs):
     assert_array_equal(single.groupdq, multi.groupdq)
 
 
-@pytest.mark.skip(reason='speed up testing during development')
+# @pytest.mark.skip(reason='speed up testing during development')
 def test_exec_time_many_crs(setup_inputs):
     """"
     Set up with dimension similar to simulated MIRI datasets, Dataset has
@@ -512,8 +512,8 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     assert out_model.groupdq[1, 7, 14, 5] == JUMP_DET
 
 
-#@pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
-def test_every_pixel_CR_neighbors_flagged(setup_inputs):
+# @pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
+def test_every_pixel_cr_neighbors_flagged(setup_inputs):
     """"
     A multiprocessing test that has a jump in every pixel. This is used
     to test the performance gain from multiprocessing.
