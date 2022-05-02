@@ -22,9 +22,12 @@ module itself and determined by the CRDS ``pars-spec2pipeline`` parameter
 reference file. Logic is mostly based on either the instrument name or the
 exposure type (EXP_TYPE keyword) of the data.
 
-The list of steps is shown in the table below and indicates which steps are
-applied to various spectroscopic modes, as well as TSO. The instrument mode
-abbreviations used in the table are as follows:
+Science Exposures
+-----------------
+
+The list of steps shown in the table below indicates which steps are
+applied to various spectroscopic modes for JWST science exposures, including
+TSO exposures. The instrument mode abbreviations used in the table are as follows:
 
 - NIRSpec FS = Fixed Slit
 - NIRSpec MOS = Multi-Object Spectroscopy
@@ -98,13 +101,14 @@ the :ref:`extract_1d <extract_1d_step>` step.
 
 NIRSpec Lamp Exposures
 ----------------------
+
 The ``Spec2Pipeline`` works slightly differently for NIRSpec lamp exposures.
 These are identified by the EXP_TYPE values of NRS_LAMP, NRS_AUTOWAVE or
 NRS_AUTOFLAT.  Using the EXP_TYPE keyword in this way means that another keyword
 is needed to specify whether the data are Fixed Slit, MOS, IFU or Brightobj.
 This is the OPMODE keyword, which maps to the ``jwst.datamodel`` attribute
 ``.meta.instrument.lamp_mode``.  This keyword can take the following values in
-in exposures that undergo ``Spec2Pipeline`` processing:
+exposures that undergo ``Spec2Pipeline`` processing:
 
 - BRIGHTOBJ = Bright Object mode (uses fixed slits)
 - FIXEDSLIT = Fixed slit mode
@@ -197,8 +201,8 @@ abbreviations used in the table are as follows:
 | :ref:`extract_1d <extract_1d_step>`   |   ALL      |    NONE      |       ALL       |      NONE    |
 +---------------------------------------+------------+--------------+-----------------+--------------+
 
-In the resample_spec and cube build steps, the spectra are transformed to a space of (wavelength,
-offset along the slit) without applying a tangent plane projection.
+In the :ref:`resample_spec <resample_step>` and :ref:`cube_build <cube_build_step>` steps, the spectra are
+transformed to a space of (wavelength, offset along the slit) without applying a tangent plane projection.
 
 Arguments
 ---------
