@@ -193,6 +193,11 @@ residual_fringe
 
 - Replaced fitting the background with an astropy fitting package [#6739]
 
+saturation
+----------
+
+- Updated to allow the step to flag neighbors of saturated pixels, which is controlled by the new step param n_pix_grow_sat. Added adjacent-to-saturated pixel flagging for nirspec irs2 mode. [spacetelescope/stcal#83] [#6818]
+
 skymatch
 --------
 
