@@ -25,7 +25,7 @@ def test_multi_vs_single_process(setup_inputs):
     the number of slices since this is where the problems could occur. It's actually a little slower
     with almost all CPUs since the overhead is higher and the extra virtual cores don't help.
     """
-    #An odd number of rows is used to make sure the last slice is a different size than the others.
+    # An odd number of rows is used to make sure the last slice is a different size than the others.
     model, rnoise, gain = setup_inputs(ngroups=10, nrows=315, ncols=215,
                                        nints=2, readnoise=6.5, gain=5.5,
                                        grouptime=2.775, deltatime=2.775)
@@ -40,8 +40,10 @@ def test_multi_vs_single_process(setup_inputs):
     tstop_multi = time.time()
     t_elapsed_single = tstop_single - tstart_single
     t_elapsed_multi = tstop_multi - tstart_multi
-
+    if multiprocessing.cpu_count() >= 4:
+        assert t_elapsed_single > t_elapsed_multi
     assert_array_equal(single.groupdq, multi.groupdq)
+
 
 @pytest.mark.skip(reason='speed up testing during development')
 def test_exec_time_many_crs(setup_inputs):
@@ -71,30 +73,6 @@ def test_exec_time_many_crs(setup_inputs):
 
     assert t_elapsed < MAX_TIME
 
-def test_exec_time_multi_many_crs(setup_inputs):
-    """"
-    Setup identical to previous test but using multiprocessing with half of the total processors.
-    This should be all of the real processors.
-    """
-    nrows = 350
-    ncols = 400
-
-    model, rnoise, gain = setup_inputs(ngroups=10, nrows=nrows, ncols=ncols,
-                                       nints=2, readnoise=6.5, gain=5.5,
-                                       grouptime=2.775, deltatime=2.775)
-
-    crs_frac = 0.25  # fraction of groups having a CR
-    model = add_crs(model, crs_frac)  # add desired fraction of CRs
-
-    tstart = time.time()
-    # using dummy variable in next to prevent "F841-variable is assigned to but never used"
-    _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
-    tstop = time.time()
-
-    t_elapsed = tstop - tstart
-    MAX_TIME = 600  # takes ~100 sec on my Mac
-
-    assert t_elapsed < MAX_TIME
 
 def test_exec_time_multi_many_crs(setup_inputs):
     """"
@@ -120,6 +98,7 @@ def test_exec_time_multi_many_crs(setup_inputs):
     MAX_TIME = 600  # takes ~100 sec on my Mac
 
     assert t_elapsed < MAX_TIME
+
 
 def test_nocrs_noflux(setup_inputs):
     """"
@@ -427,8 +406,7 @@ def add_crs(model, crs_frac):
     return model
 
 
-#@pytest.mark.skip(reason='multiprocessing temporarily disabled')
-def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
+def test_flagging_of_crs_across_slice_boundaries(setup_inputs):
     """"
     A multiprocessing test that has two CRs on the boundary between two slices.
     This makes sure that we are correctly flagging neighbors in different  slices.
@@ -485,7 +463,6 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
         assert out_model.groupdq[1, 7, yincrement - 1, 25] == JUMP_DET
 
 
-#@pytest.mark.skip(reason='multiprocessing temporarily disabled')
 def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     """"
     A multiprocessing test that has two CRs on the boundary between two slices
