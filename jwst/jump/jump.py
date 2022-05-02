@@ -36,7 +36,6 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
-    print("new jwst jump")
     new_gdq, new_pdq = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
