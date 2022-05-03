@@ -261,7 +261,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     cbs.channel = str(channel)
     cbs.band = 'ALL'
     cbs.single = True
-    cbs.weighting = 'EMSM'
+    cbs.weighting = 'drizzle'
     cube_models = cbs.process(models)
     if len(cube_models) != len(models):
         raise RuntimeError("The number of generated cube models does not "
