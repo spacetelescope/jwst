@@ -2034,7 +2034,7 @@ class IFUCubeData():
                 pctile = np.percentile(ngood[good], 1)
                 # Figure out where the number of good values were less than 1/2 of threshold,
                 # and zero out those arrays.
-                lowcov = (np.where((ngood > 0) & (ngood < pctile/2.)))[0]
+                lowcov = (np.where((ngood > 0) & (ngood < pctile / 2.)))[0]
                 nlowcov = len(lowcov)
                 log.info('Number of spectral tear planes adjusted: %i', nlowcov)
                 for zz in range(0, nlowcov):
