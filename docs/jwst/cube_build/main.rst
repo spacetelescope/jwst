@@ -58,7 +58,7 @@ Terminology
 -----------
 
 General IFU Terminology
-+++++++++++++++++++
++++++++++++++++++++++++
 
 ``pixel``
   A pixel is a physical 2-D element of the detector focal plane arrays.
@@ -168,7 +168,7 @@ WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
 The SCI image contains the surface brightness of cube spaxels in units of MJy/steradian. The wavelength dimension of the IFU cube
-can either be linear or non-linear. If the wavelength is non-linear then the IFU cube contains data from more than one band.  A
+can either be linear or non-linear. If the wavelength is non-linear, then the IFU cube contains data from more than one band.  A
 table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
 contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propagate the

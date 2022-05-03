@@ -163,7 +163,7 @@ class CubeBuildStep (Step):
             self.pars_input['coord_system'] = 'skyalign'
 
             # Don't allow anything but drizzle, msm, or emsm weightings
-            if ((self.weighting != 'msm') and (self.weighting != 'emsm') and (self.weighting != 'drizzle')):
+            if self.weighting not in ['msm', 'emsm', 'drizzle']:
                 self.weighting = 'drizzle'
 
             if self.weighting == 'drizzle':
