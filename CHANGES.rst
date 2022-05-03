@@ -86,6 +86,9 @@ datamodels
 documentation
 -------------
 
+- Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
+  description [#2579]
+
 - Document parameter reference files in the same manor as other references [#6806]
 
 extract_1d
