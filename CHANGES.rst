@@ -58,6 +58,8 @@ cube_build
 
 - Fix bug for internal_cal cubes produces by move to drizzle default. [#6826]
 
+- Fix bug for Single type cubes called by mrs_imatch using drizzle. [#6827]
+
 cube_skymatch
 -------------
 
