@@ -22,9 +22,12 @@ module itself and determined by the CRDS ``pars-spec2pipeline`` parameter
 reference file. Logic is mostly based on either the instrument name or the
 exposure type (EXP_TYPE keyword) of the data.
 
-The list of steps is shown in the table below and indicates which steps are
-applied to various spectroscopic modes, as well as TSO. The instrument mode
-abbreviations used in the table are as follows:
+Science Exposures
+-----------------
+
+The list of steps shown in the table below indicates which steps are
+applied to various spectroscopic modes for JWST science exposures, including
+TSO exposures. The instrument mode abbreviations used in the table are as follows:
 
 - NIRSpec FS = Fixed Slit
 - NIRSpec MOS = Multi-Object Spectroscopy
@@ -95,6 +98,111 @@ is not applied to a given exposure, the :ref:`extract_1d <extract_1d_step>` oper
 performed on the original (unresampled) data. The :ref:`cube_build <cube_build_step>` step produces
 a resampled/rectified cube for IFU exposures, which is then used as input to
 the :ref:`extract_1d <extract_1d_step>` step.
+
+NIRSpec Lamp Exposures
+----------------------
+
+The ``Spec2Pipeline`` works slightly differently for NIRSpec lamp exposures.
+These are identified by the EXP_TYPE values of NRS_LAMP, NRS_AUTOWAVE or
+NRS_AUTOFLAT.  Using the EXP_TYPE keyword in this way means that another keyword
+is needed to specify whether the data are Fixed Slit, MOS, IFU or Brightobj.
+This is the OPMODE keyword, which maps to the ``jwst.datamodel`` attribute
+``.meta.instrument.lamp_mode``.  This keyword can take the following values in
+exposures that undergo ``Spec2Pipeline`` processing:
+
+- BRIGHTOBJ = Bright Object mode (uses fixed slits)
+- FIXEDSLIT = Fixed slit mode
+- IFU = Integral Field Unit mode
+- MSASPEC = Multi-Object Spectrograph Mode
+
+OPMODE can also take the values of GRATING-ONLY and NONE, but only in some
+engineering-only situations, and can take the value of IMAGE for imaging
+data.  None of these values will trigger the execution of the ``Spec2Pipeline``.
+
+NIRSpec calibration lamps are identified by the LAMP keyword,
+which maps to the ``jwst.datamodel`` attribute ``.meta.instrument.lamp_state``.
+The lamps are either line lamps, used for wavelength calibration, or continuum
+lamps, which are used for flatfielding.  Each is paired with a specific grating:
+
++-----------+---------------------------+-------------------+
+| Lamp name | Wavelength range (micron) | Used with grating |
++===========+===========================+===================+
+| FLAT1     | 1.0 - 1.8                 |   G140M, G140H    |
++-----------+---------------------------+-------------------+
+| FLAT2     | 1.7 - 3.0                 |   G235M, G235H    |
++-----------+---------------------------+-------------------+
+| FLAT3     | 2.9 - 5.0                 |   G395M, G395H    |
++-----------+---------------------------+-------------------+
+| FLAT4     | 0.7 - 1.4                 |   G140M, G140H    |
++-----------+---------------------------+-------------------+
+| FLAT5     | 1.0 - 5.0                 |       PRISM       |
++-----------+---------------------------+-------------------+
+| LINE1     | 1.0 - 1.8                 |   G140M, G140H    |
++-----------+---------------------------+-------------------+
+| LINE2     | 1.7 - 3.0                 |   G235M, G235H    |
++-----------+---------------------------+-------------------+
+| LINE3     | 2.9 - 5.0                 |   G395M, G395H    |
++-----------+---------------------------+-------------------+
+| LINE4     | 0.6 - 5.0                 |       PRISM       |
++-----------+---------------------------+-------------------+
+| REF       | 1.3 - 1.7                 |   G140M, G140H    |
++-----------+---------------------------+-------------------+
+
+The pairing comes because the calibration unit lightpath doesn't pass through
+the filter wheel, so each lamp has its own filter identical to those in the
+filter wheel.
+
+The list of ``Spec2Pipeline`` steps to be run for NIRSpec lamp exposures is
+shown in the table below and indicates which steps are
+applied to various spectroscopic modes. The instrument mode
+abbreviations used in the table are as follows:
+
+- NIRSpec FS = Fixed Slit (also Brightobj)
+- NIRSpec MOS = Multi-Object Spectroscopy
+- NIRSpec IFU = Integral Field Unit
+
++---------------------------------------+------------+--------------+-----------------+--------------+
+|    Pipeline Step                      |         NRS_LAMP          |  NRS_AUTOWAVE   | NRS_AUTOFLAT |
++---------------------------------------+------------+--------------+-----------------+              +
+|                                       |   LINE     |     FLAT     |                 |  (MOS only)  |
++=======================================+============+==============+=================+==============+
+| :ref:`assign_wcs <assign_wcs_step>`   |   ALL      |     ALL      |       ALL       |       ALL    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`background <background_step>`   |  NONE      |    NONE      |      NONE       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`imprint <imprint_step>`         |  NONE      |     IFU      |      NONE       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`msaflagopen <msaflagopen_step>` |  MOS, IFU  |   MOS, IFU   |    MOS, IFU     |       MOS    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`extract_2d <extract_2d_step>`   |  MOS, FS   |   MOS, FS    |    MOS, FS      |       MOS    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`srctype <srctype_step>`         |  NONE      |    NONE      |      NONE       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`wavecorr <wavecorr_step>`       |   ALL      |     ALL      |       ALL       |       ALL    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`flat_field <flatfield_step>`    |            |              |                 |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+|              - D-FLAT                 |   ALL      |     ALL      |       ALL       |              |
++---------------------------------------+------------+--------------+-----------------+--------------+
+|              - S-FLAT                 |   ALL      |    NONE      |       ALL       |              |
++---------------------------------------+------------+--------------+-----------------+--------------+
+|              - F-FLAT                 |  NONE      |    NONE      |      NONE       |              |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`pathloss <pathloss_step>`       |  NONE      |    NONE      |      NONE       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`barshadow <barshadow_step>`     |  NONE      |    NONE      |      NONE       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`photom <photom_step>`           |  NONE      |    NONE      |      NONE       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`resample_spec <resample_step>`  |  MOS, FS   |    NONE      |    MOS, FS      |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`cube_build <cube_build_step>`   |   IFU      |    NONE      |       IFU       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`extract_1d <extract_1d_step>`   |   ALL      |    NONE      |       ALL       |      NONE    |
++---------------------------------------+------------+--------------+-----------------+--------------+
+
+In the :ref:`resample_spec <resample_step>` and :ref:`cube_build <cube_build_step>` steps, the spectra are
+transformed to a space of (wavelength, offset along the slit) without applying a tangent plane projection.
 
 Arguments
 ---------

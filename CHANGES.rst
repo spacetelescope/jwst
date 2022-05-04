@@ -1,4 +1,4 @@
-1.4.7 (unreleased)
+1.5.0 (2022-05-02)
 ==================
 
 associations
@@ -88,6 +88,9 @@ datamodels
 documentation
 -------------
 
+- Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
+  description [#2579]
+
 - Document parameter reference files in the same manor as other references [#6806]
 
 extract_1d
@@ -121,6 +124,9 @@ general
 -------
 
 - Added aliases to all steps, following step_defs naming conventions [#6740]
+
+- Require scikit-image as a dependency (for source catalog deblending).
+  [#6816]
 
 lib
 ---
@@ -193,6 +199,11 @@ residual_fringe
 ---------------
 
 - Replaced fitting the background with an astropy fitting package [#6739]
+
+saturation
+----------
+
+- Updated to allow the step to flag neighbors of saturated pixels, which is controlled by the new step param n_pix_grow_sat. Added adjacent-to-saturated pixel flagging for nirspec irs2 mode. [spacetelescope/stcal#83] [#6818]
 
 skymatch
 --------

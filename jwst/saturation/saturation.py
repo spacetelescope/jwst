@@ -3,6 +3,7 @@
 #
 import logging
 import numpy as np
+from scipy.ndimage import binary_dilation
 
 from ..datamodels import dqflags
 from ..lib import reffile_utils
@@ -20,7 +21,7 @@ NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
-def flag_saturation(input_model, ref_model):
+def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     """
     Short Summary
     -------------
@@ -33,6 +34,11 @@ def flag_saturation(input_model, ref_model):
 
     ref_model : `~jwst.datamodels.SaturationModel`
         Saturation reference file data model
+
+    n_pix_grow_sat : int
+        Number of layers of pixels adjacent to a saturated pixel to also flag
+        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        charge spilling.
 
     Returns
     -------
@@ -60,7 +66,7 @@ def flag_saturation(input_model, ref_model):
         ref_sub_model.close()
 
     gdq_new, pdq_new = flag_saturated_pixels(data, gdq, pdq, sat_thresh,
-                                             sat_dq, ATOD_LIMIT, dqflags.pixel)
+                                             sat_dq, ATOD_LIMIT, dqflags.pixel, n_pix_grow_sat)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -71,7 +77,7 @@ def flag_saturation(input_model, ref_model):
     return output_model
 
 
-def irs2_flag_saturation(input_model, ref_model):
+def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     """
     Short Summary
     -------------
@@ -87,6 +93,11 @@ def irs2_flag_saturation(input_model, ref_model):
 
     ref_model : `~jwst.datamodels.SaturationModel`
         Saturation reference file data model
+
+    n_pix_grow_sat : int
+        Number of layers of pixels adjacent to a saturated pixel to also flag
+        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        charge spilling.
 
     Returns
     -------
@@ -138,6 +149,15 @@ def irs2_flag_saturation(input_model, ref_model):
             flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
             # check for A/D floor
             flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
+
+            # now, flag any pixels that border saturated pixels (not A/D floor pix)
+            if n_pix_grow_sat > 0:
+                only_sat = np.bitwise_and(flag_temp, SATURATED).astype(np.uint8)
+                box_dim = (n_pix_grow_sat * 2) + 1
+                struct = np.ones((box_dim, box_dim)).astype(bool)
+                dialated = binary_dilation(only_sat, structure=struct).astype(only_sat.dtype)
+                flag_temp = np.bitwise_or(flag_temp, (dialated * SATURATED))
+
             # Copy temps into flagarrays.
             x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
             x_irs2.to_irs2(flaglowarray, flaglow_temp, irs2_mask, detector)

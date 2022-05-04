@@ -4,6 +4,7 @@ Module for the source catalog step.
 
 import os
 
+from crds.core.exceptions import CrdsLookupError
 import numpy as np
 
 from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
@@ -46,9 +47,15 @@ class SourceCatalogStep(Step):
     def _get_reffile_paths(self, model):
         filepaths = []
         for reffile_type in self.reference_file_types:
-            filepath = self.get_reference_file(model, reffile_type)
-            self.log.info(f'Using {reffile_type.upper()} reference file: '
-                          f'{filepath}')
+            try:
+                filepath = self.get_reference_file(model, reffile_type)
+                self.log.info(f'Using {reffile_type.upper()} reference file: '
+                              f'{filepath}')
+            except CrdsLookupError as err:
+                msg = f'{err} Source catalog will not be created.'
+                self.log.warning(msg)
+                return None
+
             filepaths.append(filepath)
         return filepaths
 
@@ -57,9 +64,16 @@ class SourceCatalogStep(Step):
             reffile_paths = self._get_reffile_paths(model)
             aperture_ee = (self.aperture_ee1, self.aperture_ee2,
                            self.aperture_ee3)
-            refdata = ReferenceData(input_model, reffile_paths, aperture_ee)
-            aperture_params = refdata.aperture_params
-            abvega_offset = refdata.abvega_offset
+
+            try:
+                refdata = ReferenceData(input_model, reffile_paths,
+                                        aperture_ee)
+                aperture_params = refdata.aperture_params
+                abvega_offset = refdata.abvega_offset
+            except RuntimeError as err:
+                msg = f'{err} Source catalog will not be created.'
+                self.log.warning(msg)
+                return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
             bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize,
