@@ -7,6 +7,10 @@ allOf:
 - $ref: subarray.schema
 - $ref: keyword_filter.schema
 - $ref: keyword_pfilter.schema
+- $ref: keyword_grating.schema
+- $ref: keyword_pgrating.schema
+- $ref: keyword_readpatt.schema
+- $ref: keyword_preadpatt.schema
 - $ref: keyword_pupil.schema
 - $ref: keyword_ppupil.schema
 - $ref: keyword_channel.schema
