@@ -231,12 +231,12 @@ allOf:
       fits_keyword: CONVTHRS
       fits_hdu: MSA_TARG_ACQ
     fitxoffs:
-      title: "[arcsec] x offset of the least squares fit"
+      title: "[arcsec] x(V2) offset of the least squares fit"
       type: number
       fits_keyword: FITXOFFS
       fits_hdu: MSA_TARG_ACQ
     fityoffs:
-      title: "[arcsec] y offset of the least squares fit"
+      title: "[arcsec] y(V3) offset of the least squares fit"
       type: number
       fits_keyword: FITYOFFS
       fits_hdu: MSA_TARG_ACQ
