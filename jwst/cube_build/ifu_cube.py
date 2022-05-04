@@ -794,13 +794,13 @@ class IFUCubeData():
 
                 if self.interpolation == 'pointcloud':
                     result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
-                                        self.overlap_partial, self.overlap_full,
-                                        self.xcoord, self.ycoord, self.zcoord,
-                                        coord1, coord2, wave, flux, err, slice_no,
-                                        rois_pixel, roiw_pixel, scalerad_pixel,
-                                        weight_pixel, softrad_pixel,
-                                        self.cdelt3_normal,
-                                        roiw_ave, self.cdelt1, self.cdelt2)
+                                          self.overlap_partial, self.overlap_full,
+                                          self.xcoord, self.ycoord, self.zcoord,
+                                          coord1, coord2, wave, flux, err, slice_no,
+                                          rois_pixel, roiw_pixel, scalerad_pixel,
+                                          weight_pixel, softrad_pixel,
+                                          self.cdelt3_normal,
+                                          roiw_ave, self.cdelt1, self.cdelt2)
                     spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
 
                     self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
