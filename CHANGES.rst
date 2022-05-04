@@ -83,6 +83,8 @@ datamodels
 
 - Create MSA_TARG_ACQ schema [#6757]
 
+- Update keyword comments/titles [#6822]
+
 documentation
 -------------
 
