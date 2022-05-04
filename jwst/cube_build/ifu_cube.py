@@ -606,7 +606,7 @@ class IFUCubeData():
                         instrument = 1
 
                     result = None
-                    weight_type = 0  # default to emsm
+                    weight_type = 0  # default to emsm instead of msm
                     if self.weighting == 'msm':
                         weight_type = 1
 
@@ -744,7 +744,7 @@ class IFUCubeData():
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
 
-        weight_type = 0  # default to emsm
+        weight_type = 0  # default to emsm instead of msm
         if self.weighting == 'msm':
             weight_type = 1
         number_bands = len(self.list_par1)

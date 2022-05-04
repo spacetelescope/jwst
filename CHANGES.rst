@@ -54,6 +54,8 @@ cube_build
 
 - Fixed a bug in how the DQ plane of NIRSpec data is set [#6718]
 
+- Use drizzle weight function by default instead of EMSM. [#6820]
+
 cube_skymatch
 -------------
 
@@ -131,6 +133,11 @@ lib
 
 - Updated default suffix names for RampFit and GuiderCDS steps to
   'ramp_fit' and 'guider_cds' to match alias convention [#6740]
+
+mrs_imatch
+----------
+
+- Use drizzle weight function by default instead of EMSM. [#6820]
 
 photom
 ------

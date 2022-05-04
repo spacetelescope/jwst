@@ -44,7 +44,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','drizzle',default = 'emsm') # Type of weighting function
+         weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
@@ -161,12 +161,19 @@ class CubeBuildStep (Step):
             self.pars_input['output_type'] = 'single'
             self.log.info('Cube Type: Single cubes')
             self.pars_input['coord_system'] = 'skyalign'
-            self.interpolation = 'pointcloud'
 
-            # Don't allow anything but msm or emsm weightings
-            if ((self.weighting != 'msm') and (self.weighting != 'emsm')):
-                self.weighting = 'emsm'
+            # Don't allow anything but drizzle, msm, or emsm weightings
+            if self.weighting not in ['msm', 'emsm', 'drizzle']:
+                self.weighting = 'drizzle'
 
+            if self.weighting == 'drizzle':
+                self.interpolation = 'drizzle'
+
+            if self.weighting == 'msm':
+                self.interpolation = 'pointcloud'
+
+            if self.weighting == 'emsm':
+                self.interpolation = 'pointcloud'
 
 # read_user_input:
 # see if options channel, band,grating filter are set on the command lines
