@@ -56,6 +56,8 @@ cube_build
 
 - Use drizzle weight function by default instead of EMSM. [#6820]
 
+- Fix bug for internal_cal cubes produces by move to drizzle default. [#6826]
+
 cube_skymatch
 -------------
 

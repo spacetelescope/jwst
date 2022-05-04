@@ -119,6 +119,7 @@ class CubeBuildStep (Step):
         # coord system = internal_cal only option for weighting = area
         if self.coord_system == 'internal_cal':
             self.interpolation = 'area'
+            self.weighting = 'emsm'
 
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method
