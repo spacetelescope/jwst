@@ -87,6 +87,8 @@ datamodels
 
 - Create MSA_TARG_ACQ schema [#6757]
 
+- Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#2593]
+
 documentation
 -------------
 
