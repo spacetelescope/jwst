@@ -40,6 +40,8 @@ assign_wcs
 - Fixed parsing the ``filteroffset`` file which resulted in the offset
   not being used by the WCS. [#6831]
 
+- Fixed assignment of ``wcs.bounding_box`` in MIRI, NIRISS and NIRCAM imaging mode. [#6831]
+
 background
 ----------
 
