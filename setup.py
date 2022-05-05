@@ -19,6 +19,8 @@ package_data = {
         "tests/data/**/*.json",
         "tests/data/*.txt",
         "*.yaml",
+        "*.cat",
+        "*.hdr",
     ],
 
     "jwst.fits_generator": [
