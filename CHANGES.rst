@@ -34,8 +34,11 @@ ami
 assign_wcs
 ----------
 
-Corrected computation of crpix by backward transform of fiducial, allow
-for reference outside of detector frame [#6789]
+- Corrected computation of crpix by backward transform of fiducial, allow
+  for reference outside of detector frame [#6789]
+
+- Fixed parsing the ``filteroffset`` file which resulted in the offset
+  not being used by the WCS. [#6831]
 
 background
 ----------

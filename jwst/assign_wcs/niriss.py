@@ -306,9 +306,12 @@ def imaging_distortion(input_model, reference_files):
         if row is not None:
             col_offset = row.get('column_offset', 'N/A')
             row_offset = row.get('row_offset', 'N/A')
+            log.info(f"Offsets from filteroffset file are {col_offset}, {row_offset}")
 
             if col_offset != 'N/A' and row_offset != 'N/A':
                 distortion = Shift(col_offset) & Shift(row_offset) | distortion
+        else:
+            log.debug("No match in fitleroffset file.")
     return distortion
 
 
