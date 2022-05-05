@@ -126,9 +126,9 @@ def imaging_distortion(input_model, reference_files):
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
     try:
-        distortion.bounding_box
+        bbox = distortion.bounding_box
     except NotImplementedError:
-        distortion.bounding_box = None
+        bbox = distortion.bounding_box = None
 
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter
