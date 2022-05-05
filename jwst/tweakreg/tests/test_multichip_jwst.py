@@ -1,8 +1,9 @@
+import os.path
+
 import numpy as np
 from astropy.io import fits
 from astropy import table
 from astropy import wcs as fitswcs
-from astropy.utils.data import get_pkg_data_filename
 from astropy.modeling import polynomial
 from astropy.modeling.models import (
     Shift, AffineTransformation2D, Pix2Sky_TAN, RotateNative2Celestial,
@@ -27,8 +28,11 @@ _RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
 _ARCSEC2RAD = 1.0 / _RAD2ARCSEC
 
 
+data_path = os.path.split(os.path.abspath(data.__file__))[0]
+
+
 def _make_gwcs_wcs(fits_hdr):
-    hdr = fits.Header.fromfile(get_pkg_data_filename(fits_hdr))
+    hdr = fits.Header.fromfile(os.path.join(data_path, fits_hdr))
     fw = fitswcs.WCS(hdr)
 
     a_order = hdr['A_ORDER']
@@ -126,7 +130,7 @@ def _make_gwcs_wcs(fits_hdr):
 
 
 def _make_reference_gwcs_wcs(fits_hdr):
-    hdr = fits.Header.fromfile(get_pkg_data_filename(fits_hdr))
+    hdr = fits.Header.fromfile(os.path.join(data_path, fits_hdr))
     fw = fitswcs.WCS(hdr)
 
     unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
@@ -223,7 +227,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
     imcat1 = tweakwcs.JWSTgWCS(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat1.meta['catalog'] = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis1.cat'),
+        os.path.join(data_path, 'wfc3_uvis1.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -236,7 +240,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     w2 = _make_gwcs_wcs('data/wfc3_uvis2.hdr')
     imcat2 = tweakwcs.JWSTgWCS(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat2.meta['catalog'] = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis2.cat'),
+        os.path.join(data_path, 'wfc3_uvis2.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -247,7 +251,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     imcat2.meta['name'] = 'ext4'
 
     refcat = table.Table.read(
-        get_pkg_data_filename('data/ref.cat'),
+        os.path.join(data_path, 'ref.cat'),
         format='ascii.csv', delimiter=' ',
         names=['RA', 'DEC']
     )
@@ -308,7 +312,7 @@ def test_multichip_alignment_step(monkeypatch):
     m1.meta.wcs = w1
 
     imcat1 = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis1.cat'),
+        os.path.join(data_path, 'wfc3_uvis1.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -337,7 +341,7 @@ def test_multichip_alignment_step(monkeypatch):
     m2.meta.wcs = w2
 
     imcat2 = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis2.cat'),
+        os.path.join(data_path, 'wfc3_uvis2.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -365,7 +369,7 @@ def test_multichip_alignment_step(monkeypatch):
     mr.meta.wcs = wr
 
     refcat = table.Table.read(
-        get_pkg_data_filename('data/ref.cat'),
+        os.path.join(data_path, 'ref.cat'),
         format='ascii.csv', delimiter=' ',
         names=['RA', 'DEC']
     )
