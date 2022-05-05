@@ -120,11 +120,12 @@ def imaging_distortion(input_model, reference_files):
     transform = dist.model
 
     try:
-        transform.bounding_box
+        bbox = transform.bounding_box
     except NotImplementedError:
         # Check if the transform in the reference file has a ``bounding_box``.
-        # If not set a ``bounding_box`` equal to the size of the image.
-        transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
+        # If not set a ``bounding_box`` equal to the size of the image after
+        # assembling all distortion corrections.
+        bbox = None
     dist.close()
 
     # Add an offset for the filter
@@ -144,6 +145,10 @@ def imaging_distortion(input_model, reference_files):
                 transform = Shift(col_offset) & Shift(row_offset) | transform
         else:
             log.debug("No match in fitleroffset file.")
+    if bbox is None:
+        transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
+    else:
+        transform.bounding_box = bbox
     return transform
 
 

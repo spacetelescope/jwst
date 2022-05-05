@@ -128,7 +128,7 @@ def imaging_distortion(input_model, reference_files):
     try:
         distortion.bounding_box
     except NotImplementedError:
-        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
+        distortion.bounding_box = None
 
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter
@@ -145,7 +145,10 @@ def imaging_distortion(input_model, reference_files):
 
     if (col_offset is not None) and (row_offset is not None):
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
-
+    if bbox is None:
+        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
+    else:
+        distortion.bounding_box = bbox
     return distortion
 
 
