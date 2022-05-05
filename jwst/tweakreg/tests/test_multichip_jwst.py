@@ -21,6 +21,7 @@ from jwst.tweakreg import tweakreg_step
 import gwcs
 from gwcs import coordinate_frames as cf
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
+from jwst.tweakreg.tests import data
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10
@@ -32,7 +33,7 @@ data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def _make_gwcs_wcs(fits_hdr):
-    hdr = fits.Header.fromfile(os.path.join(data_path, fits_hdr))
+    hdr = fits.Header.fromfile(fits_hdr)
     fw = fitswcs.WCS(hdr)
 
     a_order = hdr['A_ORDER']
@@ -224,10 +225,11 @@ def test_multichip_jwst_alignment(monkeypatch):
     monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
-    w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
+    w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
     imcat1 = tweakwcs.JWSTgWCS(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
+    data_file = os.path.join(data_path, 'wfc3_uvis1.cat')
     imcat1.meta['catalog'] = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis1.cat'),
+        data_file,
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -237,7 +239,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     imcat1.meta['group_id'] = 1
     imcat1.meta['name'] = 'ext1'
 
-    w2 = _make_gwcs_wcs('data/wfc3_uvis2.hdr')
+    w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
     imcat2 = tweakwcs.JWSTgWCS(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat2.meta['catalog'] = table.Table.read(
         os.path.join(data_path, 'wfc3_uvis2.cat'),
@@ -294,7 +296,7 @@ def test_multichip_alignment_step(monkeypatch):
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     # image 1
-    w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
+    w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
 
     m1 = ImageModel(np.zeros((100, 100)))
     m1.meta.filename = 'ext1'
@@ -322,7 +324,7 @@ def test_multichip_alignment_step(monkeypatch):
     m1.tweakreg_catalog = imcat1
 
     # image 2
-    w2 = _make_gwcs_wcs('data/wfc3_uvis2.hdr')
+    w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
 
     m2 = ImageModel(np.zeros((100, 100)))
     m2.meta.filename = 'ext4'
@@ -351,7 +353,7 @@ def test_multichip_alignment_step(monkeypatch):
     m2.tweakreg_catalog = imcat2
 
     # refcat
-    wr = _make_reference_gwcs_wcs('data/wfc3_uvis1.hdr')
+    wr = _make_reference_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
 
     mr = ImageModel(np.zeros((100, 100)))
     mr.meta.filename = 'refcat'
