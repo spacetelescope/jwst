@@ -27,10 +27,7 @@ align_refs
 cube_build
 ----------
 
-- Fixed a bug in how the dq plane of NIRspec data is set [#6718]
-
-cube_build
-----------
+- Fixed a bug in how the dq plane of NIRSpec data is set [#6718]
 
 - Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
 
