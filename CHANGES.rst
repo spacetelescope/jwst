@@ -95,15 +95,17 @@ datamodels
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
   MirMrsXArtCorrModel [#6800]
 
-- Create MSA_TARG_ACQ schema [#6757]
+- Create MSA_TARG_ACQ table extension schema [#6757]
 
-- Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#2593]
+- Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
+
+- Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#6825]
 
 documentation
 -------------
 
 - Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
-  description [#2579]
+  description [#6812]
 
 - Document parameter reference files in the same manor as other references [#6806]
 
