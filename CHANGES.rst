@@ -1,4 +1,7 @@
-1.5.0 (2022-05-02)
+1.5.1 (unreleased)
+==================
+
+1.5.0 (2022-05-05)
 ==================
 
 associations
@@ -34,8 +37,13 @@ ami
 assign_wcs
 ----------
 
-Corrected computation of crpix by backward transform of fiducial, allow
-for reference outside of detector frame [#6789]
+- Corrected computation of crpix by backward transform of fiducial, allow
+  for reference outside of detector frame [#6789]
+
+- Fixed parsing the ``filteroffset`` file which resulted in the offset
+  not being used by the WCS. [#6831]
+
+- Fixed assignment of ``wcs.bounding_box`` in MIRI, NIRISS and NIRCAM imaging mode. [#6831]
 
 background
 ----------
@@ -53,6 +61,12 @@ cube_build
 ----------
 
 - Fixed a bug in how the DQ plane of NIRSpec data is set [#6718]
+
+- Use drizzle weight function by default instead of EMSM. [#6820]
+
+- Fix bug for internal_cal cubes produces by move to drizzle default. [#6826]
+
+- Fix bug for Single type cubes called by mrs_imatch using drizzle. [#6827]
 
 cube_skymatch
 -------------
@@ -81,15 +95,17 @@ datamodels
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
   MirMrsXArtCorrModel [#6800]
 
-- Create MSA_TARG_ACQ schema [#6757]
+- Create MSA_TARG_ACQ table extension schema [#6757]
 
-- Update keyword comments/titles [#6822]
+- Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
+
+- Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#6825]
 
 documentation
 -------------
 
 - Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
-  description [#2579]
+  description [#6812]
 
 - Document parameter reference files in the same manor as other references [#6806]
 
@@ -133,6 +149,11 @@ lib
 
 - Updated default suffix names for RampFit and GuiderCDS steps to
   'ramp_fit' and 'guider_cds' to match alias convention [#6740]
+
+mrs_imatch
+----------
+
+- Use drizzle weight function by default instead of EMSM. [#6820]
 
 photom
 ------

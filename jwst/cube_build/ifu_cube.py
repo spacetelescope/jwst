@@ -606,7 +606,7 @@ class IFUCubeData():
                         instrument = 1
 
                     result = None
-                    weight_type = 0  # default to emsm
+                    weight_type = 0  # default to emsm instead of msm
                     if self.weighting == 'msm':
                         weight_type = 1
 
@@ -744,7 +744,7 @@ class IFUCubeData():
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
 
-        weight_type = 0  # default to emsm
+        weight_type = 0  # default to emsm instead of msm
         if self.weighting == 'msm':
             weight_type = 1
         number_bands = len(self.list_par1)
@@ -791,21 +791,46 @@ class IFUCubeData():
                     instrument = 1
 
                 result = None
-                result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
-                                      self.overlap_partial, self.overlap_full,
-                                      self.xcoord, self.ycoord, self.zcoord,
-                                      coord1, coord2, wave, flux, err, slice_no,
-                                      rois_pixel, roiw_pixel, scalerad_pixel,
-                                      weight_pixel, softrad_pixel,
-                                      self.cdelt3_normal,
-                                      roiw_ave, self.cdelt1, self.cdelt2)
-                spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
 
-                self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
-                self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
-                self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
-                self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3],np.float64)
-                result = None
+                if self.interpolation == 'pointcloud':
+                    result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
+                                          self.overlap_partial, self.overlap_full,
+                                          self.xcoord, self.ycoord, self.zcoord,
+                                          coord1, coord2, wave, flux, err, slice_no,
+                                          rois_pixel, roiw_pixel, scalerad_pixel,
+                                          weight_pixel, softrad_pixel,
+                                          self.cdelt3_normal,
+                                          roiw_ave, self.cdelt1, self.cdelt2)
+                    spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
+
+                    self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
+                    self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
+                    self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
+                    self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3],np.float64)
+                    result = None
+
+                if self.weighting == 'drizzle':
+                    cdelt3_mean = np.nanmean(self.cdelt3_normal)
+                    xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
+                    linear = 0
+                    if self.linear_wavelength:
+                        linear = 1
+                    result = cube_wrapper_driz(instrument, flag_dq_plane,
+                                               start_region, end_region,
+                                               self.overlap_partial, self.overlap_full,
+                                               self.xcoord, self.ycoord, self.zcoord,
+                                               coord1, coord2, wave, flux, err, slice_no,
+                                               xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
+                                               dwave,
+                                               self.cdelt3_normal,
+                                               self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+
+                    spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
+                    self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                    self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                    self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                    self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
+                    result = None
                 # ______________________________________________________________________
                 # shove Flux and iflux in the  final ifucube
                 self.find_spaxel_flux()
