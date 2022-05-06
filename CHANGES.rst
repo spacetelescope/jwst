@@ -6,6 +6,11 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
+stpipe
+------
+
+- Log the CRDS context for pipeline and standalone step processing [#6835]
+
 1.5.0 (2022-05-05)
 ==================
 
