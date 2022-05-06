@@ -1,4 +1,7 @@
-1.5.0 (2022-05-02)
+1.5.1 (unreleased)
+==================
+
+1.5.0 (2022-05-05)
 ==================
 
 associations
@@ -34,8 +37,13 @@ ami
 assign_wcs
 ----------
 
-Corrected computation of crpix by backward transform of fiducial, allow
-for reference outside of detector frame [#6789]
+- Corrected computation of crpix by backward transform of fiducial, allow
+  for reference outside of detector frame [#6789]
+
+- Fixed parsing the ``filteroffset`` file which resulted in the offset
+  not being used by the WCS. [#6831]
+
+- Fixed assignment of ``wcs.bounding_box`` in MIRI, NIRISS and NIRCAM imaging mode. [#6831]
 
 background
 ----------
