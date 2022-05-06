@@ -1,6 +1,11 @@
 1.5.1 (unreleased)
 ==================
 
+cube_build
+----------
+
+- Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
+
 datamodels
 ----------
 
