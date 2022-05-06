@@ -219,7 +219,9 @@ residual_fringe
 saturation
 ----------
 
-- Updated to allow the step to flag neighbors of saturated pixels, which is controlled by the new step param n_pix_grow_sat. Added adjacent-to-saturated pixel flagging for nirspec irs2 mode. [spacetelescope/stcal#83] [#6818]
+- Updated to allow the step to flag neighbors of saturated pixels, which is
+  controlled by the new step param ``n_pix_grow_sat``, to account for charge
+  migration. [spacetelescope/stcal#83] [#6818] [#6830]
 
 skymatch
 --------
