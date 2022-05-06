@@ -85,7 +85,7 @@ class JwstStep(Step):
                         getattr(result.meta.ref_file, ref_name).name = filename
                 result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
                 result.meta.ref_file.crds.context_used = crds_client.get_context_used(result.crds_observatory)
-                log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
+                # log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
     def record_step_status(self, datamodel, cal_step, success=True):
         """Record whether or not a step completed in meta.cal_step
@@ -123,4 +123,6 @@ class JwstStep(Step):
 # be a subclass of JwstStep so that it will pass checks
 # when constructing a pipeline using JwstStep class methods.
 class JwstPipeline(Pipeline, JwstStep):
-    pass
+    def finalize_result(self, result, reference_files_used):
+        log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
+
