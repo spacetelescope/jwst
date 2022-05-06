@@ -125,5 +125,6 @@ class JwstStep(Step):
 # when constructing a pipeline using JwstStep class methods.
 class JwstPipeline(Pipeline, JwstStep):
     def finalize_result(self, result, reference_files_used):
-        log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
+        if isinstance(result, DataModel):
+            log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
 
