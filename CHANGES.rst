@@ -1,6 +1,11 @@
 1.5.1 (unreleased)
 ==================
 
+datamodels
+----------
+
+- Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
+
 1.5.0 (2022-05-05)
 ==================
 
@@ -96,8 +101,6 @@ datamodels
   MirMrsXArtCorrModel [#6800]
 
 - Create MSA_TARG_ACQ table extension schema [#6757]
-
-- Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
 - Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#6825]
 
