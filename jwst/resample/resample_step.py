@@ -30,6 +30,8 @@ class ResampleStep(Step):
         Single filename for either a single image or an association table.
     """
 
+    class_alias = "resample"
+
     spec = """
         pixfrac = float(default=1.0)
         kernel = string(default='square')
@@ -78,14 +80,15 @@ class ResampleStep(Step):
         if ref_filename != 'N/A':
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
-
         else:
             # If there is no drizpars reffile
-            self.log.info("No DIRZPARS reffile")
+            self.log.info("No DRIZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         kwargs['allowed_memory'] = self.allowed_memory
         kwargs['weight_type'] = str(self.weight_type)
+
+        # Issue a warning about the use of exptime weighting
         if self.weight_type == 'exptime':
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
@@ -225,20 +228,16 @@ class ResampleStep(Step):
         # Force definition of good bits
         kwargs['good_bits'] = GOOD_BITS
 
-        if kwargs['pixfrac'] is None:
-            kwargs['pixfrac'] = 1.0
-        if kwargs['kernel'] is None:
-            kwargs['kernel'] = 'square'
-        if kwargs['fillval'] is None:
-            kwargs['fillval'] = 'INDEF'
-        if kwargs['weight_type'] is None:
-            kwargs['weight_type'] = 'ivm'
+        kwargs['pixfrac'] = self.pixfrac
+        kwargs['kernel'] = str(self.kernel)
+        kwargs['fillval'] = str(self.fillval)
+        kwargs['weight_type'] = str(self.weight_type)
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
         kwargs.pop('pixel_scale_ratio')
 
         for k, v in kwargs.items():
             if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
-                log.info('  setting: %s=%s', k, repr(v))
+                log.info('  using: %s=%s', k, repr(v))
 
         return kwargs
 

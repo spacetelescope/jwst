@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.ami.AmiAverageStep`
+:Alias: ami_average
+
 The ``ami_average`` step is one of the AMI-specific steps in the ``ami``
 sub-package and is part of Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>` processing.
 It averages the results of LG processing from the

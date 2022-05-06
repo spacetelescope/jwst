@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Classes: `jwst.outlier_detection.OutlierDetectionStep`, `jwst.outlier_detection.OutlierDetectionScaledStep`, `jwst.outlier_detection.OutlierDetectionStackStep`
+:Aliases: outlier_detection, outlier_detection_scaled, outlier_detection_stack
+
 Processing multiple datasets together allows for the identification of bad pixels
 or cosmic-rays that remain in each of the input images, many times at levels which
 were not detectable by the :ref:`jump <jump_step>` step. The ``outlier_detection`` step 
@@ -51,4 +54,6 @@ of JWST data.
 Reference Files
 ===============
 
-The ``outlier_detection`` step does not use any reference files.
+The ``outlier_detection`` step uses the PARS-OUTLIERDETECTIONSTEP parameter reference file.
+
+.. include:: ../references_general/pars-outlierdetectionstep_reffile.inc

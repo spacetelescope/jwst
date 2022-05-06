@@ -1,6 +1,10 @@
 Description
 ===========
 
+:Class: `jwst.assign_mtwcs.AssignMTWcsStep`
+:Alias: assign_mtwcs
+
+
 The ``jwst.assign_mtwcs`` step modifies the WCS output frame in each exposure of
 a Moving Target (MT) observation association, such that the WCS is centered at the
 average location of the target within the whole association.

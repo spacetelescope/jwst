@@ -14,6 +14,12 @@ class SaturationStep(Step):
     This Step sets saturation flags.
     """
 
+    class_alias = "saturation"
+
+    spec = """
+        n_pix_grow_sat = integer(default=1) # number of layers adjacent pixels to flag
+    """
+
     reference_file_types = ['saturation']
 
     def process(self, input):
@@ -38,9 +44,9 @@ class SaturationStep(Step):
 
             # Do the saturation check
             if pipe_utils.is_irs2(input_model):
-                sat = saturation.irs2_flag_saturation(input_model, ref_model)
+                sat = saturation.irs2_flag_saturation(input_model, ref_model, self.n_pix_grow_sat)
             else:
-                sat = saturation.flag_saturation(input_model, ref_model)
+                sat = saturation.flag_saturation(input_model, ref_model, self.n_pix_grow_sat)
 
             # Close the reference file and update the step status
             ref_model.close()

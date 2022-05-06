@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.superbias.SuperBiasStep`
+:Alias: superbias
+
 The superbias subtraction step removes the fixed detector bias from a
 science data set by subtracting a superbias reference image.
 

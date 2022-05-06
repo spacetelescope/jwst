@@ -86,12 +86,11 @@ flux associated with each output spaxel flux. The first set defines the the  **r
 boundary centered on the spaxel center of   point cloud members that are used to find the final spaxel flux.
 The arguments related to region of interest and how the fluxes are combined together are:
 
-``rios [float]``
+``rois [float]``
   The radius of the region of interest in the spatial  dimensions.
 
-``riow [float]``
+``roiw [float]``
   The size of the region of interest in the spectral dimension.
-
 
 ``weighting [string]``
   The type of weighting to use when combining detector pixel fluxes to represent the spaxel flux. Allowed values are

@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.dark_current.DarkCurrentStep`
+:Alias: dark_current
+
 Assumptions
 -----------
 It is assumed that the input science data have *NOT* had the zero group (or

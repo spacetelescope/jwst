@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.group_scale.GroupScaleStep`
+:Alias: group_scale
+
 The `group_scale` step rescales pixel values in raw JWST science
 data products to correct for instances where on-board frame averaging 
 did not result in the proper downlinked values.

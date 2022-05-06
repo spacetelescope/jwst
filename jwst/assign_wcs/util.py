@@ -132,7 +132,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     delta[spatial_idx[0]] = 1
 
     crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets)
+    crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
 
     coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
@@ -278,7 +278,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
                 fiducial[k] = crval[i]
                 i += 1
 
-    ref_fiducial = compute_fiducial([refmodel.meta.wcs])
+    ref_fiducial = np.array([refmodel.meta.wcsinfo.ra_ref, refmodel.meta.wcsinfo.dec_ref])
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -315,15 +315,14 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     out_frame = refmodel.meta.wcs.output_frame
-    input_frame = dmodels[0].meta.wcs.input_frame
+    input_frame = refmodel.meta.wcs.input_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
                              transform=transform, input_frame=input_frame)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
-
-    for axs in domain_bounds:
-        axs -= (axs.min() + .5)
+    axis_min_values = np.min(domain_bounds, axis=1)
+    domain_bounds = (domain_bounds.T - axis_min_values).T
 
     output_bounding_box = []
     for axis in out_frame.axes_order:
@@ -332,9 +331,9 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     output_bounding_box = tuple(output_bounding_box)
     if crpix is None:
-        ax1, ax2 = np.array(output_bounding_box)[sky_axes]
-        offset1 = (ax1[1] - ax1[0]) / 2
-        offset2 = (ax2[1] - ax2[0]) / 2
+        offset1, offset2 = wnew.backward_transform(*fiducial)
+        offset1 -= axis_min_values[0]
+        offset2 -= axis_min_values[1]
     else:
         offset1, offset2 = crpix
     offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
@@ -370,11 +369,15 @@ def compute_fiducial(wcslist, bounding_box=None):
     if spatial_footprint.any():
         lon, lat = spatial_footprint
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
-        x_mean = np.mean(np.cos(lat) * np.cos(lon))
-        y_mean = np.mean(np.cos(lat) * np.sin(lon))
-        z_mean = np.mean(np.sin(lat))
-        lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 + y_mean ** 2)))
+        x = np.cos(lat) * np.cos(lon)
+        y = np.cos(lat) * np.sin(lon)
+        z = np.sin(lat)
+
+        x_mid = (np.max(x) + np.min(x)) / 2.
+        y_mid = (np.max(y) + np.min(y)) / 2.
+        z_mid = (np.max(z) + np.min(z)) / 2.
+        lon_fiducial = np.rad2deg(np.arctan2(y_mid, x_mid)) % 360.0
+        lat_fiducial = np.rad2deg(np.arctan2(z_mid, np.sqrt(x_mid ** 2 + y_mid ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
     if spectral_footprint.any():
         fiducial[spectral_axes] = spectral_footprint.min()
@@ -568,10 +571,11 @@ def get_object_info(catalog_name=None):
 
 def create_grism_bbox(input_model,
                       reference_files=None,
-                      mmag_extract=99.0,
+                      mmag_extract=None,
                       extract_orders=None,
                       wfss_extract_half_height=None,
-                      wavelength_range=None):
+                      wavelength_range=None,
+                      nbright=None):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -605,6 +609,8 @@ def create_grism_bbox(input_model,
     wavelength_range : dict, optional
         Pairs of {spectral_order: (wave_min, wave_max)} for each order.
         If ``None``, the default one in the wavelengthrange reference file is used.
+    nbright : int, optional
+        The number of brightest objects to extract from the catalog.
 
     Returns
     -------
@@ -663,9 +669,12 @@ def create_grism_bbox(input_model,
 
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
 
+    if mmag_extract is None:
+        mmag_extract = 999.  # extract all objects, regardless of magnitude
+    else:
+        log.info("Extracting objects < abmag = {0}".format(mmag_extract))
     if not isinstance(mmag_extract, (int, float)):
         raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
-    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
 
     # extract the catalog objects
     if input_model.meta.source_catalog is None:
@@ -675,11 +684,12 @@ def create_grism_bbox(input_model,
 
     log.info(f"Getting objects from {input_model.meta.source_catalog}")
 
-    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range)
+    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range,
+                              nbright)
 
 
-def _create_grism_bbox(input_model, mmag_extract=99.0,
-                       wfss_extract_half_height=None, wavelength_range=None):
+def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=None,
+                       wavelength_range=None, nbright=None):
 
     log.debug(f'Extracting with wavelength_range {wavelength_range}')
 
@@ -819,10 +829,31 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                                                      sky_bbox_ur=obj.sky_bbox_ur,
                                                      xcentroid=xcenter,
                                                      ycentroid=ycenter,
-                                                     is_extended=obj.is_extended))
-    if len(grism_objects) == 0:
-        log.warning("No grism objects saved, check catalog")
-    return grism_objects
+                                                     is_extended=obj.is_extended,
+                                                     isophotal_abmag=obj.isophotal_abmag))
+
+    # At this point we have a list of grism objects limited to
+    # isophotal_abmag < mmag_extract. We now need to further restrict
+    # the list to the N brightest objects, as given by nbright.
+    if nbright is None:
+        # Include all objects, regardless of brightness
+        final_objects = grism_objects
+    else:
+        # grism_objects is a list of objects, so it's not easy or practical
+        # to sort it directly. So create a list of the isophotal_abmags, which
+        # we'll then use to find the N brightest objects.
+        indxs = np.argsort([obj.isophotal_abmag for obj in grism_objects])
+
+        # Create a final grism object list containing only the N brightest objects
+        final_objects = []
+        final_objects = [grism_objects[i] for i in indxs[:nbright]]
+        del grism_objects
+
+    log.info(f"Total of {len(final_objects)} grism objects defined")
+    if len(final_objects) == 0:
+        log.warning("No grism objects saved; check catalog or step params")
+
+    return final_objects
 
 
 def get_num_msa_open_shutters(shutter_state):

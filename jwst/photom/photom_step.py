@@ -14,6 +14,8 @@ class PhotomStep(Step):
         data model
     """
 
+    class_alias = "photom"
+
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.
@@ -32,10 +34,11 @@ class PhotomStep(Step):
         model_type = input_model.__class__.__name__
         self.log.debug("Input is {}".format(model_type))
         if model_type not in ('CubeModel', 'ImageModel', 'SlitModel',
-                              'IFUImageModel', 'MultiSlitModel'):
+                              'IFUImageModel', 'MultiSlitModel',
+                              'MultiSpecModel'):
             self.log.warning("Input is not one of the supported model types: "
-                             "CubeModel, ImageModel, IFUImageModel or "
-                             "MultiSlitModel.")
+                             "CubeModel, ImageModel, IFUImageModel, "
+                             "MultiSlitModel, or MultiSpecModel.")
 
         # Setup reference files and whether previous correction information
         # should be used.

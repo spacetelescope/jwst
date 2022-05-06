@@ -15,6 +15,8 @@ class Combine1dStep(Step):
 
     """
 
+    class_alias = "combine_1d"
+
     spec = """
     exptime_key = string(default="exposure_time") # use for weight
     """

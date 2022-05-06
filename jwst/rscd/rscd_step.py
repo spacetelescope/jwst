@@ -1,8 +1,6 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import rscd_sub
-from ..lib.basic_utils import deprecate_class
-
 
 __all__ = ["RscdStep"]
 
@@ -15,6 +13,8 @@ class RscdStep(Step):
     science data model.
     Enhanced version is not ready nor enabled.
     """
+
+    class_alias = "rscd"
 
     # allow switching between baseline and enhanced algorithms
     spec = """
@@ -62,16 +62,3 @@ class RscdStep(Step):
                 result.meta.cal_step.rscd = 'SKIPPED'
 
         return result
-
-
-@deprecate_class(RscdStep)
-class RSCD_Step:
-    """
-    RscdStep: Performs an RSCD correction to MIRI data.
-    Baseline version flags the first N groups as 'DO_NOT_USE' in
-    the 2nd and later integrations in a copy of the input
-    science data model.
-    Enhanced version is not ready nor enabled.
-
-    This class has been deprecated. Please use `RscdStep` instead.
-    """

@@ -27,6 +27,8 @@ class OutlierDetectionStackStep(Step):
 
     """
 
+    class_alias = "outlier_detection_stack"
+
     spec = """
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)

@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.refpix.RefPixStep`
+:Alias: refpix
+
 Overview
 --------
 

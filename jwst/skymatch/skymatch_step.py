@@ -33,6 +33,8 @@ class SkyMatchStep(Step):
     SkyMatchStep: Subtraction or equalization of sky background in science images.
     """
 
+    class_alias = "skymatch"
+
     spec = """
         # General sky matching parameters:
         skymethod = option('local', 'global', 'match', 'global+match', default='match') # sky computation method

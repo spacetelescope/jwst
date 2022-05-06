@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.dq_init.DQInitStep`
+:Alias: dq_init
+
 The Data Quality (DQ) initialization step in the calibration pipeline
 populates the DQ mask for the input dataset. Flag values from the
 appropriate static mask ("MASK") reference file in CRDS are copied into the

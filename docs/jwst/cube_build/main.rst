@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.cube_build.CubeBuildStep`
+:Alias: cube_build
+
 The ``cube_build`` step takes MIRI or NIRSpec IFU calibrated 2-D images and produces
 3-D spectral cubes. The 2-D disjointed IFU slice spectra are corrected
 for distortion and assembled into a rectangular cube with three orthogonal axes: two
@@ -54,6 +57,20 @@ a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the tw
 Terminology
 -----------
 
+General IFU Terminology
++++++++++++++++++++++++
+
+``pixel``
+  A pixel is a physical 2-D element of the detector focal plane arrays.
+
+``spaxel``
+  A spaxel is a 2-D spatial element of an IFU rectified data cube.  Each spaxel in a data cube
+  has an associated spectrum composed of many voxels.
+
+``voxel``
+  A voxel is 3-D volume element within an IFU rectified data cube.  Each voxel has two spatial dimensions and one
+  spectral dimension.
+
 MIRI Spectral Range Divisions
 +++++++++++++++++++++++++++++
 We use the following terminology to define the spectral range divisions of MIRI:
@@ -91,9 +108,6 @@ G395H    F290LP  2.87 - 5.27
 =======  ======  ====================
 
 * Approximate wavelength ranges are given to aid in explaining  how to build NIRSpec IFU cubes, see `NIRSpec Spectral configuration <https://jwst-docs.stsci.edu/jwst-near-infrared-spectrograph/nirspec-observing-modes/nirspec-ifu-spectroscopy#NIRSpecIFUSpectroscopy-Spectralconfigurations>`_.
- 
-
-
 
 Types of Output Cubes
 ---------------------
@@ -154,7 +168,7 @@ WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
 The SCI image contains the surface brightness of cube spaxels in units of MJy/steradian. The wavelength dimension of the IFU cube
-can either be linear or non-linear. If the wavelength is non-linear then the IFU cube contain data from more than one band.  A
+can either be linear or non-linear. If the wavelength is non-linear, then the IFU cube contains data from more than one band.  A
 table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
 contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propagate the
@@ -199,10 +213,10 @@ same resolution are combined together in an IFU cube. The default output spatial
 There is an option to create IFU cubes in the coordinate system of the NIRSpec or MIRI MIRS local ifu slicer plane (see
 :ref:`arguments`, coord_system='internal_cal'). 
 
-The pixels on each exposure that are to be  included in the output are mapped to the cube coordinate system. This input-to-output
+The pixels on each exposure that are to be  included in the output are mapped to the cube coordinate system. This
 pixel mapping is determined via a series of chained mapping transformations derived from the WCS of each input image and the
 WCS of output cube. The mapping process corrects for the optical distortions and uses the spacecraft telemetry information
-to map each pixel location to its projected location in the cube coordinate system.
+to map each pixel to its projected location in the cube coordinate system.
 
 The mapping process results in an irregular spaced "cloud of points" that sample the specific intensity
 distribution at a series of locations on the sky. A schematic of this process is shown
@@ -219,7 +233,7 @@ are from exposure two.
 
 Each point in the cloud represents a measurement of the specific intensity (with corresponding uncertainty)
 of the astronomical scene at a particular location.  The final data cube is constructed by combining each of the
-irregularly-distributed samples of the scene into a regularly-sampled grid in three dimensions for which each
+irregularly-distributed samples of the scene into a regularly-sampled **voxel** grid in three dimensions for which each
 **spaxel** (i.e., a spatial pixel in the cube) has a spectrum composed of many spectral elements.
 
 .. _weighting:
@@ -230,55 +244,56 @@ Weighting
 The best algorithm with which to combine the irregularly-distributed samples of the point cloud to a rectilinear
 data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
 the science goals of a particular observing program.  At present there are two approaches to weighting the detector pixels.
-The default method uses a flux-conserving
-variant of Shepard's method in which the value of a given element of the cube is a distance-weighted average
-of all point-cloud members within a given region of influence.  The second approach is to use a 3-D drizzling technique. 
+The default method uses a 3-D drizzling technique analogous to that used by 2-D imaging modes with an
+additional spectral overlap computation.  The second approach is to use a flux-conserving
+variant of Shepard's method in which the value of a given voxel of the cube is a distance-weighted average
+of all point-cloud members within a given region of influence.
+
+3-D drizzling
+#############
+
+This algorithm for combining data uses a 3-D generalization of the classical 2-D drizzle technique. It is used
+when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output grid according to the relative overlap
+between the detector pixels and cube voxels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial and
+spectral overlap between detector pixels and cube voxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
+the 3-D drizzle algorithm therefore assumes that detector pixels project as rectilinear volumes into cube space.  The spatial extent of each detector pixel
+volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
+to the output voxel grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
+the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
 
 Shepard's method of weighting
 ##############################
 
 In order to explain this method we will introduce the follow definitions:
 
-* xdistance = distance between point in the cloud and spaxel center in units of arc seconds along the x axis
-* ydistance = distance between point in the cloud and spaxel center in units of arc seconds along the y axis
-* zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns along the wavelength axis
+* xdistance = distance between point in the cloud and voxel center in units of arc seconds along the x axis
+* ydistance = distance between point in the cloud and voxel center in units of arc seconds along the y axis
+* zdistance = distance between point in the cloud and voxel center in the lambda dimension in units of microns along the wavelength axis
 
-These distances are then normalized by the IFU cube sample size for the appropriate axis:
+These distances are then normalized by the IFU cube voxel size for the appropriate axis:
 
-* xnormalized = xdistance/(cube sample size in x dimension [cdelt1])
-* ynormalized = ydistance/(cube sample size in y dimension [cdelt2])
-* znormalized = zdistance/(cube sample size in z dimension [cdelt3])
+* xnormalized = xdistance/(cube voxel size in x dimension [cdelt1])
+* ynormalized = ydistance/(cube voxel size in y dimension [cdelt2])
+* znormalized = zdistance/(cube voxel size in z dimension [cdelt3])
 
-The final spaxel value at a given wavelength is determined as the weighted sum of the point cloud members with a spatial and
-spectral region of influence centered on the spaxel.
+The final voxel value at a given wavelength is determined as the weighted sum of the point cloud members with a spatial and
+spectral region of influence centered on the voxel.
 The default size of the region of influence is defined in the cubepar reference file, but can be changed by the
 user with the options: ``rois`` and ``roiw``.
 
-If *n* point cloud members are located within the ROI of a spaxel, the  spaxel flux K =
+If *n* point cloud members are located within the ROI of a voxel, the voxel flux K =
 :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
 
-where the default weighting ``weighting=emsm``  is
+where the weighting ``weighting=emsm``  is
 
 :math:`w_i =e\frac{ -({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)} {scale factor}`
 
 The *scale factor* = *scale rad/cdelt1*, where *scale rad* is read in from the reference file and varies with wavelength. 
 
-If the  alternative weighting function (set by ``weighting = msm``) is selected then:
+If the alternative weighting function (set by ``weighting = msm``) is selected then:
 
 :math:`w_i =\frac{1.0} {\sqrt{({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)^{p} }}`
 
 In this  weighting function the default value for *p* is read in from the cubepar reference file. It can also  be set 
 by the argument ``weight_power=value``.
-
-3-D drizzling
-#############
-
-This algorithm for combining data uses a  3-D generalization of the classical 2-D drizzle technique. It is used
-when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output pixel grid according to the relative overlap
-between the input and output pixels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial overlap and
-spectral overlap between detector pixels and cube spaxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
-the 3-D drizzle algorithm therefore assumes that detector pixels project as rectilinear volumes into cube space.  The spatial extent of each detector pixel
-volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
-to the output coordinate grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
-the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
 

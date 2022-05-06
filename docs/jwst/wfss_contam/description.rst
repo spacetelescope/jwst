@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.wfss_contam.WfssContamStep`
+:Alias: wfss_contam
+
 The Wide Field Slitless Spectroscopy (WFSS) contamination correction
 (``wfss_contam``) step is applied to grism exposures in an
 attempt to correct effects due to overlapping spectral traces, which often

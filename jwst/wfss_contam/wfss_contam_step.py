@@ -13,6 +13,8 @@ class WfssContamStep(Step):
     This Step performs contamination correction of WFSS spectra.
     """
 
+    class_alias = "wfss_contam"
+
     spec = """
         save_simulated_image = boolean(default=False)  # Save full-frame simulated image
         save_contam_images = boolean(default=False)  # Save source contam estimates

@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.srctype.SourceTypeStep`
+:Alias: srctype
+
 The Source Type (``srctype``) step in the calibration pipeline attempts to
 determine whether a spectroscopic source should be considered to be a point
 or extended object, populating the "SRCTYPE" keyword with a value of either

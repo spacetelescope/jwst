@@ -1,7 +1,7 @@
 .. _outlier-detection-spec:
 
-OutlierDetection for Slit-like Spectroscopic Data
-=================================================
+Outlier Detection for Slit-like Spectroscopic Data
+==================================================
 
 This module serves as the interface for applying ``outlier_detection`` to slit-like
 spectroscopic observations.  The code implements the

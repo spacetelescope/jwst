@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.imprint.ImprintStep`
+:Alias: imprint
+
 The NIRSpec MSA imprint subtraction step removes patterns created in NIRSpec
 MOS and IFU exposures by the MSA structure. This is accomplished by
 subtracting a dedicated exposure taken with all MSA shutters closed and the

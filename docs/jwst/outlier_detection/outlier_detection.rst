@@ -1,6 +1,6 @@
 .. _outlier-detection-imaging:
 
-Default OutlierDetection Algorithm
+Default Outlier Detection Algorithm
 ===================================
 
 This module serves as the interface for applying ``outlier_detection`` to direct

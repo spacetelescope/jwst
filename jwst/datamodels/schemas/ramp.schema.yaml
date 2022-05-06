@@ -46,3 +46,4 @@ allOf:
       datatype: float32
 - $ref: group.schema
 - $ref: int_times.schema
+- $ref: msatargacq.schema

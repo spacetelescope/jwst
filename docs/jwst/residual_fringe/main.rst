@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.residual_fringe.ResidualFringeStep`
+:Alias: residual_fringe
+
 The JWST pipeline contains two steps devoted to the removal of fringes on MIRI MRS images.
 The first correction is applied in the ``fringe_step`` in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline
 and  consists in dividing

@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.jump.JumpStep`
+:Alias: jump
+
 Assumptions
 -----------
 We assume that the ``saturation`` step has already been applied to the input

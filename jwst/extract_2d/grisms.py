@@ -271,9 +271,10 @@ def extract_grism_objects(input_model,
                           grism_objects=None,
                           reference_files=None,
                           extract_orders=None,
-                          mmag_extract=99.,
+                          mmag_extract=None,
                           compute_wavelength=True,
-                          wfss_extract_half_height=None):
+                          wfss_extract_half_height=None,
+                          nbright=None):
     """
     Extract 2d boxes around each objects spectra for each order.
 
@@ -302,6 +303,9 @@ def extract_grism_objects(input_model,
         Cross-dispersion extraction half height in pixels, WFSS mode.
         Overwrites the computed extraction height.
 
+    nbright : int
+        Number of brightest objects to extract for WFSS mode.
+
     Returns
     -------
     output_model : `~jwst.datamodels.MultiSlitModel`
@@ -318,10 +322,13 @@ def extract_grism_objects(input_model,
     boxes that will be used to define the 2d extraction area.
 
     For each spectral order, the configuration file contains a
-    magnitude-cutoff value. Sources with magnitudes fainter than the
-    extraction cutoff (MMAG_EXTRACT)  will not be extracted, but are
+    magnitude-cutoff value. The total list of objects to extract is limited
+    by both MMAG_EXTRACT and NBRIGHT. Sources with magnitudes fainter than the
+    extraction cutoff (MMAG_EXTRACT) will not be extracted, but are
     accounted for when computing the spectral contamination and background
-    estimates. The default extraction value is 99 right now.
+    estimates. The default value is 99 right now.
+    NBRIGHT further limits the list to the NBRIGHT brightest objects.
+    The default value is 999 right now.
 
     The sensitivity information from the original aXe style configuration
     file needs to be modified by the passband of the filter used for
@@ -358,7 +365,8 @@ def extract_grism_objects(input_model,
             grism_objects = util.create_grism_bbox(input_model, reference_files,
                                                    extract_orders=extract_orders,
                                                    mmag_extract=mmag_extract,
-                                                   wfss_extract_half_height=wfss_extract_half_height)
+                                                   wfss_extract_half_height=wfss_extract_half_height,
+                                                   nbright=nbright)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog))
 
@@ -367,7 +375,7 @@ def extract_grism_objects(input_model,
     if len(grism_objects) == 0:
         raise ValueError("No grism objects created from source catalog")
 
-    log.info("Extracting grism objects into MultiSlitModel")
+    log.info("Extracting %d grism objects", len(grism_objects))
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 

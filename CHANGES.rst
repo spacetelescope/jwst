@@ -1,8 +1,23 @@
-1.4.7 (unreleased)
+1.5.1 (unreleased)
+==================
+
+cube_build
+----------
+
+- Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
+
+datamodels
+----------
+
+- Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
+
+1.5.0 (2022-05-05)
 ==================
 
 associations
 ------------
+
+- Implement PoolRow to avoid deep copy of the AssociationPool table [#6787]
 
 - Added valid optical paths for NRS_LAMP observations to generate
   or exclude associations using lamp, disperser and detector [#6695]
@@ -24,12 +39,44 @@ align_refs
   MIRI coronagraphy data, due to large contiguous regions of NON_SCIENCE
   pixels [#6722]
 
+ami
+---
+
+- Allow AmiAverageStep to be run on list in command line interface [#6797]
+
+assign_wcs
+----------
+
+- Corrected computation of crpix by backward transform of fiducial, allow
+  for reference outside of detector frame [#6789]
+
+- Fixed parsing the ``filteroffset`` file which resulted in the offset
+  not being used by the WCS. [#6831]
+
+- Fixed assignment of ``wcs.bounding_box`` in MIRI, NIRISS and NIRCAM imaging mode. [#6831]
+
+background
+----------
+
+- Added the step parameter ``wfss_mmag_extract`` to allow for setting the
+  minimum magnitude of source catalog objects to be used in the WFSS
+  background subtraction process [#6788]
+
+- Added a check to make sure that a sufficient number of background
+  (source-free) pixels are available in a WFSS image before attempting
+  to compute statistics and scale the WFSS background reference image
+  [#6788]
+
 cube_build
 ----------
 
-- Fixed a bug in how the dq plane of NIRSpec data is set [#6718]
+- Fixed a bug in how the DQ plane of NIRSpec data is set [#6718]
 
-- Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
+- Use drizzle weight function by default instead of EMSM. [#6820]
+
+- Fix bug for internal_cal cubes produces by move to drizzle default. [#6826]
+
+- Fix bug for Single type cubes called by mrs_imatch using drizzle. [#6827]
 
 cube_skymatch
 -------------
@@ -50,6 +97,26 @@ datamodels
 
 - Update rscd model to increase the size of group_skip_table to allow FASTR1, SLOWR1, FASTR100 [#6776]
 
+- Correcting the default ZEROFRAME allocation. [#6791]
+
+- Add the new MIRI MRS point source correction reference file data model
+  MirMrsPtCorrModel. [#6762]
+
+- Add new datamodel and schema for MIRI MRS cross-artifact reference file
+  MirMrsXArtCorrModel [#6800]
+
+- Create MSA_TARG_ACQ table extension schema [#6757]
+
+- Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#6825]
+
+documentation
+-------------
+
+- Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
+  description [#6812]
+
+- Document parameter reference files in the same manor as other references [#6806]
+
 extract_1d
 ----------
 
@@ -61,13 +128,46 @@ extract_1d
 
 - Propagate non-differentiated errors for IFU mode observations [#6732]
 
+- Remove temporary `soss_atoca` parameter and make ATOCA the default
+  algorithm for SOSS data [#6734]
+
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
-regtest
+- Allow reference files to specify extraction region for extended
+  sources, modify `bkg_fit` default to None while retaining `poly`
+  as default mode [#6793]
+
+flatfield
+---------
+
+- Change DQ flags for NIRSpec flatfield where one or more component flats
+  (fflat, dflat, sflat) is bad (#6794)
+
+general
 -------
 
-- Added a residual fringe correction test [#6771]
+- Added aliases to all steps, following step_defs naming conventions [#6740]
+
+- Require scikit-image as a dependency (for source catalog deblending).
+  [#6816]
+
+lib
+---
+
+- Updated default suffix names for RampFit and GuiderCDS steps to
+  'ramp_fit' and 'guider_cds' to match alias convention [#6740]
+
+mrs_imatch
+----------
+
+- Use drizzle weight function by default instead of EMSM. [#6820]
+
+photom
+------
+
+- Allow SOSS input as MultiSpecModel, and do correction on extracted 1d
+  spectra [#6734]
 
 pipeline
 --------
@@ -76,6 +176,11 @@ pipeline
 
 - Update the `calwebb_spec2` pipeline to allow for the creation of an
   optional WFSS product that's in units of e-/sec [#6783]
+
+- Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
+  step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
+
+- Added ResetStep back into `calwebb_dark` for MIRI exposures [#6798]
 
 ramp_fitting
 ------------
@@ -87,6 +192,14 @@ ramp_fitting
 - Adding feature to turn off calculations of ramps with good 0th group,
   but all other groups are saturated. [#6737]
 
+- Fix for handling jumps in the first good group following dropped groups.
+  [spacetelescope/stcal#84]
+
+regtest
+-------
+
+- Added a residual fringe correction test [#6771]
+
 resample
 --------
 
@@ -96,10 +209,27 @@ resample
 - Re-designed algorithm for computation of the output WCS for the
   ``resemple_spec`` step for ``NIRSpec`` data. [#6747, #6780]
 
+- Fixed handling of user-supplied ``weight_type`` parameter value for
+  ``resample_spec``. [#6796]
+
+- Fixed an issue with axis number for the spectral axis in ``resample_spec``. [#6802]
+
+reset
+-----
+
+- Fix bug in how segemented data is corrected [#6784]
+
 residual_fringe
 ---------------
 
 - Replaced fitting the background with an astropy fitting package [#6739]
+
+saturation
+----------
+
+- Updated to allow the step to flag neighbors of saturated pixels, which is
+  controlled by the new step param ``n_pix_grow_sat``, to account for charge
+  migration. [spacetelescope/stcal#83] [#6818] [#6830]
 
 skymatch
 --------
@@ -113,6 +243,8 @@ skymatch
 
 - Updated to populate the "BKGMETH" keyword in output files. [#6736]
 
+- Increased tolerance value for considering two sky polygons identical. [#6805]
+
 source_catalog
 --------------
 
@@ -122,10 +254,24 @@ source_catalog
 - Updated the roundness and sharpness properties to use the source
   centroid position instead of the peak position. [#6766]
 
+- Updated the catalog metadata. [#6813]
+
 srctype
 -------
 
 - Add command line option to override source type [#6720]
+
+tweakreg
+--------
+
+- Make ``fit_quality_is_good()`` member private and rename it to
+  ``_is_wcs_correction_small()``. [#6781]
+
+- Change default settings for ``searchrad``, ``tolerance``, and ``separation``
+  parameters for the ``tweakreg`` step. [#6809]
+
+- Change default value of ``brightest`` parameter in the ``tweakreg`` step. [#6810]
+
 
 1.4.6 (2022-03-25)
 ==================
@@ -408,6 +554,9 @@ documentation
 -------------
 
 - Update text to point to the JWST CRDS website. [#6549]
+
+- Update to calwebb_detector documentation to include the reset step as one of the steps applied
+  to MIRI data [#6785]
 
 extract_1d
 ----------
@@ -946,6 +1095,11 @@ extract_2d
 - In NRC_TSGRISM mode replaced FITS WCS keywords with JWST specific ones. [#6005]
 
 - Added ``specsys`` to slits. [#6005]
+
+- Added the step parameter ``wfss_nbright`` to allow for only the N brightest
+  objects to be extracted from WFSS exposures. Also changed the name of the
+  ``mmag_extract`` param to ``wfss_mmag_extract``, for consistency with other
+  WFSS-specific params. [#6788]
 
 general
 -------
@@ -2293,6 +2447,7 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
 
 wfs_combine
 -----------

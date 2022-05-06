@@ -2,6 +2,10 @@
 Description
 ===========
 
+:Class: `jwst.assign_wcs.AssignWcsStep`
+:Alias: assign_wcs
+
+
 ``jwst.assign_wcs`` is run in the beginning of the level 2B JWST pipeline.
 It associates a WCS object with each science exposure. The WCS object transforms
 positions in the detector frame to positions in a world coordinate frame - ICRS and wavelength.

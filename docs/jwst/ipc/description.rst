@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.ipc.IPCStep`
+:Alias: ipc
+
 The ``ipc`` step corrects a JWST exposure for interpixel capacitance by
 convolving with an IPC reference image.
 

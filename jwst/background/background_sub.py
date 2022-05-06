@@ -69,7 +69,7 @@ def average_background(bkg_list, sigma, maxiters):
 
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
-        log.debug(' Accumulate bkg from {}'.format(bkg_file))
+        log.info(f'Accumulate bkg from {bkg_file}')
         bkg_model = datamodels.ImageModel(bkg_file)
 
         # Initialize the avg_bkg model, if necessary
@@ -88,7 +88,7 @@ def average_background(bkg_list, sigma, maxiters):
         bkg_model.close()
 
     # Clip the background data
-    log.debug(' clip with sigma={} maxiters={}'.format(sigma, maxiters))
+    log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
     mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
     # Compute the mean of the non-clipped values
@@ -103,7 +103,7 @@ def average_background(bkg_list, sigma, maxiters):
     return avg_bkg
 
 
-def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
+def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=None):
     """Scale and subtract a background reference image from WFSS/GRISM data.
 
     Parameters
@@ -116,6 +116,9 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
 
     wl_range_name: str
         name of wavelengthrange reference file
+
+    mmag_extract: float
+        minimum abmag of grism objects to extract
 
     Returns
     -------
@@ -137,7 +140,11 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
     # Create a mask from the source catalog, True where there are no sources,
     # i.e. in regions we can use as background.
     if got_catalog:
-        bkg_mask = mask_from_source_cat(input_model, wl_range_name)
+        bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
+        if bkg_mask.sum() < 100:
+            log.warning("Not enough background pixels to work with.")
+            log.warning("Step will be SKIPPED.")
+            return None
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
 
@@ -151,7 +158,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
     bkg_mean = robust_mean(bkg_ref.data[bkg_mask],
                            lowlim=lowlim, highlim=highlim)
 
-    log.debug("mean of [{}, {}] percentile science data = {}"
+    log.debug("mean of [{}, {}] percentile grism image = {}"
               .format(lowlim, highlim, sci_mean))
     log.debug("mean of [{}, {}] percentile background image = {}"
               .format(lowlim, highlim, bkg_mean))
@@ -160,11 +167,9 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
     if bkg_mean != 0.:
         subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
         result.data = input_model.data - subtract_this
-        log.debug("Average of values subtracted = {}"
-                  .format(subtract_this.mean(dtype=float)))
+        log.info(f"Average of background image subtracted = {subtract_this.mean(dtype=float)}")
     else:
-        log.warning("Background file has zero mean; "
-                    "nothing will be subtracted.")
+        log.warning("Background image has zero mean; nothing will be subtracted.")
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
 
     bkg_ref.close()
@@ -198,7 +203,7 @@ def no_NaN(model, fill_value=0.):
         return temp
 
 
-def mask_from_source_cat(input_model, wl_range_name):
+def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     """Create a mask that is False within bounding boxes of sources.
 
     Parameters
@@ -208,6 +213,9 @@ def mask_from_source_cat(input_model, wl_range_name):
 
     wl_range_name: str
         Name of the wavelengthrange reference file
+
+    mmag_extract: float
+        Minimum abmag of grism objects to extract
 
     Returns
     -------
@@ -221,7 +229,7 @@ def mask_from_source_cat(input_model, wl_range_name):
     bkg_mask = np.ones(shape, dtype=bool)
 
     reference_files = {"wavelengthrange": wl_range_name}
-    grism_obj_list = create_grism_bbox(input_model, reference_files)
+    grism_obj_list = create_grism_bbox(input_model, reference_files, mmag_extract)
 
     for obj in grism_obj_list:
         order_bounding = obj.order_bounding

@@ -46,6 +46,8 @@ instrument exposures.
 +--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 | :ref:`refpix <refpix_step>`                | |check| | |check| | :ref:`lastframe <lastframe_step>`       | |check| |         |
 +--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+|                                            |         |         | :ref:`reset <reset_step>`               | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 | :ref:`linearity <linearity_step>`          | |check| | |check| | :ref:`linearity <linearity_step>`       | |check| | |check| |
 +--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 | :ref:`persistence <persistence_step>` [2]_ | |check| |         | :ref:`rscd <rscd_step>`                 | |check| |         |
@@ -142,3 +144,5 @@ results of each integration. The 2D countrate images for each integration are
 stacked along the 3rd axis of the data cubes (ncols x nrows x nints). This
 output file will be of type "_rateints". The 3D "_rateints" product is passed along
 to subsequent pipeline modules for all TSO and Coronagraphic exposures.
+
+.. include:: ../references_general/pars-detector1pipeline_reffile.inc

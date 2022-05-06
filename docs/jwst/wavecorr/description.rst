@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.wavecorr.WavecorrStep`
+:Alias: wavecorr
+
 The wavelength correction (``wavecorr``) step in the
 :ref:`calwebb_spec2 <calwebb_spec2>` pipeline updates the wavelength
 assignments for NIRSpec fixed-slit (FS) and MOS point sources that are

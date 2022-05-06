@@ -1,6 +1,9 @@
 Description
 ============
 
+:Class: `jwst.guider_cds.GuiderCdsStep`
+:Alias: guider_cds
+
 The ``guider_cds`` step computes countrate images from the
 Correlated Double Sampling (CDS) detector readouts used in FGS
 guiding mode data. The exact way in which the countrate images

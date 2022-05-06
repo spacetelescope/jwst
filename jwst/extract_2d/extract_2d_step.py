@@ -13,13 +13,16 @@ class Extract2dStep(Step):
     This Step performs a 2D extraction of spectra.
     """
 
+    class_alias = "extract_2d"
+
     spec = """
         slit_name = string(default=None)
         extract_orders = int_list(default=None)  # list of orders to extract
+        grism_objects = list(default=None)  # list of grism objects to use
         tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
         wfss_extract_half_height =  integer(default=5)  # extraction half height in pixels, WFSS mode
-        grism_objects = list(default=None)  # list of grism objects to use
-        mmag_extract = float(default=99.)  # minimum abmag to extract
+        wfss_mmag_extract = float(default=None)  # minimum abmag to extract, WFSS mode
+        wfss_nbright = integer(default=1000)  # number of brightest objects to extract, WFSS mode
     """
 
     reference_file_types = ['wavelengthrange']
@@ -37,6 +40,7 @@ class Extract2dStep(Step):
                                                 tsgrism_extract_height=self.tsgrism_extract_height,
                                                 wfss_extract_half_height=self.wfss_extract_half_height,
                                                 extract_orders=self.extract_orders,
-                                                mmag_extract=self.mmag_extract)
+                                                mmag_extract=self.wfss_mmag_extract,
+                                                nbright=self.wfss_nbright)
 
         return output_model

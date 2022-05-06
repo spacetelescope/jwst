@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Classes: `jwst.resample.ResampleStep`, `jwst.resample.ResampleSpecStep`
+:Alias: resample, resample_spec
+
 This routine will resample each input 2D image based on the WCS and
 distortion information, and will combine multiple resampled images
 into a single undistorted product.  The distortion information should have

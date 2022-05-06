@@ -2,11 +2,9 @@
 Module to calculate the source catalog.
 """
 
-from collections import OrderedDict
 import logging
 import warnings
 
-from astropy import __version__ as astropy_version
 from astropy.convolution import Gaussian2DKernel
 from astropy.nddata.utils import extract_array, NoOverlapError
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
@@ -15,427 +13,20 @@ import astropy.units as u
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
-from scipy import __version__ as scipy_version
 from scipy import ndimage
 from scipy.spatial import KDTree
 
-from photutils import __version__ as photutils_version
-from photutils.background import Background2D, MedianBackground
-from photutils.segmentation import (detect_sources, deblend_sources,
-                                    SourceCatalog)
+from photutils.segmentation import SourceCatalog
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 aperture_photometry)
 
 from jwst import __version__ as jwst_version
 
-from .. import datamodels
-from ..datamodels import ImageModel, ABVegaOffsetModel
+from ..datamodels import ImageModel
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-class ReferenceData:
-    """
-    Class for APCORR and ABVEGAOFFSET reference file data needed by
-    `SourceCatalogStep`.
-
-    Parameters
-    ----------
-    model : `ImageModel`
-        An `ImageModel` of drizzled image.
-
-    aperture_ee : tuple of 3 int
-        The aperture encircled energies to be used for aperture
-        photometry.  The values must be 3 strictly-increasing integers.
-        Valid values are defined in the APCORR reference files (20, 30,
-        40, 50, 60, 70, or 80).
-
-    apcorr_filename : str
-        The full path filename of the APCORR reference file.
-
-    abvegaoffset_filename : str
-        The full path filename of the ABVEGAOFFSET reference file.
-
-    Attributes
-    ----------
-    aperture_params : `dict`
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
-
-    abvega_offset : float
-        Offset to convert from AB to Vega magnitudes.  The value
-        represents m_AB - m_Vega.
-    """
-
-    def __init__(self, model, aperture_ee=(30, 50, 70),
-                 apcorr_filename=None, abvegaoffset_filename=None):
-
-        if not isinstance(model, ImageModel):
-            raise ValueError('The input model must be a ImageModel.')
-        self.model = model
-
-        self.aperture_ee = self._validate_aperture_ee(aperture_ee)
-        self.apcorr_filename = apcorr_filename
-        self.abvegaoffset_filename = abvegaoffset_filename
-
-        self.instrument = self.model.meta.instrument.name
-        self.detector = self.model.meta.instrument.detector
-        self.filtername = self.model.meta.instrument.filter
-        self.pupil = model.meta.instrument.pupil
-        self.subarray = self.model.meta.subarray.name
-
-        log.info(f'Instrument: {self.instrument}')
-        if self.detector is not None:
-            log.info(f'Detector: {self.detector}')
-        if self.filtername is not None:
-            log.info(f'Filter: {self.filtername}')
-        if self.pupil is not None:
-            log.info(f'Pupil: {self.pupil}')
-        if self.subarray is not None:
-            log.info(f'Subarray: {self.subarray}')
-
-    @staticmethod
-    def _validate_aperture_ee(aperture_ee):
-        """
-        Validate the input ``aperture_ee``.
-        """
-        aperture_ee = np.array(aperture_ee).astype(int)
-        if not np.all(aperture_ee[1:] > aperture_ee[:-1]):
-            raise ValueError('aperture_ee values must be strictly '
-                             'increasing')
-        if len(aperture_ee) != 3:
-            raise ValueError('aperture_ee must contain only 3 values')
-        if np.any(np.logical_or(aperture_ee <= 0, aperture_ee >= 100)):
-            raise ValueError('aperture_ee values must be between 0 and 100')
-        return aperture_ee
-
-    @lazyproperty
-    def _aperture_ee_table(self):
-        """
-        Get the encircled energy table for the given instrument
-        configuration.
-        """
-        if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
-            selector = {'filter': self.filtername, 'pupil': self.pupil}
-        elif self.instrument == 'MIRI':
-            selector = {'filter': self.filtername, 'subarray': self.subarray}
-        elif self.instrument == 'FGS':
-            selector = None
-        else:
-            raise RuntimeError(f'{self.instrument} is not a valid instrument')
-
-        apcorr_model = datamodels.open(self.apcorr_filename)
-        apcorr = apcorr_model.apcorr_table
-        if selector is None:  # FGS
-            ee_table = apcorr
-        else:
-            mask_idx = [apcorr[key] == value
-                        for key, value in selector.items()]
-            ee_table = apcorr[np.logical_and.reduce(mask_idx)]
-
-        if len(ee_table) == 0:
-            raise RuntimeError('APCORR reference file data is missing for '
-                               f'{selector}.')
-
-        return ee_table
-
-    def _get_ee_table_row(self, aperture_ee):
-        """
-        Get the encircled energy row for the input ``aperture_ee``.
-        """
-        ee_percent = np.round(self._aperture_ee_table['eefraction'] * 100)
-        row_mask = (ee_percent == aperture_ee)
-        ee_row = self._aperture_ee_table[row_mask]
-        if len(ee_row) == 0:
-            raise RuntimeError('Aperture encircled energy value of {0} '
-                               'appears to be invalid. No matching row '
-                               'was found in the APCORR reference file '
-                               '{1}'.format(aperture_ee,
-                                            self.apcorr_filename))
-        if len(ee_row) > 1:
-            raise RuntimeError('More than one matching row was found in '
-                               'the APCORR reference file {0}'
-                               .format(self.apcorr_filename))
-        return ee_row
-
-    @lazyproperty
-    def aperture_params(self):
-        """
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
-        """
-        if self.apcorr_filename is None:
-            log.warning('APCorrModel reference file was not input. Using '
-                        'fallback aperture sizes without any aperture '
-                        'corrections.')
-
-            params = {'aperture_radii': np.array((1.0, 2.0, 3.0)),
-                      'aperture_corrections': np.array((1.0, 1.0, 1.0)),
-                      'aperture_ee': np.array((1, 2, 3)),
-                      'bkg_aperture_inner_radius': 5.0,
-                      'bkg_aperture_outer_radius': 10.0}
-            return params
-
-        params = {}
-        radii = []
-        apcorrs = []
-        skyins = []
-        skyouts = []
-        for aper_ee in self.aperture_ee:
-            row = self._get_ee_table_row(aper_ee)
-            radii.append(row['radius'][0])
-            apcorrs.append(row['apcorr'][0])
-            skyins.append(row['skyin'][0])
-            skyouts.append(row['skyout'][0])
-
-        if self.model.meta.resample.pixel_scale_ratio is not None:
-            # pixel_scale_ratio is the ratio of the resampled to the native
-            # pixel scale (values < 1 have smaller resampled pixels)
-            pixel_scale_ratio = self.model.meta.resample.pixel_scale_ratio
-        else:
-            log.warning('model.meta.resample.pixel_scale_ratio was not '
-                        'found. Assuming the native detector pixel scale '
-                        '(i.e., pixel_scale_ratio = 1)')
-            pixel_scale_ratio = 1.0
-
-        params['aperture_ee'] = self.aperture_ee
-        params['aperture_radii'] = np.array(radii) / pixel_scale_ratio
-        params['aperture_corrections'] = np.array(apcorrs)
-
-        skyins = np.unique(skyins)
-        skyouts = np.unique(skyouts)
-        if len(skyins) != 1 or len(skyouts) != 1:
-            raise RuntimeError('Expected to find only one value for skyin '
-                               'and skyout in the APCORR reference file for '
-                               'a given selector.')
-        params['bkg_aperture_inner_radius'] = skyins[0] / pixel_scale_ratio
-        params['bkg_aperture_outer_radius'] = skyouts[0] / pixel_scale_ratio
-
-        return params
-
-    @lazyproperty
-    def abvega_offset(self):
-        """
-        Offset to convert from AB to Vega magnitudes.
-
-        The value represents m_AB - m_Vega.
-        """
-        if self.abvegaoffset_filename is None:
-            log.warning('ABVEGAOFFSET reference file was not input. '
-                        'Catalog Vega magnitudes are not correct.')
-            return 0.0
-
-        if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
-            selector = {'filter': self.filtername, 'pupil': self.pupil}
-        elif self.instrument == 'MIRI':
-            selector = {'filter': self.filtername}
-        elif self.instrument == 'FGS':
-            selector = {'detector': self.detector}
-        else:
-            raise RuntimeError(f'{self.instrument} is not a valid instrument')
-
-        abvegaoffset_model = ABVegaOffsetModel(self.abvegaoffset_filename)
-        offsets_table = abvegaoffset_model.abvega_offset
-
-        try:
-            mask_idx = [offsets_table[key] == value
-                        for key, value in selector.items()]
-        except KeyError as badkey:
-            raise KeyError('{0} not found in ABVEGAOFFSET reference '
-                           'file {1}'.format(badkey,
-                                             self.abvegaoffset_filename))
-
-        row = offsets_table[np.logical_and.reduce(mask_idx)]
-
-        if len(row) == 0:
-            raise RuntimeError('Did not find matching row in ABVEGAOFFSET '
-                               'reference file {0}'
-                               .format(self.abvegaoffset_filename))
-        if len(row) > 1:
-            raise RuntimeError('Found more than one matching row in '
-                               'ABVEGAOFFSET reference file {0}'
-                               .format(self.abvegaoffset_filename))
-
-        abvega_offset = row['abvega_offset'][0]
-        log.info('AB to Vega magnitude offset {:.5f}'.format(abvega_offset))
-        abvegaoffset_model.close()
-        return abvega_offset
-
-
-class Background:
-    """
-    Class to estimate a 2D background and background RMS noise in an
-    image.
-
-    Parameters
-    ----------
-    data : 2D `~numpy.ndarray`
-        The input 2D array.
-
-    box_size : int or array_like (int)
-        The box size along each axis.  If ``box_size`` is a scalar then
-        a square box of size ``box_size`` will be used.  If ``box_size``
-        has two elements, they should be in ``(ny, nx)`` order.
-
-    mask : array_like (bool), optional
-        A boolean mask, with the same shape as ``data``, where a `True`
-        value indicates the corresponding element of ``data`` is masked.
-        Masked data are excluded from calculations.
-
-    Attributes
-    ----------
-    background : 2D `~numpy.ndimage`
-        The estimated 2D background image.
-
-    background_rms : 2D `~numpy.ndimage`
-        The estimated 2D background RMS image.
-    """
-
-    def __init__(self, data, box_size=100, mask=None):
-        self.data = data
-        self.box_size = np.asarray(box_size).astype(int)  # must be integer
-        self.mask = mask
-
-    @lazyproperty
-    def _background2d(self):
-        """
-        Estimate the 2D background and background RMS noise in an image.
-
-        Returns
-        -------
-        background : `photutils.background.Background2D`
-            A Background2D object containing the 2D background and
-            background RMS noise estimates.
-        """
-        sigma_clip = SigmaClip(sigma=3.)
-        bkg_estimator = MedianBackground()
-        filter_size = (3, 3)
-
-        try:
-            bkg = Background2D(self.data, self.box_size,
-                               filter_size=filter_size, mask=self.mask,
-                               sigma_clip=sigma_clip,
-                               bkg_estimator=bkg_estimator)
-        except ValueError:
-            # use the entire unmasked array
-            bkg = Background2D(self.data, self.data.shape,
-                               filter_size=filter_size, mask=self.mask,
-                               sigma_clip=sigma_clip,
-                               bkg_estimator=bkg_estimator,
-                               exclude_percentile=100.)
-            log.info('Background could not be estimated in meshes. '
-                     'Using the entire unmasked array for background '
-                     f'estimation:  bkg_boxsize={self.data.shape}.')
-
-        # apply the coverage mask
-        bkg.background *= np.logical_not(self.mask)
-        bkg.background_rms *= np.logical_not(self.mask)
-
-        return bkg
-
-    @lazyproperty
-    def background(self):
-        """
-        The 2D background image.
-        """
-        return self._background2d.background
-
-    @lazyproperty
-    def background_rms(self):
-        """
-        The 2D background RMS image.
-        """
-        return self._background2d.background_rms
-
-
-def make_kernel(kernel_fwhm):
-    """
-    Make a 2D Gaussian smoothing kernel that is used to filter the image
-    before thresholding.
-
-    Filtering the image will smooth the noise and maximize detectability
-    of objects with a shape similar to the kernel.
-
-    The kernel must have odd sizes in both X and Y, be centered in the
-    central pixel, and normalized to sum to 1.
-
-    Parameters
-    ----------
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-
-    Returns
-    -------
-    kernel : `astropy.convolution.Kernel2D`
-        The output smoothing kernel, normalized such that it sums to 1.
-    """
-    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
-    kernel = Gaussian2DKernel(sigma)
-    kernel.normalize(mode='integral')
-    return kernel
-
-
-def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
-                     deblend=False):
-    """
-    Detect sources in an image, including deblending.
-
-    Parameters
-    ----------
-    data : 2D `~numpy.ndarray`
-        The input 2D array.
-
-    threshold : float
-        The data value or pixel-wise data values to be used for the
-        detection threshold. A 2D threshold must have the same shape as
-        ``data``.
-
-    npixels : int
-        The number of connected pixels, each greater than ``threshold``
-        that an object must have to be detected.  ``npixels`` must be a
-        positive integer.
-
-    kernel : `astropy.convolution.Kernel2D`
-        The filtering kernel.  Filtering the image will smooth the noise
-        and maximize detectability of objects with a shape similar to
-        the kernel.
-
-    mask : array_like of bool, optional
-        A boolean mask, with the same shape as the input ``data``, where
-        `True` values indicate masked pixels.  Masked pixels will not be
-        included in any source.
-
-    deblend : bool, optional
-        Whether to deblend overlapping sources.  Source deblending
-        requires scikit-image.
-
-    Returns
-    -------
-    segment_image : `~photutils.segmentation.SegmentationImage` or `None`
-        A 2D segmentation image, with the same shape as the input data,
-        where sources are marked by different positive integer values.
-        A value of zero is reserved for the background.  If no sources
-        are found then `None` is returned.
-    """
-    connectivity = 8
-    segm = detect_sources(data, threshold, npixels, kernel=kernel,
-                          mask=mask, connectivity=connectivity)
-    if segm is None:
-        return None
-
-    # source deblending requires scikit-image
-    if deblend:
-        nlevels = 32
-        contrast = 0.001
-        mode = 'exponential'
-        segm = deblend_sources(data, segm, npixels=npixels,
-                               filter_kernel=kernel, nlevels=nlevels,
-                               contrast=contrast, mode=mode,
-                               connectivity=connectivity, relabel=True)
-
-    return segm
 
 
 class JWSTSourceCatalog:
@@ -453,6 +44,23 @@ class JWSTSourceCatalog:
         where sources are marked by different positive integer values.
         A value of zero is reserved for the background.
 
+    convolved_data : data : 2D `~numpy.ndarray`
+        The 2D array used to calculate the source centroid and
+        morphological properties.
+
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+        This is needed to calculate the DAOFind sharpness and roundness
+        properties (DAOFind uses a special kernel that sums to zero).
+
+    aperture_params : `dict`
+        A dictionary containing the aperture parameters (radii, aperture
+        corrections, and background annulus inner and outer radii).
+
+    abvega_offset : float
+        Offset to convert from AB to Vega magnitudes.  The value
+        represents m_AB - m_Vega.
+
     ci_star_thresholds : array-like of 2 floats
         The concentration index thresholds for determining whether
         a source is a star. The first threshold corresponds to the
@@ -463,23 +71,6 @@ class JWSTSourceCatalog:
         extended if both concentration indices are greater than the
         corresponding thresholds, otherwise it is considered a star.
 
-    kernel : array-like (2D) or `~astropy.convolution.Kernel2D`, optional
-        The 2D array of the kernel used to filter the data prior to
-        calculating the source centroid and morphological parameters.
-        The kernel should be the same one used in defining the source
-        segments.
-
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-
-    aperture_params : `dict`
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
-
-    abvega_offset : float
-        Offset to convert from AB to Vega magnitudes.  The value
-        represents m_AB - m_Vega.
-
     Notes
     -----
     ``model.err`` is assumed to be the total error array corresponding
@@ -488,32 +79,31 @@ class JWSTSourceCatalog:
     and have the same shape and units as the science data array.
     """
 
-    def __init__(self, model, segment_img, ci_star_thresholds, kernel=None,
-                 kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
+    def __init__(self, model, segment_img, convolved_data, kernel_fwhm,
+                 aperture_params, abvega_offset, ci_star_thresholds):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
-        self.model = model  # background was subtracted in SourceDetection
+        self.model = model  # background was previously subtracted
 
         self.segment_img = segment_img
-        self.n_sources = len(self.segment_img.labels)
-        if len(ci_star_thresholds) != 2:
-            raise ValueError('ci_star_thresholds must contain only 2 '
-                             'items')
-        self.ci_star_thresholds = ci_star_thresholds
-        self.kernel = kernel
+        self.convolved_data = convolved_data
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
-
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
 
-        self.aperture_ee = aperture_params['aperture_ee']
-        self.n_aper = len(self.aperture_ee)
-        self.column_desc = {}
+        if len(ci_star_thresholds) != 2:
+            raise ValueError('ci_star_thresholds must contain only 2 items')
+        self.ci_star_thresholds = ci_star_thresholds
 
+        self.n_sources = len(self.segment_img.labels)
+        self.aperture_ee = self.aperture_params['aperture_ee']
+        self.n_aper = len(self.aperture_ee)
         self.wcs = self.model.meta.wcs
+        self.column_desc = {}
         self._xpeak = None
         self._ypeak = None
+        self.meta = {}
 
     def convert_to_jy(self):
         """
@@ -522,15 +112,13 @@ class JWSTSourceCatalog:
         """
         if self.model.meta.bunit_data != 'MJy/sr':
             raise ValueError('data is expected to be in units of MJy/sr')
-        self.model.data *= (1.e6 *
-                            self.model.meta.photometry.pixelarea_steradians)
+        self.model.data *= (1.e6
+                            * self.model.meta.photometry.pixelarea_steradians)
         self.model.meta.bunit_data = 'Jy'
 
         unit = u.Jy
         self.model.data <<= unit
         self.model.err <<= unit
-
-        return
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):
@@ -567,7 +155,7 @@ class JWSTSourceCatalog:
         A dictionary of the output table column names and descriptions
         for the segment catalog.
         """
-        desc = OrderedDict()
+        desc = {}
         desc['label'] = 'Unique source identification label number'
         desc['xcentroid'] = 'X pixel value of the source centroid'
         desc['ycentroid'] = 'Y pixel value of the source centroid'
@@ -614,11 +202,14 @@ class JWSTSourceCatalog:
         The values are set as dynamic attributes.
         """
         segm_cat = SourceCatalog(self.model.data, self.segment_img,
-                                 error=self.model.err, kernel=self.kernel,
-                                 wcs=self.wcs)
-
+                                 convolved_data=self.convolved_data << u.Jy,
+                                 error=self.model.err, wcs=self.wcs)
         self._xpeak = segm_cat.maxval_xindex
         self._ypeak = segm_cat.maxval_yindex
+
+        self.meta.update(segm_cat.meta)
+        for key in ('sklearn', 'matplotlib'):
+            self.meta['version'].pop(key)
 
         # rename some columns in the output catalog
         prop_names = {}
@@ -634,8 +225,6 @@ class JWSTSourceCatalog:
             except AttributeError:
                 value = getattr(self, prop_name)
             setattr(self, column, value)
-
-        return
 
     @lazyproperty
     def xypos(self):
@@ -828,7 +417,7 @@ class JWSTSourceCatalog:
         A dictionary of the output table column names and descriptions
         for the aperture catalog.
         """
-        desc = OrderedDict()
+        desc = {}
         desc['aper_bkg_flux'] = ('The local background value calculated as '
                                  'the sigma-clipped median value in the '
                                  'background annulus aperture')
@@ -941,7 +530,7 @@ class JWSTSourceCatalog:
         A dictionary of the output table column names and descriptions
         for the additional catalog values.
         """
-        desc = OrderedDict()
+        desc = {}
         for idx, colname in enumerate(self.ci_colnames):
             desc[colname] = self.ci_colname_descriptions[idx]
 
@@ -1005,7 +594,6 @@ class JWSTSourceCatalog:
         """
         for name, value in zip(self.ci_colnames, self.concentration_indices):
             setattr(self, name, value)
-        return
 
     @lazyproperty
     def is_extended(self):
@@ -1065,9 +653,8 @@ class JWSTSourceCatalog:
         """
         The DAOFind convolved data.
         """
-        return ndimage.convolve(self.model.data.value,
-                                self._daofind_kernel, mode='constant',
-                                cval=0.0)
+        return ndimage.convolve(self.model.data.value, self._daofind_kernel,
+                                mode='constant', cval=0.0)
 
     @lazyproperty
     def _daofind_cutout(self):
@@ -1130,8 +717,8 @@ class JWSTSourceCatalog:
         conv_peak = self._daofind_cutout_conv[:, self._kernel_center,
                                               self._kernel_center]
 
-        data_mean = ((np.sum(data_masked, axis=(1, 2)) -
-                      data_peak) / npixels)
+        data_mean = ((np.sum(data_masked, axis=(1, 2))
+                      - data_peak) / npixels)
 
         with warnings.catch_warnings():
             # ignore 0 / 0 for non-finite xypos
@@ -1161,8 +748,8 @@ class JWSTSourceCatalog:
         quad4 = cutout[:, self._kernel_center + 1:, self._kernel_center:]
 
         axis = (1, 2)
-        sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis) -
-                quad3.sum(axis=axis) + quad4.sum(axis=axis))
+        sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis)
+                - quad3.sum(axis=axis) + quad4.sum(axis=axis))
         sum2[sum2 == 0] = 0.0
 
         sum4 = np.abs(cutout).sum(axis=axis)
@@ -1227,8 +814,8 @@ class JWSTSourceCatalog:
         unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
-        flux = (self.aperture_params['aperture_corrections'][idx] *
-                getattr(self, self.aperture_flux_colnames[idx * 2]))
+        flux = (self.aperture_params['aperture_corrections'][idx]
+                * getattr(self, self.aperture_flux_colnames[idx * 2]))
         return flux
 
     @lazyproperty
@@ -1241,8 +828,8 @@ class JWSTSourceCatalog:
         unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
-        flux_err = (self.aperture_params['aperture_corrections'][idx] *
-                    getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
+        flux_err = (self.aperture_params['aperture_corrections'][idx]
+                    * getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
         return flux_err
 
     @lazyproperty
@@ -1335,21 +922,6 @@ class JWSTSourceCatalog:
         return catalog
 
     @lazyproperty
-    def catalog_metadata(self):
-        """
-        The catalog metadata, include package version numbers.
-        """
-        meta = {}
-        meta['jwst version'] = jwst_version
-        meta['numpy version'] = np.__version__
-        meta['scipy version'] = scipy_version
-        meta['astropy version'] = astropy_version
-        meta['photutils version'] = photutils_version
-        meta['aperture_params'] = self.aperture_params
-        meta['abvega_offset'] = self.abvega_offset
-        return meta
-
-    @lazyproperty
     def catalog(self):
         """
         The final source catalog.
@@ -1365,6 +937,11 @@ class JWSTSourceCatalog:
             catalog[column].info.description = self.column_desc[column]
 
         catalog = self.format_columns(catalog)
-        catalog.meta.update(self.catalog_metadata)
+
+        # update metadata
+        self.meta['version']['jwst'] = jwst_version
+        self.meta['aperture_params'] = self.aperture_params
+        self.meta['abvega_offset'] = self.abvega_offset
+        catalog.meta.update(self.meta)
 
         return catalog
