@@ -2,19 +2,12 @@ import pytest
 import numpy as np
 
 from stcal.ramp_fitting.ramp_fit import ramp_fit
-from stcal.ramp_fitting.ramp_fit import use_zeroframe_for_saturated_ramps
 from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel
 from jwst.datamodels import ReadnoiseModel
-
-################################################################################
-import sys
-sys.path.insert(1, "/Users/kmacdonald/code/jwst/common")
-from helper_funcs import print_ols_slopes
-################################################################################
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -865,17 +858,15 @@ def test_zero_frame_usage():
     """
     dims = 2, 5, 1, 3       # nints, ngroups, nrows, ncols
     nints, ngroups, nrows, ncols = dims
-    # frame_data = 1, 0       # nframes, groupgap
     frame_data = 4, 1       # nframes, groupgap
     timing = 10.736, 0, 0.  # tframe, tgroup, tgroup0
     variance = 10., 5.      # rnoise, gain
     model, gmodel, rnmodel = setup_inputs_ramp_model_new(
-            dims, frame_data, timing, variance)
+        dims, frame_data, timing, variance)
 
     gain = gmodel.data
     rnoise = rnmodel.data
 
-    # XXX ZEROFRAME correction; will ultimately be fixed in JP-2506.
     correct_shape = (nints, nrows, ncols)
     if model.zeroframe.shape != correct_shape:
         model.zeroframe = np.zeros(correct_shape, dtype=model.data.dtype)
@@ -889,8 +880,6 @@ def test_zero_frame_usage():
     model.data[0, :, 0, 1] = base_ramp
     model.data[0, :, 0, 2] = base_ramp
     model.data[1, :, :, :] = model.data[0, :, :, :] / 2.
-    data_check = model.data.copy()
-    data_check[0, 0, 0, 2] /= 2.
 
     model.zeroframe[0, 0, 0] = model.data[0, 0, 0, 0] / 2.
     model.zeroframe[0, 0, 1] = 0.  # Indicates bad ZEROFRAME data.
@@ -900,53 +889,57 @@ def test_zero_frame_usage():
     # Set all groups to SATURATED, except for group 0 in ramp 0.
     model.groupdq[0, :, :, :] = SATURATED
     model.groupdq[0, 0, 0, 0] = GOOD
-    groupdq_check = model.groupdq.copy()
-    groupdq_check[0, 0, 0, 2] = GOOD
     model.groupdq[1, :, :, :] = GOOD
-
-    # XXX
-    # use_zeroframe_for_saturated_ramps(model, dqflags.pixel)
-    gtime = model.meta.exposure.group_time
-    ftime = model.meta.exposure.frame_time
-    mtime = gtime / ftime
-    print(f"\n{DELIM}")
-    print(f"Group time: {gtime}")
-    print(f"Frame time: {ftime}")
-    print(f"Ratio: {mtime}")
-    print(f"Nframes : {model.meta.exposure.nframes}")
-    print(f"Predicted slope: {5000 / ftime}")
-    print(DELIM)
-    '''
-    print(f"Data (Before) = \n{model.data[:, :, 0, :]}")
-    print(DELIM)
-    print(f"Group DQ (Before) = \n{model.groupdq[:, :, 0, :]}")
-    print(DELIM)
-    '''
 
     model.meta.exposure.zero_frame = True
 
-    image_info, int_model, opt_model, gls_opt_model = ramp_fit(
+    slopes, cube, _, _ = ramp_fit(
         model, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
-    # print_ols_slopes(image_info)
-    # data, dq, var_poisson, var_rnoise, err = slopes
-    print(DELIM)
-    print(f"Data = {image_info[0]}")
-    # print(f"     {image_info[0][0, 2] * mtime}")
-    print(f"VarP = {image_info[2]}")
-    # print(f"     {image_info[2][0, 2] * mtime}")
-    print(f"Err  = {image_info[4]}")
-    # print(f"     {image_info[4][0, 2] * mtime}")
-    print(DELIM)
-    print(f"Cube Data = \n{int_model[0][:, 0, :]}")
-    print(DELIM)
-    return
 
     # Make sure the group 0 info changed for ramp 2 in the data
     # and groupdq arrays.
     tol = 1.e-5
-    np.testing.assert_allclose(model.data, data_check, tol)
 
-    np.testing.assert_array_equal(model.groupdq, groupdq_check)
+    # Check slopes information
+    sdata, sdq, svp, svr, serr = slopes
+
+    check = np.array([[37.04942, 0.46572033, 4.6866207]])
+    np.testing.assert_allclose(sdata, check, tol, tol)
+
+    check = np.array([[2, 2, 2]])
+    np.testing.assert_allclose(sdq, check, tol, tol)
+
+    check = np.array([[0.06958079, 0.0002169, 0.20677584]])
+    np.testing.assert_allclose(svp, check, tol, tol)
+
+    check = np.array([[0.00041314, 0.0004338, 0.00043293]])
+    np.testing.assert_allclose(svr, check, tol, tol)
+
+    check = np.array([[0.26456368, 0.02550867, 0.4552019]])
+    np.testing.assert_allclose(serr, check, tol, tol)
+
+    # Check slopes information
+    cdata, cdq, cvp, cvr, cint_times, cerr = cube
+
+    check = np.array([[[186.28912, 0., 93.14456]],
+                      [[0.46572027, 0.46572033, 0.46572033]]])
+    np.testing.assert_allclose(cdata, check, tol, tol)
+
+    check = np.array([[[2, 3, 2]],
+                      [[0, 0, 0]]])
+    np.testing.assert_allclose(cdq, check, tol, tol)
+
+    check = np.array([[[3.4790397e-01, 0.0000000e+00, 4.3422928e+00]],
+                      [[8.6975992e-02, 2.1689695e-04, 2.1711464e-01]]])
+    np.testing.assert_allclose(cvp, check, tol, tol)
+
+    check = np.array([[[0.00867591, 0., 0.21689774]],
+                      [[0.0004338, 0.0004338, 0.0004338]]])
+    np.testing.assert_allclose(cvr, check, tol, tol)
+
+    check = np.array([[[0.5971431, 0., 2.1352262]],
+                      [[0.29565147, 0.02550867, 0.4664209]]])
+    np.testing.assert_allclose(cerr, check, tol, tol)
 
 
 def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
@@ -970,7 +963,6 @@ def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
 
     frame_time = tframe
     group_time = (groupgap + nframes) * tframe
-    effintim = (ngroups - 1) * tgroup + tgroup0
 
     # Setup the RampModel
     int_times = np.zeros((nints,))
