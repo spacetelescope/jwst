@@ -65,18 +65,18 @@ def test_irs2_zero_frame(setup_nrs_irs2_cube):
     """
     ramp, sat = setup_nrs_irs2_cube()
 
-    # XXX ZEROFRAME dimensions correction (will get fixed with JP-2506).
+    # Setup ZEROFRAME
     nints, ngroups, nrows, ncols = ramp.data.shape
     dims = (nints, nrows, ncols)
-    if ramp.zeroframe.shape != dims:
-        ramp.zeroframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
+    ramp.zeroframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
 
     nint, row, col = 0, 1000, 1000
     ramp.meta.exposure.zero_frame = True
     ramp.zeroframe[nint, row, col] = 65000.
     ramp.zeroframe[nint, row + 1, col + 1] = -100.
 
-    output = irs2_flag_saturation(ramp, sat)
+    output = irs2_flag_saturation(ramp, sat, n_pix_grow_sat=0)
+
     check_zframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
     check_zframe[nint, row, col] = 0.
     check_zframe[nint, row + 1, col + 1] = 0.

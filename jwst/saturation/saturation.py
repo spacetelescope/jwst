@@ -162,11 +162,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
             # now, flag any pixels that border saturated pixels (not A/D floor pix)
             if n_pix_grow_sat > 0:
-                only_sat = np.bitwise_and(flag_temp, SATURATED).astype(np.uint8)
-                box_dim = (n_pix_grow_sat * 2) + 1
-                struct = np.ones((box_dim, box_dim)).astype(bool)
-                dialated = binary_dilation(only_sat, structure=struct).astype(only_sat.dtype)
-                flag_temp = np.bitwise_or(flag_temp, (dialated * SATURATED))
+                flag_temp = adjacency_sat(flag_temp, SATURATED, n_pix_grow_sat)
 
             # Copy temps into flagarrays.
             x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
@@ -189,6 +185,10 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
             zflag_temp = np.where(ztemp >= sat_thresh, SATURATED, 0)
             zflaglow_temp = np.where(ztemp <= 0, AD_FLOOR | DONOTUSE, 0)
+
+            if n_pix_grow_sat > 0:
+                zflag_temp = adjacency_sat(zflag_temp, SATURATED, n_pix_grow_sat)
+
             x_irs2.to_irs2(zflagarray, zflag_temp, irs2_mask, detector)
             x_irs2.to_irs2(zflaglowarray, zflaglow_temp, irs2_mask, detector)
 
@@ -214,3 +214,25 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     x_irs2.to_irs2(output_model.pixeldq, pixeldq_temp, irs2_mask, detector)
 
     return output_model
+
+
+def adjacency_sat(flag_temp, saturated, n_pix_grow_sat):
+    """
+    flag_temp : ndarray
+        2D array of saturated groups.
+
+    saturated : int
+        Saturated flag.
+
+    n_pix_grow_sat : int
+        Number of layers of pixels adjacent to a saturated pixel to also flag
+        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        charge spilling.
+    """
+    only_sat = np.bitwise_and(flag_temp, saturated).astype(np.uint8)
+    box_dim = (n_pix_grow_sat * 2) + 1
+    struct = np.ones((box_dim, box_dim)).astype(bool)
+    dialated = binary_dilation(only_sat, structure=struct).astype(only_sat.dtype)
+    flag_temp = np.bitwise_or(flag_temp, (dialated * saturated))
+
+    return flag_temp
