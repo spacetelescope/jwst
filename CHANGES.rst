@@ -14,8 +14,8 @@ datamodels
 extract_1d
 ----------
 
-- Replace infinite values with NaNs, caused by zero division with
-  bad data [#6836]
+- Fix bug in SOSS algorithm for bad data by replacing source of possible
+  infinite values with NaNs, caused by zero division [#6836]
 
 1.5.0 (2022-05-05)
 ==================
