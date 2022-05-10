@@ -16,6 +16,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 class JwstStep(Step):
 
     spec = """
@@ -127,4 +128,3 @@ class JwstPipeline(Pipeline, JwstStep):
     def finalize_result(self, result, reference_files_used):
         if isinstance(result, DataModel):
             log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
-
