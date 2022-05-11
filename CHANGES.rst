@@ -11,6 +11,12 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
+extract_1d
+----------
+
+- Fix bug in SOSS algorithm for bad data by replacing source of possible
+  infinite values with NaNs, caused by zero division [#6836]
+
 1.5.0 (2022-05-05)
 ==================
 
