@@ -67,7 +67,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
-    gdq_new, pdq_new, _ = flag_saturated_pixels(
+    gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
         n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
 
@@ -76,6 +76,9 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
     output_model.pixeldq = pdq_new
+
+    if zframe is not None:
+        output_model.zeroframe = zframe
 
     return output_model
 
