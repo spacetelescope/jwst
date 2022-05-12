@@ -11,6 +11,8 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
+- Add keywords ``filter``, ``pupil`` and ``ppupil`` to the filteroffset schema. [#6839]
+
 extract_1d
 ----------
 
@@ -19,11 +21,18 @@ extract_1d
 
 - Exit gracefully if data is with F277W filter; avoid masking entire wavemap
   if subarray is SUBSTRIP96 [#6840]
-  
+
 stpipe
 ------
 
 - Log the CRDS context for pipeline and standalone step processing [#6835]
+
+tweakreg
+--------
+
+- Changed default value of ``fitgeom`` from ``'general'`` to ``'rshift'``
+  at the request of CalWG. [#6838]
+
 
 1.5.0 (2022-05-05)
 ==================
