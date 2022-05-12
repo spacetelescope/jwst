@@ -16,6 +16,9 @@ extract_1d
 
 - Fix bug in SOSS algorithm for bad data by replacing source of possible
   infinite values with NaNs, caused by zero division [#6836]
+
+- Exit gracefully if data is with F277W filter; avoid masking entire wavemap
+  if subarray is SUBSTRIP96 [#6840]
   
 stpipe
 ------
