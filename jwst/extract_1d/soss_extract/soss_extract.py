@@ -572,7 +572,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         ref_file_args = get_ref_file_args(ref_files, transform)
 
         # Make sure wavelength maps cover only parts where the centroid is inside the detector image
-        _mask_wv_map_centroid_outside(ref_file_args[0], ref_files, transform, scidata_bkg.shape[0])
+        if subarray != 'SUBSTRIP96':
+            _mask_wv_map_centroid_outside(ref_file_args[0], ref_files, transform, scidata_bkg.shape[0])
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR':
@@ -709,7 +710,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 # No model can be fit for F277W yet, missing throughput reference files.
                 msg = f"No extraction possible for filter {soss_filter}."
                 log.critical(msg)
-                raise ValueError(msg)
+                return None, None
 
             # Save trace models for output reference
             for order in tracemodels:

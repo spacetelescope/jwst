@@ -364,17 +364,20 @@ class Extract1dStep(Step):
                     soss_kwargs)
 
                 # Set the step flag to complete
-                result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.target.source_type = None
+                if result is None:
+                    return None
+                else:
+                    result.meta.cal_step.extract_1d = 'COMPLETE'
+                    result.meta.target.source_type = None
 
-                input_model.close()
+                    input_model.close()
 
-                if self.soss_modelname:
-                    soss_modelname = self.make_output_path(
-                        basepath=self.soss_modelname,
-                        suffix='SossExtractModel'
-                    )
-                    ref_outputs.save(soss_modelname)
+                    if self.soss_modelname:
+                        soss_modelname = self.make_output_path(
+                            basepath=self.soss_modelname,
+                            suffix='SossExtractModel'
+                        )
+                        ref_outputs.save(soss_modelname)
 
             else:
                 # Get the reference file names
