@@ -46,6 +46,7 @@ class ResampleStep(Step):
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
+        in_memory = boolean(default=True)
     """
 
     reference_file_types = ['drizpars']
@@ -102,6 +103,7 @@ class ResampleStep(Step):
         kwargs['crval'] = _check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
         kwargs['pscale'] = self.pixel_scale
+        kwargs['in_memory'] = self.in_memory
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)

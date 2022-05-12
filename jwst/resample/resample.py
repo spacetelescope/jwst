@@ -1,6 +1,8 @@
 import logging
 import re
 
+from guppy import hpy
+
 import numpy as np
 from drizzle import util
 from drizzle import cdrizzle
@@ -67,6 +69,7 @@ class ResampleData:
         self.fillval = fillval
         self.weight_type = wht_type
         self.good_bits = good_bits
+        self.in_memory = kwargs.get('in_memory', True)
 
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
@@ -93,6 +96,7 @@ class ResampleData:
             crpix=crpix,
             crval=crval
         )
+
         log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
             self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
@@ -136,16 +140,27 @@ class ResampleData:
 
         Used for outlier detection
         """
+        he = hpy()
+        he.setrelheap()
+
         for exposure in self.input_models.models_grouped:
-            output_model = self.blank_output.copy()
+            output_model = self.blank_output  #.copy()
+            output_root = '_'.join(exposure[0].meta.filename.replace(
+                '.fits', '').split('_')[:-1])
+            output_model.meta.filename = f'{output_root}_outlier_drz.fits'
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                             kernel=self.kernel, fillval=self.fillval)
+
+            hep = he.heap()
+            log.info(f"Memory use so far: {hep.size / (1024*1024):.3f} Mb")
+            
             for img in exposure:
                 # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
                                                          good_bits=self.good_bits)
+
                 # apply sky subtraction
                 blevel = img.meta.background.level
                 if not img.meta.background.subtracted and blevel is not None:
@@ -154,9 +169,25 @@ class ResampleData:
                     data = img.data
 
                 driz.add_image(data, img.meta.wcs, inwht=inwht)
+                del data
+            hep = he.heap()
+            log.info(f"Memory use after drizzling: {hep.size / (1024*1024):.3f} Mb")
+                
+            if not self.in_memory:
+                # Write out model to disk, then return filename
+                output_name=output_model.meta.filename
+                output_model.save(output_name)
+                log.info(f"Exposure {output_name} saved to file")
+                self.output_models.append(output_name)
+            else:
+                self.output_models.append(output_model.copy())
+            output_model.data *= 0.
+            output_model.wht *= 0.
 
-            self.output_models.append(output_model)
-
+        hexp = he.heap()
+        log.info(f"MEMORY: adding all exposures required {hexp.size / (1024*1024):.3f} Mb")
+        he.setrelheap()
+            
         return self.output_models
 
     def resample_many_to_one(self):
@@ -186,9 +217,10 @@ class ResampleData:
             if not img.meta.background.subtracted and blevel is not None:
                 data = img.data - blevel
             else:
-                data = img.data
+                data = img.data.copy()
 
             driz.add_image(data, img.meta.wcs, inwht=inwht)
+            del data, inwht
 
         # Resample variances array in self.input_models to output_model
         self.resample_variance_array("var_rnoise", output_model)

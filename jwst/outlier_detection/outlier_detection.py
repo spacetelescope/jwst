@@ -4,6 +4,8 @@ from functools import partial
 import logging
 import warnings
 
+from guppy import hpy
+
 import numpy as np
 from astropy.stats import sigma_clip
 from scipy import ndimage
@@ -67,6 +69,7 @@ class OutlierDetection:
         """
         self.inputs = input_models
         self.reffiles = reffiles
+        self.in_memory = pars.get('in_memory', False)
 
         self.outlierpars = {}
         if 'outlierpars' in reffiles:
@@ -178,8 +181,11 @@ class OutlierDetection:
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
+        hp = hpy()
+        hp.setrelheap()
+        
         self._convert_inputs()
-        self.build_suffix(**self.outlierpars)
+        self.build_suffix(**self.outlierpars)        
 
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
@@ -189,6 +195,10 @@ class OutlierDetection:
             resamp = resample.ResampleData(self.input_models, single=True,
                                            blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
+            h = hp.heap()
+            log.info("\n==== Memory Usage ====\n")
+            log.info(f"ResampleData used {h.size} bytes")
+            log.info(f"{h}")
             if save_intermediate_results:
                 for model in drizzled_models:
                     log.info("Writing out resampled exposures...")
@@ -196,6 +206,7 @@ class OutlierDetection:
                         basepath=model.meta.filename,
                         suffix='outlier_i2d')
                     model.save(model_output_path)
+                  
         else:
             # for non-dithered data, the resampled image is just the original image
             drizzled_models = self.input_models
@@ -205,6 +216,8 @@ class OutlierDetection:
                     weight_type='ivm',
                     good_bits=pars['good_bits'])
 
+        hp.setrelheap()  # reset to get relative memory use of next steps
+
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
@@ -212,7 +225,7 @@ class OutlierDetection:
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
-
+        
         if save_intermediate_results:
             median_output_path = self.make_output_path(
                 basepath=self.input_models[0].meta.filename,
@@ -259,10 +272,13 @@ class OutlierDetection:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
         """
-        resampled_sci = [i.data.copy() for i in resampled_models]
-        resampled_weight = [i.wht for i in resampled_models]
-
         maskpt = self.outlierpars.get('maskpt', 0.7)
+
+        # median_image = np.zeros(resampled_models[0].data.shape)
+        # for row in range(resampled_models[0].data.shape[0]):
+
+        resampled_sci = [i.data.copy() for i in resampled_models]
+        resampled_weight = [i.wht.copy() for i in resampled_models]
 
         # Create a mask for each input image, masking out areas where there is
         # no data or the data has very low weight
@@ -287,12 +303,13 @@ class OutlierDetection:
         # Fill resampled_sci array with nan's where mask values are True
         # pdb.set_trace()
         for f1, f2 in zip(resampled_sci, badmasks):
+            # f1[f2] = np.nan
             for elem1, elem2 in zip(f1, f2):
                 elem1[elem2] = np.nan
 
         # For a of stack of images with "bad" data replaced with Nan
         # use np.nanmedian to compute the median.
-        log.info("Generating median from {} images".format(len(resampled_sci)))
+        # log.info("Generating median from row {} of {} images".format(row, len(resampled_sci)))
         with warnings.catch_warnings():
             warnings.filterwarnings(action="ignore",
                                     message="All-NaN slice encountered",
@@ -312,6 +329,7 @@ class OutlierDetection:
         log.info("Blotting median...")
 
         for model in self.input_models:
+            
             blotted_median = model.copy()
             blot_root = '_'.join(model.meta.filename.replace(
                 '.fits', '').split('_')[:-1])
@@ -323,7 +341,13 @@ class OutlierDetection:
             # apply blot to re-create model.data from median image
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                             sinscl=sinscl)
-            blot_models.append(blotted_median)
+            if not self.in_memory:
+                blotted_name = blotted_median.meta.filename
+                blotted_median.save(blotted_name)
+                del blotted_median
+                blot_models.append(blotted_name)
+            else:
+                blot_models.append(blotted_median)
 
         return blot_models
 

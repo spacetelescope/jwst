@@ -77,7 +77,7 @@ class GWCSDrizzle:
         self.conext = "CON"
 
         out_units = "cps"
-
+        
         self.outexptime = product.meta.resample.product_exposure_time or 0.0
 
         self.outsci = product.data
@@ -105,6 +105,7 @@ class GWCSDrizzle:
             np.divide(self.outsci, self.outexptime, self.outsci)
         elif out_units != "cps":
             raise ValueError("Illegal value for out_units: %s" % out_units)
+
 
     def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
                   expin=1.0, in_units="cps", wt_scl=1.0):
