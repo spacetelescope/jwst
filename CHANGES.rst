@@ -16,11 +16,18 @@ extract_1d
 
 - Fix bug in SOSS algorithm for bad data by replacing source of possible
   infinite values with NaNs, caused by zero division [#6836]
-  
+
 stpipe
 ------
 
 - Log the CRDS context for pipeline and standalone step processing [#6835]
+
+tweakreg
+--------
+
+- Changed default value of ``fitgeom`` from ``'general'`` to ``'rshift'``
+  at the request of CalWG. [#6838]
+
 
 1.5.0 (2022-05-05)
 ==================

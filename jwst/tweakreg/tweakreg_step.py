@@ -48,7 +48,7 @@ class TweakRegStep(Step):
         tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec
         xoffset = float(default=0.0), # Initial guess for X offset in arcsec
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
-        fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='general') # Fitting geometry
+        fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
         align_to_gaia = boolean(default=False)  # Align to GAIA catalog
