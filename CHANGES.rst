@@ -6,6 +6,11 @@ cube_build
 
 - Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
 
+dark_current
+------------
+
+- Eliminated extra copying of input model when step gets skipped [#6841]
+
 datamodels
 ----------
 
