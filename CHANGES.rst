@@ -11,11 +11,31 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
+linearity
+---------
+
+- Adding feature to process ZEROFRAME data with the linearity step. [#6782]
+
 ramp_fitting
 ----------
 
 - Adding feature to use ZEROFRAME for ramps that are fully saturated, but
   the ZEROFRAME data for that ramp is good. [#6782]
+
+refpix
+------
+
+- Adding feature to process ZEROFRAME data with the refpix step. [#6782]
+
+saturation
+----------
+
+- Adding feature to process ZEROFRAME data with the saturation step. [#6782]
+
+superbias
+---------
+
+- Adding feature to process ZEROFRAME data with the superbias step. [#6782]
 
 1.5.0 (2022-05-05)
 ==================
