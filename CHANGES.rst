@@ -6,11 +6,27 @@ cube_build
 
 - Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
 
+dark_current
+------------
+
+- Eliminated extra copying of input model when step gets skipped [#6841]
+
 datamodels
 ----------
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
+- Add keywords ``filter``, ``pupil`` and ``ppupil`` to the filteroffset schema. [#6839]
+
+extract_1d
+----------
+
+- Fix bug in SOSS algorithm for bad data by replacing source of possible
+  infinite values with NaNs, caused by zero division [#6836]
+
+- Exit gracefully if data is with F277W filter; avoid masking entire wavemap
+  if subarray is SUBSTRIP96 [#6840]
+  
 linearity
 ---------
 
@@ -32,10 +48,21 @@ saturation
 
 - Adding feature to process ZEROFRAME data with the saturation step. [#6782]
 
+stpipe
+------
+
+- Log the CRDS context for pipeline and standalone step processing [#6835]
+
 superbias
 ---------
 
 - Adding feature to process ZEROFRAME data with the superbias step. [#6782]
+
+tweakreg
+--------
+
+- Changed default value of ``fitgeom`` from ``'general'`` to ``'rshift'``
+  at the request of CalWG. [#6838]
 
 1.5.0 (2022-05-05)
 ==================
