@@ -173,7 +173,6 @@ class Dataset():
         self.xsize = input_model.meta.subarray.xsize
         self.ysize = input_model.meta.subarray.ysize
 
-        # HERE
         self.colstart = self.xstart - 1
         self.colstop = self.colstart + self.xsize
         self.rowstart = self.ystart - 1
@@ -1935,7 +1934,7 @@ def setup_dataset_for_zeroframe(input_dataset, saved_values):
     new_dims = (nints, ngroups, nrows, ncols)
 
     # Setup ZEROFRAME data
-    data = input_dataset.input_model.zeroframe.copy()
+    data = input_dataset.input_model.zeroframe
     data = data.reshape(new_dims)
 
     # Setup ZEROFRAME dummy groupdq

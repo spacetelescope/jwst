@@ -151,8 +151,6 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
         zflagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
         zflaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
 
-    # import ipdb; ipdb.set_trace()
-
     for ints in range(nints):
         for group in range(ngroups):
             # Update the 4D groupdq array with the saturation flag.
@@ -182,7 +180,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
         # Process ZEROFRAME.  Instead of setting a ZEROFRAME DQ array, data
         # in the ZEROFRAME that is flagged will be set to 0.
         if input_model.meta.exposure.zero_frame:
-            zplane = input_model.zeroframe[ints, :, :].copy()
+            zplane = input_model.zeroframe[ints, :, :]
             zdq = np.zeros(groupdq.shape[-2:], dtype=groupdq.dtype)
             ztemp = x_irs2.from_irs2(zplane, irs2_mask, detector)
 

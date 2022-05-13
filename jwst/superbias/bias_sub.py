@@ -79,6 +79,8 @@ def subtract_bias(input, bias):
     # of the science data
     output.data -= bias.data
 
+    # If ZEROFRAME is present, subtract the super bias.  Zero values
+    # indicate bad data, so should be kept zero.
     if input.meta.exposure.zero_frame:
         wh_zero = np.where(output.zeroframe == 0.)
         output.zeroframe -= bias.data
