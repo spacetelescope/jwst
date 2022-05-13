@@ -27,6 +27,11 @@ extract_1d
 - Exit gracefully if data is with F277W filter; avoid masking entire wavemap
   if subarray is SUBSTRIP96 [#6840]
 
+lib
+---
+
+- Update ``test_siafdb`` unit test due to recent SIAF DB update [#6842]
+
 stpipe
 ------
 
