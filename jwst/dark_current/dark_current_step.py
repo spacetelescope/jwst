@@ -119,15 +119,17 @@ def dark_output_data_2_ramp_model(out_data, input_model):
     out_model: RampModel
         The output ramp model from the dark current step.
     """
-    out_model = input_model.copy()
-    out_model.meta.cal_step.dark_sub = out_data.cal_step
 
     if out_data.cal_step == "SKIPPED":
+        # If processing was skipped in the lower-level routines,
+        # just return the unmodified input model
+        input_model.meta.cal_step.dark_sub = "SKIPPED"
+        return input_model
+    else:
+        out_model = input_model.copy()
+        out_model.meta.cal_step.dark_sub = out_data.cal_step
+        out_model.data = out_data.data
+        out_model.groupdq = out_data.groupdq
+        out_model.pixeldq = out_data.pixeldq
+        out_model.err = out_data.err
         return out_model
-
-    out_model.data = out_data.data
-    out_model.groupdq = out_data.groupdq
-    out_model.pixeldq = out_data.pixeldq
-    out_model.err = out_data.err
-
-    return out_model

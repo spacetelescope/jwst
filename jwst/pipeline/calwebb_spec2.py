@@ -297,13 +297,18 @@ class Spec2Pipeline(Pipeline):
             self.extract_1d.save_results = False
             x1d = self.extract_1d(resampled)
 
-            self.photom.save_results = self.save_results
-            x1d = self.photom(x1d)
+            # Possible that no fit was possible - if so, skip photom
+            if x1d is not None:
+                self.photom.save_results = self.save_results
+                x1d = self.photom(x1d)
+            else:
+                self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
         else:
             x1d = self.extract_1d(resampled)
 
         resampled.close()
-        x1d.close()
+        if x1d is not None:
+            x1d.close()
 
         # That's all folks
         self.log.info(
