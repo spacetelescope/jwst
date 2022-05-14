@@ -16,8 +16,6 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
-- Add keywords ``filter``, ``pupil`` and ``ppupil`` to the filteroffset schema. [#6839]
-
 extract_1d
 ----------
 
