@@ -14,6 +14,9 @@ def do_correction(input_model, lin_model):
 
     # Create the output model as a copy of the input
     output_model = input_model.copy()
+    zframe = None
+    if output_model.meta.exposure.zero_frame:
+        zframe = output_model.zeroframe
 
     # Get dq arrays
     pdq = input_model.pixeldq
@@ -33,10 +36,12 @@ def do_correction(input_model, lin_model):
         sub_lin_model.close()
 
     # Call linearity correction function in stcal
-    new_data, new_pdq = linearity_correction(output_model.data, gdq, pdq,
-                                             lin_coeffs, lin_dq, dqflags.pixel)
+    new_data, new_pdq, new_zframe = linearity_correction(
+        output_model.data, gdq, pdq, lin_coeffs, lin_dq, dqflags.pixel)
 
     output_model.data = new_data
     output_model.pixeldq = new_pdq
+    if zframe is not None:
+        output_model.zeroframe = new_zframe
 
     return output_model

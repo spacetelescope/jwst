@@ -54,6 +54,8 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
 
+    zframe = input_model.zeroframe if input_model.meta.exposure.zero_frame else None
+
     # Extract subarray from saturation reference file, if necessary
     if reffile_utils.ref_matches_sci(input_model, ref_model):
         sat_thresh = ref_model.data
@@ -65,14 +67,18 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
-    gdq_new, pdq_new = flag_saturated_pixels(data, gdq, pdq, sat_thresh,
-                                             sat_dq, ATOD_LIMIT, dqflags.pixel, n_pix_grow_sat)
+    gdq_new, pdq_new, zframe = flag_saturated_pixels(
+        data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
+        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
     output_model.pixeldq = pdq_new
+
+    if zframe is not None:
+        output_model.zeroframe = zframe
 
     return output_model
 
@@ -140,6 +146,11 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     flagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
     flaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
+
+    if input_model.meta.exposure.zero_frame:
+        zflagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
+        zflaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
+
     for ints in range(nints):
         for group in range(ngroups):
             # Update the 4D groupdq array with the saturation flag.
@@ -152,11 +163,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
             # now, flag any pixels that border saturated pixels (not A/D floor pix)
             if n_pix_grow_sat > 0:
-                only_sat = np.bitwise_and(flag_temp, SATURATED).astype(np.uint8)
-                box_dim = (n_pix_grow_sat * 2) + 1
-                struct = np.ones((box_dim, box_dim)).astype(bool)
-                dialated = binary_dilation(only_sat, structure=struct).astype(only_sat.dtype)
-                flag_temp = np.bitwise_or(flag_temp, (dialated * SATURATED))
+                flag_temp = adjacency_sat(flag_temp, SATURATED, n_pix_grow_sat)
 
             # Copy temps into flagarrays.
             x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
@@ -169,6 +176,29 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
             # for A/D floor, the flag is only set of the current plane
             np.bitwise_or(groupdq[ints, group, :, :], flaglowarray,
                           groupdq[ints, group, :, :])
+
+        # Process ZEROFRAME.  Instead of setting a ZEROFRAME DQ array, data
+        # in the ZEROFRAME that is flagged will be set to 0.
+        if input_model.meta.exposure.zero_frame:
+            zplane = input_model.zeroframe[ints, :, :]
+            zdq = np.zeros(groupdq.shape[-2:], dtype=groupdq.dtype)
+            ztemp = x_irs2.from_irs2(zplane, irs2_mask, detector)
+
+            zflag_temp = np.where(ztemp >= sat_thresh, SATURATED, 0)
+            zflaglow_temp = np.where(ztemp <= 0, AD_FLOOR | DONOTUSE, 0)
+
+            if n_pix_grow_sat > 0:
+                zflag_temp = adjacency_sat(zflag_temp, SATURATED, n_pix_grow_sat)
+
+            x_irs2.to_irs2(zflagarray, zflag_temp, irs2_mask, detector)
+            x_irs2.to_irs2(zflaglowarray, zflaglow_temp, irs2_mask, detector)
+
+            np.bitwise_or(zdq[:, :], zflagarray, zdq[:, :])
+            np.bitwise_or(zdq[:, :], zflaglowarray, zdq[:, :])
+
+            zplane[zdq != 0] = 0.
+            output_model.zeroframe[ints, :, :] = zplane[:, :]
+            del zdq
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = groupdq
@@ -185,3 +215,25 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     x_irs2.to_irs2(output_model.pixeldq, pixeldq_temp, irs2_mask, detector)
 
     return output_model
+
+
+def adjacency_sat(flag_temp, saturated, n_pix_grow_sat):
+    """
+    flag_temp : ndarray
+        2D array of saturated groups.
+
+    saturated : int
+        Saturated flag.
+
+    n_pix_grow_sat : int
+        Number of layers of pixels adjacent to a saturated pixel to also flag
+        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        charge spilling.
+    """
+    only_sat = np.bitwise_and(flag_temp, saturated).astype(np.uint8)
+    box_dim = (n_pix_grow_sat * 2) + 1
+    struct = np.ones((box_dim, box_dim)).astype(bool)
+    dialated = binary_dilation(only_sat, structure=struct).astype(only_sat.dtype)
+    flag_temp = np.bitwise_or(flag_temp, (dialated * saturated))
+
+    return flag_temp
