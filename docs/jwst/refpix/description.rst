@@ -74,8 +74,9 @@ NIR Detector Data
        left and right side reference pixels, and the overall reference signal is
        obtained by averaging the left and right signals.  A multiple of this signal
        (set by the step parameter ``side_gain``, which defaults to 1.0) is
-       subtracted from the full group on a row-by-row basis.
-#. Transform the data back to the JWST focal plane, or DMS, frame.
+       subtracted from the full group on a row-by-row basis.  Note that the ``odd_even_rows``
+       parameter is ignored for NIR data when the side reference pixels are processed.
+    #. Transform the data back to the JWST focal plane, or DMS, frame.
 
 MIR Detector Data
 +++++++++++++++++
@@ -92,7 +93,8 @@ MIR Detector Data
        Bad pixels (those whose DQ flag has the "DO_NOT_USE" bit set) are not
        included in the calculation of the mean. The mean is calculated as a
        clipped mean with a 3-sigma rejection threshold using the
-       ``scipy.stats.sigmaclip`` method.
+       ``scipy.stats.sigmaclip`` method.  Note that the ``odd_even_columns``
+       parameter is ignored for MIRI data.
     #. Average the left and right reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
        i.e. by amplifier and using the odd mean for the odd row pixels and even
