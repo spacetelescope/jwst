@@ -119,19 +119,19 @@ def correct_xartifact(input_model, modelpars):
     channel = input_model.meta.instrument.channel
     band = input_model.meta.instrument.band
 
-    # TODO: Deal with crossed-band
+    # Deal with normal cases only, we won't apply to cross-dichroic cases for now
     if ((channel == '12') & (band == 'SHORT')):
-        left, right = 'CH1A', 'CH2A'
+        left, right = 'ch1a_table', 'ch2a_table'
     if ((channel == '12') & (band == 'MEDIUM')):
-        left, right = 'CH1B', 'CH2B'
+        left, right = 'ch1b_table', 'ch2b_table'
     if ((channel == '12') & (band == 'LONG')):
-        left, right = 'CH1C', 'CH2C'
+        left, right = 'ch1c_table', 'ch2c_table'
     if ((channel == '34') & (band == 'SHORT')):
-        left, right = 'CH4A', 'CH3A'
+        left, right = 'ch4a_table', 'ch3a_table'
     if ((channel == '34') & (band == 'MEDIUM')):
-        left, right = 'CH4B', 'CH3B'
+        left, right = 'ch4b_table', 'ch3b_table'
     if ((channel == '34') & (band == 'LONG')):
-        left, right = 'CH4C', 'CH3C'
+        left, right = 'ch4c_table', 'ch3c_table'
 
     xvec = (np.arange(ncols)).astype(float)
     left_model = np.zeros_like(output.data)
@@ -139,7 +139,7 @@ def correct_xartifact(input_model, modelpars):
 
     # Left-half of detector
     try:
-        param = modelpars[left].data
+        param = modelpars[left]
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 0, 516
         fimg = output.data * mask
@@ -154,7 +154,7 @@ def correct_xartifact(input_model, modelpars):
 
     # Right-half of detector
     try:
-        param = modelpars[right].data
+        param = modelpars[right]
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 516, 1024
         fimg = output.data * mask
