@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.coron.AlignRefsStep`
+:Alias: align_refs
+
 The ``align_refs`` step is one of the coronagraphic-specific steps in the ``coron``
 sub-package that is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` processing.
 It computes offsets between science target

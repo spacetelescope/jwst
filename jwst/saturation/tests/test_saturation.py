@@ -35,11 +35,11 @@ def test_basic_saturation_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Make sure that groups with signal > saturation limit get flagged
-    satindex = np.argmax(output.data[0, :, 5, 5] == satvalue)
-    assert np.all(output.groupdq[0, satindex:, 5, 5] == dqflags.group['SATURATED'])
+    satindex = np.argmax(output.data[0, :, 4:6, 4:6] == satvalue)
+    assert np.all(output.groupdq[0, satindex:, 4:6, 4:6] == dqflags.group['SATURATED'])
 
 
 def test_nirspec_irs2_saturation_flagging(setup_nrs_irs2_cube):
@@ -50,10 +50,38 @@ def test_nirspec_irs2_saturation_flagging(setup_nrs_irs2_cube):
     data.data[0, 4, pixx, pixy] = 67000
 
     # Run saturation detection
-    output = irs2_flag_saturation(data, satmap)
+    output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Make sure that groups with signal > saturation limit get flagged
-    assert np.all(output.groupdq[0, 3:, pixx, pixy] == dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, 3:, pixx - 1: pixx + 1, pixy - 1: pixy + 1] == dqflags.group['SATURATED'])
+
+
+def test_irs2_zero_frame(setup_nrs_irs2_cube):
+    """
+    Tests IRS2 ZEROFRAME processing.
+
+    This ensures ZEROFRAME data that is outside saturation and AD floor
+    boundaries get zeroed out.
+    """
+    ramp, sat = setup_nrs_irs2_cube()
+
+    # Setup ZEROFRAME
+    nints, ngroups, nrows, ncols = ramp.data.shape
+    dims = (nints, nrows, ncols)
+    ramp.zeroframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
+
+    nint, row, col = 0, 1000, 1000
+    ramp.meta.exposure.zero_frame = True
+    ramp.zeroframe[nint, row, col] = 65000.
+    ramp.zeroframe[nint, row + 1, col + 1] = -100.
+
+    output = irs2_flag_saturation(ramp, sat, n_pix_grow_sat=0)
+
+    check_zframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
+    check_zframe[nint, row, col] = 0.
+    check_zframe[nint, row + 1, col + 1] = 0.
+    tol = 1.e-5
+    np.testing.assert_allclose(output.zeroframe, check_zframe, tol)
 
 
 def test_ad_floor_flagging(setup_nrc_cube):
@@ -82,7 +110,7 @@ def test_ad_floor_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Check if the right frames are flagged as saturated
     assert np.all(output.groupdq[0, satindxs, 5, 5]
@@ -117,13 +145,14 @@ def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Check if the right frames are flagged as ad_floor
     assert np.all(output.groupdq[0, floorindxs, 5, 5]
                   == dqflags.group['DO_NOT_USE'] | dqflags.group['AD_FLOOR'])
     # Check if the right frames are flagged as saturated
-    assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['SATURATED'])
+    assert np.all(np.bitwise_and(output.groupdq[0, satindxs, 4:6, 4:6],
+                  dqflags.group['SATURATED']) == dqflags.group['SATURATED'])
 
 
 def test_signal_fluctuation_flagging(setup_nrc_cube):
@@ -150,11 +179,12 @@ def test_signal_fluctuation_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Make sure that all groups after first saturated group are flagged
     satindex = np.argmax(output.data[0, :, 5, 5] == satvalue)
-    assert np.all(output.groupdq[0, satindex:, 5, 5] == dqflags.group['SATURATED'])
+    assert np.all(np.bitwise_and(output.groupdq[0, satindex:, 4:6, 4:6],
+                                 dqflags.group['SATURATED']) == dqflags.group['SATURATED'])
 
 
 def test_all_groups_saturated(setup_nrc_cube):
@@ -179,10 +209,11 @@ def test_all_groups_saturated(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Make sure all groups are flagged
-    assert np.all(output.groupdq[0, :, 5, 5] == dqflags.group['SATURATED'])
+    assert np.all(np.bitwise_and(output.groupdq[0, :, 4:6, 4:6],
+                                 dqflags.group['SATURATED']) == dqflags.group['SATURATED'])
 
 
 def test_subarray_extraction(setup_miri_cube):
@@ -205,7 +236,7 @@ def test_subarray_extraction(setup_miri_cube):
     satmap.dq[550, 100] = dqflags.pixel['NONLINEAR']
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Check for DQ flag in PIXELDQ of subarray image
     assert(output.pixeldq[76, 100] == dqflags.pixel['DO_NOT_USE'])
@@ -235,7 +266,7 @@ def test_dq_propagation(setup_nrc_cube):
     satmap.dq[5, 5] = dqval2
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Make sure DQ values from data and reference file are added in the output
     assert output.pixeldq[5, 5] == dqval1 + dqval2
@@ -268,11 +299,11 @@ def test_no_sat_check(setup_nrc_cube):
     data.pixeldq[5, 5] = dqflags.pixel['RC']
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Make sure output GROUPDQ does not get flagged as saturated
     # Make sure PIXELDQ is set to NO_SAT_CHECK and original flag
-    assert np.all(output.groupdq[0, :, 5, 5] != dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, :, 4:6, 4:6] != dqflags.group['SATURATED'])
     assert output.pixeldq[5, 5] == (dqflags.pixel['NO_SAT_CHECK'] +
                                     dqflags.pixel['RC'])
 
@@ -300,10 +331,10 @@ def test_nans_in_mask(setup_nrc_cube):
     satmap.data[5, 5] = np.nan
 
     # Run the pipeline
-    output = flag_saturation(data, satmap)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Check that output GROUPDQ is not flagged as saturated
-    assert np.all(output.groupdq[0, :, 5, 5] != dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, :, 4:6, 4:6] != dqflags.group['SATURATED'])
     # Check that output PIXELDQ is set to NO_SAT_CHECK
     assert output.pixeldq[5, 5] == dqflags.pixel['NO_SAT_CHECK']
 

@@ -17,6 +17,8 @@ class KlipStep(Step):
     images observed in the same coronagraphic mode.
     """
 
+    class_alias = "klip"
+
     spec = """
         truncate = integer(default=50,min=0) # The number of KL transform rows to keep
     """

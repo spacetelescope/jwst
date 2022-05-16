@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.background.BackgroundStep`
+:Alias: background
+
 The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background
 signal. The step takes as input one target exposure, to which the
@@ -61,17 +65,22 @@ WFSS Mode
 For Wide-Field Slitless Spectroscopy expsoures (NIS_WFSS and NRC_WFSS),
 a background reference image is subtracted from the target exposure.
 Before being subtracted, the background reference image is scaled to match the
-signal level of the target data within background (source-free) regions of the
+signal level of the WFSS image within background (source-free) regions of the
 image. 
 
 The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file
 that gives the wavelength range (based on filter and grism) that is relevant
-to the target data. All regions of the image that are free of source spectra
-are used for scaling the background reference image. Robust mean values are
-obtained for the background regions in the target image and for the same
-regions in the background reference image, and the ratio of those two mean
-values is used to scale the background reference image. The robust mean is
+to the WFSS image. All regions of the image that are free of source spectra
+are used for scaling the background reference image. The step argument
+``wfss_mmag_extract`` can be used, if desired, to set the minimum (faintest)
+abmag of the source catalog objects used to define the background regions.
+The default is to use all source catalog entries that result in a spectrum
+falling within the WFSS image.
+
+Robust mean values are obtained for the background regions in the WFSS image and
+for the same regions in the background reference image, and the ratio of those two
+mean values is used to scale the background reference image. The robust mean is
 computed by excluding the lowest 25% and highest 25% of the data (using the
 numpy.percentile function), and taking a simple arithmetic mean of the
 remaining values.  Note that NaN values (if any) in the background
@@ -83,4 +92,3 @@ data model, leaving the original input model unchanged.
 
 Upon successful completion of the step, the S_BKDSUB keyword will be set to
 "COMPLETE" in the output product.
-

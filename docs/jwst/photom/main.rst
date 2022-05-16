@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.photom.PhotomStep`
+:Alias: photom
+
 The ``photom`` step applies flux (photometric) calibrations to a data product
 to convert the data from units of countrate to surface brightness (or, in
 some cases described below, to units of flux density).

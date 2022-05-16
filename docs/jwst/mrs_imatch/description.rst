@@ -3,6 +3,9 @@
 Description
 ============
 
+:Class: `jwst.mrs_imatch.MRSIMatchStep`
+:Alias: mrs_imatch
+
 Overview
 --------
 The ``mrs_imatch`` step "matches" image intensities of several input

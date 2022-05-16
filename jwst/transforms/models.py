@@ -20,7 +20,7 @@ from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
 
-__all__ = ['Gwa2Slit','Slit2Msa', 'Logical', 'NirissSOSSModel', 'Slit',
+__all__ = ['Gwa2Slit', 'Slit2Msa', 'Logical', 'NirissSOSSModel', 'Slit',
            'NIRCAMForwardRowGrismDispersion', 'NIRCAMForwardColumnGrismDispersion',
            'NIRCAMBackwardGrismDispersion', 'MIRI_AB2Slice', 'GrismObject',
            'NIRISSForwardRowGrismDispersion', 'NIRISSForwardColumnGrismDispersion',
@@ -56,6 +56,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              "xcentroid",
                                              "ycentroid",
                                              "is_extended",
+                                             "isophotal_abmag",
                                              ), rename=False)):
     """ Grism Objects identified from a direct image catalog and segment map.
 
@@ -74,6 +75,10 @@ class GrismObject(namedtuple('GrismObject', ("sid",
         True if the order is only partially contained on the image
     waverange : list
         wavelength range for the order
+    is_extended : bool
+        True if marked as extended in the source catalog
+    isophotal_abmag : float
+        isophotal_abmag from the source catalog
     sky_centroid: `~astropy.coordinates.SkyCoord`
         ra and dec of the center of the object
     sky_bbox_ll : `~astropy.coordinates.SkyCoord`
@@ -114,7 +119,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 sky_bbox_ul=None,
                 xcentroid=None,
                 ycentroid=None,
-                is_extended=None):
+                is_extended=None,
+                isophotal_abmag=None):
 
         return super(GrismObject, cls).__new__(cls,
                                                sid=sid,
@@ -128,7 +134,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                                sky_bbox_ul=sky_bbox_ul,
                                                xcentroid=xcentroid,
                                                ycentroid=ycentroid,
-                                               is_extended=is_extended)
+                                               is_extended=is_extended,
+                                               isophotal_abmag=isophotal_abmag)
 
     def __str__(self):
         """Return a pretty print for the object information."""
@@ -143,6 +150,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 "ycentroid: {8}\n"
                 "partial_order: {9}\n"
                 "waverange: {10}\n"
+                "is_extended: {11}\n"
+                "isophotal_abmag: {12}\n"
                 .format(self.sid,
                         str(self.order_bounding),
                         str(self.sky_centroid),
@@ -153,7 +162,9 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                         self.xcentroid,
                         self.ycentroid,
                         str(self.partial_order),
-                        str(self.waverange)))
+                        str(self.waverange),
+                        str(self.is_extended),
+                        str(self.isophotal_abmag)))
 
 
 class MIRI_AB2Slice(Model):

@@ -761,3 +761,55 @@ def test_correct_model(setup_cube, instr, det):
 
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, 4:-4]), 0, decimal=0)
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, 4:-4]), dataval - rpix, decimal=0)
+
+
+def test_zero_frame(setup_cube):
+    """
+    Tests ZEROFRAME refpix processing.
+    """
+
+    ngroups = 2
+    nrows = 2048
+    ncols = 2048
+    # Set correction parameters
+    odd_even_columns = True
+    use_side_ref_pixels = True
+    side_smoothing_length = 11
+    side_gain = 1.0
+    odd_even_rows = False
+
+    rpix = 7
+    dataval = 150
+    instr = "NIRCAM"
+    det = "NRCA1"
+
+    # Setup RampModel
+    input_model = setup_cube(instr, det, ngroups, nrows, ncols)
+    nints = input_model.shape[0]
+    input_model.data[0, 0, :, :] = rpix
+    input_model.data[0, 0, 4:-4, 4:-4] = dataval
+
+    # Setup ZEROFRAME
+    input_model.zeroframe = np.zeros((1, nrows, ncols), dtype=float)
+    input_model.zeroframe[0, :, :] = rpix / 2.
+    input_model.zeroframe[0, 4:-4, 4:-4] = dataval / 2.
+    input_model.zeroframe[0, 5, 5] = 0.  # Test a bad pixel.
+    input_model.meta.exposure.zero_frame = True
+
+    correct_model(input_model,
+                  odd_even_columns,
+                  use_side_ref_pixels,
+                  side_smoothing_length,
+                  side_gain,
+                  odd_even_rows)
+
+    # Make sure the SCI data is as expected.
+    data = np.zeros(input_model.data.shape, dtype=input_model.data.dtype)
+    data[0, 0, 4:-4, 4:-4] = dataval - rpix
+    np.testing.assert_almost_equal(input_model.data, data, decimal=5)
+
+    # Check the ZEROFRAME
+    zeroframe = np.zeros((nints, nrows, ncols), dtype=float)
+    zeroframe[0, 4:-4, 4:-4] = dataval / 2. - rpix / 2.
+    zeroframe[0, 5, 5] = 0.  # Make sure this pixel is zero.
+    np.testing.assert_almost_equal(input_model.zeroframe, zeroframe, decimal=5)

@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.coron.StackRefsStep`
+:Alias: stack_refs
+
 The ``stack_refs`` step is one of the coronagraphic-specific steps in the
 ``coron`` sub-package and is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>`
 processing. It takes a list of reference PSF products and stacks all of the

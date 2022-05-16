@@ -26,6 +26,8 @@ class JumpStep(Step):
 
     reference_file_types = ['gain', 'readnoise']
 
+    class_alias = 'jump'
+
     def process(self, input):
 
         with datamodels.RampModel(input) as input_model:

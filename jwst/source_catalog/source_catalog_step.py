@@ -3,14 +3,13 @@ Module for the source catalog step.
 """
 
 import os
-import warnings
 
 from crds.core.exceptions import CrdsLookupError
 import numpy as np
-from photutils.utils.exceptions import NoDetectionsWarning
 
-from .source_catalog import (ReferenceData, Background, make_kernel,
-                             make_segment_img, JWSTSourceCatalog)
+from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
+from .reference_data import ReferenceData
+from .source_catalog import JWSTSourceCatalog
 from .. import datamodels
 from ..stpipe import Step
 
@@ -26,6 +25,8 @@ class SourceCatalogStep(Step):
     input : str or `ImageModel`
         A FITS filename or an `ImageModel` of a drizzled image.
     """
+
+    class_alias = "source_catalog"
 
     spec = """
         bkg_boxsize = integer(default=100)    # background mesh box size in pixels
@@ -43,69 +44,57 @@ class SourceCatalogStep(Step):
 
     reference_file_types = ['apcorr', 'abvegaoffset']
 
+    def _get_reffile_paths(self, model):
+        filepaths = []
+        for reffile_type in self.reference_file_types:
+            try:
+                filepath = self.get_reference_file(model, reffile_type)
+                self.log.info(f'Using {reffile_type.upper()} reference file: '
+                              f'{filepath}')
+            except CrdsLookupError as err:
+                msg = f'{err} Source catalog will not be created.'
+                self.log.warning(msg)
+                return None
+
+            filepaths.append(filepath)
+        return filepaths
+
     def process(self, input_model):
         with datamodels.open(input_model) as model:
-            try:
-                apcorr_fn = self.get_reference_file(input_model, 'apcorr')
-            except CrdsLookupError:
-                apcorr_fn = None
-            self.log.info(f'Using APCORR reference file {apcorr_fn}')
-
-            try:
-                abvegaoffset_fn = self.get_reference_file(input_model,
-                                                          'abvegaoffset')
-            except CrdsLookupError:
-                abvegaoffset_fn = None
-            self.log.info('Using ABVEGAOFFSET reference file '
-                          f'{abvegaoffset_fn}')
-
+            reffile_paths = self._get_reffile_paths(model)
             aperture_ee = (self.aperture_ee1, self.aperture_ee2,
                            self.aperture_ee3)
+
             try:
-                refdata = ReferenceData(model, aperture_ee=aperture_ee,
-                                        apcorr_filename=apcorr_fn,
-                                        abvegaoffset_filename=abvegaoffset_fn)
+                refdata = ReferenceData(input_model, reffile_paths,
+                                        aperture_ee)
                 aperture_params = refdata.aperture_params
                 abvega_offset = refdata.abvega_offset
             except RuntimeError as err:
                 msg = f'{err} Source catalog will not be created.'
                 self.log.warning(msg)
-                return
+                return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
-            if coverage_mask.all():
-                self.log.warning('There are no valid pixels. Source catalog '
-                                 'will not be created.')
-                return
-
-            bkg = Background(model.data, box_size=self.bkg_boxsize,
-                             mask=coverage_mask)
+            bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize,
+                                 coverage_mask=coverage_mask)
             model.data -= bkg.background
 
             threshold = self.snr_threshold * bkg.background_rms
-            kernel = make_kernel(self.kernel_fwhm)
-            with warnings.catch_warnings():
-                # suppress NoDetectionsWarning from photutils
-                warnings.filterwarnings('ignore',
-                                        category=NoDetectionsWarning)
-                segment_img = make_segment_img(model.data, threshold,
-                                               npixels=self.npixels,
-                                               kernel=kernel,
-                                               mask=coverage_mask,
-                                               deblend=self.deblend)
+            finder = JWSTSourceFinder(threshold, self.npixels,
+                                      deblend=self.deblend)
+
+            convolved_data = convolve_data(model.data, self.kernel_fwhm,
+                                           mask=coverage_mask)
+            segment_img = finder(convolved_data, mask=coverage_mask)
             if segment_img is None:
-                self.log.warning('No sources were found. Source catalog '
-                                 'will not be created.')
-                return
-            self.log.info(f'Detected {segment_img.nlabels} sources')
+                return None
 
             ci_star_thresholds = (self.ci1_star_threshold,
                                   self.ci2_star_threshold)
-            catobj = JWSTSourceCatalog(model, segment_img, kernel=kernel,
-                                       kernel_fwhm=self.kernel_fwhm,
-                                       aperture_params=aperture_params,
-                                       abvega_offset=abvega_offset,
-                                       ci_star_thresholds=ci_star_thresholds)
+            catobj = JWSTSourceCatalog(model, segment_img, convolved_data,
+                                       self.kernel_fwhm, aperture_params,
+                                       abvega_offset, ci_star_thresholds)
             catalog = catobj.catalog
 
             if self.save_results:
@@ -121,6 +110,7 @@ class SourceCatalogStep(Step):
                 segm_model.meta.wcsinfo = model.meta.wcsinfo
                 self.save_model(segm_model, suffix='segm')
                 model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info(f'Wrote segmentation map: {segm_model.meta.filename}')
+                self.log.info('Wrote segmentation map: '
+                              f'{segm_model.meta.filename}')
 
         return catalog

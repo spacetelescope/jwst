@@ -20,7 +20,7 @@ class Extract1dStep(Step):
         A string indicating the type of fitting to be applied to
         background values in each column (or row, if the dispersion is
         vertical). Allowed values are `poly`, `mean`, and `median`.
-        Default is `poly`.
+        Default is `None`.
 
     bkg_order : int or None
         If not None, a polynomial with order `bkg_order` will be fit to
@@ -103,9 +103,11 @@ class Extract1dStep(Step):
         Filename for optional model output of ATOCA traces and pixel weights.
     """
 
+    class_alias = "extract_1d"
+
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
-    bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
+    bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold
     log_increment = integer(default=50)  # increment for multi-integration log messages
@@ -362,17 +364,20 @@ class Extract1dStep(Step):
                     soss_kwargs)
 
                 # Set the step flag to complete
-                result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.target.source_type = None
+                if result is None:
+                    return None
+                else:
+                    result.meta.cal_step.extract_1d = 'COMPLETE'
+                    result.meta.target.source_type = None
 
-                input_model.close()
+                    input_model.close()
 
-                if self.soss_modelname:
-                    soss_modelname = self.make_output_path(
-                        basepath=self.soss_modelname,
-                        suffix='SossExtractModel'
-                    )
-                    ref_outputs.save(soss_modelname)
+                    if self.soss_modelname:
+                        soss_modelname = self.make_output_path(
+                            basepath=self.soss_modelname,
+                            suffix='SossExtractModel'
+                        )
+                        ref_outputs.save(soss_modelname)
 
             else:
                 # Get the reference file names

@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.msaflagopen.MSAFlagOpenStep`
+:Alias: msa_flagging
+
 Overview
 --------
 The ``msaflagopen`` step flags pixels in NIRSpec exposures that are affected by

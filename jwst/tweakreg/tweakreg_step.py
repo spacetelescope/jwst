@@ -30,23 +30,25 @@ class TweakRegStep(Step):
     input images.
     """
 
+    class_alias = "tweakreg"
+
     spec = """
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
-        brightest = integer(default=1000) # Keep top ``brightest`` objects
+        brightest = integer(default=200) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
         enforce_user_order = boolean(default=False) # Align images in user specified order?
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=1.0) # The search radius in arcsec for a match
+        searchrad = float(default=2.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
-        separation = float(default=0.5) # Minimum object separation in arcsec
-        tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
+        separation = float(default=1.0) # Minimum object separation in arcsec
+        tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec
         xoffset = float(default=0.0), # Initial guess for X offset in arcsec
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
-        fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='general') # Fitting geometry
+        fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
         align_to_gaia = boolean(default=False)  # Align to GAIA catalog

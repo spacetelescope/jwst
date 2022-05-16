@@ -4,7 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 import numpy as np
 
 import jwst.datamodels as dm
-from jwst.master_background import MasterBackgroundNrsSlitsStep, MasterBackgroundStep
+from jwst.master_background import MasterBackgroundMosStep, MasterBackgroundStep
 
 from jwst.regtest import regtestdata as rt
 
@@ -24,8 +24,8 @@ def run_spec2_mbkg(jail, rtdata_module):
     step_params = {
         'step': 'calwebb_spec2',
         'args': [
-            '--steps.master_background.skip=false',
-            '--steps.master_background.save_background=true'
+            '--steps.master_background_mos.skip=false',
+            '--steps.master_background_mos.save_background=true'
         ]
     }
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
@@ -46,8 +46,8 @@ def run_spec2_mbkg_user(jail, rtdata_module):
     step_params = {
         'step': 'calwebb_spec2',
         'args': [
-            '--steps.master_background.skip=false',
-            '--steps.master_background.user_background=jw00626030001_02103_00001_nrs1_masterbg1d.fits'
+            '--steps.master_background_mos.skip=false',
+            '--steps.master_background_mos.user_background=jw00626030001_02103_00001_nrs1_masterbg1d.fits'
         ]
     }
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
@@ -57,7 +57,7 @@ def run_spec2_mbkg_user(jail, rtdata_module):
 def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
     with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
-        mbs = MasterBackgroundNrsSlitsStep()
+        mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
         corrected_again = mbs.run(data)
 
@@ -72,7 +72,7 @@ def test_masterbkg_rerun(rtdata):
 def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
     with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
-        mbs = MasterBackgroundNrsSlitsStep()
+        mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
 
         mbs.use_correction_pars = True

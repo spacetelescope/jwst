@@ -45,6 +45,56 @@ def nircam_model():
         'module': 'A',
         'name': 'NIRCAM',
         'pupil': 'CLEAR'}
+    model.meta.exposure.type = 'NRC_IMAGE'
+    model.meta.observation.date = '2021-01-01'
+    model.meta.observation.time = '00:00:00'
+
+    return model
+
+
+@pytest.fixture
+def nircam_model_without_apcorr():
+    rng = np.random.default_rng(seed=123)
+    data = rng.normal(0, 0.5, size=(101, 101))
+    data[20:80, 10:20] = 1.4
+    data[20:30, 20:45] = 1.4
+    data[20:80, 55:65] = 7.2
+    data[70:80, 65:87] = 7.2
+    data[45:55, 65:87] = 7.2
+    data[20:30, 65:87] = 7.2
+    data[55:75, 82:92] = 7.2
+    data[25:45, 82:92] = 7.2
+
+    wht = np.ones(data.shape)
+    wht[0:10, :] = 0.
+    model = ImageModel(data, wht=wht)
+    model.meta.bunit_data = 'MJy/sr'
+    model.meta.photometry.pixelarea_steradians = 1.0
+    model.meta.wcs = make_gwcs(data.shape)
+    model.meta.wcsinfo = {
+        'ctype1': 'RA---TAN',
+        'ctype2': 'DEC--TAN',
+        'dec_ref': 11.99875540218638,
+        'ra_ref': 22.02351763251896,
+        'roll_ref': 0.005076934167039675,
+        'v2_ref': 86.039011,
+        'v3_ref': -493.385704,
+        'v3yangle': -0.07385127,
+        'vparity': -1,
+        'wcsaxes': 2,
+        'crpix1': 50,
+        'crpix2': 50}
+    model.meta.instrument = {
+        'channel': 'LONG',
+        'detector': 'NRCALONG',
+        'filter': 'F2550WR',
+        'lamp_mode': 'NONE',
+        'module': 'A',
+        'name': 'NIRCAM',
+        'pupil': 'CLEAR'}
+    model.meta.exposure.type = 'NRC_IMAGE'
+    model.meta.observation.date = '2021-01-01'
+    model.meta.observation.time = '00:00:00'
 
     return model
 
@@ -60,3 +110,9 @@ def test_source_catalog(nircam_model, npixels, nsources):
         assert nsources == 0
     else:
         assert len(cat) == nsources
+
+
+def test_model_without_apcorr_data(nircam_model_without_apcorr):
+    step = SourceCatalogStep(save_results=False)
+    cat = step.run(nircam_model_without_apcorr)
+    assert cat is None

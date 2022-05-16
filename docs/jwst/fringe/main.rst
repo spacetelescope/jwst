@@ -1,5 +1,9 @@
 Description
 ============
+
+:Class: `jwst.fringe.FringeStep`
+:Alias: fringe
+
 The ``fringe`` step applies a fringe correction to MIRI MRS images.
 In particular, the SCI array from a fringe reference file is divided into the
 SCI and ERR arrays of the science data set. Only pixels that have valid (non-NaN)

@@ -156,6 +156,9 @@ class Dataset():
         if reffile_utils.is_subarray(input_model):
             is_subarray = True
         self.is_subarray = is_subarray
+
+        self.zeroframe_proc = False
+
         (nints, ngroups, nrows, ncols) = input_model.data.shape
         self.nints = nints
         self.ngroups = ngroups
@@ -169,10 +172,12 @@ class Dataset():
         self.ystart = input_model.meta.subarray.ystart
         self.xsize = input_model.meta.subarray.xsize
         self.ysize = input_model.meta.subarray.ysize
+
         self.colstart = self.xstart - 1
         self.colstop = self.colstart + self.xsize
         self.rowstart = self.ystart - 1
         self.rowstop = self.rowstart + self.ysize
+
         self.odd_even_columns = odd_even_columns
         self.use_side_ref_pixels = use_side_ref_pixels
         self.side_smoothing_length = side_smoothing_length
@@ -1846,4 +1851,133 @@ def reference_pixel_correction(input_dataset):
 
     input_dataset.do_corrections()
 
+    if input_dataset.input_model.meta.exposure.zero_frame:
+        process_zeroframe_correction(input_dataset)
+
     return
+
+
+def process_zeroframe_correction(input_dataset):
+    """
+    Do the Reference Pixel Correction for the ZEROFRAME array.
+
+    Parameters
+    ----------
+
+    input_dataset : Dataset
+        Dataset to be corrected
+
+    Returns
+    -------
+
+    input_dataset : Dataset
+        Corrected dataset
+    """
+    # Setup input model for ZEROFRAME
+    saved_values = save_science_values(input_dataset)
+    setup_dataset_for_zeroframe(input_dataset, saved_values)
+
+    # Run refpix correction on ZEROFRAME
+    input_dataset.do_corrections()
+
+    restore_input_model(input_dataset, saved_values)
+
+
+def restore_input_model(input_dataset, saved_values):
+    """
+    Restore the input model with saved values and move
+    the computed ZEROFRAME value to the correct class
+    variable.
+
+    Parameters
+    ----------
+    input_dataset : Dataset
+        Dataset to be corrected
+
+    saved_values : tuple
+        A tuple of saved values to be used to setup the final
+        corrected RampModel.
+    """
+    data, gdq, pdq, wh_zero = saved_values
+
+    nints, ngroups, nrows, ncols = data.shape
+    zdims = (nints, nrows, ncols)
+
+    # Get ZEROFRAME data
+    zframe = input_dataset.input_model.data
+    zdq = input_dataset.input_model.groupdq
+
+    # Restore SCI data
+    input_dataset.input_model.data = data
+    input_dataset.input_model.groupdq = gdq
+    input_dataset.input_model.pixeldq = pdq
+
+    # Save computed ZEROFRAME
+    zframe[zdq != 0] = 0.
+    input_dataset.input_model.zeroframe = zframe.reshape(zdims)
+    input_dataset.input_model.zeroframe[wh_zero] = 0.
+
+
+def setup_dataset_for_zeroframe(input_dataset, saved_values):
+    """
+    Saves off corrected data for the SCI data.
+
+    Parameters:
+    -----------
+    input_dataset : Dataset
+        Dataset to be corrected
+    """
+    # Setup dimensions
+    dims = input_dataset.input_model.zeroframe.shape
+    nints, nrows, ncols = dims
+    ngroups = 1
+    new_dims = (nints, ngroups, nrows, ncols)
+
+    # Setup ZEROFRAME data
+    data = input_dataset.input_model.zeroframe
+    data = data.reshape(new_dims)
+
+    # Setup ZEROFRAME dummy groupdq
+    gdtype = input_dataset.input_model.groupdq.dtype
+    gdq = np.zeros(dims, dtype=gdtype)
+    wh_zero = saved_values[-1]
+    gdq[wh_zero] = dqflags.pixel['DO_NOT_USE']
+    gdq = gdq.reshape(new_dims)
+
+    # Setup dataset with ZEROFRAME data
+    input_dataset.ngroups = ngroups
+    input_dataset.pixeldq = input_dataset.get_pixeldq()
+    input_dataset.input_model.data = data
+    input_dataset.input_model.groupdq = gdq
+    input_dataset.zeroframe_proc = True
+
+
+def save_science_values(input_dataset):
+    """
+    Saves off corrected data for the SCI data.
+
+    Parameters:
+    -----------
+    input_dataset : Dataset
+        Dataset to be corrected
+
+    Returns
+    -------
+    data : ndarray
+        The correct SCI data.
+
+    gdq : ndarray
+        The correct SCI groupdq.
+
+    pdq : ndarray
+        The correct SCI pixeldq.
+
+    wh_zero : ndarray
+        The location of the zeroed out locations in the ZEROFRAME.
+    """
+    data = input_dataset.input_model.data
+    gdq = input_dataset.input_model.groupdq
+    pdq = input_dataset.input_model.pixeldq
+    wh_zero = np.where(input_dataset.input_model.zeroframe[:, :, :] == 0.)
+
+    return (data, gdq, pdq, wh_zero)

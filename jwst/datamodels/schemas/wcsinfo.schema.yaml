@@ -281,13 +281,13 @@ properties:
             fits_hdu: SCI
             blend_table: True
           v2_ref:
-            title: "[arcsec] Telescope v2 coordinate of the reference point"
+            title: "[arcsec] Telescope V2 coord of reference point"
             type: number
             fits_keyword: V2_REF
             fits_hdu: SCI
             blend_table: True
           v3_ref:
-            title: "[arcsec] Telescope v3 coordinate of the reference point"
+            title: "[arcsec] Telescope V3 coord of reference point"
             type: number
             fits_keyword: V3_REF
             fits_hdu: SCI

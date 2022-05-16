@@ -20,6 +20,8 @@ class TSOPhotometryStep(Step):
         Filename for a FITS image or association table, or a `CubeModel`.
     """
 
+    class_alias = "tso_photometry"
+
     spec = """
         save_catalog = boolean(default=False)  # save exposure-level catalog
     """

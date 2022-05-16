@@ -44,14 +44,15 @@ class RampModel(JwstDataModel):
         self.groupdq = self.groupdq
         self.err = self.err
 
-        try:
-            self.getarray_noinit("zeroframe")
-        except AttributeError:
-            # If "zeroframe" is not in the instance, create a zero array with
-            # the correct dimensions.
-            nints, ngroups, nrows, ncols = self.data.shape
-            dims = (nints, nrows, ncols)
-            self.zeroframe = np.zeros(dims, dtype=self.data.dtype)
+        if isinstance(init, tuple) or self.meta.exposure.zero_frame is True:
+            try:
+                self.getarray_noinit("zeroframe")
+            except AttributeError:
+                # If "zeroframe" is not in the instance, create a zero array with
+                # the correct dimensions.
+                nints, ngroups, nrows, ncols = self.data.shape
+                dims = (nints, nrows, ncols)
+                self.zeroframe = np.zeros(dims, dtype=self.data.dtype)
 
 
 @deprecate_class(RampModel)

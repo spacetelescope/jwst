@@ -606,7 +606,7 @@ class IFUCubeData():
                         instrument = 1
 
                     result = None
-                    weight_type = 0  # default to emsm
+                    weight_type = 0  # default to emsm instead of msm
                     if self.weighting == 'msm':
                         weight_type = 1
 
@@ -744,7 +744,7 @@ class IFUCubeData():
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
 
-        weight_type = 0  # default to emsm
+        weight_type = 0  # default to emsm instead of msm
         if self.weighting == 'msm':
             weight_type = 1
         number_bands = len(self.list_par1)
@@ -791,21 +791,46 @@ class IFUCubeData():
                     instrument = 1
 
                 result = None
-                result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
-                                      self.overlap_partial, self.overlap_full,
-                                      self.xcoord, self.ycoord, self.zcoord,
-                                      coord1, coord2, wave, flux, err, slice_no,
-                                      rois_pixel, roiw_pixel, scalerad_pixel,
-                                      weight_pixel, softrad_pixel,
-                                      self.cdelt3_normal,
-                                      roiw_ave, self.cdelt1, self.cdelt2)
-                spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
 
-                self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
-                self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
-                self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
-                self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3],np.float64)
-                result = None
+                if self.interpolation == 'pointcloud':
+                    result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
+                                          self.overlap_partial, self.overlap_full,
+                                          self.xcoord, self.ycoord, self.zcoord,
+                                          coord1, coord2, wave, flux, err, slice_no,
+                                          rois_pixel, roiw_pixel, scalerad_pixel,
+                                          weight_pixel, softrad_pixel,
+                                          self.cdelt3_normal,
+                                          roiw_ave, self.cdelt1, self.cdelt2)
+                    spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
+
+                    self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
+                    self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
+                    self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
+                    self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3],np.float64)
+                    result = None
+
+                if self.weighting == 'drizzle':
+                    cdelt3_mean = np.nanmean(self.cdelt3_normal)
+                    xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
+                    linear = 0
+                    if self.linear_wavelength:
+                        linear = 1
+                    result = cube_wrapper_driz(instrument, flag_dq_plane,
+                                               start_region, end_region,
+                                               self.overlap_partial, self.overlap_full,
+                                               self.xcoord, self.ycoord, self.zcoord,
+                                               coord1, coord2, wave, flux, err, slice_no,
+                                               xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
+                                               dwave,
+                                               self.cdelt3_normal,
+                                               self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+
+                    spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
+                    self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                    self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                    self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                    self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
+                    result = None
                 # ______________________________________________________________________
                 # shove Flux and iflux in the  final ifucube
                 self.find_spaxel_flux()
@@ -2014,6 +2039,34 @@ class IFUCubeData():
                                        self.naxis2, self.naxis1))
         dq = self.spaxel_dq.reshape((self.naxis3,
                                      self.naxis2, self.naxis1))
+
+        # For MIRI MRS, apply a quality cut to help fix spectral tearing at the ends of each band.
+        # This is largely taken care of by the WCS regions file, but there will still be 1-2 possibly
+        # problematic planes at the end of each band in multi-band cubes.
+        # Do this by looking for how many good spaxels there are at each wavelength and finding outliers
+        # from the trend.
+        if self.instrument == 'MIRI':
+            nz = flux.shape[0]
+            # Create a vector of the number of good spaxels at each wavelength
+            ngood = np.zeros(nz)
+            for zz in range(0, nz):
+                dqvec = dq[zz, :, :].ravel()
+                good = np.where(dqvec == 0)
+                ngood[zz] = len(good[0])
+            # Find where this vector is non-zero, and compute 1% threshold of those good values
+            good = np.where(ngood > 0)
+            if (len(good[0]) > 0):
+                pctile = np.percentile(ngood[good], 3)
+                # Figure out where the number of good values were less than 75% of threshold,
+                # and zero out those arrays.
+                lowcov = (np.where((ngood > 0) & (ngood < 0.75 * pctile)))[0]
+                nlowcov = len(lowcov)
+                log.info('Number of spectral tear planes adjusted: %i', nlowcov)
+                for zz in range(0, nlowcov):
+                    flux[lowcov[zz], :, :] = 0
+                    wmap[lowcov[zz], :, :] = 0
+                    var[lowcov[zz], :, :] = 0
+                    dq[lowcov[zz], :, :] = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE']
 
         # clean up empty wavelength planes except for single case
         if self.output_type != 'single':

@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.combine_1d.Combine1dStep`
+:Alias: combine_1d
+
 The ``combine_1d`` step computes a weighted average of 1-D spectra and writes
 the combined 1-D spectrum as output.
 

@@ -95,6 +95,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
     # CoM analysis to find initial positions using all rows.
     with np.errstate(invalid='ignore'):
         ytrace = np.nansum(scidata_norm * ygrid, axis=0) / np.nansum(scidata_norm, axis=0)
+        ytrace = np.where(ytrace == np.inf, np.nan, ytrace)
 
     # Second pass - use a windowed CoM at the previous position.
     halfwidth = 30 * yos

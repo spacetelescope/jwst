@@ -1,8 +1,9 @@
+import os.path
+
 import numpy as np
 from astropy.io import fits
 from astropy import table
 from astropy import wcs as fitswcs
-from astropy.utils.data import get_pkg_data_filename
 from astropy.modeling import polynomial
 from astropy.modeling.models import (
     Shift, AffineTransformation2D, Pix2Sky_TAN, RotateNative2Celestial,
@@ -20,6 +21,7 @@ from jwst.tweakreg import tweakreg_step
 import gwcs
 from gwcs import coordinate_frames as cf
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
+from jwst.tweakreg.tests import data
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10
@@ -27,8 +29,11 @@ _RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
 _ARCSEC2RAD = 1.0 / _RAD2ARCSEC
 
 
+data_path = os.path.split(os.path.abspath(data.__file__))[0]
+
+
 def _make_gwcs_wcs(fits_hdr):
-    hdr = fits.Header.fromfile(get_pkg_data_filename(fits_hdr))
+    hdr = fits.Header.fromfile(fits_hdr)
     fw = fitswcs.WCS(hdr)
 
     a_order = hdr['A_ORDER']
@@ -126,7 +131,7 @@ def _make_gwcs_wcs(fits_hdr):
 
 
 def _make_reference_gwcs_wcs(fits_hdr):
-    hdr = fits.Header.fromfile(get_pkg_data_filename(fits_hdr))
+    hdr = fits.Header.fromfile(os.path.join(data_path, fits_hdr))
     fw = fitswcs.WCS(hdr)
 
     unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
@@ -203,19 +208,13 @@ def _make_tweakreg_catalog(model, *args, **kwargs):
     return model.tweakreg_catalog
 
 
-tweakreg_step.make_tweakreg_catalog = _make_tweakreg_catalog
-
-
 def _align_wcs(imcats, **kwargs):
     new_kwargs = {k: v for k, v in kwargs.items() if k != 'match'}
     new_kwargs['match'] = _match
     return align_wcs(imcats, **new_kwargs)
 
 
-tweakreg_step.align_wcs = _align_wcs
-
-
-def test_multichip_jwst_alignment():
+def test_multichip_jwst_alignment(monkeypatch):
     # this test is fundamentally equivalent to test_multichip_alignment_step()
     # with the following differences:
     # 1. test_multichip_alignment_step() test includes parts of the JWST
@@ -223,10 +222,14 @@ def test_multichip_jwst_alignment():
     # 2. test_multichip_alignment_step() does not have access to 'fit_info'
     #    in the meta data and so test_multichip_jwst_alignment() can test
     #    the fit more extensively.
-    w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
+    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
+
+    w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
     imcat1 = tweakwcs.JWSTgWCS(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
+    data_file = os.path.join(data_path, 'wfc3_uvis1.cat')
     imcat1.meta['catalog'] = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis1.cat'),
+        data_file,
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -236,10 +239,10 @@ def test_multichip_jwst_alignment():
     imcat1.meta['group_id'] = 1
     imcat1.meta['name'] = 'ext1'
 
-    w2 = _make_gwcs_wcs('data/wfc3_uvis2.hdr')
+    w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
     imcat2 = tweakwcs.JWSTgWCS(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat2.meta['catalog'] = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis2.cat'),
+        os.path.join(data_path, 'wfc3_uvis2.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -250,7 +253,7 @@ def test_multichip_jwst_alignment():
     imcat2.meta['name'] = 'ext4'
 
     refcat = table.Table.read(
-        get_pkg_data_filename('data/ref.cat'),
+        os.path.join(data_path, 'ref.cat'),
         format='ascii.csv', delimiter=' ',
         names=['RA', 'DEC']
     )
@@ -288,9 +291,12 @@ def test_multichip_jwst_alignment():
     assert rmse_dec < _REF_RMSE_DEC
 
 
-def test_multichip_alignment_step():
+def test_multichip_alignment_step(monkeypatch):
+    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
+
     # image 1
-    w1 = _make_gwcs_wcs('data/wfc3_uvis1.hdr')
+    w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
 
     m1 = ImageModel(np.zeros((100, 100)))
     m1.meta.filename = 'ext1'
@@ -308,7 +314,7 @@ def test_multichip_alignment_step():
     m1.meta.wcs = w1
 
     imcat1 = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis1.cat'),
+        os.path.join(data_path, 'wfc3_uvis1.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -318,7 +324,7 @@ def test_multichip_alignment_step():
     m1.tweakreg_catalog = imcat1
 
     # image 2
-    w2 = _make_gwcs_wcs('data/wfc3_uvis2.hdr')
+    w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
 
     m2 = ImageModel(np.zeros((100, 100)))
     m2.meta.filename = 'ext4'
@@ -337,7 +343,7 @@ def test_multichip_alignment_step():
     m2.meta.wcs = w2
 
     imcat2 = table.Table.read(
-        get_pkg_data_filename('data/wfc3_uvis2.cat'),
+        os.path.join(data_path, 'wfc3_uvis2.cat'),
         format='ascii.csv',
         delimiter=' ',
         names=['x', 'y']
@@ -347,7 +353,7 @@ def test_multichip_alignment_step():
     m2.tweakreg_catalog = imcat2
 
     # refcat
-    wr = _make_reference_gwcs_wcs('data/wfc3_uvis1.hdr')
+    wr = _make_reference_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
 
     mr = ImageModel(np.zeros((100, 100)))
     mr.meta.filename = 'refcat'
@@ -365,7 +371,7 @@ def test_multichip_alignment_step():
     mr.meta.wcs = wr
 
     refcat = table.Table.read(
-        get_pkg_data_filename('data/ref.cat'),
+        os.path.join(data_path, 'ref.cat'),
         format='ascii.csv', delimiter=' ',
         names=['RA', 'DEC']
     )

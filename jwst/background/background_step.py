@@ -12,10 +12,13 @@ class BackgroundStep(Step):
     BackgroundStep:  Subtract background exposures from target exposures.
     """
 
+    class_alias = "background"
+
     spec = """
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
+        wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
     """
 
     # These reference files are only used for WFSS/GRISM data.
@@ -58,8 +61,12 @@ class BackgroundStep(Step):
 
                 # Do the background subtraction for WFSS/GRISM data
                 result = background_sub.subtract_wfss_bkg(
-                    input_model, bkg_name, wlrange_name)
-                result.meta.cal_step.back_sub = 'COMPLETE'
+                    input_model, bkg_name, wlrange_name, self.wfss_mmag_extract)
+                if result is None:
+                    result = input_model
+                    result.meta.cal_step.back_sub = 'SKIPPED'
+                else:
+                    result.meta.cal_step.back_sub = 'COMPLETE'
             else:
                 # check if input data is NRS_IFU
                 tolerance = 1.0e-8

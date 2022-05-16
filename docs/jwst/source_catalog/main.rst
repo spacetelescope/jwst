@@ -1,5 +1,9 @@
 Description
 ===========
+
+:Class: `jwst.source_catalog.SourceCatalogStep`
+:Alias: source_catalog
+
 This step creates a catalog of source photometry and morphologies.
 Both aperture and isophotal (segment-based) photometry are calculated.
 Source morphologies are based on 2D image moments within the source

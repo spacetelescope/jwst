@@ -1,5 +1,9 @@
 Description
 -----------
+
+:Class: `jwst.ami.AmiNormalizeStep`
+:Alias: ami_normalize
+
 The ``ami_normalize`` step is one of the AMI-specific steps in the ``ami``
 sub-package and is used in Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>`
 processing. It provides normalization of LG processing results for

@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.white_light.WhiteLightStep`
+:Alias: white_light
+
 Overview
 --------
 The ``white_light`` step sums the spectroscopic flux over all

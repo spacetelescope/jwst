@@ -1,6 +1,9 @@
 Description
 ===========
 
+:Class: `jwst.rscd.RscdStep`
+:Alias: rscd
+
 Assumptions
 -----------
 This correction is currently only implemented for MIRI data and is only applied

@@ -19,7 +19,7 @@ from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..fringe import fringe_step
 from ..imprint import imprint_step
-from ..master_background import master_background_nrs_slits_step
+from ..master_background import master_background_mos_step
 from ..msaflagopen import msaflagopen_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
@@ -65,7 +65,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
-        'master_background': master_background_nrs_slits_step.MasterBackgroundNrsSlitsStep,
+        'master_background_mos': master_background_mos_step.MasterBackgroundMosStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -297,13 +297,18 @@ class Spec2Pipeline(Pipeline):
             self.extract_1d.save_results = False
             x1d = self.extract_1d(resampled)
 
-            self.photom.save_results = self.save_results
-            x1d = self.photom(x1d)
+            # Possible that no fit was possible - if so, skip photom
+            if x1d is not None:
+                self.photom.save_results = self.save_results
+                x1d = self.photom(x1d)
+            else:
+                self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
         else:
             x1d = self.extract_1d(resampled)
 
         resampled.close()
-        x1d.close()
+        if x1d is not None:
+            x1d.close()
 
         # That's all folks
         self.log.info(
@@ -382,9 +387,9 @@ class Spec2Pipeline(Pipeline):
             self.barshadow.skip = True
 
         # Apply master background only to NIRSPEC MSA exposures
-        if not self.master_background.skip and exp_type != 'NRS_MSASPEC':
-            self.log.debug('Science data does not allow master background correction. Skipping "master_background".')
-            self.master_background.skip = True
+        if not self.master_background_mos.skip and exp_type != 'NRS_MSASPEC':
+            self.log.debug('Science data does not allow master background correction. Skipping "master_background_mos".')
+            self.master_background_mos.skip = True
 
         # Apply WFSS contamination correction only to WFSS exposures
         if not self.wfss_contam.skip and exp_type not in WFSS_TYPES:
@@ -454,7 +459,7 @@ class Spec2Pipeline(Pipeline):
         """
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
-        calibrated = self.master_background(calibrated)
+        calibrated = self.master_background_mos(calibrated)
         calibrated = self.wavecorr(calibrated)
         calibrated = self.flat_field(calibrated)
         calibrated = self.pathloss(calibrated)

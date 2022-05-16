@@ -1,0 +1,84 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/miri_mrsptcorr.schema"
+title: MIRI IFU Point Source Spectral Corrections
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- type: object
+  properties:
+    data:
+      title: Photometric leak array
+      fits_hdu: SCI
+      default: 1.0
+      ndim: 2
+      datatype: float64
+    err:
+      title: Uncertainty array
+      fits_hdu: ERR
+      default: 0.0
+      ndim: 2
+      datatype: float64
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      ndim: 2
+      datatype: uint32
+- $ref: dq_def.schema
+- type: object
+  properties:
+    tracor_table:
+      title: IFU across slice transmission correction
+      fits_hdu: TRACOR
+      datatype:
+      - name: channel
+        datatype: int32
+      - name: wave_min
+        datatype: float32
+      - name: wave_max
+        datatype: float32
+      - name: t_wmin_centre
+        datatype: float32
+      - name: t_wmin_edge
+        datatype: float32
+      - name: t_wmax_centre
+        datatype: float32
+      - name: t_wmax_edge
+        datatype: float32
+    wavcorr_optical_table:
+      title: IFU across slice wavelength offset table 1
+      fits_hdu: WAVCORR_OPTICAL
+      datatype:
+      - name: sub_band
+        datatype: [ascii, 16]
+      - name: beta_slice
+        datatype: float32
+      - name: wave_min
+        datatype: float32
+      - name: wave_max
+        datatype: float32
+      - name: srp_min
+        datatype: float32
+      - name: srp_max
+        datatype: float32
+    wavcorr_xslice_table:
+      title: IFU across slice wavelength offset table 2
+      fits_hdu: WAVCORR_XSLICE
+      datatype:
+      - name: xslice_min
+        datatype: float32
+      - name: xslice_max
+        datatype: float32
+    wavcorr_shift_table:
+      title: IFU across slice wavelength offset table 3
+      fits_hdu: WAVCORR_SHIFT
+      datatype:
+      - name: beta_off
+        datatype: float32
+      - name: ds_min
+        datatype: float32
+      - name: ds_max
+        datatype: float32
