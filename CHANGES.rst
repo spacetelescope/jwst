@@ -24,6 +24,10 @@ extract_1d
 
 - Exit gracefully if data is with F277W filter; avoid masking entire wavemap
   if subarray is SUBSTRIP96 [#6840]
+
+jump
+----
+- Enable multiprocessing in jump detection [#6845]
   
 linearity
 ---------

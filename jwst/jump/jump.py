@@ -37,13 +37,10 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
 
-    # turn off MP for now
-    # max_cores = None
-
     new_gdq, new_pdq = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
-                                    four_grp_thresh,
+                                    four_grp_thresh, max_cores,
                                     max_jump_to_flag_neighbors,
                                     min_jump_to_flag_neighbors,
                                     flag_4_neighbors, dqflags.pixel)
