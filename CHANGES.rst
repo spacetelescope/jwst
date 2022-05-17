@@ -1,4 +1,4 @@
-1.5.1 (unreleased)
+1.5.1 (2022-05-17)
 ==================
 
 cube_build
@@ -28,7 +28,12 @@ extract_1d
 jump
 ----
 - Enable multiprocessing in jump detection [#6845]
-  
+
+lib
+---
+
+- Update ``test_siafdb`` unit test due to recent SIAF DB update [#6842]
+
 linearity
 ---------
 
@@ -49,11 +54,6 @@ saturation
 ----------
 
 - Adding feature to process ZEROFRAME data with the saturation step. [#6782]
-
-lib
----
-
-- Update ``test_siafdb`` unit test due to recent SIAF DB update [#6842]
 
 stpipe
 ------
