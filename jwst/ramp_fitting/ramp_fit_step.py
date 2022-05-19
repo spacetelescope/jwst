@@ -234,12 +234,6 @@ class RampFitStep(Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-                # Set int_times depending on model meta data.
-            if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
-                input_model.int_times = input_model.int_times
-            else:
-                input_model.int_times = None
-
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
