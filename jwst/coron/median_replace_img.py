@@ -57,7 +57,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     if np.isnan(median_value):
         # If the median fails return 0
-        log.warning('Median filter returned NaN setting value to 0.')
+        log.debug('Median filter returned NaN; setting value to 0.')
         median_value = 0.
 
     return median_value
