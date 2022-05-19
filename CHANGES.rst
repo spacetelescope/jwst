@@ -2,6 +2,12 @@
 ==================
 
 
+linearity
+---------
+
+- Correcting bug when using ZEROFRAME data. [#6851]
+
+
 1.5.1 (2022-05-17)
 ==================
 
