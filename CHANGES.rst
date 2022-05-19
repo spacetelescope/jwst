@@ -1,6 +1,12 @@
 1.5.2 (unreleased)
 ==================
 
+extract_1d
+----------
+
+- In SOSS ATOCA, catch negative infinite values in centroid finder;
+  catch spline-fit errors in first order flux estimate [#6854]
+
 align_refs
 ----------
 
