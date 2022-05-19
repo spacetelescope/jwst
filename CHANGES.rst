@@ -6,6 +6,17 @@ align_refs
 
 - Change median filter warning message to debug level [#6853]
 
+linearity
+---------
+
+- Correct bug when using ZEROFRAME data. [#6851]
+
+ramp_fitting
+------------
+
+- Remove the logic that only copied the INT_TIMES table content when processing
+  TSO exposures, so that it shows up in all ``rateints`` products [#6852]
+
 1.5.1 (2022-05-17)
 ==================
 
