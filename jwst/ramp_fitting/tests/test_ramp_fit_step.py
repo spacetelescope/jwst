@@ -211,7 +211,7 @@ def test_int_times1(generate_miri_reffiles, setup_inputs):
         ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
         ncols=ncols, gain=ingain, deltatime=grouptime)
 
-    # Set TSOVISIT false, in which case the int_times table should come back with zero length
+    # Set TSOVISIT false, despite which the int_times table should come back populated
     model.meta.visit.tsovisit = False
 
     # Call ramp fit through the step class
@@ -222,7 +222,7 @@ def test_int_times1(generate_miri_reffiles, setup_inputs):
     assert slopes is not None
     assert cube_model is not None
 
-    assert(len(cube_model.int_times) == 0)
+    assert(len(cube_model.int_times) == 5)
 
 
 def test_int_times2(generate_miri_reffiles, setup_inputs):
@@ -235,7 +235,7 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
         ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
         ncols=ncols, gain=ingain, deltatime=grouptime)
 
-    # Set TSOVISIT false, in which case the int_times table should come back with zero length
+    # Set TSOVISIT true, in which case the int_times table should come back with all content
     model.meta.visit.tsovisit = True
 
     # Call ramp fit through the step class

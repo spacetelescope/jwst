@@ -1,6 +1,11 @@
 1.5.2 (unreleased)
 ==================
 
+ramp_fitting
+------------
+
+- Remove the logic that only copied the INT_TIMES table content when processing
+  TSO exposures, so that it shows up in all ``rateints`` products [#6852]
 
 linearity
 ---------
