@@ -1,6 +1,10 @@
 1.5.2 (unreleased)
 ==================
 
+align_refs
+----------
+
+- Change median filter warning message to debug level [#6853]
 
 1.5.1 (2022-05-17)
 ==================
