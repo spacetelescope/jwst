@@ -46,17 +46,25 @@ class Coron3Pipeline(Pipeline):
 
     prefetch_references = False
 
+    # Main processing
     def process(self, user_input):
-        """Primary method for performing pipeline."""
-        self.log.info('Starting calwebb_coron3 ...')
+        """Primary method for performing pipeline.
 
-        # Load the input association table
-        asn = self.load_as_level3_asn(user_input)
-        acid = asn.get('asn_id', '')
+        Parameters
+        ----------
+        user_input: str, Level3 Association, or ~jwst.datamodels.DataModel
+            The exposure or association of exposures to process
+        """
+        self.log.info('Starting calwebb_coron3 ...')
+        asn_exptypes = ['science', 'psf']
+
+        # Create a DM object using the association table
+        input_models = datamodels.open(user_input, asn_exptypes=asn_exptypes)
+        acid = input_models.meta.__dict__['_instance']['asn_table']['asn_id']
 
         # We assume there's one final product defined by the association
-        prod = asn['products'][0]
-        self.output_file = prod.get('name', self.output_file)
+        prod = input_models.meta.asn_table.products[0].instance
+        self.output_file = input_models.meta.asn_table.products[0].name
 
         # Setup required output products and formats
         self.outlier_detection.suffix = f'{acid}_crfints'
@@ -114,13 +122,13 @@ class Coron3Pipeline(Pipeline):
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix='psfstack')
 
-        # Call the sequence of steps outlier_detection, align_refs, and klip
+        # Call the sequence of steps: outlier_detection, align_refs, and klip
         # once for each input target exposure
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
             with datamodels.open(target_file) as target:
 
-                # Remove outliers from the target.
+                # Remove outliers from the target
                 if not skip_outlier_detection:
                     target = self.outlier_detection(target)
                     # step may have been skipped for this model;
@@ -158,17 +166,22 @@ class Coron3Pipeline(Pipeline):
         try:
             completed = result.meta.cal_step.resample
         except AttributeError:
-            self.log.debug('Could not determine whether resample was completed. Presuming not.')
+            self.log.debug('Could not determine if resample was completed.')
+            self.log.debug('Presuming not.')
+
             completed = 'SKIPPED'
         if completed == 'COMPLETE':
             self.log.debug(f'Blending metadata for {result}')
             blendmeta.blendmodels(result, inputs=targ_files)
 
         try:
-            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.pool_name = \
+                input_models.meta.\
+                __dict__['_instance']['asn_table']['asn_pool']
             result.meta.asn.table_name = op.basename(user_input)
         except AttributeError:
-            self.log.debug(f'Cannot set association information on final result {result}')
+            self.log.debug(f'Cannot set association information on final')
+            self.log.debug(f'result {result}')
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)
