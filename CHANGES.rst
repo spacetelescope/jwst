@@ -1,4 +1,4 @@
-1.5.2 (unreleased)
+1.5.2 (2022-05-20)
 ==================
 
 extract_1d
@@ -22,6 +22,8 @@ ramp_fitting
 
 - Remove the logic that only copied the INT_TIMES table content when processing
   TSO exposures, so that it shows up in all ``rateints`` products [#6852]
+
+- Updated the one good group ramp suppression handler. [spacetelescope/stcal#92]
 
 1.5.1 (2022-05-17)
 ==================
