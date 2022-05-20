@@ -113,7 +113,7 @@ class ResampleData:
         self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
 
-        self.output_models = datamodels.ModelContainer()
+        self.output_models = datamodels.ModelContainer(open_models=False)
 
     def do_drizzle(self):
         """Pick the correct drizzling mode based on self.single
@@ -145,18 +145,22 @@ class ResampleData:
 
         for exposure in self.input_models.models_grouped:
             output_model = self.blank_output  #.copy()
-            output_root = '_'.join(exposure[0].meta.filename.replace(
+            hep = he.heap()
+            log.info(f"Memory use for output_model: {hep.size / (1024*1024):.3f} Mb")
+            output_root = '_'.join(exposure[0].replace(
                 '.fits', '').split('_')[:-1])
-            output_model.meta.filename = f'{output_root}_outlier_drz.fits'
+            output_model.meta.filename = f'{output_root}_outlier_i2d.fits'
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                             kernel=self.kernel, fillval=self.fillval)
 
             hep = he.heap()
-            log.info(f"Memory use so far: {hep.size / (1024*1024):.3f} Mb")
+            log.info(f"Memory use for {exposure[0]}: {hep.size / (1024*1024):.3f} Mb")
             
+            log.info(f"{len(exposure)} exposures to drizzle together")
             for img in exposure:
+                img = datamodels.open(img)
                 # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
                                                          good_bits=self.good_bits)
@@ -170,6 +174,8 @@ class ResampleData:
 
                 driz.add_image(data, img.meta.wcs, inwht=inwht)
                 del data
+                img.close()
+                
             hep = he.heap()
             log.info(f"Memory use after drizzling: {hep.size / (1024*1024):.3f} Mb")
                 

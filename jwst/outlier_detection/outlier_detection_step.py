@@ -74,7 +74,7 @@ class OutlierDetectionStep(Step):
         hp = hpy()
         hp.setrelheap()
         
-        with datamodels.open(input_data) as input_models:
+        with datamodels.open(input_data, save_open=False) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 self.input_container = False
