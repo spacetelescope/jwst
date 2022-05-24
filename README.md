@@ -251,6 +251,8 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estimates
 (formal CONTEXT deliveries are only provided with final builds).
 
+Note: CRDS_CONTEXT values of "N/A" mean that the release is not in operations and therefore has no corresponding context on the JWST OPS CRDS server.
+
 Note: **CRDS PUB did not exist at the 1.3.3 release or before. All previous contexts between PUB and OPS are identical.
 
 ## Unit Tests
