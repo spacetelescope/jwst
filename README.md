@@ -228,28 +228,25 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 | 0.13.5   | B7.3rc3   | 0534                       | 0534                       | 2019-06-19 | Third release candidate for Build 7.3         |
 | 0.13.4   | B7.3rc2   | 0534                       | 0534                       | 2019-06-18 | Second release candidate for Build 7.3        |
 | 0.13.3   | B7.3rc1   | 0532                       | 0532                       | 2019-06-04 | First release candidate for Build 7.3         |
-| 0.13.2   |           | 0500*                      | 0500*                      | 2019-05-14 | DMS test, no delivery to I&T                  |
-| 0.13.1   |           | 0500*                      | 0500*                      | 2019-03-08 | DMS test, no delivery to I&T                  |
+| 0.13.2   |           | 0500                       | 0500                       | 2019-05-14 | DMS test, no delivery to I&T                  |
+| 0.13.1   |           | 0500                       | 0500                       | 2019-03-08 | DMS test, no delivery to I&T                  |
 | 0.13.0   |           | 0500                       | 0500                       | 2019-02-15 | DMS test, no delivery to I&T                  |
 | 0.12.3   | B7.2.1    | 0500                       | 0500                       | 2019-01-15 | DMS Build 7.2.1 patch release                 |
 | 0.12.2   | B7.2      | 0495                       | 0495                       | 2018-11-07 | Final release candidate for Build 7.2         |
 | 0.12.1   | B7.2rc2   | 0495                       | 0495                       | 2018-11-01 | Second release candidate for Build 7.2        |
-| 0.12.0   | B7.2rc1   | 0493*                      | 0493*                      | 2018-10-09 | First release candidate for Build 7.2         |
-| 0.11.0   |           | 0482*                      | 0482*                      | 2018-09-10 | DMS test, no delivery to I&T                  |
-| 0.10.0   |           | 0477*                      | 0477*                      | 2018-07-31 | DMS test, no delivery to I&T                  |
+| 0.12.0   | B7.2rc1   | 0493                       | 0493                       | 2018-10-09 | First release candidate for Build 7.2         |
+| 0.11.0   |           | 0482                       | 0482                       | 2018-09-10 | DMS test, no delivery to I&T                  |
+| 0.10.0   |           | 0477                       | 0477                       | 2018-07-31 | DMS test, no delivery to I&T                  |
 | 0.9.6    | B7.1.3    | 0468                       | 0468                       | 2018-06-08 | Final release candidate for Build 7.1.3       |
 | 0.9.5    | B7.1.3rc3 | 0468                       | 0468                       | 2018-06-06 | Third release candidate for Build 7.1.3       |
-| 0.9.4    | B7.1.3rc2 | 0463*                      | 0463*                      | 2018-05-29 | Second release candidate for Build 7.1.3      |
-| 0.9.3    | B7.1.3rc1 | 0457*                      | 0457*                      | 2018-05-11 | First release candidate for Build 7.1.3       |
-| 0.9.2    |           | 0441*                      | 0441*                      | 2018-03-28 | DMS test, no delivery to I&T                  |
-| 0.9.1    |           | 0432*                      | 0432*                      | 2018-02-16 | DMS test, no delivery to I&T                  |
+| 0.9.4    | B7.1.3rc2 | 0463                       | 0463                       | 2018-05-29 | Second release candidate for Build 7.1.3      |
+| 0.9.3    | B7.1.3rc1 | 0457                       | 0457                       | 2018-05-11 | First release candidate for Build 7.1.3       |
+| 0.9.2    |           | 0441                       | 0441                       | 2018-03-28 | DMS test, no delivery to I&T                  |
+| 0.9.1    |           | 0432                       | 0432                       | 2018-02-16 | DMS test, no delivery to I&T                  |
 | 0.9.0    | B7.1.2    | 0422                       | 0422                       | 2017-12-22 | DMS patch release to I&T 2018-02-15           |
 | 0.8.0    | B7.1.1    | 0422                       | 0422                       | 2017-11-06 | DMS patch release to I&T 2018-01-17           |
 | 0.8.0    | B7.1      | 0422                       | 0422                       | 2017-11-06 | Final, delivered to I&T 2017-11-17            |
 | 0.7.7    | B7.0      | 0303                       | 0303                       | 2016-12-13 | Final, delivered to I&T                       |
-
-Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estimates
-(formal CONTEXT deliveries are only provided with final builds).
 
 Note: CRDS_CONTEXT values of "N/A" mean that the release is not in operations and therefore has no corresponding context on the JWST OPS CRDS server.
 
