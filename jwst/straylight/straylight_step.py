@@ -24,13 +24,13 @@ class StraylightStep (Step):
     reference_file_types = ['regions']
 
     def process(self, input):
-        # Open the input data model
-        with datamodels.IFUImageModel(input) as input_model:
 
-            # check the data is MIRI data
+        with datamodels.open(input) as input_model:
+
             detector = input_model.meta.instrument.detector
+            # check the data is MIRI IFUSHORT and data is an IFUImageModel (not TSO)
 
-            if detector == 'MIRIFUSHORT':
+            if detector == 'MIRIFUSHORT' and isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
                 # If Modified Shepard  test  input parameters for weighting
                 if self.method == 'ModShepard':
                     # reasonable power variable defined as: 0.1 < power < 5
@@ -96,8 +96,12 @@ class StraylightStep (Step):
                 result.meta.cal_step.straylight = 'COMPLETE'
 
             else:
-                self.log.warning('Straylight correction not defined for detector %s',
-                                 detector)
+                if detector != 'MIRIFUSHORT':
+                    self.log.warning('Straylight correction not defined for detector %s',
+                                     detector)
+                if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)) is False:
+                    self.log.warning('Straylight correction not defined for datatype %s',
+                                     input_model)
                 self.log.warning('Straylight step will be skipped')
                 result = input_model.copy()
                 result.meta.cal_step.straylight = 'SKIPPED'
