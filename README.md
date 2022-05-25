@@ -155,10 +155,10 @@ two servers available:
 - JWST PUB: https://jwst-crds-pub.stsci.edu
 
 JWST OPS supports the automatic processing pipeline at STScI. JWST PUB supports
-the latest public release of the `jwst` package. Most often, these are one in
-the same. Regardless, if one wishes to calibrate using the same exact
-information as the automatic processing, use JWST OPS. Otherwise, use of JWST
-PUB is recommended.
+the latest public release of the `jwst` package. Most often, the reference
+contexts are one and the same. Regardless, if one wishes to calibrate using the
+same exact information as the automatic processing, use JWST OPS. Otherwise, use
+of JWST PUB is recommended.
 
 Inside the STScI network, the pipeline defaults the CRDS setup to use JWST OPS with no modifications.
 To run the pipeline outside the STScI network or to use a different server, CRDS must be configured by setting
@@ -169,12 +169,12 @@ two environment variables:
 
 To setup to use JWST OPS, use the following settings:
 
-    export CRDS_PATH=$HOME/crds_cache
+    export CRDS_PATH=$HOME/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
 To setup to use JWST PUB, use the following settings:
 
-    export CRDS_PATH=$HOME/crds_cache
+    export CRDS_PATH=$HOME/crds_cache/jwst_pub
     export CRDS_SERVER_URL=https://jwst-crds-pub.stsci.edu
 
 ## Documentation
