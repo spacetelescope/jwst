@@ -1,6 +1,11 @@
 1.5.3 (unreleased)
 ==================
 
+straylight
+----------
+
+- Add a check that input data is IFUImageModel [#6861]
+
 
 1.5.2 (2022-05-20)
 ==================
