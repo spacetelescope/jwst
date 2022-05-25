@@ -60,7 +60,7 @@ class Coron3Pipeline(Pipeline):
 
         # Create a DM object using the association table
         input_models = datamodels.open(user_input, asn_exptypes=asn_exptypes)
-        acid = input_models.meta.__dict__['_instance']['asn_table']['asn_id']
+        acid = input_models.meta.asn_table.asn_id
 
         # We assume there's one final product defined by the association
         prod = input_models.meta.asn_table.products[0].instance
@@ -175,9 +175,7 @@ class Coron3Pipeline(Pipeline):
             blendmeta.blendmodels(result, inputs=targ_files)
 
         try:
-            result.meta.asn.pool_name = \
-                input_models.meta.\
-                __dict__['_instance']['asn_table']['asn_pool']
+            result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             result.meta.asn.table_name = op.basename(user_input)
         except AttributeError:
             self.log.debug(f'Cannot set association information on final')
