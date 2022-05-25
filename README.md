@@ -272,6 +272,9 @@ Note: CRDS_CONTEXT values of "N/A" mean that the release is not in operations an
 
 Note: **CRDS PUB did not exist at the 1.3.3 release or before. All previous contexts between PUB and OPS are identical.
 
+For a specific release, the context listed is a minimum context that can be used with that release. A release should work with any contexts between
+the specified context and less than the context for the next release. 
+
 ## Unit Tests
 
 Unit tests can be run via `pytest`.  Within the top level of your local `jwst` repo checkout:
