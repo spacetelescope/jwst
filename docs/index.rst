@@ -49,42 +49,16 @@ For more detailed instructions and alternate installation methods see the
 Calibration References Data System (CRDS) Setup
 -----------------------------------------------
 
-CRDS is the system that manages the reference files needed to run the pipeline.
-For details about CRDS, see the `User's
-Guide <https://jwst-crds.stsci.edu/static/users_guide/index.html>`_.
-
-There are
-two servers available:
-
-  - JWST OPS: https://jwst-crds.stsci.edu
-  - JWST PUB: https://jwst-crds-pub.stsci.edu
-
-JWST OPS supports the automatic processing pipeline at STScI. JWST PUB supports
-the latest public release of the `jwst` package. Most often, the reference
-contexts are one and the same. Regardless, if one wishes to calibrate using the
-same exact information as the automatic processing, use JWST OPS. Otherwise, use
-of JWST PUB is recommended.
-
-Inside the STScI network, the pipeline defaults the CRDS setup to use JWST OPS with no modifications.
-To run the pipeline outside the STScI network or to use a different server, CRDS must be configured by setting
-two environment variables:
-
-  - CRDS_PATH: Local folder where CRDS content will be cached.
-  - CRDS_SERVER_URL: The server from which to pull reference information
-
-To setup to use JWST OPS, use the following settings:
+CRDS is the system that manages the reference files needed to run the
+pipeline. Inside the STScI network, the pipeline works with default CRDS
+setup with no modifications. To run the pipeline outside the STScI
+network, CRDS must be configured by setting two environment variables:
 
 ::
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_ops
-    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+   export CRDS_PATH=$HOME/crds_cache
+   export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
-To setup to use JWST PUB, use the following settings:
-
-::
-
-    export CRDS_PATH=$HOME/crds_cache/jwst_pub
-    export CRDS_SERVER_URL=https://jwst-crds-pub.stsci.edu
 
 ===========
 User Manual
