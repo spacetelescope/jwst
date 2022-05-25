@@ -178,7 +178,7 @@ class Coron3Pipeline(Pipeline):
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             result.meta.asn.table_name = op.basename(user_input)
         except AttributeError:
-            self.log.debug(f'Cannot set association information on final')
+            self.log.debug('Cannot set association information on final')
             self.log.debug(f'result {result}')
 
         # Save the final result
