@@ -75,6 +75,10 @@ skymatch
 
 - Reduced memory usage when input is an ASN. [#6874]
 
+crds
+----
+
+- Explain about CRDS PUB. [#6862]
 
 1.5.2 (2022-05-20)
 ==================
