@@ -148,8 +148,11 @@ Need other useful packages in your development environment?
 
 ## Calibration References Data System (CRDS) Setup
 
-CRDS is the system that manages the reference files needed to run the pipeline. There are
-two servers available:
+CRDS is the system that manages the reference files needed to run the pipeline.
+For details about CRDS, see the [User's
+Guide](https://jwst-crds.stsci.edu/static/users_guide/index.html)
+
+There are two servers available:
 
 - JWST OPS: https://jwst-crds.stsci.edu
 - JWST PUB: https://jwst-crds-pub.stsci.edu
