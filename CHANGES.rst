@@ -6,6 +6,12 @@ straylight
 
 - Add a check that input data is IFUImageModel [#6861]
 
+resample
+--------
+
+- Sped up the algorithm for computing sampling wavelength for the output
+  WCS in ``resample_spec``. [#6860]
+
 
 1.5.2 (2022-05-20)
 ==================
