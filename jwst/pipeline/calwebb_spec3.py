@@ -217,10 +217,13 @@ class Spec3Pipeline(Pipeline):
                     # instead run photom on the extract_1d results and save
                     # those instead.
                     self.extract_1d.save_results = False
-                    self.photom.save_results = self.save_results
-                    self.photom.suffix = 'x1d'
                     result = self.extract_1d(result)
-                    result = self.photom(result)
+
+                    # SOSS F277W may return None - don't bother with that.
+                    if result is not None:
+                        self.photom.save_results = self.save_results
+                        self.photom.suffix = 'x1d'
+                        result = self.photom(result)
                 else:
                     result = self.extract_1d(result)
 
