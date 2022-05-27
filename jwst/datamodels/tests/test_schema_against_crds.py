@@ -25,7 +25,6 @@ def flatten(xs):
 
 ignored_parkeys = ['META.OBSERVATION.DATE',
                    'META.OBSERVATION.TIME',
-                   'META.VISIT.TSOVISIT',
                    ]
 
 apcorr_model_map = {
