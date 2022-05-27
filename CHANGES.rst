@@ -1,31 +1,31 @@
 1.5.3 (unreleased)
 ==================
 
+resample
+--------
+
+- Speed up the algorithm for computing the sampling wavelengths for the output
+  WCS in ``resample_spec``. [#6860]
+
 straylight
 ----------
 
 - Add a check that input data is IFUImageModel [#6861]
 
-resample
---------
-
-- Sped up the algorithm for computing sampling wavelength for the output
-  WCS in ``resample_spec``. [#6860]
-
 
 1.5.2 (2022-05-20)
 ==================
+
+align_refs
+----------
+
+- Change median filter warning message to debug level [#6853]
 
 extract_1d
 ----------
 
 - In SOSS ATOCA, catch negative infinite values in centroid finder;
   catch spline-fit errors in first order flux estimate [#6854]
-
-align_refs
-----------
-
-- Change median filter warning message to debug level [#6853]
 
 linearity
 ---------
@@ -82,7 +82,7 @@ linearity
 - Adding feature to process ZEROFRAME data with the linearity step. [#6782]
 
 ramp_fitting
-----------
+------------
 
 - Adding feature to use ZEROFRAME for ramps that are fully saturated, but
   the ZEROFRAME data for that ramp is good. [#6782]
