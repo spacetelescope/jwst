@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/ifucubepars.schema"
 title: Default IFU CUBE parameters data model
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_exptype.schema
 - type: object
   properties:
     ifucubepars_table:
