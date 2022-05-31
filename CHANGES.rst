@@ -7,6 +7,12 @@ pipeline
 - Add check to ensure SOSS `extract_1d` return is not None, to
   avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
 
+resample
+--------
+
+- Speed up the algorithm for computing the sampling wavelengths for the output
+  WCS in ``resample_spec``. [#6860]
+
 straylight
 ----------
 
@@ -16,16 +22,16 @@ straylight
 1.5.2 (2022-05-20)
 ==================
 
+align_refs
+----------
+
+- Change median filter warning message to debug level [#6853]
+
 extract_1d
 ----------
 
 - In SOSS ATOCA, catch negative infinite values in centroid finder;
   catch spline-fit errors in first order flux estimate [#6854]
-
-align_refs
-----------
-
-- Change median filter warning message to debug level [#6853]
 
 linearity
 ---------
@@ -82,7 +88,7 @@ linearity
 - Adding feature to process ZEROFRAME data with the linearity step. [#6782]
 
 ramp_fitting
-----------
+------------
 
 - Adding feature to use ZEROFRAME for ramps that are fully saturated, but
   the ZEROFRAME data for that ramp is good. [#6782]
