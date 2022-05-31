@@ -578,6 +578,11 @@ flatfield
 - Set DO_NOT_USE DQ bit in flatfield if NO_FLAT_FIELD DQ bit is set in flat
   reference file [#6882]
 
+general
+-------
+
+- Update CI workflows to cache test environments and depend upon style and security checks [#6867]
+
 pipeline
 --------
 

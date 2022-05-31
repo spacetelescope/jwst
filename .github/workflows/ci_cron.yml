@@ -13,44 +13,24 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-  tox:
-    name: ${{ matrix.name }}
+  test_devdeps:
+    name: run tests with the latest developer version of key dependencies
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Dev dependencies in requirements-dev.txt
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: devdeps
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9, '3.10' ]
     steps:
-      - name: Install system packages
-        if: ${{ contains(matrix.toxenv,'docs') }}
-        run: |
-          sudo apt-get install graphviz texlive-latex-extra dvipng
-
-      - name: Checkout the code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
         with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install tox
-        run: |
-          pip install tox
-
-      - name: Run tests
-        run: tox -e ${{ matrix.toxenv }}
-
-      - name: Upload coverage to codecov
-        if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v2
-        with:
-          file: ./coverage.xml
-          flags: unit
-          fail_ci_if_error: true
+          path: ${{ env.pythonLocation }}
+          key: test-devdeps-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist
+      - run: pip install -r requirements-dev.txt
+      - run: pip freeze
+      - run: pytest -n auto

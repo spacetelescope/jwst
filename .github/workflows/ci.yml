@@ -19,86 +19,250 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-  tox:
-    name: ${{ matrix.name }}
+  style:
+    name: Code style checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: style-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install flake8
+      - run: pip freeze
+      - run: flake8
+  audit:
+    name: Bandit security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: audit-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install bandit
+      - run: pip freeze
+      - run: bandit -r -ll -x jwst/*test*,jwst/**/*test*,jwst/fits_generator jwst scripts
+  dependencies:
+    name: verify dependencies are correct
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: dependencies-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install .
+      - run: pip freeze
+      - run: verify_install_requires
+  test:
+    name: test (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [ style, audit, dependencies ]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Python 3.10 Tests
-            python-version: '3.10'
-            os: ubuntu-latest
-            toxenv: py310
-
-          - name: Latest dependency versions w/coverage
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: py39-cov
-
-          - name: Oldest dependency versions
-            os: ubuntu-latest
-            python-version: 3.8
-            toxenv: py38-oldestdeps-cov
-
-          - name: SDP dependencies in requirements-sdp.txt
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: sdpdeps
-
-          - name: Installed package with --pyargs
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: pyargs
-
-          - name: Verify install_requires in setup.py
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: verify-install-requires
-
-          - name: Build distribution
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: twine
-
-          - name: Code style check
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: style
-
-          - name: Security audit
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: security
-
-          # MacOS job is flaky on Github actions and fails routinely.
-          # Re-enable when things get more reliable.
-          # - name: macOS
-          #   os: macos-latest
-          #   python-version: 3.9
-          #   toxenv: py39
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9, '3.10' ]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
         with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3.0.5
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install tox
-        run: |
-          pip install tox
-
-      - name: Run tests
-        run: tox -e ${{ matrix.toxenv }}
-
-      - name: Upload coverage to codecov
+          path: ${{ env.pythonLocation }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto
+  test_sdpdeps:
+    name: run tests with the recent STScI DMS release pinned dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9, '3.10' ]
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-sdpdeps-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist
+      - run: pip install -r requirements-sdp.txt
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto
+  test_devdeps:
+    name: run tests with the latest developer version of key dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9, '3.10' ]
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-devdeps-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist
+      - run: pip install -r requirements-dev.txt
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto
+  test_pyargs:
+    name: run tests with --pyargs on installed package (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9, '3.10' ]
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto --pyargs jwst
+  test_oldestdeps:
+    name: run tests with the oldest supported version of key dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9 ]
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-coverage-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist pytest-cov
+      - run: minimum_deps
+      - run: pip install --ignore-installed -r requirements-min.txt
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto
+  test_with_coverage:
+    name: run tests with coverage
+    needs: [ test, test_sdpdeps, test_devdeps, test_pyargs ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-coverage-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist pytest-cov
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto --cov-report=xml --cov=. --cov-config=setup.cfg
+      - run: coverage report -m
+      - uses: codecov/codecov-action@v3.1.0
         if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v2
         with:
           file: ./coverage.xml
           flags: unit
           fail_ci_if_error: true
+  build-docs:
+    name: invoke sphinx-build to build the HTML docs
+    needs: [ test, test_sdpdeps, test_devdeps, test_pyargs ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: build-docs-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install ".[docs]"
+      - run: pip freeze
+      - run: sphinx-build -W docs docs/_build
+  check-dist:
+    name: check that the package builds sdist/wheel and that twine uploads
+    needs: [ test, test_sdpdeps, test_devdeps, test_pyargs ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: check-dist-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install . twine>=3.3 pep517
+      - run: pip freeze
+      - run: |
+          python -m pep517.check .
+          twine check --strict dist/*
