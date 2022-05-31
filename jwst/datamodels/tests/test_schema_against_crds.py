@@ -167,7 +167,7 @@ def test_crds_selectors_vs_datamodel(jail_environ, instrument):
 
     os.environ["CRDS_SERVER_URL"] = 'https://jwst-crds-pub.stsci.edu'
     # os.environ["CRDS_SERVER_URL"] = 'serverless'
-    # os.environ["CRDS_PATH"] = '/grp/crds/jwst/pub'
+    os.environ["CRDS_PATH"] = 'tmp_crds_cache'
 
     log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
 
