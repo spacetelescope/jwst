@@ -1,6 +1,12 @@
 1.5.3 (unreleased)
 ==================
 
+pipeline
+--------
+
+- Add check to ensure SOSS `extract_1d` return is not None, to
+  avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
+
 resample
 --------
 
