@@ -1,18 +1,12 @@
 import os
 import logging
 from collections.abc import Iterable
-
-log = logging.getLogger('crds_test')
-log.setLevel(logging.DEBUG)
-
-os.environ["CRDS_SERVER_URL"] = 'serverless'
-os.environ["CRDS_PATH"] = '/grp/crds/jwst/pub'
-
-log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
-
-import crds
-from crds.core.exceptions import IrrelevantReferenceTypeError
 from jwst import datamodels as dm
+import pytest
+import warnings
+from ..util import NoTypeWarning
+
+log = logging.getLogger(__name__)
 
 
 def flatten(xs):
@@ -166,14 +160,20 @@ ref_to_datamodel_dict = {'abvegaoffset': dm.ABVegaOffsetModel,
 }
 
 
-# get the current contex
-context = crds.get_context_name('jwst')
-pmap = crds.get_cached_mapping(context)
+@pytest.mark.parametrize('instrument', ['fgs', 'miri', 'nircam', 'niriss', 'nirspec'])
+def test_crds_selectors_vs_datamodel(jail_environ, instrument):
 
-instruments = ['fgs', 'miri', 'nircam', 'niriss', 'nirspec']
+    os.environ["CRDS_SERVER_URL"] = 'serverless'
+    os.environ["CRDS_PATH"] = '/grp/crds/jwst/pub'
 
-# get the imap for e.g. nircam
-for instrument in instruments:
+    log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
+
+    import crds
+    from crds.core.exceptions import IrrelevantReferenceTypeError
+
+    context = crds.get_context_name('jwst')
+    pmap = crds.get_cached_mapping(context)
+
     imap = pmap.get_imap(instrument)
     log.info(f"Beginning tests for {instrument}")
 
@@ -195,12 +195,14 @@ for instrument in instruments:
                     # If reftype has multiple datamodels possible, do some guesswork
                     if reftype in ref_to_multiples_dict.keys():
                         model_map = ref_to_multiples_dict[reftype]
-                        with dm.open(crds.locate_file(f, observatory='jwst')) as model:
-                            try:
-                                ref_exptype = model.meta.exposure.type
-                            except AttributeError as e:
-                                ref_exptype = None
-                            ref_instrument = model.meta.instrument.name
+                        with warnings.catch_warnings():
+                            warnings.simplefilter('ignore', NoTypeWarning)
+                            with dm.open(crds.locate_file(f, observatory='jwst')) as model:
+                                try:
+                                    ref_exptype = model.meta.exposure.type
+                                except AttributeError as e:
+                                    ref_exptype = None
+                                ref_instrument = model.meta.instrument.name
                         if ref_exptype in model_map.keys():
                             ref_model = model_map[ref_exptype]
                         elif ref_instrument in model_map.keys():
@@ -218,13 +220,9 @@ for instrument in instruments:
                         break
                     # No need to actually load the reference file into the datamodel!
                     # with ref_model(crds.locate_file(f, observatory='jwst')) as model:
-                    test_datamodel_against_selectors(ref_model, parkeys)
+                    with ref_model() as m:
+                        for key in parkeys:
+                            assert len(m.search_schema(key.lower())) > 0
                     break
         except IrrelevantReferenceTypeError as e:
             pass
-
-
-def test_datamodel_against_selectors(model, test_keys):
-    with model() as m:
-        for key in test_keys:
-            assert len(m.search_schema(key.lower())) > 0
