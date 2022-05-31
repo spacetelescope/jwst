@@ -1,6 +1,12 @@
 1.5.3 (unreleased)
 ==================
 
+datamodels
+----------
+
+- Updated many reference file schemas to include current
+  CRDS rmap selectors in schema structure [#6866]
+
 documentation
 -------------
 
