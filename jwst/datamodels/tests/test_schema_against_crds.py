@@ -166,7 +166,6 @@ ref_to_datamodel_dict = {
 def test_crds_selectors_vs_datamodel(jail_environ, instrument):
 
     os.environ["CRDS_SERVER_URL"] = 'https://jwst-crds-pub.stsci.edu'
-    # os.environ["CRDS_PATH"] = ''
 
     log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
 
@@ -200,8 +199,8 @@ def test_crds_selectors_vs_datamodel(jail_environ, instrument):
                         model_map = ref_to_multiples_dict[reftype]
                         with warnings.catch_warnings():
                             warnings.simplefilter('ignore', NoTypeWarning)
-                            uri = get_flex_uri(f, observatory='jwst')
-                            with dm.open(uri) as model:
+                            refs = cache_references(context, {reftype: f})
+                            with dm.open(refs[reftype]) as model:
                                 try:
                                     ref_exptype = model.meta.exposure.type
                                 except AttributeError:
