@@ -170,7 +170,7 @@ def test_crds_selectors_vs_datamodel(jail_environ, instrument):
     log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
 
     import crds
-    from crds.client.api import get_flex_uri, cache_references
+    from crds.client.api import cache_references
     from crds.core.exceptions import IrrelevantReferenceTypeError
 
     context = crds.get_context_name('jwst')
