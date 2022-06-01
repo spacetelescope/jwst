@@ -201,7 +201,6 @@ def test_crds_selectors_vs_datamodel(jail_environ, instrument):
                         with warnings.catch_warnings():
                             warnings.simplefilter('ignore', NoTypeWarning)
                             uri = get_flex_uri(f, observatory='jwst')
-                            print(uri)
                             with dm.open(uri) as model:
                                 try:
                                     ref_exptype = model.meta.exposure.type
