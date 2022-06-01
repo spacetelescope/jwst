@@ -9,7 +9,6 @@ from stcal.ramp_fitting import ramp_fit
 from jwst.datamodels import dqflags
 
 from ..lib import reffile_utils  # TODO remove
-from ..lib import pipe_utils
 
 import logging
 
@@ -233,12 +232,6 @@ class RampFitStep(Step):
             buffsize = ramp_fit.BUFSIZE
             if self.algorithm == "GLS":
                 buffsize //= 10
-
-                # Set int_times depending on model meta data.
-            if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
-                input_model.int_times = input_model.int_times
-            else:
-                input_model.int_times = None
 
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,

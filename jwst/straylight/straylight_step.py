@@ -27,32 +27,40 @@ class StraylightStep (Step):
     reference_file_types = ['regions']
 
     def process(self, input):
-        # Open the input data model
-        with datamodels.IFUImageModel(input) as input_model:
 
-            # check the data is MIRI data
+        with datamodels.open(input) as input_model:
+
             detector = input_model.meta.instrument.detector
+            # check the data is MIRI IFUSHORT and data is an IFUImageModel (not TSO)
 
-            # Check for a valid mrsxartcorr reference file
-            self.straylight_name = self.get_reference_file(input_model, 'mrsxartcorr')
+            if detector == 'MIRIFUSHORT' and isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+                # Check for a valid mrsxartcorr reference file
+                self.straylight_name = self.get_reference_file(input_model, 'mrsxartcorr')
 
-            self.log.info('Using mrsxartcorr reference file %s',
-                          self.straylight_name)
+                if self.straylight_name == 'N/A':
+                    self.log.warning('No MRSXARTCORR reference file found')
+                    self.log.warning('Straylight step will be skipped')
+                    result = input_model.copy()
+                    result.meta.cal_step.straylight = 'SKIPPED'
+                    return result
 
-            if self.straylight_name == 'N/A':
-                self.log.warning('No MRSXARTCORR reference file found')
-                self.log.warning('Straylight step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.straylight = 'SKIPPED'
-                return result
+                self.log.info('Using mrsxartcorr reference file %s', self.straylight_name)
+                
+                modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
 
-            modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
+                # Apply the correction
+                result = straylight.correct_xartifact(input_model, modelpars)
 
-            # Apply the correction
-            result = straylight.correct_xartifact(input_model, modelpars)
+                modelpars.close()
+                result.meta.cal_step.straylight = 'COMPLETE'
 
-            modelpars.close()
-            result.meta.cal_step.straylight = 'COMPLETE'
+            else:
+                if detector != 'MIRIFUSHORT':
+                    self.log.warning('Straylight correction not defined for detector %s',
+                                     detector)
+                if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)) is False:
+                    self.log.warning('Straylight correction not defined for datatype %s',
+                                     input_model)
 
         return result
 

@@ -81,7 +81,7 @@ exact versions of all packages to be installed.
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
-version of `jwst` used in DMS build 7.9, use jwst tag 1.4.2. The overall
+version of `jwst` used in DMS build 8.0, use jwst tag 1.5.2. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
 details of each command vary, due to the use of environment snapshot files that specify
 all of the particular packages to install. Also note that different snapshot files are
@@ -89,15 +89,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.4.2 --file https://ssb.stsci.edu/releases/jwstdp/1.4.2/conda_python_stable-deps.txt
-    conda activate jwstdp-1.4.2
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.4.2/reqs_stable-deps.txt
+    conda create -n jwstdp-1.5.2 --file https://ssb.stsci.edu/releases/jwstdp/1.5.2/conda_python_stable-deps.txt
+    conda activate jwstdp-1.5.2
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.5.2/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.4.2 --file https://ssb.stsci.edu/releases/jwstdp/1.4.2/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.4.2
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.4.2/reqs_macos-stable-deps.txt
+    conda create -n jwstdp-1.5.2 --file https://ssb.stsci.edu/releases/jwstdp/1.5.2/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.5.2
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.5.2/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -188,6 +188,8 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  1.5.2   | B8.0      | 0848*        | 2022-05-20 | Final release candidate for B8.0              |
+|  1.5.1   | B8.0rc2   | 0834*        | 2022-05-17 | Second release candidate for B8.0             |
 |  1.5.0   | B8.0rc1   | 0821*        | 2022-05-05 | First release candidate for B8.0              |
 |  1.4.6   | B7.9.3    | 0800         | 2022-03-25 | Final release candidate for B7.9.3            |
 |  1.4.5   | B7.9.3rc2 | 0800         | 2022-03-23 | Second release candidate for B7.9.3           |

@@ -1,4 +1,52 @@
-1.5.1 (unreleased)
+1.5.3 (unreleased)
+==================
+
+pipeline
+--------
+
+- Add check to ensure SOSS `extract_1d` return is not None, to
+  avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
+
+resample
+--------
+
+- Speed up the algorithm for computing the sampling wavelengths for the output
+  WCS in ``resample_spec``. [#6860]
+
+straylight
+----------
+
+- Add a check that input data is IFUImageModel [#6861]
+
+
+1.5.2 (2022-05-20)
+==================
+
+align_refs
+----------
+
+- Change median filter warning message to debug level [#6853]
+
+extract_1d
+----------
+
+- In SOSS ATOCA, catch negative infinite values in centroid finder;
+  catch spline-fit errors in first order flux estimate [#6854]
+
+linearity
+---------
+
+- Correct bug when using ZEROFRAME data. [#6851]
+
+ramp_fitting
+------------
+
+- Remove the logic that only copied the INT_TIMES table content when processing
+  TSO exposures, so that it shows up in all ``rateints`` products [#6852]
+
+- Updated the one good group ramp suppression handler. [spacetelescope/stcal#92]
+
+1.5.1 (2022-05-17)
 ==================
 
 cube_build
@@ -24,14 +72,23 @@ extract_1d
 
 - Exit gracefully if data is with F277W filter; avoid masking entire wavemap
   if subarray is SUBSTRIP96 [#6840]
-  
+
+jump
+----
+- Enable multiprocessing in jump detection [#6845]
+
+lib
+---
+
+- Update ``test_siafdb`` unit test due to recent SIAF DB update [#6842]
+
 linearity
 ---------
 
 - Adding feature to process ZEROFRAME data with the linearity step. [#6782]
 
 ramp_fitting
-----------
+------------
 
 - Adding feature to use ZEROFRAME for ramps that are fully saturated, but
   the ZEROFRAME data for that ramp is good. [#6782]
@@ -45,11 +102,6 @@ saturation
 ----------
 
 - Adding feature to process ZEROFRAME data with the saturation step. [#6782]
-
-lib
----
-
-- Update ``test_siafdb`` unit test due to recent SIAF DB update [#6842]
 
 stpipe
 ------
