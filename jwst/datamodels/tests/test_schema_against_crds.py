@@ -166,12 +166,12 @@ ref_to_datamodel_dict = {
 def test_crds_selectors_vs_datamodel(jail_environ, instrument):
 
     os.environ["CRDS_SERVER_URL"] = 'https://jwst-crds-pub.stsci.edu'
-    # os.environ["CRDS_SERVER_URL"] = 'serverless'
-    os.environ["CRDS_PATH"] = 'tmp_crds_cache'
+    # os.environ["CRDS_PATH"] = ''
 
     log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
 
     import crds
+    from crds.client.api import get_flex_uri, cache_references
     from crds.core.exceptions import IrrelevantReferenceTypeError
 
     context = crds.get_context_name('jwst')
@@ -200,7 +200,9 @@ def test_crds_selectors_vs_datamodel(jail_environ, instrument):
                         model_map = ref_to_multiples_dict[reftype]
                         with warnings.catch_warnings():
                             warnings.simplefilter('ignore', NoTypeWarning)
-                            with dm.open(crds.locate_file(f, observatory='jwst')) as model:
+                            uri = get_flex_uri(f, observatory='jwst')
+                            print(uri)
+                            with dm.open(uri) as model:
                                 try:
                                     ref_exptype = model.meta.exposure.type
                                 except AttributeError:
