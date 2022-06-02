@@ -142,7 +142,7 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`refpix <refpix_step>`                   | :ref:`REFPIX <refpix_reffile>`                   |
 +-----------------------------------------------+--------------------------------------------------+
-| :ref:`resample <resample_step>`               | :ref:`DRIZPARS <drizpars_reffile>`                     |
+| :ref:`resample <resample_step>`               | :ref:`DRIZPARS <drizpars_reffile>`               |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`reset <reset_step>`                     | :ref:`RESET <reset_reffile>`                     |
 +-----------------------------------------------+--------------------------------------------------+
@@ -164,7 +164,7 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`   | :ref:`TSOPHOT <tsophot_reffile>`                 |
 +-----------------------------------------------+--------------------------------------------------+
-| :ref:`wavecorr <wavecorr_step>`               | :ref:`WAVECORR <wavecorr_reffile>`                 |
+| :ref:`wavecorr <wavecorr_step>`               | :ref:`WAVECORR <wavecorr_reffile>`               |
 +-----------------------------------------------+--------------------------------------------------+
 
 +--------------------------------------------------+-----------------------------------------------+
@@ -194,7 +194,7 @@ documentation on each reference file.
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`DISTORTION <distortion_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
-| :ref:`DRIZPARS <drizpars_reffile>`               | :ref:`resample <resample_step>`           |
+| :ref:`DRIZPARS <drizpars_reffile>`               | :ref:`resample <resample_step>`               |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`EXTRACT1D <extract1d_reffile>`             | :ref:`extract_1d <extract_1d_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
@@ -280,7 +280,7 @@ documentation on each reference file.
 +                                                  +-----------------------------------------------+
 |                                                  | :ref:`extract_2d <extract_2d_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
-| :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`                 |
+| :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`               |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
