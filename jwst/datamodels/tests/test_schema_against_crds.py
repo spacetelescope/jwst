@@ -222,7 +222,6 @@ def test_crds_selectors_vs_datamodel(jail_environ, instrument):
                         log.warning(f"No datamodel found for {reftype}: skipping...")
                         break
                     # No need to actually load the reference file into the datamodel!
-                    # with ref_model(crds.locate_file(f, observatory='jwst')) as model:
                     with ref_model() as m:
                         for key in parkeys:
                             assert len(m.search_schema(key.lower())) > 0
