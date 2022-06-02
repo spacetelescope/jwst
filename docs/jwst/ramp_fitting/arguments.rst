@@ -3,7 +3,7 @@ Arguments
 The ramp fitting step has three optional arguments that can be set by the user:
 
 * ``--save_opt``: A True/False value that specifies whether to write
-  the optional output product. Default if False.
+  the optional output product. Default is False.
 
 * ``--opt_name``: A string that can be used to override the default name
   for the optional output product.
@@ -12,7 +12,7 @@ The ramp fitting step has three optional arguments that can be set by the user:
   for the per-integration product.
 
 * ``--suppress_one_group``: A boolean to suppress computations for saturated ramps
-  with good 0th group.  The default is set to true to suppress these computations,
+  with only one good (unsaturated) sample.  The default is set to True to suppress these computations,
   which will compute all values for the ramp the same as if the entire ramp were
   saturated.
 

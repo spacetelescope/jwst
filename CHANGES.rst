@@ -1,10 +1,17 @@
 1.5.3 (unreleased)
 ==================
 
+documentation
+-------------
+
+- Updated the docs for ``calwebb_detector1`` pipeline, as well as the
+  ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
+  steps to include information on the handling of NIRCam "Frame 0" data.
+
 pipeline
 --------
 
-- Add check to ensure SOSS `extract_1d` return is not None, to
+- Add check to ensure SOSS ``extract_1d`` return is not None, to
   avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
 
 resample

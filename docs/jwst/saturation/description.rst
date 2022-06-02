@@ -79,6 +79,17 @@ extra entries for these pixels. The step-by-step process is as follows:
   "GROUPDQ" array if the pixel value is greater than or equal to the saturation
   threshold from the reference file
 
+NIRCam Frame 0
+--------------
+If the input contains a frame zero data cube, the frame zero image for each
+integration is checked for saturation in the same way as the regular science data.
+This means doing the same comparison of pixel values in the frame zero image to
+the saturation thresholds defined in the saturation reference file. Because the
+frame zero does not carry its own Data Quality (DQ) information, pixels found to be
+above the saturation threshold are simply reset to a value of zero in the
+frame zero image itself. Subsequent calibration steps are setup to recognize
+these zero values as indicating that the data were saturated.
+
 Subarrays
 ---------
 The ``saturation`` step will accept either full-frame or subarray saturation reference files.

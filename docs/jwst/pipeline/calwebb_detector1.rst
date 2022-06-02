@@ -27,6 +27,22 @@ table below. Note that MIRI exposures use some instrument-specific steps and
 some of the steps are applied in a different order than for Near-IR (NIR)
 instrument exposures.
 
+Several steps in this pipeline include special handling for NIRCam "Frame 0"
+data. The NIRCam instrument has the ability to downlink the image from the
+initial readout that follows the detector reset at the start of each integration
+in an exposure. These images are distinct from the first group of each integration
+when on-board frame averaging is done. In these cases, the first group contains
+data from multiple frames, while frame zero is always composed of just the
+first frame following the reset. It can be used to recover an estimated slope for
+pixels that go into saturation already in the first group (see more details on
+that process in the :ref:`ramp_fitting <ramp_fitting_step>` step). In order for
+the frame zero image to be utilized during ramp fitting, it must have all of
+the same calibrations and corrections applied as the first group in the various
+``Detector1Pipeline`` steps. This includes the :ref:`saturation <saturation_step>`,
+:ref:`superbias <superbias_step>`, :ref:`refpix <refpix_step>`, and
+:ref:`linearity <linearity_step>` steps. Other steps do not have a direct effect
+on either the first group or frame zero pixel values.
+
 .. |check| unicode:: U+2713 .. checkmark
 
 +--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
@@ -104,6 +120,11 @@ contains the 4D array of detector pixel values, along with some optional
 extensions. When such a file is loaded into the pipeline, it is immediately
 converted into a `~jwst.datamodels.RampModel`, and has all additional data arrays
 for errors and Data Quality flags created and initialized to zero.
+
+The input can also contain a 3D cube of NIRCam "Frame 0" data, where
+each image plane in the 3D cube is the initial frame for each integration in
+the exposure. Only present when the option to downlink the frame zero data
+was selected in the observing program.
 
 Outputs
 -------
