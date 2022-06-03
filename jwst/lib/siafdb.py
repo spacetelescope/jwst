@@ -46,8 +46,12 @@ SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
 SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
                              (0, 1, 1, 0, 0, 0, 1, 1))
 
+SIAF_REQUIRED = ['V2Ref', 'V3Ref', 'V3IdlYAngle', 'VIdlParity']
+SIAF_OPTIONAL = ['XSciRef', 'YSciRef', 'XSciScale', 'YSciScale']
 SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
                   'YIdlVert1', 'YIdlVert2', 'YIdlVert3', 'YIdlVert4']
+SIAF_MAP = {'V2Ref': 'v2_ref', 'V3Ref': 'v3_ref', 'V3IdlYAngle': 'v3yangle', 'VIdlParity': 'vparity',
+            'XSciRef': 'crpix1', 'YSciRef': 'crpix2', 'XSciScale': 'cdelt1', 'YSciScale': 'cdelt2'}
 
 
 class SiafDb:
@@ -202,11 +206,25 @@ class SiafDbPySiaf:
         siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
         aperture = siaf[aperture.upper()]
 
+        # Build the SIAF entry. Missing required values is an error.
+        # Otherwise, use defaults.
+        default_siaf = SIAF()
+        values = {SIAF_MAP[key]: getattr(aperture, key) for key in SIAF_REQUIRED}
+        if not all(values):
+            raise RuntimeError(f'Required SIAF entries for {instrument}:{aperture} are not all defined: {values}')
+        for key in SIAF_OPTIONAL:
+            value = getattr(aperture, key)
+            value = value if value else getattr(default_siaf, SIAF_MAP[key])
+            values[SIAF_MAP[key]] = value
+        vertices = list()
+        for key in SIAF_VERTICIES:
+            value = getattr(aperture, key)
+            value = value if value else getattr(default_siaf, SIAF_MAP[key])
+            vertices.append(value)
+        vertices = tuple(vertices)
+
         # Fill out the Siaf
-        vertices = tuple(getattr(aperture, key) for key in SIAF_VERTICIES)
-        siaf = SIAF(v2_ref=aperture.V2Ref, v3_ref=aperture.V3Ref, v3yangle=aperture.V3IdlYAngle, vparity=aperture.VIdlParity,
-                    crpix1=aperture.XSciRef, crpix2=aperture.YSciRef, cdelt1=aperture.XSciScale, cdelt2=aperture.YSciScale,
-                    vertices_idl=vertices)
+        siaf = SIAF(**values, vertices_idl=vertices)
 
         return siaf
 
