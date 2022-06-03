@@ -60,6 +60,11 @@ resample
 - Speed up the algorithm for computing the sampling wavelengths for the output
   WCS in ``resample_spec``. [#6860]
 
+set_telescope_pointing
+----------------------
+
+-  Fix SIAF default handling for missing SIAF values using pysiaf [#6869]
+
 straylight
 ----------
 
