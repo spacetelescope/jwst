@@ -1260,15 +1260,7 @@ def calc_attitude_matrix(wcs, yangle, position):
     v3 = pos_rads[1]
 
     # Create the matrices
-    r1 = np.array([
-        [cos(ra) * cos(dec), sin(ra) * cos(dec), sin(dec)],
-        [(-sin(ra) * cos(yangle_ra)) + (cos(ra) * sin(dec) * sin(yangle_ra)),
-         (cos(ra) * cos(yangle_ra)) + (sin(ra) * sin(dec) * sin(yangle_ra)),
-         -cos(dec) * sin(yangle_ra)],
-        [(-sin(ra) * sin(yangle_ra)) - (cos(ra) * sin(dec) * cos(yangle_ra)),
-         (cos(ra) * sin(yangle_ra)) - (sin(ra) * sin(dec) * cos(yangle_ra)),
-         cos(dec) * cos(yangle_ra)]
-    ])
+    r1 = dcm(ra, dec, yangle_ra)
 
     r2 = np.array([
         [cos(v2) * cos(v3), -sin(v2), -cos(v2) * sin(v3)],
