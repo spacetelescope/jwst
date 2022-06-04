@@ -61,6 +61,9 @@ class StraylightStep (Step):
                 if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)) is False:
                     self.log.warning('Straylight correction not defined for datatype %s',
                                      input_model)
+                self.log.warning('Straylight step will be skipped')
+                result = input_model.copy()
+                result.meta.cal_step.straylight = 'SKIPPED'
 
         return result
 
