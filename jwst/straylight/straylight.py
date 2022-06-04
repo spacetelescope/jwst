@@ -155,7 +155,7 @@ def correct_xartifact(input_model, modelpars):
     # Right-half of detector
     try:
         param = modelpars[right]
-        log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
+        log.info("Found parameters for right detector half, applying Cross-Artifact correction.")
         istart, istop = 516, 1024
         fimg = output.data * mask
         right_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],

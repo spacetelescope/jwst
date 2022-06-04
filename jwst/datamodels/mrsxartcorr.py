@@ -21,5 +21,8 @@ class MirMrsXArtCorrModel(ReferenceFileModel):
     ch1c_table : numpy table
          Cross artifact correction parameters for Channel 1C
 
+    ch2a_table : numpy table
+         Cross artifact correction parameters for Channel 2A
+
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_mrsxartcorr.schema"

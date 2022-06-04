@@ -63,3 +63,21 @@ allOf:
         datatype: float32
       - name: gau_scale2
         datatype: float32
+    ch2a_table:
+      title: Cross artifact corrections for Channel 2A
+      fits_hdu: CH2A
+      datatype:
+      - name: yrow
+        datatype: int16
+      - name: lor_fwhm
+        datatype: float32
+      - name: lor_scale
+        datatype: float32
+      - name: gau_fwhm
+        datatype: float32
+      - name: gau_xoff
+        datatype: float32
+      - name: gau_scale1
+        datatype: float32
+      - name: gau_scale2
+        datatype: float32
