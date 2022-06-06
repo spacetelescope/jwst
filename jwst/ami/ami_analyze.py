@@ -10,7 +10,7 @@ from .utils import img_median_replace
 from astropy import units as u
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 
 
 def apply_LG_plus(input_model, filter_model, oversample, rotation,
@@ -102,6 +102,6 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
     output_model = ff_t.fit_fringes_all(input_copy)
 
     # Copy header keywords from input to output
-    output_model.update(input_model)
+    output_model.update(input_model, only="PRIMARY")
 
     return output_model

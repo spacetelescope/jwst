@@ -4,6 +4,7 @@
 # Original python was by A. Greenbaum & A. Sivaramakrishnan
 
 import os
+import logging
 
 import numpy as np
 from scipy.special import comb
@@ -12,6 +13,9 @@ from scipy.stats import mstats
 from .. import datamodels
 from . import lg_model
 from . import utils
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class FringeFitter:

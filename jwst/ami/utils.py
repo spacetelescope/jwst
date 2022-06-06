@@ -430,6 +430,7 @@ def center_imagepeak(img, r='default', cntrimg=True):
         Cropped to place the brightest pixel at the center of the img array
     """
     peakx, peaky, h = min_distance_to_edge(img, cntrimg=cntrimg)
+    log.debug(' peakx=%g, peaky=%g, distance to edge=%g', peakx, peaky, h)
     if r == 'default':
         r = h.copy()
     else:

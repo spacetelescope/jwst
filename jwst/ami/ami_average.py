@@ -5,7 +5,8 @@ import logging
 from .. import datamodels
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+#log.addHandler(logging.NullHandler())
+log.setLevel(logging.DEBUG)
 
 
 def average_LG(lg_products):
@@ -25,30 +26,47 @@ def average_LG(lg_products):
         Averaged fringe data
     """
 
+
     # Create the output model as a copy of the first input model
     log.debug(' Create output as copy of %s', lg_products[0])
     output_model = datamodels.AmiLgModel(lg_products[0]).copy()
 
-    # Loop over remaining list of inputs, adding their values to the output
-    for file in lg_products[1:]:
+    # Find the input product with the smallest fit_image attribute
+    min_size = 2048
+    for input in lg_products:
+        prod = datamodels.AmiLgModel(input)
+        if prod.fit_image.shape[0] < min_size:
+            min_size = prod.fit_image.shape[0]
+        prod.close()
+    log.debug(' minimum size of fit_image=%d', min_size)
 
-        log.debug(' Accumulate data from %s', file)
-        prod = datamodels.AmiLgModel(file)
+    # Loop over inputs, adding their values to the output
+    for prod_num, input in enumerate(lg_products):
 
-        output_model.fit_image += prod.fit_image
-        output_model.resid_image += prod.resid_image
-        output_model.closure_amp_table['coeffs'] += \
-            prod.closure_amp_table['coeffs']
-        output_model.closure_phase_table['coeffs'] += \
-            prod.closure_phase_table['coeffs']
-        output_model.fringe_amp_table['coeffs'] += \
-            prod.fringe_amp_table['coeffs']
-        output_model.fringe_phase_table['coeffs'] += \
-            prod.fringe_phase_table['coeffs']
-        output_model.pupil_phase_table['coeffs'] += \
-            prod.pupil_phase_table['coeffs']
-        output_model.solns_table['coeffs'] += prod.solns_table['coeffs']
+        log.debug(' Accumulate data from %s', input)
+        prod = datamodels.AmiLgModel(input)
 
+        prod_size = prod.fit_image.shape[0]
+        if prod_size > min_size:
+            trim = int((prod_size - min_size) / 2)
+            log.debug(' trim fit and resid images by %d pixels', trim)
+            fit_image = prod.fit_image[trim:-trim, trim:-trim]
+            resid_image = prod.resid_image[trim:-trim, trim:-trim]
+            if prod_num == 0:
+                output_model.fit_image = fit_image
+                output_model.resid_image = resid_image
+        else:
+            fit_image = prod.fit_image
+            resid_image = prod.resid_image
+        if prod_num > 0:
+            output_model.fit_image += fit_image
+            output_model.resid_image += resid_image
+            output_model.closure_amp_table['coeffs'] += prod.closure_amp_table['coeffs']
+            output_model.closure_phase_table['coeffs'] += prod.closure_phase_table['coeffs']
+            output_model.fringe_amp_table['coeffs'] += prod.fringe_amp_table['coeffs']
+            output_model.fringe_phase_table['coeffs'] += prod.fringe_phase_table['coeffs']
+            output_model.pupil_phase_table['coeffs'] += prod.pupil_phase_table['coeffs']
+            output_model.solns_table['coeffs'] += prod.solns_table['coeffs']
         prod.close()
 
     # Take the average of the accumulated results
