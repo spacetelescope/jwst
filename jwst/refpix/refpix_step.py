@@ -1,5 +1,5 @@
 from ..stpipe import Step
-from ..lib import pipe_utils
+from ..lib import pipe_utils, reffile_utils
 from .. import datamodels
 from . import reference_pixels
 from . import irs2_subtract_reference
@@ -59,12 +59,6 @@ class RefPixStep(Step):
 
             else:
                 # Not an NRS IRS2 exposure. Do the normal refpix correction.
-                self.log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
-                self.log.info(f'odd_even_columns = {self.odd_even_columns}')
-                self.log.info(f'side_smoothing_length = {self.side_smoothing_length}')
-                self.log.info(f'side_gain = {self.side_gain}')
-                self.log.info(f'odd_even_rows = {self.odd_even_rows}')
-
                 datamodel = input_model.copy()
                 status = reference_pixels.correct_model(datamodel,
                                                         self.odd_even_columns,

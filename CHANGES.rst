@@ -8,11 +8,21 @@ documentation
   ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
   steps to include information on the handling of NIRCam "Frame 0" data.
 
+- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
+  parameters (#6844)
+
 pipeline
 --------
 
 - Add check to ensure SOSS ``extract_1d`` return is not None, to
   avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
+
+refpix
+------
+
+- Add code to refpix step to specify which parameters are used and which are
+  ignored, depending on data type [#6844]
+
 
 resample
 --------
@@ -71,12 +81,6 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
-documentation
--------------
-
-- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
-  parameters (#6844)
-
 extract_1d
 ----------
 
@@ -88,6 +92,7 @@ extract_1d
 
 jump
 ----
+
 - Enable multiprocessing in jump detection [#6845]
 
 lib
