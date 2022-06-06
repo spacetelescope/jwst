@@ -77,6 +77,7 @@ def test_ami_analyze_with_nans(rtdata, fitsdiff_default_kwargs):
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+
 @pytest.mark.bigdata
 def test_ami_average_with_sizes(run_pipeline2, fitsdiff_default_kwargs):
     """Test the AmiAverageStep with inputs of different sizes"""
