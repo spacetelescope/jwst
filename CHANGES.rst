@@ -1,6 +1,19 @@
 1.5.3 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Fixed the creation of the output product so that it no longer contains
+  an empty "SCI" extension. [#6870]
+
+ami_average
+-----------
+
+- Updated the step to handle inputs with different sizes for `fit_image` and
+  `resid_image`. Larger inputs are trimmed to match the size of the smallest
+  input. [#6870]
+
 documentation
 -------------
 
