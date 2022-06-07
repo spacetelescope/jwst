@@ -382,7 +382,7 @@ class Dataset():
                         log.info(f'side_gain = {self.side_gain}')
                         log.info(f'odd_even_rows = {self.odd_even_rows}')
         else:
-            if not is_subarray:
+            if not self.is_subarray:
                 log.info('MIRI full frame data')
                 log.info('The following parameter is valid for this mode:')
                 log.info(f'odd_even_rows = {self.odd_even_rows}')
@@ -413,6 +413,7 @@ class Dataset():
                 good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
                 ngood += len(good[0])
         return ngood
+
 
 class NIRDataset(Dataset):
     """Generic NIR detector Class.
