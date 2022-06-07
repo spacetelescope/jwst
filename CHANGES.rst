@@ -58,6 +58,11 @@ straylight
 
 - Add a check that input data is IFUImageModel [#6861]
 
+skymatch
+--------
+
+- Reduced memory usage when input is an ASN. [#6874]
+
 
 1.5.2 (2022-05-20)
 ==================

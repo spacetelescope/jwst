@@ -5,6 +5,8 @@ import os.path as op
 import re
 import logging
 
+import numpy as np
+
 from asdf import AsdfFile
 from astropy.io import fits
 from stdatamodels import DataModel, properties
@@ -89,15 +91,23 @@ class ModelContainer(JwstDataModel, Sequence):
         self.asn_pool_name = None
 
         self._memmap = kwargs.get("memmap", False)
+        self._return_open = kwargs.get('return_open', True)
+        self._save_open = kwargs.get('save_open', True)
 
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, fits.HDUList):
-            self._models.append([datamodel_open(init, memmap=self._memmap)])
+            if self._save_open:
+                model = [datamodel_open(init, memmap=self._memmap)]
+            else:
+                model = init._file.name
+                init.close()
+            self._models.append(model)
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, DataModel)) for x in init):
-                init = [datamodel_open(m, memmap=self._memmap) for m in init]
+                if self._save_open:
+                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
@@ -124,7 +134,10 @@ class ModelContainer(JwstDataModel, Sequence):
         return len(self._models)
 
     def __getitem__(self, index):
-        return self._models[index]
+        m = self._models[index]
+        if not isinstance(m, DataModel) and self._return_open:
+            m = datamodel_open(m, memmap=self._memmap)
+        return m
 
     def __setitem__(self, index, model):
         self._models[index] = model
@@ -134,6 +147,8 @@ class ModelContainer(JwstDataModel, Sequence):
 
     def __iter__(self):
         for model in self._models:
+            if not isinstance(model, DataModel) and self._return_open:
+                model = datamodel_open(model, memmap=self._memmap)
             yield model
 
     def insert(self, index, model):
@@ -228,7 +243,11 @@ class ModelContainer(JwstDataModel, Sequence):
             sublist = infiles
         try:
             for filepath in sublist:
-                self._models.append(datamodel_open(filepath, memmap=self._memmap))
+                if self._save_open:
+                    m = datamodel_open(filepath, memmap=self._memmap)
+                else:
+                    m = filepath
+                self._models.append(m)
         except IOError:
             self.close()
             raise
@@ -308,11 +327,12 @@ class ModelContainer(JwstDataModel, Sequence):
 
             else:
                 output_paths.append(save_model_func(model, idx=idx))
-
         return output_paths
 
-    def _assign_group_ids(self):
+    @property
+    def models_grouped(self):
         """
+        Returns a list of a list of datamodels grouped by exposure.
         Assign an ID grouping by exposure.
 
         Data from different detectors of the same exposure will have the
@@ -337,8 +357,12 @@ class ModelContainer(JwstDataModel, Sequence):
             'exposure_number'
         ]
 
+        group_dict = OrderedDict()
         for i, model in enumerate(self._models):
             params = []
+            if not self._save_open:
+                model = datamodel_open(model, memmap=self._memmap)
+
             for param in unique_exposure_parameters:
                 params.append(getattr(model.meta.observation, param))
             try:
@@ -348,19 +372,16 @@ class ModelContainer(JwstDataModel, Sequence):
             except TypeError:
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
-    @property
-    def models_grouped(self):
-        """
-        Returns a list of a list of datamodels grouped by exposure.
-        """
-        self._assign_group_ids()
-        group_dict = OrderedDict()
-        for model in self._models:
             group_id = model.meta.group_id
+            if not self._save_open and not self._return_open:
+                model.close()
+                model = self._models[i]
+
             if group_id in group_dict:
                 group_dict[group_id].append(model)
             else:
                 group_dict[group_id] = [model]
+
         return group_dict.values()
 
     @property
@@ -377,7 +398,8 @@ class ModelContainer(JwstDataModel, Sequence):
         """Close all datamodels."""
         if not self._iscopy:
             for model in self._models:
-                model.close()
+                if isinstance(model, DataModel):
+                    model.close()
 
     @property
     def crds_observatory(self):
@@ -444,6 +466,77 @@ class ModelContainer(JwstDataModel, Sequence):
             if model.meta.filename in names:
                 ind.append(i)
         return ind
+
+    def set_buffer(self, buffer_size, overlap=None):
+        """Set buffer size for scrolling section-by-section access.
+
+        Parameters
+        ----------
+        buffer_size : float, None
+            Define size of buffer in Mb for each section.
+            If None, a default buffer size of 1Mb will be used.
+
+        overlap : int, optional
+            Define the number of rows of overlaps between sections.
+            If None, no overlap will be used.
+        """
+        buffMb = 1024 * 1024
+        self.buffer_size = buffMb if buffer_size is None else (buffer_size * buffMb)
+        self.overlap = 0 if overlap is None else overlap
+        self.grow = 0
+
+        with datamodel_open(self._models[0]) as model:
+            imrows, imcols = model.data.shape
+            data_item_size = model.data.itemsize
+            data_item_type = model.data.dtype
+            model.close()
+        del model
+
+        section_nrows = min(imrows, int(self.buffer_size / (imcols * data_item_size)))
+
+        if section_nrows == 0:
+            self.buffer_size = imcols * data_item_size
+            print("WARNING: Buffer size is too small to hold a single row.\n"
+                  "         Buffer size size will be increased to minimal "
+                  "required: {}MB".format(float(self.buffer_size) / 1048576.0))
+            section_nrows = 1
+
+        nbr = section_nrows - self.overlap
+        nsec = (imrows - self.overlap) // nbr
+        if (imrows - self.overlap) % nbr > 0:
+            nsec += 1
+
+        self.n_sections = nsec
+        self.nbr = nbr
+        self.section_nrows = section_nrows
+        self.imrows = imrows
+        self.imcols = imcols
+        self.imtype = data_item_type
+
+    def get_sections(self):
+        """Iterator to return the sections from all members of the container."""
+
+        for k in range(self.n_sections):
+            e1 = k * self.nbr
+            e2 = e1 + self.section_nrows
+
+            if k == self.n_sections - 1:  # last section
+                e2 = min(e2, self.imrows)
+                e1 = min(e1, e2 - self.overlap - 1)
+
+            data_list = np.empty((len(self._models), e2 - e1, self.imcols),
+                                 dtype=self.imtype)
+            wht_list = np.empty((len(self._models), e2 - e1, self.imcols),
+                                dtype=self.imtype)
+            for i, model in enumerate(self._models):
+                model = datamodel_open(model, memmap=self._memmap)
+
+                data_list[i, :, :] = model.data[e1:e2].copy()
+                wht_list[i, :, :] = model.wht[e1:e2].copy()
+                model.close()
+                del model
+
+            yield (data_list, wht_list, (e1, e2))
 
 
 def make_file_with_index(file_path, idx):
