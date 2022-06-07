@@ -93,8 +93,9 @@ MIR Detector Data
        Bad pixels (those whose DQ flag has the "DO_NOT_USE" bit set) are not
        included in the calculation of the mean. The mean is calculated as a
        clipped mean with a 3-sigma rejection threshold using the
-       ``scipy.stats.sigmaclip`` method.  Note that the ``odd_even_columns``
-       parameter is ignored for MIRI data.
+       ``scipy.stats.sigmaclip`` method.  Note that the ``odd_even_columns``,
+       ``use_side_ref_pixels``, ``side_smoothing_length`` and ``side_gain``
+       parameters are ignored for MIRI data.
     #. Average the left and right reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
        i.e. by amplifier and using the odd mean for the odd row pixels and even
@@ -138,6 +139,9 @@ the reference pixels in each group and subtracted from each pixel.
 If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
+The ``use_side_ref_pixels``, ``side_smoothing_length``, ``side_gain`` and
+``odd_even_rows`` parameters are ignored for these types of data.
+
 For 4 amplifier readout (NOUTPUTS keyword = 4):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -146,7 +150,8 @@ the same as for full-frame exposures.  The top/bottom reference values are obtai
 reference pixel regions, and the side reference values are used if available.  If only 1 of the
 top/bottom or side reference regions are available, they are used, whereas if both are available they
 are averaged.  If there are no top/bottom or side reference pixels available, then that part of
-the correction is omitted.
+the correction is omitted.  The routine will log which parameters are valid according to
+whether valid reference pixels exist.
 
 MIR Data
 ++++++++

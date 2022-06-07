@@ -81,12 +81,6 @@ datamodels
 
 - Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
 
-documentation
--------------
-
-- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
-  parameters (#6844)
-
 extract_1d
 ----------
 

@@ -1,5 +1,5 @@
 from ..stpipe import Step
-from ..lib import pipe_utils, reffile_utils
+from ..lib import pipe_utils
 from .. import datamodels
 from . import reference_pixels
 from . import irs2_subtract_reference
