@@ -37,6 +37,7 @@ straylight
 ----------
 
 - Add a check that input data is IFUImageModel [#6861]
+- Update straylight algorithm to use cross-artifact model [#]
 
 
 1.5.2 (2022-05-20)
