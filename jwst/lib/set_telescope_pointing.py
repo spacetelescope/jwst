@@ -2532,14 +2532,14 @@ def dcm(alpha, delta, angle):
         The 3x3 direction cosine matrix
     """
     dcm = np.array(
-       [[cos(delta) * cos(alpha),
-         cos(delta) * sin(alpha),
-         sin(delta)],
-        [-cos(angle) * sin(alpha) + sin(angle) * sin(delta) * cos(alpha),
-         cos(angle) * cos(alpha) + sin(angle) * sin(delta) * sin(alpha),
-         -sin(angle) * cos(delta)],
-        [-sin(angle) * sin(alpha) - cos(angle) * sin(delta) * cos(alpha),
-         sin(angle) * cos(alpha) - cos(angle) * sin(delta) * sin(alpha),
-         cos(angle) * cos(delta)]])
+        [[cos(delta) * cos(alpha),
+          cos(delta) * sin(alpha),
+          sin(delta)],
+         [-cos(angle) * sin(alpha) + sin(angle) * sin(delta) * cos(alpha),
+          cos(angle) * cos(alpha) + sin(angle) * sin(delta) * sin(alpha),
+          -sin(angle) * cos(delta)],
+         [-sin(angle) * sin(alpha) - cos(angle) * sin(delta) * cos(alpha),
+          sin(angle) * cos(alpha) - cos(angle) * sin(delta) * sin(alpha),
+          cos(angle) * cos(delta)]])
 
     return dcm
