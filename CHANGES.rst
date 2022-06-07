@@ -1,10 +1,30 @@
 1.5.3 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Fixed the creation of the output product so that it no longer contains
+  an empty "SCI" extension. [#6870]
+
+ami_average
+-----------
+
+- Updated the step to handle inputs with different sizes for `fit_image` and
+  `resid_image`. Larger inputs are trimmed to match the size of the smallest
+  input. [#6870]
+
+documentation
+-------------
+
+- Updated the docs for ``calwebb_detector1`` pipeline, as well as the
+  ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
+  steps to include information on the handling of NIRCam "Frame 0" data.
+
 pipeline
 --------
 
-- Add check to ensure SOSS `extract_1d` return is not None, to
+- Add check to ensure SOSS ``extract_1d`` return is not None, to
   avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
 
 resample

@@ -101,6 +101,13 @@ MIR Detector Data
 
 At the end of the refpix step, the S_REFPIX keyword is set to "COMPLETE".
 
+NIRCam Frame 0
+--------------
+
+If a frame zero data cube is present in the input data, the image corresponding
+to each integration is corrected in the same way as the regular science data and
+passed along to subsequent pipeline steps.
+
 Subarrays
 ---------
 

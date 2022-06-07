@@ -84,13 +84,32 @@ If any input dataset contains ramps saturated in their second group, the count
 rates for those pixels in that integration will be calculated as the value
 of the science data in the first group divided by the group time. 
 
-The MIRI first frame correction step flags all pixels in the first group of
-each integration, so that those data do not get used in either the jump detection
-or ramp fitting steps. 
-Similarly, the MIRI last frame correction step flags all pixels in the last 
-group of each integration.
+MIRI First and Last Frames
+++++++++++++++++++++++++++
+The MIRI :ref:`first frame <firstframe_step>` correction step flags all pixels in the
+first group of each integration, so that those data do not get used in either the jump
+detection or ramp fitting steps. 
+Similarly, the MIRI :ref:`last frame <lastframe_step>` correction step flags all pixels
+in the last group of each integration.
 The ramp fitting will only fit data if there are at least 2 good groups 
 of data and will log a warning otherwise.
+
+NIRCam Frame 0
+++++++++++++++
+If the input data contains a frame zero data cube, those data will be used to
+estimate a slope for pixels that are saturated in all groups. If all groups in an
+integration are flagged as SATURATED for a given pixel, the frame zero data array
+is examined to determine whether or not it is also saturated. Saturated elements of
+the frame zero array are set to zero by the preceding :ref:`saturation <saturation_step>`
+step in the pipeline. Unsaturated elements will have non-zero values in the
+frame zero array. If the frame zero is not saturated, then it's value will be
+divided by the frame time for the exposure in order to compute a slope for the pixel
+in that integration. This is analagous to the situation in which only the first group
+in an integration is unsaturated and used by itself to compute a slope (see above).
+
+Note that the computation of slopes from either a single group or single frame zero
+value is disabled when the step parameter ``suppress_one_group`` is set to ``True``.
+In this case the slope value for a pixel with only one good sample will be set to zero.
 
 All Cases
 ---------
@@ -143,7 +162,7 @@ Slope and Variance Calculations
 -------------------------------
 Slopes and their variances are calculated for each segment, for each integration,
 and for the entire exposure. As defined above, a segment is a set of contiguous
-groups where none of the groups are saturated or cosmic ray-affected.  The 
+groups where none of the groups is saturated or cosmic-ray impacted.  The 
 appropriate slopes and variances are output to the primary output product, the 
 integration-specific output product, and the optional output product. The 
 following is a description of these computations. The notation in the equations
