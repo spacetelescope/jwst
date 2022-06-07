@@ -9,13 +9,12 @@
 import numpy as np
 import logging
 from ..datamodels import dqflags
-from astropy.io import fits
-#import pdb
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+# C version of the fitting code
 def makemodel_ccode(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_amp):
     fuse = fimg.copy()
     badval = np.where(fuse < 0.)
@@ -27,7 +26,7 @@ def makemodel_ccode(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_a
     g_std = g_fwhm / (2 * np.sqrt(2. * np.log(2)))
 
     xsize, ysize = 1032, 1024
-    print('Running C version')
+    #print('Running C version')
 
     result = xart_wrapper(imin, imax, xsize, ysize,
                  xvec, fuse1d, gamma, lor_amp, g_std, g_dx, g1_amp, g2_amp)
@@ -38,10 +37,11 @@ def makemodel_ccode(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_a
 
     return model
 
+# Python version of the fitting code
 def makemodel_composite(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_amp):
     model = np.zeros_like(fimg)
     model1d = model.ravel()
-    print('Running python version')
+    #print('Running python version')
 
     fuse = fimg.copy()
     badval = np.where(fuse < 0.)
@@ -147,8 +147,7 @@ def correct_xartifact(input_model, modelpars):
                                          param['LOR_SCALE'], param['GAU_FWHM'],
                                          param['GAU_XOFF'], param['GAU_SCALE1'],
                                          param['GAU_SCALE2'])
-        #hdu=fits.PrimaryHDU(left_model)
-        #hdu.writeto('test_c.fits',overwrite=True)
+
     except:
         log.info("No parameters for left detector half, not applying Cross-Artifact correction.")
 
@@ -170,10 +169,6 @@ def correct_xartifact(input_model, modelpars):
     model[:, 1028:1032] = 0.0
     model[:, 0:4] = 0.0
     output.data = output.data - model
-
-    # Test
-    #hdu=fits.PrimaryHDU(model)
-    #hdu.writeto('pipemodel.fits',overwrite=True)
 
     log.info("Cross-artifact model complete.")
     return output

@@ -3,8 +3,6 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import straylight
-from astropy.io import fits
-import os
 
 __all__ = ["StraylightStep"]
 
