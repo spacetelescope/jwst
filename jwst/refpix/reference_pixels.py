@@ -314,15 +314,13 @@ class Dataset():
         """Print out the parameters that are valid for this type of data, and
         those that aren't
 
-        Parameters :
-        ------------
-
-        input_model: JWST datamodel
+        Parameters
+        ----------
+        input_model : JWST datamodel
             Datamodel being processed
 
-        Returns :
-        ---------
-
+        Returns
+        -------
         None
 
         """

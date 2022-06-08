@@ -9,7 +9,7 @@ documentation
   steps to include information on the handling of NIRCam "Frame 0" data.
 
 - Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
-  parameters (#6872)
+  parameters [#6872]
 
 pipeline
 --------

@@ -123,7 +123,7 @@ NIR Data
 For single amplifier readout (NOUTPUTS keyword = 1):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the odd_even_columns flag is set to True, then the clipped means of all
+If the ``odd_even_columns`` flag is set to True, then the clipped means of all
 reference pixels in odd-numbered columns and those in even numbered columns
 are calculated separately, and subtracted from their respective data columns.
 If the flag is False, then a single clipped mean is calculated from all of
