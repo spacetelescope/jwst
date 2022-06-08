@@ -20,10 +20,9 @@ class StraylightStep (Step):
 
         with datamodels.open(input) as input_model:
 
-            detector = input_model.meta.instrument.detector
-            # check the data is MIRI IFUSHORT and data is an IFUImageModel (not TSO)
+            # check the data is an IFUImageModel (not TSO)
 
-            if detector == 'MIRIFUSHORT' and isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+            if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
                 # Check for a valid mrsxartcorr reference file
                 self.straylight_name = self.get_reference_file(input_model, 'mrsxartcorr')
 
@@ -35,7 +34,7 @@ class StraylightStep (Step):
                     return result
 
                 self.log.info('Using mrsxartcorr reference file %s', self.straylight_name)
-                
+
                 modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
 
                 # Apply the correction
@@ -45,9 +44,6 @@ class StraylightStep (Step):
                 result.meta.cal_step.straylight = 'COMPLETE'
 
             else:
-                if detector != 'MIRIFUSHORT':
-                    self.log.warning('Straylight correction not defined for detector %s',
-                                     detector)
                 if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)) is False:
                     self.log.warning('Straylight correction not defined for datatype %s',
                                      input_model)

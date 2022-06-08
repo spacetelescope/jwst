@@ -14,6 +14,7 @@ from .calc_xart import xart_wrapper  # c extension
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 # C version of the fitting code
 def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
 
@@ -35,6 +36,7 @@ def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_
     result = None
 
     return model
+
 
 # Python version of the fitting code
 def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
@@ -70,6 +72,7 @@ def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx,
                  * np.exp(-((xvec - ii + 2 * g_dx[yy]) * (xvec - ii + 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
 
     return model
+
 
 def correct_xartifact(input_model, modelpars):
     """
@@ -148,11 +151,9 @@ def correct_xartifact(input_model, modelpars):
         istart, istop = 0, 516
         fimg = output.data * mask
         left_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
-                                         param['LOR_SCALE'], param['GAU_FWHM'],
-                                         param['GAU_XOFF'], param['GAU_SCALE1'],
-                                         param['GAU_SCALE2'])
-
-    except:
+                                     param['LOR_SCALE'], param['GAU_FWHM'],
+                                     param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
+    except Exception:
         left_model[:, :] = 0
         log.info("No parameters for left detector half, not applying Cross-Artifact correction.")
 
@@ -163,10 +164,9 @@ def correct_xartifact(input_model, modelpars):
         istart, istop = 516, 1024
         fimg = output.data * mask
         right_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
-                                         param['LOR_SCALE'], param['GAU_FWHM'],
-                                         param['GAU_XOFF'], param['GAU_SCALE1'],
-                                         param['GAU_SCALE2'])
-    except:
+                                      param['LOR_SCALE'], param['GAU_FWHM'],
+                                      param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
+    except Exception:
         right_model[:, :] = 0
         log.info("No parameters for right detector half, not applying Cross-Artifact correction.")
 
