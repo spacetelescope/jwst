@@ -14,15 +14,7 @@ class StraylightStep (Step):
 
     class_alias = "straylight"
 
-    spec = """
-         method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
-         roi = integer(2, 1024, default = 50) # Region of interest given as even integer
-         power = float(0.1, 5, default = 1.0) # Power of weighting function
-
-    """
-
-    # Change this line
-    reference_file_types = ['regions']
+    reference_file_types = ['mrsxartcorr']
 
     def process(self, input):
 

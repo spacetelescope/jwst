@@ -16,6 +16,7 @@ log.setLevel(logging.DEBUG)
 
 # C version of the fitting code
 def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
+
     fuse = fimg.copy()
     badval = np.where(fuse < 0.)
     if (len(badval[0]) > 0):
@@ -37,6 +38,7 @@ def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_
 
 # Python version of the fitting code
 def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
+
     model = np.zeros_like(fimg)
     model1d = model.ravel()
 
@@ -44,23 +46,28 @@ def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx,
     badval = np.where(fuse < 0.)
     if (len(badval[0]) > 0):
         fuse[badval] = 0.
-    fuse1d=fuse.ravel()
+    fuse1d = fuse.ravel()
 
     gamma = lor_fwhm / 2.
     gstd = g_fwhm / (2 * np.sqrt(2. * np.log(2)))
 
     for yy in range(0, 1024):
         for ii in range(imin, imax):
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * lor_amp[yy] * gamma[yy] * gamma[yy]) / \
-                                                  (gamma[yy] * gamma[yy] + (xvec - ii) * (xvec - ii))
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g1_amp[yy] *
-                np.exp(-((xvec - ii - g_dx[yy]) * (xvec - ii - g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g1_amp[yy] * np.exp(
-                -((xvec - ii + g_dx[yy]) * (xvec - ii + g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g2_amp[yy] * np.exp(
-                -((xvec - ii - 2 * g_dx[yy]) * (xvec - ii - 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g2_amp[yy] * np.exp(
-                -((xvec - ii + 2 * g_dx[yy]) * (xvec - ii + 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
+            model1d[1032 * yy:1032 * (yy + 1)] += \
+                (fuse1d[yy * 1032 + ii] * lor_amp[yy] * gamma[yy] * gamma[yy]) \
+                / (gamma[yy] * gamma[yy] + (xvec - ii) * (xvec - ii))
+            model1d[1032 * yy:1032 * (yy + 1)] += \
+                (fuse1d[yy * 1032 + ii] * g1_amp[yy]
+                 * np.exp(-((xvec - ii - g_dx[yy]) * (xvec - ii - g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
+            model1d[1032 * yy:1032 * (yy + 1)] += \
+                (fuse1d[yy * 1032 + ii] * g1_amp[yy]
+                 * np.exp(-((xvec - ii + g_dx[yy]) * (xvec - ii + g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
+            model1d[1032 * yy:1032 * (yy + 1)] += \
+                (fuse1d[yy * 1032 + ii] * g2_amp[yy]
+                 * np.exp(-((xvec - ii - 2 * g_dx[yy]) * (xvec - ii - 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
+            model1d[1032 * yy:1032 * (yy + 1)] += \
+                (fuse1d[yy * 1032 + ii] * g2_amp[yy]
+                 * np.exp(-((xvec - ii + 2 * g_dx[yy]) * (xvec - ii + 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
 
     return model
 
@@ -146,6 +153,7 @@ def correct_xartifact(input_model, modelpars):
                                          param['GAU_SCALE2'])
 
     except:
+        left_model[:, :] = 0
         log.info("No parameters for left detector half, not applying Cross-Artifact correction.")
 
     # Right-half of detector
@@ -159,6 +167,7 @@ def correct_xartifact(input_model, modelpars):
                                          param['GAU_XOFF'], param['GAU_SCALE1'],
                                          param['GAU_SCALE2'])
     except:
+        right_model[:, :] = 0
         log.info("No parameters for right detector half, not applying Cross-Artifact correction.")
 
     model = left_model + right_model
