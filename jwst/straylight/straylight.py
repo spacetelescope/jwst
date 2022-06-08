@@ -15,21 +15,19 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # C version of the fitting code
-def makemodel_ccode(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_amp):
+def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
     fuse = fimg.copy()
     badval = np.where(fuse < 0.)
     if (len(badval[0]) > 0):
         fuse[badval] = 0.
-    fuse1d=fuse.ravel()
+    fuse1d = fuse.ravel()
 
     gamma = lor_fwhm / 2.
     g_std = g_fwhm / (2 * np.sqrt(2. * np.log(2)))
 
     xsize, ysize = 1032, 1024
-    #print('Running C version')
 
-    result = xart_wrapper(imin, imax, xsize, ysize,
-                 xvec, fuse1d, gamma, lor_amp, g_std, g_dx, g1_amp, g2_amp)
+    result = xart_wrapper(imin, imax, xsize, ysize, xvec, fuse1d, gamma, lor_amp, g_std, g_dx, g1_amp, g2_amp)
 
     model = np.reshape(result[0], fimg.shape)
 
@@ -38,10 +36,9 @@ def makemodel_ccode(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_a
     return model
 
 # Python version of the fitting code
-def makemodel_composite(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,g2_amp):
+def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
     model = np.zeros_like(fimg)
     model1d = model.ravel()
-    #print('Running python version')
 
     fuse = fimg.copy()
     badval = np.where(fuse < 0.)
@@ -54,10 +51,10 @@ def makemodel_composite(fimg,xvec,imin,imax,lor_fwhm,lor_amp,g_fwhm,g_dx,g1_amp,
 
     for yy in range(0, 1024):
         for ii in range(imin, imax):
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * lor_amp[yy] * gamma[yy] * gamma[yy]) / (
-                        gamma[yy] * gamma[yy] + (xvec - ii) * (xvec - ii))
-            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g1_amp[yy] * np.exp(
-                -((xvec - ii - g_dx[yy]) * (xvec - ii - g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
+            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * lor_amp[yy] * gamma[yy] * gamma[yy]) / \
+                                                  (gamma[yy] * gamma[yy] + (xvec - ii) * (xvec - ii))
+            model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g1_amp[yy] *
+                np.exp(-((xvec - ii - g_dx[yy]) * (xvec - ii - g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
             model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g1_amp[yy] * np.exp(
                 -((xvec - ii + g_dx[yy]) * (xvec - ii + g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
             model1d[1032 * yy:1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * g2_amp[yy] * np.exp(
