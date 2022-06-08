@@ -25,8 +25,9 @@ documentation
 extract_1d
 ----------
 
-- Catch two more errors raised, one if an input ImageModel uses the F277W
-  filter (similar to #6840, which only dealt with input CubeModels) [#6877]
+- Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
+  ImageModel uses the F277W filter (similar to #6840, which only dealt with
+  input CubeModels), and another for bad DataModel input type [#6877]
 
 pipeline
 --------
