@@ -20,12 +20,16 @@ documentation
 - Updated the docs for ``calwebb_detector1`` pipeline, as well as the
   ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
   steps to include information on the handling of NIRCam "Frame 0" data.
+  [#6868]
 
 pipeline
 --------
 
 - Add check to ensure SOSS ``extract_1d`` return is not None, to
-  avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
+  avoid photom errors in ``Spec3Pipeline`` and ``Tso3Pipeline``. [#6863]
+
+- Updated the ``calwebb_image3`` pipeline to only science members from the
+  input ASN table. [#6875]
 
 resample
 --------
