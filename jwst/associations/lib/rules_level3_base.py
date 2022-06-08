@@ -532,7 +532,10 @@ class Utility():
             return level1b_name
 
         if member_exptype == 'background':
-            suffix = 'x1d'
+            if exp_type in IMAGE2_SCIENCE_EXP_TYPES:
+                suffix = 'cal'
+            else:
+                suffix = 'x1d'
         else:
             if exp_type in LEVEL2B_EXPTYPES:
                 suffix = 'cal'
