@@ -22,6 +22,12 @@ documentation
   steps to include information on the handling of NIRCam "Frame 0" data.
   [#6868]
 
+extract_1d
+----------
+
+- Catch two more errors raised, one if an input ImageModel uses the F277W
+  filter (similar to #6840, which only dealt with input CubeModels) [#6877]
+
 pipeline
 --------
 
