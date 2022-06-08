@@ -1021,7 +1021,15 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         refmask = bitfield_to_boolean_mask(input_model.dq,
                                            ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
                                            flip_bits=True)
-        # TODO: Add check (is finite?) on scierr and scidata
+
+        # Make sure there aren't any nans not flagged in scimask
+        not_finite = ~(np.isfinite(scidata) & np.isfinite(scierr))
+        if (not_finite & ~scimask).any():
+            log.warning('Input contains invalid values that '
+                        'are not flagged correctly in the dq map. '
+                        'They will be masked for the following procedure.')
+            scimask |= not_finite
+            refmask |= not_finite
 
         # Perform background correction.
         if soss_kwargs['subtract_background']:
@@ -1170,7 +1178,15 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             scimask = np.bitwise_and(input_model.dq[i], dqflags.pixel['DO_NOT_USE']).astype(bool)
             refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
                                                flip_bits=True)
-            # TODO: Add check (is finite?) on scierr and scidata
+
+            # Make sure there aren't any nans not flagged in scimask
+            not_finite = ~(np.isfinite(scidata) & np.isfinite(scierr))
+            if (not_finite & ~scimask).any():
+                log.warning('Input contains invalid values that '
+                            'are not flagged correctly in the dq map. '
+                            'They will be masked for the following procedure.')
+                scimask |= not_finite
+                refmask |= not_finite
 
             # Perform background correction.
             if soss_kwargs['subtract_background']:
