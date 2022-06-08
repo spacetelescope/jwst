@@ -22,6 +22,9 @@ documentation
   steps to include information on the handling of NIRCam "Frame 0" data.
   [#6868]
 
+- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
+  parameters [#6872]
+
 pipeline
 --------
 
@@ -30,6 +33,13 @@ pipeline
 
 - Updated the ``calwebb_image3`` pipeline to only science members from the
   input ASN table. [#6875]
+
+refpix
+------
+
+- Add code to refpix step to specify which parameters are used and which are
+  ignored, depending on data type [#6872]
+
 
 resample
 --------
@@ -99,6 +109,7 @@ extract_1d
 
 jump
 ----
+
 - Enable multiprocessing in jump detection [#6845]
 
 lib
