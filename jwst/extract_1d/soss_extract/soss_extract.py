@@ -654,21 +654,24 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 
         # Model
         scidata_order2_decont = scidata_bkg - tracemodels['Order 1']
-        model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
+        try:
+            model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
                                              mask_fit, global_mask, order,
                                              pixel_wave_grid, valid_cols, save_tiktests)
+        except:
+            log.warning('Did not model remaining order 2')
+        else:
+            # Keep only pixels from which order 2 contribution
+            # is not already modeled.
+            already_modeled = np.isfinite(tracemodels[order_str])
+            model = np.where(already_modeled, 0., model)
 
-        # Keep only pixels from which order 2 contribution
-        # is not already modeled.
-        already_modeled = np.isfinite(tracemodels[order_str])
-        model = np.where(already_modeled, 0., model)
+            # Add to tracemodels
+            tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
 
-        # Add to tracemodels
-        tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
-
-        # Add the result to spec_list
-        for sp in spec_ord: sp.meta.soss_extract1d.color_range = 'BLUE'
-        spec_list += spec_ord
+            # Add the result to spec_list
+            for sp in spec_ord: sp.meta.soss_extract1d.color_range = 'BLUE'
+            spec_list += spec_ord
 
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
@@ -739,7 +742,7 @@ def decontaminate_image(scidata_bkg, tracemodels, subarray):
 # TODO Add docstring
 # TODO Add threshold like in model_image? TO use with the rough (but stable) estimate
 def model_single_order(data_order, err_order, ref_file_args, mask_fit,
-                       mask_rebuild, order, wave_grid, valid_cols, save_tiktests=False):
+                       mask_rebuild, order, wave_grid, valid_cols, save_tiktests=False, tikfac_range=None):
 
     # The throughput and kernel is not needed here; set them so they have no effect on the extraction.
     def throughput(wavelength):
@@ -1018,6 +1021,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         refmask = bitfield_to_boolean_mask(input_model.dq,
                                            ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
                                            flip_bits=True)
+        # TODO: Add check (is finite?) on scierr and scidata
 
         # Perform background correction.
         if soss_kwargs['subtract_background']:
@@ -1166,6 +1170,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             scimask = np.bitwise_and(input_model.dq[i], dqflags.pixel['DO_NOT_USE']).astype(bool)
             refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
                                                flip_bits=True)
+            # TODO: Add check (is finite?) on scierr and scidata
 
             # Perform background correction.
             if soss_kwargs['subtract_background']:
