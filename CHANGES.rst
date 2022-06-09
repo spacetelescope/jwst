@@ -25,6 +25,13 @@ documentation
 - Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
   parameters [#6872]
 
+extract_1d
+----------
+
+- Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
+  ImageModel uses the F277W filter (similar to #6840, which only dealt with
+  input CubeModels), and another for bad DataModel input type [#6877]
+
 pipeline
 --------
 
@@ -39,7 +46,6 @@ refpix
 
 - Add code to refpix step to specify which parameters are used and which are
   ignored, depending on data type [#6872]
-
 
 resample
 --------

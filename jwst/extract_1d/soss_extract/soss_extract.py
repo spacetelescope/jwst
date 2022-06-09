@@ -594,7 +594,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             # No model can be fit for F277W yet, missing throughput reference files.
             msg = f"No extraction possible for filter {soss_filter}."
             log.critical(msg)
-            raise ValueError(msg)
+            return None, None
 
         # Save trace models for output reference
         for order in tracemodels:
@@ -768,7 +768,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
         log.critical(msg)
-        raise ValueError(msg)
+        return None, None
 
     # Save output references
     for order in all_tracemodels:
