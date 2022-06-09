@@ -953,23 +953,18 @@ class _BaseOverlap:
 
         return self.tikho_mat
 
-    def estimate_tikho_factors(self, flux_estimate, log_range=(-4, 2), n_points=10):
-        """Estimate an initial guess of the Tikhonov factors. The output factor grid will
+    def estimate_tikho_factors(self, flux_estimate):
+        """Estimate an initial guess of the Tikhonov factor. The output factor will
         be used to find the best Tikhonov factor. The flux_estimate is used to generate
-        a factor_guess. Then, a grid is constructed using
-        np.logspace(factor_guess + log_range[0], factor_guess + log_range[1], n_points)
+        a factor_guess. The user should coonstruct a grid with this output using
+        >>> log_guess = np.log10(factor_guess)
+        >>> np.logspace(log_guess - log_range_minus, log_guess + log_range_plus, n_points)
 
         Parameters
         ----------
         flux_estimate : callable
             Estimate of the underlying flux (the solution f_k). Must be function
             of wavelengths and it will be projected on self.wave_grid.
-        log_range : tuple, optional
-            Tuple of two values used to generate a grid around the estimation of the
-            Tikhonov factor. It is in log space and relative. For example, log_range=(-1, 1)
-            will generate a grid spanning 2 orders of magnitude. Default is (-4, 2).
-        n_points : int, optional
-            Number of points on the grid. Default is 10.
 
         Returns
         -------
@@ -994,17 +989,10 @@ class _BaseOverlap:
 
         # Estimate of the factor
         factor_guess = (n_pixels / reg_estimate) ** 0.5
-        
-        # TODO: REturn directly the factor, not a grid around the factor.
-        # Then the user can build the grid. It's only one line!
 
         log.info(f'First guess of tikhonov factor: {factor_guess}')
 
-        # Make the grid
-        factor_guess = np.log10(factor_guess)
-        factors = np.logspace(factor_guess + log_range[0], factor_guess + log_range[1], n_points)
-
-        return factors
+        return factor_guess
 
     def get_tikho_tests(self, factors, tikho=None, tikho_kwargs=None, data=None,
                         error=None, mask=None, trace_profile=None, throughput=None):
