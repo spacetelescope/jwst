@@ -528,7 +528,9 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
     #       dq mask caused issues here and this may need a try/except wrap.
     #       Dev suggested np.logspace(-19, -10, 10)
-    estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile[0])
+    if tikfac is None or wave_grid is None:
+        estimate = estim_flux_first_order(scidata_bkg, scierr, scimask,
+                                          ref_file_args, mask_trace_profile[0])
 
     # Generate grid based on estimate if not given
     if wave_grid is None:
@@ -536,17 +538,17 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         wave_grid = make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os)
         log.debug(f'soss_wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
 
-    # Use estimate to evaluate the contribution from each orders to pixels
-    # (Used to determine which pixel to model later)
-    ref_args_estimate = [ref_arg for ref_arg in ref_file_args]
-    # No convolution needed (so give equivalent of identity)
-    ref_args_estimate[3] = [np.array([1.]) for _ in order_list]
-    engine_for_estimate = ExtractionEngine(*ref_args_estimate, wave_grid=wave_grid, mask_trace_profile=mask_trace_profile)
-    models = {order: engine_for_estimate.rebuild(estimate, i_orders=[idx_ord], fill_value=np.nan)
-              for idx_ord, order in enumerate(order_list)}
-    total = np.nansum([models[order] for order in order_list], axis=0)
-    total = np.where((total != 0), total, np.nan)
-    contribution = {order: models[order] / total for order in order_list}
+#     # Use estimate to evaluate the contribution from each orders to pixels
+#     # (Used to determine which pixel to model later)
+#     ref_args_estimate = [ref_arg for ref_arg in ref_file_args]
+#     # No convolution needed (so give equivalent of identity)
+#     ref_args_estimate[3] = [np.array([1.]) for _ in order_list]
+#     engine_for_estimate = ExtractionEngine(*ref_args_estimate, wave_grid=wave_grid, mask_trace_profile=mask_trace_profile)
+#     models = {order: engine_for_estimate.rebuild(estimate, i_orders=[idx_ord], fill_value=np.nan)
+#               for idx_ord, order in enumerate(order_list)}
+#     total = np.nansum([models[order] for order in order_list], axis=0)
+#     total = np.where((total != 0), total, np.nan)
+#     contribution = {order: models[order] / total for order in order_list}
 
     log.debug('Extracting using transformation parameters {}'.format(transform))
 
