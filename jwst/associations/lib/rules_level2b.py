@@ -75,17 +75,10 @@ class Asn_Lv2Image(
             ),
             Constraint(
                 [
-                    Constraint(
-                        [SimpleConstraint(
-                            value='science',
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        ),
-                        SimpleConstraint(
-                            value='target_acquisition',
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        )], reduce=Constraint.all
+                    SimpleConstraint(
+                        value='background',
+                        test=lambda value, item: self.get_exposure_type(item) == value,
+                        force_unique=False,
                     ),
                     Constraint_Single_Science(self.has_science),
                 ], reduce=Constraint.any
