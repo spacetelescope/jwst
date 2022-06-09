@@ -567,7 +567,9 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 
         # Find the tikhonov factor.
         # Initial pass 8 orders of magnitude with 10 grid points.
-        factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
+        guess_factor = engine.estimate_tikho_factors(estimate)
+        log_guess = np.log10(guess_factor)
+        factors = np.logspace(log_guess - 4, log_guess + 4, 10)
         all_tests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
         tikfac, mode, _ = engine.best_tikho_factor(tests=all_tests, fit_mode='all')
 
@@ -652,26 +654,29 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         is_in_wv_range = (pixel_wave_grid < 0.95)
         pixel_wave_grid, valid_cols = pixel_wave_grid[is_in_wv_range], valid_cols[is_in_wv_range]
 
-        # Model
+        # Remove order 1
         scidata_order2_decont = scidata_bkg - tracemodels['Order 1']
-        try:
-            model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
+
+        # Range of initial tikhonov factors
+        tikfac_log_range = np.log10(tikfac) + np.array([-2, 8])
+
+        # Model the remaining part of order 2 with atoca
+        model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
                                              mask_fit, global_mask, order,
-                                             pixel_wave_grid, valid_cols, save_tiktests)
-        except:
-            log.warning('Did not model remaining order 2')
-        else:
-            # Keep only pixels from which order 2 contribution
-            # is not already modeled.
-            already_modeled = np.isfinite(tracemodels[order_str])
-            model = np.where(already_modeled, 0., model)
+                                             pixel_wave_grid, valid_cols, save_tiktests,
+                                             tikfac_log_range=tikfac_log_range)
 
-            # Add to tracemodels
-            tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
+        # Keep only pixels from which order 2 contribution
+        # is not already modeled.
+        already_modeled = np.isfinite(tracemodels[order_str])
+        model = np.where(already_modeled, 0., model)
 
-            # Add the result to spec_list
-            for sp in spec_ord: sp.meta.soss_extract1d.color_range = 'BLUE'
-            spec_list += spec_ord
+        # Add to tracemodels
+        tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
+
+        # Add the result to spec_list
+        for sp in spec_ord: sp.meta.soss_extract1d.color_range = 'BLUE'
+        spec_list += spec_ord
 
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
@@ -742,7 +747,7 @@ def decontaminate_image(scidata_bkg, tracemodels, subarray):
 # TODO Add docstring
 # TODO Add threshold like in model_image? TO use with the rough (but stable) estimate
 def model_single_order(data_order, err_order, ref_file_args, mask_fit,
-                       mask_rebuild, order, wave_grid, valid_cols, save_tiktests=False, tikfac_range=None):
+                       mask_rebuild, order, wave_grid, valid_cols, save_tiktests=False, tikfac_log_range=None):
 
     # The throughput and kernel is not needed here; set them so they have no effect on the extraction.
     def throughput(wavelength):
@@ -755,20 +760,22 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
 
     # ###########################
     # First, generate an estimate
+    # (only if the initial guess of tikhonov factor range is not given)
     # ###########################
 
-    # Initialize the engine
-    engine = ExtractionEngine(*ref_file_args,
-                              wave_grid=wave_grid,
-                              orders=[order],
-                              mask_trace_profile=[mask_fit])
+    if tikfac_log_range is None:
+        # Initialize the engine
+        engine = ExtractionEngine(*ref_file_args,
+                                  wave_grid=wave_grid,
+                                  orders=[order],
+                                  mask_trace_profile=[mask_fit])
 
-    # Extract estimate
-    spec_estimate = engine.__call__(data=data_order, error=err_order)
+        # Extract estimate
+        spec_estimate = engine.__call__(data=data_order, error=err_order)
 
-    # Interpolate
-    idx = np.isfinite(spec_estimate)
-    estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
+        # Interpolate
+        idx = np.isfinite(spec_estimate)
+        estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
 
     # ##################################################
     # Second, do the extraction to get the best estimate
@@ -784,8 +791,13 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
                               mask_trace_profile=[mask_fit])
 
     # Find the tikhonov factor.
-    # Initial pass 8 orders of magnitude with 10 grid points.
-    factors = engine.estimate_tikho_factors(estimate_spl, log_range=[-2, 8], n_points=10)
+    # Initial pass with tikfac_range.
+    if tikfac_log_range is None:
+        guess_factor = engine.estimate_tikho_factors(estimate_spl)
+        log_guess = np.log10(guess_factor)
+        factors = np.log_range(log_guess - 2, log_guess + 8, 10)
+    else:
+        factors = np.logspace(tikfac_log_range[0], tikfac_log_range[-1] + 8, 10)
     all_tests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
     tikfac, mode, _ = engine.best_tikho_factor(tests=all_tests, fit_mode='all')
 
@@ -905,8 +917,6 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
                 is_modeled = np.isfinite(tracemodels[order])
                 # Replace bad pixels
                 decont = np.where(scimask & is_modeled, tracemodels[order], decont)
-                # Update the mask for the modeled order, so all the modeled pixels are used.
-                scimask_ord = scimask & ~is_modeled
 
                 log.debug(f'Bad pixels in {order} are replaced with trace model.')
 
@@ -916,7 +926,7 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
                 extraction_region = (box_w_ord > 0)
                 pix_to_estim = (extraction_region & scimask & is_modeled)
                 # Use only valid pixels (not masked) in the extraction region for the empirical estimation
-                valid_pix = (extraction_region & ~scimask_ord)
+                valid_pix = (extraction_region & ~scimask)
                 scierr_ord = estim_error_nearest_data(scierr, decont, pix_to_estim, valid_pix)
 
             except KeyError:
@@ -925,13 +935,11 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
                 scierr_ord = scierr
                 log.warning(f'Bad pixels in {order} will be masked instead of modeled: trace model unavailable.')
         else:
-            # Mask pixels
-            scimask_ord = scimask
             scierr_ord = scierr
             log.info(f'Bad pixels in {order} will be masked.')
 
         # Perform the box extraction and save
-        out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord)
+        out = box_extract(decont, scierr_ord, scimask, box_w_ord)
         _, fluxes[order], fluxerrs[order], npixels[order] = out
 
     return fluxes, fluxerrs, npixels
@@ -1186,7 +1194,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                             'are not flagged correctly in the dq map. '
                             'They will be masked for the following procedure.')
                 scimask |= not_finite
-                refmask |= not_finite
+                refmask &= ~not_finite
 
             # Perform background correction.
             if soss_kwargs['subtract_background']:
