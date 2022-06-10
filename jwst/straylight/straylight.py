@@ -80,15 +80,15 @@ def correct_xartifact(input_model, modelpars):
 
     Parameters
     ----------
-    input_model: `~jwst.datamodels.IFUImageModel`
+    input_model : `~jwst.datamodels.IFUImageModel`
         Science data to be corrected.
 
-    modelpars: FITS binary table
+    modelpars : FITS binary table
         Holds the reference parameters to be used to build the cross-artifact model
 
     Returns
     -------
-    output: `~jwst.datamodels.IFUImageModel`
+    output : `~jwst.datamodels.IFUImageModel`
         Straylight-subtracted science data.
 
     """
@@ -127,6 +127,8 @@ def correct_xartifact(input_model, modelpars):
     band = input_model.meta.instrument.band
 
     # Deal with normal cases only, we won't apply to cross-dichroic cases for now
+    left, right = 'N/A', 'N/A'
+
     if ((channel == '12') & (band == 'SHORT')):
         left, right = 'ch1a_table', 'ch2a_table'
     if ((channel == '12') & (band == 'MEDIUM')):
@@ -139,6 +141,10 @@ def correct_xartifact(input_model, modelpars):
         left, right = 'ch4b_table', 'ch3b_table'
     if ((channel == '34') & (band == 'LONG')):
         left, right = 'ch4c_table', 'ch3c_table'
+
+    # Catch failure cases with a log warning
+    if ((left == 'N/A') or (right == 'N/A')):
+        log.info("Warning: no parameters found for channel = " + str(channel) + " band = " + str(band))
 
     xvec = (np.arange(ncols)).astype(float)
     left_model = np.zeros_like(output.data)
