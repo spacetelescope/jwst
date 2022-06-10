@@ -1,6 +1,20 @@
 1.5.3 (unreleased)
 ==================
 
+
+ami_analyze
+-----------
+
+- Fixed the creation of the output product so that it no longer contains
+  an empty "SCI" extension. [#6870]
+
+ami_average
+-----------
+
+- Updated the step to handle inputs with different sizes for `fit_image` and
+  `resid_image`. Larger inputs are trimmed to match the size of the smallest
+  input. [#6870]
+
 datamodels
 ----------
 
@@ -13,12 +27,32 @@ documentation
 - Updated the docs for ``calwebb_detector1`` pipeline, as well as the
   ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
   steps to include information on the handling of NIRCam "Frame 0" data.
+  [#6868]
+
+- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
+  parameters [#6872]
+
+extract_1d
+----------
+
+- Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
+  ImageModel uses the F277W filter (similar to #6840, which only dealt with
+  input CubeModels), and another for bad DataModel input type [#6877]
 
 pipeline
 --------
 
 - Add check to ensure SOSS ``extract_1d`` return is not None, to
-  avoid photom errors in Spec3Pipeline and Tso3Pipeline [#6863]
+  avoid photom errors in ``Spec3Pipeline`` and ``Tso3Pipeline``. [#6863]
+
+- Updated the ``calwebb_image3`` pipeline to only science members from the
+  input ASN table. [#6875]
+
+refpix
+------
+
+- Add code to refpix step to specify which parameters are used and which are
+  ignored, depending on data type [#6872]
 
 resample
 --------
@@ -88,6 +122,7 @@ extract_1d
 
 jump
 ----
+
 - Enable multiprocessing in jump detection [#6845]
 
 lib
