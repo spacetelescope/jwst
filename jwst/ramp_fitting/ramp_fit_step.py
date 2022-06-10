@@ -8,7 +8,7 @@ from .. import datamodels
 from stcal.ramp_fitting import ramp_fit
 from jwst.datamodels import dqflags
 
-from ..lib import reffile_utils  # TODO remove
+from ..lib import reffile_utils
 
 import logging
 
