@@ -19,6 +19,8 @@ __doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
+_ONE_MB = 1 << 20
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -473,15 +475,13 @@ class ModelContainer(JwstDataModel, Sequence):
         Parameters
         ----------
         buffer_size : float, None
-            Define size of buffer in Mb for each section.
-            If None, a default buffer size of 1Mb will be used.
+            Define size of buffer in MB for each section.
+            If `None`, a default buffer size of 1MB will be used.
 
         overlap : int, optional
             Define the number of rows of overlaps between sections.
-            If None, no overlap will be used.
+            If `None`, no overlap will be used.
         """
-        buffMb = 1024 * 1024
-        self.buffer_size = buffMb if buffer_size is None else (buffer_size * buffMb)
         self.overlap = 0 if overlap is None else overlap
         self.grow = 0
 
@@ -491,14 +491,16 @@ class ModelContainer(JwstDataModel, Sequence):
             data_item_type = model.data.dtype
             model.close()
         del model
+        min_buffer_size = imcols * data_item_size
 
-        section_nrows = min(imrows, int(self.buffer_size / (imcols * data_item_size)))
+        self.buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
+
+        section_nrows = min(imrows, self.buffer_size // min_buffer_size)
 
         if section_nrows == 0:
-            self.buffer_size = imcols * data_item_size
-            print("WARNING: Buffer size is too small to hold a single row.\n"
-                  "         Buffer size size will be increased to minimal "
-                  "required: {}MB".format(float(self.buffer_size) / 1048576.0))
+            self.buffer_size = min_buffer_size
+            logger.warning("WARNING: Buffer size is too small to hold a single row."
+                           f"Increasing buffer size to {self.buffer_size / _ONE_MB}MB")
             section_nrows = 1
 
         nbr = section_nrows - self.overlap
