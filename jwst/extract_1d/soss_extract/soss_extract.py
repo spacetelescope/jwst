@@ -931,17 +931,22 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
                 valid_pix = (extraction_region & ~scimask)
                 scierr_ord = estim_error_nearest_data(scierr, decont, pix_to_estim, valid_pix)
 
+                # Update the scimask for box extraction:
+                # the pixels that are modeled are set not masked anymore, so set to False.
+                scimask_ord = np.where(is_modeled, False, scimask)
+
             except KeyError:
                 # Keep same mask and error
                 scimask_ord = scimask
                 scierr_ord = scierr
                 log.warning(f'Bad pixels in {order} will be masked instead of modeled: trace model unavailable.')
         else:
+            scimask_ord = scimask
             scierr_ord = scierr
             log.info(f'Bad pixels in {order} will be masked.')
 
         # Perform the box extraction and save
-        out = box_extract(decont, scierr_ord, scimask, box_w_ord)
+        out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord)
         _, fluxes[order], fluxerrs[order], npixels[order] = out
 
     return fluxes, fluxerrs, npixels
