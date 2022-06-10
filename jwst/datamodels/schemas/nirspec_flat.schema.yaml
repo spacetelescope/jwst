@@ -4,8 +4,11 @@ $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
 id: "http://stsci.edu/schemas/jwst_datamodel/nirspec_flat.schema"
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_exptype.schema
 - $ref: keyword_filter.schema
 - $ref: keyword_grating.schema
+- $ref: keyword_lampmode.schema
+- $ref: keyword_lampstate.schema
 - $ref: keyword_pexptype.schema
 - $ref: subarray.schema
 - type: object

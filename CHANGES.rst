@@ -1,6 +1,7 @@
 1.5.3 (unreleased)
 ==================
 
+
 ami_analyze
 -----------
 
@@ -13,6 +14,12 @@ ami_average
 - Updated the step to handle inputs with different sizes for `fit_image` and
   `resid_image`. Larger inputs are trimmed to match the size of the smallest
   input. [#6870]
+
+datamodels
+----------
+
+- Updated many reference file schemas to include current
+  CRDS rmap selectors in schema structure [#6866]
 
 documentation
 -------------

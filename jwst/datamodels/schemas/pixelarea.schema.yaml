@@ -6,6 +6,7 @@ allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema
 - $ref: keyword_filter.schema
+- $ref: keyword_grating.schema
 - $ref: keyword_pixelarea.schema
 - $ref: keyword_pupil.schema
 
