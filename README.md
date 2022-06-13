@@ -172,13 +172,16 @@ two environment variables:
 
 To setup to use JWST OPS, use the following settings:
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_ops
+    export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
 To setup to use JWST PUB, use the following settings:
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_pub
+    export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_pub
     export CRDS_SERVER_URL=https://jwst-crds-pub.stsci.edu
+    
+``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
+Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
 ## Documentation
 
