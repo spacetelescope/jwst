@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/specprofile.schema"
 allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema
+- $ref: keyword_filter.schema
 - $ref: subarray.schema
 - type: object
   properties:

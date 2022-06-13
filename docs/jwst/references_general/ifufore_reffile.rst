@@ -14,11 +14,11 @@ CRDS selects appropriate IFUFORE references based on the following keywords.
 IFUFORE is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
-========== ======================================
+========== ==============================================
 Instrument Keywords
-========== ======================================
-NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
-========== ======================================
+========== ==============================================
+NIRSpec    INSTRUME, EXP_TYPE, OPMODE, DATE-OBS, TIME-OBS
+========== ==============================================
 
 .. include:: ../includes/standard_keywords.inc
 

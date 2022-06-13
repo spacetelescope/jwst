@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/distortion.schema"
 title: Distortion data model
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_band.schema
 - $ref: keyword_filter.schema
 - $ref: keyword_pfilter.schema
 - $ref: keyword_pupil.schema

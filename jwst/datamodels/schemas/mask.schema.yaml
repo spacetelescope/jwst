@@ -5,6 +5,8 @@ id: "http://stsci.edu/schemas/jwst_datamodel/mask.schema"
 allOf:
 - $ref: referencefile.schema
 - $ref: subarray.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_readpatt.schema
 - $ref: keyword_preadpatt.schema
 - type: object
   properties:

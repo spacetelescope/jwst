@@ -6,6 +6,7 @@ title: NirSpec IFUFORE reference file model
 allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema
+- $ref: keyword_lampmode.schema
 - type: object
   properties:
     model:
