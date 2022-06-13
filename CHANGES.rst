@@ -6,6 +6,12 @@ straylight
 
 - Add a check that input data is IFUImageModel [#6861]
 
+
+ramp_fitting
+------------
+
+- Fixed multirpocessing error by handling ``int_times`` entirely in step code. [#6880]
+
 resample
 --------
 
