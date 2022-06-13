@@ -63,17 +63,19 @@ resample
 set_telescope_pointing
 ----------------------
 
--  Fix SIAF default handling for missing SIAF values using pysiaf [#6869]
+- Fix SIAF default handling for missing SIAF values using pysiaf [#6869]
+
+skymatch
+--------
+
+- Reduced memory usage when input is an ASN. [#6874]
 
 straylight
 ----------
 
 - Add a check that input data is IFUImageModel [#6861]
 
-skymatch
---------
-
-- Reduced memory usage when input is an ASN. [#6874]
+- Update straylight algorithm to use cross-artifact model [#6873]
 
 
 1.5.2 (2022-05-20)

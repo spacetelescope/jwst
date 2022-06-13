@@ -42,6 +42,7 @@ package_data = {
     # Include C extensions
     "jwst.lib.src": ["*.c"],
     "jwst.cube_build.src": ["*.c"],
+    "jwst.straylight.src": ["*.c"],
 
     # Include the transforms schemas
     "jwst.transforms": ["resources/schemas/stsci.edu/jwst_pipeline/*.yaml"],
@@ -90,6 +91,12 @@ setup(
         Extension(
             'jwst.cube_build.blot_median',
             ['jwst/cube_build/src/blot_median.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        ),
+        Extension(
+            'jwst.straylight.calc_xart',
+            ['jwst/straylight/src/calc_xart.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         )
