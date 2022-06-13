@@ -1,7 +1,7 @@
 .. _mrsxartcorr_reffile:
 
 MRSXARTCORR reference file
-----------------------
+--------------------------
 
 :REFTYPE: MRSXARTCORR
 :Data models: `~jwst.datamodels.MirMrsXArtCorrModel`
@@ -14,7 +14,7 @@ the cross-artifact in the straylight step.
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for MRSXARTCORR
-+++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
 the following keywords are *required* in MRSXARTCORR reference files,
 because they are used as CRDS selectors
