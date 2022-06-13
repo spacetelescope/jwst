@@ -77,6 +77,10 @@ straylight
 
 - Update straylight algorithm to use cross-artifact model [#6873]
 
+crds
+----
+
+- Explain about CRDS PUB. [#6862]
 
 1.5.2 (2022-05-20)
 ==================
