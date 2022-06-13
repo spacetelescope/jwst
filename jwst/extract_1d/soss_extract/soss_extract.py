@@ -898,7 +898,7 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
     fluxerrs = dict()
     npixels = dict()
 
-    log.info('Performing the decontaminated box extraction.')
+    log.info('Performing the box extraction.')
 
     # Extract each order from order list
     for order in order_list:
@@ -986,6 +986,12 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     # TODO: (suite) would be the best.
     # TODO: In fact, if the flux is know approximately, the estimate could also be an input. Could be the same input,
     # TODO: for example soss_kwargs['spec_estimate_file'], a datamodels.SpecModel, with the grid and the estimate
+
+    # Use atoca to decontaminate or not
+    apply_decontamination = soss_kwargs['atoca']
+
+    # Generate the atoca models or not (not necessarily for decontamination)
+    generate_model = soss_kwargs['model'] or (soss_kwargs['bad_pix'] == 'model')
 
     # Map the order integer names to the string names
     order_str_2_int = {f'Order {order}': order for order in [1, 2, 3]}
@@ -1248,7 +1254,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             box_weights, wavelengths = compute_box_weights(*args, width=soss_kwargs['width'])
 
             # Model the traces based on optics filter configuration (CLEAR or F277W)
-            if soss_filter == 'CLEAR':
+            if soss_filter == 'CLEAR' and generate_model:
 
                 # Model the image.
                 kwargs = dict()
@@ -1264,23 +1270,33 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                                      ref_files, box_weights, subarray, **kwargs)
                 tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'], spec_list = result
 
-            else:
+                # Add atoca spectra to multispec for output
+                for spec in spec_list:
+                    # If it was a test, not the best spectrum,
+                    # int_num is already set to 0.
+                    if not hasattr(spec, 'int_num'):
+                        spec.int_num = i + 1
+                    output_atoca.spec.append(spec)
+
+            elif soss_filter != 'CLEAR' and generate_model:
                 # No model can be fit for F277W yet, missing throughput reference files.
                 msg = f"No extraction possible for filter {soss_filter}."
                 log.critical(msg)
                 raise ValueError(msg)
+            else:
+                # Return empty tracemodels and no spec_list
+                tracemodels = dict()
+                spec_list = None
 
-            # Add atoca spectra to multispec for output
-            for spec in spec_list:
-                if not hasattr(spec, 'int_num'):
-                    spec.int_num = i + 1
-                output_atoca.spec.append(spec)
-
-            # Decontaminate the data using trace models
-            decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
+            # Decontaminate the data using trace models (if required)
+#             if apply_decontamination:
+            data_to_extract = decontaminate_image(scidata_bkg, tracemodels, subarray)
+#             else:
+#                 data_to_extract = scidata_bkg
 
             if soss_kwargs['bad_pix'] == 'model':
                 # Generate new trace models for each individual decontaminated orders
+                # TODO: Use the sum of tracemodels so it can be applied even w/o decontamination
                 bad_pix_models = tracemodels
             else:
                 bad_pix_models = None
@@ -1289,7 +1305,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             kwargs = dict()
             kwargs['bad_pix'] = soss_kwargs['bad_pix']
             kwargs['tracemodels'] = bad_pix_models
-            result = extract_image(decontaminated_data, scierr, scimask, box_weights, **kwargs)
+            result = extract_image(data_to_extract, scierr, scimask, box_weights, **kwargs)
             fluxes, fluxerrs, npixels = result
 
             # Save trace models for output reference
@@ -1333,12 +1349,14 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 output_model.spec.append(spec)
 
             output_model.meta.soss_extract1d.width = soss_kwargs['width']
+            output_model.meta.soss_extract1d.apply_decontamination = apply_decontamination
             output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
             output_model.meta.soss_extract1d.delta_x = transform[1]
             output_model.meta.soss_extract1d.delta_y = transform[2]
             output_model.meta.soss_extract1d.theta = transform[0]
             output_model.meta.soss_extract1d.oversampling = soss_kwargs['n_os']
             output_model.meta.soss_extract1d.threshold = soss_kwargs['threshold']
+            output_model.meta.soss_extract1d.bad_pix = soss_kwargs['bad_pix']
 
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
