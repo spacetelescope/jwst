@@ -32,6 +32,12 @@ extract_1d
   ImageModel uses the F277W filter (similar to #6840, which only dealt with
   input CubeModels), and another for bad DataModel input type [#6877]
 
+flatfield
+---------
+
+- Set DO_NOT_USE DQ bit in flatfield if NO_FLAT_FIELD DQ bit is set in flat
+  reference file [#6882]
+
 pipeline
 --------
 
