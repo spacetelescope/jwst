@@ -156,7 +156,7 @@ documentation on each reference file.
 +                                               +--------------------------------------------------+
 |                                               | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       |
 +-----------------------------------------------+--------------------------------------------------+
-| :ref:`straylight <straylight_step>`           | :ref:`REGIONS <regions_reffile>`                 |
+| :ref:`straylight <straylight_step>`           | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`             | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-----------------------------------------------+--------------------------------------------------+
@@ -223,6 +223,8 @@ documentation on each reference file.
 | :ref:`LINEARITY <linearity_reffile>`             | :ref:`linearity <linearity_step>`             |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MASK <mask_reffile>`                       | :ref:`dq_init <dq_init_step>`                 |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         | :ref:`straylight <straylight_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MSA <msa_reffile>`                         | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
