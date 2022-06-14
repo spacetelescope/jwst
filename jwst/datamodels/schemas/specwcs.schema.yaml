@@ -7,6 +7,9 @@ allOf:
 - $ref: referencefile.schema
 - $ref: keyword_band.schema
 - $ref: keyword_channel.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_module.schema
+- $ref: keyword_pupil.schema
 - $ref: keyword_exptype.schema
 - $ref: subarray.schema
 - type: object

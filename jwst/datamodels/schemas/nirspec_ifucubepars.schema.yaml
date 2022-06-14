@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/nirspec_ifucubepars.schema"
 title: Default NIRSPEC IFU cube parameters data model
 allOf:
 - $ref: ifucubepars.schema
+- $ref: keyword_lampmode.schema
 - type: object
   properties:
     ifucubepars_table:

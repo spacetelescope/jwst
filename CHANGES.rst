@@ -1,6 +1,7 @@
 1.5.3 (unreleased)
 ==================
 
+
 ami_analyze
 -----------
 
@@ -21,6 +22,12 @@ associations
   target observations into level 2 image associations for background
   subtraction [#6878]
 
+datamodels
+----------
+
+- Updated many reference file schemas to include current
+  CRDS rmap selectors in schema structure [#6866]
+
 documentation
 -------------
 
@@ -28,6 +35,16 @@ documentation
   ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
   steps to include information on the handling of NIRCam "Frame 0" data.
   [#6868]
+
+- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
+  parameters [#6872]
+
+extract_1d
+----------
+
+- Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
+  ImageModel uses the F277W filter (similar to #6840, which only dealt with
+  input CubeModels), and another for bad DataModel input type [#6877]
 
 pipeline
 --------
@@ -38,17 +55,39 @@ pipeline
 - Updated the ``calwebb_image3`` pipeline to only science members from the
   input ASN table. [#6875]
 
+refpix
+------
+
+- Add code to refpix step to specify which parameters are used and which are
+  ignored, depending on data type [#6872]
+
 resample
 --------
 
 - Speed up the algorithm for computing the sampling wavelengths for the output
   WCS in ``resample_spec``. [#6860]
 
+set_telescope_pointing
+----------------------
+
+- Fix SIAF default handling for missing SIAF values using pysiaf [#6869]
+
+skymatch
+--------
+
+- Reduced memory usage when input is an ASN. [#6874]
+
 straylight
 ----------
 
 - Add a check that input data is IFUImageModel [#6861]
 
+- Update straylight algorithm to use cross-artifact model [#6873]
+
+crds
+----
+
+- Explain about CRDS PUB. [#6862]
 
 1.5.2 (2022-05-20)
 ==================
@@ -106,6 +145,7 @@ extract_1d
 
 jump
 ----
+
 - Enable multiprocessing in jump detection [#6845]
 
 lib

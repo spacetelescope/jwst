@@ -1,0 +1,16 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/keyword_tsovisit.schema"
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      visit:
+        type: object
+        properties:
+          tsovisit:
+            title: Is TSO Special Requirement present
+            type: boolean
+            fits_keyword: TSOVISIT
