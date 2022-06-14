@@ -14,6 +14,13 @@ ami_average
   `resid_image`. Larger inputs are trimmed to match the size of the smallest
   input. [#6870]
 
+associations
+------------
+
+- Create level 3 association for background images, and allow background
+  target observations into level 2 image associations for background
+  subtraction [#6878]
+
 documentation
 -------------
 
