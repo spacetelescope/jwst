@@ -15,6 +15,11 @@ ami_average
   `resid_image`. Larger inputs are trimmed to match the size of the smallest
   input. [#6870]
 
+cube_build
+----------
+
+- Fixed bug in selecting correct values to extract from the cube pars reference file. [#6885]
+
 datamodels
 ----------
 
