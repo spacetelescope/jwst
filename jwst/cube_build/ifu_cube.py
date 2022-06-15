@@ -1022,7 +1022,7 @@ class IFUCubeData():
 
             if imin > 1 and table_wavelength[imin] > self.wavemin:
                 imin = imin - 1
-            if (imax < len(table_wavelength) and
+            if (imax < (len(table_wavelength) - 1) and
                     self.wavemax > table_wavelength[imax]):
                 imax = imax + 1
 

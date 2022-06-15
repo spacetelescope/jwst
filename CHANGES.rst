@@ -8,6 +8,9 @@ ami_analyze
 - Fixed the creation of the output product so that it no longer contains
   an empty "SCI" extension. [#6870]
 
+- Updated the step docs to include information about all of the available
+  step arguments. [#6884]
+
 ami_average
 -----------
 
@@ -21,6 +24,11 @@ associations
 - Create level 3 association for background images, and allow background
   target observations into level 2 image associations for background
   subtraction [#6878]
+
+cube_build
+----------
+
+- Fixed bug in selecting correct values to extract from the cube pars reference file. [#6885]
 
 datamodels
 ----------
@@ -45,6 +53,12 @@ extract_1d
 - Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
   ImageModel uses the F277W filter (similar to #6840, which only dealt with
   input CubeModels), and another for bad DataModel input type [#6877]
+
+flatfield
+---------
+
+- Set DO_NOT_USE DQ bit in flatfield if NO_FLAT_FIELD DQ bit is set in flat
+  reference file [#6882]
 
 pipeline
 --------
