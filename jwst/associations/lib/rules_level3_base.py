@@ -485,8 +485,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 obs_list = set([int(m['expname'][7:10]) for m in self.current_product['members']])
                 if len(obs_list) <= 1:
                     return
-                else:
-                    return super(DMS_Level3_Base, self).finalize()
+
+        return super(DMS_Level3_Base, self).finalize()
 
 
 @RegistryMarker.utility
