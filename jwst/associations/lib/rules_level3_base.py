@@ -481,11 +481,16 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     def finalize(self):
         if self.acid.type.lower() == 'group':
             if len(self.current_product['members']):
-                # Janky extraction of obs_num from filenames
-                obs_list = set([int(m['expname'][7:10]) for m in self.current_product['members']])
-                if len(obs_list) <= 1:
-                    return
-
+                try:
+                    # Janky extraction of obs_num from filenames
+                    # This assumes default OPS naming structure
+                    obs_list = set([int(m['expname'][7:10]) for m in self.current_product['members']])
+                    if len(obs_list) <= 1:
+                        return
+                except ValueError:
+                    # If extracting obs_num from filename fails, assume exclusion
+                    # of group candidates not important for this user
+                    pass
         return super(DMS_Level3_Base, self).finalize()
 
 
