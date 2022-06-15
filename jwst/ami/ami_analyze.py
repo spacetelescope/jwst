@@ -86,7 +86,8 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
     PIXELSCALE_r = pixelscale_as * arcsec2rad
     holeshape = 'hex'
     filt = "F430M"
-    rotsearch_d = np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2])
+    rotsearch_d = np.append(np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
+                            rotsearch_parameters[1])
 
     log.info(f'Initial values to use for rotation search {rotsearch_d}')
 

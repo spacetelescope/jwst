@@ -20,12 +20,20 @@ the SUB80 subarray, in order to reduce execution time.
 
 Arguments
 ---------
-The ``ami_analyze`` step has two optional arguments:
+The ``ami_analyze`` step has four optional arguments:
 
-:--oversample: The oversampling factor to be used in the model fit (default=3)
+:--oversample: The oversampling factor to be used in the model fit (default=3).
 
 :--rotation: Initial guess for the rotation of the PSF in the input image, in
-             units of degrees (default=0.0)
+             units of degrees (default=0.0).
+
+:--psf_offset: List of PSF offset values to use when creating the model array
+               (default='0.0 0.0').
+
+:--rotation_search: List of start, stop, and step values that define the list of
+                    rotation search values. The default setting of '-3 3 1'
+                    results in search values of [-3, -2, -1, 0, 1, 2, 3].
+                    
 
 Inputs
 ------

@@ -8,6 +8,9 @@ ami_analyze
 - Fixed the creation of the output product so that it no longer contains
   an empty "SCI" extension. [#6870]
 
+- Updated the step docs to include information about all of the available
+  step arguments. [#6884]
+
 ami_average
 -----------
 
