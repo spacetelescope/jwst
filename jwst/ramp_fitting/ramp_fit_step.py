@@ -75,7 +75,7 @@ def create_image_model(input_model, image_info):
     image_info: tuple
         The ramp fitting arrays needed for the ImageModel.
 
-    Parameter
+    Return
     ---------
     out_model: ImageModel
         The output ImageModel to be returned from the ramp fit step.
@@ -104,15 +104,18 @@ def create_integration_model(input_model, integ_info, int_times):
 
     Parameter
     ---------
-    input_model: RampModel
+    input_model : RampModel
         Input RampModel for which the output CubeModel is created.
 
     integ_info: tuple
         The ramp fitting arrays needed for the CubeModel for each integration.
 
-    Parameter
+    int_times : astropy.io.fits.fitsrec.FITS_rec or None
+        Integration times.
+
+    Return
     ---------
-    int_model: CubeModel
+    int_model : CubeModel
         The output CubeModel to be returned from the ramp fit step.
     """
     data, dq, var_poisson, var_rnoise, err = integ_info
@@ -145,7 +148,7 @@ def create_optional_results_model(input_model, opt_info):
     opt_info: tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
-    Parameter
+    Return
     ---------
     opt_model: RampFitOutputModel
         The optional RampFitOutputModel to be returned from the ramp fit step.
