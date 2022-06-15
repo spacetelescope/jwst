@@ -15,6 +15,12 @@ ami_average
   `resid_image`. Larger inputs are trimmed to match the size of the smallest
   input. [#6870]
 
+associations
+------------
+
+- Add finalization for level 3 group association candidates to require
+  more than one observation amongst member entries [#6886]
+
 datamodels
 ----------
 
