@@ -224,6 +224,10 @@ def copy_background_to_surf_bright(spectrum):
         spec.spec_table['BACKGROUND'][:] = 0
         # Set BERROR to dummy val of 0.0, as in extract_1d currently
         spec.spec_table['BKGD_ERROR'][:] = 0.
+        # Temporary hack to deal with DQ not being properly set to DO_NOT_USE
+        # in regions between the two MRS bands
+        indx = np.where(spec.spec_table['SURF_BRIGHT'] == 0)
+        spec.spec_table['DQ'][indx] = 1
 
 
 def split_container(container):
