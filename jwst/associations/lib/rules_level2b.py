@@ -69,11 +69,20 @@ class Asn_Lv2Image(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Image_Science(),
-            Constraint_Single_Science(self.has_science),
             Constraint(
                 [Constraint_TSO()],
                 reduce=Constraint.notany
-            )
+            ),
+            Constraint(
+                [
+                    SimpleConstraint(
+                        value='background',
+                        test=lambda value, item: self.get_exposure_type(item) == value,
+                        force_unique=False,
+                    ),
+                    Constraint_Single_Science(self.has_science),
+                ], reduce=Constraint.any
+            ),
         ])
 
         # Now check and continue initialization.

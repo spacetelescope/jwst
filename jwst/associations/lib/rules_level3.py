@@ -16,6 +16,7 @@ __all__ = [
     'Asn_Lv3AMI',
     'Asn_Lv3Coron',
     'Asn_Lv3Image',
+    'Asn_Lv3ImageBackground',
     'Asn_Lv3SpecAux',
     'Asn_Lv3MIRMRS',
     'Asn_Lv3MIRMRSBackground',
@@ -222,6 +223,13 @@ class Asn_Lv3Image(AsnMixin_Science):
                 required=False
             ),
             Constraint(
+                [DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+                )], reduce=Constraint.notany
+            ),
+            Constraint(
                 [Constraint_TSO()],
                 reduce=Constraint.notany
             )
@@ -235,6 +243,53 @@ class Asn_Lv3Image(AsnMixin_Science):
 
         self.data['asn_type'] = 'image3'
         super(Asn_Lv3Image, self)._init_hook(item)
+
+
+@RegistryMarker.rule
+class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
+    """Level 3 Background Image Association
+
+    Characteristics:
+        - Association type: ``image3``
+        - Pipeline: ``calwebb_image3``
+        - Non-TSO
+        - Non-WFS&C
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            Constraint_Target(association=self),
+            Constraint_Image(),
+            DMSAttrConstraint(
+                name='wfsvisit',
+                sources=['visitype'],
+                value='((?!wfsc).)*',
+                required=False
+            ),
+            Constraint(
+                [DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+                )],
+            ),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv3ImageBackground, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Lv3ImageBackground, self)._init_hook(item)
 
 
 @RegistryMarker.rule
