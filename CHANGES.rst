@@ -84,6 +84,11 @@ skymatch
 
 - Reduced memory usage when input is an ASN. [#6874]
 
+source_catalog
+--------------
+
+- Fix bug in passing filename rather than datamodel [#6889]
+
 straylight
 ----------
 
