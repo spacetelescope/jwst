@@ -131,13 +131,13 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     # Convert the sum to an average, for surface brightness.
     surf_bright = temp_flux / npixels_temp
-    sb_var_poisson = f_var_poisson / npixels_temp
-    sb_var_rnoise = f_var_rnoise / npixels_temp
-    sb_var_flat = f_var_flat / npixels_temp
+    sb_var_poisson = f_var_poisson / npixels_temp / npixels_temp
+    sb_var_rnoise = f_var_rnoise / npixels_temp / npixels_temp
+    sb_var_flat = f_var_flat / npixels_temp / npixels_temp
     background /= npixels_bkg_temp
-    b_var_poisson /= npixels_bkg_temp
-    b_var_rnoise /= npixels_bkg_temp
-    b_var_flat /= npixels_bkg_temp
+    b_var_poisson /= npixels_bkg_temp / npixels_temp
+    b_var_rnoise /= npixels_bkg_temp / npixels_temp
+    b_var_flat /= npixels_bkg_temp / npixels_temp
 
     del npixels_temp
     del npixels_bkg_temp
