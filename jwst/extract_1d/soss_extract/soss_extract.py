@@ -1030,17 +1030,37 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     all_tracemodels = dict()
     all_box_weights = dict()
 
-    # Extract depending on the type of datamodels (Image or Cube)
+    # Convert to Cube if datamodels is an ImageModel
     if isinstance(input_model, datamodels.ImageModel):
 
+        cube_model = datamodels.CubeModel(shape=(1, *input_model.shape))
+        cube_model.data = input_model.data[None, :, :]
+        cube_model.err = input_model.err[None, :, :]
+        cube_model.dq = input_model.dq[None, :, :]
+        nimages = 1
         log.info('Input is an ImageModel, processing a single integration.')
+        
+    elif isinstance(input_model, datamodels.CubeModel):
 
-        # Received a single 2D image; set dtype to float64 and convert DQ to boolean mask.
-        scidata = input_model.data.astype('float64')
-        scierr = input_model.err.astype('float64')
-        scimask = input_model.dq > 0  # Mask bad pixels with True.
-        refmask = bitfield_to_boolean_mask(input_model.dq,
-                                           ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
+        cube_model = input_model
+        nimages = len(cube_model.data)
+        log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
+        
+    else:
+        msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
+        log.critical(msg)
+        raise ValueError(msg)
+
+    # Loop over images.
+    for i in range(nimages):
+
+        log.info('Processing integration {} of {}.'.format(i + 1, nimages))
+
+        # Unpack the i-th image, set dtype to float64 and convert DQ to boolean mask.
+        scidata = cube_model.data[i].astype('float64')
+        scierr = cube_model.err[i].astype('float64')
+        scimask = np.bitwise_and(cube_model.dq[i], dqflags.pixel['DO_NOT_USE']).astype(bool)
+        refmask = bitfield_to_boolean_mask(cube_model.dq[i], ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
                                            flip_bits=True)
 
         # Make sure there aren't any nans not flagged in scimask
@@ -1050,7 +1070,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                         'are not flagged correctly in the dq map. '
                         'They will be masked for the following procedure.')
             scimask |= not_finite
-            refmask |= not_finite
+            refmask &= ~not_finite
 
         # Perform background correction.
         if soss_kwargs['subtract_background']:
@@ -1097,7 +1117,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         box_weights, wavelengths = compute_box_weights(*args, width=soss_kwargs['width'])
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
-        if soss_filter == 'CLEAR':
+        if soss_filter == 'CLEAR' and generate_model:
 
             # Model the image.
             kwargs = dict()
@@ -1113,23 +1133,30 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                                  ref_files, box_weights, subarray, **kwargs)
             tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'], spec_list = result
 
-        else:
+            # Add atoca spectra to multispec for output
+            for spec in spec_list:
+                # If it was a test, not the best spectrum,
+                # int_num is already set to 0.
+                if not hasattr(spec, 'int_num'):
+                    spec.int_num = i + 1
+                output_atoca.spec.append(spec)
+
+        elif soss_filter != 'CLEAR' and generate_model:
             # No model can be fit for F277W yet, missing throughput reference files.
             msg = f"No extraction possible for filter {soss_filter}."
             log.critical(msg)
             raise ValueError(msg)
+        else:
+            # Return empty tracemodels and no spec_list
+            tracemodels = dict()
+            spec_list = None
 
-        # Add atoca spectra to multispec for output
-        for spec in spec_list:
-            if not hasattr(spec, 'int_num'):
-                spec.int_num = 1  # Only one integration
-            output_atoca.spec.append(spec)
-
-        # Decontaminate the data using trace models
-        decontaminated_data = decontaminate_image(scidata_bkg, tracemodels, subarray)
+        # Decontaminate the data using trace models (if tracemodels not empty)
+        data_to_extract = decontaminate_image(scidata_bkg, tracemodels, subarray)
 
         if soss_kwargs['bad_pix'] == 'model':
-            # Use the same tracemodels to model bad pixels
+            # Generate new trace models for each individual decontaminated orders
+            # TODO: Use the sum of tracemodels so it can be applied even w/o decontamination
             bad_pix_models = tracemodels
         else:
             bad_pix_models = None
@@ -1138,21 +1165,27 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         kwargs = dict()
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
         kwargs['tracemodels'] = bad_pix_models
-        result = extract_image(decontaminated_data, scierr, scimask, box_weights, **kwargs)
+        result = extract_image(data_to_extract, scierr, scimask, box_weights, **kwargs)
         fluxes, fluxerrs, npixels = result
 
         # Save trace models for output reference
         for order in tracemodels:
+            # Initialize a list for first integration
+            if i == 0:
+                all_tracemodels[order] = []
             # Put NaNs to zero
+            # TODO Save to Nans or zeros and mark bad pixels in the apertures instead?
             model_ord = tracemodels[order]
             model_ord = np.where(np.isfinite(model_ord), model_ord, 0.)
             # Save as a list (convert to array at the end)
-            all_tracemodels[order] = [model_ord]
+            all_tracemodels[order].append(model_ord)
 
         # Save box weights for output reference
         for order in box_weights:
-            # Save as a list (convert to array at the end)
-            all_box_weights[order] = [box_weights[order]]
+            # Initialize a list for first integration
+            if i == 0:
+                all_box_weights[order] = []
+            all_box_weights[order].append(box_weights[order])
 
         # Copy spectral data for each order into the output model.
         for order in fluxes.keys():
@@ -1171,197 +1204,20 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
             # Add integration number and spectral order
             spec.spectral_order = order_str_2_int[order]
+            spec.int_num = i + 1  # integration number starts at 1, not 0 like python
 
             output_model.spec.append(spec)
 
         output_model.meta.soss_extract1d.width = soss_kwargs['width']
+        output_model.meta.soss_extract1d.apply_decontamination = apply_decontamination
         output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
         output_model.meta.soss_extract1d.delta_x = transform[1]
         output_model.meta.soss_extract1d.delta_y = transform[2]
         output_model.meta.soss_extract1d.theta = transform[0]
         output_model.meta.soss_extract1d.oversampling = soss_kwargs['n_os']
         output_model.meta.soss_extract1d.threshold = soss_kwargs['threshold']
+        output_model.meta.soss_extract1d.bad_pix = soss_kwargs['bad_pix']
 
-    elif isinstance(input_model, datamodels.CubeModel):
-
-        nimages = len(input_model.data)
-
-        log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
-
-        # Loop over images.
-        for i in range(nimages):
-
-            log.info('Processing integration {} of {}.'.format(i + 1, nimages))
-
-            # Unpack the i-th image, set dtype to float64 and convert DQ to boolean mask.
-            scidata = input_model.data[i].astype('float64')
-            scierr = input_model.err[i].astype('float64')
-            scimask = np.bitwise_and(input_model.dq[i], dqflags.pixel['DO_NOT_USE']).astype(bool)
-            refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=dqflags.pixel['REFERENCE_PIXEL'],
-                                               flip_bits=True)
-
-            # Make sure there aren't any nans not flagged in scimask
-            not_finite = ~(np.isfinite(scidata) & np.isfinite(scierr))
-            if (not_finite & ~scimask).any():
-                log.warning('Input contains invalid values that '
-                            'are not flagged correctly in the dq map. '
-                            'They will be masked for the following procedure.')
-                scimask |= not_finite
-                refmask &= ~not_finite
-
-            # Perform background correction.
-            if soss_kwargs['subtract_background']:
-                bkg_mask = make_background_mask(scidata, width=40)
-                scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
-            else:
-                scidata_bkg = scidata
-                col_bkg = np.zeros(scidata.shape[1])
-
-            # Determine the theta, dx, dy transform needed to match scidata trace position to ref file position.
-            if None in transform:
-                log.info('Solving for the transformation parameters.')
-
-                # Unpack the expected order 1 & 2 positions.
-                spectrace_ref = ref_files['spectrace']
-                xref_o1 = spectrace_ref.trace[0].data['X']
-                yref_o1 = spectrace_ref.trace[0].data['Y']
-                xref_o2 = spectrace_ref.trace[1].data['X']
-                yref_o2 = spectrace_ref.trace[1].data['Y']
-
-                # Define which parameters to fit
-                is_fitted = np.array([value is None for value in transform])
-                
-                # Show which parameters are fitted in log
-                log.info('Parameters used for fit: ' + ', '.join(param_name[is_fitted]))
-                log.info('Fixed parameters: ' + ', '.join(param_name[~is_fitted]))
-
-                # Use the solver on the background subtracted image.
-                if subarray == 'SUBSTRIP96' or soss_filter == 'F277W':
-                    # Use only order 1 to solve theta, dx, dy
-                    transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                                soss_filter=soss_filter, is_fitted=is_fitted,
-                                                guess_transform=transform)
-                else:
-                    transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1,
-                                                xref_o2, yref_o2, is_fitted=is_fitted,
-                                                soss_filter=soss_filter, guess_transform=transform)
-
-            string_list = [f'{name}={value}' for name, value in zip(param_name, transform)]
-            log.info('Measured to Reference trace position transform: ' + ', '.join(string_list))
-
-            # Pre-compute the weights for box extraction (used in modeling and extraction)
-            args = (ref_files, transform, subarray, scidata_bkg.shape)
-            box_weights, wavelengths = compute_box_weights(*args, width=soss_kwargs['width'])
-
-            # Model the traces based on optics filter configuration (CLEAR or F277W)
-            if soss_filter == 'CLEAR' and generate_model:
-
-                # Model the image.
-                kwargs = dict()
-                kwargs['transform'] = transform
-                kwargs['tikfac'] = soss_kwargs['tikfac']
-                kwargs['max_grid_size'] = soss_kwargs['max_grid_size']
-                kwargs['rtol'] = soss_kwargs['rtol']
-                kwargs['n_os'] = soss_kwargs['n_os']
-                kwargs['wave_grid'] = soss_kwargs['wave_grid']
-                kwargs['threshold'] = soss_kwargs['threshold']
-
-                result = model_image(scidata_bkg, scierr, scimask, refmask,
-                                     ref_files, box_weights, subarray, **kwargs)
-                tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'], spec_list = result
-
-                # Add atoca spectra to multispec for output
-                for spec in spec_list:
-                    # If it was a test, not the best spectrum,
-                    # int_num is already set to 0.
-                    if not hasattr(spec, 'int_num'):
-                        spec.int_num = i + 1
-                    output_atoca.spec.append(spec)
-
-            elif soss_filter != 'CLEAR' and generate_model:
-                # No model can be fit for F277W yet, missing throughput reference files.
-                msg = f"No extraction possible for filter {soss_filter}."
-                log.critical(msg)
-                raise ValueError(msg)
-            else:
-                # Return empty tracemodels and no spec_list
-                tracemodels = dict()
-                spec_list = None
-
-            # Decontaminate the data using trace models (if required)
-#             if apply_decontamination:
-            data_to_extract = decontaminate_image(scidata_bkg, tracemodels, subarray)
-#             else:
-#                 data_to_extract = scidata_bkg
-
-            if soss_kwargs['bad_pix'] == 'model':
-                # Generate new trace models for each individual decontaminated orders
-                # TODO: Use the sum of tracemodels so it can be applied even w/o decontamination
-                bad_pix_models = tracemodels
-            else:
-                bad_pix_models = None
-
-            # Use the bad pixel models to perform a de-contaminated extraction.
-            kwargs = dict()
-            kwargs['bad_pix'] = soss_kwargs['bad_pix']
-            kwargs['tracemodels'] = bad_pix_models
-            result = extract_image(data_to_extract, scierr, scimask, box_weights, **kwargs)
-            fluxes, fluxerrs, npixels = result
-
-            # Save trace models for output reference
-            for order in tracemodels:
-                # Initialize a list for first integration
-                if i == 0:
-                    all_tracemodels[order] = []
-                # Put NaNs to zero
-                # TODO Save to Nans or zeros and mark bad pixels in the apertures instead?
-                model_ord = tracemodels[order]
-                model_ord = np.where(np.isfinite(model_ord), model_ord, 0.)
-                # Save as a list (convert to array at the end)
-                all_tracemodels[order].append(model_ord)
-
-            # Save box weights for output reference
-            for order in box_weights:
-                # Initialize a list for first integration
-                if i == 0:
-                    all_box_weights[order] = []
-                all_box_weights[order].append(box_weights[order])
-
-            # Copy spectral data for each order into the output model.
-            for order in fluxes.keys():
-
-                table_size = len(wavelengths[order])
-
-                out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
-                out_table['WAVELENGTH'] = wavelengths[order]
-                out_table['FLUX'] = fluxes[order]
-                out_table['FLUX_ERROR'] = fluxerrs[order]
-                out_table['DQ'] = np.zeros(table_size)
-                out_table['BACKGROUND'] = col_bkg
-                out_table['NPIXELS'] = npixels[order]
-
-                spec = datamodels.SpecModel(spec_table=out_table)
-
-                # Add integration number and spectral order
-                spec.spectral_order = order_str_2_int[order]
-                spec.int_num = i + 1  # integration number starts at 1, not 0 like python
-
-                output_model.spec.append(spec)
-
-            output_model.meta.soss_extract1d.width = soss_kwargs['width']
-            output_model.meta.soss_extract1d.apply_decontamination = apply_decontamination
-            output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
-            output_model.meta.soss_extract1d.delta_x = transform[1]
-            output_model.meta.soss_extract1d.delta_y = transform[2]
-            output_model.meta.soss_extract1d.theta = transform[0]
-            output_model.meta.soss_extract1d.oversampling = soss_kwargs['n_os']
-            output_model.meta.soss_extract1d.threshold = soss_kwargs['threshold']
-            output_model.meta.soss_extract1d.bad_pix = soss_kwargs['bad_pix']
-
-    else:
-        msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
-        log.critical(msg)
-        raise ValueError(msg)
 
     # Save output references
     for order in all_tracemodels:
