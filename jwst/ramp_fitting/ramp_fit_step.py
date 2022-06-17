@@ -256,7 +256,8 @@ class RampFitStep(Step):
             )
         '''
 
-        if image_info is not None:
+        out_model, int_model = None, None
+        if image_info is not None and integ_info is not None:
             out_model = create_image_model(input_model, image_info)
             out_model.meta.bunit_data = 'DN/s'
             out_model.meta.bunit_err = 'DN/s'
@@ -267,8 +268,7 @@ class RampFitStep(Step):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-        if integ_info is not None:
-            int_model = create_integration_model(input_model, integ_info, int_times)
+            int_model = create_integration_model(input_model, integ_info)
             int_model.meta.bunit_data = 'DN/s'
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'

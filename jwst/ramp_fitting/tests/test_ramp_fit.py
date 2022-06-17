@@ -746,32 +746,8 @@ def test_miri_all_sat():
     image_info, integ_info, opt_info, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
 
-    # Check PRI output arrays
-    data, dq, var_poisson, var_rnoise, err = image_info
-    np.testing.assert_allclose(data, 0.0, atol=1E-6)
-    np.testing.assert_allclose(err, 0.0, atol=1E-6)
-    np.testing.assert_allclose(var_poisson, 0.0, atol=1E-6)
-    np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)
-
-    # Check INT output arrays
-    data, dq, var_poisson, var_rnoise, err = integ_info
-    np.testing.assert_allclose(data, 0.0, atol=1E-6)
-    np.testing.assert_allclose(err, 0.0, atol=1E-6)
-    np.testing.assert_allclose(var_poisson, 0.0, atol=1E-6)
-    np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)
-
-    # Check OPT output arrays
-    (slope, sigslope, var_poisson, var_rnoise,
-        yint, sigyint, pedestal, weights, crmag) = opt_info
-
-    np.testing.assert_allclose(slope, 0.0, atol=1E-6)
-    np.testing.assert_allclose(var_poisson, 0.0, atol=1E-6)
-    np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)
-    np.testing.assert_allclose(sigslope, 0.0, atol=1E-6)
-    np.testing.assert_allclose(yint, 0.0, atol=1E-6)
-    np.testing.assert_allclose(sigyint, 0.0, atol=1E-6)
-    np.testing.assert_allclose(pedestal, 0.0, atol=1E-6)
-    np.testing.assert_allclose(weights, 0.0, atol=1E-6)
+    assert image_info is None
+    assert integ_info is None
 
 
 def test_miri_first_last():
