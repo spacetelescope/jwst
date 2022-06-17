@@ -48,7 +48,7 @@ extract_1d
   input CubeModels), and another for bad DataModel input type [#6877]
 
 - Fix variance propagation for IFU cube extraction in calculations of surface
-  brightness []
+  brightness [#6892]
 
 flatfield
 ---------
