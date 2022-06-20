@@ -225,9 +225,9 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 | 1.4.2               | B7.9      | 0797                       | 0798                       | 2022-01-20 | Final release candidate for B7.9            |
 | 1.4.1               | B7.9rc2   | 0797                       | 0798                       | 2022-01-15 | Second release candidate for B7.9           |
 | 1.4.0               | B7.9rc1   | 0797                       | 0798                       | 2022-01-10 | First release candidate for B7.9            |
+| Pre-launch releases |           |                            |                            |            |                                             |
 | 1.3.3               | B7.8.2    | 0764                       | 0764**                     | 2021-10-05 | Same as 1.3.2, but with installation bug fix |
 | 1.3.2               | B7.8.2    | 0764                       | 0764                       | 2021-09-03 | Final release candidate for B7.8.2          |
-| Pre-launch releases |           |                            |                            |            |                                             |
 | 1.3.1               | B7.8.1    | 0742                       | 0742                       | 2021-08-09 | Final release candidate for B7.8.1          |
 | 1.3.0               | B7.8.1rc1 | 0741                       | 0741                       | 2021-08-02 | First release candidate for B7.8.1          |
 | 1.2.3               | B7.8      | 0732                       | 0732                       | 2021-06-08 | Final release candidate for B7.8            |
