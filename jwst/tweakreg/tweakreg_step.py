@@ -208,6 +208,20 @@ class TweakRegStep(Step):
                     model.meta.cal_step.tweakreg = "SKIPPED"
                 return images
 
+        except RuntimeError as e:
+            msg = e.args[0]
+            if msg.startswith("Number of output coordinates exceeded allocation"):
+                # we need at least two exposures to perform image alignment
+                self.log.error(msg)
+                self.log.error("Multiple sources within specified tolerance "
+                               "matched to a single reference source. Try to "
+                               "adjust 'tolerance' and/or 'separation' parameters.")
+                self.log.warning("Skipping 'TweakRegStep'...")
+                self.skip = True
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images
+
             else:
                 raise e
 

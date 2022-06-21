@@ -1,6 +1,12 @@
 1.5.4 (unreleased)
 ==================
 
+tweakreg
+--------
+
+Added check for multiple matches to a single reference source and skip
+``tweakreg`` step when this happens. [#6896]
+
 
 1.5.3 (2022-06-20)
 ==================
