@@ -214,10 +214,10 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag            | DMS build | CRDS_CONTEXT<br>(JWST OPS) | CRDS_CONTEXT<br>(JWST PUB) | Date       | Notes                                       |
 |---------------------|-----------|----------------------------|----------------------------|------------|---------------------------------------------|
-| 1.5.3               | B8.0.1    | N/A                        | 0850                       | 2022-06-20 | First patch release for B8.0                |
-| 1.5.2               | B8.0      | N/A                        | 0850                       | 2022-05-20 | Final release candidate for B8.0            |
-| 1.5.1               | B8.0rc2   | N/A                        | 0850                       | 2022-05-17 | Second release candidate for B8.0           |
-| 1.5.0               | B8.0rc1   | N/A                        | 0850                       | 2022-05-05 | First release candidate for B8.0            |
+| 1.5.3               | B8.0.1    | N/A                        | 0875                       | 2022-06-20 | First patch release for B8.0                |
+| 1.5.2               | B8.0      | 874                        | 0850                       | 2022-05-20 | Final release candidate for B8.0            |
+| 1.5.1               | B8.0rc2   | 874                        | 0850                       | 2022-05-17 | Second release candidate for B8.0           |
+| 1.5.0               | B8.0rc1   | 874                        | 0850                       | 2022-05-05 | First release candidate for B8.0            |
 | 1.4.6               | B7.9.3    | 0800                       | 0801                       | 2022-03-25 | Final release candidate for B7.9.3          |
 | 1.4.5               | B7.9.3rc2 | 0800                       | 0801                       | 2022-03-23 | Second release candidate for B7.9.3         |
 | 1.4.4               | B7.9.3rc1 | 0800                       | 0801                       | 2022-03-16 | First release candidate for B7.9.3          |
