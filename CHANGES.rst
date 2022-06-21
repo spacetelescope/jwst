@@ -1,6 +1,11 @@
 1.5.4 (unreleased)
 ==================
 
+skymatch
+--------
+
+- Fixed a couple errors in the step documentation. [#6891]
+
 
 1.5.3 (2022-06-20)
 ==================
