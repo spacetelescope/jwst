@@ -1,12 +1,16 @@
 1.5.4 (unreleased)
 ==================
 
+skymatch
+--------
+
+- Fixed a couple errors in the step documentation. [#6891]
+
 tweakreg
 --------
 
-Added check for multiple matches to a single reference source and skip
-``tweakreg`` step when this happens. [#6896]
-
+- Added check for multiple matches to a single reference source and skip
+  ``tweakreg`` step when this happens. [#6896]
 
 1.5.3 (2022-06-20)
 ==================
