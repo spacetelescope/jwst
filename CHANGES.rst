@@ -1,12 +1,34 @@
-1.5.3 (unreleased)
+1.5.4 (unreleased)
 ==================
 
+associations
+------------
+
+- Add finalization for level 3 group association candidates to require
+  more than one observation amongst member entries [#6886]
+
+skymatch
+--------
+
+- Fixed a couple errors in the step documentation. [#6891]
+
+tweakreg
+--------
+
+- Added check for multiple matches to a single reference source and skip
+  ``tweakreg`` step when this happens. [#6896, #6898]
+
+1.5.3 (2022-06-20)
+==================
 
 ami_analyze
 -----------
 
 - Fixed the creation of the output product so that it no longer contains
   an empty "SCI" extension. [#6870]
+
+- Updated the step docs to include information about all of the available
+  step arguments. [#6884]
 
 ami_average
 -----------
@@ -18,8 +40,14 @@ ami_average
 associations
 ------------
 
-- Add finalization for level 3 group association candidates to require
-  more than one observation amongst member entries [#6886]
+- Create level 3 association for background images, and allow background
+  target observations into level 2 image associations for background
+  subtraction [#6878]
+
+cube_build
+----------
+
+- Fixed bug in selecting correct values to extract from the cube pars reference file. [#6885]
 
 datamodels
 ----------
@@ -44,6 +72,15 @@ extract_1d
 - Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
   ImageModel uses the F277W filter (similar to #6840, which only dealt with
   input CubeModels), and another for bad DataModel input type [#6877]
+
+- Fix variance propagation for IFU cube extraction in calculations of surface
+  brightness [#6892]
+
+flatfield
+---------
+
+- Set DO_NOT_USE DQ bit in flatfield if NO_FLAT_FIELD DQ bit is set in flat
+  reference file [#6882]
 
 pipeline
 --------
@@ -75,6 +112,11 @@ skymatch
 --------
 
 - Reduced memory usage when input is an ASN. [#6874]
+
+source_catalog
+--------------
+
+- Fix bug in passing filename rather than datamodel [#6889]
 
 straylight
 ----------

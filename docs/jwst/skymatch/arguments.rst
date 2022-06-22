@@ -34,8 +34,8 @@ The ``skymatch`` step uses the following optional arguments:
 
 ``skystat`` (str, default='mode')
   Statistic to be used for sky background
-  computations. Supported values are 'mean', 'mode', 'midpt',
-  and 'median'.
+  computations. Supported values are: `mean`, `mode`, `midpt`,
+  and `median`.
 
 ``dqbits`` (str, default='~DO_NOT_USE+NON_SCIENCE')
   The DQ bit values from the input images' DQ arrays that
