@@ -86,6 +86,9 @@ LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 # Association Candidates that should never make Level3 associations
 INVALID_AC_TYPES = ['background']
 
+# Association Candidates that should have more than one observations
+MULTI_OBS_AC_TYPES = ['group']
+
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
@@ -477,21 +480,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         is_valid : bool
         """
         return self.acid.type.lower() not in INVALID_AC_TYPES
-
-    def finalize(self):
-        if self.acid.type.lower() == 'group':
-            if len(self.current_product['members']):
-                try:
-                    # Janky extraction of obs_num from filenames
-                    # This assumes default OPS naming structure
-                    obs_list = set([int(m['expname'][7:10]) for m in self.current_product['members']])
-                    if len(obs_list) <= 1:
-                        return
-                except ValueError:
-                    # If extracting obs_num from filename fails, assume exclusion
-                    # of group candidates not important for this user
-                    pass
-        return super(DMS_Level3_Base, self).finalize()
 
 
 @RegistryMarker.utility
@@ -936,6 +924,13 @@ class AsnMixin_Science(DMS_Level3_Base):
         )
 
         super(AsnMixin_Science, self).__init__(*args, **kwargs)
+
+    def finalize(self):
+        if self.acid.type.lower() in MULTI_OBS_AC_TYPES:
+            if len(self.constraints['obs_num'].found_values) <= 1:
+                return
+
+        return super(AsnMixin_Science, self).finalize()
 
 
 class AsnMixin_Spectrum(AsnMixin_Science):
