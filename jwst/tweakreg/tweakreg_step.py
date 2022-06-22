@@ -207,6 +207,8 @@ class TweakRegStep(Step):
                 for model in images:
                     model.meta.cal_step.tweakreg = "SKIPPED"
                 return images
+            else:
+                raise e
 
         except RuntimeError as e:
             msg = e.args[0]
@@ -221,7 +223,6 @@ class TweakRegStep(Step):
                 for model in images:
                     model.meta.cal_step.tweakreg = "SKIPPED"
                 return images
-
             else:
                 raise e
 

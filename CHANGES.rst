@@ -10,7 +10,7 @@ tweakreg
 --------
 
 - Added check for multiple matches to a single reference source and skip
-  ``tweakreg`` step when this happens. [#6896]
+  ``tweakreg`` step when this happens. [#6896, #6898]
 
 1.5.3 (2022-06-20)
 ==================
