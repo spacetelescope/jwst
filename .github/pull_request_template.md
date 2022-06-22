@@ -9,8 +9,8 @@ Closes #
 This PR addresses ...
 
 **Checklist**
-- [ ] added entry in `CHANGES.rst` under the corresponding subsection
-- [ ] updated relevant tests
+- [ ] added entry in `CHANGES.rst` within the relevant release section
+- [ ] updated or added relevant tests
 - [ ] updated relevant documentation
-- [ ] updated relevant milestone(s)
+- [ ] added relevant milestone
 - [ ] added relevant label(s)
