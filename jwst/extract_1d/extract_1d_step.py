@@ -124,7 +124,7 @@ class Extract1dStep(Step):
     soss_transform = list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
     soss_tikfac = float(default=None)  # regularization factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
-    soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
+    soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 

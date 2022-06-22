@@ -1074,9 +1074,11 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
 
         # Perform background correction.
         if soss_kwargs['subtract_background']:
+            log.info('Applying background subtraction.')
             bkg_mask = make_background_mask(scidata, width=40)
             scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
         else:
+            log.info('Skip background subtraction.')
             scidata_bkg = scidata
             col_bkg = np.zeros(scidata.shape[1])
 
