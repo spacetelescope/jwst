@@ -10,7 +10,9 @@ straylight
 ramp_fitting
 ------------
 
-- Fixed multirpocessing error by handling ``int_times`` entirely in step code. [#6880]
+- Fixed multirpocessing error by removing ``int_times`` entirely in step code.
+  Also, in order to work better with multiprocessing changed the way one group
+  suppression gets handled and changed the location ZEROFRAME gets handled. [#6880]
 
 resample
 --------
