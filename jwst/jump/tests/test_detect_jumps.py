@@ -859,6 +859,166 @@ def test_adjacent_CRs(setup_inputs):
 # Need test for multi-ints near zero with positive and negative slopes
 
 
+def test_cr_neighbor_sat_flagging(setup_inputs):
+    """"
+    For pixels impacted by cosmic rays, neighboring pixels that are not
+    already flagged as saturated will also be flagged as JUMP_DET. If a
+    neigboring pixel has been flagged as saturated, it should not also be
+    flagged as JUMP_DET.  This test checks if both of those types of
+    neighboring pixels are correctly flagged, and tests more cases than
+    covered by the tests test_nirspec_saturated_pix() and
+    test_crs_on_edge_with_neighbor_flagging().
+    """
+    SAT_SCI = 1E4  # dummy saturation level
+
+    grouptime = 3.0
+    ingain = 200
+    inreadnoise = 7.0
+    ngroups = 8
+    model, rnoise, gain = setup_inputs(ngroups=ngroups, gain=ingain, nrows=6,
+                                       ncols=7, readnoise=inreadnoise,
+                                       deltatime=grouptime)
+
+    # Construct ramps with cosmic rays having some neighboring SAT pixels:
+    # CR (A): group 2, in corner
+    model.data[0, 0, 0, 0] = 15.0
+    model.data[0, 1, 0, 0] = 20.0
+    model.data[0, 2, 0, 0] = 120.0
+    model.data[0, 3, 0, 0] = 125.0
+    model.data[0, 4, 0, 0] = 130.0
+    model.data[0, 5, 0, 0] = 135.0
+    model.data[0, 6, 0, 0] = 140.0
+    model.data[0, 7, 0, 0] = 145.0
+    # ... and set 1 of the 2 neighbors to SAT, and adjust its ramp
+    model.groupdq[0, 2:, 0, 1] = SATURATED
+    model.data[0, 2:, 0, 1] = SAT_SCI
+
+    # CR (B): group 2, not on edge
+    model.data[0, 0, 1, 4] = 30.0
+    model.data[0, 1, 1, 4] = 40.0
+    model.data[0, 2, 1, 4] = 160.0
+    model.data[0, 3, 1, 4] = 165.0
+    model.data[0, 4, 1, 4] = 170.0
+    model.data[0, 5, 1, 4] = 175.0
+    model.data[0, 6, 1, 4] = 180.0
+    model.data[0, 7, 1, 4] = 185.0
+    # ... and set 2 of the 4 neighbors to SAT, and adjust their ramps
+    model.groupdq[0, 2:, 0, 4] = SATURATED
+    model.groupdq[0, 2:, 1, 3] = SATURATED
+    model.data[0, 2:, 0, 4] = SAT_SCI
+    model.data[0, 2:, 1, 3] = SAT_SCI
+
+    # CR (C): group 2, on edge
+    model.data[0, 0, 4, 0] = 20.0
+    model.data[0, 1, 4, 0] = 35.0
+    model.data[0, 2, 4, 0] = 260.0
+    model.data[0, 3, 4, 0] = 275.0
+    model.data[0, 4, 4, 0] = 295.0
+    model.data[0, 5, 4, 0] = 310.0
+    model.data[0, 6, 4, 0] = 325.0
+    model.data[0, 7, 4, 0] = 340.0
+    # ... and set 1 of the 3 neighbors to SAT, and adjust its ramp
+    model.groupdq[0, 2:, 3, 0] = SATURATED
+    model.data[0, 2:, 3, 0] = SAT_SCI
+
+    # CR (D): group 2, not on edge
+    model.data[0, 0, 4, 5] = 60.0
+    model.data[0, 1, 4, 5] = 75.0
+    model.data[0, 2, 4, 5] = 160.0
+    model.data[0, 3, 4, 5] = 175.0
+    model.data[0, 4, 4, 5] = 195.0
+    model.data[0, 5, 4, 5] = 210.0
+    model.data[0, 6, 4, 5] = 225.0
+    model.data[0, 7, 4, 5] = 240.0
+    # ... and set 2 of the 4 neighbors to SAT, and adjust their ramps
+    model.groupdq[0, 2:, 4, 4] = SATURATED
+    model.groupdq[0, 2:, 4, 6] = SATURATED
+    model.data[0, 2:, 4, 4] = SAT_SCI
+    model.data[0, 2:, 4, 6] = SAT_SCI
+
+    # CR (E): group 4, not on edge
+    model.data[0, 0, 2, 5] = 20.0
+    model.data[0, 1, 2, 5] = 25.0
+    model.data[0, 2, 2, 5] = 31.0
+    model.data[0, 3, 2, 5] = 36.0
+    model.data[0, 4, 2, 5] = 190.0
+    model.data[0, 5, 2, 5] = 196.0
+    model.data[0, 6, 2, 5] = 201.0
+    model.data[0, 7, 2, 5] = 207.0
+    # ... and set 2 of the 4 neighbors to SAT, and adjust their ramps
+    model.groupdq[0, 4:, 1, 5] = SATURATED
+    model.groupdq[0, 4:, 3, 5] = SATURATED
+    model.data[0, 4:, 1, 5] = SAT_SCI
+    model.data[0, 4:, 3, 5] = SAT_SCI
+
+    # CR (F): group 4, on edge
+    model.data[0, 0, 5, 2] = 50.0
+    model.data[0, 1, 5, 2] = 55.0
+    model.data[0, 2, 5, 2] = 61.0
+    model.data[0, 3, 5, 2] = 66.0
+    model.data[0, 4, 5, 2] = 290.0
+    model.data[0, 5, 5, 2] = 296.0
+    model.data[0, 6, 5, 2] = 301.0
+    model.data[0, 7, 5, 2] = 307.0
+    # ... and set 1 of the 3 neighbors to SAT, and adjust its ramp
+    model.groupdq[0, 4:, 5, 1] = SATURATED
+    model.data[0, 4:, 5, 1] = SAT_SCI
+
+    out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
+    dq_out = out_model.groupdq
+
+    # Do assertions for each cosmic ray and its neighbors
+    # CR (A):
+    # Check the CR-impacted pixel and non-SAT neighbor
+    assert dq_out[0, 2, 0, 0] == JUMP_DET
+    assert dq_out[0, 2, 1, 0] == JUMP_DET
+    # Check the SAT neighbor
+    assert dq_out[0, 2, 0, 1] == SATURATED
+
+    # CR (B):
+    # Check the CR-impacted pixel and 2 non-SAT neighbors
+    assert dq_out[0, 2, 1, 4] == JUMP_DET
+    assert dq_out[0, 2, 1, 5] == JUMP_DET
+    assert dq_out[0, 2, 2, 4] == JUMP_DET
+    # Check the 2 SAT neighbors
+    assert dq_out[0, 2, 0, 4] == SATURATED
+    assert dq_out[0, 2, 1, 3] == SATURATED
+
+    # CR (C):
+    # Check the CR-impacted pixel and 2 non-SAT neighbors
+    assert dq_out[0, 2, 4, 0] == JUMP_DET
+    assert dq_out[0, 2, 4, 1] == JUMP_DET
+    assert dq_out[0, 2, 5, 0] == JUMP_DET
+    # Check the SAT neighbor
+    assert dq_out[0, 2, 3, 0] == SATURATED
+
+    # CR (D):
+    # Check the CR-impacted pixel and 2 non-SAT neighbors
+    assert dq_out[0, 2, 4, 5] == JUMP_DET
+    assert dq_out[0, 2, 3, 5] == JUMP_DET
+    assert dq_out[0, 2, 5, 5] == JUMP_DET
+    # Check the 2 SAT neighbors
+    assert dq_out[0, 2, 4, 4] == SATURATED
+    assert dq_out[0, 2, 4, 6] == SATURATED
+
+    # CR (E):
+    # Check the CR-impacted pixel and 2 non-SAT neighbors
+    assert dq_out[0, 4, 2, 5] == JUMP_DET
+    assert dq_out[0, 4, 2, 4] == JUMP_DET
+    assert dq_out[0, 4, 2, 6] == JUMP_DET
+    # Check the 2 SAT neighbors
+    assert dq_out[0, 4, 1, 5] == SATURATED
+    assert dq_out[0, 4, 3, 5] == SATURATED
+
+    # CR (F):
+    # Check the CR-impacted pixel and 2 non-SAT neighbors
+    assert dq_out[0, 4, 5, 2] == JUMP_DET
+    assert dq_out[0, 4, 4, 2] == JUMP_DET
+    assert dq_out[0, 4, 5, 3] == JUMP_DET
+    # Check the 1 SAT neighbor
+    assert dq_out[0, 4, 5, 1] == SATURATED
+
+
 @pytest.fixture
 def setup_inputs():
     def _setup(ngroups=10, readnoise=10, nints=1, nrows=102, ncols=103,
