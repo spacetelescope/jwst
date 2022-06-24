@@ -3698,13 +3698,13 @@ def create_extraction(extract_ref_dict,
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
         surf_bright = temp_flux / npixels_temp  # may be reset below
-        sb_var_poisson = f_var_poisson / npixels_temp
-        sb_var_rnoise = f_var_rnoise / npixels_temp
-        sb_var_flat = f_var_flat / npixels_temp
+        sb_var_poisson = f_var_poisson / npixels_temp / npixels_temp
+        sb_var_rnoise = f_var_rnoise / npixels_temp / npixels_temp
+        sb_var_flat = f_var_flat / npixels_temp / npixels_temp
         background /= npixels_temp
-        b_var_poisson = b_var_poisson / npixels_temp
-        b_var_rnoise = b_var_rnoise / npixels_temp
-        b_var_flat = b_var_flat / npixels_temp
+        b_var_poisson = b_var_poisson / npixels_temp / npixels_temp
+        b_var_rnoise = b_var_rnoise / npixels_temp / npixels_temp
+        b_var_flat = b_var_flat / npixels_temp / npixels_temp
 
         del npixels_temp
 
@@ -3729,9 +3729,9 @@ def create_extraction(extract_ref_dict,
                 sb_var_rnoise[:] = 0.
                 sb_var_flat[:] = 0.
                 background[:] /= pixel_solid_angle  # MJy / sr
-                b_var_poisson /= pixel_solid_angle
-                b_var_rnoise /= pixel_solid_angle
-                b_var_flat /= pixel_solid_angle
+                b_var_poisson = b_var_poisson / pixel_solid_angle / pixel_solid_angle
+                b_var_rnoise = b_var_rnoise / pixel_solid_angle / pixel_solid_angle
+                b_var_flat = b_var_flat / pixel_solid_angle / pixel_solid_angle
             else:
                 flux = temp_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
                 f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
