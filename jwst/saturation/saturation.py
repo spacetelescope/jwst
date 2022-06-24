@@ -136,13 +136,14 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
         ref_sub_model.close()
 
     # For pixels flagged in reference file as NO_SAT_CHECK,
-    # set the saturation check threshold to the A-to-D converter limit.
-    sat_thresh[np.bitwise_and(sat_dq, NO_SAT_CHECK) == NO_SAT_CHECK] = ATOD_LIMIT
+    # set the saturation check threshold to above the A-to-D converter limit,
+    # so no pixels will ever be above that level and hence not get flagged.
+    sat_thresh[np.bitwise_and(sat_dq, NO_SAT_CHECK) == NO_SAT_CHECK] = ATOD_LIMIT + 1
 
-    # Also reset NaN values in the saturation threshold array to the
-    # A-to-D limit and flag them with NO_SAT_CHECK
+    # Also reset NaN values in the saturation threshold array to above
+    # the A-to-D limit and flag them with NO_SAT_CHECK
     sat_dq[np.isnan(sat_thresh)] |= NO_SAT_CHECK
-    sat_thresh[np.isnan(sat_thresh)] = ATOD_LIMIT
+    sat_thresh[np.isnan(sat_thresh)] = ATOD_LIMIT + 1
 
     flagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
     flaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
