@@ -1,0 +1,16 @@
+name: Ensure changelog
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, synchronize, reopened]
+
+jobs:
+  ensure_changelog:
+    name: Verify that a changelog entry exists for this pull request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - run: grep -P '\[[^\]]*#${{github.event.number}}[,\]]' CHANGES.rst
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-changelog-entry-needed') }}

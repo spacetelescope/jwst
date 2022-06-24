@@ -1260,15 +1260,7 @@ def calc_attitude_matrix(wcs, yangle, position):
     v3 = pos_rads[1]
 
     # Create the matrices
-    r1 = np.array([
-        [cos(ra) * cos(dec), sin(ra) * cos(dec), sin(dec)],
-        [(-sin(ra) * cos(yangle_ra)) + (cos(ra) * sin(dec) * sin(yangle_ra)),
-         (cos(ra) * cos(yangle_ra)) + (sin(ra) * sin(dec) * sin(yangle_ra)),
-         -cos(dec) * sin(yangle_ra)],
-        [(-sin(ra) * sin(yangle_ra)) - (cos(ra) * sin(dec) * cos(yangle_ra)),
-         (cos(ra) * sin(yangle_ra)) - (sin(ra) * sin(dec) * cos(yangle_ra)),
-         cos(dec) * cos(yangle_ra)]
-    ])
+    r1 = dcm(ra, dec, yangle_ra)
 
     r2 = np.array([
         [cos(v2) * cos(v3), -sin(v2), -cos(v2) * sin(v3)],
@@ -1514,20 +1506,7 @@ def calc_v2siaf_matrix(siaf):
     """
     v2, v3, v3idlyang, vparity = (siaf.v2_ref, siaf.v3_ref,
                                   siaf.v3yangle, siaf.vparity)
-    v2 *= A2R
-    v3 *= A2R
-    v3idlyang *= D2R
-
-    mat = np.array(
-        [[cos(v3) * cos(v2),
-          cos(v3) * sin(v2),
-          sin(v3)],
-         [-cos(v3idlyang) * sin(v2) + sin(v3idlyang) * sin(v3) * cos(v2),
-          cos(v3idlyang) * cos(v2) + sin(v3idlyang) * sin(v3) * sin(v2),
-          -sin(v3idlyang) * cos(v3)],
-         [-sin(v3idlyang) * sin(v2) - cos(v3idlyang) * sin(v3) * cos(v2),
-          sin(v3idlyang) * cos(v2) - cos(v3idlyang) * sin(v3) * sin(v2),
-          cos(v3idlyang) * cos(v3)]])
+    mat = dcm(v2 * A2R, v3 * A2R, v3idlyang * D2R)
     pmat = np.array([[0., vparity, 0.],
                      [0., 0., 1.],
                      [1., 0., 0.]])
@@ -2528,3 +2507,39 @@ def t_pars_from_model(model, **t_pars_kwargs):
     t_pars.pointing = pointing
 
     return t_pars
+
+
+def dcm(alpha, delta, angle):
+    """Construct the Direction Cosine Matrix (DCM)
+
+    Typical usage is passing of (RA, DEC, PositionAngle).
+    All values must be in radians.
+
+    Parameters
+    ----------
+    alpha : float
+        First coordinate in radians.
+
+    delta : float
+        Second coordinate in radians.
+
+    angle : float
+        Position angle in radians.
+
+    Returns
+    -------
+    dcm : nd.array((3, 3))
+        The 3x3 direction cosine matrix
+    """
+    dcm = np.array(
+        [[cos(delta) * cos(alpha),
+          cos(delta) * sin(alpha),
+          sin(delta)],
+         [-cos(angle) * sin(alpha) + sin(angle) * sin(delta) * cos(alpha),
+          cos(angle) * cos(alpha) + sin(angle) * sin(delta) * sin(alpha),
+          -sin(angle) * cos(delta)],
+         [-sin(angle) * sin(alpha) - cos(angle) * sin(delta) * cos(alpha),
+          sin(angle) * cos(alpha) - cos(angle) * sin(delta) * sin(alpha),
+          cos(angle) * cos(delta)]])
+
+    return dcm

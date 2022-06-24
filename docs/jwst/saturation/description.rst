@@ -28,9 +28,9 @@ group 7 is the first one to cross the saturation threshold for a given pixel,
 then groups 7 through 10 will all be flagged for that pixel.
 
 Pixels with thresholds set to NaN or flagged as "NO_SAT_CHECK" in the saturation
-reference file have their thresholds set to the 16-bit A-to-D converter limit
-of 65535 and hence will only be flagged as saturated if the pixel reaches that
-hard limit in at least one group. The "NO_SAT_CHECK" flag is propagated to the
+reference file have their thresholds set above the 16-bit A-to-D converter limit
+of 65535 and hence will never be flagged as saturated.
+The "NO_SAT_CHECK" flag is propagated to the
 PIXELDQ array in the output science data to indicate which pixels fall into
 this category.
 
@@ -78,6 +78,17 @@ extra entries for these pixels. The step-by-step process is as follows:
 - For each group in the input science data, set the "SATURATION" flag in the
   "GROUPDQ" array if the pixel value is greater than or equal to the saturation
   threshold from the reference file
+
+NIRCam Frame 0
+--------------
+If the input contains a frame zero data cube, the frame zero image for each
+integration is checked for saturation in the same way as the regular science data.
+This means doing the same comparison of pixel values in the frame zero image to
+the saturation thresholds defined in the saturation reference file. Because the
+frame zero does not carry its own Data Quality (DQ) information, pixels found to be
+above the saturation threshold are simply reset to a value of zero in the
+frame zero image itself. Subsequent calibration steps are setup to recognize
+these zero values as indicating that the data were saturated.
 
 Subarrays
 ---------

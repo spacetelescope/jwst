@@ -66,7 +66,7 @@ class SourceCatalogStep(Step):
                            self.aperture_ee3)
 
             try:
-                refdata = ReferenceData(input_model, reffile_paths,
+                refdata = ReferenceData(model, reffile_paths,
                                         aperture_ee)
                 aperture_params = refdata.aperture_params
                 abvega_offset = refdata.abvega_offset

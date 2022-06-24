@@ -52,8 +52,9 @@ class Image3Pipeline(Pipeline):
         """
         self.log.info('Starting calwebb_image3 ...')
 
-        # Only load science and background members from input ASN
-        asn_exptypes = ['science', 'background']
+        # Only load science members from input ASN;
+        # background and target-acq members are not needed.
+        asn_exptypes = ['science']
 
         # Configure settings for saving results files
         self.outlier_detection.suffix = 'crf'

@@ -41,7 +41,7 @@ def test_create(source, expected, use_pysiaf, jail_environ):
     'source, expected, use_pysiaf',
     [
         (None,
-         siafdb.SIAF(v2_ref=206.464, v3_ref=-697.97, v3yangle=-1.25081713, vparity=1,
+         siafdb.SIAF(v2_ref=206.407, v3_ref=-697.765, v3yangle=-1.24120427, vparity=1,
                      crpix1=1024.5, crpix2=1024.5, cdelt1=0.06839158, cdelt2=0.06993081,
                      vertices_idl=(-68.8543, 70.1233, 71.5697, -70.2482, 72.1764, 68.8086, -75.5918, -70.7457)),
          True),

@@ -52,7 +52,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
             sources).
 
         * **'global'** : compute a common sky value for all input images and
-          groups of images. With this setting `match` will compute
+          groups of images. With this setting `local` will compute
           sky values for each input image/group, find the minimum sky value,
           and then it will set (and/or subtract) the sky value of each input image
           to this minimum value. This method *may* be
@@ -396,7 +396,7 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
             old_img_sky = [im.sky for im in img]
             if do_skysub:
                 for im in img:
-                    im.image -= sky
+                    im._image.set_data(im._image.get_data() - sky)
             img.sky += sky
             new_img_sky = [im.sky for im in img]
 
@@ -420,7 +420,7 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
             # apply sky change:
             old_sky = img.sky
             if do_skysub:
-                img.image -= sky
+                img._image.set_data(img._image.get_data() - sky)
             img.sky += sky
             new_sky = img.sky
 

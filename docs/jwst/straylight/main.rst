@@ -2,72 +2,84 @@ Description
 ===========
 
 :Class: `jwst.straylight.StraylightStep`
-:Alias: refpix
+:Alias: straylight
 
 Assumption
 ----------
-The ``straylight`` correction is only valid for MIRI MRS channel 1 and 2 data.
-The step uses information in the REGIONS reference file about which pixels
-belong to a slice and which pixels are located in the slice gaps.
+The ``straylight`` correction is only valid for MIRI MRS data.
 
 Overview
 --------
-This routine removes stray light that may contaminate MIRI MRS channel 1/2
-spectra by interpolating the measured signal in the inter-slice
-regions of the detector. The inter-slice regions nominally should not receive
-light from the sky and therefore should serve as a good measure of the
-amount of stray light within the exposure.
+This routine removes contamination of MIRI MRS spectral data
+by the MIRI cross artifact feature produced by internal reflections
+within the detector arrays.  As discussed in depth for the MIRI Imager
+by A. Gáspár et al. 2021 (PASP, 133, 4504), the cross artifact manifests
+as a signal extending up to hundreds of pixels along the detector column and row directions from
+bright sources.  This signal has both smooth and structured components whose
+profiles vary as a function of wavelength.
+Although the peak intensity of the cross artifact is at
+most 1% of the source intensity in Channel 1 (decreasing toward longer wavelengths),
+the total integrated light in this feature can be of order 20% of the total light from a given source.
 
-The chief source of the MIRI MRS stray light appears to be caused
-by scattering in the optical components within the SMO. The stray light is
-manifested as a signal that extends in the detector row direction. Its
-magnitude is proportional to that of bright illuminated regions of the
-spectral image, at a ratio that falls with increasing wavelength,
-from about 1% in Channel 1A to undetectably low levels longward of Channel 2B.
-Two components of the stray light have been observed: a smooth and a structured
-distribution. 
+
+In the MIRI MRS, such a signal extending along detector rows is more disruptive
+than for the MIRI imager.
+Since the individual IFU slices are interleaved on the detector
+and staggered in wavelength from each other, the cross artifact signal thus contaminates
+non-local regions in reconstructed data cubes (both non-local on the sky and offset in wavelength
+space from bright emission lines).
+The purpose of this routine is thus to model the cross artifact feature in a given science exposure
+and subtract it at the detector level prior to reformatting
+the data into three-dimensional cubes.
+
 
 Algorithm
 ---------
-The basic idea of the stray light removal algorithm is to only deal with the 
-smooth component of the stray light. Due to the extended nature of the
-stray light we use the detected signal in the slice gaps, where nominally no photons
-should hit the detectors, and assume that all detected light is the stray light. 
-Using this measurement, we can interpolate the gap flux within the slice to
-estimate the amount of the stray light in the slice. 
+The basic idea of the cross artifact correction is to convolve a given science detector image with a
+kernel function that has been pre-calibrated based on observations
+of isolated sources and subtract the corresponding convolved image.
+As such, there are no free parameters in this step when applied to science data.
 
-There are two possible algorithms in the stray light step, both of which use the
-REGIONS reference file (20% throughput threshold) to define slice and inter-slice pixels.
-
-The first algorithm is a simplistic approach to deal with the stray light estimation row-by-row
-and interpolate the gap flux linearly. An intermediate stray light map is 
-generated row-by-row and then this map is further smoothed to remove row-by-row
-variations. 
-
-.. _msm_equations:
-
-Given the extended nature of the smooth component of the MRS stray light, it
-is obvious that a row-by-row handling of the stray light could be replaced
-by a two-dimensional approach, so that no additional smoothing is required.
-For the second algorithm we use the Modified Shepard's
-Method to interpolate the gap fluxes two dimensionally. This approach has the benefit
-of being more robust to outliers that can bias the first algorithm.  The stray light correction
-for each science pixel is based on the flux of the gap pixels with a "region of influence"
-from the science pixel. The algorithm takes each science pixel and determines the 
-amount of stray light :math:`s` to remove from the pixel by interpolating the fluxes
-:math:`p_i` measured by the gap pixels. The gap pixel flux is weighted by the distance
-:math:`d_i` between the science pixel and gap pixel. 
-The Modified Shepard’s Method uses this distance to weight the different contributors according
-the equations
+In Channel 1, the kernel function is based on engineering observations of isolated bright stars and
+consists of a broad low-amplitude Lorentzian function plus two pairs
+of double Gaussians.
+The low-amplitude Lorentzian describes the broad wings of the kernel, and typically
+has a FWHM of 100 pixels or more:
 
 .. math::
- s = \frac{ \sum_{i=1}^n p_i w_i}{\sum_{i=1}^n w_i}
+ f_{Lor} = \frac{A_{Lor} \gamma^2}{\gamma^2 + (x - x_0)^2}
 
-and
+where :math:`\gamma = FWHM/2` and :math:`x_0` is the column coordinate of a given pixel.
+
+The two double Gaussian functions describe the structured component of the profile,
+in which two peaks are seen on each side of a bright spectral trace on the detector.  The relative offsets of
+these Gaussians (:math:`dx`) are observed to be fixed with respect to each other, with the separation of
+the secondary Gaussian from the bright trace being double the separation of the first Gaussian and both
+increasing as a function of wavelength.  The widths of the Gaussians (:math:`\sigma`)
+are also tied, with the secondary Gaussian
+having double the width of the first.  The inner Gaussians are thus described by:
 
 .. math::
- w_i =\frac{ max(0,R-d_i)} {R d_i}^ k
+ f_{G1} = A_{G1} exp^{\frac{- (x-x_0-dx)^2}{2 \sigma^2}}
 
-The radius of influence :math:`R` and the exponent :math:`k` are variables that 
-can be adjusted to the actual problem. The default values for these parameters are
-:math:`R = 50` pixels and :math:`k = 1`.
+.. math::
+ f_{G3} = A_{G1} exp^{\frac{- (x-x_0+dx)^2}{2 \sigma^2}}
+
+while the outer Gaussians are described by:
+
+.. math::
+ f_{G2} = A_{G2} exp^{\frac{- (x-x_0-2 dx)^2}{8 \sigma^2}}
+
+.. math::
+ f_{G4} = A_{G2} exp^{\frac{- (x-x_0+2 dx)^2}{8 \sigma^2}}
+
+
+The best-fit parameters of these models derived from engineering data are recorded in the
+:ref:`MRSXARTCORR <mrsxartcorr_reffile>` reference file and applied in a pixelwise
+manner to the detector data.
+
+The kernel functions for Channels 2 and 3 rely upon engineering observations of bright extended sources,
+as the magnitude of the correction is typically too small to be visible from point sources.  These
+channels use only a Lorentzian kernel with the Gaussian amplitudes set to zero as such structured components are less
+obvious at these longer wavelengths.  In Channel 4 no correction appears to be necessary,
+and the amplitudes of all model components are set equal to zero.

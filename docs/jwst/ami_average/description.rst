@@ -8,8 +8,15 @@ The ``ami_average`` step is one of the AMI-specific steps in the ``ami``
 sub-package and is part of Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>` processing.
 It averages the results of LG processing from the
 :ref:`ami_analyze <ami_analyze_step>` step for multiple exposures of a given target.
-It computes a simple average for all 8 components of the "_ami" product files from all
+It computes a simple average for all 8 components of the "ami" product files from all
 input exposures.
+
+For a given association of exposures, the "ami" products created by the `ami_analyze`
+step may have `fit_image` and `resid_image` images that vary in size from one
+exposure to another. If this is the case, the smallest image size of all the input
+products is used for the averaged product and the averaged `fit_image` and
+`resid_image` images are created by trimming extra rows/columns from the edges of
+images that are larger.
 
 Arguments
 ---------
@@ -23,10 +30,10 @@ LG model parameters
 :Data model: `~jwst.datamodels.AmiLgModel`
 :File suffix: _ami
 
-The only input to the ``ami_average`` step is a list of one or more "_ami" files to be
+The only input to the ``ami_average`` step is a list of one or more "ami" files to be
 processed. These should be output files from the
 :ref:`ami_analyze <ami_analyze_step>` step. The input to the step must be in the form
-of a list of "_ami" **file names**. Passing data models or ASN files is not supported
+of a list of "ami" **file names**. Passing data models or ASN files is not supported
 at this time. Use the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline to conveniently
 process multiple inputs.
 

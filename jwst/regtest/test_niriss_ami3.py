@@ -21,6 +21,19 @@ def run_pipeline(jail, rtdata_module):
     return rtdata
 
 
+@pytest.fixture(scope="module")
+def run_pipeline2(jail, rtdata_module):
+    """Run calwebb_ami3 on NIRISS AMI data."""
+    rtdata = rtdata_module
+    rtdata.get_asn("niriss/ami/jw01093_c1000_short_ami3_asn.json")
+
+    # Run the calwebb_ami3 pipeline on the association
+    args = ["calwebb_ami3", rtdata.input]
+    Step.from_cmdline(args)
+
+    return rtdata
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["c1014_ami"])
 @pytest.mark.parametrize("exposure", ["022", "025"])
@@ -61,5 +74,19 @@ def test_ami_analyze_with_nans(rtdata, fitsdiff_default_kwargs):
     rtdata.output = 'jw00042004001_01101_00005_nis_withNAN_amianalyzestep.fits'
 
     rtdata.get_truth('truth/test_niriss_ami3/jw00042004001_01101_00005_nis_withNAN_amianalyzestep.fits')
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_ami_average_with_sizes(run_pipeline2, fitsdiff_default_kwargs):
+    """Test the AmiAverageStep with inputs of different sizes"""
+    rtdata = run_pipeline2
+
+    output = "jw01093-o007_result_short_amiavg.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_niriss_ami3/" + output)
+
+    fitsdiff_default_kwargs['atol'] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

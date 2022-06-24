@@ -142,6 +142,8 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`refpix <refpix_step>`                   | :ref:`REFPIX <refpix_reffile>`                   |
 +-----------------------------------------------+--------------------------------------------------+
+| :ref:`resample <resample_step>`               | :ref:`DRIZPARS <drizpars_reffile>`               |
++-----------------------------------------------+--------------------------------------------------+
 | :ref:`reset <reset_step>`                     | :ref:`RESET <reset_reffile>`                     |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`residual_fringe <residual_fringe_step>` | :ref:`FRINGEFREQ <fringefreq_reffile>`           |
@@ -156,11 +158,13 @@ documentation on each reference file.
 +                                               +--------------------------------------------------+
 |                                               | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       |
 +-----------------------------------------------+--------------------------------------------------+
-| :ref:`straylight <straylight_step>`           | :ref:`REGIONS <regions_reffile>`                 |
+| :ref:`straylight <straylight_step>`           | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`             | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`   | :ref:`TSOPHOT <tsophot_reffile>`                 |
++-----------------------------------------------+--------------------------------------------------+
+| :ref:`wavecorr <wavecorr_step>`               | :ref:`WAVECORR <wavecorr_reffile>`               |
 +-----------------------------------------------+--------------------------------------------------+
 
 +--------------------------------------------------+-----------------------------------------------+
@@ -189,6 +193,8 @@ documentation on each reference file.
 | :ref:`DISPERSER <disperser_reffile>`             | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`DISTORTION <distortion_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`           |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`DRIZPARS <drizpars_reffile>`               | :ref:`resample <resample_step>`               |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`EXTRACT1D <extract1d_reffile>`             | :ref:`extract_1d <extract_1d_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
@@ -223,6 +229,8 @@ documentation on each reference file.
 | :ref:`LINEARITY <linearity_reffile>`             | :ref:`linearity <linearity_step>`             |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MASK <mask_reffile>`                       | :ref:`dq_init <dq_init_step>`                 |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         | :ref:`straylight <straylight_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MSA <msa_reffile>`                         | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
@@ -273,6 +281,8 @@ documentation on each reference file.
 |                                                  | :ref:`background <background_step>`           |
 +                                                  +-----------------------------------------------+
 |                                                  | :ref:`extract_2d <extract_2d_step>`           |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`               |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_step>`           |
 +--------------------------------------------------+-----------------------------------------------+

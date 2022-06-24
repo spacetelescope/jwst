@@ -8,9 +8,9 @@ from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+log.setLevel(logging.DEBUG)
 
 
 # define phi at the center of F430M band:

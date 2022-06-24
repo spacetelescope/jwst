@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/flat.schema"
 allOf:
 - $ref: referencefile.schema
 - $ref: subarray.schema
+- $ref: keyword_exptype.schema
 - $ref: keyword_filter.schema
 - $ref: keyword_pfilter.schema
 - $ref: keyword_readpatt.schema
