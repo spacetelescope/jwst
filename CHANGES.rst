@@ -6,6 +6,13 @@ extract_1d
 
 - Fix error in variance propagation calculation [#6899]
 
+ramp_fitting
+------------
+
+- Fixed multirpocessing error by removing ``int_times`` entirely in step code.
+  Also, in order to work better with multiprocessing changed the way one group
+  suppression gets handled and changed the location ZEROFRAME gets handled. [#6880]
+
 saturation
 ----------
 
