@@ -754,7 +754,7 @@ def test_miri_all_sat():
     np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)
 
     # Check INT output arrays
-    data, dq, var_poisson, var_rnoise, int_times, err = integ_info
+    data, dq, var_poisson, var_rnoise, err = integ_info
     np.testing.assert_allclose(data, 0.0, atol=1E-6)
     np.testing.assert_allclose(err, 0.0, atol=1E-6)
     np.testing.assert_allclose(var_poisson, 0.0, atol=1E-6)
@@ -919,7 +919,7 @@ def test_zero_frame_usage():
     np.testing.assert_allclose(serr, check, tol, tol)
 
     # Check slopes information
-    cdata, cdq, cvp, cvr, cint_times, cerr = cube
+    cdata, cdq, cvp, cvr, cerr = cube
 
     check = np.array([[[186.28912, 0., 93.14456]],
                       [[0.46572027, 0.46572033, 0.46572033]]])
