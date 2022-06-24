@@ -1,6 +1,12 @@
 1.5.4 (unreleased)
 ==================
 
+saturation
+----------
+
+- Updated to set the internal threshold for NO_SAT_CHECK and NaN pixels above the
+  A-to-D limit, so that they never get flagged as saturated. [#6901]
+
 skymatch
 --------
 
