@@ -6,6 +6,12 @@ extract_1d
 
 - Fix error in variance propagation calculation [#6899]
 
+saturation
+----------
+
+- Updated to set the internal threshold for NO_SAT_CHECK and NaN pixels above the
+  A-to-D limit, so that they never get flagged as saturated. [#6901]
+
 skymatch
 --------
 
