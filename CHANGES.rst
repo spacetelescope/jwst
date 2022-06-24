@@ -1,6 +1,11 @@
 1.5.4 (unreleased)
 ==================
 
+extract_1d
+----------
+
+- Fix error in variance propagation calculation [#6899]
+
 saturation
 ----------
 
