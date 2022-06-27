@@ -158,6 +158,20 @@ def we_three_sci():
     return we_many_sci(numsci=3)
 
 
+@pytest.fixture
+def we_three_sci_files():
+    """Provide 3 science images with different noise but identical source
+    and same background level, but written out to disk"""
+    sci_models = we_many_sci(numsci=3)
+    we_many_sci_filenames = [f.meta.filename for f in sci_models]
+    # Write out models to disk to test this mode of ModelContainer
+    for model in sci_models:
+        model.save(model.meta.filename)
+        model.close()
+
+    return we_many_sci_filenames
+
+
 def test_outlier_step_no_outliers(we_three_sci):
     """Test whole step, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
@@ -178,6 +192,29 @@ def test_outlier_step_no_outliers(we_three_sci):
 def test_outlier_step(_jail, we_three_sci):
     """Test whole step with an outlier including saving intermediate and results files"""
     container = datamodels.ModelContainer(list(we_three_sci))
+
+    # Drop a CR on the science array
+    container[0].data[12, 12] += 1
+
+    result = OutlierDetectionStep.call(
+        container, save_results=True, save_intermediate_results=True
+    )
+
+    # Make sure nothing changed in SCI array
+    for image, corrected in zip(container, result):
+        np.testing.assert_allclose(image.data, corrected.data)
+
+    # Verify source is not flagged
+    for r in result:
+        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+
+    # Verify CR is flagged
+    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+
+
+def test_outlier_step_on_disk(_jail, we_three_sci_files):
+    """Test whole step with an outlier including saving intermediate and results files"""
+    container = datamodels.ModelContainer(we_three_sci_files)
 
     # Drop a CR on the science array
     container[0].data[12, 12] += 1
