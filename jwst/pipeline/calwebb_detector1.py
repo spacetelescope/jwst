@@ -134,7 +134,6 @@ class Detector1Pipeline(Pipeline):
             input, ints_model = self.ramp_fit(input)
 
         # apply the gain_scale step to the exposure-level product
-        # XXX JP-2651
         if input is not None:
             self.gain_scale.suffix = 'gain_scale'
             input = self.gain_scale(input)
@@ -156,7 +155,6 @@ class Detector1Pipeline(Pipeline):
         return input
 
     def setup_output(self, input):
-        # XXX JP-2651
         if input is None:
             return None
         # Determine the proper file name suffix to use later
