@@ -1,8 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
 from functools import partial
 
-from guppy import hpy
-
 from jwst.stpipe import Step
 from jwst import datamodels
 from jwst.lib.pipe_utils import is_tso
@@ -71,9 +69,7 @@ class OutlierDetectionStep(Step):
 
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
-        hp = hpy()
-        hp.setrelheap()
-        
+
         with datamodels.open(input_data, save_open=False) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, datamodels.ModelContainer):
@@ -160,18 +156,11 @@ class OutlierDetectionStep(Step):
 
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
             reffiles = {}
-            
-            h = hp.heap()
-            self.log.info(f"MEMORY: Initializing the input models requires {h.size}bytes")
-            hp.setrelheap() 
-            
+
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
             step.do_detection()
-            
-            h = hp.heap()
-            self.log.info(f"MEMORY: outlier_detection step required {h.size}bytes")
-            
+
             state = 'COMPLETE'
             if self.input_container:
                 for model in self.input_models:

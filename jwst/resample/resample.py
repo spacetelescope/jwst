@@ -1,8 +1,6 @@
 import logging
 import re
 
-from guppy import hpy
-
 import numpy as np
 from drizzle import util
 from drizzle import cdrizzle
@@ -140,9 +138,6 @@ class ResampleData:
 
         Used for outlier detection
         """
-        he = hpy()
-        he.setrelheap()
-
         for exposure in self.input_models.models_grouped:
             output_model = self.blank_output  #.copy()
             hep = he.heap()
@@ -155,9 +150,6 @@ class ResampleData:
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                             kernel=self.kernel, fillval=self.fillval)
 
-            hep = he.heap()
-            log.info(f"Memory use for {exposure[0]}: {hep.size / (1024*1024):.3f} Mb")
-            
             log.info(f"{len(exposure)} exposures to drizzle together")
             for img in exposure:
                 img = datamodels.open(img)
@@ -175,10 +167,7 @@ class ResampleData:
                 driz.add_image(data, img.meta.wcs, inwht=inwht)
                 del data
                 img.close()
-                
-            hep = he.heap()
-            log.info(f"Memory use after drizzling: {hep.size / (1024*1024):.3f} Mb")
-                
+
             if not self.in_memory:
                 # Write out model to disk, then return filename
                 output_name=output_model.meta.filename
@@ -190,10 +179,6 @@ class ResampleData:
             output_model.data *= 0.
             output_model.wht *= 0.
 
-        hexp = he.heap()
-        log.info(f"MEMORY: adding all exposures required {hexp.size / (1024*1024):.3f} Mb")
-        he.setrelheap()
-            
         return self.output_models
 
     def resample_many_to_one(self):

@@ -3,9 +3,6 @@
 from functools import partial
 import logging
 import warnings
-import os
-
-from guppy import hpy
 
 import numpy as np
 from astropy.stats import sigma_clip
@@ -182,29 +179,18 @@ class OutlierDetection:
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
-        hp = hpy()
-        hp.setrelheap()
-        
         self._convert_inputs()
         self.build_suffix(**self.outlierpars)
 
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
-        h = hp.heap()
-        log.info(f"Initilialized using {h.size / (1024*1024):.3f} Mb")
-        log.info(f"self.input_models._models: {self.input_models._models}")
-        
+
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
             resamp = resample.ResampleData(self.input_models, single=True,
                                            blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
-            h = hp.heap()
-            log.info(f"RESAMPLING used {h.size / (1024*1024):.3f} Mb")
-
-            h = hp.heap()
-            log.info(f"Results saved using {h.size / (1024*1024):.3f} Mb")
 
         else:
             # for non-dithered data, the resampled image is just the original image
@@ -214,10 +200,6 @@ class OutlierDetection:
                     self.input_models[i],
                     weight_type='ivm',
                     good_bits=pars['good_bits'])
-
-        h = hp.heap()
-        log.info(f"Starting MEDIAN using {h.size / (1024*1024):.3f} Mb")
-        log.info(f"self.input_models._models: {self.input_models._models}")
 
         # Initialize intermediate products used in the outlier detection
         dm0 = datamodel_open(drizzled_models[0])
@@ -235,18 +217,10 @@ class OutlierDetection:
             suffix='median')
         median_model.save(median_model_output_path)
         
-        h = hp.heap()
-        log.info(f"Finished MEDIAN using {h.size / (1024*1024):.3f} Mb")
-        log.info(f"self.input_models._models: {self.input_models._models}")
-        h = hp.heap()
-        log.info(f"Starting BLOT using {h.size / (1024*1024):.3f} Mb")
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
-
-            h = hp.heap()
-            log.info(f"Finished BLOT using {h.size / (1024*1024):.3f} Mb")
 
         else:
             # Median image will serve as blot image
@@ -257,9 +231,6 @@ class OutlierDetection:
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
         self.detect_outliers(blot_models)
-
-        h = hp.heap()
-        log.info(f"Finished DETECT using {h.size / (1024*1024):.3f} Mb")
 
         # clean-up (just to be explicit about being finished with
         # these results)
@@ -275,14 +246,8 @@ class OutlierDetection:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
         """
-        hcm = hpy()
-        hcm.setrelheap()
         maskpt = self.outlierpars.get('maskpt', 0.7)
         
-        """
-        resampled_sci = [i.data.copy() for i in resampled_models]
-        resampled_weight = [i.wht.copy() for i in resampled_models]
-        """        
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
         resampled_sections = resampled_models.get_sections()
         median_image = np.empty((resampled_models.imrows, resampled_models.imcols),
@@ -326,8 +291,6 @@ class OutlierDetection:
                                         category=RuntimeWarning)
                 median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
             del resampled_sci, resampled_weight
-        h = hcm.heap()
-        log.info(f"HCM: Finished CREATE using {h.size / (1024*1024):.3f} Mb")
 
         return median_image
 
@@ -336,14 +299,8 @@ class OutlierDetection:
         interp = self.outlierpars.get('interp', 'linear')
         sinscl = self.outlierpars.get('sinscl', 1.0)
 
-        hbm = hpy()
-        mheap = hbm.heap()
-        log.info(f"Starting blot_median using {mheap.size / (1024*1024)} Mb")
         # Initialize container for output blot images
         blot_models = datamodels.ModelContainer(open_models=False)
-        hbm = hpy()
-        mheap = hbm.heap()
-        log.info(f"Opened blot_models using {mheap.size / (1024*1024)} Mb")
 
         log.info("Blotting median...")
         for model in self.input_models:
@@ -356,17 +313,11 @@ class OutlierDetection:
             )
             
             blotted_median.meta.filename = model_path
-            hbm = hpy()
-            mheap = hbm.heap()
-            log.info(f"output model filename set using {mheap.size / (1024*1024)} Mb")
 
             # clean out extra data not related to blot result
             blotted_median.err *= 0.0  # None
             blotted_median.dq *= 0     # None
 
-            hbm = hpy()
-            mheap = hbm.heap()
-            log.info(f"Starting gwcs_blot using {mheap.size / (1024*1024)} Mb")
             # apply blot to re-create model.data from median image
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                             sinscl=sinscl)
@@ -376,11 +327,6 @@ class OutlierDetection:
             blotted_median.close()
             # blot_models.append(blotted_median)
             del blotted_median
-
-            hbm = hpy()
-            mheap = hbm.heap()
-            log.info(f"Finished saving blotted model using {mheap.size / (1024*1024)} Mb")
-
 
         return blot_models
 
