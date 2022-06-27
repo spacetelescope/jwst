@@ -103,6 +103,12 @@ pipeline
 - Updated the ``calwebb_image3`` pipeline to only science members from the
   input ASN table. [#6875]
 
+ramp_fitting
+------------
+
+- Properly handles the returning of ``None`` from ramp fitting for fully
+  saturated exposures. [#6895]
+
 refpix
 ------
 
