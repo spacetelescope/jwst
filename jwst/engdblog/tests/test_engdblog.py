@@ -21,10 +21,6 @@ def test_engdblogstep(caplog, engdb):
     assert 'Step EngDBLogStep done' in caplog.text
 
 
-@pytest.mark.xfail(
-    reason='See Jira JP-1108',
-    run=False
-)
 def test_barestring(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     result = EngDBLogStep.call(mnemonic)
@@ -32,8 +28,8 @@ def test_barestring(caplog, engdb):
     assert mnemonic in result
     assert 'EngDBLogStep instance created' in caplog.text
     assert mnemonic in caplog.text
-    assert f"Step EngDBLogStep running with args ('{mnemonic}')." in caplog.text
-    assert '{}[2016-01-01:2016-01-31] = '.format(mnemonic) in caplog.text
+    assert f"Step EngDBLogStep running with args ('{mnemonic}',)." in caplog.text
+    assert '{}[2021-01-25:2021-01-27] = '.format(mnemonic) in caplog.text
     assert 'Step EngDBLogStep done' in caplog.text
 
 
