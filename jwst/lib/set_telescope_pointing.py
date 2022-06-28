@@ -622,42 +622,39 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    # Open the SIAF database
     with SiafDb(siaf_path) as siaf_db:
 
-        # If the type of exposure is not FGS, then attempt to get pointing
-        # from telemetry.
+        # Get model attributes
         try:
             exp_type = model.meta.exposure.type.lower()
         except AttributeError:
             exp_type = None
-        aperture_name = model.meta.aperture.name.upper()
         useafter = model.meta.observation.date
-        if aperture_name != "UNKNOWN":
-            logger.info("Updating WCS for aperture %s", aperture_name)
-            siaf = siaf_db.get_wcs(aperture_name, useafter)
-            populate_model_from_siaf(model, siaf)
-        else:
-            logger.warning("Aperture name is set to 'UNKNOWN'. "
-                           "WCS keywords will not be populated from SIAF.")
-            siaf = None
 
+        # Configure transformation parameters.
+        t_pars = t_pars_from_model(
+            model,
+            default_pa_v3=default_pa_v3, engdb_url=engdb_url,
+            tolerance=tolerance, allow_default=allow_default,
+            reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
+            **transform_kwargs
+        )
+        if fgsid:
+            t_pars.fgsid = fgsid
+
+        # Populate header with SIAF information.
+        if t_pars.siaf is None:
+            if exp_type not in FGS_GUIDE_EXP_TYPES:
+                raise ValueError('Insufficient SIAF information found in header.')
+        else:
+            populate_model_from_siaf(model, t_pars.siaf)
+
+        # Calculate WCS.
         if exp_type in FGS_GUIDE_EXP_TYPES:
             update_wcs_from_fgs_guiding(
                 model, default_roll_ref=default_roll_ref
             )
         else:
-            t_pars = t_pars_from_model(
-                model,
-                default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
-                tolerance=tolerance, allow_default=allow_default,
-                reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
-                **transform_kwargs
-            )
-
-            if fgsid:
-                t_pars.fgsid = fgsid
-
             transforms = update_wcs_from_telem(model, t_pars)
 
     return t_pars, transforms
@@ -2453,8 +2450,6 @@ def t_pars_from_model(model, **t_pars_kwargs):
             if aperture_name != "UNKNOWN":
                 logger.info("Updating WCS for aperture %s", aperture_name)
                 siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
-        if siaf is None:
-            raise ValueError('Insufficient SIAF information found in header.')
         t_pars.siaf = siaf
         t_pars.useafter = useafter
     logger.debug('SIAF: %s', t_pars.siaf)
