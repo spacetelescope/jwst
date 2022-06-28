@@ -140,9 +140,7 @@ class ResampleData:
         """
         for exposure in self.input_models.models_grouped:
             output_model = self.blank_output  #.copy()
-            hep = he.heap()
-            log.info(f"Memory use for output_model: {hep.size / (1024*1024):.3f} Mb")
-            output_root = '_'.join(exposure[0].replace(
+            output_root = '_'.join(exposure[0].meta.filename.replace(
                 '.fits', '').split('_')[:-1])
             output_model.meta.filename = f'{output_root}_outlier_i2d.fits'
 
