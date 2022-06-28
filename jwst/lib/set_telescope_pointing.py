@@ -582,10 +582,6 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
 
     default_roll_ref : float
         If pointing information cannot be retrieved,
-        use this as the V3 position angle.
-
-    default_roll_ref : float
-        If pointing information cannot be retrieved,
         use this as the roll ref angle.
 
     siaf_path : str
