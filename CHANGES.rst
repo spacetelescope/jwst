@@ -1,6 +1,11 @@
 1.5.4 (unreleased)
 ==================
 
+cube_build
+----------
+
+- Update C code to allow it to compile under Windows [#7xxx]
+
 extract_1d
 ----------
 
