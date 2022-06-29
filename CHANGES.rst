@@ -4,7 +4,7 @@
 cube_build
 ----------
 
-- Update C code to allow it to compile under Windows [#7xxx]
+- Update C code to allow it to compile under Windows [#6905]
 
 extract_1d
 ----------
