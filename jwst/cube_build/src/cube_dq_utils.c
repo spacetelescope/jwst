@@ -498,7 +498,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 
   int status, status_wave, w, nxy, i, istart, iend, in, ii;
   double xi_corner[4], eta_corner[4];
-  
+
+  int *wave_slice_dq;
+
   int *idqv ;  // int vector for spaxel
   if (mem_alloc_dq(ncube, &idqv)) return 1;
 
@@ -511,7 +513,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   // corner of the FOV for each wavelength
 
   nxy = nx * ny;
-  int wave_slice_dq[nxy];
+  wave_slice_dq = (int *) malloc(nxy * sizeof(int));
+  //  int wave_slice_dq[nxy];
+
   // Loop over the wavelength planes and set DQ plane 
   for (w = 0; w  < nz; w++) {
     
@@ -598,6 +602,7 @@ int dq_nirspec(int overlap_partial,
   long istart, in, iend, ii;
   double c1_min, c2_min, c1_max, c2_max;
   int *idqv ;  // int vector for spaxel
+  int *wave_slice_dq;  // int vector for wavelength slices
 
   if (mem_alloc_dq(ncube, &idqv)) return 1;
   
@@ -605,7 +610,8 @@ int dq_nirspec(int overlap_partial,
   //     onto each of the IFU wavelength planes.
 
   nxy = nx * ny;
-  int wave_slice_dq[nxy];
+  wave_slice_dq = (int *) malloc (nxy * sizeof(int));
+  // int wave_slice_dq[nxy];
   
   for (w = 0; w  < nz; w++) {
     for (islice =1; islice< 31 ; islice++){
