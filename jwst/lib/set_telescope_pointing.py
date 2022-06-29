@@ -96,8 +96,40 @@ logger.addHandler(logging.NullHandler())
 DEBUG_FULL = logging.DEBUG - 1
 LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
+# Datamodels that can be updated, normally
 EXPECTED_MODELS = (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel)
+
+# Exposure types that can be updated, normally
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
+
+# Mnemonics for each transformation method.
+# dict where value indicates whether the mnemonic is required or not.
+COURSE_TR_202111_MNEMONICS = {
+    'SA_ZATTEST1': True,
+    'SA_ZATTEST2': True,
+    'SA_ZATTEST3': True,
+    'SA_ZATTEST4': True,
+    'SA_ZRFGS2J11': False,
+    'SA_ZRFGS2J12': False,
+    'SA_ZRFGS2J13': False,
+    'SA_ZRFGS2J21': False,
+    'SA_ZRFGS2J22': False,
+    'SA_ZRFGS2J23': False,
+    'SA_ZRFGS2J31': False,
+    'SA_ZRFGS2J32': False,
+    'SA_ZRFGS2J33': False,
+    'SA_ZADUCMDX': False,
+    'SA_ZADUCMDY': False,
+    'SA_ZFGGSCMDX': True,
+    'SA_ZFGGSCMDY': True,
+    'SA_ZFGDETID': False,
+}
+
+TRACK_TR_202111_MNEMONICS = {
+    **COURSE_TR_202111_MNEMONICS,
+    'SA_ZFGGSPOSX': True,
+    'SA_ZFGGSPOSY': True,
+}
 
 
 # The available methods for transformation
@@ -108,11 +140,11 @@ class Methods(Enum):
     TRACK_TR_202111 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
     #: COARSE tracking mode algorithm, TR version 2021-11.
-    COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111')
+    COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111', COURSE_TR_202111_MNEMONICS)
     #: Method to use in OPS to use TR version 2021-11
-    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111')
+    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111', None)
     #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
-    TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111')
+    TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
 
     # Aliases
     #: Algorithm to use by default. Used by Operations.
@@ -124,11 +156,12 @@ class Methods(Enum):
     #: Default algorithm under PCS_MODE TRACK/FINEGUIDE/MOVING.
     TRACK = TRACK_TR_202111
 
-    def __new__(cls: object, value: str, func_name: str, calc_func: str):
+    def __new__(cls: object, value: str, func_name: str, calc_func: str, mnemonics: dict):
         obj = object.__new__(cls)
         obj._value_ = value
         obj._func_name = func_name
         obj._calc_func = calc_func
+        obj._mnemonics = mnemonics
         return obj
 
     @property
@@ -140,6 +173,10 @@ class Methods(Enum):
     def func(self):
         """Function associated with the method"""
         return globals()[self._func_name]
+
+    @property
+    def mnemonics(self):
+        return self._mnemonics
 
     def __str__(self):
         return self.value
@@ -1551,13 +1588,18 @@ def calc_position_angle(point, ref):
     return point_pa
 
 
-def get_pointing(obsstart, obsend, engdb_url=None,
-                 tolerance=60, reduce_func=None):
+def get_pointing(mnemonics_to_read, obsstart, obsend,
+                 engdb_url=None, tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
     Parameters
     ----------
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     obsstart, obsend : float
         MJD observation start/end times
 
@@ -1599,8 +1641,9 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     logger.info('Telemetry search tolerance: %s', tolerance)
     logger.info('Reduction function: %s', reduce_func)
 
-    mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
-    reduced = reduce_func(mnemonics)
+    mnemonics = get_mnemonics(mnemonics_to_read, obsstart, obsend,
+                              tolerance=tolerance, engdb_url=engdb_url)
+    reduced = reduce_func(mnemonics_to_read, mnemonics)
 
     logger.log(DEBUG_FULL, 'Mnemonics found:')
     logger.log(DEBUG_FULL, '%s', mnemonics)
@@ -1712,11 +1755,15 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
+def get_mnemonics(mnemonics_to_read, obsstart, obsend, tolerance, engdb_url=None):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
     ----------
+    mnemonics_to_read : {str: bool[,...]}
+        The mnemonics to fetch. key is the mnemonic and
+        value is whether it is required to be found.
+
     obsstart, obsend : float
         MJD observation start/end times
 
@@ -1750,28 +1797,34 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'Querying engineering DB: %s', engdb.base_url
     )
 
+    # Construct the mnemonic values structure.
     mnemonics = {
-        'SA_ZATTEST1': None,
-        'SA_ZATTEST2': None,
-        'SA_ZATTEST3': None,
-        'SA_ZATTEST4': None,
-        'SA_ZRFGS2J11': None,
-        'SA_ZRFGS2J12': None,
-        'SA_ZRFGS2J13': None,
-        'SA_ZRFGS2J21': None,
-        'SA_ZRFGS2J22': None,
-        'SA_ZRFGS2J23': None,
-        'SA_ZRFGS2J31': None,
-        'SA_ZRFGS2J32': None,
-        'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX': None,
-        'SA_ZADUCMDY': None,
-        'SA_ZFGGSCMDX': None,
-        'SA_ZFGGSCMDY': None,
-        'SA_ZFGGSPOSX': None,
-        'SA_ZFGGSPOSY': None,
-        'SA_ZFGDETID': None
+        mnemonic: None
+        for mnemonic in mnemonics_to_read
     }
+
+    # mnemonics = {
+    #     'SA_ZATTEST1': None,
+    #     'SA_ZATTEST2': None,
+    #     'SA_ZATTEST3': None,
+    #     'SA_ZATTEST4': None,
+    #     'SA_ZRFGS2J11': None,
+    #     'SA_ZRFGS2J12': None,
+    #     'SA_ZRFGS2J13': None,
+    #     'SA_ZRFGS2J21': None,
+    #     'SA_ZRFGS2J22': None,
+    #     'SA_ZRFGS2J23': None,
+    #     'SA_ZRFGS2J31': None,
+    #     'SA_ZRFGS2J32': None,
+    #     'SA_ZRFGS2J33': None,
+    #     'SA_ZADUCMDX': None,
+    #     'SA_ZADUCMDY': None,
+    #     'SA_ZFGGSCMDX': None,
+    #     'SA_ZFGGSCMDY': None,
+    #     'SA_ZFGGSPOSX': None,
+    #     'SA_ZFGGSPOSY': None,
+    #     'SA_ZFGDETID': None
+    # }
 
     # Retrieve the mnemonics from the engineering database.
     # Check for whether the bracket values are used and
@@ -1819,11 +1872,16 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
     return mnemonics
 
 
-def all_pointings(mnemonics):
+def all_pointings(mnemonics_to_read, mnemonics):
     """V1 of making pointings
 
     Parameters
     ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
@@ -1933,11 +1991,16 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 
 
-def first_pointing(mnemonics):
+def first_pointing(mnemonics_to_read, mnemonics):
     """Return first pointing
 
     Parameters
     ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
@@ -1947,15 +2010,20 @@ def first_pointing(mnemonics):
         First pointing.
 
     """
-    pointings = all_pointings(mnemonics)
+    pointings = all_pointings(mnemonics_to_read, mnemonics)
     return pointings[0]
 
 
-def pointing_from_average(mnemonics):
+def pointing_from_average(mnemonics_to_read, mnemonics):
     """Determine single pointing from average of available pointings
 
     Parameters
     ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
@@ -1965,19 +2033,18 @@ def pointing_from_average(mnemonics):
         Pointing from average.
 
     """
-    # Get average observation time. This is keyed off the q0 quaternion term, SA_ZATTEST1
+    # Get average observation time.
     times = [
         eng_param.obstime.unix
-        for eng_param in mnemonics['SA_ZATTEST1']
+        for key in mnemonics
+        for eng_param in mnemonics[key]
+        if eng_param.obstime.unix != 0.0
     ]
-    goodtimes = []
-    for this_time in times:
-        if this_time != 0.0:
-            goodtimes.append(this_time)
-    if len(goodtimes) > 0:
-        obstime = Time(np.average(goodtimes), format='unix')
+    if len(times) > 0:
+        obstime = Time(np.average(times), format='unix')
     else:
         raise ValueError("No valid times in range")
+
     # Get averages for all the mnemonics.
     mnemonic_averages = {}
     zero_mnemonics = []
@@ -2478,7 +2545,8 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Get the pointing information
     try:
-        pointing = get_pointing(t_pars.obsstart, t_pars.obsend, engdb_url=t_pars.engdb_url,
+        pointing = get_pointing(TRACK_TR_202111_MNEMONICS, t_pars.obsstart, t_pars.obsend,
+                                engdb_url=t_pars.engdb_url,
                                 tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
     except ValueError as exception:
         if not t_pars.allow_default:
