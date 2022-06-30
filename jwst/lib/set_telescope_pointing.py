@@ -1636,11 +1636,6 @@ def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
 
     Parameters
     ----------
-    mnemonics_to_read: {str: bool[,...]}
-        The mnemonics to read. Key is the mnemonic name.
-        Value is a boolean indicating whether the mnemonic
-        is required to have values or not.
-
     obsstart, obsend : float
         MJD observation start/end times
 
@@ -1848,29 +1843,6 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
         mnemonic: None
         for mnemonic in mnemonics_to_read
     }
-
-    # mnemonics = {
-    #     'SA_ZATTEST1': None,
-    #     'SA_ZATTEST2': None,
-    #     'SA_ZATTEST3': None,
-    #     'SA_ZATTEST4': None,
-    #     'SA_ZRFGS2J11': None,
-    #     'SA_ZRFGS2J12': None,
-    #     'SA_ZRFGS2J13': None,
-    #     'SA_ZRFGS2J21': None,
-    #     'SA_ZRFGS2J22': None,
-    #     'SA_ZRFGS2J23': None,
-    #     'SA_ZRFGS2J31': None,
-    #     'SA_ZRFGS2J32': None,
-    #     'SA_ZRFGS2J33': None,
-    #     'SA_ZADUCMDX': None,
-    #     'SA_ZADUCMDY': None,
-    #     'SA_ZFGGSCMDX': None,
-    #     'SA_ZFGGSCMDY': None,
-    #     'SA_ZFGGSPOSX': None,
-    #     'SA_ZFGGSPOSY': None,
-    #     'SA_ZFGDETID': None
-    # }
 
     # Retrieve the mnemonics from the engineering database.
     # Check for whether the bracket values are used and
