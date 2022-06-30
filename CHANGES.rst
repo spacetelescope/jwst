@@ -1,6 +1,12 @@
 1.5.4 (unreleased)
 ==================
 
+associations
+------------
+
+- Add finalization for level 3 group association candidates to require
+  more than one observation amongst member entries [#6886]
+
 extract_1d
 ----------
 
