@@ -1,0 +1,25 @@
+{%- extends "stsci_rtd_theme/layout.html" %}
+{% block sidebartitle %}
+
+{{ super() }}
+
+        {% if nav_version %}
+          <div class="version">
+            {% if nav_version == "stable" %}
+            	stable version
+            	{% if version and version != "stable" %}
+            		<small>({{ version }})</small>
+            	{% endif %}
+            {% elif nav_version == "latest" %}
+            	development version
+            	{% if commit %}
+            		<small>(<tt>{{ commit }}</tt>)</small>
+            	{% endif %}
+            {% else %}
+            	version {{ nav_version }}
+            {% endif %}
+          </div>
+        {% endif %}
+
+
+  {% endblock %}
