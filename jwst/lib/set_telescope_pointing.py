@@ -1588,23 +1588,23 @@ def calc_position_angle(point, ref):
     return point_pa
 
 
-def get_pointing(mnemonics_to_read, obsstart, obsend,
+def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
                  engdb_url=None, tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
     Parameters
     ----------
-    mnemonics_to_read: {str: bool[,...]}
-        The mnemonics to read. Key is the mnemonic name.
-        Value is a boolean indicating whether the mnemonic
-        is required to have values or not.
-
     obsstart, obsend : float
         MJD observation start/end times
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
+
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -1641,7 +1641,7 @@ def get_pointing(mnemonics_to_read, obsstart, obsend,
     logger.info('Telemetry search tolerance: %s', tolerance)
     logger.info('Reduction function: %s', reduce_func)
 
-    mnemonics = get_mnemonics(mnemonics_to_read, obsstart, obsend,
+    mnemonics = get_mnemonics(obsstart, obsend, mnemonics_to_read=mnemonics_to_read,
                               tolerance=tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics_to_read, mnemonics)
 
@@ -1755,7 +1755,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def get_mnemonics(mnemonics_to_read, obsstart, obsend, tolerance, engdb_url=None):
+def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111_MNEMONICS, engdb_url=None):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
@@ -1802,29 +1802,6 @@ def get_mnemonics(mnemonics_to_read, obsstart, obsend, tolerance, engdb_url=None
         mnemonic: None
         for mnemonic in mnemonics_to_read
     }
-
-    # mnemonics = {
-    #     'SA_ZATTEST1': None,
-    #     'SA_ZATTEST2': None,
-    #     'SA_ZATTEST3': None,
-    #     'SA_ZATTEST4': None,
-    #     'SA_ZRFGS2J11': None,
-    #     'SA_ZRFGS2J12': None,
-    #     'SA_ZRFGS2J13': None,
-    #     'SA_ZRFGS2J21': None,
-    #     'SA_ZRFGS2J22': None,
-    #     'SA_ZRFGS2J23': None,
-    #     'SA_ZRFGS2J31': None,
-    #     'SA_ZRFGS2J32': None,
-    #     'SA_ZRFGS2J33': None,
-    #     'SA_ZADUCMDX': None,
-    #     'SA_ZADUCMDY': None,
-    #     'SA_ZFGGSCMDX': None,
-    #     'SA_ZFGGSCMDY': None,
-    #     'SA_ZFGGSPOSX': None,
-    #     'SA_ZFGGSPOSY': None,
-    #     'SA_ZFGDETID': None
-    # }
 
     # Retrieve the mnemonics from the engineering database.
     # Check for whether the bracket values are used and
@@ -2545,7 +2522,7 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Get the pointing information
     try:
-        pointing = get_pointing(TRACK_TR_202111_MNEMONICS, t_pars.obsstart, t_pars.obsend,
+        pointing = get_pointing(t_pars.obsstart, t_pars.obsend,
                                 engdb_url=t_pars.engdb_url,
                                 tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
     except ValueError as exception:
