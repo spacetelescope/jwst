@@ -238,6 +238,7 @@ def test_change_engdb_url():
     """
     with pytest.raises(ValueError):
         stp.get_pointing(
+            stp.TRACK_TR_202111_MNEMONICS,
             STARTTIME.mjd,
             ENDTIME.mjd,
             engdb_url=engdb_mast.MAST_BASE_URL
@@ -248,6 +249,7 @@ def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
     with pytest.raises(Exception):
         stp.get_pointing(
+            stp.TRACK_TR_202111_MNEMONICS,
             Time('2019-06-03T17:25:40', format='isot').mjd,
             Time('2019-06-03T17:25:56', format='isot').mjd,
             engdb_url='http://nonexistent.fake.example'
@@ -283,6 +285,7 @@ def test_pointing_averaging(eng_db_jw703):
      gs_commanded,
      fgsid,
      gs_position) = stp.get_pointing(
+         stp.TRACK_TR_202111_MNEMONICS,
          Time('2019-06-03T17:25:40', format='isot').mjd,
          Time('2019-06-03T17:25:56', format='isot').mjd,
          engdb_url='http://localhost'
@@ -296,7 +299,12 @@ def test_pointing_averaging(eng_db_jw703):
 
 def test_get_pointing_fail():
     with pytest.raises(Exception):
-        q, j2fgs_matrix, fmscorr, obstime, gs_commanded = stp.get_pointing(47892.0, 48256.0)
+        (q,
+         j2fgs_matrix,
+         fmscorr,
+         obstime,
+         gs_commanded) = stp.get_pointing(stp.TRACK_TR_202111_MNEMONICS,
+                                          47892.0, 48256.0)
 
 
 def test_get_pointing(eng_db_ngas):
@@ -306,7 +314,8 @@ def test_get_pointing(eng_db_ngas):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
+     gs_position) = stp.get_pointing(stp.TRACK_TR_202111_MNEMONICS,
+                                     STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
     assert np.isclose(q, Q_EXPECTED).all()
     assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
     assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
@@ -320,7 +329,8 @@ def test_logging(eng_db_ngas, caplog):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
+     gs_position) = stp.get_pointing(stp.TRACK_TR_202111_MNEMONICS,
+                                     STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
     assert 'Determining pointing between observations times' in caplog.text
     assert 'Telemetry search tolerance' in caplog.text
     assert 'Reduction function' in caplog.text
@@ -328,7 +338,8 @@ def test_logging(eng_db_ngas, caplog):
 
 
 def test_get_pointing_list(eng_db_ngas):
-    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings, engdb_url='http://localhost')
+    results = stp.get_pointing(stp.TRACK_TR_202111_MNEMONICS,
+                               STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings, engdb_url='http://localhost')
     assert isinstance(results, list)
     assert len(results) > 0
     assert np.isclose(results[0].q, Q_EXPECTED).all()
@@ -344,7 +355,8 @@ def test_get_pointing_with_zeros(eng_db_ngas):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd,
+     gs_position) = stp.get_pointing(stp.TRACK_TR_202111_MNEMONICS,
+                                     ZEROTIME_START.mjd, ENDTIME.mjd,
                                      reduce_func=stp.first_pointing,
                                      engdb_url='http://localhost')
     assert j2fgs_matrix.any()
@@ -354,7 +366,8 @@ def test_get_pointing_with_zeros(eng_db_ngas):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
+     gs_position) = stp.get_pointing(stp.TRACK_TR_202111_MNEMONICS,
+                                     STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
     assert np.array_equal(q, q_desired)
     assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
     assert np.array_equal(fsmcorr, fsmcorr_desired)
