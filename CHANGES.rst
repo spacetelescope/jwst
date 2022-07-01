@@ -7,6 +7,12 @@ associations
 - Add finalization for level 3 group association candidates to require
   more than one observation amongst member entries [#6886]
 
+datamodels
+----------
+
+- Added new MIRI MRS dither pattern "SCAN-CALIBRATION" to list of allowed
+  values for the "PATTTYPE" keyword. [#6908]
+
 extract_1d
 ----------
 
@@ -15,7 +21,7 @@ extract_1d
 ramp_fitting
 ------------
 
-- Fixed multirpocessing error by removing ``int_times`` entirely in step code.
+- Fixed multiprocessing error by removing ``int_times`` entirely in step code.
   Also, in order to work better with multiprocessing changed the way one group
   suppression gets handled and changed the location ZEROFRAME gets handled. [#6880]
 
