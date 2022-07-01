@@ -64,11 +64,11 @@ class Coron3Pipeline(Pipeline):
 
         # Store the output file for future use
         self.output_file = input_models.meta.asn_table.products[0].name
-        
+
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         prod = input_models.meta.asn_table.products[0].instance
-        
+
         for member in prod['members']:
             members_by_type[member['exptype'].lower()].append(member['expname'])
 

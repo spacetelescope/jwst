@@ -12,6 +12,13 @@ extract_1d
 
 - Fix error in variance propagation calculation [#6899]
 
+pipeline
+--------
+
+- Update the ``Coron3Pipeline`` to use the datamodels.open() method to
+  open an ASN file, and improve the construction of lists of the ASN
+  members [#6855] 
+  
 ramp_fitting
 ------------
 
