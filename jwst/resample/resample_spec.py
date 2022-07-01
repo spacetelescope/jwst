@@ -651,18 +651,23 @@ def _spherical_sep(j, k, wcs, xyz_ref):
     return 1 - np.dot(_S2C(ra, dec), xyz_ref)
 
 
-def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, fast=True):
+def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode='median'):
+    assert mode in ['median', 'fast', 'accurate']
     refwcs = wcs_list[0]
     bbox = refwcs.bounding_box
 
     grid = wcstools.grid_from_bounding_box(bbox)
-    ra, dec, lam = np.array(refwcs(*grid))
+    ra, dec, lambdas = refwcs(*grid)
 
-    ref_lam, _, _ = _find_nirspec_sampling_wavelengths(
-        refwcs,
-        targ_ra, targ_dec,
-        ra, dec
-    )
+    if mode == 'median':
+        ref_lam = np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0).tolist()
+    else:
+        ref_lam, _, _ = _find_nirspec_sampling_wavelengths(
+            refwcs,
+            targ_ra, targ_dec,
+            ra, dec,
+            fast=mode == 'fast'
+        )
 
     lam1 = ref_lam[0]
     lam2 = ref_lam[-1]
@@ -671,12 +676,16 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, fast=
     for w in wcs_list[1:]:
         bbox = w.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
-        ra, dec, _ = w(*grid)
-        lam, _, _ = _find_nirspec_sampling_wavelengths(
-            w,
-            targ_ra, targ_dec,
-            ra, dec
-        )
+        ra, dec, lambdas = w(*grid)
+        if mode == 'median':
+            lam = np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0).tolist()
+        else:
+            lam, _, _ = _find_nirspec_sampling_wavelengths(
+                w,
+                targ_ra, targ_dec,
+                ra, dec,
+                fast=mode == 'fast'
+            )
         image_lam.append((lam, np.min(lam), np.max(lam)))
 
     # The code below is optimized for the case when wavelength is an increasing

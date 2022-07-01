@@ -68,6 +68,15 @@ The ERR array of the input science exposure is not modified.
 The flags from the linearity reference file DQ array are propagated into the
 PIXELDQ array of the science exposure using a bitwise OR operation.
 
+NIRCam Frame 0
+--------------
+
+If the NIRCam "Frame 0" data are included in the input, the linearity
+correction is applied to each integration's frame zero image in the same
+way as it's applied to the normal science data cube. The corrected
+frame zero data are returned as part of the overall datamodel being
+processed.
+
 Subarrays
 ---------
 

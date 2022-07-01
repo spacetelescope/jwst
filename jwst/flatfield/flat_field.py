@@ -191,6 +191,11 @@ def apply_flat_field(science, flat, inverse=False):
     flat_zero = np.where(flat_data == 0.)
     flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero], bad_flag)
 
+    # Find pixels in the flat that have the DQ bit for NO_FLAT_FIELD set
+    # Set the DO_NOT_USE flag for such pixels
+    flat_noflat = np.where(np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD']))
+    flat_dq[flat_noflat] = np.bitwise_or(flat_dq[flat_noflat], dqflags.pixel['DO_NOT_USE'])
+
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
 
@@ -1040,6 +1045,10 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     else:
         for dq_component in dq_list:
             flat_dq = np.bitwise_or(flat_dq, dq_component)
+
+    # Flag DO_NOT_USE where some or all of the flats had NO_FLAT_FIELD set
+    do_not_use_loc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD']))
+    flat_dq[do_not_use_loc] = np.bitwise_or(flat_dq[do_not_use_loc], dqflags.pixel['DO_NOT_USE'])
 
     # Flag DO_NOT_USE, NO_FLAT_FIELD and UNRELIABLE_FLAT where some or all the
     # flats had DO_NOT_USE set

@@ -74,8 +74,9 @@ NIR Detector Data
        left and right side reference pixels, and the overall reference signal is
        obtained by averaging the left and right signals.  A multiple of this signal
        (set by the step parameter ``side_gain``, which defaults to 1.0) is
-       subtracted from the full group on a row-by-row basis.
-#. Transform the data back to the JWST focal plane, or DMS, frame.
+       subtracted from the full group on a row-by-row basis.  Note that the ``odd_even_rows``
+       parameter is ignored for NIR data when the side reference pixels are processed.
+    #. Transform the data back to the JWST focal plane, or DMS, frame.
 
 MIR Detector Data
 +++++++++++++++++
@@ -92,7 +93,9 @@ MIR Detector Data
        Bad pixels (those whose DQ flag has the "DO_NOT_USE" bit set) are not
        included in the calculation of the mean. The mean is calculated as a
        clipped mean with a 3-sigma rejection threshold using the
-       ``scipy.stats.sigmaclip`` method.
+       ``scipy.stats.sigmaclip`` method.  Note that the ``odd_even_columns``,
+       ``use_side_ref_pixels``, ``side_smoothing_length`` and ``side_gain``
+       parameters are ignored for MIRI data.
     #. Average the left and right reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
        i.e. by amplifier and using the odd mean for the odd row pixels and even
@@ -100,6 +103,13 @@ MIR Detector Data
     #. Add the first group of each integration back to each group.
 
 At the end of the refpix step, the S_REFPIX keyword is set to "COMPLETE".
+
+NIRCam Frame 0
+--------------
+
+If a frame zero data cube is present in the input data, the image corresponding
+to each integration is corrected in the same way as the regular science data and
+passed along to subsequent pipeline steps.
 
 Subarrays
 ---------
@@ -113,7 +123,7 @@ NIR Data
 For single amplifier readout (NOUTPUTS keyword = 1):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the odd_even_columns flag is set to True, then the clipped means of all
+If the ``odd_even_columns`` flag is set to True, then the clipped means of all
 reference pixels in odd-numbered columns and those in even numbered columns
 are calculated separately, and subtracted from their respective data columns.
 If the flag is False, then a single clipped mean is calculated from all of
@@ -129,6 +139,9 @@ the reference pixels in each group and subtracted from each pixel.
 If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
+The ``use_side_ref_pixels``, ``side_smoothing_length``, ``side_gain`` and
+``odd_even_rows`` parameters are ignored for these types of data.
+
 For 4 amplifier readout (NOUTPUTS keyword = 4):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -137,7 +150,8 @@ the same as for full-frame exposures.  The top/bottom reference values are obtai
 reference pixel regions, and the side reference values are used if available.  If only 1 of the
 top/bottom or side reference regions are available, they are used, whereas if both are available they
 are averaged.  If there are no top/bottom or side reference pixels available, then that part of
-the correction is omitted.
+the correction is omitted.  The routine will log which parameters are valid according to
+whether valid reference pixels exist.
 
 MIR Data
 ++++++++

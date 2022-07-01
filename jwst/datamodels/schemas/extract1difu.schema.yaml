@@ -6,6 +6,8 @@ title: Default IFU Data extract 1d data model
 allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema
+- $ref: keyword_lampmode.schema
+- $ref: keyword_lampstate.schema
 - $ref: keyword_pexptype.schema
 - type: object
   properties:

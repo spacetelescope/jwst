@@ -8,8 +8,7 @@ from .. import datamodels
 from stcal.ramp_fitting import ramp_fit
 from jwst.datamodels import dqflags
 
-from ..lib import reffile_utils  # TODO remove
-from ..lib import pipe_utils
+from ..lib import reffile_utils
 
 import logging
 
@@ -76,7 +75,7 @@ def create_image_model(input_model, image_info):
     image_info: tuple
         The ramp fitting arrays needed for the ImageModel.
 
-    Parameter
+    Return
     ---------
     out_model: ImageModel
         The output ImageModel to be returned from the ramp fit step.
@@ -99,31 +98,33 @@ def create_image_model(input_model, image_info):
     return out_model
 
 
-def create_integration_model(input_model, integ_info):
+def create_integration_model(input_model, integ_info, int_times):
     """
     Creates an ImageModel from the computed arrays from ramp_fit.
 
     Parameter
     ---------
-    input_model: RampModel
+    input_model : RampModel
         Input RampModel for which the output CubeModel is created.
 
     integ_info: tuple
         The ramp fitting arrays needed for the CubeModel for each integration.
 
-    Parameter
+    int_times : astropy.io.fits.fitsrec.FITS_rec or None
+        Integration times.
+
+    Return
     ---------
-    int_model: CubeModel
+    int_model : CubeModel
         The output CubeModel to be returned from the ramp fit step.
     """
-    data, dq, var_poisson, var_rnoise, int_times, err = integ_info
+    data, dq, var_poisson, var_rnoise, err = integ_info
     int_model = datamodels.CubeModel(
         data=np.zeros(data.shape, dtype=np.float32),
         dq=np.zeros(data.shape, dtype=np.uint32),
         var_poisson=np.zeros(data.shape, dtype=np.float32),
         var_rnoise=np.zeros(data.shape, dtype=np.float32),
         err=np.zeros(data.shape, dtype=np.float32))
-    int_model.int_times = None
     int_model.update(input_model)  # ... and add all keys from input
 
     int_model.data = data
@@ -147,7 +148,7 @@ def create_optional_results_model(input_model, opt_info):
     opt_info: tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
-    Parameter
+    Return
     ---------
     opt_model: RampFitOutputModel
         The optional RampFitOutputModel to be returned from the ramp fit step.
@@ -234,11 +235,7 @@ class RampFitStep(Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-                # Set int_times depending on model meta data.
-            if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
-                input_model.int_times = input_model.int_times
-            else:
-                input_model.int_times = None
+            int_times = input_model.int_times
 
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
@@ -259,7 +256,8 @@ class RampFitStep(Step):
             )
         '''
 
-        if image_info is not None:
+        out_model, int_model = None, None
+        if image_info is not None and integ_info is not None:
             out_model = create_image_model(input_model, image_info)
             out_model.meta.bunit_data = 'DN/s'
             out_model.meta.bunit_err = 'DN/s'
@@ -270,8 +268,7 @@ class RampFitStep(Step):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-        if integ_info is not None:
-            int_model = create_integration_model(input_model, integ_info)
+            int_model = create_integration_model(input_model, integ_info, int_times)
             int_model.meta.bunit_data = 'DN/s'
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'

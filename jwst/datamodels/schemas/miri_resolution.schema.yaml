@@ -5,6 +5,7 @@ id: "http://stsci.edu/schemas/jwst_datamodel/miri_resolution.schema"
 title: Miri Resolution Reference file
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_channel.schema
 - type: object
   properties:
     resolving_power_table:

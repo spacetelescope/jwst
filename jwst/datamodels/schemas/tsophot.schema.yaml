@@ -5,6 +5,8 @@ id: "http://stsci.edu/schemas/jwst_datamodel/tsophot.schema"
 title: TSO image photometry reference file model (tso_photometry step)
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_tsovisit.schema
 - type: object
   properties:
     radii:

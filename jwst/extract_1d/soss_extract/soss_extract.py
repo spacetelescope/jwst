@@ -295,12 +295,14 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_file_args, transform=
         log.info('Solving for the optimal Tikhonov factor.')
 
         # Need a rough estimate of the underlying flux to estimate the tikhonov factor
-        # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
-        #       dq mask caused issues here and this may need a try/except wrap.
-        #       Dev suggested np.logspace(-19, -10, 10)
-        estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, threshold)
-        # Initial pass 8 orders of magnitude with 10 grid points.
-        factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
+        try:
+            estimate = estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, threshold)
+            # Initial pass 8 orders of magnitude with 10 grid points.
+            factors = engine.estimate_tikho_factors(estimate, log_range=[-4, 4], n_points=10)
+        except Exception as e:
+            log.warning(f"Error caught in first order flux estimation: {e}\n"
+                        f"Using pre-defined array for flux factor estimate.")
+            factors = np.logspace(-19, -10, 10)
         # Find the tikhonov factor.
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
         tikfac, mode, _ = engine.best_tikho_factor(tests=tiktests, fit_mode='chi2')
@@ -572,7 +574,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         ref_file_args = get_ref_file_args(ref_files, transform)
 
         # Make sure wavelength maps cover only parts where the centroid is inside the detector image
-        _mask_wv_map_centroid_outside(ref_file_args[0], ref_files, transform, scidata_bkg.shape[0])
+        if subarray != 'SUBSTRIP96':
+            _mask_wv_map_centroid_outside(ref_file_args[0], ref_files, transform, scidata_bkg.shape[0])
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR':
@@ -591,7 +594,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             # No model can be fit for F277W yet, missing throughput reference files.
             msg = f"No extraction possible for filter {soss_filter}."
             log.critical(msg)
-            raise ValueError(msg)
+            return None, None
 
         # Save trace models for output reference
         for order in tracemodels:
@@ -709,7 +712,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
                 # No model can be fit for F277W yet, missing throughput reference files.
                 msg = f"No extraction possible for filter {soss_filter}."
                 log.critical(msg)
-                raise ValueError(msg)
+                return None, None
 
             # Save trace models for output reference
             for order in tracemodels:
@@ -765,7 +768,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
         log.critical(msg)
-        raise ValueError(msg)
+        return None, None
 
     # Save output references
     for order in all_tracemodels:

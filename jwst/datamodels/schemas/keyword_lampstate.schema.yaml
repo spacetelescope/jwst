@@ -1,0 +1,17 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/keyword_lampmode.schema"
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      instrument:
+        type: object
+        properties:
+          lamp_state:
+            title: Name of the lamp used
+            type: string
+            enum: [FLAT1, FLAT2, FLAT3, FLAT4, FLAT5, LINE1, LINE2, LINE3, LINE4, REF, TEST, N/A]
+            fits_keyword: LAMP

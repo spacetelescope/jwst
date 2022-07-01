@@ -123,9 +123,26 @@ The ``tweakreg`` step has the following optional arguments:
   to be considered when fitting catalogs. Allowed values:
 
   - ``'shift'``: x/y shifts only
-  - ``'rscale'``: rotation and scale
   - ``'rshift'``: rotation and shifts
-  - ``'general'``: shift, rotation, and scale (Default="general")
+  - ``'rscale'``: rotation and scale
+  - ``'general'``: shift, rotation, and scale
+
+  The default value is "rshift".
+
+  .. note::
+      Mathematically, alignment of images observed in different tangent planes
+      requires ``fitgeometry='general'`` in order to fit source catalogs
+      in the different images even if mis-alignment is caused only by a shift
+      or rotation in the tangent plane of one of the images.
+
+      However, under certain circumstances, such as small alignment errors or
+      minimal dithering during observations that keep tangent planes of the
+      images to be aligned almost parallel, then it may be more robust to
+      use a ``fitgeometry`` setting with fewer degrees of freedom such as
+      ``'rshift'``, especially for "ill-conditioned" source catalogs such as
+      catalogs with very few sources, or large errors in source positions, or
+      sources placed along a line or bunched in a corner of the image (not
+      spread across/covering the entire image).
 
 * ``nclip``: A non-negative integer number of clipping iterations
   to use in the fit. (Default = 3)

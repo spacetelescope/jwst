@@ -1,4 +1,261 @@
-1.5.0 (2022-05-02)
+1.5.4 (unreleased)
+==================
+
+associations
+------------
+
+- Add finalization for level 3 group association candidates to require
+  more than one observation amongst member entries [#6886]
+
+extract_1d
+----------
+
+- Fix error in variance propagation calculation [#6899]
+
+ramp_fitting
+------------
+
+- Fixed multirpocessing error by removing ``int_times`` entirely in step code.
+  Also, in order to work better with multiprocessing changed the way one group
+  suppression gets handled and changed the location ZEROFRAME gets handled. [#6880]
+
+saturation
+----------
+
+- Updated to set the internal threshold for NO_SAT_CHECK and NaN pixels above the
+  A-to-D limit, so that they never get flagged as saturated. [#6901]
+
+skymatch
+--------
+
+- Fixed a couple errors in the step documentation. [#6891]
+
+tweakreg
+--------
+
+- Added check for multiple matches to a single reference source and skip
+  ``tweakreg`` step when this happens. [#6896, #6898]
+
+1.5.3 (2022-06-20)
+==================
+
+ami_analyze
+-----------
+
+- Fixed the creation of the output product so that it no longer contains
+  an empty "SCI" extension. [#6870]
+
+- Updated the step docs to include information about all of the available
+  step arguments. [#6884]
+
+ami_average
+-----------
+
+- Updated the step to handle inputs with different sizes for `fit_image` and
+  `resid_image`. Larger inputs are trimmed to match the size of the smallest
+  input. [#6870]
+
+associations
+------------
+
+- Create level 3 association for background images, and allow background
+  target observations into level 2 image associations for background
+  subtraction [#6878]
+
+cube_build
+----------
+
+- Fixed bug in selecting correct values to extract from the cube pars reference file. [#6885]
+
+datamodels
+----------
+
+- Updated many reference file schemas to include current
+  CRDS rmap selectors in schema structure [#6866]
+
+documentation
+-------------
+
+- Updated the docs for ``calwebb_detector1`` pipeline, as well as the
+  ``linearity``, ``refpix``, ``ramp_fit``, ``saturation``, and ``superbias``
+  steps to include information on the handling of NIRCam "Frame 0" data.
+  [#6868]
+
+- Update refpix docs to clarify roles of odd_even_rows and odd_even_columns
+  parameters [#6872]
+
+extract_1d
+----------
+
+- Catch two more errors raised in the SOSS ATOCA algorithm; one, if an input
+  ImageModel uses the F277W filter (similar to #6840, which only dealt with
+  input CubeModels), and another for bad DataModel input type [#6877]
+
+- Fix variance propagation for IFU cube extraction in calculations of surface
+  brightness [#6892]
+
+flatfield
+---------
+
+- Set DO_NOT_USE DQ bit in flatfield if NO_FLAT_FIELD DQ bit is set in flat
+  reference file [#6882]
+
+pipeline
+--------
+
+- Add check to ensure SOSS ``extract_1d`` return is not None, to
+  avoid photom errors in ``Spec3Pipeline`` and ``Tso3Pipeline``. [#6863]
+
+- Updated the ``calwebb_image3`` pipeline to only science members from the
+  input ASN table. [#6875]
+
+ramp_fitting
+------------
+
+- Properly handles the returning of ``None`` from ramp fitting for fully
+  saturated exposures. [#6895]
+
+refpix
+------
+
+- Add code to refpix step to specify which parameters are used and which are
+  ignored, depending on data type [#6872]
+
+resample
+--------
+
+- Speed up the algorithm for computing the sampling wavelengths for the output
+  WCS in ``resample_spec``. [#6860]
+
+set_telescope_pointing
+----------------------
+
+- Fix SIAF default handling for missing SIAF values using pysiaf [#6869]
+
+skymatch
+--------
+
+- Reduced memory usage when input is an ASN. [#6874]
+
+source_catalog
+--------------
+
+- Fix bug in passing filename rather than datamodel [#6889]
+
+straylight
+----------
+
+- Add a check that input data is IFUImageModel [#6861]
+
+- Update straylight algorithm to use cross-artifact model [#6873]
+
+crds
+----
+
+- Explain about CRDS PUB. [#6862]
+
+1.5.2 (2022-05-20)
+==================
+
+align_refs
+----------
+
+- Change median filter warning message to debug level [#6853]
+
+extract_1d
+----------
+
+- In SOSS ATOCA, catch negative infinite values in centroid finder;
+  catch spline-fit errors in first order flux estimate [#6854]
+
+linearity
+---------
+
+- Correct bug when using ZEROFRAME data. [#6851]
+
+ramp_fitting
+------------
+
+- Remove the logic that only copied the INT_TIMES table content when processing
+  TSO exposures, so that it shows up in all ``rateints`` products [#6852]
+
+- Updated the one good group ramp suppression handler. [spacetelescope/stcal#92]
+
+1.5.1 (2022-05-17)
+==================
+
+cube_build
+----------
+
+- Fix for residual spectral tearing in MIRI MRS multiband cubes [#6786]
+
+dark_current
+------------
+
+- Eliminated extra copying of input model when step gets skipped [#6841]
+
+datamodels
+----------
+
+- Update keyword comments/titles for V2_REF, V3_REF, FITXOFFS, FITYOFFS [#6822]
+
+extract_1d
+----------
+
+- Fix bug in SOSS algorithm for bad data by replacing source of possible
+  infinite values with NaNs, caused by zero division [#6836]
+
+- Exit gracefully if data is with F277W filter; avoid masking entire wavemap
+  if subarray is SUBSTRIP96 [#6840]
+
+jump
+----
+
+- Enable multiprocessing in jump detection [#6845]
+
+lib
+---
+
+- Update ``test_siafdb`` unit test due to recent SIAF DB update [#6842]
+
+linearity
+---------
+
+- Adding feature to process ZEROFRAME data with the linearity step. [#6782]
+
+ramp_fitting
+------------
+
+- Adding feature to use ZEROFRAME for ramps that are fully saturated, but
+  the ZEROFRAME data for that ramp is good. [#6782]
+
+refpix
+------
+
+- Adding feature to process ZEROFRAME data with the refpix step. [#6782]
+
+saturation
+----------
+
+- Adding feature to process ZEROFRAME data with the saturation step. [#6782]
+
+stpipe
+------
+
+- Log the CRDS context for pipeline and standalone step processing [#6835]
+
+superbias
+---------
+
+- Adding feature to process ZEROFRAME data with the superbias step. [#6782]
+
+tweakreg
+--------
+
+- Changed default value of ``fitgeom`` from ``'general'`` to ``'rshift'``
+  at the request of CalWG. [#6838]
+
+1.5.0 (2022-05-05)
 ==================
 
 associations
@@ -34,8 +291,13 @@ ami
 assign_wcs
 ----------
 
-Corrected computation of crpix by backward transform of fiducial, allow
-for reference outside of detector frame [#6789]
+- Corrected computation of crpix by backward transform of fiducial, allow
+  for reference outside of detector frame [#6789]
+
+- Fixed parsing the ``filteroffset`` file which resulted in the offset
+  not being used by the WCS. [#6831]
+
+- Fixed assignment of ``wcs.bounding_box`` in MIRI, NIRISS and NIRCAM imaging mode. [#6831]
 
 background
 ----------
@@ -53,6 +315,12 @@ cube_build
 ----------
 
 - Fixed a bug in how the DQ plane of NIRSpec data is set [#6718]
+
+- Use drizzle weight function by default instead of EMSM. [#6820]
+
+- Fix bug for internal_cal cubes produces by move to drizzle default. [#6826]
+
+- Fix bug for Single type cubes called by mrs_imatch using drizzle. [#6827]
 
 cube_skymatch
 -------------
@@ -81,13 +349,15 @@ datamodels
 - Add new datamodel and schema for MIRI MRS cross-artifact reference file
   MirMrsXArtCorrModel [#6800]
 
-- Create MSA_TARG_ACQ schema [#6757]
+- Create MSA_TARG_ACQ table extension schema [#6757]
+
+- Added selector keywords ``readpatt`` and ``preadpatt`` to MIRI flat schema. [#6825]
 
 documentation
 -------------
 
 - Added documentation for processing NIRSpec lamp mode data in Spec2Pipeline
-  description [#2579]
+  description [#6812]
 
 - Document parameter reference files in the same manor as other references [#6806]
 
@@ -131,6 +401,11 @@ lib
 
 - Updated default suffix names for RampFit and GuiderCDS steps to
   'ramp_fit' and 'guider_cds' to match alias convention [#6740]
+
+mrs_imatch
+----------
+
+- Use drizzle weight function by default instead of EMSM. [#6820]
 
 photom
 ------
@@ -196,7 +471,9 @@ residual_fringe
 saturation
 ----------
 
-- Updated to allow the step to flag neighbors of saturated pixels, which is controlled by the new step param n_pix_grow_sat. Added adjacent-to-saturated pixel flagging for nirspec irs2 mode. [spacetelescope/stcal#83] [#6818]
+- Updated to allow the step to flag neighbors of saturated pixels, which is
+  controlled by the new step param ``n_pix_grow_sat``, to account for charge
+  migration. [spacetelescope/stcal#83] [#6818] [#6830]
 
 skymatch
 --------

@@ -9,6 +9,7 @@ import numpy as np
 from jwst.superbias import SuperBiasStep
 from jwst.superbias.bias_sub import do_correction
 from jwst.datamodels import RampModel, SuperBiasModel
+from jwst.datamodels import dqflags
 
 
 def test_basic_superbias_subtraction(setup_full_cube):
@@ -133,6 +134,42 @@ def test_full_step(setup_full_cube):
 
     # Check that pixel value is negative after bias is subtracted
     assert np.sign(output.data[0, 0, 500, 500]) == -1
+
+
+def test_zeroframe(setup_full_cube):
+    """
+    """
+    darr1 = [11800., 11793., 11823., 11789., 11857.]
+    darr2 = [11800., 11793., 11823., 11789., 11857.]
+    darr3 = [10579., 10594., 10620., 10583., 10621.]
+    zarr = [0., 10500., 10579.]
+
+    ngroups, nrows, ncols = len(darr1), 1, len(zarr)
+    ramp, bias = setup_full_cube(ngroups, nrows, ncols)
+
+    cdq = np.array([dqflags.group["SATURATED"]] * ngroups)
+
+    # Set up data array
+    ramp.data[0, :, 0, 0] = np.array(darr1)
+    ramp.data[0, :, 0, 1] = np.array(darr2)
+    ramp.data[0, :, 0, 2] = np.array(darr3)
+
+    ramp.groupdq[0, :, 0, 0] = np.array(cdq)
+    ramp.groupdq[0, :, 0, 1] = np.array(cdq)
+
+    nints = ramp.data.shape[0]
+    ramp.zeroframe = np.zeros((nints, nrows, ncols), dtype=float)
+
+    ramp.zeroframe[0, 0, :] = np.array(zarr)
+
+    bval = 5000.
+    bias.data[:, :] = bval
+
+    ramp.meta.exposure.zero_frame = True
+    output = do_correction(ramp, bias)
+
+    check = np.array([zarr[0], zarr[1] - bval, zarr[2] - bval])
+    np.testing.assert_equal(check, output.zeroframe[0, 0, :])
 
 
 @pytest.fixture(scope='function')

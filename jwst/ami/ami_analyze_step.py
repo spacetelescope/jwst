@@ -15,7 +15,7 @@ class AmiAnalyzeStep(Step):
         oversample = integer(default=3, min=1)  # Oversampling factor
         rotation = float(default=0.0)           # Rotation initial guess [deg]
         psf_offset = string(default='0.0 0.0') # Psf offset values to use to create the model array
-        rotation_search = string(default='-3 3.1 1.') # Rotation search parameters: start, stop, step
+        rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
     """
 
     reference_file_types = ['throughput']
