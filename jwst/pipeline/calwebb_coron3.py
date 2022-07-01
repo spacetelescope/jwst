@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os.path as op
-
+from collections import defaultdict
 from ..stpipe import Pipeline
 from .. import datamodels
 from ..model_blender import blendmeta
@@ -52,7 +52,7 @@ class Coron3Pipeline(Pipeline):
 
         Parameters
         ----------
-        user_input: str, Level3 Association, or ~jwst.datamodels.DataModel
+        user_input : str, Level3 Association, or ~jwst.datamodels.DataModel
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_coron3 ...')
@@ -62,11 +62,17 @@ class Coron3Pipeline(Pipeline):
         input_models = datamodels.open(user_input, asn_exptypes=asn_exptypes)
         acid = input_models.meta.asn_table.asn_id
 
-        # We assume there's one final product defined by the association
-        prod = input_models.meta.asn_table.products[0].instance
+        # Store the output file for future use
         self.output_file = input_models.meta.asn_table.products[0].name
+        
+        # Find all the member types in the product
+        members_by_type = defaultdict(list)
+        prod = input_models.meta.asn_table.products[0].instance
+        
+        for member in prod['members']:
+            members_by_type[member['exptype'].lower()].append(member['expname'])
 
-        # Setup required output products and formats
+        # Set up required output products and formats
         self.outlier_detection.suffix = f'{acid}_crfints'
         self.outlier_detection.save_results = self.save_results
         self.resample.blendheaders = False
@@ -76,11 +82,9 @@ class Coron3Pipeline(Pipeline):
         # processing individual inputs
         skip_outlier_detection = self.outlier_detection.skip
 
-        # Construct lists of all the PSF and science target members
-        psf_files = [m['expname'] for m in prod['members']
-                     if m['exptype'].upper() == 'PSF']
-        targ_files = [m['expname'] for m in prod['members']
-                      if m['exptype'].upper() == 'SCIENCE']
+        # Extract lists of all the PSF and science target members
+        psf_files = members_by_type['psf']
+        targ_files = members_by_type['science']
 
         # Make sure we found some PSF and target members
         if len(psf_files) == 0:
@@ -103,6 +107,7 @@ class Coron3Pipeline(Pipeline):
         for i in range(len(psf_files)):
             psf_input = datamodels.CubeModel(psf_files[i])
             psf_models.append(psf_input)
+
             psf_input.close()
 
         # Perform outlier detection on the PSFs.
