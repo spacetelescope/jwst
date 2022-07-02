@@ -574,7 +574,14 @@ def extract_ifu(input_model, source_type, extract_params):
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
+        # if aperture_area = 0, then there is no valid data for this wavelength
+        # set the DQ flag to DO_NOT_USE
+        if aperture_area == 0:
+            dq[k] = dqflags.pixel['DO_NOT_USE']
 
+        # There is no valid data for this region. To prevent the code from
+        # crashing set aperture_area to a nonzero value. It will have the dq flag
+        # set to DO_NOT_USE.
         if(aperture_area == 0 and aperture.area > 0):
             aperture_area = aperture.area
 
@@ -595,6 +602,7 @@ def extract_ifu(input_model, source_type, extract_params):
                 subtract_background_plane = False
 
         npixels[k] = aperture_area
+
         npixels_bkg[k] = 0.0
         if annulus is not None:
             npixels_bkg[k] = annulus_area
@@ -611,6 +619,10 @@ def extract_ifu(input_model, source_type, extract_params):
         var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture,
                                                method=method, subpixels=subpixels)
         f_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
+
+        var_flat_table = aperture_photometry(var_flat[k, :, :], aperture,
+                                             method=method, subpixels=subpixels)
+        f_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
         var_flat_table = aperture_photometry(var_flat[k, :, :], aperture,
                                              method=method, subpixels=subpixels)
