@@ -581,7 +581,6 @@ def extract_ifu(input_model, source_type, extract_params):
 
         # There is no valid data for this region. To prevent the code from
         # crashing set aperture_area to a nonzero value. It will have the dq flag
-        # set to DO_NOT_USE.
         if(aperture_area == 0 and aperture.area > 0):
             aperture_area = aperture.area
 
