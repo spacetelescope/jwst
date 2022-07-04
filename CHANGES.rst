@@ -5,6 +5,7 @@ extract_1d
 ----------
 
 - Fix error in variance propagation calculation [#6899]
+- Fix error in setting DQ flags for s3d data when on data is in extraction aperture [#6909]
 
 ramp_fitting
 ------------
