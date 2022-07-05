@@ -2599,6 +2599,11 @@ def method_from_pcs_mode(pcs_mode):
     -------
     method : Methods
         The orientation calculation method to use.
+
+    Raises
+    ------
+    ValueError
+        If `pcs_mode` does not uniquely define the method to use.
     """
     if pcs_mode is None or pcs_mode in ['NONE', 'COARSE']:
         return Methods.COARSE_TR_202111
