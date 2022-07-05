@@ -36,6 +36,12 @@ skymatch
 
 - Fixed a couple errors in the step documentation. [#6891]
 
+source_catalog
+--------------
+
+- Updated the default background box size and minimum number of pixels.
+  [#6911]
+
 tweakreg
 --------
 
