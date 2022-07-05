@@ -623,10 +623,6 @@ def extract_ifu(input_model, source_type, extract_params):
                                              method=method, subpixels=subpixels)
         f_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
-        var_flat_table = aperture_photometry(var_flat[k, :, :], aperture,
-                                             method=method, subpixels=subpixels)
-        f_var_flat[k] = float(var_flat_table['aperture_sum'][0])
-
         # Point source type of data with defined annulus size
         if subtract_background_plane:
             bkg_table = aperture_photometry(data[k, :, :], annulus,
