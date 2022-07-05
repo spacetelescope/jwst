@@ -142,7 +142,7 @@ class Methods(Enum):
     #: COARSE tracking mode algorithm, TR version 2021-11.
     COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111', COURSE_TR_202111_MNEMONICS)
     #: Method to use in OPS to use TR version 2021-11
-    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111', None)
+    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
     #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
     TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
 
@@ -791,6 +791,28 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     )
     vinfo = wcsinfo
 
+    # Get the pointing information
+    try:
+        pointing = get_pointing(t_pars.obsstart, t_pars.obsend,
+                                engdb_url=t_pars.engdb_url,
+                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+    except ValueError as exception:
+        if not t_pars.allow_default:
+            raise
+        else:
+            logger.warning(
+                'Cannot retrieve valid telescope pointing.'
+                ' Default pointing parameters will be used.'
+            )
+            logger.warning('Exception is %s', exception)
+            logger.info("Setting ENGQLPTG keyword to PLANNED")
+            model.meta.visit.engdb_pointing_quality = "PLANNED"
+            pointing = None
+    else:
+        logger.info('Successful read of engineering quaternions:')
+        logger.info('\tPointing: %s', pointing)
+    t_pars.pointing = pointing
+
     # If pointing is available, attempt to calculate WCS information
     if t_pars.pointing is not None:
         try:
@@ -1189,14 +1211,8 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
     transforms : Transforms
         The list of coordinate matrix transformations
     """
-    if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
-        return Methods.COARSE_TR_202111.func(t_pars)
-    elif t_pars.pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
-        return Methods.TRACK_TR_202111.func(t_pars)
-    else:
-        raise ValueError(
-            f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
-        )
+    method = method_from_pcs_mode(t_pars.pcs_mode)
+    return method.func(t_pars)
 
 
 def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
@@ -2525,27 +2541,8 @@ def t_pars_from_model(model, **t_pars_kwargs):
     ])
     logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
 
-    # Get the pointing information
-    try:
-        pointing = get_pointing(t_pars.obsstart, t_pars.obsend,
-                                engdb_url=t_pars.engdb_url,
-                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-    except ValueError as exception:
-        if not t_pars.allow_default:
-            raise
-        else:
-            logger.warning(
-                'Cannot retrieve valid telescope pointing.'
-                ' Default pointing parameters will be used.'
-            )
-            logger.warning('Exception is %s', exception)
-            logger.info("Setting ENGQLPTG keyword to PLANNED")
-            model.meta.visit.engdb_pointing_quality = "PLANNED"
-            pointing = None
-    else:
-        logger.info('Successful read of engineering quaternions:')
-        logger.info('\tPointing: %s', pointing)
-    t_pars.pointing = pointing
+    # Set the transform and WCS calculation method.
+    t_pars.method = method_from_pcs_mode(t_pars.pcs_mode)
 
     return t_pars
 
@@ -2584,3 +2581,30 @@ def dcm(alpha, delta, angle):
           cos(angle) * cos(delta)]])
 
     return dcm
+
+# Determine calculation method from tracking mode.
+def method_from_pcs_mode(pcs_mode):
+    """Determine transform/wcs calculation method from PCS_MODE
+
+    Pointing Control System Mode (PCS_MODE) contains the string representing
+    which mode the JWST tracking system is in. The orientation calculation
+    changes depending on the mode in use.
+
+    Parameters
+    ----------
+    pcs_mode : str
+        The PCS mode in use.
+
+    Returns
+    -------
+    method : Methods
+        The orientation calculation method to use.
+    """
+    if pcs_mode is None or pcs_mode in ['NONE', 'COARSE']:
+        return Methods.COARSE_TR_202111
+    elif pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
+        return Methods.TRACK_TR_202111
+    else:
+        raise ValueError(
+            f'Invalid PCS_MODE: {pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
+        )
