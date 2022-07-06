@@ -131,6 +131,15 @@ TRACK_TR_202111_MNEMONICS = {
     'SA_ZFGGSPOSY': False,
 }
 
+FGS_AQC_MNEMONICS  = {
+    'IFGS_ACQ_XPOSG': True,
+    'IFGS_ACQ_YPOSG': True,
+}
+FGS_GUIDED_MNEMONICS = {
+    'IFGS_CTDGS_X': True,
+    'IFGS_CTDGS_Y': True,
+}
+
 
 # The available methods for transformation
 class Methods(Enum):
