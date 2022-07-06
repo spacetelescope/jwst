@@ -20,15 +20,19 @@ siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
 # Define minimal model meta structure
 WCS_META = {
     'meta': {
-        'exposure': {
-            'type': 'FGS_ACQ1',
-        },
         'aperture': {
             'name': 'FGS1_FULL',
         },
+        'exposure': {
+            'type': 'FGS_ACQ1',
+        },
+        'guidestar': {
+            'gs_ra': 45.1234,
+            'gs_dec': -45.1234,
+        },
         'observation': {
             'date': '2017-01-01',
-        }
+        },
     }
 }
 
@@ -42,6 +46,10 @@ def test_fgs_pointing():
     assert isclose(model.meta.wcsinfo.pc2_1, -0.021829143247382235, atol=1e-15)
     assert isclose(model.meta.wcsinfo.pc2_2, 0.9997617158628777, atol=1e-15)
 
+    assert isclose(model.meta.wcsinfo.crpix1, 1024.5, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crpix2, 1024.5, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crval1, 45.1234, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crval2, -45.1234, atol=1e-15)
 
 # ---------
 # Utilities
