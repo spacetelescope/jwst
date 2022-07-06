@@ -374,6 +374,8 @@ class TransformParameters:
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
+    #: Exposure type
+    exp_type: str = None
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
     fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
@@ -674,10 +676,6 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     with SiafDb(siaf_path) as siaf_db:
 
         # Get model attributes
-        try:
-            exp_type = model.meta.exposure.type.lower()
-        except AttributeError:
-            exp_type = None
         useafter = model.meta.observation.date
 
         # Configure transformation parameters.
@@ -693,15 +691,15 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
 
         # Populate header with SIAF information.
         if t_pars.siaf is None:
-            if exp_type not in FGS_GUIDE_EXP_TYPES:
+            if t_pars.exp_type not in FGS_GUIDE_EXP_TYPES:
                 raise ValueError('Insufficient SIAF information found in header.')
         else:
             populate_model_from_siaf(model, t_pars.siaf)
 
         # Calculate WCS.
-        if exp_type in FGS_GUIDE_EXP_TYPES:
+        if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
             update_wcs_from_fgs_guiding(
-                model, default_roll_ref=default_roll_ref
+                model, t_pars, default_roll_ref=default_roll_ref
             )
         else:
             transforms = update_wcs_from_telem(model, t_pars)
@@ -709,7 +707,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     return t_pars, transforms
 
 
-def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
+def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
     """ Update WCS pointing from header information
 
     For Fine Guidance guiding observations, nearly everything
@@ -723,6 +721,9 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update.
+
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
 
     default_pa_v3 : float
         If pointing information cannot be retrieved,
@@ -2531,6 +2532,11 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Instrument details
     t_pars.detector = model.meta.instrument.detector
+    try:
+        exp_type = model.meta.exposure.type.lower()
+    except AttributeError:
+        exp_type = None
+    t_pars.exp_type = exp_type
 
     # observation parameters
     t_pars.obsstart = model.meta.exposure.start_time
@@ -2557,6 +2563,10 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Set the transform and WCS calculation method.
     t_pars.method = method_from_pcs_mode(t_pars.pcs_mode)
+
+    # Set pointing reduction function if not already set.
+    if not t_pars.reduce_func:
+        t_pars.reduce_func = get_reduce_func_from_exptype(t_pars.exp_type)
 
     return t_pars
 
@@ -2627,3 +2637,26 @@ def method_from_pcs_mode(pcs_mode):
         raise ValueError(
             f'Invalid PCS_MODE: {pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
         )
+
+
+def get_reduce_func_from_exptype(exp_type):
+    """Determine preferred pointing reduction based on exposure type
+
+    Parameters
+    ----------
+    exp_type : str
+        The exposure type.
+
+    Returns
+    -------
+    reduce_func : func
+        The preferred reduction function.
+    """
+    if exp_type in ['fgs_acq1', 'fgs_acq2']:
+        reduce_func = pointing_from_fgs_acq
+    elif exp_type in ['fgs_fineguide', 'fgs_track']:
+        reduce_func = pointing_from_guiding
+    else:
+        reduce_func = pointing_from_average
+
+    return reduce_func
