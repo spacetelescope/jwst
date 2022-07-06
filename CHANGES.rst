@@ -18,6 +18,12 @@ extract_1d
 
 - Fix error in variance propagation calculation [#6899]
 
+pipeline
+--------
+
+- Fixed the logic used in the `calwebb_tso3` pipeline to check for null
+  photometry results. [#6912]
+
 ramp_fitting
 ------------
 
