@@ -409,6 +409,13 @@ class TransformParameters:
         r = {key: repr(value) for key, value in d.items()}
         return r
 
+    def update_pointing(self):
+        """Update pointing information"""
+        self.pointing = get_pointing(self.obsstart, self.obsend,
+                                     mnemonics_to_read=self.method.mnemonics,
+                                     engdb_url=self.engdb_url,
+                                     tolerance=self.tolerance, reduce_func=self.reduce_func)
+
 
 def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
             default_pa_v3=0., siaf_path=None, engdb_url=None,
@@ -793,10 +800,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
 
     # Get the pointing information
     try:
-        pointing = get_pointing(t_pars.obsstart, t_pars.obsend,
-                                mnemonics_to_read=t_pars.method.mnemonics,
-                                engdb_url=t_pars.engdb_url,
-                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+        t_pars.update_pointing()
     except ValueError as exception:
         if not t_pars.allow_default:
             raise
@@ -808,11 +812,10 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
             logger.warning('Exception is %s', exception)
             logger.info("Setting ENGQLPTG keyword to PLANNED")
             model.meta.visit.engdb_pointing_quality = "PLANNED"
-            pointing = None
+            t_pars.pointing = None
     else:
         logger.info('Successful read of engineering quaternions:')
-        logger.info('\tPointing: %s', pointing)
-    t_pars.pointing = pointing
+        logger.info('\tPointing: %s', t_pars.pointing)
 
     # If pointing is available, attempt to calculate WCS information
     if t_pars.pointing is not None:
