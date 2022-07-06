@@ -29,10 +29,10 @@ class SourceCatalogStep(Step):
     class_alias = "source_catalog"
 
     spec = """
-        bkg_boxsize = integer(default=100)    # background mesh box size in pixels
+        bkg_boxsize = integer(default=1000)   # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
-        npixels = integer(default=5)          # min number of pixels in source
+        npixels = integer(default=25)         # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
         aperture_ee1 = integer(default=30)    # aperture encircled energy 1
         aperture_ee2 = integer(default=50)    # aperture encircled energy 2
