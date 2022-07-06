@@ -713,14 +713,13 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
         update_wcs_from_fgs_guiding(
             model, t_pars, default_roll_ref=default_roll_ref
         )
-        transforms = None
     else:
         transforms = update_wcs_from_telem(model, t_pars)
 
     return t_pars, transforms
 
 
-def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
+def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
     """ Update WCS pointing from header information
 
     For Fine Guidance guiding observations, nearly everything
@@ -734,6 +733,9 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     ----------
     model : `~jwst.datamodels.JwstDataModel`
         The model to update.
+
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
 
     default_pa_v3 : float
         If pointing information cannot be retrieved,
@@ -2568,6 +2570,11 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Instrument details
     t_pars.detector = model.meta.instrument.detector
+    try:
+        exp_type = model.meta.exposure.type.lower()
+    except AttributeError:
+        exp_type = None
+    t_pars.exp_type = exp_type
 
     # observation parameters
     t_pars.obsstart = model.meta.exposure.start_time
@@ -2594,6 +2601,10 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Set the transform and WCS calculation method.
     t_pars.method = method_from_pcs_mode(t_pars.pcs_mode)
+
+    # Set pointing reduction function if not already set.
+    if not t_pars.reduce_func:
+        t_pars.reduce_func = get_reduce_func_from_exptype(t_pars.exp_type)
 
     return t_pars
 
@@ -2667,10 +2678,24 @@ def method_from_pcs_mode(pcs_mode):
         )
 
 
-def check_prd_versions(model, siaf_db):
-    """Check on consistency between the model and the current PRD"""
-    if siaf_db.prd_version:
-        if model.meta.prd_software_version != siaf_db.prd_version:
-            logger.warning('PRD versions between the model %s and pysiaf %s are different.'
-                           'This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.',
-                           model.meta.prd_software_version, siaf_db.prd_version, model.meta.prd_software_version)
+def get_reduce_func_from_exptype(exp_type):
+    """Determine preferred pointing reduction based on exposure type
+
+    Parameters
+    ----------
+    exp_type : str
+        The exposure type.
+
+    Returns
+    -------
+    reduce_func : func
+        The preferred reduction function.
+    """
+    if exp_type in ['fgs_acq1', 'fgs_acq2']:
+        reduce_func = pointing_from_fgs_acq
+    elif exp_type in ['fgs_fineguide', 'fgs_track']:
+        reduce_func = pointing_from_guiding
+    else:
+        reduce_func = pointing_from_average
+
+    return reduce_func
