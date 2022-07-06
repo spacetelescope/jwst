@@ -12,21 +12,18 @@ def run_pipelines(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the _rateints file, saving intermediate products
-    rtdata.get_data("nircam/tsgrism/jwst_nircam_tsgrism_extract1d.json")
     rtdata.get_data("nircam/tsgrism/jw00721012001_03103_00001-seg001_nrcalong_rateints.fits")
     args = ["calwebb_spec2", rtdata.input,
             "--steps.flat_field.save_results=True",
             "--steps.extract_2d.save_results=True",
-            "--steps.srctype.save_results=True",
-            "--steps.extract_1d.override_extract1d='jwst_nircam_tsgrism_extract1d.json'"
+            "--steps.srctype.save_results=True"
             ]
     Step.from_cmdline(args)
 
     # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("nircam/tsgrism/jw00721-o012_20191119t043909_tso3_001_asn.json")
-    args = ["calwebb_tso3", rtdata.input,
-            "--steps.extract_1d.override_extract1d='jwst_nircam_tsgrism_extract1d.json'"]
+    args = ["calwebb_tso3", rtdata.input]
     Step.from_cmdline(args)
 
     return rtdata
