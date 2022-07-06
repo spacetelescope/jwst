@@ -740,6 +740,19 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
 
     # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
     # in the image.
+    if t_pars.exp_type in ['fgs_acq1', 'fgs_acq2']:
+        mnemonics_to_read = FGS_AQC_MNEMONICS
+    elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
+        mnemonics_to_read = FGS_GUIDED_MNEMONICS
+    else:
+        raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
+
+    crpix1, crpix2 = get_pointing(t_pars.obsstart, t_pars.obsend,
+                                  mnemonics_to_read=mnemonics_to_read,
+                                  engdb_url=t_pars.engdb_url,
+                                  tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+    model.meta.wcsinfo.crpix1 = crpix1
+    model.meta.wcsinfo.crpix2 = crpix2
 
     # Get position angle
     try:
@@ -2652,11 +2665,50 @@ def get_reduce_func_from_exptype(exp_type):
     reduce_func : func
         The preferred reduction function.
     """
-    if exp_type in ['fgs_acq1', 'fgs_acq2']:
-        reduce_func = pointing_from_fgs_acq
-    elif exp_type in ['fgs_fineguide', 'fgs_track']:
-        reduce_func = pointing_from_guiding
+    if exp_type in FGS_GUIDE_EXP_TYPES:
+        reduce_func = crpix_from_gspos
     else:
         reduce_func = pointing_from_average
 
     return reduce_func
+
+
+def crpix_from_gspos(mnemonics_to_read, mnemonics):
+    """Get the CRPIX values from guide star telemetry for FGS
+
+    Average of all positive values.
+
+    Parameters
+    ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
+    mnemonics : {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    crpix1, crpix2 : float, float
+        Some value from telemetry
+    """
+    # Determine which set of mnemonics is being used, to ensure the right pairs are used for CRPIX.
+    if all(k in mnemonics for k in FGS_AQC_MNEMONICS):
+        crpix1_mnemonic = 'IFGS_ACQ_XPOSG'
+        crpix2_mnemonic = 'IFGS_ACQ_YPOSG'
+    elif all(k in mnemonics for k in FGS_GUIDED_MNEMONICS):
+        crpix1_mnemonic = 'IFGS_CTDGS_X'
+        crpix2_mnemonic = 'IFGS_CTDGS_Y'
+    else:
+        raise ValueError(f'Accessed mnemonics {mnemonics} not in the required mnemonics {FGS_AQC_MNEMONICS} or {FGS_GUIDED_MNEMONICS}')
+
+    # Get the values.
+    crpix1 = np.array([eng_param.value
+                       for eng_param in mnemonics[crpix1_mnemonic]
+                       if eng_param.value > 0.])
+    crpix2 = np.array([eng_param.value
+                       for eng_param in mnemonics[crpix2_mnemonic]
+                       if eng_param.value > 0.])
+
+    return np.average(crpix1), np.average(crpix2)
