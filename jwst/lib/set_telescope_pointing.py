@@ -109,26 +109,26 @@ COURSE_TR_202111_MNEMONICS = {
     'SA_ZATTEST2': True,
     'SA_ZATTEST3': True,
     'SA_ZATTEST4': True,
-    'SA_ZRFGS2J11': False,
-    'SA_ZRFGS2J12': False,
-    'SA_ZRFGS2J13': False,
-    'SA_ZRFGS2J21': False,
-    'SA_ZRFGS2J22': False,
-    'SA_ZRFGS2J23': False,
-    'SA_ZRFGS2J31': False,
-    'SA_ZRFGS2J32': False,
-    'SA_ZRFGS2J33': False,
+    'SA_ZRFGS2J11': True,
+    'SA_ZRFGS2J12': True,
+    'SA_ZRFGS2J13': True,
+    'SA_ZRFGS2J21': True,
+    'SA_ZRFGS2J22': True,
+    'SA_ZRFGS2J23': True,
+    'SA_ZRFGS2J31': True,
+    'SA_ZRFGS2J32': True,
+    'SA_ZRFGS2J33': True,
     'SA_ZADUCMDX': False,
     'SA_ZADUCMDY': False,
-    'SA_ZFGGSCMDX': True,
-    'SA_ZFGGSCMDY': True,
+    'SA_ZFGGSCMDX': False,
+    'SA_ZFGGSCMDY': False,
     'SA_ZFGDETID': False,
 }
 
 TRACK_TR_202111_MNEMONICS = {
     **COURSE_TR_202111_MNEMONICS,
-    'SA_ZFGGSPOSX': True,
-    'SA_ZFGGSPOSY': True,
+    'SA_ZFGGSPOSX': False,
+    'SA_ZFGGSPOSY': False,
 }
 
 
@@ -794,6 +794,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     # Get the pointing information
     try:
         pointing = get_pointing(t_pars.obsstart, t_pars.obsend,
+                                mnemonics_to_read=t_pars.method.mnemonics,
                                 engdb_url=t_pars.engdb_url,
                                 tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
     except ValueError as exception:
@@ -2050,8 +2051,7 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
             for eng_param in mnemonics[mnemonic]
         ]
         # Weed out mnemonic entries that are zero, though some are OK to be zero.
-        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY', 'SA_ZFGGSCMDX', 'SA_ZFGGSCMDY',
-                            'SA_ZFGGSPOSX', 'SA_ZFGGSPOSY', 'SA_ZFGDETID']:
+        if mnemonics_to_read[mnemonic]:
             good_mnemonic = []
             for this_value in values:
                 if this_value != 0.0:
@@ -2102,10 +2102,12 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
 
     ])
 
-    gs_position = np.array([
-        mnemonic_averages['SA_ZFGGSPOSX'],
-        mnemonic_averages['SA_ZFGGSPOSY']
-    ])
+    gs_position = None
+    if all(k in mnemonic_averages for k in ('SA_ZFGGSPOSX', 'SA_ZFGGSPOSY')):
+        gs_position = np.array([
+            mnemonic_averages['SA_ZFGGSPOSX'],
+            mnemonic_averages['SA_ZFGGSPOSY']
+        ])
 
     # For FGS ID, just take the first one.
     fgsid = mnemonics['SA_ZFGDETID'][0].value
