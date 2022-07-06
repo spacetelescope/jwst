@@ -102,6 +102,7 @@ def calc_wcs(databases, request):
 
         # Calculate the pointing information
         t_pars = stp.t_pars_from_model(model, siaf_db=siaf_db, engdb_url='http://localhost')
+        t_pars.update_pointing()
         wcsinfo, vinfo, transforms = stp.calc_wcs(t_pars)
 
         return model, t_pars, wcsinfo, vinfo, transforms
