@@ -740,6 +740,9 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 
     logger.info('Updating WCS for Fine Guidance.')
 
+    # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
+    # in the image.
+
     # Get position angle
     try:
         roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
