@@ -1923,11 +1923,13 @@ def all_pointings(mnemonics_to_read, mnemonics):
 
         ])
 
-        gs_position = np.array([
-            mnemonics_at_time['SA_ZFGGSPOSX'].value,
-            mnemonics_at_time['SA_ZFGGSPOSY'].value
+        gs_position = None
+        if all(k in mnemonics for k in ('SA_ZFGGSPOSX', 'SA_ZFGGSPOSY')):
+            gs_position = np.array([
+                mnemonics_at_time['SA_ZFGGSPOSX'].value,
+                mnemonics_at_time['SA_ZFGGSPOSY'].value
 
-        ])
+            ])
 
         fgsid = mnemonics_at_time['SA_ZFGDETID'].value
 
