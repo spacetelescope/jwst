@@ -185,10 +185,13 @@ class Spec3Pipeline(Pipeline):
             src_id = int(src_id)
             # Replace ids that aren't positive 5-digit integers
             if src_id < 0 or src_id > 99999:
-                src_id = available_src_ids.pop()
+                src_id_new = available_src_ids.pop()
+                self.log.info(f"Source ID {src_id} falls outside allowed range.")
+                self.log.info(f"Reassigning {src_id} to {str(src_id_new).zfill(5)}.")
                 # Replace source_id for each model in the SourceModelContainers
                 for contained_model in model:
-                    contained_model.source_id = src_id
+                    contained_model.source_id = src_id_new
+                src_id = src_id_new
             hotfixed_sources.append((str(src_id), model))
 
         sources = hotfixed_sources
