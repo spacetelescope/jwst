@@ -2,11 +2,7 @@
 import logging
 from numpy import array
 from numpy import isclose
-from pathlib import Path
-
 import pytest
-
-from stdatamodels.jwst.datamodels import Level1bModel
 
 from jwst.datamodels import Level1bModel
 from jwst.lib import engdb_mast
@@ -44,15 +40,8 @@ WCS_META = {
 }
 
 
-@pytest.mark.xfail(reason='See JP-2658')
-def test_fgs_pointing():
+def test_fgs_pointing(mast):
     model = make_level1b()
-
-    # See if access to MAST is available.
-    try:
-        engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
-    except RuntimeError as exception:
-        pytest.skip(f'Live MAST Engineering Service not available: {exception}')
 
     # Update wcs
     stp.update_wcs(model, siaf_path=siaf_db, engdb_url=engdb_mast.MAST_BASE_URL)
@@ -68,9 +57,22 @@ def test_fgs_pointing():
     assert isclose(model.meta.wcsinfo.crval1, 45.1234, atol=1e-15)
     assert isclose(model.meta.wcsinfo.crval2, -45.1234, atol=1e-15)
 
+
 # ---------
 # Utilities
 # ---------
+@pytest.fixture
+def mast():
+
+    # See if access to MAST is available.
+    try:
+        engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+    except RuntimeError as exception:
+        pytest.skip(f'Live MAST Engineering Service not available: {exception}')
+
+    return engdb
+
+
 def make_level1b():
     data = array([1.])
     data.shape = (1, 1, 1, 1)
