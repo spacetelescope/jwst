@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 import os.path as op
+import numpy as np
 
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
@@ -161,6 +162,28 @@ class Spec3Pipeline(Pipeline):
                 (name, model)
                 for name, model in multislit_to_container(source_models).items()
             ]
+
+        # Check for negative and large source_id values
+        n_srcs = len(sources)
+        available_src_ids=set(np.arange(99999) + 1)
+        used_src_ids = set()
+        for src in sources:
+            src_id, model = src
+            src_id = int(src_id)
+            used_src_ids.add(src_id)
+            if src_id > 0 and src_id <= 99999:
+                available_src_ids.remove(src_id)
+
+        hotfixed_sources = []
+        # now find and reset bad source_id values
+        for src in sources:
+            src_id, model = src
+            src_id = int(src_id)
+            if src_id < 0 or src_id > 99999:
+                src_id = available_src_ids.pop()
+            hotfixed_sources.append((str(src_id), model))
+
+        sources = hotfixed_sources
 
         # Process each source
         for source in sources:
