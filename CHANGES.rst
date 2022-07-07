@@ -27,6 +27,10 @@ extract_1d
 pipeline
 --------
 
+- Update the ``Coron3Pipeline`` to use the datamodels.open() method to
+  open an ASN file, and improve the construction of lists of the ASN
+  members [#6855] 
+  
 - Fixed the logic used in the `calwebb_tso3` pipeline to check for null
   photometry results. [#6912]
 
