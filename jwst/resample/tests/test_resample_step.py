@@ -194,6 +194,7 @@ def nircam_rate():
     return im
 
 
+@pytest.mark.xfail(reason="Fails due to updated ref files delivered to CRDS")
 def test_nirspec_wcs_roundtrip(nirspec_rate):
     im = AssignWcsStep.call(nirspec_rate)
     im = Extract2dStep.call(im)

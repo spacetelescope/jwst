@@ -1,6 +1,18 @@
 1.5.4 (unreleased)
 ==================
 
+associations
+------------
+
+- Add finalization for level 3 group association candidates to require
+  more than one observation amongst member entries [#6886]
+
+datamodels
+----------
+
+- Added new MIRI MRS dither pattern "SCAN-CALIBRATION" to list of allowed
+  values for the "PATTTYPE" keyword. [#6908]
+
 extract_1d
 ----------
 
@@ -9,10 +21,16 @@ extract_1d
 - Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture 
   has no valid data [#6909]
 
+pipeline
+--------
+
+- Fixed the logic used in the `calwebb_tso3` pipeline to check for null
+  photometry results. [#6912]
+
 ramp_fitting
 ------------
 
-- Fixed multirpocessing error by removing ``int_times`` entirely in step code.
+- Fixed multiprocessing error by removing ``int_times`` entirely in step code.
   Also, in order to work better with multiprocessing changed the way one group
   suppression gets handled and changed the location ZEROFRAME gets handled. [#6880]
 
@@ -26,6 +44,12 @@ skymatch
 --------
 
 - Fixed a couple errors in the step documentation. [#6891]
+
+source_catalog
+--------------
+
+- Updated the default background box size and minimum number of pixels.
+  [#6911]
 
 tweakreg
 --------
