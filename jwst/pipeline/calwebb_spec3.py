@@ -164,7 +164,11 @@ class Spec3Pipeline(Pipeline):
             ]
 
         # Check for negative and large source_id values
-        n_srcs = len(sources)
+        if len(sources) > 99999:
+            self.log.critical(f"Data contain more than 100,000 sources;"
+                              f"filename does not support 6 digit source ids.")
+            raise Exception
+
         available_src_ids=set(np.arange(99999) + 1)
         used_src_ids = set()
         for src in sources:
