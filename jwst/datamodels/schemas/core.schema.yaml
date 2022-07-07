@@ -1406,17 +1406,17 @@ properties:
             fits_keyword: BARTDELT
             blend_table: True
           barycentric_expstart:
-            title: [d] Barycentric exposure start time in MJD
+            title: "[d] Barycentric exposure start time in MJD"
             type: number
             fits_keyword: BSTRTIME
             blend_table: True
           barycentric_expend:
-            title: [d] Barycentric exposure end time in MJD
+            title: "[d] Barycentric exposure end time in MJD"
             type: number
             fits_keyword: BENDTIME
             blend_table: True
           barycentric_expmid:
-            title: [d] Barycentric exposure mid time in MJD
+            title: "[d] Barycentric exposure mid time in MJD"
             type: number
             fits_keyword: BMIDTIME
             blend_table: True
@@ -1426,17 +1426,17 @@ properties:
             fits_keyword: HELIDELT
             blend_table: True
           heliocentric_expstart:
-            title: [d] Heliocentric exposure start time in MJD
+            title: "[d] Heliocentric exposure start time in MJD"
             type: number
             fits_keyword: HSTRTIME
             blend_table: True
           heliocentric_expend:
-            title: [d] Heliocentric exposure end time in MJD
+            title: "[d] Heliocentric exposure end time in MJD"
             type: number
             fits_keyword: HENDTIME
             blend_table: True
           heliocentric_expmid:
-            title: [d] Heliocentric exposure mid time in MJD
+            title: "[d] Heliocentric exposure mid time in MJD"
             type: number
             fits_keyword: HMIDTIME
             blend_table: True
