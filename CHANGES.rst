@@ -30,6 +30,9 @@ pipeline
 - Fixed the logic used in the `calwebb_tso3` pipeline to check for null
   photometry results. [#6912]
 
+- Check source_ids in `calwebb_spec3` and force into 5 digit positive number,
+  if available [#6915]
+
 ramp_fitting
 ------------
 
