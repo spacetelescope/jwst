@@ -5,7 +5,9 @@ extract_1d
 ----------
 
 - Fix error in variance propagation calculation [#6899]
-- Fix error in setting DQ flags for s3d data when on data is in extraction aperture [#6909]
+
+- Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture 
+  has no valid data [#6909]
 
 ramp_fitting
 ------------
