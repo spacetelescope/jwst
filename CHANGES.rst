@@ -13,6 +13,9 @@ datamodels
 - Added new MIRI MRS dither pattern "SCAN-CALIBRATION" to list of allowed
   values for the "PATTTYPE" keyword. [#6908]
 
+- Added MJD unit to keyword comment strings for barycentric and heliocentric
+  start, mid, and end times. [#6910]
+
 extract_1d
 ----------
 
