@@ -1094,7 +1094,7 @@ properties:
               7x3-PIXEL-MAP-SLITLESS, 9x3-8x4-SCAN-MAPS-SLITLESS,
 
               # MIRI MRS
-              2-POINT, 4-POINT,
+              2-POINT, 4-POINT, SCAN-CALIBRATION,
 
               # NIRCam
               FULL, FULLBOX, FULL-TIGHT,

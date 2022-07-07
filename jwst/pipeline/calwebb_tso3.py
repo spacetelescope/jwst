@@ -187,7 +187,8 @@ class Tso3Pipeline(Pipeline):
         input_models.close()
 
         # Check for all null photometry results before saving
-        if phot_result_list.count(None) == len(phot_result_list):
+        all_none = np.all([(x is None) for x in phot_result_list])
+        if all_none:
             self.log.warning("Could not create a photometric catalog; all results are null")
         else:
             # Otherwise, save results to a photometry catalog file
