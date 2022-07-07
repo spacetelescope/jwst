@@ -18,6 +18,9 @@ extract_1d
 
 - Fix error in variance propagation calculation [#6899]
 
+- Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture 
+  has no valid data [#6909]
+
 pipeline
 --------
 

@@ -154,8 +154,8 @@ class MasterBackgroundStep(Step):
 
                 # Save the computed background if requested by user
                 if self.save_background:
-                    self.save_model(master_background, suffix='masterbg1d', asn_id=asn_id)
-                    self.save_model(background_2d_collection, suffix='masterbg2d', asn_id=asn_id)
+                    self.save_model(master_background, suffix='masterbg1d', force=True, asn_id=asn_id)
+                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
 
             self.record_step_status(result, 'master_background', success=True)
 

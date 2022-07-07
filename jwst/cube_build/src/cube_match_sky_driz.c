@@ -283,9 +283,6 @@ int match_driz(double *xc, double *yc, double *zc,
 		  weightv[index_cube] = weightv[index_cube] + area_weight;
 		  varv[index_cube] = varv[index_cube] + weighted_var;
 		  ifluxv[index_cube] = ifluxv[index_cube] +1.0;
-		  if(index_cube == 1577){
-		    printf(" found value %f %f %f %f \n", area_weight, zoverlap, weighted_flux, flux[k]);
-		  }
 		}
 	    
 	      } // xleft, xright, ybot, ytop
