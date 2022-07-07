@@ -165,17 +165,17 @@ class Spec3Pipeline(Pipeline):
 
         # Check for negative and large source_id values
         if len(sources) > 99999:
-            self.log.critical(f"Data contain more than 100,000 sources;"
-                              f"filename does not support 6 digit source ids.")
+            self.log.critical("Data contain more than 100,000 sources;"
+                              "filename does not support 6 digit source ids.")
             raise Exception
 
-        available_src_ids=set(np.arange(99999) + 1)
+        available_src_ids = set(np.arange(99999) + 1)
         used_src_ids = set()
         for src in sources:
             src_id, model = src
             src_id = int(src_id)
             used_src_ids.add(src_id)
-            if src_id > 0 and src_id <= 99999:
+            if 0 < src_id <= 99999:
                 available_src_ids.remove(src_id)
 
         hotfixed_sources = []
