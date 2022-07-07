@@ -2552,8 +2552,12 @@ def t_pars_from_model(model, **t_pars_kwargs):
     t_pars.exp_type = exp_type
 
     # observation parameters
-    t_pars.obsstart = model.meta.exposure.start_time
-    t_pars.obsend = model.meta.exposure.end_time
+    if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
+        t_pars.obsstart = Time(model.meta.observation.date_beg, format='isot').mjd
+        t_pars.obsend = Time(model.meta.observation.date_end, format='isot').mjd
+    else:
+        t_pars.obsstart = model.meta.exposure.start_time
+        t_pars.obsend = model.meta.exposure.end_time
     logger.debug('Observation time: %s - %s', t_pars.obsstart, t_pars.obsend)
 
     # Get Guide Star information
