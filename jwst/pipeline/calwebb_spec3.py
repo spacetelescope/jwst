@@ -183,8 +183,12 @@ class Spec3Pipeline(Pipeline):
         for src in sources:
             src_id, model = src
             src_id = int(src_id)
+            # Replace ids that aren't positive 5-digit integers
             if src_id < 0 or src_id > 99999:
                 src_id = available_src_ids.pop()
+                # Replace source_id for each model in the SourceModelContainers
+                for contained_model in model:
+                    contained_model.source_id = src_id
             hotfixed_sources.append((str(src_id), model))
 
         sources = hotfixed_sources
