@@ -363,7 +363,7 @@ def test_shutter_state(open_shutters, main_shutter, result):
 def test_slit_projection_on_detector():
     step = assign_wcs_step.AssignWcsStep()
 
-    hdul = create_nirspec_fs_file(grating="G395M", filter="OPAQUE", lamp="ARGON")
+    hdul = create_nirspec_fs_file(grating="G395M", filter="OPAQUE", lamp="LINE1")
     hdul[0].header['DETECTOR'] = 'NRS2'
     im = datamodels.ImageModel(hdul)
 
