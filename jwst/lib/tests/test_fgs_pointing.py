@@ -3,11 +3,14 @@ import os.path
 import logging
 from numpy import array
 from numpy import isclose
+from pathlib import Path
 import pytest
 
 from jwst.datamodels import Level1bModel
 from jwst.lib import engdb_mast
+from jwst.lib import engdb_tools
 from jwst.lib import set_telescope_pointing as stp
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 # Set logging for the module to be tested.
 logger = logging.getLogger(stp.__name__)
@@ -16,7 +19,10 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
+# Get database paths.
+DATA_PATH = Path(__file__).parent / 'data'
+db_1029 = DATA_PATH / 'engdb_jw01029'
+siaf_db = DATA_PATH / 'siaf.db'
 
 # Define minimal model meta structure
 WCS_META = {
@@ -40,11 +46,15 @@ WCS_META = {
 }
 
 
-def test_fgs_pointing(mast):
+@pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)
+def test_fgs_pointing(multi_fixture):
+    engdb = multi_fixture
+
+    # Setup model
     model = make_level1b()
 
     # Update wcs
-    stp.update_wcs(model, siaf_path=siaf_db, engdb_url=engdb_mast.MAST_BASE_URL)
+    stp.update_wcs(model, siaf_path=siaf_db, engdb_url=engdb.base_url)
 
     # Test results
     assert isclose(model.meta.wcsinfo.pc1_1, -0.9997617158628777, atol=1e-15)
@@ -62,15 +72,27 @@ def test_fgs_pointing(mast):
 # Utilities
 # ---------
 @pytest.fixture
-def mast():
+def engdb_jw01029():
+    """Setup the test engineering database"""
+    with EngDB_Mocker(db_path=db_1029):
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
+        yield engdb
 
-    # See if access to MAST is available.
+
+@pytest.fixture
+def mast():
+    """Use the Mast database."""
     try:
         engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
     except RuntimeError as exception:
         pytest.skip(f'Live MAST Engineering Service not available: {exception}')
+    yield engdb
 
-    return engdb
+
+@pytest.fixture
+def multi_fixture(request):
+    """Allow a test to use multiple fixtures"""
+    return request.getfixturevalue(request.param)
 
 
 def make_level1b():
