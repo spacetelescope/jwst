@@ -92,6 +92,10 @@ properties:
         type: number
         fits_keyword: NWFSEST
         blend_table: True
+      compress:
+        title: On-board data compression was used (T/F)
+        type: boolean
+        fits_keyword: COMPRESS
       asn:
         title: Association information
         type: object
@@ -542,12 +546,15 @@ properties:
             title: Internal lamp state
             type: string
             fits_keyword: LAMP
+            enum: [FLAT1, FLAT2, FLAT3, FLAT4, FLAT5, G1LAMP1, G2LAMP1,
+              IFU, IMG, LINE1, LINE2, LINE3, LINE4, NONE, OFF, REF, TEST, N/A]
             blend_table: True
           lamp_mode:
             title: Lamp operating mode
             type: string
             default: 'NONE'
-            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, IMAGE, 'NONE']
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, IMAGE, MSASPEC,
+              'NONE', ANY, N/A]
             fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:

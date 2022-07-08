@@ -13,5 +13,6 @@ properties:
           lamp_mode:
             title: Name of the lamp mode used
             type: string
-            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, ANY, N/A]
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, IMAGE, MSASPEC,
+              'NONE', ANY, N/A]
             fits_keyword: OPMODE
