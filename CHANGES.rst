@@ -21,7 +21,7 @@ extract_1d
 
 - Fix error in variance propagation calculation [#6899]
 
-- Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture 
+- Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture
   has no valid data [#6909]
 
 pipeline
@@ -29,8 +29,8 @@ pipeline
 
 - Update the ``Coron3Pipeline`` to use the datamodels.open() method to
   open an ASN file, and improve the construction of lists of the ASN
-  members [#6855] 
-  
+  members [#6855]
+
 - Fixed the logic used in the `calwebb_tso3` pipeline to check for null
   photometry results. [#6912]
 
@@ -63,6 +63,13 @@ tweakreg
 
 - Added check for multiple matches to a single reference source and skip
   ``tweakreg`` step when this happens. [#6896, #6898]
+
+wiimatch
+--------
+
+- ``wiimatch`` subpackage has been removed from ``jwst`` in favor of the
+  external ``wiimatch`` package:
+  https://github.com/spacetelescope/wiimatch. [#6916]
 
 1.5.3 (2022-06-20)
 ==================
