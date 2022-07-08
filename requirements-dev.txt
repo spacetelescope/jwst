@@ -12,3 +12,4 @@ git+https://github.com/spacetelescope/stdatamodels
 git+https://github.com/spacetelescope/stpipe
 git+https://github.com/spacetelescope/stcal
 git+https://github.com/spacetelescope/tweakwcs
+git+https://github.com/spacetelescope/wiimatch

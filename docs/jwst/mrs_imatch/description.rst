@@ -69,4 +69,4 @@ This step does not require any reference files.
 
 Also See
 ========
-See :doc:`wiimatch package documentation <../wiimatch/index>` for more details.
+See `wiimatch package documentation <http://wiimatch.readthedocs.io>`_ for more details.
