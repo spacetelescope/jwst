@@ -25,10 +25,22 @@ ENGDB_PATH = os.path.join(
     'engdb'
 )
 MNEMONICS_TO_CACHE = [
+    'IFGS_ACQ_XPOSG',
+    'IFGS_ACQ_YPOSG',
+    'IFGS_CTDGS_X',
+    'IFGS_CTDGS_Y',
+    'INRSI_GWA_Y_TILT_AVGED',
+    'SA_ZADUCMDX',
+    'SA_ZADUCMDY',
     'SA_ZATTEST1',
     'SA_ZATTEST2',
     'SA_ZATTEST3',
     'SA_ZATTEST4',
+    'SA_ZFGDETID',
+    'SA_ZFGGSCMDX',
+    'SA_ZFGGSCMDY',
+    'SA_ZFGGSPOSX',
+    'SA_ZFGGSPOSY',
     'SA_ZRFGS2J11',
     'SA_ZRFGS2J21',
     'SA_ZRFGS2J31',
@@ -38,14 +50,6 @@ MNEMONICS_TO_CACHE = [
     'SA_ZRFGS2J13',
     'SA_ZRFGS2J23',
     'SA_ZRFGS2J33',
-    'SA_ZADUCMDX',
-    'SA_ZADUCMDY',
-    'SA_ZFGGSCMDX',
-    'SA_ZFGGSCMDY',
-    'SA_ZFGGSPOSX',
-    'SA_ZFGGSPOSY',
-    'SA_ZFGDETID',
-    'INRSI_GWA_Y_TILT_AVGED',
 ]
 
 # Path templates
