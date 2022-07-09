@@ -61,6 +61,9 @@ general
 
 - Add requirement for asdf-transform-schemas >= 0.3.0 [#7352]
 
+- Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
+  pipeline in Python and with strun. [#6919]
+
 guider_cds
 ----------
 

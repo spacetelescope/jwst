@@ -4,106 +4,75 @@
 
 :ref:`genindex`  |  :ref:`modindex`
 
+.. image:: _static/webb_logo.png
+   :width: 400
+   :align: center
+
 .. warning::
 
    As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
 
    For details, refer to the :ref:`pub-deprecation` page.
 
-============
-Installation
-============
+Welcome to the documentation for `jwst`. This package contains the Python
+software suite for the James Webb Space Telescope (JWST) calibration pipeline,
+which processes data from all JWST instruments by applying various corrections to
+produce science-ready, calibrated output products including fully calibrated
+individual exposures as well as high-level data products (mosaics, extracted
+spectra, etc.). The tools in this package allow users to run and configure the
+pipeline to custom process their JWST data. Additionally, the `jwst` package
+contains the interface to JWST datamodels, the recommended method of reading and
+writing JWST data files in Python.
 
 
-Stable releases of the ``jwst`` package are registered at
-`PyPI <https://pypi.org/project/jwst/>`_. The latest released version can be
-installed into a fresh virtualenv or conda environment using pip:
-
-::
-
-   pip install jwst
-
-Installation details (via conda)
 --------------------------------
-
-The ``jwst`` package should be installed into a virtualenv or conda
-environment via ``pip``. We recommend that for each installation you
-start by creating a fresh environment that only has Python installed and
-then install the ``jwst`` package into that bare environment.
-
-If using conda environments, first make sure you have a
-recent version of Anaconda or Miniconda installed.
-
-Installation is generally a 3-step process:
-
--  Create a conda environment
--  Activate that environment
--  Install the ``jwst`` package into that environment
-
-In a bash-compatible shell:
-
-::
-
-   conda create -n <env_name> python
-   conda activate <env_name>
-   pip install jwst
-
-For more detailed instructions and alternate installation methods see the
-`Github README <https://github.com/spacetelescope/jwst>`_.
-
-
-Calibration References Data System (CRDS) Setup
------------------------------------------------
-
-CRDS is the system that manages the reference files needed to run the
-pipeline. Inside the STScI network, the pipeline works with default CRDS
-setup with no modifications. To run the pipeline outside the STScI
-network, CRDS must be configured by setting two environment variables:
-
-::
-
-   export CRDS_PATH=$HOME/crds_cache
-   export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
-
-
-===========
-User Manual
-===========
-
-.. toctree::
-   :maxdepth: 2
-
-   jwst/introduction.rst
-   jwst/pub_deprecation.rst
-
-
-===========================
-Data products Documentation
-===========================
 
 .. toctree::
    :maxdepth: 1
+   :caption: Getting Started
+
+   getting_started/quickstart.rst
+   getting_started/install.rst
+   getting_started/contributing.rst
+
+.. _user-docs:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Documentation
+
+   jwst/user_documentation/introduction.rst
+   jwst/user_documentation/reference_files_crds.rst
+   jwst/user/documentation/pub_deprecation.rst
+   jwst/user_documentation/parameters.rst
+   jwst/user_documentation/running_pipeline_python.rst
+   jwst/user_documentation/running_pipeline_command_line.rst
+   jwst/user_documentation/available_pipelines.rst
+   jwst/user_documentation/input_output_file_conventions.rst
+   jwst/user_documentation/logging_configuration.rst
+   jwst/user_documentation/datamodels.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Data Products Documentation
 
    jwst/data_products/index.rst
 
 
-===============================
-Error Propagation Documentation
-===============================
-
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Error Propagation Documentation
 
    jwst/error_propagation/index.rst
 
+--------------------------------
 
 =====================
 Package Documentation
 =====================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Package Documentation
 
    jwst/package_index.rst
-
-
