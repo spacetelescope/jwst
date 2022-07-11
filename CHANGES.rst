@@ -16,6 +16,9 @@ datamodels
 - Added MJD unit to keyword comment strings for barycentric and heliocentric
   start, mid, and end times. [#6910]
 
+- Updated schemas to include new COMPRESS keyword, as well as allowed values
+  for the LAMP and OPMODE keywords. [#6918]
+
 extract_1d
 ----------
 
