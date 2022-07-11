@@ -64,7 +64,9 @@ class OutlierDetectionStep(Step):
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
-        in_memory = boolean(default=True)
+        in_memory = boolean(default=False)
+        output_use_index = boolean(default=False)
+        output_use_model = boolean(default=False)
     """
 
     def process(self, input_data):
