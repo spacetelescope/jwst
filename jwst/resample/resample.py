@@ -140,9 +140,13 @@ class ResampleData:
         """
         for exposure in self.input_models.models_grouped:
             output_model = self.blank_output
+            # Determine output file type from input exposure filenames
+            # Use this for defining the output filename
+            indx = exposure[0].meta.filename.rfind('.')
+            output_type = exposure[0].meta.filename[indx:]
             output_root = '_'.join(exposure[0].meta.filename.replace(
-                '.fits', '').split('_')[:-1])
-            output_model.meta.filename = f'{output_root}_outlier_i2d.fits'
+                output_type, '').split('_')[:-1])
+            output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
