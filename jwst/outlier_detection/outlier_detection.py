@@ -309,7 +309,7 @@ class OutlierDetection:
                 basename=blot_root,
                 suffix='blot'
             )
-            
+
             blotted_median.meta.filename = model_path
 
             # clean out extra data not related to blot result
