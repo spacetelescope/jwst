@@ -281,7 +281,7 @@ class OutlierDetection:
 
             del badmasks
 
-            # For a of stack of images with "bad" data replaced with Nan
+            # For a stack of images with "bad" data replaced with Nan
             # use np.nanmedian to compute the median.
             with warnings.catch_warnings():
                 warnings.filterwarnings(action="ignore",
