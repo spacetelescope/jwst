@@ -40,6 +40,9 @@ pipeline
 - Check source_ids in `calwebb_spec3` and force into 5 digit positive number,
   if available [#6915]
 
+- Only apply source_id fix from #6915 to models with multiple
+  sources [#6917]
+
 ramp_fitting
 ------------
 
