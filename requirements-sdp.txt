@@ -23,7 +23,7 @@ asdf-wcs-schemas==0.1.1
 astropy==5.1
 attrs==21.4.0
 BayesicFitting==3.0.1
-certifi==2022.6.15
+certifi==2022.5.18.1
 charset-normalizer==2.1.0
 ci-watson==0.6.1
 codecov==2.1.12
