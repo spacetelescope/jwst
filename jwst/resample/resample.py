@@ -139,7 +139,7 @@ class ResampleData:
         Used for outlier detection
         """
         for exposure in self.input_models.models_grouped:
-            output_model = self.blank_output  #.copy()
+            output_model = self.blank_output
             output_root = '_'.join(exposure[0].meta.filename.replace(
                 '.fits', '').split('_')[:-1])
             output_model.meta.filename = f'{output_root}_outlier_i2d.fits'
@@ -168,7 +168,7 @@ class ResampleData:
 
             if not self.in_memory:
                 # Write out model to disk, then return filename
-                output_name=output_model.meta.filename
+                output_name = output_model.meta.filename
                 output_model.save(output_name)
                 log.info(f"Exposure {output_name} saved to file")
                 self.output_models.append(output_name)

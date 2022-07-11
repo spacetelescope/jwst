@@ -183,7 +183,6 @@ class OutlierDetection:
         self.build_suffix(**self.outlierpars)
 
         pars = self.outlierpars
-        save_intermediate_results = pars['save_intermediate_results']
 
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
@@ -216,7 +215,7 @@ class OutlierDetection:
             basepath=median_model.meta.filename,
             suffix='median')
         median_model.save(median_model_output_path)
-        
+
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
@@ -247,7 +246,7 @@ class OutlierDetection:
         - 'minmed' not implemented as an option
         """
         maskpt = self.outlierpars.get('maskpt', 0.7)
-        
+
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
         resampled_sections = resampled_models.get_sections()
         median_image = np.empty((resampled_models.imrows, resampled_models.imcols),
@@ -275,14 +274,13 @@ class OutlierDetection:
                     np.sum(badmask) / len(weight.flat) * 100))
                 badmasks.append(badmask)
 
-           # Fill resampled_sci array with nan's where mask values are True
+            # Fill resampled_sci array with nan's where mask values are True
             for f1, f2 in zip(resampled_sci, badmasks):
                 for elem1, elem2 in zip(f1, f2):
-                   elem1[elem2] = np.nan
-           
+                    elem1[elem2] = np.nan
+
             del badmasks
-                
-            import pdb;pdb.set_trace()
+
             # For a of stack of images with "bad" data replaced with Nan
             # use np.nanmedian to compute the median.
             with warnings.catch_warnings():
@@ -321,7 +319,7 @@ class OutlierDetection:
             # apply blot to re-create model.data from median image
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                             sinscl=sinscl)
-                                            
+
             blotted_median.save(model_path)
             blot_models.append(model_path)
             blotted_median.close()
