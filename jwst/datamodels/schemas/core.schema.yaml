@@ -546,8 +546,6 @@ properties:
             title: Internal lamp state
             type: string
             fits_keyword: LAMP
-            enum: [FLAT1, FLAT2, FLAT3, FLAT4, FLAT5, G1LAMP1, G2LAMP1,
-              IFU, IMG, LINE1, LINE2, LINE3, LINE4, NONE, OFF, REF, TEST, N/A]
             blend_table: True
           lamp_mode:
             title: Lamp operating mode
