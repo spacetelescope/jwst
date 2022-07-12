@@ -453,6 +453,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 			&spaxel_dq);
 
     } else{
+      printf(" dq nirspec set up \n");
       status1 = dq_nirspec(overlap_partial,
 			   nxx,nyy,nwave,
 			   cdelt1, cdelt2, cdelt3_mean,
@@ -465,6 +466,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 			   (double *) PyArray_DATA(sliceno),
 			   ncube, npt,
 			   &spaxel_dq);
+      printf(" dq nirspec done set up \n");
     }
   } else{ // set dq plane to 0
     status1 = set_dqplane_to_zero(ncube, &spaxel_dq);

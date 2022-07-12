@@ -342,24 +342,35 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
   *c2_min = dvalue;
   *c1_max = -dvalue;
   *c2_max = -dvalue;
- 
+
+  double min = 500.0;
   for (ipt =0; ipt< npt ; ipt++){
     slice = (int)sliceno[ipt];
     wave_distance = fabs(zc[w] - wave[ipt]);
-
+    
+    if(wave_distance < min){
+      min = wave_distance;
+    }
     // Find all the coordinates on wave slice with slice = start region
-
+    //if(slice == slicevalue){
+    //  printf("values %i %f %f %i %f %f \n", slice, wave_distance, roiw_ave, slicevalue, wave[ipt], zc[w]);
+    //  }
     if (wave_distance < roiw_ave && slice == slicevalue){
+
       c1 = coord1[ipt];
       c2 = coord2[ipt];
+      //printf(" before found value %i %f %f %f %f %f %f ", ipt, c1, c2, *c1_min, *c2_min, *c1_max, *c2_max);
       // find min, max of xi eta
       if (c1 < *c1_min) {*c1_min = c1;}
       if (c1 > *c1_max) {*c1_max = c1;}
       if (c2 < *c2_min) {*c2_min = c2;}
       if (c2 > *c2_max) {*c2_max = c2;}
+
+      //printf(" after found value %i %f %f %f %f %f %f /n ", ipt, c1, c2, *c1_min, *c2_min, *c1_max, *c2_max);
     }
   } // end looping over point cloud
-
+  printf("min wavedistance %f \n", min);
+  printf(" c1_min, c2_min, c1_max, c2_max %f %f %f %f \n", *c1_min, *c2_min, *c1_max, *c2_max);
   status = 0;
   if(*c1_min == dvalue || *c2_min == dvalue || *c1_max ==-dvalue || *c2_max == -dvalue){
     // Problem finding limits of slice for wavelength plane
@@ -421,6 +432,8 @@ int overlap_slice_with_spaxels(int overlap_partial,
   bool is_steep;
   is_steep = abs(dy) > abs(dx);
 
+  printf(" x1 x2 y1 y2 %i %i %i %i \n", x1,x2,y1,y2);
+  
   // if is_steep switch x and y 
   if (is_steep){
       x1 = y1;
@@ -439,6 +452,8 @@ int overlap_slice_with_spaxels(int overlap_partial,
     y2 = y1;
   }
 
+  printf(" is steep %d \n", is_steep);
+  
   // Recalculate differences
   dx = x2 - x1;
   dy = y2 - y1;
@@ -460,7 +475,10 @@ int overlap_slice_with_spaxels(int overlap_partial,
 	yuse = x;
 	xuse = y;
       }
+
     index = (yuse * naxis1) + xuse;
+    printf(" index %i %i %i %i %i %i \n", index, yuse, naxis1, xuse, x,y );
+    
     wave_slice_dq[index] = overlap_partial;
     error -= abs(dy);
     if (error < 0){
@@ -605,9 +623,12 @@ int dq_nirspec(int overlap_partial,
   //     onto each of the IFU wavelength planes.
 
   nxy = nx * ny;
+  
   int wave_slice_dq[nxy];
   
   for (w = 0; w  < nz; w++) {
+   
+    printf(" wavelength plane  %i %i %i %i\n", w, nz, nxy,ncube);
     for (islice =1; islice< 31 ; islice++){
       for (j =0; j< nxy; j++){
 	wave_slice_dq[j] = 0;
@@ -617,20 +638,28 @@ int dq_nirspec(int overlap_partial,
       c1_max = 0;
       c2_min = 0;
       c2_max = 0;
+      printf( " calling slice_wave_plane_nirspec %i %i %i \n  ", islice, w, ncube);
+      if(w < nz-1){
+	printf( "wavebin %f \n", zc[w]-zc[w+1]);
+      }
       status_wave =  slice_wave_plane_nirspec( w, islice, roiw_ave, zc,
 					       coord1, coord2, wave, sliceno, ncube, npt,
 					       &c1_min, &c2_min, &c1_max, &c2_max);
+      printf( " status_wave %i \n ", status_wave);
       if( status_wave ==0){
+	printf( " calling overlap slice with spaxels %i %i \n ", islice, nxy);
 	status = overlap_slice_with_spaxels(overlap_partial,
 					    cdelt1,cdelt2,
 					    nx, ny,
 					    xc, yc,
 					    c1_min, c2_min, c1_max, c2_max,
 					    wave_slice_dq);
+	printf( " done overlap slice with spaxels %i \n ", status);
       } // end loop over status_wave
 
       istart = nxy*w;
       iend = istart + nxy;
+      printf(" going to set idqv %i %i %i %i %i %i\n ", nxy, w, istart, iend,ncube, status_wave);
       for( in = istart; in < iend; in ++){
 	ii = in - istart;
 	if (status_wave ==0){

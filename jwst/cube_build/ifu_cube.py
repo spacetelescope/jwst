@@ -629,6 +629,7 @@ class IFUCubeData():
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
                     if self.weighting == 'drizzle':
+                        print('calling drizzle')
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                         linear = 0
@@ -643,7 +644,7 @@ class IFUCubeData():
                                                    dwave,
                                                    self.cdelt3_normal,
                                                    self.cdelt1, self.cdelt2, cdelt3_mean,linear)
-
+                        print('return from drizzle')
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
@@ -1765,7 +1766,7 @@ class IFUCubeData():
             ra = ra[valid]
             dec = dec[valid]
             lam = lam[valid]
-
+            print('on slice ',ii+1)
             if self.interpolation == 'drizzle':
                 # Delta wavelengths
                 _,_,wave1 = slice_wcs(x - 0.4999, y)
