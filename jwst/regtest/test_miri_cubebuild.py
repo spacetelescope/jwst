@@ -10,12 +10,11 @@ from jwst.stpipe import Step
 def run_cube_build_single_output(rtdata_module):
     """Run cube_build on multiple inputs but single output"""
     rtdata = rtdata_module
-    rtdata.get_asn('miri/mrs/two_spec3_asn.json')
+    rtdata.get_asn('miri/mrs/jw01024-o001_20220501t155404_spec3_002_asn.json')
 
     args = [
         'jwst.cube_build.CubeBuildStep',
         rtdata.input,
-        '--save_results=true'
     ]
     Step.from_cmdline(args)
 
@@ -23,10 +22,9 @@ def run_cube_build_single_output(rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.slow
 @pytest.mark.parametrize(
     'output',
-    ['outtest_ch1-short_s3d.fits', 'outtest_ch2-short_s3d.fits']
+    ['jw01024-o001_t002_miri_ch1-short_s3d.fits', 'jw01024-o001_t002_miri_ch2-short_s3d.fits']
 )
 def test_cube_build_single_output(run_cube_build_single_output, output, fitsdiff_default_kwargs):
     """Test just running cube build and ensure that output happens"""
@@ -44,13 +42,12 @@ def test_cube_build_single_output(run_cube_build_single_output, output, fitsdiff
 @pytest.mark.bigdata
 def test_cube_build_miri_internal_cal(rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = internal_cal"""
-    input_file = 'det_image_seq2_MIRIFUSHORT_12SHORTexp1_cal.fits'
+    input_file = 'jw01024001001_04101_00001_mirifushort_cal.fits'
     rtdata.get_data(f"miri/mrs/{input_file}")
 
     args = [
         'jwst.cube_build.CubeBuildStep',
         input_file,
-        '--save_results=true',
         '--coord_system=internal_cal'
     ]
     Step.from_cmdline(args)
