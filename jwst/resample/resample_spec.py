@@ -69,6 +69,7 @@ class ResampleSpecData(ResampleData):
         self.fillval = fillval
         self.weight_type = wht_type
         self.good_bits = good_bits
+        self.in_memory = kwargs.get('in_memory', True)
 
         # Define output WCS based on all inputs, including a reference WCS
         if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
