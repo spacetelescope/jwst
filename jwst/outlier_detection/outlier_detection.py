@@ -203,7 +203,6 @@ class OutlierDetection:
         # Initialize intermediate products used in the outlier detection
         dm0 = datamodel_open(drizzled_models[0])
         median_model = datamodels.ImageModel(dm0.data.shape)
-        # median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
         median_model.update(dm0)
         median_model.meta.wcs = dm0.meta.wcs
         dm0.close()
@@ -323,7 +322,6 @@ class OutlierDetection:
             blotted_median.save(model_path)
             blot_models.append(model_path)
             blotted_median.close()
-            # blot_models.append(blotted_median)
             del blotted_median
 
         return blot_models
