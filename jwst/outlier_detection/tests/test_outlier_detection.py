@@ -1,3 +1,5 @@
+import os
+
 import pytest
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -214,10 +216,15 @@ def test_outlier_step(_jail, we_three_sci):
 
 def test_outlier_step_on_disk(_jail, we_three_sci_files):
     """Test whole step with an outlier including saving intermediate and results files"""
-    container = datamodels.ModelContainer(we_three_sci_files)
 
-    # Drop a CR on the science array
-    container[0].data[12, 12] += 1
+    # Drop a CR on the science array without reading the model into memory for the test
+    dm0 = datamodels.ImageModel(we_three_sci_files[0])
+    dm0.data[12, 12] += 1
+    dm0.to_fits(os.path.join(os.getcwd(), dm0.meta.filename), overwrite=True)
+    del dm0
+
+    # Initialize inputs for the test based on filenames only
+    container = datamodels.ModelContainer(we_three_sci_files)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
