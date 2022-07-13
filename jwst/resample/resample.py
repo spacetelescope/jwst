@@ -39,7 +39,7 @@ class ResampleData:
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
-                 pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
+                 pixfrac=1.0, kernel="square", fillval="INDEF", wht_type="ivm",
                  good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
@@ -65,8 +65,13 @@ class ResampleData:
         self.pixfrac = pixfrac
         self.kernel = kernel
         self.fillval = fillval
-        self.weight_type = weight_type
+        self.weight_type = wht_type
         self.good_bits = good_bits
+
+        log.info(f"Driz parameter kernal: {self.kernel}")
+        log.info(f"Driz parameter pixfrac: {self.pixfrac}")
+        log.info(f"Driz parameter fillval: {self.fillval}")
+        log.info(f"Driz parameter weight_type: {self.weight_type}")
 
         ref_wcs = kwargs.get('ref_wcs', None)
         out_shape = kwargs.get('out_shape', None)

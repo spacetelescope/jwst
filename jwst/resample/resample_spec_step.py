@@ -25,6 +25,7 @@ class ResampleSpecStep(ResampleStep):
     class_alias = "resample_spec"
 
     def process(self, input):
+        self.wht_type = self.weight_type
         input_new = datamodels.open(input)
 
         # Convert ImageModel to SlitModel (needed for MIRI LRS)
@@ -61,11 +62,10 @@ class ResampleSpecStep(ResampleStep):
             kwargs['blendheaders'] = self.blendheaders
 
         kwargs['allowed_memory'] = self.allowed_memory
-        kwargs['weight_type'] = str(self.weight_type)
         kwargs['output'] = output
 
         # Issue a warning about the use of exptime weighting
-        if self.weight_type == 'exptime':
+        if self.wht_type == 'exptime':
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
 
