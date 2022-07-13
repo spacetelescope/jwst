@@ -206,14 +206,18 @@ class SkyMatchStep(Step):
         return sky_im
 
     def _set_sky_background(self, image, sky, step_status):
+
         if self._is_asn:
-            image = datamodel_open(image)
+            dm = datamodel_open(image)
+        else:
+            dm = image
 
         if step_status == "COMPLETE":
-            image.meta.background.method = str(self.skymethod)
-            image.meta.background.level = sky
-            image.meta.background.subtracted = self.subtract
-        image.meta.cal_step.skymatch = step_status
+            dm.meta.background.method = str(self.skymethod)
+            dm.meta.background.level = sky
+            dm.meta.background.subtracted = self.subtract
+        dm.meta.cal_step.skymatch = step_status
 
         if self._is_asn:
-            image.close()
+            dm.save(image)
+            dm.close()
