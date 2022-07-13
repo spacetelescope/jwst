@@ -302,7 +302,7 @@ class OutlierDetection:
 
         log.info("Blotting median...")
         for model in self.input_models:
-            blotted_median = model
+            blotted_median = model.copy()
             blot_root = '_'.join(model.meta.filename.replace(
                 '.fits', '').split('_')[:-1])
             model_path = self.make_output_path(
