@@ -9,8 +9,13 @@ general
 resample
 --------
 
-- Changed parameters read in from drizpar reference file to have a value of None in Spec [#6921] 
+- Changed parameters read in from drizpar reference file to have a value of None in Spec [#6921]
 
+skymatch
+--------
+
+- Fixed a bug in `skymatch` due to which subtracted values were not saved
+  in the input `cal` files when input was an association table. [#6922]
 
 
 source_catalog
