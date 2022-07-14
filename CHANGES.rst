@@ -6,6 +6,11 @@ general
 
 -
 
+ramp_fitting
+------------
+
+- Added documentation for the calculation of the readnoise variance [#6924]
+
 1.6.0 (2022-07-11)
 ==================
 
