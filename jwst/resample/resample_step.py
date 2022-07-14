@@ -140,7 +140,7 @@ class ResampleStep(Step):
         pixfrac = float(default=None)
         kernel = string(default=None)
         fillval = string(default=None)
-        wht_type = option('ivm', 'exptime', None,default=None)
+        wht_type = option('ivm', 'exptime', None, default=None)
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,

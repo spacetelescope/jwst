@@ -68,7 +68,7 @@ class ResampleData:
         self.weight_type = wht_type
         self.good_bits = good_bits
 
-        log.info(f"Driz parameter kernal: {self.kernel}")
+        log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
         log.info(f"Driz parameter weight_type: {self.weight_type}")
