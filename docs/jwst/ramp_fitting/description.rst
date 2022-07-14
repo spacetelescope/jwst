@@ -224,7 +224,8 @@ The variance of the slope of a segment due to read noise is:
 
 where :math:`R` is the noise in the difference between 2 frames, 
 :math:`ngroups_{s}` is the number of groups in the segment, and :math:`tgroup` is the group 
-time in seconds (from the keyword TGROUP).  
+time in seconds (from the keyword TGROUP). The derivation of this equation is given in 
+the appendix in this section.
 
 The variance of the slope in a segment due to Poisson noise is: 
 
