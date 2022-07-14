@@ -4,7 +4,7 @@
 general
 -------
 
-- Use latest `stpipe` patch [#6925]
+- Update `stpipe` requirement to `>=0.4.1` [#6925]
 
 1.6.0 (2022-07-11)
 ==================
