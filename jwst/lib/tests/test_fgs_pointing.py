@@ -1,9 +1,11 @@
 """Test suite for ensuring correct FGS pointing"""
 import logging
-from numpy import array
-from numpy import isclose
 from pathlib import Path
 import pytest
+
+from astropy.time import Time
+from numpy import array
+from numpy import isclose
 
 from jwst.datamodels import Level1bModel
 from jwst.lib import engdb_mast
@@ -23,6 +25,10 @@ DATA_PATH = Path(__file__).parent / 'data'
 db_1029 = DATA_PATH / 'engdb_jw01029'
 siaf_db = DATA_PATH / 'siaf.db'
 
+# Time frame
+OBSSTART = '2022-05-23T00:36:08.000'
+OBSEND = '2022-05-23T00:36:22.480'
+
 # Define minimal model meta structure
 WCS_META = {
     'meta': {
@@ -37,12 +43,29 @@ WCS_META = {
             'gs_dec': -45.1234,
         },
         'observation': {
-            'date_beg': '2022-05-23T00:36:08.000',
-            'date_end': '2022-05-23T00:36:22.480',
+            'date_beg': OBSSTART,
+            'date_end': OBSEND,
             'date': '2017-01-01',
         },
     }
 }
+
+
+@pytest.mark.parametrize('exp_type, expected',
+                         [('fgs_acq1', (17.7885990143, 42.6522407532)),
+                          ('fgs_acq2', (17.8298149109, 42.65200042725))])
+def test_crpix_from_gspos(mast, exp_type, expected):
+    """Test the mnemonics reading"""
+
+    # Perform operation
+    mnemonics = stp.get_mnemonics(Time(OBSSTART).mjd, Time(OBSEND).mjd, 60.,
+                                  stp.FGS_AQC_MNEMONICS, engdb_url=mast.base_url)
+    crpix1, crpix2 = stp.crpix_from_gspos(stp.FGS_AQC_MNEMONICS, mnemonics, exp_type)
+
+    # Test
+    expected_crpix1, expected_crpix2 = expected
+    assert isclose(crpix1, expected_crpix1)
+    assert isclose(crpix2, expected_crpix2)
 
 
 @pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)

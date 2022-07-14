@@ -2716,7 +2716,7 @@ def get_reduce_func_from_exptype(exp_type):
     return reduce_func
 
 
-def crpix_from_gspos(mnemonics_to_read, mnemonics):
+def crpix_from_gspos(mnemonics_to_read, mnemonics, exp_type=None):
     """Get the CRPIX values from guide star telemetry for FGS
 
     Average of all positive values.
@@ -2730,6 +2730,9 @@ def crpix_from_gspos(mnemonics_to_read, mnemonics):
 
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
+
+    exp_type: str
+       The exposure type being dealt with
 
     Returns
     =======
@@ -2753,5 +2756,15 @@ def crpix_from_gspos(mnemonics_to_read, mnemonics):
     crpix2 = np.array([eng_param.value
                        for eng_param in mnemonics[crpix2_mnemonic]
                        if eng_param.value > 0.])
+
+    # Which values are actually used depends on exposure type.
+    # ACQ1 exposures should use the first 3 values.
+    # ACQ2 exposures use the next 5 values.
+    if exp_type == 'fgs_acq1':
+        crpix1 = crpix1[0:3]
+        crpix2 = crpix2[0:3]
+    elif exp_type == 'fgs_acq2':
+        crpix1 = crpix1[3:8]
+        crpix2 = crpix2[3:8]
 
     return np.average(crpix1), np.average(crpix2)
