@@ -133,9 +133,14 @@ TRACK_TR_202111_MNEMONICS = {
 }
 
 FGS_ACQ_MNEMONICS  = {
+    'IFGS_ACQ_DETXCOR': True,
+    'IFGS_ACQ_DETYCOR': True,
+    'IFGS_ACQ_DETXSIZ': True,
+    'IFGS_ACQ_DETYSIZ': True,
     'IFGS_ACQ_XPOSG': True,
     'IFGS_ACQ_YPOSG': True,
 }
+
 FGS_GUIDED_MNEMONICS = {
     'IFGS_CTDGS_X': True,
     'IFGS_CTDGS_Y': True,

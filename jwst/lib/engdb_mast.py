@@ -149,7 +149,7 @@ class EngdbMast(EngdbABC):
                 t = Time(record['MJD'], format='mjd')
                 t = int(t.unix * 1000.)
                 v = record['euvalue']
-                if record['sqldataType'] == 'tinyint':
+                if record['sqldataType'] in ['int', 'tinyint']:
                     v = int(v)
                 entry = {'ObsTime': f'/Date({t}+0000)/', 'EUValue': v}
                 target['Data'].append(entry)
