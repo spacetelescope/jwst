@@ -132,7 +132,7 @@ TRACK_TR_202111_MNEMONICS = {
     'SA_ZFGGSPOSY': False,
 }
 
-FGS_AQC_MNEMONICS  = {
+FGS_ACQ_MNEMONICS  = {
     'IFGS_ACQ_XPOSG': True,
     'IFGS_ACQ_YPOSG': True,
 }
@@ -753,7 +753,7 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
     # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
     # in the image.
     if t_pars.exp_type in ['fgs_acq1', 'fgs_acq2']:
-        mnemonics_to_read = FGS_AQC_MNEMONICS
+        mnemonics_to_read = FGS_ACQ_MNEMONICS
     elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
         mnemonics_to_read = FGS_GUIDED_MNEMONICS
     else:
@@ -2740,14 +2740,14 @@ def crpix_from_gspos(mnemonics_to_read, mnemonics, exp_type=None):
         Some value from telemetry
     """
     # Determine which set of mnemonics is being used, to ensure the right pairs are used for CRPIX.
-    if all(k in mnemonics for k in FGS_AQC_MNEMONICS):
+    if all(k in mnemonics for k in FGS_ACQ_MNEMONICS):
         crpix1_mnemonic = 'IFGS_ACQ_XPOSG'
         crpix2_mnemonic = 'IFGS_ACQ_YPOSG'
     elif all(k in mnemonics for k in FGS_GUIDED_MNEMONICS):
         crpix1_mnemonic = 'IFGS_CTDGS_X'
         crpix2_mnemonic = 'IFGS_CTDGS_Y'
     else:
-        raise ValueError(f'Accessed mnemonics {mnemonics} not in the required mnemonics {FGS_AQC_MNEMONICS} or {FGS_GUIDED_MNEMONICS}')
+        raise ValueError(f'Accessed mnemonics {mnemonics} not in the required mnemonics {FGS_ACQ_MNEMONICS} or {FGS_GUIDED_MNEMONICS}')
 
     # Get the values.
     crpix1 = np.array([eng_param.value
