@@ -62,8 +62,8 @@ def test_crpix_from_gspos(multi_fixture, exp_type, expected):
 
     # Perform operation
     mnemonics = stp.get_mnemonics(Time(OBSSTART).mjd, Time(OBSEND).mjd, 60.,
-                                  stp.FGS_AQC_MNEMONICS, engdb_url=engdb.base_url)
-    crpix1, crpix2 = stp.crpix_from_gspos(stp.FGS_AQC_MNEMONICS, mnemonics, exp_type)
+                                  stp.FGS_ACQ_MNEMONICS, engdb_url=engdb.base_url)
+    crpix1, crpix2 = stp.crpix_from_gspos(stp.FGS_ACQ_MNEMONICS, mnemonics, exp_type)
 
     # Test
     expected_crpix1, expected_crpix2 = expected
