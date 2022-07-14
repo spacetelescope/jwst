@@ -25,6 +25,10 @@ ENGDB_PATH = os.path.join(
     'engdb'
 )
 MNEMONICS_TO_CACHE = [
+    'IFGS_ACQ_DETXCOR',
+    'IFGS_ACQ_DETYCOR',
+    'IFGS_ACQ_DETXSIZ',
+    'IFGS_ACQ_DETYSIZ',
     'IFGS_ACQ_XPOSG',
     'IFGS_ACQ_YPOSG',
     'IFGS_CTDGS_X',
