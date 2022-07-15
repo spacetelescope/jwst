@@ -36,7 +36,7 @@ class ResampleStep(Step):
         pixfrac = float(default=None)
         kernel = string(default=None)
         fillval = string(default=None)
-        weight_type = option('ivm', 'exptime', None,default=None)
+        weight_type = option('ivm', 'exptime', None, default=None)
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
         crpix = float_list(min=2, max=2, default=None)
         crval = float_list(min=2, max=2, default=None)
@@ -228,6 +228,12 @@ class ResampleStep(Step):
         if config.validate(Validator()):
             kwargs = config.dict()
 
+        if self.pixfrac is None:
+            self.pixfrac = 1.0
+        if self.kernel is None:
+            self.kernel = 'square'
+        if self.fillval is None:
+            self.fillval = 'INDEF'
         # Force definition of good bits
         kwargs['good_bits'] = GOOD_BITS
         kwargs['pixfrac'] = self.pixfrac
@@ -237,6 +243,7 @@ class ResampleStep(Step):
         # The other instruments read this parameter from a reference file
         if self.wht_type is None:
             self.wht_type = 'ivm'
+
         kwargs['wht_type'] = str(self.wht_type)
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
         kwargs.pop('pixel_scale_ratio')
