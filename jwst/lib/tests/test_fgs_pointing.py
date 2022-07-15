@@ -53,21 +53,19 @@ WCS_META = {
 
 @pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)
 @pytest.mark.parametrize('exp_type, expected',
-                         [('fgs_acq1', (17.7885990143, 42.6522407532)),
-                          ('fgs_acq2', (17.8298149109, 42.65200042725))])
-def test_crpix_from_gspos(multi_fixture, exp_type, expected):
+                         [('fgs_acq1', stp.GuideStarPosition(position=(17.7885990143, 42.6522407532), corner=(1193, 343), size=(128, 128))),
+                          ('fgs_acq2', stp.GuideStarPosition(position=(17.8298149109, 42.65200042725), corner=(1268, 386), size=(32, 32)))])
+def test_gs_position_acq(multi_fixture, exp_type, expected):
     """Test the mnemonics reading"""
     engdb = multi_fixture
 
     # Perform operation
     mnemonics = stp.get_mnemonics(Time(OBSSTART).mjd, Time(OBSEND).mjd, 60.,
                                   stp.FGS_ACQ_MNEMONICS, engdb_url=engdb.base_url)
-    crpix1, crpix2 = stp.crpix_from_gspos(stp.FGS_ACQ_MNEMONICS, mnemonics, exp_type)
+    gs_position = stp.gs_position_acq(stp.FGS_ACQ_MNEMONICS, mnemonics, exp_type)
 
     # Test
-    expected_crpix1, expected_crpix2 = expected
-    assert isclose(crpix1, expected_crpix1)
-    assert isclose(crpix2, expected_crpix2)
+    assert gs_position == expected
 
 
 @pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)

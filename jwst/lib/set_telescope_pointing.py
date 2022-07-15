@@ -64,6 +64,7 @@ import logging
 from math import (cos, sin, sqrt)
 import typing
 
+from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 from scipy.interpolate import interp1d
@@ -253,6 +254,10 @@ PI2 = np.pi * 2.
 # Pointing container
 Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid', 'gs_position'])
 Pointing.__new__.__defaults__ = ((None,) * 5)
+
+# Guide Star ACQ pointing container
+GuideStarPosition = namedtuple('GuideStarPosition', ['position', 'corner', 'size'])
+GuideStarPosition.__new__.__defaults__ = ((None,) * 3)
 
 
 # Transforms
@@ -2223,6 +2228,43 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
     return filled
 
 
+def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
+    """Return time-ordered mnemonic list with progressive values
+
+    The different set of mnemonics used for observatory orientation
+    appear at different cadences. This routine creates a time-ordered dictionary
+    with all the mnemonics for each time found in the engineering. For mnemonics
+    missing for a particular time, the last previous value is used.
+
+    Parameters
+    ----------
+    mnemonics : {mnemonic: [value[,...]]}
+
+    filled_only : bool
+        Only return a matrix where observation times have all the mnemonics defined.
+
+    Returns
+    -------
+    filled_by_time : astropy.table.Table
+    """
+    filled = fill_mnemonics_chronologically(mnemonics, filled_only=filled_only)
+
+    names = [mnemonic for mnemonic in mnemonics]
+    names = ['time'] + names
+    time_idx = 0
+
+    values = [ [] for _ in names]
+
+    for time in filled:
+        values[time_idx].append(time)
+        for mnemonic in filled[time]:
+            idx = names.index(mnemonic)
+            values[idx].append(filled[time][mnemonic].value)
+
+    t = Table(values, names=names)
+
+    return t
+
 def calc_estimated_gs_wcs(t_pars: TransformParameters):
     """Calculate the estimated guide star RA/DEC/Y-angle
 
@@ -2721,10 +2763,22 @@ def get_reduce_func_from_exptype(exp_type):
     return reduce_func
 
 
-def crpix_from_gspos(mnemonics_to_read, mnemonics, exp_type=None):
-    """Get the CRPIX values from guide star telemetry for FGS
+def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
+    """Get the guide star position from guide star telemetry for FGS
 
-    Average of all positive values.
+    The ACQ1 and ACQ2 exposures share nearly the same time range of mnemonics
+    with ACQ2 being slightly longer. As such, the information needed by
+    both types are interleaved in the engineering.
+    ACQ1 needs the first three values of the IFGS_ACQ_*POSG mnemonics.
+    ACQ2 needs the next five values of the IFGS_ACQ_*POSG mnemonics.
+
+    The corresponding values of the acquisition box location and size
+    are also different between ACQ1 and ACQ2. The values to retrieve
+    need be coordinated with the corresponding *POSG values.
+
+    The *POSG values are in arcseconds and are relative to the full
+    FGS array. They need to be converted to pixels and shifted
+    to be with respect to the actual acquisition box in the exposure.
 
     Parameters
     ==========
@@ -2737,39 +2791,33 @@ def crpix_from_gspos(mnemonics_to_read, mnemonics, exp_type=None):
         The values for each pointing mnemonic
 
     exp_type: str
-       The exposure type being dealt with
+        The exposure type being dealt with. Either
+        'fgs_acq1' or 'fgs_acq2'
 
     Returns
     =======
-    crpix1, crpix2 : float, float
-        Some value from telemetry
+    gs_position : GuideStarPosition
+        The guide star position
     """
-    # Determine which set of mnemonics is being used, to ensure the right pairs are used for CRPIX.
-    if all(k in mnemonics for k in FGS_ACQ_MNEMONICS):
-        crpix1_mnemonic = 'IFGS_ACQ_XPOSG'
-        crpix2_mnemonic = 'IFGS_ACQ_YPOSG'
-    elif all(k in mnemonics for k in FGS_GUIDED_MNEMONICS):
-        crpix1_mnemonic = 'IFGS_CTDGS_X'
-        crpix2_mnemonic = 'IFGS_CTDGS_Y'
-    else:
-        raise ValueError(f'Accessed mnemonics {mnemonics} not in the required mnemonics {FGS_ACQ_MNEMONICS} or {FGS_GUIDED_MNEMONICS}')
+    exp_type = exp_type.lower()
+    if exp_type not in ['fgs_acq1', 'fgs_acq2']:
+        raise ValueError(f'exp_type {exp_type} not one of [fgs_acq1, fgs_acq2]')
 
-    # Get the values.
-    crpix1 = np.array([eng_param.value
-                       for eng_param in mnemonics[crpix1_mnemonic]
-                       if eng_param.value > 0.])
-    crpix2 = np.array([eng_param.value
-                       for eng_param in mnemonics[crpix2_mnemonic]
-                       if eng_param.value > 0.])
+    ordered = fill_mnemonics_chronologically_table(mnemonics)
+    valid = ordered[ordered['IFGS_ACQ_XPOSG'] != 0.0]
 
-    # Which values are actually used depends on exposure type.
-    # ACQ1 exposures should use the first 3 values.
-    # ACQ2 exposures use the next 5 values.
+    # Setup parameters depending on ACQ1 vs ACQ2
     if exp_type == 'fgs_acq1':
-        crpix1 = crpix1[0:3]
-        crpix2 = crpix2[0:3]
-    elif exp_type == 'fgs_acq2':
-        crpix1 = crpix1[3:8]
-        crpix2 = crpix2[3:8]
+        subarray = valid[0]
+        posg_slice = slice(0, 3)
+    else:
+        subarray = valid[-1]
+        posg_slice = slice(3, 8)
 
-    return np.average(crpix1), np.average(crpix2)
+    position = (np.average(valid['IFGS_ACQ_XPOSG'][posg_slice]),
+                np.average(valid['IFGS_ACQ_YPOSG'][posg_slice]))
+    corner = (subarray['IFGS_ACQ_DETXCOR'], subarray['IFGS_ACQ_DETYCOR'])
+    size = (subarray['IFGS_ACQ_DETXSIZ'], subarray['IFGS_ACQ_DETYSIZ'])
+    gs_position = GuideStarPosition(position=position, corner=corner, size=size)
+
+    return gs_position
