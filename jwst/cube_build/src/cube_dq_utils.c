@@ -640,7 +640,7 @@ int dq_nirspec(int overlap_partial,
       c2_max = 0;
       printf( " calling slice_wave_plane_nirspec %i %i %i \n  ", islice, w, ncube);
       if(w < nz-1){
-	printf( "wavebin %f \n", zc[w]-zc[w+1]);
+	printf( "wavebin%i %i  %f \n", w, islice, zc[w+1]-zc[w]);
       }
       status_wave =  slice_wave_plane_nirspec( w, islice, roiw_ave, zc,
 					       coord1, coord2, wave, sliceno, ncube, npt,
@@ -663,12 +663,13 @@ int dq_nirspec(int overlap_partial,
       for( in = istart; in < iend; in ++){
 	ii = in - istart;
 	if (status_wave ==0){
+	  printf( " values %i %i \n ", ii, in);
 	  idqv[in] = wave_slice_dq[ii];
 	} else {
 	  idqv[in] = 0;
 	}
       }
-      
+
     } // end loop over slices
 	
   } // end of wavelength
