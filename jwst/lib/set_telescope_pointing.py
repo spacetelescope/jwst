@@ -53,6 +53,7 @@ of transformations, the DCM for the reference point of the target aperture
 is calculated.
 
 """
+import functools
 import sys
 
 import asdf
@@ -132,6 +133,7 @@ TRACK_TR_202111_MNEMONICS = {
     'SA_ZFGGSPOSY': False,
 }
 
+FGS_ACQ_EXP_TYPES = ['fgs_acq1', 'fgs_acq2']
 FGS_ACQ_MNEMONICS  = {
     'IFGS_ACQ_DETXCOR': True,
     'IFGS_ACQ_DETYCOR': True,
@@ -757,12 +759,12 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
     else:
         raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
 
-    crpix1, crpix2 = get_pointing(t_pars.obsstart, t_pars.obsend,
+    gs_position = get_pointing(t_pars.obsstart, t_pars.obsend,
                                   mnemonics_to_read=mnemonics_to_read,
                                   engdb_url=t_pars.engdb_url,
                                   tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-    model.meta.wcsinfo.crpix1 = crpix1
-    model.meta.wcsinfo.crpix2 = crpix2
+    model.meta.wcsinfo.crpix1 = gs_position.position[0]
+    model.meta.wcsinfo.crpix2 = gs_position.position[1]
 
     # Get position angle
     try:
@@ -2716,8 +2718,8 @@ def get_reduce_func_from_exptype(exp_type):
     reduce_func : func
         The preferred reduction function.
     """
-    if exp_type in FGS_GUIDE_EXP_TYPES:
-        reduce_func = crpix_from_gspos
+    if exp_type in FGS_ACQ_EXP_TYPES:
+        reduce_func = functools.partial(gs_position_acq, exp_type=exp_type)
     else:
         reduce_func = pointing_from_average
 
@@ -2761,8 +2763,8 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
         The guide star position
     """
     exp_type = exp_type.lower()
-    if exp_type not in ['fgs_acq1', 'fgs_acq2']:
-        raise ValueError(f'exp_type {exp_type} not one of [fgs_acq1, fgs_acq2]')
+    if exp_type not in FGS_ACQ_EXP_TYPES:
+        raise ValueError(f'exp_type {exp_type} not one of {FGS_ACQ_EXP_TYPES}')
 
     ordered = fill_mnemonics_chronologically_table(mnemonics)
     valid = ordered[ordered['IFGS_ACQ_XPOSG'] != 0.0]
