@@ -647,14 +647,14 @@ int dq_nirspec(int overlap_partial,
 					       &c1_min, &c2_min, &c1_max, &c2_max);
       printf( " status_wave %i \n ", status_wave);
       if( status_wave ==0){
-	printf( " calling overlap slice with spaxels %i %i \n ", islice, nxy);
+	printf( " calling overlap slice with spaxels %i %i %i\n ", islice, nxy,w);
 	status = overlap_slice_with_spaxels(overlap_partial,
 					    cdelt1,cdelt2,
 					    nx, ny,
 					    xc, yc,
 					    c1_min, c2_min, c1_max, c2_max,
 					    wave_slice_dq);
-	printf( " done overlap slice with spaxels %i \n ", status);
+	printf( " done overlap slice with spaxels status: %i \n ", status);
       } // end loop over status_wave
 
       istart = nxy*w;

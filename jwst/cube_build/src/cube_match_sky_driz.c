@@ -437,6 +437,8 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   // if flag_dq_plane = 1, Set up the dq plane 
   //______________________________________________________________________
   int status1 = 0;
+  printf("flag dq plane %i \n ", flag_dq_plane);
+  
   if(flag_dq_plane){
     if (instrument == 0){
       status1 = dq_miri(start_region, end_region,overlap_partial, overlap_full,
@@ -472,7 +474,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
     status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
     
   }
-
+  printf(" drizzling data \n");
   //______________________________________________________________________
   // Driz the mapped detector data onto the IFU cube
   //______________________________________________________________________
