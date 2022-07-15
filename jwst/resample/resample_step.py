@@ -112,6 +112,8 @@ class ResampleStep(Step):
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
+            model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+            model.meta.resample.pixfrac = kwargs['pixfrac']
             self.update_phot_keywords(model)
 
         if len(result) == 1:
@@ -126,8 +128,6 @@ class ResampleStep(Step):
             model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
         if model.meta.photometry.pixelarea_arcsecsq is not None:
             model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
-        model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-        model.meta.resample.pixfrac = self.pixfrac
 
     def get_drizpars(self, ref_filename, input_models):
         """
