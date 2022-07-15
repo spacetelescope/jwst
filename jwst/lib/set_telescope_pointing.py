@@ -763,8 +763,19 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
                                   mnemonics_to_read=mnemonics_to_read,
                                   engdb_url=t_pars.engdb_url,
                                   tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-    model.meta.wcsinfo.crpix1 = gs_position.position[0]
-    model.meta.wcsinfo.crpix2 = gs_position.position[1]
+
+    crpix1 = crpix2 = None
+    if t_pars.exp_type in FGS_ACQ_EXP_TYPES:
+        apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
+        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
+        position_pixel = aperture.idl_to_det(*gs_position.position)
+        position_subarray = (position_pixel[0] - gs_position.corner[0],
+                             position_pixel[1] - gs_position.corner[1])
+        crpix1 = gs_position.size[0] - position_subarray[0]
+        crpix2 = gs_position.size[1] - position_subarray[1]
+
+    model.meta.wcsinfo.crpix1 = crpix1
+    model.meta.wcsinfo.crpix2 = crpix2
 
     # Get position angle
     try:

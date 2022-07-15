@@ -43,6 +43,9 @@ WCS_META = {
             'gs_ra': 45.1234,
             'gs_dec': -45.1234,
         },
+        'instrument': {
+            'detector': 'GUIDER1',
+        },
         'observation': {
             'date_beg': OBSSTART,
             'date_end': OBSEND,
@@ -77,16 +80,16 @@ def test_fgs_pointing(multi_fixture):
     model = make_level1b()
 
     # Update wcs
-    stp.update_wcs(model, siaf_path=siaf_db, engdb_url=engdb.base_url)
+    stp.update_wcs(model, engdb_url=engdb.base_url)
 
     # Test results
     assert isclose(model.meta.wcsinfo.pc1_1, -0.9997617158628777, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc1_2, -0.021829143247382235, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc2_1, -0.021829143247382235, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc2_2, 0.9997617158628777, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc1_2, -0.02166140686177685, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc2_1, -0.02166140686177685, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc2_2, 0.9997653641994049, atol=1e-15)
 
-    assert isclose(model.meta.wcsinfo.crpix1, 17.80508537294, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crpix2, 42.65214462281999, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crpix1, 36.23964226769749, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crpix2, 68.3690778810028, atol=1e-15)
     assert isclose(model.meta.wcsinfo.crval1, 45.1234, atol=1e-15)
     assert isclose(model.meta.wcsinfo.crval2, -45.1234, atol=1e-15)
 

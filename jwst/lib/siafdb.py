@@ -106,6 +106,25 @@ class SiafDb:
     def close(self):
         self._db.close()
 
+    def get_aperture(self, aperture, useafter=None):
+        """Get the pysiaf.Aperture for an aperture
+
+        Parameters
+        ----------
+        aperture : str
+            The name of the aperture to retrieve.
+        useafter : str
+            The date of observation (``model.meta.date``)
+
+        Returns
+        -------
+        aperture : pysiaf.Aperture
+            The aperture specification.
+        """
+        if not useafter:
+            useafter = date.today().strftime('%Y-%m-%d')
+        return self._db.get_aperture(aperture, useafter)
+
     def get_wcs(self, aperture, useafter=None):
         """
         Query the SIAF database file and get WCS values.
@@ -179,6 +198,26 @@ class SiafDbPySiaf:
     def close(self):
         pass
 
+    def get_aperture(self, aperture, useafter):
+        """Get the pysiaf.Aperture for an aperture
+
+        Parameters
+        ----------
+        aperture : str
+            The name of the aperture to retrieve.
+        useafter : str
+            The date of observation (``model.meta.date``)
+
+        Returns
+        -------
+        aperture : pysiaf.Aperture
+            The aperture specification.
+        """
+        instrument = INSTRUMENT_MAP[aperture[:3].lower()]
+        siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
+        aperture = siaf[aperture.upper()]
+        return aperture
+
     def get_wcs(self, aperture, useafter):
         """
         Query the SIAF database file and get WCS values.
@@ -202,9 +241,7 @@ class SiafDbPySiaf:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        instrument = INSTRUMENT_MAP[aperture[:3].lower()]
-        siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
-        aperture = siaf[aperture.upper()]
+        aperture = self.get_aperture(aperture, useafter)
 
         # Build the SIAF entry. Missing required values is an error.
         # Otherwise, use defaults.
