@@ -780,11 +780,7 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
     if t_pars.exp_type in FGS_ACQ_EXP_TYPES:
         apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
         aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
-        position_pixel = aperture.idl_to_det(*gs_position.position)
-        position_subarray = (position_pixel[0] - gs_position.corner[0],
-                             position_pixel[1] - gs_position.corner[1])
-        crpix1 = gs_position.size[0] - position_subarray[0]
-        crpix2 = gs_position.size[1] - position_subarray[1]
+        crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture)
 
     model.meta.wcsinfo.crpix1 = crpix1
     model.meta.wcsinfo.crpix2 = crpix2
@@ -2834,3 +2830,28 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
     gs_position = GuideStarPosition(position=position, corner=corner, size=size)
 
     return gs_position
+
+
+def gs_ideal_to_subarray(gs_position, aperture):
+    """Calculate pixel position for the guide star in the acquisition subarray
+
+    Parameters
+    ----------
+    gs_position : GuideStarPosition
+        The guide star position telemetry.
+
+    aperture : pysiaf.Aperture
+        The aperture in use.
+
+    Returns
+    -------
+    x, y : float
+        The pixel position relative to the subarray
+    """
+    position_pixel = aperture.idl_to_det(*gs_position.position)
+    position_subarray = (position_pixel[0] - gs_position.corner[0],
+                         position_pixel[1] - gs_position.corner[1])
+    x = gs_position.size[0] - position_subarray[0]
+    y = gs_position.size[1] - position_subarray[1]
+
+    return x, y
