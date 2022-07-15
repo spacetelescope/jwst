@@ -87,6 +87,9 @@ class SiafDb:
     def get_aperture(self, aperture, useafter=None):
         """Get the pysiaf.Aperture for an aperture
 
+    def get_aperture(self, aperture, useafter):
+        """Get the pysiaf.Aperture for an aperture
+
         Parameters
         ----------
         aperture : str
