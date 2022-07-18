@@ -63,7 +63,10 @@ class SkyMatchStep(Step):
 
     def process(self, input):
         self.log.setLevel(logging.DEBUG)
-        self._is_asn = datamodels.util.is_association(input) or isinstance(input, str)
+        # for now turn off memory optimization until we have better machinery
+        # to handle outputs in a consistent way.
+        self._is_asn = False
+        # self._is_asn = datamodels.util.is_association(input) or isinstance(input, str)
 
         img = datamodels.ModelContainer(
             input,
