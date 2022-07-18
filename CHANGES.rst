@@ -1,4 +1,26 @@
-1.5.4 (unreleased)
+1.6.2 (unreleased)
+==================
+
+general
+-------
+
+-
+
+source_catalog
+--------------
+
+- Fixed the actual units of the error array used to calculate
+  photometric errors. [#6928]
+
+1.6.1 (2022-07-15)
+==================
+
+general
+-------
+
+- Update `stpipe` requirement to `>=0.4.1` [#6925]
+
+1.6.0 (2022-07-11)
 ==================
 
 associations
@@ -16,19 +38,32 @@ datamodels
 - Added MJD unit to keyword comment strings for barycentric and heliocentric
   start, mid, and end times. [#6910]
 
+- Updated schemas to include new COMPRESS keyword, as well as allowed values
+  for the LAMP and OPMODE keywords. [#6918]
+
 extract_1d
 ----------
 
 - Fix error in variance propagation calculation [#6899]
 
-- Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture 
+- Set DO_NOT_USE flag in extracted spectrum when the IFU extraction aperture
   has no valid data [#6909]
 
 pipeline
 --------
 
+- Update the ``Coron3Pipeline`` to use the datamodels.open() method to
+  open an ASN file, and improve the construction of lists of the ASN
+  members [#6855]
+
 - Fixed the logic used in the `calwebb_tso3` pipeline to check for null
   photometry results. [#6912]
+
+- Check source_ids in `calwebb_spec3` and force into 5 digit positive number,
+  if available [#6915]
+
+- Only apply source_id fix from #6915 to models with multiple
+  sources [#6917]
 
 ramp_fitting
 ------------
@@ -59,6 +94,13 @@ tweakreg
 
 - Added check for multiple matches to a single reference source and skip
   ``tweakreg`` step when this happens. [#6896, #6898]
+
+wiimatch
+--------
+
+- ``wiimatch`` subpackage has been removed from ``jwst`` in favor of the
+  external ``wiimatch`` package:
+  https://github.com/spacetelescope/wiimatch. [#6916]
 
 1.5.3 (2022-06-20)
 ==================

@@ -10,7 +10,7 @@ import numpy as np
 
 from .. stpipe import Step
 from .. import datamodels
-from .. wiimatch.match import match_lsq
+from wiimatch.match import match_lsq
 from astropy.stats import sigma_clipped_stats as sigclip
 
 __all__ = ['MRSIMatchStep', 'apply_background_2d']

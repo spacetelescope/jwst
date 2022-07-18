@@ -1,18 +1,15 @@
-"""Regression tests for MIRI MRS modes"""
-from pathlib import Path
-
+"""Regression tests for MIRI MRS modes in calwebb_spec2"""
 import pytest
 
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
+from jwst.stpipe import Step
 from jwst import datamodels
-from jwst.associations import load_asn
-from jwst.lib.suffix import replace_suffix
 
 from jwst.regtest import regtestdata as rt
 
-# Define artifactory source and truth
+# Define artifactory source and truth file paths
 INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs'
 
@@ -22,22 +19,11 @@ def run_spec2(jail, rtdata_module):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
 
-    # Setup the inputs
-    asn_name = 'ifushort_ch12_rate_asn3.json'
-    rtdata.get_data(INPUT_PATH + '/' + asn_name)
-    asn_path = rtdata.input
-    with open(asn_path, 'r') as asn_fh:
-        asn = load_asn(asn_fh)
-    member_path = Path(asn['products'][0]['members'][0]['expname'])
-    rate_path = member_path.stem
-    rate_path = replace_suffix(rate_path, 'rate')
-    rate_path = INPUT_PATH + '/' + rate_path + member_path.suffix
+    # Get the input rate file
+    rtdata.get_data(INPUT_PATH + '/' + 'jw01024001001_04101_00001_mirifulong_rate.fits')
 
     # Run the pipeline
-    step_params = {
-        'input_path': rate_path,
-        'step': 'calwebb_spec2',
-        'args': [
+    args = ["calwebb_spec2", rtdata.input,
             '--steps.bkg_subtract.save_results=true',
             '--steps.assign_wcs.save_results=true',
             '--steps.imprint_subtract.save_results=true',
@@ -53,11 +39,9 @@ def run_spec2(jail, rtdata_module):
             '--steps.resample_spec.save_results=true',
             '--steps.cube_build.save_results=true',
             '--steps.extract_1d.save_results=true',
-        ]
-    }
+            ]
 
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
-    return rtdata, asn_path
+    Step.from_cmdline(args)
 
 
 @pytest.mark.slow
@@ -66,19 +50,21 @@ def run_spec2(jail, rtdata_module):
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'fringe', 'photom', 's3d', 'srctype', 'straylight', 'x1d']
 )
-def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
-    """Test ensuring the callwebb_spec2 is operating appropriately for MIRI MRS data"""
-    rtdata, asn_path = run_spec2
-    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix,
-                     truth_path=TRUTH_PATH)
+def test_miri_mrs_spec2(run_spec2, fitsdiff_default_kwargs, suffix, rtdata_module):
+    """Regression test of the calwebb_spec2 pipeline on a MIRI MRS long-wave exposure"""
+
+    rtdata = rtdata_module
+    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path=TRUTH_PATH)
 
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs):
-    rtdata, asn_path = run_spec2
+def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
+
+    rtdata = rtdata_module
+
     # get input assign_wcs and truth file
-    output = "ifushort_ch12_assign_wcs.fits"
+    output = "jw01024001001_04101_00001_mirifulong_assign_wcs.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_miri_mrs/{output}")
 

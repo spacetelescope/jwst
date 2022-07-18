@@ -13,5 +13,6 @@ properties:
           lamp_state:
             title: Name of the lamp used
             type: string
-            enum: [FLAT1, FLAT2, FLAT3, FLAT4, FLAT5, LINE1, LINE2, LINE3, LINE4, REF, TEST, N/A]
+            enum: [BOTH, FLAT1, FLAT2, FLAT3, FLAT4, FLAT5, G1LAMP1, G2LAMP1,
+              IFU, IMG, LINE1, LINE2, LINE3, LINE4, NONE, OFF, REF, TEST, N/A]
             fits_keyword: LAMP

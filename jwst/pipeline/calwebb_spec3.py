@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 import os.path as op
+import numpy as np
 
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
@@ -161,6 +162,39 @@ class Spec3Pipeline(Pipeline):
                 (name, model)
                 for name, model in multislit_to_container(source_models).items()
             ]
+
+            # Check for negative and large source_id values
+            if len(sources) > 99999:
+                self.log.critical("Data contain more than 100,000 sources;"
+                                  "filename does not support 6 digit source ids.")
+                raise Exception
+
+            available_src_ids = set(np.arange(99999) + 1)
+            used_src_ids = set()
+            for src in sources:
+                src_id, model = src
+                src_id = int(src_id)
+                used_src_ids.add(src_id)
+                if 0 < src_id <= 99999:
+                    available_src_ids.remove(src_id)
+
+            hotfixed_sources = []
+            # now find and reset bad source_id values
+            for src in sources:
+                src_id, model = src
+                src_id = int(src_id)
+                # Replace ids that aren't positive 5-digit integers
+                if src_id < 0 or src_id > 99999:
+                    src_id_new = available_src_ids.pop()
+                    self.log.info(f"Source ID {src_id} falls outside allowed range.")
+                    self.log.info(f"Reassigning {src_id} to {str(src_id_new).zfill(5)}.")
+                    # Replace source_id for each model in the SourceModelContainers
+                    for contained_model in model:
+                        contained_model.source_id = src_id_new
+                    src_id = src_id_new
+                hotfixed_sources.append((str(src_id), model))
+
+            sources = hotfixed_sources
 
         # Process each source
         for source in sources:
