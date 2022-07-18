@@ -6,6 +6,11 @@ general
 
 -
 
+residual_fringe
+---------------
+
+- Fixed the residual fringe code to run on MRS LONG detector. [#6929]
+
 source_catalog
 --------------
 
