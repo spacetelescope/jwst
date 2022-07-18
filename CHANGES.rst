@@ -1,6 +1,11 @@
 1.6.3 (unreleased)
 ==================
 
+extract_1d
+----------
+
+- Update int_times keywords in SOSS spectral output [#6930]
+
 general
 -------
 
