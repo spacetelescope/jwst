@@ -6,6 +6,13 @@ general
 
 -
 
+resample
+--------
+
+- Changed parameters read in from drizpar reference file to have a value of None in Spec [#6921] 
+
+
+
 source_catalog
 --------------
 
@@ -19,6 +26,7 @@ general
 -------
 
 - Update `stpipe` requirement to `>=0.4.1` [#6925]
+
 
 1.6.0 (2022-07-11)
 ==================
