@@ -20,8 +20,10 @@ def nircam_model():
 
     wht = np.ones(data.shape)
     wht[0:10, :] = 0.
-    model = ImageModel(data, wht=wht)
+    err = np.abs(data) / 10.
+    model = ImageModel(data, wht=wht, err=err)
     model.meta.bunit_data = 'MJy/sr'
+    model.meta.bunit_err = 'MJy/sr'
     model.meta.photometry.pixelarea_steradians = 1.0
     model.meta.wcs = make_gwcs(data.shape)
     model.meta.wcsinfo = {
@@ -67,8 +69,10 @@ def nircam_model_without_apcorr():
 
     wht = np.ones(data.shape)
     wht[0:10, :] = 0.
-    model = ImageModel(data, wht=wht)
+    err = np.abs(data) / 10.
+    model = ImageModel(data, wht=wht, err=err)
     model.meta.bunit_data = 'MJy/sr'
+    model.meta.bunit_err = 'MJy/sr'
     model.meta.photometry.pixelarea_steradians = 1.0
     model.meta.wcs = make_gwcs(data.shape)
     model.meta.wcsinfo = {
@@ -110,6 +114,8 @@ def test_source_catalog(nircam_model, npixels, nsources):
         assert nsources == 0
     else:
         assert len(cat) == nsources
+        min_snr = np.min(cat['isophotal_flux'] / cat['isophotal_flux_err'])
+        assert min_snr >= 100
 
 
 def test_model_without_apcorr_data(nircam_model_without_apcorr):

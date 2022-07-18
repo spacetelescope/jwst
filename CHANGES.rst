@@ -6,6 +6,12 @@ general
 
 -
 
+source_catalog
+--------------
+
+- Fixed the actual units of the error array used to calculate
+  photometric errors. [#6928]
+
 1.6.1 (2022-07-15)
 ==================
 
