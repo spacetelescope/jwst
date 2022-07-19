@@ -6,6 +6,13 @@ general
 
 -
 
+
+ramp_fitting
+------------
+
+- Added documentation for the calculation of the readnoise variance [#6924]
+
+
 resample
 --------
 
