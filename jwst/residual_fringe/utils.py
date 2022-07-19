@@ -17,7 +17,7 @@ from .fitter import ChiSqOutlierRejectionFitter
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 #
 
 # hard coded parameters, have been selected based on testing but can be changed
@@ -192,8 +192,11 @@ def fit_envelope(wavenum, signal):
     return pcl(wavenum), l_x, l_y, pcu(wavenum), u_x, u_y
 
 
-def find_lines(signal, max_amp):
+def find_lines_resfringe(signal, max_amp):
     """
+    *** Replaced with find_lines below. This version does not include some of the
+    feature finding functionality***
+
     Take signal and max amp array, determine location of spectral
     features with amplitudes greater than max amp
 
@@ -222,16 +225,110 @@ def find_lines(signal, max_amp):
             l_x.append(x)
 
     log.debug("find_lines: Found {} peaks   {} troughs".format(len(u_x), len(l_x)))
-    weights_factors[signal_check > np.amax(max_amp)] = 0
+    weights_factors[signal_check > max_amp] = 0
+    return weights_factors
+
+
+def find_lines(signal, max_amp):
+    """
+    Take signal and max amp array, determine location of spectral
+    features with amplitudes greater than max amp
+
+    :param signal:
+    :param max_amp:
+    :return:
+    """
+
+    r_x = np.arange(signal.shape[0] - 1)
+
+    # setup the output arrays
+    signal_check = signal.copy()
+    weights_factors = np.ones(signal.shape[0])
+
+    # Detect peaks
+    u_y, u_x, l_y, l_x = [], [], [], []
+
+    for x in r_x:
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and \
+                (np.sign(signal_check[x] - signal_check[x + 1]) == 1):
+            u_y.append(signal_check[x])
+            u_x.append(x)
+
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and \
+                (np.sign(signal_check[x] - signal_check[x + 1]) == -1):
+            l_y.append(signal[x])
+            l_x.append(x)
+
+    for n, amp in enumerate(u_y):
+        max_amp_val = max_amp[u_x[n]]
+        log.debug("find_lines: check if peak above max amp")
+        if amp > max_amp_val:
+
+            # peak in x
+            # log.debug("find_lines: flagging neighbours")
+            xpeaks = [u_x[n] - 1, u_x[n], u_x[n] + 1]
+
+            # log.debug("find_lines:  find neareast troughs")
+            # find nearest troughs
+
+            for xp in xpeaks:
+                log.debug("find_lines:  checking ind {}".format(xp))
+
+                try:
+
+                    x1 = l_x[np.argsort(np.abs(l_x - xp))[0]]
+
+                    try:
+                        x2 = l_x[np.argsort(np.abs(l_x - xp))[1]]
+
+                        if x1 < x2:
+                            xlow = x1
+                            xhigh = x2
+                        if x1 > x2:
+                            xhigh = x1
+                            xlow = x2
+
+                    except IndexError:
+                        # raised if x1 is at the edge
+                        xlow = x1
+                        xhigh = x1
+
+                    # set the weights to 0 and signal 1
+                    log.debug("find_lines: setting weights between troughs to 0")
+                    signal_check[xlow:xhigh] = 0
+                    weights_factors[xlow:xhigh] = 0
+
+                except IndexError:
+                    pass
+
+    log.debug("find_lines: Found {} peaks   {} troughs".format(len(u_x), len(l_x)))
+    weights_factors[signal_check > max_amp * 2] = 0  # catch any remaining
+    # weights_factors[signal_check > np.amax(max_amp)] = 0
+
     return weights_factors
 
 
 def check_res_fringes(res_fringe_fit, max_amp):
     """
-    Check for regions where res fringe fit runs away, set to 0
+    Check for regions where res fringe fit runs away (greater than max amp),
+    set the beat where this happens to 0 to avoid  making the fringes worse
 
-    :param res_fringes:
-    :return:
+    :Parameters:
+
+    res_fringe_fit:  numpy array, required
+        the residual fringe fit
+
+    max_amp:  numpy array, required
+        the maximum amplitude array
+
+    :Returns:
+
+    res_fringe_fit: numpy array
+        the residual fringe fit with exploding fit regions removed
+
+    flats: numpy array
+        flags where the fit was rejected
+
     """
 
     flags = np.zeros(res_fringe_fit.shape[0])
@@ -250,7 +347,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
     log.debug("check_res_fringes: found {} nodes".format(len(node_ind)))
 
     # find where res_fringes goes above max_amp
-    runaway_rfc = np.argwhere((np.abs(lenv_fit) + np.abs(uenv_fit)) > max_amp * 2)
+    runaway_rfc = np.argwhere((np.abs(lenv_fit) + np.abs(uenv_fit)) > (max_amp * 2))
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
@@ -287,7 +384,7 @@ def interp_helper(mask):
     return mask < 1e-05, lambda z: z.nonzero()[0]
 
 
-def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=False):
+def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, channel=1, test=False):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
@@ -309,6 +406,10 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
         the expected fringe frequency, used to determine number of knots. If None,
         defaults to NUM_KNOTS constant
 
+    channel: int, optional, default=1
+        the channel processed. used to determine if other arrays need to be reversed given the direction of increasing
+        wavelength down the detector in MIRIFULONG
+
     :Returns:
 
     bg_fit: numpy array
@@ -329,6 +430,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
     if ffreq is not None:
         log.debug("fit_1d_background_complex: knot positions for {} cm-1".format(ffreq))
         nknots = int((np.amax(wavenum) - np.amin(wavenum)) / (ffreq))
+
     else:
         log.debug("fit_1d_background_complex: using num_knots={}".format(NUM_KNOTS))
         nknots = int((flux.shape[0] / 1024) * NUM_KNOTS)
@@ -355,17 +457,31 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, test=
     bgindx = new_make_knots(flux.copy(), int(nknots), weights=weights.copy())
     bgknots = wavenum_scaled[bgindx].astype(float)
 
-    # Reverse (and clip) the fit data as scipy/astropy need monotone increasing data.
-    t = bgknots[::-1][1:-1]
-    x = wavenum_scaled[::-1]
-    y = flux[::-1]
-    w = weights[::-1]
+    # Reverse (and clip) the fit data as scipy/astropy need monotone increasing data for SW detector
+    if channel == 3 or channel == 4:
+        t = bgknots[1:-1]
+        x = wavenum_scaled
+        y = flux
+        w = weights
+    elif channel == 1 or channel == 2:
+        t = bgknots[::-1][1:-1]
+        x = wavenum_scaled[::-1]
+        y = flux[::-1]
+        w = weights[::-1]
+    else:
+        raise ValueError('channel not in 1-4')
 
     # Fit the spline
-    spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
-    fitter = SplineExactKnotsFitter()
-    robust_fitter = ChiSqOutlierRejectionFitter(fitter)
-    bg_model = robust_fitter(spline_model, x, y, weights=w)
+    # robust fitting causing problems for fringe 2 in channels 3 and 4, just use the fitter class
+    if ffreq > 1.5:
+        spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
+        fitter = SplineExactKnotsFitter()
+        robust_fitter = ChiSqOutlierRejectionFitter(fitter)
+        bg_model = robust_fitter(spline_model, x, y, weights=w)
+    else:
+        spline_model = Spline1D(knots=t, degree=1, bounds=[x[0], x[-1]])
+        fitter = SplineExactKnotsFitter()
+        bg_model = fitter(spline_model, x, y, weights=w)
 
     # fit the background
     bg_fit = bg_model(wavenum_scaled)
@@ -428,9 +544,10 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
     # create the model
     mdl = SineModel(pars=[0.1, 0.1], fixed={0: 1 / peak_freq})
 
-    fitter = LevenbergMarquardtFitter(wavenum[50:-50], mdl)
+    fitter = LevenbergMarquardtFitter(wavenum[10:-10], mdl)
     ftr = RobustShell(fitter, domain=10)
-    fr_par = ftr.fit(res_fringes[50:-50], weights=weights[50:-50])
+
+    fr_par = ftr.fit(res_fringes[10:-10], weights=weights[10:-10])
     log.debug("fit_quality: best fit pars: {}".format(fr_par))
 
     if np.abs(fr_par[0]) > np.abs(fr_par[1]):
@@ -448,7 +565,8 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
     return contrast, quality
 
 
-def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res):
+def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
+                                      pgram_res, col_snr2):
 
     """Fit the residual fringe signal.- Improved method
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
@@ -498,6 +616,8 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
 
     # handle out of slice pixels
     res_fringes = np.nan_to_num(res_fringes)
+    res_fringes[res_fringes == np.inf] = 0
+    res_fringes[res_fringes == -np.inf] = 0
 
     # initialise some parameters
     res_fringes_proc = res_fringes.copy()
@@ -510,7 +630,7 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
     sdml = ConstantModel(values=1.0)
     sftr = Fitter(wavenum, sdml)
     _ = sftr.fit(res_fringes, weights=weights)
-    evidence1 = sftr.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
+    evidence1 = sftr.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
     log.debug(
         "fit_1d_fringes_bayes_evidence: Initial Evidence: {}".format(evidence1))
 
@@ -519,6 +639,7 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
             "Starting fringe {}".format(f + 1))
 
         # get the scan arrays
+        weights *= col_snr2
         res_fringe_scan = res_fringes_proc[np.where(weights > 1e-05)]
         wavenum_scan = wavenum[np.where(weights > 1e-05)]
 
@@ -538,25 +659,45 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
         mdl = multi_sine(nfringes + 1)
 
         # fit the multi-sine model and get evidence
-        fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0, keep=keep_dict)
-        ftr = RobustShell(fitter, domain=10)
-        try:
-            pars = ftr.fit(res_fringes, weights=weights)
-
-            # free the parameters and refit
-            mdl = multi_sine(nfringes + 1)
-            mdl.parameters = pars
-            fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0)
+        if (ffreq * factor) > 1.5:
+            fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0, keep=keep_dict)
             ftr = RobustShell(fitter, domain=10)
-            pars = ftr.fit(res_fringes, weights=weights)
-
-            # try get evidence (may fail for large component fits to noisy data, set to very negative value
             try:
-                evidence2 = fitter.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
-            except ValueError:
+                pars = ftr.fit(res_fringes, weights=weights)
+
+                # free the parameters and refit
+                mdl = multi_sine(nfringes + 1)
+                mdl.parameters = pars
+                fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0)
+                ftr = RobustShell(fitter, domain=10)
+                pars = ftr.fit(res_fringes, weights=weights)
+
+                # try get evidence (may fail for large component fits to noisy data, set to very negative value
+                try:
+                    evidence2 = fitter.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
+                except ValueError:
+                    evidence2 = -1e9
+            except Exception:
                 evidence2 = -1e9
-        except RuntimeError:
-            evidence2 = -1e9
+
+        else:
+            fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0, keep=keep_dict)
+            try:
+                pars = fitter.fit(res_fringes, weights=weights)
+
+                # free the parameters and refit
+                mdl = multi_sine(nfringes + 1)
+                mdl.parameters = pars
+                fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0)
+                pars = fitter.fit(res_fringes, weights=weights)
+
+                # try get evidence (may fail for large component fits to noisy data, set to very negative value
+                try:
+                    evidence2 = fitter.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
+                except ValueError:
+                    evidence2 = -1e9
+            except Exception:
+                evidence2 = -1e9
 
         log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
 
@@ -612,6 +753,14 @@ def new_make_knots(flux, nknots=20, weights=None):
 
     """
     log.debug("new_make_knots: creating {} knots on flux array".format(nknots))
+
+    # handle nans or infs that may exist
+    flux = np.nan_to_num(flux, posinf=1e-08, neginf=1e-08)
+    flux[flux < 0] = 1e-08
+
+    if weights is not None:
+        weights = np.nan_to_num(weights, posinf=1e-08, neginf=1e-08)
+        weights[weights < 0] = 1e-08
 
     # create an array of indices
     npoints = flux.shape[0]
