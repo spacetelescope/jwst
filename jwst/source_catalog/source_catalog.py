@@ -110,15 +110,20 @@ class JWSTSourceCatalog:
         Convert the data and errors from MJy/sr to Jy and convert to
         `~astropy.unit.Quantity` objects.
         """
-        if self.model.meta.bunit_data != 'MJy/sr':
-            raise ValueError('data is expected to be in units of MJy/sr')
-        self.model.data *= (1.e6
-                            * self.model.meta.photometry.pixelarea_steradians)
-        self.model.meta.bunit_data = 'Jy'
+        in_unit = 'MJy/sr'
+        if (self.model.meta.bunit_data != in_unit
+                or self.model.meta.bunit_err != in_unit):
+            raise ValueError('data and err are expected to be in units of '
+                             'MJy/sr')
 
         unit = u.Jy
+        to_jy = 1.e6 * self.model.meta.photometry.pixelarea_steradians
+        self.model.data *= to_jy
+        self.model.err *= to_jy
         self.model.data <<= unit
         self.model.err <<= unit
+        self.model.meta.bunit_data = unit.name
+        self.model.meta.bunit_err = unit.name
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):

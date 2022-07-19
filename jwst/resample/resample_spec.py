@@ -43,7 +43,7 @@ class ResampleSpecData(ResampleData):
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=False,
-                 pixfrac=1.0, kernel="square", fillval=0, weight_type="ivm",
+                 pixfrac=1.0, kernel="square", fillval=0, wht_type="ivm",
                  good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
@@ -67,7 +67,7 @@ class ResampleSpecData(ResampleData):
         self.pixfrac = pixfrac
         self.kernel = kernel
         self.fillval = fillval
-        self.weight_type = weight_type
+        self.weight_type = wht_type
         self.good_bits = good_bits
 
         # Define output WCS based on all inputs, including a reference WCS
@@ -82,6 +82,11 @@ class ResampleSpecData(ResampleData):
         self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
+
+        log.info(f"Driz parameter kernal: {self.kernel}")
+        log.info(f"Driz parameter pixfrac: {self.pixfrac}")
+        log.info(f"Driz parameter fillval: {self.fillval}")
+        log.info(f"Driz parameter weight_type: {self.weight_type}")
 
     def build_nirspec_output_wcs(self, refmodel=None):
         """
