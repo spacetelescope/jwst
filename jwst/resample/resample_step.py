@@ -33,10 +33,10 @@ class ResampleStep(Step):
     class_alias = "resample"
 
     spec = """
-        pixfrac = float(default=1.0)
-        kernel = string(default='square')
-        fillval = string(default='INDEF')
-        weight_type = option('ivm', 'exptime', default='ivm')
+        pixfrac = float(default=1.0) # change back to None when drizpar reference files are updated
+        kernel = string(default='square') # change back to None when drizpar reference files are updated
+        fillval = string(default='INDEF' ) # change back to None when drizpar reference files are updated
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # change back to None when drizpar ref update
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
         crpix = float_list(min=2, max=2, default=None)
         crval = float_list(min=2, max=2, default=None)
@@ -74,6 +74,7 @@ class ResampleStep(Step):
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
         # Get drizzle parameters reference file
+        self.wht_type = self.weight_type
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
@@ -86,10 +87,9 @@ class ResampleStep(Step):
             kwargs = self._set_spec_defaults()
 
         kwargs['allowed_memory'] = self.allowed_memory
-        kwargs['weight_type'] = str(self.weight_type)
 
         # Issue a warning about the use of exptime weighting
-        if self.weight_type == 'exptime':
+        if self.wht_type == 'exptime':
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
 
@@ -112,6 +112,8 @@ class ResampleStep(Step):
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
+            model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+            model.meta.resample.pixfrac = kwargs['pixfrac']
             self.update_phot_keywords(model)
 
         if len(result) == 1:
@@ -126,8 +128,6 @@ class ResampleStep(Step):
             model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
         if model.meta.photometry.pixelarea_arcsecsq is not None:
             model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
-        model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-        model.meta.resample.pixfrac = self.pixfrac
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -140,6 +140,7 @@ class ResampleStep(Step):
         pixfrac = float(default=None)
         kernel = string(default=None)
         fillval = string(default=None)
+        wht_type = option('ivm', 'exptime', None, default=None)
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,
@@ -177,11 +178,13 @@ class ResampleStep(Step):
         # Define the keys to pull from drizpars reffile table.
         # All values should be None unless the user set them on the command
         # line or in the call to the step
+
         drizpars = dict(
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            pscale_ratio=self.pixel_scale_ratio,
+            wht_type=self.wht_type
+            # pscale_ratio=self.pixel_scale_ratio, # I think this can be removed JEM (??)
         )
 
         # For parameters that are set in drizpars table but not set by the
@@ -225,18 +228,28 @@ class ResampleStep(Step):
         if config.validate(Validator()):
             kwargs = config.dict()
 
+        if self.pixfrac is None:
+            self.pixfrac = 1.0
+        if self.kernel is None:
+            self.kernel = 'square'
+        if self.fillval is None:
+            self.fillval = 'INDEF'
         # Force definition of good bits
         kwargs['good_bits'] = GOOD_BITS
-
         kwargs['pixfrac'] = self.pixfrac
         kwargs['kernel'] = str(self.kernel)
         kwargs['fillval'] = str(self.fillval)
-        kwargs['weight_type'] = str(self.weight_type)
+        #  self.weight_type has a default value of None
+        # The other instruments read this parameter from a reference file
+        if self.wht_type is None:
+            self.wht_type = 'ivm'
+
+        kwargs['wht_type'] = str(self.wht_type)
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
         kwargs.pop('pixel_scale_ratio')
 
         for k, v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
+            if k in ['pixfrac', 'kernel', 'fillval', 'wht_type', 'pscale_ratio']:
                 log.info('  using: %s=%s', k, repr(v))
 
         return kwargs
