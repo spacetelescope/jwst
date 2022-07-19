@@ -1,15 +1,21 @@
 1.6.2 (unreleased)
 ==================
 
-general
--------
+resample
+--------
 
--
+- Changed parameters read in from drizpar reference file to have a value of None in Spec [#6921]
 
 residual_fringe
 ---------------
 
 - Fixed the residual fringe code to run on MRS LONG detector. [#6929]
+
+skymatch
+--------
+
+- Fixed a bug in `skymatch` due to which subtracted values were not saved
+  in the input `cal` files when input was an association table. [#6922]
 
 source_catalog
 --------------
@@ -24,6 +30,7 @@ general
 -------
 
 - Update `stpipe` requirement to `>=0.4.1` [#6925]
+
 
 1.6.0 (2022-07-11)
 ==================
