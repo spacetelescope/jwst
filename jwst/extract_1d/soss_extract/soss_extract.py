@@ -790,5 +790,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     if pipe_utils.is_tso(input_model):
         log.info("Populating INT_TIMES keywords from input table.")
         populate_time_keywords(input_model, output_model)
+        output_model.int_times = input_model.int_times.copy()
 
     return output_model, output_references
