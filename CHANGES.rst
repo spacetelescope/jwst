@@ -1,4 +1,4 @@
-1.6.1 (unreleased)
+1.6.2 (unreleased)
 ==================
 
 general
@@ -6,10 +6,39 @@ general
 
 -
 
+
 ramp_fitting
 ------------
 
 - Added documentation for the calculation of the readnoise variance [#6924]
+
+
+resample
+--------
+
+- Changed parameters read in from drizpar reference file to have a value of None in Spec [#6921]
+
+skymatch
+--------
+
+- Fixed a bug in `skymatch` due to which subtracted values were not saved
+  in the input `cal` files when input was an association table. [#6922]
+
+
+source_catalog
+--------------
+
+- Fixed the actual units of the error array used to calculate
+  photometric errors. [#6928]
+
+1.6.1 (2022-07-15)
+==================
+
+general
+-------
+
+- Update `stpipe` requirement to `>=0.4.1` [#6925]
+
 
 1.6.0 (2022-07-11)
 ==================
