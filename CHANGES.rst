@@ -357,7 +357,11 @@ residual_fringe
 skymatch
 --------
 
+<<<<<<< HEAD
 - Fixed a bug in ``skymatch`` due to which subtracted values were not saved
+=======
+- Fixed a bug in `skymatch` due to which subtracted values were not saved
+>>>>>>> Fix inability of residual fringe code to run on MRS LONG detector (#6929)
   in the inputs when input was an association table. [#6922]
 
 source_catalog
