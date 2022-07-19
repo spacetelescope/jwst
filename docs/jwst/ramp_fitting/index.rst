@@ -10,6 +10,6 @@ Ramp Fitting
    description.rst
    arguments.rst
    reference_files.rst
-
+   appendix.rst
 
 .. automodapi:: jwst.ramp_fitting
