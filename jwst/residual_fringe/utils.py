@@ -249,15 +249,15 @@ def find_lines(signal, max_amp):
     u_y, u_x, l_y, l_x = [], [], [], []
 
     for x in r_x:
-        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (
-            np.sign(signal_check[x] - signal_check[x + 1]) == 1):
-                u_y.append(signal_check[x])
-                u_x.append(x)
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and \
+                (np.sign(signal_check[x] - signal_check[x + 1]) == 1):
+            u_y.append(signal_check[x])
+            u_x.append(x)
 
-        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (
-            np.sign(signal_check[x] - signal_check[x + 1]) == -1):
-                l_y.append(signal[x])
-                l_x.append(x)
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and \
+                (np.sign(signal_check[x] - signal_check[x + 1]) == -1):
+            l_y.append(signal[x])
+            l_x.append(x)
 
     for n, amp in enumerate(u_y):
         max_amp_val = max_amp[u_x[n]]
