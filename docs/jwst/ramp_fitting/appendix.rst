@@ -9,7 +9,7 @@ n = number of groups (`ngroups` in the text)
 
 t = group time (`tgroup` in the text)
 
-x = starting time for each channel, = :math:`{(1,2,3, ... n+1) \cdot t}`
+x = starting time for each group, = :math:`{(1,2,3, ... n+1) \cdot t}`
 
 
 :math:`{S_1 = \sum_{k=1}^n w}`
