@@ -235,7 +235,7 @@ class ResidualFringeCorrection():
 
                             col_weight = ss_weight[:, col]
                             col_max_amp = np.interp(col_wmap, self.max_amp['Wavelength'], self.max_amp['Amplitude'])
-                            col_snr2 = np.where(col_snr > 10, 1, 0) # hardcoded at snr > 10 for now
+                            col_snr2 = np.where(col_snr > 10, 1, 0)  # hardcoded at snr > 10 for now
 
                             # get the in-slice pixel indices for replacing in output later
                             idx = np.where(col_data > 0)
@@ -340,15 +340,15 @@ class ResidualFringeCorrection():
                                             pre_contrast = 0.0
                                             quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape),
                                                                 np.zeros(col_data.shape)])
-                                            #if fn == 0:
-                                                #pre_contrast, quality = utils.fit_quality(col_wnum,
-                                                #                                          res_fringes,
-                                                #                                          weights_feat,
-                                                #                                          ffreq[0],
-                                                #                                          dffreq[0])
-
-                                                #log.debug(" pre-correction contrast = {}".format(pre_contrast))
-
+                                            # if fn == 0:
+                                            #    pre_contrast, quality = utils.fit_quality(col_wnum,
+                                            #                                              res_fringes,
+                                            #                                              weights_feat,
+                                            #                                              ffreq[0],
+                                            #                                              dffreq[0])
+                                            #
+                                            #   log.debug(" pre-correction contrast = {}".format(pre_contrast))
+                                            #
                                             # fit the residual fringes
                                             log.debug(" set up bayes ")
                                             res_fringe_fit, wpix_num, opt_nfringe, peak_freq, freq_min, freq_max = \
@@ -405,7 +405,7 @@ class ResidualFringeCorrection():
                                 # set dummy values for contrast check parameters until removed
                                 contrast = 0.0
                                 quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape), np.zeros(col_data.shape)])
-                                #contrast, quality = utils.fit_quality(col_wnum,
+                                # contrast, quality = utils.fit_quality(col_wnum,
                                 #                                      fit_res,
                                 #                                      weights_feat,
                                 #                                      ffreq,

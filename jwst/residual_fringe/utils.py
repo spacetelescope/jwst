@@ -251,13 +251,13 @@ def find_lines(signal, max_amp):
     for x in r_x:
         if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (
             np.sign(signal_check[x] - signal_check[x + 1]) == 1):
-            u_y.append(signal_check[x])
-            u_x.append(x)
+                u_y.append(signal_check[x])
+                u_x.append(x)
 
         if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (
             np.sign(signal_check[x] - signal_check[x + 1]) == -1):
-            l_y.append(signal[x])
-            l_x.append(x)
+                l_y.append(signal[x])
+                l_x.append(x)
 
     for n, amp in enumerate(u_y):
         max_amp_val = max_amp[u_x[n]]
@@ -302,8 +302,8 @@ def find_lines(signal, max_amp):
                     pass
 
     log.debug("find_lines: Found {} peaks   {} troughs".format(len(u_x), len(l_x)))
-    weights_factors[signal_check > max_amp*2] = 0  # catch any remaining
-    #weights_factors[signal_check > np.amax(max_amp)] = 0
+    weights_factors[signal_check > max_amp * 2] = 0  # catch any remaining
+    # weights_factors[signal_check > np.amax(max_amp)] = 0
 
     return weights_factors
 
@@ -382,6 +382,7 @@ def interp_helper(mask):
 
     """
     return mask < 1e-05, lambda z: z.nonzero()[0]
+
 
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, channel=1, test=False):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
@@ -471,7 +472,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
         raise ValueError('channel not in 1-4')
 
     # Fit the spline
-    #robust fitting causing problems for fringe 2 in channels 3 and 4, just use the fitter class
+    # robust fitting causing problems for fringe 2 in channels 3 and 4, just use the fitter class
     if ffreq > 1.5:
         spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
         fitter = SplineExactKnotsFitter()
@@ -564,7 +565,8 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
     return contrast, quality
 
 
-def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res, col_snr2):
+def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
+                                      pgram_res, col_snr2):
 
     """Fit the residual fringe signal.- Improved method
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
