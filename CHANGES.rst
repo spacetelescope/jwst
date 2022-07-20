@@ -6,6 +6,19 @@ general
 
 -
 
+mrs_imatch
+----------
+
+- Use data containers from ``wiimatch`` to reduce memory usage by storing
+  data arrays in temporary files and loading them as necessary instead of
+  keeping them loaded in memory at all times. [#6931]
+
+skymatch
+--------
+
+- Replace data "accessor" classes with data containers from ``wiimatch``. [#6931]
+
+
 1.6.2 (2022-07-19)
 ==================
 

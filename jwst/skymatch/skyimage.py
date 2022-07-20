@@ -6,104 +6,18 @@ computing intersections and statistics in the overlap regions.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-
 """
-
-# STDLIB
-import abc
-import tempfile
-
 # THIRD-PARTY
 import numpy as np
 from spherical_geometry.polygon import SphericalPolygon
+from wiimatch.containers import WMData, WMInMemoryData, WMMappedData
 
 # LOCAL
 from . skystatistics import SkyStats
 from . import region
 
 
-__all__ = ['SkyImage', 'SkyGroup', 'DataAccessor', 'NDArrayInMemoryAccessor',
-           'NDArrayMappedAccessor']
-
-
-class DataAccessor(abc.ABC):
-    """ Base class for all data accessors. Provides a common interface to
-        access data.
-    """
-    @abc.abstractmethod
-    def get_data(self):
-        pass
-
-    @abc.abstractmethod
-    def set_data(self, data):
-        """ Sets data.
-
-        Parameters
-        ----------
-        data : numpy.ndarray
-            Data array to be set.
-
-        """
-        pass
-
-    @abc.abstractmethod
-    def get_data_shape(self):
-        pass
-
-
-class NDArrayInMemoryAccessor(DataAccessor):
-    """ Acessor for in-memory `numpy.ndarray` data. """
-    def __init__(self, data):
-        super().__init__()
-        self._data = data
-
-    def get_data(self):
-        return self._data
-
-    def set_data(self, data):
-        self._data = data
-
-    def get_data_shape(self):
-        return np.shape(self._data)
-
-
-class NDArrayMappedAccessor(DataAccessor):
-    """ Data accessor for arrays stored in temporary files. """
-    def __init__(self, data, tmpfile=None, prefix='tmp_skymatch_',
-                 suffix='.npy', tmpdir=''):
-        super().__init__()
-        if tmpfile is None:
-            self._close = True
-            self._tmp = tempfile.NamedTemporaryFile(
-                prefix=prefix,
-                suffix=suffix,
-                dir=tmpdir
-            )
-            if not self._tmp:
-                raise RuntimeError("Unable to create temporary file.")
-        else:
-            # temp file managed by the caller
-            self._close = False
-            self._tmp = tmpfile
-
-        self.set_data(data)
-
-    def get_data(self):
-        self._tmp.seek(0)
-        return np.load(self._tmp)
-
-    def set_data(self, data):
-        data = np.asanyarray(data)
-        self._data_shape = data.shape
-        self._tmp.seek(0)
-        np.save(self._tmp, data)
-
-    def __del__(self):
-        if self._close:
-            self._tmp.close()
-
-    def get_data_shape(self):
-        return self._data_shape
+__all__ = ['SkyImage', 'SkyGroup']
 
 
 class SkyImage:
@@ -129,8 +43,8 @@ class SkyImage:
 
         Parameters
         ----------
-        image : numpy.ndarray, NDArrayDataAccessor
-            A 2D array of image data or a `NDArrayDataAccessor`.
+        image : numpy.ndarray, WMData
+            A 2D array of image data or a `WMData`.
 
         wcs_fwd : function
             "forward" pixel-to-world transformation function.
@@ -151,8 +65,8 @@ class SkyImage:
               The functionality to support this conversion is not yet
               implemented and at this moment `convf` is ignored.
 
-        mask : numpy.ndarray, NDArrayDataAccessor
-            A 2D array or `NDArrayDataAccessor` of a 2D array that indicates
+        mask : numpy.ndarray, WMData
+            A 2D array or `WMData` of a 2D array that indicates
             which pixels in the input `image` should be used for sky
             computations (``1``) and which pixels should **not** be used
             for sky computations (``0``).
@@ -186,7 +100,7 @@ class SkyImage:
             Indicates whether to attempt to minimize memory usage by attaching
             input ``image`` and/or ``mask`` `numpy.ndarray` arrays to
             file-mapped accessor. This has no effect when input parameters
-            ``image`` and/or ``mask`` are already of `NDArrayDataAccessor`
+            ``image`` and/or ``mask`` are already of `WMData`
             objects.
 
         """
@@ -235,7 +149,7 @@ class SkyImage:
         if self._mask is None:
             return None
         else:
-            return self._mask.get_data()
+            return self._mask.data
 
     @mask.setter
     def mask(self, mask):
@@ -243,12 +157,12 @@ class SkyImage:
             self._mask = None
             self._mask_shape = None
 
-        elif isinstance(mask, DataAccessor):
+        elif isinstance(mask, WMData):
             if self._image is None:
                 raise ValueError("'mask' must be None when 'image' is None")
 
             self._mask = mask
-            self._mask_shape = mask.get_data_shape()
+            self._mask_shape = mask.shape
 
             # check that mask has the same shape as image:
             if self._mask_shape != self.image_shape:
@@ -267,14 +181,14 @@ class SkyImage:
 
             if self._mask is None:
                 if self._reduce_memory_usage:
-                    self._mask = NDArrayMappedAccessor(
+                    self._mask = WMMappedData(
                         mask,
                         prefix='tmp_skymatch_mask_'
                     )
                 else:
-                    self._mask = NDArrayInMemoryAccessor(mask)
+                    self._mask = WMInMemoryData(mask)
             else:
-                self._mask.set_data(mask)
+                self._mask.data = mask
 
     @property
     def image(self):
@@ -282,7 +196,7 @@ class SkyImage:
         if self._image is None:
             return None
         else:
-            return self._image.get_data()
+            return self._image.data
 
     @image.setter
     def image(self, image):
@@ -291,29 +205,29 @@ class SkyImage:
             self._image_shape = None
             self.mask = None
 
-        if isinstance(image, DataAccessor):
+        if isinstance(image, WMData):
             self._image = image
-            self._image_shape = image.get_data_shape()
+            self._image_shape = image.shape
 
         else:
             image = np.asanyarray(image)
             self._image_shape = image.shape
             if self._image is None:
                 if self._reduce_memory_usage:
-                    self._image = NDArrayMappedAccessor(
+                    self._image = WMMappedData(
                         image,
                         prefix='tmp_skymatch_image_'
                     )
                 else:
-                    self._image = NDArrayInMemoryAccessor(image)
+                    self._image = WMInMemoryData(image)
             else:
-                self._image.set_data(image)
+                self._image.data = image
 
     @property
     def image_shape(self):
         """ Get `SkyImage`'s ``image`` data shape. """
         if self._image_shape is None and self._image is not None:
-            self._image_shape = self._image.get_data_shape()
+            self._image_shape = self._image.shape
         return self._image_shape
 
     @property
@@ -566,7 +480,7 @@ None, optional
             if self._mask is None:
                 data = self.image
             else:
-                data = self.image[self._mask.get_data()]
+                data = self.image[self._mask.data]
 
             polyarea = self.poly_area
 
@@ -626,7 +540,7 @@ None, optional
                 fill_mask = polygon.scan(fill_mask)
 
             if self._mask is not None:
-                fill_mask &= self._mask.get_data()
+                fill_mask &= self._mask.data
 
             data = self.image[fill_mask]
 
@@ -690,7 +604,7 @@ None, optional
             if self._mask is None:
                 data = self.image
             else:
-                data = self.image[self._mask.get_data()]
+                data = self.image[self._mask.data]
 
             polyarea = self.poly_area
 
@@ -728,7 +642,7 @@ None, optional
                 fill_mask = polygon.scan(fill_mask)
 
             if self._mask is not None:
-                fill_mask &= self._mask.get_data()
+                fill_mask &= self._mask.data
 
             data = self.image[fill_mask]
 
