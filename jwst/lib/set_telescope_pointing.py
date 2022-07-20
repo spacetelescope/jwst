@@ -2851,7 +2851,13 @@ def gs_ideal_to_subarray(gs_position, aperture):
     position_pixel = aperture.idl_to_det(*gs_position.position)
     position_subarray = (position_pixel[0] - gs_position.corner[0],
                          position_pixel[1] - gs_position.corner[1])
-    x = gs_position.size[0] - position_subarray[0]
-    y = gs_position.size[1] - position_subarray[1]
+
+    # The magic flip. For FGS1, both axes must be reversed. For FGS2, only the X-axis changed.
+    if aperture.AperName.startswith('FGS1'):
+        x = gs_position.size[0] - position_subarray[0]
+        y = gs_position.size[1] - position_subarray[1]
+    else:
+        x = gs_position.size[0] - position_subarray[0]
+        y = position_subarray[1]
 
     return x, y
