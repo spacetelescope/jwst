@@ -256,6 +256,9 @@ class OutlierDetection:
         for resampled in resampled_models:
             m = datamodel_open(resampled)
             weight = m.wht
+            # necessary in order to assure that mask gets applied correctly
+            if hasattr(weight, '_mask'):
+                del weight._mask
             mask_zero_weight = np.equal(weight, 0.)
             mask_nans = np.isnan(weight)
             # Combine the masks
