@@ -246,6 +246,34 @@ class OutlierDetection:
         """
         maskpt = self.outlierpars.get('maskpt', 0.7)
 
+        # Compute weight means without keeping datamodels for eacn input open
+        # Start by insuring that the ModelContainer does NOT open and keep each datamodel
+        ropen_orig = resampled_models._return_open
+        resampled_models._return_open = False  # turn off auto-opening of models
+        # keep track of resulting computation for each input resampled datamodel
+        weight_thresholds = []
+        # For each model, compute the bad-pixel threshold from the weight arrays
+        for resampled in resampled_models:
+            m = datamodel_open(resampled)
+            weight = m.wht
+            mask_zero_weight = np.equal(weight, 0.)
+            mask_nans = np.isnan(weight)
+            # Combine the masks
+            weight_masked = np.ma.array(weight, mask=np.logical_or(
+                mask_zero_weight, mask_nans))
+            # Sigma-clip the unmasked data
+            weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
+            mean_weight = np.mean(weight_masked)
+            # Mask pixels where weight falls below maskpt percent
+            weight_threshold = mean_weight * maskpt
+            weight_thresholds.append(weight_threshold)
+            # close and delete the model, just to explicitly try to keep the memory as clean as possible
+            m.close()
+            del m
+        # Reset ModelContainer attribute to original value
+        resampled_models._return_open = ropen_orig
+
+        # Now, set up buffered access to all input models
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
         resampled_sections = resampled_models.get_sections()
         median_image = np.empty((resampled_models.imrows, resampled_models.imcols),
@@ -256,18 +284,7 @@ class OutlierDetection:
             # Create a mask for each input image, masking out areas where there is
             # no data or the data has very low weight
             badmasks = []
-            for weight in resampled_weight:
-                # Create boolean masks for weight being zero or NaN
-                mask_zero_weight = np.equal(weight, 0.)
-                mask_nans = np.isnan(weight)
-                # Combine the masks
-                weight_masked = np.ma.array(weight, mask=np.logical_or(
-                    mask_zero_weight, mask_nans))
-                # Sigma-clip the unmasked data
-                weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
-                mean_weight = np.mean(weight_masked)
-                # Mask pixels where weight falls below maskpt percent
-                weight_threshold = mean_weight * maskpt
+            for weight, weight_threshold in zip(resampled_weight, weight_thresholds):
                 badmask = np.less(weight, weight_threshold)
                 log.debug("Percentage of pixels with low weight: {}".format(
                     np.sum(badmask) / len(weight.flat) * 100))
