@@ -11,7 +11,9 @@ import numpy as np
 from .. stpipe import Step
 from .. import datamodels
 from wiimatch.match import match_lsq
+from wiimatch.containers import WMMappedData, WMInMemoryData
 from astropy.stats import sigma_clipped_stats as sigclip
+
 
 __all__ = ['MRSIMatchStep', 'apply_background_2d']
 
@@ -302,22 +304,20 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
 
         # process weights and create masks:
         if not hasattr(cm, 'weightmap') or cm.weightmap is None:
-            weights = np.ones_like(cm.data, dtype=np.float64)
-            sigmas = weights / np.sqrt(exptime)
-            mask = np.ones_like(weights, dtype=np.uint8)
-            mask_data.append(mask)
+            sigmas = WMInMemoryData(1.0 / np.sqrt(exptime))
+            mask = WMInMemoryData(np.ones(cm.data.shape, dtype=np.uint8))
 
         else:
             weights = cm.weightmap.copy()
             eps = np.finfo(weights.dtype).tiny
             bad_data = weights < eps
             weights[bad_data] = eps  # in order to avoid runtime warnings
-            sigmas = 1.0 / np.sqrt(exptime * weights)
-            mask = np.logical_not(bad_data).astype(np.uint8)
-            mask_data.append(mask)
+            sigmas = WMMappedData(1.0 / np.sqrt(exptime * weights))
+            mask = WMMappedData(np.logical_not(bad_data).astype(np.uint8))
 
-        image_data.append(cm.data)
+        image_data.append(WMMappedData(cm.data))
         sigma_data.append(sigmas)
+        mask_data.append(mask)
 
     # leaving in below commented out lines for
     # Mihai to de-bug step when coefficients are NAN
@@ -339,7 +339,9 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     # Loop over input exposures
     for image, mask in zip(image_data, mask_data):
         # Do statistics wavelength by wavelength
-        for thisimg, thismask in zip(image, mask):
+        image_data_arr = image.data
+        mask_data_arr = mask.data
+        for thisimg, thismask in zip(image_data_arr, mask_data_arr):
             # Avoid bug in sigma_clipped_stats (fixed in astropy 4.0.2) which
             # fails on all-zero arrays passed when mask_value=0
             if not np.any(thisimg):
@@ -351,6 +353,9 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             # Reject beyond 3 sigma
             reject = np.where(np.abs(thisimg - themed) > 3 * clipsig)
             thismask[reject] = 0
+
+        image.data = image_data_arr
+        mask.data = mask_data_arr
 
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(
         images=image_data,
