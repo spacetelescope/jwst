@@ -12,162 +12,162 @@ installation:
   - MANIFEST.in
 
 ami:
-  - 'jwst/ami/**/*'
+  - 'jwst/ami/**'
 
 assign_mtwcs:
-  - 'jwst/assign_mtwcs/**/*'
+  - 'jwst/assign_mtwcs/**'
 
 assign_wcs:
-  - 'jwst/assign_wcs/**/*'
+  - 'jwst/assign_wcs/**'
 
 associations:
-  - 'jwst/associations/**/*'
+  - 'jwst/associations/**'
 
 background:
-  - 'jwst/background/**/*'
+  - 'jwst/background/**'
 
 barshadow:
-  - 'jwst/barshadow/**/*'
+  - 'jwst/barshadow/**'
 
 combine_1d:
-  - 'jwst/combine_1d/**/*'
+  - 'jwst/combine_1d/**'
 
 coron3 pipeline:
-  - 'jwst/coron/**/*'
+  - 'jwst/coron/**'
   - jwst/pipeline/calwebb_coron.py
 
 cube_build:
-  - 'jwst/cube_build/**/*'
+  - 'jwst/cube_build/**'
 
 cube_skymatch:
-  - 'jwst/cube_skymatch/**/*'
+  - 'jwst/cube_skymatch/**'
 
 dark_current:
-  - 'jwst/dark_current/**/*'
+  - 'jwst/dark_current/**'
 
 datamodels:
-  - 'jwst/datamodels/**/*'
+  - 'jwst/datamodels/**'
 
 dq_init:
-  - 'jwst/dq_init/**/*'
+  - 'jwst/dq_init/**'
 
 engdb_tools:
   - 'jwst/lib/engdb_*'
 
 exp_to_source:
-  - 'jwst/exp_to_source/**/*'
+  - 'jwst/exp_to_source/**'
 
 extract_1d:
-  - 'jwst/extract_1d/**/*'
+  - 'jwst/extract_1d/**'
 
 extract_2d:
-  - 'jwst/extract_2d/**/*'
+  - 'jwst/extract_2d/**'
 
 firstframe:
-  - 'jwst/firstframe/**/*'
+  - 'jwst/firstframe/**'
 
 fits_generator:
-  - 'jwst/fits_generator/**/*'
+  - 'jwst/fits_generator/**'
 
 flatfield:
-  - 'jwst/flatfield/**/*'
+  - 'jwst/flatfield/**'
 
 fringe:
-  - 'jwst/fringe/**/*'
+  - 'jwst/fringe/**'
 
 gain_scale:
-  - 'jwst/gain_scale/**/*'
+  - 'jwst/gain_scale/**'
 
 group_scale:
-  - 'jwst/group_scale/**/*'
+  - 'jwst/group_scale/**'
 
 guider_cds:
-  - 'jwst/guider_cds/**/*'
+  - 'jwst/guider_cds/**'
 
 imprint:
-  - 'jwst/imprint/**/*'
+  - 'jwst/imprint/**'
 
 ipc:
-  - 'jwst/ipc/**/*'
+  - 'jwst/ipc/**'
 
 jump:
-  - 'jwst/jump/**/*'
+  - 'jwst/jump/**'
 
 lastframe:
-  - 'jwst/lastframe/**/*'
+  - 'jwst/lastframe/**'
 
 linearity:
-  - 'jwst/linearity/**/*'
+  - 'jwst/linearity/**'
 
 master_background:
-  - 'jwst/master_background/**/*'
+  - 'jwst/master_background/**'
 
 mrs_imatch:
-  - 'jwst/mrs_imatch/**/*'
+  - 'jwst/mrs_imatch/**'
 
 msa_flagging:
-  - 'jwst/msaflagopen/**/*'
+  - 'jwst/msaflagopen/**'
 
 outlier_detection:
-  - 'jwst/outlier_detection/**/*'
+  - 'jwst/outlier_detection/**'
 
 path loss:
-  - 'jwst/pathloss/**/*'
+  - 'jwst/pathloss/**'
 
 persistence:
-  - 'jwst/persistence/**/*'
+  - 'jwst/persistence/**'
 
 photom:
-  - 'jwst/photom/**/*'
+  - 'jwst/photom/**'
 
 pipeline:
-  - 'jwst/pipeline/**/*'
+  - 'jwst/pipeline/**'
 
 ramp_fitting:
-  - 'jwst/ramp_fitting/**/*'
+  - 'jwst/ramp_fitting/**'
 
 refpix:
-  - 'jwst/refpix/**/*'
+  - 'jwst/refpix/**'
 
 regression_testing:
-  - 'jwst/regtest/**/*'
+  - 'jwst/regtest/**'
   - 'Jenkinsfile*'
 
 resample:
-  - 'jwst/resample/**/*'
+  - 'jwst/resample/**'
 
 reset:
-  - 'jwst/reset/**/*'
+  - 'jwst/reset/**'
 
 residual_fringe:
-  - 'jwst/residual_fringe/**/*'
+  - 'jwst/residual_fringe/**'
 
 rscd:
-  - 'jwst/rscd/**/*'
+  - 'jwst/rscd/**'
 
 saturation:
-  - 'jwst/saturation/**/*'
+  - 'jwst/saturation/**'
 
 skymatch:
-  - 'jwst/skymatch/**/*'
+  - 'jwst/skymatch/**'
 
 source catalog:
-  - 'jwst/source_catalog/**/*'
+  - 'jwst/source_catalog/**'
 
 source type:
-  - 'jwst/srctype/**/*'
+  - 'jwst/srctype/**'
 
 stpipe:
-  - 'jwst/stpipe/**/*'
+  - 'jwst/stpipe/**'
 
 straylight:
-  - 'jwst/straylight/**/*'
+  - 'jwst/straylight/**'
 
 superbias:
-  - 'jwst/superbias/**/*'
+  - 'jwst/superbias/**'
 
 testing:
-  - '**/tests/**/*'
+  - '**/tests/**'
   - .github/workflows/*.yml
   - .bandit.yaml
   - .codecov.yml
@@ -175,37 +175,41 @@ testing:
   - tox.ini
 
 timeconversion:
-  - 'jwst/timeconversion/**/*'
+  - 'jwst/timeconversion/**'
 
 transforms:
-  - 'jwst/transforms/**/*'
+  - 'jwst/transforms/**'
 
 tso_photometry:
-  - 'jwst/tso_photometry/**/*'
+  - 'jwst/tso_photometry/**'
 
 tweakreg:
-  - 'jwst/tweakreg/**/*'
+  - 'jwst/tweakreg/**'
 
 wavecorr:
-  - 'jwst/wavecorr/**/*'
+  - 'jwst/wavecorr/**'
 
 wfs_combine:
-  - 'jwst/wfs_combine/**/*'
+  - 'jwst/wfs_combine/**'
 
 wfss_contam:
-  - 'jwst/wfss_contam/**/*'
+  - 'jwst/wfss_contam/**'
 
 white_light:
-  - 'jwst/white_light/**/*'
+  - 'jwst/white_light/**'
 
 Wide Field Slitless Spec (WFSS):
-  - 'jwst/**/*wfss*/**/*'
+  - 'jwst/**/*wfss*'
+  - 'jwst/**/*wfss*/**'
 
 NIRSPEC:
-  - 'jwst/**/*nirspec*/**/*'
+  - 'jwst/**/*nirspec*'
+  - 'jwst/**/*nirspec*/**'
 
 NIRCAM:
-  - 'jwst/**/*nircam*/**/*'
+  - 'jwst/**/*nircam*'
+  - 'jwst/**/*nircam*/**'
 
 NIRISS:
-  - 'jwst/**/*niriss*/**/*'
+  - 'jwst/**/*niriss*'
+  - 'jwst/**/*niriss*/**'
