@@ -6,6 +6,13 @@ general
 
 -
 
+skymatch
+--------
+
+- Fixed a bug in ``skymatch`` due to which computed background values were
+  not subtracted from image data when ``subtract=True``. [#6934]
+
+
 1.6.2 (2022-07-19)
 ==================
 
@@ -28,7 +35,7 @@ residual_fringe
 skymatch
 --------
 
-- Fixed a bug in `skymatch` due to which subtracted values were not saved
+- Fixed a bug in ``skymatch`` due to which subtracted values were not saved
   in the inputs when input was an association table. [#6922]
 
 source_catalog
