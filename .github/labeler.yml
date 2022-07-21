@@ -34,7 +34,7 @@ combine_1d:
 
 coron3 pipeline:
   - 'jwst/coron/**'
-  - jwst/pipeline/calwebb_coron.py
+  - jwst/pipeline/calwebb_coron3.py
 
 cube_build:
   - 'jwst/cube_build/**'
