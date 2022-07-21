@@ -1,25 +1,25 @@
 documentation:
-  - docs/**/*
+  - 'docs/**/*'
   - any: [ '*.rst', '!CHANGES.rst' ]
   - '*.md'
-  - .readthedocs.yml
-  - LICENSE
+  - '.readthedocs.yml'
+  - 'LICENSE'
 
 installation:
-  - pyproject.toml
+  - 'pyproject.toml'
   - 'setup.*'
   - 'requirements-*.txt'
-  - MANIFEST.in
+  - 'MANIFEST.in'
 
 # --------------------------------------- testing ---------------------------------------
 
 testing:
   - '**/tests/**'
-  - .github/workflows/*.yml
-  - .bandit.yaml
-  - .codecov.yml
-  - conftest.py
-  - tox.ini
+  - '.github/workflows/*.yml'
+  - '.bandit.yaml'
+  - '.codecov.yml'
+  - 'conftest.py'
+  - 'tox.ini'
 
 regression_testing:
   - 'jwst/regtest/**'
@@ -202,7 +202,7 @@ pipeline:
 
 coron3 pipeline:
   - 'jwst/coron/**'
-  - jwst/pipeline/calwebb_coron3.py
+  - 'jwst/pipeline/calwebb_coron3.py'
   - 'jwst/**/*coron*'
   - 'jwst/**/*coron*/**'
 
