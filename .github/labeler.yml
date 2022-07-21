@@ -11,6 +11,22 @@ installation:
   - 'requirements-*.txt'
   - MANIFEST.in
 
+# --------------------------------------- testing ---------------------------------------
+
+testing:
+  - '**/tests/**'
+  - .github/workflows/*.yml
+  - .bandit.yaml
+  - .codecov.yml
+  - conftest.py
+  - tox.ini
+
+regression_testing:
+  - 'jwst/regtest/**'
+  - 'Jenkinsfile*'
+
+# --------------------------------------- modules ---------------------------------------
+
 ami:
   - 'jwst/ami/**'
 
@@ -31,10 +47,6 @@ bar shadow:
 
 combine_1d:
   - 'jwst/combine_1d/**'
-
-coron3 pipeline:
-  - 'jwst/coron/**'
-  - jwst/pipeline/calwebb_coron3.py
 
 cube_build:
   - 'jwst/cube_build/**'
@@ -120,18 +132,11 @@ persistence:
 photom:
   - 'jwst/photom/**'
 
-pipeline:
-  - 'jwst/pipeline/**'
-
 ramp_fitting:
   - 'jwst/ramp_fitting/**'
 
 refpix:
   - 'jwst/refpix/**'
-
-regression_testing:
-  - 'jwst/regtest/**'
-  - 'Jenkinsfile*'
 
 resample:
   - 'jwst/resample/**'
@@ -157,22 +162,11 @@ source catalog:
 source type:
   - 'jwst/srctype/**'
 
-stpipe:
-  - 'jwst/stpipe/**'
-
 straylight:
   - 'jwst/straylight/**'
 
 superbias:
   - 'jwst/superbias/**'
-
-testing:
-  - '**/tests/**'
-  - .github/workflows/*.yml
-  - .bandit.yaml
-  - .codecov.yml
-  - conftest.py
-  - tox.ini
 
 timeconversion:
   - 'jwst/timeconversion/**'
@@ -197,6 +191,50 @@ wfss_contam:
 
 white_light:
   - 'jwst/white_light/**'
+
+# --------------------------------------- pipelines ---------------------------------------
+
+stpipe:
+  - 'jwst/stpipe/**'
+
+pipeline:
+  - 'jwst/pipeline/**'
+
+coron3 pipeline:
+  - 'jwst/coron/**'
+  - jwst/pipeline/calwebb_coron3.py
+  - 'jwst/**/*coron*'
+  - 'jwst/**/*coron*/**'
+
+image2 pipeline:
+  - 'jwst/**/*image2*'
+  - 'jwst/**/*image2*/**'
+
+image3 pipeline:
+  - 'jwst/**/*image3*'
+  - 'jwst/**/*image3*/**'
+
+spec2 pipeline:
+  - 'jwst/**/*spec2*'
+  - 'jwst/**/*spec2*/**'
+
+spec3 pipeline:
+  - 'jwst/**/*spec3*'
+  - 'jwst/**/*spec3*/**'
+
+ami3 pipeline:
+  - 'jwst/**/*ami3*'
+  - 'jwst/**/*ami3*/**'
+
+tso3 pipeline:
+  - 'jwst/**/*tso3*'
+  - 'jwst/**/*tso3*/**'
+
+detector1:
+  - 'jwst/**/*detector1*'
+  - 'jwst/**/*detector1*/**'
+
+# --------------------------------------- instruments ---------------------------------------
 
 FGS:
   - 'jwst/**/*fgs*'
