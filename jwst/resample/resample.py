@@ -67,6 +67,7 @@ class ResampleData:
         self.fillval = fillval
         self.weight_type = wht_type
         self.good_bits = good_bits
+        self.in_memory = kwargs.get('in_memory', True)
 
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
@@ -93,6 +94,7 @@ class ResampleData:
             crpix=crpix,
             crval=crval
         )
+
         log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
             self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
@@ -109,7 +111,7 @@ class ResampleData:
         self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
 
-        self.output_models = datamodels.ModelContainer()
+        self.output_models = datamodels.ModelContainer(open_models=False)
 
     def do_drizzle(self):
         """Pick the correct drizzling mode based on self.single
@@ -137,15 +139,26 @@ class ResampleData:
         Used for outlier detection
         """
         for exposure in self.input_models.models_grouped:
-            output_model = self.blank_output.copy()
+            output_model = self.blank_output
+            # Determine output file type from input exposure filenames
+            # Use this for defining the output filename
+            indx = exposure[0].meta.filename.rfind('.')
+            output_type = exposure[0].meta.filename[indx:]
+            output_root = '_'.join(exposure[0].meta.filename.replace(
+                output_type, '').split('_')[:-1])
+            output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                             kernel=self.kernel, fillval=self.fillval)
+
+            log.info(f"{len(exposure)} exposures to drizzle together")
             for img in exposure:
+                img = datamodels.open(img)
                 # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
                                                          good_bits=self.good_bits)
+
                 # apply sky subtraction
                 blevel = img.meta.background.level
                 if not img.meta.background.subtracted and blevel is not None:
@@ -154,8 +167,19 @@ class ResampleData:
                     data = img.data
 
                 driz.add_image(data, img.meta.wcs, inwht=inwht)
+                del data
+                img.close()
 
-            self.output_models.append(output_model)
+            if not self.in_memory:
+                # Write out model to disk, then return filename
+                output_name = output_model.meta.filename
+                output_model.save(output_name)
+                log.info(f"Exposure {output_name} saved to file")
+                self.output_models.append(output_name)
+            else:
+                self.output_models.append(output_model.copy())
+            output_model.data *= 0.
+            output_model.wht *= 0.
 
         return self.output_models
 
@@ -186,9 +210,10 @@ class ResampleData:
             if not img.meta.background.subtracted and blevel is not None:
                 data = img.data - blevel
             else:
-                data = img.data
+                data = img.data.copy()
 
             driz.add_image(data, img.meta.wcs, inwht=inwht)
+            del data, inwht
 
         # Resample variances array in self.input_models to output_model
         self.resample_variance_array("var_rnoise", output_model)

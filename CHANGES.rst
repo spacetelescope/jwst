@@ -98,6 +98,14 @@ pipeline
 - Only apply source_id fix from #6915 to models with multiple
   sources [#6917]
 
+
+outlier_detection
+-----------------
+- Improved memory usage during `outlier_detection` by adding ability to work with
+  input ``ImageModels`` that are saved to disk instead of keeping them in memory.
+  New parameters were aded to outlier_detection_step to control this functionality. [#6904]
+
+
 ramp_fitting
 ------------
 

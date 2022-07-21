@@ -64,11 +64,13 @@ class OutlierDetectionStep(Step):
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
+        in_memory = boolean(default=False)
     """
 
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
-        with datamodels.open(input_data) as input_models:
+
+        with datamodels.open(input_data, save_open=False) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 self.input_container = False
@@ -106,6 +108,7 @@ class OutlierDetectionStep(Step):
                 'scale': self.scale,
                 'backg': self.backg,
                 'allowed_memory': self.allowed_memory,
+                'in_memory': self.in_memory,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,

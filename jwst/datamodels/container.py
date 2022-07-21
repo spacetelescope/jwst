@@ -495,7 +495,7 @@ class ModelContainer(JwstDataModel, Sequence):
 
         self.buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
 
-        section_nrows = min(imrows, self.buffer_size // min_buffer_size)
+        section_nrows = min(imrows, int(self.buffer_size // min_buffer_size))
 
         if section_nrows == 0:
             self.buffer_size = min_buffer_size
