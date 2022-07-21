@@ -26,7 +26,7 @@ associations:
 background:
   - 'jwst/background/**'
 
-barshadow:
+bar shadow:
   - 'jwst/barshadow/**'
 
 combine_1d:
@@ -198,9 +198,13 @@ wfss_contam:
 white_light:
   - 'jwst/white_light/**'
 
-Wide Field Slitless Spec (WFSS):
-  - 'jwst/**/*wfss*'
-  - 'jwst/**/*wfss*/**'
+FGS:
+  - 'jwst/**/*fgs*'
+  - 'jwst/**/*fgs*/**'
+
+MIRI:
+  - 'jwst/**/*miri*'
+  - 'jwst/**/*miri*/**'
 
 NIRSPEC:
   - 'jwst/**/*nirspec*'
@@ -213,3 +217,7 @@ NIRCAM:
 NIRISS:
   - 'jwst/**/*niriss*'
   - 'jwst/**/*niriss*/**'
+
+Wide Field Slitless Spec (WFSS):
+  - 'jwst/**/*wfss*'
+  - 'jwst/**/*wfss*/**'
