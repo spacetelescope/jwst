@@ -31,26 +31,72 @@ OBSSTART = '2022-05-23T00:36:08.000'
 OBSEND = '2022-05-23T00:36:22.480'
 
 # Define minimal model meta structure
-WCS_META = {
-    'meta': {
-        'aperture': {
-            'name': 'FGS1_FULL',
-        },
-        'exposure': {
-            'type': 'FGS_ACQ1',
-        },
-        'guidestar': {
-            'gs_ra': 45.1234,
-            'gs_dec': -45.1234,
-        },
-        'instrument': {
-            'detector': 'GUIDER1',
-        },
-        'observation': {
-            'date_beg': OBSSTART,
-            'date_end': OBSEND,
-            'date': '2017-01-01',
-        },
+META_FGS1 = {
+    'wcs': {
+        'meta': {
+            'aperture': {
+                'name': 'FGS1_FULL',
+            },
+            'exposure': {
+                'type': 'FGS_ACQ1',
+            },
+            'guidestar': {
+                'gs_ra': 45.1234,
+                'gs_dec': -45.1234,
+            },
+            'instrument': {
+                'detector': 'GUIDER1',
+            },
+            'observation': {
+                'date_beg': OBSSTART,
+                'date_end': OBSEND,
+                'date': '2017-01-01',
+            },
+        }
+    },
+    'expected': {
+        'pc1_1': -0.9997617158628777,
+        'pc1_2': -0.02166140686177685,
+        'pc2_1': -0.02166140686177685,
+        'pc2_2': 0.9997653641994049,
+        'crpix1': 36.23964226769749,
+        'crpix2': 68.3690778810028,
+        'crval1': 45.1234,
+        'crval2': -45.1234,
+    }
+}
+META_FGS2 = {
+    'wcs': {
+        'meta': {
+            'aperture': {
+                'name': 'FGS2_FULL',
+            },
+            'exposure': {
+                'type': 'FGS_ACQ1',
+            },
+            'guidestar': {
+                'gs_ra': 45.1234,
+                'gs_dec': -45.1234,
+            },
+            'instrument': {
+                'detector': 'GUIDER2',
+            },
+            'observation': {
+                'date_beg': OBSSTART,
+                'date_end': OBSEND,
+                'date': '2017-01-01',
+            },
+        }
+    },
+    'expected': {
+        'pc1_1': -0.9999870595413809,
+        'pc1_2': 0.005087312628765689,
+        'pc2_1': 0.005087312628765689,
+        'pc2_2': 0.9999870595413809,
+        'crpix1': 32.03855011856763,
+        'crpix2': 1294.2350135132765,
+        'crval1': 45.1234,
+        'crval2': -45.1234,
     }
 }
 
@@ -73,25 +119,23 @@ def test_gs_position_acq(multi_fixture, exp_type, expected):
 
 
 @pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)
-def test_fgs_pointing(multi_fixture):
+def test_fgs_pointing(multi_fixture, make_level1b):
     engdb = multi_fixture
-
-    # Setup model
-    model = make_level1b()
+    model, expected = make_level1b
 
     # Update wcs
     stp.update_wcs(model, engdb_url=engdb.base_url)
 
     # Test results
-    assert isclose(model.meta.wcsinfo.pc1_1, -0.9997617158628777, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc1_2, -0.02166140686177685, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc2_1, -0.02166140686177685, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc2_2, 0.9997653641994049, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc1_1, expected['pc1_1'], atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc1_2, expected['pc1_2'], atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc2_1, expected['pc2_1'], atol=1e-15)
+    assert isclose(model.meta.wcsinfo.pc2_2, expected['pc2_2'], atol=1e-15)
 
-    assert isclose(model.meta.wcsinfo.crpix1, 36.23964226769749, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crpix2, 68.3690778810028, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crval1, 45.1234, atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crval2, -45.1234, atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crpix1, expected['crpix1'], atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crpix2, expected['crpix2'], atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crval1, expected['crval1'], atol=1e-15)
+    assert isclose(model.meta.wcsinfo.crval2, expected['crval2'], atol=1e-15)
 
 
 # ---------
@@ -121,9 +165,11 @@ def multi_fixture(request):
     return request.getfixturevalue(request.param)
 
 
-def make_level1b():
+@pytest.fixture(scope='module', params=[META_FGS1, META_FGS2])
+def make_level1b(request):
+    model_meta = request.param
     data = array([1.])
     data.shape = (1, 1, 1, 1)
     model = Level1bModel(data)
-    model.update(WCS_META)
-    return model
+    model.update(model_meta['wcs'])
+    return model, model_meta['expected']
