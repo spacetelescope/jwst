@@ -116,15 +116,13 @@ class SkyMatchStep(Step):
         for im in images:
             if isinstance(im, SkyImage):
                 self._set_sky_background(
-                    im.meta['image_model'],
-                    im.sky,
+                    im,
                     "COMPLETE" if im.is_sky_valid else "SKIPPED"
                 )
             else:
                 for gim in im:
                     self._set_sky_background(
-                        gim.meta['image_model'],
-                        gim.sky,
+                        gim,
                         "COMPLETE" if gim.is_sky_valid else "SKIPPED"
                     )
 
@@ -183,11 +181,10 @@ class SkyMatchStep(Step):
                                  "present in image '{:s}' meta."
                                  .format(image_model.meta.filename))
 
-        data = np.array(image_model.data)
         wcs = deepcopy(image_model.meta.wcs)
 
         sky_im = SkyImage(
-            image=data,
+            image=image_model.data,
             wcs_fwd=wcs.__call__,
             wcs_inv=wcs.invert,
             pix_area=1.0,  # TODO: pixel area
@@ -208,7 +205,9 @@ class SkyMatchStep(Step):
 
         return sky_im
 
-    def _set_sky_background(self, image, sky, step_status):
+    def _set_sky_background(self, sky_image, step_status):
+        image = sky_image.meta['image_model']
+        sky = sky_image.sky
 
         if self._is_asn:
             dm = datamodel_open(image)
@@ -219,6 +218,9 @@ class SkyMatchStep(Step):
             dm.meta.background.method = str(self.skymethod)
             dm.meta.background.level = sky
             dm.meta.background.subtracted = self.subtract
+            if self.subtract:
+                dm.data[...] = sky_image.image[...]
+
         dm.meta.cal_step.skymatch = step_status
 
         if self._is_asn:
