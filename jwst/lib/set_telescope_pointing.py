@@ -152,6 +152,15 @@ FGS_GUIDED_MNEMONICS = {
     'IFGS_TFGDET_YSIZ',
 }
 
+FGS_ID_MNEMONICS = {
+    'IFGS_ID_XPOSG',
+    'IFGS_ID_YPOSG',
+    'IFGS_ID_DETXCOR',
+    'IFGS_ID_DETYCOR',
+    'IFGS_ID_DETXSIZ',
+    'IFGS_ID_DETYSIZ',
+}
+
 # The available methods for transformation
 class Methods(Enum):
     """Available methods to calculate V1 and aperture WCS information
@@ -2834,6 +2843,47 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
                 np.average(valid['IFGS_TFGGS_Y']))
     corner = (valid['IFGS_TFGDET_XCOR'][0], valid['IFGS_TFGDET_YCOR'][0])
     size = (valid['IFGS_TFGDET_XSIZ'][0], valid['IFGS_TFGDET_YSIZ'][0])
+    gs_position = GuideStarPosition(position=position, corner=corner, size=size)
+
+    return gs_position
+
+
+def gs_position_id(mnemonics_to_read, mnemonics):
+    """Get the guide star position from guide star telemetry for FGS ID
+
+    For FGS ID, the position of the guide star is given by mnemonics
+    IFGS_ID_[X|Y] in arcseconds (Ideal system). This mode is when the desired guide star is identified.
+    As such, there is no position to report. However, when completed, the position is then reported for approximately
+    five seconds after the end of the exposure. The input mnemonic array needs to have this. The first non-zero
+    report is used.
+
+    There is a box defined by the IFGS_ID_DET* mnemonics. 
+
+    Parameters
+    ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
+    mnemonics : {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    gs_position : GuideStarPosition
+        The guide star position
+
+    """
+    # Remove the zero positions.
+    ordered = fill_mnemonics_chronologically_table(mnemonics)
+    valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0) 
+    valid = ordered[valid_flags]
+
+    # Get the positions
+    position = (valid['IFGS_ID_XPOSG'][0], valid['IFGS_ID_YPOSG'][0])
+    corner = (valid['IFGS_ID_DETXCOR'][0], valid['IFGS_ID_DETYCOR'][0])
+    size = (valid['IFGS_ID_DETXSIZ'][0], valid['IFGS_ID_DETYSIZ'][0])
     gs_position = GuideStarPosition(position=position, corner=corner, size=size)
 
     return gs_position
