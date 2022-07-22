@@ -644,7 +644,7 @@ properties:
             fits_keyword: EXP_TYPE
             blend_table: True
           start_time:
-            title: UTC exposure start time
+            title: "[d] exposure start time in MJD"
             type: number
             fits_keyword: EXPSTART
             blend_table: True
@@ -657,7 +657,7 @@ properties:
             blend_table: True
             blend_rule: min
           mid_time:
-            title: UTC exposure mid time
+            title: "[d] exposure mid time in MJD"
             type: number
             fits_keyword: EXPMID
             blend_table: True
@@ -670,7 +670,7 @@ properties:
             blend_table: True
             blend_rule: mean
           end_time:
-            title: UTC exposure end time
+            title: "[d] exposure end time in MJD"
             type: number
             fits_keyword: EXPEND
             blend_table: True
@@ -798,12 +798,12 @@ properties:
             fits_keyword: GROUPGAP
             blend_table: True
           drop_frames1:
-            title: Frames dropped at start of each integration
+            title: Number of frames dropped prior to first integration
             type: integer
             fits_keyword: DRPFRMS1
             blend_table: True
           drop_frames3:
-            title: Frames dropped at end of each integration
+            title: Number of frames dropped between integrations
             type: integer
             fits_keyword: DRPFRMS3
             blend_table: True
@@ -1148,7 +1148,7 @@ properties:
             fits_keyword: PRIDTPTS
             blend_table: True
           position_number:
-            title: Position number in primary pattern
+            title: Position number within dither pattern
             type: integer
             fits_keyword: PATT_NUM
             blend_table: True
@@ -1296,7 +1296,7 @@ properties:
             fits_hdu: SCI
             blend_table: True
           time:
-            title: UTC time of position and velocity vectors in ephemeris (MJD)
+            title: [d] MJD time of position and velocity vectors
             type: number
             fits_keyword: EPH_TIME
             fits_hdu: SCI

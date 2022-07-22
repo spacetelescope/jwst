@@ -61,24 +61,24 @@ allOf:
               fits_keyword: CRVAL2
               fits_hdu: PATHLOSS
             cdelt1:
-              title: Axis 1 increment per pixel
+              title: Axis 1 coordinate increment at reference point 
               type: number
               default: 1.0
               fits_keyword: CDELT1
               fits_hdu: PATHLOSS
             cdelt2:
-              title: Axis 2 increment per pixel
+              title: Axis 2 coordinate increment at reference point 
               type: number
               default: 1.0
               fits_keyword: CDELT2
               fits_hdu: PATHLOSS
             ctype1:
-              title: Axis 1 coordinate type
+              title: Axis 1 type
               type: string
               fits_keyword: CTYPE1
               fits_hdu: PATHLOSS
             ctype2:
-              title: Axis 2 coordinate type
+              title: Axis 2 type
               type: string
               fits_keyword: CTYPE2
               fits_hdu: PATHLOSS

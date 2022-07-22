@@ -108,55 +108,55 @@ properties:
             fits_hdu: SCI
             blend_table: True
           ctype1:
-            title: first axis coordinate type
-            type: string
+            title: Axis 1 type
+            type: string 
             fits_keyword: CTYPE1
             fits_hdu: SCI
             blend_table: True
           ctype2:
-            title: second axis coordinate type
+            title: Axis 2 type
             type: string
             fits_keyword: CTYPE2
             fits_hdu: SCI
             blend_table: True
           ctype3:
-            title: third axis coordinate type
+            title: Axis 3 type
             type: string
             fits_keyword: CTYPE3
             fits_hdu: SCI
             blend_table: True
           cunit1:
-            title: first axis units
+            title: Axis 1 units
             type: string
             fits_keyword: CUNIT1
             fits_hdu: SCI
             blend_table: True
           cunit2:
-            title: second axis units
+            title: Axis 2 units
             type: string
             fits_keyword: CUNIT2
             fits_hdu: SCI
             blend_table: True
           cunit3:
-            title: third axis units
+            title: Axis 3 units
             type: string
             fits_keyword: CUNIT3
             fits_hdu: SCI
             blend_table: True
           cdelt1:
-            title: first axis increment per pixel
+            title: Axis 1 coordinate increment at reference point
             type: number
             fits_keyword: CDELT1
             fits_hdu: SCI
             blend_table: True
           cdelt2:
-            title: second axis increment per pixel
+            title: Axis 2 coordinate increment at reference point
             type: number
             fits_keyword: CDELT2
             fits_hdu: SCI
             blend_table: True
           cdelt3:
-            title: third axis increment per pixel
+            title: Axis 3 coordinate increment at reference point
             type: number
             fits_keyword: CDELT3
             fits_hdu: SCI
