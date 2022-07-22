@@ -376,7 +376,7 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
     // Problem finding limits of slice for wavelength plane
     // This is likely caused the no valid data on wavelength plane
     // The two ends of wavelengths can have DQ detector data set to DO_NOT_USE - setting up no
-    // valid data on thee planes in the IFU Cube. 
+    // valid data on the planes in the IFU Cube. 
 
     status = 1; 
   } 
