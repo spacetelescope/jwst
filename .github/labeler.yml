@@ -13,7 +13,7 @@ installation:
 
 # --------------------------------------- testing ---------------------------------------
 
-CI:
+automation:
   - '.github/**'
   - '.bandit.yaml'
   - '.codecov.yml'
