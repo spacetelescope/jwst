@@ -4,16 +4,13 @@ from .. import datamodels
 from ..lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
-from .util import MSAFileError
+from .util import MSAFileError, update_fits_wcsinfo
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 __all__ = ["AssignWcsStep"]
-
-
-_MAX_SIP_DEGREE = 6
 
 
 class AssignWcsStep(Step):
@@ -99,37 +96,21 @@ class AssignWcsStep(Step):
             return result
 
         # fit sip approx., degree is chosen by best fit
-        sip_degree = range(1, _MAX_SIP_DEGREE) if self.sip_degree is None else self.sip_degree
-        sip_inv_degree = range(1, _MAX_SIP_DEGREE) if self.sip_inv_degree is None else self.sip_inv_degree
-        crpix = [result.meta.wcsinfo.crpix1, result.meta.wcsinfo.crpix2]
-        crpix = None if None in crpix else crpix
         try:
-            fit_sip_hdr = result.meta.wcs.to_fits_sip(
+            update_fits_wcsinfo(
+                result,
                 max_pix_error=self.sip_max_pix_error,
-                degree=sip_degree,
+                degree=self.sip_degree,
                 max_inv_pix_error=self.sip_max_inv_pix_error,
-                inv_degree=sip_inv_degree,
+                inv_degree=self.sip_inv_degree,
                 npoints=self.sip_npoints,
-                crpix=crpix
+                crpix=None
             )
 
-        except ValueError:
-            return result
+        except ValueError as e:
+            log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
+                        f'approximation. Reported error is:\n"{e.args[0]}"')
 
-        # update meta.wcs_info with fit keywords except for naxis*
-        del fit_sip_hdr['naxis*']
-
-        # maintain convention of lowercase keys
-        fit_sip_hdr = {k.lower(): v for k, v in fit_sip_hdr.items()}
-
-        # delete naxis, cdelt, pc from wcsinfo
-        rm_keys = ['naxis', 'cdelt1', 'cdelt2',
-                   'pc1_1', 'pc1_2', 'pc2_1', 'pc2_2']
-        for key in rm_keys:
-            if key in result.meta.wcsinfo.instance:
-                del result.meta.wcsinfo.instance[key]
-
-        # update meta.wcs_info with fit keywords
-        result.meta.wcsinfo.instance.update(fit_sip_hdr)
+            pass
 
         return result
