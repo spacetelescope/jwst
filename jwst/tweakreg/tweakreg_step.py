@@ -16,7 +16,7 @@ from tweakwcs.matchutils import TPMatch
 # LOCAL
 from ..stpipe import Step
 from .. import datamodels
-
+from ..assign_wcs.util import update_fits_wcsinfo
 from . import astrometric_utils as amutils
 from .tweakreg_catalog import make_tweakreg_catalog
 
@@ -319,16 +319,9 @@ class TweakRegStep(Step):
 
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
 
-                """
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
-                # Not currently enabled, but may be requested later...
-                gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1,
-                                                max_inv_pix_error=0.1,
-                                                degree=3,
-                                                npoints=128)
-                imcat.meta['image_model'].wcs = wcs.WCS(header=gwcs_header)
-                """
+                update_fits_wcsinfo(imcat.meta['image_model'])
 
         return images
 

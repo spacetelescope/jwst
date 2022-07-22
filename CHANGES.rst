@@ -19,6 +19,12 @@ skymatch
 - Fixed a bug in ``skymatch`` due to which computed background values were
   not subtracted from image data when ``subtract=True``. [#6934]
 
+tweakreg
+--------
+
+- ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
+  from data model's tweaked GWCS. [#6936]
+
 
 1.6.2 (2022-07-19)
 ==================
