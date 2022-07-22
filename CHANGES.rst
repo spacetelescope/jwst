@@ -6,6 +6,13 @@ general
 
 -
 
+assign_wcs
+----------
+
+- Added convenience function ``update_fits_wcsinfo()`` to ``assign_wcs.util``
+  module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
+  from data model's GWCS. [#6935]
+
 skymatch
 --------
 
