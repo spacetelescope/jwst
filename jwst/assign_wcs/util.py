@@ -1258,7 +1258,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     The default mode in using this attempts to achieve roughly 0.01 pixel
     accuracy over the entire image.
 
-    This function uses on the :py:meth:`~gwcs.wcs.WCS.to_fits_sip` to
+    This function uses the :py:meth:`~gwcs.wcs.WCS.to_fits_sip` to
     create FITS WCS representations of GWCS objects. Only most important
     :py:meth:`~gwcs.wcs.WCS.to_fits_sip` parameters are exposed here. Other
     arguments to :py:meth:`~gwcs.wcs.WCS.to_fits_sip` can be passed via
