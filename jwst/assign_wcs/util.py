@@ -30,9 +30,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+_MAX_SIP_DEGREE = 6
+
+
 __all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
            "MSAFileError", "NoDataOnDetectorError", "compute_scale",
-           "calc_rotation_matrix", "wrap_ra"]
+           "calc_rotation_matrix", "wrap_ra", "update_fits_wcsinfo"]
 
 
 class MSAFileError(Exception):
@@ -1243,3 +1246,177 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     onslice_ind = np.isclose(slx, SLX,atol=5e-4)
 
     return onslice_ind
+
+
+def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
+                        crpix=None, projection='TAN', **kwargs):
+    """
+    For imaging data models *only*, update data model's ``meta.wcsinfo``
+    attribute using a FITS SIP approximation of the current data model's
+    GWCS from ``meta.wcs``.
+
+    The default mode in using this attempts to achieve roughly 0.01 pixel
+    accuracy over the entire image.
+
+    This function uses the :py:meth:`~gwcs.wcs.WCS.to_fits_sip` to
+    create FITS WCS representations of GWCS objects. Only most important
+    :py:meth:`~gwcs.wcs.WCS.to_fits_sip` parameters are exposed here. Other
+    arguments to :py:meth:`~gwcs.wcs.WCS.to_fits_sip` can be passed via
+    ``kwargs`` - see "Other Parameters" section below.
+    Please refer to the documentation of :py:meth:`~gwcs.wcs.WCS.to_fits_sip`
+    for more details.
+
+    .. warning::
+        This function modifies input data model's ``datamodel.meta.wcsinfo``
+        members.
+
+
+    Parameters
+    ----------
+
+    max_pix_error : float, optional
+        Maximum allowed error over the domain of the pixel array. This
+        error is the equivalent pixel error that corresponds to the maximum
+        error in the output coordinate resulting from the fit based on
+        a nominal plate scale.
+
+    degree : int, iterable, None, optional
+        Degree of the SIP polynomial. Default value `None` indicates that
+        all allowed degree values (``[1...6]``) will be considered and
+        the lowest degree that meets accuracy requerements set by
+        ``max_pix_error`` will be returned. Alternatively, ``degree`` can be
+        an iterable containing allowed values for the SIP polynomial degree.
+        This option is similar to default `None` but it allows caller to
+        restrict the range of allowed SIP degrees used for fitting.
+        Finally, ``degree`` can be an integer indicating the exact SIP degree
+        to be fit to the WCS transformation. In this case
+        ``max_pixel_error`` is ignored.
+
+    npoints : int, optional
+        The number of points in each dimension to sample the bounding box
+        for use in the SIP fit. Minimum number of points is 3.
+
+    crpix : list of float, None, optional
+        Coordinates (1-based) of the reference point for the new FITS WCS.
+        When not provided, i.e., when set to `None` (default) the reference
+        pixel already specified in ``wcsinfo`` will be re-used. If
+        ``wcsinfo`` does not contain ``crpix`` information, then the
+        reference pixel will be chosen near the center of the bounding box
+        for axes corresponding to the celestial frame.
+
+    projection : str, `~astropy.modeling.projections.Pix2SkyProjection`, optional
+        Projection to be used for the created FITS WCS. It can be specified
+        as a string of three characters specifying a FITS projection code
+        from Table 13 in
+        `Representations of World Coordinates in FITS \
+        <https://doi.org/10.1051/0004-6361:20021326>`_
+        (Paper I), Greisen, E. W., and Calabretta, M. R., A & A, 395,
+        1061-1075, 2002. Alternatively, it can be an instance of one of the
+        `astropy's Pix2Sky_* <https://docs.astropy.org/en/stable/modeling/\
+        reference_api.html#module-astropy.modeling.projections>`_
+        projection models inherited from
+        :py:class:`~astropy.modeling.projections.Pix2SkyProjection`.
+
+
+    Other Parameters
+    ----------------
+
+    max_inv_pix_error : float, None, optional
+        Maximum allowed inverse error over the domain of the pixel array
+        in pixel units. With the default value of `None` no inverse
+        is generated.
+
+    inv_degree : int, iterable, None, optional
+        Degree of the SIP polynomial. Default value `None` indicates that
+        all allowed degree values (``[1...6]``) will be considered and
+        the lowest degree that meets accuracy requerements set by
+        ``max_pix_error`` will be returned. Alternatively, ``degree`` can be
+        an iterable containing allowed values for the SIP polynomial degree.
+        This option is similar to default `None` but it allows caller to
+        restrict the range of allowed SIP degrees used for fitting.
+        Finally, ``degree`` can be an integer indicating the exact SIP degree
+        to be fit to the WCS transformation. In this case
+        ``max_inv_pixel_error`` is ignored.
+
+    bounding_box : tuple, None, optional
+        A pair of tuples, each consisting of two numbers
+        Represents the range of pixel values in both dimensions
+        ((xmin, xmax), (ymin, ymax))
+
+    verbose : bool, optional
+        Print progress of fits.
+
+
+    Returns
+    -------
+    FITS header with all SIP WCS keywords
+
+
+    Raises
+    ------
+    ValueError
+        If the WCS is not at least 2D, an exception will be raised. If the
+        specified accuracy (both forward and inverse, both rms and maximum)
+        is not achieved an exception will be raised.
+
+
+    Notes
+    -----
+
+    Use of this requires a judicious choice of required accuracies.
+    Attempts to use higher degrees (~7 or higher) will typically fail due
+    to floating point problems that arise with high powers.
+
+    For more details, see :py:meth:`~gwcs.wcs.WCS.to_fits_sip`.
+
+    """
+    # make a copy of kwargs:
+    kwargs = {k: v for k, v in kwargs.items()}
+
+    # override default values for "other parameters":
+    max_inv_pix_error = kwargs.pop('max_inv_pix_error', None)
+    inv_degree = kwargs.pop('inv_degree', None)
+    if inv_degree is None:
+        inv_degree = range(1, _MAX_SIP_DEGREE)
+
+    # limit default 'degree' range to _MAX_SIP_DEGREE:
+    if degree is None:
+        degree = range(1, _MAX_SIP_DEGREE)
+
+    if crpix is None:
+        crpix = [datamodel.meta.wcsinfo.crpix1, datamodel.meta.wcsinfo.crpix2]
+    if None in crpix:
+        crpix = None
+
+    hdr = datamodel.meta.wcs.to_fits_sip(
+        max_pix_error=max_pix_error,
+        degree=degree,
+        max_inv_pix_error=max_inv_pix_error,
+        inv_degree=inv_degree,
+        npoints=npoints,
+        crpix=crpix,
+        **kwargs
+    )
+
+    # update meta.wcs_info with fit keywords except for naxis*
+    del hdr['naxis*']
+
+    # maintain convention of lowercase keys
+    hdr_dict = {k.lower(): v for k, v in hdr.items()}
+
+    # delete naxis, cdelt, pc from wcsinfo
+    rm_keys = ['naxis', 'cdelt1', 'cdelt2',
+               'pc1_1', 'pc1_2', 'pc2_1', 'pc2_2',
+               'a_order', 'b_order', 'ap_order', 'bp_order']
+
+    rm_keys.extend(f"{s}_{i}_{j}" for i in range(10) for j in range(10)
+                   for s in ['a', 'b', 'ap', 'bp'])
+
+    for key in rm_keys:
+        if key in datamodel.meta.wcsinfo.instance:
+            del datamodel.meta.wcsinfo.instance[key]
+
+    # update meta.wcs_info with fit keywords
+    datamodel.meta.wcsinfo.instance.update(hdr_dict)
+
+    return hdr

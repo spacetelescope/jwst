@@ -28,8 +28,8 @@ def setup(app):
     except AttributeError:
         app.add_stylesheet("stsci.css")
 
-conf = ConfigParser()
 
+conf = ConfigParser()
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -43,7 +43,7 @@ conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.3'
+# needs_sphinx = '1.3'
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -64,7 +64,8 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/devdocs', None),
     'scipy': ('http://scipy.github.io/devdocs', None),
     'matplotlib': ('http://matplotlib.org/', None),
-    }
+    'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
+}
 
 if sys.version_info[0] == 2:
     intersphinx_mapping['python'] = ('http://docs.python.org/2/', None)
@@ -95,7 +96,7 @@ extensions = [
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
     'sphinx_asdf',
-    ]
+]
 
 
 if on_rtd:
@@ -232,13 +233,12 @@ html_theme = 'stsci_rtd_theme'
 # documentation.
 html_theme_options = {
     "collapse_navigation": True
-    }
-#        "nosidebar": "false",
-#        "sidebarbgcolor": "#4db8ff",
-#        "sidebartextcolor": "black",
-#        "sidebarlinkcolor": "black",
-#        "headbgcolor": "white",
-#        }
+    # "nosidebar": "false",
+    # "sidebarbgcolor": "#4db8ff",
+    # "sidebartextcolor": "black",
+    # "sidebarlinkcolor": "black",
+    # "headbgcolor": "white",
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = [stsci_rtd_theme.get_html_theme_path()]
@@ -328,8 +328,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'jwst.tex', u'JWST Pipeline Documentation',
-   u'jwst', 'manual'),
+    ('index', 'jwst.tex', u'JWST Pipeline Documentation', u'jwst', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -372,9 +371,8 @@ man_show_urls = True
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'jwst', u'JWST Pipeline Documentation',
-   u'jwst', 'jwst', 'JWST Pipeline Documentation',
-   'Miscellaneous'),
+    ('index', 'jwst', u'JWST Pipeline Documentation',
+     u'jwst', 'jwst', 'JWST Pipeline Documentation', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
