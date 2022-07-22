@@ -13,11 +13,15 @@ installation:
 
 # --------------------------------------- testing ---------------------------------------
 
-testing:
-  - '**/tests/**'
-  - '.github/workflows/*.yml'
+CI:
+  - '.github/**'
   - '.bandit.yaml'
   - '.codecov.yml'
+  - 'Jenkinsfile*'
+
+testing:
+  - '**/tests/**'
+  - '.github/workflows/ci*.yml'
   - 'conftest.py'
   - 'tox.ini'
 
