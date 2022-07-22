@@ -95,8 +95,6 @@ class AssignWcsStep(Step):
         if not (result.meta.exposure.type.lower() in IMAGING_TYPES and self.sip_approx):
             return result
 
-        (result, )
-
         # fit sip approx., degree is chosen by best fit
         try:
             update_fits_wcsinfo(
@@ -109,7 +107,10 @@ class AssignWcsStep(Step):
                 crpix=None
             )
 
-        except ValueError:
+        except ValueError as e:
+            log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
+                        f'approximation. Reported error is:\n"{e.args[0]}"')
+
             pass
 
         return result
