@@ -144,10 +144,13 @@ FGS_ACQ_MNEMONICS  = {
 }
 
 FGS_GUIDED_MNEMONICS = {
-    'IFGS_CTDGS_X': True,
-    'IFGS_CTDGS_Y': True,
+    'IFGS_TFGGS_X',
+    'IFGS_TFGGS_Y',
+    'IFGS_TFGDET_XCOR',
+    'IFGS_TFGDET_YCOR',
+    'IFGS_TFGDET_XSIZ',
+    'IFGS_TFGDET_YSIZ',
 }
-
 
 # The available methods for transformation
 class Methods(Enum):
@@ -2793,7 +2796,50 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
     return gs_position
 
 
-def gs_ideal_to_subarray(gs_position, aperture):
+def gs_position_fgtrack(mnemonics_to_read, mnemonics):
+    """Get the guide star position from guide star telemetry for FGS FINEGUIDE/TRACK
+
+    For FGS FINEGUIDE and TRACK modes, the position of the guide star is
+    given by mnemonics IFGS_TFGGS_[X|Y] in arcseconds (Ideal system).
+    The values are generally valid throughout the whole length of the observation.
+    The average is used as the result. Ignore values where both coordinates are
+    exactly zero.
+
+    The position is relative to the full detector. However, the science data is cropped
+    to an 8x8 box. The location of the box is defined by the IFGS_TFGDET_* mnemonics.
+    These do not change during the duration of the exposure, so the first values are used.
+
+    Parameters
+    ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
+    mnemonics : {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    gs_position : GuideStarPosition
+        The guide star position
+    """
+    # Remove the zero positions.
+    ordered = fill_mnemonics_chronologically_table(mnemonics)
+    valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0) 
+    valid = ordered[valid_flags]
+
+    # Get the positions
+    position = (np.average(valid['IFGS_TFGGS_X']),
+                np.average(valid['IFGS_TFGGS_Y']))
+    corner = (valid['IFGS_TFGDET_XCOR'][0], valid['IFGS_TFGDET_YCOR'][0])
+    size = (valid['IFGS_TFGDET_XSIZ'][0], valid['IFGS_TFGDET_YSIZ'][0])
+    gs_position = GuideStarPosition(position=position, corner=corner, size=size)
+
+    return gs_position
+
+
+def gs_ideal_to_subarray(gs_position, aperture, flip=False):
     """Calculate pixel position for the guide star in the acquisition subarray
 
     Parameters
@@ -2803,6 +2849,9 @@ def gs_ideal_to_subarray(gs_position, aperture):
 
     aperture : pysiaf.Aperture
         The aperture in use.
+
+    flip : bool
+        Institute the magic flip. Necessary for ACQ1/ACQ2 exposures.
 
     Returns
     -------
@@ -2814,11 +2863,13 @@ def gs_ideal_to_subarray(gs_position, aperture):
                          position_pixel[1] - gs_position.corner[1])
 
     # The magic flip. For FGS1, both axes must be reversed. For FGS2, only the X-axis changed.
-    if aperture.AperName.startswith('FGS1'):
-        x = gs_position.size[0] - position_subarray[0]
-        y = gs_position.size[1] - position_subarray[1]
-    else:
-        x = gs_position.size[0] - position_subarray[0]
-        y = position_subarray[1]
+    x, y = position_subarray
+    if flip:
+        if aperture.AperName.startswith('FGS1'):
+            x = gs_position.size[0] - position_subarray[0]
+            y = gs_position.size[1] - position_subarray[1]
+        else:
+            x = gs_position.size[0] - position_subarray[0]
+            y = position_subarray[1]
 
     return x, y
