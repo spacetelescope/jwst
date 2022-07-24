@@ -16,8 +16,8 @@ ami_analyze
 -----------
 
 - Revert Fourier Transform code to avoid using Poppy which was recently updated
-  to use a different sign convention.[#6967]  
-  
+  to use a different sign convention.[#6967]
+
 assign_wcs
 ----------
 
@@ -67,6 +67,9 @@ tweakreg
 
 - The ``tweakreg`` step now masks ``NON_SCIENCE`` pixels when
   calculating the source detection theshold. [#6940]
+
+- ``tweakreg`` will report inverse SIP coefficients in updated
+  FITS WCS. [#6939]
 
 1.6.2 (2022-07-19)
 ==================
