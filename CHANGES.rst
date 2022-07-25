@@ -54,6 +54,8 @@ tweakreg
 - ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
   from data model's tweaked GWCS. [#6936, #6947]
 
+- The ``tweakreg`` step now masks ``NON_SCIENCE`` pixels when
+  calculating the source detection theshold. [#6940]
 
 1.6.2 (2022-07-19)
 ==================
