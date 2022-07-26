@@ -17,7 +17,7 @@ datamodels
 ----------
 
 - Updated keyword titles in data model schemas to match those in keyword
-  dictionary. [#6937]
+  dictionary. [#6941]
   
 skymatch
 --------
