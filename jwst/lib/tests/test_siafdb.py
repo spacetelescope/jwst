@@ -6,6 +6,12 @@ import pytest
 from jwst.lib import siafdb
 
 
+# Database paths
+DATA_PATH = Path(__file__).parent / 'data'
+XML_DATA_NO_SIAFXML_PATH = DATA_PATH / 'xml_data_no_siafxml'
+XML_DATA_SIAFXML_PATH = DATA_PATH / 'xml_data_siafxml'
+PYSIAF_SIAFXML_PATH = XML_DATA_SIAFXML_PATH
+
 @pytest.fixture
 def jail_environ():
     """Lock changes to the environment"""
@@ -20,7 +26,7 @@ def jail_environ():
     'source, expected, use_pysiaf',
     [
         (None, siafdb.SiafDbPySiaf, True),
-        (Path(__file__).parent / 'data' / 'xml_data_no_siafxml' / 'prd.db', siafdb.SiafDbSqlite, False),
+        (XML_DATA_NO_SIAFXML_PATH / 'prd.db', siafdb.SiafDbSqlite, False),
         ('XML_DATA', siafdb.SiafDbSqlite, False)
     ]
 )
@@ -30,7 +36,7 @@ def test_create(source, expected, use_pysiaf, jail_environ):
         pytest.importorskip('pysiaf')
 
     if source == 'XML_DATA':
-        os.environ['XML_DATA'] = str(Path(__file__).parent / 'data' / 'xml_data_no_siafxml')
+        os.environ['XML_DATA'] = str(XML_DATA_NO_SIAFXML_PATH)
         source = None
 
     with siafdb.SiafDb(source) as siaf_db:
@@ -45,7 +51,7 @@ def test_create(source, expected, use_pysiaf, jail_environ):
                      crpix1=1024.5, crpix2=1024.5, cdelt1=0.06839158, cdelt2=0.06993081,
                      vertices_idl=(-68.8543, 70.1233, 71.5697, -70.2482, 72.1764, 68.8086, -75.5918, -70.7457)),
          True),
-        (Path(__file__).parent / 'data' / 'xml_data_no_siafxml' / 'prd.db',
+        (XML_DATA_NO_SIAFXML_PATH / 'prd.db',
          siafdb.SIAF(v2_ref=206.464, v3_ref=-697.97, v3yangle=-1.25081713, vparity=1,
                      crpix1=1024.5, crpix2=1024.5, cdelt1=0.06853116, cdelt2=0.07005886,
                      vertices_idl=(-69.01, 70.294, 71.8255, -70.3952, 72.3452, 68.951, -75.8935, -70.8365)),
