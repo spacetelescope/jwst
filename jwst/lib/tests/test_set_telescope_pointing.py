@@ -39,7 +39,7 @@ TARG_DEC = -87.0
 DATA_PATH = Path(__file__).parent / 'data'
 db_ngas_path = DATA_PATH / 'engdb_ngas'
 db_jw703_path = DATA_PATH / 'engdb_jw00703'
-siaf_path = DATA_PATH / 'siaf.db'
+siaf_path = DATA_PATH / 'prd.db'
 
 # Some expected values
 Q_EXPECTED = np.asarray(
