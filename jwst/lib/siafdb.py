@@ -64,20 +64,21 @@ class SiafDb:
 
     Parameters
     ----------
-    source : None, str, or a file-like object
+    source : None, str, or a path-like object
         The SIAF database source. See notes for more details.
 
     Notes
     -----
     The interpretation of `source` is as follows:
 
-    If None, the environmental 'XML_DATA' is queried for a value.
-    If None, then the `pysiaf` package is used.
-    If a string, the string is treated as a path.
-    If that path is to a folder, the `pysiaf` package is used with the folder
-        as the XML source folder. See the `pysiaf` package for more information.
-    Finally, an attempt is made to open the path as a sqlite database.
-    Otherwise, fail.
+    If None, the environmental 'XML_DATA' is queried for a value. If the folder
+    'SIAFXML' exists, `pysiaf` is used with that folder. If not, the 'prd.db'
+    file is tried. If 'XML_DATA' is not defined, then the `pysiaf` package is
+    used.
+
+    Otherwise `source` will be treated as a path to some SIAF database.
+    `SiafDbSqlite` will first be attempted, then `SiafDbPysiaf`.
+
     """
     def __init__(self, source=None):
         self._db = None
@@ -87,7 +88,11 @@ class SiafDb:
         if source is None:
             source = os.environ.get('XML_DATA', None)
             if source is not None:
-                source = Path(source) / 'prd.db'
+                source = Path(source)
+                if (source / 'SIAFXML').exists():
+                    source = source / 'SIAFXML'
+                else:
+                    source = source / 'prd.db'
         self._source = source
 
         # Attempt to access source as an sqlite database.
