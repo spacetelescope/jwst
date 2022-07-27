@@ -10,6 +10,7 @@ from datetime import date
 import logging
 import os
 from pathlib import Path
+import traceback
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -98,9 +99,10 @@ class SiafDb:
         # Attempt to access source as an sqlite database.
         try:
             db = SiafDbSqlite(source)
-        except ValueError:
+        except ValueError as exception:
             # Source is incompatible.
             logger.debug('Could not open as a sqlite object: %s', source)
+            logger.debug('Exception: %s', traceback.format_exception(exception))
         else:
             self._db = db
             return
@@ -258,7 +260,10 @@ class SiafDbSqlite:
             raise ValueError('Source: %s does not exist.', source)
         self._source = f'file:{str(source)}?mode=ro'
 
-        self._db = sqlite3.connect(self._source, uri=True)
+        try:
+            self._db = sqlite3.connect(self._source, uri=True)
+        except Exception as exception:
+            raise ValueError from exception
         self._cursor = self._db.cursor()
         logger.info("Using SIAF database from %s", source)
 

@@ -27,7 +27,8 @@ def jail_environ():
     [
         (None, siafdb.SiafDbPySiaf, True),
         (XML_DATA_NO_SIAFXML_PATH / 'prd.db', siafdb.SiafDbSqlite, False),
-        ('XML_DATA', siafdb.SiafDbSqlite, False)
+        ('XML_DATA_NO_SIAFXML', siafdb.SiafDbSqlite, False),
+        ('XML_DATA_SIAFXML', siafdb.SiafDbPySiaf, True)
     ]
 )
 def test_create(source, expected, use_pysiaf, jail_environ):
@@ -35,8 +36,11 @@ def test_create(source, expected, use_pysiaf, jail_environ):
     if use_pysiaf:
         pytest.importorskip('pysiaf')
 
-    if source == 'XML_DATA':
+    if source == 'XML_DATA_NO_SIAFXML':
         os.environ['XML_DATA'] = str(XML_DATA_NO_SIAFXML_PATH)
+        source = None
+    elif source == 'XML_DATA_SIAFXML':
+        os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
         source = None
 
     with siafdb.SiafDb(source) as siaf_db:
