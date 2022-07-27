@@ -24,7 +24,7 @@ logger.addHandler(handler)
 # Get database paths.
 DATA_PATH = Path(__file__).parent / 'data'
 db_1029 = DATA_PATH / 'engdb_jw01029'
-siaf_db = DATA_PATH / 'siaf.db'
+siaf_db = DATA_PATH / 'prd.db'
 
 # Time frame
 OBSSTART = '2022-05-23T00:36:08.000'
