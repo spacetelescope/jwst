@@ -13,6 +13,7 @@ allOf:
 - $ref: keyword_ngroups.schema
 - $ref: keyword_groupgap.schema
 - $ref: keyword_gainfact.schema
+- $ref: keyword_psubarray.schema
 - $ref: subarray.schema
 - type: object
   properties:
