@@ -343,7 +343,8 @@ jump
 extract_1d
 ----------
 
-- Update int_times keywords in SOSS spectral output [#6930]
+- Update int_times keywords in SOSS spectral output; update ATOCA algorithm
+  to current development version [#6945]
 
 general
 -------
