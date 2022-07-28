@@ -70,6 +70,13 @@ outlier_detection
 
 - Fix reading of the source_type attribute for NIRSpec IFU data. [#6980]
 
+ramp_fitting
+------------
+
+- Updating tests due to new behavior in STCAL (spacetelescope/stcal#112)
+  removing NaNs from the rateints product and setting appropriate DQ
+  flags. [#6949]
+
 resample
 --------
 
