@@ -368,19 +368,7 @@ residual_fringe
 skymatch
 --------
 
-<<<<<<< HEAD
 - Fixed a bug in ``skymatch`` due to which subtracted values were not saved
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-- Fixed a bug in ``skymatch`` due to which subtracted values were not saved
-=======
-- Fixed a bug in `skymatch` due to which subtracted values were not saved
->>>>>>> Fix inability of residual fringe code to run on MRS LONG detector (#6929)
-=======
-- Fixed a bug in ``skymatch`` due to which subtracted values were not saved
->>>>>>> JP-2688: Skymatch - Update datamodel data when subtract is True (#6934)
->>>>>>> JP-2688: Skymatch - Update datamodel data when subtract is True (#6934)
   in the inputs when input was an association table. [#6922]
 
 source_catalog
