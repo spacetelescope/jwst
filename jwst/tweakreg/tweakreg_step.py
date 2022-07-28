@@ -52,7 +52,7 @@ class TweakRegStep(Step):
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
         align_to_gaia = boolean(default=False)  # Align to GAIA catalog
-        gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
+        gaia_catalog = string(default='GAIADR2')  # Catalog file name or 'GAIADR1', 'GAIADR2'
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
@@ -260,15 +260,30 @@ class TweakRegStep(Step):
                 output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
             else:
                 output_name = None
-            ref_cat = amutils.create_astrometric_catalog(images,
-                                                         self.gaia_catalog,
-                                                         output=output_name)
+
+            self.gaia_catalog = self.gaia_catalog.strip()
+            gaia_cat_name = self.gaia_catalog.upper()
+
+            if gaia_cat_name in ['GAIADR2', 'GAIADR1']:
+                ref_cat = amutils.create_astrometric_catalog(
+                    images,
+                    gaia_cat_name,
+                    output=output_name
+                )
+
+            elif path.isfile(self.gaia_catalog):
+                ref_cat = Table.read(self.gaia_catalog)
+
+            else:
+                raise ValueError("'gaia_catalog' must be a path to an "
+                                 "existing file name or one of the two special "
+                                 "catalogs: 'GAIADR2' or 'GAIADR1'.")
 
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
             if num_ref < self.min_gaia:
-                msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
-                msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
+                msg = f"Not enough reference catalog #2 sources for a fit: {num_ref}"
+                msg += f"Skipping alignment to {self.gaia_catalog} astrometric catalog!"
                 # Raise Exception here to avoid rest of code in this try block
                 self.log.warning(msg)
             else:
