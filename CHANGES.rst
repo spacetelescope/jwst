@@ -13,6 +13,12 @@ assign_wcs
   module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
   from data model's GWCS. [#6935]
 
+datamodels
+----------
+
+- Updated keyword titles in data model schemas to match those in keyword
+  dictionary. [#6941]
+  
 skymatch
 --------
 
