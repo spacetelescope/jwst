@@ -461,6 +461,25 @@ see :ref:`Execute via call()<call_examples>`::
 For more details on the different ways to run a pipeline step, see
 the :ref:`Configuring a Step<configuring-a-step>` page.
 
+CRDS Environmentals
+-------------------
+
+The CRDS environmental variables need to be defined *before* importing anything
+from `jwst` or `crds`. In general, any scripts should assume the environmentals
+have been set before the scripts have run. If one needs to define the CRDS
+environmentals within a script, the following code snippet is the suggested
+method. These lines should be the first executable lines:
+
+::
+
+   import os
+   os.environ['CRDS_PATH'] = 'path_to_local_cache'
+   os.environ['CRDS_SERVER_URL'] = 'url-of-server-to-use'
+
+   # Now import anything else needed
+   import jwst
+
+
 Available Pipelines
 ===================
 There are many pre-defined pipeline modules for processing
