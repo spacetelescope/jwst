@@ -18,6 +18,8 @@ datamodels
 
 - Updated keyword titles in data model schemas to match those in keyword
   dictionary. [#6941]
+
+- Add P_SUBARR keyword to the `DarkModel` schema. [#6951]
   
 skymatch
 --------
