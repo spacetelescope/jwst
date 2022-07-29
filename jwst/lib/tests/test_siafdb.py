@@ -5,12 +5,13 @@ import pytest
 
 from jwst.lib import siafdb
 
+pytest.importorskip('pysiaf')
 
 # Database paths
 DATA_PATH = Path(__file__).parent / 'data'
-XML_DATA_NO_SIAFXML_PATH = DATA_PATH / 'xml_data_no_siafxml'
 XML_DATA_SIAFXML_PATH = DATA_PATH / 'xml_data_siafxml'
-PYSIAF_SIAFXML_PATH = XML_DATA_SIAFXML_PATH
+SIAFXML_PATH = XML_DATA_SIAFXML_PATH / 'SIAFXML'
+
 
 @pytest.fixture
 def jail_environ():
@@ -22,51 +23,32 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.mark.parametrize(
-    'source, expected, use_pysiaf',
-    [
-        (None, siafdb.SiafDbPySiaf, True),
-        (XML_DATA_NO_SIAFXML_PATH / 'prd.db', siafdb.SiafDbSqlite, False),
-        ('XML_DATA_NO_SIAFXML', siafdb.SiafDbSqlite, False),
-        ('XML_DATA_SIAFXML', siafdb.SiafDbPySiaf, True)
-    ]
-)
-def test_create(source, expected, use_pysiaf, jail_environ):
+@pytest.mark.parametrize('source', [None, XML_DATA_SIAFXML_PATH, 'XML_DATA_SIAFXML'])
+def test_create(source, jail_environ):
     """Test the the right objects are created"""
-    if use_pysiaf:
-        pytest.importorskip('pysiaf')
-
-    if source == 'XML_DATA_NO_SIAFXML':
-        os.environ['XML_DATA'] = str(XML_DATA_NO_SIAFXML_PATH)
-        source = None
-    elif source == 'XML_DATA_SIAFXML':
+    if source == 'XML_DATA_SIAFXML':
         os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
         source = None
 
-    with siafdb.SiafDb(source) as siaf_db:
-        assert isinstance(siaf_db._db, expected)
+    siaf_db = siafdb.SiafDb(source)
+    assert isinstance(siaf_db, siafdb.SiafDb)
 
 
 @pytest.mark.parametrize(
-    'source, expected, use_pysiaf',
+    'aperture, expected',
     [
-        (None,
+        ('FGS1_FULL_OSS',
          siafdb.SIAF(v2_ref=206.407, v3_ref=-697.765, v3yangle=-1.24120427, vparity=1,
                      crpix1=1024.5, crpix2=1024.5, cdelt1=0.06839158, cdelt2=0.06993081,
-                     vertices_idl=(-68.8543, 70.1233, 71.5697, -70.2482, 72.1764, 68.8086, -75.5918, -70.7457)),
-         True),
-        (XML_DATA_NO_SIAFXML_PATH / 'prd.db',
-         siafdb.SIAF(v2_ref=206.464, v3_ref=-697.97, v3yangle=-1.25081713, vparity=1,
-                     crpix1=1024.5, crpix2=1024.5, cdelt1=0.06853116, cdelt2=0.07005886,
-                     vertices_idl=(-69.01, 70.294, 71.8255, -70.3952, 72.3452, 68.951, -75.8935, -70.8365)),
-         False),
+                     vertices_idl=(-68.8543, 70.1233, 71.5697, -70.2482, 72.1764, 68.8086, -75.5918, -70.7457))),
+        ('FGS2_FULL_OSS',
+         siafdb.SIAF(v2_ref=22.835, v3_ref=-699.423, v3yangle=0.2914828, vparity=1,
+                     crpix1=1024.5, crpix2=1024.5, cdelt1=0.06787747, cdelt2=0.06976441,
+                     vertices_idl=(-70.7843, 69.9807, 68.6042, -69.4153, -74.3558, -71.5516, 71.3065, 69.3639))),
     ]
 )
-def test_get_wcs(source, expected, use_pysiaf):
+def test_get_wcs(aperture, expected):
     """Test retrieval of wcs information."""
-    if use_pysiaf:
-        pytest.importorskip('pysiaf')
-
-    with siafdb.SiafDb(source) as siaf_db:
-        siaf = siaf_db.get_wcs('FGS1_FULL_OSS')
+    siaf_db =  siafdb.SiafDb(SIAFXML_PATH)
+    siaf = siaf_db.get_wcs(aperture, None)
     assert siaf == expected
