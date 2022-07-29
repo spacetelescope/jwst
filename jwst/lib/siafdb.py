@@ -8,9 +8,7 @@ Otherwise, use the standard interface defined by the `pysiaf` package
 from collections import namedtuple
 from datetime import date
 import logging
-import os
 from pathlib import Path
-import traceback
 
 from .basic_utils import LoggingContext
 
@@ -50,7 +48,6 @@ SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
 SIAF_MAP = {'V2Ref': 'v2_ref', 'V3Ref': 'v3_ref', 'V3IdlYAngle': 'v3yangle', 'VIdlParity': 'vparity',
             'XSciRef': 'crpix1', 'YSciRef': 'crpix2', 'XSciScale': 'cdelt1', 'YSciScale': 'cdelt2'}
 
-
 class SiafDb:
     """Use pysiaf as the source of siaf information
 
@@ -86,9 +83,6 @@ class SiafDb:
         self.xml_path = self.get_xml_path(source, prd)
 
     def get_aperture(self, aperture, useafter=None):
-        """Get the pysiaf.Aperture for an aperture
-
-    def get_aperture(self, aperture, useafter):
         """Get the pysiaf.Aperture for an aperture
 
         Parameters
