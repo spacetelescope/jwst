@@ -39,7 +39,7 @@ TARG_DEC = -87.0
 DATA_PATH = Path(__file__).parent / 'data'
 db_ngas_path = DATA_PATH / 'engdb_ngas'
 db_jw703_path = DATA_PATH / 'engdb_jw00703'
-siaf_path = DATA_PATH / 'xml_data_no_siafxml' / 'prd.db'
+siaf_path = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
 
 # Some expected values
 Q_EXPECTED = np.asarray(
@@ -160,7 +160,7 @@ def test_override_calc_wcs():
 
     assert vinfo_new != vinfo
     assert all(np.isclose(vinfo_new,
-                          stp.WCSRef(ra=32.50407337171124, dec=17.161233048951043, pa=352.28553015159287)))
+                          stp.WCSRef(ra=32.504066294908846, dec=17.16116653015435, pa=352.2757851954435)))
 
 
 @pytest.mark.parametrize(
@@ -527,8 +527,8 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         stp.update_wcs(model, siaf_path=siaf_path, allow_default=False, engdb_url='http://localhost')
         assert model.meta.wcsinfo.crpix1 == 24.5
         assert model.meta.wcsinfo.crpix2 == 24.5
-        assert model.meta.wcsinfo.cdelt1 == 3.067124166666667e-05
-        assert model.meta.wcsinfo.cdelt2 == 3.090061944444444e-05
+        assert model.meta.wcsinfo.cdelt1 == 3.0693922222222226e-05
+        assert model.meta.wcsinfo.cdelt2 == 3.092664722222222e-05
 
 
 def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
@@ -543,7 +543,7 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
         stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
-        assert model.meta.wcsinfo.siaf_xref_sci == 952
+        assert model.meta.wcsinfo.siaf_xref_sci == 858.0
         assert model.meta.wcsinfo.siaf_yref_sci == 35
 
 
@@ -643,10 +643,7 @@ def calc_coarse_202111_fgsid(request, tmp_path_factory):
     # Save transforms for later examination
     transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{t_pars.method}{truth_ext}.asdf')
 
-    try:
-        return transforms, t_pars, truth_ext, fgs_expected
-    finally:
-        t_pars.siaf_db.close()
+    return transforms, t_pars, truth_ext, fgs_expected
 
 
 @pytest.fixture(scope='module',
@@ -665,10 +662,7 @@ def calc_transforms(request, tmp_path_factory):
     # Save transforms for later examination
     transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{request.param}.asdf')
 
-    try:
-        return transforms, t_pars
-    finally:
-        t_pars.siaf_db.close()
+    return transforms, t_pars
 
 
 @pytest.fixture
