@@ -697,36 +697,36 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    with SiafDb(siaf_path) as siaf_db:
+    siaf_db = SiafDb(siaf_path)
 
-        # Get model attributes
-        useafter = model.meta.observation.date
+    # Get model attributes
+    useafter = model.meta.observation.date
 
-        # Configure transformation parameters.
-        t_pars = t_pars_from_model(
-            model,
-            default_pa_v3=default_pa_v3, engdb_url=engdb_url,
-            tolerance=tolerance, allow_default=allow_default,
-            reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
-            **transform_kwargs
+    # Configure transformation parameters.
+    t_pars = t_pars_from_model(
+        model,
+        default_pa_v3=default_pa_v3, engdb_url=engdb_url,
+        tolerance=tolerance, allow_default=allow_default,
+        reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
+        **transform_kwargs
+    )
+    if fgsid:
+        t_pars.fgsid = fgsid
+
+    # Populate header with SIAF information.
+    if t_pars.siaf is None:
+        if t_pars.exp_type not in FGS_GUIDE_EXP_TYPES:
+            raise ValueError('Insufficient SIAF information found in header.')
+    else:
+        populate_model_from_siaf(model, t_pars.siaf)
+
+    # Calculate WCS.
+    if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
+        update_wcs_from_fgs_guiding(
+            model, t_pars, default_roll_ref=default_roll_ref
         )
-        if fgsid:
-            t_pars.fgsid = fgsid
-
-        # Populate header with SIAF information.
-        if t_pars.siaf is None:
-            if t_pars.exp_type not in FGS_GUIDE_EXP_TYPES:
-                raise ValueError('Insufficient SIAF information found in header.')
-        else:
-            populate_model_from_siaf(model, t_pars.siaf)
-
-        # Calculate WCS.
-        if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
-            update_wcs_from_fgs_guiding(
-                model, t_pars, default_roll_ref=default_roll_ref
-            )
-        else:
-            transforms = update_wcs_from_telem(model, t_pars)
+    else:
+        transforms = update_wcs_from_telem(model, t_pars)
 
     return t_pars, transforms
 

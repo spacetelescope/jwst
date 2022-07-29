@@ -100,7 +100,7 @@ class SiafDb:
         aperture = siaf[aperture.upper()]
         return aperture
 
-    def get_wcs(self, aperture, useafter):
+    def get_wcs(self, aperture, useafter=None):
         """
         Query the SIAF database file and get WCS values.
 
