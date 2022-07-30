@@ -20,7 +20,14 @@ datamodels
   dictionary. [#6941]
 
 - Add P_SUBARR keyword to the `DarkModel` schema. [#6951]
-  
+
+resample
+--------
+
+- Fixed a bug in how variance arrays were resampled due to which the resulting
+  resampled error map contained an excessive number of zero-valued
+  pixel. [#6954]
+
 skymatch
 --------
 

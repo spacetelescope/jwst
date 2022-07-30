@@ -245,6 +245,8 @@ class ResampleData:
         output_wcs = output_model.meta.wcs
         inverse_variance_sum = np.zeros_like(output_model.data)
 
+        tmask = None
+
         log.info(f"Resampling {name}")
         for model in self.input_models:
             variance = getattr(model, name)
@@ -275,17 +277,21 @@ class ResampleData:
             self.drizzle_arrays(variance, inwht, model.meta.wcs,
                                 output_wcs, resampled_variance, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.inf)
+                                fillval=0.0)
 
             # Add the inverse of the resampled variance to a running sum
-            with np.errstate(divide="ignore"):
-                inverse_variance_sum += np.reciprocal(resampled_variance)
+            mask = (outwht > 0) & (resampled_variance > 0)
+            inverse_variance_sum[mask] += np.reciprocal(resampled_variance[mask])
+            if tmask is None:
+                tmask = mask
+            else:
+                tmask = np.logical_or(tmask, mask)
 
         # We now have a sum of the inverse resampled variances.  We need the
         # inverse of that to get back to units of variance.
-        with np.errstate(divide="ignore"):
-            output_variance = np.reciprocal(inverse_variance_sum)
-        output_variance[~np.isfinite(output_variance)] = np.nan
+        output_variance = np.full_like(output_model.data, np.nan)
+        output_variance[tmask] = np.reciprocal(inverse_variance_sum[tmask])
+
         setattr(output_model, name, output_variance)
 
     def update_exposure_times(self, output_model):
