@@ -321,7 +321,13 @@ class TweakRegStep(Step):
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
-                update_fits_wcsinfo(imcat.meta['image_model'])
+                try:
+                    update_fits_wcsinfo(imcat.meta['image_model'])
+                except (ValueError, RuntimeError) as e:
+                    self.log.warning(
+                        "Failed to update 'meta.wcsinfo' with FITS SIP "
+                        f'approximation. Reported error is:\n"{e.args[0]}"'
+                    )
 
         return images
 
