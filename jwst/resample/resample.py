@@ -219,8 +219,16 @@ class ResampleData:
         self.resample_variance_array("var_rnoise", output_model)
         self.resample_variance_array("var_poisson", output_model)
         self.resample_variance_array("var_flat", output_model)
-        output_model.err = np.sqrt(output_model.var_rnoise + output_model.var_poisson
-                                   + output_model.var_flat)
+        output_model.err = np.sqrt(
+            np.nansum(
+                [
+                    output_model.var_rnoise,
+                    output_model.var_poisson,
+                    output_model.var_flat
+                ],
+                axis=0
+            )
+        )
 
         # TODO: The following two methods and calls should be moved upstream to
         # ResampleStep and ResampleSpecStep respectively
@@ -243,9 +251,7 @@ class ResampleData:
         This modifies output_model in-place.
         """
         output_wcs = output_model.meta.wcs
-        inverse_variance_sum = np.zeros_like(output_model.data)
-
-        tmask = None
+        inverse_variance_sum = np.full_like(output_model.data, np.nan)
 
         log.info(f"Resampling {name}")
         for model in self.input_models:
@@ -265,8 +271,11 @@ class ResampleData:
                 continue
 
             # Make input weight map of unity where there is science data
-            inwht = resample_utils.build_driz_weight(model, weight_type=None,
-                                                     good_bits="~NON_SCIENCE+REFERENCE_PIXEL")
+            inwht = resample_utils.build_driz_weight(
+                model,
+                weight_type=None,
+                good_bits="~NON_SCIENCE+REFERENCE_PIXEL"
+            )
 
             resampled_variance = np.zeros_like(output_model.data)
             outwht = np.zeros_like(output_model.data)
@@ -277,20 +286,18 @@ class ResampleData:
             self.drizzle_arrays(variance, inwht, model.meta.wcs,
                                 output_wcs, resampled_variance, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=0.0)
+                                fillval=np.nan)
 
             # Add the inverse of the resampled variance to a running sum
             mask = (outwht > 0) & (resampled_variance > 0)
-            inverse_variance_sum[mask] += np.reciprocal(resampled_variance[mask])
-            if tmask is None:
-                tmask = mask
-            else:
-                tmask = np.logical_or(tmask, mask)
+            inverse_variance_sum[mask] = np.nansum(
+                [inverse_variance_sum[mask], np.reciprocal(resampled_variance[mask])],
+                 axis=0
+            )
 
         # We now have a sum of the inverse resampled variances.  We need the
         # inverse of that to get back to units of variance.
-        output_variance = np.full_like(output_model.data, np.nan)
-        output_variance[tmask] = np.reciprocal(inverse_variance_sum[tmask])
+        output_variance = np.reciprocal(inverse_variance_sum)
 
         setattr(output_model, name, output_variance)
 
