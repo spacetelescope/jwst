@@ -281,15 +281,16 @@ class ResampleData:
             outwht = np.zeros_like(output_model.data)
             outcon = np.zeros_like(output_model.con)
 
-            # Resample the variance array.  Use fillval=np.inf so that when we
-            # take the reciprocal for summing, it is zero where there is zero weight
+            # Resample the variance array. Fill "unpopulated" pixels with NaNs.
             self.drizzle_arrays(variance, inwht, model.meta.wcs,
                                 output_wcs, resampled_variance, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
                                 fillval=np.nan)
 
-            # Add the inverse of the resampled variance to a running sum
-            mask = (outwht > 0) & (resampled_variance > 0)
+            # Add the inverse of the resampled variance to a running sum.
+            # Update only pixels (in the running sum) with valid new values:
+            mask = np.logical_and(outcon, resampled_variance > 0)
+
             inverse_variance_sum[mask] = np.nansum(
                 [inverse_variance_sum[mask], np.reciprocal(resampled_variance[mask])],
                  axis=0
