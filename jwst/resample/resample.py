@@ -289,11 +289,11 @@ class ResampleData:
 
             # Add the inverse of the resampled variance to a running sum.
             # Update only pixels (in the running sum) with valid new values:
-            mask = np.logical_and(outcon, resampled_variance > 0)
+            mask = resampled_variance > 0
 
             inverse_variance_sum[mask] = np.nansum(
                 [inverse_variance_sum[mask], np.reciprocal(resampled_variance[mask])],
-                 axis=0
+                axis=0
             )
 
         # We now have a sum of the inverse resampled variances.  We need the
