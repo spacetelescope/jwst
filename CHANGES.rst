@@ -4,7 +4,7 @@
 general
 -------
 
--  Add details on when crds environmentals be defined. [#6953]
+-
 
 assign_wcs
 ----------
