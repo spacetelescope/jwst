@@ -1,6 +1,5 @@
 import copy
 from collections import OrderedDict
-from collections.abc import Sequence
 import os.path as op
 import re
 import logging
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class ModelContainer(JwstDataModel, Sequence, ModelList):
+class ModelContainer(JwstDataModel, ModelList):
     """
     A container for holding DataModels.
 
