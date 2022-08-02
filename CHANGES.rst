@@ -21,6 +21,12 @@ datamodels
 
 - Add P_SUBARR keyword to the `DarkModel` schema. [#6951]
 
+master_background
+-----------------
+
+- Fix MRS sigma-clipped background use in cases where EXTENDED keyword not
+  properly set. [#]
+
 resample
 --------
 

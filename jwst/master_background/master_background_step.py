@@ -115,8 +115,9 @@ class MasterBackgroundStep(Step):
                         # for simulated data that didn't bother populating this
                         # keyword
                         this_is_ifu_extended = False
-                        if ((model.meta.exposure.type == 'MIR_MRS' or model.meta.exposure.type == 'NRS_IFU')
-                                and model.meta.target.source_type == 'EXTENDED'):
+                        if (model.meta.exposure.type == 'NRS_IFU' and model.meta.target.source_type == 'EXTENDED'):
+                            this_is_ifu_extended = True
+                        if (model.meta.exposure.type == 'MIR_MRS'):
                             this_is_ifu_extended = True
 
                         if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
