@@ -15,7 +15,7 @@ how a parameter gets its final value.
 
    Retrieval of ``Step`` parameters from CRDS can be completely disabled by
    using the ``--disable-crds-steppars`` command-line switch, or setting the
-   environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
+   environment variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
 
 A parameter file should be used when there are parameters a user wishes to
 change from the default/CRDS version for a custom run of the step. To create a

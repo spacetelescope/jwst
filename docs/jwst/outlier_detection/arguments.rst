@@ -70,7 +70,7 @@ that control the behavior of the processing:
 ``--allowed_memory`` (float, default=None)
   Specifies the fractional amount of
   free memory to allow when creating the resampled image. If ``None``, the
-  environmental variable ``DMODEL_ALLOWED_MEMORY`` is used. If not defined, no
+  environment variable ``DMODEL_ALLOWED_MEMORY`` is used. If not defined, no
   check is made. If the resampled image would be larger than specified, an
   ``OutputTooLargeError`` exception will be generated.
 
