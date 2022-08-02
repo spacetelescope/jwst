@@ -40,6 +40,9 @@ datamodels
 
 - Add P_SUBARR keyword to the `DarkModel` schema. [#6951]
 
+- Change parent abstract class of ModelContainer from generic ``Sequence``
+  to ``ModelList`` from ``stdatamodels`` [#6948]
+
 master_background
 -----------------
 
