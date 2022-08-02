@@ -47,7 +47,7 @@ class GroupScaleStep(Step):
 
             # Compare NFRAMES and FRMDIVSR. If they're equal,
             # rescaling isn't needed.
-            elif (nframes == frame_divisor):
+            elif nframes == frame_divisor:
                 self.log.info('NFRAMES and FRMDIVSR are equal; correction not needed')
                 self.log.info('Step will be skipped')
                 result.meta.cal_step.group_scale = 'SKIPPED'

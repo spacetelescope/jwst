@@ -315,7 +315,7 @@ def get_rscd_parameters(input_model, rscd_model):
         subarray_table = tabdata['subarray']
         readpatt_table = tabdata['readpatt']
         group_skip_table = tabdata['group_skip']
-        if (subarray_table == subarray and readpatt_table == readpatt):
+        if subarray_table == subarray and readpatt_table == readpatt:
             param['skip'] = group_skip_table
             break
 
@@ -326,7 +326,7 @@ def get_rscd_parameters(input_model, rscd_model):
         lower_cutoff_gen = tabdata['lower_cutoff']
         alpha_even_gen = tabdata['alpha_even']
         alpha_odd_gen = tabdata['alpha_even']
-        if (subarray_gen == subarray and readpatt_gen == readpatt):
+        if subarray_gen == subarray and readpatt_gen == readpatt:
             param['gen'] = {}
             param['gen']['lower_cutoff'] = lower_cutoff_gen
             param['gen']['lower_alpha_odd'] = alpha_odd_gen
@@ -342,7 +342,7 @@ def get_rscd_parameters(input_model, rscd_model):
         a1_int1 = tabdata['a1']
         a2_int1 = tabdata['a2']
         a3_int1 = tabdata['a3']
-        if (subarray_int1 == subarray and readpatt_int1 == readpatt):
+        if subarray_int1 == subarray and readpatt_int1 == readpatt:
             param['int1'] = {}
             param['int1']['even'] = {}
             param['int1']['odd'] = {}
@@ -367,7 +367,7 @@ def get_rscd_parameters(input_model, rscd_model):
         a1_int2 = tabdata['b1']
         a2_int2 = tabdata['b2']
         a3_int2 = tabdata['b3']
-        if (subarray_int2 == subarray and readpatt_int2 == readpatt):
+        if subarray_int2 == subarray and readpatt_int2 == readpatt:
             param['int2'] = {}
             param['int2']['even'] = {}
             param['int2']['odd'] = {}
@@ -392,7 +392,7 @@ def get_rscd_parameters(input_model, rscd_model):
         a1_int3 = tabdata['c1']
         a2_int3 = tabdata['c2']
         a3_int3 = tabdata['c3']
-        if (subarray_int3 == subarray and readpatt_int3 == readpatt):
+        if subarray_int3 == subarray and readpatt_int3 == readpatt:
             param['int3'] = {}
             param['int3']['even'] = {}
             param['int3']['odd'] = {}
