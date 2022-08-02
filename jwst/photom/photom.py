@@ -115,11 +115,9 @@ class DataSet():
             if model.meta.instrument.grating is not None:
                 self.grating = model.meta.instrument.grating.upper()
             self.order = None
-            if (
-                model.meta.hasattr('wcsinfo')
-                and model.meta.wcsinfo.hasattr('spectral_order')
-                and model.meta.wcsinfo.spectral_order is not None
-            ):
+            if (model.meta.hasattr('wcsinfo') and
+                    model.meta.wcsinfo.hasattr('spectral_order') and
+                    model.meta.wcsinfo.spectral_order is not None):
                 self.order = model.meta.wcsinfo.spectral_order
             self.pupil = None
             if model.meta.instrument.pupil is not None:
@@ -524,7 +522,7 @@ class DataSet():
         -------
         """
         # Handle WFSS data separately from regular imaging
-        if (isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS'):
+        if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS':
             # Loop over the WFSS slits, applying the correct photom ref data
             for slit in self.input.slits:
                 log.info('Working on slit %s' % slit.name)
@@ -972,7 +970,7 @@ class DataSet():
         wl_array = model.spec_table['WAVELENGTH']
 
         flip_wl = False
-        if (np.nanargmax(wl_array) - np.nanargmin(wl_array)) < 0:
+        if np.nanargmax(wl_array) - np.nanargmin(wl_array) < 0:
             # Need monotonically increasing wavelengths for interp
             # Bool flag to flip fit if True
             flip_wl = True
@@ -980,7 +978,7 @@ class DataSet():
 
         wl_array[np.isnan(wl_array)] = -1.
 
-        if (np.nanargmax(waves) - np.nanargmin(waves)) < 0:
+        if np.nanargmax(waves) - np.nanargmin(waves) < 0:
             # Need monotonically increasing wavelengths for interp
             # This shouldn't have effects external to method.
             waves = waves[::-1]

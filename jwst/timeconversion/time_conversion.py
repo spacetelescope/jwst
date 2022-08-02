@@ -98,7 +98,7 @@ def read_jwst_ephemeris(times):
     # Determine min, max of times sought
     mintime = times.min()
     maxtime = times.max()
-    if (mintime < starttime) or (maxtime > endtime):
+    if mintime < starttime or maxtime > endtime:
         raise ValueError(
             'Some of times provided are out of the range of times in the JWST ephemeris file')
     # Determine fractional locations

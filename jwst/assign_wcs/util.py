@@ -994,9 +994,9 @@ def compute_footprint_spectral(model):
     max_ra = np.nanmax(ra)
 
     # for the footprint we want the ra values to fall between 0 to 360
-    if (min_ra < 0):
+    if min_ra < 0:
         min_ra = min_ra + 360.0
-    if (max_ra >= 360.0):
+    if max_ra >= 360.0:
         max_ra = max_ra - 360.0
     footprint = np.array([[min_ra, np.nanmin(dec)],
                           [max_ra, np.nanmin(dec)],
@@ -1123,9 +1123,9 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     ra_max = np.nanmax(ra_total)
     ra_min = np.nanmin(ra_total)
     # for the footprint we want ra to be between 0 to 360
-    if (ra_min < 0):
+    if ra_min < 0:
         ra_min = ra_min + 360.0
-    if (ra_max >= 360.0):
+    if ra_max >= 360.0:
         ra_max = ra_max - 360.0
 
     dec_max = np.nanmax(dec_total)
@@ -1209,10 +1209,10 @@ def wrap_ra(ravalues):
     nwrap = wrap_index[0].size
 
     # get all the ra on the same "side" of 0/360
-    if (nwrap != 0 and median_ra < 180):
+    if nwrap != 0 and median_ra < 180:
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] - 360.0
 
-    if (nwrap != 0 and median_ra > 180):
+    if nwrap != 0 and median_ra > 180:
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
 
     # if the input ravaules are a list - return a list
