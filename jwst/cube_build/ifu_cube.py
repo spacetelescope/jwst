@@ -190,8 +190,6 @@ class IFUCubeData():
                 b_name = ''
                 for i in range(number_subchannels):
                     b_name = b_name + subchannels[i]
-                    if i > 1:
-                        b_name = b_name + '-'
                 b_name = b_name.lower()
                 newname = self.output_name_base + ch_name + '-' + b_name + \
                     '_s3d.fits'
