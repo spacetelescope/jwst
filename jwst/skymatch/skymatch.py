@@ -500,7 +500,7 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
     A, W = _overlap_matrix(images, apply_sky=apply_sky)
 
     def is_valid(i, j):
-        return (W[i, j] > 0 and W[j, i] > 0)
+        return W[i, j] > 0 and W[j, i] > 0
 
     # We need to know how many "non-trivial" (at least for now... - we will
     # compute rank later) equations can be built so that we know the

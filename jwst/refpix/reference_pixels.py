@@ -2083,4 +2083,4 @@ def save_science_values(input_dataset):
     pdq = input_dataset.input_model.pixeldq
     wh_zero = np.where(input_dataset.input_model.zeroframe[:, :, :] == 0.)
 
-    return (data, gdq, pdq, wh_zero)
+    return data, gdq, pdq, wh_zero
