@@ -16,7 +16,9 @@ assign_wcs
 cube_build
 ----------
 
-- Remove trailing dash from IFU cube filenames built from all subchannels [#6959]
+- Remove trailing dash from IFU cube filenames built from all subchannels.
+  Sort subchannels present by inverse alphabetical order to ensure
+  consistent filename creation across processing runs. [#6959]
 
 datamodels
 ----------
