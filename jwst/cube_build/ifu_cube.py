@@ -149,7 +149,7 @@ class IFUCubeData():
             if num_files > 1:
                 raise IncorrectInput("Cubes built in internal_cal coordinate system" +
                                      " are built from a single file, not multiple exposures")
-            if (len(self.list_par1) > 1):
+            if len(self.list_par1) > 1:
                 raise IncorrectInput("Only a single channel or grating " +
                                      " can be used to create cubes in internal_cal coordinate system." +
                                      " Use --output_type=band")
@@ -214,7 +214,7 @@ class IFUCubeData():
                 fg_name = '_'
                 for i in range(len(self.list_par1)):
                     fg_name = fg_name + self.list_par1[i] + '-' + self.list_par2[i]
-                    if (i < self.num_bands - 1):
+                    if i < self.num_bands - 1:
                         fg_name = fg_name + '-'
                 fg_name = fg_name.lower()
                 newname = self.output_name_base + fg_name + '_s3d.fits'
@@ -1262,7 +1262,7 @@ class IFUCubeData():
                         spatial_found = False
                         spectral_found = False
 
-                if (spectral_found & spatial_found & world):
+                if spectral_found and spatial_found and world:
                     [lmin,lmax] = input_model.meta.wcsinfo.spectral_region
                     spatial_box = input_model.meta.wcsinfo.s_region
                     s = spatial_box.split(' ')
@@ -1354,7 +1354,7 @@ class IFUCubeData():
         test_a = final_a_max - final_a_min
         test_b = final_b_max - final_b_min
         tolerance1 = 0.00001
-        if (test_a < tolerance1 or test_b < tolerance1):
+        if test_a < tolerance1 or test_b < tolerance1:
             log.info(f'No Valid IFU slice data found {test_a} {test_b}')
         # ________________________________________________________________________________
         # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
@@ -1620,11 +1620,11 @@ class IFUCubeData():
         # If it has not been subtracted and the background has not been
         # subtracted - subtract it.
         num_ch_bgk = len(input_model.meta.background.polynomial_info)
-        if (num_ch_bgk > 0 and subtract_background and input_model.meta.background.subtracted is False):
+        if num_ch_bgk > 0 and subtract_background and input_model.meta.background.subtracted is False:
             for ich_num in range(num_ch_bgk):
                 poly = input_model.meta.background.polynomial_info[ich_num]
                 poly_ch = poly.channel
-                if (poly_ch == this_par1):
+                if poly_ch == this_par1:
                     apply_background_2d(input_model, poly_ch, subtract=True)
 
         # find the slice number of each pixel and fill in slice_det
@@ -1994,7 +1994,7 @@ class IFUCubeData():
 
             while ((ij < 4) and (found == 0)):
                 if (xcheck[ij] > 0 and xcheck[ij] < self.naxis1 and
-                   ycheck[ij] > 0 and ycheck[ij] < self.naxis2):
+                        ycheck[ij] > 0 and ycheck[ij] < self.naxis2):
                     index_check = iwave * nxy + ycheck[ij] * self.naxis1 + xcheck[ij]
                     # If the nearby spaxel_dq contains overlap_no_coverage
                     # then unmark dq flag as hole. A hole has to have nearby
@@ -2055,7 +2055,7 @@ class IFUCubeData():
                 ngood[zz] = len(good[0])
             # Find where this vector is non-zero, and compute 1% threshold of those good values
             good = np.where(ngood > 0)
-            if (len(good[0]) > 0):
+            if len(good[0]) > 0:
                 pctile = np.percentile(ngood[good], 3)
                 # Figure out where the number of good values were less than 75% of threshold,
                 # and zero out those arrays.
@@ -2103,7 +2103,7 @@ class IFUCubeData():
                 # the input to cube_build  is returned instead of an zero filled ifucube
                 status = 1
 
-            if (remove_total > 0 and remove_total < self.naxis3):
+            if remove_total > 0 and remove_total < self.naxis3:
                 log.info('Number of wavelength planes removed with no data: %i',
                          remove_total)
 

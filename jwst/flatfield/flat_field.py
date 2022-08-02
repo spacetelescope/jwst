@@ -119,7 +119,7 @@ def do_flat_field(output_model, flat_model, inverse=False):
     any_updated = False  # will set True if any flats applied
 
     # Check to see if flat data array is smaller than science data
-    if ((output_model.data.shape[-1] > flat_model.data.shape[-1]) or 
+    if ((output_model.data.shape[-1] > flat_model.data.shape[-1]) or
             (output_model.data.shape[-2] > flat_model.data.shape[-2])):
         log.warning('Reference data array is smaller than science data')
         log.warning('Step will be skipped')
