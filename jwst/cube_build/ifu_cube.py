@@ -185,7 +185,9 @@ class IFUCubeData():
                         if i < number_channels - 1:
                             ch_name = ch_name + '-'
 
-                subchannels = list(set(self.list_par2))
+                # Sort by inverse alphabetical, e.g. short -> medium -> long
+                subchannels = sorted(list(set(self.list_par2)))[::-1]
+                log.info(f"Subchannel listing: {subchannels}")
                 number_subchannels = len(subchannels)
                 b_name = ''
                 for i in range(number_subchannels):
