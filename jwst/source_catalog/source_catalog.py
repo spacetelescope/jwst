@@ -554,7 +554,7 @@ class JWSTSourceCatalog:
         The EE indices for the concentration indices.
         """
         # NOTE: the EE values are always in increasing order
-        return ((0, 1), (1, 2), (0, 2))
+        return (0, 1), (1, 2), (0, 2)
 
     @lazyproperty
     def ci_colnames(self):
@@ -650,8 +650,7 @@ class JWSTSourceCatalog:
         # normalize the kernel to zero sum
         npixels = self._kernel_mask.sum()
         denom = np.sum(kernel**2) - (np.sum(kernel)**2 / npixels)
-        return (((kernel - (kernel.sum() / npixels)) / denom)
-                * self._kernel_mask)
+        return ((kernel - (kernel.sum() / npixels)) / denom) * self._kernel_mask
 
     @lazyproperty
     def _daofind_convolved_data(self):

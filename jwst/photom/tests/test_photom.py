@@ -44,7 +44,7 @@ def mk_data(shape):
     var_r = np.ones(shape, dtype=np.float32)            # var_rnoise
     var_f = np.ones(shape, dtype=np.float32)            # var_flat
 
-    return (data, dq, err, var_p, var_r, var_f)
+    return data, dq, err, var_p, var_r, var_f
 
 
 def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):

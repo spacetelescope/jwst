@@ -442,7 +442,7 @@ class AttrConstraint(SimpleConstraintABC):
                     )
                 )
             self.matched = True
-            return (self.matched, reprocess)
+            return self.matched, reprocess
 
         # Get the condition information.
         try:

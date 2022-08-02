@@ -849,7 +849,7 @@ def spectrograph_flat(wl, s_flat_model,
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
-        return (1., None)
+        return 1., None
 
     (tab_wl, tab_flat) = read_flat_table(s_flat_model, exposure_type,
                                          slit_name, quadrant)
@@ -956,7 +956,7 @@ def detector_flat(wl, d_flat_model,
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
-        return (1., None)
+        return 1., None
 
     (tab_wl, tab_flat) = read_flat_table(d_flat_model, exposure_type,
                                          slit_name, quadrant)
@@ -1244,7 +1244,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
             log.warning("Wavelengths in the fast-variation table "
                         "must be strictly increasing.")
 
-    return (tab_wl, tab_flat)
+    return tab_wl, tab_flat
 
 
 def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
@@ -1329,7 +1329,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
                 else:
                     values[j, i] = temp
 
-    return (flat_2d * values, combined_dq)
+    return flat_2d * values, combined_dq
 
 
 def clean_wl(wl, dispaxis):
@@ -1524,11 +1524,9 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
             # dq and err arrays are the same size, so treat them the same
             return image_flat.reshape((ysize, xsize)), image_dq, image_err
         else:
-            return (
-                image_flat.reshape((ysize, xsize)),
-                image_dq.reshape((ysize, xsize)),
-                image_err.reshape((ysize, xsize))
-            )
+            return (image_flat.reshape((ysize, xsize)),
+                    image_dq.reshape((ysize, xsize)),
+                    image_err.reshape((ysize, xsize)))
 
     grid = np.indices((ysize, xsize), dtype=np.intp)
     ixpixel = grid[1]

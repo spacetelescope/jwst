@@ -501,9 +501,7 @@ def get_marked(module, predicate=None, include_bases=False):
         A generator that will yield all class members in the module.
     """
     def is_method(obj):
-        return (isfunction(obj) or
-                ismethod(obj)
-        )
+        return isfunction(obj) or ismethod(obj)
 
     for name, obj in getmembers(module, predicate):
         if isclass(obj):

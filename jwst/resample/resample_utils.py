@@ -199,7 +199,7 @@ def build_mask(dqarr, bitvalue):
     bitvalue = interpret_bit_flags(bitvalue, mnemonic_map=pixel)
 
     if bitvalue is None:
-        return (np.ones(dqarr.shape, dtype=np.uint8))
+        return np.ones(dqarr.shape, dtype=np.uint8)
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
 
 

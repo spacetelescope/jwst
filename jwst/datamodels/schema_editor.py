@@ -1473,7 +1473,7 @@ class Schema_editor:
         different_values = list(set(model_value) - set(common_values))
         sorted_model_value = different_values + common_values
 
-        return (sorted_keyword_value, sorted_model_value)
+        return sorted_keyword_value, sorted_model_value
 
     def strip_blanks(self, value):
         """

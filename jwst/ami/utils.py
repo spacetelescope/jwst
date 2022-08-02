@@ -458,7 +458,7 @@ def centerpoint(s):
     center: 2D integer or float tuple
         center of image
     """
-    return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
+    return 0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5
 
 
 def combine_transmission(filt, SRC):
