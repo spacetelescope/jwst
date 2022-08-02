@@ -113,7 +113,7 @@ def fourier_imshift(image, shift):
     elif ndim == 3:
         nslices = image.shape[0]
         shift = np.asanyarray(shift)[:, :2]
-        if (shift.shape[0] != nslices):
+        if shift.shape[0] != nslices:
             raise ValueError("The number of provided shifts must be equal "
                              "to the number of slices in the input image.")
 
