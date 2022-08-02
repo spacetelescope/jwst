@@ -1206,7 +1206,7 @@ def img_median_replace(img_model, box_size):
     num_dq_bad = np.count_nonzero(input_dq == dqflags.pixel['DO_NOT_USE'])
 
     # check to see if any of the pixels are bad
-    if (num_nan + num_dq_bad > 0):
+    if num_nan + num_dq_bad > 0:
 
         log.info(f'Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels')
         bad_locations = np.where(np.isnan(input_data) |
