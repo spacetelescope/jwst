@@ -391,7 +391,10 @@ long match_wave_plane_nirspec(double wave_plane,
     for (int i = 0; i< 30; i++){
       if (c1_min[i] != minvalue && c2_min[i] != minvalue &&
 	  c1_max[i] != maxvalue && c2_max[i] != maxvalue){
-	match_slice[i] = 1;
+	
+	if (c1_min[i] != c1_max[i] && c2_min[i] != c2_max[i]){
+	  match_slice[i] = 1;
+	}
       }
     }
   }
@@ -404,7 +407,8 @@ long match_wave_plane_nirspec(double wave_plane,
 int overlap_slice_with_spaxels(int overlap_partial,
 			       double cdelt1, double cdelt2,
 			       int naxis1, int naxis2,
-			       double xcenters[], double ycenters[],
+			       double xstart, double ystart,
+			       // double xcenters[], double ycenters[],
 			       double xi_min, double eta_min,
 			       double xi_max, double eta_max,
 			       int wave_slice_dq[]) {
@@ -436,20 +440,20 @@ int overlap_slice_with_spaxels(int overlap_partial,
 
   */
  
-  int error, ystep, y, x, yuse, xuse, index;
+  int error, ystep, y, x, yuse, xuse;
+  int index;
   //set up line - convert to integer values
-  int x1 = (int)((xi_min - xcenters[0]) / cdelt1);
-  int y1 = (int)((eta_min - ycenters[0]) / cdelt2);
-  int x2 = (int)((xi_max - xcenters[0]) / cdelt1);
-  int y2 = (int)((eta_max - ycenters[0]) / cdelt2);
+  int x1 = (int)((xi_min - xstart) / cdelt1);
+  int y1 = (int)((eta_min - ystart) / cdelt2);
+  int x2 = (int)((xi_max - xstart) / cdelt1);
+  int y2 = (int)((eta_max - ystart) / cdelt2);
 
   int dx = x2 - x1;
   int dy = y2 - y1;
   bool is_steep;
+
   is_steep = abs(dy) > abs(dx);
 
-  // printf(" x1 x2 y1 y2 %i %i %i %i \n", x1,x2,y1,y2);
-  
   // if is_steep switch x and y 
   if (is_steep){
       x1 = y1;
@@ -491,8 +495,7 @@ int overlap_slice_with_spaxels(int overlap_partial,
       }
 
     index = (yuse * naxis1) + xuse;
-    //printf(" index %i %i %i %i %i %i \n", index, yuse, naxis1, xuse, x,y );
-    
+
     wave_slice_dq[index] = overlap_partial;
     error -= abs(dy);
     if (error < 0){
@@ -636,7 +639,7 @@ int dq_nirspec(int overlap_partial,
   }
   
   nxy = nx * ny;
-  
+
   for (w = 0; w  < nz; w++) {
     long imatch = 0;
     double c1_min[30];
@@ -674,10 +677,13 @@ int dq_nirspec(int overlap_partial,
 
 	  // at the wavelength plane find the overlap of each slice on
 	  // output spaxel plane
+
+	  float xstart = xc[0];
+	  float ystart = yc[0];
 	  status = overlap_slice_with_spaxels(overlap_partial,
 					      cdelt1,cdelt2,
 					      nx, ny,
-					      xc, yc,
+					      xstart, ystart,
 					      slice_c1_min, slice_c2_min,
 					      slice_c1_max, slice_c2_max,
 					      wave_slice_dq);

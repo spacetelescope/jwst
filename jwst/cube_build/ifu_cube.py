@@ -1260,7 +1260,10 @@ class IFUCubeData():
                     if ch1 in self.list_par1 or ch3 in self.list_par1:
                         spatial_found = False
                         spectral_found = False
-
+                # If Moving TARGET data then do not use s_region the y are not updated for moving targets
+                target_type = input_model.meta.target.type
+                if target_type == 'MOVING':
+                    spatial_found = False
                 if(spectral_found & spatial_found & world):
                     [lmin, lmax] = input_model.meta.wcsinfo.spectral_region
                     spatial_box = input_model.meta.wcsinfo.s_region
@@ -1756,7 +1759,6 @@ class IFUCubeData():
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
             ra, dec, lam = slice_wcs(x, y)
-
             # the slices are curved on detector so a rectangular region returns NaNs
             valid = ~np.isnan(lam)
             x = x[valid]
