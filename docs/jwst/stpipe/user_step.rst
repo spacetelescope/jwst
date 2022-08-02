@@ -175,7 +175,7 @@ qualifying member, usually of type ``science`` is used.
 
 Retrieval of ``Step`` parameters from CRDS can be completely disabled by
 using the ``--disable-crds-steppars`` command-line switch, or setting the
-environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
+environment variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
 
 .. _run_step_from_python:
 
