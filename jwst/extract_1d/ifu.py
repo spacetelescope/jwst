@@ -581,7 +581,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         # There is no valid data for this region. To prevent the code from
         # crashing set aperture_area to a nonzero value. It will have the dq flag
-        if(aperture_area == 0 and aperture.area > 0):
+        if (aperture_area == 0 and aperture.area > 0):
             aperture_area = aperture.area
 
         if subtract_background and annulus is not None:
@@ -590,7 +590,7 @@ def extract_ifu(input_model, source_type, extract_params):
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
 
-            if(annulus_area == 0 and annulus.area > 0):
+            if (annulus_area == 0 and annulus.area > 0):
                 annulus_area = annulus.area
 
             if annulus_area > 0.:

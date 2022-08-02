@@ -317,7 +317,7 @@ def get_jwst_keywords(fd):
                          fd['SCI'].header['jwst_dy'],
                          fd['SCI'].header['jwst_dz']), dtype=np.float64)
 
-    return(eph_time, jwst_pos, jwst_vel)
+    return (eph_time, jwst_pos, jwst_vel)
 
 
 def linear_pos(tt_times, eph_time, jwst_pos, jwst_vel):

@@ -250,7 +250,7 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
                                                           deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores=max_cores)
-    assert(out_model.meta.cal_step.jump == 'SKIPPED')
+    assert (out_model.meta.cal_step.jump == 'SKIPPED')
 
 
 def test_three_group_integration(generate_miri_reffiles, setup_inputs):
