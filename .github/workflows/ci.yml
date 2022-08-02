@@ -194,7 +194,7 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-coverage-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install -e ".[test]" pytest-xdist pytest-cov
+      - run: pip install -e ".[test]" pytest-xdist pytest-cov cython
       - run: minimum_deps
       - run: pip install --ignore-installed -r requirements-min.txt
       - run: pip freeze
