@@ -25,7 +25,7 @@ master_background
 -----------------
 
 - Fix MRS sigma-clipped background use in cases where EXTENDED keyword not
-  properly set. [#]
+  properly set. [#6960]
 
 resample
 --------
