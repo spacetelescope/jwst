@@ -219,8 +219,16 @@ class ResampleData:
         self.resample_variance_array("var_rnoise", output_model)
         self.resample_variance_array("var_poisson", output_model)
         self.resample_variance_array("var_flat", output_model)
-        output_model.err = np.sqrt(output_model.var_rnoise + output_model.var_poisson
-                                   + output_model.var_flat)
+        output_model.err = np.sqrt(
+            np.nansum(
+                [
+                    output_model.var_rnoise,
+                    output_model.var_poisson,
+                    output_model.var_flat
+                ],
+                axis=0
+            )
+        )
 
         # TODO: The following two methods and calls should be moved upstream to
         # ResampleStep and ResampleSpecStep respectively
@@ -243,7 +251,7 @@ class ResampleData:
         This modifies output_model in-place.
         """
         output_wcs = output_model.meta.wcs
-        inverse_variance_sum = np.zeros_like(output_model.data)
+        inverse_variance_sum = np.full_like(output_model.data, np.nan)
 
         log.info(f"Resampling {name}")
         for model in self.input_models:
@@ -263,29 +271,35 @@ class ResampleData:
                 continue
 
             # Make input weight map of unity where there is science data
-            inwht = resample_utils.build_driz_weight(model, weight_type=None,
-                                                     good_bits="~NON_SCIENCE+REFERENCE_PIXEL")
+            inwht = resample_utils.build_driz_weight(
+                model,
+                weight_type=None,
+                good_bits="~NON_SCIENCE+REFERENCE_PIXEL"
+            )
 
             resampled_variance = np.zeros_like(output_model.data)
             outwht = np.zeros_like(output_model.data)
             outcon = np.zeros_like(output_model.con)
 
-            # Resample the variance array.  Use fillval=np.inf so that when we
-            # take the reciprocal for summing, it is zero where there is zero weight
+            # Resample the variance array. Fill "unpopulated" pixels with NaNs.
             self.drizzle_arrays(variance, inwht, model.meta.wcs,
                                 output_wcs, resampled_variance, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.inf)
+                                fillval=np.nan)
 
-            # Add the inverse of the resampled variance to a running sum
-            with np.errstate(divide="ignore"):
-                inverse_variance_sum += np.reciprocal(resampled_variance)
+            # Add the inverse of the resampled variance to a running sum.
+            # Update only pixels (in the running sum) with valid new values:
+            mask = resampled_variance > 0
+
+            inverse_variance_sum[mask] = np.nansum(
+                [inverse_variance_sum[mask], np.reciprocal(resampled_variance[mask])],
+                axis=0
+            )
 
         # We now have a sum of the inverse resampled variances.  We need the
         # inverse of that to get back to units of variance.
-        with np.errstate(divide="ignore"):
-            output_variance = np.reciprocal(inverse_variance_sum)
-        output_variance[~np.isfinite(output_variance)] = np.nan
+        output_variance = np.reciprocal(inverse_variance_sum)
+
         setattr(output_model, name, output_variance)
 
     def update_exposure_times(self, output_model):
