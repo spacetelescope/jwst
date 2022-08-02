@@ -74,8 +74,8 @@ def do_correction(input_model,
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    if (input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and \
-            (input_model.meta.instrument.lamp_mode != 'IMAGE'):
+    if ((input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and
+            (input_model.meta.instrument.lamp_mode != 'IMAGE')):
         flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
                                              user_supplied_flat=user_supplied_flat,
                                              inverse=inverse)
@@ -119,8 +119,8 @@ def do_flat_field(output_model, flat_model, inverse=False):
     any_updated = False  # will set True if any flats applied
 
     # Check to see if flat data array is smaller than science data
-    if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
-            (output_model.data.shape[-2] > flat_model.data.shape[-2]):
+    if ((output_model.data.shape[-1] > flat_model.data.shape[-1]) or 
+            (output_model.data.shape[-2] > flat_model.data.shape[-2])):
         log.warning('Reference data array is smaller than science data')
         log.warning('Step will be skipped')
 

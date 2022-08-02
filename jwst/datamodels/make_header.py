@@ -342,8 +342,7 @@ def import_objects(package, line):
 
     objects = []
     for value in local_variables.values():
-        if (inspect.isclass(value) or
-            inspect.isfunction(value) or
+        if (inspect.isclass(value) or inspect.isfunction(value) or
                 inspect.ismodule(value)):
             objects.append(value)
     return objects
