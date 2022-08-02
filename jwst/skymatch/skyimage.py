@@ -612,7 +612,7 @@ None, optional
                     radec.append(self.intersection(poly).to_radec())
 
             if polyarea == 0.0:
-                return (None, 0, 0.0)
+                return None, 0, 0.0
 
             for ra, dec in radec:
                 if len(ra) < 4:
@@ -631,16 +631,16 @@ None, optional
             data = self.image[fill_mask]
 
             if data.size < 1:
-                return (None, 0, 0.0)
+                return None, 0, 0.0
 
         # Calculate sky
         try:
             skyval, npix = self._skystat(data)
         except ValueError:
-            return (None, 0, 0.0)
+            return None, 0, 0.0
 
         if not np.isfinite(skyval):
-            return (None, 0, 0.0)
+            return None, 0, 0.0
 
         if delta:
             skyval -= self._sky
@@ -714,7 +714,7 @@ None, optional
                     radec.append(self.intersection(poly).to_radec())
 
             if polyarea == 0.0:
-                return (None, 0, 0.0)
+                return None, 0, 0.0
 
             for ra, dec in radec:
                 if len(ra) < 4:
@@ -733,7 +733,7 @@ None, optional
             data = self.image[fill_mask]
 
             if data.size < 1:
-                return (None, 0, 0.0)
+                return None, 0, 0.0
 
         # Calculate sky
         try:
@@ -742,7 +742,7 @@ None, optional
 
         except ValueError:
 
-            return (None, 0, 0.0)
+            return None, 0, 0.0
 
         if delta:
             skyval -= self._sky
@@ -975,7 +975,7 @@ None, optional
         """
 
         if len(self._images) == 0:
-            return (None, 0, 0.0)
+            return None, 0, 0.0
 
         wght = 0
         area = 0.0
@@ -998,7 +998,7 @@ None, optional
                     wght = npix
                     area = imarea
 
-            return (wsky, wght, area)
+            return wsky, wght, area
 
         # compute weighted sky in various overlaps:
         wsky = 0.0
@@ -1017,6 +1017,6 @@ None, optional
                 wght += pix_area
 
         if wght == 0.0 or area == 0.0:
-            return (None, wght, area)
+            return None, wght, area
         else:
-            return (wsky / wght, wght, area)
+            return wsky / wght, wght, area

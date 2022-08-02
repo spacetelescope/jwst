@@ -1088,7 +1088,7 @@ def get_coordinates(input_model, x0, y0):
         (ra, dec) = (0., 0.)
         wavelength = np.arange(1, nelem + 1, dtype=np.float64)
 
-    return (ra, dec, wavelength)
+    return ra, dec, wavelength
 
 
 def nans_in_wavelength(wavelength, dq):
@@ -1119,14 +1119,14 @@ def nans_in_wavelength(wavelength, dq):
     slc = slice(nelem)
     if nelem == 0:
         log.warning("Output arrays are empty!")
-        return (wavelength, dq, slice(nelem))
+        return wavelength, dq, slice(nelem)
 
     nan_mask = np.isnan(wavelength)
     n_nan = nan_mask.sum(dtype=np.intp)
     if n_nan == nelem:
         log.warning("Wavelength array is all NaN!")
         dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
-        return (wavelength, dq, slice(0))
+        return wavelength, dq, slice(0)
 
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
@@ -1183,7 +1183,7 @@ def separate_target_and_background(ref):
     else:
         mask_bkg = None
 
-    return (mask_target, mask_bkg)
+    return mask_target, mask_bkg
 
 
 def im_centroid(data, mask_target):
@@ -1219,7 +1219,7 @@ def im_centroid(data, mask_target):
         shape = data_2d.shape
         y0 = shape[0] / 2.
         x0 = shape[0] / 2.
-        return (y0, x0)
+        return y0, x0
 
     x_profile = data_2d.sum(axis=0, dtype=np.float64)
     x = np.arange(data_2d.shape[1], dtype=np.float64)
@@ -1231,7 +1231,7 @@ def im_centroid(data, mask_target):
     s_y = (y_profile * y).sum()
     y0 = s_y / y_profile.sum()
 
-    return (y0, x0)
+    return y0, x0
 
 
 def shift_ref_image(mask, delta_y, delta_x, fill=0):
