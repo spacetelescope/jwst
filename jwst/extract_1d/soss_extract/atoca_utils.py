@@ -47,7 +47,7 @@ def arange_2d(starts, stops, dtype=None):
     stops = np.asarray(stops)
 
     # Check input for starts and stops is valid.
-    if (starts.shape != stops.shape) & (starts.shape != ()):
+    if starts.shape != stops.shape and starts.shape != ():
         msg = ('Shapes of starts and stops are not compatible, '
                'they must either have the same shape or starts must be scalar.')
         log.critical(msg)

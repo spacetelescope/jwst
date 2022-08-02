@@ -312,11 +312,9 @@ def get_extract_parameters(
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
 
         for aper in ref_dict['apertures']:
-            if (
-                    'id' in aper
-                    and aper['id'] != "dummy"
-                    and (aper['id'] == slitname or aper['id'] == "ANY" or slitname == "ANY")
-            ):
+            if ('id' in aper and aper['id'] != "dummy" and
+                    (aper['id'] == slitname or aper['id'] == "ANY" or
+                     slitname == "ANY")):
                 extract_params['match'] = PARTIAL
                 # region_type is retained for backward compatibility; it is
                 # not required to be present.
@@ -782,12 +780,8 @@ def sanity_check_limits(
     flag : boolean
         True if ap_ref and ap_wcs do overlap, i.e. if the sanity test passes.
     """
-    if (
-            ap_wcs.xstart >= ap_ref.xstop
-            or ap_wcs.xstop <= ap_ref.xstart
-            or ap_wcs.ystart >= ap_ref.ystop
-            or ap_wcs.ystop <= ap_ref.ystart
-    ):
+    if (ap_wcs.xstart >= ap_ref.xstop or ap_wcs.xstop <= ap_ref.xstart or
+            ap_wcs.ystart >= ap_ref.ystop or ap_wcs.ystop <= ap_ref.ystart):
         log.warning(
             f"The WCS bounding box is outside the aperture:\n\t"
             f"aperture: {ap_ref.xstart}, {ap_ref.xstop}, {ap_ref.ystart}, {ap_ref.ystop}\n\t"
@@ -1485,11 +1479,9 @@ class ExtractModel(ExtractBase):
 
         # The independent variable for functions for the lower and upper limits of target and background regions can be
         # either 'pixel' or 'wavelength'.
-        if (
-                self.independent_var != "wavelength"
-                and self.independent_var != "pixel"
-                and self.independent_var != "pixels"
-        ):
+        if (self.independent_var != "wavelength" and
+                self.independent_var != "pixel" and
+                self.independent_var != "pixels"):
             log.error(f"independent_var = {self.independent_var}'; specify 'wavelength' or 'pixel'")
             raise RuntimeError("Invalid value for independent_var")
 
@@ -3191,12 +3183,8 @@ def is_prism(input_model: DataModel) -> bool:
 
     prism_mode = False
 
-    if (
-            instrument == "MIRI"
-            and instrument_filter.find("P750L") >= 0
-            or instrument == "NIRSPEC"
-            and grating.find("PRISM") >= 0
-    ):
+    if (instrument == "MIRI" and instrument_filter.find("P750L") >= 0 or
+            instrument == "NIRSPEC" and grating.find("PRISM") >= 0):
         prism_mode = True
 
     return prism_mode

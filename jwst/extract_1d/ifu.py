@@ -301,7 +301,8 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
         foundit = False
         for im in ref_dict['ref_model'].images:
-            if (im.name is None or im.name == "ANY" or slitname == "ANY" or im.name == slitname):
+            if (im.name is None or im.name == "ANY" or slitname == "ANY" or
+                    im.name == slitname):
                 extract_params['ref_image'] = im
                 foundit = True
                 break
@@ -581,7 +582,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         # There is no valid data for this region. To prevent the code from
         # crashing set aperture_area to a nonzero value. It will have the dq flag
-        if (aperture_area == 0 and aperture.area > 0):
+        if aperture_area == 0 and aperture.area > 0:
             aperture_area = aperture.area
 
         if subtract_background and annulus is not None:
@@ -590,7 +591,7 @@ def extract_ifu(input_model, source_type, extract_params):
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
 
-            if (annulus_area == 0 and annulus.area > 0):
+            if annulus_area == 0 and annulus.area > 0:
                 annulus_area = annulus.area
 
             if annulus_area > 0.:
@@ -650,7 +651,7 @@ def extract_ifu(input_model, source_type, extract_params):
             bkg_stat_data = bkg_data[temp_weightmap == 1]
 
             # If there are good data, work out the statistics
-            if (len(bkg_stat_data) > 0):
+            if len(bkg_stat_data) > 0:
                 bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
                                                                     sigma=bkg_sigma_clip, maxiters=5)
                 low = bkg_mean - bkg_sigma_clip * bkg_stddev
