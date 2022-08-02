@@ -119,6 +119,35 @@ jobs:
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
       - run: pytest -n auto
+  test_pyargs:
+    name: run tests with --pyargs on installed package (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ 3.8, 3.9, '3.10' ]
+    steps:
+      - uses: actions/checkout@v3.0.2
+        with:
+          path: ./jwst/
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install "./jwst/.[test]" pytest-xdist
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+      - run: pytest -n auto --pyargs jwst
   test_devdeps:
     name: run tests with the latest developer version of key dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
     needs: [ test ]
@@ -149,33 +178,6 @@ jobs:
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
       - run: pytest -n auto
-  test_pyargs:
-    name: run tests with --pyargs on installed package (${{ matrix.os }}, Python ${{ matrix.python }})
-    needs: [ test ]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        python: [ 3.8, 3.9, '3.10' ]
-    steps:
-      - uses: actions/checkout@v3.0.2
-      - uses: actions/setup-python@v4.1.0
-        with:
-          python-version: ${{ matrix.python }}
-      - uses: actions/cache@v3.0.5
-        with:
-          path: ${{ env.pythonLocation }}
-          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install -e ".[test]" pytest-xdist
-      - run: pip freeze
-      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
-      - uses: actions/cache@v3.0.5
-        with:
-          path: ${{ env.CRDS_PATH }}
-          key: crds-${{ env.CRDS_CONTEXT }}
-      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
-      - run: pytest -n auto --pyargs jwst
   test_oldestdeps:
     name: run tests with the oldest supported version of key dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
     needs: [ test ]
@@ -236,7 +238,7 @@ jobs:
           fail_ci_if_error: true
   build-docs:
     name: invoke sphinx-build to build the HTML docs
-    needs: [ test, test_sdpdeps, test_devdeps, test_pyargs ]
+    needs: [ test ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
@@ -252,7 +254,7 @@ jobs:
       - run: sphinx-build -W docs docs/_build
   check-dist:
     name: check that the package builds sdist/wheel and that twine uploads
-    needs: [ test, test_sdpdeps, test_devdeps, test_pyargs ]
+    needs: [ test, test_sdpdeps, test_pyargs, test_devdeps, test_oldestdeps ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
