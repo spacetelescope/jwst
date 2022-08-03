@@ -175,7 +175,7 @@ def align_array(reference, target, mask=None):
     else:
         raise ValueError("Input target image must be either a 2D or 3D array.")
 
-    return (aligned, shifts)
+    return aligned, shifts
 
 
 def align_models(reference, target, mask):
