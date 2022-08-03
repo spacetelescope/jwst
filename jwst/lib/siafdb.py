@@ -5,11 +5,13 @@ Provide a common interface to different versions of the SIAF.
 Under operations, the SIAF is found in a sqlite database.
 Otherwise, use the standard interface defined by the `pysiaf` package
 """
-from .basic_utils import LoggingContext
 from collections import namedtuple
 from datetime import date
 import logging
+import os
 from pathlib import Path
+
+from .basic_utils import LoggingContext
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -166,20 +168,23 @@ class SiafDb:
 
         Returns
         -------
-        xml_path : Path or None
-            Either the Path to the XML files or None, meaning the latest PRD will be used.
+        xml_path : Path
+            Either the Path to the XML files.
 
         Raises
         ------
         ValueError
             If `source` does not resolve to a folder or `prd` is not a valid PRD version.
         """
+
+        # If `source` is defined and valid, use that.
         xml_path = None
         if source is not None:
             xml_path = Path(source)
             if not xml_path.is_dir():
                 raise ValueError('Source %s: Needs to be a folder for use with pysiaf', xml_path)
 
+        # If a PRD version is defined, attempt to use that.
         if not xml_path and prd:
             prd = prd.upper()
             prd_root = Path(self.pysiaf.JWST_PRD_DATA_ROOT).parent.parent.parent
@@ -187,9 +192,17 @@ class SiafDb:
                 raise ValueError('PRD specification %s does not exist', prd)
             xml_path = prd_root / prd / 'SIAFXML' / 'SIAFXML'
 
-        if xml_path:
-            logger.info('pysiaf: Using SIAF XML folder %s', xml_path)
-        else:
+        # If nothing has been specified, see if XML_DATA says what to do.
+        if not xml_path:
+            xml_path = os.environ.get('XML_DATA', None)
+            if xml_path:
+                xml_path = Path(xml_path) / 'SIAFXML'
+
+        # If nothing else, use the `pysiaf` default.
+        if not xml_path:
+            xml_path = Path(self.pysiaf.JWST_PRD_DATA_ROOT)
             logger.info('pysiaf: Using latest installed PRD %s', self.pysiaf.JWST_PRD_VERSION)
+        else:
+            logger.info('pysiaf: Using SIAF XML folder %s', xml_path)
 
         return xml_path

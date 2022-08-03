@@ -6,6 +6,7 @@ import pytest
 from jwst.lib import siafdb
 
 pytest.importorskip('pysiaf')
+import pysiaf
 
 # Database paths
 DATA_PATH = Path(__file__).parent / 'data'
@@ -23,15 +24,20 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.mark.parametrize('source', [None, XML_DATA_SIAFXML_PATH, 'XML_DATA_SIAFXML'])
-def test_create(source, jail_environ):
+@pytest.mark.parametrize('source, xml_path',
+                         [(None, pysiaf.JWST_PRD_DATA_ROOT),
+                          (SIAFXML_PATH, SIAFXML_PATH),
+                          ('XML_DATA', SIAFXML_PATH)
+                          ])
+def test_create(source, xml_path, jail_environ):
     """Test the the right objects are created"""
-    if source == 'XML_DATA_SIAFXML':
+    source_actual = source
+    if source == 'XML_DATA':
         os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
-        source = None
+        source_actual = None
 
-    siaf_db = siafdb.SiafDb(source)
-    assert isinstance(siaf_db, siafdb.SiafDb)
+    siaf_db = siafdb.SiafDb(source_actual)
+    assert str(siaf_db.xml_path) == str(xml_path)
 
 
 @pytest.mark.parametrize(
