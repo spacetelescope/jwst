@@ -8,7 +8,7 @@ for a list of exposures.
 
 Copyright
 ---------
-Copyright (C) 2010-2011 Association of Universities for Research in Astronomy (AURA)
+Copyright (C) 2010-2022 Association of Universities for Research in Astronomy (AURA)
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -105,7 +105,11 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--siaf', type=str, default=None,
-        help='SIAF PRD sqlite database file. If not specified, default is to use `$XML_DATA/prd.db`'
+        help='SIAF PRD XML folder or file as defined by the `pysiaf` package. Overrides the `prd` option'
+    )
+    parser.add_argument(
+        '--prd', type=str, default=None,
+        help='The PRD version to use, as delivered in the `pysiaf` package.'
     )
     parser.add_argument(
         '--engdb_url', type=str, default=None,
@@ -150,6 +154,7 @@ if __name__ == '__main__':
                 allow_any_file=args.allow_any_file,
                 force_level1bmodel=args.force_level1bmodel,
                 siaf_path=args.siaf,
+                prd=args.prd,
                 engdb_url=args.engdb_url,
                 fgsid=args.fgsid,
                 tolerance=args.tolerance,
