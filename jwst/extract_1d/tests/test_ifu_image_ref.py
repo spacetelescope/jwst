@@ -126,7 +126,7 @@ def make_ifu_cube(data_shape, source=None, background=None,
         wl = wavelength[iz]
         ra = wl.copy()                          # dummy values
         dec = wl.copy()                         # dummy values
-        return (ra, dec, wl)
+        return ra, dec, wl
 
     input_model.meta.wcs = mock_wcs
     input_model.meta.target.source_type = 'POINT'
