@@ -53,25 +53,20 @@ class SiafDb:
     Parameters
     ----------
     source : None, str, or a file-like object
-        The SIAF database source. See notes for more details.
+        If None, then the latest PRD version in `pysiaf` is used.
+        Otherwise, it should be a string or Path-like object pointing to a folder containing the
+        SIAF XML files.
+
+    prd : None or str
+        The PRD version to use from the pysiaf application. If `source` has also been
+        specified, `source` will be used instead.
 
     Notes
     -----
     The interpretation of `source` is as follows:
 
-    If None, then the `pysiaf` package is used.
-    If a string, the string is treated as a path.
-    If that path is to a folder, the `pysiaf` package is used with the folder
-        as the XML source folder. See the `pysiaf` package for more information.
-    Otherwise, fail.
     """
-    def __init__(self, source=None):
-        if source is not None:
-            source = Path(source)
-            if not source.is_dir():
-                raise ValueError('Source %s: Needs to be a folder for use with pysiaf')
-        self._source = source
-
+    def __init__(self, source=None, prd=None):
         logger_pysiaf = logging.getLogger('pysiaf')
         log_level = logger_pysiaf.getEffectiveLevel()
         if not source:
@@ -82,6 +77,8 @@ class SiafDb:
         except ImportError:
             raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
         self.pysiaf = pysiaf
+
+        self.xml_path = self.get_xml_path(source, prd)
 
     def get_aperture(self, aperture, useafter=None):
         """Get the pysiaf.Aperture for an aperture
@@ -102,7 +99,7 @@ class SiafDb:
             useafter = date.today().strftime('%Y-%m-%d')
 
         instrument = INSTRUMENT_MAP[aperture[:3].lower()]
-        siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
+        siaf = self.pysiaf.Siaf(instrument, basepath=self.xml_path)
         aperture = siaf[aperture.upper()]
         return aperture
 
@@ -154,3 +151,47 @@ class SiafDb:
         siaf = SIAF(**values, vertices_idl=vertices)
 
         return siaf
+
+    def get_xml_path(self, source, prd):
+        """Determine the XML source to use
+
+        Parameters
+        ----------
+        source : None, str, or a file-like object
+            If None, then the latest PRD version in `pysiaf` is used.
+            Otherwise, it should be a string or Path-like object pointing to a folder containing the
+            SIAF XML files.
+
+        prd : None or str
+            The PRD version to use from the pysiaf application. If `source` has also been
+            specified, `source` will be used instead.
+
+        Returns
+        -------
+        xml_path : Path or None
+            Either the Path to the XML files or None, meaning the latest PRD will be used.
+
+        Raises
+        ------
+        ValueError
+            If `source` does not resolve to a folder or `prd` is not a valid PRD version.
+        """
+        xml_path = None
+        if source is not None:
+            xml_path = Path(source)
+            if not xml_path.is_dir():
+                raise ValueError('Source %s: Needs to be a folder for use with pysiaf', xml_path)
+
+        if not xml_path and prd:
+            prd = prd.upper()
+            prd_root = Path(self.pysiaf.JWST_PRD_DATA_ROOT).parent.parent.parent
+            if not (prd_root / prd).is_dir():
+                raise ValueError('PRD specification %s does not exist', prd)
+            xml_path = prd_root / prd / 'SIAFXML' / 'SIAFXML'
+
+        if xml_path:
+            logger.info('pysiaf: Using SIAF XML folder %s', xml_path)
+        else:
+            logger.info('pysiaf: Using latest installed PRD %s', self.pysiaf.JWST_PRD_VERSION)
+
+        return xml_path
