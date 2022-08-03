@@ -63,7 +63,8 @@ def test_is_tso_nrcgrism_nints1():
     assert not pipe_utils.is_tso(model)
 
     # with hardwired TSO EXP_TYPE's, should always be True
-    assert (is_tso(model) or model.meta.exposure.type.lower() in ['nrc_tsimage', 'nrc_tsgrism'])
+    assert (is_tso(model) or model.meta.exposure.type.lower() in
+            ['nrc_tsimage', 'nrc_tsgrism'])
 
 
 def test_is_irs2_1():

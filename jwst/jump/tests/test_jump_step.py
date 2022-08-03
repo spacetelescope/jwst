@@ -157,7 +157,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
+        assert 4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]])
 
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
@@ -195,7 +195,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
+        assert 4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]])
 
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
@@ -231,8 +231,8 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
-        assert (4 == np.max(out_model.groupdq[0, CR_group + 8, CR_y_locs[i], CR_x_locs[i]]))
+        assert 4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]])
+        assert 4 == np.max(out_model.groupdq[0, CR_group + 8, CR_y_locs[i], CR_x_locs[i]])
 
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
@@ -250,7 +250,7 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
                                                           deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores=max_cores)
-    assert (out_model.meta.cal_step.jump == 'SKIPPED')
+    assert out_model.meta.cal_step.jump == 'SKIPPED'
 
 
 def test_three_group_integration(generate_miri_reffiles, setup_inputs):
@@ -267,4 +267,4 @@ def test_three_group_integration(generate_miri_reffiles, setup_inputs):
                                                           deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores='none')
-    assert (out_model.meta.cal_step.jump == 'COMPLETE')
+    assert out_model.meta.cal_step.jump == 'COMPLETE'
