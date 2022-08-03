@@ -17,7 +17,8 @@ cube_build
 ----------
 
 - Re-wrote c code for NIRSpec dq flagging. In addition,if data is moving_target data, then do not
-  use s_region values in cal files, but map all the pixels to sky to find cube footprint. [6957]
+  use s_region values in cal files, but map all the pixels to sky to find cube footprint.
+  Updated drizzle code to use wcs of output frame to account for moving target data .[#6957]
 
 datamodels
 ----------
