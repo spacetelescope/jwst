@@ -1277,7 +1277,7 @@ class IFUCubeData():
                     ca4 = float(s[9])
                     cb4 = float(s[10])
                 else:
-                    log.info('Mapping all pixels to output to determine IFU foot print')
+                    log.info('Mapping all pixels to output to determine IFU footprint')
 
                     if self.instrument == 'NIRSPEC':
                         ch_corners = cube_build_wcs_util.find_corners_NIRSPEC(
@@ -1679,13 +1679,13 @@ class IFUCubeData():
             # Find slice width
             allbetaval = np.unique(beta)
             dbeta = np.abs(allbetaval[1] - allbetaval[0])
-            ra1, dec1, _ = input_model.meta.wcs.transform('alpha_beta', 'world', alpha1,
+            ra1, dec1, _ = input_model.meta.wcs.transform('alpha_beta', input_model.meta.wcs.output_frame, alpha1,
                                                           beta - dbeta * pixfrac / 2., wave)
-            ra2, dec2, _ = input_model.meta.wcs.transform('alpha_beta', 'world', alpha1,
+            ra2, dec2, _ = input_model.meta.wcs.transform('alpha_beta', input_model.meta.wcs.output_frame, alpha1,
                                                           beta + dbeta * pixfrac / 2., wave)
-            ra3, dec3, _ = input_model.meta.wcs.transform('alpha_beta', 'world', alpha2,
+            ra3, dec3, _ = input_model.meta.wcs.transform('alpha_beta', input_model.meta.wcs.output_frame, alpha2,
                                                           beta + dbeta * pixfrac / 2., wave)
-            ra4, dec4, _ = input_model.meta.wcs.transform('alpha_beta', 'world', alpha2,
+            ra4, dec4, _ = input_model.meta.wcs.transform('alpha_beta', input_model.meta.wcs.output_frame, alpha2,
                                                           beta - dbeta * pixfrac / 2., wave)
 
             corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
@@ -1775,7 +1775,7 @@ class IFUCubeData():
                 # Pixel corners
                 pixfrac = 1.0
                 detector2slicer = slice_wcs.get_transform('detector', 'slicer')
-                slicer2world = slice_wcs.get_transform('slicer', 'world')
+                slicer2world = slice_wcs.get_transform('slicer', slice_wcs.output_frame)
                 across1, along1, lam1 = detector2slicer(x, y - 0.49 * pixfrac)
                 across2, along2, lam2 = detector2slicer(x, y + 0.49 * pixfrac)
 
