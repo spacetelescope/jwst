@@ -13,6 +13,12 @@ assign_wcs
   module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
   from data model's GWCS. [#6935]
 
+cube_build
+----------
+
+- Re-wrote c code for NIRSpec dq flagging. In addition,if data is moving_target data, then do not
+  use s_region values in cal files, but map all the pixels to sky to find cube footprint. [6957]
+
 datamodels
 ----------
 
