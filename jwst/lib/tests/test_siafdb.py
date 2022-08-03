@@ -1,4 +1,5 @@
 """Test the siaf db classes"""
+from contextlib import nullcontext as does_not_raise
 import os
 from pathlib import Path
 import pytest
@@ -10,8 +11,11 @@ import pysiaf
 
 # Database paths
 DATA_PATH = Path(__file__).parent / 'data'
+PYSIAF_PRD_PATH = Path(pysiaf.JWST_PRD_DATA_ROOT).parent.parent.parent
 XML_DATA_SIAFXML_PATH = DATA_PATH / 'xml_data_siafxml'
 SIAFXML_PATH = XML_DATA_SIAFXML_PATH / 'SIAFXML'
+OLD_PRD = 'PRDOPSSOC-053'
+OLD_PRD_PATH = PYSIAF_PRD_PATH / OLD_PRD / 'SIAFXML' / 'SIAFXML'
 
 
 @pytest.fixture
@@ -24,20 +28,26 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.mark.parametrize('source, xml_path',
-                         [(None, pysiaf.JWST_PRD_DATA_ROOT),
-                          (SIAFXML_PATH, SIAFXML_PATH),
-                          ('XML_DATA', SIAFXML_PATH)
+@pytest.mark.parametrize('source, prd, xml_path, exception',
+                         [(None, None, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),                     # Default
+                          (SIAFXML_PATH, None, SIAFXML_PATH, does_not_raise()),                          # User-define XML path
+                          ('XML_DATA', None, SIAFXML_PATH, does_not_raise()),                            # Use $XML_DATA
+                          ('junk_source', None, None, pytest.raises(ValueError)),                        # Non-existent user-define XML path
+                          (None, pysiaf.JWST_PRD_VERSION, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),  # Latest pysiaf PRD version
+                          (None, OLD_PRD, OLD_PRD_PATH, does_not_raise()),                               # User-specified PRD version
+                          (None, 'junk_prd', None, pytest.raises(ValueError)),                           # Non-existent PRD version
+                          (SIAFXML_PATH, OLD_PRD, SIAFXML_PATH, does_not_raise()),                       # `source` overrides `prd`
                           ])
-def test_create(source, xml_path, jail_environ):
+def test_create(source, prd, xml_path, exception, jail_environ):
     """Test the the right objects are created"""
     source_actual = source
     if source == 'XML_DATA':
         os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
         source_actual = None
 
-    siaf_db = siafdb.SiafDb(source_actual)
-    assert str(siaf_db.xml_path) == str(xml_path)
+    with exception:
+        siaf_db = siafdb.SiafDb(source_actual, prd)
+        assert str(siaf_db.xml_path) == str(xml_path)
 
 
 @pytest.mark.parametrize(
