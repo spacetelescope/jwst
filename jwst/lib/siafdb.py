@@ -71,7 +71,7 @@ class SiafDb:
     def __init__(self, source=None, prd=None):
         logger_pysiaf = logging.getLogger('pysiaf')
         log_level = logger_pysiaf.getEffectiveLevel()
-        if not source and not prd:
+        if not source:
             log_level = logging.ERROR
         try:
             with LoggingContext(logger_pysiaf, level=log_level):
@@ -82,17 +82,6 @@ class SiafDb:
 
         self.prd_version = None
         self.xml_path = self.get_xml_path(source, prd)
-
-        logger_pysiaf = logging.getLogger('pysiaf')
-        log_level = logger_pysiaf.getEffectiveLevel()
-        if not source:
-            log_level = logging.ERROR
-        try:
-            with LoggingContext(logger_pysiaf, level=log_level):
-                import pysiaf
-        except ImportError:
-            raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
-        self.pysiaf = pysiaf
 
     def get_aperture(self, aperture, useafter=None):
         """Get the pysiaf.Aperture for an aperture
