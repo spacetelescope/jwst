@@ -486,12 +486,13 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
+@pytest.mark.parametrize('source, prd', [(siaf_path, None), (None, 'prdopssoc-053')])
+def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path, source, prd):
     """Test using the database and a specified siaf db"""
     expected_name = 'add_wcs_method_full_siafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
+    stp.add_wcs(data_file, siaf_path=siaf_path, prd=prd, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
 
     # Test
     with datamodels.Level1bModel(data_file) as model:

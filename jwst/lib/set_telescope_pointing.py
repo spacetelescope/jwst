@@ -453,7 +453,7 @@ class TransformParameters:
 
 
 def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
-            default_pa_v3=0., siaf_path=None, engdb_url=None,
+            default_pa_v3=0., siaf_path=None, prd=None, engdb_url=None,
             fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, save_transforms=None, **transform_kwargs):
     """Add WCS information to a JWST DataModel.
@@ -484,6 +484,10 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
 
     siaf_path : str or file-like object or None
         The path to the SIAF database. See `SiafDb` for more information.
+
+    prd : str
+        The PRD version from the `pysiaf` to use.
+        `siaf_path` overrides this value.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -578,6 +582,7 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
             model,
             default_pa_v3=default_pa_v3,
             siaf_path=siaf_path,
+            prd=prd,
             engdb_url=engdb_url,
             fgsid=fgsid,
             tolerance=tolerance,
@@ -643,7 +648,7 @@ def update_mt_kwds(model):
     return model
 
 
-def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, engdb_url=None,
+def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd=None, engdb_url=None,
                fgsid=None, tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
@@ -663,8 +668,12 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         If pointing information cannot be retrieved,
         use this as the roll ref angle.
 
-    siaf_path : str
+    siaf_path : str or Path-like object
         The path to the SIAF database. See `SiafDb` for more information.
+
+    prd : str
+        The PRD version from the `pysiaf` to use.
+        `siaf_path` overrides this value.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -697,7 +706,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    siaf_db = SiafDb(siaf_path)
+    siaf_db = SiafDb(source=siaf_path, prd=prd)
 
     # Get model attributes
     useafter = model.meta.observation.date
