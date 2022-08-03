@@ -60,7 +60,7 @@ def test_nframes_is_power_of_two(make_rampmodel):
     datmod = make_rampmodel(2, 4, None, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert output.meta.cal_step.group_scale == 'SKIPPED')
+    assert output.meta.cal_step.group_scale == 'SKIPPED'
 
 
 def test_nframes_is_not_power_of_two(make_rampmodel):
