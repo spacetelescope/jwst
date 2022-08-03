@@ -5,10 +5,10 @@ Provide a common interface to different versions of the SIAF.
 Under operations, the SIAF is found in a sqlite database.
 Otherwise, use the standard interface defined by the `pysiaf` package
 """
-from .basic_utils import LoggingContext
 from collections import namedtuple
 from datetime import date
 import logging
+import os
 from pathlib import Path
 
 from .basic_utils import LoggingContext
@@ -203,6 +203,12 @@ class SiafDb:
             prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
             self.prd_version = prd_to_use
             logger.info('Using PRD %s for specified PRD %s', prd_to_use, prd)
+
+        # If nothing has been specified, see if XML_DATA says what to do.
+        if not xml_path:
+            xml_path = os.environ.get('XML_DATA', None)
+            if xml_path:
+                xml_path = Path(xml_path) / 'SIAFXML'
 
         # If nothing else, use the `pysiaf` default.
         if not xml_path:
