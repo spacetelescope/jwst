@@ -5,6 +5,7 @@ Provide a common interface to different versions of the SIAF.
 Under operations, the SIAF is found in a sqlite database.
 Otherwise, use the standard interface defined by the `pysiaf` package
 """
+from .basic_utils import LoggingContext
 from collections import namedtuple
 from datetime import date
 import logging
@@ -65,17 +66,22 @@ class SiafDb:
     Otherwise, fail.
     """
     def __init__(self, source=None):
-        try:
-            import pysiaf
-        except ImportError:
-            raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
-        self.pysiaf = pysiaf
-
         if source is not None:
             source = Path(source)
             if not source.is_dir():
                 raise ValueError('Source %s: Needs to be a folder for use with pysiaf')
         self._source = source
+
+        logger_pysiaf = logging.getLogger('pysiaf')
+        log_level = logger_pysiaf.getEffectiveLevel()
+        if not source:
+            log_level = logging.ERROR
+        try:
+            with LoggingContext(logger_pysiaf, level=log_level):
+                import pysiaf
+        except ImportError:
+            raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
+        self.pysiaf = pysiaf
 
     def get_aperture(self, aperture, useafter=None):
         """Get the pysiaf.Aperture for an aperture
