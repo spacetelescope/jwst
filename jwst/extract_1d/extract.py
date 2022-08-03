@@ -1480,8 +1480,7 @@ class ExtractModel(ExtractBase):
         # The independent variable for functions for the lower and upper limits of target and background regions can be
         # either 'pixel' or 'wavelength'.
         if (self.independent_var != "wavelength" and
-                self.independent_var != "pixel" and
-                self.independent_var != "pixels"):
+                self.independent_var not in ["pixel", "pixels"]):
             log.error(f"independent_var = {self.independent_var}'; specify 'wavelength' or 'pixel'")
             raise RuntimeError("Invalid value for independent_var")
 
