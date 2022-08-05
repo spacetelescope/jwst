@@ -71,7 +71,7 @@ class SiafDb:
     def __init__(self, source=None, prd=None):
         logger_pysiaf = logging.getLogger('pysiaf')
         log_level = logger_pysiaf.getEffectiveLevel()
-        if not source:
+        if not source and not prd:
             log_level = logging.ERROR
         try:
             with LoggingContext(logger_pysiaf, level=log_level):
