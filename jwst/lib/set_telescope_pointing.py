@@ -407,8 +407,7 @@ class TransformParameters:
 
     def as_reprdict(self):
         """Return a dict where all values are REPR of their values"""
-        d = dataclasses.asdict(self)
-        r = {key: repr(value) for key, value in d.items()}
+        r = dict((field.name, repr(getattr(self, field.name))) for field in dataclasses.fields(self))
         return r
 
     def update_pointing(self):
