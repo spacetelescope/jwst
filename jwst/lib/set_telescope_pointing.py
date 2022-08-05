@@ -65,6 +65,7 @@ import logging
 from math import (cos, sin, sqrt)
 import typing
 
+from astropy import units as U
 from astropy.table import Table
 from astropy.time import Time
 import numpy as np
@@ -2985,19 +2986,28 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
         mnemonics_to_read = FGS_ACQ_MNEMONICS
     elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
         mnemonics_to_read = FGS_GUIDED_MNEMONICS
+    elif t_pars.exp_type in FGS_ID_EXP_TYPES:
+        mnemonics_to_read = FGS_ID_MNEMONICS
     else:
         raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
 
-    gs_position = get_pointing(t_pars.obsstart, t_pars.obsend,
-                                  mnemonics_to_read=mnemonics_to_read,
-                                  engdb_url=t_pars.engdb_url,
-                                  tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+    # For ID modes, the mnemonics are valid only after the exposure is completed.
+    # The time to examine is within 10 seconds after the end of exposure
+    obsstart = t_pars.obsstart
+    obsend = t_pars.obsend
+    if t_pars.exp_type in FGS_ID_EXP_TYPES:
+        obsstart = obsend
+        obsend = (Time(obsend, format='mjd') + (10 * U.second)).mjd
+ 
+    gs_position = get_pointing(obsstart, obsend,
+                               mnemonics_to_read=mnemonics_to_read,
+                               engdb_url=t_pars.engdb_url,
+                               tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
 
     crpix1 = crpix2 = None
-    if t_pars.exp_type in FGS_ACQ_EXP_TYPES:
-        apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
-        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
-        crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture)
+    apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
+    aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
+    crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture, flip=True)
 
     ### Determine PC matrix
 
