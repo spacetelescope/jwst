@@ -707,6 +707,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     t_pars = transforms = None  # Assume telemetry is not used.
 
     siaf_db = SiafDb(source=siaf_path, prd=prd)
+    check_prd_versions(model, siaf_db)
 
     # Get model attributes
     useafter = model.meta.observation.date
@@ -2932,3 +2933,12 @@ def gs_ideal_to_subarray(gs_position, aperture, flip=False):
             y = position_subarray[1]
 
     return x, y
+
+
+def check_prd_versions(model, siaf_db):
+    """Check on consistency between the model and the current PRD"""
+    if siaf_db.prd_version:
+        if model.meta.prd_software_version != siaf_db.prd_version:
+            logger.warning('PRD versions between the model %s and pysiaf %s are different.'
+                           'This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.',
+                           model.meta.prd_software_version, siaf_db.prd_version, model.meta.prd_software_version)
