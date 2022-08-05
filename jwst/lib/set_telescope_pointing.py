@@ -143,6 +143,7 @@ FGS_ACQ_MNEMONICS  = {
     'IFGS_ACQ_YPOSG': True,
 }
 
+FGS_GUIDED_EXP_TYPES = ['fgs_fineguide', 'fgs_track']
 FGS_GUIDED_MNEMONICS = {
     'IFGS_TFGGS_X',
     'IFGS_TFGGS_Y',
@@ -152,6 +153,7 @@ FGS_GUIDED_MNEMONICS = {
     'IFGS_TFGDET_YSIZ',
 }
 
+FGS_ID_EXP_TYPES = ['fgs_id-image', 'fgs_id-stack']
 FGS_ID_MNEMONICS = {
     'IFGS_ID_XPOSG',
     'IFGS_ID_YPOSG',
@@ -2750,6 +2752,10 @@ def get_reduce_func_from_exptype(exp_type):
     """
     if exp_type in FGS_ACQ_EXP_TYPES:
         reduce_func = functools.partial(gs_position_acq, exp_type=exp_type)
+    elif exp_type in FGS_GUIDED_EXP_TYPES:
+        reduce_func = gs_position_fgtrack
+    elif exp_type in FGS_ID_EXP_TYPES:
+        reduce_func = gs_position_id
     else:
         reduce_func = pointing_from_average
 
