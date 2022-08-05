@@ -1420,3 +1420,16 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     datamodel.meta.wcsinfo.instance.update(hdr_dict)
 
     return hdr
+
+
+def populate_wavelength_extension(model):
+    """For MIRI LRS Slitless, no step currently
+    assigns values to model.wavelength - do it here
+    """
+    data_shape = model.data.shape
+    if len(data_shape) > 2:
+        data_shape = data_shape[-2:]
+    index_array = np.indices(data_shape[::-1])
+    wcs_array = model.meta.wcs(*index_array)
+    model.wavelength = wcs_array[2].T
+    return model
