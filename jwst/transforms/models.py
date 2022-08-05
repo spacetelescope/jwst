@@ -1147,7 +1147,6 @@ class NIRISSForwardRowGrismDispersion(Model):
         t = np.linspace(0, 1, 10)  # sample t
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
-        lmodel = self.lmodels[iorder]
 
         dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00) + t**2 * xmodel[2](x00, y00)
         dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00) + t**2 * ymodel[2](x00, y00)
