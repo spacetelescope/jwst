@@ -185,13 +185,13 @@ class IFUCubeData():
                         if i < number_channels - 1:
                             ch_name = ch_name + '-'
 
-                subchannels = list(set(self.list_par2))
+                # Sort by inverse alphabetical, e.g. short -> medium -> long
+                subchannels = sorted(list(set(self.list_par2)))[::-1]
+                log.info(f"Subchannel listing: {subchannels}")
                 number_subchannels = len(subchannels)
                 b_name = ''
                 for i in range(number_subchannels):
                     b_name = b_name + subchannels[i]
-                    if i > 1:
-                        b_name = b_name + '-'
                 b_name = b_name.lower()
                 newname = self.output_name_base + ch_name + '-' + b_name + \
                     '_s3d.fits'

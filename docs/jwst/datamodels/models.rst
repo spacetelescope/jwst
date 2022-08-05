@@ -316,10 +316,10 @@ returns a dictionary of of the instance at the model._extra_fits node.
 `_instance` can be used at any node in the tree to return a dictionary
 of rest of the tree structure at that node.
 
-Environmental Variables
------------------------
+Environment Variables
+---------------------
 
-There are a number of environmental variables that affect how models are read.
+There are a number of environment variables that affect how models are read.
 
 PASS_INVALID_VALUES
   Used by `~jwst.datamodels.DataModel` when instantiating
@@ -357,7 +357,7 @@ For flag or boolean variables, any value in ``('true', 't', 'yes', 'y')`` or a
 non-zero number, will evaluate as ``True``. Any value in ``('false', 'f', 'no',
 'n', '0')`` will evaluate as ``False``. The values are case-insensitive.
 
-All of the environmental variables have equivalent function arguments in the API
+All of the environment variables have equivalent function arguments in the API
 for the relevant code. The environment variables are used only if explicit
 values had not been used in a script. In other words, values in code override
-environmental variables.
+environment variables.
