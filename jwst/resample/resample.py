@@ -425,7 +425,7 @@ class ResampleData:
         else:
             fillval = str(fillval)
 
-        if (insci.dtype > np.float32):
+        if insci.dtype > np.float32:
             insci = insci.astype(np.float32)
 
         # Add input weight image if it was not passed in

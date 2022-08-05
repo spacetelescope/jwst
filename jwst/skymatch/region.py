@@ -139,7 +139,7 @@ class Polygon(Region):
         y = self._vertices[:, 1].min()
         w = self._vertices[:, 0].max() - x
         h = self._vertices[:, 1].max() - y
-        return (x, y, w, h)
+        return x, y, w, h
 
     def _construct_ordered_GET(self):
         """
@@ -408,4 +408,4 @@ class Edge():
 
 def _round_vertex(v):
     x, y = v
-    return (int(round(x)), int(round(y)))
+    return int(round(x)), int(round(y))

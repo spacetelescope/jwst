@@ -51,7 +51,7 @@ def dummy_wcs(x, y):
     cosdec = math.cos(dec * math.pi / 180.)
     ra = (x + 1. - crpix1) * cdelt1 / cosdec + crval1
 
-    return (ra, dec)
+    return ra, dec
 
 
 def set_meta(datamodel, sub64p=False):

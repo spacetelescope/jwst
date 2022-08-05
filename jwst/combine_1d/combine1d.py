@@ -378,7 +378,7 @@ def count_input(input_spectra):
     if np.any(n_input_spectra <= 0.):
         raise RuntimeError("Problem with input wavelengths.")
 
-    return (wl, n_input_spectra)
+    return wl, n_input_spectra
 
 
 def compute_output_wl(wl, n_input_spectra):

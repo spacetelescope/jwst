@@ -109,7 +109,7 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     d0, d1 = (c[0] - int(c[0]), c[1] - int(c[1]))
 
     # Are they very small (i.e. 'almost exactly' centered on 0)?
-    if (abs(d0) < 0.5 * eps_offset):  # might have the singular central pixel here
+    if abs(d0) < 0.5 * eps_offset:  # might have the singular central pixel here
         c_adjust[0] = c[0] + eps_offset
 
     if abs(d1) < 0.5 * eps_offset:  # might have the singular central pixel here

@@ -582,7 +582,7 @@ def create_single_subarray(input_hdulist, subarray):
     print(subarrays[instrument][subarray])
     xstart, xstop, ystart, ystop, name = subarrays[instrument][subarray]
     subarray_data = cube[:, ystart - 1:ystop, xstart - 1:xstop]
-    if (instrument == 'MIRI'):
+    if instrument == 'MIRI':
         #
         #  Add the Reference Output if MIRI
         #

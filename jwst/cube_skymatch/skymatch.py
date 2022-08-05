@@ -168,7 +168,7 @@ def max_overlap_pair(cubes):
     """
     n = len(cubes)
     if n == 1:
-        return (None, None, 0.0)  # leave single cube in the input list
+        return None, None, 0.0  # leave single cube in the input list
 
     im = -1
     jm = -1
@@ -189,7 +189,7 @@ def max_overlap_pair(cubes):
     c1 = cubes.pop(im)
     c2 = cubes.pop(jm)
 
-    return (c1, c2, om)
+    return c1, c2, om
 
 
 def max_overlap_cube(refcube, cubes):

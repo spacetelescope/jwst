@@ -202,7 +202,7 @@ class DataSet():
         if len(shape) != 4:
             log.warning(f"Don't understand shape {shape} of input data, skipping...")
             skipped = True
-            return (self.output_obj, None, None, skipped)
+            return self.output_obj, None, None, skipped
 
         # Read the table of capture and decay parameters.
         par = self.get_parameters()
@@ -397,7 +397,7 @@ class DataSet():
         if self.save_persistence:
             self.output_pers.update(self.output_obj, only="PRIMARY")
 
-        return (self.output_obj, self.traps_filled, self.output_pers, skipped)
+        return self.output_obj, self.traps_filled, self.output_pers, skipped
 
     def get_slice(self, ref, sci):
         """Find the 2-D slice for a reference file.
@@ -445,7 +445,7 @@ class DataSet():
             raise ValueError("Can't extract matching subarray from "
                              "reference data")
 
-        return (slice(ystart, ystop), slice(xstart, xstop))
+        return slice(ystart, ystop), slice(xstart, xstop)
 
     def ref_matches_sci(self, ref, slc):
         """Test whether ref and sci cover the same area of the detector.
@@ -527,7 +527,7 @@ class DataSet():
         par2 = data["capture2"].copy()
         par3 = data["decay_param"].copy()
 
-        return (par0, par1, par2, par3)
+        return par0, par1, par2, par3
 
     def compute_slope(self, integ):
         """Compute an estimate of the slope of the ramp for each pixel.
@@ -585,7 +585,7 @@ class DataSet():
                 persat = np.where(mask, 1., self.persistencesat.data)
                 slope = np.where(mask, 0.,
                                  grp_slope / (persat * self.tgroup))
-            return (grp_slope, slope)
+            return grp_slope, slope
 
         gdqflags = dqflags.group
 
@@ -652,7 +652,7 @@ class DataSet():
             slope = np.where(mask, 0.,
                              grp_slope / (persat * self.tgroup))
 
-        return (grp_slope, slope)
+        return grp_slope, slope
 
     def get_capture_param(self, par, k):
         """Extract capture parameters for the current trap family.
@@ -675,7 +675,7 @@ class DataSet():
 
         (par0, par1, par2) = par[0:3]
 
-        return (par0[k], par1[k], par2[k])
+        return par0[k], par1[k], par2[k]
 
     def get_decay_param(self, par, k):
         """Extract decay parameter(s) for the current trap family.

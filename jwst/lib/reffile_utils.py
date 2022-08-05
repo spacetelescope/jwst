@@ -73,13 +73,13 @@ def ref_matches_sci(sci_model, ref_model):
     ysize_ref = ref_model.meta.subarray.ysize
 
     # Make sure the attributes were populated
-    if (xstart_ref is None) or (xsize_ref is None) or \
-       (ystart_ref is None) or (ysize_ref is None):
+    if ((xstart_ref is None) or (xsize_ref is None) or
+            (ystart_ref is None) or (ysize_ref is None)):
 
         # If the ref file is full-frame, set the missing params to
         # default values
         if ref_model.meta.instrument.name.upper() == 'MIRI':
-            if (ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024):
+            if ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024:
                 log.warning('Missing subarray corner/size keywords in reference file')
                 log.warning('Setting them to full-frame default values')
                 xstart_ref = 1
@@ -94,7 +94,7 @@ def ref_matches_sci(sci_model, ref_model):
                 log.error('Missing subarray corner/size keywords in reference file')
                 raise ValueError("Can't determine ref file subarray properties")
         else:
-            if (ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048):
+            if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
                 log.warning('Missing subarray corner/size keywords in reference file')
                 log.warning('Setting them to full-frame default values')
                 xstart_ref = 1
@@ -113,7 +113,7 @@ def ref_matches_sci(sci_model, ref_model):
               (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
 
     # Make sure the starting corners are valid
-    if (xstart_ref < 1) or (ystart_ref < 1):
+    if xstart_ref < 1 or ystart_ref < 1:
         log.error("Reference file subarray corners are invalid")
         raise ValueError("Bad subarray corners")
 
@@ -134,7 +134,7 @@ def ref_matches_sci(sci_model, ref_model):
     if ysize_ref != ysize_data:
         # NIRSpec IRS2 is a special mode, where it's allowed to have
         # a mismatch in the y-size.
-        if (ysize_ref == 2048) and (ysize_data == 3200):
+        if ysize_ref == 2048 and ysize_data == 3200:
             pass
         else:
             log.warning("Reference file data array size doesn't match SUBSIZE2")
@@ -157,8 +157,8 @@ def ref_matches_sci(sci_model, ref_model):
         ysize_sci = sci_model.meta.subarray.ysize
 
     # Make sure the attributes were populated
-    if (xstart_sci is None) or (xsize_sci is None) or \
-       (ystart_sci is None) or (ysize_sci is None):
+    if ((xstart_sci is None) or (xsize_sci is None) or
+            (ystart_sci is None) or (ysize_sci is None)):
         log.error('Missing subarray corner/size keywords in science file')
         raise ValueError("Can't determine science file subarray properties")
     else:
@@ -166,7 +166,7 @@ def ref_matches_sci(sci_model, ref_model):
                   (xstart_sci, xsize_sci, ystart_sci, ysize_sci))
 
     # Make sure the starting corners are valid
-    if (xstart_sci < 1) or (ystart_sci < 1):
+    if xstart_sci < 1 or ystart_sci < 1:
         log.error("Science file subarray corners are invalid")
         raise ValueError("Bad subarray corners")
 
@@ -180,7 +180,7 @@ def ref_matches_sci(sci_model, ref_model):
     if ysize_sci != sci_model.shape[-2]:
         # NIRSpec IRS2 is a special mode, where it's allowed to have
         # a mismatch in the y-size.
-        if (ysize_sci == 2048) and (sci_model.shape[-2] == 3200):
+        if ysize_sci == 2048 and sci_model.shape[-2] == 3200:
             pass
         else:
             log.warning("Science file data array size doesn't match SUBSIZE2")
@@ -216,11 +216,11 @@ def get_subarray_data(sci_model, ref_model):
     """
 
     # Make sure xstart/ystart exist in science data model
-    if (sci_model.meta.subarray.xstart is None or sci_model.meta.subarray.ystart is None):
+    if sci_model.meta.subarray.xstart is None or sci_model.meta.subarray.ystart is None:
 
         # If the science file is full-frame, set the missing params to
         # default values
-        if (sci_model.data.shape[-1] == 2048 and sci_model.data.shape[-2] == 2048):
+        if sci_model.data.shape[-1] == 2048 and sci_model.data.shape[-2] == 2048:
             sci_model.meta.subarray.xstart = 1
             sci_model.meta.subarray.ystart = 1
             sci_model.meta.subarray.xsize = 2048
@@ -229,12 +229,12 @@ def get_subarray_data(sci_model, ref_model):
             raise ValueError('xstart or ystart metadata values not found in input model')
 
     # Make sure xstart/ystart exist in reference data model
-    if (ref_model.meta.subarray.xstart is None or ref_model.meta.subarray.ystart is None):
+    if ref_model.meta.subarray.xstart is None or ref_model.meta.subarray.ystart is None:
 
         # If the ref file is full-frame, set the missing params to
         # default values
         if ref_model.meta.instrument.name.upper() == 'MIRI':
-            if (ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024):
+            if ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024:
                 ref_model.meta.subarray.xstart = 1
                 ref_model.meta.subarray.ystart = 1
                 ref_model.meta.subarray.xsize = 1032
@@ -242,7 +242,7 @@ def get_subarray_data(sci_model, ref_model):
             else:
                 raise ValueError('xstart or ystart metadata values not found in reference model')
         else:
-            if (ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048):
+            if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
                 ref_model.meta.subarray.xstart = 1
                 ref_model.meta.subarray.ystart = 1
                 ref_model.meta.subarray.xsize = 2048
@@ -276,8 +276,8 @@ def get_subarray_data(sci_model, ref_model):
 
     # Make sure that the slice limits are within the bounds of
     # the reference file data array
-    if (xstart < 0 or ystart < 0 or
-            xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
+    if (xstart < 0 or ystart < 0 or xstop > ref_model.meta.subarray.xsize or
+            ystop > ref_model.meta.subarray.ysize):
         log.error('Computed reference file slice indexes are ' +
                   'incompatible with size of reference data array')
         log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
@@ -333,8 +333,8 @@ def get_subarray_model(sci_model, ref_model):
 
     # Make sure that the slice limits are within the bounds of
     # the reference file data array
-    if (xstart < 0 or ystart < 0 or
-            xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
+    if (xstart < 0 or ystart < 0 or xstop > ref_model.meta.subarray.xsize or
+            ystop > ref_model.meta.subarray.ysize):
         log.error('Computed reference file slice indexes are incompatible with size of reference data array')
         log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
                   xstart_sci, ystart_sci, xsize_sci, ysize_sci)

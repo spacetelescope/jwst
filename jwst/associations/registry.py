@@ -276,8 +276,7 @@ class AssociationRegistry(dict):
         for name, obj in get_marked(module, include_bases=include_bases):
 
             # Add rules.
-            if (include_bases and isclass(obj)) or\
-               obj._asnreg_role == 'rule':
+            if (include_bases and isclass(obj)) or obj._asnreg_role == 'rule':
                 self.add_rule(name, obj, global_constraints=global_constraints)
                 continue
 
@@ -502,9 +501,7 @@ def get_marked(module, predicate=None, include_bases=False):
         A generator that will yield all class members in the module.
     """
     def is_method(obj):
-        return (isfunction(obj) or
-                ismethod(obj)
-        )
+        return isfunction(obj) or ismethod(obj)
 
     for name, obj in getmembers(module, predicate):
         if isclass(obj):

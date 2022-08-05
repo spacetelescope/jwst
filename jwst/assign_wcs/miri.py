@@ -143,7 +143,7 @@ def imaging_distortion(input_model, reference_files):
             row_offset = f.row_offset
             break
 
-    if (col_offset is not None) and (row_offset is not None):
+    if col_offset is not None and row_offset is not None:
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
     if bbox is None:
         distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)

@@ -239,13 +239,13 @@ def test_subarray_extraction(setup_miri_cube):
     output = flag_saturation(data, satmap, n_pix_grow_sat=1)
 
     # Check for DQ flag in PIXELDQ of subarray image
-    assert(output.pixeldq[76, 100] == dqflags.pixel['DO_NOT_USE'])
-    assert(output.pixeldq[76, 104] == dqflags.pixel['DO_NOT_USE'])
+    assert output.pixeldq[76, 100] == dqflags.pixel['DO_NOT_USE']
+    assert output.pixeldq[76, 104] == dqflags.pixel['DO_NOT_USE']
 
     # Pixel 84, 100 in subarray maps to 550, 100 in reference file
     # Check that pixel was flagged 'NO_SAT_CHECK' and that original
     # DQ flag persists (i.e. did not get overwritten)
-    assert(output.pixeldq[84, 100] ==
+    assert (output.pixeldq[84, 100] ==
            dqflags.pixel['NO_SAT_CHECK'] + dqflags.pixel['NONLINEAR'])
 
 

@@ -248,9 +248,9 @@ def _get_2d_pixgrid(model2d, channel):
     y, x = np.indices((1024, 512))
 
     if channel in ['1', '4']:
-        return (x + 4, y)
+        return x + 4, y
     else:
-        return (x + 516, y)
+        return x + 516, y
 
 
 def _match_models(models, channel, degree, center=None, center_cs='image'):

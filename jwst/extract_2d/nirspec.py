@@ -229,7 +229,7 @@ def extract_slit(input_model, slit, exp_type):
         ext_dq = input_model.dq[slit_slice].copy()
         ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
         ext_var_poisson = input_model.var_poisson[slit_slice].copy()
-        if (pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times')):
+        if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
             log.debug("TSO data, so copying the INT_TIMES table.")
             int_times = input_model.int_times.copy()
         else:

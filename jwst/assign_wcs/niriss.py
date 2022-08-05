@@ -95,11 +95,11 @@ def _niriss_order_bounding_box(input_model, order):
     bbox_x = np.array([-0.5, input_model.meta.subarray.xsize - 0.5])
 
     if order == 1:
-        return (tuple(bbox_y), tuple(bbox_x))
+        return tuple(bbox_y), tuple(bbox_x)
     elif order == 2:
-        return (tuple(bbox_y), tuple(bbox_x))
+        return tuple(bbox_y), tuple(bbox_x)
     elif order == 3:
-        return (tuple(bbox_y), tuple(bbox_x))
+        return tuple(bbox_y), tuple(bbox_x)
     else:
         raise ValueError(f'Invalid spectral order: {order} provided. Spectral order must be 1, 2, or 3.')
 

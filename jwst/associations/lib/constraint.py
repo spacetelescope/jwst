@@ -304,8 +304,8 @@ class SimpleConstraint(SimpleConstraintABC):
 
         # Determine reprocessing
         reprocess = []
-        if (self.matched and self.reprocess_on_match) or \
-           (not self.matched and self.reprocess_on_fail):
+        if ((self.matched and self.reprocess_on_match) or
+                (not self.matched and self.reprocess_on_fail)):
             reprocess.append(ProcessList(
                 items=[item],
                 work_over=self.work_over,
@@ -442,7 +442,7 @@ class AttrConstraint(SimpleConstraintABC):
                     )
                 )
             self.matched = True
-            return (self.matched, reprocess)
+            return self.matched, reprocess
 
         # Get the condition information.
         try:
@@ -648,8 +648,8 @@ class Constraint:
         self.matched, reprocess = self.reduce(item, self.constraints)
 
         # Determine reprocessing
-        if (self.matched and self.reprocess_on_match) or \
-           (not self.matched and self.reprocess_on_fail):
+        if ((self.matched and self.reprocess_on_match) or
+                (not self.matched and self.reprocess_on_fail)):
             reprocess.append([ProcessList(
                 items=[item],
                 work_over=self.work_over,

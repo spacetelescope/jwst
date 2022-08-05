@@ -458,7 +458,7 @@ def centerpoint(s):
     center: 2D integer or float tuple
         center of image
     """
-    return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
+    return 0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5
 
 
 def combine_transmission(filt, SRC):
@@ -1206,7 +1206,7 @@ def img_median_replace(img_model, box_size):
     num_dq_bad = np.count_nonzero(input_dq == dqflags.pixel['DO_NOT_USE'])
 
     # check to see if any of the pixels are bad
-    if (num_nan + num_dq_bad > 0):
+    if num_nan + num_dq_bad > 0:
 
         log.info(f'Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels')
         bad_locations = np.where(np.isnan(input_data) |

@@ -77,24 +77,24 @@ class CubeBuildStep (Step):
         self.subchannel = self.band
         self.suffix = 's3d'  # override suffix = cube_build
 
-        if(not self.subchannel.islower()):
+        if not self.subchannel.islower():
             self.subchannel = self.subchannel.lower()
-        if(not self.filter.islower()):
+        if not self.filter.islower():
             self.filter = self.filter.lower()
-        if(not self.grating.islower()):
+        if not self.grating.islower():
             self.grating = self.grating.lower()
-        if(not self.coord_system.islower()):
+        if not self.coord_system.islower():
             self.coord_system = self.coord_system.lower()
-        if(not self.output_type.islower()):
+        if not self.output_type.islower():
             self.output_type = self.output_type.lower()
-        if(not self.weighting.islower()):
+        if not self.weighting.islower():
             self.weighting = self.weighting.lower()
 
-        if(self.scale1 != 0.0):
+        if self.scale1 != 0.0:
             self.log.info(f'Input Scale of axis 1 {self.scale1}')
-        if(self.scale2 != 0.0):
+        if self.scale2 != 0.0:
             self.log.info(f'Input Scale of axis 2 {self.scale2}')
-        if(self.scalew != 0.0):
+        if self.scalew != 0.0:
             self.log.info(f'Input wavelength scale {self.scalew}')
 
         if self.wavemin is not None:
@@ -390,7 +390,7 @@ class CubeBuildStep (Step):
             user_clen = len(channellist)
             for j in range(user_clen):
                 ch = channellist[j]
-                if(user_clen > 1):
+                if user_clen > 1:
                     ch = ch.strip('[')
                     ch = ch.strip(']')
                     ch = ch.strip(' ')

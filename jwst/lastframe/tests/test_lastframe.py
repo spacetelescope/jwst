@@ -145,7 +145,7 @@ def test_lastframe_add1_groupdq():
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # test if pixels in groupdq were incremented in value by 1
-    assert(dm_ramp_lastframe.groupdq[0, ngroups - 1, 505, 505] == 5)
+    assert (dm_ramp_lastframe.groupdq[0, ngroups - 1, 505, 505] == 5)
 
 
 def test_nircam():

@@ -56,15 +56,15 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
         dqdata = outfile.pixeldq
 
     # assert that the pixels read back in match the mapping from ref data to science data
-    assert(dqdata[100, 100] == dqflags.pixel['DEAD'])
-    assert(dqdata[200, 100] == dqflags.pixel['HOT'])
-    assert(dqdata[300, 100] == dqflags.pixel['UNRELIABLE_SLOPE'])
-    assert(dqdata[400, 100] == dqflags.pixel['RC'])
-    assert(dqdata[500, 100] == dqflags.pixel['DO_NOT_USE'])
-    assert(dqdata[100, 200] == 1025)
-    assert(dqdata[200, 200] == 2049)
-    assert(dqdata[300, 200] == 16777217)
-    assert(dqdata[400, 200] == 16385)
+    assert dqdata[100, 100] == dqflags.pixel['DEAD']
+    assert dqdata[200, 100] == dqflags.pixel['HOT']
+    assert dqdata[300, 100] == dqflags.pixel['UNRELIABLE_SLOPE']
+    assert dqdata[400, 100] == dqflags.pixel['RC']
+    assert dqdata[500, 100] == dqflags.pixel['DO_NOT_USE']
+    assert dqdata[100, 200] == 1025
+    assert dqdata[200, 200] == 2049
+    assert dqdata[300, 200] == 16777217
+    assert dqdata[400, 200] == 16385
 
 
 def test_groupdq():
@@ -141,8 +141,8 @@ def test_err():
     # check that ERR array was created and initialized to zero
     errarr = outfile.err
 
-    assert(errarr.ndim == 4)  # check that output err array is 4-D
-    assert(np.all(errarr == 0))  # check that values are 0
+    assert errarr.ndim == 4  # check that output err array is 4-D
+    assert np.all(errarr == 0)  # check that values are 0
 
 
 def test_dq_subarray():
@@ -208,9 +208,9 @@ def test_dq_subarray():
     outpixdq = outfile.pixeldq
 
     # check for dq flag in pixeldq of subarray image
-    assert(outpixdq[76, 100] == 1024)
-    assert(outpixdq[84, 100] == 1)
-    assert(outpixdq[114, 80] == 2048)  # check that pixel was flagged 'NO_SAT_CHECK'
+    assert outpixdq[76, 100] == 1024
+    assert outpixdq[84, 100] == 1
+    assert outpixdq[114, 80] == 2048  # check that pixel was flagged 'NO_SAT_CHECK'
 
 
 def test_dq_add1_groupdq():
@@ -252,8 +252,8 @@ def test_dq_add1_groupdq():
     outfile = do_dqinit(dm_ramp, ref_data)
 
     # test if pixels in pixeldq were incremented in value by 1
-    assert(outfile.pixeldq[505, 505] == 5)  # check that previous dq flag is added to mask value
-    assert(outfile.pixeldq[400, 500] == 1025)  # check two flags propagate correctly
+    assert outfile.pixeldq[505, 505] == 5  # check that previous dq flag is added to mask value
+    assert outfile.pixeldq[400, 500] == 1025  # check two flags propagate correctly
 
 
 # Set parameters for multiple runs of guider data

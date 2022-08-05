@@ -428,8 +428,7 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
     npts = good.sum()
 
     if npts == 0:
-        return (np.nan, 0.0, 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 0.0, 0.0)
+        return np.nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
     # filter-out bad values:
     # TODO: in the future we may need to develop a way of interpolating
@@ -669,7 +668,7 @@ def _extract_colpix(image_data, x, j, limits):
         intervals.append([lim[0][j], lim[1][j]])
 
     if len(intervals) == 0:
-        return ([], [], [])
+        return [], [], []
 
     # optimize limits:
     intervals = _coalesce_bounds(intervals)
@@ -723,7 +722,7 @@ def _extract_colpix(image_data, x, j, limits):
 
         k += ii2 - ii1 + 1
 
-    return (y, val, wht)  # pixel coordinate, value, wheight=fractional pixel area
+    return y, val, wht  # pixel coordinate, value, wheight=fractional pixel area
 
 
 def _coalesce_bounds(segments):

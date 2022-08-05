@@ -83,7 +83,7 @@ def do_correction(input_model, wavecorr_file):
                         log.warning('Skipping wavecorr correction')
                         input_model.meta.cal_step.wavecorr = 'SKIPPED'
                         break
-                    if (slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None):
+                    if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
                         log.warning('dither.x(y)_offset values are None for primary slit')
                         log.warning('Skipping wavecorr correction')
                         input_model.meta.cal_step.wavecorr = 'SKIPPED'
@@ -239,7 +239,7 @@ def _is_point_source(slit, exp_type):
     else:
         src_type = None
 
-    if (src_type is not None) and (src_type.upper() in ['POINT', 'EXTENDED']):
+    if src_type is not None and src_type.upper() in ['POINT', 'EXTENDED']:
         # Use the supplied value
         log.info(f'Detected a {src_type} source type in slit {slit.name}')
         if src_type.strip().upper() == 'POINT':

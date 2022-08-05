@@ -43,5 +43,5 @@ def test_correct_mrs_xartifact():
                         0.18655573, 0.18370678, 0.17830785, 0.17058835, 0.1610211,
                         0.15021261, 0.13880997, 0.12742336, 0.11656731, 0.10662437])
 
-    assert(np.allclose(compare, cutout_c, rtol=1e-6))
-    assert(np.allclose(compare, cutout_py, rtol=1e-6))
+    assert np.allclose(compare, cutout_c, rtol=1e-6)
+    assert np.allclose(compare, cutout_py, rtol=1e-6)

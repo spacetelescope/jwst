@@ -172,10 +172,12 @@ def fit_envelope(wavenum, signal):
     u_y = [signal[0]]
 
     for k in np.arange(1, len(signal) - 1):
-        if (np.sign(signal[k] - signal[k - 1]) == -1) and ((np.sign(signal[k] - signal[k + 1])) == -1):
+        if ((np.sign(signal[k] - signal[k - 1]) == -1) and
+                ((np.sign(signal[k] - signal[k + 1])) == -1)):
             l_x.append(wavenum[k])
             l_y.append(signal[k])
-        if (np.sign(signal[k] - signal[k - 1]) == 1) and ((np.sign(signal[k] - signal[k + 1])) == 1):
+        if ((np.sign(signal[k] - signal[k - 1]) == 1) and
+                ((np.sign(signal[k] - signal[k + 1])) == 1)):
             u_x.append(wavenum[k])
             u_y.append(signal[k])
 
@@ -216,11 +218,13 @@ def find_lines_resfringe(signal, max_amp):
     u_y, u_x, l_y, l_x = [], [], [], []
 
     for x in r_x:
-        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (np.sign(signal_check[x] - signal_check[x + 1]) == 1):
+        if ((np.sign(signal_check[x] - signal_check[x - 1]) == 1) and
+                (np.sign(signal_check[x] - signal_check[x + 1]) == 1)):
             u_y.append(signal_check[x])
             u_x.append(x)
 
-        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (np.sign(signal_check[x] - signal_check[x + 1]) == -1):
+        if ((np.sign(signal_check[x] - signal_check[x - 1]) == -1) and
+                (np.sign(signal_check[x] - signal_check[x + 1]) == -1)):
             l_y.append(signal[x])
             l_x.append(x)
 
@@ -659,7 +663,7 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
         mdl = multi_sine(nfringes + 1)
 
         # fit the multi-sine model and get evidence
-        if (ffreq * factor) > 1.5:
+        if ffreq * factor > 1.5:
             fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0, keep=keep_dict)
             ftr = RobustShell(fitter, domain=10)
             try:

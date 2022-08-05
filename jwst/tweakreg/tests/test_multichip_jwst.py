@@ -195,7 +195,7 @@ def _match(x, y):
     lenx = len(x)
     leny = len(y)
     if lenx == leny:
-        return (np.arange(lenx), np.arange(leny))
+        return np.arange(lenx), np.arange(leny)
     elif lenx < leny:
         lenx, leny = leny, lenx
         x, y = y, x

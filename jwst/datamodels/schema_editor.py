@@ -262,7 +262,7 @@ class Keyword_db:
                             raise ValueError(error_msg + name)
 
                     elif ("$ref" in this_subschema["properties"] and
-                          "$ref" in other_subschema["properties"]):
+                            "$ref" in other_subschema["properties"]):
                         if (this_subschema["properties"]["$ref"] !=
                                 other_subschema["properties"]["$ref"]):
                             try:
@@ -328,7 +328,7 @@ class Keyword_db:
                                     new_path(path, keyword_name))
 
                 elif (isinstance(keyword_subschema, list) and
-                      keyword_name == "allOf"):
+                        keyword_name == "allOf"):
                     # Need to combine keyword db schemas if they are under
                     # an "allOf"
                     merged_subschema = self.merge_schemas(keyword_subschema)
@@ -364,7 +364,7 @@ class Keyword_db:
         def merge_dictionaries(merged_subschema, dictionary):
             for name, subdictionary in dictionary.items():
                 if name in merged_subschema:
-                    if ("enum" in merged_subschema[name] and "enum" in subdictionary):
+                    if "enum" in merged_subschema[name] and "enum" in subdictionary:
                         merge_enums(merged_subschema[name], subdictionary)
                     else:
                         merged_subschema[name] = subdictionary
@@ -1055,8 +1055,7 @@ class Schema_editor:
         """
         Compare iwo values for type specific kind of equality
         """
-        if (isinstance(keyword_value, str) and
-                isinstance(model_value, str)):
+        if isinstance(keyword_value, str) and isinstance(model_value, str):
             result = (keyword_value.lower().strip() ==
                       model_value.lower().strip())
 
@@ -1474,7 +1473,7 @@ class Schema_editor:
         different_values = list(set(model_value) - set(common_values))
         sorted_model_value = different_values + common_values
 
-        return (sorted_keyword_value, sorted_model_value)
+        return sorted_keyword_value, sorted_model_value
 
     def strip_blanks(self, value):
         """

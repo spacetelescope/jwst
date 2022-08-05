@@ -425,7 +425,7 @@ def test_basic_step(make_rampmodel, make_darkmodel):
 
     dark_model = DarkCurrentStep.call(dm_ramp, override_dark=dark)
 
-    assert(dark_model.meta.cal_step.dark_sub == "COMPLETE")
+    assert dark_model.meta.cal_step.dark_sub == "COMPLETE"
 
     outdata = np.squeeze(dark_model.data)
 

@@ -124,8 +124,7 @@ def in_range(val, min=0, max=0, inclusive=True):
     assert isinstance(min, (int, float))
     assert isinstance(max, (int, float))
 
-    if ((inclusive and val < min or val > max) or
-        (val <= min or val >= max)):
+    if ((inclusive and val < min or val > max) or (val <= min or val >= max)):
         raise ValueError(
             "Value outside of range %s - %s" % (min, max))
     return True

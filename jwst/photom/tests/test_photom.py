@@ -44,7 +44,7 @@ def mk_data(shape):
     var_r = np.ones(shape, dtype=np.float32)            # var_rnoise
     var_f = np.ones(shape, dtype=np.float32)            # var_flat
 
-    return (data, dq, err, var_p, var_r, var_f)
+    return data, dq, err, var_p, var_r, var_f
 
 
 def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):
@@ -1288,7 +1288,7 @@ def test_niriss_soss():
     compare = photmj * rel_resp
     # Compare the values at the center pixel.
     ratio = output[test_ind] / input[test_ind]
-    assert(np.allclose(ratio, compare, rtol=1.e-7))
+    assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_niriss_image():
@@ -1312,7 +1312,7 @@ def test_niriss_image():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert(np.allclose(ratio, compare, rtol=1.e-7))
+    assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_miri_mrs():
@@ -1379,7 +1379,7 @@ def test_miri_lrs():
     compare = photmjsr * rel_resp
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert(np.allclose(ratio, compare, rtol=1.e-7))
+    assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_miri_image():
@@ -1404,7 +1404,7 @@ def test_miri_image():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert(np.allclose(ratio, compare, rtol=1.e-7))
+    assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_nircam_image():
@@ -1428,7 +1428,7 @@ def test_nircam_image():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert(np.allclose(ratio, compare, rtol=1.e-7))
+    assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_nircam_spec():
@@ -1464,7 +1464,7 @@ def test_nircam_spec():
         compare = photmjsr * rel_resp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
-        assert(np.allclose(ratio, compare, rtol=1.e-7))
+        assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_fgs():
@@ -1489,7 +1489,7 @@ def test_fgs():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert(np.allclose(ratio, compare, rtol=1.e-7))
+    assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_apply_photom_1():
@@ -1518,10 +1518,10 @@ def test_apply_photom_1():
     # (and other photom models) can take either an open model or the name of
     # a file as input.
     output_model = ds.apply_photom(ftab, area_ref)
-    assert(math.isclose(output_model.meta.photometry.pixelarea_steradians,
-                        area_ster, rel_tol=1.e-7))
-    assert(math.isclose(output_model.meta.photometry.pixelarea_arcsecsq,
-                        area_a2, rel_tol=1.e-7))
+    assert (math.isclose(output_model.meta.photometry.pixelarea_steradians,
+                         area_ster, rel_tol=1.e-7))
+    assert (math.isclose(output_model.meta.photometry.pixelarea_arcsecsq,
+                         area_a2, rel_tol=1.e-7))
 
 
 @pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])
