@@ -1,14 +1,14 @@
 from astropy.table import Table
 import numpy as np
 from photutils.detection import DAOStarFinder
-from photutils.segmentation import detect_threshold
 
 from ..datamodels import dqflags, ImageModel
+from ..source_catalog.detection import JWSTBackground
 
 
 def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
                           sharphi=1.0, roundlo=-1.0, roundhi=1.0,
-                          brightest=None, peakmax=None):
+                          brightest=None, peakmax=None, bkg_boxsize=400):
     """
     Create a catalog of point-line sources to be used for image
     alignment in tweakreg.
@@ -56,6 +56,9 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
             pixel values are negative. Therefore, setting ``peakmax`` to a
             non-positive value would result in exclusion of all objects.
 
+    bkg_boxsize : float, optional
+        The background mesh box size in pixels.
+
     Returns
     -------
     catalog : `~astropy.Table`
@@ -64,25 +67,26 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     if not isinstance(model, ImageModel):
         raise TypeError('The input model must be an ImageModel.')
 
-    threshold_img = detect_threshold(model.data, nsigma=snr_threshold)
-    # TODO:  use threshold image based on error array
-    threshold = threshold_img[0, 0]     # constant image
+    # Mask the non-imaging area (e.g. MIRI)
+    coverage_mask = (dqflags.pixel['NON_SCIENCE'] & model.dq).astype(bool)
+
+    bkg = JWSTBackground(model.data, box_size=bkg_boxsize,
+                         coverage_mask=coverage_mask)
+
+    threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
+    threshold = np.median(threshold_img)  # DAOStarFinder requires float
 
     daofind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
                             sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
                             roundhi=roundhi, brightest=brightest,
                             peakmax=peakmax)
-
-    # Mask the non-imaging area (e.g. MIRI)
-    mask = (dqflags.pixel['NON_SCIENCE'] & model.dq).astype(bool)
-
-    sources = daofind(model.data, mask=mask)
+    sources = daofind(model.data, mask=coverage_mask)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     if sources:
         catalog = sources[columns]
     else:
-        catalog = Table(names=columns, dtype=(np.int_, np.float_, np.float_,
-                                              np.float_))
+        # return an empty table
+        catalog = Table(names=columns, dtype=(int, float, float, float))
 
     return catalog
