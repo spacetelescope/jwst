@@ -765,7 +765,7 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
     t_pars : `TransformParameters`
         The transformation parameters. Parameters are updated during processing.
 
-    default_pa_v3 : float
+    default_roll_ref : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
 
@@ -774,65 +774,25 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
         be either "1" or "-1". "1" is the
         default since FGS guiding will be using the
         OSS aperture.
+
+    default_v3yangle : float
+        Default SIAF Y-angle.
     """
 
     logger.info('Updating WCS for Fine Guidance.')
 
-    # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
-    # in the image.
-    if t_pars.exp_type in ['fgs_acq1', 'fgs_acq2']:
-        mnemonics_to_read = FGS_ACQ_MNEMONICS
-    elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
-        mnemonics_to_read = FGS_GUIDED_MNEMONICS
-    else:
-        raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
-
-    gs_position = get_pointing(t_pars.obsstart, t_pars.obsend,
-                                  mnemonics_to_read=mnemonics_to_read,
-                                  engdb_url=t_pars.engdb_url,
-                                  tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-
-    crpix1 = crpix2 = None
-    if t_pars.exp_type in FGS_ACQ_EXP_TYPES:
-        apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
-        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
-        crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture)
+    crpix1, crpix2, crval1, crval2, pc_matrix = calc_wcs_guiding(model, t_pars, default_roll_ref, default_vparity, default_v3yangle)
 
     model.meta.wcsinfo.crpix1 = crpix1
     model.meta.wcsinfo.crpix2 = crpix2
-
-    # Get position angle
-    try:
-        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
-    except AttributeError:
-        logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
-        roll_ref = default_roll_ref
-
-    roll_ref = np.deg2rad(roll_ref)
-
-    # Get VIdlParity
-    try:
-        vparity = model.meta.wcsinfo.vparity
-    except AttributeError:
-        logger.warning('Keyword "VPARITY" not found. Using %s as default value', default_vparity)
-        vparity = default_vparity
-
-    try:
-        v3i_yang = model.meta.wcsinfo.v3yangle
-    except AttributeError:
-        logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
-        v3i_yang = default_v3yangle
-
+    model.meta.wcsinfo.crval1 = crval1
+    model.meta.wcsinfo.crval2 = crval2
     (
         model.meta.wcsinfo.pc1_1,
         model.meta.wcsinfo.pc1_2,
         model.meta.wcsinfo.pc2_1,
         model.meta.wcsinfo.pc2_2
-    ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
-
-    # Set CRVAL as the guide star coordinates.
-    model.meta.wcsinfo.crval1 = model.meta.guidestar.gs_ra
-    model.meta.wcsinfo.crval2 = model.meta.guidestar.gs_dec
+    ) = pc_matrix
 
 
 def update_wcs_from_telem(model, t_pars: TransformParameters):
@@ -2979,3 +2939,94 @@ def check_prd_versions(model, siaf_db):
             logger.warning('PRD versions between the model %s and pysiaf %s are different.'
                            'This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.',
                            model.meta.prd_software_version, siaf_db.prd_version, model.meta.prd_software_version)
+
+
+def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
+    """Calculate WCS info for FGS guiding
+
+    For Fine Guidance guiding observations, nearly everything
+    in the `wcsinfo` meta information is already populated,
+    except for the PC matrix and CRVAL*. This function updates the PC
+    matrix based on the rest of the `wcsinfo`.
+
+    CRVAL* values are taken from GS_RA/GS_DEC.
+
+    Parameters
+    ----------
+    model : `~jwst.datamodels.DataModel`
+        The model to update.
+
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
+
+    default_roll_ref : float
+        If pointing information cannot be retrieved,
+        use this as the V3 position angle.
+
+    default_vparity : int
+        The default `VIdlParity` to use and should
+        be either "1" or "-1". "1" is the
+        default since FGS guiding will be using the
+        OSS aperture.
+
+    default_v3yangle : float
+        Default SIAF Y-angle.
+
+    Returns
+    -------
+    crpix1, crpix2, crval1, crval2, pc1_1, pc1_2, pc2_1, pc2_2 : float
+        The WCS info.
+    """
+    ### Determine reference pixel
+
+    # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
+    # in the image.
+    if t_pars.exp_type in ['fgs_acq1', 'fgs_acq2']:
+        mnemonics_to_read = FGS_ACQ_MNEMONICS
+    elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
+        mnemonics_to_read = FGS_GUIDED_MNEMONICS
+    else:
+        raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
+
+    gs_position = get_pointing(t_pars.obsstart, t_pars.obsend,
+                                  mnemonics_to_read=mnemonics_to_read,
+                                  engdb_url=t_pars.engdb_url,
+                                  tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+
+    crpix1 = crpix2 = None
+    if t_pars.exp_type in FGS_ACQ_EXP_TYPES:
+        apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
+        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
+        crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture)
+
+    ### Determine PC matrix
+
+    # Get position angle
+    try:
+        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
+    except AttributeError:
+        logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
+        roll_ref = default_roll_ref
+
+    roll_ref = np.deg2rad(roll_ref)
+
+    # Get VIdlParity
+    try:
+        vparity = model.meta.wcsinfo.vparity
+    except AttributeError:
+        logger.warning('Keyword "VPARITY" not found. Using %s as default value', default_vparity)
+        vparity = default_vparity
+
+    try:
+        v3i_yang = model.meta.wcsinfo.v3yangle
+    except AttributeError:
+        logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
+        v3i_yang = default_v3yangle
+
+    pc_matrix= calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
+
+    ### Determine reference sky values
+    crval1 = model.meta.guidestar.gs_ra
+    crval2 = model.meta.guidestar.gs_dec
+
+    return crpix1, crpix2, crval1, crval2, pc_matrix
