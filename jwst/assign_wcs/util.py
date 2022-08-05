@@ -1430,7 +1430,8 @@ def populate_wavelength_extension(model):
     if len(data_shape) > 2:
         data_shape = data_shape[-2:]
 
-    bbox_grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
-    model.wavelength = model.meta.wcs(*bbox_grid)[2]
+    index_array = np.indices(data_shape[::-1])
+    wcs_array = model.meta.wcs(*index_array)
+    model.wavelength = wcs_array[2].T
 
     return model
