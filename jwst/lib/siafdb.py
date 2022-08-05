@@ -71,7 +71,7 @@ class SiafDb:
     def __init__(self, source=None, prd=None):
         logger_pysiaf = logging.getLogger('pysiaf')
         log_level = logger_pysiaf.getEffectiveLevel()
-        if not source:
+        if not source and not prd:
             log_level = logging.ERROR
         try:
             with LoggingContext(logger_pysiaf, level=log_level):
@@ -80,6 +80,7 @@ class SiafDb:
             raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
         self.pysiaf = pysiaf
 
+        self.prd_version = None
         self.xml_path = self.get_xml_path(source, prd)
 
     def get_aperture(self, aperture, useafter=None):
@@ -191,6 +192,7 @@ class SiafDb:
             if not (prd_root / prd).is_dir():
                 raise ValueError('PRD specification %s does not exist', prd)
             xml_path = prd_root / prd / 'SIAFXML' / 'SIAFXML'
+            self.prd_version = prd
 
         # If nothing has been specified, see if XML_DATA says what to do.
         if not xml_path:
@@ -202,6 +204,7 @@ class SiafDb:
         if not xml_path:
             xml_path = Path(self.pysiaf.JWST_PRD_DATA_ROOT)
             logger.info('pysiaf: Using latest installed PRD %s', self.pysiaf.JWST_PRD_VERSION)
+            self.prd_version = self.pysiaf.JWST_PRD_VERSION
         else:
             logger.info('pysiaf: Using SIAF XML folder %s', xml_path)
 
