@@ -11,6 +11,7 @@ from jwst.datamodels import Level1bModel
 from jwst.lib import engdb_mast
 from jwst.lib import engdb_tools
 from jwst.lib import set_telescope_pointing as stp
+from jwst.lib.siafdb import SiafDb
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 # Set logging for the module to be tested.
@@ -23,7 +24,75 @@ logger.addHandler(handler)
 # Get database paths.
 DATA_PATH = Path(__file__).parent / 'data'
 db_1029 = DATA_PATH / 'engdb_jw01029'
-siaf_db = DATA_PATH / 'xml_data_no_siafxml' / 'prd.db'
+SIAF_PATH = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
+
+# All the FGS GUIDER examples. Generated from proposal JW01029
+FGS_ROOT_PATH = DATA_PATH / 'fgs_guider'
+FGS_PATHS = list(FGS_ROOT_PATH.glob('*.fits'))
+WCS_ATTRIBUTES = ['crpix1', 'crpix2', 'crval1', 'crval2', 'pc_matrix']
+
+FGS_TRUTHS = {
+    'fgs_acq2-guider2': {
+        'crpix1': 14.080291368942198, 'crpix2': 16.948358663805948,
+        'crval1': 261.8605720136804, 'crval2': -73.29163131766869,
+        'pc_matrix': [-0.9999944854986974, 0.0033209896409866256, 0.0033209896409866256, 0.9999944854986974]
+    },
+    'fgs_acq1-guider1': {
+        'crpix1': 36.23964226769749, 'crpix2': 68.3690778810028,
+        'crval1': 79.81704567329847, 'crval2': -69.5008404076233,
+        'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
+    },
+    'fgs_id-image-guider1': {
+        'crpix1': 348.00050401354497, 'crpix2': 1003.0004342656284,
+        'crval1': 81.833662406237, 'crval2': -69.9550484271066,
+        'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
+    },
+    'fgs_track-guider1': {
+        'crpix1': 14.033443395549511, 'crpix2': 15.37628173802716,
+        'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
+        'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
+    },
+    'fgs_id-stack-guider1': {
+        'crpix1': 348.00050401354497, 'crpix2': 1003.0004342656284,
+        'crval1': 81.833662406237, 'crval2': -69.9550484271066,
+        'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
+    },
+    'fgs_fineguide-guider2': {
+        'crpix1': 2.649773636966529, 'crpix2': 5.286930283199808,
+        'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
+        'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
+    },
+    'fgs_id-stack-guider2': {
+        'crpix1': 334.0005319984152, 'crpix2': 1046.0004786236082,
+        'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
+        'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
+    },
+    'fgs_fineguide-guider1': {
+        'crpix1': 3.10440965671296, 'crpix2': 2.993667433646692,
+        'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
+        'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
+    },
+    'fgs_track-guider2': {
+        'crpix1': 15.285383252442102,'crpix2': 17.29819212708435,
+        'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
+        'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
+    },
+    'fgs_id-image-guider2': {
+        'crpix1': 334.0005319984152, 'crpix2': 1046.0004786236082,
+        'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
+        'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
+    },
+    'fgs_acq1-guider2': {
+        'crpix1': 59.98007063730438, 'crpix2': 60.29148482075243,
+        'crval1': 261.8605720136804, 'crval2': -73.29163131766869,
+        'pc_matrix': [-0.9999944854986974, 0.0033209896409866256, 0.0033209896409866256, 0.9999944854986974]
+    },
+    'fgs_acq2-guider1': {
+        'crpix1': 14.635545812541295, 'crpix2': 15.382114908026438,
+        'crval1': 79.81704567329847, 'crval2': -69.5008404076233,
+        'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
+    }
+}
 
 # Time frame
 OBSSTART = '2022-05-23T00:36:08.000'
@@ -99,6 +168,26 @@ META_FGS2 = {
     }
 }
 
+
+@pytest.mark.parametrize('attribute', WCS_ATTRIBUTES)
+def test_wcs_calc_guiding(attribute, get_guider_wcs):
+    """Test the WCS calculation"""
+    exp_type, detector, wcs = get_guider_wcs
+
+    assert FGS_TRUTHS[f'{exp_type}-{detector}'] == wcs
+
+
+@pytest.fixture(params=FGS_PATHS)
+def get_guider_wcs(request, mast):
+    siaf_db = SiafDb(SIAF_PATH)
+    with Level1bModel(request.param) as model:
+        exp_type = model.meta.exposure.type.lower()
+        detector = model.meta.instrument.detector.lower()
+        t_pars = stp.t_pars_from_model(model, siaf_db=siaf_db, engdb_url=mast.base_url)
+        wcs = stp.calc_wcs_guiding(model, t_pars)
+
+    wcs = {key: value for key, value in zip(WCS_ATTRIBUTES, wcs)}
+    return exp_type, detector, wcs
 
 @pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)
 @pytest.mark.parametrize('exp_type, expected',
