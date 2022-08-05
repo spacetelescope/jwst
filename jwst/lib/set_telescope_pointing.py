@@ -738,6 +738,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
         update_wcs_from_fgs_guiding(
             model, t_pars, default_roll_ref=default_roll_ref
         )
+        transforms = None
     else:
         transforms = update_wcs_from_telem(model, t_pars)
 
