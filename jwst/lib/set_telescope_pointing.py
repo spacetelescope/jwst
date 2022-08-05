@@ -701,7 +701,8 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     t_pars, transforms : TransformParameters, Transforms
         The parameters and transforms calculated. May be
         None for either if telemetry calculations were not
-        performed.
+        performed. In particular, FGS GUIDER data does
+        not need `transforms`.
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
@@ -734,6 +735,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
         update_wcs_from_fgs_guiding(
             model, t_pars, default_roll_ref=default_roll_ref
         )
+        transforms = None
     else:
         transforms = update_wcs_from_telem(model, t_pars)
 
