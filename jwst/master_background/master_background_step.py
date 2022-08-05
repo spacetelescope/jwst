@@ -119,7 +119,7 @@ class MasterBackgroundStep(Step):
                             this_is_ifu_extended = True
                         if (model.meta.exposure.type == 'MIR_MRS'):
                             this_is_ifu_extended = True
- 
+
                         if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
                             self.log.debug("Copying BACKGROUND column "
                                            "to SURF_BRIGHT")
