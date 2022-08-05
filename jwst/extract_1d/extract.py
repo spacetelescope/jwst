@@ -3182,8 +3182,8 @@ def is_prism(input_model: DataModel) -> bool:
 
     prism_mode = False
 
-    if (instrument == "MIRI" and instrument_filter.find("P750L") >= 0 or
-            instrument == "NIRSPEC" and grating.find("PRISM") >= 0):
+    if ((instrument == "MIRI" and instrument_filter.find("P750L") >= 0) or
+            (instrument == "NIRSPEC" and grating.find("PRISM") >= 0)):
         prism_mode = True
 
     return prism_mode
