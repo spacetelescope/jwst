@@ -13,6 +13,13 @@ assign_wcs
   module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
   from data model's GWCS. [#6935]
 
+cube_build
+----------
+
+- Remove trailing dash from IFU cube filenames built from all subchannels.
+  Sort subchannels present by inverse alphabetical order to ensure
+  consistent filename creation across processing runs. [#6959]
+
 datamodels
 ----------
 
