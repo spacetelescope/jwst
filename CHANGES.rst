@@ -11,7 +11,7 @@ ami_analyze
 -----------
 
 - Revert Fourier Transform code to avoid using Poppy which was recently updated
-  to use a different sign convention.[#666]  
+  to use a different sign convention.[#6967]  
   
 assign_wcs
 ----------
