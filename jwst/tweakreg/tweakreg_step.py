@@ -299,7 +299,8 @@ class TweakRegStep(Step):
                 )
 
         for imcat in imcats:
-            imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+            image_model = imcat.meta['image_model']
+            image_model.meta.cal_step.tweakreg = 'COMPLETE'
 
             # retrieve fit status and update wcs if fit is successful:
             if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
@@ -317,12 +318,15 @@ class TweakRegStep(Step):
                     #       for end-user searches.
                     imcat.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
 
-                imcat.meta['image_model'].meta.wcs = imcat.wcs
+                image_model.meta.wcs = imcat.wcs
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
                 try:
-                    update_fits_wcsinfo(imcat.meta['image_model'])
+                    update_fits_wcsinfo(
+                        image_model,
+                        max_pix_error=0.005
+                    )
                 except (ValueError, RuntimeError) as e:
                     self.log.warning(
                         "Failed to update 'meta.wcsinfo' with FITS SIP "
