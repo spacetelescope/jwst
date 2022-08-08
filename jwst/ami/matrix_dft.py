@@ -225,12 +225,6 @@ class MatrixFourierTransform:
         Deprecated. Use poppy.conf.default_logging_level to set DEBUG level
         logging.
 
-    Example
-    -------
-    >>> mft = MatrixFourierTransform()
-    >>> result = mft.perform(pupil, nlamD, npix, offset)
-
-
     History
     -------
     Code by Sivaramakrishnan based on Soummer et al.
