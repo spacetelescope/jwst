@@ -228,7 +228,8 @@ class MatrixFourierTransform:
     Example
     -------
     >>> mft = MatrixFourierTransform()
-    >>> result = mft.perform(pupilArray, focalplane_size, focalplane_npix)
+    >>> result = mft.perform(pupil, nlamD, npix, offset)
+
 
     History
     -------
