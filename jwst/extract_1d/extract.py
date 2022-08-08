@@ -3097,8 +3097,8 @@ def populate_time_keywords(
 
     n = 0  # Counter for spectra in output_model.
 
-    for j in range(num_j):  # for each spectrum or order
-        for k in range(num_integ):  # for each integration
+    for k in range(num_integ):  # for each spectrum or order
+        for j in range(num_j):  # for each integration
             row = k + offset
             spec = output_model.spec[n]  # n is incremented below
             spec.int_num = int_num[row]

@@ -13,6 +13,7 @@ from ..white_light import white_light_step
 from ..photom import photom_step
 
 from ..lib.pipe_utils import is_tso
+from astropy.io.fits import FITS_rec
 
 __all__ = ['Tso3Pipeline']
 
@@ -151,6 +152,8 @@ class Tso3Pipeline(Pipeline):
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
+            x1d_result.int_times = FITS_rec.from_columns(input_models[0].int_times.columns,
+                                                         nrows=input_models[0].meta.exposure.nints)
 
             # Remove source_type from the output model, if it exists, to prevent
             # the creation of an empty SCI extension just for that keyword.
@@ -162,6 +165,9 @@ class Tso3Pipeline(Pipeline):
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
                 result = self.extract_1d(cube)
+                for row in cube.int_times:
+                    # Subtract one to assign 1-indexed int_nums to int_times array locations
+                    x1d_result.int_times[row[0] - 1] = row
 
                 # SOSS F277W may return None - don't bother with that
                 if result is not None:
