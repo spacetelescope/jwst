@@ -98,11 +98,7 @@ class NIRISS:
             self.lam_w = {"F277W": beta, "F380M": beta, "F430M": beta, "F480M": beta}
             self.throughput = bandpass
 
-        try:
-            self.wls = [utils.combine_transmission(self.throughput, src), ]
-        except Exception:
-            self.wls = [self.throughput, ]
-
+        self.wls = [self.throughput, ]
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
         self.wavextension = ([self.lam_c[self.filt], ], [self.lam_w[self.filt], ])
         self.nwav = 1
@@ -200,7 +196,7 @@ class NIRISS:
         Parameters
         ----------
         nwav: integer
-            length of axis3 for 3D input (DG: review later)
+            length of axis3 for 3D input
 
         Returns
         -------

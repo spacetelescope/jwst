@@ -12,6 +12,12 @@ general
 - Made style changes due to the new 5.0.3 version of flake8, which noted many
   missing white spaces after keywords. [#6958]
 
+ami_analyze
+-----------
+
+- Revert Fourier Transform code to avoid using Poppy which was recently updated
+  to use a different sign convention.[#6967]  
+  
 assign_wcs
 ----------
 
