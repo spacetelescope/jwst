@@ -956,9 +956,8 @@ class _BaseOverlap:
     def estimate_tikho_factors(self, flux_estimate):
         """Estimate an initial guess of the Tikhonov factor. The output factor will
         be used to find the best Tikhonov factor. The flux_estimate is used to generate
-        a factor_guess. The user should coonstruct a grid with this output using
-        >>> log_guess = np.log10(factor_guess)
-        >>> np.logspace(log_guess - log_range_minus, log_guess + log_range_plus, n_points)
+        a factor_guess. The user should construct a grid with this output in log space,
+        e.g. np.logspace(np.log10(flux_estimate)-4, np.log10(flux_estimate)+4, 9).
 
         Parameters
         ----------
