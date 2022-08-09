@@ -758,13 +758,13 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                         if input_model.meta.wcsinfo.dispersion_direction == 2:
                             ra_center, dec_center = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
                             center, _, _, _, _ = sky_to_grism(ra_center, dec_center, (lmin + lmax) / 2, order)
-                            xmin = center - wfss_extract_half_height - 1
-                            xmax = center + wfss_extract_half_height + 1
+                            xmin = center - wfss_extract_half_height
+                            xmax = center + wfss_extract_half_height
                         elif input_model.meta.wcsinfo.dispersion_direction == 1:
                             ra_center, dec_center = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
                             _, center, _, _, _ = sky_to_grism(ra_center, dec_center, (lmin + lmax) / 2, order)
-                            ymin = center - wfss_extract_half_height - 1
-                            ymax = center + wfss_extract_half_height + 1
+                            ymin = center - wfss_extract_half_height
+                            ymax = center + wfss_extract_half_height
                         else:
                             raise ValueError("Cannot determine dispersion direction.")
 
