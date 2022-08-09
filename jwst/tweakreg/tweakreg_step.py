@@ -282,10 +282,13 @@ class TweakRegStep(Step):
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
             if num_ref < self.min_gaia:
-                msg = f"Not enough reference catalog #2 sources for a fit: {num_ref}"
-                msg += f"Skipping alignment to {self.gaia_catalog} astrometric catalog!"
                 # Raise Exception here to avoid rest of code in this try block
-                self.log.warning(msg)
+                self.log.warning(
+                    f"Not enough sources ({num_ref}) in the reference catalog "
+                    "for the single-group alignment step to perform a fit. "
+                    f"Skipping alignment to the {self.gaia_catalog} reference "
+                    "catalog!"
+                )
             else:
                 # align images:
                 # Update to separation needed to prevent confusion of sources
