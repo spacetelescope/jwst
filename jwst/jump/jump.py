@@ -12,8 +12,10 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      rejection_thresh, three_grp_thresh, four_grp_thresh,
                      max_cores, max_jump_to_flag_neighbors,
                      min_jump_to_flag_neighbors, flag_4_neighbors,
-                     after_jump_flag_dn1, after_jump_flag_time1,
-                     after_jump_flag_dn2, after_jump_flag_time2):
+                     after_jump_flag_dn1=0.0,
+                     after_jump_flag_time1=0,
+                     after_jump_flag_dn2=0.0,
+                     after_jump_flag_time2=0):
 
     # Runs `detect_jumps` in stcal
 
@@ -51,10 +53,11 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     four_grp_thresh, max_cores,
                                     max_jump_to_flag_neighbors,
                                     min_jump_to_flag_neighbors,
-                                    flag_4_neighbors,
-                                    after_jump_flag_dn1, after_jump_flag_n1,
-                                    after_jump_flag_dn2, after_jump_flag_n2,
-                                    dqflags.pixel)
+                                    flag_4_neighbors, dqflags.pixel,
+                                    after_jump_flag_dn1=after_jump_flag_dn1,
+                                    after_jump_flag_n1=after_jump_flag_n1,
+                                    after_jump_flag_dn2=after_jump_flag_dn2,
+                                    after_jump_flag_n2=after_jump_flag_n2)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq

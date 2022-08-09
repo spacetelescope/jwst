@@ -79,8 +79,10 @@ class JumpStep(Step):
                                       rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
                                       max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                                       flag_4_neighbors,
-                                      after_jump_flag_dn1, after_jump_flag_time1,
-                                      after_jump_flag_dn2, after_jump_flag_time2)
+                                      after_jump_flag_dn1=after_jump_flag_dn1,
+                                      after_jump_flag_time1=after_jump_flag_time1,
+                                      after_jump_flag_dn2=after_jump_flag_dn2,
+                                      after_jump_flag_time2=after_jump_flag_time2)
             gain_model.close()
             readnoise_model.close()
             tstop = time.time()
