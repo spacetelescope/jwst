@@ -107,7 +107,6 @@ def test_niriss_wfss_available_frames():
         assert all([a == b for a, b in zip(niriss_wfss_frames, available_frames)])
 
 
-@pytest.mark.xfail(reason="New specwcs reference files are needed in CRDS")
 def traverse_wfss_trace(filtername):
     wcsobj = create_wfss_wcs(filtername)
     detector_to_grism = wcsobj.get_transform('detector', 'grism_detector')
@@ -126,6 +125,7 @@ def traverse_wfss_trace(filtername):
     assert orderdet == orderin
 
 
+@pytest.mark.xfail(reason="New specwcs reference files are needed in CRDS")
 def test_traverse_wfss_grisms():
     """Make sure the trace polynomials roundtrip for both grisms."""
     for f in niriss_grisms:
