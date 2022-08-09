@@ -243,6 +243,7 @@ def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
         assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
         assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
 
+
 @pytest.mark.xfail(reason="Needs new reference specawcs reference files in CRDS")
 @pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
 @pytest.mark.parametrize("pupils", ['F090W', 'F115W', 'F140M', 'F150W', 'F158M', 'F200W'])

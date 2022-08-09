@@ -424,14 +424,13 @@ def wfss(input_model, reference_files):
                                                   lmodels=displ,
                                                   xmodels=dispx,
                                                   ymodels=dispy,
-                                                  theta=0)#-(fwcpos_ref - fwcpos))
+                                                  theta=fwcpos - fwcpos_ref)
     elif input_model.meta.instrument.filter.endswith('R'):
         det2det = NIRISSForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
                                                      ymodels=dispy,
                                                      theta=fwcpos - fwcpos_ref)
-                                                     #theta=fwcpos_ref - fwcpos)
     else:
         raise ValueError("FILTER keyword {} is not valid."
                          .format(input_model.meta.instrument.filter))
@@ -441,7 +440,6 @@ def wfss(input_model, reference_files):
                                              xmodels=dispx,
                                              ymodels=dispy,
                                              theta=fwcpos_ref - fwcpos)
-                                             #theta=fwcpos - fwcpos_ref)
     det2det.inverse = backward
 
     # Add in the wavelength shift from the velocity dispersion
