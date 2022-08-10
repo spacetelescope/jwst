@@ -16,8 +16,8 @@ ami_analyze
 -----------
 
 - Revert Fourier Transform code to avoid using Poppy which was recently updated
-  to use a different sign convention.[#6967]  
-  
+  to use a different sign convention.[#6967]
+
 assign_wcs
 ----------
 
@@ -67,6 +67,11 @@ tweakreg
 
 - The ``tweakreg`` step now masks ``NON_SCIENCE`` pixels when
   calculating the source detection theshold. [#6940]
+
+- Allow alignment of a single image (or group) to Gaia while skipping relative
+  alignment (whcih needs 2 images) instead of cancelling  the entire
+  step. [#6938]
+
 
 1.6.2 (2022-07-19)
 ==================
