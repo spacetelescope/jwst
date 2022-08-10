@@ -2961,6 +2961,10 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     else:
         raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
 
+    # Getting the timing to extract from the engineering database is complicated by
+    # the fact that the observation times and the processing of the guide star
+    # acquisition do not always exactly match. Extend the end time by one second.
+    # 
     # For ID modes, the mnemonics are valid only after the exposure is completed.
     # The time to examine is within 10 seconds after the end of exposure
     obsstart = t_pars.obsstart
@@ -2968,6 +2972,8 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     if t_pars.exp_type in FGS_ID_EXP_TYPES:
         obsstart = obsend
         obsend = (Time(obsend, format='mjd') + (10 * U.second)).mjd
+    elif t_pars.exp_type in FGS_ACQ_EXP_TYPES:
+        obsend = (Time(obsend, format='mjd') + (1 * U.second)).mjd
  
     gs_position = get_pointing(obsstart, obsend,
                                mnemonics_to_read=mnemonics_to_read,
