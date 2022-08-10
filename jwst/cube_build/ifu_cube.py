@@ -1693,7 +1693,7 @@ class IFUCubeData():
                                                           input_model.meta.wcs.output_frame, alpha2,
                                                           beta + dbeta * pixfrac / 2., wave)
             ra4, dec4, _ = input_model.meta.wcs.transform('alpha_beta',
-                                                          input_model.meta.wsc.output_frame, alpha2,
+                                                          input_model.meta.wcs.output_frame, alpha2,
                                                           beta - dbeta * pixfrac / 2., wave)
 
             corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
