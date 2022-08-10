@@ -140,7 +140,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 	c12 = coord1[ipt];
 	c22 = coord2[ipt];
 	// for the end region find min and max c1,c2
-	if( c12 !=-1){
+	if (c12 != -1){
 	  if (c12 < c1_end_min) {
 	    c1_end_min = c12;
 	    ic1_end_min = ipt;
@@ -165,7 +165,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   // Make sure the 2 extreme slices are found on the FOV. Not finding both can occur for edge wavelength planes
   // or empty wavelength planes between channels
 
-  if( ic1_start_min ==-1 || ic1_start_max ==-1 || ic1_end_min == -1 || ic1_end_max == -1){
+  if (ic1_start_min == -1 || ic1_start_max == -1 || ic1_end_min == -1 || ic1_end_max == -1){
     status = 1;
     return status;
   } else {
@@ -179,7 +179,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
       c1_use = 0;   // use the c2 coords to set the corners
     }
 
-    if(c1_use ==0) {
+    if (c1_use == 0) {
       corner1[0] = coord1[ic2_start_min];
       corner1[1] = coord2[ic2_start_min];
     
@@ -191,7 +191,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 
       corner4[0] = coord1[ic2_end_min];
       corner4[1] = coord2[ic2_end_min];
-    } else{
+    } else {
       corner1[0] = coord1[ic1_start_min];
       corner1[1] = coord2[ic1_start_min];
     
@@ -284,10 +284,11 @@ int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
 	y1 = (ycenters[ix] - cdelt2)/2;
 	y2 = (ycenters[ix] + cdelt2)/2;
 	if(y1 > etamin && y2 < etamax){
-	  ixy = iy* naxis1 + ix;
-	  area_overlap = sh_find_overlap(xcenters[ix],ycenters[iy],
-						cdelt1, cdelt2,
-						xi_corner, eta_corner);
+	  ixy = iy * naxis1 + ix;
+	  area_overlap = sh_find_overlap(xcenters[ix],
+					 ycenters[iy],
+					 cdelt1, cdelt2,
+					 xi_corner, eta_corner);
 
 	  overlap_coverage = area_overlap / area_box;
 	  
@@ -408,7 +409,6 @@ int overlap_slice_with_spaxels(int overlap_partial,
 			       double cdelt1, double cdelt2,
 			       int naxis1, int naxis2,
 			       double xstart, double ystart,
-			       // double xcenters[], double ycenters[],
 			       double xi_min, double eta_min,
 			       double xi_max, double eta_max,
 			       int wave_slice_dq[]) {
@@ -650,12 +650,12 @@ int dq_nirspec(int overlap_partial,
 
     // At each wavelength plane find the min and max of the
     // tangent plane coordinates for each slice
-    imatch =  match_wave_plane_nirspec( zc[w], roiw_ave,
-    					coord1, coord2, wave,
-					sliceno, npt,
-    					c1_min, c2_min,
-					c1_max, c2_max,
-					match_slice);
+    imatch =  match_wave_plane_nirspec(zc[w], roiw_ave,
+				       coord1, coord2, wave,
+				       sliceno, npt,
+				       c1_min, c2_min,
+				       c1_max, c2_max,
+				       match_slice);
 
     int wave_slice_dq[nxy];
     for (j =0; j< nxy; j++){
@@ -665,14 +665,14 @@ int dq_nirspec(int overlap_partial,
     int slice_found = 0; 
 
     if( imatch > 0){ // some matches were found on the wavelength slice
-      for (islice =0; islice< 30 ; islice++){
+      for (islice = 0; islice< 30 ; islice++){
 	float slice_c1_min = c1_min[islice];
 	float slice_c1_max = c1_max[islice];
 
 	float slice_c2_min = c2_min[islice];
 	float slice_c2_max = c2_max[islice];
 	
-	if( match_slice[islice] ==1 ){
+	if( match_slice[islice] == 1){
 	  slice_found = 1;
 
 	  // at the wavelength plane find the overlap of each slice on
@@ -681,7 +681,7 @@ int dq_nirspec(int overlap_partial,
 	  float xstart = xc[0];
 	  float ystart = yc[0];
 	  status = overlap_slice_with_spaxels(overlap_partial,
-					      cdelt1,cdelt2,
+					      cdelt1, cdelt2,
 					      nx, ny,
 					      xstart, ystart,
 					      slice_c1_min, slice_c2_min,
@@ -695,7 +695,7 @@ int dq_nirspec(int overlap_partial,
       istart = nxy*w;
       iend = istart + nxy;
 
-      for( in = istart; in < iend; in ++){
+      for (in = istart; in < iend; in ++){
 	ii = in - istart;
 	idqv[in] = wave_slice_dq[ii];
       }
