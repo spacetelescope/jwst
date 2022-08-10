@@ -27,10 +27,12 @@ cube_build
   Sort subchannels present by inverse alphabetical order to ensure
   consistent filename creation across processing runs. [#6959]
   
-- Re-wrote c code for NIRSpec dq flagging. In addition,if data is
-  moving_target data, then do not use s_region values in cal files,
-  but map all the pixels to sky to find cube footprint. Updated drizzle
-  code to use wcs of output frame to account for moving target data  [#6971]
+- Re-wrote c code for NIRSpec dq flagging.[#6971]
+
+- For moving target data removed using  s_region values in cal files to
+  determine the size of the cube, instead all the pixels are mapped to
+  the skip to determine the cube footprint. Also updated the drizzle
+  code to use the  wcs of output frame to account for moving target. [#6971]
  
 
 - Update the wcs value for naxis3 when wavelength planes are removed from the
