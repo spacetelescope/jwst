@@ -31,6 +31,12 @@ cube_build
 - Remove trailing dash from IFU cube filenames built from all subchannels.
   Sort subchannels present by inverse alphabetical order to ensure
   consistent filename creation across processing runs. [#6959]
+  
+- Re-wrote c code for NIRSpec dq flagging. In addition,if data is
+  moving_target data, then do not use s_region values in cal files,
+  but map all the pixels to sky to find cube footprint. Updated drizzle
+  code to use wcs of output frame to account for moving target data 
+ 
 
 datamodels
 ----------
