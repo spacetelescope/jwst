@@ -33,32 +33,32 @@ WCS_ATTRIBUTES = ['crpix1', 'crpix2', 'crval1', 'crval2', 'pc_matrix']
 
 FGS_TRUTHS = {
     'fgs_acq2-guider2': {
-        'crpix1': 14.080291368942198, 'crpix2': 16.948358663805948,
-        'crval1': 261.8605720136804, 'crval2': -73.29163131766869,
-        'pc_matrix': [-0.9999944854986974, 0.0033209896409866256, 0.0033209896409866256, 0.9999944854986974]
+        'crpix1': 14.819122599592902, 'crpix2': 17.146828363188888,
+        'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
+        'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
     },
     'fgs_acq1-guider1': {
-        'crpix1': 36.23964226769749, 'crpix2': 68.3690778810028,
-        'crval1': 79.81704567329847, 'crval2': -69.5008404076233,
+        'crpix1': 87.61603886804687, 'crpix2': 63.774429604665784,
+        'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
         'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
     },
     'fgs_id-image-guider1': {
-        'crpix1': 348.00050401354497, 'crpix2': 1003.0004342656284,
-        'crval1': 81.833662406237, 'crval2': -69.9550484271066,
+        'crpix1': 216.99326282453353, 'crpix2': 1078.9913232886374,
+        'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
         'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
     },
     'fgs_track-guider1': {
-        'crpix1': 14.033443395549511, 'crpix2': 15.37628173802716,
+        'crpix1': 15.69677730515923, 'crpix2': 15.056990925049945,
         'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
         'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
     },
     'fgs_id-stack-guider1': {
-        'crpix1': 348.00050401354497, 'crpix2': 1003.0004342656284,
-        'crval1': 81.833662406237, 'crval2': -69.9550484271066,
+        'crpix1': 216.99326282453353, 'crpix2': 1078.9913232886374,
+        'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
         'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
     },
     'fgs_fineguide-guider2': {
-        'crpix1': 2.649773636966529, 'crpix2': 5.286930283199808,
+        'crpix1': 2.528106143013133, 'crpix2': 5.1871953296345055,
         'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
         'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
     },
@@ -68,12 +68,12 @@ FGS_TRUTHS = {
         'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
     },
     'fgs_fineguide-guider1': {
-        'crpix1': 3.10440965671296, 'crpix2': 2.993667433646692,
+        'crpix1': 3.3286305599267507, 'crpix2': 3.32740499197007,
         'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
         'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
     },
     'fgs_track-guider2': {
-        'crpix1': 15.285383252442102,'crpix2': 17.29819212708435,
+        'crpix1': 15.285383252442102, 'crpix2': 17.29819212708435,
         'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
         'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
     },
@@ -81,15 +81,15 @@ FGS_TRUTHS = {
         'crpix1': 334.0005319984152, 'crpix2': 1046.0004786236082,
         'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
         'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
-    },
+        },
     'fgs_acq1-guider2': {
-        'crpix1': 59.98007063730438, 'crpix2': 60.29148482075243,
-        'crval1': 261.8605720136804, 'crval2': -73.29163131766869,
-        'pc_matrix': [-0.9999944854986974, 0.0033209896409866256, 0.0033209896409866256, 0.9999944854986974]
+        'crpix1': 57.74390675801692, 'crpix2': 80.82385247510342,
+        'crval1': 79.96718069128876, 'crval2': -69.46731727531973,
+        'pc_matrix': [-0.9999870595413809, 0.005087312628765689, 0.005087312628765689, 0.9999870595413809]
     },
     'fgs_acq2-guider1': {
-        'crpix1': 14.635545812541295, 'crpix2': 15.382114908026438,
-        'crval1': 79.81704567329847, 'crval2': -69.5008404076233,
+        'crpix1': 14.776268791950542, 'crpix2': 14.90005565778631,
+        'crval1': 81.83366240613603, 'crval2': -69.9550484271187,
         'pc_matrix': [-0.9997653641994049, -0.02166140686177685, -0.02166140686177685, 0.9997653641994049]
     }
 }
@@ -169,33 +169,38 @@ META_FGS2 = {
 }
 
 
-@pytest.mark.parametrize('attribute', WCS_ATTRIBUTES)
-def test_wcs_calc_guiding(attribute, get_guider_wcs):
+def test_wcs_calc_guiding(get_guider_wcs):
     """Test the WCS calculation"""
     exp_type, detector, wcs = get_guider_wcs
 
     assert FGS_TRUTHS[f'{exp_type}-{detector}'] == wcs
 
 
-@pytest.fixture(params=FGS_PATHS)
-def get_guider_wcs(request, mast):
+def get_guider_wcs_id(path):
+    """Generate ids for get_guider_wcs"""
+    id = path.stem
+    return id
+
+
+@pytest.fixture(params=FGS_PATHS, ids=get_guider_wcs_id)
+def get_guider_wcs(request, multi_engdb):
     siaf_db = SiafDb(SIAF_PATH)
+    engdb = multi_engdb
     with Level1bModel(request.param) as model:
         exp_type = model.meta.exposure.type.lower()
         detector = model.meta.instrument.detector.lower()
-        t_pars = stp.t_pars_from_model(model, siaf_db=siaf_db, engdb_url=mast.base_url)
+        t_pars = stp.t_pars_from_model(model, siaf_db=siaf_db, engdb_url=engdb.base_url)
         wcs = stp.calc_wcs_guiding(model, t_pars)
 
     wcs = {key: value for key, value in zip(WCS_ATTRIBUTES, wcs)}
     return exp_type, detector, wcs
 
-@pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)
 @pytest.mark.parametrize('exp_type, expected',
                          [('fgs_acq1', stp.GuideStarPosition(position=(17.7885990143, 42.6522407532), corner=(1193, 343), size=(128, 128))),
                           ('fgs_acq2', stp.GuideStarPosition(position=(17.8298149109, 42.65200042725), corner=(1268, 386), size=(32, 32)))])
-def test_gs_position_acq(multi_fixture, exp_type, expected):
+def test_gs_position_acq(multi_engdb, exp_type, expected):
     """Test the mnemonics reading"""
-    engdb = multi_fixture
+    engdb = multi_engdb
 
     # Perform operation
     mnemonics = stp.get_mnemonics(Time(OBSSTART).mjd, Time(OBSEND).mjd, 60.,
@@ -206,9 +211,8 @@ def test_gs_position_acq(multi_fixture, exp_type, expected):
     assert gs_position == expected
 
 
-@pytest.mark.parametrize('multi_fixture', ['engdb_jw01029', 'mast'], indirect=True)
-def test_fgs_pointing(multi_fixture, make_level1b):
-    engdb = multi_fixture
+def test_fgs_pointing(multi_engdb, make_level1b):
+    engdb = multi_engdb
     model, expected = make_level1b
 
     # Update wcs
@@ -247,9 +251,9 @@ def mast():
     yield engdb
 
 
-@pytest.fixture
-def multi_fixture(request):
-    """Allow a test to use multiple fixtures"""
+@pytest.fixture(params=['engdb_jw01029', 'mast'])
+def multi_engdb(request):
+    """Allow a test to use multiple database fixtures"""
     return request.getfixturevalue(request.param)
 
 
