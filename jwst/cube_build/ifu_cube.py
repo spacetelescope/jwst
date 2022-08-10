@@ -1683,7 +1683,7 @@ class IFUCubeData():
             # Find slice width
             allbetaval = np.unique(beta)
             dbeta = np.abs(allbetaval[1] - allbetaval[0])
-            ra1, dec1, _ = input_model.meta.wcs.transform('alpha_beta', 
+            ra1, dec1, _ = input_model.meta.wcs.transform('alpha_beta',
                                                           input_model.meta.wcs.output_frame, alpha1,
                                                           beta - dbeta * pixfrac / 2., wave)
             ra2, dec2, _ = input_model.meta.wcs.transform('alpha_beta',
