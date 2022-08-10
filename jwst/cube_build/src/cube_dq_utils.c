@@ -10,7 +10,7 @@
 
 extern double sh_find_overlap(const double xcenter, const double ycenter, 
 			      const double xlength, const double ylength,
-			      double xPixelCorner[],double yPixelCorner[]);
+			      double xPixelCorner[], double yPixelCorner[]);
 
 
 //________________________________________________________________________________
@@ -213,7 +213,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 //________________________________________________________________________________
 // MIRI DQ routine. Find the overlap of the FOV for the wavelength slice in IFU cube
 
-int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
+int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
                              double cdelt1, double cdelt2,
                              int naxis1, int naxis2,
                              double xcenters[], double ycenters[],
