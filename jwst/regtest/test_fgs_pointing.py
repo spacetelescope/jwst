@@ -1,17 +1,17 @@
 """Test suite for ensuring correct FGS pointing"""
-import os.path
 import logging
 from pathlib import Path
 import pytest
 
 from astropy.time import Time
 from numpy import array
-from numpy import isclose
+from numpy import allclose, isclose
 
 from jwst.datamodels import Level1bModel
 from jwst.lib import engdb_mast
 from jwst.lib import engdb_tools
 from jwst.lib import set_telescope_pointing as stp
+from jwst.lib.file_utils import pushdir
 from jwst.lib.siafdb import SiafDb
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
@@ -23,12 +23,11 @@ handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 # Get database paths.
-DATA_PATH = Path(__file__).parent / 'data'
-db_1029 = DATA_PATH / 'engdb_jw01029'
+DATA_PATH = Path(stp.__file__).parent / 'tests' / 'data'
 SIAF_PATH = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
 
 # All the FGS GUIDER examples. Generated from proposal JW01029
-FGS_ROOT_PATH = DATA_PATH / 'fgs_guider'
+FGS_ROOT_PATH = DATA_PATH / 'fgs_exposures'
 FGS_PATHS = list(FGS_ROOT_PATH.glob('*.fits'))
 WCS_ATTRIBUTES = ['crpix1', 'crpix2', 'crval1', 'crval2', 'pc_matrix']
 
@@ -170,11 +169,12 @@ META_FGS2 = {
 }
 
 
-def test_wcs_calc_guiding(get_guider_wcs):
+@pytest.mark.parametrize('attr', WCS_ATTRIBUTES)
+def test_wcs_calc_guiding(get_guider_wcs, attr):
     """Test the WCS calculation"""
     exp_type, detector, wcs = get_guider_wcs
 
-    assert FGS_TRUTHS[f'{exp_type}-{detector}'] == wcs
+    assert allclose(wcs[attr], FGS_TRUTHS[f'{exp_type}-{detector}'][attr])
 
 
 def get_guider_wcs_id(path):
@@ -183,7 +183,7 @@ def get_guider_wcs_id(path):
     return id
 
 
-@pytest.fixture(params=FGS_PATHS, ids=get_guider_wcs_id)
+@pytest.fixture(params=FGS_PATHS, ids=get_guider_wcs_id, scope='module')
 def get_guider_wcs(request, multi_engdb):
     siaf_db = SiafDb(SIAF_PATH)
     engdb = multi_engdb
@@ -234,15 +234,24 @@ def test_fgs_pointing(multi_engdb, make_level1b):
 # ---------
 # Utilities
 # ---------
-@pytest.fixture
-def engdb_jw01029():
+@pytest.fixture(scope='module')
+def engdb_jw01029(request, rtdata_module):
     """Setup the test engineering database"""
-    with EngDB_Mocker(db_path=db_1029):
+    rtdata = rtdata_module
+    if not request.config.getoption('--bigdata'):
+        pytest.skip('"--bigdata" not specified')
+
+    db_path = Path('engdb_jw0109')
+    db_path.mkdir()
+    with pushdir(db_path):
+        for path in rtdata.data_glob('fgs/pointing/engdb_jw01029'):
+            rtdata.get_data(path)
+    with EngDB_Mocker(db_path=db_path):
         engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
         yield engdb
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def mast():
     """Use the Mast database."""
     try:
@@ -252,7 +261,7 @@ def mast():
     yield engdb
 
 
-@pytest.fixture(params=['engdb_jw01029', 'mast'])
+@pytest.fixture(params=['engdb_jw01029', 'mast'], scope='module')
 def multi_engdb(request):
     """Allow a test to use multiple database fixtures"""
     return request.getfixturevalue(request.param)
