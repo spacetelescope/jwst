@@ -65,7 +65,7 @@ charge_migration
 - Step was renamed from undersampling_migration. Changed default signal threshold,
   added efficient routine to flag neighborhood pixels, added new unit test,
   improved earlier unit tests, updated docs. [#7825]
-  
+
 cube_build
 ----------
 
@@ -184,7 +184,13 @@ residual_fringe
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
-  
+
+
+set_telescope_pointing
+----------------------
+
+-  Update WCS calculations for the GUIDING modes [#6975]
+
 undersampling_correction
 ------------------------
 
@@ -193,7 +199,7 @@ undersampling_correction
 
 - Removed directories for undersampling_correction step, as the step has been
   renamed charge_migration. [#7850]
-  
+
 
 1.11.4 (2023-08-14)
 ===================
