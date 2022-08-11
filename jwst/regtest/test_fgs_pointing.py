@@ -95,8 +95,8 @@ FGS_TRUTHS = {
 }
 
 # Time frame
-OBSSTART = '2022-05-23T00:36:08.000'
-OBSEND = '2022-05-23T00:36:22.480'
+OBSSTART = '2022-05-22T18:07:34.000'
+OBSEND = '2022-05-22T18:07:46.087'
 
 # Define minimal model meta structure
 META_FGS1 = {
@@ -123,12 +123,12 @@ META_FGS1 = {
         }
     },
     'expected': {
-        'pc1_1': -0.9997617158628777,
+        'pc1_1': -0.9997653641994049,
         'pc1_2': -0.02166140686177685,
         'pc2_1': -0.02166140686177685,
         'pc2_2': 0.9997653641994049,
-        'crpix1': 36.23964226769749,
-        'crpix2': 68.3690778810028,
+        'crpix1': 87.61603886804687,
+        'crpix2': 63.774429604665784,
         'crval1': 45.1234,
         'crval2': -45.1234,
     }
@@ -161,8 +161,8 @@ META_FGS2 = {
         'pc1_2': 0.005087312628765689,
         'pc2_1': 0.005087312628765689,
         'pc2_2': 0.9999870595413809,
-        'crpix1': 32.03855011856763,
-        'crpix2': 1294.2350135132765,
+        'crpix1': 86.80602146475417,
+        'crpix2': 172.52832537903396,
         'crval1': 45.1234,
         'crval2': -45.1234,
     }
@@ -196,23 +196,8 @@ def get_guider_wcs(request, multi_engdb):
     wcs = {key: value for key, value in zip(WCS_ATTRIBUTES, wcs)}
     return exp_type, detector, wcs
 
-@pytest.mark.parametrize('exp_type, expected',
-                         [('fgs_acq1', stp.GuideStarPosition(position=(17.7885990143, 42.6522407532), corner=(1193, 343), size=(128, 128))),
-                          ('fgs_acq2', stp.GuideStarPosition(position=(17.8298149109, 42.65200042725), corner=(1268, 386), size=(32, 32)))])
-def test_gs_position_acq(multi_engdb, exp_type, expected):
-    """Test the mnemonics reading"""
-    engdb = multi_engdb
 
-    # Perform operation
-    mnemonics = stp.get_mnemonics(Time(OBSSTART).mjd, Time(OBSEND).mjd, 60.,
-                                  stp.FGS_ACQ_MNEMONICS, engdb_url=engdb.base_url)
-    gs_position = stp.gs_position_acq(stp.FGS_ACQ_MNEMONICS, mnemonics, exp_type)
-
-    # Test
-    assert gs_position == expected
-
-
-def test_fgs_pointing(multi_engdb, make_level1b):
+def test_update_wcs(multi_engdb, make_level1b):
     engdb = multi_engdb
     model, expected = make_level1b
 
