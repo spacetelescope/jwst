@@ -780,7 +780,9 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
 
     logger.info('Updating WCS for Fine Guidance.')
 
-    crpix1, crpix2, crval1, crval2, pc_matrix = calc_wcs_guiding(model, t_pars, default_roll_ref, default_vparity, default_v3yangle)
+    crpix1, crpix2, crval1, crval2, pc_matrix = calc_wcs_guiding(
+        model, t_pars, default_roll_ref, default_vparity, default_v3yangle
+    )
 
     model.meta.wcsinfo.crpix1 = crpix1
     model.meta.wcsinfo.crpix2 = crpix2
