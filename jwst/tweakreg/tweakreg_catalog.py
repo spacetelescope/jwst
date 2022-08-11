@@ -68,7 +68,9 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
         raise TypeError('The input model must be an ImageModel.')
 
     # Mask the non-imaging area (e.g. MIRI)
-    coverage_mask = (dqflags.pixel['NON_SCIENCE'] & model.dq).astype(bool)
+    coverage_mask = ((dqflags.pixel['NON_SCIENCE'] +
+                      dqflags.pixel['DO_NOT_USE']) &
+                     model.dq).astype(bool)
 
     bkg = JWSTBackground(model.data, box_size=bkg_boxsize,
                          coverage_mask=coverage_mask)
