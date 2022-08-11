@@ -99,6 +99,7 @@ OBSSTART = '2022-05-22T18:07:34.000'
 OBSEND = '2022-05-22T18:07:46.087'
 
 # Define minimal model meta structure
+META_ATTRIBUTES = ['pc1_1', 'pc1_2', 'pc2_1', 'pc2_2', 'crpix1', 'crpix2', 'crval1', 'crval2']
 META_FGS1 = {
     'wcs': {
         'meta': {
@@ -197,28 +198,29 @@ def get_guider_wcs(request, multi_engdb):
     return exp_type, detector, wcs
 
 
-def test_update_wcs(multi_engdb, make_level1b):
-    engdb = multi_engdb
-    model, expected = make_level1b
+@pytest.mark.parametrize('attr', META_ATTRIBUTES)
+def test_update_wcs(update_wcs, attr):
+    """Test that meta info gets updated"""
+    model, expected = update_wcs
+    wcsinfo = model.meta.wcsinfo.instance
 
-    # Update wcs
-    stp.update_wcs(model, engdb_url=engdb.base_url)
-
-    # Test results
-    assert isclose(model.meta.wcsinfo.pc1_1, expected['pc1_1'], atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc1_2, expected['pc1_2'], atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc2_1, expected['pc2_1'], atol=1e-15)
-    assert isclose(model.meta.wcsinfo.pc2_2, expected['pc2_2'], atol=1e-15)
-
-    assert isclose(model.meta.wcsinfo.crpix1, expected['crpix1'], atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crpix2, expected['crpix2'], atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crval1, expected['crval1'], atol=1e-15)
-    assert isclose(model.meta.wcsinfo.crval2, expected['crval2'], atol=1e-15)
+    assert isclose(wcsinfo[attr], expected[attr], atol=1e-15)
 
 
 # ---------
 # Utilities
 # ---------
+@pytest.fixture(scope='module')
+def update_wcs(multi_engdb, make_level1b):
+    """Update the model wcs info"""
+    engdb = multi_engdb
+    model, expected = make_level1b
+
+    stp.update_wcs(model, engdb_url=engdb.base_url)
+
+    return model, expected
+
+
 @pytest.fixture(scope='module')
 def engdb_jw01029(request, rtdata_module):
     """Setup the test engineering database"""
