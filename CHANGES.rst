@@ -1,11 +1,6 @@
 1.6.3 (unreleased)
 ==================
 
-extract_1d
-----------
-
-- Update int_times keywords in SOSS spectral output [#6930]
-
 general
 -------
 
@@ -39,6 +34,13 @@ datamodels
   dictionary. [#6941]
 
 - Add P_SUBARR keyword to the `DarkModel` schema. [#6951]
+
+- Added the P_READPA keyword to the `ReadnoiseModel` schema [#6973]
+
+extract_1d
+----------
+
+- Update int_times keywords in SOSS spectral output [#6930]
 
 master_background
 -----------------
