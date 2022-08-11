@@ -784,6 +784,11 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
         model, t_pars, default_roll_ref, default_vparity, default_v3yangle
     )
 
+    logger.info('WCS info:'
+                f'\n\tcrpix1: {crpix1} crpix2: {crpix2}'
+                f'\n\tcrval1: {crval1} crval2: {crval2}'
+                f'\n\tpc_matrix: {pc_matrix}')
+
     model.meta.wcsinfo.crpix1 = crpix1
     model.meta.wcsinfo.crpix2 = crpix2
     model.meta.wcsinfo.crval1 = crval1
