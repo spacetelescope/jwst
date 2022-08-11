@@ -67,8 +67,9 @@ tweakreg
 - ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
   from data model's tweaked GWCS. [#6936, #6947, #6955]
 
-- The ``tweakreg`` step now masks ``NON_SCIENCE`` pixels when
-  calculating the source detection theshold. [#6940]
+- The ``tweakreg`` step now masks `both `NON_SCIENCE`` and ``DO_NOT_USE``
+  pixels when calculating the source detection theshold and finding
+  sources. [#6940, #6974]
 
 - Allow alignment of a single image (or group) to Gaia while skipping relative
   alignment (whcih needs 2 images) instead of cancelling  the entire
