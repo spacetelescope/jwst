@@ -65,6 +65,6 @@ def test_create(source, prd, xml_path, exception, jail_environ):
 )
 def test_get_wcs(aperture, expected):
     """Test retrieval of wcs information."""
-    siaf_db =  siafdb.SiafDb(SIAFXML_PATH)
+    siaf_db = siafdb.SiafDb(SIAFXML_PATH)
     siaf = siaf_db.get_wcs(aperture)
     assert siaf == expected

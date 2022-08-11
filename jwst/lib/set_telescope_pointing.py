@@ -135,7 +135,7 @@ TRACK_TR_202111_MNEMONICS = {
 }
 
 FGS_ACQ_EXP_TYPES = ['fgs_acq1', 'fgs_acq2']
-FGS_ACQ_MNEMONICS  = {
+FGS_ACQ_MNEMONICS = {
     'IFGS_ACQ_DETXCOR': True,
     'IFGS_ACQ_DETYCOR': True,
     'IFGS_ACQ_DETXSIZ': True,
@@ -163,6 +163,7 @@ FGS_ID_MNEMONICS = {
     'IFGS_ID_DETXSIZ',
     'IFGS_ID_DETYSIZ',
 }
+
 
 # The available methods for transformation
 class Methods(Enum):
@@ -2226,7 +2227,7 @@ def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
     names = ['time'] + names
     time_idx = 0
 
-    values = [ [] for _ in names]
+    values = [[] for _ in names]
 
     for time in filled:
         values[time_idx].append(time)
@@ -2237,6 +2238,7 @@ def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
     t = Table(values, names=names)
 
     return t
+
 
 def calc_estimated_gs_wcs(t_pars: TransformParameters):
     """Calculate the estimated guide star RA/DEC/Y-angle
@@ -2665,6 +2667,7 @@ def dcm(alpha, delta, angle):
 
     return dcm
 
+
 # Determine calculation method from tracking mode.
 def method_from_pcs_mode(pcs_mode):
     """Determine transform/wcs calculation method from PCS_MODE
@@ -2813,7 +2816,7 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
-    valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0) 
+    valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0)
     valid = ordered[valid_flags]
 
     # Get the positions
@@ -2835,7 +2838,7 @@ def gs_position_id(mnemonics_to_read, mnemonics):
     five seconds after the end of the exposure. The input mnemonic array needs to have this. The first non-zero
     report is used.
 
-    There is a box defined by the IFGS_ID_DET* mnemonics. 
+    There is a box defined by the IFGS_ID_DET* mnemonics.
 
     Parameters
     ==========
@@ -2855,7 +2858,7 @@ def gs_position_id(mnemonics_to_read, mnemonics):
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
-    valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0) 
+    valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0)
     valid = ordered[valid_flags]
 
     # Get the positions
@@ -2948,7 +2951,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     crpix1, crpix2, crval1, crval2, pc1_1, pc1_2, pc2_1, pc2_2 : float
         The WCS info.
     """
-    ### Determine reference pixel
+    # Determine reference pixel
 
     # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
     # in the image.
@@ -2964,7 +2967,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     # Getting the timing to extract from the engineering database is complicated by
     # the fact that the observation times and the processing of the guide star
     # acquisition do not always exactly match. Extend the end time by one second.
-    # 
+    #
     # For ID modes, the mnemonics are valid only after the exposure is completed.
     # The time to examine is within 10 seconds after the end of exposure
     obsstart = t_pars.obsstart
@@ -2974,7 +2977,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
         obsend = (Time(obsend, format='mjd') + (10 * U.second)).mjd
     elif t_pars.exp_type in FGS_ACQ_EXP_TYPES:
         obsend = (Time(obsend, format='mjd') + (1 * U.second)).mjd
- 
+
     gs_position = get_pointing(obsstart, obsend,
                                mnemonics_to_read=mnemonics_to_read,
                                engdb_url=t_pars.engdb_url,
@@ -2985,7 +2988,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
     crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture, flip=True)
 
-    ### Determine PC matrix
+    # Determine PC matrix
 
     # Get position angle
     try:
@@ -3009,9 +3012,9 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
         logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
         v3i_yang = default_v3yangle
 
-    pc_matrix= calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
+    pc_matrix = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
 
-    ### Determine reference sky values
+    # Determine reference sky values
     crval1 = model.meta.guidestar.gs_ra
     crval2 = model.meta.guidestar.gs_dec
 
