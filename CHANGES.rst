@@ -27,6 +27,9 @@ cube_build
   Sort subchannels present by inverse alphabetical order to ensure
   consistent filename creation across processing runs. [#6959]
 
+- Update the wcs value for naxis3 when wavelength planes are removed from the
+  IFUCube when there is no valid data. [#6976]
+
 datamodels
 ----------
 
