@@ -6,16 +6,16 @@ import pytest
 # Only run if `pysiaf` is installed.
 pytest.importorskip('pysiaf')
 
-from numpy import array
-from numpy import allclose, isclose
+from numpy import array                             # noqa: E402
+from numpy import allclose, isclose                 # noqa: E402
 
-from jwst.datamodels import Level1bModel
-from jwst.lib import engdb_mast
-from jwst.lib import engdb_tools
-from jwst.lib import set_telescope_pointing as stp
-from jwst.lib.file_utils import pushdir
-from jwst.lib.siafdb import SiafDb
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
+from jwst.datamodels import Level1bModel            # noqa: E402
+from jwst.lib import engdb_mast                     # noqa: E402
+from jwst.lib import engdb_tools                    # noqa: E402
+from jwst.lib import set_telescope_pointing as stp  # noqa: E402
+from jwst.lib.file_utils import pushdir             # noqa: E402
+from jwst.lib.siafdb import SiafDb                  # noqa: E402
+from jwst.lib.tests.engdb_mock import EngDB_Mocker  # noqa: E402
 
 # Set logging for the module to be tested.
 logger = logging.getLogger(stp.__name__)
