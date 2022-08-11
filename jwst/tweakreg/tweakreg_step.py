@@ -21,6 +21,22 @@ from . import astrometric_utils as amutils
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
+def _oxford_or_str_join(str_list):
+    nelem = len(str_list)
+    if not nelem:
+        return 'N/A'
+    str_list = list(map(repr, str_list))
+    if nelem == 1:
+        return str_list
+    elif nelem == 2:
+        return str_list[0] + ' or ' + str_list[1]
+    else:
+        return ', '.join(map(repr, str_list[:-1])) + ', or ' + repr(str_list[-1])
+
+
+SINGLE_GROUP_REFCAT = ['GAIADR2', 'GAIADR1']
+_SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
+
 __all__ = ['TweakRegStep']
 
 
@@ -32,7 +48,7 @@ class TweakRegStep(Step):
 
     class_alias = "tweakreg"
 
-    spec = """
+    spec = f"""
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
@@ -52,7 +68,7 @@ class TweakRegStep(Step):
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
         align_to_gaia = boolean(default=False)  # Align to GAIA catalog
-        gaia_catalog = string(default='GAIADR2')  # Catalog file name or 'GAIADR1', 'GAIADR2'
+        gaia_catalog = string(default='GAIADR2')  # Catalog file name or one of: {_SINGLE_GROUP_REFCAT_STR}
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
@@ -264,7 +280,7 @@ class TweakRegStep(Step):
             self.gaia_catalog = self.gaia_catalog.strip()
             gaia_cat_name = self.gaia_catalog.upper()
 
-            if gaia_cat_name in ['GAIADR2', 'GAIADR1']:
+            if gaia_cat_name in SINGLE_GROUP_REFCAT:
                 ref_cat = amutils.create_astrometric_catalog(
                     images,
                     gaia_cat_name,
@@ -276,8 +292,8 @@ class TweakRegStep(Step):
 
             else:
                 raise ValueError("'gaia_catalog' must be a path to an "
-                                 "existing file name or one of the two special "
-                                 "catalogs: 'GAIADR2' or 'GAIADR1'.")
+                                 "existing file name or one of the supported "
+                                 f"reference catalogs: {_SINGLE_GROUP_REFCAT_STR}.")
 
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)

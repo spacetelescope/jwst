@@ -53,7 +53,7 @@ input images to align them all to the astrometric reference frame while
 maintaining the relative alignment between the images.
 
 For this part of alignment, instead of 'GAIADR1' or 'GAIADR2', users can
-supply an external reference catalog by providing path to an existing
+supply an external reference catalog by providing a path to an existing
 file. User-supplied catalog must contain ``'RA'`` and ``'DEC'`` columns which
 indicate reference source world coordinates (in degrees). An optional column
 in the catalog is the ``'weight'`` column, which when present, will be used
@@ -163,8 +163,10 @@ The ``tweakreg`` step has the following optional arguments:
   perform the fit to an astrometric catalog. (Default=False)
 
 * ``gaia_catalog``: String indicating what astrometric catalog should be used.
-  Supported options: 'GAIADR2' and 'GAIADR1' or a path to an existing
-  reference catalog. (Default='GAIADR2')
+  Currently supported options: 'GAIADR2' and 'GAIADR1' or a path to an existing
+  reference catalog. See :py:data:`jwst.tweakreg.tweakreg_step.SINGLE_GROUP_REFCAT`
+  for an up-to-date list of supported built-in reference catalogs.
+  (Default='GAIADR2')
 
 * ``min_gaia``: Minimum number of matches to astrometric sources to initiate a fit.
   (Default=5)
