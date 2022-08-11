@@ -3,7 +3,9 @@ import logging
 from pathlib import Path
 import pytest
 
-from astropy.time import Time
+# Only run if `pysiaf` is installed.
+pytest.importorskip('pysiaf')
+
 from numpy import array
 from numpy import allclose, isclose
 
