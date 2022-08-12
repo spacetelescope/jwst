@@ -2112,12 +2112,14 @@ class IFUCubeData():
                 dq = dq[remove_start:self.naxis3 - remove_final, :, :]
                 var = var[remove_start:self.naxis3 - remove_final, :, :]
 
+                # update WCS information if removing wavelengths from the IFU Cube
+                self.naxis3 = self.naxis3 - (remove_start + remove_final) + 1
+
                 if self.linear_wavelength:
                     self.crval3 = self.zcoord[remove_start]
                 else:
                     self.wavelength_table = self.wavelength_table[remove_start:self.naxis3 - remove_final]
                     self.crval3 = self.wavelength_table[0]
-                    self.naxis3 = self.naxis3 - (remove_start + remove_final)
 
         # end removing empty wavelength planes
 
