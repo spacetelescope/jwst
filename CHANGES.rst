@@ -34,7 +34,7 @@ cube_build
 datamodels
 ----------
 
-- Updated keyword commentstitles in datamodel schemas to match those in keyword
+- Updated keyword comments/titles in datamodel schemas to match those in keyword
   dictionary. [#6941]
 
 - Add the P_SUBARR keyword to the `DarkModel` schema. [#6951]
