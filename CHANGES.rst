@@ -19,7 +19,7 @@ assign_wcs
 
 - Added convenience function ``update_fits_wcsinfo()`` to ``assign_wcs.util``
   module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
-  from datamodel's GWCS. [#6935]
+  from ``datamodel``'s GWCS. [#6935]
 
 cube_build
 ----------
@@ -28,29 +28,29 @@ cube_build
   Also sort subchannels present by inverse alphabetical order to ensure
   consistent filename creation across processing runs. [#6959]
 
-- Update the WCS naxis3 value when wavelength planes are removed from the
+- Update the WCS ``naxis3`` value when wavelength planes are removed from the
   IFUCube due to no valid data. [#6976]
 
 datamodels
 ----------
 
-- Updated keyword comments/titles in datamodel schemas to match those in keyword
+- Updated keyword comments/titles in ``datamodels`` schemas to match those in keyword
   dictionary. [#6941]
 
-- Add the P_SUBARR keyword to the `DarkModel` schema. [#6951]
+- Add the ``P_SUBARR`` keyword to the ``DarkModel`` schema. [#6951]
 
-- Add the P_READPA keyword to the `ReadnoiseModel` schema [#6973]
+- Add the ``P_READPA`` keyword to the ``ReadnoiseModel`` schema [#6973]
 
 extract_1d
 ----------
 
-- Update int_times keywords and copy the INT_TIMES table extension to SOSS
+- Update ``int_times`` keywords and copy the ``INT_TIMES`` table extension to SOSS
   spectral output (x1d) files [#6930]
 
 master_background
 -----------------
 
-- Fix the use of MRS sigma-clipped background in cases where the SRCTYPE
+- Fix the use of MRS sigma-clipped background in cases where the ``SRCTYPE``
   keyword is not properly set. [#6960]
 
 outlier_detection
@@ -77,7 +77,7 @@ tweakreg
 --------
 
 - The ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
-  from datamodel's tweaked GWCS. [#6936, #6947, #6955]
+  from ``datamodel``'s tweaked GWCS. [#6936, #6947, #6955]
 
 - The ``tweakreg`` step now masks both ``NON_SCIENCE`` and ``DO_NOT_USE``
   pixels when calculating the source detection theshold and finding
