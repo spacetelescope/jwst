@@ -338,15 +338,16 @@ long match_wave_plane_nirspec(double wave_plane,
      c1_min, c2_min, c1_max, c2_max, match_slice
    */
 
-  long ipt;
+  long ipt =0;
   double wave_distance;
   double slice;
   long ii = 0;
+  int i =0 ; 
   
   // initialize the values
   float minvalue = 10000.0;
   float maxvalue = -10000.0;
-  for (int i = 0; i < 30; i++){
+  for (i = 0; i < 30; i++){
     c1_min[i] = minvalue;
     c2_min[i] = minvalue;
 
@@ -389,7 +390,7 @@ long match_wave_plane_nirspec(double wave_plane,
   }
   // find which slices have a c1,c2 min and max found 
   if (ii > 0) {
-    for (int i = 0; i< 30; i++){
+    for (i = 0; i< 30; i++){
       if (c1_min[i] != minvalue && c2_min[i] != minvalue &&
 	  c1_max[i] != maxvalue && c2_max[i] != maxvalue){
 	
@@ -629,12 +630,12 @@ int dq_nirspec(int overlap_partial,
   */
   
   int w, islice, status, status_wave, nxy, j;
-  long istart, in, iend, ii;
+  long istart, in, iend, ii, i;
   double c1_min, c2_min, c1_max, c2_max;
   int *idqv ;  // int vector for spaxel
   idqv = (int*)calloc(ncube, sizeof(int));
 
-  for (long i = 0; i< ncube; i++){
+  for (i = 0; i< ncube; i++){
     idqv[i] = 0;
   }
   
