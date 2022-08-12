@@ -97,7 +97,7 @@ extern int dq_miri(int start_region, int end_region, int overlap_partial, int ov
 		   double *xc, double *yc, double *zc,
 		   double *coord1, double *coord2, double *wave,
 		   double *sliceno,
-		   long ncube, int npt, 
+		   long ncube, long npt, 
 		   int **spaxel_dq);
 
 extern int dq_nirspec(int overlap_partial,
@@ -106,7 +106,7 @@ extern int dq_nirspec(int overlap_partial,
 		      double *xc, double *yc, double *zc,
 		      double *coord1, double *coord2, double *wave,
 		      double *sliceno,
-		      long ncube, int npt,
+		      long ncube, long npt,
 		      int **spaxel_dq);
 
 extern int set_dqplane_to_zero(int ncube, int **spaxel_dq);
@@ -128,7 +128,7 @@ int match_driz(double *xc, double *yc, double *zc,
 	       double *dwave,
 	       double *cdelt3,
 	       double cdelt1, double cdelt2,
-	       int nx, int ny, int nwave, int ncube, int npt, int linear, 
+	       int nx, int ny, int nwave, long ncube, long npt, int linear, 
 	       double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
 	       double **spaxel_iflux) {
 
@@ -164,7 +164,6 @@ int match_driz(double *xc, double *yc, double *zc,
  
   // loop over each detector pixel and find which spaxels it overlaps with
   nxy = nx * ny;
-  //printf(" number of cube elements %i \n", npt);
   for (k = 0; k < npt; k++) {
       xpixel[0] = xi1[k];
       xpixel[1] = xi2[k];
@@ -183,7 +182,6 @@ int match_driz(double *xc, double *yc, double *zc,
       xmax = xmin;
       ymax = ymin;
       for (j =1; j< 5; j++){
-	// if(k < 5) {printf("pixel %f %f \n", xpixel[j], ypixel[j]);}
 	if(xpixel[j] > xmax) xmax = xpixel[j];
 	if(ypixel[j] > ymax) ymax = ypixel[j];
 	if(xpixel[j] < xmin) xmin = xpixel[j];
@@ -229,10 +227,7 @@ int match_driz(double *xc, double *yc, double *zc,
 	zreg = fabs(dwave[k] + cdelt3[iw]);
 	// zreg = 0.0025; (roiw size for testing- usually larger than zreg)
 	wdiff = zc[iw] - wave[k];
-	if( k == -40 && iw ==0){
-	  printf(" found %f %f %f %f  %f %f \n ",wdiff, wave[k], zc[0], zreg, dwave[k], cdelt3[iw]);
-	  printf(" x,y overlaps %i %i %i %i \n", ix1, ix2, iy1, iy2);
-	}
+
 	if( fabs(wdiff) < zreg){
 	  // Fractional wavelength overlaps to use for weighting
 	  ptmin = wave[k] - dwave[k]/2;
@@ -261,9 +256,6 @@ int match_driz(double *xc, double *yc, double *zc,
 	      ytop = yc[iy] + cdelt2*0.5;
 
 	      index_xy = iy* nx + ix;
-	      if(index_xy == -1727 && iw ==0){
-		printf(" found %f %f %f %f %f %f %f %f %i %i %i \n", xleft, xright, ybot, ytop, xmax, xmin, ymax, ymin,iw,ix,iy);
-	      }
 	
 	      if(xleft < xmax && xright > xmin && ybot < ymax && ytop > ymin){
 
@@ -327,7 +319,8 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyObject *dwaveo;
   
   double cdelt1, cdelt2,cdelt3_mean;
-  int  nwave, npt, nxx, nyy, ncube;
+  int  nwave, nxx, nyy;
+  long npt, ncube;
   int linear;
   int instrument, flag_dq_plane,start_region, end_region, overlap_partial, overlap_full;
   double *spaxel_flux=NULL, *spaxel_weight=NULL, *spaxel_var=NULL;
@@ -393,7 +386,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
     }
 
-  npt = (int) PyArray_Size((PyObject *) coord1);
+  npt = (long) PyArray_Size((PyObject *) coord1);
   ny = (int) PyArray_Size((PyObject *) coord2);
   nz = (int) PyArray_Size((PyObject *) wave);
   if (ny != npt || nz != npt ) {
@@ -437,6 +430,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   // if flag_dq_plane = 1, Set up the dq plane 
   //______________________________________________________________________
   int status1 = 0;
+  
   if(flag_dq_plane){
     if (instrument == 0){
       status1 = dq_miri(start_region, end_region,overlap_partial, overlap_full,
@@ -454,7 +448,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
     } else{
       status1 = dq_nirspec(overlap_partial,
-			   nxx,nyy,nwave,
+      			   nxx,nyy,nwave,
 			   cdelt1, cdelt2, cdelt3_mean,
 			   (double *) PyArray_DATA(xc),
 			   (double *) PyArray_DATA(yc),
@@ -470,7 +464,6 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
     status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
     
   }
-
   //______________________________________________________________________
   // Driz the mapped detector data onto the IFU cube
   //______________________________________________________________________
