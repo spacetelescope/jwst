@@ -109,20 +109,20 @@ class MasterBackgroundStep(Step):
                     asn_id = input_data.meta.asn_table.asn_id
 
                     for model in background_data:
-                        # Check if the background members are nodded x1d extractions.
-                        # Or background from dedicated background exposures
+                        # Check if the background members are nodded x1d extractions
+                        # or background from dedicated background exposures.
                         # Use "bkgdtarg == False" so we don't also get None cases
                         # for simulated data that didn't bother populating this
-                        # keyword
+                        # keyword.
                         this_is_ifu_extended = False
-                        if (model.meta.exposure.type == 'NRS_IFU' and model.meta.target.source_type == 'EXTENDED'):
+                        if (model.meta.exposure.type == 'NRS_IFU' and model.spec[0].source_type == 'EXTENDED'):
                             this_is_ifu_extended = True
                         if (model.meta.exposure.type == 'MIR_MRS'):
+                            # always treat as extended for MIRI MRS
                             this_is_ifu_extended = True
 
                         if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
-                            self.log.debug("Copying BACKGROUND column "
-                                           "to SURF_BRIGHT")
+                            self.log.debug("Copying BACKGROUND column to SURF_BRIGHT")
                             copy_background_to_surf_bright(model)
 
                     master_background = combine_1d_spectra(
