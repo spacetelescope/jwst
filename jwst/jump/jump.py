@@ -13,9 +13,9 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      max_cores, max_jump_to_flag_neighbors,
                      min_jump_to_flag_neighbors, flag_4_neighbors,
                      after_jump_flag_dn1=0.0,
-                     after_jump_flag_time1=0,
+                     after_jump_flag_time1=0.0,
                      after_jump_flag_dn2=0.0,
-                     after_jump_flag_time2=0):
+                     after_jump_flag_time2=0.0):
 
     # Runs `detect_jumps` in stcal
 
@@ -27,8 +27,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     err = input_model.err
     output_model = input_model.copy()
 
-    # determine the number of groups that coorespond to the after_jump times
-    # needed as the group time is not passed to detect_jumps
+    # determine the number of groups that correspond to the after_jump times
+    # needed because the group time is not passed to detect_jumps
     gtime = input_model.meta.exposure.group_time
     after_jump_flag_n1 = int(after_jump_flag_time1 // gtime)
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
@@ -54,10 +54,10 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     max_jump_to_flag_neighbors,
                                     min_jump_to_flag_neighbors,
                                     flag_4_neighbors, dqflags.pixel,
-                                    after_jump_flag_dn1=after_jump_flag_dn1,
-                                    after_jump_flag_n1=after_jump_flag_n1,
-                                    after_jump_flag_dn2=after_jump_flag_dn2,
-                                    after_jump_flag_n2=after_jump_flag_n2)
+                                    after_jump_flag_dn1,
+                                    after_jump_flag_n1,
+                                    after_jump_flag_dn2,
+                                    after_jump_flag_n2)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
