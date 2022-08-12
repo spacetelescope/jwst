@@ -86,6 +86,12 @@ tweakreg
   step. [#6938]
 
 
+- Added support for user-supplied reference catalog for stage 2 of alignment
+  in the ``tweakreg`` step. This catalog, if provided, will be used instead
+  of the 'GAIA' catalogs for aligning all input images together as one single
+  group. [#6946]
+
+
 1.6.2 (2022-07-19)
 ==================
 
