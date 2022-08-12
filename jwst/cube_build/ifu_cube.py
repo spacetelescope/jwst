@@ -1492,6 +1492,7 @@ class IFUCubeData():
         bad2 = np.bitwise_and(dq_all, dqflags.pixel['NON_SCIENCE']).astype(bool)
         good_data = np.where(~bad1 & ~bad2 & valid2 & valid3)
 
+        print("Number of good pixels ", len(good_data[0])) 
         # good data holds the location of pixels we want to map to cube
         # define variables as numpy arrays (numba needs this defined)
         flux_all_good = flux_all[good_data]
