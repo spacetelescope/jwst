@@ -121,21 +121,21 @@ def databases(rtdata_module):
     siaf_db, metas : `set_telescope_pointing.SiafDb`, dict
         Returns the tuple of the siaf database and all exposures meta information.
     """
-    with siafdb.SiafDb() as siaf_db:
+    siaf_db = siafdb.SiafDb()
 
-        # Get the exposures' meta information
-        metas_path = rtdata_module.get_data('pointing/jw00697013_metas.asdf')
-        with asdf.open(metas_path) as metas_asdf:
-            metas = metas_asdf['metas']
+    # Get the exposures' meta information
+    metas_path = rtdata_module.get_data('pointing/jw00697013_metas.asdf')
+    with asdf.open(metas_path) as metas_asdf:
+        metas = metas_asdf['metas']
 
-        # Setup the engineering database
-        engdb_path = Path('engdb')
-        engdb_path.mkdir()
-        with pushdir(engdb_path):
-            paths = rtdata_module.data_glob('pointing/jw00697013_engdb')
-            for path in paths:
-                rtdata_module.get_data(path)
+    # Setup the engineering database
+    engdb_path = Path('engdb')
+    engdb_path.mkdir()
+    with pushdir(engdb_path):
+        paths = rtdata_module.data_glob('pointing/jw00697013_engdb')
+        for path in paths:
+            rtdata_module.get_data(path)
 
-        # Pass on the database info.
-        with engdb_mock.EngDB_Mocker(db_path=engdb_path):
-            yield siaf_db, metas
+    # Pass on the database info.
+    with engdb_mock.EngDB_Mocker(db_path=engdb_path):
+        yield siaf_db, metas
