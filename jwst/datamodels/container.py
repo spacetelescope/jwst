@@ -83,13 +83,14 @@ class ModelContainer(JwstDataModel, Sequence):
         to control how the DataModels are used by the ModelContainer.
         If ``save_open`` is set to `False`,
         each input DataModel instance in ``init`` will be written out to disk and closed,
-         then only the filename for the
+        then only the filename for the
         DataModel will be used to initialize the ModelContainer object.  Subsequent
         access of each member will then open the DataModel file to work with it.  If
         ``return_open`` is also `False`, then the DataModel will be closed when
         access to the DataModel is completed.  The use of these parameters can
         minimize the amount of memory used by this object during processing, with
         these parameters being used by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
+
 
     """
     schema_url = None
