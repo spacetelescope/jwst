@@ -1,35 +1,72 @@
-@software{the_jwst_developers_2022_6984366,
-  author       = {Bushouse, Howard and
-                  Eisenhamer, Jonathan and
-                  Dencheva, Nadia and
-                  Davies, James and
-                  Greenfield, Perry and
-                  Morrison, Jane and
-                  Hodge, Phil and
-                  Simon, Bernie and
-                  Grumm, David and
-                  Droettboom, Michael and
-                  Slavich, Edward and
-                  Sosey, Megan and
-                  Pauly, Tyler and
-                  Miller, Todd and
-                  Jedrzejewski, Robert and
-                  Hack, Warren and
-                  Davis, David and
-                  Crawford, Steven and
-                  Law, David and
-                  Gordon, Karl and
-                  Regan, Michael and
-                  Cara, Mihai and
-                  MacDonald, Ken and
-                  Bradley, Larry and
-                  Shanahan, Clare and
-                  Jamieson, William},
-  title        = {JWST Calibration Pipeline 1.6.2,
-  month        = aug,
-  year         = 2022,
-  publisher    = {Zenodo},
-  version      = {1.6.2},
-  doi          = {10.5281/zenodo.6984366},
-  url          = {https://doi.org/10.5281/zenodo.6984366}
-}
+cff-version: 1.2.0
+message: "If you use this software in your work, please cite it using the following metadata."
+authors:
+- family-names: "Bushouse"
+  given-names: "Howard"
+  orcid: "https://orcid.org/0000-0001-6664-7585"
+- family-names: "Eisenhamer"
+  given-names: "Jonathan"
+- family-names: "Dencheva"
+  given-names: "Nadia"
+  orcid: "https://orcid.org/0000-0002-5686-9632"
+- family-names: "Davies"
+  given-names: "James"
+- family-names: "Greenfield"
+  given-names: "Perry"
+  orcid: "https://orcid.org/0000-0003-2269-0551"
+- family-names: "Morrison"
+  given-names: "Jane"
+- family-names: "Hodge"
+  given-names: "Phil"
+- family-names: "Simon"
+  given-names: "Bernie"
+- family-names: "Grumm"
+  given-names: "David"
+- family-names: "Droettboom"
+  given-names: "Michael"
+- family-names: "Slavich"
+  given-names: "Edward"
+- family-names: "Sosey"
+  given-names: "Megan"
+  orcid: "https://orcid.org/0000-0002-4206-6492"
+- family-names: "Pauly"
+  given-names: "Tyler"
+  orcid: "https://orcid.org/0000-0001-9500-9267"
+- family-names: "Miller"
+  given-names: "Todd"
+- family-names: "Jedrzejewski"
+  given-names: "Robert"
+- family-names: "Hack"
+  given-names: "Warren"
+- family-names: "Davis"
+  given-names: "David"
+- family-names: "Crawford"
+  given-names: "Steven"
+  orcid: "https://orcid.org/0000-0002-8969-5229"
+- family-names: "Law"
+  given-names: "David"
+  orcid: "https://orcid.org/0000-0002-9402-186X"
+- family-names: "Gordon"
+  given-names: "Karl"
+  orcid: "https://orcid.org/0000-0001-5340-6774"
+- family-names: "Regan"
+  given-names: "Michael"
+  orcid: "https://orcid.org/0000-0001-9367-0705"
+- family-names: "Cara"
+  given-names: "Mihai"
+  orcid: "https://orcid.org/0000-0002-9294-6551"
+- family-names: "MacDonald"
+  given-names: "Ken"
+- family-names: "Bradley"
+  given-names: "Larry"
+  orcid: "https://orcid.org/0000-0002-7908-9284"
+- family-names: "Shanahan"
+  given-names: "Clare"
+- family-names: "Jamieson"
+  given-names: "William"
+  orcid: "https://orcid.org/0000-0001-5976-4492"
+title: "JWST Calibration Pipeline"
+version: 1.6.2
+doi: 10.5281/zenodo.6984366
+date-released: 2022-08-11
+url: "https://github.com/spacetelescope/jwst"
