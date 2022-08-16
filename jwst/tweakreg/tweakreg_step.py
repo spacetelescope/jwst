@@ -56,6 +56,14 @@ class TweakRegStep(Step):
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
+        abs_minobj = integer(default=15) # Minimum number of objects acceptable for matching when performing absolute astrometry
+        abs_searchrad = float(default=6.0) # The search radius in arcsec for a match when performing absolute astrometry
+        abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry? We encourage setting this parameter to True. Otherwise, xoffset and yoffset will be set to zero.
+        abs_separation = float(default=0.1) # Minimum object separation in arcsec when performing absolute astrometry
+        abs_tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
+        abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry when performing absolute astrometry
+        abs_nclip = integer(min=0, default=3) # Number of clipping iterations in fit when performing absolute astrometry
+        abs_sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units when performing absolute astrometry
     """
 
     reference_file_types = []
@@ -80,6 +88,7 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
+            # source finding
             catalog = make_tweakreg_catalog(
                 image_model, self.kernel_fwhm, self.snr_threshold,
                 brightest=self.brightest, peakmax=self.peakmax
@@ -136,6 +145,7 @@ class TweakRegStep(Step):
         self.log.info("Image groups:")
 
         if len(grp_img) == 1:
+            # there's an open PR that will fix this step, which currently quits this step if there's only one group
             self.log.info("* Images in GROUP 1:")
             for im in grp_img[0]:
                 self.log.info("     {}".format(im.meta.filename))
@@ -159,6 +169,7 @@ class TweakRegStep(Step):
                 raise AssertionError("Logical error in the pipeline code.")
             else:
                 group_name = _common_name(g)
+                # list of WCS corrector class + catalog
                 wcsimlist = list(map(self._imodel2wcsim, g))
                 # Remove the attached catalogs
                 for model in g:
@@ -193,6 +204,7 @@ class TweakRegStep(Step):
                 nclip=self.nclip,
                 sigma=(self.sigma, 'rmse')
             )
+        # imcats[0].wcs -> updated and improved WCS
 
         except ValueError as e:
             msg = e.args[0]
@@ -227,7 +239,9 @@ class TweakRegStep(Step):
                 raise e
 
         for imcat in imcats:
+            # original WCS
             wcs = imcat.meta['image_model'].meta.wcs
+            # corrected WCS
             twcs = imcat.wcs
             if not self._is_wcs_correction_small(wcs, twcs):
                 # Large corrections are typically a result of source
@@ -267,12 +281,12 @@ class TweakRegStep(Step):
                 # from overlapping images where centering is not consistent or
                 # for the possibility that errors still exist in relative overlap.
                 tpmatch_gaia = TPMatch(
-                    searchrad=self.searchrad * 3.0,
-                    separation=self.separation / 10.0,
-                    use2dhist=self.use2dhist,
-                    tolerance=self.tolerance,
-                    xoffset=0.0,
-                    yoffset=0.0
+                    searchrad=self.abs_searchrad,
+                    separation=self.abs_separation,
+                    use2dhist=self.abs_use2dhist,
+                    tolerance=self.abs_tolerance,
+                    xoffset=self.xoffset if self.abs_use2dhist else 0.0,
+                    yoffset=self.yoffset if self.abs_use2dhist else 0.0
                 )
 
                 # Set group_id to same value so all get fit as one observation
@@ -291,11 +305,11 @@ class TweakRegStep(Step):
                     refcat=ref_cat,
                     enforce_user_order=True,
                     expand_refcat=False,
-                    minobj=self.minobj,
+                    minobj=self.abs_minobj,
                     match=tpmatch_gaia,
-                    fitgeom=self.fitgeometry,
-                    nclip=self.nclip,
-                    sigma=(self.sigma, 'rmse')
+                    fitgeom=self.abs_fitgeometry,
+                    nclip=self.abs_nclip,
+                    sigma=(self.abs_sigma, 'rmse')
                 )
 
         for imcat in imcats:
