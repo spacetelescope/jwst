@@ -190,7 +190,7 @@ class SiafDb:
         if not xml_path and prd:
             prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
             self.prd_version = prd_to_use
-            logger.debug('Using PRD %s for specified PRD %s', prd_to_use, prd)
+            logger.info('Using PRD %s for specified PRD %s', prd_to_use, prd)
 
         # If nothing has been specified, see if XML_DATA says what to do.
         if not xml_path:
