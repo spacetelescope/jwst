@@ -673,8 +673,9 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
+    if not prd:
+        prd = model.meta.prd_software_version
     siaf_db = SiafDb(source=siaf_path, prd=prd)
-    check_prd_versions(model, siaf_db)
 
     # Get model attributes
     useafter = model.meta.observation.date
