@@ -67,6 +67,8 @@ outlier_detection
   input ``ImageModels`` that are saved to disk instead of keeping them in memory.
   New parameters were aded to the step to control this functionality. [#6904]
 
+- Fix reading of the source_type attribute for NIRSpec IFU data. [#6980]
+
 resample
 --------
 
