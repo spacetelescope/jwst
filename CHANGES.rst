@@ -70,6 +70,8 @@ outlier_detection
 - Updated documentation of memory model and new parameters for memory use in
   outlier_detection and resample steps. [#6983]
 
+- Fix reading of the source_type attribute for NIRSpec IFU data. [#6980]
+
 resample
 --------
 
