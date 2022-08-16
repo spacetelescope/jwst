@@ -187,12 +187,9 @@ class SiafDb:
 
         # If a PRD version is defined, attempt to use that.
         if not xml_path and prd:
-            prd = prd.upper()
-            prd_root = Path(self.pysiaf.JWST_PRD_DATA_ROOT).parent.parent.parent
-            if not (prd_root / prd).is_dir():
-                raise ValueError('PRD specification %s does not exist', prd)
-            xml_path = prd_root / prd / 'SIAFXML' / 'SIAFXML'
-            self.prd_version = prd
+            prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
+            self.prd_version = prd_to_use
+            logger.debug('Using PRD %s for specified PRD %s', prd_to_use, prd)
 
         # If nothing has been specified, see if XML_DATA says what to do.
         if not xml_path:
@@ -209,3 +206,46 @@ class SiafDb:
             logger.info('pysiaf: Using SIAF XML folder %s', xml_path)
 
         return xml_path
+
+
+# #########
+# Utilities
+# #########
+def nearest_prd(pysiaf_module, prd):
+    """Find the nearest PRD version to the version specified.
+
+    The SIAF is not updated in every new PRD. Find the latest PRD
+    which has the SIAF specification.
+
+    Parameters
+    ----------
+    pysiaf_module : module
+        The `pysiaf` module in use
+
+    prd : str
+        Requested PRD specification. Should be of the form
+        "PRDOPSSOC-XXX" where XXX is a 3 digit number.
+
+    Returns
+    -------
+    prd_to_use, xml_path : str, Path
+        The PRD name and path to the XML files of the PRD that is to be used.
+    """
+    prd = prd.upper()
+    if not prd.startswith('PRDOPSSOC'):
+        raise ValueError('PRD specification must begin with PRDOPSSOC: %s', prd)
+
+    prd_root = Path(pysiaf_module.JWST_PRD_DATA_ROOT).parent.parent.parent
+    prds = [prd_path.stem for prd_path in prd_root.glob('*')]
+    prds.append(prd)
+    prds.sort(reverse=True)
+    try:
+        prd_to_use = prds[prds.index(prd) + 1]
+    except IndexError:
+        raise ValueError('Cannot find a matching PRD for %s', prd)
+
+    if not (prd_root / prd_to_use).is_dir():
+        raise ValueError('PRD specification %s does not exist', prd)
+
+    xml_path = prd_root / prd_to_use / 'SIAFXML' / 'SIAFXML'
+    return prd_to_use, xml_path
