@@ -68,14 +68,16 @@ final output product.  Specifically,
       be on the order of 2Gb or more.
 
     * The median combination step then needs to have all pixels at the same position on
-      the sky in memory in order to perform the median computation.  The simplest implmentation
-      for this step would require keeping all resampled outputs in memory at the same time.
+      the sky in memory in order to perform the median computation.  The simplest implementation
+      for this step requires keeping all resampled outputs fully in memory at the same time.
 
 Many Level 3 products only include a modest number of input exposures which can be
-processed using less than 32Gb of memory at a time.  However, given the number of
-ways this memory limit can be exceeded, the overall memory model for the outlier detection
-was revised to minimize the memory usage at the expense of file I/O with limited control
-over this through the ``in_memory`` parameter when set to `False`.
+processed using less than 32Gb of memory at a time.  However, there are a number of
+ways this memory limit can be exceeded.  This has been addressed by implementing an
+overall memory model for the outlier detection that includes options to minimize the
+memory usage at the expense of file I/O.  The control over this memory model happens
+with the use of the ``in_memory`` parameter.  The full impact of this parameter
+during processing includes:
 
     * The ``save_open`` parameter gets set to `False`
       when opening the input :py:class:`~jwst.datamodels.ModelContainer` object.

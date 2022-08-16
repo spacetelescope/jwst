@@ -68,7 +68,7 @@ outlier_detection
   New parameters were aded to the step to control this functionality. [#6904]
 
 - Updated documentation of memory model and new parameters for memory use in
-  outlier_detection and resample steps. [#xxxx]
+  outlier_detection and resample steps. [#6983]
 
 resample
 --------
