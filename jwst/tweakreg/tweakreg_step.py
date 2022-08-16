@@ -78,7 +78,8 @@ class TweakRegStep(Step):
         abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry? 
         abs_separation = float(default=0.1) # Minimum object separation in arcsec when performing absolute astrometry
         abs_tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
-        abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry when performing absolute astrometry
+        # Fitting geometry when performing absolute astrometry
+        abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift')
         abs_nclip = integer(min=0, default=3) # Number of clipping iterations in fit when performing absolute astrometry
         abs_sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units when performing absolute astrometry
     """
