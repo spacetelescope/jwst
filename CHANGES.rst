@@ -53,6 +53,8 @@ tweakreg
 - ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
   from data model's tweaked GWCS. [#6936, #6947]
 
+- ``TweakRegStep`` has been refactored to exposed additional parameters for absolute astrometry: ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``, ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``, and ``abs_sigma``). [#6987]
+
 
 1.6.2 (2022-07-19)
 ==================
