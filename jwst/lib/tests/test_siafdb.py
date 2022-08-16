@@ -1,5 +1,6 @@
 """Test the siaf db classes"""
 from contextlib import nullcontext as does_not_raise
+from logging import exception
 import os
 from pathlib import Path
 import pytest
