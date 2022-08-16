@@ -78,7 +78,7 @@ resample
   pixels. [#6954]
 
 - Propagate ``asn.pool_name`` and ``asn.table_name`` through step ModelContainer
-  for level 2 processing of single input datamodels
+  for level 2 processing of single input datamodels [#6989]
 
 skymatch
 --------
