@@ -96,7 +96,7 @@ class MultiSlitModel(JwstDataModel):
             try:
                 slit = self.slits[key]  # returns an ObjectNode instance
             except IndexError:
-                raise("Slit {0} doesn't exist".format(key))
+                raise ("Slit {0} doesn't exist".format(key))
             kwargs = {}
             items = dict(slit.items())
             for key in items:

@@ -128,7 +128,7 @@ class FileTable():
                 instrument = input_model.meta.instrument.name.upper()
                 assign_wcs = input_model.meta.cal_step.assign_wcs
 
-                if(assign_wcs != 'COMPLETE'):
+                if assign_wcs != 'COMPLETE':
                     raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
                                            ifile)
             # _____________________________________________________________________

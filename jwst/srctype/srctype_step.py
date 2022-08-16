@@ -25,7 +25,7 @@ class SourceTypeStep(Step):
 
     def process(self, input):
 
-        if (self.source_type is not None):
+        if self.source_type is not None:
             self.source_type = self.source_type.upper()
 
         source_type = self.source_type  # retrieve command line override

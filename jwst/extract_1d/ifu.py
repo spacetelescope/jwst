@@ -301,7 +301,8 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
         foundit = False
         for im in ref_dict['ref_model'].images:
-            if (im.name is None or im.name == "ANY" or slitname == "ANY" or im.name == slitname):
+            if (im.name is None or im.name == "ANY" or slitname == "ANY" or
+                    im.name == slitname):
                 extract_params['ref_image'] = im
                 foundit = True
                 break
@@ -581,7 +582,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         # There is no valid data for this region. To prevent the code from
         # crashing set aperture_area to a nonzero value. It will have the dq flag
-        if(aperture_area == 0 and aperture.area > 0):
+        if aperture_area == 0 and aperture.area > 0:
             aperture_area = aperture.area
 
         if subtract_background and annulus is not None:
@@ -590,7 +591,7 @@ def extract_ifu(input_model, source_type, extract_params):
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
 
-            if(annulus_area == 0 and annulus.area > 0):
+            if annulus_area == 0 and annulus.area > 0:
                 annulus_area = annulus.area
 
             if annulus_area > 0.:
@@ -650,7 +651,7 @@ def extract_ifu(input_model, source_type, extract_params):
             bkg_stat_data = bkg_data[temp_weightmap == 1]
 
             # If there are good data, work out the statistics
-            if (len(bkg_stat_data) > 0):
+            if len(bkg_stat_data) > 0:
                 bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
                                                                     sigma=bkg_sigma_clip, maxiters=5)
                 low = bkg_mean - bkg_sigma_clip * bkg_stddev
@@ -1087,7 +1088,7 @@ def get_coordinates(input_model, x0, y0):
         (ra, dec) = (0., 0.)
         wavelength = np.arange(1, nelem + 1, dtype=np.float64)
 
-    return (ra, dec, wavelength)
+    return ra, dec, wavelength
 
 
 def nans_in_wavelength(wavelength, dq):
@@ -1118,14 +1119,14 @@ def nans_in_wavelength(wavelength, dq):
     slc = slice(nelem)
     if nelem == 0:
         log.warning("Output arrays are empty!")
-        return (wavelength, dq, slice(nelem))
+        return wavelength, dq, slice(nelem)
 
     nan_mask = np.isnan(wavelength)
     n_nan = nan_mask.sum(dtype=np.intp)
     if n_nan == nelem:
         log.warning("Wavelength array is all NaN!")
         dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
-        return (wavelength, dq, slice(0))
+        return wavelength, dq, slice(0)
 
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
@@ -1182,7 +1183,7 @@ def separate_target_and_background(ref):
     else:
         mask_bkg = None
 
-    return (mask_target, mask_bkg)
+    return mask_target, mask_bkg
 
 
 def im_centroid(data, mask_target):
@@ -1218,7 +1219,7 @@ def im_centroid(data, mask_target):
         shape = data_2d.shape
         y0 = shape[0] / 2.
         x0 = shape[0] / 2.
-        return (y0, x0)
+        return y0, x0
 
     x_profile = data_2d.sum(axis=0, dtype=np.float64)
     x = np.arange(data_2d.shape[1], dtype=np.float64)
@@ -1230,7 +1231,7 @@ def im_centroid(data, mask_target):
     s_y = (y_profile * y).sum()
     y0 = s_y / y_profile.sum()
 
-    return (y0, x0)
+    return y0, x0
 
 
 def shift_ref_image(mask, delta_y, delta_x, fill=0):

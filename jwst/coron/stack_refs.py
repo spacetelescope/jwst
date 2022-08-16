@@ -29,7 +29,7 @@ def make_cube(input_models):
     for i in range(num_refs):
         nints += input_models[i].shape[0]
         nrows, ncols = input_models[i].shape[-2:]
-        if (nrows != nrows_ref) or (ncols != ncols_ref):
+        if nrows != nrows_ref or ncols != ncols_ref:
             raise ValueError('All PSF exposures must have the same x/y dimensions!')
 
     # Create empty output data arrays of the appropriate dimensions

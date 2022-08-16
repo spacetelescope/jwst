@@ -28,7 +28,7 @@ def full_pool_rules(request):
     pool = AssociationPool.read(pool_fname)
     rules = AssociationRegistry()
 
-    return (pool, rules, pool_fname)
+    return pool, rules, pool_fname
 
 
 @pytest.fixture

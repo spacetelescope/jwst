@@ -15,7 +15,7 @@ def test_ifu_pathloss_existence():
     input = datamodels.IFUImageModel((10, 10))
     result = correct_nrs_ifu_bkg(input)
 
-    assert (result == input)
+    assert result == input
 
 
 def test_ifu_correction():

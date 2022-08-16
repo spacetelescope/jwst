@@ -66,7 +66,7 @@ def dummy_wcs(x, y):
     ra[index_nan] = np.nan
     wave[index_nan] = np.nan
 
-    return (ra, dec, wave)
+    return ra, dec, wave
 
 
 def test_coord_trans1():

@@ -222,7 +222,7 @@ def test_int_times1(generate_miri_reffiles, setup_inputs):
     assert slopes is not None
     assert cube_model is not None
 
-    assert(len(cube_model.int_times) == 5)
+    assert len(cube_model.int_times) == 5
 
 
 def test_int_times2(generate_miri_reffiles, setup_inputs):
@@ -246,7 +246,7 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     assert slopes is not None
     assert cube_model is not None
 
-    assert(len(cube_model.int_times) == nints)
+    assert len(cube_model.int_times) == nints
 
 
 def one_group_suppressed(nints, suppress, setup_inputs):

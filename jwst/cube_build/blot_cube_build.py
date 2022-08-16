@@ -284,9 +284,9 @@ class CubeBlot():
                 decmax = np.nanmax(dec) + self.median_skycube.meta.wcsinfo.cdelt2 * 4
                 lam_min = np.nanmin(lam)
                 lam_max = np.nanmax(lam)
-                if(ramin < 0):
+                if ramin < 0:
                     ramin = 0
-                if(ramax > 360):
+                if ramax > 360:
                     ramax = 360
 
                 use1 = np.logical_and(self.cube_ra >= ramin, self.cube_ra <= ramax)

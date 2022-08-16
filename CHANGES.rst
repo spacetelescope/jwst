@@ -4,56 +4,109 @@
 general
 -------
 
--
+- Made code style changes due to the new 5.0.3 version of flake8, which noted many
+  missing white spaces after keywords. [#6958]
+- pin `jsonschema` below `4.10.0` to fix issues with unit and regression tests [#6986]
+
+ami_analyze
+-----------
+
+- Revert Fourier Transform code to original standalone module rather than importing
+  from the Poppy package, which was recently updated to use a different sign convention.
+  [#6967]
 
 assign_wcs
 ----------
 
 - Added convenience function ``update_fits_wcsinfo()`` to ``assign_wcs.util``
   module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
-  from data model's GWCS. [#6935]
+  from ``datamodel``'s GWCS. [#6935]
 
 cube_build
 ----------
 
 - Remove trailing dash from IFU cube filenames built from all subchannels.
-  Sort subchannels present by inverse alphabetical order to ensure
+  Also sort subchannels present by inverse alphabetical order to ensure
   consistent filename creation across processing runs. [#6959]
+  
+- Re-wrote c code for NIRSpec dq flagging.[#6981]
+
+- For moving target data removed using  s_region values in cal files to
+  determine the size of the cube, instead all the pixels are mapped to
+  the skip to determine the cube footprint. Also updated the drizzle
+  code to use the  wcs of output frame to account for moving target. [#6981]
+
+- Update the WCS ``naxis3`` value when wavelength planes are removed from the
+  IFUCube due to no valid data. [#6976]
 
 datamodels
 ----------
 
-- Updated keyword titles in data model schemas to match those in keyword
+- Updated keyword comments/titles in ``datamodels`` schemas to match those in keyword
   dictionary. [#6941]
 
-- Add P_SUBARR keyword to the `DarkModel` schema. [#6951]
+- Add the ``P_SUBARR`` keyword to the ``DarkModel`` schema. [#6951]
+
+- Add the ``P_READPA`` keyword to the ``ReadnoiseModel`` schema [#6973]
+
+extract_1d
+----------
+
+- Update ``int_times`` keywords and copy the ``INT_TIMES`` table extension to SOSS
+  spectral output (x1d) files [#6930]
 
 master_background
 -----------------
 
-- Fix MRS sigma-clipped background use in cases where EXTENDED keyword not
-  properly set. [#6960]
+- Fix the use of MRS sigma-clipped background in cases where the ``SRCTYPE``
+  keyword is not properly set. [#6960]
+
+outlier_detection
+-----------------
+
+- Improved memory usage during `outlier_detection` by adding ability to work with
+  input ``ImageModels`` that are saved to disk instead of keeping them in memory.
+  New parameters were aded to the step to control this functionality. [#6904]
+
+- Fix reading of the source_type attribute for NIRSpec IFU data. [#6980]
 
 resample
 --------
 
-- Fixed a bug in how variance arrays were resampled due to which the resulting
+- Fix a bug in how variance arrays are resampled, due to which the resulting
   resampled error map contained an excessive number of zero-valued
-  pixel. [#6954]
+  pixels. [#6954]
 
 skymatch
 --------
 
-- Fixed a bug in ``skymatch`` due to which computed background values were
-  not subtracted from image data when ``subtract=True``. [#6934]
+- Fix a bug so that computed background values eare subtracted from the image
+  data when ``subtract=True``. [#6934]
 
 tweakreg
 --------
 
-- ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
-  from data model's tweaked GWCS. [#6936, #6947]
+- The ``tweakreg`` step now updates FITS WCS stored in ``datamodel.meta.wcsinfo``
+  from ``datamodel``'s tweaked GWCS. [#6936, #6947, #6955]
 
-- ``TweakRegStep`` has been refactored to exposed additional parameters for absolute astrometry: ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``, ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``, and ``abs_sigma``). [#6987]
+- The ``tweakreg`` step now masks both ``NON_SCIENCE`` and ``DO_NOT_USE``
+  pixels when calculating the source detection theshold and finding
+  sources. [#6940, #6974]
+
+- Allow alignment of a single image (or group) to Gaia while skipping relative
+  alignment (which needs 2 images) instead of skipping the entire
+  step. [#6938]
+
+
+- Added support for user-supplied reference catalog for stage 2 of alignment
+  in the ``tweakreg`` step. This catalog, if provided, will be used instead
+  of the 'GAIA' catalogs for aligning all input images together as one single
+  group. [#6946]
+
+- ``TweakRegStep`` has been refactored to exposed additional parameters for 
+  absolute astrometry: ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``,
+  ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``,
+  and ``abs_sigma``). [#6987]
 
 
 1.6.2 (2022-07-19)
@@ -86,6 +139,7 @@ source_catalog
 
 - Fixed the actual units of the error array used to calculate
   photometric errors. [#6928]
+
 
 1.6.1 (2022-07-15)
 ==================
@@ -141,14 +195,6 @@ pipeline
 - Only apply source_id fix from #6915 to models with multiple
   sources [#6917]
 
-
-outlier_detection
------------------
-- Improved memory usage during `outlier_detection` by adding ability to work with
-  input ``ImageModels`` that are saved to disk instead of keeping them in memory.
-  New parameters were aded to outlier_detection_step to control this functionality. [#6904]
-
-
 ramp_fitting
 ------------
 
@@ -185,6 +231,7 @@ wiimatch
 - ``wiimatch`` subpackage has been removed from ``jwst`` in favor of the
   external ``wiimatch`` package:
   https://github.com/spacetelescope/wiimatch. [#6916]
+
 
 1.5.3 (2022-06-20)
 ==================

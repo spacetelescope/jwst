@@ -115,4 +115,4 @@ def get_ref_data(reffile, pupil='ANY'):
 
     ref_model.close()
 
-    return (radius, radius_inner, radius_outer)
+    return radius, radius_inner, radius_outer

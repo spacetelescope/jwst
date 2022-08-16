@@ -124,7 +124,7 @@ cgi-bin/gethelp.cgi?gstatistics>`_
                             **(self._kwargs))
         self.skyval = self._skystat(imstat)
         self.npix = imstat.npix
-        return (self.skyval, self.npix)
+        return self.skyval, self.npix
 
     def __call__(self, data):
         return self.calc_sky(data)

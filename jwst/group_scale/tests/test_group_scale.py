@@ -16,7 +16,7 @@ def test_nframes_or_frame_divisor_is_none(make_rampmodel):
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
     do_correction(datmod)
 
-    assert(datmod.meta.cal_step.group_scale == 'SKIPPED')
+    assert datmod.meta.cal_step.group_scale == 'SKIPPED'
 
 
 def test_nframes_equal_frame_divisor(make_rampmodel):
@@ -26,7 +26,7 @@ def test_nframes_equal_frame_divisor(make_rampmodel):
     output = GroupScaleStep.call(datmod)
     print(output.meta.exposure.frame_divisor,
           output.meta.exposure.nframes)
-    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+    assert output.meta.cal_step.group_scale == 'SKIPPED'
 
 
 def test_nframes_not_equal_frame_divisor(make_rampmodel):
@@ -36,7 +36,7 @@ def test_nframes_not_equal_frame_divisor(make_rampmodel):
     output = GroupScaleStep.call(datmod)
 
     # Assert that the step completed
-    assert(output.meta.cal_step.group_scale == 'COMPLETE')
+    assert output.meta.cal_step.group_scale == 'COMPLETE'
 
     # This assertion doesn't verify for correct output,
     # it just checks that the correction ran and that the data array
@@ -50,7 +50,7 @@ def test_nframes_is_none(make_rampmodel):
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+    assert output.meta.cal_step.group_scale == 'SKIPPED'
 
 
 def test_nframes_is_power_of_two(make_rampmodel):
@@ -60,7 +60,7 @@ def test_nframes_is_power_of_two(make_rampmodel):
     datmod = make_rampmodel(2, 4, None, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+    assert output.meta.cal_step.group_scale == 'SKIPPED'
 
 
 def test_nframes_is_not_power_of_two(make_rampmodel):
@@ -71,7 +71,7 @@ def test_nframes_is_not_power_of_two(make_rampmodel):
     datmod = make_rampmodel(2, 3, None, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+    assert output.meta.cal_step.group_scale == 'SKIPPED'
 
 
 def test_scale_value(make_rampmodel):
@@ -91,11 +91,11 @@ def test_scale_value(make_rampmodel):
     # Since the scale value is applied uniformly to the array, if we divide the output
     # by the input then we should get a single unique value (ie the scale) calculated
     # by the pipeline.
-    assert(len(scale_from_data) == 1)
+    assert len(scale_from_data) == 1
 
     # Make sure the scale calculated manually from the data model above matched what the
     # pipeline calculated.
-    assert(scale == scale_from_data[0])
+    assert scale == scale_from_data[0]
 
 
 @pytest.fixture(scope='function')

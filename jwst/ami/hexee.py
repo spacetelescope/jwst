@@ -231,7 +231,7 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
     # Replace NaN strip with limiting behavior; the same for both halves
     hex_complex[xnan[:], ynan[:]] = 2.0 * centralpix_limit()
 
-    if (log.getEffectiveLevel() <= logging.DEBUG):
+    if log.getEffectiveLevel() <= logging.DEBUG:
         hr = hex_complex.real
         hi = hex_complex.imag
         log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',

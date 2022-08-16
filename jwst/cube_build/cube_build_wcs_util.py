@@ -12,7 +12,7 @@ log.setLevel(logging.DEBUG)
 
 # ******************************************************************************
 def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
-    """ For MIRI channel data find the foot of this data on the sky
+    """ For MIRI channel data find the footprint of this data on the sky
 
     For a specific channel on an exposure find the min and max of the
     spatial coordinates, either in alpha,beta or ra,dec depending
@@ -153,7 +153,7 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
     lambda_slice = np.zeros(nslices * 2)
     k = 0
     # for NIRSPEC there are 30 regions
-    log.info('Looping over slices to determine cube size .. this takes a while')
+    log.info('Looping over slices to determine cube size')
 
     for i in range(nslices):
         slice_wcs = nirspec.nrs_wcs_set_input(input, i)

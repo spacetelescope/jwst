@@ -111,7 +111,7 @@ def test_firstframe_add1_groupdq():
     dm_ramp_firstframe = do_correction(dm_ramp)
 
     # test if pixels in groupdq were incremented in value by 1
-    assert(dm_ramp_firstframe.groupdq[0, 0, 505, 505] == 5)
+    assert dm_ramp_firstframe.groupdq[0, 0, 505, 505] == 5
 
 
 def test_firstframe_3groups():

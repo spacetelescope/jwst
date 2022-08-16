@@ -89,7 +89,7 @@ def klip(target_model, refs_model, truncate):
         # Now take the standard deviation of the results
         output_target.err[i] = np.std(refs_fit, 0).reshape(tshape)
 
-    return (output_target, output_psf)
+    return output_target, output_psf
 
 
 def KarhunenLoeveTransform(m, normalize=False):

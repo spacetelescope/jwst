@@ -62,7 +62,7 @@ def test_mixed_crs_and_donotuse():
 
     # max segments should be 2
     max_seg, max_cr = calc_num_seg(gdq, 3, JUMP_DET, DO_NOT_USE)
-    assert(max_seg == 2)
+    assert max_seg == 2
 
     # pix with only 1 middle group flagged DO_NOT_USE;
     # results in 2 segments
@@ -79,7 +79,7 @@ def test_mixed_crs_and_donotuse():
 
     # max segments should now be 3
     max_seg, max_cr = calc_num_seg(gdq, 3, JUMP_DET, DO_NOT_USE)
-    assert(max_seg == 3)
+    assert max_seg == 3
 
 
 @pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
@@ -226,8 +226,8 @@ class TestMethods:
             model1, 60000, False, rnoise, gain, method, 'optimal', 'none', dqflags.pixel)
 
         data = slopes[0]
-        assert(0 == np.max(data))
-        assert(0 == np.min(data))
+        assert 0 == np.max(data)
+        assert 0 == np.min(data)
 
     def test_nocrs_noflux_firstrows_are_nan(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
@@ -237,8 +237,8 @@ class TestMethods:
             model1, 60000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
 
         data = slopes[0]
-        assert(0 == np.max(data))
-        assert(0 == np.min(data))
+        assert 0 == np.max(data)
+        assert 0 == np.min(data)
 
     @pytest.mark.xfail(reason="Fails, without frame_time it doesn't work")
     def test_error_when_frame_time_not_set(self, method):
@@ -250,8 +250,8 @@ class TestMethods:
             model1, 64000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
 
         data = slopes.data
-        assert(0 == np.max(data))
-        assert(0 == np.min(data))
+        assert 0 == np.max(data)
+        assert 0 == np.min(data)
 
     def test_five_groups_two_ints_Poisson_noise_only(self, method):
         grouptime = 3.0
@@ -289,8 +289,8 @@ class TestMethods:
             model1, 64000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
 
         data = slopes[0]
-        assert(0 == np.max(data))
-        assert(0 == np.min(data))
+        assert 0 == np.max(data)
+        assert 0 == np.min(data)
 
     def test_bad_gain_values(self, method):
         # all pixel values are zero. So slope should be zero
@@ -304,8 +304,8 @@ class TestMethods:
 
         data = slopes[0]
         dq = slopes[1]
-        assert(0 == np.max(data))
-        assert(0 == np.min(data))
+        assert 0 == np.max(data)
+        assert 0 == np.min(data)
         assert dq[10, 10] == 524288 + 1
         assert dq[20, 20] == 524288 + 1
 

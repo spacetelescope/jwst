@@ -26,7 +26,7 @@ def get_center(exp_type, input):
     if exp_type == "NRS_IFU":
 
         # Currently assume IFU sources are centered
-        return (0.0, 0.0)
+        return 0.0, 0.0
 
     elif exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
 
@@ -40,7 +40,7 @@ def get_center(exp_type, input):
             log.warning("Using 0.0, 0.0")
             xcenter = 0.0
             ycenter = 0.0
-        return (xcenter, ycenter)
+        return xcenter, ycenter
 
     elif exp_type in ["MIR_LRS-FIXEDSLIT"]:
 
@@ -60,12 +60,12 @@ def get_center(exp_type, input):
         # compute location relative to LRS aperture reference point
         xcenter -= imx
         ycenter -= imy
-        return (xcenter, ycenter)
+        return xcenter, ycenter
 
     else:
         log.warning(f'No method to get centering for exp_type {exp_type}')
         log.warning("Using (0.0, 0.0)")
-        return (0.0, 0.0)
+        return 0.0, 0.0
 
 
 def get_aperture_from_model(input_model, match):

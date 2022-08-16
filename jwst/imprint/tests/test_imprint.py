@@ -14,7 +14,7 @@ def test_step(make_imagemodel):
     im = make_imagemodel(10, 10)
     result = ImprintStep.call(im, im)
 
-    assert(result.meta.cal_step.imprint == 'COMPLETE')
+    assert result.meta.cal_step.imprint == 'COMPLETE'
     assert result.data.sum() == 0
 
 

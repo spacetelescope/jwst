@@ -66,7 +66,7 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
     if not update_tdb and not update_velosys:
         log.warning("Both update_tdb and update_velosys are False; "
                     "there's nothing to do.")
-        return (0., 0., 0.)
+        return 0., 0., 0.
 
     log.info("Processing file %s", filename)
     fd = fits.open(filename, mode="update")
@@ -118,7 +118,7 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
         except RuntimeError as e:
             log.warning(str(e))
             fd.close()
-            return (0., 0., 0.)
+            return 0., 0., 0.
 
         # TT, MJD
         tt_start_times = to_tt(fd[hdunum].data.field("int_start_MJD_UTC"))
@@ -164,7 +164,7 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
 
     fd.close()
 
-    return (tdb_start_times, tdb_mid_times, tdb_end_times)
+    return tdb_start_times, tdb_mid_times, tdb_end_times
 
 
 def find_hdu(fd, extname):
@@ -261,8 +261,8 @@ def get_jwst_position2(times, jwstpos, use_jpl_ephemeris=False):
 
     centerearth_jwst = jwstpos
 
-    return (barysun_centerearth_pos + centerearth_jwst), \
-        (centersun_centerearth_pos + centerearth_jwst)
+    return ((barysun_centerearth_pos + centerearth_jwst),
+            (centersun_centerearth_pos + centerearth_jwst))
 
 
 def get_target_vector2(targetcoord):
@@ -317,7 +317,7 @@ def get_jwst_keywords(fd):
                          fd['SCI'].header['jwst_dy'],
                          fd['SCI'].header['jwst_dz']), dtype=np.float64)
 
-    return(eph_time, jwst_pos, jwst_vel)
+    return eph_time, jwst_pos, jwst_vel
 
 
 def linear_pos(tt_times, eph_time, jwst_pos, jwst_vel):

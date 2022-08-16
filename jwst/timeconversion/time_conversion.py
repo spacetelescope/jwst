@@ -98,7 +98,7 @@ def read_jwst_ephemeris(times):
     # Determine min, max of times sought
     mintime = times.min()
     maxtime = times.max()
-    if (mintime < starttime) or (maxtime > endtime):
+    if mintime < starttime or maxtime > endtime:
         raise ValueError(
             'Some of times provided are out of the range of times in the JWST ephemeris file')
     # Determine fractional locations
@@ -358,8 +358,8 @@ def get_jwst_position(times, jwstpos, debug=False):
         centerearth_jwst = jwstpos
     else:
         centerearth_jwst = jwst_ephem_interp(times)
-    return (barysun_centerearth_pos + centerearth_jwst), \
-        (centersun_centerearth_pos + centerearth_jwst)
+    return ((barysun_centerearth_pos + centerearth_jwst),
+            (centersun_centerearth_pos + centerearth_jwst))
 
 
 def get_target_vector(targetcoord):

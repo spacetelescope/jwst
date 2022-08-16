@@ -698,7 +698,7 @@ def ols_line(x, y):
     xf = x.ravel()
     yf = y.ravel()
     if len(xf) < 1 or len(yf) < 1:
-        return (0., 0.)
+        return 0., 0.
 
     groups = float(len(xf))
     mean_x = xf.mean()
@@ -710,7 +710,7 @@ def ols_line(x, y):
             (sum_x2 - groups * mean_x**2)
     intercept = mean_y - slope * mean_x
 
-    return (intercept, slope)
+    return intercept, slope
 
 
 def remove_slopes(data0, ngroups, ny, row):

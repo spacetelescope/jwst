@@ -155,7 +155,7 @@ def boundingbox_to_indices(data_model, bounding_box):
     ymin = max(ymin, 0)
     ymax = int(max(y1, y2)) + 1
     ymax = min(ymax, nrows)
-    return (xmin, xmax, ymin, ymax)
+    return xmin, xmax, ymin, ymax
 
 
 def wcs_to_dq(wcs_array, FLAG):

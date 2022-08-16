@@ -1,6 +1,5 @@
 from jwst.datamodels import dqflags
-from poppy import specFromSpectralType
-from poppy import matrixDFT
+from . import matrix_dft
 
 import logging
 import numpy as np
@@ -461,44 +460,6 @@ def centerpoint(s):
     return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
 
 
-def combine_transmission(filt, SRC):
-    """
-    Short Summary
-    -------------
-    Combine the transmission of the filter and the spectral type
-
-    Parameters
-    ----------
-    filt: 1D array
-        bandpass
-
-    SRC: string
-        spectral type string, e.g. A0V
-
-    Returns
-    -------
-    transmissionlist: list
-    """
-
-    filt_wls = np.zeros(len(filt))
-    filt_wght = np.zeros(len(filt))
-    for ii in range(len(filt)):
-        filt_wls[ii] = filt[ii][1]  # in m
-        filt_wght[ii] = filt[ii][0]
-    src = specFromSpectralType(SRC)
-
-    # converts t angstrom for pysynphot
-    src = src.resample(np.array(filt_wls) * 1.0e10)
-
-    specwavl, specwghts = src.getArrays()
-    totalwght = specwghts * filt_wght
-    transmissionlist = []
-
-    for ii in range(len(filt_wls)):
-        transmissionlist.append((totalwght[ii], filt_wls[ii]))
-    return transmissionlist
-
-
 def min_distance_to_edge(img, cntrimg=True):
     """
     Short Summary
@@ -585,7 +546,8 @@ def find_centroid(a, thresh):
     htilt, vtilt: float, float
         Centroid of a, as offset from array center, as calculated by the DFT's.
     """
-    ft = matrixDFT.MatrixFourierTransform()
+    ft = matrix_dft.MatrixFourierTransform()
+
     cv = ft.perform(a, a.shape[0], a.shape[0])
     cvmod, cvpha = np.abs(cv), np.angle(cv)
 

@@ -1642,7 +1642,7 @@ def vector_to_angle(v):
     delta = np.arcsin(v[2])
     if alpha < 0.:
         alpha += 2. * np.pi
-    return(alpha, delta)
+    return alpha, delta
 
 
 def angle_to_vector(alpha, delta):

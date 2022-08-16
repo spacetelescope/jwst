@@ -181,7 +181,7 @@ def vector_to_ra_dec(v):
     dec = np.arcsin(v[2])
     if ra < 0.:
         ra += 2. * np.pi
-    return(ra, dec)
+    return ra, dec
 
 
 R2D = 180. / np.pi

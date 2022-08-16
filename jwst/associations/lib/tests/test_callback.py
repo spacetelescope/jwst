@@ -11,11 +11,11 @@ def fn_single_2(arg):
 
 
 def fn_double_1(arg1, arg2):
-    return (arg1 + 1, arg2 - 1)
+    return arg1 + 1, arg2 - 1
 
 
 def fn_double_2(*args):
-    return (args[0] + args[0], args[1] + args[1])
+    return args[0] + args[0], args[1] + args[1]
 
 
 def test_basics():

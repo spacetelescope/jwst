@@ -74,8 +74,8 @@ def do_correction(input_model,
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    if (input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and \
-            (input_model.meta.instrument.lamp_mode != 'IMAGE'):
+    if ((input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and
+            (input_model.meta.instrument.lamp_mode != 'IMAGE')):
         flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
                                              user_supplied_flat=user_supplied_flat,
                                              inverse=inverse)
@@ -119,8 +119,8 @@ def do_flat_field(output_model, flat_model, inverse=False):
     any_updated = False  # will set True if any flats applied
 
     # Check to see if flat data array is smaller than science data
-    if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
-            (output_model.data.shape[-2] > flat_model.data.shape[-2]):
+    if ((output_model.data.shape[-1] > flat_model.data.shape[-1]) or
+            (output_model.data.shape[-2] > flat_model.data.shape[-2])):
         log.warning('Reference data array is smaller than science data')
         log.warning('Step will be skipped')
 
@@ -849,7 +849,7 @@ def spectrograph_flat(wl, s_flat_model,
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
-        return (1., None)
+        return 1., None
 
     (tab_wl, tab_flat) = read_flat_table(s_flat_model, exposure_type,
                                          slit_name, quadrant)
@@ -956,7 +956,7 @@ def detector_flat(wl, d_flat_model,
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
-        return (1., None)
+        return 1., None
 
     (tab_wl, tab_flat) = read_flat_table(d_flat_model, exposure_type,
                                          slit_name, quadrant)
@@ -1244,7 +1244,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
             log.warning("Wavelengths in the fast-variation table "
                         "must be strictly increasing.")
 
-    return (tab_wl, tab_flat)
+    return tab_wl, tab_flat
 
 
 def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
@@ -1329,7 +1329,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
                 else:
                     values[j, i] = temp
 
-    return (flat_2d * values, combined_dq)
+    return flat_2d * values, combined_dq
 
 
 def clean_wl(wl, dispaxis):
@@ -1524,11 +1524,9 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
             # dq and err arrays are the same size, so treat them the same
             return image_flat.reshape((ysize, xsize)), image_dq, image_err
         else:
-            return (
-                image_flat.reshape((ysize, xsize)),
-                image_dq.reshape((ysize, xsize)),
-                image_err.reshape((ysize, xsize))
-            )
+            return (image_flat.reshape((ysize, xsize)),
+                    image_dq.reshape((ysize, xsize)),
+                    image_err.reshape((ysize, xsize)))
 
     grid = np.indices((ysize, xsize), dtype=np.intp)
     ixpixel = grid[1]

@@ -52,11 +52,11 @@ def get_fitsfile(fitsfile):
     """
     from . import input_file_types
     if isinstance(fitsfile, str):
-        return (fitsfile, pyfits.open(fitsfile), True)
+        return fitsfile, pyfits.open(fitsfile), True
     elif isinstance(fitsfile, pyfits.HDUList):
-        return (fitsfile.filename, fitsfile, False)
+        return fitsfile.filename, fitsfile, False
     elif isinstance(fitsfile, input_file_types.InputFITSFile):
-        return (fitsfile._hdulist.filename, fitsfile._hdulist, False)
+        return fitsfile._hdulist.filename, fitsfile._hdulist, False
 
 def get_error_collector(error_collector=None):
     """

@@ -146,8 +146,8 @@ class Dataset():
                  odd_even_rows):
 
         if (input_model.meta.subarray.xstart is None or
-            input_model.meta.subarray.ystart is None or
-            input_model.meta.subarray.xsize is None or
+                input_model.meta.subarray.ystart is None or
+                input_model.meta.subarray.xsize is None or
                 input_model.meta.subarray.ysize is None):
             raise ValueError('subarray metadata not found')
         self.input_model = input_model
@@ -2083,4 +2083,4 @@ def save_science_values(input_dataset):
     pdq = input_dataset.input_model.pixeldq
     wh_zero = np.where(input_dataset.input_model.zeroframe[:, :, :] == 0.)
 
-    return (data, gdq, pdq, wh_zero)
+    return data, gdq, pdq, wh_zero

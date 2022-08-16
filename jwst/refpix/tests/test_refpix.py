@@ -66,10 +66,10 @@ def test_each_amp():
     out = RefPixStep.call(im)
 
     # for amp 1, value subtracted should be 1, for amp 2, value should be 2, etc.
-    assert(out.data[0, 5, 100, 4] == 4.0)  # pick a random pixel in the 4th column
-    assert(out.data[0, 5, 100, 5] == 3.0)
-    assert(out.data[0, 5, 100, 6] == 2.0)
-    assert(out.data[0, 5, 100, 7] == 1.0)
+    assert out.data[0, 5, 100, 4] == 4.0  # pick a random pixel in the 4th column
+    assert out.data[0, 5, 100, 5] == 3.0
+    assert out.data[0, 5, 100, 6] == 2.0
+    assert out.data[0, 5, 100, 7] == 1.0
 
 
 def test_firstframe_sub():
@@ -156,14 +156,14 @@ def test_odd_even():
 
     # values should be different by amp and by odd/even row
     # value of data in 5th frame is 50, ref values are subtracted from that
-    assert(out.data[0, 5, 100, 4] == 45.0)  # pick a random pixel in the 4th column
-    assert(out.data[0, 5, 100, 5] == 44.0)
-    assert(out.data[0, 5, 100, 6] == 43.0)
-    assert(out.data[0, 5, 100, 7] == 42.0)
-    assert(out.data[0, 5, 101, 4] == 49.0)
-    assert(out.data[0, 5, 101, 5] == 48.0)
-    assert(out.data[0, 5, 101, 6] == 47.0)
-    assert(out.data[0, 5, 101, 7] == 46.0)
+    assert out.data[0, 5, 100, 4] == 45.0  # pick a random pixel in the 4th column
+    assert out.data[0, 5, 100, 5] == 44.0
+    assert out.data[0, 5, 100, 6] == 43.0
+    assert out.data[0, 5, 100, 7] == 42.0
+    assert out.data[0, 5, 101, 4] == 49.0
+    assert out.data[0, 5, 101, 5] == 48.0
+    assert out.data[0, 5, 101, 6] == 47.0
+    assert out.data[0, 5, 101, 7] == 46.0
 
 
 def test_no_odd_even():
@@ -209,14 +209,14 @@ def test_no_odd_even():
     # values should be different by amp and not by odd/even row
     # value of data in 5th frame is 50, ref values are subtracted from that
     # odd+even/2 -> (1+5)/2=3, (2+6)/2=4, (3+7)/2=5, (4+8)/2=6
-    assert(out.data[0, 5, 100, 4] == 47.0)  # pick a random pixel in the 4th column
-    assert(out.data[0, 5, 100, 5] == 46.0)
-    assert(out.data[0, 5, 100, 6] == 45.0)
-    assert(out.data[0, 5, 100, 7] == 44.0)
-    assert(out.data[0, 5, 101, 4] == 47.0)
-    assert(out.data[0, 5, 101, 5] == 46.0)
-    assert(out.data[0, 5, 101, 6] == 45.0)
-    assert(out.data[0, 5, 101, 7] == 44.0)
+    assert out.data[0, 5, 100, 4] == 47.0  # pick a random pixel in the 4th column
+    assert out.data[0, 5, 100, 5] == 46.0
+    assert out.data[0, 5, 100, 6] == 45.0
+    assert out.data[0, 5, 100, 7] == 44.0
+    assert out.data[0, 5, 101, 4] == 47.0
+    assert out.data[0, 5, 101, 5] == 46.0
+    assert out.data[0, 5, 101, 6] == 45.0
+    assert out.data[0, 5, 101, 7] == 44.0
 
 
 def test_side_averaging():
@@ -247,7 +247,7 @@ def test_side_averaging():
     out = RefPixStep.call(im)
 
     # average reference pixel value should be 1.5 (all 1's on left, all 2's on right)
-    assert(out.data[0, 5, 100, 50] == 48.5)
+    assert out.data[0, 5, 100, 50] == 48.5
 
 
 def test_above_sigma():
@@ -278,7 +278,7 @@ def test_above_sigma():
     out = RefPixStep.call(im)
 
     # average reference pixel value should be 1.5 (all 1's on left, all 2's on right)
-    assert(out.data[0, 3, 50, 7] == 28.5)
+    assert out.data[0, 3, 50, 7] == 28.5
 
 
 def test_nan_refpix():
@@ -313,7 +313,7 @@ def test_nan_refpix():
     out = RefPixStep.call(im)
 
     # average reference pixel value should be 1.5 (all 1's on left, all 2's on right)
-    assert(out.data[0, 3, 50, 7] == 28.5)
+    assert out.data[0, 3, 50, 7] == 28.5
 
 
 def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):

@@ -932,7 +932,7 @@ class NIRISSBackwardGrismDispersion(Model):
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
-        return (x + dx, y + dy, x, y, order)
+        return x + dx, y + dy, x, y, order
 
 
 class NIRISSForwardRowGrismDispersion(Model):

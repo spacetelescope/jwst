@@ -109,7 +109,7 @@ def image_data_c():
         wl = wavelength[iy, ix]
         ra = wl.copy()                          # placeholder
         dec = wl.copy()                         # placeholder
-        return (ra, dec, wl)
+        return ra, dec, wl
 
     input_model.meta.wcs = mock_wcs
 

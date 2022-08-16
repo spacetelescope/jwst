@@ -113,7 +113,7 @@ def fourier_imshift(image, shift):
     elif ndim == 3:
         nslices = image.shape[0]
         shift = np.asanyarray(shift)[:, :2]
-        if (shift.shape[0] != nslices):
+        if shift.shape[0] != nslices:
             raise ValueError("The number of provided shifts must be equal "
                              "to the number of slices in the input image.")
 
@@ -175,7 +175,7 @@ def align_array(reference, target, mask=None):
     else:
         raise ValueError("Input target image must be either a 2D or 3D array.")
 
-    return (aligned, shifts)
+    return aligned, shifts
 
 
 def align_models(reference, target, mask):

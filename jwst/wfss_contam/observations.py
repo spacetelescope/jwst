@@ -97,7 +97,7 @@ class Observation:
             log.info(f"Loading {len(all_IDs)} sources from segmentation map")
             for ID in all_IDs:
                 ys, xs = np.nonzero(self.seg == ID)
-                if (len(xs) > 0) & (len(ys) > 0):
+                if len(xs) > 0 and len(ys) > 0:
                     self.xs.append(xs)
                     self.ys.append(ys)
 
@@ -105,7 +105,7 @@ class Observation:
             # Process only the given source ID
             log.info(f"Loading source {self.ID} from segmentation map")
             ys, xs = np.nonzero(self.seg == self.ID)
-            if (len(xs) > 0) & (len(ys) > 0):
+            if len(xs) > 0 and len(ys) > 0:
                 self.xs = [xs]
                 self.ys = [ys]
                 self.IDs = [self.ID]

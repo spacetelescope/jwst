@@ -277,9 +277,9 @@ class CubeSkyMatchStep(Step):
         y, x = np.indices((1024, 512))
 
         if channel in ['1', '3']:
-            return (x + 4, y)
+            return x + 4, y
         else:
-            return (x + 516, y)
+            return x + 516, y
 
 
 def _find_associated_2d_image(cube, models2d):
@@ -297,7 +297,7 @@ def _find_associated_2d_image(cube, models2d):
 
     for m in models2d:
         if m.meta.filename == fn:
-            return (m, ch)
+            return m, ch
 
     return None, None
 

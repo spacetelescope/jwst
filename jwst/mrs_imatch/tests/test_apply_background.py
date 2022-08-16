@@ -144,7 +144,7 @@ def test_apply_background_2d(_jail, miri_dither_ch12):
     data3 = new_container[2].data[:, 16:]
     data4 = new_container[3].data[:, 16:]
 
-    assert(np.allclose(data1, data2, rtol=1e-6))
-    assert(np.allclose(data2, data3, rtol=1e-6))
-    assert(np.allclose(data3, data4, rtol=1e-6))
-    assert(np.allclose(data1, data4, rtol=1e-6))
+    assert np.allclose(data1, data2, rtol=1e-6)
+    assert np.allclose(data2, data3, rtol=1e-6)
+    assert np.allclose(data3, data4, rtol=1e-6)
+    assert np.allclose(data1, data4, rtol=1e-6)

@@ -21,6 +21,22 @@ from . import astrometric_utils as amutils
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
+def _oxford_or_str_join(str_list):
+    nelem = len(str_list)
+    if not nelem:
+        return 'N/A'
+    str_list = list(map(repr, str_list))
+    if nelem == 1:
+        return str_list
+    elif nelem == 2:
+        return str_list[0] + ' or ' + str_list[1]
+    else:
+        return ', '.join(map(repr, str_list[:-1])) + ', or ' + repr(str_list[-1])
+
+
+SINGLE_GROUP_REFCAT = ['GAIADR2', 'GAIADR1']
+_SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
+
 __all__ = ['TweakRegStep']
 
 
@@ -32,7 +48,7 @@ class TweakRegStep(Step):
 
     class_alias = "tweakreg"
 
-    spec = """
+    spec = f"""
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
@@ -52,7 +68,7 @@ class TweakRegStep(Step):
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
         align_to_gaia = boolean(default=False)  # Align to GAIA catalog
-        gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
+        gaia_catalog = string(default='GAIADR2')  # Catalog file name or one of: {_SINGLE_GROUP_REFCAT_STR}
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
@@ -144,8 +160,7 @@ class TweakRegStep(Step):
                       .format(len(grp_img)))
         self.log.info("Image groups:")
 
-        if len(grp_img) == 1:
-            # there's an open PR that will fix this step, which currently quits this step if there's only one group
+        if len(grp_img) == 1 and not self.align_to_gaia:
             self.log.info("* Images in GROUP 1:")
             for im in grp_img[0]:
                 self.log.info("     {}".format(im.meta.filename))
@@ -162,96 +177,103 @@ class TweakRegStep(Step):
                 del model.catalog
             return input
 
-        # create a list of WCS-Catalog-Images Info and/or their Groups:
-        imcats = []
-        for g in grp_img:
-            if len(g) == 0:
-                raise AssertionError("Logical error in the pipeline code.")
-            else:
-                group_name = _common_name(g)
-                # list of WCS corrector class + catalog
-                wcsimlist = list(map(self._imodel2wcsim, g))
-                # Remove the attached catalogs
-                for model in g:
-                    del model.catalog
-                self.log.info("* Images in GROUP '{}':".format(group_name))
-                for im in wcsimlist:
-                    im.meta['group_id'] = group_name
-                    self.log.info("     {}".format(im.meta['name']))
-                imcats.extend(wcsimlist)
+        elif len(grp_img) > 1:
 
-        self.log.info('')
+            # create a list of WCS-Catalog-Images Info and/or their Groups:
+            imcats = []
+            for g in grp_img:
+                if len(g) == 0:
+                    raise AssertionError("Logical error in the pipeline code.")
+                else:
+                    group_name = _common_name(g)
+                    wcsimlist = list(map(self._imodel2wcsim, g))
+                    # Remove the attached catalogs
+                    for model in g:
+                        del model.catalog
+                    self.log.info("* Images in GROUP '{}':".format(group_name))
+                    for im in wcsimlist:
+                        im.meta['group_id'] = group_name
+                        self.log.info("     {}".format(im.meta['name']))
+                    imcats.extend(wcsimlist)
 
-        # align images:
-        tpmatch = TPMatch(
-            searchrad=self.searchrad,
-            separation=self.separation,
-            use2dhist=self.use2dhist,
-            tolerance=self.tolerance,
-            xoffset=self.xoffset,
-            yoffset=self.yoffset
-        )
+            self.log.info('')
 
-        try:
-            align_wcs(
-                imcats,
-                refcat=None,
-                enforce_user_order=self.enforce_user_order,
-                expand_refcat=self.expand_refcat,
-                minobj=self.minobj,
-                match=tpmatch,
-                fitgeom=self.fitgeometry,
-                nclip=self.nclip,
-                sigma=(self.sigma, 'rmse')
+            # align images:
+            tpmatch = TPMatch(
+                searchrad=self.searchrad,
+                separation=self.separation,
+                use2dhist=self.use2dhist,
+                tolerance=self.tolerance,
+                xoffset=self.xoffset,
+                yoffset=self.yoffset
             )
         # imcats[0].wcs -> updated and improved WCS
 
-        except ValueError as e:
-            msg = e.args[0]
-            if (msg == "Too few input images (or groups of images) with "
-                    "non-empty catalogs."):
-                # we need at least two exposures to perform image alignment
-                self.log.warning(msg)
-                self.log.warning("At least two exposures are required for "
-                                 "image alignment.")
-                self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
-                self.skip = True
-                for model in images:
-                    model.meta.cal_step.tweakreg = "SKIPPED"
-                return images
-            else:
-                raise e
+            try:
+                align_wcs(
+                    imcats,
+                    refcat=None,
+                    enforce_user_order=self.enforce_user_order,
+                    expand_refcat=self.expand_refcat,
+                    minobj=self.minobj,
+                    match=tpmatch,
+                    fitgeom=self.fitgeometry,
+                    nclip=self.nclip,
+                    sigma=(self.sigma, 'rmse')
+                )
 
-        except RuntimeError as e:
-            msg = e.args[0]
-            if msg.startswith("Number of output coordinates exceeded allocation"):
-                # we need at least two exposures to perform image alignment
-                self.log.error(msg)
-                self.log.error("Multiple sources within specified tolerance "
-                               "matched to a single reference source. Try to "
-                               "adjust 'tolerance' and/or 'separation' parameters.")
-                self.log.warning("Skipping 'TweakRegStep'...")
-                self.skip = True
-                for model in images:
-                    model.meta.cal_step.tweakreg = "SKIPPED"
-                return images
-            else:
-                raise e
+            except ValueError as e:
+                msg = e.args[0]
+                if (msg == "Too few input images (or groups of images) with "
+                        "non-empty catalogs."):
+                    # we need at least two exposures to perform image alignment
+                    self.log.warning(msg)
+                    self.log.warning("At least two exposures are required for "
+                                     "image alignment.")
+                    self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
+                    for model in images:
+                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    if not self.align_to_gaia:
+                        self.skip = True
+                        return images
+                else:
+                    raise e
 
-        for imcat in imcats:
-            # original WCS
-            wcs = imcat.meta['image_model'].meta.wcs
-            # corrected WCS
-            twcs = imcat.wcs
-            if not self._is_wcs_correction_small(wcs, twcs):
-                # Large corrections are typically a result of source
-                # mis-matching or poorly-conditioned fit. Skip such models.
-                self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
-                self.log.warning("Skipping 'TweakRegStep'...")
-                self.skip = True
-                for model in images:
-                    model.meta.cal_step.tweakreg = "SKIPPED"
-                return images
+            except RuntimeError as e:
+                msg = e.args[0]
+                if msg.startswith("Number of output coordinates exceeded allocation"):
+                    # we need at least two exposures to perform image alignment
+                    self.log.error(msg)
+                    self.log.error("Multiple sources within specified tolerance "
+                                   "matched to a single reference source. Try to "
+                                   "adjust 'tolerance' and/or 'separation' parameters.")
+                    self.log.warning("Skipping 'TweakRegStep'...")
+                    self.skip = True
+                    for model in images:
+                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    return images
+                else:
+                    raise e
+
+            for imcat in imcats:
+                model = imcat.meta['image_model']
+                if model.meta.cal_step.tweakreg == "SKIPPED":
+                    continue
+                wcs = model.meta.wcs
+                twcs = imcat.wcs
+                if not self._is_wcs_correction_small(wcs, twcs):
+                    # Large corrections are typically a result of source
+                    # mis-matching or poorly-conditioned fit. Skip such models.
+                    self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
+
+                    for model in images:
+                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    if self.align_to_gaia:
+                        self.log.warning("Skipping relative alignment (stage 1)...")
+                    else:
+                        self.log.warning("Skipping 'TweakRegStep'...")
+                        self.skip = True
+                        return images
 
         if self.align_to_gaia:
             # Get catalog of GAIA sources for the field
@@ -264,17 +286,35 @@ class TweakRegStep(Step):
                 output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
             else:
                 output_name = None
-            ref_cat = amutils.create_astrometric_catalog(images,
-                                                         self.gaia_catalog,
-                                                         output=output_name)
+
+            self.gaia_catalog = self.gaia_catalog.strip()
+            gaia_cat_name = self.gaia_catalog.upper()
+
+            if gaia_cat_name in SINGLE_GROUP_REFCAT:
+                ref_cat = amutils.create_astrometric_catalog(
+                    images,
+                    gaia_cat_name,
+                    output=output_name
+                )
+
+            elif path.isfile(self.gaia_catalog):
+                ref_cat = Table.read(self.gaia_catalog)
+
+            else:
+                raise ValueError("'gaia_catalog' must be a path to an "
+                                 "existing file name or one of the supported "
+                                 f"reference catalogs: {_SINGLE_GROUP_REFCAT_STR}.")
 
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
             if num_ref < self.min_gaia:
-                msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
-                msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
                 # Raise Exception here to avoid rest of code in this try block
-                self.log.warning(msg)
+                self.log.warning(
+                    f"Not enough sources ({num_ref}) in the reference catalog "
+                    "for the single-group alignment step to perform a fit. "
+                    f"Skipping alignment to the {self.gaia_catalog} reference "
+                    "catalog!"
+                )
             else:
                 # align images:
                 # Update to separation needed to prevent confusion of sources
@@ -313,7 +353,8 @@ class TweakRegStep(Step):
                 )
 
         for imcat in imcats:
-            imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+            image_model = imcat.meta['image_model']
+            image_model.meta.cal_step.tweakreg = 'COMPLETE'
 
             # retrieve fit status and update wcs if fit is successful:
             if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
@@ -331,12 +372,15 @@ class TweakRegStep(Step):
                     #       for end-user searches.
                     imcat.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
 
-                imcat.meta['image_model'].meta.wcs = imcat.wcs
+                image_model.meta.wcs = imcat.wcs
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
                 try:
-                    update_fits_wcsinfo(imcat.meta['image_model'])
+                    update_fits_wcsinfo(
+                        image_model,
+                        max_pix_error=0.005
+                    )
                 except (ValueError, RuntimeError) as e:
                     self.log.warning(
                         "Failed to update 'meta.wcsinfo' with FITS SIP "

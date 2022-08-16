@@ -39,8 +39,8 @@ def test_data_correction(setup_inputs):
 
     # Check that correction was not done on pixel with NaN values for both SCI
     #     and ERR arrays (i.e. these pixels have not been corrected)
-    assert(np.isnan(output_model.data[0, 0]))
-    assert(np.isnan(output_model.err[0, 0]))
+    assert np.isnan(output_model.data[0, 0])
+    assert np.isnan(output_model.err[0, 0])
 
 
 @pytest.fixture

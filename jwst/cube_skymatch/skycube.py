@@ -169,7 +169,7 @@ class SkyCube():
 
     @property
     def bkg_center(self):
-        return (self._x0, self._y0, self._z0)
+        return self._x0, self._y0, self._z0
 
     @property
     def weights(self):
@@ -262,7 +262,7 @@ class SkyCube():
         if self._bkg_status > 0:
             return self._data
 
-        return (self._data - self.bkg_cube)
+        return self._data - self.bkg_cube
 
     def subtract_sky(self):
         """ Subtract computed sky from cube data. """

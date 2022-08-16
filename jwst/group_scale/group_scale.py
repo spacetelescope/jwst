@@ -29,7 +29,7 @@ def do_correction(model):
     # Get the meta data values that we need
     nframes = model.meta.exposure.nframes
     frame_divisor = model.meta.exposure.frame_divisor
-    if (nframes is None) or (frame_divisor is None):
+    if nframes is None or frame_divisor is None:
         log.warning('Necessary meta data not found')
         log.warning('Step will be skipped')
         model.meta.cal_step.group_scale = 'SKIPPED'
