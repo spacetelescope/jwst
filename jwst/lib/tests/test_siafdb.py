@@ -1,5 +1,6 @@
 """Test the siaf db classes"""
 from contextlib import nullcontext as does_not_raise
+from logging import exception
 import os
 from pathlib import Path
 import pytest
@@ -79,3 +80,27 @@ def test_get_wcs(aperture, expected):
     siaf_db = siafdb.SiafDb(SIAFXML_PATH)
     siaf = siaf_db.get_wcs(aperture)
     assert siaf == expected
+
+
+@pytest.mark.parametrize('prd, expected, exception', [
+    # Valid cases
+    ('PRDOPSSOC-055', 'PRDOPSSOC-055', does_not_raise()),
+    ('PRDOPSSOC-054', 'PRDOPSSOC-053', does_not_raise()),
+    ('PRDOPSSOC-053', 'PRDOPSSOC-053', does_not_raise()),
+
+    # Bad specification
+    ('PRDOPSSOC', 'PRDOPSSOC-053', pytest.raises(ValueError)),
+    ('junk', 'PRDOPSSOC-053', pytest.raises(ValueError)),
+
+    # Out-of-range specs
+    # 999 case should produce whatever the "latest" is. Will need
+    # regular updating.
+    ('PRDOPSSOC-000', 'PRDOPSSOC-053', pytest.raises(ValueError)),
+    ('PRDOPSSOC-999', 'PRDOPSSOC-055', does_not_raise()),
+])
+def test_nearest_prd(prd, expected, exception):
+    """Test nearest prd finding"""
+
+    with exception:
+        prd_to_use, _ = siafdb.nearest_prd(pysiaf, prd)
+        assert prd_to_use == expected
