@@ -361,8 +361,6 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file, tmp_path):
     """Handle when no pointing exists and the default is used."""
     expected_name = 'add_wcs_default.fits'
@@ -403,8 +401,6 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
     """Test using the database"""
     expected_name = 'add_wcs_with_db.fits'
@@ -427,8 +423,6 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 @pytest.mark.parametrize('fgsid', [1, 2])
 def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
     """Test using the database"""
@@ -489,8 +483,6 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     """Test using the database and a specified siaf db"""
     expected_name = 'add_wcs_method_full_siafdb.fits'
