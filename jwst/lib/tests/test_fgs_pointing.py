@@ -1,8 +1,10 @@
 """Test suite for ensuring correct FGS pointing"""
-import os.path
 import logging
 from numpy import array
 from numpy import isclose
+from pathlib import Path
+
+import pytest
 
 from jwst.datamodels import Level1bModel
 from jwst.lib import set_telescope_pointing as stp
@@ -15,7 +17,8 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
+DATA_PATH = Path(__file__).parent / 'data'
+siaf_path = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
 
 # Define minimal model meta structure
 WCS_META = {
@@ -33,9 +36,10 @@ WCS_META = {
 }
 
 
+@pytest.mark.xfail(reason='See JP-2658')
 def test_fgs_pointing():
     model = make_level1b()
-    stp.update_wcs(model, siaf_path=siaf_db)
+    stp.update_wcs(model, siaf_path=siaf_path)
 
     assert isclose(model.meta.wcsinfo.pc1_1, -0.9997617158628777, atol=1e-15)
     assert isclose(model.meta.wcsinfo.pc1_2, -0.021829143247382235, atol=1e-15)
