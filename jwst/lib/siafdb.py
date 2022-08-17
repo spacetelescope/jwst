@@ -128,9 +128,7 @@ class SiafDb:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        instrument = INSTRUMENT_MAP[aperture[:3].lower()]
-        siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
-        aperture = siaf[aperture.upper()]
+        aperture = self.get_aperture(aperture, useafter=useafter)
 
         # Build the SIAF entry. Missing required values is an error.
         # Otherwise, use defaults.
