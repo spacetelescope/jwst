@@ -55,6 +55,12 @@ extract_1d
 - Update ``int_times`` keywords and copy the ``INT_TIMES`` table extension to SOSS
   spectral output (x1d) files [#6930]
 
+jump
+----
+
+- Added flagging after detected ramp jumps based on two DN thresholds and
+  two number of groups to flag [#6943]
+
 master_background
 -----------------
 

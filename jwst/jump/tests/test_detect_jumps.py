@@ -702,6 +702,47 @@ def test_onecr_50_groups(setup_inputs):
     assert_array_equal(out_model.groupdq[0, 6:30, 5, 5], GOOD)
 
 
+def test_onecr_50_groups_afterjump(setup_inputs):
+    """"
+    A test with a fifty group integration. There are two jumps in pixel 5,5. One in group 5 and
+    one in group 30.  Test includes after jump flagging.
+    """
+    grouptime = 3.0
+    ingain = 5
+    inreadnoise = 7.0
+    ngroups = 50
+    model, rnoise, gain = setup_inputs(ngroups=ngroups, gain=ingain, nrows=10, ncols=10,
+                                       readnoise=inreadnoise, deltatime=grouptime)
+
+    model.data[0, 0, 5, 5] = 15.0
+    model.data[0, 1, 5, 5] = 20.0
+    model.data[0, 2, 5, 5] = 25.0
+    model.data[0, 3, 5, 5] = 30.0
+    model.data[0, 4, 5, 5] = 35.0
+    model.data[0, 5, 5, 5] = 140.0
+    model.data[0, 6, 5, 5] = 150.0
+    model.data[0, 7, 5, 5] = 160.0
+    model.data[0, 8, 5, 5] = 170.0
+    model.data[0, 9, 5, 5] = 180.0
+    model.data[0, 10:30, 5, 5] = np.arange(190, 290, 5)
+    model.data[0, 30:50, 5, 5] = np.arange(500, 600, 5)
+    out_model = run_detect_jumps(model, gain, rnoise,
+                                 4.0, 5.0, 6.0, 'none', 200, 10, False,
+                                 after_jump_flag_dn1=20.,
+                                 after_jump_flag_time1=grouptime * 2,
+                                 after_jump_flag_dn2=150.,
+                                 after_jump_flag_time2=grouptime * 3)
+
+    # CR in group 5 + 2 groups
+    for k in range(5, 8):
+        assert out_model.groupdq[0, k, 5, 5] == JUMP_DET, f"first cr group {k}"
+    # CR in group 30 + 3 groups
+    for k in range(30, 34):
+        assert out_model.groupdq[0, k, 5, 5] == JUMP_DET, f"second cr group {k}"
+    # groups in between are not flagged
+    assert_array_equal(out_model.groupdq[0, 8:30, 5, 5], GOOD, err_msg="between crs")
+
+
 def test_single_CR_neighbor_flag(setup_inputs):
     """"
     A single CR in a 10 group exposure. Tests that:
