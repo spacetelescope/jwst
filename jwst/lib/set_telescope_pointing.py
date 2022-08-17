@@ -365,6 +365,8 @@ class TransformParameters:
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
+    #: Exposure type
+    exp_type: str = None
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
     fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
