@@ -5,7 +5,6 @@ import logging
 import numpy as np
 import os
 from pathlib import Path
-import sys
 from tempfile import TemporaryDirectory
 import warnings
 
@@ -56,32 +55,32 @@ OBSTIME_EXPECTED = STARTTIME
 
 # Meta attributes for test comparisons
 METAS_EQUALITY = ['meta.visit.engdb_pointing_quality',
-                  'meta.pointing.ra_v1',
-                  'meta.pointing.dec_v1',
-                  'meta.pointing.pa_v3',
                   'meta.wcsinfo.wcsaxes',
-                  'meta.wcsinfo.crpix1',
-                  'meta.wcsinfo.crpix2',
-                  'meta.wcsinfo.crval1',
-                  'meta.wcsinfo.crval2',
                   'meta.wcsinfo.ctype1',
                   'meta.wcsinfo.ctype2',
                   'meta.wcsinfo.cunit1',
                   'meta.wcsinfo.cunit2',
-                  'meta.wcsinfo.v2_ref',
-                  'meta.wcsinfo.v3_ref',
                   'meta.wcsinfo.vparity',
-                  'meta.wcsinfo.v3yangle',
-                  'meta.wcsinfo.ra_ref',
-                  'meta.wcsinfo.dec_ref',
                   ]
-METAS_ISCLOSE = ['meta.wcsinfo.cdelt1',
+METAS_ISCLOSE = ['meta.wcsinfo.crpix1',
+                 'meta.wcsinfo.crpix2',
+                 'meta.wcsinfo.crval1',
+                 'meta.wcsinfo.crval2',
+                 'meta.wcsinfo.cdelt1',
                  'meta.wcsinfo.cdelt2',
                  'meta.wcsinfo.pc1_1',
                  'meta.wcsinfo.pc1_2',
                  'meta.wcsinfo.pc2_1',
                  'meta.wcsinfo.pc2_2',
                  'meta.wcsinfo.roll_ref',
+                 'meta.wcsinfo.v2_ref',
+                 'meta.wcsinfo.v3_ref',
+                 'meta.wcsinfo.v3yangle',
+                 'meta.wcsinfo.ra_ref',
+                 'meta.wcsinfo.dec_ref',
+                 'meta.pointing.ra_v1',
+                 'meta.pointing.dec_v1',
+                 'meta.pointing.pa_v3',
                  ]
 
 
@@ -361,8 +360,6 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file, tmp_path):
     """Handle when no pointing exists and the default is used."""
     expected_name = 'add_wcs_default.fits'
@@ -403,8 +400,6 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
     """Test using the database"""
     expected_name = 'add_wcs_with_db.fits'
@@ -427,8 +422,6 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 @pytest.mark.parametrize('fgsid', [1, 2])
 def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
     """Test using the database"""
@@ -455,7 +448,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f"{meta} is not equal"
 
             for meta in METAS_ISCLOSE:
                 assert np.isclose(model[meta], expected[meta])
@@ -489,8 +482,6 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="No URI support in sqlite3")
 def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     """Test using the database and a specified siaf db"""
     expected_name = 'add_wcs_method_full_siafdb.fits'
