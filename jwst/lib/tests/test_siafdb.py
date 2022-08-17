@@ -7,7 +7,7 @@ import pytest
 from jwst.lib import siafdb
 
 pytest.importorskip('pysiaf')
-import pysiaf
+import pysiaf  # noqa: 402
 
 # Database paths
 DATA_PATH = Path(__file__).parent / 'data'
@@ -28,16 +28,24 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.mark.parametrize('source, prd, xml_path, exception',
-                         [(None, None, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),                     # Default
-                          (SIAFXML_PATH, None, SIAFXML_PATH, does_not_raise()),                          # User-define XML path
-                          ('XML_DATA', None, SIAFXML_PATH, does_not_raise()),                            # Use $XML_DATA
-                          ('junk_source', None, None, pytest.raises(ValueError)),                        # Non-existent user-define XML path
-                          (None, pysiaf.JWST_PRD_VERSION, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),  # Latest pysiaf PRD version
-                          (None, OLD_PRD, OLD_PRD_PATH, does_not_raise()),                               # User-specified PRD version
-                          (None, 'junk_prd', None, pytest.raises(ValueError)),                           # Non-existent PRD version
-                          (SIAFXML_PATH, OLD_PRD, SIAFXML_PATH, does_not_raise()),                       # `source` overrides `prd`
-                          ])
+@pytest.mark.parametrize('source, prd, xml_path, exception', [
+    # Default
+    (None, None, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),
+    # User-define XML path
+    (SIAFXML_PATH, None, SIAFXML_PATH, does_not_raise()),
+    # Use $XML_DATA
+    ('XML_DATA', None, SIAFXML_PATH, does_not_raise()),
+    # Non-existent user-define XML path
+    ('junk_source', None, None, pytest.raises(ValueError)),
+    # Latest pysiaf PRD version
+    (None, pysiaf.JWST_PRD_VERSION, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),
+    # User-specified PRD version
+    (None, OLD_PRD, OLD_PRD_PATH, does_not_raise()),
+    # Non-existent PRD version
+    (None, 'junk_prd', None, pytest.raises(ValueError)),
+    # `source` overrides `prd`
+    (SIAFXML_PATH, OLD_PRD, SIAFXML_PATH, does_not_raise()),
+])
 def test_create(source, prd, xml_path, exception, jail_environ):
     """Test the the right objects are created"""
     source_actual = source
@@ -65,7 +73,7 @@ def test_create(source, prd, xml_path, exception, jail_environ):
 )
 def test_get_wcs(aperture, expected):
     """Test retrieval of wcs information."""
-    siaf_db =  siafdb.SiafDb(SIAFXML_PATH)
+    siaf_db = siafdb.SiafDb(SIAFXML_PATH)
     siaf = siaf_db.get_wcs(aperture)
     assert siaf == expected
 

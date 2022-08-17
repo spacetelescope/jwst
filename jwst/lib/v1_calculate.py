@@ -49,7 +49,7 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
     t_pars = stp.TransformParameters(siaf=siaf, **calc_wcs_from_time_kwargs)
 
     # Calculate V1 for all sources.
-    siaf_db =  siafdb.SiafDb(siaf_path)
+    siaf_db = siafdb.SiafDb(siaf_path)
     t_pars.siaf_db = siaf_db
     for source in sources:
         with dm.open(source) as model:

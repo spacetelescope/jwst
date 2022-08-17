@@ -2594,6 +2594,7 @@ def dcm(alpha, delta, angle):
 
     return dcm
 
+
 # Determine calculation method from tracking mode.
 def method_from_pcs_mode(pcs_mode):
     """Determine transform/wcs calculation method from PCS_MODE
