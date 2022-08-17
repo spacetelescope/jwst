@@ -455,7 +455,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
         with datamodels.open(DATA_PATH / expected_name) as expected:
             for meta in METAS_EQUALITY:
-                assert model[meta] == expected[meta]
+                assert model[meta] == expected[meta], f"{meta} is not equal"
 
             for meta in METAS_ISCLOSE:
                 assert np.isclose(model[meta], expected[meta])
