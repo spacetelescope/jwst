@@ -74,10 +74,12 @@ class TweakRegStep(Step):
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
         abs_minobj = integer(default=15) # Minimum number of objects acceptable for matching when performing absolute astrometry
         abs_searchrad = float(default=6.0) # The search radius in arcsec for a match when performing absolute astrometry
-        abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry? We encourage setting this parameter to True. Otherwise, xoffset and yoffset will be set to zero.
+        abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry?
+        # We encourage setting this parameter to True. Otherwise, xoffset and yoffset will be set to zero.
         abs_separation = float(default=0.1) # Minimum object separation in arcsec when performing absolute astrometry
         abs_tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
-        abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry when performing absolute astrometry
+        abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift')
+        # Fitting geometry when performing absolute astrometry
         abs_nclip = integer(min=0, default=3) # Number of clipping iterations in fit when performing absolute astrometry
         abs_sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units when performing absolute astrometry
     """
@@ -287,6 +289,10 @@ class TweakRegStep(Step):
             else:
                 output_name = None
 
+            # initial shift to be used with absolute astrometry
+            self.abs_xoffset = 0
+            self.abs_yoffset = 0
+
             self.gaia_catalog = self.gaia_catalog.strip()
             gaia_cat_name = self.gaia_catalog.upper()
 
@@ -325,8 +331,8 @@ class TweakRegStep(Step):
                     separation=self.abs_separation,
                     use2dhist=self.abs_use2dhist,
                     tolerance=self.abs_tolerance,
-                    xoffset=self.xoffset if self.abs_use2dhist else 0.0,
-                    yoffset=self.yoffset if self.abs_use2dhist else 0.0
+                    xoffset=self.abs_xoffset,
+                    yoffset=self.abs_yoffset
                 )
 
                 # Set group_id to same value so all get fit as one observation
