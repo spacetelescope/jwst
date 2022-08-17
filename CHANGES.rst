@@ -250,6 +250,11 @@ resample
 - Propagate ``asn.pool_name`` and ``asn.table_name`` through step ModelContainer
   for level 2 processing of single input datamodels [#6989]
 
+set_telescope_pointing
+----------------------
+
+- Migrate set_telescope_pointing to pysiaf-based exclusively [#6993]
+
 skymatch
 --------
 
