@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: 3.9
@@ -39,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: 3.9
@@ -54,6 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: 3.9
@@ -75,6 +81,8 @@ jobs:
         python: [ 3.8, 3.9, '3.10' ]
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: ${{ matrix.python }}
@@ -102,6 +110,8 @@ jobs:
         python: [ 3.8, 3.9, '3.10' ]
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: ${{ matrix.python }}
@@ -132,6 +142,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3.0.2
         with:
+          fetch-depth: 0
           path: ./jwst/
       - uses: actions/setup-python@v4.1.0
         with:
@@ -160,6 +171,8 @@ jobs:
         python: [ 3.8, 3.9, '3.10' ]
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: ${{ matrix.python }}
@@ -190,6 +203,8 @@ jobs:
         python: [ 3.8, 3.9 ]
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: ${{ matrix.python }}
@@ -214,6 +229,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: 3.9
@@ -243,6 +260,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: 3.9
@@ -259,6 +278,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4.1.0
         with:
           python-version: 3.9
