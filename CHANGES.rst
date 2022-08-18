@@ -6,6 +6,7 @@ general
 
 - Made code style changes due to the new 5.0.3 version of flake8, which noted many
   missing white spaces after keywords. [#6958]
+
 - pin ``asdf`` above ``2.12.1`` to fix issues encountered within ASDF due to ``jsonschema`` release ``4.10.0`` [#6986, #6991]
 
 ami_analyze
@@ -48,6 +49,12 @@ datamodels
 - Add the ``P_SUBARR`` keyword to the ``DarkModel`` schema. [#6951]
 
 - Add the ``P_READPA`` keyword to the ``ReadnoiseModel`` schema [#6973]
+
+documentation
+-------------
+
+- Update the Error Propagation section to include info for the ``resample`` step
+  [#6994]
 
 extract_1d
 ----------

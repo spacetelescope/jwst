@@ -13,9 +13,9 @@ The table below is a summary of which steps create or update variance and error 
 as well as which steps make use of these data. Details of how each step computes or
 uses these data are given in the subsequent sections below.
 
-================= ===== ======================= ====================================== =========
+================= ===== ======================= ====================================== ==========
 Step              Stage Creates arrays          Updates arrays                         Step uses
-================= ===== ======================= ====================================== =========
+================= ===== ======================= ====================================== ==========
 ramp_fitting        1   VAR_POISSON, VAR_RNOISE ERR                                    None
 gain_scale          1   None                    ERR, VAR_POISSON, VAR_RNOISE           None
 flat_field          2   VAR_FLAT                ERR, VAR_POISSON, VAR_RNOISE           None
@@ -24,8 +24,9 @@ barshadow           2   None                    ERR, VAR_POISSON, VAR_RNOISE, VA
 pathloss            2   None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None
 photom              2   None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None
 outlier_detection   3   None                    None                                   ERR
+resample            3   None                    None                                   VAR_RNOISE
 wfs_combine         3   None                    ERR                                    None
-================= ===== ======================= ====================================== =========
+================= ===== ======================= ====================================== ==========
 
 Stage 1 Pipelines 
 -----------------
@@ -122,6 +123,13 @@ The ``outlier_detection`` step is used in all Stage 3 pipelines.  It uses the ER
 make a local noise model, based on the readnoise and calibration errors of earlier 
 steps in the pipeline. This step does not modify the ERR array or any of the VAR
 arrays.
+
+resample/resample_spec
+++++++++++++++++++++++
+The ``resample`` and ``resample_spec`` steps make use of the VAR_RNOISE array to
+compute weights that are used when combining data with the ``weight_type=ivm``
+option selected. The step also resamples all of the variance and error arrays,
+using the same output WCS frame as the science data.
 
 wfs_combine
 +++++++++++
