@@ -50,6 +50,57 @@ Specifically, this routine performs the following operations:
 * Perform statistical comparison between blotted image and original image to identify outliers.
 * Update input data model DQ arrays with mask of detected outliers.
 
+Memory Model for Outlier Detection Algorithm
+---------------------------------------------
+The outlier detection algorithm can end up using massive amounts of memory
+depending on the number of inputs, the size of each input, and the size of the
+final output product.  Specifically,
+
+    * The input :py:class:`~jwst.datamodels.ModelContainer` or
+      :py:class:`~jwst.datamodels.CubeModel`
+      for IFU data, by default, all input exposures would have been kept open in memory to make
+      processing more efficient.
+
+    * The initial resample step creates an output product for EACH input that is the
+      same size as the final
+      output product, which for imaging modes can span all chips in the detector while
+      also accounting for all dithers.  For some Level 3 products, each resampled image can
+      be on the order of 2Gb or more.
+
+    * The median combination step then needs to have all pixels at the same position on
+      the sky in memory in order to perform the median computation.  The simplest implementation
+      for this step requires keeping all resampled outputs fully in memory at the same time.
+
+Many Level 3 products only include a modest number of input exposures which can be
+processed using less than 32Gb of memory at a time.  However, there are a number of
+ways this memory limit can be exceeded.  This has been addressed by implementing an
+overall memory model for the outlier detection that includes options to minimize the
+memory usage at the expense of file I/O.  The control over this memory model happens
+with the use of the ``in_memory`` parameter.  The full impact of this parameter
+during processing includes:
+
+    * The ``save_open`` parameter gets set to `False`
+      when opening the input :py:class:`~jwst.datamodels.ModelContainer` object.
+      This forces all input models in the input :py:class:`~jwst.datamodels.ModelContainer` or
+      :py:class:`~jwst.datamodels.CubeModel` to get written out to disk.  The ModelContainer
+      then uses the filename of the input model during subsequent processing.
+
+    * The ``in_memory`` parameter gets passed to the :py:class:`~jwst.resample.ResampleStep`
+      to set whether or not to keep the resampled images in memory or not.  By default,
+      the outlier detection processing sets this parameter to `False` so that each resampled
+      image gets written out to disk.
+
+    * Computing the median image works section-by-section by only keeping 1Mb of each input
+      in memory at a time.  As a result, only the final output product array for the final
+      median image along with a stack of 1Mb image sections are kept in memory.
+
+    * The final resampling step also avoids keeping all inputs in memory by only reading
+      each input into memory 1 at a time as it gets resampled onto the final output product.
+
+These changes result in a minimum amount of memory usage during processing at the obvious
+expense of reading and writing the products from disk.
+
+
 Outlier Detection for TSO data
 -------------------------------
 Time-series observations (TSO) result in input data stored as a 3D CubeModel

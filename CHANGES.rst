@@ -81,6 +81,9 @@ outlier_detection
   input ``ImageModels`` that are saved to disk instead of keeping them in memory.
   New parameters were aded to the step to control this functionality. [#6904]
 
+- Updated documentation of memory model and new parameters for memory use in
+  outlier_detection and resample steps. [#6983]
+
 - Fix reading of the source_type attribute for NIRSpec IFU data. [#6980]
 
 ramp_fitting
