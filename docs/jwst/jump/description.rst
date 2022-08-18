@@ -34,7 +34,7 @@ output PIXELDQ array.
 The SCI and ERR arrays of the input data are not modified.
 
 The current implementation uses the two-point difference method described
-in Anderson&Gordon2011_.
+in `Anderson & Gordon (2011) <https://ui.adsabs.harvard.edu/abs/2011PASP..123.1237A>`_.
 
 Two-Point Difference Method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -59,6 +59,15 @@ The two-point difference method is applied to each integration as follows:
   is used rather than the clipped median.
 * If there are only two differences (three groups), the smallest one is compared to the larger
   one and if the larger one is above a threshold, it is flagged as a jump.
+
+* If flagging of the 4 neighbors is requested, then the 4 adjacent pixels will
+  have ramp jumps flagged in the same group as the central pixel as long as it has
+  a jump between the min and max requested levels for this option.
+
+* If flagging of groups after a ramp jump is requested, then the groups in the
+  requested time since a detected ramp jump will be flagged as ramp jumps if
+  the ramp jump is above the requested threshold.  Two thresholds and times are
+  possible for this option.
 
 Note that any ramp values flagged as SATURATED in the input GROUPDQ array
 are not used in any of the above calculations and hence will never be
@@ -87,5 +96,3 @@ The use of the reference files is flexible. Full-frame reference
 files can be used for all science exposures, in which case subarrays will be
 extracted from the reference file data to match the science exposure, or
 subarray-specific reference files may be used.
-
-.. _Anderson&Gordon2011: https://ui.adsabs.harvard.edu/abs/2011PASP..123.1237A
