@@ -73,6 +73,9 @@ jump
 - Added flagging after detected ramp jumps based on two DN thresholds and
   two number of groups to flag [#6943]
 
+- Change parent abstract class of ModelContainer from generic ``Sequence``
+  to ``ModelList`` from ``stdatamodels`` [#6948]
+
 master_background
 -----------------
 

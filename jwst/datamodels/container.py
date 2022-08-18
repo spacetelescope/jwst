@@ -1,6 +1,5 @@
 import copy
 from collections import OrderedDict
-from collections.abc import Sequence
 import os.path as op
 import re
 import logging
@@ -9,7 +8,7 @@ import numpy as np
 
 from asdf import AsdfFile
 from astropy.io import fits
-from stdatamodels import DataModel, properties
+from stdatamodels import DataModel, ModelList, properties
 
 from .model_base import JwstDataModel
 from .util import open as datamodel_open
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class ModelContainer(JwstDataModel, Sequence):
+class ModelContainer(JwstDataModel, ModelList):
     """
     A container for holding DataModels.
 
