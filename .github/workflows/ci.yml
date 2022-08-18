@@ -70,9 +70,31 @@ jobs:
       - run: pip install .
       - run: pip freeze
       - run: verify_install_requires
+  cache_crds:
+    name: cache current CRDS operational context
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4.1.0
+        with:
+          python-version: '3.x'
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install -e ".[test]" pytest-xdist
+      - run: pip freeze
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+      - uses: actions/cache@v3.0.5
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ env.CRDS_CONTEXT }}
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
   test:
     name: test (${{ matrix.os }}, Python ${{ matrix.python }})
-    needs: [ style, audit, dependencies ]
+    needs: [ style, audit, dependencies, cache_crds ]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
