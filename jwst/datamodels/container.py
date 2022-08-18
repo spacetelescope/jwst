@@ -477,9 +477,12 @@ class ModelContainer(JwstDataModel, Sequence):
         ind : list
             Indices of models in ModelContainer._models matching ``asn_exptype``.
         """
+        names = []
+        for m in self.meta.asn_table.products[0].members:
+            if m.exptype.lower() == asn_exptype:
+                file_path, file_name = op.split(m.expname)
+                names.append(file_name)
         ind = []
-        names = [m.expname for m in self.meta.asn_table.products[0].members
-                 if m.exptype.lower() == asn_exptype]
         for i, model in enumerate(self._models):
             if model.meta.filename in names:
                 ind.append(i)

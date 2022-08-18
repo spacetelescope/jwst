@@ -50,11 +50,16 @@ datamodels
 
 - Add the ``P_READPA`` keyword to the ``ReadnoiseModel`` schema [#6973]
 
+
 documentation
 -------------
 
 - Update the Error Propagation section to include info for the ``resample`` step
   [#6994]
+
+- For the `ModelContainer` method `ind_asn_type` directory information
+  is now properly handled if directory information is included as part
+  of the filename for `expname`. [#6985]
 
 extract_1d
 ----------
