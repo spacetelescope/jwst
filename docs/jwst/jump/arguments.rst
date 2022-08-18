@@ -38,4 +38,14 @@ The ``jump`` step has five optional arguments that can be set by the user:
   not have its neighbors flagged. The goal is to prevent flagging jumps that would be too
   small to significantly affect the slope determination.  The default value is 10.
 
+*  ``--after_jump_flag_dn1``: A floating point value in units of DN that gives the
+   minimum ramp jump for after jump flagging for the 1st after ramp flagging.
 
+* ``--after_jump_flag_time1``: A floating point value in units of seconds that gives the
+  time since the ramp jump to flag groups as ramp jumps for the 1st after jump flagging.
+
+*  ``--after_jump_flag_dn1``: A floating point value in units of DN that gives the
+   minimum ramp jump for after jump flagging for the 2nd after ramp flagging.
+
+* ``--after_jump_flag_time1``: A floating point value in units of seconds that gives the
+  time since the ramp jump to flag groups as ramp jumps for the 2nd after jump flagging.
