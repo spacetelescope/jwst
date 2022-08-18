@@ -109,7 +109,8 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-sdpdeps-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install -e ".[test]" pytest-xdist
+      - run: git checkout $(git describe --tags --abbrev=0)
+      - run: pip install pytest-xdist
       - run: pip install -r requirements-sdp.txt
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
