@@ -43,6 +43,8 @@ cube_build
 - Update the WCS ``naxis3`` value when wavelength planes are removed from the
   IFUCube due to no valid data. [#6976]
 
+- Add a check in the process of building a cube to confirm that there is valid data on the detector. [#6998]
+
 datamodels
 ----------
 
