@@ -9,6 +9,9 @@ general
 
 - pin ``asdf`` above ``2.12.1`` to fix issues encountered within ASDF due to ``jsonschema`` release ``4.10.0`` [#6986, #6991]
 
+- remove the ``timeconversion`` package and associated scripts ``set_bary_helio_times``
+  and ``utc_to_bary``, because they are now part of level-1b SDP code [#6996]
+
 ami_analyze
 -----------
 
