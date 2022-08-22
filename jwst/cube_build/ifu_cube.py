@@ -586,11 +586,11 @@ class IFUCubeData():
 
                     # check that there is valid data returned
                     # If all the data is flagged as DO_NOT_USE - not common- then log warning
-                    if wave.size == 0:
+                    build_cube = True
+                    if wave is None:
                         log.warning(f'No valid data found on file {input_model.meta.filename}')
                         flag_dq_plane = 0
-
-                    roiw_ave = np.mean(roiw_pixel)
+                        build_cube = False
                     # ______________________________________________________________________
                     # C extension setup
                     # ______________________________________________________________________
@@ -610,7 +610,8 @@ class IFUCubeData():
                     if self.weighting == 'msm':
                         weight_type = 1
 
-                    if self.interpolation == 'pointcloud':
+                    if self.interpolation == 'pointcloud' and build_cube:
+                        roiw_ave = np.mean(roiw_pixel)
                         result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
                                               self.overlap_partial, self.overlap_full,
                                               self.xcoord, self.ycoord, self.zcoord,
@@ -628,7 +629,7 @@ class IFUCubeData():
                         spaxel_dq.astype(np.uint)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
-                    if self.weighting == 'drizzle':
+                    if self.weighting == 'drizzle' and build_cube:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                         linear = 0
@@ -778,6 +779,9 @@ class IFUCubeData():
                     rois_pixel, roiw_pixel, weight_pixel, \
                     softrad_pixel, scalerad_pixel = pixelresult
 
+                build_cube = True
+                if wave is None:  # there is no valid data on the detector. Pixels are flagged as DO_NOT_USE.
+                    build_cube = False
                 # the following values are not needed in cube_wrapper because the DQ plane is not being
                 # filled in
                 flag_dq_plane = 0
@@ -792,7 +796,8 @@ class IFUCubeData():
 
                 result = None
 
-                if self.interpolation == 'pointcloud':
+                if self.interpolation == 'pointcloud' and build_cube:
+                    roiw_ave = np.mean(roiw_pixel)
                     result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
                                           self.overlap_partial, self.overlap_full,
                                           self.xcoord, self.ycoord, self.zcoord,
@@ -809,7 +814,7 @@ class IFUCubeData():
                     self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3],np.float64)
                     result = None
 
-                if self.weighting == 'drizzle':
+                if self.weighting == 'drizzle' and build_cube:
                     cdelt3_mean = np.nanmean(self.cdelt3_normal)
                     xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                     linear = 0
@@ -1428,8 +1433,22 @@ class IFUCubeData():
         slice_no_all = None  # Slice number
         dwave_all = None
         corner_coord_all = None
+
+        # initializa values to be returned to None
         dwave = None
         corner_coord = None
+        coord1 = None
+        coord2 = None
+        wave = None
+        flux = None
+        err = None
+        slice_no = None
+        rois_det = None
+        roiw_det = None
+        weight_det = None
+        softrad_det = None
+        scalerad_det = None
+
         if self.instrument == 'MIRI':
             sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background)
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
@@ -1491,6 +1510,13 @@ class IFUCubeData():
         bad1 = np.bitwise_and(dq_all, dqflags.pixel['DO_NOT_USE']).astype(bool)
         bad2 = np.bitwise_and(dq_all, dqflags.pixel['NON_SCIENCE']).astype(bool)
         good_data = np.where(~bad1 & ~bad2 & valid2 & valid3)
+
+        num_good = len(good_data[0])
+        if num_good == 0:  # This can occcur if all the pixels on the detector are marked DO_NOT_USE.
+
+            return coord1, coord2, corner_coord, wave, dwave, flux, err, \
+                slice_no, rois_det, roiw_det, weight_det, \
+                softrad_det, scalerad_det
 
         # good data holds the location of pixels we want to map to cube
         # define variables as numpy arrays (numba needs this defined)
@@ -2117,20 +2143,19 @@ class IFUCubeData():
                 log.info('Number of wavelength planes removed with no data: %i',
                          remove_total)
 
-                flux = flux[remove_start:self.naxis3 - remove_final, :, :]
-                wmap = wmap[remove_start:self.naxis3 - remove_final, :, :]
-                dq = dq[remove_start:self.naxis3 - remove_final, :, :]
-                var = var[remove_start:self.naxis3 - remove_final, :, :]
-
-                # update WCS information if removing wavelengths from the IFU Cube
-                self.naxis3 = self.naxis3 - (remove_start + remove_final) + 1
+                flux = flux[remove_start: (self.naxis3 - remove_final), :, :]
+                wmap = wmap[remove_start: (self.naxis3 - remove_final), :, :]
+                dq = dq[remove_start: (self.naxis3 - remove_final), :, :]
+                var = var[remove_start: (self.naxis3 - remove_final), :, :]
 
                 if self.linear_wavelength:
                     self.crval3 = self.zcoord[remove_start]
                 else:
-                    self.wavelength_table = self.wavelength_table[remove_start:self.naxis3 - remove_final]
+                    self.wavelength_table = self.wavelength_table[remove_start: (self.naxis3 - remove_final)]
                     self.crval3 = self.wavelength_table[0]
 
+                # update WCS information if removing wavelengths from the IFU Cube
+                self.naxis3 = self.naxis3 - (remove_start + remove_final)
         # end removing empty wavelength planes
 
         var = np.sqrt(var)
