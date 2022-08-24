@@ -589,7 +589,11 @@ class NIRCAMForwardRowGrismDispersion(Model):
         List of models which govern the x solutions for each order
 
     ymodels : list [astropy.modeling.Model]
-        List of models which givern the y solutions for each order
+        List of models which govern the y solutions for each order
+
+    inv_xmodels : list [astropy.modeling.Model]
+        List of models which will be used if inverse ymodels
+        cannot be analytically derived
 
     Returns
     -------
@@ -611,11 +615,12 @@ class NIRCAMForwardRowGrismDispersion(Model):
     n_outputs = 4
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, name=None, meta=None):
+                 ymodels=None, inv_xmodels=None, name=None, meta=None):
         self.orders = orders
         self.lmodels = lmodels
         self.xmodels = xmodels
         self.ymodels = ymodels
+        self.inv_xmodels = inv_xmodels
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
         meta = {"orders": orders}  # informational for users
         if name is None:
@@ -652,7 +657,10 @@ class NIRCAMForwardRowGrismDispersion(Model):
         y00 = y0.flatten()[0]
 
         t = np.linspace(0, 1, 10)  # sample t
-        xmodel = self.xmodels[iorder]
+        if not len(self.xmodels):
+            pass
+        else:
+            xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
 
@@ -683,7 +691,11 @@ class NIRCAMForwardColumnGrismDispersion(Model):
         List of models which govern the x solutions
 
     ymodels : list [astropy.modeling.Model]
-        List of models which givern the y solutions
+        List of models which govern the y solutions
+
+    inv_ymodels : list [astropy.modeling.Model]
+        List of models which will be used if inverse ymodels
+        cannot be analytically derived
 
     Returns
     -------
@@ -705,11 +717,12 @@ class NIRCAMForwardColumnGrismDispersion(Model):
     n_outputs = 4
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, name=None, meta=None):
+                 ymodels=None, inv_ymodels=None, name=None, meta=None):
         self.orders = orders
         self.lmodels = lmodels
         self.xmodels = xmodels
         self.ymodels = ymodels
+        self.inv_ymodels = inv_ymodels
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
         meta = {"orders": orders}  # informational for users
         if name is None:
@@ -748,7 +761,12 @@ class NIRCAMForwardColumnGrismDispersion(Model):
 
         t = np.linspace(0, 1, 10)
         xmodel = self.xmodels[iorder]
-        ymodel = self.ymodels[iorder]
+        if not len(self.ymodels):
+            t = self.invdisp_interp(iorder, x0, y0, (y - y0))
+        else:
+            t = self.ymodels[iorder](y - y0)
+
+        lmodel = self.lmodels[iorder]
 
         dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00) + t**2 * xmodel[2](x00, y00)
         dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00) + t**2 * ymodel[2](x00, y00)
@@ -760,6 +778,29 @@ class NIRCAMForwardColumnGrismDispersion(Model):
         wavelength = dyr | tab | lmodel
         model = Mapping((2, 3, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
         return model(x, y, x0, y0, order)
+
+
+    def invdisp_interp(self, order, x0, y0, dy, t0=None):
+
+        if t0 is None:
+            if hasattr(y0, '__iter__'):
+                length = len(y0)
+            else:
+                length = 40
+            t0 = np.linspace(-1, 2, length)
+
+        if len(self.inv_ymodels[order]) == 2:
+            xr = self.inv_ymodels[order][0](x0, y0) + t0 * self.inv_ymodels[order][1](x0, y0)
+        elif len(self.inv_ymodels[order]) == 3:
+            xr = self.inv_ymodels[order][0](x0, y0) + t0 * self.inv_ymodels[order][1](x0, y0) + \
+                 t0**2 * self.inv_ymodels[order][2](x0, y0)
+        elif len(self.inv_ymodels[order].instance[0].inputs) == 1:
+            xr = self.inv_ymodels[order][0](y0)
+        else:
+            raise Exception
+        so = np.argsort(xr)
+        f = np.interp(dy, xr[so], t0[so])
+        return f
 
 
 class NIRCAMBackwardGrismDispersion(Model):
@@ -777,7 +818,11 @@ class NIRCAMBackwardGrismDispersion(Model):
         List of models which govern the x solutions
 
     ymodels : list [astropy.modeling.Model]
-        List of models which givern the y solutions
+        List of models which govern the y solutions
+
+    inv_lmodels: list [astropy.modeling.Model]
+        List of models which will be used if inverse lmodels
+        cannot be analytically derived
 
     Returns
     -------
@@ -798,8 +843,9 @@ class NIRCAMBackwardGrismDispersion(Model):
     n_outputs = 5
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, name=None, meta=None):
+                 ymodels=None, inv_lmodels=None, name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        self.inv_lmodels = inv_lmodels
         self.lmodels = lmodels
         self.xmodels = xmodels
         self.ymodels = ymodels
@@ -834,20 +880,49 @@ class NIRCAMBackwardGrismDispersion(Model):
         if (wavelength < 0).any():
             raise ValueError("wavelength should be greater than zero")
 
-        t = self.lmodels[iorder](wavelength)
-        xmodel = self.xmodels[iorder]
-        ymodel = self.ymodels[iorder]
+        if not len(self.lmodels):
+            t = self.invdisp_interp(iorder, x, y, wavelength)
+        else:
+            t = self.lmodels[iorder](wavelength)
+        xmodel = self.xmodels[iorder].instance
+        ymodel = self.ymodels[iorder].instance
 
-        if len(xmodel.inputs) == 2:
+        if len(xmodel[0].inputs) == 2:
             dx = xmodel[0](x, y) + t * xmodel[1](x, y) + t**2 * xmodel[2](x, y)
             dy = ymodel[0](x, y) + t * ymodel[1](x, y) + t**2 * ymodel[2](x, y)
-        elif len(xmodel.inputs) == 1:
-            dx = xmodel[0](x, y) + t * xmodel[1](x, y)
-            dy = ymodel[0](x, y) + t * ymodel[1](x, y)
+        elif len(xmodel[0].inputs) == 1:
+            if len(xmodel) == 1:
+                dx = xmodel[0](x)
+                dy = ymodel[0](x)
+            elif len(xmodel) == 2:
+                dx = xmodel[0](x) + t * xmodel[1](x)
+                dy = ymodel[0](x) + t * ymodel[1](x)
         else:
             raise ValueError("xmodel has incorrect number of inputs required.")
 
         return (x + dx, y + dy, x, y, order)
+
+    def invdisp_interp(self, order, x0, y0, wavelength, t0=None):
+
+        if t0 is None:
+            if hasattr(x0, '__iter__'):
+                length = len(x0)
+            else:
+                length = 40
+            t0 = np.linspace(-1, 2, length)
+
+        if len(self.inv_lmodels[order]) == 2:
+            xr = self.inv_lmodels[order][0](x0, y0) + t0 * self.inv_lmodels[order][1](x0, y0)
+        elif len(self.inv_lmodels[order]) == 3:
+            xr = self.inv_lmodels[order][0](x0, y0) + t0 * self.inv_lmodels[order][1](x0, y0) + \
+                 t0**2 * self.inv_lmodels[order][2](x0, y0)
+        elif len(self.inv_lmodels[order].instance[0].inputs) == 1:
+            xr = self.inv_lmodels[order][0](x0)
+        else:
+            raise Exception
+        so = np.argsort(xr)
+        f = np.interp(wavelength, xr[so], t0[so])
+        return f
 
 
 class NIRISSBackwardGrismDispersion(Model):

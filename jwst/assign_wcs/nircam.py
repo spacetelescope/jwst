@@ -360,7 +360,6 @@ def wfss(input_model, reference_files):
     # spectral order
     with NIRCAMGrismModel(reference_files['specwcs']) as f:
         displ = f.displ
-        log.critical(f"type, displ: {type(displ)} {displ}")
         dispx = f.dispx
         dispy = f.dispy
         invdispx = f.invdispx
@@ -373,18 +372,21 @@ def wfss(input_model, reference_files):
         det2det = NIRCAMForwardRowGrismDispersion(orders,
                                                   lmodels=displ,
                                                   xmodels=invdispx,
-                                                  ymodels=dispy)
+                                                  ymodels=dispy,
+                                                  inv_xmodels=dispx)
 
     elif "GRISMC" in input_model.meta.instrument.pupil:
         det2det = NIRCAMForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
-                                                     ymodels=invdispy)
+                                                     ymodels=invdispy,
+                                                     inv_ymodels=dispy)
 
     det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
                                                     lmodels=invdispl,
                                                     xmodels=dispx,
-                                                    ymodels=dispy)
+                                                    ymodels=dispy,
+                                                    inv_lmodels=displ)
 
     # Add in the wavelength shift from the velocity dispersion
     try:
