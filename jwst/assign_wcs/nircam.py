@@ -360,7 +360,6 @@ def wfss(input_model, reference_files):
     # spectral order
     with NIRCAMGrismModel(reference_files['specwcs']) as f:
         displ = f.displ
-        log.critical(f"type, displ: {type(displ)} {displ}")
         dispx = f.dispx
         dispy = f.dispy
         invdispx = f.invdispx

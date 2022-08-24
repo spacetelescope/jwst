@@ -656,6 +656,11 @@ class NIRCAMForwardRowGrismDispersion(Model):
         else:
             t = self.xmodels[iorder](y - y0)
 
+        if not len(self.xmodels):
+            pass
+        else:
+            xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
 
         def apply_poly(coeff_model, inputs, t):
@@ -934,7 +939,7 @@ class NIRCAMBackwardGrismDispersion(Model):
             xr = self.inv_lmodels[order][0](x0, y0) + t0 * self.inv_lmodels[order][1](x0, y0)
         elif len(self.inv_lmodels[order]) == 3:
             xr = self.inv_lmodels[order][0](x0, y0) + t0 * self.inv_lmodels[order][1](x0, y0) + \
-                t0**2 * self.inv_lmodels[order][2](x0, y0)
+                 t0**2 * self.inv_lmodels[order][2](x0, y0)
         elif len(self.inv_lmodels[order].instance[0].inputs) == 1:
             xr = self.inv_lmodels[order][0](x0)
         else:
