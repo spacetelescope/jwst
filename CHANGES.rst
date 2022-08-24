@@ -6,7 +6,11 @@ general
 
 - Made code style changes due to the new 5.0.3 version of flake8, which noted many
   missing white spaces after keywords. [#6958]
-- pin `jsonschema` below `4.10.0` to fix issues with unit and regression tests [#6986]
+
+- pin ``asdf`` above ``2.12.1`` to fix issues encountered within ASDF due to ``jsonschema`` release ``4.10.0`` [#6986, #6991]
+
+- remove the ``timeconversion`` package and associated scripts ``set_bary_helio_times``
+  and ``utc_to_bary``, because they are now part of level-1b SDP code [#6996]
 
 ami_analyze
 -----------
@@ -41,6 +45,8 @@ cube_build
 - Update the WCS ``naxis3`` value when wavelength planes are removed from the
   IFUCube due to no valid data. [#6976]
 
+- Add a check in the process of building a cube to confirm that there is valid data on the detector. [#6998]
+
 datamodels
 ----------
 
@@ -51,11 +57,31 @@ datamodels
 
 - Add the ``P_READPA`` keyword to the ``ReadnoiseModel`` schema [#6973]
 
+- Change name of ``P_READPA`` keyword in datamodel metadata to ``p_readpatt``
+  to be consistent with other pattern keyword names [#7001]
+
+
+documentation
+-------------
+
+- Update the Error Propagation section to include info for the ``resample`` step
+  [#6994]
+
+- For the `ModelContainer` method `ind_asn_type` directory information
+  is now properly handled if directory information is included as part
+  of the filename for `expname`. [#6985]
+
 extract_1d
 ----------
 
 - Update ``int_times`` keywords and copy the ``INT_TIMES`` table extension to SOSS
   spectral output (x1d) files [#6930]
+
+jump
+----
+
+- Added flagging after detected ramp jumps based on two DN thresholds and
+  two number of groups to flag [#6943]
 
 master_background
 -----------------
@@ -70,7 +96,17 @@ outlier_detection
   input ``ImageModels`` that are saved to disk instead of keeping them in memory.
   New parameters were aded to the step to control this functionality. [#6904]
 
+- Updated documentation of memory model and new parameters for memory use in
+  outlier_detection and resample steps. [#6983]
+
 - Fix reading of the source_type attribute for NIRSpec IFU data. [#6980]
+
+ramp_fitting
+------------
+
+- Updating tests due to new behavior in STCAL (spacetelescope/stcal#112)
+  removing NaNs from the rateints product and setting appropriate DQ
+  flags. [#6949]
 
 resample
 --------
@@ -78,6 +114,9 @@ resample
 - Fix a bug in how variance arrays are resampled, due to which the resulting
   resampled error map contained an excessive number of zero-valued
   pixels. [#6954]
+
+- Propagate ``asn.pool_name`` and ``asn.table_name`` through step ModelContainer
+  for level 2 processing of single input datamodels [#6989]
 
 skymatch
 --------

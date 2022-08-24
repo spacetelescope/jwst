@@ -70,7 +70,8 @@ class OutlierDetectionStep(Step):
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
 
-        with datamodels.open(input_data, save_open=False) as input_models:
+        # interpret how memory should be used
+        with datamodels.open(input_data, save_open=self.in_memory) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 self.input_container = False

@@ -10,7 +10,7 @@ properties:
       exposure:
         type: object
         properties:
-          preadpatt:
+          p_readpatt:
             title: Readout pattern
             type: string
             pattern: "\
