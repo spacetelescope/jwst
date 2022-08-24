@@ -55,6 +55,9 @@ datamodels
 
 - Add the ``P_READPA`` keyword to the ``ReadnoiseModel`` schema [#6973]
 
+- Change name of ``P_READPA`` keyword in datamodel metadata to ``p_readpatt``
+  to be consistent with other pattern keyword names [#7001]
+
 
 documentation
 -------------
