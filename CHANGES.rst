@@ -47,6 +47,8 @@ cube_build
 
 - Add a check in the process of building a cube to confirm that there is valid data on the detector. [#6998]
 
+- Fix a bug when user changes the spatial scale [#7002]
+
 datamodels
 ----------
 

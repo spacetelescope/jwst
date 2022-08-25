@@ -309,10 +309,11 @@ class IFUCubeData():
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.cdelt2 / 2.0
         self.ycoord = np.arange(start=ystart, stop=ystart + self.naxis2 * self.cdelt2, step=self.cdelt2)
-        # depending on naxis and cdelt the x,ycoord can have more elements (usually just 1) Clean up arrays
+        # depending on the naxis and cdelt values the x,ycoord can have more elements (usually just 1) than naxis.
+        # Clean up arrays dropping extra values at the end.
         self.xcoord = self.xcoord[0:self.naxis1]
         self.ycoord = self.ycoord[0:self.naxis2]
-        
+
         xv,yv = np.meshgrid(self.xcoord, self.ycoord)
         self.xcenters = xv.flatten()
         self.ycenters = yv.flatten()
@@ -336,7 +337,7 @@ class IFUCubeData():
             self.crpix3 = 1.0
             zstart = self.lambda_min + self.cdelt3 / 2.0
             self.zcoord = np.arange(start=zstart, stop=self.lambda_max, step=self.cdelt3)
-
+            self.zcoord = self.zcoord[0:self.naxis3]
         else:
             self.naxis3 = len(self.wavelength_table)
             self.zcoord = np.asarray(self.wavelength_table)
@@ -648,7 +649,6 @@ class IFUCubeData():
                                                    self.cdelt1, self.cdelt2, cdelt3_mean,linear)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-                        
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
                         self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
