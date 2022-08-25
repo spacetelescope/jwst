@@ -15,7 +15,7 @@ from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.models import (Rotation2D, Identity, Mapping, Tabular1D, Const1D)
+from astropy.modeling.models import (Rotation2D, Identity, Mapping, Tabular1D, Tabular2D, Const1D)
 from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
@@ -657,18 +657,32 @@ class NIRCAMForwardRowGrismDispersion(Model):
         y00 = y0.flatten()[0]
 
         t = np.linspace(0, 1, 10)  # sample t
-        if not len(self.xmodels):
-            pass
-        else:
-            xmodel = self.xmodels[iorder]
+        xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
 
-        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00) + t**2 * xmodel[2](x00, y00)
-        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00) + t**2 * ymodel[2](x00, y00)
+        def apply_poly(coeff_model, inputs, t):
+            # Determine order of polynomial in t
+            ord_t = len(coeff_model)
+            sumval = 0.
+            for i in range(ord_t):
+                sumval += t ** i * coeff_model[i](*inputs)
+            return sumval
 
-        so = np.argsort(dx)
-        tab = Tabular1D(dx[so], t[so], bounds_error=False, fill_value=None)
+        if xmodel[0].n_inputs == 2:
+            dx = apply_poly(xmodel, (x00, y00), t)
+            dy = apply_poly(ymodel, (x00, y00), t)
+
+            so = np.argsort(dx)
+            tab = Tabular2D((dx[so], dy[so]), np.meshgrid(t[so], t[so])[0], bounds_error=False, fill_value=None)
+        elif xmodel[0].n_inputs == 1:
+            dx = apply_poly(xmodel, x00, t)
+            dy = apply_poly(xmodel, x00, t)
+
+            so = np.argsort(dx)
+            tab = Tabular1D(dx[so], t[so], bounds_error=False, fill_value=None)
+        else:
+            raise Exception
 
         dxr = astmath.SubtractUfunc()
         wavelength = dxr | tab | lmodel
