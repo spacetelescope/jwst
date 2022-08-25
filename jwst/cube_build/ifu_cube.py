@@ -304,13 +304,15 @@ class IFUCubeData():
         # center of spaxels
         self.xcoord = np.zeros(self.naxis1)
         xstart = xi_min + self.cdelt1 / 2.0
-
         self.xcoord = np.arange(start=xstart, stop=xstart + self.naxis1 * self.cdelt1, step=self.cdelt1)
 
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.cdelt2 / 2.0
         self.ycoord = np.arange(start=ystart, stop=ystart + self.naxis2 * self.cdelt2, step=self.cdelt2)
-
+        # depending on naxis and cdelt the x,ycoord can have more elements (usually just 1) Clean up arrays
+        self.xcoord = self.xcoord[0:self.naxis1]
+        self.ycoord = self.ycoord[0:self.naxis2]
+        
         xv,yv = np.meshgrid(self.xcoord, self.ycoord)
         self.xcenters = xv.flatten()
         self.ycenters = yv.flatten()
@@ -646,6 +648,7 @@ class IFUCubeData():
                                                    self.cdelt1, self.cdelt2, cdelt3_mean,linear)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                        
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
                         self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
