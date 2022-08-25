@@ -86,11 +86,26 @@ The ``tweakreg`` step has the following optional arguments:
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. (Default=5.0)
 
+* ``sharplo``: A `float` value indicating The lower bound on sharpness
+  for object detection. (Default=0.2)
+
+* ``sharphi``: A `float` value indicating the upper bound on sharpness
+  for object detection. (Default=1.0)
+
+* ``roundlo``: A `float` value indicating the lower bound on roundness
+  for object detection. (Default=-1.0)
+
+* ``roundhi``: `float` value indicating the upper bound on roundness
+  for object detection. (Default=1.0)
+
 * ``brightest``: A positive `int` value indicating the number of brightest
   objects to keep. (Default=200)
 
 * ``peakmax``: A `float` value used to filter out objects with pixel values
   >= ``peakmax``. (Default=None)
+
+* ``bkg_boxsize``: A positive `int` indicating the background mesh box size
+  in pixels. (Default=400)
 
 **Optimize alignment order:**
 
