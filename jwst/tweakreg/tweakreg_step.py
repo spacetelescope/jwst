@@ -75,7 +75,7 @@ class TweakRegStep(Step):
         abs_minobj = integer(default=15) # Minimum number of objects acceptable for matching when performing absolute astrometry
         abs_searchrad = float(default=6.0) # The search radius in arcsec for a match when performing absolute astrometry
         # We encourage setting this parameter to True. Otherwise, xoffset and yoffset will be set to zero.
-        abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry? 
+        abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry?
         abs_separation = float(default=0.1) # Minimum object separation in arcsec when performing absolute astrometry
         abs_tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
         # Fitting geometry when performing absolute astrometry
