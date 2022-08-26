@@ -26,6 +26,8 @@ assign_wcs
   module to allow easy updating of FITS WCS stored in ``datamodel.meta.wcsinfo``
   from ``datamodel``'s GWCS. [#6935]
 
+- Populate ``WAVELENGTH`` extension for MIRI LRS slitless data [#6964]
+
 cube_build
 ----------
 
