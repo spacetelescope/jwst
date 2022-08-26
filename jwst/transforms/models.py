@@ -673,21 +673,34 @@ class NIRCAMForwardRowGrismDispersion(Model):
             dx = apply_poly(xmodel, (x00, y00), t)
             dy = apply_poly(ymodel, (x00, y00), t)
 
-            so = np.argsort(dx)
-            tab = Tabular2D((dx[so], dy[so]), np.meshgrid(t[so], t[so])[0], bounds_error=False, fill_value=None)
+            sox = np.argsort(dx)
+            soy = np.argsort(dy)
+            tabx = Tabular1D(dx[sox], t[sox], bounds_error=False, fill_value=None)
+            taby = Tabular1D(dy[soy], t[soy], bounds_error=False, fill_value=None)
+            dxr = astmath.SubtractUfunc()
+            dyr = astmath.SubtractUfunc()
+
+            l_poly = apply_poly(lmodel, (x00, y00), t)
+            wavelength = dxr & dyr | tabx & taby | l_poly
+
+            model = Mapping((2, 3, 0, 2, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
+            return model(x, y, x0, y0, order)
+
         elif xmodel[0].n_inputs == 1:
             dx = apply_poly(xmodel, x00, t)
             dy = apply_poly(xmodel, x00, t)
 
             so = np.argsort(dx)
             tab = Tabular1D(dx[so], t[so], bounds_error=False, fill_value=None)
+            dxr = astmath.SubtractUfunc()
+            wavelength = dxr | tab | lmodel
+
+            model = Mapping((2, 3, 0, 2, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
+            return model(x, y, x0, y0, order)
+
         else:
             raise Exception
 
-        dxr = astmath.SubtractUfunc()
-        wavelength = dxr | tab | lmodel
-        model = Mapping((2, 3, 0, 2, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
-        return model(x, y, x0, y0, order)
 
 
 class NIRCAMForwardColumnGrismDispersion(Model):
