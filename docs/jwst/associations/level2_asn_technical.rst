@@ -133,7 +133,10 @@ members *required*
 association. Each member has the following keywords.
 
 expname *required*
-  The exposure file name
+  The exposure file name.  This must be a filename only, with no path.  This
+  file must be in the same directory as the association file, so path is not
+  needed.  If path data is included, an exception is raised when loading the
+  association file.
 
 exptype *required*
   Type of information represented by the exposure. Possible
