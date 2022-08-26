@@ -66,6 +66,8 @@ class ResampleStep(Step):
                 output = None
         else:
             input_models = datamodels.ModelContainer([input])
+            input_models.asn_pool_name = input.meta.asn.pool_name
+            input_models.asn_table_name = input.meta.asn.table_name
             output = input.meta.filename
             self.blendheaders = False
 

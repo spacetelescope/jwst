@@ -76,6 +76,22 @@ class ModelContainer(JwstDataModel, Sequence):
     >>> c = ModelContainer()
     >>> m = datamodels.open('myfile.fits')
     >>> c.append(m)
+
+    Notes
+    -----
+        The optional paramters ``save_open`` and ``return_open`` can be provided
+        to control how the DataModels are used by the ModelContainer.
+        If ``save_open`` is set to `False`,
+        each input DataModel instance in ``init`` will be written out to disk and closed,
+        then only the filename for the
+        DataModel will be used to initialize the ModelContainer object.  Subsequent
+        access of each member will then open the DataModel file to work with it.  If
+        ``return_open`` is also `False`, then the DataModel will be closed when
+        access to the DataModel is completed.  The use of these parameters can
+        minimize the amount of memory used by this object during processing, with
+        these parameters being used by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
+
+
     """
     schema_url = None
 
@@ -461,9 +477,12 @@ class ModelContainer(JwstDataModel, Sequence):
         ind : list
             Indices of models in ModelContainer._models matching ``asn_exptype``.
         """
+        names = []
+        for m in self.meta.asn_table.products[0].members:
+            if m.exptype.lower() == asn_exptype:
+                file_path, file_name = op.split(m.expname)
+                names.append(file_name)
         ind = []
-        names = [m.expname for m in self.meta.asn_table.products[0].members
-                 if m.exptype.lower() == asn_exptype]
         for i, model in enumerate(self._models):
             if model.meta.filename in names:
                 ind.append(i)

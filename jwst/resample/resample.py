@@ -55,6 +55,13 @@ class ResampleData:
 
             .. note::
                 ``output_shape`` is in the ``x, y`` order.
+
+            .. note::
+                ``in_memory`` controls whether or not the resampled
+                array from ``resample_many_to_many()``
+                should be kept in memory or written out to disk and
+                deleted from memory. Default value is `True` to keep
+                all products in memory.
         """
         self.input_models = input_models
 

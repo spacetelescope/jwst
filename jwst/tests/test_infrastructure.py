@@ -90,7 +90,5 @@ def test_submodules_can_be_imported():
     import jwst
 
     submodules = [mod for _, mod, ispkg in iter_modules(jwst.__path__) if ispkg]
-    # Ignore timeconversion which has non-standard env vars and dependencies
-    submodules.remove('timeconversion')
     for module in submodules:
         importlib.import_module("jwst." + module)

@@ -373,7 +373,7 @@ def test_one_group_suppressed_one_integration(setup_inputs):
     check = np.array([[0., 0., 1.0000002]])
     np.testing.assert_allclose(slopes.data, check, tol)
 
-    check = np.array([[3, 2, 0]])
+    check = np.array([[3, 3, 0]])
     np.testing.assert_allclose(slopes.dq, check, tol)
 
     check = np.array([[0., 0., 0.01]])
@@ -386,10 +386,10 @@ def test_one_group_suppressed_one_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., np.nan, 1.0000001]]])
+    check = np.array([[[0., 0., 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
-    check = np.array([[[3, 2, 0]]])
+    check = np.array([[[3, 3, 0]]])
     np.testing.assert_allclose(cube.dq, check, tol)
 
     check = np.array([[[0., 0., 0.01]]])
@@ -489,11 +489,11 @@ def test_one_group_suppressed_two_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., np.nan, 1.0000001]],
+    check = np.array([[[0., 0., 1.0000001]],
                       [[1.0000001, 1.0000001, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
-    check = np.array([[[3, 2, 0]],
+    check = np.array([[[3, 3, 0]],
                       [[0, 0, 0]]])
     np.testing.assert_allclose(cube.dq, check, tol)
 
