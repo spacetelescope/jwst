@@ -309,7 +309,7 @@ class IFUCubeData():
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.cdelt2 / 2.0
         self.ycoord = np.arange(start=ystart, stop=ystart + self.naxis2 * self.cdelt2, step=self.cdelt2)
-        # depending on the naxis and cdelt values the x,ycoord can have more elements (usually just 1) than naxis.
+        # depending on the naxis and cdelt values the x,ycoord can have 1 more element than naxis.
         # Clean up arrays dropping extra values at the end.
         self.xcoord = self.xcoord[0:self.naxis1]
         self.ycoord = self.ycoord[0:self.naxis2]
