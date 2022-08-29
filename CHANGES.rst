@@ -144,10 +144,8 @@ tweakreg
   of the 'GAIA' catalogs for aligning all input images together as one single
   group. [#6946]
 
-- ``TweakRegStep`` has been refactored to exposed additional parameters for 
-  absolute astrometry: ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``,
-  ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``,
-  and ``abs_sigma``). [#6987]
+- exposed additional parameters for absolute astrometry:
+ ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``, ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``,  and ``abs_sigma``. [#6987]
 
 
 1.6.2 (2022-07-19)
