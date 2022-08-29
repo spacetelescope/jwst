@@ -1426,12 +1426,9 @@ def populate_wavelength_extension(model):
     """For MIRI LRS Slitless, no step currently
     assigns values to model.wavelength - do it here
     """
-    data_shape = model.data.shape
-    if len(data_shape) > 2:
-        data_shape = data_shape[-2:]
+    shape = model.data.shape
+    grid = np.indices(shape[-2:], dtype=np.float64)
 
-    index_array = np.indices(data_shape[::-1])
-    wcs_array = model.meta.wcs(*index_array)
-    model.wavelength = wcs_array[2].T
+    model.wavelength = model.meta.wcs(grid[1], grid[0])[2]
 
     return model
