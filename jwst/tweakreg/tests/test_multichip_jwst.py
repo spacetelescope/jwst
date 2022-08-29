@@ -12,7 +12,7 @@ from astropy.modeling.models import (
 from astropy import units as u
 from astropy import coordinates as coord
 
-import tweakwcs
+from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.imalign import align_wcs
 
 from jwst.datamodels import ImageModel, ModelContainer
@@ -226,7 +226,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
-    imcat1 = tweakwcs.JWSTgWCS(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
+    imcat1 = JWSTWCSCorrector(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     data_file = os.path.join(data_path, 'wfc3_uvis1.cat')
     imcat1.meta['catalog'] = table.Table.read(
         data_file,
@@ -240,7 +240,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     imcat1.meta['name'] = 'ext1'
 
     w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
-    imcat2 = tweakwcs.JWSTgWCS(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
+    imcat2 = JWSTWCSCorrector(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat2.meta['catalog'] = table.Table.read(
         os.path.join(data_path, 'wfc3_uvis2.cat'),
         format='ascii.csv',
