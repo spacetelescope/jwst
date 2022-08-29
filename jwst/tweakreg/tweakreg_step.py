@@ -209,7 +209,6 @@ class TweakRegStep(Step):
                 xoffset=self.xoffset,
                 yoffset=self.yoffset
             )
-        # imcats[0].wcs -> updated and improved WCS
 
             try:
                 align_wcs(
