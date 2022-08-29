@@ -124,6 +124,25 @@ The ``tweakreg`` step has the following optional arguments:
 
 * ``yoffset``: Initial guess for Y offset in arcsec. (Default=0.0)
 
+Parameters used for absolute astrometry using a reference catalog:
+
+* ``abs_minobj``: A positive `int` indicating minimum number of objects acceptable
+  for matching. (Default=15)
+
+* ``abs_searchrad``: A `float` indicating the search radius in arcsec for a match. 
+  It is recommended that a value larger than ``searchrad`` be used for this parameter 
+  (e.g. 3 times larger) (Default=6.0)
+
+* ``abs_use2dhist``: A boolean indicating whether to use 2D histogram to find
+  initial offset. It is strongly recommended setting this parameter to `True`. 
+  Otherwise the initial guess for the offsets will be set to zero (Default=True)
+
+* ``abs_separation``: Minimum object separation in arcsec. It is recommended that 
+  a value smaller than ``separation`` be used for this parameter 
+  (e.g. 10 times smaller) (Default=0.1)
+
+* ``abs_tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
+
 **Catalog fitting parameters:**
 
 * ``fitgeometry``: A `str` value indicating the type of affine transformation
@@ -155,6 +174,25 @@ The ``tweakreg`` step has the following optional arguments:
   to use in the fit. (Default = 3)
 
 * ``sigma``: A positive `float` indicating the clipping limit, in sigma units,
+  used when performing fit. (Default=3.0)
+
+Parameters used for absolute astrometry using a reference catalog:
+
+* ``abs_fitgeometry``: A `str` value indicating the type of affine transformation
+  to be considered when fitting catalogs. Allowed values:
+
+  - ``'shift'``: x/y shifts only
+  - ``'rshift'``: rotation and shifts
+  - ``'rscale'``: rotation and scale
+  - ``'general'``: shift, rotation, and scale
+
+  The default value is "rshift". Note that the same conditions/restrictions that 
+  apply to ``fitgeometry`` also apply to ``abs_fitgeometry``.
+
+* ``abs_nclip``: A non-negative integer number of clipping iterations
+  to use in the fit. (Default = 3)
+
+* ``abs_sigma``: A positive `float` indicating the clipping limit, in sigma units,
   used when performing fit. (Default=3.0)
 
 **Astrometric fitting parameters:**
