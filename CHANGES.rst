@@ -34,7 +34,7 @@ cube_build
 - Remove trailing dash from IFU cube filenames built from all subchannels.
   Also sort subchannels present by inverse alphabetical order to ensure
   consistent filename creation across processing runs. [#6959]
-  
+
 - Re-wrote c code for NIRSpec dq flagging.[#6981]
 
 - For moving target data removed using  s_region values in cal files to
@@ -145,6 +145,8 @@ tweakreg
   in the ``tweakreg`` step. This catalog, if provided, will be used instead
   of the 'GAIA' catalogs for aligning all input images together as one single
   group. [#6946]
+
+- Refactored code to work with changes in ``tweakwcs`` version 0.8.0. [#7006]
 
 
 1.6.2 (2022-07-19)

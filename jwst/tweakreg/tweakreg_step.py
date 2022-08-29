@@ -10,8 +10,8 @@ from astropy.table import Table
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from tweakwcs.imalign import align_wcs
-from tweakwcs.tpwcs import JWSTgWCS
-from tweakwcs.matchutils import TPMatch
+from tweakwcs.correctors import JWSTWCSCorrector
+from tweakwcs.matchutils import XYXYMatch
 
 # LOCAL
 from ..stpipe import Step
@@ -190,7 +190,7 @@ class TweakRegStep(Step):
             self.log.info('')
 
             # align images:
-            tpmatch = TPMatch(
+            xyxymatch = XYXYMatch(
                 searchrad=self.searchrad,
                 separation=self.separation,
                 use2dhist=self.use2dhist,
@@ -206,7 +206,7 @@ class TweakRegStep(Step):
                     enforce_user_order=self.enforce_user_order,
                     expand_refcat=self.expand_refcat,
                     minobj=self.minobj,
-                    match=tpmatch,
+                    match=xyxymatch,
                     fitgeom=self.fitgeometry,
                     nclip=self.nclip,
                     sigma=(self.sigma, 'rmse')
@@ -310,7 +310,7 @@ class TweakRegStep(Step):
                 # Update to separation needed to prevent confusion of sources
                 # from overlapping images where centering is not consistent or
                 # for the possibility that errors still exist in relative overlap.
-                tpmatch_gaia = TPMatch(
+                xyxymatch_gaia = XYXYMatch(
                     searchrad=self.searchrad * 3.0,
                     separation=self.separation / 10.0,
                     use2dhist=self.use2dhist,
@@ -336,7 +336,7 @@ class TweakRegStep(Step):
                     enforce_user_order=True,
                     expand_refcat=False,
                     minobj=self.minobj,
-                    match=tpmatch_gaia,
+                    match=xyxymatch_gaia,
                     fitgeom=self.fitgeometry,
                     nclip=self.nclip,
                     sigma=(self.sigma, 'rmse')
@@ -419,7 +419,7 @@ class TweakRegStep(Step):
 
         # create WCSImageCatalog object:
         refang = image_model.meta.wcsinfo.instance
-        im = JWSTgWCS(
+        im = JWSTWCSCorrector(
             wcs=image_model.meta.wcs,
             wcsinfo={'roll_ref': refang['roll_ref'],
                      'v2_ref': refang['v2_ref'],
