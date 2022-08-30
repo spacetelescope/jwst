@@ -135,8 +135,8 @@ int match_driz(double *xc, double *yc, double *zc,
 
   double *fluxv, *weightv, *varv, *ifluxv;  // vector for spaxel
 
-  int k,j,ix1,ix2,iy1,iy2,iz1,iz2, iw1, iw2;
-  int ii, nxy, ix, iy, iw, index_xy, index_cube;
+  int k,j,ix1,ix2,iy1,iy2, iw1, iw2;
+  int nxy, ix, iy, iw, index_xy, index_cube;
   double wdiff, zreg;
   double w1;
   double weighted_flux, weighted_var;
@@ -389,6 +389,8 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   npt = (long) PyArray_Size((PyObject *) coord1);
   ny = (int) PyArray_Size((PyObject *) coord2);
   nz = (int) PyArray_Size((PyObject *) wave);
+
+
   if (ny != npt || nz != npt ) {
     PyErr_SetString(PyExc_ValueError,
 		    "Input coordinate arrays of unequal size.");
@@ -401,7 +403,6 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   nwave = (int) PyArray_Size((PyObject *) zc);
 
   ncube = nxx * nyy * nwave;
-  
   if (ncube ==0) {
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
     spaxel_flux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
