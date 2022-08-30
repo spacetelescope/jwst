@@ -304,12 +304,15 @@ class IFUCubeData():
         # center of spaxels
         self.xcoord = np.zeros(self.naxis1)
         xstart = xi_min + self.cdelt1 / 2.0
-
         self.xcoord = np.arange(start=xstart, stop=xstart + self.naxis1 * self.cdelt1, step=self.cdelt1)
 
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.cdelt2 / 2.0
         self.ycoord = np.arange(start=ystart, stop=ystart + self.naxis2 * self.cdelt2, step=self.cdelt2)
+        # depending on the naxis and cdelt values the x,ycoord can have 1 more element than naxis.
+        # Clean up arrays dropping extra values at the end.
+        self.xcoord = self.xcoord[0:self.naxis1]
+        self.ycoord = self.ycoord[0:self.naxis2]
 
         xv,yv = np.meshgrid(self.xcoord, self.ycoord)
         self.xcenters = xv.flatten()
@@ -334,7 +337,7 @@ class IFUCubeData():
             self.crpix3 = 1.0
             zstart = self.lambda_min + self.cdelt3 / 2.0
             self.zcoord = np.arange(start=zstart, stop=self.lambda_max, step=self.cdelt3)
-
+            self.zcoord = self.zcoord[0:self.naxis3]
         else:
             self.naxis3 = len(self.wavelength_table)
             self.zcoord = np.asarray(self.wavelength_table)
