@@ -62,6 +62,8 @@ datamodels
 - Change name of ``P_READPA`` keyword in datamodel metadata to ``p_readpatt``
   to be consistent with other pattern keyword names [#7001]
 
+- Add "BACKGROUND" to the list of allowed values for the ``PATTTYPE`` keyword
+  for MIRI coronagraphic mode [#7009]
 
 documentation
 -------------
