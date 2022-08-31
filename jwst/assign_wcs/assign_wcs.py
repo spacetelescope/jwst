@@ -2,10 +2,10 @@ import logging
 import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
-                   update_s_region_nrs_ifu, update_s_region_mrs,
-                   populate_wavelength_extension)
+                   update_s_region_nrs_ifu, update_s_region_mrs)
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
+from ..lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -82,7 +82,7 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
                     log.info("assign_wcs updated S_REGION to {0}".format(
                         output_model.meta.wcsinfo.s_region))
                 if output_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-                    output_model = populate_wavelength_extension(output_model)
+                    output_model.wavelength = get_wavelengths(output_model)
             elif output_model.meta.exposure.type.lower() == "nrs_ifu":
                 update_s_region_nrs_ifu(output_model, mod)
             elif output_model.meta.exposure.type.lower() == 'mir_mrs':
