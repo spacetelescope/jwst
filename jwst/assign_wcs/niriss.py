@@ -439,7 +439,7 @@ def wfss(input_model, reference_files):
                                              lmodels=invdispl,
                                              xmodels=dispx,
                                              ymodels=dispy,
-                                             theta= - (fwcpos - fwcpos_ref))
+                                             theta= -(fwcpos - fwcpos_ref))
     det2det.inverse = backward
 
     # Add in the wavelength shift from the velocity dispersion

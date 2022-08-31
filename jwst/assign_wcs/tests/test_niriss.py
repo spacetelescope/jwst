@@ -12,7 +12,6 @@ file.
 from numpy.testing import assert_allclose
 from astropy.io import fits
 from gwcs import wcs
-import pytest
 
 from jwst.datamodels.image import ImageModel
 
