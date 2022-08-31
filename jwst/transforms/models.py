@@ -656,7 +656,11 @@ class NIRCAMForwardRowGrismDispersion(Model):
         x00 = x0.flatten()[0]
         y00 = y0.flatten()[0]
 
-        t = np.linspace(0, 1, 10)  # sample t
+        if not len(self.xmodels):
+            t = self.invdisp_interp(iorder, x0, y0, (x - x0))
+        else:
+            t = self.xmodels[iorder](y - y0)
+
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
@@ -675,16 +679,19 @@ class NIRCAMForwardRowGrismDispersion(Model):
 
             sox = np.argsort(dx)
             soy = np.argsort(dy)
-            tabx = Tabular1D(dx[sox], t[sox], bounds_error=False, fill_value=None)
-            taby = Tabular1D(dy[soy], t[soy], bounds_error=False, fill_value=None)
+            tabx = Tabular1D(dx[sox], t[sox], bounds_error=False, fill_value=None, n_models=1)
+            taby = Tabular1D(dy[soy], t[soy], bounds_error=False, fill_value=None, n_models=1)
             dxr = astmath.SubtractUfunc()
             dyr = astmath.SubtractUfunc()
+            l_poly = apply_poly(lmodel, (x00, y00), tabx(dx))
 
-            l_poly = apply_poly(lmodel, (x00, y00), t)
-            wavelength = dxr & dyr | tabx & taby | l_poly
+            print(np.shape(x0), np.shape(y0), np.shape(l_poly), order)
+            #print(f"lmodel n_models: {lmodel.n_models}")
+            wavelength = dxr | tabx | lmodel
+            #wavelength = dxr & dyr | tabx & taby | lmodel
 
-            model = Mapping((2, 3, 0, 2, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
-            return model(x, y, x0, y0, order)
+            #model = Mapping((2, 3, 0, 2, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
+            return (x0, y0, l_poly, order) #model(x, y, x0, y0, order)
 
         elif xmodel[0].n_inputs == 1:
             dx = apply_poly(xmodel, x00, t)
@@ -701,6 +708,32 @@ class NIRCAMForwardRowGrismDispersion(Model):
         else:
             raise Exception
 
+    def invdisp_interp(self, order, x0, y0, dy):
+
+        if hasattr(y0, '__iter__'):
+            length = len(y0)
+        else:
+            length = 40
+
+        t0 = np.linspace(-1, 2, length)
+        if len(y0.shape) == 2:
+            t0 = t0.reshape(-1, 1)
+
+        if len(self.inv_xmodels[order]) == 2:
+            xr = self.inv_xmodels[order][0](x0, y0) + t0 * self.inv_xmodels[order][1](x0, y0)
+        elif len(self.inv_xmodels[order]) == 3:
+            xr = self.inv_xmodels[order][0](x0, y0) + t0 * self.inv_xmodels[order][1](x0, y0) + \
+                 t0**2 * self.inv_xmodels[order][2](x0, y0)
+        elif len(self.inv_xmodels[order].instance[0].inputs) == 1:
+            xr = self.inv_xmodels[order][0](y0)
+        else:
+            raise Exception
+
+        #if len(xr.shape) != 1:
+        #    xr = xr[:, 0]
+        #so = np.argsort(xr)
+        f = np.interp(dy, xr[so], t0[so])
+        return f
 
 
 class NIRCAMForwardColumnGrismDispersion(Model):

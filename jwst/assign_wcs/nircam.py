@@ -371,7 +371,7 @@ def wfss(input_model, reference_files):
     if "GRISMR" in input_model.meta.instrument.pupil:
         det2det = NIRCAMForwardRowGrismDispersion(orders,
                                                   lmodels=displ,
-                                                  xmodels=dispx,
+                                                  xmodels=invdispx,
                                                   ymodels=dispy,
                                                   inv_xmodels=dispx)
 
@@ -379,7 +379,7 @@ def wfss(input_model, reference_files):
         det2det = NIRCAMForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
-                                                     ymodels=dispy,
+                                                     ymodels=invdispy,
                                                      inv_ymodels=dispy)
 
     det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
