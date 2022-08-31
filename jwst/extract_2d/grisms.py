@@ -411,7 +411,7 @@ def extract_grism_objects(input_model,
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
             y, x = obj.order_bounding[order]
-            log.info(f'YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}')
+            log.debug(f'YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}')
 
             # limit the boxes to the detector
             ymin = clamp(y[0], 0, input_model.meta.subarray.ysize)
@@ -450,8 +450,6 @@ def extract_grism_objects(input_model,
                 y_slice = slice(_toindex(ymin), _toindex(ymax))
                 x_slice = slice(_toindex(xmin), _toindex(xmax))
                 ext_data = input_model.data[y_slice, x_slice].copy()
-                # ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
-                # ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_err = input_model.err[y_slice, x_slice].copy()
                 ext_dq = input_model.dq[y_slice, x_slice].copy()
                 if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:

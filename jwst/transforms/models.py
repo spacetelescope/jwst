@@ -1154,8 +1154,6 @@ class NIRISSForwardColumnGrismDispersion(Model):
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
-        # so = np.argsort(dy)
-        # tab = Tabular1D(dy[so], t[so], bounds_error=False, fill_value=None)
         so = np.argsort(dy)
         tab = Tabular1D(dy[so], t[so], bounds_error=False, fill_value=None)
         dyr = astmath.SubtractUfunc()
