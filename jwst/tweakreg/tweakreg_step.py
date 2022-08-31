@@ -53,8 +53,13 @@ class TweakRegStep(Step):
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
+        sharplo = float(default=0.2) # The lower bound on sharpness for object detection.
+        sharphi = float(default=1.0) # The upper bound on sharpness for object detection.
+        roundlo = float(default=-1.0) # The lower bound on roundness for object detection.
+        roundhi = float(default=1.0) # The upper bound on roundness for object detection.
         brightest = integer(default=200) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
+        bkg_boxsize = integer(default=400) # The background mesh box size in pixels.
         enforce_user_order = boolean(default=False) # Align images in user specified order?
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
@@ -109,7 +114,10 @@ class TweakRegStep(Step):
             # source finding
             catalog = make_tweakreg_catalog(
                 image_model, self.kernel_fwhm, self.snr_threshold,
-                brightest=self.brightest, peakmax=self.peakmax
+                sharplo=self.sharplo, sharphi=self.sharphi,
+                roundlo=self.roundlo, roundhi=self.roundhi,
+                brightest=self.brightest, peakmax=self.peakmax,
+                bkg_boxsize=self.bkg_boxsize
             )
 
             # filter out sources outside the WCS bounding box

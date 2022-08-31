@@ -888,11 +888,11 @@ class NIRISSBackwardGrismDispersion(Model):
 
         Parameters
         ----------
-        wavelength : int,float
+        wavelength : float
             Input wavelength you want to know about, will be converted to float
-        x :  int,float
+        x : float
             Input x location
-        y :  int,float
+        y : float
             Input y location
         wavelength : float
             Wavelength to disperse
@@ -924,8 +924,8 @@ class NIRISSBackwardGrismDispersion(Model):
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
 
-        dx = xmodel[0](x, y) + t * xmodel[1](x, y)
-        dy = ymodel[0](x, y) + t * ymodel[1](x, y)
+        dx = xmodel[0](x, y) + t * xmodel[1](x, y) + t**2 * xmodel[2](x, y)
+        dy = ymodel[0](x, y) + t * ymodel[1](x, y) + t**2 * ymodel[2](x, y)
 
         # rotate by theta
         if self.theta != 0.0:
@@ -1036,8 +1036,8 @@ class NIRISSForwardRowGrismDispersion(Model):
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
 
-        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00)
-        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00)
+        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00) + t**2 * xmodel[2](x00, y00)
+        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00) + t**2 * ymodel[2](x00, y00)
 
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
@@ -1049,6 +1049,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         dxr = astmath.SubtractUfunc()
         wavelength = dxr | tab | lmodel
         model = Mapping((2, 3, 0, 2, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
+        # returns x0, y0, lam, order
         return model(x, y, x0, y0, order)
 
 
@@ -1147,15 +1148,14 @@ class NIRISSForwardColumnGrismDispersion(Model):
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
-        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00)
-        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00)
+        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00) + t**2 * xmodel[2](x00, y00)
+        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00) + t**2 * ymodel[2](x00, y00)
 
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dy)
         tab = Tabular1D(dy[so], t[so], bounds_error=False, fill_value=None)
-
         dyr = astmath.SubtractUfunc()
         wavelength = dyr | tab | lmodel
         model = Mapping((2, 3, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)

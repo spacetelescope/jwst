@@ -128,6 +128,11 @@ skymatch
 - Fix a bug so that computed background values eare subtracted from the image
   data when ``subtract=True``. [#6934]
 
+transforms
+----------
+
+- Updated the NIRISS WFSS transforms from direct to grism image to V4.[#6803]
+
 tweakreg
 --------
 
@@ -147,6 +152,8 @@ tweakreg
   in the ``tweakreg`` step. This catalog, if provided, will be used instead
   of the 'GAIA' catalogs for aligning all input images together as one single
   group. [#6946]
+
+- Exposed ``tweakreg_catalog`` parameters in ``tweakreg`` [#7003]
 
 - exposed additional parameters for absolute astrometry:
  ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``, ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``,  and ``abs_sigma``. [#6987]
