@@ -128,6 +128,11 @@ skymatch
 - Fix a bug so that computed background values eare subtracted from the image
   data when ``subtract=True``. [#6934]
 
+transforms
+----------
+
+- Updated the NIRISS WFSS transforms from direct to grism image to V4.[#6803]
+
 tweakreg
 --------
 

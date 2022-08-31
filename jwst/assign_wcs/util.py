@@ -816,7 +816,7 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                             log.info("Partial order on detector for obj: {} order: {}".format(obj.label, order))
 
                     if not exclude:
-                        order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
+                        order_bounding[order] = ((ymin, ymax), (xmin, xmax))
                         waverange[order] = ((lmin, lmax))
                         partial_order[order] = ispartial
 

@@ -17,7 +17,7 @@ from jwst.assign_wcs.tests import data
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
-def create_slit(model, x0, y0, order):
+def create_nircam_slit(model, x0, y0, order):
     """ Create a SlitModel representing a grism slit."""
     ymin = 0
     xmin = 0
@@ -34,6 +34,63 @@ def create_slit(model, x0, y0, order):
     return slit
 
 
+def create_niriss_slit(model, x0, y0, order):
+    """ Create a SlitModel representing a grism slit."""
+    ymin = y0
+    xmin = x0
+    model = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
+                                        Const1D(x0) & Const1D(y0) &
+                                        Const1D(order)) | model
+    wcsobj = wcs.WCS([('det', model), ('world', None)])
+    slit = SlitModel()
+    slit.meta.wcs = wcsobj
+    slit.source_xpos = x0
+    slit.source_ypos = y0
+    return slit
+
+
+@pytest.fixture(scope='module')
+def niriss_models():
+    ymodels = [[Polynomial2D(2, c0_0=59.70176, c1_0=-0.00000036, c2_0=0., c0_1=-0.00000026),
+                Polynomial2D(2, c0_0=-330.4911, c1_0=0.00000089, c2_0=-0., c0_1=0.00000064),
+                Polynomial2D(2, c0_0=0.00041831, c1_0=-0.00000055, c2_0=0., c0_1=-0.0000004)],
+               [Polynomial2D(2, c0_0=-100.4272, c1_0=-0.00000005, c2_0=0., c0_1=-0.0000004),
+                Polynomial2D(2, c0_0=-662.3936, c1_0=0.00000005, c2_0=-0., c0_1=0.00000103),
+                Polynomial2D(2, c0_0=0.00025086, c1_0=0.00000003, c2_0=0., c0_1=-0.00000066)],
+               [Polynomial2D(2, c0_0=-260.8984, c1_0=0.00000052, c2_0=0., c0_1=0.0000013),
+                Polynomial2D(2, c0_0=-993.5874, c1_0=-0.00000134, c2_0=-0., c0_1=-0.00000336),
+                Polynomial2D(2, c0_0=-0.00152898, c1_0=0.00000086, c2_0=0., c0_1=0.00000215)],
+               [Polynomial2D(2, c0_0=379.5311, c1_0=-0.00000027, c2_0=0., c0_1=-0.00000025),
+                Polynomial2D(2, c0_0=330.49, c1_0=0.00000072, c2_0=-0., c0_1=0.00000066),
+                Polynomial2D(2, c0_0=0.00025935, c1_0=-0.00000048, c2_0=0., c0_1=-0.00000044)],
+               [Polynomial2D(2, c0_0=217.1429, c1_0=-0.00000001),
+                Polynomial2D(2, c0_0=-7.38096, c1_0=0.00000002, c0_1=-0.00000001),
+                Polynomial2D(2, c0_0=0.00000253, c1_0=-0.00000001)]]
+
+    xmodels = [[Polynomial2D(2, c0_0=-0.2846298),
+                Polynomial2D(2, c0_0=-0.08449617),
+                Polynomial2D(2, c0_0=-0.00243989)],
+               [Polynomial2D(2, c0_0=-0.412634),
+                Polynomial2D(2, c0_0=-0.08853529),
+                Polynomial2D(2, c0_0=0.0004952)],
+               [Polynomial2D(2, c0_0=0.09586888),
+                Polynomial2D(2, c0_0=-0.5574736),
+                Polynomial2D(2, c0_0=-0.00080743)],
+               [Polynomial2D(2, c0_0=0.3766071),
+                Polynomial2D(2, c0_0=0.3271358),
+                Polynomial2D(2, c0_0=-0.00487867)],
+               [Polynomial2D(2, c0_0=-0.99),
+                Polynomial2D(2),
+                Polynomial2D(2)]]
+
+    lmodels = [Polynomial1D(1, c0=0.75, c1=1.55),
+               Polynomial1D(1, c0=0.75, c1=1.55),
+               Polynomial1D(1, c0=0.75, c1=1.55),
+               Polynomial1D(1, c0=0.75, c1=1.55),
+               Polynomial1D(1, c0=0.75, c1=1.55)]
+    return xmodels, ymodels, lmodels
+
+
 def test_NIRCAMForwardRowGrismDispersion():
     xmodels = [Polynomial1D(1, c0=0.59115385, c1=0.00038615),
                Polynomial1D(1, c0=-0.16596154, c1=0.00019308)]
@@ -45,7 +102,7 @@ def test_NIRCAMForwardRowGrismDispersion():
     y0 = 15.5
     order = 1
 
-    slit = create_slit(model, x0, y0, order)
+    slit = create_nircam_slit(model, x0, y0, order)
 
     expected = np.array([[3.03973415, 3.04073814, 3.04174213, 3.04274612, 3.04375011, 3.0447541],
                          [3.03973415, 3.04073814, 3.04174213, 3.04274612, 3.04375011, 3.0447541],
@@ -60,7 +117,7 @@ def test_NIRCAMForwardRowGrismDispersion():
     assert_allclose(wavelength, expected)
 
     with pytest.raises(ValueError):
-        slit = create_slit(model, x0, y0, 3)
+        slit = create_nircam_slit(model, x0, y0, 3)
         compute_wavelength_array(slit)
 
 
@@ -76,7 +133,7 @@ def test_NIRCAMForwardColumnGrismDispersion():
     y0 = 15.5
     order = 1
 
-    slit = create_slit(model, x0, y0, order)
+    slit = create_nircam_slit(model, x0, y0, order)
     expected = np.array([[4.724638, 4.724638, 4.724638, 4.724638, 4.724638, 4.724638],
                          [4.725642, 4.725642, 4.725642, 4.725642, 4.725642, 4.725642],
                          [4.726646, 4.726646, 4.726646, 4.726646, 4.726646, 4.726646],
@@ -90,7 +147,7 @@ def test_NIRCAMForwardColumnGrismDispersion():
     assert_allclose(wavelength, expected)
 
     with pytest.raises(ValueError):
-        slit = create_slit(model, x0, y0, 3)
+        slit = create_nircam_slit(model, x0, y0, 3)
         compute_wavelength_array(slit)
 
 
@@ -123,7 +180,7 @@ def test_NIRCAMBackwardDispersion():
     y0 = 15.5
     order = 1
 
-    slit = create_slit(forward_model, x0, y0, order)
+    slit = create_nircam_slit(forward_model, x0, y0, order)
 
     expected_xdx = np.array([[20., 21., 22., 23., 24., 25.],
                              [20., 21., 22., 23., 24., 25.],
@@ -145,32 +202,21 @@ def test_NIRCAMBackwardDispersion():
     assert_allclose(ydy, expected_ydy)
 
 
-def test_NIRISSBackwardDispersion():
-    forward_ymodels = [[Polynomial2D(2, c0_0=-1.876215, c1_0=-5.179793e-04, c2_0=2.116366e-08,
-                                     c0_1=-2.259297e-04, c0_2=-2.502127e-12, c1_1=4.771951e-08),
+def test_NIRISSBackwardDispersion(niriss_models):
+    forward_xmodels, forward_ymodels, forward_lmodels = niriss_models
 
-                        Polynomial2D(2, c0_0=-3.089115, c1_0=3.063270e-03, c2_0=-9.786785e-07,
-                                     c0_1=1.237905e-03, c0_2=-1.510774e-11, c1_1=-5.405480e-09)]]
-
-    forward_xmodels = [[Polynomial2D(2, c0_0=63.55173, c1_0=3.846599e-06, c2_0=-7.173816e-10,
-                                     c0_1=8.158127e-07, c0_2=-1.274281e-09, c1_1=4.098804e-11),
-
-                        Polynomial2D(2, c0_0=-331.8532, c1_0=-1.24494e-05, c2_0=4.210112e-10,
-                                     c0_1=-1.615311e-06, c0_2=6.665276e-09, c1_1=1.43762e-10)]]
-
-    forward_lmodels = [Polynomial1D(1, c0=0.75, c1=1.55),
-                       Polynomial1D(1, c0=0.75, c1=1.55)]
-
-    forward_model = transforms.NIRISSForwardColumnGrismDispersion([1, 2], forward_lmodels,
-                                                                  forward_xmodels, forward_ymodels,
-                                                                  theta=0)
+    forward_model = transforms.NIRISSForwardRowGrismDispersion([1, 2, 3, -1], forward_lmodels,
+                                                               forward_xmodels, forward_ymodels,
+                                                               theta=0)
 
     # NirissBackward model uses xmodels, ymodels and invlmodels
     lmodels = [Polynomial1D(1, c0=-0.48387097, c1=0.64516129),
-               Polynomial1D(1, c0=-0.48387097, c1=0.64516129)
-               ]
+               Polynomial1D(1, c0=-0.48387097, c1=0.64516129),
+               Polynomial1D(1, c0=-0.48387097, c1=0.64516129),
+               Polynomial1D(1, c0=-0.48387097, c1=0.64516129),
+               Polynomial1D(1, c0=-0.48387097, c1=0.64516129)]
 
-    model = transforms.NIRISSBackwardGrismDispersion([1, 2], lmodels=lmodels,
+    model = transforms.NIRISSBackwardGrismDispersion([1, 2, 3, -1], lmodels=lmodels,
                                                      xmodels=forward_xmodels,
                                                      ymodels=forward_ymodels,
                                                      theta=0.0)
@@ -188,26 +234,40 @@ def test_NIRISSBackwardDispersion():
     y0 = 15.5
     order = 1
 
-    slit = create_slit(forward_model, x0, y0, order)
+    slit = create_niriss_slit(forward_model, x0, y0, order)
     slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
 
     expected_xdx = np.array(
-        [[641.69045022, 642.69044108, 643.69043194, 644.6904228, 645.69041366, 646.69040451, 647.69039537],
-         [923.12589407, 924.12589483, 925.1258956, 926.12589636, 927.12589712, 928.12589788, 929.12589864],
-            [973.55464886, 974.55465141, 975.55465395, 976.55465648, 977.55465902, 978.55466155, 979.55466409],
-            [973.55464968, 974.55465222, 975.55465476, 976.5546573, 977.55465984, 978.55466237, 979.5546649],
-            [973.55465049, 974.55465304, 975.55465557, 976.55465811, 977.55466065, 978.55466318, 979.55466572],
-            [973.55465131, 974.55465385, 975.55465639, 976.55465892, 977.55466146, 978.554664, 979.55466653],
-            [973.55465211, 974.55465466, 975.55465719, 976.55465973, 977.55466227, 978.5546648, 979.55466734]])
+        [[909.62843414, 910.62843414, 911.62843414, 912.62843414,
+          913.62843414, 914.62843414, 915.62843414],
+         [909.70247416, 910.70247416, 911.70247416, 912.70247416,
+          913.70247416, 914.70247416, 915.70247416],
+         [909.7153702, 910.7153702, 911.7153702, 912.7153702,
+          913.7153702, 914.7153702, 915.7153702],
+         [909.7153702, 910.7153702, 911.7153702, 912.7153702,
+          913.7153702, 914.7153702, 915.7153702],
+         [909.7153702, 910.7153702, 911.7153702, 912.7153702,
+          913.7153702, 914.7153702, 915.7153702],
+         [909.7153702, 910.7153702, 911.7153702, 912.7153702,
+          913.7153702, 914.7153702, 915.7153702],
+         [909.7153702, 910.7153702, 911.7153702, 912.7153702,
+          913.7153702, 914.7153702, 915.7153702]])
 
     expected_ydy = np.array(
-        [[8.57057227, 8.57137444, 8.57217468, 8.57297302, 8.57376944, 8.57456394, 8.57535653],
-         [10.5010401, 10.50075594, 10.50047152, 10.50018685, 10.49990193, 10.49961675, 10.49933131],
-         [11.6673944, 11.66691562, 11.66643689, 11.66595821, 11.66547956, 11.66500096, 11.6645224],
-         [12.66721189, 12.66673317, 12.66625449, 12.66577585, 12.66529725, 12.66481869, 12.66434018],
-         [13.66702939, 13.66655071, 13.66607208, 13.66559348, 13.66511493, 13.66463643, 13.66415796],
-         [14.66684688, 14.66636825, 14.66588967, 14.66541112, 14.66493262, 14.66445416, 14.66397574],
-         [15.66666438, 15.6661858, 15.66570726, 15.66522876, 15.66475031, 15.66427189, 15.66379352]])
+        [[-258.78893914, -258.78893916, -258.78893918, -258.7889392,
+          -258.78893922, -258.78893924, -258.78893926],
+         [22.48144873, 22.48144849, 22.48144825, 22.48144802,
+          22.48144778, 22.48144754, 22.4814473],
+         [73.70142959, 73.70142923, 73.70142887, 73.70142851,
+          73.70142815, 73.70142779, 73.70142743],
+         [74.70142933, 74.70142897, 74.70142861, 74.70142825,
+          74.70142789, 74.70142753, 74.70142717],
+         [75.70142907, 75.70142871, 75.70142835, 75.70142799,
+          75.70142763, 75.70142727, 75.70142691],
+         [76.70142881, 76.70142845, 76.70142809, 76.70142773,
+          76.70142737, 76.70142701, 76.70142665],
+         [77.70142855, 77.70142819, 77.70142783, 77.70142747,
+          77.70142711, 77.70142675, 77.70142639]])
 
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
@@ -216,22 +276,8 @@ def test_NIRISSBackwardDispersion():
     assert_allclose(ydy, expected_ydy)
 
 
-def test_NIRISSForwardRowGrismDispersion():
-    ymodels = [[Polynomial2D(2, c0_0=-1.876215, c1_0=-5.179793e-04, c2_0=2.116366e-08,
-                             c0_1=-2.259297e-04, c0_2=-2.502127e-12, c1_1=4.771951e-08),
-
-                Polynomial2D(2, c0_0=-3.089115, c1_0=3.063270e-03, c2_0=-9.786785e-07,
-                             c0_1=1.237905e-03, c0_2=-1.510774e-11, c1_1=-5.405480e-09)]]
-
-    xmodels = [[Polynomial2D(2, c0_0=63.55173, c1_0=3.846599e-06, c2_0=-7.173816e-10,
-                             c0_1=8.158127e-07, c0_2=-1.274281e-09, c1_1=4.098804e-11),
-
-                Polynomial2D(2, c0_0=-331.8532, c1_0=-1.24494e-05, c2_0=4.210112e-10,
-                             c0_1=-1.615311e-06, c0_2=6.665276e-09, c1_1=1.43762e-10)]]
-
-    lmodels = [Polynomial1D(1, c0=0.75, c1=1.55),
-               Polynomial1D(1, c0=0.75, c1=1.55)]
-
+def test_NIRISSForwardRowGrismDispersion(niriss_models):
+    xmodels, ymodels, lmodels = niriss_models
     model = transforms.NIRISSForwardRowGrismDispersion([1, 2, 3, -1], lmodels, xmodels,
                                                        ymodels, theta=354.222)
 
@@ -239,76 +285,62 @@ def test_NIRISSForwardRowGrismDispersion():
     y0 = 15.5
     order = 1
 
-    slit = create_slit(model, x0, y0, order)
+    slit = create_niriss_slit(model, x0, y0, order)
     slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
 
     wavelength = compute_wavelength_array(slit)
     expected = np.array(
-        [[1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-          1.0395352, 1.03484232],
-         [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-            1.0395352, 1.03484232],
-            [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-             1.0395352, 1.03484232],
-            [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-             1.0395352, 1.03484232],
-            [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-             1.0395352, 1.03484232],
-            [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-             1.0395352, 1.03484232],
-            [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
-             1.0395352, 1.03484232]])
-
+        [[-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588],
+         [-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588],
+         [-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588],
+         [-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588],
+         [-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588],
+         [-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588],
+         [-41.26984722, -41.31631533, -41.36278344, -41.40925155,
+          -41.45571966, -41.50218777, -41.54865588]])
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = compute_wavelength_array(slit)
     assert_allclose(wavelength, expected)
 
-
-def test_NIRISSForwardColumnGrismDispersion():
-    ymodels = [[Polynomial2D(2, c0_0=-1.876215, c1_0=-5.179793e-04, c2_0=2.116366e-08,
-                             c0_1=-2.259297e-04, c0_2=-2.502127e-12, c1_1=4.771951e-08),
-
-                Polynomial2D(2, c0_0=-3.089115, c1_0=3.063270e-03, c2_0=-9.786785e-07,
-                             c0_1=1.237905e-03, c0_2=-1.510774e-11, c1_1=-5.405480e-09)]]
-
-    xmodels = [[Polynomial2D(2, c0_0=63.55173, c1_0=3.846599e-06, c2_0=-7.173816e-10,
-                             c0_1=8.158127e-07, c0_2=-1.274281e-09, c1_1=4.098804e-11),
-
-                Polynomial2D(2, c0_0=-331.8532, c1_0=-1.24494e-05, c2_0=4.210112e-10,
-                             c0_1=-1.615311e-06, c0_2=6.665276e-09, c1_1=1.43762e-10)]]
-
-    lmodels = [Polynomial1D(1, c0=0.75, c1=1.55),
-               Polynomial1D(1, c0=0.75, c1=1.55)]
-
-    model = transforms.NIRISSForwardColumnGrismDispersion([1, 2, 3, -1], lmodels=lmodels,
-                                                          xmodels=xmodels, ymodels=ymodels,
-                                                          theta=33.5677)
-
-    x0 = 913.7
-    y0 = 15.5
-    order = 1
-
-    slit = create_slit(model, x0, y0, order)
-    slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
-
-    expected = np.array(
-        [[1.05844596, 1.05844596, 1.05844596, 1.05844596, 1.05844596,
-          1.05844596, 1.05844596],
-         [1.0500404, 1.0500404, 1.0500404, 1.0500404, 1.0500404,
-            1.0500404, 1.0500404],
-            [1.04163483, 1.04163483, 1.04163483, 1.04163483, 1.04163483,
-             1.04163483, 1.04163483],
-            [1.03322927, 1.03322927, 1.03322927, 1.03322927, 1.03322927,
-             1.03322927, 1.03322927],
-            [1.02482371, 1.02482371, 1.02482371, 1.02482371, 1.02482371,
-             1.02482371, 1.02482371],
-            [1.01641815, 1.01641815, 1.01641815, 1.01641815, 1.01641815,
-             1.01641815, 1.01641815],
-            [1.00801258, 1.00801258, 1.00801258, 1.00801258, 1.00801258,
-             1.00801258, 1.00801258]])
-
-    # refactored call
-    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    wavelength = compute_wavelength_array(slit)
-    assert_allclose(wavelength, expected)
+#
+# def test_NIRISSForwardColumnGrismDispersion(niriss_models):
+#     xmodels, ymodels, lmodels = niriss_models
+#
+#     model = transforms.NIRISSForwardColumnGrismDispersion([1, 2, 3, -1], lmodels=lmodels,
+#                                                           xmodels=xmodels, ymodels=ymodels,
+#                                                           theta=33.5677)
+#
+#     x0 = 913.7
+#     y0 = 15.5
+#     order = 1
+#
+#     slit = create_niriss_slit(model, x0, y0, order)
+#     slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
+#
+#     expected = np.array(
+#         [[1.05844596, 1.05844596, 1.05844596, 1.05844596, 1.05844596,
+#           1.05844596, 1.05844596],
+#          [1.0500404, 1.0500404, 1.0500404, 1.0500404, 1.0500404,
+#             1.0500404, 1.0500404],
+#             [1.04163483, 1.04163483, 1.04163483, 1.04163483, 1.04163483,
+#              1.04163483, 1.04163483],
+#             [1.03322927, 1.03322927, 1.03322927, 1.03322927, 1.03322927,
+#              1.03322927, 1.03322927],
+#             [1.02482371, 1.02482371, 1.02482371, 1.02482371, 1.02482371,
+#              1.02482371, 1.02482371],
+#             [1.01641815, 1.01641815, 1.01641815, 1.01641815, 1.01641815,
+#              1.01641815, 1.01641815],
+#             [1.00801258, 1.00801258, 1.00801258, 1.00801258, 1.00801258,
+#              1.00801258, 1.00801258]])
+#
+#     # refactored call
+#     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+#     wavelength = compute_wavelength_array(slit)
+#     assert_allclose(wavelength, expected)
