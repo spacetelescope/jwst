@@ -811,7 +811,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
             xr = self.inv_ymodels[order][0](x0, y0) + t0 * self.inv_ymodels[order][1](x0, y0)
         elif len(self.inv_ymodels[order]) == 3:
             xr = self.inv_ymodels[order][0](x0, y0) + t0 * self.inv_ymodels[order][1](x0, y0) + \
-                t0 ** 2 * self.inv_ymodels[order][2](x0, y0)
+                 t0 ** 2 * self.inv_ymodels[order][2](x0, y0)
         elif len(self.inv_ymodels[order].instance[0].inputs) == 1:
             xr = self.inv_ymodels[order][0](y0)
         else:
