@@ -1,3 +1,12 @@
+1.7.1 (unreleased)
+==================
+
+straylight
+----------
+
+- Fix a bug in calibrated MRS slopes from small pedestal rate offsets between exposures by reintroducing zeropoint
+  subtraction using dark regions of MRS detectors. [#7013]
+
 1.7.0 (2022-09-01)
 ==================
 
