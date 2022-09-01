@@ -66,6 +66,10 @@ authors:
 - family-names: "Jamieson"
   given-names: "William"
   orcid: "https://orcid.org/0000-0001-5976-4492"
+- family-names: "Teodoro"
+  given-names: "Mairan"
+- family-names: "Williams"
+  given-names: "Thomas"
 title: "JWST Calibration Pipeline"
 version: 1.6.2
 doi: 10.5281/zenodo.6984366
