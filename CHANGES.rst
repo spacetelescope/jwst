@@ -13,6 +13,13 @@ tweakreg
 - Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
   code more robust. [#7038]
 
+resample
+--------
+- Fix calculation of 'pixel_scale_ratio' when 'pixel_scale' parameter is
+  supplied, as well as fix a bug where this value was not being properly passed
+  to ResampleStep, and another where photometry keywords weren't being updated
+  correctly to reflect the correct pixel scale ratio. [#7033]
+
 
 1.7.2 (2022-09-12)
 ==================
@@ -26,6 +33,7 @@ assign_wcs
 
 - Adjust default parameters for FITS SIP approximation to make it more robust
   vis-a-vis MIRI imaging distortions. [#7037]
+
 
 
 1.7.1 (2022-09-07)
