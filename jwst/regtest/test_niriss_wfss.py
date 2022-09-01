@@ -30,8 +30,7 @@ def run_nis_wfss_spec2(jail, rtdata_module):
             '--steps.photom.save_results=true',
             '--steps.extract_1d.save_results=true',
             '--save_wfss_esec=true',
-            '--steps.extract_2d.wfss_nbright=10',
-    ]
+            '--steps.extract_2d.wfss_nbright=10']
     Step.from_cmdline(args)
 
     # Run the remaining exposures without doing comparisons, just so that
@@ -39,8 +38,7 @@ def run_nis_wfss_spec2(jail, rtdata_module):
     for asn in spec2_asns[1:]:
         rtdata.get_asn(asn)
         args = ["calwebb_spec2", rtdata.input,
-                "--steps.extract_2d.wfss_nbright=10"
-        ]
+                "--steps.extract_2d.wfss_nbright=10"]
         Step.from_cmdline(args)
 
 
@@ -81,7 +79,7 @@ def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fi
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
     rtdata.input = "jw01324-o001_20220629t171902_spec3_003_asn.json"
-    output = f"jw01324-o001_" + source_id + "_niriss_f115w-gr150c-gr150r_" + suffix + ".fits"
+    output = "jw01324-o001_" + source_id + "_niriss_f115w-gr150c-gr150r_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
