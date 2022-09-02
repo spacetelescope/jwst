@@ -651,12 +651,10 @@ class NIRCAMForwardRowGrismDispersion(Model):
         except KeyError:
             raise ValueError("Specified order is not available")
 
-
         if not len(self.xmodels):
             t = self.invdisp_interp(iorder, x0, y0, (x - x0))
         else:
             t = self.xmodels[iorder](y - y0)
-
 
         lmodel = self.lmodels[iorder]
 
@@ -670,14 +668,12 @@ class NIRCAMForwardRowGrismDispersion(Model):
 
         l_poly = apply_poly(lmodel, (x0, y0), t)
 
-        return (x0, y0, l_poly, order)  # model(x, y, x0, y0, order)
-
-
+        return x0, y0, l_poly, order
 
     def invdisp_interp(self, order, x0, y0, dy):
 
         if len(dy.shape) == 2:
-                dy = dy[0, :]
+            dy = dy[0, :]
 
         t_len = dy.shape[0]
         t0 = np.linspace(0., 1., t_len)
@@ -1151,6 +1147,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         t = np.linspace(0, 1, 10)  # sample t
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
 
         dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00) + t**2 * xmodel[2](x00, y00)
         dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00) + t**2 * ymodel[2](x00, y00)
