@@ -782,8 +782,9 @@ class DataSet():
 
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
+                    scalar_conv = conversion
                     conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
-                                                                   self.exptype, conversion,
+                                                                   self.exptype, scalar_conv,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=False)
                     slit.photom_uniform = conversion  # store the result
@@ -792,7 +793,7 @@ class DataSet():
                     # which is appropriate for a point source. This is the version of
                     # the correction that will actually get applied to the data below.
                     conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
-                                                                   self.exptype, conversion,
+                                                                   self.exptype, scalar_conv,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=True)
                     slit.photom_point = conversion  # store the result
