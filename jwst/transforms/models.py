@@ -15,7 +15,7 @@ from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.models import (Rotation2D, Identity, Mapping, Tabular1D, Tabular2D, Const1D)
+from astropy.modeling.models import (Rotation2D, Identity, Mapping, Tabular1D, Const1D)
 from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
