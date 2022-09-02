@@ -465,7 +465,8 @@ assign_wcs
 - Updated the loading of NIRSpec MSA configuration data to assign the source_id
   for each slitlet from the shutter entry that contains the primary/main source. [#7379]
 
-- Added approximated imaging FITS WCS to WFSS grism image headers. [#7373, #7412]
+- Pass the dispersion relation to NIRCam row/column transforms, to interpolate
+  against if analytic inverse does not exist [#7018]
 
 associations
 ------------
@@ -670,6 +671,15 @@ documentation
 -------------
 
 - CRDS PUB deprecation notice and transition documentation [#7342]
+
+- Add list of items to description of dispersion relations in NIRCam specwcs schema,
+  now that a list of polynomials is being provided [#7018]
+
+transforms
+----------
+
+- Update NIRCam WFSS transforms to use version 4 of GRISMCONF fileset; interpolate
+  to create inverse dispersion relation due to third-order polynomial in use [#7018]
 
 1.8.2 (2022-10-20)
 ==================
