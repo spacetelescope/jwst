@@ -47,10 +47,13 @@ import logging
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-#
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+REFERENCE_PIXEL = dqflags.pixel["REFERENCE_PIXEL"]
+
 # NIR Reference section dictionaries are zero indexed and specify the values
 # to be used in the following slice:
 # (rowstart: rowstop, colstart:colstop)
@@ -216,15 +219,14 @@ class Dataset():
 
         """
 
-        #
         # Only calculate the clipped mean for pixels that don't have the DO_NOT_USE
-        # DQ bit set
-        goodpixels = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']) == 0)
-        #
+        # DQ bit set.  Create a boolean mask.
+        goodpixels = np.bitwise_and(dq, DO_NOT_USE) != DO_NOT_USE
+
         # If there are no good pixels, return None
-        if len(goodpixels[0]) == 0:
+        if not goodpixels.any():
             return None
-        #
+
         # scipy routine fails if the pixels all have exactly the same value
         if np.std(data[goodpixels], dtype=np.float64) != 0.0:
             clipped_ref, lowlim, uplim = stats.sigmaclip(data[goodpixels],
@@ -261,11 +263,10 @@ class Dataset():
                 fullcols = 2048
             self.full_shape = (fullrows, fullcols)
             pixeldq = np.zeros(self.full_shape, dtype=self.input_model.pixeldq.dtype)
-            refpixdq_dontuse = dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL']
-            pixeldq[0:4, :] = refpixdq_dontuse
-            pixeldq[fullrows - 4:fullrows, :] = refpixdq_dontuse
-            pixeldq[4:fullrows - 4, 0:4] = refpixdq_dontuse
-            pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = refpixdq_dontuse
+            pixeldq[0:4, :] = DO_NOT_USE | REFERENCE_PIXEL
+            pixeldq[fullrows - 4:fullrows, :] = DO_NOT_USE | REFERENCE_PIXEL
+            pixeldq[4:fullrows - 4, 0:4] = DO_NOT_USE | REFERENCE_PIXEL
+            pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = DO_NOT_USE | REFERENCE_PIXEL
             pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.pixeldq.copy()
         else:
             pixeldq = self.input_model.pixeldq.copy()
@@ -394,21 +395,19 @@ class Dataset():
                 log.info('refpix processing skipped for this mode')
 
     def count_good_side_refpixels(self):
-        donotuse = dqflags.pixel['DO_NOT_USE']
         ngood = 0
         for amplifier in 'AD':
             rowstart, rowstop, colstart, colstop = NIR_reference_sections[amplifier]['side']
-            good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
+            good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], DO_NOT_USE) != DO_NOT_USE)
             ngood += len(good[0])
         return ngood
 
     def count_good_top_bottom_refpixels(self):
-        donotuse = dqflags.pixel['DO_NOT_USE']
         ngood = 0
         for edge in ['top', 'bottom']:
             for amplifier in 'ABCD':
                 rowstart, rowstop, colstart, colstop = NIR_reference_sections[amplifier][edge]
-                good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
+                good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], DO_NOT_USE) != DO_NOT_USE)
                 ngood += len(good[0])
         return ngood
 
@@ -825,7 +824,7 @@ class NIRDataset(Dataset):
             rowstart = i
             rowstop = rowstart + smoothing_length
             goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop],
-                                                 dqflags.pixel['DO_NOT_USE']) == 0)
+                                                 DO_NOT_USE) == 0)
             if len(goodpixels[0]) == 0:
                 result[i] = np.nan
             else:
@@ -1012,17 +1011,14 @@ class NIRDataset(Dataset):
         """Do corrections for subarray.  Reference pixel value calculated
         separately for odd and even columns if odd_even_columns is True,
         otherwise a single number calculated from all reference pixels"""
-        #
+
         #  First transform to detector coordinates
-        #
-        refdq = dqflags.pixel['REFERENCE_PIXEL']
-        donotuse = dqflags.pixel['DO_NOT_USE']
         #
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
         self.DMS_to_detector_dq()
         # Determined refpix indices to use on each group
-        refpixindices = np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))
+        refpixindices = np.where((self.pixeldq & REFERENCE_PIXEL == REFERENCE_PIXEL) & (self.pixeldq & DO_NOT_USE != DO_NOT_USE))
         nrefpixels = len(refpixindices[0])
         if nrefpixels == 0:
             self.bad_reference_pixels = True
@@ -1931,6 +1927,10 @@ def correct_model(input_model, odd_even_columns,
     input_dataset.log_parameters()
     reference_pixel_correction(input_dataset)
 
+    # Now that they are corrected, flag reference pixels as DO_NOT_USE
+    mask = input_model.pixeldq & REFERENCE_PIXEL == REFERENCE_PIXEL
+    input_model.pixeldq[mask] |= DO_NOT_USE
+
     return REFPIX_OK
 
 
@@ -2044,7 +2044,7 @@ def setup_dataset_for_zeroframe(input_dataset, saved_values):
     gdtype = input_dataset.input_model.groupdq.dtype
     gdq = np.zeros(dims, dtype=gdtype)
     wh_zero = saved_values[-1]
-    gdq[wh_zero] = dqflags.pixel['DO_NOT_USE']
+    gdq[wh_zero] = DO_NOT_USE
     gdq = gdq.reshape(new_dims)
 
     # Setup dataset with ZEROFRAME data

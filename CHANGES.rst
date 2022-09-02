@@ -577,6 +577,11 @@ ramp_fitting
   removing NaNs from the rateints product and setting appropriate DQ
   flags. [#6949]
 
+refpix
+------
+
+- Set DQ of ref pixels to DO_NOT_USE after `refpix` correction [#7017]
+
 resample
 --------
 

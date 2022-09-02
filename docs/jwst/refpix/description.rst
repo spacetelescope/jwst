@@ -77,6 +77,8 @@ NIR Detector Data
        subtracted from the full group on a row-by-row basis.  Note that the ``odd_even_rows``
        parameter is ignored for NIR data when the side reference pixels are processed.
     #. Transform the data back to the JWST focal plane, or DMS, frame.
+    #. Flag reference pixel locations in DQ array as DO_NOT_USE now that the correction is
+       complete, so that they are not used in ramp fitting or any other downstream steps.
 
 MIR Detector Data
 +++++++++++++++++
