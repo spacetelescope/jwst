@@ -13,6 +13,22 @@ photom
   flux conversion factors get computed correctly for both point-source and
   extended-source data. [#7019]
 
+tweakreg
+--------
+
+- Renamed ``gaia`` suffix to ``abs`` for the absolute astrometry
+  parameters. Specifically, ``gaia_catalog``->``abs_refcat``,
+  ``save_gaia_catalog``->``save_abs_catalog``. [#7023]
+
+- Removed ``align_to_gaia`` boolean step parameter since it now can be
+  indicated via ``abs_refcat`` parameter. When ``abs_refcat`` is None or an
+  empty string, alignment to an absolute astrometric catalog will be turned
+  OFF. When ``abs_refcat`` is a non-empty string, alignment to an absolute
+  astrometric reference catalog will be turned ON.
+
+- Bug fix: removed ``min_gaia`` which should have been removed in the
+  PR 6987. [#2023]
+
 1.7.0 (2022-09-01)
 ==================
 
@@ -167,7 +183,6 @@ tweakreg
   alignment (which needs 2 images) instead of skipping the entire
   step. [#6938]
 
-
 - Added support for user-supplied reference catalog for stage 2 of alignment
   in the ``tweakreg`` step. This catalog, if provided, will be used instead
   of the 'GAIA' catalogs for aligning all input images together as one single
@@ -176,10 +191,11 @@ tweakreg
 - Exposed ``tweakreg_catalog`` parameters in ``tweakreg`` [#7003]
 
 - exposed additional parameters for absolute astrometry:
- ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``, ``abs_separation``, ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``,  and ``abs_sigma``. [#6987]
+  ``abs_minobj``, ``abs_searchrad``, ``abs_use2dhist``, ``abs_separation``,
+  ``abs_tolerance``, ``abs_fitgeometry``, ``abs_nclip``,
+  and ``abs_sigma``. [#6987]
 
 - Refactored code to work with changes in ``tweakwcs`` version 0.8.0. [#7006]
-
 
 1.6.2 (2022-07-19)
 ==================

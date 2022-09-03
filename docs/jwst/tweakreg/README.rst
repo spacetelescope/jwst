@@ -144,16 +144,16 @@ Parameters used for absolute astrometry using a reference catalog:
 * ``abs_minobj``: A positive `int` indicating minimum number of objects acceptable
   for matching. (Default=15)
 
-* ``abs_searchrad``: A `float` indicating the search radius in arcsec for a match. 
-  It is recommended that a value larger than ``searchrad`` be used for this parameter 
+* ``abs_searchrad``: A `float` indicating the search radius in arcsec for a match.
+  It is recommended that a value larger than ``searchrad`` be used for this parameter
   (e.g. 3 times larger) (Default=6.0)
 
 * ``abs_use2dhist``: A boolean indicating whether to use 2D histogram to find
-  initial offset. It is strongly recommended setting this parameter to `True`. 
+  initial offset. It is strongly recommended setting this parameter to `True`.
   Otherwise the initial guess for the offsets will be set to zero (Default=True)
 
-* ``abs_separation``: Minimum object separation in arcsec. It is recommended that 
-  a value smaller than ``separation`` be used for this parameter 
+* ``abs_separation``: Minimum object separation in arcsec. It is recommended that
+  a value smaller than ``separation`` be used for this parameter
   (e.g. 10 times smaller) (Default=0.1)
 
 * ``abs_tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
@@ -191,7 +191,19 @@ Parameters used for absolute astrometry using a reference catalog:
 * ``sigma``: A positive `float` indicating the clipping limit, in sigma units,
   used when performing fit. (Default=3.0)
 
-Parameters used for absolute astrometry using a reference catalog:
+**Absolute Astrometric fitting parameters:**
+
+Parameters used for absolute astrometry to a reference catalog.
+
+* ``abs_refcat``: String indicating what astrometric catalog should be used.
+  Currently supported options: `None`, '', 'GAIADR2' and 'GAIADR1' or a path
+  to an existing reference catalog. See
+  :py:data:`jwst.tweakreg.tweakreg_step.SINGLE_GROUP_REFCAT`
+  for an up-to-date list of supported built-in reference catalogs.
+
+  When ``abs_refcat`` is `None` or an empty string, alignment to the
+  absolute astrometry catalog will be turned off.
+  (Default='')
 
 * ``abs_fitgeometry``: A `str` value indicating the type of affine transformation
   to be considered when fitting catalogs. Allowed values:
@@ -201,7 +213,7 @@ Parameters used for absolute astrometry using a reference catalog:
   - ``'rscale'``: rotation and scale
   - ``'general'``: shift, rotation, and scale
 
-  The default value is "rshift". Note that the same conditions/restrictions that 
+  The default value is "rshift". Note that the same conditions/restrictions that
   apply to ``fitgeometry`` also apply to ``abs_fitgeometry``.
 
 * ``abs_nclip``: A non-negative integer number of clipping iterations
@@ -210,21 +222,10 @@ Parameters used for absolute astrometry using a reference catalog:
 * ``abs_sigma``: A positive `float` indicating the clipping limit, in sigma units,
   used when performing fit. (Default=3.0)
 
-**Astrometric fitting parameters:**
-
 * ``align_to_gaia``: A boolean indicating whether or not to fit to
   perform the fit to an astrometric catalog. (Default=False)
 
-* ``gaia_catalog``: String indicating what astrometric catalog should be used.
-  Currently supported options: 'GAIADR2' and 'GAIADR1' or a path to an existing
-  reference catalog. See :py:data:`jwst.tweakreg.tweakreg_step.SINGLE_GROUP_REFCAT`
-  for an up-to-date list of supported built-in reference catalogs.
-  (Default='GAIADR2')
-
-* ``min_gaia``: Minimum number of matches to astrometric sources to initiate a fit.
-  (Default=5)
-
-* ``save_gaia_catalog``: A boolean specifying whether or not to write out the
+* ``save_abs_catalog``: A boolean specifying whether or not to write out the
   astrometric catalog used for the fit as a separate product. (Default=False)
 
 
