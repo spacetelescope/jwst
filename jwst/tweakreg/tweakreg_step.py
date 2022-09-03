@@ -50,6 +50,7 @@ class TweakRegStep(Step):
 
     spec = f"""
         save_catalogs = boolean(default=False) # Write out catalogs?
+        ignore_input_catalogs = boolean(default=True) # Find sources anew?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
@@ -112,23 +113,43 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
-            # source finding
-            catalog = make_tweakreg_catalog(
-                image_model, self.kernel_fwhm, self.snr_threshold,
-                sharplo=self.sharplo, sharphi=self.sharphi,
-                roundlo=self.roundlo, roundhi=self.roundhi,
-                brightest=self.brightest, peakmax=self.peakmax,
-                bkg_boxsize=self.bkg_boxsize
-            )
+            if (self.ignore_input_catalogs or
+                    not image_model.meta.tweakreg_catalog):
+                # source finding
+                catalog = make_tweakreg_catalog(
+                    image_model, self.kernel_fwhm, self.snr_threshold,
+                    sharplo=self.sharplo, sharphi=self.sharphi,
+                    roundlo=self.roundlo, roundhi=self.roundhi,
+                    brightest=self.brightest, peakmax=self.peakmax,
+                    bkg_boxsize=self.bkg_boxsize
+                )
+                new_cat = True
+
+            else:
+                # use user-supplied catalog:
+                self.log.info("Using user-provided input catalog "
+                              f"'{image_model.meta.tweakreg_catalog}'")
+                catalog = Table.read(image_model.meta.tweakreg_catalog)
+                new_cat = False
+
+            for axis in ['x', 'y']:
+                if axis not in catalog.colnames:
+                    long_axis = axis + 'centroid'
+                    if long_axis in catalog.colnames:
+                        catalog.rename_column(long_axis, axis)
+                    else:
+                        raise ValueError(
+                            "'tweakreg' source catalogs must contain either "
+                            "columns 'x' and 'y' or 'xcentroid' and "
+                            "'ycentroid'."
+                        )
 
             # filter out sources outside the WCS bounding box
             bb = image_model.meta.wcs.bounding_box
             if bb is not None:
                 ((xmin, xmax), (ymin, ymax)) = bb
-                xname = 'xcentroid' if 'xcentroid' in catalog.colnames else 'x'
-                yname = 'ycentroid' if 'ycentroid' in catalog.colnames else 'y'
-                x = catalog[xname]
-                y = catalog[yname]
+                x = catalog['x']
+                y = catalog['y']
                 mask = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
                 catalog = catalog[mask]
 
@@ -140,7 +161,7 @@ class TweakRegStep(Step):
                 self.log.info('Detected {} sources in {}.'
                               .format(len(catalog), filename))
 
-            if self.save_catalogs:
+            if new_cat and self.save_catalogs:
                 catalog_filename = filename.replace(
                     '.fits', '_cat.{}'.format(self.catalog_format)
                 )
@@ -437,10 +458,6 @@ class TweakRegStep(Step):
                 catalog.meta['name'] = cat_name
             except IOError:
                 self.log.error("Cannot read catalog {}".format(catalog))
-
-        if 'xcentroid' in catalog.colnames:
-            catalog.rename_column('xcentroid', 'x')
-            catalog.rename_column('ycentroid', 'y')
 
         # create WCSImageCatalog object:
         refang = image_model.meta.wcsinfo.instance
