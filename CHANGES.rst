@@ -38,6 +38,11 @@ assign_wcs
 
 - Populate ``WAVELENGTH`` extension for MIRI LRS slitless data [#6964] [#7005]
 
+associations
+------------
+
+- Refactor Asn_Lv2WFSS to better descriminate what direct images should be used [#7010]
+
 cube_build
 ----------
 

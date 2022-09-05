@@ -4,6 +4,7 @@ from collections import deque
 import logging
 
 from jwst.associations.exceptions import AssociationNotValidError
+from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
@@ -35,7 +36,8 @@ __all__ = [
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
     'Asn_Lv2SpecTSO',
-    'Asn_Lv2WFSS',
+    'Asn_Lv2WFSSNIS',
+    'Asn_Lv2WFSSNRC',
     'Asn_Lv2WFSC',
 ]
 
@@ -582,9 +584,9 @@ class Asn_Lv2NRSLAMPSpectral(
 
 
 @RegistryMarker.rule
-class Asn_Lv2WFSS(
+class Asn_Lv2WFSSNIS(
+        AsnMixin_Lv2WFSS,
         AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
 ):
     """Level2b WFSS/GRISM Association
 
@@ -599,194 +601,96 @@ class Asn_Lv2WFSS(
     def __init__(self, *args, **kwargs):
 
         self.constraints = Constraint([
-
-            # Basic constraints
             Constraint_Base(),
             Constraint_Target(),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume']
-            ),
-
-            # Allow WFSS exposures but account for the direct imaging.
             Constraint([
-
-                # Constrain on the WFSS exposure
-                Constraint([
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nis_wfss|nrc_wfss',
-                    ),
-                    Constraint_Mode(),
-                    Constraint_Single_Science(self.has_science),
-                ]),
-
-                # Or select related imaging exposures.
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_wfss',
+                ),
                 DMSAttrConstraint(
                     name='image_exp_type',
                     sources=['exp_type'],
-                    value='nis_image|nrc_image',
-                    force_reprocess=ProcessList.EXISTING,
+                    value='nis_image',
+                    force_reprocess=ProcessList.NONSCIENCE,
                     only_on_match=True,
                 ),
+            ], reduce=Constraint.any),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+            ),
+            DMSAttrConstraint(
+                name='pupil',
+                sources=['pupil'],
+            ),
+            Constraint([
+                SimpleConstraint(
+                    value='science',
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                    ),
+                Constraint_Single_Science(self.has_science),
             ], reduce=Constraint.any)
         ])
 
-        super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
+        super(Asn_Lv2WFSSNIS, self).__init__(*args, **kwargs)
 
-    def add_catalog_members(self):
-        """Add catalog and direct image member based on direct image members"""
-        directs = self.members_by_type('direct_image')
-        if not directs:
-            raise AssociationNotValidError(
-                '{} has no required direct image exposures'.format(
-                    self.__class__.__name__
-                )
-            )
 
-        sciences = self.members_by_type('science')
-        if not sciences:
-            raise AssociationNotValidError(
-                '{} has no required science exposure'.format(
-                    self.__class__.__name__
-                )
-            )
-        science = sciences[0]
+@RegistryMarker.rule
+class Asn_Lv2WFSSNRC(
+        AsnMixin_Lv2WFSS,
+        AsnMixin_Lv2Spectral,
+):
+    """Level2b WFSS/GRISM Association
 
-        # Get the exposure sequence for the science. Then, find
-        # the direct image greater than but closest to this value.
-        closest = directs[0]  # If the search fails, just use the first.
-        try:
-            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
-        except KeyError:
-            # If exposure sequence cannot be determined, just fall through.
-            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
-        else:
-            min_diff = 9999         # Initialize to an invalid value.
-            for direct in directs:
-                # For NIRCam, only consider direct images from the same channel
-                # as the grism image
-                if direct.item['exp_type'] == 'nrc_image':
-                    science_channel = getattr_from_list(science.item, ['channel'], _EMPTY)[1]
-                    direct_channel = getattr_from_list(direct.item, ['channel'], _EMPTY)[1]
-                    if direct_channel != science_channel:
-                        continue
-                # For NIRISS, only consider direct images with the same PUPIL value
-                if direct.item['exp_type'] == 'nis_image':
-                    science_pupil = getattr_from_list(science.item, ['pupil'], _EMPTY)[1]
-                    direct_pupil = getattr_from_list(direct.item, ['pupil'], _EMPTY)[1]
-                    if direct_pupil != science_pupil:
-                        continue
-                try:
-                    direct_expspcin = int(getattr_from_list(
-                        direct.item, ['expspcin'], _EMPTY
-                    )[1])
-                except KeyError:
-                    # Try the next one.
-                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
-                    continue
-                diff = direct_expspcin - expspcin
-                if diff < min_diff and diff > 0:
-                    min_diff = diff
-                    closest = direct
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Multi-object science exposures
+        - Single science exposure
+        - Require a source catalog from processing of the corresponding direct imagery.
+    """
 
-        # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
-        self.direct_image = closest
+    def __init__(self, *args, **kwargs):
 
-        # Remove all direct images from the association.
-        members = self.current_product['members']
-        direct_idxs = [
-            idx
-            for idx, member in enumerate(members)
-            if member['exptype'] == 'direct_image'
-        ]
-        deque((
-            list.pop(members, idx)
-            for idx in sorted(direct_idxs, reverse=True)
-        ))
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Target(),
+            Constraint([
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nrc_wfss',
+                ),
+                DMSAttrConstraint(
+                    name='image_exp_type',
+                    sources=['exp_type'],
+                    value='nrc_image',
+                    force_reprocess=ProcessList.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ], reduce=Constraint.any),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+            ),
+            DMSAttrConstraint(
+                name='detector',
+                sources=['detector'],
+            ),
+            Constraint([
+                SimpleConstraint(
+                    value='science',
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                    ),
+                Constraint_Single_Science(self.has_science),
+            ], reduce=Constraint.any)
+        ])
 
-        # Add the Level3 catalog, direct image, and segmentation map members
-        lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
-        members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_i2d.fits',
-                'exptype': 'direct_image'
-            })
-        )
-        members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_cat.ecsv',
-                'exptype': 'sourcecat'
-            })
-        )
-        members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_segm.fits',
-                'exptype': 'segmap'
-            })
-        )
-
-    def finalize(self):
-        """Finalize the association
-
-        For WFSS, this involves taking all the direct image exposures,
-        determine which one is first after last science exposure,
-        and creating the catalog name from that image.
-        """
-        try:
-            self.add_catalog_members()
-        except AssociationNotValidError as err:
-            logger.debug(
-                '%s: %s',
-                self.__class__.__name__, str(err)
-            )
-            return None
-
-        return super(Asn_Lv2WFSS, self).finalize()
-
-    def get_exposure_type(self, item, default='science'):
-        """Modify exposure type depending on dither pointing index
-
-        If an imaging exposure as been found, treat is as a direct image.
-        """
-        exp_type = super(Asn_Lv2WFSS, self).get_exposure_type(
-            item, default
-        )
-        if exp_type == 'science' and item['exp_type'] in ['nis_image', 'nrc_image']:
-            exp_type = 'direct_image'
-
-        return exp_type
-
-    def _get_opt_element(self):
-        """Get string representation of the optical elements
-
-        Returns
-        -------
-        opt_elem: str
-            The Level3 Product name representation
-            of the optical elements.
-        Notes
-        -----
-        This is an override for the method in `DMSBaseMixin`.
-        The optical element is retrieved from the chosen direct image
-        found in `self.direct_image`, determined in the `self.finalize`
-        method.
-        """
-        item = self.direct_image.item
-        opt_elems = []
-        for keys in [['filter', 'band'], ['pupil', 'grating']]:
-            opt_elem = getattr_from_list_nofail(
-                item, keys, _EMPTY
-            )[1]
-            if opt_elem:
-                opt_elems.append(opt_elem)
-        opt_elems.sort(key=str.lower)
-        full_opt_elem = '-'.join(opt_elems)
-        if full_opt_elem == '':
-            full_opt_elem = 'clear'
-
-        return full_opt_elem
+        super(Asn_Lv2WFSSNRC, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
