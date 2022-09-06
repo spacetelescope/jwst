@@ -93,9 +93,6 @@ class EngdbMast(EngdbABC):
             raise RuntimeError(f'MAST url: {self.base_url} is not available. Returned HTTPS status {resp.status_code}')
 
         # Basics are covered. Finalize initialization.
-        self._req = requests.Request(method='GET',
-                                     url=self.base_url + API_URI,
-                                     headers={'Authorization': f'token {self.token}'})
         self.set_session()
 
     def cache(self, mnemonics, starttime, endtime, cache_path):
@@ -276,6 +273,10 @@ class EngdbMast(EngdbABC):
 
     def set_session(self):
         """Setup HTTP session"""
+        self._req = requests.Request(method='GET',
+                                     url=self.base_url + API_URI,
+                                     headers={'Authorization': f'token {self.token}'})
+
         s = requests.Session()
         retries = Retry(total=self.retries, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
         s.mount('https://', HTTPAdapter(max_retries=retries))
