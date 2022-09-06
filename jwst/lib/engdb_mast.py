@@ -6,6 +6,7 @@ import logging
 from os import getenv
 from pathlib import Path
 import requests
+from requests.adapters import HTTPAdapter, Retry
 from shutil import copy2
 
 from astropy.table import Table
@@ -20,6 +21,10 @@ __all__ = ['EngdbMast']
 MAST_BASE_URL = 'https://mast.stsci.edu'
 API_URI = 'api/v0.1/Download/file'
 SERVICE_URI = 'mast:jwstedb/'
+
+# HTTP status that should get retries
+FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+TIMEOUT = 10 * 60  # 10 minutes
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -92,7 +97,7 @@ class EngdbMast(EngdbABC):
         self._req = requests.Request(method='GET',
                                      url=base_url + API_URI,
                                      headers={'Authorization': f'token {token}'})
-        self._session = requests.Session()
+        self.set_session()
 
     def cache(self, mnemonics, starttime, endtime, cache_path):
         """Cache results for the list of mnemonics
@@ -237,6 +242,14 @@ class EngdbMast(EngdbABC):
             results.append(obstime, value)
 
         return results.collection
+
+    def set_session(self):
+        """Setup HTTP session"""
+        s = requests.Session()
+        retries = Retry(total=10, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+
+        self._session = s
 
     def _get_records(
             self,
