@@ -15,7 +15,7 @@ from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.models import (Rotation2D, Identity, Mapping, Tabular1D, Const1D)
+from astropy.modeling.models import (Rotation2D, Mapping, Tabular1D, Const1D)
 from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
@@ -682,7 +682,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
             xr = self.inv_xmodels[order][0](x0, y0) + t0 * self.inv_xmodels[order][1](x0, y0)
         elif len(self.inv_xmodels[order]) == 3:
             xr = self.inv_xmodels[order][0](x0, y0) + t0 * self.inv_xmodels[order][1](x0, y0) + \
-                 t0**2 * self.inv_xmodels[order][2](x0, y0)
+                t0**2 * self.inv_xmodels[order][2](x0, y0)
         elif len(self.inv_xmodels[order].instance[0].inputs) == 1:
             xr = self.inv_xmodels[order][0](y0)
         else:
@@ -806,7 +806,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
             xr = self.inv_ymodels[order][0](x0, y0) + t0 * self.inv_ymodels[order][1](x0, y0)
         elif len(self.inv_ymodels[order]) == 3:
             xr = self.inv_ymodels[order][0](x0, y0) + t0 * self.inv_ymodels[order][1](x0, y0) + \
-                 t0 ** 2 * self.inv_ymodels[order][2](x0, y0)
+                t0 ** 2 * self.inv_ymodels[order][2](x0, y0)
         elif len(self.inv_ymodels[order].instance[0].inputs) == 1:
             xr = self.inv_ymodels[order][0](y0)
         else:
@@ -934,7 +934,7 @@ class NIRCAMBackwardGrismDispersion(Model):
             xr = self.inv_lmodels[order][0](x0, y0) + t0 * self.inv_lmodels[order][1](x0, y0)
         elif len(self.inv_lmodels[order]) == 3:
             xr = self.inv_lmodels[order][0](x0, y0) + t0 * self.inv_lmodels[order][1](x0, y0) + \
-                 t0**2 * self.inv_lmodels[order][2](x0, y0)
+                t0**2 * self.inv_lmodels[order][2](x0, y0)
         elif len(self.inv_lmodels[order].instance[0].inputs) == 1:
             xr = self.inv_lmodels[order][0](x0)
         else:
