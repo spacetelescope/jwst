@@ -311,7 +311,7 @@ class EngdbMast(EngdbABC):
         prepped = self._session.prepare_request(self._req)
         settings = self._session.merge_environment_settings(prepped.url, {}, None, None, None)
         logger.debug('Query: %s', prepped.url)
-        self.response = self._session.send(prepped, **settings)
+        self.response = self._session.send(prepped, timeout=TIMEOUT, **settings)
         self.response.raise_for_status()
         logger.debug('Response: %s', self.response)
         logger.debug('Response test: %s', self.response.text)
