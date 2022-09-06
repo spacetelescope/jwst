@@ -27,6 +27,7 @@ ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 
 # HTTP status that should get retries
 FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+TIMEOUT = 10 * 60  # 10 minutes
 
 __all__ = [
     'EngdbDirect'
@@ -85,7 +86,7 @@ class EngdbDirect(EngdbABC):
             self.base_url,
             self.default_format,
             ENGDB_METADATA
-        ]))
+        ]), timeout=TIMEOUT)
         response.raise_for_status()
 
     @property
@@ -123,7 +124,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = self.session.get(query)
+        response = self.session.get(query, timeout=TIMEOUT)
         logger.debug('Response="{}"'.format(response))
         response.raise_for_status()
 
@@ -288,7 +289,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = self.session.get(query)
+        response = self.session.get(query, timeout=TIMEOUT)
         logger.debug('Response: %s', response)
         logger.debug('Response: %s', response.json())
         response.raise_for_status()
