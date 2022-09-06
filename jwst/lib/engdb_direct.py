@@ -27,6 +27,7 @@ ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 
 # HTTP status that should get retries
 FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+RETRIES = 10
 TIMEOUT = 10 * 60  # 10 minutes
 
 __all__ = [
@@ -70,13 +71,8 @@ class EngdbDirect(EngdbABC):
     def __init__(self, base_url=None, default_format='dict', **service_kwargs):
         logger.debug('kwargs not used by this service: %s', service_kwargs)
 
-        if base_url is None:
-            base_url = getenv('ENG_BASE_URL')
-        if not base_url:
-            raise RuntimeError('No engineering database URL given.')
-        if base_url[-1] != '/':
-            base_url += '/'
-        self.base_url = base_url
+        self.configure(base_url=base_url)
+
         self.default_format = default_format
 
         self.set_session()
@@ -86,7 +82,7 @@ class EngdbDirect(EngdbABC):
             self.base_url,
             self.default_format,
             ENGDB_METADATA
-        ]), timeout=TIMEOUT)
+        ]), timeout=self.timeout)
         response.raise_for_status()
 
     @property
@@ -99,6 +95,27 @@ class EngdbDirect(EngdbABC):
         if result_format == 'dict/':
             result_format = ''
         self._default_format = result_format
+
+    def configure(self, base_url=None):
+        """Configure from parameters and environment
+
+        Parameters
+        ----------
+        base_url : str
+            The base url for the engineering RESTful service
+        """
+        # Determine the database to use.
+        if base_url is None:
+            base_url = getenv('ENG_BASE_URL')
+        if not base_url:
+            raise RuntimeError('No engineering database URL given.')
+        if base_url[-1] != '/':
+            base_url += '/'
+        self.base_url = base_url
+
+        # Get various timeout parameters
+        self.retries = getenv('ENG_RETRIES', RETRIES)
+        self.timeout = getenv('ENG_TIMEOUT', TIMEOUT)
 
     def get_meta(self, mnemonic='', result_format=None):
         """Get the mnemonics meta info
@@ -124,7 +141,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = self._session.get(query, timeout=TIMEOUT)
+        response = self._session.get(query, timeout=self.timeout)
         logger.debug('Response="{}"'.format(response))
         response.raise_for_status()
 
@@ -289,7 +306,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = self._session.get(query, timeout=TIMEOUT)
+        response = self._session.get(query, timeout=self.timeout)
         logger.debug('Response: %s', response)
         logger.debug('Response: %s', response.json())
         response.raise_for_status()
