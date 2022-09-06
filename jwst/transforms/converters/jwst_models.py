@@ -20,7 +20,7 @@ class NIRCAMGrismDispersionConverter(TransformConverterBase):
     def from_yaml_tree_transform(self, node, tag, ctx):
         from jwst.transforms import models
 
-        _fname = getattr(models, node["class_name"])
+        _fname = getattr(models, node["model_type"])
         return _fname(list(node['orders']),
                       list(node['lmodels']),
                       list(node['xmodels']),
@@ -28,12 +28,6 @@ class NIRCAMGrismDispersionConverter(TransformConverterBase):
                       )
 
     def to_yaml_tree_transform(self, model, tag, ctx):
-        # node = {'orders': list(model.orders),
-        #         'lmodels': list(model.lmodels),
-        #         'xmodels': list(model.xmodels),
-        #         'ymodels': list(model.ymodels),
-        #         'class_name': type(model).name
-        #         }
         xll = [list(m) for m in model.xmodels]
         yll = [list(m) for m in model.ymodels]
         lll = [list(m) for m in model.lmodels]
@@ -43,12 +37,6 @@ class NIRCAMGrismDispersionConverter(TransformConverterBase):
                 'lmodels': lll,
                 'model_type': type(model).name
                 }
-        # node = {'orders': model.orders,
-        #         'lmodels': model.lmodels,
-        #         'xmodels': model.xmodels,
-        #         'ymodels': model.ymodels,
-        #         'class_name': type(model).name
-        #         }
         return node
 
 
