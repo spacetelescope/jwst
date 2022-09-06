@@ -7,6 +7,7 @@ import logging
 from os import getenv
 import re
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from .engdb_lib import EngDB_Value, EngdbABC
 
@@ -23,6 +24,9 @@ ENGDB_DATA = 'Data/'
 ENGDB_DATA_XML = 'xml/Data/'
 ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
+
+# HTTP status that should get retries
+FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
 
 __all__ = [
     'EngdbDirect'
@@ -74,8 +78,10 @@ class EngdbDirect(EngdbABC):
         self.base_url = base_url
         self.default_format = default_format
 
+        self.set_session()
+
         # Check for aliveness
-        response = requests.get(''.join([
+        response = self.session.get(''.join([
             self.base_url,
             self.default_format,
             ENGDB_METADATA
@@ -117,7 +123,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = requests.get(query)
+        response = self.session.get(query)
         logger.debug('Response="{}"'.format(response))
         response.raise_for_status()
 
@@ -203,6 +209,14 @@ class EngdbDirect(EngdbABC):
 
         return results.collection
 
+    def set_session(self):
+        """Setup HTTP session"""
+        s = requests.Session()
+        retries = Retry(total=10, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+
+        self.session = s
+
     def _get_records(
             self,
             mnemonic,
@@ -274,7 +288,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = requests.get(query)
+        response = self.session.get(query)
         logger.debug('Response: %s', response)
         logger.debug('Response: %s', response.json())
         response.raise_for_status()

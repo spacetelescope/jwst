@@ -28,7 +28,7 @@ BAD_MNEMONIC = 'No_Such_MNEMONIC'
 NODATA_STARTIME = '2014-01-01'
 NODATA_ENDTIME = '2014-01-02'
 
-ALTERNATE_HOST = 'http://twjwdmsemwebag.stsci.edu'
+ALTERNATE_HOST = 'https://twjwdmsemwebag.stsci.edu'
 ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAccSide2/TlmMnemonicDataSrv.svc/'
 
 
@@ -72,7 +72,7 @@ def test_environmental(jail_environ):
 
 
 def test_environmental_bad(jail_environ):
-    alternate = 'http://google.com/'
+    alternate = 'https://google.com/'
     did_except = False
     os.environ['ENG_BASE_URL'] = alternate
     try:
