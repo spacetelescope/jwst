@@ -82,7 +82,7 @@ class EngdbDirect(EngdbABC):
         self.set_session()
 
         # Check for aliveness
-        response = self.session.get(''.join([
+        response = self._session.get(''.join([
             self.base_url,
             self.default_format,
             ENGDB_METADATA
@@ -124,7 +124,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = self.session.get(query, timeout=TIMEOUT)
+        response = self._session.get(query, timeout=TIMEOUT)
         logger.debug('Response="{}"'.format(response))
         response.raise_for_status()
 
@@ -216,7 +216,7 @@ class EngdbDirect(EngdbABC):
         retries = Retry(total=10, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
         s.mount('https://', HTTPAdapter(max_retries=retries))
 
-        self.session = s
+        self._session = s
 
     def _get_records(
             self,
@@ -289,7 +289,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = self.session.get(query, timeout=TIMEOUT)
+        response = self._session.get(query, timeout=TIMEOUT)
         logger.debug('Response: %s', response)
         logger.debug('Response: %s', response.json())
         response.raise_for_status()
