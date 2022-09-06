@@ -1,6 +1,11 @@
 1.7.1 (unreleased)
 ==================
 
+engdb_tools
+-----------
+
+- Add retries and timeout parameters to engineering access calls [#7025]
+
 photom
 ------
 
