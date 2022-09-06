@@ -169,6 +169,7 @@ class EngdbMast(EngdbABC):
 
     def configure(self, base_url=None, token=None):
         """Configure from parameters and environment
+
         Parameters
         ----------
         base_url : str

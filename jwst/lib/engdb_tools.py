@@ -55,6 +55,12 @@ MAST_API_TOKEN
     If no token is provided in code or by command line parameters, this value will be used.
     `~jwst.lib.engdb_mast.EngdbMast` service requires a token to be provided.
     See https://auth.mast.stsci.edu/ for more information.
+
+ENG_RETRIES
+    Number of attempts to make when connecting to the service. Default is 10.
+
+ENG_TIMEOUT
+    Number of seconds before timing out a network connection. Default is 600 seconds (10 minutes)
 """
 import logging
 
