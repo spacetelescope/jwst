@@ -170,7 +170,7 @@ class Observation:
             self.cached_object = {}
 
         # Initialize the simulated dispersed image
-        self.simulated_image = np.zeros(self.dims, np.float)
+        self.simulated_image = np.zeros(self.dims, float)
 
         # Loop over all source ID's from segmentation map
         for i in range(len(self.IDs)):
@@ -265,7 +265,7 @@ class Observation:
                 all_res.append(dispersed_pixel(*pars[i]))
 
         # Initialize blank image for this source
-        this_object = np.zeros(self.dims, np.float)
+        this_object = np.zeros(self.dims, float)
 
         nres = 0
         for pp in all_res:
@@ -309,7 +309,7 @@ class Observation:
         if not self.cache:
             return
 
-        self.simulated_image = np.zeros(self.dims, np.float)
+        self.simulated_image = np.zeros(self.dims, float)
 
         for i in range(len(self.IDs)):
             this_object = self.disperse_chunk_from_cache(i, trans=trans)
@@ -325,7 +325,7 @@ class Observation:
         time1 = time.time()
 
         # Initialize blank image for this object
-        this_object = np.zeros(self.dims, np.float)
+        this_object = np.zeros(self.dims, float)
 
         if trans is not None:
             log.debug("Applying a transmission function...")
