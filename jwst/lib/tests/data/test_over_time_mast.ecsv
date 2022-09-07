@@ -6,15 +6,15 @@
 # - {name: ra, datatype: float64}
 # - {name: dec, datatype: float64}
 # - {name: pa_v3, datatype: float64}
-# meta: {allow_default: 'False', default_pa_v3: '0.0', dry_run: 'False', engdb_url: '''https://mast.stsci.edu''', fgsid: '1', fsmcorr_units: '''arcsec''',
-#   fsmcorr_version: '''latest''', guide_star_wcs: 'WCSRef(ra=None, dec=None, pa=None)', j2fgs_transpose: 'True', jwst_velocity: None,
-#   method: '<Methods.COARSE_TR_202111: ''coarse_tr_202111''>', obsend: None, obsstart: None, override_transforms: None, pcs_mode: None,
-#   pointing: "Pointing(q=array([-0.30521413, -0.79144945, -0.25000546,  0.46685048]), j2fgs_matrix=array([-8.73067300e-04,  3.60334320e-03,\
-#     \  9.99993132e-01,  9.99757625e-01,\n       -2.19949530e-02,  9.52115800e-04,  2.19982331e-02,  9.99751584e-01,\n       -3.58325960e-03]),\
-#     \ fsmcorr=array([-0.15910795, -0.00529688]), obstime=<Time object: scale='utc' format='unix' value=1643840740.9320743>, gs_commanded=array([0.,\
-#     \ 0.]), fgsid=1, gs_position=array([0., 0.]))", reduce_func: None, siaf: 'SIAF(v2_ref=0.0, v3_ref=0.0, v3yangle=0.0, vparity=1.0,
-#     crpix1=0, crpix2=0, cdelt1=3600, cdelt2=3600, vertices_idl=(0, 1, 1, 0, 0, 0, 1, 1))', siaf_db: <jwst.lib.siafdb.SiafDb object at
-#     0x7fa3fe746640>, tolerance: '60.0', useafter: None, v3pa_at_gs: None}
+# meta: {allow_default: 'False', default_pa_v3: '0.0', detector: None, dry_run: 'False', engdb_url: '''https://mast.stsci.edu''', fgsid: '1',
+#   fsmcorr_units: '''arcsec''', fsmcorr_version: '''latest''', guide_star_wcs: 'WCSRef(ra=None, dec=None, pa=None)', j2fgs_transpose: 'True',
+#   jwst_velocity: None, method: '<Methods.COARSE_TR_202111: ''coarse_tr_202111''>', obsend: None, obsstart: None, override_transforms: None,
+#   pcs_mode: None, pointing: "Pointing(q=array([-0.30521413, -0.79144945, -0.25000546,  0.46685048]), j2fgs_matrix=array([-8.73067300e-04,\
+#     \  3.60334320e-03,  9.99993132e-01,  9.99757625e-01,\n       -2.19949530e-02,  9.52115800e-04,  2.19982331e-02,  9.99751584e-01,\n\
+#     \       -3.58325960e-03]), fsmcorr=array([-0.15910795, -0.00529688]), obstime=<Time object: scale='utc' format='unix' value=1643840740.9320743>,\
+#     \ gs_commanded=array([0., 0.]), fgsid=0, gs_position=array([0., 0.]))", reduce_func: None, siaf: 'SIAF(v2_ref=0.0, v3_ref=0.0, v3yangle=0.0,
+#     vparity=1.0, crpix1=0, crpix2=0, cdelt1=3600, cdelt2=3600, vertices_idl=(0, 1, 1, 0, 0, 0, 1, 1))', siaf_db: <jwst.lib.siafdb.SiafDb
+#     object at 0x7fa414f061a0>, tolerance: '60.0', useafter: None, v3pa_at_gs: None}
 # schema: astropy-2.0
 source obstime ra dec pa_v3
-"time range" 2022-02-02T22:25:40.932 146.550322401799 63.08381107913903 194.15784810636973
+"time range" 2022-02-02T22:25:40.932 146.5503941066434 63.08387154277842 194.1482993002141

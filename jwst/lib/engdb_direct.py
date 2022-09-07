@@ -7,6 +7,7 @@ import logging
 from os import getenv
 import re
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from .engdb_lib import EngDB_Value, EngdbABC
 
@@ -23,6 +24,11 @@ ENGDB_DATA = 'Data/'
 ENGDB_DATA_XML = 'xml/Data/'
 ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
+
+# HTTP status that should get retries
+FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+RETRIES = 10
+TIMEOUT = 10 * 60  # 10 minutes
 
 __all__ = [
     'EngdbDirect'
@@ -65,21 +71,18 @@ class EngdbDirect(EngdbABC):
     def __init__(self, base_url=None, default_format='dict', **service_kwargs):
         logger.debug('kwargs not used by this service: %s', service_kwargs)
 
-        if base_url is None:
-            base_url = getenv('ENG_BASE_URL')
-        if not base_url:
-            raise RuntimeError('No engineering database URL given.')
-        if base_url[-1] != '/':
-            base_url += '/'
-        self.base_url = base_url
+        self.configure(base_url=base_url)
+
         self.default_format = default_format
 
+        self.set_session()
+
         # Check for aliveness
-        response = requests.get(''.join([
+        response = self._session.get(''.join([
             self.base_url,
             self.default_format,
             ENGDB_METADATA
-        ]))
+        ]), timeout=self.timeout)
         response.raise_for_status()
 
     @property
@@ -92,6 +95,27 @@ class EngdbDirect(EngdbABC):
         if result_format == 'dict/':
             result_format = ''
         self._default_format = result_format
+
+    def configure(self, base_url=None):
+        """Configure from parameters and environment
+
+        Parameters
+        ----------
+        base_url : str
+            The base url for the engineering RESTful service
+        """
+        # Determine the database to use.
+        if base_url is None:
+            base_url = getenv('ENG_BASE_URL')
+        if not base_url:
+            raise RuntimeError('No engineering database URL given.')
+        if base_url[-1] != '/':
+            base_url += '/'
+        self.base_url = base_url
+
+        # Get various timeout parameters
+        self.retries = getenv('ENG_RETRIES', RETRIES)
+        self.timeout = getenv('ENG_TIMEOUT', TIMEOUT)
 
     def get_meta(self, mnemonic='', result_format=None):
         """Get the mnemonics meta info
@@ -117,7 +141,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = requests.get(query)
+        response = self._session.get(query, timeout=self.timeout)
         logger.debug('Response="{}"'.format(response))
         response.raise_for_status()
 
@@ -203,6 +227,14 @@ class EngdbDirect(EngdbABC):
 
         return results.collection
 
+    def set_session(self):
+        """Setup HTTP session"""
+        s = requests.Session()
+        retries = Retry(total=10, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+
+        self._session = s
+
     def _get_records(
             self,
             mnemonic,
@@ -274,7 +306,7 @@ class EngdbDirect(EngdbABC):
         logger.debug('Query URL="{}"'.format(query))
 
         # Make our request
-        response = requests.get(query)
+        response = self._session.get(query, timeout=self.timeout)
         logger.debug('Response: %s', response)
         logger.debug('Response: %s', response.json())
         response.raise_for_status()

@@ -6,6 +6,7 @@ import logging
 from os import getenv
 from pathlib import Path
 import requests
+from requests.adapters import HTTPAdapter, Retry
 from shutil import copy2
 
 from astropy.table import Table
@@ -20,6 +21,11 @@ __all__ = ['EngdbMast']
 MAST_BASE_URL = 'https://mast.stsci.edu'
 API_URI = 'api/v0.1/Download/file'
 SERVICE_URI = 'mast:jwstedb/'
+
+# HTTP status that should get retries
+FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+RETRIES = 10
+TIMEOUT = 10 * 60  # 10 minutes
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -61,38 +67,33 @@ class EngdbMast(EngdbABC):
     #: The results of the last query.
     response = None
 
+    #: Number of retries to attempt to contact the service
+    retries = RETRIES
+
     #: The start time of the last query.
     starttime = None
+
+    #: Network timeout when communicating with the service
+    timeout = TIMEOUT
+
+    #: MAST Token
+    token = None
 
     def __init__(self, base_url=None, token=None, **service_kwargs):
         logger.debug('kwargs not used by this service: %s', service_kwargs)
 
-        # Determine the database to use
-        if base_url is None:
-            base_url = getenv('ENG_BASE_URL', MAST_BASE_URL)
-        if base_url[-1] != '/':
-            base_url += '/'
-        self.base_url = base_url
-
-        # Get the token
-        if token is None:
-            token = getenv('MAST_API_TOKEN', None)
-        if token is None:
-            raise RuntimeError('No MAST token provided but is required. See https://auth.mast.stsci.edu/ for more information.')
+        self.configure(base_url=base_url, token=token)
 
         # Check for basic aliveness.
         try:
-            resp = requests.get(base_url + 'api/')
+            resp = requests.get(self.base_url + 'api/')
         except requests.exceptions.ConnectionError as exception:
-            raise RuntimeError(f'MAST url: {base_url} is unreachable.') from exception
+            raise RuntimeError(f'MAST url: {self.base_url} is unreachable.') from exception
         if resp.status_code != 200:
-            raise RuntimeError(f'MAST url: {base_url} is not available. Returned HTTPS status {resp.status_code}')
+            raise RuntimeError(f'MAST url: {self.base_url} is not available. Returned HTTPS status {resp.status_code}')
 
         # Basics are covered. Finalize initialization.
-        self._req = requests.Request(method='GET',
-                                     url=base_url + API_URI,
-                                     headers={'Authorization': f'token {token}'})
-        self._session = requests.Session()
+        self.set_session()
 
     def cache(self, mnemonics, starttime, endtime, cache_path):
         """Cache results for the list of mnemonics
@@ -166,6 +167,39 @@ class EngdbMast(EngdbABC):
         metas_path = Path(__file__).parent / 'tests/data/meta_for_mock.json'
         copy2(metas_path, cache_path / 'meta.json')
 
+    def configure(self, base_url=None, token=None):
+        """Configure from parameters and environment
+
+        Parameters
+        ----------
+        base_url : str
+            The base url for the engineering RESTful service. If not defined,
+            the environmental variable ENG_BASE_URL is queried. Otherwise
+            the default MAST website is used.
+
+        token : str or None
+            The MAST access token. If not defined, the environmental variable
+            MAST_API_TOKEN is queried. A token is required.
+            For more information, see 'https://auth.mast.stsci.edu/'
+        """
+        # Determine the database to use
+        if base_url is None:
+            base_url = getenv('ENG_BASE_URL', MAST_BASE_URL)
+        if base_url[-1] != '/':
+            base_url += '/'
+        self.base_url = base_url
+
+        # Get the token
+        if token is None:
+            token = getenv('MAST_API_TOKEN', None)
+        if token is None:
+            raise RuntimeError('No MAST token provided but is required. See https://auth.mast.stsci.edu/ for more information.')
+        self.token = token
+
+        # Get various timeout parameters
+        self.retries = getenv('ENG_RETRIES', RETRIES)
+        self.timeout = getenv('ENG_TIMEOUT', TIMEOUT)
+
     def get_meta(self, *kwargs):
         """Get the mnemonics meta info
 
@@ -238,6 +272,18 @@ class EngdbMast(EngdbABC):
 
         return results.collection
 
+    def set_session(self):
+        """Setup HTTP session"""
+        self._req = requests.Request(method='GET',
+                                     url=self.base_url + API_URI,
+                                     headers={'Authorization': f'token {self.token}'})
+
+        s = requests.Session()
+        retries = Retry(total=self.retries, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+
+        self._session = s
+
     def _get_records(
             self,
             mnemonic,
@@ -298,7 +344,7 @@ class EngdbMast(EngdbABC):
         prepped = self._session.prepare_request(self._req)
         settings = self._session.merge_environment_settings(prepped.url, {}, None, None, None)
         logger.debug('Query: %s', prepped.url)
-        self.response = self._session.send(prepped, **settings)
+        self.response = self._session.send(prepped, timeout=self.timeout, **settings)
         self.response.raise_for_status()
         logger.debug('Response: %s', self.response)
         logger.debug('Response test: %s', self.response.text)
