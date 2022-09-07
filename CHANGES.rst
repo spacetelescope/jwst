@@ -468,6 +468,12 @@ documentation
 
 - CRDS PUB deprecation notice and transition documentation [#7342]
 
+tweakreg
+--------
+
+- Include option to use IRAFStarFinder instead of default DAOStarFinder in ``tweakreg_catalog`` [#7024]
+
+
 1.8.2 (2022-10-20)
 ==================
 
@@ -620,6 +626,7 @@ tweakreg
 
 - Added support for user-provided catalog files. [#7022]
 
+
 1.7.2 (2022-09-12)
 ==================
 
@@ -673,11 +680,14 @@ tweakreg
 - Bug fix: removed ``min_gaia`` which should have been removed in the
   PR 6987. [#7023]
 
+- Include option to use IRAFStarFinder instead of default DAOStarFinder in ``tweakreg_catalog`` [#7024]
+
 wfss_contam
 -----------
 
 - Update WCS transform attribute names for 2D source cutout offsets,
   to stay in synch with newer wcs models. [#7028]
+
 
 1.7.0 (2022-09-01)
 ==================
@@ -850,6 +860,7 @@ tweakreg
 source_catalog
 --------------
 - Reset input model (units, re-add backgroud) after source_catalog step. [#6942]
+
 
 1.6.2 (2022-07-19)
 ==================

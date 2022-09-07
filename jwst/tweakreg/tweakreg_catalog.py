@@ -1,14 +1,14 @@
 from astropy.table import Table
 import numpy as np
-from photutils.detection import DAOStarFinder
+from photutils.detection import DAOStarFinder, IRAFStarFinder
 
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
 
 from ..source_catalog.detection import JWSTBackground
 
 
-def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
-                          sharphi=1.0, roundlo=-1.0, roundhi=1.0,
+def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, method='dao',
+                          sharplo=0.2, sharphi=1.0, roundlo=-1.0, roundhi=1.0,
                           brightest=None, peakmax=None, bkg_boxsize=400):
     """
     Create a catalog of point-line sources to be used for image
@@ -29,6 +29,10 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     snr_threshold : float
         The signal-to-noise ratio per pixel above the ``background`` for
         which to consider a pixel as possibly being part of a source.
+
+    method : str, optional
+        Method to use for source detection. Options are `dao` for
+        DAOStarFinder, and `iraf` for IRAFStarFinder.
 
     sharplo : float, optional
         The lower bound on sharpness for object detection.
@@ -79,11 +83,20 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     threshold = np.median(threshold_img)  # DAOStarFinder requires float
 
-    daofind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
-                            sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
-                            roundhi=roundhi, brightest=brightest,
-                            peakmax=peakmax)
-    sources = daofind(model.data, mask=coverage_mask)
+    if method == 'dao':
+        sourcefind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
+                                   sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
+                                   roundhi=roundhi, brightest=brightest,
+                                   peakmax=peakmax)
+    elif method == 'iraf':
+        sourcefind = IRAFStarFinder(fwhm=kernel_fwhm, threshold=threshold,
+                                    sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
+                                    roundhi=roundhi, brightest=brightest,
+                                    peakmax=peakmax)
+    else:
+        raise ValueError('method should be one of dao, iraf.')
+
+    sources = sourcefind(model.data, mask=coverage_mask)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     if sources:

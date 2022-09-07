@@ -58,6 +58,7 @@ class TweakRegStep(Step):
         catfile = string(default='') # Name of the file with a list of custom user-provided catalogs
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
+        catalog_method = option('dao', 'iraf', default='dao') # Method to use for source finding.
         sharplo = float(default=0.2) # The lower bound on sharpness for object detection.
         sharphi = float(default=1.0) # The upper bound on sharpness for object detection.
         roundlo = float(default=-1.0) # The lower bound on roundness for object detection.

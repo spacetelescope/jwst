@@ -20,9 +20,11 @@ format automatically recognized by :py:meth:`~astropy.table.Table.read`.
 
 When ``meta.tweakreg_catalog`` attribute of input data models is `None` or
 an empty string, then ``tweakreg`` step will attempt to detect sources in the
-input images. Stars are detected in the image using the Photutils "daofind"
-function. Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
+input images. By default, stars are detected in the image using the Photutils
+"daofind" function (although this can be changed to Photutils
+`IRAFStarFinder`_) Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
+. Photutils.daofind is an implementation of the
 <http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
@@ -32,6 +34,7 @@ roundness and sharpness, whose lower and upper bounds can be
 specified.
 
 .. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
+.. _IRAFStarFinder: https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html
 
 Custom Source Catalogs
 ----------------------
@@ -156,6 +159,14 @@ The ``tweakreg`` step has the following optional arguments:
 
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. (Default=5.0)
+
+* ``catalog_method``: A `str` value indicating the type of source extraction
+  to use when generating tweakreg catalogs. Allowed values:
+
+  - ``'dao'``: DAOStarFinder
+  - ``'iraf'``: IRAFStarFinder
+
+  The default value is "dao".
 
 * ``sharplo``: A `float` value indicating The lower bound on sharpness
   for object detection. (Default=0.2)
