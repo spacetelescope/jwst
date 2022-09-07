@@ -1,4 +1,6 @@
 import pytest
+from packaging.version import Version
+
 from numpy import zeros
 from numpy.testing import assert_allclose
 from astropy import units as u
@@ -6,6 +8,7 @@ from astropy import wcs
 from astropy.io import fits
 from astropy.modeling.models import RotationSequence3D
 
+import gwcs
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 
@@ -189,6 +192,8 @@ def test_create_fitswcs(tmpdir, create_model_3d):
     assert_allclose((ra, dec), (gra, gdec))
 
 
+@pytest.mark.xfail(Version(gwcs.__version__) > Version('0.18.1'),
+                   reason="Changes in fit errors units in gwcs.to_sip_fits")
 def test_sip_approx(tmpdir):
     # some of the wcs info
     true_wcs = {
