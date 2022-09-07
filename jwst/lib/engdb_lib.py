@@ -12,7 +12,9 @@ EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 DATA = '_data.json'
 
 # HTTP status that should get retries
-FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+# For statuses, just blanket cover the 4xx and 5xx errors
+# However, do immediately fail for 404.
+FORCE_STATUSES = list(range(400, 404)) + list(range(405, 460)) + list(range(500, 520))
 RETRIES = 10
 TIMEOUT = 10 * 60  # 10 minutes
 
