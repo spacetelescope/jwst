@@ -4,6 +4,8 @@
 engdb_tools
 -----------
 
+- Update HTTP status list to include 4xx issues [#7026]
+
 - Add retries and timeout parameters to engineering access calls [#7025]
 
 photom
