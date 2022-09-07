@@ -72,11 +72,8 @@ class TweakRegStep(Step):
         fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
-        align_to_gaia = boolean(default=False)  # Align to GAIA catalog
-        gaia_catalog = string(default='GAIADR2')  # Catalog file name or one of: {_SINGLE_GROUP_REFCAT_STR}
-        min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
-        save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
-        output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
+        abs_refcat = string(default='')  # Catalog file name or one of: {_SINGLE_GROUP_REFCAT_STR}, or None, or ''
+        save_abs_catalog = boolean(default=False)  # Write out used absolute astrometric reference catalog as a separate product
         abs_minobj = integer(default=15) # Minimum number of objects acceptable for matching when performing absolute astrometry
         abs_searchrad = float(default=6.0) # The search radius in arcsec for a match when performing absolute astrometry
         # We encourage setting this parameter to True. Otherwise, xoffset and yoffset will be set to zero.
@@ -87,6 +84,7 @@ class TweakRegStep(Step):
         abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift')
         abs_nclip = integer(min=0, default=3) # Number of clipping iterations in fit when performing absolute astrometry
         abs_sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units when performing absolute astrometry
+        output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
     """
 
     reference_file_types = []
@@ -101,10 +99,13 @@ class TweakRegStep(Step):
                       "containing one or more DataModels.", ) + e.args[1:]
             raise e
 
-        if self.align_to_gaia:
+        if self.abs_refcat is not None and self.abs_refcat.strip():
+            align_to_abs_refcat = True
             # Set expand_refcat to True to eliminate possibility of duplicate
-            # entries when aligning to GAIA
+            # entries when aligning to absolute astrometric reference catalog
             self.expand_refcat = True
+        else:
+            align_to_abs_refcat = False
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
@@ -170,7 +171,7 @@ class TweakRegStep(Step):
                       .format(len(grp_img)))
         self.log.info("Image groups:")
 
-        if len(grp_img) == 1 and not self.align_to_gaia:
+        if len(grp_img) == 1 and not align_to_abs_refcat:
             self.log.info("* Images in GROUP 1:")
             for im in grp_img[0]:
                 self.log.info("     {}".format(im.meta.filename))
@@ -242,7 +243,7 @@ class TweakRegStep(Step):
                     self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
                     for model in images:
                         model.meta.cal_step.tweakreg = "SKIPPED"
-                    if not self.align_to_gaia:
+                    if not align_to_abs_refcat:
                         self.skip = True
                         return images
                 else:
@@ -277,22 +278,22 @@ class TweakRegStep(Step):
 
                     for model in images:
                         model.meta.cal_step.tweakreg = "SKIPPED"
-                    if self.align_to_gaia:
+                    if align_to_abs_refcat:
                         self.log.warning("Skipping relative alignment (stage 1)...")
                     else:
                         self.log.warning("Skipping 'TweakRegStep'...")
                         self.skip = True
                         return images
 
-        if self.align_to_gaia:
+        if align_to_abs_refcat:
             # Get catalog of GAIA sources for the field
             #
             # NOTE:  If desired, the pipeline can write out the reference
             #        catalog as a separate product with a name based on
             #        whatever convention is determined by the JWST Cal Working
             #        Group.
-            if self.save_gaia_catalog:
-                output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
+            if self.save_abs_catalog:
+                output_name = 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower())
             else:
                 output_name = None
 
@@ -300,8 +301,8 @@ class TweakRegStep(Step):
             self.abs_xoffset = 0
             self.abs_yoffset = 0
 
-            self.gaia_catalog = self.gaia_catalog.strip()
-            gaia_cat_name = self.gaia_catalog.upper()
+            self.abs_refcat = self.abs_refcat.strip()
+            gaia_cat_name = self.abs_refcat.upper()
 
             if gaia_cat_name in SINGLE_GROUP_REFCAT:
                 ref_cat = amutils.create_astrometric_catalog(
@@ -310,22 +311,22 @@ class TweakRegStep(Step):
                     output=output_name
                 )
 
-            elif path.isfile(self.gaia_catalog):
-                ref_cat = Table.read(self.gaia_catalog)
+            elif path.isfile(self.abs_refcat):
+                ref_cat = Table.read(self.abs_refcat)
 
             else:
-                raise ValueError("'gaia_catalog' must be a path to an "
+                raise ValueError("'abs_refcat' must be a path to an "
                                  "existing file name or one of the supported "
                                  f"reference catalogs: {_SINGLE_GROUP_REFCAT_STR}.")
 
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
-            if num_ref < self.min_gaia:
+            if num_ref < self.abs_minobj:
                 # Raise Exception here to avoid rest of code in this try block
                 self.log.warning(
                     f"Not enough sources ({num_ref}) in the reference catalog "
                     "for the single-group alignment step to perform a fit. "
-                    f"Skipping alignment to the {self.gaia_catalog} reference "
+                    f"Skipping alignment to the {self.abs_refcat} reference "
                     "catalog!"
                 )
             else:
@@ -375,7 +376,7 @@ class TweakRegStep(Step):
                 # Update/create the WCS .name attribute with information
                 # on this astrometric fit as the only record that it was
                 # successful:
-                if self.align_to_gaia:
+                if align_to_abs_refcat:
                     # NOTE: This .name attrib agreed upon by the JWST Cal
                     #       Working Group.
                     #       Current value is merely a place-holder based
@@ -383,7 +384,7 @@ class TweakRegStep(Step):
                     #       translated to the FITS WCSNAME keyword
                     #       IF that is what gets recorded in the archive
                     #       for end-user searches.
-                    imcat.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
+                    imcat.wcs.name = "FIT-LVL3-{}".format(self.abs_refcat)
 
                 image_model.meta.wcs = imcat.wcs
 
