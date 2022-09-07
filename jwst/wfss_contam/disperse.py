@@ -87,7 +87,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     try:
         offset_x = -imgxy_to_grismxy.offset_1
         offset_y = -imgxy_to_grismxy.offset_2
-    except:
+    except AttributeError:
         offset_x = -imgxy_to_grismxy.offset_6
         offset_y = -imgxy_to_grismxy.offset_7
 
