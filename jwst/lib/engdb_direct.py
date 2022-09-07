@@ -9,7 +9,7 @@ import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-from .engdb_lib import EngDB_Value, EngdbABC
+from .engdb_lib import EngDB_Value, EngdbABC, FORCE_STATUSES, RETRIES, TIMEOUT
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -24,11 +24,6 @@ ENGDB_DATA = 'Data/'
 ENGDB_DATA_XML = 'xml/Data/'
 ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
-
-# HTTP status that should get retries
-FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
-RETRIES = 10
-TIMEOUT = 10 * 60  # 10 minutes
 
 __all__ = [
     'EngdbDirect'

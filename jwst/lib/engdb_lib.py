@@ -11,6 +11,11 @@ EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 # Path templates
 DATA = '_data.json'
 
+# HTTP status that should get retries
+FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
+RETRIES = 10
+TIMEOUT = 10 * 60  # 10 minutes
+
 
 class EngdbABC(abc.ABC):
     """Access the JWST Engineering Database

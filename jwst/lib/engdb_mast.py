@@ -13,7 +13,7 @@ from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 
-from .engdb_lib import EngDB_Value, EngdbABC, mnemonic_data_fname
+from .engdb_lib import EngDB_Value, EngdbABC, FORCE_STATUSES, RETRIES, TIMEOUT, mnemonic_data_fname
 
 __all__ = ['EngdbMast']
 
@@ -21,11 +21,6 @@ __all__ = ['EngdbMast']
 MAST_BASE_URL = 'https://mast.stsci.edu'
 API_URI = 'api/v0.1/Download/file'
 SERVICE_URI = 'mast:jwstedb/'
-
-# HTTP status that should get retries
-FORCE_STATUSES = [500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511]
-RETRIES = 10
-TIMEOUT = 10 * 60  # 10 minutes
 
 # Configure logging
 logger = logging.getLogger(__name__)
