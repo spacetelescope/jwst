@@ -4,6 +4,8 @@
 engdb_tools
 -----------
 
+- Update HTTP status list to include 4xx issues [#7026]
+
 - Add retries and timeout parameters to engineering access calls [#7025]
 
 photom
@@ -12,6 +14,12 @@ photom
 - Fix bug in handling of NIRSpec FS data, so that the wavelength-dependent
   flux conversion factors get computed correctly for both point-source and
   extended-source data. [#7019]
+
+straylight
+----------
+
+- Fix a bug in calibrated MRS slopes from small pedestal rate offsets between exposures by reintroducing zeropoint
+  subtraction using dark regions of MRS detectors. [#7013]
 
 tweakreg
 --------
@@ -24,10 +32,16 @@ tweakreg
   indicated via ``abs_refcat`` parameter. When ``abs_refcat`` is None or an
   empty string, alignment to an absolute astrometric catalog will be turned
   OFF. When ``abs_refcat`` is a non-empty string, alignment to an absolute
-  astrometric reference catalog will be turned ON.
+  astrometric reference catalog will be turned ON. [#7023]
 
 - Bug fix: removed ``min_gaia`` which should have been removed in the
   PR 6987. [#7023]
+
+straylight
+----------
+
+- Fix a bug in calibrated MRS slopes from small pedestal rate offsets between exposures by reintroducing zeropoint
+  subtraction using dark regions of MRS detectors. [#7013]
 
 1.7.0 (2022-09-01)
 ==================
