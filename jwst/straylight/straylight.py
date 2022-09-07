@@ -182,5 +182,17 @@ def correct_xartifact(input_model, modelpars):
     model[:, 0:4] = 0.0
     output.data = output.data - model
 
+    # Remove any remaining pedestal stray light values based on inter-channel region
+    # chosen based on analysis of multiple bands of data from various programs
+    if (channel == '12'):
+        pedestal = np.nanmedian(output.data[280:740, 503:516])
+    else:
+        pedestal = np.nanmedian(output.data[280:740, 474:507])
+    try:
+        output.data = output.data - pedestal
+        log.info("Derived pedestal correction " + str(pedestal) + " DN/s")
+    except Exception:
+        log.info("Straylight pedestal correction failed.")
+
     log.info("Cross-artifact model complete.")
     return output
