@@ -13,7 +13,7 @@ def run_image3pipeline(rtdata_module, jail):
     rtdata = rtdata_module
     rtdata.get_asn("nircam/image/level3_F277W_3img_asn.json")
     args = ["calwebb_image3", rtdata.input,
-            "--steps.tweakreg.align_to_gaia=True",
+            "--steps.tweakreg.abs_refcat=GAIADR2",
             "--steps.tweakreg.save_results=True",
             "--steps.tweakreg.output_use_model=True"
             ]

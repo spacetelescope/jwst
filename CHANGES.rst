@@ -32,7 +32,7 @@ tweakreg
   indicated via ``abs_refcat`` parameter. When ``abs_refcat`` is None or an
   empty string, alignment to an absolute astrometric catalog will be turned
   OFF. When ``abs_refcat`` is a non-empty string, alignment to an absolute
-  astrometric reference catalog will be turned ON. [#7023]
+  astrometric reference catalog will be turned ON. [#7023, #7029]
 
 - Bug fix: removed ``min_gaia`` which should have been removed in the
   PR 6987. [#7023]
