@@ -192,8 +192,10 @@ def test_create_fitswcs(tmpdir, create_model_3d):
     assert_allclose((ra, dec), (gra, gdec))
 
 
-@pytest.mark.xfail(Version(gwcs.__version__) > Version('0.18.1'),
-                   reason="Changes in fit errors units in gwcs.to_sip_fits")
+@pytest.mark.xfail(
+    Version('0.18.1') < Version(gwcs.__version__) < Version('0.18.2'),
+    reason="Changes in fit errors units in gwcs.to_sip_fits"
+)
 def test_sip_approx(tmpdir):
     # some of the wcs info
     true_wcs = {
