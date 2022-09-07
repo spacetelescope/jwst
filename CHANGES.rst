@@ -18,8 +18,14 @@ photom
 straylight
 ----------
 
-- Fix a bug in calibrated MRS slopes from small pedestal rate offsets between exposures by reintroducing zeropoint
-  subtraction using dark regions of MRS detectors. [#7013]
+- Fix a bug in calibrated MRS slopes from small pedestal rate offsets between
+  exposures by reintroducing zeropoint subtraction using dark regions of MRS detectors. [#7013]
+
+wfss_contam
+-----------
+
+- Update WCS transform attribute names for 2D source cutout offsets,
+  to stay in synch with newer wcs models. [#7028]
 
 1.7.0 (2022-09-01)
 ==================

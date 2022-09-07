@@ -84,8 +84,12 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # The WCS comes from the first 2D cutout in the grism image, which has
     # the offset from the full-frame origin to the cutout origin in it.
     # We'll use these values later to get back to full-frame coords.
-    offset_x = -imgxy_to_grismxy.offset_1
-    offset_y = -imgxy_to_grismxy.offset_2
+    try:
+        offset_x = -imgxy_to_grismxy.offset_1
+        offset_y = -imgxy_to_grismxy.offset_2
+    except AttributeError:
+        offset_x = -imgxy_to_grismxy.offset_6
+        offset_y = -imgxy_to_grismxy.offset_7
 
     # Setup function for retrieving flux values at each dispersed wavelength
     if len(lams) > 1:
