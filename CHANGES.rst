@@ -27,7 +27,7 @@ tweakreg
   astrometric reference catalog will be turned ON.
 
 - Bug fix: removed ``min_gaia`` which should have been removed in the
-  PR 6987. [#2023]
+  PR 6987. [#7023]
 
 1.7.0 (2022-09-01)
 ==================
