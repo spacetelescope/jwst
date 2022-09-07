@@ -15,6 +15,12 @@ photom
   flux conversion factors get computed correctly for both point-source and
   extended-source data. [#7019]
 
+wfss_contam
+-----------
+
+- Update WCS transform attribute names for 2D source cutout offsets,
+  to stay in synch with newer wcs models. [#7028]
+
 1.7.0 (2022-09-01)
 ==================
 
