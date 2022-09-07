@@ -15,6 +15,12 @@ photom
   flux conversion factors get computed correctly for both point-source and
   extended-source data. [#7019]
 
+straylight
+----------
+
+- Fix a bug in calibrated MRS slopes from small pedestal rate offsets between exposures by reintroducing zeropoint
+  subtraction using dark regions of MRS detectors. [#7013]
+
 1.7.0 (2022-09-01)
 ==================
 

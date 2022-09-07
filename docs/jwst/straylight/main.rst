@@ -32,6 +32,8 @@ The purpose of this routine is thus to model the cross artifact feature in a giv
 and subtract it at the detector level prior to reformatting
 the data into three-dimensional cubes.
 
+At the same time, this step also ensures that the median count rate (in DN/s) in regions of the detector that
+see no direct light from the sky is zero for consistency with the applied flux calibration vectors.
 
 Algorithm
 ---------
