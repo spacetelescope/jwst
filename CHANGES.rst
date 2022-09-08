@@ -257,17 +257,6 @@ jump
 - Added flagging after detected ramp jumps based on two DN thresholds and
   two number of groups to flag [#6943]
 
-extract_1d
-----------
-
-- Update ATOCA algorithm to current development version [#6945]
-
-general
--------
-
-- Made style changes due to the new 5.0.3 version of flake8, which noted many
-  missing white spaces after keywords. [#6958]
-
 master_background
 -----------------
 
