@@ -30,7 +30,7 @@ jobs:
         run: |
           sudo apt-get install graphviz texlive-latex-extra dvipng
 
-      - name: Checkout code
+      - name: Checkout the code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
