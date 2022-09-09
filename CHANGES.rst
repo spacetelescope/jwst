@@ -1,6 +1,13 @@
 1.7.2 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Fixed a bug in ``assign_wcs`` due to which the step could crash due to
+  uncaught exception when SIP approximation fails to reach desired
+  accuracy. [#7036]
+
 
 1.7.1 (2022-09-07)
 ==================
