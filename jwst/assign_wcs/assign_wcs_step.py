@@ -107,10 +107,8 @@ class AssignWcsStep(Step):
                 crpix=None
             )
 
-        except ValueError as e:
+        except (ValueError, RuntimeError) as e:
             log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
                         f'approximation. Reported error is:\n"{e.args[0]}"')
-
-            pass
 
         return result
