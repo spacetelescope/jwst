@@ -11,6 +11,12 @@ assign_wcs
   uncaught exception when SIP approximation fails to reach desired
   accuracy. [#7036]
 
+tweakreg
+--------
+
+- Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
+  code more robust. [#7038]
+
 
 1.7.1 (2022-09-07)
 ==================
