@@ -96,3 +96,17 @@ The use of the reference files is flexible. Full-frame reference
 files can be used for all science exposures, in which case subarrays will be
 extracted from the reference file data to match the science exposure, or
 subarray-specific reference files may be used.
+
+Large Events (Snowballs and Showers)
+====================================
+All the detectors on JWST are affected by large cosmic ray
+events. While these events, in general, affect a large number of
+pixels, the more distinguishing characteristic is that they are
+surrounded by a halo of pixels that have a low level of excess
+counts. These excess counts are, in general, below the detection
+threshold of normal cosmic rays.
+
+To constrain the effect of this halo the jump step will fit ellipses or circles that enclose the large events and expand the ellipses and circles by the input expansion_factor and mark them as jump.
+
+The two types of detectors respond differently. The large events in the near infrared detectors are almost always circles with a central region that is saturated. The saturated core allows the search for smaller events without false positives.
+The MIRI detectors do not, in general, have a saturated center and are only rarely circular. Thus, we fit the minimum enclosing ellipse and do not require that there are saturated pixels within the ellipse.
