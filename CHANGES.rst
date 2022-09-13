@@ -18,6 +18,9 @@ assign_wcs
   uncaught exception when SIP approximation fails to reach desired
   accuracy. [#7036]
 
+- Adjust default parameters for FITS SIP approximation to make it more robust
+  vis-a-vis MIRI imaging distortions. [#7037]
+
 
 1.7.1 (2022-09-07)
 ==================
