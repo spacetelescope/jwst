@@ -89,15 +89,20 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     for nimage in range(n_ints):
         img_int = img_model.data[nimage]
         img_dq = img_model.dq[nimage]
-        bad_locations = np.where(np.bitwise_and(img_dq, bad_bitvalue))
-        # if it's MIRI coronagraphy, only use the bad locations that are in the
-        # science aperture. Set the others to 0 directly to avoid thousands of
-        # logging warnings.
+
+        # Bad locations are defined as pixels set to NaN and/or pixels with
+        # DQ flags contained in the list of bad dq bits
+        bad_locations = np.where(np.bitwise_and(img_dq, bad_bitvalue) | np.isnan(img_int))
+
+        # If it's MIRI coronagraphy, only use the bad locations that are in the
+        # science aperture (i.e. not flagged as NON_SCIENCE). Set the others to 0
+        # directly to avoid thousands of logging warnings.
         if img_model.meta.instrument.name == 'MIRI':
             bad_locations, non_science = separate_non_science_pixels(img_dq, bad_locations)
             # skip the median filter for non-science pixels
             img_int[non_science[0], non_science[1]] = 0
-        # Fill the bad pixel values with the median of the data in a box region
+
+        # Fill the bad pixel values with the median of the data in the specified box region
         for i_pos in range(len(bad_locations[0])):
             # note: x and y are switched here but median_fill_value is
             # consistent with their usage here so it's all OK

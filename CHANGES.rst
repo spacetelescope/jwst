@@ -1,4 +1,14 @@
-1.7.2 (unreleased)
+1.7.3 (unreleased)
+==================
+
+align_refs
+----------
+
+- Upgrade the median image replacement routine to also replace NaN pixels,
+  in addition to pixels flagged as bad. [#7044]
+
+
+1.7.2 (2022-09-12)
 ==================
 
 assign_wcs
