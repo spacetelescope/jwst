@@ -5,7 +5,7 @@ resample_step
 -------------
 
 - fixed a bug that was causing a misalignment between the 'single' mosaic
-  image and the input CAL images. [#7040]
+  image and the input CAL images. [#7042]
 
 1.7.2 (2022-09-12)
 ==================
