@@ -231,12 +231,19 @@ def split_container(container):
     """Divide a ModelContainer with science and background into one of each
     """
     asn = container.meta.asn_table.instance
+    # Could update the asn_table in the assign_mtwcs step to change filenames to assign_mtwcs suffixes instead of this kluge?\
+
     background = datamodels.ModelContainer()
     science = datamodels.ModelContainer()
+    # Check to see if assign_mtwcs has been run - if so, need suffix replacement
+    assign_mtwcs = False
+    for f in container:
+        if f.meta.cal_step.assign_mtwcs == 'COMPLETE':
+            assign_mtwcs = True
     for product in asn['products']:
         for member in product['members']:
             if member['exptype'].lower() == 'science':
-                science.append(datamodels.open(member['expname']))
+                science.append(datamodels.open(member['expname'].replace('cal', 'assign_mtwcs')))
             if member['exptype'].lower() == 'background':
                 background.append(datamodels.open(member['expname']))
 
