@@ -1,6 +1,11 @@
 1.7.3 (unreleased)
 ==================
 
+resample_spec_step
+------------------
+
+- Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
+
 resample_step
 -------------
 
