@@ -6,6 +6,12 @@ align_refs
 
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
+  
+tweakreg
+--------
+
+- Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
+  code more robust. [#7038]
 
 
 1.7.2 (2022-09-12)
