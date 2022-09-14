@@ -236,11 +236,6 @@ class ResampleData:
             )
         )
 
-        # TODO: The following method and call should be moved upstream to
-        # ResampleSpecStep
-        if isinstance(output_model, datamodels.SlitModel):
-            self.update_slit_metadata(output_model)
-
         self.update_exposure_times(output_model)
         self.output_models.append(output_model)
 
@@ -486,23 +481,3 @@ class ResampleData:
             wtscale=wtscale,
             fillstr=fillval
         )
-
-    def update_slit_metadata(self, model):
-        """
-        Update slit attributes in the resampled slit image.
-
-        This is needed because model.slit attributes are not in model.meta, so
-        the normal update() method doesn't work with them. Updates output_model
-        in-place.
-        """
-        for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                     'dispersion_direction', 'shutter_state']:
-            try:
-                val = getattr(self.input_models[-1], attr)
-            except AttributeError:
-                pass
-            else:
-                if val is not None:
-                    setattr(model, attr, val)
