@@ -241,6 +241,10 @@ tweakreg
 
 - Refactored code to work with changes in ``tweakwcs`` version 0.8.0. [#7006]
 
+source_catalog
+--------------
+- Reset input model (units, re-add backgroud) after source_catalog step. [#6942]
+
 1.6.2 (2022-07-19)
 ==================
 
