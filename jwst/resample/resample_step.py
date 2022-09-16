@@ -76,18 +76,19 @@ class ResampleStep(Step):
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
-        # Get drizzle parameters reference file
-        self.wht_type = self.weight_type
-        for reftype in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], reftype)
-
-        if ref_filename != 'N/A':
-            self.log.info('Drizpars reference file: {}'.format(ref_filename))
+        #  Get drizzle parameters reference file, if there is one
+        if 'drizpars' in self.reference_file_types:
+            ref_filename = self.get_reference_file(input_models[0], 'drizpars')
+            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
-        else:
-            # If there is no drizpars reffile
-            self.log.info("No DRIZPARS reffile")
+        else:  # no drizpars reference file found
+            ref_filename = 'N/A'
+
+        if ref_filename == 'N/A':
+            self.log.info('No drizpars reference file found.')
             kwargs = self._set_spec_defaults()
+
+        self.wht_type = self.weight_type
 
         kwargs['allowed_memory'] = self.allowed_memory
 
@@ -105,6 +106,7 @@ class ResampleStep(Step):
         kwargs['crval'] = _check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
         kwargs['pscale'] = self.pixel_scale
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
         kwargs['in_memory'] = self.in_memory
 
         # Call the resampling routine
@@ -116,7 +118,14 @@ class ResampleStep(Step):
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
-            model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+
+            # if pixel_scale exists, it will override pixel_scale_ratio.
+            # calculate the actual value of pixel_scale_ratio based on pixel_scale
+            # because source_catalog uses this value from the header.
+            if not self.pixel_scale:
+                model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+            else:
+                model.meta.resample.pixel_scale_ratio = (self.pixel_scale ** 2) / model.meta.photometry.pixelarea_arcsecsq
             model.meta.resample.pixfrac = kwargs['pixfrac']
             self.update_phot_keywords(model)
 
@@ -129,9 +138,9 @@ class ResampleStep(Step):
     def update_phot_keywords(self, model):
         """Update pixel scale keywords"""
         if model.meta.photometry.pixelarea_steradians is not None:
-            model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
+            model.meta.photometry.pixelarea_steradians *= model.meta.resample.pixel_scale_ratio**2
         if model.meta.photometry.pixelarea_arcsecsq is not None:
-            model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
+            model.meta.photometry.pixelarea_arcsecsq *= model.meta.resample.pixel_scale_ratio**2
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -187,7 +196,7 @@ class ResampleStep(Step):
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.wht_type
+            wht_type=self.weight_type
             # pscale_ratio=self.pixel_scale_ratio, # I think this can be removed JEM (??)
         )
 
