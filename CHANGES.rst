@@ -7,6 +7,13 @@ align_refs
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
   
+associations
+------------
+
+- Enforce no path data in ``expname`` in association files by raising an
+  exception if path data is found.  Also, expanded documentation to make this
+  more clear to users. [#7008]
+
 tweakreg
 --------
 
@@ -107,10 +114,6 @@ associations
 ------------
 
 - Refactor Asn_Lv2WFSS to better descriminate what direct images should be used [#7010]
-
-- Enforce no path data in ``expname`` in association files by raising an
-  exception if path data is found.  Also, expanded documentation to make this
-  more clear to users. [#7008]
 
 cube_build
 ----------
