@@ -39,11 +39,10 @@ The parameters are defined by the :ref:`Step.spec <the-spec-member>` member.
 Input Files, Associations, and Directories
 ``````````````````````````````````````````
 
-It is presumed that all input files are co-resident in the same
-directory. This directory is whichever directory the first input file
-is found in. This is particularly important for associations. It is
-assumed that all files referenced by an association are in the same
-directory as the association file itself.
+All input files must be in the same directory. This directory is
+whichever directory the first input file is found in. This is particularly
+important for associations. It is assumed that all files referenced by an
+association are in the same directory as the association file itself.
 
 Output Files and Directories
 ````````````````````````````
