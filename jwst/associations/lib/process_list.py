@@ -100,6 +100,11 @@ class ProcessList:
         self.work_over = work_over
         self.only_on_match = only_on_match
 
+    @property
+    def hash(self):
+        """Create a unique hash"""
+        return (tuple(self.rules), self.work_over, self.only_on_match)
+
     def __str__(self):
         result = '{}(n_items: {}, {})'.format(
             self.__class__.__name__,
@@ -122,41 +127,41 @@ class ProcessQueue(deque):
                 break
 
 
-class ProcessQueueNoDups:
-    """First-In-First-Out queue
+class ProcessListQueue:
+    """First-In-First-Out queue of ProcessLists
 
     Checks on whether the objects are already in
     the queue
 
     Parameters
     ----------
-    init : [obj[,...]] or None
-        List of objects to put on the queue
+    init : [ProcessList[,...]] or None
+        List of ProcessLists to put on the queue.
     """
     def __init__(self, init=None):
-
-        self._members = set()
-        self._queue = deque()
-
+        self._queue = dict()
         if init is not None:
             self.extend(init)
 
     def extend(self, iterable):
         """Add objects if not already in the queue"""
-        for obj in iterable:
-            self.append(obj)
+        for process_list in iterable:
+            self.append(process_list)
 
-    def append(self, obj):
+    def append(self, process_list):
         """Add object if not already in the queue"""
-        if obj not in self._members:
-            self._queue.append(obj)
-            self._members.add(obj)
+        plhash = process_list.hash
+        if plhash not in self._queue:
+            self._queue[plhash] = process_list
+        else:
+            self._queue[plhash].items += process_list.items
 
     def popleft(self):
         """Pop the first-in object"""
-        obj = self._queue.popleft()
-        self._members.remove(obj)
-        return obj
+        plhash = next(iter(self._queue))
+        process_list = self._queue[plhash]
+        del self._queue[plhash]
+        return process_list
 
     def __len__(self):
         return len(self._queue)
@@ -182,10 +187,10 @@ class ProcessQueueSorted:
     """
     def __init__(self, init=None):
         self.queues = [
-            ProcessQueue(),
-            ProcessQueue(),
-            ProcessQueue(),
-            ProcessQueue(),
+            ProcessListQueue(),
+            ProcessListQueue(),
+            ProcessListQueue(),
+            ProcessListQueue(),
         ]
 
         if init is not None:

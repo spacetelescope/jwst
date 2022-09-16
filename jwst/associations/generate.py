@@ -52,13 +52,14 @@ def generate(pool, rules, version_id=None):
     ])
 
     for process_list in process_queue:
-        # logger.debug(
-        #     'Working process list:'
-        #     f'\n\t#items {len(process_list.items)}'
-        #     f' working over {process_list.work_over}'
-        #     f' matching on {process_list.only_on_match}'
-        #     f'\n\trules {process_list.rules}'
-        # )
+        logger.debug(
+            'Working process list:'
+            f'\n\t#process items: {len(process_queue)}'
+            f'\n\t#items: {len(process_list.items)}'
+            f' working over {process_list.work_over}'
+            f' matching on {process_list.only_on_match}'
+            f'\n\trules: {len(process_list.rules)} {process_list.rules}'
+        )
         for item in process_list.items:
             item = PoolRow(item)
 
