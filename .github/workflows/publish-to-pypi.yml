@@ -2,10 +2,16 @@ name: Publish to PyPI
 
 on:
   release:
-    types: [released]
+    types: [ released ]
 
 jobs:
+  check:
+    name: check that `requirements-sdp.txt` is populated
+    runs-on: ubuntu-latest
+    steps:
+      - run: "[[ -z $(grep -v '^ *#' requirements-sdp.txt) ]] && { echo \"requirements-sdp.txt is empty\" ; exit 1; }"
   publish:
+    needs: [ check ]
     uses: spacetelescope/action-publish_to_pypi/.github/workflows/workflow.yml@master
     with:
       test: false
