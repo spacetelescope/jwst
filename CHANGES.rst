@@ -6,13 +6,21 @@ align_refs
 
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
-  
+
 associations
 ------------
 
 - Enforce no path data in ``expname`` in association files by raising an
   exception if path data is found.  Also, expanded documentation to make this
   more clear to users. [#7008]
+
+resample
+--------
+
+- Fix calculation of 'pixel_scale_ratio' when 'pixel_scale' parameter is
+  supplied, as well as fix a bug where this value was not being properly passed
+  to ResampleStep, and another where photometry keywords weren't being updated
+  correctly to reflect the correct pixel scale ratio. [#7033]
 
 tweakreg
 --------

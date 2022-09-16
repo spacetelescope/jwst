@@ -422,9 +422,9 @@ def test_resample_variance(nircam_rate, n_images):
     result = ResampleStep.call(c, blendheaders=False)
 
     # Verify that the combined uncertainty goes as 1 / sqrt(N)
-    assert_allclose(result.err[5:-5,5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
-    assert_allclose(result.var_rnoise[5:-5,5:-5].mean(), var_rnoise / n_images, atol=1e-7)
-    assert_allclose(result.var_poisson[5:-5,5:-5].mean(), var_poisson / n_images, atol=1e-7)
+    assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
+    assert_allclose(result.var_rnoise[5:-5, 5:-5].mean(), var_rnoise / n_images, atol=1e-7)
+    assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
 
 
 @pytest.mark.parametrize("shape", [(0, ), (10, 1)])
@@ -493,3 +493,40 @@ def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
 
     # test scales are close
     assert np.allclose(output_scale, input_scale * 0.75)
+
+
+def test_pixscale(nircam_rate):
+
+    # check that if both 'pixel_scale_ratio' and 'pixel_scale' are passed in,
+    # that 'pixel_scale' overrides correctly
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    pixarea = im.meta.photometry.pixelarea_arcsecsq
+
+    # check when both pixel_scale and pixel_scale_ratio are passed in
+    res = ResampleStep.call(im, pixel_scale=0.04, pixel_scale_ratio=0.7)
+    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04**2 / pixarea)
+
+    # just pixel_scale
+    res = ResampleStep.call(im, pixel_scale=0.04)
+    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04**2 / pixarea)
+
+    # just pixel_scale_ratio
+    res = ResampleStep.call(im, pixel_scale_ratio=0.7)
+    assert res.meta.resample.pixel_scale_ratio == 0.7
+
+
+def test_phot_keywords(nircam_rate):
+    # test that resample keywords agree with photometry keywords after step is run
+
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+
+    orig_pix_area_sr = im.meta.photometry.pixelarea_steradians
+    orig_pix_area_arcsec = im.meta.photometry.pixelarea_arcsecsq
+
+    # first run by setting `pixel_scale`
+    res = ResampleStep.call(im, pixel_scale=0.04)
+    new_psr = res.meta.resample.pixel_scale_ratio
+
+    assert res.meta.resample.pixel_scale_ratio == 0.04**2 / orig_pix_area_arcsec
+    assert res.meta.photometry.pixelarea_steradians == orig_pix_area_sr * new_psr**2
+    assert res.meta.photometry.pixelarea_arcsecsq == orig_pix_area_arcsec * new_psr**2

@@ -64,7 +64,6 @@ class ResampleData:
                 all products in memory.
         """
         self.input_models = input_models
-
         self.output_filename = output
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -88,7 +87,10 @@ class ResampleData:
         rotation = kwargs.get('rotation', None)
 
         if pscale is not None:
+            log.info(f'Output pixel scale: {pscale} arcsec.')
             pscale /= 3600.0
+        else:
+            log.info(f'Output pixel scale ratio: {pscale_ratio}')
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(
