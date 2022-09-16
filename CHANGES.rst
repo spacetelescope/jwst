@@ -1,6 +1,12 @@
 1.7.3 (unreleased)
 ==================
 
+align_refs
+----------
+
+- Upgrade the median image replacement routine to also replace NaN pixels,
+  in addition to pixels flagged as bad. [#7044]
+
 datamodels
 ----------
 
@@ -15,6 +21,13 @@ master_background
   ``asn_table``; instead sort input datamodels by new
   ``model.meta.asn.exptype`` metadata. [#7046]
 
+tweakreg
+--------
+
+- Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
+  code more robust. [#7038]
+
+
 1.7.2 (2022-09-12)
 ==================
 
@@ -24,6 +37,9 @@ assign_wcs
 - Fixed a bug in ``assign_wcs`` due to which the step could crash due to
   uncaught exception when SIP approximation fails to reach desired
   accuracy. [#7036]
+
+- Adjust default parameters for FITS SIP approximation to make it more robust
+  vis-a-vis MIRI imaging distortions. [#7037]
 
 
 1.7.1 (2022-09-07)
@@ -238,6 +254,10 @@ tweakreg
   and ``abs_sigma``. [#6987]
 
 - Refactored code to work with changes in ``tweakwcs`` version 0.8.0. [#7006]
+
+source_catalog
+--------------
+- Reset input model (units, re-add backgroud) after source_catalog step. [#6942]
 
 1.6.2 (2022-07-19)
 ==================

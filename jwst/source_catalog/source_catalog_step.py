@@ -97,6 +97,9 @@ class SourceCatalogStep(Step):
                                        abvega_offset, ci_star_thresholds)
             catalog = catobj.catalog
 
+            # add back background to data so input model is unchanged
+            model.data += bkg.background
+
             if self.save_results:
                 cat_filepath = self.make_output_path(ext='.ecsv')
                 catalog.write(cat_filepath, format='ascii.ecsv',
