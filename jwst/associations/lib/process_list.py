@@ -130,9 +130,6 @@ class ProcessQueue(deque):
 class ProcessListQueue:
     """First-In-First-Out queue of ProcessLists
 
-    Checks on whether the objects are already in
-    the queue
-
     Parameters
     ----------
     init : [ProcessList[,...]] or None
@@ -143,11 +140,6 @@ class ProcessListQueue:
         if init is not None:
             self.extend(init)
 
-    def extend(self, iterable):
-        """Add objects if not already in the queue"""
-        for process_list in iterable:
-            self.append(process_list)
-
     def append(self, process_list):
         """Add object if not already in the queue"""
         plhash = process_list.hash
@@ -155,6 +147,17 @@ class ProcessListQueue:
             self._queue[plhash] = process_list
         else:
             self._queue[plhash].items += process_list.items
+
+    def extend(self, iterable):
+        """Add objects if not already in the queue"""
+        for process_list in iterable:
+            self.append(process_list)
+
+    def items(self):
+        """Return list generator of all items"""
+        for plhash in self._queue:
+            for item in self._queue[plhash].items:
+                yield item
 
     def popleft(self):
         """Pop the first-in object"""
@@ -172,6 +175,10 @@ class ProcessListQueue:
                 yield self.popleft()
             except:
                 break
+
+    def __str__(self):
+        result = f'{self.__class__.__name__}: rulesets {len(self)} items {len(list(self.items()))}'
+        return result
 
 
 class ProcessQueueSorted:
@@ -201,9 +208,6 @@ class ProcessQueueSorted:
         for process_list in process_lists:
             self.queues[process_list.work_over].append(process_list)
 
-    def __len__(self):
-        return reduce(lambda x, y: x + len(y), self.queues, 0)
-
     def __iter__(self):
         """Return the queues in order"""
         while len(self) > 0:
@@ -214,3 +218,12 @@ class ProcessQueueSorted:
                 else:
                     continue
                 break
+
+    def __len__(self):
+        return reduce(lambda x, y: x + len(y), self.queues, 0)
+
+    def __str__(self):
+        result = f'{self.__class__.__name__}:'
+        for queue in self.queues:
+            result += f'\n\t{queue}'
+        return result

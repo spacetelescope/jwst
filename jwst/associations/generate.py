@@ -51,6 +51,7 @@ def generate(pool, rules, version_id=None):
         )
     ])
 
+    logger.debug(f'Initial process queue: {process_queue}')
     for process_list in process_queue:
         logger.debug(
             'Working process list:'
@@ -85,6 +86,7 @@ def generate(pool, rules, version_id=None):
                     if to_process_list.work_over != process_list.work_over
                 ]
             process_queue.extend(to_process)
+        logger.debug(f'Updated process queue: {process_queue}')
 
     # Finalize found associations
     logger.debug('# associations before finalization: %s', len(associations))
