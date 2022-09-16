@@ -8,7 +8,7 @@ import logging
 import re
 import typing
 
-from .process_list import ProcessList
+from .process_list import ListCategory, ProcessList
 from .utilities import (
     evaluate,
     getattr_from_list,
@@ -194,7 +194,7 @@ class SimpleConstraint(SimpleConstraintABC):
     reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over : ProcessList.[BOTH, EXISTING, RULES]
+    work_over : ListCategory.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
 
     reprocess_rules : [rule[,..]] or None
@@ -259,7 +259,7 @@ class SimpleConstraint(SimpleConstraintABC):
             test=None,
             reprocess_on_match=False,
             reprocess_on_fail=False,
-            work_over=ProcessList.BOTH,
+            work_over=ListCategory.BOTH,
             reprocess_rules=None,
             **kwargs
     ):
@@ -337,7 +337,7 @@ class AttrConstraint(SimpleConstraintABC):
     evaluate : bool
         Evaluate the item's value before checking condition.
 
-    force_reprocess : ProcessList.state or False
+    force_reprocess : ListCategory.state or False
         Add item back onto the reprocess list using
         the specified `~jwst.associations.ProcessList` work over state.
 
@@ -541,7 +541,7 @@ class Constraint:
     reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over : ProcessList.[BOTH, EXISTING, RULES]
+    work_over : ListCategory.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
 
     reprocess_rules : [rule[,..]] or None
@@ -590,7 +590,7 @@ class Constraint:
             name=None,
             reprocess_on_match=False,
             reprocess_on_fail=False,
-            work_over=ProcessList.BOTH,
+            work_over=ListCategory.BOTH,
             reprocess_rules=None
     ):
         self.constraints = []
@@ -630,7 +630,7 @@ class Constraint:
         if self.reduce is None:
             self.reduce = self.all
 
-    def check_and_set(self, item, work_over=ProcessList.BOTH):
+    def check_and_set(self, item, work_over=ListCategory.BOTH):
         """Check and set the constraint
 
         Returns
@@ -641,7 +641,7 @@ class Constraint:
                 - success : True if check is successful.
                 - List of `~jwst.associations.ProcessList`.
         """
-        if work_over not in (self.work_over, ProcessList.BOTH):
+        if work_over not in (self.work_over, ListCategory.BOTH):
             return False, []
 
         # Do we have positive?

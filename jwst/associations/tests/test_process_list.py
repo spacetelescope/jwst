@@ -55,18 +55,18 @@ def test_process_queue_sorted():
     """Test the sorted process queue"""
     items_to_add = [
         [
-            ProcessList([1], ['r1'], work_over=ProcessList.RULES),
-            ProcessList([2], ['r2'], work_over=ProcessList.BOTH),
-            ProcessList([3], ['r3'], work_over=ProcessList.EXISTING),
+            ProcessList([1], ['r1'], work_over=ListCategory.RULES),
+            ProcessList([2], ['r2'], work_over=ListCategory.BOTH),
+            ProcessList([3], ['r3'], work_over=ListCategory.EXISTING),
         ],
         [
-            ProcessList([4], ['r4'], work_over=ProcessList.EXISTING),
+            ProcessList([4], ['r4'], work_over=ListCategory.EXISTING),
         ],
         [
-            ProcessList([5], ['r5'], work_over=ProcessList.BOTH),
+            ProcessList([5], ['r5'], work_over=ListCategory.BOTH),
         ],
         [
-            ProcessList([6], ['r6'], work_over=ProcessList.RULES),
+            ProcessList([6], ['r6'], work_over=ListCategory.RULES),
         ],
     ]
 
@@ -96,18 +96,18 @@ def test_process_queue_dups():
     """Test the sorted process queue with same rulesets."""
     items_to_add = [
         [
-            ProcessList([1], ['r1'], work_over=ProcessList.RULES),
-            ProcessList([2], ['r1'], work_over=ProcessList.BOTH),
-            ProcessList([3], ['r1'], work_over=ProcessList.EXISTING),
+            ProcessList([1], ['r1'], work_over=ListCategory.RULES),
+            ProcessList([2], ['r1'], work_over=ListCategory.BOTH),
+            ProcessList([3], ['r1'], work_over=ListCategory.EXISTING),
         ],
         [
-            ProcessList([4], ['r1'], work_over=ProcessList.EXISTING),
+            ProcessList([4], ['r1'], work_over=ListCategory.EXISTING),
         ],
         [
-            ProcessList([5], ['r1'], work_over=ProcessList.BOTH),
+            ProcessList([5], ['r1'], work_over=ListCategory.BOTH),
         ],
         [
-            ProcessList([6], ['r1'], work_over=ProcessList.RULES),
+            ProcessList([6], ['r1'], work_over=ListCategory.RULES),
         ],
     ]
 

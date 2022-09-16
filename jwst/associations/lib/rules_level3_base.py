@@ -10,7 +10,7 @@ import re
 
 from jwst.associations import (
     Association,
-    ProcessList,
+    ListCategory,
     libpath
 )
 from jwst.associations.registry import RegistryMarker
@@ -58,7 +58,7 @@ __all__ = [
     'Constraint_Target',
     'DMS_Level3_Base',
     'DMSAttrConstraint',
-    'ProcessList',
+    'ListCategory',
     'SimpleConstraint',
     'Utility',
 ]
@@ -823,7 +823,7 @@ class Constraint_Target(DMSAttrConstraint):
                 name='target',
                 sources=['targetid'],
                 onlyif=lambda item: association.get_exposure_type(item) != 'background',
-                force_reprocess=ProcessList.EXISTING,
+                force_reprocess=ListCategory.EXISTING,
                 only_on_match=True,
             )
 
@@ -876,7 +876,7 @@ class AsnMixin_Science(DMS_Level3_Base):
                 )
             ],
             name='acq_constraint',
-            work_over=ProcessList.EXISTING
+            work_over=ListCategory.EXISTING
         )
 
         # Put all constraints together.

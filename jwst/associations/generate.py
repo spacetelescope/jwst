@@ -2,6 +2,7 @@ import logging
 
 from .association import make_timestamp
 from .lib.process_list import (
+    ListCategory,
     ProcessList,
     ProcessQueueSorted
 )
@@ -79,7 +80,7 @@ def generate(pool, rules, version_id=None):
             # If working on a process list EXISTING
             # remove any new `to_process` that is
             # also EXISTING. Prevent infinite loops.
-            if process_list.work_over in (ProcessList.EXISTING, ProcessList.NONSCIENCE):
+            if process_list.work_over in (ListCategory.EXISTING, ListCategory.NONSCIENCE):
                 to_process = [
                     to_process_list
                     for to_process_list in to_process
@@ -149,9 +150,9 @@ def generate_from_item(
     existing_asns = []
     reprocess_list = []
     if process_list.work_over in (
-            ProcessList.BOTH,
-            ProcessList.EXISTING,
-            ProcessList.NONSCIENCE,
+            ListCategory.BOTH,
+            ListCategory.EXISTING,
+            ListCategory.NONSCIENCE,
     ):
         associations = [
             asn
@@ -171,8 +172,8 @@ def generate_from_item(
     reprocess = []
     new_asns = []
     if process_list.work_over in (
-            ProcessList.BOTH,
-            ProcessList.RULES,
+            ListCategory.BOTH,
+            ListCategory.RULES,
     ) and rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
         # logger.debug(f'Ignore asns {ignore_asns}')

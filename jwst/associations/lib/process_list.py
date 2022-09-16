@@ -1,8 +1,16 @@
 """Reprocessing List"""
-from collections import (defaultdict, deque)
+from collections import deque
+from enum import Enum
 from functools import reduce
 
+class ListCategory(Enum):
+    RULES      = 0
+    BOTH       = 1
+    EXISTING   = 2
+    NONSCIENCE = 3
+
 __all__ = [
+    'ListCategory',
     'ProcessList',
     'ProcessItem',
     'ProcessQueue',
@@ -77,23 +85,12 @@ class ProcessList:
         is True.
     """
 
-    (
-        RULES,
-        BOTH,
-        EXISTING,
-        NONSCIENCE,
-    ) = range(0, 4)
-    """
-    Categories of different sets of associations or items
-    to process
-    """
-
     _str_attrs = ('rules', 'work_over', 'only_on_match')
 
     def __init__(self,
                  items=None,
                  rules=None,
-                 work_over=BOTH,
+                 work_over=ListCategory.BOTH,
                  only_on_match=False):
         self.items = items
         self.rules = rules
@@ -193,12 +190,10 @@ class ProcessQueueSorted:
         List of `ProcessList` to start the queue with.
     """
     def __init__(self, init=None):
-        self.queues = [
-            ProcessListQueue(),
-            ProcessListQueue(),
-            ProcessListQueue(),
-            ProcessListQueue(),
-        ]
+        self.queues = {
+            list_category: ProcessListQueue()
+            for list_category in ListCategory
+        }
 
         if init is not None:
             self.extend(init)
@@ -211,8 +206,8 @@ class ProcessQueueSorted:
     def __iter__(self):
         """Return the queues in order"""
         while len(self) > 0:
-            for queue in self.queues:
-                for process_list in queue:
+            for category in ListCategory:
+                for process_list in self.queues[category]:
                     yield process_list
                     break
                 else:
@@ -220,10 +215,10 @@ class ProcessQueueSorted:
                 break
 
     def __len__(self):
-        return reduce(lambda x, y: x + len(y), self.queues, 0)
+        return reduce(lambda x, y: x + len(y), self.queues.values(), 0)
 
     def __str__(self):
         result = f'{self.__class__.__name__}:'
-        for queue in self.queues:
+        for queue in self.queues.values():
             result += f'\n\t{queue}'
         return result

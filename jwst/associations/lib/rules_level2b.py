@@ -17,7 +17,7 @@ from jwst.associations.lib.dms_base import (
     nrslamp_valid_detector,
 )
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.process_list import ProcessList
+from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
@@ -407,7 +407,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                             Constraint_Single_Science(
                                 self.has_science,
                                 reprocess_on_match=True,
-                                work_over=ProcessList.EXISTING
+                                work_over=ListCategory.EXISTING
                             )
                         ]
                     ),
@@ -613,7 +613,7 @@ class Asn_Lv2WFSSNIS(
                     name='image_exp_type',
                     sources=['exp_type'],
                     value='nis_image',
-                    force_reprocess=ProcessList.NONSCIENCE,
+                    force_reprocess=ListCategory.NONSCIENCE,
                     only_on_match=True,
                 ),
             ], reduce=Constraint.any),
@@ -668,7 +668,7 @@ class Asn_Lv2WFSSNRC(
                     name='image_exp_type',
                     sources=['exp_type'],
                     value='nrc_image',
-                    force_reprocess=ProcessList.NONSCIENCE,
+                    force_reprocess=ListCategory.NONSCIENCE,
                     only_on_match=True,
                 ),
             ], reduce=Constraint.any),
@@ -927,7 +927,7 @@ class Asn_Force_Reprocess(DMSLevel2bBase):
                 test=lambda x, y: False,
                 value='anything but None',
                 reprocess_on_fail=True,
-                work_over=ProcessList.EXISTING,
+                work_over=ListCategory.EXISTING,
                 reprocess_rules=[]
             )
         ])
