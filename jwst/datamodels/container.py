@@ -480,8 +480,9 @@ class ModelContainer(JwstDataModel, Sequence):
         """
         ind = []
         for i, model in enumerate(self._models):
-            if model.meta.asn.exptype.lower() == asn_exptype:
-                ind.append(i)
+            if model.meta.asn.exptype:
+                if model.meta.asn.exptype.lower() == asn_exptype:
+                    ind.append(i)
         return ind
 
     def set_buffer(self, buffer_size, overlap=None):
