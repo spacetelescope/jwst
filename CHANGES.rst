@@ -6,12 +6,6 @@ align_refs
 
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
-  
-tweakreg
---------
-
-- Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
-  code more robust. [#7038]
 
 resample
 --------
@@ -19,6 +13,12 @@ resample
   supplied, as well as fix a bug where this value was not being properly passed
   to ResampleStep, and another where photometry keywords weren't being updated
   correctly to reflect the correct pixel scale ratio. [#7033]
+
+tweakreg
+--------
+
+- Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
+  code more robust. [#7038]
 
 
 1.7.2 (2022-09-12)
@@ -33,7 +33,6 @@ assign_wcs
 
 - Adjust default parameters for FITS SIP approximation to make it more robust
   vis-a-vis MIRI imaging distortions. [#7037]
-
 
 
 1.7.1 (2022-09-07)
