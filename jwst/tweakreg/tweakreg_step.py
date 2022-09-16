@@ -393,7 +393,8 @@ class TweakRegStep(Step):
                 try:
                     update_fits_wcsinfo(
                         image_model,
-                        max_pix_error=0.005
+                        max_pix_error=0.01,
+                        npoints=16
                     )
                 except (ValueError, RuntimeError) as e:
                     self.log.warning(
