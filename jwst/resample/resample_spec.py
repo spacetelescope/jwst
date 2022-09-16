@@ -99,6 +99,9 @@ class ResampleSpecData(ResampleData):
         else:
             refmodel = self.input_models[0]
 
+        refmodel_data = refmodel.data.copy()
+        refmodel_data[refmodel_data < 0.] = np.NaN
+
         refwcs = refmodel.meta.wcs
 
         s2d = refwcs.get_transform('slit_frame', 'detector')
@@ -107,28 +110,31 @@ class ResampleSpecData(ResampleData):
 
         # estimate position of the target without relying in the meta.target:
         bbox = refwcs.bounding_box
+        log.debug(f" refwcs.bounding_box = {bbox}")
 
         grid = wcstools.grid_from_bounding_box(bbox)
         _, s, lam = np.array(d2s(*grid))
-        sd = s * refmodel.data
-        ld = lam * refmodel.data
+        sd = s * refmodel_data
+        ld = lam * refmodel_data
         good_s = np.isfinite(sd)
         if np.any(good_s):
-            total = np.sum(refmodel.data[good_s])
+            total = np.sum(refmodel_data[good_s])
             wmean_s = np.sum(sd[good_s]) / total
             wmean_l = np.sum(ld[good_s]) / total
+            log.debug(f" wmean_s={wmean_s}")
+            log.debug(f" wmean_l={wmean_l}")
         else:
             wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
             wmean_l = d2s(*np.mean(bbox, axis=1))[2]
 
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
+        log.debug(f" targ_ra, targ_dec = {targ_ra,targ_dec}")
 
         ref_lam = _find_nirspec_output_sampling_wavelengths(
             all_wcs,
             targ_ra, targ_dec
         )
         ref_lam = np.array(ref_lam)
-
         n_lam = ref_lam.size
         if not n_lam:
             raise ValueError("Not enough data to construct output WCS.")
@@ -138,6 +144,7 @@ class ResampleSpecData(ResampleData):
 
         # Find the spatial pixel scale:
         y_slit_min, y_slit_max = self._max_virtual_slit_extent(all_wcs, targ_ra, targ_dec)
+        log.debug(f" y_slit_min={y_slit_min}, y_slit_max={y_slit_max}")
 
         nsampl = 50
         xy_min = s2d(
