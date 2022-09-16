@@ -22,6 +22,9 @@ resample
   to ResampleStep, and another where photometry keywords weren't being updated
   correctly to reflect the correct pixel scale ratio. [#7033]
 
+- Changed computation of meta.resample.pixel_scale_ratio to correctly be the
+  ratio of input / output areas [#7048]
+
 tweakreg
 --------
 

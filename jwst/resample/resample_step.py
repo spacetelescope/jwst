@@ -125,7 +125,7 @@ class ResampleStep(Step):
             if not self.pixel_scale:
                 model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
             else:
-                model.meta.resample.pixel_scale_ratio = (self.pixel_scale ** 2) / model.meta.photometry.pixelarea_arcsecsq
+                model.meta.resample.pixel_scale_ratio = self.pixel_scale / np.sqrt(model.meta.photometry.pixelarea_arcsecsq)
             model.meta.resample.pixfrac = kwargs['pixfrac']
             self.update_phot_keywords(model)
 
