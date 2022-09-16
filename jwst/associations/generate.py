@@ -54,18 +54,11 @@ def generate(pool, rules, version_id=None):
 
     logger.debug(f'Initial process queue: {process_queue}')
     for process_list in process_queue:
-        logger.debug(
-            'Working process list:'
-            f'\n\t#process items: {len(process_queue)}'
-            f'\n\t#items: {len(process_list.items)}'
-            f' working over {process_list.work_over}'
-            f' matching on {process_list.only_on_match}'
-            f'\n\trules: {len(process_list.rules)} {process_list.rules}'
-        )
+        logger.debug(f'Working process list: {process_list}')
         for item in process_list.items:
             item = PoolRow(item)
+            # logger.debug(f'Processing item {item['filename']})
 
-            # logger.debug(f'Processing item {item}')
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
@@ -73,8 +66,8 @@ def generate(pool, rules, version_id=None):
                 rules,
                 process_list
             )
-            # logger.debug(f'Associations updated: {existing_asns}')
-            # logger.debug(f'New associations: {new_asns}')
+            # logger.debug(f'Associations updated: {len(existing_asns)}')
+            # logger.debug(f'New associations: {len(new_asns)}')
             associations.extend(new_asns)
 
             # If working on a process list EXISTING

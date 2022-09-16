@@ -219,6 +219,6 @@ class ProcessQueueSorted:
 
     def __str__(self):
         result = f'{self.__class__.__name__}:'
-        for queue in self.queues.values():
-            result += f'\n\t{queue}'
+        for queue in self.queues:
+            result += f'\n\tQueue {queue}: {self.queues[queue]}'
         return result
