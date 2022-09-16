@@ -110,6 +110,11 @@ properties:
             type: string
             fits_keyword: ASNTABLE
             blend_table: True
+          exptype:
+            title: Exposure type provided for this exposure in the association
+            type: string
+            fits_keyword: ASNEXPTP
+            blend_table: True
       program:
         title: Program information
         type: object

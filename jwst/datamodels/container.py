@@ -244,15 +244,15 @@ class ModelContainer(JwstDataModel, Sequence):
             for member in asn_data['products'][0]['members']:
                 if any([x for x in self.asn_exptypes if re.match(member['exptype'],
                                                                  x, re.IGNORECASE)]):
-                    infiles.append(member['expname'])
+                    infiles.append([member['expname'], member['exptype']])
                     logger.debug('Files accepted for processing {}:'.format(member['expname']))
         else:
-            infiles = [member['expname'] for member
+            infiles = [[member['expname'], member['exptype']] for member
                        in asn_data['products'][0]['members']]
 
         if asn_file_path:
             asn_dir = op.dirname(asn_file_path)
-            infiles = [op.join(asn_dir, f) for f in infiles]
+            infiles = [[op.join(asn_dir, f[0]), f[1]] for f in infiles]
 
         # Only handle the specified number of members.
         if self.asn_n_members:
@@ -260,9 +260,10 @@ class ModelContainer(JwstDataModel, Sequence):
         else:
             sublist = infiles
         try:
-            for filepath in sublist:
+            for filepath, exptype in sublist:
                 if self._save_open:
                     m = datamodel_open(filepath, memmap=self._memmap)
+                    m.meta.asn.exptype = exptype
                 else:
                     m = filepath
                 self._models.append(m)
@@ -477,14 +478,9 @@ class ModelContainer(JwstDataModel, Sequence):
         ind : list
             Indices of models in ModelContainer._models matching ``asn_exptype``.
         """
-        names = []
-        for m in self.meta.asn_table.products[0].members:
-            if m.exptype.lower() == asn_exptype:
-                file_path, file_name = op.split(m.expname)
-                names.append(file_name)
         ind = []
         for i, model in enumerate(self._models):
-            if model.meta.filename in names:
+            if model.meta.asn.exptype.lower() == asn_exptype:
                 ind.append(i)
         return ind
 

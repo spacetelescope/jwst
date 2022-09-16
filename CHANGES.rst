@@ -1,6 +1,20 @@
 1.7.3 (unreleased)
 ==================
 
+datamodels
+----------
+
+- Add metadata to core schema to carry association exptype into datamodels
+  loaded from associations into ModelContainer. Modify container method
+  ``ind_asn_type`` to query this metadata. [#7046]
+
+master_background
+-----------------
+
+- Remove loading of datamodels directly from expnames listed in
+  ``asn_table``; instead sort input datamodels by new
+  ``model.meta.asn.exptype`` metadata. [#7046]
+
 1.7.2 (2022-09-12)
 ==================
 
