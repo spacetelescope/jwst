@@ -55,6 +55,9 @@ def generate(pool, rules, version_id=None):
     logger.debug(f'Initial process queue: {process_queue}')
     for process_list in process_queue:
         logger.debug(f'Working process list: {process_list}')
+        total_mod_existing = 0
+        total_new = 0
+        total_reprocess = 0
         for item in process_list.items:
             item = PoolRow(item)
             # logger.debug(f'Processing item {item['filename']})
@@ -66,8 +69,8 @@ def generate(pool, rules, version_id=None):
                 rules,
                 process_list
             )
-            # logger.debug(f'Associations updated: {len(existing_asns)}')
-            # logger.debug(f'New associations: {len(new_asns)}')
+            total_mod_existing += len(existing_asns)
+            total_new += len(new_asns)
             associations.extend(new_asns)
 
             # If working on a process list EXISTING
@@ -80,6 +83,11 @@ def generate(pool, rules, version_id=None):
                     if to_process_list.work_over != process_list.work_over
                 ]
             process_queue.extend(to_process)
+            total_reprocess += len(to_process)
+
+        # logger.debug(f'Associations: {associations}')
+        logger.debug(f'Existing associations modified: {total_mod_existing} New associations created: {total_new}')
+        logger.debug(f'Items to reprocess: {total_reprocess}')
         logger.debug(f'Updated process queue: {process_queue}')
 
     # Finalize found associations
