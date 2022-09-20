@@ -91,7 +91,7 @@ class ProcessList:
         The association rules that created the ProcessList
     """
 
-    _str_attrs = ('rules', 'work_over', 'only_on_match')
+    _str_attrs = ('rules', 'work_over', 'only_on_match', 'trigger_constraints', 'trigger_rules')
 
     def __init__(self, items=None, rules=None,
                  work_over=ListCategory.BOTH, only_on_match=False,
