@@ -396,6 +396,7 @@ class Association(MutableMapping):
 
         # Set the association type for all reprocessed items.
         for process_list in reprocess:
+            process_list.trigger_rules.append(type(self))
             if process_list.rules is None:
                 process_list.rules = [type(self)]
 

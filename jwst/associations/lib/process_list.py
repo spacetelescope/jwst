@@ -108,6 +108,32 @@ class ProcessList:
         """Create a unique hash"""
         return (tuple(self.rules), self.work_over, self.only_on_match)
 
+    def update(self, process_list, full=False):
+        """Update with information from ProcessList
+
+        Attributes from `process_list` are added to self's attributes. If `not
+        full`, the attributes `rules`, 'work_over`, and `only_on_match` are not
+        taken.
+
+        Note that if `full`, destructive action will occur with respect to
+        `work_over` and `only_on_match`.
+
+        Parameters
+        ----------
+        process_list : ProcessList
+            The source process list to absorb.
+
+        full : bool
+            Include the hash attributes `rules`, `work_over`, and `only_on_match`.
+        """
+        self.items += process_list.items
+        self.trigger_constraints += process_list.trigger_constraints
+        self.trigger_rules += process_list.trigger_rules
+        if full:
+            self.rules += process_list.rules
+            self.work_over = process_list.work_over
+            self.only_on_match = process_list.only_on_match
+
     def __str__(self):
         result = '{}(n_items: {}, {})'.format(
             self.__class__.__name__,
@@ -144,12 +170,12 @@ class ProcessListQueue:
             self.extend(init)
 
     def append(self, process_list):
-        """Add object if not already in the queue"""
+        """Add ProcessList to queue"""
         plhash = process_list.hash
         if plhash not in self._queue:
             self._queue[plhash] = process_list
         else:
-            self._queue[plhash].items += process_list.items
+            self._queue[plhash].update(process_list)
 
     def extend(self, iterable):
         """Add objects if not already in the queue"""
