@@ -1,4 +1,0 @@
-# As of 2021-09-07, setuptools 58.x is incompatible with packages
-# installed into the readthedocs environment due to deprecation of
-# the use_2to3 argument..
-setuptools<58
