@@ -321,7 +321,7 @@ class SimpleConstraint(SimpleConstraintABC):
                 items=[item],
                 work_over=self.work_over,
                 rules=self.reprocess_rules,
-                trigger_constraints=self.id
+                trigger_constraints=[self.id]
             ))
 
         return self.matched, reprocess
@@ -451,7 +451,7 @@ class AttrConstraint(SimpleConstraintABC):
                         items=[item],
                         work_over=self.force_reprocess,
                         only_on_match=self.only_on_match,
-                        trigger_constraints=self.id
+                        trigger_constraints=[self.id]
                     )
                 )
             self.matched = True
@@ -487,7 +487,7 @@ class AttrConstraint(SimpleConstraintABC):
                     reprocess_items.append(new_item)
                 reprocess.append(ProcessList(
                     items=reprocess_items,
-                    trigger_constraints=self.id
+                    trigger_constraints=[self.id]
                 ))
                 self.matched = False
                 return self.matched, reprocess
@@ -521,7 +521,7 @@ class AttrConstraint(SimpleConstraintABC):
                     items=[item],
                     work_over=self.force_reprocess,
                     only_on_match=self.only_on_match,
-                    trigger_constraints=self.id
+                    trigger_constraints=[self.id]
                 )
             )
 
@@ -709,7 +709,7 @@ class Constraint:
                 items=[item],
                 work_over=self.work_over,
                 rules=self.reprocess_rules,
-                trigger_constraints=self.id
+                trigger_constraints=[self.id]
             )])
 
         return self.matched, list(chain(*reprocess))

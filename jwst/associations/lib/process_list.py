@@ -100,8 +100,8 @@ class ProcessList:
         self.rules = rules
         self.work_over = work_over
         self.only_on_match = only_on_match
-        self.trigger_constraints = trigger_constraints if trigger_constraints else list()
-        self.trigger_rules = trigger_rules if trigger_rules else list()
+        self.trigger_constraints = set(trigger_constraints) if trigger_constraints else set()
+        self.trigger_rules = set(trigger_rules) if trigger_rules else set()
 
     @property
     def hash(self):
@@ -127,8 +127,8 @@ class ProcessList:
             Include the hash attributes `rules`, `work_over`, and `only_on_match`.
         """
         self.items += process_list.items
-        self.trigger_constraints += process_list.trigger_constraints
-        self.trigger_rules += process_list.trigger_rules
+        self.trigger_constraints.update(process_list.trigger_constraints)
+        self.trigger_rules.update(process_list.trigger_rules)
         if full:
             self.rules += process_list.rules
             self.work_over = process_list.work_over
