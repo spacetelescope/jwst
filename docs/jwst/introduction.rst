@@ -169,7 +169,7 @@ and data files.  The references files, unless explicitly
 overridden, are provided through CRDS.
 
 Data files are the science input, such as exposure FITS files and association
-files. All files are assumed to be co-resident in the directory where the primary
+files. All input files must be co-resident in the directory where the primary
 input file is located. This is particularly important for associations: JWST
 associations contain file names only. All files referred to by an association
 are expected to be located in the directory in which the association file is located.
