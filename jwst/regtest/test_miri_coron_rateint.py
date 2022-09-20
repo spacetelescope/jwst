@@ -38,6 +38,7 @@ def run_miri_coron(jail, rtdata_module):
     return rtdata
 
 
+@pytest.mark.bigdata
 def test_miri_coron(run_miri_coron, fitsdiff_default_kwargs):
     """Regression test for miri_coron applied to MIRI coron rateint data"""
 
