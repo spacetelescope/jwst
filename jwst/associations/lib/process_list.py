@@ -83,19 +83,25 @@ class ProcessList:
     only_on_match : bool
         Only use this object if the overall condition
         is True.
+
+    trigger_constraints : [Constraint[,...]]
+        The constraints that created the ProcessList
+
+    trigger_rules : [Association[,...]]
+        The association rules that created the ProcessList
     """
 
     _str_attrs = ('rules', 'work_over', 'only_on_match')
 
-    def __init__(self,
-                 items=None,
-                 rules=None,
-                 work_over=ListCategory.BOTH,
-                 only_on_match=False):
+    def __init__(self, items=None, rules=None,
+                 work_over=ListCategory.BOTH, only_on_match=False,
+                 trigger_constraints=None, trigger_rules=None):
         self.items = items
         self.rules = rules
         self.work_over = work_over
         self.only_on_match = only_on_match
+        self.trigger_constraints = trigger_constraints if trigger_constraints else list()
+        self.trigger_rules = trigger_rules if trigger_rules else list()
 
     @property
     def hash(self):

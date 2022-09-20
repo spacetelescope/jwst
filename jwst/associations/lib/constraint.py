@@ -82,10 +82,6 @@ class SimpleConstraintABC(abc.ABC):
         self.matched = True
         return self.matched, []
 
-    def copy(self):
-        """Copy ourselves"""
-        return deepcopy(self)
-
     @property
     def dup_names(self): #  -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]
         """Return dictionary of constraints with duplicate names
@@ -100,6 +96,21 @@ class SimpleConstraintABC(abc.ABC):
             and all the constraints that define that name.
         """
         return {}
+
+    @property
+    def id(self):
+        """Return identifyer for the constraint
+
+        Returns
+        -------
+        id : str
+            The identifyer
+        """
+        return f'{self.__class__.__name__}:{self.name}'
+
+    def copy(self):
+        """Copy ourselves"""
+        return deepcopy(self)
 
     def get_all_attr(self, attribute: str): # -> list[tuple[SimpleConstraint, typing.Any]]:
         """Return the specified attribute
@@ -630,6 +641,46 @@ class Constraint:
         if self.reduce is None:
             self.reduce = self.all
 
+    @property
+    def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+        """Return dictionary of constraints with duplicate names
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Returns
+        -------
+        dups : {str: [constraint[,...]][,...]}
+            Returns a mapping between the duplicated name
+            and all the constraints that define that name.
+        """
+        attrs = self.get_all_attr('name')
+        constraints, names = zip(*attrs)
+        dups = [name for name, count in collections.Counter(names).items() if count > 1]
+        result = collections.defaultdict(list)
+        for name, constraint in zip(names, constraints):
+            if name in dups:
+                result[name].append(constraint)
+
+        # Turn off the defaultdict factory.
+        result.default_factory = None
+        return result
+
+    @property
+    def id(self):
+        """Return identifyer for the constraint
+
+        Returns
+        -------
+        id : str
+            The identifyer
+        """
+        return f'{self.__class__.__name__}:{self.name}'
+
+    def append(self, constraint):
+        """Append a new constraint"""
+        self.constraints.append(constraint)
+
     def check_and_set(self, item, work_over=ListCategory.BOTH):
         """Check and set the constraint
 
@@ -658,13 +709,40 @@ class Constraint:
 
         return self.matched, list(chain(*reprocess))
 
-    def append(self, constraint):
-        """Append a new constraint"""
-        self.constraints.append(constraint)
-
     def copy(self):
         """Copy ourselves"""
         return deepcopy(self)
+
+    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
+        """Return the specified attribute
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve
+
+        Returns
+        -------
+        result : [(SimpleConstraint or Constraint, object)[,...]]
+            The list of values of the attribute in a tuple. If there is no attribute,
+            an empty tuple is returned.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found.
+        """
+        result = []
+        value = getattr(self, attribute)
+        if value is not None:
+            result = [(self, value)]
+        for constraint in self.constraints:
+            result.extend(constraint.get_all_attr(attribute))
+
+        return result
 
     @staticmethod
     def all(item, constraints):
@@ -737,61 +815,9 @@ class Constraint:
         match, to_reprocess = Constraint.all(item, constraints)
         return not match, to_reprocess
 
-    @property
-    def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
-        """Return dictionary of constraints with duplicate names
-
-        This method is meant to be overridden by classes
-        that need to traverse a list of constraints.
-
-        Returns
-        -------
-        dups : {str: [constraint[,...]][,...]}
-            Returns a mapping between the duplicated name
-            and all the constraints that define that name.
-        """
-        attrs = self.get_all_attr('name')
-        constraints, names = zip(*attrs)
-        dups = [name for name, count in collections.Counter(names).items() if count > 1]
-        result = collections.defaultdict(list)
-        for name, constraint in zip(names, constraints):
-            if name in dups:
-                result[name].append(constraint)
-
-        # Turn off the defaultdict factory.
-        result.default_factory = None
-        return result
-
-    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
-        """Return the specified attribute
-
-        This method is meant to be overridden by classes
-        that need to traverse a list of constraints.
-
-        Parameters
-        ----------
-        attribute : str
-            The attribute to retrieve
-
-        Returns
-        -------
-        result : [(SimpleConstraint or Constraint, object)[,...]]
-            The list of values of the attribute in a tuple. If there is no attribute,
-            an empty tuple is returned.
-
-        Raises
-        ------
-        AttributeError
-            If the attribute is not found.
-        """
-        result = []
-        value = getattr(self, attribute)
-        if value is not None:
-            result = [(self, value)]
-        for constraint in self.constraints:
-            result.extend(constraint.get_all_attr(attribute))
-
-        return result
+    def __delitem__(self, key):
+        """Not implemented"""
+        raise NotImplementedError('Cannot delete a constraint by index.')
 
     # Make iterable
     def __iter__(self):
@@ -813,14 +839,6 @@ class Constraint:
                 return found
         raise KeyError('Constraint {} not found'.format(key))
 
-    def __setitem__(self, key, value):
-        """Not implemented"""
-        raise NotImplementedError('Cannot set constraints by index.')
-
-    def __delitem__(self, key):
-        """Not implemented"""
-        raise NotImplementedError('Cannot delete a constraint by index.')
-
     def __repr__(self):
         result = '{}(name={}).{}([{}])'.format(
             self.__class__.__name__,
@@ -832,6 +850,10 @@ class Constraint:
             ])
         )
         return result
+
+    def __setitem__(self, key, value):
+        """Not implemented"""
+        raise NotImplementedError('Cannot set constraints by index.')
 
     def __str__(self):
         result = '\n'.join([
