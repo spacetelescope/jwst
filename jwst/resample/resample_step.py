@@ -86,7 +86,7 @@ class ResampleStep(Step):
             self.log.info('No drizpars reference file found.')
             kwargs = self._set_spec_defaults()
         else:
-        	self.log.info('Using drizpars reference file: {}'.format(ref_filename))
+            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
 
         self.wht_type = self.weight_type
