@@ -235,17 +235,11 @@ def split_container(container):
     background = datamodels.ModelContainer()
     science = datamodels.ModelContainer()
 
-    ind_science = container.ind_asn_type('science')
-    sci_models = np.asarray(container._models)[ind_science]
+    for ind_science in container.ind_asn_type('science'):
+        science.append(container._models[ind_science])
 
-    ind_bkgd = container.ind_asn_type('background')
-    bkgd_models = np.asarray(container._models)[ind_bkgd]
-
-    for model in sci_models:
-        science.append(model)
-
-    for model in bkgd_models:
-        background.append(model)
+    for ind_bkgd in container.ind_asn_type('background'):
+        background.append(container._models[ind_bkgd])
 
     # Pass along the association table to the output science container
     science.meta.asn_table = {}
