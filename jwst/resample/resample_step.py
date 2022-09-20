@@ -77,6 +77,7 @@ class ResampleStep(Step):
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
         #  Get drizzle parameters reference file, if there is one
+        self.wht_type = self.weight_type
         if 'drizpars' in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], 'drizpars')
         else:  # no drizpars reference file found
@@ -88,8 +89,6 @@ class ResampleStep(Step):
         else:
             self.log.info('Using drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
-
-        self.wht_type = self.weight_type
 
         kwargs['allowed_memory'] = self.allowed_memory
 
