@@ -77,18 +77,18 @@ class ResampleStep(Step):
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
         #  Get drizzle parameters reference file, if there is one
+        self.wht_type = self.weight_type
         if 'drizpars' in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], 'drizpars')
-            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
         else:  # no drizpars reference file found
             ref_filename = 'N/A'
 
         if ref_filename == 'N/A':
             self.log.info('No drizpars reference file found.')
             kwargs = self._set_spec_defaults()
-
-        self.wht_type = self.weight_type
+        else:
+            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
+            kwargs = self.get_drizpars(ref_filename, input_models)
 
         kwargs['allowed_memory'] = self.allowed_memory
 
@@ -125,7 +125,7 @@ class ResampleStep(Step):
             if not self.pixel_scale:
                 model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
             else:
-                model.meta.resample.pixel_scale_ratio = (self.pixel_scale ** 2) / model.meta.photometry.pixelarea_arcsecsq
+                model.meta.resample.pixel_scale_ratio = self.pixel_scale / np.sqrt(model.meta.photometry.pixelarea_arcsecsq)
             model.meta.resample.pixfrac = kwargs['pixfrac']
             self.update_phot_keywords(model)
 

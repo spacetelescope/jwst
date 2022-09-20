@@ -504,11 +504,11 @@ def test_pixscale(nircam_rate):
 
     # check when both pixel_scale and pixel_scale_ratio are passed in
     res = ResampleStep.call(im, pixel_scale=0.04, pixel_scale_ratio=0.7)
-    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04**2 / pixarea)
+    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(pixarea))
 
     # just pixel_scale
     res = ResampleStep.call(im, pixel_scale=0.04)
-    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04**2 / pixarea)
+    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(pixarea))
 
     # just pixel_scale_ratio
     res = ResampleStep.call(im, pixel_scale_ratio=0.7)
@@ -527,6 +527,6 @@ def test_phot_keywords(nircam_rate):
     res = ResampleStep.call(im, pixel_scale=0.04)
     new_psr = res.meta.resample.pixel_scale_ratio
 
-    assert res.meta.resample.pixel_scale_ratio == 0.04**2 / orig_pix_area_arcsec
+    assert res.meta.resample.pixel_scale_ratio == 0.04 / np.sqrt(orig_pix_area_arcsec)
     assert res.meta.photometry.pixelarea_steradians == orig_pix_area_sr * new_psr**2
     assert res.meta.photometry.pixelarea_arcsecsq == orig_pix_area_arcsec * new_psr**2
