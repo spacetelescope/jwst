@@ -79,14 +79,15 @@ class ResampleStep(Step):
         #  Get drizzle parameters reference file, if there is one
         if 'drizpars' in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], 'drizpars')
-            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
         else:  # no drizpars reference file found
             ref_filename = 'N/A'
 
         if ref_filename == 'N/A':
             self.log.info('No drizpars reference file found.')
             kwargs = self._set_spec_defaults()
+        else:
+        	self.log.info('Using drizpars reference file: {}'.format(ref_filename))
+            kwargs = self.get_drizpars(ref_filename, input_models)
 
         self.wht_type = self.weight_type
 
