@@ -11,7 +11,7 @@ background
 ----------
 
 - Update the background subtraction step to accept rateints (3D) input
-  background exposures. [#0123]
+  background exposures. [#7049]
   
 associations
 ------------
