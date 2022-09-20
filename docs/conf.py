@@ -459,4 +459,4 @@ epub_exclude_files = ['search.html']
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
-nitpicky = True
+nitpicky = False
