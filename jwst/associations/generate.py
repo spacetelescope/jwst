@@ -84,13 +84,6 @@ def generate(pool, rules, version_id=None):
                 next_list = workover_filter(next_list, process_list.work_over)
                 if next_list:
                     to_process_modified.append(next_list)
-
-            if process_list.work_over in (ListCategory.EXISTING, ListCategory.NONSCIENCE):
-                to_process = [
-                    to_process_list
-                    for to_process_list in to_process
-                    if to_process_list.work_over != process_list.work_over
-                ]
             process_queue.extend(to_process_modified)
             total_reprocess += len(to_process_modified)
 
