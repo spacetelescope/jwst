@@ -254,3 +254,32 @@ class ProcessQueueSorted:
         for queue in self.queues:
             result += f'\n\tQueue {queue}: {self.queues[queue]}'
         return result
+
+
+def workover_filter(process_list, work_over):
+    """Determine and modify workover of input process list
+
+    Parameters
+    ---------
+    process_list : ProcessList
+        The process list under consideration
+
+    work_over : ListCategory
+        The ListCategory to compare against.
+
+    Returns
+    -------
+    process_list : ProcessList or None
+        The input process_list with work_over modified.
+        None if the process list should not be continued.
+    """
+    result = process_list
+    if process_list.work_over in [ListCategory.RULES, ListCategory.BOTH]:
+        if work_over in [ListCategory.RULES, ListCategory.BOTH]:
+            result.work_over = ListCategory.BOTH
+        else:
+            result.work_over = work_over
+    else:
+        if work_over not in [ListCategory.RULES, ListCategory.BOTH]:
+            result = None
+    return result

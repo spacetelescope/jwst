@@ -4,7 +4,8 @@ from .association import make_timestamp
 from .lib.process_list import (
     ListCategory,
     ProcessList,
-    ProcessQueueSorted
+    ProcessQueueSorted,
+    workover_filter
 )
 from .pool import PoolRow
 
@@ -76,14 +77,20 @@ def generate(pool, rules, version_id=None):
             # If working on a process list EXISTING
             # remove any new `to_process` that is
             # also EXISTING. Prevent infinite loops.
+            to_process_modified = []
+            for next_list in to_process:
+                next_list = workover_filter(next_list, process_list.work_over)
+                if next_list:
+                    to_process_modified.append(next_list)
+
             if process_list.work_over in (ListCategory.EXISTING, ListCategory.NONSCIENCE):
                 to_process = [
                     to_process_list
                     for to_process_list in to_process
                     if to_process_list.work_over != process_list.work_over
                 ]
-            process_queue.extend(to_process)
-            total_reprocess += len(to_process)
+            process_queue.extend(to_process_modified)
+            total_reprocess += len(to_process_modified)
 
         # logger.debug(f'Associations: {associations}')
         logger.debug(f'Existing associations modified: {total_mod_existing} New associations created: {total_new}')
