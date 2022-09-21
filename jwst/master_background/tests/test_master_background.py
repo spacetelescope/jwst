@@ -3,6 +3,7 @@ Unit tests for master background subtraction
 """
 import numpy as np
 import pytest
+import json
 
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
@@ -117,8 +118,10 @@ def test_split_container(tmp_path):
     im1.save(path1)
     im2 = datamodels.ImageModel()
     im2.save(path2)
-    container = datamodels.ModelContainer([im1, im2])
-    container.meta.asn_table = {
+    # container = datamodels.ModelContainer([im1, im2])
+    # container.meta.asn_table = {
+    asn_table = {
+        "asn_pool": "singleton",
         "products": [
             {
                 "members": [
@@ -134,6 +137,10 @@ def test_split_container(tmp_path):
             }
         ]
     }
+    with open(tmp_path / 'tmp_asn.json', 'w') as f:
+        json.dump(asn_table, f)
+
+    container = datamodels.open(tmp_path / 'tmp_asn.json')
 
     sci, bkg = split_container(container)
 
