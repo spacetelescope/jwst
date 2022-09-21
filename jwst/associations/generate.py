@@ -1,4 +1,5 @@
 import logging
+from timeit import default_timer as timer
 
 from .association import make_timestamp
 from .lib.process_list import (
@@ -56,6 +57,7 @@ def generate(pool, rules, version_id=None):
     logger.debug(f'Initial process queue: {process_queue}')
     for process_list in process_queue:
         logger.debug(f'Working process list: {process_list}')
+        time_start = timer()
         total_mod_existing = 0
         total_new = 0
         total_reprocess = 0
@@ -93,9 +95,11 @@ def generate(pool, rules, version_id=None):
             total_reprocess += len(to_process_modified)
 
         # logger.debug(f'Associations: {associations}')
+        timer_end = timer()
         logger.debug(f'Existing associations modified: {total_mod_existing} New associations created: {total_new}')
         logger.debug(f'Items to reprocess: {total_reprocess}')
         logger.debug(f'Updated process queue: {process_queue}')
+        logger.debug('Seconds to process: %.2f', timer_end - time_start)
 
     # Finalize found associations
     logger.debug('# associations before finalization: %s', len(associations))
