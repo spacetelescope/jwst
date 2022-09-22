@@ -2370,6 +2370,11 @@ properties:
             type: string
             fits_keyword: S_RESAMP
             blend_table: True
+          residual_fringe:	
+            title: Residual fringe Correction
+            type: string
+            fits_keyword: S_RESFRI
+            blend_table: True
           reset:
             title: Reset Anomaly Correction
             type: string
