@@ -53,6 +53,11 @@ master_background
   ``asn_table``; instead sort input datamodels by new
   ``model.meta.asn.exptype`` metadata. [#7046]
 
+pipeline
+--------
+
+- Added residual_fringe correction to the calspec2 pipeline
+
 resample
 --------
 
@@ -68,10 +73,18 @@ resample_spec
   containing negative spectral traces (due to nodded background subtraction)
   in a more robust way. [#7047]
 
+residual_fringe
+---------------
+
+- Removed reading and saving data as a ModelContainer. Data now read in and saved
+as an IFUImageModel. [#7051]
+
+
 set_telescope_pointing
 ----------------------
 
 - Migrate set_telescope_pointing to pysiaf-based exclusively [#6993]
+
 
 tweakreg
 --------
