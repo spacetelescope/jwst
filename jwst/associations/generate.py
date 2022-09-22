@@ -54,16 +54,15 @@ def generate(pool, rules, version_id=None):
         )
     ])
 
-    logger.debug(f'Initial process queue: {process_queue}')
+    logger.debug('Initial process queue: %s', process_queue)
     for process_list in process_queue:
-        logger.debug(f'** Working process list: {process_list}')
+        logger.debug('** Working process list: %s', process_list)
         time_start = timer()
         total_mod_existing = 0
         total_new = 0
         total_reprocess = 0
         for item in process_list.items:
             item = PoolRow(item)
-            # logger.debug(f'Processing item {item['filename']})
 
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
@@ -87,15 +86,14 @@ def generate(pool, rules, version_id=None):
             process_queue.extend(to_process_modified)
             total_reprocess += len(to_process_modified)
 
-        # logger.debug(f'Associations: {associations}')
-        logger.debug(f'Existing associations modified: {total_mod_existing} New associations created: {total_new}')
-        logger.debug(f'Items to reprocess: {total_reprocess}')
-        logger.debug(f'Updated process queue: {process_queue}')
+        logger.debug('Existing associations modified: %d New associations created: %d', total_mod_existing, total_new)
+        logger.debug('New process lists: %d', total_reprocess)
+        logger.debug('Updated process queue: %s', process_queue)
         logger.debug('# associations: %d', len(associations))
         logger.debug('Seconds to process: %.2f\n', timer() - time_start)
 
     # Finalize found associations
-    logger.debug('# associations before finalization: %s', len(associations))
+    logger.debug('# associations before finalization: %d', len(associations))
     try:
         finalized_asns = rules.callback.reduce('finalize', associations)
     except KeyError:
@@ -164,9 +162,6 @@ def generate_from_item(
             for asn in associations
             if type(asn) in allowed_rules
         ]
-        # logger.debug(
-        #     f'Checking against {len(associations)} existing associations'
-        # )
         existing_asns, reprocess_list = match_item(
             item, associations
         )
@@ -181,7 +176,6 @@ def generate_from_item(
             ListCategory.RULES,
     ) and rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
-        # logger.debug(f'Ignore asns {ignore_asns}')
         new_asns, reprocess = rules.match(
             item,
             version_id=version_id,
