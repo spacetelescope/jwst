@@ -255,9 +255,7 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_common(calibrated)
 
         if not self.residual_fringe.skip and exp_type == 'MIR_MRS':
-            print('Type of calibrated', type(calibrated))
             calibrated = self.residual_fringe(calibrated)
-            print('Type of calibrated', type(calibrated))
 
         # Record ASN pool and table names in output
         calibrated.meta.asn.pool_name = pool_name

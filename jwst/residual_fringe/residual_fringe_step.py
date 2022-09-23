@@ -10,15 +10,17 @@ __all__ = ["ResidualFringeStep"]
 class ResidualFringeStep(Step):
     """
     ResidualFringeStep: Apply residual fringe correction to a science image
-    using a residual fringe reference image.
+    using parameters in the residual fringe reference file.
 
     Parameters
     ----------
-    input_data : asn file or ModelContainer
-        Single filename association table or a datamodels.ModelContainer
+    input_data : asn file or single file
     """
 
+    class_alias = 'residual_fringe'
+
     spec = """
+        skip = boolean(default=True)
         save_intermediate_results  = boolean(default = False)
         search_output_file = boolean(default = False)
         ignore_region_min = list(default = None)
@@ -28,10 +30,8 @@ class ResidualFringeStep(Step):
 
     reference_file_types = ['fringefreq', 'regions']
 
-    class_alias = 'residual_fringe'
 
     def process(self, input):
-
         self.transmission_level = 80  # sets the transmission level to use in the regions file
         # 80% is what other steps use.
 
