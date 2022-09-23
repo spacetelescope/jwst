@@ -476,9 +476,15 @@ class AttrConstraint(SimpleConstraintABC):
                 self.matched = False
                 return self.matched, reprocess
 
-        # If the value is a list, build the reprocess list
+        evaled = value
         if self.evaluate:
             evaled = evaluate(value)
+
+        # If the constraint has no value to check against, and given
+        # value evaluates to a list, the item must be duplicated,
+        # with each value from its list, and all the new items reprocessed.
+        # Otherwise, the value is the value to set the constraint by.
+        if self.value is None:
             if is_iterable(evaled):
                 reprocess_items = []
                 for avalue in evaled:
@@ -493,15 +499,19 @@ class AttrConstraint(SimpleConstraintABC):
                 return self.matched, reprocess
             value = str(evaled)
 
-        # Check condition
-        if self.value is not None:
+        # Else, the constraint does have a value. Check against it.
+        else:
             if callable(self.value):
                 match_value = self.value()
             else:
                 match_value = self.value
-            if not meets_conditions(
-                    value, match_value
-            ):
+            if not is_iterable(evaled):
+                evaled = [evaled]
+            for evaled_item in evaled:
+                value = str(evaled_item)
+                if meets_conditions(value, match_value):
+                    break
+            else:
                 self.matched = False
                 return self.matched, reprocess
 
