@@ -30,7 +30,6 @@ class ResidualFringeStep(Step):
 
     reference_file_types = ['fringefreq', 'regions']
 
-
     def process(self, input):
         self.transmission_level = 80  # sets the transmission level to use in the regions file
         # 80% is what other steps use.
