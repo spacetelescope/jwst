@@ -484,20 +484,14 @@ class AttrConstraint(SimpleConstraintABC):
         # value evaluates to a list, the item must be duplicated,
         # with each value from its list, and all the new items reprocessed.
         # Otherwise, the value is the value to set the constraint by.
+        matched = False
         if self.value is None:
             if is_iterable(evaled):
-                reprocess_items = []
-                for avalue in evaled:
-                    new_item = PoolRow(item)
-                    new_item[source] = str(avalue)
-                    reprocess_items.append(new_item)
-                reprocess.append(ProcessList(
-                    items=reprocess_items,
-                    trigger_constraints=[self.id]
-                ))
+                reprocess.append(reprocess_multivalue(item, source, evaled, self))
                 self.matched = False
                 return self.matched, reprocess
             value = str(evaled)
+            matched = True
 
         # Else, the constraint does have a value. Check against it.
         else:
@@ -507,13 +501,22 @@ class AttrConstraint(SimpleConstraintABC):
                 match_value = self.value
             if not is_iterable(evaled):
                 evaled = [evaled]
+            self.matched = False
             for evaled_item in evaled:
                 value = str(evaled_item)
                 if meets_conditions(value, match_value):
+                    matched = True
+                    evaled.remove(evaled_item)
                     break
-            else:
+
+            # If the condition is not matched, leave now.
+            if not matched:
                 self.matched = False
                 return self.matched, reprocess
+
+            # If there are any values left, add to the reprocess list.
+            if evaled:
+                reprocess.append(reprocess_multivalue(item, source, evaled, self))
 
         # At this point, the constraint has passed.
         # Fix the conditions.
@@ -910,3 +913,34 @@ def meets_conditions(value, conditions):
         if match:
             return True
     return False
+
+
+def reprocess_multivalue(item, source, values, constraint):
+    """Reprocess items that have a list of values
+
+    Parameters
+    ----------
+    item : dict
+        The item.
+
+    source : str
+        The attribute which has the multi-values.
+
+    values : list
+        The list of values
+
+    constraint : Constraint
+        The constraint which is triggering the reprocessing.
+
+    Returns
+    -------
+    process_list : ProcessList
+        The process list to put on the reprocess queue
+    """
+    reprocess_items = []
+    for value in values:
+        new_item = PoolRow(item)
+        new_item[source] = str(value)
+        reprocess_items.append(new_item)
+    process_list = (ProcessList(items=reprocess_items, trigger_constraints=[constraint.id]))
+    return process_list
