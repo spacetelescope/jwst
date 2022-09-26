@@ -33,55 +33,33 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     maxiters: int or None, optional
         Maximum number of sigma-clipping iterations to perform
 
+    Returns
+    -------
     bkg_model: JWST data model
         background data model
 
-    Returns
-    -------
     result: JWST data model
         background-subtracted target data model
 
     """
-    # Subtract the average background from the member
-    log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
 
     # Compute the average of the background images associated with
     # the target exposure
-    if input_model.meta.model_type == "ImageModel":
-        data_dim = 2  # rate
-    elif input_model.meta.model_type == "CubeModel":
-        data_dim = 3  # rateints
-    else:
-        log.error("Input target exposure must be either a CubeModel or an ImageModel.")
-        raise ValueError("Expected either a CubeModel or an ImageModel.")
+    bkg_model = average_background(bkg_list, sigma, maxiters)
 
-    bkg_model = average_background(bkg_list, sigma, maxiters, data_dim)
+    # Subtract the average background from the member
+    log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
 
-    if data_dim == 2:  # rate
-        result = subtract_images.subtract(input_model, bkg_model)
-    elif data_dim == 3:  # rateints
-        result = subtract_images.subtract_ints(input_model, bkg_model)
+    result = subtract_images.subtract(input_model, bkg_model)
 
-    # We're done. Return the background model and result.
+    # We're done. Return the background model and the result.
     return bkg_model, result
 
 
-def average_background(bkg_list, sigma, maxiters, data_dim):
+def average_background(bkg_list, sigma, maxiters):
     """
-    Short Summary
-    -------------
     Average multiple background exposures into a combined data model.
-
-    Long Summary
-    ------------
-    For 2D (rate) background exposures, the average background will be calculated
-    as the mean of the sigma-clipped data in the background expoosures.
-
-    For 3D (rateint) background exposures, each exposure can have an arbitrary
-    number of integrations. First the average (over integrations) of the clipped
-    mean will be calculated for each exposure. Then the mean of these average
-    backgrounds will be calculated as the final average background image. This
-    final average will be subtracted from each integration of the SCI exposure.
+    Processes either 2D (rate) or 3D (rateints) backgrounds.
 
     Parameters:
     -----------
@@ -95,102 +73,81 @@ def average_background(bkg_list, sigma, maxiters, data_dim):
     maxiters: int or None, optional
         Maximum number of sigma-clipping iterations to perform
 
-    data_dim: int
-        Dimension of data arrays in input files. For input rate files: 2.
-        For input rateint files: 3,
-
     Returns:
     --------
     avg_bkg: data model
         The averaged background exposure
     """
+
+    # Determine the type and dimensionality of the background files
+    try:
+        bkg_try = datamodels.ImageModel(bkg_list[0])
+        image_shape = bkg_try.data.shape
+        bkg_dim = 2
+    except ValueError:
+        try:
+            bkg_try = datamodels.CubeModel(bkg_list[0])
+            image_shape = bkg_try.data.shape[1:]
+            bkg_dim = 3
+            accum_dq_arr = np.zeros((image_shape), dtype=np.int32)
+        except ValueError:
+            pass
+
+    avg_bkg = datamodels.ImageModel(image_shape)
     num_bkg = len(bkg_list)
-    avg_bkg = None
+    cdata = np.zeros(((num_bkg,) + image_shape))
+    cerr = cdata.copy()
 
-    if data_dim == 2:  # background rate input
-        cdata = None
-        # Loop over the images to be used as background
-        for i, bkg_file in enumerate(bkg_list):
-            log.info(f'Accumulate bkg from {bkg_file}')
-            bkg_model = datamodels.ImageModel(bkg_file)
+    # Loop over the images to be used as background
+    for i, bkg_file in enumerate(bkg_list):
+        log.info(f'Accumulate bkg from {bkg_file}')
 
-            # Initialize the avg_bkg model, if necessary
-            if avg_bkg is None:
-                avg_bkg = datamodels.ImageModel(bkg_model.shape)
-
-            if cdata is None:
-                cdata = np.zeros(((num_bkg,) + bkg_model.shape))
-                cerr = cdata.copy()
+        if bkg_dim == 2:  # do what the old code does
+            bkg_model = datamodels.ImageModel(bkg_file)  # 2D
 
             # Accumulate the data from this background image
-            cdata[i] = bkg_model.data
+            cdata[i] = bkg_model.data  # 2D slice
             cerr[i] = bkg_model.err * bkg_model.err
-
             avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_model.dq)
 
             bkg_model.close()
 
-        # Clip the background data
-        log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
-        mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
+        if bkg_dim == 3:
+            bkg_model = datamodels.CubeModel(bkg_file)  # 3D
 
-        # Compute the mean of the non-clipped values
-        avg_bkg.data = mdata.mean(axis=0).data
-
-        # Mask the ERR values using the data mask
-        merr = np.ma.masked_array(cerr, mask=mdata.mask)
-
-        # Compute the combined ERR as the uncertainty in the mean
-        avg_bkg.err = (np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))).data
-
-        return avg_bkg
-
-    else:  # data_dim = 3; background rateints input
-        temp_avg_bkg = None  # accumulating Cube model; file is along axis 0
-
-        # Loop over the images to be used as background
-        for i, bkg_file in enumerate(bkg_list):
-            log.info(f'Accumulate bkg from {bkg_file}')
-            bkg_model = datamodels.CubeModel(bkg_file)  # axis=0 is for integrations
-
-            # Initialize a bunch of stuff if necessary
-            if temp_avg_bkg is None:
-                image_shape = bkg_model.data.shape[1:]
-                avg_bkg = datamodels.ImageModel(image_shape)
-                accum_dq_arr = np.zeros((image_shape), dtype=np.int32)
-                temp_avg_bkg = datamodels.CubeModel((num_bkg,) + image_shape)
-
-            # Sigma clip the bkg model's data along the integration axis
+            # Sigma clip the bkg model's data and err along the integration axis
             sc_bkg_data = sigma_clip(bkg_model.data, sigma=sigma, maxiters=maxiters, axis=0)
+            sc_bkg_err = sigma_clip(bkg_model.err * bkg_model.err, sigma=sigma, maxiters=maxiters, axis=0)
 
-            # Accumulate the integ-averaged clipped data in the temp Cubemodel for file
-            temp_avg_bkg.data[i, :, :] = sc_bkg_data.mean(axis=0)
+            # Accumulate the integ-averaged clipped data and err for the file
+            cdata[i] = sc_bkg_data.mean(axis=0)
+            cerr[i] = sc_bkg_err.mean(axis=0)
 
-            # Collapse the DQ by doing a bitwise_OR over all integrations in the file
+            # Collapse the DQ by doing a bitwise_OR over all integrations
             for i_nint in range(bkg_model.dq.shape[0]):
                 accum_dq_arr = np.bitwise_or(bkg_model.dq[i_nint, :, :], accum_dq_arr)
+            avg_bkg.dq = np.bitwise_or(avg_bkg.dq, accum_dq_arr)
 
-            # Accumulate the collapsed DQ in the temp Cubemodel for file
-            temp_avg_bkg.dq[i, :, :] = accum_dq_arr
+            bkg_model.close()
 
-        # Average data averages over all files
-        avg_bkg.data = temp_avg_bkg.data.mean(axis=0)  # mean along file axis
+    # Clip the background data
+    log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
+    mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
-        # Do bitwise_OR over all of the files to give 2D dq array
-        temp_dq_arr = temp_avg_bkg.dq[0, :, :]
-        for i in range(num_bkg):
-            temp_dq_arr = np.bitwise_or(temp_avg_bkg.dq[i, :, :], temp_dq_arr)
+    # Compute the mean of the non-clipped values
+    avg_bkg.data = mdata.mean(axis=0).data
 
-        avg_bkg.dq = temp_dq_arr
+    # Mask the ERR values using the data mask
+    merr = np.ma.masked_array(cerr, mask=mdata.mask)
 
-        return avg_bkg
+    # Compute the combined ERR as the uncertainty in the mean
+    avg_bkg.err = (np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))).data
+
+    return avg_bkg
 
 
 def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=None):
-    """
-    Short Summary
-    -------------
-    Scale and subtract a background reference image from WFSS/GRISM data.
+    """Scale and subtract a background reference image from WFSS/GRISM data.
 
     Parameters
     ----------
@@ -264,10 +221,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
 
 
 def no_NaN(model, fill_value=0.):
-    """
-    Short Summary
-    -------------
-    Replace NaNs with a harmless value.
+    """Replace NaNs with a harmless value.
 
     Parameters
     ----------
@@ -293,10 +247,7 @@ def no_NaN(model, fill_value=0.):
 
 
 def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
-    """
-    Short Summary
-    -------------
-    Create a mask that is False within bounding boxes of sources.
+    """Create a mask that is False within bounding boxes of sources.
 
     Parameters
     ----------
@@ -341,10 +292,7 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
 
 
 def robust_mean(x, lowlim=25., highlim=75.):
-    """
-    Short Summary
-    -------------
-    Compute a mean value, excluding outliers.
+    """Compute a mean value, excluding outliers.
 
     Parameters
     ----------
