@@ -24,7 +24,7 @@ The ``residual_fringe`` step can accept several different forms of input data, i
 
   - a data model (IFUImageModel) containing a 2-D IFU image
 
-  - an association table (in json format) containing a list of input files
+  - an association table (in json format) containing a single input file
 
 
 Assumptions

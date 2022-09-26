@@ -56,7 +56,7 @@ master_background
 pipeline
 --------
 
-- Added residual_fringe correction to the calspec2 pipeline
+- Added residual_fringe correction to the calspec2 pipeline [#7051]
 
 resample
 --------

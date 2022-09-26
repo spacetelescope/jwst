@@ -99,11 +99,10 @@ class ResidualFringeStep(Step):
             input.meta.cal_step.residual_fringe = "SKIPPED"
             return input
 
-        # 1. read in reference file for model
+        # 1. set up the reference files
         # 2. correct the  model
         # 3. return from step
 
-        # Open the residual fringe reference file
         self.residual_fringe_filename = self.get_reference_file(input, 'fringefreq')
         self.log.info('Using Residual FRINGE reference file:{}'.
                       format(self.residual_fringe_filename))

@@ -254,6 +254,7 @@ class Spec2Pipeline(Pipeline):
         else:
             calibrated = self._process_common(calibrated)
 
+        # for MIR_MRS data call the residual fringe correction
         calibrated = self.residual_fringe(calibrated)
 
         # Record ASN pool and table names in output
@@ -280,7 +281,6 @@ class Spec2Pipeline(Pipeline):
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
             # wavelength bands
-            # for MIR_MRS data call the residual fringe correction
 
             resampled = self.cube_build(calibrated)
             if not self.cube_build.skip:
