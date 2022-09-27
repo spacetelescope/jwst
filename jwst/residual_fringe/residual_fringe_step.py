@@ -104,10 +104,10 @@ class ResidualFringeStep(Step):
         # 3. return from step
 
         self.residual_fringe_filename = self.get_reference_file(input, 'fringefreq')
-        self.log.info('Using Residual FRINGE reference file:{}'.
+        self.log.info('Using FRINGEFREQ reference file:{}'.
                       format(self.residual_fringe_filename))
 
-        # Open the regions reference file
+        # set up regions reference file
         self.regions_filename = self.get_reference_file(input, 'regions')
         self.log.info('Using MRS regions reference file: {}'.
                       format(self.regions_filename))

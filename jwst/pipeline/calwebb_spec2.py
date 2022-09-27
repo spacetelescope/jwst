@@ -254,9 +254,6 @@ class Spec2Pipeline(Pipeline):
         else:
             calibrated = self._process_common(calibrated)
 
-        # for MIR_MRS data call the residual fringe correction
-        calibrated = self.residual_fringe(calibrated)
-
         # Record ASN pool and table names in output
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
@@ -503,5 +500,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
+        calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
 
         return calibrated

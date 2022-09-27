@@ -1852,6 +1852,15 @@ properties:
                 type: string
                 fits_keyword: R_FRINGE
                 blend_table: True
+          fringefreq:
+            title: Fringe Frequency reference file information
+            type: object
+            properties:
+              name:
+                title: Fringe Frequency reference file name
+                type: string
+                fits_keyword: R_FRIFRQ
+                blend_table: True		
           gain:
             title: Gain reference file information
             type: object
