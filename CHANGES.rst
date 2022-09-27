@@ -27,6 +27,11 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+general
+-------
+
+- Reformat code base with ``black`` [#6970]
+
 resample
 --------
 

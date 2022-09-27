@@ -6,6 +6,7 @@
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 [![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
@@ -82,7 +83,7 @@ exact versions of all packages to be installed.
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
-version of `jwst` used in DMS build 9.0, use jwst tag 1.8.2. The overall
+version of `jwst` used in DMS build 8.0, use jwst tag 1.5.2. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
 details of each command vary, due to the use of environment snapshot files that specify
 all of the particular packages to install. Also note that different snapshot files are
