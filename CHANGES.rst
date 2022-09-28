@@ -14,6 +14,20 @@ associations
   exception if path data is found.  Also, expanded documentation to make this
   more clear to users. [#7008]
 
+datamodels
+----------
+
+- Add metadata to core schema to carry association exptype into datamodels
+  loaded from associations into ModelContainer. Modify container method
+  ``ind_asn_type`` to query this metadata. [#7046]
+
+master_background
+-----------------
+
+- Remove loading of datamodels directly from expnames listed in
+  ``asn_table``; instead sort input datamodels by new
+  ``model.meta.asn.exptype`` metadata. [#7046]
+
 resample
 --------
 
@@ -21,7 +35,6 @@ resample
   supplied, as well as fix a bug where this value was not being properly passed
   to ResampleStep, and another where photometry keywords weren't being updated
   correctly to reflect the correct pixel scale ratio. [#7033, #7048]
-
 
 tweakreg
 --------
