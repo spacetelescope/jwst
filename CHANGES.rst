@@ -46,6 +46,8 @@ datamodels
   loaded from associations into ModelContainer. Modify container method
   ``ind_asn_type`` to query this metadata. [#7046]
 
+- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file. 
+
 master_background
 -----------------
 
@@ -56,7 +58,7 @@ master_background
 pipeline
 --------
 
-- Added residual_fringe correction to the calspec2 pipeline [#7051]
+- Added residual_fringe correction to the calspec2 pipeline. [#7051]
 
 resample
 --------
@@ -77,7 +79,7 @@ residual_fringe
 ---------------
 
 - Removed reading and saving data as a ModelContainer. Data now read in and saved
-as an IFUImageModel. [#7051]
+as an IFUImageModel.  [#7051]
 
 
 set_telescope_pointing
