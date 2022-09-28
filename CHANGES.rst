@@ -41,7 +41,7 @@ resample_spec
 
 - Update computation of target RA/Dec for slit spectra to handle data
   containing negative spectral traces (due to nodded background subtraction)
-  in a most robust way. [#7047]
+  in a more robust way. [#7047]
 
 tweakreg
 --------
