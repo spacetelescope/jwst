@@ -1,6 +1,8 @@
 import logging
 from timeit import default_timer as timer
 
+from progress.bar import Bar
+
 from .association import make_timestamp
 from .lib.process_list import (
     ListCategory,
@@ -61,30 +63,32 @@ def generate(pool, rules, version_id=None):
         total_mod_existing = 0
         total_new = 0
         total_reprocess = 0
-        for item in process_list.items:
-            item = PoolRow(item)
+        with Bar('Processing', max=len(process_list.items)) as bar:
+            for item in process_list.items:
+                item = PoolRow(item)
 
-            existing_asns, new_asns, to_process = generate_from_item(
-                item,
-                version_id,
-                associations,
-                rules,
-                process_list
-            )
-            total_mod_existing += len(existing_asns)
-            total_new += len(new_asns)
-            associations.extend(new_asns)
+                existing_asns, new_asns, to_process = generate_from_item(
+                    item,
+                    version_id,
+                    associations,
+                    rules,
+                    process_list
+                )
+                total_mod_existing += len(existing_asns)
+                total_new += len(new_asns)
+                associations.extend(new_asns)
 
-            # If working on a process list EXISTING
-            # remove any new `to_process` that is
-            # also EXISTING. Prevent infinite loops.
-            to_process_modified = []
-            for next_list in to_process:
-                next_list = workover_filter(next_list, process_list.work_over)
-                if next_list:
-                    to_process_modified.append(next_list)
-            process_queue.extend(to_process_modified)
-            total_reprocess += len(to_process_modified)
+                # If working on a process list EXISTING
+                # remove any new `to_process` that is
+                # also EXISTING. Prevent infinite loops.
+                to_process_modified = []
+                for next_list in to_process:
+                    next_list = workover_filter(next_list, process_list.work_over)
+                    if next_list:
+                        to_process_modified.append(next_list)
+                process_queue.extend(to_process_modified)
+                total_reprocess += len(to_process_modified)
+                bar.next()
 
         logger.debug('Existing associations modified: %d New associations created: %d', total_mod_existing, total_new)
         logger.debug('New process lists: %d', total_reprocess)
