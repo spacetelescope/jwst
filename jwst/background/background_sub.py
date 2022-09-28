@@ -59,7 +59,8 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 def average_background(bkg_list, sigma, maxiters):
     """
     Average multiple background exposures into a combined data model.
-    Processes either 2D (rate) or 3D (rateints) backgrounds.
+    Processes backgrounds from various DataModel types, including those
+    having 2D (rate) or 3D (rateints) backgrounds.
 
     Parameters:
     -----------
@@ -79,19 +80,10 @@ def average_background(bkg_list, sigma, maxiters):
         The averaged background exposure
     """
 
-    # Determine the type and dimensionality of the background files
-    try:
-        bkg_try = datamodels.ImageModel(bkg_list[0])
-        image_shape = bkg_try.data.shape
-        bkg_dim = 2
-    except ValueError:
-        try:
-            bkg_try = datamodels.CubeModel(bkg_list[0])
-            image_shape = bkg_try.data.shape[1:]
-            bkg_dim = 3
-            accum_dq_arr = np.zeros((image_shape), dtype=np.int32)
-        except ValueError:
-            pass
+    # Determine the dimensionality of the background files
+    bkg_model = datamodels.open(bkg_list[0])
+    bkg_dim = len(bkg_model.data.shape)
+    image_shape = bkg_model.data.shape[-2:]
 
     avg_bkg = datamodels.ImageModel(image_shape)
     num_bkg = len(bkg_list)
@@ -101,10 +93,9 @@ def average_background(bkg_list, sigma, maxiters):
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
         log.info(f'Accumulate bkg from {bkg_file}')
+        bkg_model = datamodels.open(bkg_file)
 
-        if bkg_dim == 2:  # do what the old code does
-            bkg_model = datamodels.ImageModel(bkg_file)  # 2D
-
+        if bkg_dim == 2:
             # Accumulate the data from this background image
             cdata[i] = bkg_model.data  # 2D slice
             cerr[i] = bkg_model.err * bkg_model.err
@@ -113,8 +104,6 @@ def average_background(bkg_list, sigma, maxiters):
             bkg_model.close()
 
         if bkg_dim == 3:
-            bkg_model = datamodels.CubeModel(bkg_file)  # 3D
-
             # Sigma clip the bkg model's data and err along the integration axis
             sc_bkg_data = sigma_clip(bkg_model.data, sigma=sigma, maxiters=maxiters, axis=0)
             sc_bkg_err = sigma_clip(bkg_model.err * bkg_model.err, sigma=sigma, maxiters=maxiters, axis=0)
