@@ -20,6 +20,7 @@ def strict_validation(monkeypatch):
     yield
 
 
+@pytest.mark.skip(reason="obsolete test with no available old input data")
 @pytest.mark.bigdata
 @pytest.mark.parametrize("truth_path", [
     "truth/test_miri_lrs_slit_spec2/jw00623032001_03102_00001_mirimage_x1d.fits",
@@ -43,6 +44,7 @@ def test_x1d_spec_table(truth_path, rtdata):
         pass
 
 
+@pytest.mark.skip(reason="obsolete test with no available old input data")
 @pytest.mark.bigdata
 @pytest.mark.parametrize("truth_path",
                          ["truth/test_nircam_mtimage/mt_pre_1-2-2_schema_uncal.fits"],

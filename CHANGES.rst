@@ -36,6 +36,13 @@ resample
   to ResampleStep, and another where photometry keywords weren't being updated
   correctly to reflect the correct pixel scale ratio. [#7033, #7048]
 
+resample_spec
+-------------
+
+- Update computation of target RA/Dec for slit spectra to handle data
+  containing negative spectral traces (due to nodded background subtraction)
+  in a more robust way. [#7047]
+
 tweakreg
 --------
 

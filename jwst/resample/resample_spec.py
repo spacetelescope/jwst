@@ -99,28 +99,38 @@ class ResampleSpecData(ResampleData):
         else:
             refmodel = self.input_models[0]
 
+        # make a copy of the data array for internal manipulation
+        refmodel_data = refmodel.data.copy()
+        # renormalize to the minimum value, for best results when
+        # computing the weighted mean below
+        refmodel_data -= np.nanmin(refmodel_data)
+
+        # save the wcs of the reference model
         refwcs = refmodel.meta.wcs
 
+        # setup the transforms that are needed
         s2d = refwcs.get_transform('slit_frame', 'detector')
         d2s = refwcs.get_transform('detector', 'slit_frame')
         s2w = refwcs.get_transform('slit_frame', 'world')
 
-        # estimate position of the target without relying in the meta.target:
+        # estimate position of the target without relying on the meta.target:
+        # compute the mean spatial and wavelength coords weighted
+        # by the spectral intensity
         bbox = refwcs.bounding_box
-
         grid = wcstools.grid_from_bounding_box(bbox)
         _, s, lam = np.array(d2s(*grid))
-        sd = s * refmodel.data
-        ld = lam * refmodel.data
+        sd = s * refmodel_data
+        ld = lam * refmodel_data
         good_s = np.isfinite(sd)
         if np.any(good_s):
-            total = np.sum(refmodel.data[good_s])
+            total = np.sum(refmodel_data[good_s])
             wmean_s = np.sum(sd[good_s]) / total
             wmean_l = np.sum(ld[good_s]) / total
         else:
             wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
             wmean_l = d2s(*np.mean(bbox, axis=1))[2]
 
+        # transform the weighted means into target RA/Dec
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
 
         ref_lam = _find_nirspec_output_sampling_wavelengths(
@@ -128,7 +138,6 @@ class ResampleSpecData(ResampleData):
             targ_ra, targ_dec
         )
         ref_lam = np.array(ref_lam)
-
         n_lam = ref_lam.size
         if not n_lam:
             raise ValueError("Not enough data to construct output WCS.")
