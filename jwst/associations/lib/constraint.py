@@ -484,14 +484,12 @@ class AttrConstraint(SimpleConstraintABC):
         # value evaluates to a list, the item must be duplicated,
         # with each value from its list, and all the new items reprocessed.
         # Otherwise, the value is the value to set the constraint by.
-        matched = False
         if self.value is None:
             if is_iterable(evaled):
                 reprocess.append(reprocess_multivalue(item, source, evaled, self))
                 self.matched = False
                 return self.matched, reprocess
             value = str(evaled)
-            matched = True
 
         # Else, the constraint does have a value. Check against it.
         else:
@@ -501,22 +499,23 @@ class AttrConstraint(SimpleConstraintABC):
                 match_value = self.value
             if not is_iterable(evaled):
                 evaled = [evaled]
-            self.matched = False
+            matched = []
             for evaled_item in evaled:
                 value = str(evaled_item)
                 if meets_conditions(value, match_value):
-                    matched = True
-                    evaled.remove(evaled_item)
-                    break
+                    matched.append(evaled_item)
 
             # If the condition is not matched, leave now.
             if not matched:
                 self.matched = False
                 return self.matched, reprocess
 
-            # If there are any values left, add to the reprocess list.
-            if evaled:
-                reprocess.append(reprocess_multivalue(item, source, evaled, self))
+            # Matches were found. The first match becomes
+            # the value for the current constraint.
+            # The rest get reprocessed.
+            value = str(matched[0])
+            if matched[1:]:
+                reprocess.append(reprocess_multivalue(item, source, matched[1:], self))
 
         # At this point, the constraint has passed.
         # Fix the conditions.
