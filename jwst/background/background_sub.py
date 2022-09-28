@@ -90,6 +90,9 @@ def average_background(bkg_list, sigma, maxiters):
     cdata = np.zeros(((num_bkg,) + image_shape))
     cerr = cdata.copy()
 
+    if bkg_dim == 3:
+        accum_dq_arr = np.zeros((image_shape), dtype=np.int32)
+
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
         log.info(f'Accumulate bkg from {bkg_file}')
