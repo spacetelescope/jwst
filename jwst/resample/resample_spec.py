@@ -99,19 +99,24 @@ class ResampleSpecData(ResampleData):
         else:
             refmodel = self.input_models[0]
 
+        # make a copy of the data array for internal manipulation
         refmodel_data = refmodel.data.copy()
-        refmodel_data[refmodel_data < 0.] = np.NaN
+        # renormalize to the minimum value, for best results when
+        # computing the weighted mean below
+        refmodel_data -= np.nanmin(refmodel_data)
 
+        # save the wcs of the reference model
         refwcs = refmodel.meta.wcs
 
+        # setup the transforms that are needed
         s2d = refwcs.get_transform('slit_frame', 'detector')
         d2s = refwcs.get_transform('detector', 'slit_frame')
         s2w = refwcs.get_transform('slit_frame', 'world')
 
-        # estimate position of the target without relying in the meta.target:
+        # estimate position of the target without relying on the meta.target:
+        # compute the mean spatial and wavelength coords weighted
+        # by the spectral intensity
         bbox = refwcs.bounding_box
-        log.debug(f" refwcs.bounding_box = {bbox}")
-
         grid = wcstools.grid_from_bounding_box(bbox)
         _, s, lam = np.array(d2s(*grid))
         sd = s * refmodel_data
@@ -121,14 +126,12 @@ class ResampleSpecData(ResampleData):
             total = np.sum(refmodel_data[good_s])
             wmean_s = np.sum(sd[good_s]) / total
             wmean_l = np.sum(ld[good_s]) / total
-            log.debug(f" wmean_s={wmean_s}")
-            log.debug(f" wmean_l={wmean_l}")
         else:
             wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
             wmean_l = d2s(*np.mean(bbox, axis=1))[2]
 
+        # transform the weighted means into target RA/Dec
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
-        log.debug(f" targ_ra, targ_dec = {targ_ra,targ_dec}")
 
         ref_lam = _find_nirspec_output_sampling_wavelengths(
             all_wcs,
@@ -144,7 +147,6 @@ class ResampleSpecData(ResampleData):
 
         # Find the spatial pixel scale:
         y_slit_min, y_slit_max = self._max_virtual_slit_extent(all_wcs, targ_ra, targ_dec)
-        log.debug(f" y_slit_min={y_slit_min}, y_slit_max={y_slit_max}")
 
         nsampl = 50
         xy_min = s2d(
