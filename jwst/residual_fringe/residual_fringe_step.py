@@ -115,7 +115,7 @@ class ResidualFringeStep(Step):
         # Check for a valid reference files. If they are not found skip step
         if self.residual_fringe_filename == 'N/A' or self.regions_filename == 'N/A':
             if self.residual_fringe_filename == 'N/A':
-                self.log.warning('No Residual FRINGE reference file found')
+                self.log.warning('No FRINGEFREQ reference file found')
                 self.log.warning('Residual Fringe step will be skipped')
 
             if self.regions_filename == 'N/A':
