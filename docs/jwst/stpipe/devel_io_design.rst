@@ -28,7 +28,8 @@ API Summary
     - `output_use_model`: True to always base output file names on the
       `DataModel.meta.filename` of the `DataModel` being saved.
     - `input_dir`: Generally defined by the location of the primary
-      input file unless otherwise specified.
+      input file unless otherwise specified.  All input files must be
+      in this directory.
 
 Classes, Methods, Functions
 ---------------------------
@@ -165,7 +166,8 @@ Many of the JWST calibration steps and pipelines expect an
 is, among other features, a list-like object where each element is the
 `DataModel` of each member of the association. The `meta.asn_table` is
 populated with the association data structure, allowing direct access
-to the association itself.
+to the association itself.  The association file, as well as the files
+listed in the association file, must be in the input directory.
 
 To read in a list of files, or an association file, as an association,
 use the `load_as_level2_asn` or `load_as_level3_asn` methods.
@@ -173,7 +175,7 @@ use the `load_as_level2_asn` or `load_as_level3_asn` methods.
 Input Source
 ------------
 
-In general, all input, except for references files provided by CRDS,
+All input files, except for references files provided by CRDS,
 are expected to be co-resident in the same directory. That directory
 is determined by the directory in which the primary input file
 resides. For programmatic use, this directory is available in the

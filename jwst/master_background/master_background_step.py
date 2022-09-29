@@ -231,14 +231,15 @@ def split_container(container):
     """Divide a ModelContainer with science and background into one of each
     """
     asn = container.meta.asn_table.instance
+
     background = datamodels.ModelContainer()
     science = datamodels.ModelContainer()
-    for product in asn['products']:
-        for member in product['members']:
-            if member['exptype'].lower() == 'science':
-                science.append(datamodels.open(member['expname']))
-            if member['exptype'].lower() == 'background':
-                background.append(datamodels.open(member['expname']))
+
+    for ind_science in container.ind_asn_type('science'):
+        science.append(container._models[ind_science])
+
+    for ind_bkgd in container.ind_asn_type('background'):
+        background.append(container._models[ind_bkgd])
 
     # Pass along the association table to the output science container
     science.meta.asn_table = {}

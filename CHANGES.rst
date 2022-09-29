@@ -19,7 +19,55 @@ align_refs
 
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
-  
+
+associations
+------------
+
+- Enforce no path data in ``expname`` in association files by raising an
+  exception if path data is found.  Also, expanded documentation to make this
+  more clear to users. [#7008]
+
+background
+----------
+
+- Update the background subtraction step to accept rateints (3D) input
+  background exposures. [#7049]
+
+combine_1d
+----------
+
+- Fixed a bug to properly exclude input spectra that have only 1
+  wavelength bin. [#7053]
+
+datamodels
+----------
+
+- Add metadata to core schema to carry association exptype into datamodels
+  loaded from associations into ModelContainer. Modify container method
+  ``ind_asn_type`` to query this metadata. [#7046]
+
+master_background
+-----------------
+
+- Remove loading of datamodels directly from expnames listed in
+  ``asn_table``; instead sort input datamodels by new
+  ``model.meta.asn.exptype`` metadata. [#7046]
+
+resample
+--------
+
+- Fix calculation of 'pixel_scale_ratio' when 'pixel_scale' parameter is
+  supplied, as well as fix a bug where this value was not being properly passed
+  to ResampleStep, and another where photometry keywords weren't being updated
+  correctly to reflect the correct pixel scale ratio. [#7033, #7048]
+
+resample_spec
+-------------
+
+- Update computation of target RA/Dec for slit spectra to handle data
+  containing negative spectral traces (due to nodded background subtraction)
+  in a more robust way. [#7047]
+
 tweakreg
 --------
 
@@ -253,6 +301,10 @@ tweakreg
   and ``abs_sigma``. [#6987]
 
 - Refactored code to work with changes in ``tweakwcs`` version 0.8.0. [#7006]
+
+source_catalog
+--------------
+- Reset input model (units, re-add backgroud) after source_catalog step. [#6942]
 
 1.6.2 (2022-07-19)
 ==================

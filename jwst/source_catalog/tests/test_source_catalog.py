@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from photutils.datasets import make_gwcs
 from jwst.datamodels import ImageModel
 from ..source_catalog_step import SourceCatalogStep
@@ -122,3 +123,28 @@ def test_model_without_apcorr_data(nircam_model_without_apcorr):
     step = SourceCatalogStep(save_results=False)
     cat = step.run(nircam_model_without_apcorr)
     assert cat is None
+
+
+def test_input_model_reset(nircam_model):
+    """ Changes to input model data are made in SourceCatalogStep - make sure that
+        these changes are correctly reversed so the input model data/err arrays
+        remain unchanged after processing (to avoid copying datamodel),
+        and that the units are in MJy/sr before and after."""
+
+    original_data = nircam_model.data.copy()
+    original_data_unit = nircam_model.meta.bunit_data
+    original_err = nircam_model.err.copy()
+    original_err_unit = nircam_model.meta.bunit_err
+
+    assert (original_data_unit == original_err_unit == 'MJy/sr')
+
+    step = SourceCatalogStep(snr_threshold=0.5, npixels=5,
+                             bkg_boxsize=50, kernel_fwhm=2.0,
+                             save_results=False)
+
+    step.run(nircam_model)
+
+    assert_allclose(original_data, nircam_model.data, atol=5.e-7)
+    assert_allclose(original_err, nircam_model.err, 5.e-7)
+    assert (nircam_model.meta.bunit_data == 'MJy/sr')
+    assert (nircam_model.meta.bunit_err == 'MJy/sr')
