@@ -7,18 +7,24 @@ align_refs
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
 
-background
-----------
-
-- Update the background subtraction step to accept rateints (3D) input
-  background exposures. [#7049]
-  
 associations
 ------------
 
 - Enforce no path data in ``expname`` in association files by raising an
   exception if path data is found.  Also, expanded documentation to make this
   more clear to users. [#7008]
+
+background
+----------
+
+- Update the background subtraction step to accept rateints (3D) input
+  background exposures. [#7049]
+
+combine_1d
+----------
+
+- Fixed a bug to properly exclude input spectra that have only 1
+  wavelength bin. [#7053]
 
 datamodels
 ----------
