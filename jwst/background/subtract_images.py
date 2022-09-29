@@ -9,7 +9,8 @@ def subtract(model1, model2):
     """
     Short Summary
     -------------
-    Subtract one data model from another
+    Subtract one data model from another, and include updated DQ
+    in output.
 
     Parameters
     ----------

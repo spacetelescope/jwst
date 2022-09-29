@@ -7,6 +7,12 @@ align_refs
 - Upgrade the median image replacement routine to also replace NaN pixels,
   in addition to pixels flagged as bad. [#7044]
 
+background
+----------
+
+- Update the background subtraction step to accept rateints (3D) input
+  background exposures. [#7049]
+  
 associations
 ------------
 

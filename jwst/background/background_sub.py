@@ -26,8 +26,18 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     bkg_list: filename list
         list of background exposure file names
 
+    sigma: float, optional
+        Number of standard deviations to use for both the lower
+        and upper clipping limits.
+
+    maxiters: int or None, optional
+        Maximum number of sigma-clipping iterations to perform
+
     Returns
     -------
+    bkg_model: JWST data model
+        background data model
+
     result: JWST data model
         background-subtracted target data model
 
@@ -39,53 +49,78 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
     # Subtract the average background from the member
     log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
+
     result = subtract_images.subtract(input_model, bkg_model)
 
-    # We're done. Return the result.
+    # We're done. Return the background model and the result.
     return bkg_model, result
 
 
 def average_background(bkg_list, sigma, maxiters):
     """
-    Average multiple background exposures into a combined data model
+    Average multiple background exposures into a combined data model.
+    Processes backgrounds from various DataModel types, including those
+    having 2D (rate) or 3D (rateints) backgrounds.
 
     Parameters:
     -----------
-
     bkg_list: filename list
         List of background exposure file names
 
+    sigma: float, optional
+        Number of standard deviations to use for both the lower
+        and upper clipping limits.
+
+    maxiters: int or None, optional
+        Maximum number of sigma-clipping iterations to perform
+
     Returns:
     --------
-
     avg_bkg: data model
         The averaged background exposure
-
     """
 
+    # Determine the dimensionality of the background files
+    bkg_model = datamodels.open(bkg_list[0])
+    bkg_dim = len(bkg_model.data.shape)
+    image_shape = bkg_model.data.shape[-2:]
+
+    avg_bkg = datamodels.ImageModel(image_shape)
     num_bkg = len(bkg_list)
-    avg_bkg = None
-    cdata = None
+    cdata = np.zeros(((num_bkg,) + image_shape))
+    cerr = cdata.copy()
+
+    if bkg_dim == 3:
+        accum_dq_arr = np.zeros((image_shape), dtype=np.uint32)
 
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
         log.info(f'Accumulate bkg from {bkg_file}')
-        bkg_model = datamodels.ImageModel(bkg_file)
+        bkg_model = datamodels.open(bkg_file)
 
-        # Initialize the avg_bkg model, if necessary
-        if avg_bkg is None:
-            avg_bkg = datamodels.ImageModel(bkg_model.shape)
+        if bkg_dim == 2:
+            # Accumulate the data from this background image
+            cdata[i] = bkg_model.data  # 2D slice
+            cerr[i] = bkg_model.err * bkg_model.err
+            avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_model.dq)
 
-        if cdata is None:
-            cdata = np.zeros(((num_bkg,) + bkg_model.shape))
-            cerr = cdata.copy()
+            bkg_model.close()
 
-        # Accumulate the data from this background image
-        cdata[i] = bkg_model.data
-        cerr[i] = bkg_model.err * bkg_model.err
-        avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_model.dq)
+        if bkg_dim == 3:
+            # Sigma clip the bkg model's data and err along the integration axis
+            sc_bkg_data = sigma_clip(bkg_model.data, sigma=sigma, maxiters=maxiters, axis=0)
+            sc_bkg_err = sigma_clip(bkg_model.err * bkg_model.err, sigma=sigma, maxiters=maxiters, axis=0)
 
-        bkg_model.close()
+            # Accumulate the integ-averaged clipped data and err for the file
+            cdata[i] = sc_bkg_data.mean(axis=0)
+            cerr[i] = sc_bkg_err.mean(axis=0)
+
+            # Collapse the DQ by doing a bitwise_OR over all integrations
+            for i_nint in range(bkg_model.dq.shape[0]):
+                accum_dq_arr = np.bitwise_or(bkg_model.dq[i_nint, :, :], accum_dq_arr)
+            avg_bkg.dq = np.bitwise_or(avg_bkg.dq, accum_dq_arr)
+
+            bkg_model.close()
 
     # Clip the background data
     log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
