@@ -1,19 +1,6 @@
 1.7.3 (unreleased)
 ==================
 
-resample_spec
-------------------
-
-- Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
-
-resample
--------------
-
-- Fix a bug that was causing a WCS misalignment between the 'single' mosaic
-  image and the input CAL images. [#7042]
-
-- Move update_fits_wcs out of ResampleData and into ResampleStep. [#7042]
-
 align_refs
 ----------
 
@@ -63,6 +50,11 @@ pipeline
 resample
 --------
 
+- Fix a bug that was causing a WCS misalignment between the 'single' mosaic
+  image and the input CAL images. [#7042]
+
+- Move update_fits_wcs out of ResampleData and into ResampleStep. [#7042]
+
 - Fix calculation of 'pixel_scale_ratio' when 'pixel_scale' parameter is
   supplied, as well as fix a bug where this value was not being properly passed
   to ResampleStep, and another where photometry keywords weren't being updated
@@ -74,6 +66,9 @@ resample_spec
 - Update computation of target RA/Dec for slit spectra to handle data
   containing negative spectral traces (due to nodded background subtraction)
   in a more robust way. [#7047]
+
+ - Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
+
 
 residual_fringe
 ---------------
