@@ -1,12 +1,12 @@
 1.7.3 (unreleased)
 ==================
 
-resample_spec_step
+resample_spec
 ------------------
 
 - Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
 
-resample_step
+resample
 -------------
 
 - Fix a bug that was causing a WCS misalignment between the 'single' mosaic
