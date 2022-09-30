@@ -1,4 +1,5 @@
 import logging
+import re
 
 import numpy as np
 
@@ -115,6 +116,7 @@ class ResampleStep(Step):
 
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
+            self.update_fits_wcs(model)
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
@@ -266,6 +268,43 @@ class ResampleStep(Step):
                 log.info('  using: %s=%s', k, repr(v))
 
         return kwargs
+
+    def update_fits_wcs(self, model):
+        """
+        Update FITS WCS keywords of the resampled image.
+        """
+        # Delete any SIP-related keywords first
+        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
+        regex = re.compile(pattern)
+
+        keys = list(model.meta.wcsinfo.instance.keys())
+        for key in keys:
+            if regex.match(key):
+                del model.meta.wcsinfo.instance[key]
+
+        # Write new PC-matrix-based WCS based on GWCS model
+        transform = model.meta.wcs.forward_transform
+        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+        model.meta.wcsinfo.ra_ref = transform[6].lon.value
+        model.meta.wcsinfo.dec_ref = transform[6].lat.value
+        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        model.meta.wcsinfo.ctype1 = "RA---TAN"
+        model.meta.wcsinfo.ctype2 = "DEC--TAN"
+
+        # Remove no longer relevant WCS keywords
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+        for key in rm_keys:
+            if key in model.meta.wcsinfo.instance:
+                del model.meta.wcsinfo.instance[key]
 
 
 def _check_list_pars(vals, name, min_vals=None):

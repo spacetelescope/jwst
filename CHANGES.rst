@@ -1,6 +1,19 @@
 1.7.3 (unreleased)
 ==================
 
+resample_spec
+------------------
+
+- Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
+
+resample
+-------------
+
+- Fix a bug that was causing a WCS misalignment between the 'single' mosaic
+  image and the input CAL images. [#7042]
+
+- Move update_fits_wcs out of ResampleData and into ResampleStep. [#7042]
+
 align_refs
 ----------
 
