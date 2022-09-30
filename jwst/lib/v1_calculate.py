@@ -49,25 +49,25 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
     t_pars = stp.TransformParameters(siaf=siaf, **calc_wcs_from_time_kwargs)
 
     # Calculate V1 for all sources.
-    with siafdb.SiafDb(siaf_path) as siaf_db:
-        t_pars.siaf_db = siaf_db
-        for source in sources:
-            with dm.open(source) as model:
-                obsstart = model.meta.exposure.start_time
-                obsend = model.meta.exposure.end_time
-                guide_star_wcs = stp.WCSRef(
-                    model.meta.guidestar.gs_ra,
-                    model.meta.guidestar.gs_dec,
-                    model.meta.guidestar.gs_v3_pa_science
-                )
+    siaf_db = siafdb.SiafDb(siaf_path)
+    t_pars.siaf_db = siaf_db
+    for source in sources:
+        with dm.open(source) as model:
+            obsstart = model.meta.exposure.start_time
+            obsend = model.meta.exposure.end_time
+            guide_star_wcs = stp.WCSRef(
+                model.meta.guidestar.gs_ra,
+                model.meta.guidestar.gs_dec,
+                model.meta.guidestar.gs_v3_pa_science
+            )
 
-                t_pars.guide_star_wcs = guide_star_wcs
-                obstimes, _, vinfos = stp.calc_wcs_over_time(obsstart, obsend, t_pars)
+            t_pars.guide_star_wcs = guide_star_wcs
+            obstimes, _, vinfos = stp.calc_wcs_over_time(obsstart, obsend, t_pars)
 
-            sources = [source] * len(obstimes)
-            v1_dict['source'] += sources
-            v1_dict['obstime'] += obstimes
-            v1_dict['v1'] += vinfos
+        sources = [source] * len(obstimes)
+        v1_dict['source'] += sources
+        v1_dict['obstime'] += obstimes
+        v1_dict['v1'] += vinfos
 
     # Format and return.
     v1_table = Table(v1_dict, meta=t_pars.as_reprdict())
@@ -109,9 +109,9 @@ def v1_calculate_over_time(obsstart, obsend, siaf_path=None, **calc_wcs_from_tim
     t_pars = stp.TransformParameters(siaf=siaf, **calc_wcs_from_time_kwargs)
 
     # Calculate V1 for all sources.
-    with siafdb.SiafDb(siaf_path) as siaf_db:
-        t_pars.siaf_db = siaf_db
-        obstimes, _, vinfos = stp.calc_wcs_over_time(obsstart, obsend, t_pars)
+    siaf_db = siafdb.SiafDb(siaf_path)
+    t_pars.siaf_db = siaf_db
+    obstimes, _, vinfos = stp.calc_wcs_over_time(obsstart, obsend, t_pars)
     v1_dict = dict()
     v1_dict['source'] = ['time range'] * len(obstimes)
     v1_dict['obstime'] = obstimes

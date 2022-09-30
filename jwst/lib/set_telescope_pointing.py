@@ -96,8 +96,40 @@ logger.addHandler(logging.NullHandler())
 DEBUG_FULL = logging.DEBUG - 1
 LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
+# Datamodels that can be updated, normally
 EXPECTED_MODELS = (datamodels.Level1bModel, datamodels.ImageModel, datamodels.CubeModel)
+
+# Exposure types that can be updated, normally
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
+
+# Mnemonics for each transformation method.
+# dict where value indicates whether the mnemonic is required or not.
+COURSE_TR_202111_MNEMONICS = {
+    'SA_ZATTEST1': True,
+    'SA_ZATTEST2': True,
+    'SA_ZATTEST3': True,
+    'SA_ZATTEST4': True,
+    'SA_ZRFGS2J11': True,
+    'SA_ZRFGS2J12': True,
+    'SA_ZRFGS2J13': True,
+    'SA_ZRFGS2J21': True,
+    'SA_ZRFGS2J22': True,
+    'SA_ZRFGS2J23': True,
+    'SA_ZRFGS2J31': True,
+    'SA_ZRFGS2J32': True,
+    'SA_ZRFGS2J33': True,
+    'SA_ZADUCMDX': False,
+    'SA_ZADUCMDY': False,
+    'SA_ZFGGSCMDX': False,
+    'SA_ZFGGSCMDY': False,
+    'SA_ZFGDETID': False,
+}
+
+TRACK_TR_202111_MNEMONICS = {
+    **COURSE_TR_202111_MNEMONICS,
+    'SA_ZFGGSPOSX': False,
+    'SA_ZFGGSPOSY': False,
+}
 
 
 # The available methods for transformation
@@ -108,11 +140,11 @@ class Methods(Enum):
     TRACK_TR_202111 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
     #: COARSE tracking mode algorithm, TR version 2021-11.
-    COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111')
+    COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111', COURSE_TR_202111_MNEMONICS)
     #: Method to use in OPS to use TR version 2021-11
-    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111')
+    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
     #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
-    TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111')
+    TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
 
     # Aliases
     #: Algorithm to use by default. Used by Operations.
@@ -124,11 +156,12 @@ class Methods(Enum):
     #: Default algorithm under PCS_MODE TRACK/FINEGUIDE/MOVING.
     TRACK = TRACK_TR_202111
 
-    def __new__(cls: object, value: str, func_name: str, calc_func: str):
+    def __new__(cls: object, value: str, func_name: str, calc_func: str, mnemonics: dict):
         obj = object.__new__(cls)
         obj._value_ = value
         obj._func_name = func_name
         obj._calc_func = calc_func
+        obj._mnemonics = mnemonics
         return obj
 
     @property
@@ -140,6 +173,10 @@ class Methods(Enum):
     def func(self):
         """Function associated with the method"""
         return globals()[self._func_name]
+
+    @property
+    def mnemonics(self):
+        return self._mnemonics
 
     def __str__(self):
         return self.value
@@ -328,6 +365,8 @@ class TransformParameters:
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
+    #: Exposure type
+    exp_type: str = None
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
     fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
@@ -368,13 +407,19 @@ class TransformParameters:
 
     def as_reprdict(self):
         """Return a dict where all values are REPR of their values"""
-        d = dataclasses.asdict(self)
-        r = {key: repr(value) for key, value in d.items()}
+        r = dict((field.name, repr(getattr(self, field.name))) for field in dataclasses.fields(self))
         return r
+
+    def update_pointing(self):
+        """Update pointing information"""
+        self.pointing = get_pointing(self.obsstart, self.obsend,
+                                     mnemonics_to_read=self.method.mnemonics,
+                                     engdb_url=self.engdb_url,
+                                     tolerance=self.tolerance, reduce_func=self.reduce_func)
 
 
 def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
-            default_pa_v3=0., siaf_path=None, engdb_url=None,
+            default_pa_v3=0., siaf_path=None, prd=None, engdb_url=None,
             fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, save_transforms=None, **transform_kwargs):
     """Add WCS information to a JWST DataModel.
@@ -405,6 +450,10 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
 
     siaf_path : str or file-like object or None
         The path to the SIAF database. See `SiafDb` for more information.
+
+    prd : str
+        The PRD version from the `pysiaf` to use.
+        `siaf_path` overrides this value.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -499,6 +548,7 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
             model,
             default_pa_v3=default_pa_v3,
             siaf_path=siaf_path,
+            prd=prd,
             engdb_url=engdb_url,
             fgsid=fgsid,
             tolerance=tolerance,
@@ -564,7 +614,7 @@ def update_mt_kwds(model):
     return model
 
 
-def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, engdb_url=None,
+def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd=None, engdb_url=None,
                fgsid=None, tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
@@ -582,14 +632,14 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
 
     default_roll_ref : float
         If pointing information cannot be retrieved,
-        use this as the V3 position angle.
-
-    default_roll_ref : float
-        If pointing information cannot be retrieved,
         use this as the roll ref angle.
 
-    siaf_path : str
+    siaf_path : str or Path-like object
         The path to the SIAF database. See `SiafDb` for more information.
+
+    prd : str
+        The PRD version from the `pysiaf` to use.
+        `siaf_path` overrides this value.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -618,47 +668,44 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     t_pars, transforms : TransformParameters, Transforms
         The parameters and transforms calculated. May be
         None for either if telemetry calculations were not
-        performed.
+        performed. In particular, FGS GUIDER data does
+        not need `transforms`.
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    # Open the SIAF database
-    with SiafDb(siaf_path) as siaf_db:
+    if not prd:
+        prd = model.meta.prd_software_version
+    siaf_db = SiafDb(source=siaf_path, prd=prd)
 
-        # If the type of exposure is not FGS, then attempt to get pointing
-        # from telemetry.
-        try:
-            exp_type = model.meta.exposure.type.lower()
-        except AttributeError:
-            exp_type = None
-        aperture_name = model.meta.aperture.name.upper()
-        useafter = model.meta.observation.date
-        if aperture_name != "UNKNOWN":
-            logger.info("Updating WCS for aperture %s", aperture_name)
-            siaf = siaf_db.get_wcs(aperture_name, useafter)
-            populate_model_from_siaf(model, siaf)
-        else:
-            logger.warning("Aperture name is set to 'UNKNOWN'. "
-                           "WCS keywords will not be populated from SIAF.")
-            siaf = None
+    # Get model attributes
+    useafter = model.meta.observation.date
 
-        if exp_type in FGS_GUIDE_EXP_TYPES:
-            update_wcs_from_fgs_guiding(
-                model, default_roll_ref=default_roll_ref
-            )
-        else:
-            t_pars = t_pars_from_model(
-                model,
-                default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
-                tolerance=tolerance, allow_default=allow_default,
-                reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
-                **transform_kwargs
-            )
+    # Configure transformation parameters.
+    t_pars = t_pars_from_model(
+        model,
+        default_pa_v3=default_pa_v3, engdb_url=engdb_url,
+        tolerance=tolerance, allow_default=allow_default,
+        reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
+        **transform_kwargs
+    )
+    if fgsid:
+        t_pars.fgsid = fgsid
 
-            if fgsid:
-                t_pars.fgsid = fgsid
+    # Populate header with SIAF information.
+    if t_pars.siaf is None:
+        if t_pars.exp_type not in FGS_GUIDE_EXP_TYPES:
+            raise ValueError('Insufficient SIAF information found in header.')
+    else:
+        populate_model_from_siaf(model, t_pars.siaf)
 
-            transforms = update_wcs_from_telem(model, t_pars)
+    # Calculate WCS.
+    if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
+        update_wcs_from_fgs_guiding(
+            model, t_pars, default_roll_ref=default_roll_ref
+        )
+        transforms = None
+    else:
+        transforms = update_wcs_from_telem(model, t_pars)
 
     return t_pars, transforms
 
@@ -757,6 +804,25 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         t_pars.default_pa_v3
     )
     vinfo = wcsinfo
+
+    # Get the pointing information
+    try:
+        t_pars.update_pointing()
+    except ValueError as exception:
+        if not t_pars.allow_default:
+            raise
+        else:
+            logger.warning(
+                'Cannot retrieve valid telescope pointing.'
+                ' Default pointing parameters will be used.'
+            )
+            logger.warning('Exception is %s', exception)
+            logger.info("Setting ENGQLPTG keyword to PLANNED")
+            model.meta.visit.engdb_pointing_quality = "PLANNED"
+            t_pars.pointing = None
+    else:
+        logger.info('Successful read of engineering quaternions:')
+        logger.info('\tPointing: %s', t_pars.pointing)
 
     # If pointing is available, attempt to calculate WCS information
     if t_pars.pointing is not None:
@@ -1156,14 +1222,8 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
     transforms : Transforms
         The list of coordinate matrix transformations
     """
-    if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
-        return Methods.COARSE_TR_202111.func(t_pars)
-    elif t_pars.pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
-        return Methods.TRACK_TR_202111.func(t_pars)
-    else:
-        raise ValueError(
-            f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
-        )
+    method = method_from_pcs_mode(t_pars.pcs_mode)
+    return method.func(t_pars)
 
 
 def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
@@ -1558,8 +1618,8 @@ def calc_position_angle(point, ref):
     return point_pa
 
 
-def get_pointing(obsstart, obsend, engdb_url=None,
-                 tolerance=60, reduce_func=None):
+def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
+                 engdb_url=None, tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
@@ -1570,6 +1630,11 @@ def get_pointing(obsstart, obsend, engdb_url=None,
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
+
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -1606,8 +1671,9 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     logger.info('Telemetry search tolerance: %s', tolerance)
     logger.info('Reduction function: %s', reduce_func)
 
-    mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
-    reduced = reduce_func(mnemonics)
+    mnemonics = get_mnemonics(obsstart, obsend, mnemonics_to_read=mnemonics_to_read,
+                              tolerance=tolerance, engdb_url=engdb_url)
+    reduced = reduce_func(mnemonics_to_read, mnemonics)
 
     logger.log(DEBUG_FULL, 'Mnemonics found:')
     logger.log(DEBUG_FULL, '%s', mnemonics)
@@ -1719,11 +1785,15 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
+def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111_MNEMONICS, engdb_url=None):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
     ----------
+    mnemonics_to_read : {str: bool[,...]}
+        The mnemonics to fetch. key is the mnemonic and
+        value is whether it is required to be found.
+
     obsstart, obsend : float
         MJD observation start/end times
 
@@ -1757,27 +1827,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'Querying engineering DB: %s', engdb.base_url
     )
 
+    # Construct the mnemonic values structure.
     mnemonics = {
-        'SA_ZATTEST1': None,
-        'SA_ZATTEST2': None,
-        'SA_ZATTEST3': None,
-        'SA_ZATTEST4': None,
-        'SA_ZRFGS2J11': None,
-        'SA_ZRFGS2J12': None,
-        'SA_ZRFGS2J13': None,
-        'SA_ZRFGS2J21': None,
-        'SA_ZRFGS2J22': None,
-        'SA_ZRFGS2J23': None,
-        'SA_ZRFGS2J31': None,
-        'SA_ZRFGS2J32': None,
-        'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX': None,
-        'SA_ZADUCMDY': None,
-        'SA_ZFGGSCMDX': None,
-        'SA_ZFGGSCMDY': None,
-        'SA_ZFGGSPOSX': None,
-        'SA_ZFGGSPOSY': None,
-        'SA_ZFGDETID': None
+        mnemonic: None
+        for mnemonic in mnemonics_to_read
     }
 
     # Retrieve the mnemonics from the engineering database.
@@ -1826,11 +1879,16 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
     return mnemonics
 
 
-def all_pointings(mnemonics):
+def all_pointings(mnemonics_to_read, mnemonics):
     """V1 of making pointings
 
     Parameters
     ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
@@ -1875,11 +1933,13 @@ def all_pointings(mnemonics):
 
         ])
 
-        gs_position = np.array([
-            mnemonics_at_time['SA_ZFGGSPOSX'].value,
-            mnemonics_at_time['SA_ZFGGSPOSY'].value
+        gs_position = None
+        if all(k in mnemonics for k in ('SA_ZFGGSPOSX', 'SA_ZFGGSPOSY')):
+            gs_position = np.array([
+                mnemonics_at_time['SA_ZFGGSPOSX'].value,
+                mnemonics_at_time['SA_ZFGGSPOSY'].value
 
-        ])
+            ])
 
         fgsid = mnemonics_at_time['SA_ZFGDETID'].value
 
@@ -1940,11 +2000,16 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 
 
-def first_pointing(mnemonics):
+def first_pointing(mnemonics_to_read, mnemonics):
     """Return first pointing
 
     Parameters
     ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
@@ -1954,15 +2019,20 @@ def first_pointing(mnemonics):
         First pointing.
 
     """
-    pointings = all_pointings(mnemonics)
+    pointings = all_pointings(mnemonics_to_read, mnemonics)
     return pointings[0]
 
 
-def pointing_from_average(mnemonics):
+def pointing_from_average(mnemonics_to_read, mnemonics):
     """Determine single pointing from average of available pointings
 
     Parameters
     ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
     mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
@@ -1972,19 +2042,18 @@ def pointing_from_average(mnemonics):
         Pointing from average.
 
     """
-    # Get average observation time. This is keyed off the q0 quaternion term, SA_ZATTEST1
+    # Get average observation time.
     times = [
         eng_param.obstime.unix
-        for eng_param in mnemonics['SA_ZATTEST1']
+        for key in mnemonics
+        for eng_param in mnemonics[key]
+        if eng_param.obstime.unix != 0.0
     ]
-    goodtimes = []
-    for this_time in times:
-        if this_time != 0.0:
-            goodtimes.append(this_time)
-    if len(goodtimes) > 0:
-        obstime = Time(np.average(goodtimes), format='unix')
+    if len(times) > 0:
+        obstime = Time(np.average(times), format='unix')
     else:
         raise ValueError("No valid times in range")
+
     # Get averages for all the mnemonics.
     mnemonic_averages = {}
     zero_mnemonics = []
@@ -1994,8 +2063,7 @@ def pointing_from_average(mnemonics):
             for eng_param in mnemonics[mnemonic]
         ]
         # Weed out mnemonic entries that are zero, though some are OK to be zero.
-        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY', 'SA_ZFGGSCMDX', 'SA_ZFGGSCMDY',
-                            'SA_ZFGGSPOSX', 'SA_ZFGGSPOSY', 'SA_ZFGDETID']:
+        if mnemonics_to_read[mnemonic]:
             good_mnemonic = []
             for this_value in values:
                 if this_value != 0.0:
@@ -2046,10 +2114,12 @@ def pointing_from_average(mnemonics):
 
     ])
 
-    gs_position = np.array([
-        mnemonic_averages['SA_ZFGGSPOSX'],
-        mnemonic_averages['SA_ZFGGSPOSY']
-    ])
+    gs_position = None
+    if all(k in mnemonic_averages for k in ('SA_ZFGGSPOSX', 'SA_ZFGGSPOSY')):
+        gs_position = np.array([
+            mnemonic_averages['SA_ZFGGSPOSX'],
+            mnemonic_averages['SA_ZFGGSPOSY']
+        ])
 
     # For FGS ID, just take the first one.
     fgsid = mnemonics['SA_ZFGDETID'][0].value
@@ -2453,8 +2523,6 @@ def t_pars_from_model(model, **t_pars_kwargs):
             if aperture_name != "UNKNOWN":
                 logger.info("Updating WCS for aperture %s", aperture_name)
                 siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
-        if siaf is None:
-            raise ValueError('Insufficient SIAF information found in header.')
         t_pars.siaf = siaf
         t_pars.useafter = useafter
     logger.debug('SIAF: %s', t_pars.siaf)
@@ -2485,26 +2553,8 @@ def t_pars_from_model(model, **t_pars_kwargs):
     ])
     logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
 
-    # Get the pointing information
-    try:
-        pointing = get_pointing(t_pars.obsstart, t_pars.obsend, engdb_url=t_pars.engdb_url,
-                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-    except ValueError as exception:
-        if not t_pars.allow_default:
-            raise
-        else:
-            logger.warning(
-                'Cannot retrieve valid telescope pointing.'
-                ' Default pointing parameters will be used.'
-            )
-            logger.warning('Exception is %s', exception)
-            logger.info("Setting ENGQLPTG keyword to PLANNED")
-            model.meta.visit.engdb_pointing_quality = "PLANNED"
-            pointing = None
-    else:
-        logger.info('Successful read of engineering quaternions:')
-        logger.info('\tPointing: %s', pointing)
-    t_pars.pointing = pointing
+    # Set the transform and WCS calculation method.
+    t_pars.method = method_from_pcs_mode(t_pars.pcs_mode)
 
     return t_pars
 
@@ -2543,3 +2593,45 @@ def dcm(alpha, delta, angle):
           cos(angle) * cos(delta)]])
 
     return dcm
+
+
+# Determine calculation method from tracking mode.
+def method_from_pcs_mode(pcs_mode):
+    """Determine transform/wcs calculation method from PCS_MODE
+
+    Pointing Control System Mode (PCS_MODE) contains the string representing
+    which mode the JWST tracking system is in. The orientation calculation
+    changes depending on the mode in use.
+
+    Parameters
+    ----------
+    pcs_mode : str
+        The PCS mode in use.
+
+    Returns
+    -------
+    method : Methods
+        The orientation calculation method to use.
+
+    Raises
+    ------
+    ValueError
+        If `pcs_mode` does not uniquely define the method to use.
+    """
+    if pcs_mode is None or pcs_mode in ['NONE', 'COARSE']:
+        return Methods.COARSE_TR_202111
+    elif pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
+        return Methods.TRACK_TR_202111
+    else:
+        raise ValueError(
+            f'Invalid PCS_MODE: {pcs_mode}. Should be one of ["NONE", "COARSE", "FINEGUIDE", "MOVING", "TRACK"]'
+        )
+
+
+def check_prd_versions(model, siaf_db):
+    """Check on consistency between the model and the current PRD"""
+    if siaf_db.prd_version:
+        if model.meta.prd_software_version != siaf_db.prd_version:
+            logger.warning('PRD versions between the model %s and pysiaf %s are different.'
+                           'This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.',
+                           model.meta.prd_software_version, siaf_db.prd_version, model.meta.prd_software_version)
