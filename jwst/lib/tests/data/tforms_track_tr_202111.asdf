@@ -4,29 +4,29 @@
 %TAG ! tag:stsci.edu:asdf/
 --- !core/asdf-1.1.0
 asdf_library: !core/software-1.0.0 {author: The ASDF Developers, homepage: 'http://github.com/asdf-format/asdf',
-  name: asdf, version: 2.8.1}
+  name: asdf, version: 2.12.0}
 history:
   extensions:
   - !core/extension_metadata-1.0.0
     extension_class: asdf.extension.BuiltinExtension
-    software: !core/software-1.0.0 {name: asdf, version: 2.8.1}
+    software: !core/software-1.0.0 {name: asdf, version: 2.12.0}
 transforms:
   m_eci2fgs1: null
   m_eci2gs: null
   m_eci2j: null
   m_eci2siaf: !core/ndarray-1.0.0
     data:
-    - [-0.1600455948612094, -0.28974752429861605, 0.9436269282551999]
-    - [-0.8126565916923755, -0.5039704801327788, -0.2925799363142806]
-    - [-0.5603344283055018, 0.8136707732968903, 0.15480698026247713]
+    - [-0.16004489452345466, -0.28974832666619305, 0.9436268006638626]
+    - [-0.8125625905417139, -0.5041070234836338, -0.2926057848481643]
+    - [-0.5604709342946476, 0.813585899624995, 0.15475889551903776]
     datatype: float64
     shape: [3, 3]
   m_eci2sifov: null
   m_eci2v: !core/ndarray-1.0.0
     data:
-    - [-0.16193571766086515, -0.28794272195305015, 0.943856881216601]
-    - [0.8180267213354935, 0.4957858199268441, 0.2915968174390283]
-    - [-0.5519140390738069, 0.8193200898511738, 0.15525940821573725]
+    - [-0.1619353146565979, -0.2879438182187553, 0.9438566159203807]
+    - [0.8179340657524773, 0.49592318973483573, 0.29162313688191543]
+    - [-0.5520514631342722, 0.8192365637792485, 0.15521158016874448]
     datatype: float64
     shape: [3, 3]
   m_fgs12fgsx: null

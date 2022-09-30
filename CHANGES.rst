@@ -55,6 +55,11 @@ resample_spec
   containing negative spectral traces (due to nodded background subtraction)
   in a more robust way. [#7047]
 
+set_telescope_pointing
+----------------------
+
+- Migrate set_telescope_pointing to pysiaf-based exclusively [#6993]
+
 tweakreg
 --------
 

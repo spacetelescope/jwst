@@ -11,15 +11,11 @@ import logging
 import os
 from pathlib import Path
 
+from .basic_utils import LoggingContext
+
 # Setup logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-# Attempt import of sqlite3 and flag whether there are fails.
-try:
-    import sqlite3
-except ModuleNotFoundError:
-    sqlite3 = False
 
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {
@@ -55,131 +51,63 @@ SIAF_MAP = {'V2Ref': 'v2_ref', 'V3Ref': 'v3_ref', 'V3IdlYAngle': 'v3yangle', 'VI
 
 
 class SiafDb:
-    """SIAF Database Access
-
-    Provide a common interface to different versions of the SIAF.
-
-    Under operations, the SIAF is found in a sqlite database.
-    Otherwise, use the standard interface defined by the `pysiaf` package
-
-    Parameters
-    ----------
-    source : None, str, or a file-like object
-        The SIAF database source. See notes for more details.
-
-    Notes
-    -----
-    The interpretation of `source` is as follows:
-
-    If None, the environmental 'XML_DATA' is queried for a value.
-    If None, then the `pysiaf` package is used.
-    If a string, the string is treated as a path.
-    If that path is to a folder, the `pysiaf` package is used with the folder
-        as the XML source folder. See the `pysiaf` package for more information.
-    Finally, an attempt is made to open the path as a sqlite database.
-    Otherwise, fail.
-    """
-    def __init__(self, source=None):
-        self._db = None
-        self._source = None
-
-        # If no source, retrieve the environmental XML_DATA
-        if source is None:
-            source = os.environ.get('XML_DATA', None)
-            if source is not None:
-                source = Path(source) / 'prd.db'
-        self._source = source
-
-        # Attempt to access source as an sqlite database.
-        try:
-            db = SiafDbSqlite(source)
-        except ValueError:
-            # Source is incompatible.
-            logger.debug('Could not open as a sqlite object: %s', source)
-        else:
-            self._db = db
-            return
-
-        # Attempt to access source as a pysiaf source
-        self._db = SiafDbPySiaf(source)
-
-    def close(self):
-        self._db.close()
-
-    def get_wcs(self, aperture, useafter=None):
-        """
-        Query the SIAF database file and get WCS values.
-
-        Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
-        and extract the following keywords:
-        ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
-        ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
-        ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
-        ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
-
-        Parameters
-        ----------
-        aperture_name : str
-            The name of the aperture to retrieve.
-        useafter : str
-            The date of observation (``model.meta.date``).
-            If None, set to the current day.
-
-        Returns
-        -------
-        siaf : namedtuple
-            The SIAF namedtuple with values from the PRD database.
-        """
-        if not useafter:
-            useafter = date.today().strftime('%Y-%m-%d')
-        return self._db.get_wcs(aperture, useafter)
-
-    def __deepcopy__(self, memo):
-        """Do not copy, just return."""
-        return self
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self._db.close()
-
-
-class SiafDbPySiaf:
     """Use pysiaf as the source of siaf information
 
     Parameters
     ----------
     source : None, str, or a file-like object
-        The SIAF database source. See notes for more details.
+        If None, then the latest PRD version in `pysiaf` is used.
+        Otherwise, it should be a string or Path-like object pointing to a folder containing the
+        SIAF XML files.
+
+    prd : None or str
+        The PRD version to use from the pysiaf application. If `source` has also been
+        specified, `source` will be used instead.
 
     Notes
     -----
     The interpretation of `source` is as follows:
 
-    If None, then the `pysiaf` package is used.
-    If a string, the string is treated as a path.
-    If that path is to a folder, the `pysiaf` package is used with the folder
-        as the XML source folder. See the `pysiaf` package for more information.
-    Otherwise, fail.
     """
-    def __init__(self, source=None):
+    def __init__(self, source=None, prd=None):
+        logger_pysiaf = logging.getLogger('pysiaf')
+        log_level = logger_pysiaf.getEffectiveLevel()
+        if not source and not prd:
+            log_level = logging.ERROR
         try:
-            import pysiaf
+            with LoggingContext(logger_pysiaf, level=log_level):
+                import pysiaf
         except ImportError:
             raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
         self.pysiaf = pysiaf
 
-        if source is not None:
-            source = Path(source)
-            if not source.is_dir():
-                raise ValueError('Source %s: Needs to be a folder for use with pysiaf')
-        self._source = source
+        self.prd_version = None
+        self.xml_path = self.get_xml_path(source, prd)
 
-    def close(self):
-        pass
+    def get_aperture(self, aperture, useafter=None):
+        """Get the pysiaf.Aperture for an aperture
 
-    def get_wcs(self, aperture, useafter):
+        Parameters
+        ----------
+        aperture : str
+            The name of the aperture to retrieve.
+        useafter : str
+            The date of observation (``model.meta.date``)
+
+        Returns
+        -------
+        aperture : pysiaf.Aperture
+            The aperture specification.
+        """
+        if not useafter:
+            useafter = date.today().strftime('%Y-%m-%d')
+
+        instrument = INSTRUMENT_MAP[aperture[:3].lower()]
+        siaf = self.pysiaf.Siaf(instrument, basepath=self.xml_path)
+        aperture = siaf[aperture.upper()]
+        return aperture
+
+    def get_wcs(self, aperture, useafter=None):
         """
         Query the SIAF database file and get WCS values.
 
@@ -202,16 +130,14 @@ class SiafDbPySiaf:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        instrument = INSTRUMENT_MAP[aperture[:3].lower()]
-        siaf = self.pysiaf.Siaf(instrument, basepath=self._source)
-        aperture = siaf[aperture.upper()]
+        aperture = self.get_aperture(aperture, useafter=useafter)
 
         # Build the SIAF entry. Missing required values is an error.
         # Otherwise, use defaults.
         default_siaf = SIAF()
         values = {SIAF_MAP[key]: getattr(aperture, key) for key in SIAF_REQUIRED}
         if not all(values):
-            raise RuntimeError(f'Required SIAF entries for {instrument}:{aperture} are not all defined: {values}')
+            raise RuntimeError(f'Required SIAF entries for {aperture} are not all defined: {values}')
         for key in SIAF_OPTIONAL:
             value = getattr(aperture, key)
             value = value if value else getattr(default_siaf, SIAF_MAP[key])
@@ -228,100 +154,99 @@ class SiafDbPySiaf:
 
         return siaf
 
-
-class SiafDbSqlite:
-    """Use a sqlite db as the source of siaf information
-
-    Parameters
-    ----------
-    source : str, or a file-like object
-        The SIAF database source.
-    """
-    def __init__(self, source):
-        self._cursor = None
-        self._db = None
-        self._source = None
-
-        if not sqlite3:
-            raise ValueError('Package "sqlite3" is not install. Cannot use the sqlite api.')
-
-        if source is None:
-            raise ValueError('Source: %s: Cannot be None. A sqlite path needs to be specified.', source)
-
-        source = Path(source)
-        if not source.exists():
-            raise ValueError('Source: %s does not exist.', source)
-        self._source = f'file:{str(source)}?mode=ro'
-
-        self._db = sqlite3.connect(self._source, uri=True)
-        self._cursor = self._db.cursor()
-        logger.info("Using SIAF database from %s", source)
-
-    def close(self):
-        self._db.close()
-
-    def get_wcs(self, aperture, useafter):
-        """
-        Query the SIAF database file and get WCS values.
-
-        Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
-        and extract the following keywords:
-        ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
-        ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
-        ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
-        ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
+    def get_xml_path(self, source, prd):
+        """Determine the XML source to use
 
         Parameters
         ----------
-        aperture : str
-            The name of the aperture to retrieve.
-        useafter : str
-            The date of observation (``model.meta.date``)
+        source : None, str, or a file-like object
+            If None, then the latest PRD version in `pysiaf` is used.
+            Otherwise, it should be a string or Path-like object pointing to a folder containing the
+            SIAF XML files.
+
+        prd : None or str
+            The PRD version to use from the pysiaf application. If `source` has also been
+            specified, `source` will be used instead.
 
         Returns
         -------
-        siaf : namedtuple
-            The SIAF namedtuple with values from the PRD database.
+        xml_path : Path
+            Either the Path to the XML files.
+
+        Raises
+        ------
+        ValueError
+            If `source` does not resolve to a folder or `prd` is not a valid PRD version.
         """
-        logger.info("Querying SIAF for aperture "
-                    "%s with USEAFTER %s", aperture, useafter)
-        RESULT = {}
-        try:
-            self._cursor.execute("SELECT Apername, V2Ref, V3Ref, V3IdlYAngle, VIdlParity, "
-                                 "XSciRef, YSciRef, XSciScale, YSciScale, "
-                                 "XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
-                                 "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                                 "FROM Aperture WHERE Apername = ? "
-                                 "and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1",
-                                 (aperture, useafter))
-            for row in self._cursor:
-                RESULT[row[0]] = tuple(row[1:17])
-            self._db.commit()
-        except (sqlite3.Error, sqlite3.OperationalError) as err:
-            print("Error: " + err.args[0])
-            raise
 
-        logger.info("loaded %s table rows", len(RESULT))
-        default_siaf = SIAF()
-        if RESULT:
-            # This populates the SIAF tuple with the values from the database.
-            # The last 8 values returned from the database are the vertices.
-            # They are wrapped in a list and assigned to SIAF.vertices_idl.
-            values = list(RESULT.values())[0]
-            vert = values[-8:]
-            values = list(values[: - 8])
-            values.append(vert)
-            # If any of "crpix1", "crpix2", "cdelt1", "cdelt2", "vertices_idl" is None
-            # reset ot to the default value.
-            for i in range(4, 8):
-                if values[i] is None:
-                    values[i] = default_siaf[i]
-            siaf = SIAF(*values)
-            return siaf
+        # If `source` is defined and valid, use that.
+        xml_path = None
+        if source is not None:
+            xml_path = Path(source)
+            if not xml_path.is_dir():
+                raise ValueError('Source %s: Needs to be a folder for use with pysiaf', xml_path)
+
+        # If a PRD version is defined, attempt to use that.
+        if not xml_path and prd:
+            prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
+            self.prd_version = prd_to_use
+            logger.info('Using PRD %s for specified PRD %s', prd_to_use, prd)
+
+        # If nothing has been specified, see if XML_DATA says what to do.
+        if not xml_path:
+            xml_path = os.environ.get('XML_DATA', None)
+            if xml_path:
+                xml_path = Path(xml_path) / 'SIAFXML'
+
+        # If nothing else, use the `pysiaf` default.
+        if not xml_path:
+            xml_path = Path(self.pysiaf.JWST_PRD_DATA_ROOT)
+            logger.info('pysiaf: Using latest installed PRD %s', self.pysiaf.JWST_PRD_VERSION)
+            self.prd_version = self.pysiaf.JWST_PRD_VERSION
         else:
-            raise RuntimeError(f'No SIAF entries found for {aperture}')
+            logger.info('pysiaf: Using SIAF XML folder %s', xml_path)
 
-    def __del__(self):
-        """Close out any connections"""
-        if self._db:
-            self._db.close()
+        return xml_path
+
+
+# #########
+# Utilities
+# #########
+def nearest_prd(pysiaf_module, prd):
+    """Find the nearest PRD version to the version specified.
+
+    The SIAF is not updated in every new PRD. Find the latest PRD
+    which has the SIAF specification.
+
+    Parameters
+    ----------
+    pysiaf_module : module
+        The `pysiaf` module in use
+
+    prd : str
+        Requested PRD specification. Should be of the form
+        "PRDOPSSOC-XXX" where XXX is a 3 digit number.
+
+    Returns
+    -------
+    prd_to_use, xml_path : str, Path
+        The PRD name and path to the XML files of the PRD that is to be used.
+    """
+    prd = prd.upper()
+    if not prd.startswith('PRDOPSSOC'):
+        raise ValueError('PRD specification must begin with PRDOPSSOC: %s', prd)
+
+    prd_root = Path(pysiaf_module.JWST_PRD_DATA_ROOT).parent.parent.parent
+    prds = [prd_path.stem for prd_path in prd_root.glob('*')]
+    prds.append(prd)
+    prds.sort(reverse=True)
+    try:
+        prd_to_use = prds[prds.index(prd) + 1]
+    except IndexError:
+        raise ValueError('Cannot find a matching PRD for %s', prd)
+
+    if not (prd_root / prd_to_use).is_dir():
+        raise ValueError('PRD specification %s does not exist', prd)
+
+    xml_path = prd_root / prd_to_use / 'SIAFXML' / 'SIAFXML'
+    return prd_to_use, xml_path
