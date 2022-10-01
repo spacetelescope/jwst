@@ -18,6 +18,7 @@ from ..extract_1d import extract_1d_step
 from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..fringe import fringe_step
+from ..residual_fringe import residual_fringe_step
 from ..imprint import imprint_step
 from ..master_background import master_background_mos_step
 from ..msaflagopen import msaflagopen_step
@@ -46,8 +47,8 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    source type decision, straylight, fringe, pathloss, barshadow,  photom,
-    resample_spec, cube_build, and extract_1d.
+    source type decision, straylight, fringe, residual_fringe, pathloss,
+    barshadow,  photom, resample_spec, cube_build, and extract_1d.
     """
 
     class_alias = "calwebb_spec2"
@@ -71,6 +72,7 @@ class Spec2Pipeline(Pipeline):
         'srctype': srctype_step.SourceTypeStep,
         'straylight': straylight_step.StraylightStep,
         'fringe': fringe_step.FringeStep,
+        'residual_fringe': residual_fringe_step.ResidualFringeStep,
         'pathloss': pathloss_step.PathLossStep,
         'barshadow': barshadow_step.BarShadowStep,
         'wfss_contam': wfss_contam_step.WfssContamStep,
@@ -276,6 +278,7 @@ class Spec2Pipeline(Pipeline):
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
             # wavelength bands
+
             resampled = self.cube_build(calibrated)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], 's3d')
@@ -369,6 +372,11 @@ class Spec2Pipeline(Pipeline):
         if not self.straylight.skip and exp_type != 'MIR_MRS':
             self.log.debug('Science data does not allow stray light correction. Skipping "straylight".')
             self.straylight.skip = True
+
+        # Check for residual_fringe correction for MIRI MRS.
+        if not self.residual_fringe.skip and exp_type != 'MIR_MRS':
+            self.log.debug('Science data does not allow residual fringe correction. Skipping "residual fringe".')
+            self.residual_fringe.skip = True
 
         # Apply the fringe correction for MIRI MRS
         if not self.fringe.skip and exp_type != 'MIR_MRS':
@@ -492,5 +500,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
+        calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
 
         return calibrated

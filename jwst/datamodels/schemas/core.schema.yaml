@@ -1852,6 +1852,15 @@ properties:
                 type: string
                 fits_keyword: R_FRINGE
                 blend_table: True
+          fringefreq:
+            title: Fringe Frequency reference file information
+            type: object
+            properties:
+              name:
+                title: Fringe Frequency reference file name
+                type: string
+                fits_keyword: R_FRIFRQ
+                blend_table: True
           gain:
             title: Gain reference file information
             type: object
@@ -2369,6 +2378,11 @@ properties:
             title: Image resampling
             type: string
             fits_keyword: S_RESAMP
+            blend_table: True
+          residual_fringe:
+            title: Residual fringe Correction
+            type: string
+            fits_keyword: S_RESFRI
             blend_table: True
           reset:
             title: Reset Anomaly Correction
