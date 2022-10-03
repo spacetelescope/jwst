@@ -10,6 +10,13 @@ from jwst.associations.load_asn import load_asn
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+__all__ = [
+    'compare_asn_files',
+    'compare_asn_lists',
+    'compare_asns',
+    'compare_membership',
+    'compare_product_membership',
+]
 
 # #########################
 # Define the types of diffs
@@ -22,12 +29,16 @@ class CandidateLevelError(DiffError):
     """Candidate level mismatch"""
 
 
-class DifferentProductSetsError(DiffError):
-    """Different product sets between groups of associations"""
+class DuplicateMembersError(DiffError):
+    """Duplicate members within a product"""
 
 
 class DuplicateProductError(DiffError):
     """Duplicate products found"""
+
+
+class DifferentProductSetsError(DiffError):
+    """Different product sets between groups of associations"""
 
 
 class MemberMismatchError(DiffError):
@@ -347,30 +358,12 @@ def compare_product_membership(left, right):
         raise diffs
 
 
+# #########
+# Utilities
+# #########
 def components(s):
     """split string into its components"""
     return set(re.split('[_-]', s))
-
-
-def separate_products(asn):
-    """Separate products into individual associations
-
-    Parameters
-    ----------
-    asn: `Association`
-        The association to split
-
-    Returns
-    -------
-    separated: [`Association`[, ...]]
-        The list of separated associations
-    """
-    separated = []
-    for product in asn['products']:
-        new_asn = copy(asn)
-        new_asn['products'] = [product]
-        separated.append(new_asn)
-    return separated
 
 
 def get_product_names(asns):
@@ -401,3 +394,24 @@ def get_product_names(asns):
         )
 
     return set(product_names), dups
+
+
+def separate_products(asn):
+    """Separate products into individual associations
+
+    Parameters
+    ----------
+    asn: `Association`
+        The association to split
+
+    Returns
+    -------
+    separated: [`Association`[, ...]]
+        The list of separated associations
+    """
+    separated = []
+    for product in asn['products']:
+        new_asn = copy(asn)
+        new_asn['products'] = [product]
+        separated.append(new_asn)
+    return separated
