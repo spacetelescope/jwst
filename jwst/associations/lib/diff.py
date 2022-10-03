@@ -313,6 +313,17 @@ def compare_product_membership(left, right):
         all the differences.
     """
     diffs = MultiDiffError()
+
+    # Check for duplicate members.
+    try:
+        check_duplicate_members(left)
+    except MultiDiffError as dup_member_errors:
+        diffs.extend(dup_member_errors)
+    try:
+        check_duplicate_members(right)
+    except MultiDiffError as dup_member_errors:
+        diffs.extend(dup_member_errors)
+
     if len(right['members']) != len(left['members']):
         diffs.append(MemberMismatchError(
             'Product Member length differs:'
@@ -356,6 +367,35 @@ def compare_product_membership(left, right):
 
     if diffs:
         raise diffs
+
+
+def check_duplicate_members(product):
+    """Check for duplicate members in an association product
+
+    The check is based solely on `expname`.
+
+    Parameters
+    ----------
+    product : dict
+        Association product to check.
+
+    Raises
+    ------
+    MultiDiffError
+        If the product has duplicate members.
+    """
+    seen = set()
+    dups = []
+    for expname in [member['expname'] for member in product['members']]:
+        if expname in seen:
+            dups.append(expname)
+        else:
+            seen.add(expname)
+
+    if dups:
+        raise DuplicateMembersError(
+            f'Product {product["name"]} has duplicate members {dups}'
+        )
 
 
 # #########
