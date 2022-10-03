@@ -41,7 +41,7 @@ datamodels
 - Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
-  
+
 extract_1d
 ----------
 
@@ -66,8 +66,10 @@ general
 
 - Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
   pipeline in Python and with strun. [#6919]
-  
+
 - fixed wrong Python version expected in ``__init__.py`` [#7366]
+
+- replace `flake8` with `ruff` [#7054]
 
 guider_cds
 ----------
