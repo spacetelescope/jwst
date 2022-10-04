@@ -81,6 +81,8 @@ class Asn_Lv2Image(
                         value='background',
                         test=lambda value, item: self.get_exposure_type(item) == value,
                         force_unique=False,
+                        reprocess_on_match=True,
+                        work_over=ListCategory.EXISTING,
                     ),
                     Constraint_Single_Science(self.has_science),
                 ], reduce=Constraint.any
@@ -249,12 +251,15 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
-                    Constraint_Single_Science(self.has_science),
+                    # This constraint must come first to ensure all non-science get reprocessed.
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
                         force_unique=False,
-                    )
+                        reprocess_on_match=True,
+                        work_over=ListCategory.EXISTING,
+                    ),
+                    Constraint_Single_Science(self.has_science),
                 ],
                 reduce=Constraint.any
             ),
