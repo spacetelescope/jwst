@@ -18,7 +18,7 @@ background
 ----------
 
 - Update the background subtraction step to accept rateints (3D) input
-  background exposures. [#7049]
+  background exposures. [#7049] Updated docs accordingly. [#7055]
 
 combine_1d
 ----------
