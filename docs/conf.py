@@ -456,3 +456,7 @@ epub_exclude_files = ['search.html']
 
 # If false, no index is generated.
 # epub_use_index = True
+
+# Enable nitpicky mode - which ensures that all references in the docs
+# resolve.
+nitpicky = False
