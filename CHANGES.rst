@@ -1,4 +1,4 @@
-1.7.3 (unreleased)
+1.8.0 (unreleased)
 ==================
 
 align_refs
@@ -81,6 +81,8 @@ set_telescope_pointing
 ----------------------
 
 - Migrate set_telescope_pointing to pysiaf-based exclusively [#6993]
+
+- Return non-zero status from the set_telescope_pointing command-line when an error occurs [#7056]
 
 
 tweakreg
