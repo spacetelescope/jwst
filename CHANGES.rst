@@ -34,6 +34,9 @@ combine_1d
 datamodels
 ----------
 
+- Switch to using new ``asdf.resources`` entry-point mechanism for
+  registering schemas. [#7057]
+
 - Add metadata to core schema to carry association exptype into datamodels
   loaded from associations into ModelContainer. Modify container method
   ``ind_asn_type`` to query this metadata. [#7046]
