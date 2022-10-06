@@ -2,10 +2,18 @@
 
 import argparse
 import logging
+from pathlib import Path
 
 from . import set_telescope_pointing as stp
 
 __all__ = ['stp_cmdline']
+
+# Configure logging
+logger = logging.getLogger('jwst')
+logger.propagate = False
+logger_handler = logging.StreamHandler()
+logger.addHandler(logger_handler)
+logger_format_debug = logging.Formatter('%(levelname)s:%(filename)s::%(funcName)s: %(message)s')
 
 
 def stp_cmdline(argv=None):
@@ -85,7 +93,7 @@ def stp_cmdline(argv=None):
         help='Transpose the J2FGS matrix'
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Set output detail.
     level = stp.LOGLEVELS[min(len(stp.LOGLEVELS) - 1, args.verbose)]
@@ -99,6 +107,7 @@ def stp_cmdline(argv=None):
         override_transforms = stp.Transforms.from_asdf(override_transforms)
 
     # Calculate WCS for all inputs.
+    exceptions = []
     for filename in args.exposure:
         logger.info(
             '\n------'
@@ -131,3 +140,8 @@ def stp_cmdline(argv=None):
         except (TypeError, ValueError) as exception:
             logger.warning('Cannot determine pointing information: %s', str(exception))
             logger.debug('Full exception:', exc_info=exception)
+            exceptions.append(exception)
+
+    if exceptions:
+        raise RuntimeError('Exceptions occurred while processing.'
+                           ' Turn on debugging "-v" for more details.') from exceptions[-1]
