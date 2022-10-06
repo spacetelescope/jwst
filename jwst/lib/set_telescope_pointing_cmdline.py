@@ -8,22 +8,26 @@ from . import set_telescope_pointing as stp
 
 __all__ = ['stp_cmdline']
 
-# Configure logging
-logger = logging.getLogger('jwst')
-logger.propagate = False
-logger_handler = logging.StreamHandler()
-logger.addHandler(logger_handler)
+# Setup default logging
+module_logger = logging.getLogger(__name__)
+module_logger.addHandler(logging.NullHandler())
 logger_format_debug = logging.Formatter('%(levelname)s:%(filename)s::%(funcName)s: %(message)s')
 
 
-def stp_cmdline(argv=None):
+def stp_cmdline(argv=None, logger=None):
     """Execute set_telescope_pointing from the command-line
 
     Parameters
     ----------
     argv : dict
         The command-line arguments. If None, `sys.argv` will be used.
+
+    logger : logging.Logger
+        Logger to use. If not specified, use the default module logger
     """
+    if not logger:
+        logger = module_logger
+
     parser = argparse.ArgumentParser(
         description=('Update basic WCS information in JWST exposures from the engineering database.'
                      ' For detailed information, see'
@@ -99,7 +103,8 @@ def stp_cmdline(argv=None):
     level = stp.LOGLEVELS[min(len(stp.LOGLEVELS) - 1, args.verbose)]
     logger.setLevel(level)
     if level <= logging.DEBUG:
-        logger_handler.setFormatter(logger_format_debug)
+        for handler in logger.handlers:
+            handler.setFormatter(logger_format_debug)
     logger.info('set_telescope_pointing called with args %s', args)
 
     override_transforms = args.override_transforms
