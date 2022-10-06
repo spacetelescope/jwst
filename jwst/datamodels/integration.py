@@ -1,4 +1,3 @@
-from pathlib import Path
 import sys
 
 if sys.version_info < (3, 9):

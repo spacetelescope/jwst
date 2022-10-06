@@ -1,4 +1,3 @@
-from pathlib import Path
 import sys
 
 if sys.version_info < (3, 9):
@@ -14,11 +13,7 @@ from jwst import transforms
 def get_resource_mappings():
     resources_root = importlib_resources.files(transforms) / "resources"
     if not resources_root.is_dir():
-        # In an editable install, the resources directory will exist off the
-        # repository root:
-        resources_root = Path(__file__).parent.parent.parent / "resources"
-        if not resources_root.is_dir():
-            raise RuntimeError("Missing resources directory")
+        raise RuntimeError(f"Missing resources directory: {resources_root=}")
 
     return [
         DirectoryResourceMapping(
