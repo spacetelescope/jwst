@@ -12,10 +12,9 @@ Applying the fringe flat should eliminate fringes from spectra of spatially exte
 residual fringes can remain. For spatially unresolved (point) sources or extended sources with structure,
 applying the fringe flat will undoubtedly leave residual fringes since these produce different fringe patterns
 on the detector than accounted for by the fringe flat. The second step for fringe removal is the
-``residual_fringe_step``. At this time this step can only be run offline; it is not part of the default pipeline.
-After thorough testing and possible updates after commissioning,
-it will be determined if this step should be run as part of  :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.
-To run this offline it is best if it is applied  after the ``mrs_imatch_step``, but before the ``cube_build_step``.
+``residual_fringe_step``. This step is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently
+it is skipped by default. To apply this step set the step parameter,  ``--skip = False``. This step is applied after
+:ref:`photom <photom_step>`, but before :ref:`cube_build <cube_build_step>`.
 
 
 
@@ -25,9 +24,7 @@ The ``residual_fringe`` step can accept several different forms of input data, i
 
   - a data model (IFUImageModel) containing a 2-D IFU image
 
-  - an association table (in json format) containing a list of input files
-
-  - a model container with several 2-D IFU data models
+  - an association table (in json format) containing a single input file
 
 
 Assumptions

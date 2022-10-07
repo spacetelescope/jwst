@@ -113,6 +113,7 @@ class ResampleSpecStep(ResampleStep):
             drizzled_models = resamp.do_drizzle()
 
             for model in drizzled_models:
+                self.update_slit_metadata(model)
                 update_s_region_spectral(model)
                 result.slits.append(model)
 
@@ -151,6 +152,27 @@ class ResampleSpecStep(ResampleStep):
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
         result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac
+        self.update_slit_metadata(result)
         update_s_region_spectral(result)
 
         return result
+
+    def update_slit_metadata(self, model):
+        """
+        Update slit attributes in the resampled slit image.
+
+        This is needed because model.slit attributes are not in model.meta, so
+        the normal update() method doesn't work with them. Updates output_model
+        in-place.
+        """
+        for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
+                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                     'dispersion_direction', 'shutter_state']:
+            try:
+                val = getattr(self.input_models[-1], attr)
+            except AttributeError:
+                pass
+            else:
+                if val is not None:
+                    setattr(model, attr, val)

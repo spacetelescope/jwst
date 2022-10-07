@@ -17,6 +17,7 @@ def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
         'jwst.residual_fringe.ResidualFringeStep',
         input_file,
         '--save_results=true',
+        '--skip=False'
     ]
     Step.from_cmdline(args)
 

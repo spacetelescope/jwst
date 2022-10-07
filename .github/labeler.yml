@@ -2,7 +2,7 @@ documentation:
   - 'docs/**/*'
   - any: [ '*.rst', '!CHANGES.rst' ]
   - '*.md'
-  - '.readthedocs.yml'
+  - '.readthedocs.yaml'
   - 'LICENSE'
 
 installation:
