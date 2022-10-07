@@ -30,7 +30,10 @@ The background step allows users to supply values for the ``sigma_clip``
 parameters ``sigma`` and ``maxiters`` (see :ref:`bkg_step_args`),
 in order to control the clipping operation.
 
-The average background image is produced as follows:
+For imaging mode observations, the calculation of the average background
+image depends on whether the background exposures are "rate" (2D) or
+"rateint" (3D) exposures. In the case of "rate" exposures, the average
+background image is produced as follows:
 
  * Clip the combined SCI arrays of all background exposures
  * Compute the mean of the unclipped SCI values
@@ -40,6 +43,23 @@ The average background image is produced as follows:
  * Combine the DQ arrays of all background exposures using a bitwise OR
    operation
 
+In the case of "rateint" exposures, each background exposure can have multiple
+integrations, so calculations are slightly more involved. The "overall" average
+background image is produced as follows:
+
+ * Clip the SCI arrays of each background exposure along its integrations
+ * Compute the mean of the unclipped SCI values to yield an average image for
+   each background exposure
+ * Clip the means of all background exposure averages
+ * Compute the mean of the unclipped background exposure averages to yield the
+   "overall" average background image
+ * Sum in quadrature the ERR arrays of all background exposures, clipping the
+   same input values as determined for the SCI arrays, and convert the result
+   to an uncertainty in the mean (This is not yet implemented)
+ * Combine the DQ arrays of all background exposures, by first using a bitwise
+   OR operation over all integrations in each exposure, followed by doing by a
+   bitwise OR operation over all exposures.
+        
 The average background exposure is then subtracted from the target exposure.
 The subtraction consists of the following operations:
 
@@ -54,7 +74,7 @@ The subtraction consists of the following operations:
 
 If the target exposure is a simple ImageModel, the background image is
 subtracted from it. If the target exposure is in the form of a 3-D CubeModel
-(e.g. the result of a time series exposure), the background image
+(e.g. the result of a time series exposure), the average background image
 is subtracted from each plane of the CubeModel.
 
 The combined, averaged background image can be saved using the step parameter

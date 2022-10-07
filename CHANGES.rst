@@ -1,4 +1,4 @@
-1.7.3 (unreleased)
+1.8.0 (unreleased)
 ==================
 
 align_refs
@@ -18,7 +18,7 @@ background
 ----------
 
 - Update the background subtraction step to accept rateints (3D) input
-  background exposures. [#7049]
+  background exposures, and updated docs accordingly. [#7049, #7055]
 
 combine_1d
 ----------
@@ -88,6 +88,8 @@ set_telescope_pointing
 ----------------------
 
 - Migrate set_telescope_pointing to pysiaf-based exclusively [#6993]
+
+- Return non-zero status from the set_telescope_pointing command-line when an error occurs [#7056]
 
 
 tweakreg
