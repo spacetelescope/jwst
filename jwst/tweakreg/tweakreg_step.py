@@ -50,7 +50,7 @@ class TweakRegStep(Step):
 
     spec = f"""
         save_catalogs = boolean(default=False) # Write out catalogs?
-        ignore_input_catalogs = boolean(default=True) # Find sources anew?
+        use_custom_catalogs = boolean(default=False) # Use custom user-provided catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
@@ -113,8 +113,7 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
-            if (self.ignore_input_catalogs or
-                    not image_model.meta.tweakreg_catalog):
+            if self.use_custom_catalogs and image_model.meta.tweakreg_catalog:
                 # source finding
                 catalog = make_tweakreg_catalog(
                     image_model, self.kernel_fwhm, self.snr_threshold,
