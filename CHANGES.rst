@@ -35,6 +35,13 @@ datamodels
 
 - Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file. 
 
+jump
+----
+
+- First version of snowball/shower flagging for the jump step
+  JP-#2645. This code will not be actiavated without either a set of
+  parameter reference files or a command line override. [#7039]
+
 master_background
 -----------------
 
