@@ -26,6 +26,12 @@ combine_1d
 - Fixed a bug to properly exclude input spectra that have only 1
   wavelength bin. [#7053]
 
+cube_build
+----------
+
+- Changed IFUALIGN convention for MIRI so that isobeta is along cube X instead of
+  isoalpha along cube Y.  [xx]
+
 datamodels
 ----------
 
