@@ -9,7 +9,9 @@ jobs:
     name: check that `requirements-sdp.txt` is populated
     runs-on: ubuntu-latest
     steps:
-      - run: "[[ -z $(grep -v '^ *#' requirements-sdp.txt) ]] && { echo \"requirements-sdp.txt is empty\" ; exit 1; }"
+      - uses: actions/checkout@v3
+      - run: grep -v '^ *#' requirements-sdp.txt
+      - run: if [[ -z $(grep -v '^ *#' requirements-sdp.txt) ]]; then echo requirements-sdp.txt is empty; exit 1; fi
   publish:
     needs: [ check ]
     uses: spacetelescope/action-publish_to_pypi/.github/workflows/workflow.yml@master
