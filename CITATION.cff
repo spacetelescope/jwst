@@ -72,7 +72,7 @@ authors:
   given-names: "Thomas"
   orcid: "https://orcid.org/0000-0002-0012-2142"
 title: "JWST Calibration Pipeline"
-version: 1.7.0
+version: 1.8.0
 doi: 10.5281/zenodo.7038885
-date-released: 2022-09-01
+date-released: 2022-10-07
 url: "https://github.com/spacetelescope/jwst"
