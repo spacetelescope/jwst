@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: cat requirements-sdp.txt
-      - run: "[[ -z $(grep -v '^ *#' requirements-sdp.txt) ]] && { echo \"requirements-sdp.txt is empty\" ; exit 1; }"
+      - run: grep -v '^ *#' requirements-sdp.txt
+      - run: [[ -z $(grep -v '^ *#' requirements-sdp.txt) ]] && { echo "requirements-sdp.txt is empty" ; exit 1; }
   publish:
     needs: [ check ]
     uses: spacetelescope/action-publish_to_pypi/.github/workflows/workflow.yml@master
