@@ -16,8 +16,8 @@ __all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'Constraint_WFSC', 'DMSBase
 PRODUCT_NAME_DEFAULT = 'undefined'
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
+_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:05d}_asn'
+_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:05d}_asn'
 
 # Acquisition and Confirmation images
 ACQ_EXP_TYPES = (

@@ -55,21 +55,21 @@ def nirspec_params_id(fixture_value):
         (
             'o001',
             'spec3',
-            r'jw99009-o001_spec3_\d{3}_asn',
+            r'jw99009-o001_spec3_\d{5}_asn',
             'jw99009-o001_{source_id}_nirspec_f100lp-g140m-s200a2-s200a2',
             set(('science', 'target_acquisition', 'autowave'))
         ),
         (
             'o002',
             'spec3',
-            r'jw99009-o002_spec3_\d{3}_asn',
+            r'jw99009-o002_spec3_\d{5}_asn',
             'jw99009-o002_{source_id}_nirspec_f100lp-g140h',
             set(('science', 'target_acquisition', 'autoflat', 'autowave'))
         ),
         (
             'o003',
             'spec3',
-            r'jw99009-o003_spec3_\d{3}_asn',
+            r'jw99009-o003_spec3_\d{5}_asn',
             'jw99009-o003_t002_nirspec_g235h',
             set(('science', 'target_acquisition', 'autowave'))
         ),
@@ -106,13 +106,13 @@ def test_nirspec_modes(nirspec_params):
         (
             'o007',
             'spec3',
-            r'jw99009-o007_spec3_\d{3}_asn',
+            r'jw99009-o007_spec3_\d{5}_asn',
             'jw99009-o007_t001_miri',
         ),
         (
             'o008',
             'spec3',
-            r'jw99009-o008_spec3_\d{3}_asn',
+            r'jw99009-o008_spec3_\d{5}_asn',
             'jw99009-o008_t001_miri',
         ),
     ]

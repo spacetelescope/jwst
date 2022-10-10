@@ -7,6 +7,12 @@ datamodels
 - Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
   [#7062]
 
+associations
+------------
+
+- Expand the sequence field in a file name for association files from
+  3 characters to 5 characters. [#7061]
+
 
 1.8.0 (2022-10-07)
 ==================
