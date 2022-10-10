@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: grep -v '^ *#' requirements-sdp.txt
-      - run: "[[ -z $(grep -v '^ *#' requirements-sdp.txt) ]] && { echo \"requirements-sdp.txt is empty\" ; exit 1; }"
+      - run: if [[ -z $(grep -v '^ *#' requirements-sdp.txt) ]]; then echo requirements-sdp.txt is empty; exit 1; fi
   publish:
     needs: [ check ]
     uses: spacetelescope/action-publish_to_pypi/.github/workflows/workflow.yml@master
