@@ -637,7 +637,7 @@ def _trim_grids(all_grids, grid_range=None):
             # Trim the grid
             grid = grid[i_min:i_max + 1]
 
-        # Remove parts of the grid that are already covered 
+        # Remove parts of the grid that are already covered
         if len(grids_trimmed) > 0:
             # Use all grids already trimmed (so higher in priority)
             conca_grid = np.concatenate(grids_trimmed)
@@ -743,7 +743,7 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
                         f' was reached for grid index = {i_grid}')
             else:
                 total_size = np.sum(all_sizes)
-                msg += f' max grid size of '
+                msg += ' max grid size of '
                 msg += ' + '.join([f'{size}' for size in all_sizes])
                 msg += f' = {total_size} was reached for grid index = {i_grid}.'
             log.warning(msg)
@@ -2324,11 +2324,14 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
 def soft_l1(z):
     return 2 * ((1 + z)**0.5 - 1)
 
+
 def cauchy(z):
     return np.log(1 + z)
 
+
 def linear(z):
     return z
+
 
 LOSS_FUNCTIONS = {'soft_l1': soft_l1, 'cauchy': cauchy, 'linear': linear}
 
@@ -2370,7 +2373,7 @@ class TikhoTests(dict):
         # Save attributes
         self.n_points = n_points
         self.default_chi2 = default_chi2
-        self.default_thresh = {chi2_type: thresh 
+        self.default_thresh = {chi2_type: thresh
                                for (chi2_type, thresh)
                                in self.DEFAULT_TRESH_DERIVATIVE}
 
@@ -2541,7 +2544,7 @@ class TikhoTests(dict):
             # are not already below thresh. If not _find_intersect
             # would just return the last value of factors.
             i_last = -1
-            while abs(i_last) <= len(y_val) :
+            while abs(i_last) <= len(y_val):
                 # Check derivative
                 if y_val[i_last] > thresh:
                     # Save index in slice

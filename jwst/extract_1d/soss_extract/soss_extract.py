@@ -269,7 +269,7 @@ def get_native_grid_from_trace(ref_files, transform, spectral_order):
     # ... and should correspond to subsequent columns
     is_subsequent = (np.diff(col[idx_valid]) == 1)
     if not is_subsequent.all():
-        msg = f'Wavelength solution for order {sp_ord} contains gaps.'
+        msg = f'Wavelength solution for order {spectral_order} contains gaps.'
         log.warning(msg)
     wave = wave[idx_valid]
     col = col[idx_valid]
@@ -358,7 +358,9 @@ def make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimat
     # Finally, build the list of corresponding estimates.
     # The estimate for the overlapping part is the order 1 estimate.
     # There is no estimate yet for the blue part of order 2, so give a flat spectrum.
-    flat_fct = lambda wv: np.ones_like(wv)
+    def flat_fct(wv):
+        return np.ones_like(wv)
+
     all_estimates = [estimate, estimate, flat_fct]
 
     # Generate the combined grid
@@ -590,14 +592,13 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
                 f_k = all_tests['solution'][idx, :]
                 args = (engine, ref_file_args, f_k, i_order, global_mask, ref_files, transform)
                 _, spec_ord = _build_tracemodel_order(*args)
-                populate_tikho_attr(spec_ord, all_tests, idx, i_order+1)
+                populate_tikho_attr(spec_ord, all_tests, idx, i_order + 1)
                 spec_ord.meta.soss_extract1d.color_range = 'RED'
 
                 # Add the result to spec_list
                 spec_list.append(spec_ord)
     else:
         save_tiktests = False
-
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
@@ -637,7 +638,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         idx_order2 = 1
         order = idx_order2 + 1
         order_str = 'Order 2'
-        log.info(f'Generate model for bluemost part of order 2')
+        log.info('Generate model for blue-most part of order 2')
 
         # Take only the second order's specific ref_files
         ref_file_order = [[ref_f[idx_order2]] for ref_f in ref_file_args]
@@ -650,14 +651,15 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
 
         # Build 1d spectrum integrated over pixels
         pixel_wave_grid, valid_cols = get_native_grid_from_trace(ref_files, transform, order)
-        
+
         # Hardcode wavelength highest boundary as well.
         # Must overlap with lower limit in make_decontamination_grid
         is_in_wv_range = (pixel_wave_grid < 0.95)
         pixel_wave_grid, valid_cols = pixel_wave_grid[is_in_wv_range], valid_cols[is_in_wv_range]
 
+        # NOTE: This code is currently unused.
         # Remove order 1
-        scidata_order2_decont = scidata_bkg - tracemodels['Order 1']
+        # scidata_order2_decont = scidata_bkg - tracemodels['Order 1']
 
         # Range of initial tikhonov factors
         tikfac_log_range = np.log10(tikfac) + np.array([-2, 8])
@@ -677,7 +679,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
 
         # Add the result to spec_list
-        for sp in spec_ord: sp.meta.soss_extract1d.color_range = 'BLUE'
+        for sp in spec_ord:
+            sp.meta.soss_extract1d.color_range = 'BLUE'
         spec_list += spec_ord
 
     return tracemodels, tikfac, logl, wave_grid, spec_list
@@ -821,7 +824,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
 
             # Build 1d spectrum integrated over pixels
             spec_ord = f_to_spec(f_k, wave_grid_os, ref_file_args, wave_grid,
-                             np.all(mask_rebuild, axis=0)[valid_cols], sp_ord=order)
+                                 np.all(mask_rebuild, axis=0)[valid_cols], sp_ord=order)
             populate_tikho_attr(spec_ord, all_tests, idx, order)
 
             # Add the result to spec_list
@@ -1039,13 +1042,13 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         cube_model.dq = input_model.dq[None, :, :]
         nimages = 1
         log.info('Input is an ImageModel, processing a single integration.')
-        
+
     elif isinstance(input_model, datamodels.CubeModel):
 
         cube_model = input_model
         nimages = len(cube_model.data)
         log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
-        
+
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
         log.critical(msg)
@@ -1219,7 +1222,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         output_model.meta.soss_extract1d.oversampling = soss_kwargs['n_os']
         output_model.meta.soss_extract1d.threshold = soss_kwargs['threshold']
         output_model.meta.soss_extract1d.bad_pix = soss_kwargs['bad_pix']
-
 
     # Save output references
     for order in all_tracemodels:
