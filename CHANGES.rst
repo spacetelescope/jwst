@@ -1,6 +1,11 @@
 1.8.1 (unreleased)
 ==================
 
+=======
+extract_1d
+----------
+
+- Update ATOCA algorithm to development version [#6945]
 
 
 1.8.0 (2022-10-07)
