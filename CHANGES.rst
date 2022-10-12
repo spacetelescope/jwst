@@ -71,7 +71,6 @@ associations
 - Expand the sequence field in a file name for association files from
   3 characters to 5 characters. [#7061]
 
-
 cube_build
 ----------
 
