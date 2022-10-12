@@ -1,6 +1,7 @@
 1.8.3 (unreleased)
 ==================
 
+
 assign_wcs
 ----------
 
@@ -21,6 +22,11 @@ datamodels
 ----------
 
 - Add subarray keywords in filteroffset schema [#7317]
+
+extract_1d
+----------
+
+- Update ATOCA algorithm to development version [#6945]
 
 extract_2d
 ----------
