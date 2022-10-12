@@ -208,7 +208,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     # Convert None to 0. in guess_transform and then convert to array
     guess_transform = [val if val is not None else 0. for val in guess_transform]
     guess_transform = np.array(guess_transform)
-    
+
     # Convert is_fitted to array
     is_fitted = np.array(is_fitted)
 
@@ -280,6 +280,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
 
     # Setup minimizing function depending on the parameters to fit
     simple_transform = guess_transform.copy()
+
     def _chi2_to_fit(values, *args):
         simple_transform[is_fitted] = values
         return _chi_squared(simple_transform, *args)
@@ -404,7 +405,7 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
     ceny = ovs * (pad + 50)
 
     # Apply the transformation to the reference map.
-    if (angle==0 and xshift==0 and yshift==0):
+    if (angle == 0 and xshift == 0 and yshift == 0):
         trans_map = ref_map
     else:
         trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)

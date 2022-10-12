@@ -124,7 +124,7 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
-    soss_atoca = boolean(default=True)  # use ATOCA algorithm 
+    soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
     soss_wave_grid = input_file(default = None)  # Wavelength grid used to model the detector
