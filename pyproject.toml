@@ -28,9 +28,5 @@ per-file-ignores = [
     'jwst/ramp_fitting/tests/mc_3d.py:E402',
 ]
 ignore = [
-    'A001', # Variable is shadowing a python builtin
-    'A002', # Argument is shadowing a python builtin
-    'A003', # class attribute is shadowing a python builtin
     'E741', # ambiguous variable name
-    'SPR001', # Use `super()` instead of `super(__class__, self)`
 ]
