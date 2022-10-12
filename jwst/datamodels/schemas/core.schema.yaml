@@ -741,7 +741,7 @@ properties:
           noutputs:
             title: Number of detector outputs used
             type: integer
-            enum: [1, 4]
+            enum: [1, 4, 5]
             fits_keyword: NOUTPUTS
             blend_table: True
           nints:
