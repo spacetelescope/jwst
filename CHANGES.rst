@@ -69,7 +69,7 @@ general
 
 - fixed wrong Python version expected in ``__init__.py`` [#7366]
 
-- replace `flake8` with `ruff` [#7054]
+- replace ``flake8`` with ``ruff`` [#7054]
 
 guider_cds
 ----------
