@@ -7,6 +7,10 @@ datamodels
 - Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
   [#7062]
 
+set_telescope_pointing
+----------------------
+
+- Allow XML_DATA usage to override PRD specification [#7063]
 
 1.8.0 (2022-10-07)
 ==================
