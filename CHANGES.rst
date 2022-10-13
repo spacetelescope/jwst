@@ -39,6 +39,11 @@ resample
 - Enhance spectral output WCS construction to guard against nearly identical
   points. [#7321]
 
+set_telescope_pointing
+----------------------
+
+- Allow XML_DATA usage to override PRD specification [#7063]
+
 tweakreg
 --------
 
