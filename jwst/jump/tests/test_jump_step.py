@@ -12,64 +12,77 @@ MAXIMUM_CORES = ['none', 'quarter', 'half', 'all']
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles(tmpdir_factory):
-    gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
-    readnoisefile = str(tmpdir_factory.mktemp("data").join('readnoise.fits'))
 
-    ingain = 6
-    xsize = 103
-    ysize = 102
-    gain = np.ones(shape=(ysize, xsize), dtype=np.float64) * ingain
-    gain_model = GainModel(data=gain)
-    gain_model.meta.instrument.name = "MIRI"
-    gain_model.meta.subarray.name = "FULL"
-    gain_model.meta.subarray.xstart = 1
-    gain_model.meta.subarray.ystart = 1
-    gain_model.meta.subarray.xsize = xsize
-    gain_model.meta.subarray.ysize = ysize
-    gain_model.save(gainfile)
+    def _generate_miri_reffiles(xsize=103, ysize=102, ingain=6):
 
-    inreadnoise = 5
-    rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
-    readnoise_model = ReadnoiseModel(data=rnoise)
-    readnoise_model.meta.instrument.name = "MIRI"
-    readnoise_model.meta.subarray.xstart = 1
-    readnoise_model.meta.subarray.ystart = 1
-    readnoise_model.meta.subarray.xsize = xsize
-    readnoise_model.meta.subarray.ysize = ysize
-    readnoise_model.save(readnoisefile)
+        gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
+        readnoisefile = str(tmpdir_factory.mktemp("data").join('readnoise.fits'))
 
-    return gainfile, readnoisefile
+        ingain = ingain
+        xsize = xsize
+        ysize = ysize
+        gain = np.ones(shape=(ysize, xsize), dtype=np.float64) * ingain
+        gain_model = GainModel(data=gain)
+        gain_model.meta.instrument.name = "MIRI"
+        gain_model.meta.subarray.name = "FULL"
+        gain_model.meta.subarray.xstart = 1
+        gain_model.meta.subarray.ystart = 1
+        gain_model.meta.subarray.xsize = xsize
+        gain_model.meta.subarray.ysize = ysize
+        gain_model.save(gainfile)
+        gain_model.close()
+
+        inreadnoise = 5
+        rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
+        readnoise_model = ReadnoiseModel(data=rnoise)
+        readnoise_model.meta.instrument.name = "MIRI"
+        readnoise_model.meta.subarray.xstart = 1
+        readnoise_model.meta.subarray.ystart = 1
+        readnoise_model.meta.subarray.xsize = xsize
+        readnoise_model.meta.subarray.ysize = ysize
+        readnoise_model.save(readnoisefile)
+        readnoise_model.close()
+
+        return gainfile, readnoisefile
+
+    return _generate_miri_reffiles
 
 
 @pytest.fixture(scope="module")
 def generate_nircam_reffiles(tmpdir_factory):
-    gainfile = str(tmpdir_factory.mktemp("ndata").join("gain.fits"))
-    readnoisefile = str(tmpdir_factory.mktemp("ndata").join('readnoise.fits'))
 
-    ingain = 6
-    xsize = 20
-    ysize = 20
-    gain = np.ones(shape=(ysize, xsize), dtype=np.float64) * ingain
-    gain_model = GainModel(data=gain)
-    gain_model.meta.instrument.name = "NIRCAM"
-    gain_model.meta.subarray.name = "FULL"
-    gain_model.meta.subarray.xstart = 1
-    gain_model.meta.subarray.ystart = 1
-    gain_model.meta.subarray.xsize = xsize
-    gain_model.meta.subarray.ysize = ysize
-    gain_model.save(gainfile)
+    def _generate_nircam_reffiles(xsize=20, ysize=20, ingain=6):
+        gainfile = str(tmpdir_factory.mktemp("ndata").join("gain.fits"))
+        readnoisefile = str(tmpdir_factory.mktemp("ndata").join('readnoise.fits'))
 
-    inreadnoise = 5
-    rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
-    readnoise_model = ReadnoiseModel(data=rnoise)
-    readnoise_model.meta.instrument.name = "NIRCAM"
-    readnoise_model.meta.subarray.xstart = 1
-    readnoise_model.meta.subarray.ystart = 1
-    readnoise_model.meta.subarray.xsize = xsize
-    readnoise_model.meta.subarray.ysize = ysize
-    readnoise_model.save(readnoisefile)
+        ingain = ingain
+        xsize = xsize
+        ysize = ysize
+        gain = np.ones(shape=(ysize, xsize), dtype=np.float64) * ingain
+        gain_model = GainModel(data=gain)
+        gain_model.meta.instrument.name = "NIRCAM"
+        gain_model.meta.subarray.name = "FULL"
+        gain_model.meta.subarray.xstart = 1
+        gain_model.meta.subarray.ystart = 1
+        gain_model.meta.subarray.xsize = xsize
+        gain_model.meta.subarray.ysize = ysize
+        gain_model.save(gainfile)
+        gain_model.close()
 
-    return gainfile, readnoisefile
+        inreadnoise = 5
+        rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
+        readnoise_model = ReadnoiseModel(data=rnoise)
+        readnoise_model.meta.instrument.name = "NIRCAM"
+        readnoise_model.meta.subarray.xstart = 1
+        readnoise_model.meta.subarray.ystart = 1
+        readnoise_model.meta.subarray.xsize = xsize
+        readnoise_model.meta.subarray.ysize = ysize
+        readnoise_model.save(readnoisefile)
+        readnoise_model.close()
+
+        return gainfile, readnoisefile
+
+    return _generate_nircam_reffiles
 
 
 @pytest.fixture
@@ -122,9 +135,30 @@ def setup_inputs():
     return _setup
 
 
+def add_circles_to_data(data, center_coords, radii, fill_val=None):
+    """Modifies `data` to add circles at positions specified by `center_coords`
+       of sizes specified by `radii`. The magnitude of each circle is 10x its
+       radius (bigger snowballs are brighter).
+    """
+
+    X, Y = np.ogrid[:data.shape[0], :data.shape[1]]
+
+    for i, _ in enumerate(radii):
+
+        radius = radii[i]
+        x_center = center_coords[i][0]
+        y_center = center_coords[i][1]
+        dist_from_center = np.sqrt((X - x_center)**2 + (Y - y_center)**2)
+        circular_mask = ~(dist_from_center >= radius)
+        if fill_val is None:
+            data[circular_mask] += 10 * radius
+        else:
+            data[circular_mask] = fill_val
+
+
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
-    override_gain, override_readnoise = generate_miri_reffiles
+    override_gain, override_readnoise = generate_miri_reffiles()
     print("max_cores = ", max_cores)
     grouptime = 3.0
     deltaDN = 5
@@ -162,7 +196,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
-    override_gain, override_readnoise = generate_nircam_reffiles
+    override_gain, override_readnoise = generate_nircam_reffiles()
 
     grouptime = 3.0
     deltaDN = 5
@@ -200,7 +234,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
-    override_gain, override_readnoise = generate_miri_reffiles
+    override_gain, override_readnoise = generate_miri_reffiles()
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
@@ -237,7 +271,7 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
-    override_gain, override_readnoise = generate_miri_reffiles
+    override_gain, override_readnoise = generate_miri_reffiles()
     grouptime = 3.0
     ingain = 6
     inreadnoise = 7
@@ -254,7 +288,7 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
 
 
 def test_three_group_integration(generate_miri_reffiles, setup_inputs):
-    override_gain, override_readnoise = generate_miri_reffiles
+    override_gain, override_readnoise = generate_miri_reffiles()
     grouptime = 3.0
     ingain = 6
     inreadnoise = 7
@@ -268,3 +302,97 @@ def test_three_group_integration(generate_miri_reffiles, setup_inputs):
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores='none')
     assert out_model.meta.cal_step.jump == 'COMPLETE'
+
+
+def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
+    """Test that snowballs are properly flagged when the `sat_required_snowball`,
+    which requires there to be a saturated pixel within the cluster of
+    jump-flagged pixels for a snowball to be flagged, is set to FALSE.
+
+    This test also tests if the `expand_factor` keyword, which controls how many
+    pixels out a snowball is grown, is being used properly"""
+
+    # make datamodel
+    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
+                                                                 ysize=100)
+    mod, _, _, _, _, _ = setup_inputs(ngroups=5, nrows=100, ncols=100, gain=6,
+                                      readnoise=7, deltatime=3.0)
+
+    # add 'snowballs' to data array in 0th integration, 1st read. when run though
+    # jump step, the DQ array in the 1st groupdq group should have clusters of
+    # jump-flagged pixels, which should then be detected as snowballs in that group.
+
+    center_coords = [(20, 20), (60, 60)]
+    radii = [10, 20]
+    add_circles_to_data(mod.data[0, 1], center_coords, radii)
+
+    expand_factor = 2
+    jump_result = JumpStep.call(mod, override_gain=override_gain,
+                                override_readnoise=override_readnoise,
+                                expand_large_events=True, sat_required_snowball=False,
+                                expand_factor=expand_factor)
+
+    # both clusters should be detected as jumps then flagged as snowballs,
+    # resulting in a circle of x2 radius of the original having a jump flag in
+    # that group (and only that group). verify this is the case
+    for i, coord in enumerate(center_coords):
+        x, y = coord
+        rad = radii[i]
+        expanded_rad = expand_factor * rad
+
+        initial_area = np.sum((mod.data[0, 1, y - rad: y + rad, x - rad: x + rad]).astype(bool))
+        expanded_area = np.sum((jump_result.groupdq[0, 1,
+                                                    y - expanded_rad: y + expanded_rad,
+                                                    x - expanded_rad: x + expanded_rad]).astype(bool))
+
+        assert (np.floor(expanded_area / initial_area) == (expand_factor**2))
+
+
+def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
+    """Test that snowballs are properly flagged when the `sat_required_snowball`,
+    which requires there to be a saturated pixel within the cluster of
+    jump-flagged pixels for a snowball to be flagged, is set to FALSE.
+
+    This test also tests if the `expand_factor` keyword, which controls how many
+    pixels out a snowball is grown, is being used properly"""
+
+    # make datamodel
+    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
+                                                                 ysize=100)
+    mod, _, _, _, _, _ = setup_inputs(ngroups=5, nrows=100, ncols=100, gain=6,
+                                      readnoise=7, deltatime=3.0)
+
+    # add 'snowballs' to data array in 0th integration, 1st read. when run though
+    # jump step, the DQ array in the 1st groupdq group should have clusters of
+    # jump-flagged pixels, which should then be detected as snowballs in that group.
+
+    center_coords = [(20, 20), (60, 60)]
+    radii = [10, 20]
+    add_circles_to_data(mod.data[0, 1], center_coords, radii)
+
+    # add circles of saturation flags in the input groupdq in the center of each snowball
+    # in every read except the 0th
+
+    for i in range(1, mod.data.shape[1]):
+        add_circles_to_data(mod.groupdq[0, i], center_coords, [4, 4], fill_val=2)
+
+    expand_factor = 2
+    jump_result = JumpStep.call(mod, override_gain=override_gain,
+                                override_readnoise=override_readnoise,
+                                expand_large_events=True, sat_required_snowball=True,
+                                expand_factor=expand_factor)
+
+    # both clusters should be detected as jumps then flagged as snowballs,
+    # resulting in a circle of x2 radius of the original having a jump flag in
+    # that group (and only that group). verify this is the case
+    for i, coord in enumerate(center_coords):
+        x, y = coord
+        rad = radii[i]
+        expanded_rad = expand_factor * rad
+
+        initial_area = np.sum((mod.data[0, 1, y - rad: y + rad, x - rad: x + rad]).astype(bool))
+        expanded_area = np.sum((jump_result.groupdq[0, 1,
+                                                    y - expanded_rad: y + expanded_rad,
+                                                    x - expanded_rad: x + expanded_rad]).astype(bool))
+
+    assert (np.floor(expanded_area / initial_area) == (expand_factor**2))

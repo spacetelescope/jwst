@@ -1,4 +1,14 @@
-1.8.0 (unreleased)
+1.8.1 (unreleased)
+==================
+
+datamodels
+----------
+
+- Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
+  [#7062]
+
+
+1.8.0 (2022-10-07)
 ==================
 
 align_refs
@@ -40,6 +50,13 @@ datamodels
   ``ind_asn_type`` to query this metadata. [#7046]
 
 - Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file. 
+
+jump
+----
+
+- First version of snowball/shower flagging for the jump step
+  JP-#2645. This code will not be actiavated without either a set of
+  parameter reference files or a command line override. [#7039]
 
 master_background
 -----------------
