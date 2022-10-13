@@ -96,7 +96,7 @@ def test_nearest_prd(prd, expected, exception):
     (None, None, XML_DATA_SIAFXML_PATH / 'SIAFXML'),
     (None, 'PRDOPSSOC-055', XML_DATA_SIAFXML_PATH / 'SIAFXML'),
     (SIAFXML_PATH, None, SIAFXML_PATH)
-    ])
+])
 def test_xml_data_overrides(source, prd, expected, jail_environ):
     """Test cases where XML_DATA should be used and not used."""
     os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
