@@ -1,7 +1,12 @@
 1.8.1 (unreleased)
 ==================
 
-=======
+datamodels
+----------
+
+- Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
+  [#7062]
+
 extract_1d
 ----------
 
