@@ -18,16 +18,6 @@ OLD_PRD = 'PRDOPSSOC-053'
 OLD_PRD_PATH = PYSIAF_PRD_PATH / OLD_PRD / 'SIAFXML' / 'SIAFXML'
 
 
-@pytest.fixture
-def jail_environ():
-    """Lock changes to the environment"""
-    original = os.environ.copy()
-    try:
-        yield
-    finally:
-        os.environ = original
-
-
 @pytest.mark.parametrize('source, prd, xml_path, exception', [
     # Default
     (None, None, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),
