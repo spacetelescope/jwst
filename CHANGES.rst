@@ -1,4 +1,4 @@
-1.8.1 (unreleased)
+1.8.1 (2022-10-17)
 ==================
 
 associations
@@ -34,8 +34,7 @@ set_telescope_pointing
 
 - Allow XML_DATA usage to override PRD specification [#7063]
 
-
-1.8.0 (2022-10-07)
+1.8.0 (2022-10-10)
 ==================
 
 align_refs
