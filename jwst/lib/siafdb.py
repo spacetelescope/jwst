@@ -160,7 +160,9 @@ class SiafDb:
         Parameters
         ----------
         source : None, str, or a file-like object
-            If None, then the latest PRD version in `pysiaf` is used.
+            If None, the environmental XML_DATA is queried.
+            If None and no XML_DATA information, then the PRD version, as defined by `prd`,
+            will be used.
             Otherwise, it should be a string or Path-like object pointing to a folder containing the
             SIAF XML files.
 
@@ -186,17 +188,17 @@ class SiafDb:
             if not xml_path.is_dir():
                 raise ValueError('Source %s: Needs to be a folder for use with pysiaf', xml_path)
 
-        # If a PRD version is defined, attempt to use that.
-        if not xml_path and prd:
-            prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
-            self.prd_version = prd_to_use
-            logger.info('Using PRD %s for specified PRD %s', prd_to_use, prd)
-
         # If nothing has been specified, see if XML_DATA says what to do.
         if not xml_path:
             xml_path = os.environ.get('XML_DATA', None)
             if xml_path:
                 xml_path = Path(xml_path) / 'SIAFXML'
+
+        # If a PRD version is defined, attempt to use that.
+        if not xml_path and prd:
+            prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
+            self.prd_version = prd_to_use
+            logger.info('Using PRD %s for specified PRD %s', prd_to_use, prd)
 
         # If nothing else, use the `pysiaf` default.
         if not xml_path:

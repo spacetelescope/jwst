@@ -18,16 +18,6 @@ OLD_PRD = 'PRDOPSSOC-053'
 OLD_PRD_PATH = PYSIAF_PRD_PATH / OLD_PRD / 'SIAFXML' / 'SIAFXML'
 
 
-@pytest.fixture
-def jail_environ():
-    """Lock changes to the environment"""
-    original = os.environ.copy()
-    try:
-        yield
-    finally:
-        os.environ = original
-
-
 @pytest.mark.parametrize('source, prd, xml_path, exception', [
     # Default
     (None, None, pysiaf.JWST_PRD_DATA_ROOT, does_not_raise()),
@@ -100,3 +90,17 @@ def test_nearest_prd(prd, expected, exception):
     with exception:
         prd_to_use, _ = siafdb.nearest_prd(pysiaf, prd)
         assert prd_to_use == expected
+
+
+@pytest.mark.parametrize('source, prd, expected', [
+    (None, None, XML_DATA_SIAFXML_PATH / 'SIAFXML'),
+    (None, 'PRDOPSSOC-055', XML_DATA_SIAFXML_PATH / 'SIAFXML'),
+    (SIAFXML_PATH, None, SIAFXML_PATH)
+])
+def test_xml_data_overrides(source, prd, expected, jail_environ):
+    """Test cases where XML_DATA should be used and not used."""
+    os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
+
+    siaf_db = siafdb.SiafDb(source=source, prd=prd)
+
+    assert siaf_db.xml_path == expected

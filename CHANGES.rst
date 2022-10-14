@@ -1,17 +1,31 @@
 1.8.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Expand the sequence field in a file name for association files from
+  3 characters to 5 characters. [#7061]
+
+cube_build
+----------
+
+- Changed IFUALIGN convention for MIRI so that isobeta is along cube X instead of
+  isoalpha along cube Y.  [#7058]
+
 datamodels
 ----------
 
 - Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
   [#7062]
 
-associations
-------------
+- Switch to using new ``asdf.resources`` entry-point mechanism for
+  registering schemas. [#7057]  
 
-- Expand the sequence field in a file name for association files from
-  3 characters to 5 characters. [#7061]
+set_telescope_pointing
+----------------------
+
+- Allow XML_DATA usage to override PRD specification [#7063]
 
 
 1.8.0 (2022-10-07)
@@ -49,7 +63,7 @@ datamodels
   loaded from associations into ModelContainer. Modify container method
   ``ind_asn_type`` to query this metadata. [#7046]
 
-- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file. 
+- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file.
 
 jump
 ----
@@ -90,7 +104,7 @@ resample_spec
   containing negative spectral traces (due to nodded background subtraction)
   in a more robust way. [#7047]
 
- - Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
+- Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
 
 
 residual_fringe
@@ -114,6 +128,7 @@ tweakreg
 - Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
   code more robust. [#7038]
 
+- Added support for user-provided catalog files. [#7022]
 
 1.7.2 (2022-09-12)
 ==================
