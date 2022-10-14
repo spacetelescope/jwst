@@ -20,7 +20,9 @@ datamodels
   [#7062]
 
 - Switch to using new ``asdf.resources`` entry-point mechanism for
-  registering schemas. [#7057]  
+  registering schemas. [#7057]
+
+- Fix handling of ASN directory path by the ``ModelContainer``. [#7071]
 
 set_telescope_pointing
 ----------------------
