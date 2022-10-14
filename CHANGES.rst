@@ -1,6 +1,12 @@
 1.8.1 (unreleased)
 ==================
 
+cube_build
+----------
+
+- Changed IFUALIGN convention for MIRI so that isobeta is along cube X instead of
+  isoalpha along cube Y.  [#7058]
+  
 datamodels
 ----------
 
