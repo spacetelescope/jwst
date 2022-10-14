@@ -18,7 +18,8 @@ from ..stpipe import Step
 from .. import datamodels
 from ..assign_wcs.util import update_fits_wcsinfo
 from . import astrometric_utils as amutils
-from .tweakreg_catalog import make_tweakreg_catalog
+from . tweakreg_catalog import make_tweakreg_catalog
+from ..datamodels.util import is_association
 
 
 def _oxford_or_str_join(str_list):
@@ -50,7 +51,9 @@ class TweakRegStep(Step):
 
     spec = f"""
         save_catalogs = boolean(default=False) # Write out catalogs?
+        use_custom_catalogs = boolean(default=False) # Use custom user-provided catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
+        catfile = string(default='') # Name of the file with a list of custom user-provided catalogs
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
         sharplo = float(default=0.2) # The lower bound on sharpness for object detection.
@@ -90,9 +93,51 @@ class TweakRegStep(Step):
     reference_file_types = []
 
     def process(self, input):
+        use_custom_catalogs = self.use_custom_catalogs
+
+        if use_custom_catalogs:
+            catdict = _parse_catfile(self.catfile)
+            # if user requested the use of custom catalogs and provided a
+            # valid 'catfile' file name that has no custom catalogs,
+            # turn off the use of custom catalogs:
+            if catdict is not None and not catdict:
+                self.log.warning(
+                    "'use_custom_catalogs' is set to True but 'catfile' "
+                    "contains no user catalogs. Turning on built-in catalog "
+                    "creation."
+                )
+                use_custom_catalogs = False
 
         try:
-            images = datamodels.ModelContainer(input)
+            if use_custom_catalogs and catdict:
+                images = datamodels.ModelContainer()
+                if isinstance(input, str):
+                    asn_dir = path.dirname(input)
+                    asn_data = images.read_asn(input)
+                    for member in asn_data['products'][0]['members']:
+                        filename = member['expname']
+                        member['expname'] = path.join(asn_dir, filename)
+                        if filename in catdict:
+                            member['tweakreg_catalog'] = catdict[filename]
+                        elif 'tweakreg_catalog' in member:
+                            del member['tweakreg_catalog']
+
+                    images.from_asn(input)
+
+                elif is_association(input):
+                    images.from_asn(input)
+
+                else:
+                    images = datamodels.ModelContainer(input)
+                    for im in images:
+                        filename = im.meta.filename
+                        if filename in catdict:
+                            print(f"setting {filename}.tweakreg_catalog = {repr(catdict[filename])}")
+                            im.meta.tweakreg_catalog = catdict[filename]
+
+            else:
+                images = datamodels.ModelContainer(input)
+
         except TypeError as e:
             e.args = ("Input to tweakreg must be a list of DataModels, an "
                       "association, or an already open ModelContainer "
@@ -112,23 +157,42 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
-            # source finding
-            catalog = make_tweakreg_catalog(
-                image_model, self.kernel_fwhm, self.snr_threshold,
-                sharplo=self.sharplo, sharphi=self.sharphi,
-                roundlo=self.roundlo, roundhi=self.roundhi,
-                brightest=self.brightest, peakmax=self.peakmax,
-                bkg_boxsize=self.bkg_boxsize
-            )
+            if use_custom_catalogs and image_model.meta.tweakreg_catalog:
+                # use user-supplied catalog:
+                self.log.info("Using user-provided input catalog "
+                              f"'{image_model.meta.tweakreg_catalog}'")
+                catalog = Table.read(image_model.meta.tweakreg_catalog)
+                new_cat = False
+
+            else:
+                # source finding
+                catalog = make_tweakreg_catalog(
+                    image_model, self.kernel_fwhm, self.snr_threshold,
+                    sharplo=self.sharplo, sharphi=self.sharphi,
+                    roundlo=self.roundlo, roundhi=self.roundhi,
+                    brightest=self.brightest, peakmax=self.peakmax,
+                    bkg_boxsize=self.bkg_boxsize
+                )
+                new_cat = True
+
+            for axis in ['x', 'y']:
+                if axis not in catalog.colnames:
+                    long_axis = axis + 'centroid'
+                    if long_axis in catalog.colnames:
+                        catalog.rename_column(long_axis, axis)
+                    else:
+                        raise ValueError(
+                            "'tweakreg' source catalogs must contain either "
+                            "columns 'x' and 'y' or 'xcentroid' and "
+                            "'ycentroid'."
+                        )
 
             # filter out sources outside the WCS bounding box
             bb = image_model.meta.wcs.bounding_box
             if bb is not None:
                 ((xmin, xmax), (ymin, ymax)) = bb
-                xname = 'xcentroid' if 'xcentroid' in catalog.colnames else 'x'
-                yname = 'ycentroid' if 'ycentroid' in catalog.colnames else 'y'
-                x = catalog[xname]
-                y = catalog[yname]
+                x = catalog['x']
+                y = catalog['y']
                 mask = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
                 catalog = catalog[mask]
 
@@ -140,7 +204,7 @@ class TweakRegStep(Step):
                 self.log.info('Detected {} sources in {}.'
                               .format(len(catalog), filename))
 
-            if self.save_catalogs:
+            if new_cat and self.save_catalogs:
                 catalog_filename = filename.replace(
                     '.fits', '_cat.{}'.format(self.catalog_format)
                 )
@@ -438,10 +502,6 @@ class TweakRegStep(Step):
             except IOError:
                 self.log.error("Cannot read catalog {}".format(catalog))
 
-        if 'xcentroid' in catalog.colnames:
-            catalog.rename_column('xcentroid', 'x')
-            catalog.rename_column('ycentroid', 'y')
-
         # create WCSImageCatalog object:
         refang = image_model.meta.wcsinfo.instance
         im = JWSTWCSCorrector(
@@ -464,3 +524,29 @@ def _common_name(group):
     cn = path.commonprefix(file_names)
     assert cn
     return cn
+
+
+def _parse_catfile(catfile):
+    if catfile is None or not catfile.strip():
+        return None
+
+    catdict = {}
+
+    with open(catfile) as f:
+        catfile_dir = path.dirname(catfile)
+
+        for line in f.readlines():
+            sline = line.strip()
+            if not sline or sline[0] == '#':
+                continue
+
+            data_model, *catalog = sline.split()
+            catalog = list(map(str.strip, catalog))
+            if len(catalog) == 1:
+                catdict[data_model] = path.join(catfile_dir, catalog[0])
+            elif len(catalog) == 0:
+                catdict[data_model] = None
+            else:
+                raise ValueError("'catfile' can contain at most two columns.")
+
+    return catdict

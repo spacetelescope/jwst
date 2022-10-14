@@ -1210,7 +1210,7 @@ class IFUCubeData():
                                                                       input_model.meta.wcs.output_frame.name)
 
                 temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
-                temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, 2, lam_med)
+                temp_ra2, temp_dec2, lam_temp = alpha_beta2world(2, 0, lam_med)
 
             elif self.instrument == 'NIRSPEC':
                 slice_wcs = nirspec.nrs_wcs_set_input(input_model, 0)
@@ -1227,7 +1227,7 @@ class IFUCubeData():
             # ________________________________________________________________________________
             # temp_dec1 is in degrees
             dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1 * np.pi / 180.0), (temp_dec2 - temp_dec1)
-            self.rot_angle = np.arctan2(dra, ddec) * 180. / np.pi
+            self.rot_angle = 90 + np.arctan2(dra, ddec) * 180. / np.pi
             log.info(f'Rotation angle between ifu and sky: {self.rot_angle}')
 
 # ________________________________________________________________________________
