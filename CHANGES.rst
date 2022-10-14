@@ -1,12 +1,18 @@
 1.8.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Expand the sequence field in a file name for association files from
+  3 characters to 5 characters. [#7061]
+
 cube_build
 ----------
 
 - Changed IFUALIGN convention for MIRI so that isobeta is along cube X instead of
   isoalpha along cube Y.  [#7058]
-  
+
 datamodels
 ----------
 
@@ -20,6 +26,7 @@ set_telescope_pointing
 ----------------------
 
 - Allow XML_DATA usage to override PRD specification [#7063]
+
 
 1.8.0 (2022-10-07)
 ==================

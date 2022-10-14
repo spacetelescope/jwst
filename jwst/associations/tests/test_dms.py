@@ -33,7 +33,7 @@ def test_asn_name(dms_asns):
     asns, _ = dms_asns
     asn = asns[0]
 
-    regex = re.compile(r'jwnoprogram-a3001_none_\d\d\d_asn')
+    regex = re.compile(r'jwnoprogram-a3001_none_\d\d\d\d\d_asn')
     assert regex.match(asn.asn_name)
 
 

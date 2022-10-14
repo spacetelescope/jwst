@@ -15,7 +15,7 @@ LEVEL3_ASN_ACID_NAME_REGEX = (
     r'(?P<program>\d{5})'
     r'-(?P<acid>(o|c)\d{3,4})'
     r'_(?P<asn_type>\w+)'
-    r'_(?P<sequence>\d{3})'
+    r'_(?P<sequence>\d{5})'
     r'_asn'
 )
 LEVEL3_ASN_DISCOVERED_NAME_REGEX = (
@@ -23,7 +23,7 @@ LEVEL3_ASN_DISCOVERED_NAME_REGEX = (
     r'(?P<program>\d{5})'
     r'-(?P<acid>a\d{4})'
     r'_(?P<asn_type>\w+)'
-    r'_(?P<sequence>\d{3})'
+    r'_(?P<sequence>\d{5})'
     r'_asn'
 )
 
@@ -33,7 +33,7 @@ LEVEL3_ASN_WITH_VERSION = (
     r'-(?P<acid>[a-z]\d{3,4})'
     r'_(?P<stamp>.+)'
     r'_(?P<asn_type>.+)'
-    r'_(?P<sequence>\d{3})'
+    r'_(?P<sequence>\d{5})'
     r'_asn'
 )
 
