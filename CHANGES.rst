@@ -23,6 +23,9 @@ datamodels
 
 - Add subarray keywords in filteroffset schema [#7317]
 
+- Switch to using new ``asdf.resources`` entry-point mechanism for
+  registering schemas. [#7057]
+
 extract_1d
 ----------
 
