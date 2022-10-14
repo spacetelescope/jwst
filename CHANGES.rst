@@ -63,7 +63,7 @@ datamodels
   loaded from associations into ModelContainer. Modify container method
   ``ind_asn_type`` to query this metadata. [#7046]
 
-- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file.
+- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file. 
 
 jump
 ----
@@ -128,7 +128,6 @@ tweakreg
 - Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
   code more robust. [#7038]
 
-- Added support for user-provided catalog files. [#7022]
 
 1.7.2 (2022-09-12)
 ==================
