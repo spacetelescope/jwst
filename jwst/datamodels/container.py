@@ -294,7 +294,7 @@ to supply custom catalogs.
             sublist = infiles
         try:
             for member in sublist:
-                filepath = member['expname']
+                filepath = op.join(asn_dir, member['expname'])
                 update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
                 if update_model or self._save_open:
                     m = datamodel_open(filepath, memmap=self._memmap)
