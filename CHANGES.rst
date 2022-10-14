@@ -13,6 +13,9 @@ datamodels
 - Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
   [#7062]
 
+- Switch to using new ``asdf.resources`` entry-point mechanism for
+  registering schemas. [#7057]  
+
 set_telescope_pointing
 ----------------------
 
@@ -94,7 +97,7 @@ resample_spec
   containing negative spectral traces (due to nodded background subtraction)
   in a more robust way. [#7047]
 
- - Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
+- Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
 
 
 residual_fringe
