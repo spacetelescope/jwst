@@ -57,6 +57,7 @@ class GWCSDrizzle:
         """
 
         # Initialize the object fields
+        self._product = product
         self.outsci = None
         self.outwht = None
         self.outcon = None
@@ -105,6 +106,18 @@ class GWCSDrizzle:
             np.divide(self.outsci, self.outexptime, self.outsci)
         elif out_units != "cps":
             raise ValueError("Illegal value for out_units: %s" % out_units)
+
+    # Since the context array is dynamic, it must be re-assigned
+    # back to the product's `con` attribute.
+    @property
+    def outcon(self):
+        """Return the context array"""
+        return self._product.con
+
+    @outcon.setter
+    def outcon(self, value):
+        """Set new context array"""
+        self._product.con = value
 
     def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
                   expin=1.0, in_units="cps", wt_scl=1.0):
