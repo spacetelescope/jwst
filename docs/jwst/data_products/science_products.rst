@@ -373,33 +373,33 @@ different set of data arrays than other science products. Resampled 2-D images a
 ``i2d`` products and resampled 2-D spectra are stored in ``s2d`` products.
 The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
 
-+-----+-------------+----------+-----------+---------------+
-| HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
-+=====+=============+==========+===========+===============+
-|  0  | N/A         | primary  | N/A       | N/A           |
-+-----+-------------+----------+-----------+---------------+
-|  1  | SCI         | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  2  | ERR         | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  3  | CON         | IMAGE    | int32     | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  4  | WHT         | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  5  | VAR_POISSON | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  6  | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|  7  | VAR_FLAT    | IMAGE    | float32   | ncols x nrows |
-+-----+-------------+----------+-----------+---------------+
-|     | HDRTAB*     | BINTABLE | N/A       | variable      |
-+-----+-------------+----------+-----------+---------------+
-|     | ASDF        | BINTABLE | N/A       | variable      |
-+-----+-------------+----------+-----------+---------------+
++-----+-------------+----------+-----------+-------------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions              |
++=====+=============+==========+===========+=========================+
+|  0  | N/A         | primary  | N/A       | N/A                     |
++-----+-------------+----------+-----------+-------------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows           |
++-----+-------------+----------+-----------+-------------------------+
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows           |
++-----+-------------+----------+-----------+-------------------------+
+|  3  | CON         | IMAGE    | int32     | ncols x nrows x nplanes |
++-----+-------------+----------+-----------+-------------------------+
+|  4  | WHT         | IMAGE    | float32   | ncols x nrows           |
++-----+-------------+----------+-----------+-------------------------+
+|  5  | VAR_POISSON | IMAGE    | float32   | ncols x nrows           |
++-----+-------------+----------+-----------+-------------------------+
+|  6  | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows           |
++-----+-------------+----------+-----------+-------------------------+
+|  7  | VAR_FLAT    | IMAGE    | float32   | ncols x nrows           |
++-----+-------------+----------+-----------+-------------------------+
+|     | HDRTAB*     | BINTABLE | N/A       | variable                |
++-----+-------------+----------+-----------+-------------------------+
+|     | ASDF        | BINTABLE | N/A       | variable                |
++-----+-------------+----------+-----------+-------------------------+
 
  - SCI: 2-D data array containing the pixel values, in units of surface brightness
  - ERR: 2-D data array containing resampled uncertainty estimates, given as standard deviation
- - CON: 2-D context image, which encodes information about which input images contribute
+ - CON: 3-D context image, which encodes information about which input images contribute
    to a specific output pixel
  - WHT: 2-D weight image giving the relative weight of the output pixels
  - VAR_POISSON: 2-D resampled Poisson variance estimates for each pixel
@@ -408,12 +408,16 @@ The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
  - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
    that were combined to produce the output image. Only appears when multiple inputs are used.
  - ADSF: The data model meta data.
- 
+
 For spectroscopic exposure-based products that contain spectra for more than one source or slit
 (e.g. NIRSpec MOS) there will be multiple tuples of the SCI, ERR, CON, WHT, and variance
 extensions, one set for each source or slit. FITS "EXTVER" keywords are used in each
 extension header to segregate the multiple instances of each extension type by
 source.
+
+For the context array, CON, though the schema represents it as an ``int32``,
+users should interpret and recast the array as ``uint32`` post-processing. This
+inconsistency will be dealt with in a later release.
 
 .. _s3d:
 
