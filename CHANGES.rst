@@ -24,6 +24,11 @@ datamodels
 
 - Fix handling of ASN directory path by the ``ModelContainer``. [#7071]
 
+resample
+--------
+
+- Make the GWCSDrizzle.outcon attribute a property with setter [#7295]
+
 set_telescope_pointing
 ----------------------
 
