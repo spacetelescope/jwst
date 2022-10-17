@@ -128,6 +128,7 @@ class Extract1dStep(Step):
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
     soss_wave_grid = input_file(default = None)  # Wavelength grid used to model the detector
+    soss_estimate = input_file(default = None)  # Estimate used to generate the wavelength grid
     soss_rtol = float(default=1.0e-4)  # Relative tolerance needed on a pixel model
     soss_max_grid_size = integer(default=20000)  # Maximum grid size, if wave_grid not specified
     soss_transform = list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
