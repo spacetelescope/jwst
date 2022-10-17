@@ -94,6 +94,11 @@ resample
 
 - Make the GWCSDrizzle.outcon attribute a property with setter [#7295]
 
+resample
+--------
+
+- Make the GWCSDrizzle.outcon attribute a property with setter [#7295]
+
 set_telescope_pointing
 ----------------------
 
