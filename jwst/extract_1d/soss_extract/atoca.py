@@ -1092,7 +1092,7 @@ class _BaseOverlap:
             tests = self.tikho_tests
 
         # TODO Find a way to identify when the solution becomes unstable
-        # and do nnot use these in the search for the best tikhonov factor.
+        #      and do nnot use these in the search for the best tikhonov factor.
         # The follwing commented bloc was an attemp to do it, but problems
         # occur if the chi2 reaches a maximum at large factors.
 #         # Remove all bad factors that are most likely unstable

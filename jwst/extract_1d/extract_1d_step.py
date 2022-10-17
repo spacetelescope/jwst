@@ -102,14 +102,23 @@ class Extract1dStep(Step):
     soss_modelname : str
         Filename for optional model output of ATOCA traces and pixel weights.
 
-    soss_wave_grid : str
-        Filename of reference file containing wavelength grid used to model the detector.
+    soss_estimate : str or SpecModel or None
+        Filename or SpecModel of the estimate of the target flux. The estimate must
+        be a SpecModel with wavelength and flux values.
+
+    soss_wave_grid : str or SpecModel or None
+        Filename of reference file or SpecModel containing the wavelength grid used by ATOCA
+        to model each pixel valid pixel of the detector. If not given, the grid is determined
+        based on an estimate of the flux (soss_estimate), the relative tolerance (soss_rtol)
+        required on each pixel model and the maximum grid size (soss_max_grid_size).
 
     soss_rtol : float
-        The relative tolerance needed on a pixel model
+        The relative tolerance needed on a pixel model. It is used to determine the sampling
+        of the soss_wave_grid when not directly given.
 
     soss_max_grid_size: int
-        Maximum grid size allowed if soss_wave_grid is not specified
+        Maximum grid size allowed. It is used when soss_wave_grid is not directly
+        to make sure the computation time or the memory used stays reasonable.
     """
 
     class_alias = "extract_1d"

@@ -462,8 +462,6 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
     return tracemodel_ord, spec_ord
 
 
-# TODO Model order 2 for decontamination (wider estimate)
-# TODO Update docstring
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
                 tikfac=None, threshold=1e-4, n_os=2, wave_grid=None, estimate=None, rtol=1e-3, max_grid_size=1000000):
     """Perform the spectral extraction on a single image.
@@ -478,8 +476,14 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         Pixel mask to apply to detector image.
     refmask : array[bool]
         Pixels that should never be reconstructed e.g. the reference pixels.
-    ref_file_args : tuple
-        A tuple of reference file arguments constructed by get_ref_file_args().
+    ref_files : dict
+        A dictionary of the reference file DataModels.
+    box_weights : dict
+        A dictionary of the weights (for each order) used in the box extraction.
+        The weights for each order are 2d arrays with the same size as the detector.
+    subarray : str
+        Subarray on which the data were recorded; one of 'SUBSTRIPT96',
+        'SUBSTRIP256' or 'FULL'.
     transform : array or list, optional
         A 3-element list or array describing the rotation and translation to
         apply to the reference files in order to match the observation. If not
@@ -494,9 +498,20 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     threshold : float
         The threshold value for using pixels based on the spectral profile.
         Default value is 1e-4.
-    soss_filter : str, optional
-        Filter setting for NIRISS SOSS during observation. For use once F277W
-        algorithm is determined, currently defaults to 'CLEAR'.
+    wave_grid : str or SpecModel or None
+        Filename of reference file or SpecModel containing the wavelength grid used by ATOCA
+        to model each pixel valid pixel of the detector. If not given, the grid is determined
+        based on an estimate of the flux (estimate), the relative tolerance (rtol)
+        required on each pixel model and the maximum grid size (max_grid_size).
+    estimate : UnivariateSpline or None
+         Estimate of the target flux as a function of wavelength in microns.
+    rtol : float
+        The relative tolerance needed on a pixel model. It is used to determine the sampling
+        of the soss_wave_grid when not directly given. Default is 1e-3.
+    max_grid_size : int
+        Maximum grid size allowed. It is used when soss_wave_grid is not directly
+        to make sure the computation time or the memory used stays reasonable.
+        Default is 1000000
 
     Returns
     -------
@@ -506,6 +521,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         Optimal Tikhonov factor used in extraction
     logl : float
         Log likelihood value associated with the Tikhonov factor selected.
+    wave_grid : 1d array
+        Same as wave_grid input
+    spec_list : list of SpecModel
+        List of the underlying spectra for each integration and order.
+        The tikhonov tests are also included.
     """
 
     # Init list of atoca 1d spectra
@@ -539,6 +559,9 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         log.info(f'soss_wave_grid not given: generating grid based on rtol={rtol}')
         wave_grid = make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os)
         log.debug(f'soss_wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
+
+    # TODO: Unpack wave_grid to array. wave_grid can be a MultiSpecModel
+    #       to allow to specify wave_grid for different orders.
 
 #     # Use estimate to evaluate the contribution from each orders to pixels
 #     # (Used to determine which pixel to model later)
@@ -682,6 +705,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         for sp in spec_ord:
             sp.meta.soss_extract1d.color_range = 'BLUE'
         spec_list += spec_ord
+
+    # TODO : Re-pack wave_grid to so it can be passed for the next integration.
 
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
@@ -984,11 +1009,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     output_model : DataModel
         DataModel containing the extracted spectra.
     """
-    # TODO: Read soss_kwargs['wave_grid'] if it is given. For now, we always build it based on rtol,
-    # TODO: (suite) but if the flux is known, an input wave grid in the form of a datamodels.SpecModel maybe
-    # TODO: (suite) would be the best.
-    # TODO: In fact, if the flux is know approximately, the estimate could also be an input. Could be the same input,
-    # TODO: for example soss_kwargs['spec_estimate_file'], a datamodels.SpecModel, with the grid and the estimate
 
     # Use atoca to decontaminate or not
     apply_decontamination = soss_kwargs['atoca']
@@ -1018,6 +1038,9 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     # Save names for logging
     param_name = np.array(['theta', 'x-offset', 'y-offset'])
 
+
+    # TODO: Maybe not unpack yet. Use SpecModel attributes
+    #       to allow for multiple orders? Create unpacking function.
     # Convert estimate to cubic spline if given.
     # It should be a SpecModel or a file name (string)
     estimate = soss_kwargs.pop('soss_estimate')
@@ -1194,7 +1217,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             if i == 0:
                 all_tracemodels[order] = []
             # Put NaNs to zero
-            # TODO Save to Nans or zeros and mark bad pixels in the apertures instead?
             model_ord = tracemodels[order]
             model_ord = np.where(np.isfinite(model_ord), model_ord, 0.)
             # Save as a list (convert to array at the end)
