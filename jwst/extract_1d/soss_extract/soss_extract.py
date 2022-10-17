@@ -465,7 +465,7 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
 # TODO Model order 2 for decontamination (wider estimate)
 # TODO Update docstring
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
-                tikfac=None, threshold=1e-4, n_os=2, wave_grid=None, rtol=1e-3, max_grid_size=1000000):
+                tikfac=None, threshold=1e-4, n_os=2, wave_grid=None, estimate=None, rtol=1e-3, max_grid_size=1000000):
     """Perform the spectral extraction on a single image.
 
     Parameters
@@ -530,7 +530,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
     #       dq mask caused issues here and this may need a try/except wrap.
     #       Dev suggested np.logspace(-19, -10, 10)
-    if tikfac is None or wave_grid is None:
+    if (tikfac is None or wave_grid is None) and estimate is None:
         estimate = estim_flux_first_order(scidata_bkg, scierr, scimask,
                                           ref_file_args, mask_trace_profile[0])
 
@@ -1011,6 +1011,27 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     ref_files['specprofile'] = specprofile_ref
     ref_files['speckernel'] = speckernel_ref
 
+    # Initialize the theta, dx, dy transform parameters
+    transform = soss_kwargs.pop('transform')
+    if transform is None:
+        transform = [None, None, None]
+    # Save names for logging
+    param_name = np.array(['theta', 'x-offset', 'y-offset'])
+
+    # Convert estimate to cubic spline if given.
+    # It should be a SpecModel or a file name (string)
+    estimate = soss_kwargs.pop('soss_estimate')
+    if estimate is not None:
+        log.info('Converting the estimate of the flux to spline function.')
+
+        # Convert estimate to cubic spline
+        estimate = datamodels.open(estimate)
+        wv_estimate = estimate.spec_table['WAVELENGTH']
+        flux_estimate = estimate.spec_table['FLUX']
+        # Keep only finite values
+        idx = np.isfinite(flux_estimate)
+        estimate = UnivariateSpline(wv_estimate[idx], flux_estimate[idx], k=3, s=0, ext=0)
+
     # Initialize the output model.
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)  # Copy meta data from input to output.
@@ -1022,13 +1043,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     # Initialize output references (model of the detector and box aperture weights).
     output_references = datamodels.SossExtractModel()
     output_references.update(input_model)
-
-    # Initialize the theta, dx, dy transform parameters
-    transform = soss_kwargs.pop('transform')
-    if transform is None:
-        transform = [None, None, None]
-    # Save names for logging
-    param_name = np.array(['theta', 'x-offset', 'y-offset'])
 
     all_tracemodels = dict()
     all_box_weights = dict()
@@ -1127,6 +1141,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             # Model the image.
             kwargs = dict()
             kwargs['transform'] = transform
+            kwargs['estimate'] = estimate
             kwargs['tikfac'] = soss_kwargs['tikfac']
             kwargs['max_grid_size'] = soss_kwargs['max_grid_size']
             kwargs['rtol'] = soss_kwargs['rtol']
@@ -1237,10 +1252,5 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         # Save
         order_int = order_str_2_int[order]
         setattr(output_references, f'aperture{order_int}', box_w_ord)
-
-    if pipe_utils.is_tso(input_model):
-        log.info("Populating INT_TIMES keywords from input table.")
-        populate_time_keywords(input_model, output_model)
-        output_model.int_times = input_model.int_times.copy()
 
     return output_model, output_references, output_atoca
