@@ -79,7 +79,7 @@ scipy==1.9.2
 semantic-version==2.10.0
 six==1.16.0
 spherical-geometry==1.2.22
-stcal==1.2.0
+stcal==1.2.1
 stdatamodels==0.4.3
 stpipe==0.4.2
 stsci.image==2.3.5
