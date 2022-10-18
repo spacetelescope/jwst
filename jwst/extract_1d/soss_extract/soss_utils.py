@@ -31,7 +31,7 @@ def zero_roll(a, shift):
     return result
 
 
-def robust_polyfit(x, y, order, maxiter=5, nstd=3.):
+def robust_polyfit(x, y, order, maxiter=5, nstd=3.0):
     """Perform a robust polynomial fit.
 
     Parameters
@@ -53,7 +53,7 @@ def robust_polyfit(x, y, order, maxiter=5, nstd=3.):
         best-fit polynomial parameters.
     """
 
-    mask = np.ones_like(x, dtype='bool')
+    mask = np.ones_like(x, dtype="bool")
     for niter in range(maxiter):
 
         # Fit the data and evaluate the best-fit model.
@@ -117,7 +117,7 @@ def get_image_dim(image, header=None):
             xos = int(dimx // 2040)
 
         else:
-            log_message = f'Stack X dimension has unrecognized size of {dimx}. Accepts 2048, 2040 or multiple of.'
+            log_message = f"Stack X dimension has unrecognized size of {dimx}. Accepts 2048, 2040 or multiple of."
             log.critical(log_message)
             raise ValueError(log_message)
 
@@ -127,51 +127,59 @@ def get_image_dim(image, header=None):
             ynative = np.int(dimy / yos)
 
         else:
-            log_message = f'Stack Y dimension ({dimy}) is inconsistent with stack X' \
-                          f'dimension ({dimx}) for acceptable SOSS arrays'
+            log_message = (
+                f"Stack Y dimension ({dimy}) is inconsistent with stack X"
+                f"dimension ({dimx}) for acceptable SOSS arrays"
+            )
             log.critical(log_message)
             raise ValueError(log_message)
 
         # Create a boolean mask indicating which pixels are not reference pixels.
-        refpix_mask = np.ones_like(image, dtype='bool')
+        refpix_mask = np.ones_like(image, dtype="bool")
         if xnative == 2048:
             # Mask out the left and right columns of reference pixels.
-            refpix_mask[:, :xos * 4] = False
-            refpix_mask[:, -xos * 4:] = False
+            refpix_mask[:, : xos * 4] = False
+            refpix_mask[:, -xos * 4 :] = False
 
         if ynative == 2048:
             # Mask out the top and bottom rows of reference pixels.
-            refpix_mask[:yos * 4, :] = False
-            refpix_mask[-yos * 4:, :] = False
+            refpix_mask[: yos * 4, :] = False
+            refpix_mask[-yos * 4 :, :] = False
 
         if ynative == 256:
             # Mask the top rows of reference pixels.
-            refpix_mask[-yos * 4:, :] = False
+            refpix_mask[-yos * 4 :, :] = False
 
     else:
         # Read the oversampling and padding from the header.
-        padding = int(header['PADDING'])
-        xos, yos = int(header['OVERSAMP']), int(header['OVERSAMP'])
+        padding = int(header["PADDING"])
+        xos, yos = int(header["OVERSAMP"]), int(header["OVERSAMP"])
 
         # Check that the stack respects its intended format.
         if (dimx / xos - 2 * padding) not in [2048]:
-            log_message = 'The header passed is inconsistent with the X dimension of the stack.'
+            log_message = (
+                "The header passed is inconsistent with the X dimension of the stack."
+            )
             log.critical(log_message)
             raise ValueError(log_message)
         else:
             xnative = 2048
 
         if (dimy / yos - 2 * padding) not in [96, 256, 2048]:
-            log_message = 'The header passed is inconsistent with the Y dimension of the stack.'
+            log_message = (
+                "The header passed is inconsistent with the Y dimension of the stack."
+            )
             log.critical(log_message)
             raise ValueError(log_message)
         else:
             ynative = np.int(dimy / yos - 2 * padding)
 
         # The trace file contains no reference pixels so all pixels are good.
-        refpix_mask = np.ones_like(image, dtype='bool')
+        refpix_mask = np.ones_like(image, dtype="bool")
 
-    log.debug('Data dimensions:')
-    log.debug(f'dimx={dimx}, dimy={dimy}, xos={xos}, yos={yos}, xnative={xnative}, ynative={ynative}')
+    log.debug("Data dimensions:")
+    log.debug(
+        f"dimx={dimx}, dimy={dimy}, xos={xos}, yos={yos}, xnative={xnative}, ynative={ynative}"
+    )
 
     return dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask

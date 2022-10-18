@@ -30,24 +30,27 @@ def test_lastframe_set_groupdq():
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    dq_diff = (
+        dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :]
+        - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    )
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          dqflags.group['DO_NOT_USE'],
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                  + 'equal to the DO_NOT_USE flag')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+    )
 
     # test that the groupdq flags are not changed for the rest of the groups
-    dq_diff = (dm_ramp_lastframe.groupdq[0, 0:ngroups - 2, :, :]
-               - dm_ramp.groupdq[0, 0:ngroups - 2, :, :])
-    np.testing.assert_array_equal(np.full((ngroups - 2, ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='n <= ngroups-2 groupdq flags changes '
-                                  + 'and they should not be')
+    dq_diff = (
+        dm_ramp_lastframe.groupdq[0, 0 : ngroups - 2, :, :]
+        - dm_ramp.groupdq[0, 0 : ngroups - 2, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((ngroups - 2, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="n <= ngroups-2 groupdq flags changes " + "and they should not be",
+    )
 
 
 def test_lastframe_ngroup2():
@@ -74,14 +77,16 @@ def test_lastframe_ngroup2():
 
     # check that the difference in the groupdq flags is equal to
     #  zero
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    dq_diff = (
+        dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :]
+        - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    )
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='groupdq flag changed '
-                                          + 'when it should not')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq flag changed " + "when it should not",
+    )
 
 
 def test_lastframe_single_group():
@@ -109,14 +114,16 @@ def test_lastframe_single_group():
     # check that the difference in the groupdq flags is equal to
     # zero
 
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    dq_diff = (
+        dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :]
+        - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    )
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='groupdq changed for single group '
-                                  + 'when it should not')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq changed for single group " + "when it should not",
+    )
 
 
 def test_lastframe_add1_groupdq():
@@ -145,7 +152,7 @@ def test_lastframe_add1_groupdq():
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # test if pixels in groupdq were incremented in value by 1
-    assert (dm_ramp_lastframe.groupdq[0, ngroups - 1, 505, 505] == 5)
+    assert dm_ramp_lastframe.groupdq[0, ngroups - 1, 505, 505] == 5
 
 
 def test_nircam():
@@ -164,22 +171,24 @@ def test_nircam():
     # create a JWST datamodel for data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
-    dm_ramp.meta.instrument.name = 'NIRCAM'
-    dm_ramp.meta.instrument.detector = 'NRCA1'
+    dm_ramp.meta.instrument.name = "NIRCAM"
+    dm_ramp.meta.instrument.detector = "NRCA1"
 
     # run the last frame correction step
     dm_ramp_lastframe = LastFrameStep.call(dm_ramp)
 
     # check that the difference in the groupdq flags is equal to
     #   0 since the step should not run for NIR data
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    dq_diff = (
+        dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :]
+        - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    )
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                          + 'equal to 0')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to 0",
+    )
 
 
 def test_miri():
@@ -198,19 +207,21 @@ def test_miri():
     # create a JWST datamodel for data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
-    dm_ramp.meta.instrument.name = 'MIRI'
-    dm_ramp.meta.instrument.detector = 'MIRIMAGE'
+    dm_ramp.meta.instrument.name = "MIRI"
+    dm_ramp.meta.instrument.detector = "MIRIMAGE"
 
     # run the last frame correction step
     dm_ramp_lastframe = LastFrameStep.call(dm_ramp)
 
     # check that the difference in the groupdq flags is equal to
     #   DO_NOT_USE flag
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    dq_diff = (
+        dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :]
+        - dm_ramp.groupdq[0, ngroups - 1, :, :]
+    )
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          dqflags.group['DO_NOT_USE'],
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                          + 'equal to DO_NOT_USE')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to DO_NOT_USE",
+    )

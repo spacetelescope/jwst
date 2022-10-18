@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['ResolutionModel', 'MiriResolutionModel']
+__all__ = ["ResolutionModel", "MiriResolutionModel"]
 
 
 class ResolutionModel(ReferenceFileModel):
@@ -12,6 +12,7 @@ class ResolutionModel(ReferenceFileModel):
     data : numpy float32 array
         Resolving Power table
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/resolution.schema"
 
 
@@ -45,4 +46,5 @@ class MiriResolutionModel(ResolutionModel):
         than cutoff. Columns 4 and 5 give the polynomial coefficients (a,b)
         describing beta FWHM for wavelengths longer than the cutoff.
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_resolution.schema"

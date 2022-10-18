@@ -16,16 +16,18 @@ def run_detector1pipeline(jail, rtdata_module):
     rtdata.get_data("nircam/image/jw42424001001_01101_00001_nrca5_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["calwebb_detector1", rtdata.input,
-            "--steps.dq_init.save_results=True",
-            "--steps.saturation.save_results=True",
-            "--steps.superbias.save_results=True",
-            "--steps.refpix.save_results=True",
-            "--steps.linearity.save_results=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.jump.save_results=True",
-            "--steps.jump.rejection_threshold=50.0",
-            ]
+    args = [
+        "calwebb_detector1",
+        rtdata.input,
+        "--steps.dq_init.save_results=True",
+        "--steps.saturation.save_results=True",
+        "--steps.superbias.save_results=True",
+        "--steps.refpix.save_results=True",
+        "--steps.linearity.save_results=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.jump.save_results=True",
+        "--steps.jump.rejection_threshold=50.0",
+    ]
     Step.from_cmdline(args)
 
 
@@ -34,10 +36,12 @@ def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_rate.fits"
-    args = ["calwebb_image2", rtdata.input,
-            "--steps.assign_wcs.save_results=True",
-            "--steps.flat_field.save_results=True",
-            ]
+    args = [
+        "calwebb_image2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=True",
+        "--steps.flat_field.save_results=True",
+    ]
     Step.from_cmdline(args)
 
 
@@ -63,20 +67,37 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     # Get the level3 association json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
-    args = ["calwebb_image3", rtdata.input,
-            "--steps.tweakreg.save_results=True",
-            # "--steps.skymatch.save_results=True",
-            "--steps.source_catalog.snr_threshold=20",
-            ]
+    args = [
+        "calwebb_image3",
+        rtdata.input,
+        "--steps.tweakreg.save_results=True",
+        # "--steps.skymatch.save_results=True",
+        "--steps.source_catalog.snr_threshold=20",
+    ]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
-                                    "refpix", "linearity", "trapsfilled",
-                                    "dark_current", "jump", "rate",
-                                    "flat_field", "cal", "i2d"])
-def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "dq_init",
+        "saturation",
+        "superbias",
+        "refpix",
+        "linearity",
+        "trapsfilled",
+        "dark_current",
+        "jump",
+        "rate",
+        "flat_field",
+        "cal",
+        "i2d",
+    ],
+)
+def test_nircam_image_stages12(
+    run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
@@ -102,7 +123,9 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
-    with datamodels.open(rtdata.output) as model, datamodels.open(rtdata.truth) as model_truth:
+    with datamodels.open(rtdata.output) as model, datamodels.open(
+        rtdata.truth
+    ) as model_truth:
         grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
 
         ra, dec = model.meta.wcs(*grid)
@@ -130,7 +153,9 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["i2d"])
-def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+def test_nircam_image_stage3(
+    run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Test that resampled i2d looks good for NIRCam imaging"""
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
@@ -147,7 +172,9 @@ def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_astropy_tables):
+def test_nircam_image_stage3_catalog(
+    run_image3pipeline, rtdata_module, diff_astropy_tables
+):
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
     output = "jw42424-o002_t001_nircam_clear-f444w_cat.ecsv"
@@ -158,7 +185,9 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
+def test_nircam_image_stage3_segm(
+    run_image3pipeline, rtdata_module, fitsdiff_default_kwargs
+):
     """Test that segmentation map looks good for NIRCam imaging"""
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
@@ -182,8 +211,10 @@ def run_image3_closedfile(rtdata, jail):
 @pytest.mark.bigdata
 def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwargs):
     """Ensure production of Image3Pipeline output with data having closed file issues"""
-    rtdata.output = 'jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits'
-    rtdata.get_truth('truth/test_nircam_image/jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits')
+    rtdata.output = "jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits"
+    rtdata.get_truth(
+        "truth/test_nircam_image/jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits"
+    )
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -194,9 +225,11 @@ def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     """Test optional frame-averaged darks output from DarkCurrentStep"""
     rtdata.get_data("nircam/image/jw00312007001_02102_00001_nrcblong_ramp.fits")
 
-    args = ["jwst.dark_current.DarkCurrentStep", rtdata.input,
-            "--dark_output='frame_averaged_darks.fits'",
-            ]
+    args = [
+        "jwst.dark_current.DarkCurrentStep",
+        rtdata.input,
+        "--dark_output='frame_averaged_darks.fits'",
+    ]
     Step.from_cmdline(args)
     rtdata.output = "frame_averaged_darks.fits"
 

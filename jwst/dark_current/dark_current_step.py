@@ -18,7 +18,7 @@ class DarkCurrentStep(Step):
         dark_output = output_file(default = None) # Dark model or averaged dark subtracted
     """
 
-    reference_file_types = ['dark']
+    reference_file_types = ["dark"]
 
     def process(self, input):
 
@@ -26,36 +26,31 @@ class DarkCurrentStep(Step):
         with datamodels.RampModel(input) as input_model:
 
             # Get the name of the dark reference file to use
-            self.dark_name = self.get_reference_file(input_model, 'dark')
-            self.log.info('Using DARK reference file %s', self.dark_name)
+            self.dark_name = self.get_reference_file(input_model, "dark")
+            self.log.info("Using DARK reference file %s", self.dark_name)
 
             # Check for a valid reference file
-            if self.dark_name == 'N/A':
-                self.log.warning('No DARK reference file found')
-                self.log.warning('Dark current step will be skipped')
+            if self.dark_name == "N/A":
+                self.log.warning("No DARK reference file found")
+                self.log.warning("Dark current step will be skipped")
                 result = input_model.copy()
-                result.meta.cal_step.dark = 'SKIPPED'
+                result.meta.cal_step.dark = "SKIPPED"
                 return result
 
             # Create name for the intermediate dark, if desired.
             dark_output = self.dark_output
             if dark_output is not None:
-                dark_output = self.make_output_path(
-                    basepath=dark_output,
-                    suffix=False
-                )
+                dark_output = self.make_output_path(basepath=dark_output, suffix=False)
 
             # Open the dark ref file data model - based on Instrument
             instrument = input_model.meta.instrument.name
-            if instrument == 'MIRI':
+            if instrument == "MIRI":
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
                 dark_model = datamodels.DarkModel(self.dark_name)
 
             # Do the dark correction
-            result = dark_sub.do_correction(
-                input_model, dark_model, dark_output
-            )
+            result = dark_sub.do_correction(input_model, dark_model, dark_output)
 
             out_data, dark_data = result
 
@@ -85,14 +80,12 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
     """
     if instrument == "MIRI":
         out_dark_model = datamodels.DarkMIRIModel(
-            data=dark_data.data,
-            dq=dark_data.groupdq,
-            err=dark_data.err)
+            data=dark_data.data, dq=dark_data.groupdq, err=dark_data.err
+        )
     else:
         out_dark_model = datamodels.DarkModel(
-            data=dark_data.data,
-            dq=dark_data.groupdq,
-            err=dark_data.err)
+            data=dark_data.data, dq=dark_data.groupdq, err=dark_data.err
+        )
     out_dark_model.update(dark_model)
 
     out_dark_model.meta.exposure.nframes = dark_data.exp_nframes

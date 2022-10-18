@@ -24,17 +24,29 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 # Define location of default Artifactory API key, for Jenkins use only
-ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
+ARTIFACTORY_API_KEY_FILE = "/eng/ssb2/keys/svc_rodata.key"
 
 
 class RegtestData:
     """Defines data paths on Artifactory and data retrieval methods"""
 
-    def __init__(self, env="dev", inputs_root="jwst-pipeline",
-                 results_root="jwst-pipeline-results", docopy=True,
-                 input=None, input_remote=None, output=None, truth=None,
-                 truth_remote=None, remote_results_path=None, test_name=None,
-                 traceback=None, okify_op='file_copy', **kwargs):
+    def __init__(
+        self,
+        env="dev",
+        inputs_root="jwst-pipeline",
+        results_root="jwst-pipeline-results",
+        docopy=True,
+        input=None,
+        input_remote=None,
+        output=None,
+        truth=None,
+        truth_remote=None,
+        remote_results_path=None,
+        test_name=None,
+        traceback=None,
+        okify_op="file_copy",
+        **kwargs
+    ):
         self.env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
@@ -60,11 +72,18 @@ class RegtestData:
 
     def __repr__(self):
         return pprint.pformat(
-            dict(input=self.input, output=self.output, truth=self.truth,
-                 input_remote=self.input_remote, truth_remote=self.truth_remote,
-                 remote_results_path=self.remote_results_path, test_name=self.test_name,
-                 traceback=self.traceback, okify_op=self.okify_op),
-            indent=1
+            dict(
+                input=self.input,
+                output=self.output,
+                truth=self.truth,
+                input_remote=self.input_remote,
+                truth_remote=self.truth_remote,
+                remote_results_path=self.remote_results_path,
+                test_name=self.test_name,
+                traceback=self.traceback,
+                okify_op=self.okify_op,
+            ),
+            indent=1,
         )
 
     @property
@@ -144,13 +163,12 @@ class RegtestData:
             self.input_remote = path
         if docopy is None:
             docopy = self.docopy
-        self.input = get_bigdata(self._inputs_root, self.env, path,
-                                 docopy=docopy)
+        self.input = get_bigdata(self._inputs_root, self.env, path, docopy=docopy)
         self.input_remote = os.path.join(self._inputs_root, self.env, path)
 
         return self.input
 
-    def data_glob(self, path=None, glob='*', docopy=None):
+    def data_glob(self, path=None, glob="*", docopy=None):
         """Get a list of files"""
         if path is None:
             path = self.input_remote
@@ -167,15 +185,14 @@ class RegtestData:
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
             root_len = len(self.env) + 1
-            file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
+            file_paths = _data_glob_url(
+                self._inputs_root, self.env, path, glob, root=root
+            )
         else:
-            raise BigdataError('Path cannot be found: {}'.format(path))
+            raise BigdataError("Path cannot be found: {}".format(path))
 
         # Remove the root from the paths
-        file_paths = [
-            file_path[root_len:]
-            for file_path in file_paths
-        ]
+        file_paths = [file_path[root_len:] for file_path in file_paths]
         return file_paths
 
     def get_truth(self, path=None, docopy=None):
@@ -189,10 +206,9 @@ class RegtestData:
             self.truth_remote = path
         if docopy is None:
             docopy = self.docopy
-        os.makedirs('truth', exist_ok=True)
-        with pushdir('truth'):
-            self.truth = get_bigdata(self._inputs_root, self.env, path,
-                                     docopy=docopy)
+        os.makedirs("truth", exist_ok=True)
+        with pushdir("truth"):
+            self.truth = get_bigdata(self._inputs_root, self.env, path, docopy=docopy)
             self.truth_remote = os.path.join(self._inputs_root, self.env, path)
 
         return self.truth
@@ -227,21 +243,21 @@ class RegtestData:
             docopy = self.docopy
 
         # Get the association JSON file
-        self.input = get_bigdata(self._inputs_root, self.env, path,
-                                 docopy=docopy)
+        self.input = get_bigdata(self._inputs_root, self.env, path, docopy=docopy)
         with open(self.input) as fp:
             asn = load_asn(fp)
             self.asn = asn
 
         # Get each member in the association as well
         if get_members:
-            for product in asn['products']:
-                for member in product['members']:
+            for product in asn["products"]:
+                for member in product["members"]:
                     fullpath = os.path.join(
-                        os.path.dirname(self.input_remote),
-                        member['expname'])
-                    get_bigdata(self._inputs_root, self.env, fullpath,
-                                docopy=self.docopy)
+                        os.path.dirname(self.input_remote), member["expname"]
+                    )
+                    get_bigdata(
+                        self._inputs_root, self.env, fullpath, docopy=self.docopy
+                    )
 
     def to_asdf(self, path):
         tree = eval(str(self))
@@ -283,7 +299,7 @@ def run_step_from_dict(rtdata, **step_params):
     # Get the data. If `step_params['input_path]` is not
     # specified, the presumption is that `rtdata.input` has
     # already been retrieved.
-    input_path = step_params.get('input_path', None)
+    input_path = step_params.get("input_path", None)
     if input_path:
         try:
             rtdata.get_asn(input_path)
@@ -291,14 +307,14 @@ def run_step_from_dict(rtdata, **step_params):
             rtdata.get_data(input_path)
 
     # Figure out whether we have a config or class
-    step = step_params['step']
-    if step.endswith(('.asdf', '.cfg')):
-        step = os.path.join('config', step)
+    step = step_params["step"]
+    if step.endswith((".asdf", ".cfg")):
+        step = os.path.join("config", step)
 
     # Run the step
-    collect_pipeline_cfgs('config')
+    collect_pipeline_cfgs("config")
     full_args = [step, rtdata.input]
-    full_args.extend(step_params['args'])
+    full_args.extend(step_params["args"])
 
     Step.from_cmdline(full_args)
 
@@ -340,7 +356,7 @@ def run_step_from_dict_mock(rtdata, source, **step_params):
     # Get the data. If `step_params['input_path]` is not
     # specified, the presumption is that `rtdata.input` has
     # already been retrieved.
-    input_path = step_params.get('input_path', None)
+    input_path = step_params.get("input_path", None)
     if input_path:
         try:
             rtdata.get_asn(input_path)
@@ -351,7 +367,7 @@ def run_step_from_dict_mock(rtdata, source, **step_params):
     for file_name in os.listdir(source):
         file_path = os.path.join(source, file_name)
         if os.path.isfile(file_path):
-            shutil.copy(file_path, '.')
+            shutil.copy(file_path, ".")
 
     return rtdata
 
@@ -384,10 +400,10 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
     if is_suffix:
         suffix = output
         if rtdata.asn:
-            output = rtdata.asn['products'][0]['name']
+            output = rtdata.asn["products"][0]["name"]
         else:
             output = os.path.splitext(os.path.basename(rtdata.input))[0]
-        output = replace_suffix(output, suffix) + '.fits'
+        output = replace_suffix(output, suffix) + ".fits"
     rtdata.output = output
 
     rtdata.get_truth(os.path.join(truth_path, output))
@@ -463,39 +479,42 @@ def _data_glob_url(*url_parts, root=None):
         Full URLS that match the glob criterion
     """
     # Fix root root-ed-ness
-    if root.endswith('/'):
+    if root.endswith("/"):
         root = root[:-1]
 
     # Access
     try:
-        envkey = os.environ['API_KEY_FILE']
+        envkey = os.environ["API_KEY_FILE"]
     except KeyError:
         envkey = ARTIFACTORY_API_KEY_FILE
 
     try:
         with open(envkey) as fp:
-            headers = {'X-JFrog-Art-Api': fp.readline().strip()}
+            headers = {"X-JFrog-Art-Api": fp.readline().strip()}
     except (PermissionError, FileNotFoundError):
-        print("Warning: Anonymous Artifactory search requests are limited to "
-              "1000 results. Use an API key and define API_KEY_FILE environment "
-              "variable to get full search results.", file=sys.stderr)
+        print(
+            "Warning: Anonymous Artifactory search requests are limited to "
+            "1000 results. Use an API key and define API_KEY_FILE environment "
+            "variable to get full search results.",
+            file=sys.stderr,
+        )
         headers = None
 
-    search_url = '/'.join([root, 'api/search/pattern'])
+    search_url = "/".join([root, "api/search/pattern"])
 
     # Join and re-split the url so that every component is identified.
-    url = '/'.join([root] + [idx for idx in url_parts])
-    all_parts = url.split('/')
+    url = "/".join([root] + [idx for idx in url_parts])
+    all_parts = url.split("/")
 
     # Pick out "jwst-pipeline", the repo name
     repo = all_parts[4]
 
     # Format the pattern
-    pattern = repo + ':' + '/'.join(all_parts[5:])
+    pattern = repo + ":" + "/".join(all_parts[5:])
 
     # Make the query
-    params = {'pattern': pattern}
+    params = {"pattern": pattern}
     with requests.get(search_url, params=params, headers=headers) as r:
-        url_paths = r.json()['files']
+        url_paths = r.json()["files"]
 
     return url_paths

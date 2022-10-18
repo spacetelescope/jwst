@@ -34,9 +34,9 @@ class JumpStep(Step):
         expand_large_events = boolean(default=False) # must be True to trigger snowball and shower flagging
     """
 
-    reference_file_types = ['gain', 'readnoise']
+    reference_file_types = ["gain", "readnoise"]
 
-    class_alias = 'jump'
+    class_alias = "jump"
 
     def process(self, input):
 
@@ -45,10 +45,10 @@ class JumpStep(Step):
             # Check for an input model with NGROUPS<=2
             ngroups = input_model.data.shape[1]
             if ngroups <= 2:
-                self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
-                self.log.warning('Jump step will be skipped')
+                self.log.warning("Cannot apply jump detection when NGROUPS<=2;")
+                self.log.warning("Jump step will be skipped")
                 result = input_model.copy()
-                result.meta.cal_step.jump = 'SKIPPED'
+                result.meta.cal_step.jump = "SKIPPED"
                 return result
 
             # Retrieve the parameter values
@@ -69,40 +69,48 @@ class JumpStep(Step):
             use_ellipses = self.use_ellipses
             sat_required_snowball = self.sat_required_snowball
             expand_large_events = self.expand_large_events
-            self.log.info('CR rejection threshold = %g sigma', rej_thresh)
-            if self.maximum_cores != 'none':
-                self.log.info('Maximum cores to use = %s', max_cores)
+            self.log.info("CR rejection threshold = %g sigma", rej_thresh)
+            if self.maximum_cores != "none":
+                self.log.info("Maximum cores to use = %s", max_cores)
 
             # Get the gain and readnoise reference files
-            gain_filename = self.get_reference_file(input_model, 'gain')
-            self.log.info('Using GAIN reference file: %s', gain_filename)
+            gain_filename = self.get_reference_file(input_model, "gain")
+            self.log.info("Using GAIN reference file: %s", gain_filename)
 
             gain_model = datamodels.GainModel(gain_filename)
 
-            readnoise_filename = self.get_reference_file(input_model,
-                                                         'readnoise')
-            self.log.info('Using READNOISE reference file: %s',
-                          readnoise_filename)
+            readnoise_filename = self.get_reference_file(input_model, "readnoise")
+            self.log.info("Using READNOISE reference file: %s", readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
 
             # Call the jump detection routine
-            result = run_detect_jumps(input_model, gain_model, readnoise_model,
-                                      rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
-                                      max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
-                                      flag_4_neighbors,
-                                      after_jump_flag_dn1,
-                                      after_jump_flag_time1,
-                                      after_jump_flag_dn2,
-                                      after_jump_flag_time2,
-                                      min_sat_area=min_sat_area, min_jump_area=min_jump_area,
-                                      expand_factor=expand_factor, use_ellipses=use_ellipses,
-                                      sat_required_snowball=sat_required_snowball,
-                                      expand_large_events=expand_large_events)
+            result = run_detect_jumps(
+                input_model,
+                gain_model,
+                readnoise_model,
+                rej_thresh,
+                three_grp_rej_thresh,
+                four_grp_rej_thresh,
+                max_cores,
+                max_jump_to_flag_neighbors,
+                min_jump_to_flag_neighbors,
+                flag_4_neighbors,
+                after_jump_flag_dn1,
+                after_jump_flag_time1,
+                after_jump_flag_dn2,
+                after_jump_flag_time2,
+                min_sat_area=min_sat_area,
+                min_jump_area=min_jump_area,
+                expand_factor=expand_factor,
+                use_ellipses=use_ellipses,
+                sat_required_snowball=sat_required_snowball,
+                expand_large_events=expand_large_events,
+            )
             gain_model.close()
             readnoise_model.close()
             tstop = time.time()
-            self.log.info('The execution time in seconds: %f', tstop - tstart)
+            self.log.info("The execution time in seconds: %f", tstop - tstart)
 
-        result.meta.cal_step.jump = 'COMPLETE'
+        result.meta.cal_step.jump = "COMPLETE"
 
         return result

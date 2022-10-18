@@ -25,14 +25,14 @@ def fits_file(tmp_path):
 
 def test_from_fits(fits_file):
     with RampModel(fits_file) as dm:
-        assert dm.meta.instrument.name == 'MIRI'
+        assert dm.meta.instrument.name == "MIRI"
         assert dm.shape == (5, 35, 40, 32)
 
 
 def test_delete(fits_file):
     with JwstDataModel() as dm:
-        dm.meta.instrument.name = 'NIRCAM'
-        assert dm.meta.instrument.name == 'NIRCAM'
+        dm.meta.instrument.name = "NIRCAM"
+        assert dm.meta.instrument.name == "NIRCAM"
         del dm.meta.instrument.name
         assert dm.meta.instrument.name is None
 
@@ -40,24 +40,26 @@ def test_delete(fits_file):
 def test_fits_without_sci():
     schema = {
         "allOf": [
-            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
-                                resolve_references=True),
+            mschema.load_schema(
+                "http://stsci.edu/schemas/jwst_datamodel/core.schema",
+                resolve_references=True,
+            ),
             {
                 "type": "object",
                 "properties": {
                     "coeffs": {
-                        'max_ndim': 1,
-                        'fits_hdu': 'COEFFS',
-                        'datatype': 'float32'
+                        "max_ndim": 1,
+                        "fits_hdu": "COEFFS",
+                        "datatype": "float32",
                     }
-                }
-            }
+                },
+            },
         ]
     }
 
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
-    hdulist.append(fits.ImageHDU(name='COEFFS', data=np.array([0.0], np.float32)))
+    hdulist.append(fits.ImageHDU(name="COEFFS", data=np.array([0.0], np.float32)))
 
     with JwstDataModel(hdulist, schema=schema) as dm:
         assert_array_equal(dm.coeffs, [0.0])

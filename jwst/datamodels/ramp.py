@@ -3,7 +3,7 @@ import numpy as np
 from .model_base import JwstDataModel
 from ..lib.basic_utils import deprecate_class
 
-__all__ = ['RampModel']
+__all__ = ["RampModel"]
 
 
 class RampModel(JwstDataModel):
@@ -34,6 +34,7 @@ class RampModel(JwstDataModel):
          table of times for each integration
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/ramp.schema"
 
     def __init__(self, init=None, **kwargs):

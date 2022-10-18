@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['SpecProfileModel', 'SpecProfileSingleModel']
+__all__ = ["SpecProfileModel", "SpecProfileSingleModel"]
 
 
 class SpecProfileModel(ReferenceFileModel):
@@ -29,6 +29,7 @@ class SpecProfileModel(ReferenceFileModel):
          Spectral profile data
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/specprofile.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -51,4 +52,5 @@ class SpecProfileSingleModel(ReferenceFileModel):
     data : numpy float32 array
          Spectral profile values
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/specprofilesingle.schema"

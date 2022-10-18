@@ -33,35 +33,32 @@ def test_rscd_baseline_set_groupdq():
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag for the 2nd integration
-    dq_diff = (dm_ramp_rscd.groupdq[1, 0:nflag, :, :]
-               - dm_ramp.groupdq[1, 0:nflag, :, :])
-    np.testing.assert_array_equal(np.full((nflag, ysize, xsize),
-                                          dqflags.group['DO_NOT_USE'],
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                  + 'equal to the DO_NOT_USE flag')
+    dq_diff = dm_ramp_rscd.groupdq[1, 0:nflag, :, :] - dm_ramp.groupdq[1, 0:nflag, :, :]
+    np.testing.assert_array_equal(
+        np.full((nflag, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+    )
 
     # test that the groupdq flags are not changed for the rest of the groups
     # in the 2nd integration
-    dq_diff = (dm_ramp_rscd.groupdq[1, nflag:ngroups, :, :]
-               - dm_ramp.groupdq[1, nflag:ngroups, :, :])
-    np.testing.assert_array_equal(np.full((ngroups - nflag, ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='groupdq flags changed after '
-                                  + 'maximum requested')
+    dq_diff = (
+        dm_ramp_rscd.groupdq[1, nflag:ngroups, :, :]
+        - dm_ramp.groupdq[1, nflag:ngroups, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((ngroups - nflag, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq flags changed after " + "maximum requested",
+    )
 
     # test that the groupdq flags are not changed for the 1st integration
-    dq_diff = (dm_ramp_rscd.groupdq[0, :, :, :]
-               - dm_ramp.groupdq[0, :, :, :])
-    np.testing.assert_array_equal(np.full((ngroups, ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='groupdq flags changed in 1st '
-                                  + 'integration this should not happen')
+    dq_diff = dm_ramp_rscd.groupdq[0, :, :, :] - dm_ramp.groupdq[0, :, :, :]
+    np.testing.assert_array_equal(
+        np.full((ngroups, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq flags changed in 1st " + "integration this should not happen",
+    )
 
 
 def test_rscd_baseline_too_few_groups():
@@ -91,11 +88,9 @@ def test_rscd_baseline_too_few_groups():
     dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
 
     # test that the groupdq flags are not changed for any integration
-    dq_diff = (dm_ramp_rscd.groupdq[:, :, :, :]
-               - dm_ramp.groupdq[:, :, :, :])
-    np.testing.assert_array_equal(np.full((nints, ngroups, ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='groupdq flags changed when '
-                                  + 'not enough groups are present')
+    dq_diff = dm_ramp_rscd.groupdq[:, :, :, :] - dm_ramp.groupdq[:, :, :, :]
+    np.testing.assert_array_equal(
+        np.full((nints, ngroups, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq flags changed when " + "not enough groups are present",
+    )

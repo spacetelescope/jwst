@@ -29,15 +29,15 @@ def is_subarray(input_model):
     ncols = input_model.data.shape[-1]
 
     # Compare the dimensions to a full-frame
-    if input_model.meta.instrument.name.upper() == 'MIRI':
+    if input_model.meta.instrument.name.upper() == "MIRI":
         if ncols < 1032 or nrows < 1024:
-            log.debug('Input exposure is a subarray readout')
+            log.debug("Input exposure is a subarray readout")
             return True
         else:
             return False
     else:
         if ncols < 2048 or nrows < 2048:
-            log.debug('Input exposure is a subarray readout')
+            log.debug("Input exposure is a subarray readout")
             return True
         else:
             return False
@@ -73,15 +73,19 @@ def ref_matches_sci(sci_model, ref_model):
     ysize_ref = ref_model.meta.subarray.ysize
 
     # Make sure the attributes were populated
-    if ((xstart_ref is None) or (xsize_ref is None) or
-            (ystart_ref is None) or (ysize_ref is None)):
+    if (
+        (xstart_ref is None)
+        or (xsize_ref is None)
+        or (ystart_ref is None)
+        or (ysize_ref is None)
+    ):
 
         # If the ref file is full-frame, set the missing params to
         # default values
-        if ref_model.meta.instrument.name.upper() == 'MIRI':
+        if ref_model.meta.instrument.name.upper() == "MIRI":
             if ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024:
-                log.warning('Missing subarray corner/size keywords in reference file')
-                log.warning('Setting them to full-frame default values')
+                log.warning("Missing subarray corner/size keywords in reference file")
+                log.warning("Setting them to full-frame default values")
                 xstart_ref = 1
                 ystart_ref = 1
                 xsize_ref = 1032
@@ -91,12 +95,12 @@ def ref_matches_sci(sci_model, ref_model):
                 ref_model.meta.subarray.xsize = xsize_ref
                 ref_model.meta.subarray.ysize = ysize_ref
             else:
-                log.error('Missing subarray corner/size keywords in reference file')
+                log.error("Missing subarray corner/size keywords in reference file")
                 raise ValueError("Can't determine ref file subarray properties")
         else:
             if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
-                log.warning('Missing subarray corner/size keywords in reference file')
-                log.warning('Setting them to full-frame default values')
+                log.warning("Missing subarray corner/size keywords in reference file")
+                log.warning("Setting them to full-frame default values")
                 xstart_ref = 1
                 ystart_ref = 1
                 xsize_ref = 2048
@@ -106,11 +110,13 @@ def ref_matches_sci(sci_model, ref_model):
                 ref_model.meta.subarray.xsize = xsize_ref
                 ref_model.meta.subarray.ysize = ysize_ref
             else:
-                log.error('Missing subarray corner/size keywords in reference file')
+                log.error("Missing subarray corner/size keywords in reference file")
                 raise ValueError("Can't determine ref file subarray properties")
 
-    log.debug("ref substrt1=%d, subsize1=%d, substrt2=%d, subsize2=%d" %
-              (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
+    log.debug(
+        "ref substrt1=%d, subsize1=%d, substrt2=%d, subsize2=%d"
+        % (xstart_ref, xsize_ref, ystart_ref, ysize_ref)
+    )
 
     # Make sure the starting corners are valid
     if xstart_ref < 1 or ystart_ref < 1:
@@ -118,7 +124,7 @@ def ref_matches_sci(sci_model, ref_model):
         raise ValueError("Bad subarray corners")
 
     # Make sure the size attributes are consistent with data array
-    if hasattr(ref_model, 'coeffs'):
+    if hasattr(ref_model, "coeffs"):
         xsize_data = ref_model.coeffs.shape[-1]
         ysize_data = ref_model.coeffs.shape[-2]
     else:
@@ -157,13 +163,19 @@ def ref_matches_sci(sci_model, ref_model):
         ysize_sci = sci_model.meta.subarray.ysize
 
     # Make sure the attributes were populated
-    if ((xstart_sci is None) or (xsize_sci is None) or
-            (ystart_sci is None) or (ysize_sci is None)):
-        log.error('Missing subarray corner/size keywords in science file')
+    if (
+        (xstart_sci is None)
+        or (xsize_sci is None)
+        or (ystart_sci is None)
+        or (ysize_sci is None)
+    ):
+        log.error("Missing subarray corner/size keywords in science file")
         raise ValueError("Can't determine science file subarray properties")
     else:
-        log.debug("sci substrt1=%d, subsize1=%d, substrt2=%d, subsize2=%d" %
-                  (xstart_sci, xsize_sci, ystart_sci, ysize_sci))
+        log.debug(
+            "sci substrt1=%d, subsize1=%d, substrt2=%d, subsize2=%d"
+            % (xstart_sci, xsize_sci, ystart_sci, ysize_sci)
+        )
 
     # Make sure the starting corners are valid
     if xstart_sci < 1 or ystart_sci < 1:
@@ -189,8 +201,12 @@ def ref_matches_sci(sci_model, ref_model):
 
     # Finally, see if all of the science file subarray params match those
     # of the reference file
-    if (xstart_ref == xstart_sci and xsize_ref == xsize_sci and
-            ystart_ref == ystart_sci and ysize_ref == ysize_sci):
+    if (
+        xstart_ref == xstart_sci
+        and xsize_ref == xsize_sci
+        and ystart_ref == ystart_sci
+        and ysize_ref == ysize_sci
+    ):
         return True
     else:
         return False
@@ -226,21 +242,25 @@ def get_subarray_data(sci_model, ref_model):
             sci_model.meta.subarray.xsize = 2048
             sci_model.meta.subarray.ysize = 2048
         else:
-            raise ValueError('xstart or ystart metadata values not found in input model')
+            raise ValueError(
+                "xstart or ystart metadata values not found in input model"
+            )
 
     # Make sure xstart/ystart exist in reference data model
     if ref_model.meta.subarray.xstart is None or ref_model.meta.subarray.ystart is None:
 
         # If the ref file is full-frame, set the missing params to
         # default values
-        if ref_model.meta.instrument.name.upper() == 'MIRI':
+        if ref_model.meta.instrument.name.upper() == "MIRI":
             if ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024:
                 ref_model.meta.subarray.xstart = 1
                 ref_model.meta.subarray.ystart = 1
                 ref_model.meta.subarray.xsize = 1032
                 ref_model.meta.subarray.ysize = 1024
             else:
-                raise ValueError('xstart or ystart metadata values not found in reference model')
+                raise ValueError(
+                    "xstart or ystart metadata values not found in reference model"
+                )
         else:
             if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
                 ref_model.meta.subarray.xstart = 1
@@ -248,45 +268,79 @@ def get_subarray_data(sci_model, ref_model):
                 ref_model.meta.subarray.xsize = 2048
                 ref_model.meta.subarray.ysize = 2048
             else:
-                raise ValueError('xstart or ystart metadata values not found in reference model')
+                raise ValueError(
+                    "xstart or ystart metadata values not found in reference model"
+                )
 
     # Get subarray limits from metadata of input model
     xstart_sci = sci_model.meta.subarray.xstart
     xsize_sci = sci_model.meta.subarray.xsize
     ystart_sci = sci_model.meta.subarray.ystart
     ysize_sci = sci_model.meta.subarray.ysize
-    log.debug('science xstart=%d, xsize=%d, ystart=%d, ysize=%d',
-              xstart_sci, xsize_sci, ystart_sci, ysize_sci)
+    log.debug(
+        "science xstart=%d, xsize=%d, ystart=%d, ysize=%d",
+        xstart_sci,
+        xsize_sci,
+        ystart_sci,
+        ysize_sci,
+    )
 
     # Get subarray limits from metadata of reference model
     xstart_ref = ref_model.meta.subarray.xstart
     xsize_ref = ref_model.meta.subarray.xsize
     ystart_ref = ref_model.meta.subarray.ystart
     ysize_ref = ref_model.meta.subarray.ysize
-    log.debug('reference xstart=%d, xsize=%d, ystart=%d, ysize=%d',
-              xstart_ref, xsize_ref, ystart_ref, ysize_ref)
+    log.debug(
+        "reference xstart=%d, xsize=%d, ystart=%d, ysize=%d",
+        xstart_ref,
+        xsize_ref,
+        ystart_ref,
+        ysize_ref,
+    )
 
     # Compute slice limits, in 0-indexed python notation
     xstart = xstart_sci - xstart_ref
     ystart = ystart_sci - ystart_ref
     xstop = xstart + xsize_sci
     ystop = ystart + ysize_sci
-    log.debug('slice xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-              xstart, xstop, ystart, ystop)
+    log.debug(
+        "slice xstart=%d, xstop=%d, ystart=%d, ystop=%d", xstart, xstop, ystart, ystop
+    )
 
     # Make sure that the slice limits are within the bounds of
     # the reference file data array
-    if (xstart < 0 or ystart < 0 or xstop > ref_model.meta.subarray.xsize or
-            ystop > ref_model.meta.subarray.ysize):
-        log.error('Computed reference file slice indexes are ' +
-                  'incompatible with size of reference data array')
-        log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                  xstart_sci, ystart_sci, xsize_sci, ysize_sci)
-        log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                  xstart_ref, ystart_ref, xsize_ref, ysize_ref)
-        log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-                  xstart, xstop, ystart, ystop)
-        raise ValueError('Bad reference file slice indexes')
+    if (
+        xstart < 0
+        or ystart < 0
+        or xstop > ref_model.meta.subarray.xsize
+        or ystop > ref_model.meta.subarray.ysize
+    ):
+        log.error(
+            "Computed reference file slice indexes are "
+            + "incompatible with size of reference data array"
+        )
+        log.error(
+            "Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d",
+            xstart_sci,
+            ystart_sci,
+            xsize_sci,
+            ysize_sci,
+        )
+        log.error(
+            "Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d",
+            xstart_ref,
+            ystart_ref,
+            xsize_ref,
+            ysize_ref,
+        )
+        log.error(
+            "Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d",
+            xstart,
+            xstop,
+            ystart,
+            ystop,
+        )
+        raise ValueError("Bad reference file slice indexes")
 
     return ref_model.data[ystart:ystop, xstart:xstop]
 
@@ -329,19 +383,43 @@ def get_subarray_model(sci_model, ref_model):
     ystart = ystart_sci - ystart_ref
     xstop = xstart + xsize_sci
     ystop = ystart + ysize_sci
-    log.debug("slice xstart=%d, xstop=%d, ystart=%d, ystop=%d", xstart, xstop, ystart, ystop)
+    log.debug(
+        "slice xstart=%d, xstop=%d, ystart=%d, ystop=%d", xstart, xstop, ystart, ystop
+    )
 
     # Make sure that the slice limits are within the bounds of
     # the reference file data array
-    if (xstart < 0 or ystart < 0 or xstop > ref_model.meta.subarray.xsize or
-            ystop > ref_model.meta.subarray.ysize):
-        log.error('Computed reference file slice indexes are incompatible with size of reference data array')
-        log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                  xstart_sci, ystart_sci, xsize_sci, ysize_sci)
-        log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                  xstart_ref, ystart_ref, xsize_ref, ysize_ref)
-        log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d', xstart, xstop, ystart, ystop)
-        raise ValueError('Bad reference file slice indexes')
+    if (
+        xstart < 0
+        or ystart < 0
+        or xstop > ref_model.meta.subarray.xsize
+        or ystop > ref_model.meta.subarray.ysize
+    ):
+        log.error(
+            "Computed reference file slice indexes are incompatible with size of reference data array"
+        )
+        log.error(
+            "Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d",
+            xstart_sci,
+            ystart_sci,
+            xsize_sci,
+            ysize_sci,
+        )
+        log.error(
+            "Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d",
+            xstart_ref,
+            ystart_ref,
+            xsize_ref,
+            ysize_ref,
+        )
+        log.error(
+            "Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d",
+            xstart,
+            xstop,
+            ystart,
+            ystop,
+        )
+        raise ValueError("Bad reference file slice indexes")
 
     # Extract subarrays from each data attribute in the particular
     # type of reference file model and return a new copy of the
@@ -381,7 +459,7 @@ def get_subarray_model(sci_model, ref_model):
         sub_model = datamodels.SuperBiasModel(data=sub_data, err=sub_err, dq=sub_dq)
         sub_model.update(ref_model)
     else:
-        log.warning('Unsupported reference file model type')
+        log.warning("Unsupported reference file model type")
         sub_model = None
 
     return sub_model
@@ -433,6 +511,7 @@ def find_row(ldict, match_keys):
     row : int, or None
         FITS table row index, None if no match.
     """
+
     def _normalize_strings(field):
         if isinstance(field[0], str):
             return np.array([s.upper() for s in field])
@@ -445,7 +524,9 @@ def find_row(ldict, match_keys):
         if all(row):
             results.append(d)
     if len(results) > 1:
-        raise MatchRowError(f"Expected to find one matching row in table, found {len(results)}.")
+        raise MatchRowError(
+            f"Expected to find one matching row in table, found {len(results)}."
+        )
     if len(results) == 0:
         log.warning("Expected to find one matching row in table, found 0.")
         return None

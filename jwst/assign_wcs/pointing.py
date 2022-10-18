@@ -12,8 +12,12 @@ from gwcs import wcs
 from stdatamodels import DataModel
 
 
-__all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model",
-           "dva_corr_model"]
+__all__ = [
+    "compute_roll_ref",
+    "frame_from_model",
+    "fitswcs_transform_from_model",
+    "dva_corr_model",
+]
 
 
 def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
@@ -29,9 +33,13 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
 
     # The sky rotation expects values in deg.
     # This should be removed when models work with quantities.
-    m = ((Scale(1 / 3600) & Scale(1 / 3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
-         | rot | CartesianToSpherical(wrap_lon_at=wrap_lon_at))
-    m.name = 'v23tosky'
+    m = (
+        (Scale(1 / 3600) & Scale(1 / 3600))
+        | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
+        | rot
+        | CartesianToSpherical(wrap_lon_at=wrap_lon_at)
+    )
+    m.name = "v23tosky"
     return m
 
 
@@ -77,10 +85,12 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
 
 
 def _roll_angle_from_matrix(matrix, v2, v3):
-    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * \
-        np.sin(v3) + matrix[2, 2] * np.cos(v3)
-    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
-        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[
+        2, 2
+    ] * np.cos(v3)
+    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + (
+        matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]
+    ) * np.sin(v2)
     new_roll = np.rad2deg(np.arctan2(Y, X))
     if new_roll < 0:
         new_roll += 360
@@ -97,11 +107,11 @@ def wcsinfo_from_model(input_model):
         The input data model
 
     """
-    defaults = {'CRPIX': 0, 'CRVAL': 0, 'CDELT': 1., 'CTYPE': "", 'CUNIT': u.Unit("")}
+    defaults = {"CRPIX": 0, "CRVAL": 0, "CDELT": 1.0, "CTYPE": "", "CUNIT": u.Unit("")}
     wcsinfo = {}
     wcsaxes = input_model.meta.wcsinfo.wcsaxes
-    wcsinfo['WCSAXES'] = wcsaxes
-    for key in ['CRPIX', 'CRVAL', 'CDELT', 'CTYPE', 'CUNIT']:
+    wcsinfo["WCSAXES"] = wcsaxes
+    for key in ["CRPIX", "CRVAL", "CDELT", "CTYPE", "CUNIT"]:
         val = []
         for ax in range(1, wcsaxes + 1):
             k = (key + "{0}".format(ax)).lower()
@@ -112,10 +122,12 @@ def wcsinfo_from_model(input_model):
     pc = np.zeros((wcsaxes, wcsaxes))
     for i in range(1, wcsaxes + 1):
         for j in range(1, wcsaxes + 1):
-            pc[i - 1, j - 1] = getattr(input_model.meta.wcsinfo, 'pc{0}_{1}'.format(i, j), 1)
-    wcsinfo['PC'] = pc
-    wcsinfo['RADESYS'] = input_model.meta.coordinates.reference_frame
-    wcsinfo['has_cd'] = False
+            pc[i - 1, j - 1] = getattr(
+                input_model.meta.wcsinfo, "pc{0}_{1}".format(i, j), 1
+            )
+    wcsinfo["PC"] = pc
+    wcsinfo["RADESYS"] = input_model.meta.coordinates.reference_frame
+    wcsinfo["has_cd"] = False
     return wcsinfo
 
 
@@ -142,12 +154,14 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
         sp_axis = spectral_axes[0]
         if wavetable is None:
             # Subtract one from CRPIX which is 1-based.
-            spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
-                astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
-                astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
+            spectral_transform = (
+                astmodels.Shift(-(wcsinfo["CRPIX"][sp_axis] - 1))
+                | astmodels.Scale(wcsinfo["CDELT"][sp_axis])
+                | astmodels.Shift(wcsinfo["CRVAL"][sp_axis])
+            )
         else:
             # Wave dimension is an array that needs to be converted to a table
-            waves = wavetable['wavelength'].flatten()
+            waves = wavetable["wavelength"].flatten()
             spectral_transform = astmodels.Tabular1D(lookup_table=waves)
 
         transform = transform & spectral_transform
@@ -176,32 +190,40 @@ def frame_from_model(wcsinfo):
     if isinstance(wcsinfo, DataModel):
         wcsinfo = wcsinfo_from_model(wcsinfo)
 
-    wcsaxes = wcsinfo['WCSAXES']
+    wcsaxes = wcsinfo["WCSAXES"]
     celestial_axes, spectral_axes, other = gwutils.get_axes(wcsinfo)
-    cunit = wcsinfo['CUNIT']
+    cunit = wcsinfo["CUNIT"]
     frames = []
     if celestial_axes:
         ref_frame = coords.ICRS()
-        celestial = cf.CelestialFrame(name='sky', axes_order=tuple(celestial_axes),
-                                      reference_frame=ref_frame, unit=cunit[celestial_axes],
-                                      axes_names=('RA', 'DEC'))
+        celestial = cf.CelestialFrame(
+            name="sky",
+            axes_order=tuple(celestial_axes),
+            reference_frame=ref_frame,
+            unit=cunit[celestial_axes],
+            axes_names=("RA", "DEC"),
+        )
         frames.append(celestial)
     if spectral_axes:
-        spec = cf.SpectralFrame(name='spectral', axes_order=tuple(spectral_axes),
-                                unit=cunit[spectral_axes],
-                                axes_names=('wavelength',))
+        spec = cf.SpectralFrame(
+            name="spectral",
+            axes_order=tuple(spectral_axes),
+            unit=cunit[spectral_axes],
+            axes_names=("wavelength",),
+        )
         frames.append(spec)
     if other:
         # Make sure these are strings and not np.str_ objects.
-        axes_names = tuple([str(name) for name in wcsinfo['CTYPE'][other]])
-        name = "_".join(wcsinfo['CTYPE'][other])
-        spatial = cf.Frame2D(name=name, axes_order=tuple(other), unit=cunit[other],
-                             axes_names=axes_names)
+        axes_names = tuple([str(name) for name in wcsinfo["CTYPE"][other]])
+        name = "_".join(wcsinfo["CTYPE"][other])
+        spatial = cf.Frame2D(
+            name=name, axes_order=tuple(other), unit=cunit[other], axes_names=axes_names
+        )
         frames.append(spatial)
     if wcsaxes == 2:
         return frames[0]
     elif wcsaxes == 3:
-        world = cf.CompositeFrame(frames, name='world')
+        world = cf.CompositeFrame(frames, name="world")
         return world
     else:
         raise ValueError("WCSAXES can be 2 or 3, got {0}".format(wcsaxes))
@@ -214,7 +236,7 @@ def create_fitswcs(inp, input_frame=None):
         spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
         if spectral_axes:
             sp_axis = spectral_axes[0]
-            if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
+            if wcsinfo["CTYPE"][sp_axis] == "WAVE-TAB":
                 wavetable = inp.wavetable
         transform = fitswcs_transform_from_model(wcsinfo, wavetable=wavetable)
         output_frame = frame_from_model(wcsinfo)
@@ -222,18 +244,24 @@ def create_fitswcs(inp, input_frame=None):
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
     if input_frame is None:
-        wcsaxes = wcsinfo['WCSAXES']
+        wcsaxes = wcsinfo["WCSAXES"]
         if wcsaxes == 2:
             input_frame = cf.Frame2D(name="detector")
         elif wcsaxes == 3:
-            input_frame = cf.CoordinateFrame(name="detector", naxes=3,
-                                             axes_order=(0, 1, 2), unit=(u.pix, u.pix, u.pix),
-                                             axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
-                                             axes_names=('x', 'y', 'z'), axis_physical_types=None)
+            input_frame = cf.CoordinateFrame(
+                name="detector",
+                naxes=3,
+                axes_order=(0, 1, 2),
+                unit=(u.pix, u.pix, u.pix),
+                axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
+                axes_names=("x", "y", "z"),
+                axis_physical_types=None,
+            )
         else:
-            raise TypeError(f"WCSAXES is expected to be 2 or 3, instead it is {wcsaxes}")
-    pipeline = [(input_frame, transform),
-                (output_frame, None)]
+            raise TypeError(
+                f"WCSAXES is expected to be 2 or 3, instead it is {wcsaxes}"
+            )
+    pipeline = [(input_frame, transform), (output_frame, None)]
 
     wcsobj = wcs.WCS(pipeline)
     return wcsobj
@@ -272,7 +300,9 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
     if va_scale <= 0:
         raise ValueError("'Velocity aberration scale must be a positive number.")
 
-    va_corr = Scale(va_scale, name='dva_scale_v2') & Scale(va_scale, name='dva_scale_v3')
+    va_corr = Scale(va_scale, name="dva_scale_v2") & Scale(
+        va_scale, name="dva_scale_v3"
+    )
 
     if v2_ref is None:
         v2_ref = 0
@@ -289,6 +319,8 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
     v2_shift = (1 - va_scale) * v2_ref
     v3_shift = (1 - va_scale) * v3_ref
 
-    va_corr |= Shift(v2_shift, name='dva_v2_shift') & Shift(v3_shift, name='dva_v3_shift')
-    va_corr.name = 'DVA_Correction'
+    va_corr |= Shift(v2_shift, name="dva_v2_shift") & Shift(
+        v3_shift, name="dva_v3_shift"
+    )
+    va_corr.name = "DVA_Correction"
     return va_corr

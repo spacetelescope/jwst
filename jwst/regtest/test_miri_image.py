@@ -13,18 +13,20 @@ def run_detector1(rtdata_module):
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
-            "--save_calibrated_ramp=True",
-            "--steps.dq_init.save_results=True",
-            "--steps.saturation.save_results=True",
-            "--steps.firstframe.save_results=True",
-            "--steps.lastframe.save_results=True",
-            "--steps.reset.save_results=True",
-            "--steps.linearity.save_results=True",
-            "--steps.rscd.save_results=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.refpix.save_results=True",
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata.input,
+        "--save_calibrated_ramp=True",
+        "--steps.dq_init.save_results=True",
+        "--steps.saturation.save_results=True",
+        "--steps.firstframe.save_results=True",
+        "--steps.lastframe.save_results=True",
+        "--steps.reset.save_results=True",
+        "--steps.linearity.save_results=True",
+        "--steps.rscd.save_results=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.refpix.save_results=True",
+    ]
     Step.from_cmdline(args)
 
 
@@ -32,11 +34,13 @@ def run_detector1(rtdata_module):
 def run_image2(run_detector1, rtdata_module):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
-    rtdata.input = 'jw01024001001_04101_00001_mirimage_rate.fits'
-    args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-            "--steps.assign_wcs.save_results=True",
-            "--steps.flat_field.save_results=True"
-            ]
+    rtdata.input = "jw01024001001_04101_00001_mirimage_rate.fits"
+    args = [
+        "jwst.pipeline.Image2Pipeline",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=True",
+        "--steps.flat_field.save_results=True",
+    ]
     Step.from_cmdline(args)
 
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
@@ -49,8 +53,11 @@ def run_image2(run_detector1, rtdata_module):
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
-        args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-                "--steps.resample.skip=True"]
+        args = [
+            "jwst.pipeline.Image2Pipeline",
+            rtdata.input,
+            "--steps.resample.skip=True",
+        ]
         Step.from_cmdline(args)
 
 
@@ -65,10 +72,26 @@ def run_image3(run_image2, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["dq_init", "saturation", "firstframe", "lastframe", "reset",
-                                    "linearity", "rscd", "dark_current", "refpix", "ramp", "rate",
-                                    "rateints"])
-def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "dq_init",
+        "saturation",
+        "firstframe",
+        "lastframe",
+        "reset",
+        "linearity",
+        "rscd",
+        "dark_current",
+        "refpix",
+        "ramp",
+        "rate",
+        "rateints",
+    ],
+)
+def test_miri_image_detector1(
+    run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
@@ -109,7 +132,9 @@ def test_miri_image3_i2d(run_image3, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
     rtdata.input = "jw01024-o001_20220501t155404_image3_001_asn.json"
     rtdata.output = "jw01024-o001_t002_miri_f770w_i2d.fits"
-    rtdata.get_truth("truth/test_miri_image_stages/jw01024-o001_t002_miri_f770w_i2d.fits")
+    rtdata.get_truth(
+        "truth/test_miri_image_stages/jw01024-o001_t002_miri_f770w_i2d.fits"
+    )
 
     fitsdiff_default_kwargs["rtol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -121,7 +146,9 @@ def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.input = "jw01024-o001_20220501t155404_image3_001_asn.json"
     rtdata.output = "jw01024-o001_t002_miri_f770w_cat.ecsv"
-    rtdata.get_truth("truth/test_miri_image_stages/jw01024-o001_t002_miri_f770w_cat.ecsv")
+    rtdata.get_truth(
+        "truth/test_miri_image_stages/jw01024-o001_t002_miri_f770w_cat.ecsv"
+    )
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
 
@@ -136,7 +163,9 @@ def test_miri_image_wcs(run_image2, rtdata_module, fitsdiff_default_kwargs):
     rtdata.get_truth("truth/test_miri_image_stages/" + output)
 
     # Open the output and truth file
-    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+    with datamodels.open(rtdata.output) as im, datamodels.open(
+        rtdata.truth
+    ) as im_truth:
         x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
         ra, dec = im.meta.wcs(x, y)
         ratruth, dectruth = im_truth.meta.wcs(x, y)

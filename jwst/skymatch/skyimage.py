@@ -18,25 +18,31 @@ import numpy as np
 from spherical_geometry.polygon import SphericalPolygon
 
 # LOCAL
-from . skystatistics import SkyStats
+from .skystatistics import SkyStats
 from . import region
 
 
-__all__ = ['SkyImage', 'SkyGroup', 'DataAccessor', 'NDArrayInMemoryAccessor',
-           'NDArrayMappedAccessor']
+__all__ = [
+    "SkyImage",
+    "SkyGroup",
+    "DataAccessor",
+    "NDArrayInMemoryAccessor",
+    "NDArrayMappedAccessor",
+]
 
 
 class DataAccessor(abc.ABC):
-    """ Base class for all data accessors. Provides a common interface to
-        access data.
+    """Base class for all data accessors. Provides a common interface to
+    access data.
     """
+
     @abc.abstractmethod
     def get_data(self):
         pass
 
     @abc.abstractmethod
     def set_data(self, data):
-        """ Sets data.
+        """Sets data.
 
         Parameters
         ----------
@@ -52,7 +58,8 @@ class DataAccessor(abc.ABC):
 
 
 class NDArrayInMemoryAccessor(DataAccessor):
-    """ Acessor for in-memory `numpy.ndarray` data. """
+    """Acessor for in-memory `numpy.ndarray` data."""
+
     def __init__(self, data):
         super().__init__()
         self._data = data
@@ -68,16 +75,16 @@ class NDArrayInMemoryAccessor(DataAccessor):
 
 
 class NDArrayMappedAccessor(DataAccessor):
-    """ Data accessor for arrays stored in temporary files. """
-    def __init__(self, data, tmpfile=None, prefix='tmp_skymatch_',
-                 suffix='.npy', tmpdir=''):
+    """Data accessor for arrays stored in temporary files."""
+
+    def __init__(
+        self, data, tmpfile=None, prefix="tmp_skymatch_", suffix=".npy", tmpdir=""
+    ):
         super().__init__()
         if tmpfile is None:
             self._close = True
             self._tmp = tempfile.NamedTemporaryFile(
-                prefix=prefix,
-                suffix=suffix,
-                dir=tmpdir
+                prefix=prefix, suffix=suffix, dir=tmpdir
             )
             if not self._tmp:
                 raise RuntimeError("Unable to create temporary file.")
@@ -122,10 +129,21 @@ class SkyImage:
 
     """
 
-    def __init__(self, image, wcs_fwd, wcs_inv, pix_area=1.0, convf=1.0,
-                 mask=None, id=None, skystat=None, stepsize=None, meta=None,
-                 reduce_memory_usage=True):
-        """ Initializes the SkyImage object.
+    def __init__(
+        self,
+        image,
+        wcs_fwd,
+        wcs_inv,
+        pix_area=1.0,
+        convf=1.0,
+        mask=None,
+        id=None,
+        skystat=None,
+        stepsize=None,
+        meta=None,
+        reduce_memory_usage=True,
+    ):
+        """Initializes the SkyImage object.
 
         Parameters
         ----------
@@ -231,7 +249,7 @@ class SkyImage:
 
     @property
     def mask(self):
-        """ Set or get `SkyImage`'s ``mask`` data array or `None`. """
+        """Set or get `SkyImage`'s ``mask`` data array or `None`."""
         if self._mask is None:
             return None
         else:
@@ -268,8 +286,7 @@ class SkyImage:
             if self._mask is None:
                 if self._reduce_memory_usage:
                     self._mask = NDArrayMappedAccessor(
-                        mask,
-                        prefix='tmp_skymatch_mask_'
+                        mask, prefix="tmp_skymatch_mask_"
                     )
                 else:
                     self._mask = NDArrayInMemoryAccessor(mask)
@@ -278,7 +295,7 @@ class SkyImage:
 
     @property
     def image(self):
-        """ Set or get `SkyImage`'s ``image`` data array. """
+        """Set or get `SkyImage`'s ``image`` data array."""
         if self._image is None:
             return None
         else:
@@ -301,8 +318,7 @@ class SkyImage:
             if self._image is None:
                 if self._reduce_memory_usage:
                     self._image = NDArrayMappedAccessor(
-                        image,
-                        prefix='tmp_skymatch_image_'
+                        image, prefix="tmp_skymatch_image_"
                     )
                 else:
                     self._image = NDArrayInMemoryAccessor(image)
@@ -311,14 +327,14 @@ class SkyImage:
 
     @property
     def image_shape(self):
-        """ Get `SkyImage`'s ``image`` data shape. """
+        """Get `SkyImage`'s ``image`` data shape."""
         if self._image_shape is None and self._image is not None:
             self._image_shape = self._image.get_data_shape()
         return self._image_shape
 
     @property
     def id(self):
-        """ Set or get `SkyImage`'s `id`.
+        """Set or get `SkyImage`'s `id`.
 
         While `id` can be of any type, it is preferable that `id` be
         of a type with nice string representation.
@@ -332,8 +348,7 @@ class SkyImage:
 
     @property
     def pix_area(self):
-        """ Set or get mean pixel area.
-        """
+        """Set or get mean pixel area."""
         return self._pix_area
 
     @pix_area.setter
@@ -342,14 +357,12 @@ class SkyImage:
 
     @property
     def poly_area(self):
-        """ Get bounding polygon area in srad units.
-        """
+        """Get bounding polygon area in srad units."""
         return self._poly_area
 
     @property
     def sky(self):
-        """ Sky background value. See `calc_sky` for more details.
-        """
+        """Sky background value. See `calc_sky` for more details."""
         return self._sky
 
     @sky.setter
@@ -378,8 +391,7 @@ class SkyImage:
 
     @property
     def polygon(self):
-        """ Get image's bounding polygon.
-        """
+        """Get image's bounding polygon."""
         return self._polygon
 
     def intersection(self, skyimage):
@@ -415,7 +427,7 @@ class SkyImage:
         return intersect_poly
 
     def calc_bounding_polygon(self, stepsize=None):
-        """ Compute image's bounding polygon.
+        """Compute image's bounding polygon.
 
         Parameters
         ----------
@@ -449,15 +461,15 @@ class SkyImage:
         borderx[:nptx] = xs
         bordery[:nptx] = -0.5
         # "right"
-        sl = np.s_[nptx:nptx + npty]
+        sl = np.s_[nptx : nptx + npty]
         borderx[sl] = nx - 0.5
         bordery[sl] = ys
         # "top"
-        sl = np.s_[nptx + npty:2 * nptx + npty]
+        sl = np.s_[nptx + npty : 2 * nptx + npty]
         borderx[sl] = xs[::-1]
         bordery[sl] = ny - 0.5
         # "left"
-        sl = np.s_[2 * nptx + npty:-1]
+        sl = np.s_[2 * nptx + npty : -1]
         borderx[sl] = -0.5
         bordery[sl] = ys[::-1]
 
@@ -479,7 +491,7 @@ class SkyImage:
 
     @property
     def skystat(self):
-        """ Stores/retrieves a callable object that takes a either a 2D image
+        """Stores/retrieves a callable object that takes a either a 2D image
         (2D `numpy.ndarray`) or a list of pixel values (a Nx1 array) and
         returns a tuple of two values: some statistics
         (e.g., mean, median, etc.) and number of pixels/values from the input
@@ -496,8 +508,16 @@ class SkyImage:
     def skystat(self, skystat):
         self._skystat = skystat
 
-    def set_builtin_skystat(self, skystat='median', lower=None, upper=None,
-                            nclip=5, lsigma=4.0, usigma=4.0, binwidth=0.1):
+    def set_builtin_skystat(
+        self,
+        skystat="median",
+        lower=None,
+        upper=None,
+        nclip=5,
+        lsigma=4.0,
+        usigma=4.0,
+        binwidth=0.1,
+    ):
         """
         Replace already set `skystat` with a "built-in" version of a
         statistics callable object used to measure sky background.
@@ -513,7 +533,7 @@ class SkyImage:
             nclip=nclip,
             lsig=lsigma,
             usig=usigma,
-            binwidth=binwidth
+            binwidth=binwidth,
         )
 
     # TODO: due to a bug in the sphere package, see
@@ -762,7 +782,7 @@ None, optional
             mask=None,
             id=self.id,
             stepsize=None,
-            meta=self.meta
+            meta=self.meta,
         )
 
         si._image = self._image
@@ -793,17 +813,21 @@ class SkyGroup:
         if isinstance(images, SkyImage):
             self._images = [images]
 
-        elif hasattr(images, '__iter__'):
+        elif hasattr(images, "__iter__"):
             self._images = []
             for im in images:
                 if not isinstance(im, SkyImage):
-                    raise TypeError("Each element of the 'images' parameter "
-                                    "must be an 'SkyImage' object.")
+                    raise TypeError(
+                        "Each element of the 'images' parameter "
+                        "must be an 'SkyImage' object."
+                    )
                 self._images.append(im)
 
         else:
-            raise TypeError("Parameter 'images' must be either a single "
-                            "'SkyImage' object or a list of 'SkyImage' objects")
+            raise TypeError(
+                "Parameter 'images' must be either a single "
+                "'SkyImage' object or a list of 'SkyImage' objects"
+            )
 
         self._id = id
         self._update_bounding_polygon()
@@ -813,10 +837,10 @@ class SkyGroup:
 
     @property
     def id(self):
-        """ Set or get `SkyImage`'s `id`.
+        """Set or get `SkyImage`'s `id`.
 
-            While `id` can be of any type, it is preferable that `id` be
-            of a type with nice string representation.
+        While `id` can be of any type, it is preferable that `id` be
+        of a type with nice string representation.
 
         """
         return self._id
@@ -827,8 +851,7 @@ class SkyGroup:
 
     @property
     def sky(self):
-        """ Sky background value. See `calc_sky` for more details.
-        """
+        """Sky background value. See `calc_sky` for more details."""
         return self._sky
 
     @sky.setter
@@ -849,8 +872,7 @@ class SkyGroup:
 
     @property
     def polygon(self):
-        """ Get image's bounding polygon.
-        """
+        """Get image's bounding polygon."""
         return self._polygon
 
     def intersection(self, skyimage):
@@ -919,8 +941,7 @@ class SkyGroup:
             yield image
 
     def insert(self, idx, value):
-        """Inserts a `SkyImage` into the group.
-        """
+        """Inserts a `SkyImage` into the group."""
         if not isinstance(value, SkyImage):
             raise TypeError("Item must be of 'SkyImage' type")
         value.sky += self._sky
@@ -928,8 +949,7 @@ class SkyGroup:
         self._update_bounding_polygon()
 
     def append(self, value):
-        """Appends a `SkyImage` to the group.
-        """
+        """Appends a `SkyImage` to the group."""
         if not isinstance(value, SkyImage):
             raise TypeError("Item must be of 'SkyImage' type")
         value.sky += self._sky

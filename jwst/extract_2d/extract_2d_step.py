@@ -25,7 +25,7 @@ class Extract2dStep(Step):
         wfss_nbright = integer(default=1000)  # number of brightest objects to extract, WFSS mode
     """
 
-    reference_file_types = ['wavelengthrange']
+    reference_file_types = ["wavelengthrange"]
 
     def process(self, input_model, *args, **kwargs):
         reference_file_names = {}
@@ -34,13 +34,16 @@ class Extract2dStep(Step):
             reference_file_names[reftype] = reffile if reffile else ""
 
         with datamodels.open(input_model) as dm:
-            output_model = extract_2d.extract2d(dm, self.slit_name,
-                                                reference_files=reference_file_names,
-                                                grism_objects=self.grism_objects,
-                                                tsgrism_extract_height=self.tsgrism_extract_height,
-                                                wfss_extract_half_height=self.wfss_extract_half_height,
-                                                extract_orders=self.extract_orders,
-                                                mmag_extract=self.wfss_mmag_extract,
-                                                nbright=self.wfss_nbright)
+            output_model = extract_2d.extract2d(
+                dm,
+                self.slit_name,
+                reference_files=reference_file_names,
+                grism_objects=self.grism_objects,
+                tsgrism_extract_height=self.tsgrism_extract_height,
+                wfss_extract_half_height=self.wfss_extract_half_height,
+                extract_orders=self.extract_orders,
+                mmag_extract=self.wfss_mmag_extract,
+                nbright=self.wfss_nbright,
+            )
 
         return output_model

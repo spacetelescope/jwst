@@ -7,8 +7,12 @@ from astropy import units as u
 from astropy import coordinates as coord
 from gwcs import coordinate_frames as cf
 
-from .util import (not_implemented_mode, subarray_transform,
-                   transform_bbox_from_shape, bounding_box_from_subarray)
+from .util import (
+    not_implemented_mode,
+    subarray_transform,
+    transform_bbox_from_shape,
+    bounding_box_from_subarray,
+)
 from . import pointing
 from ..datamodels import DistortionModel
 
@@ -33,8 +37,11 @@ def create_pipeline(input_model, reference_files):
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
-    log.info("Creating a FGS {0} pipeline with references {1}".format(
-        exp_type, reference_files))
+    log.info(
+        "Creating a FGS {0} pipeline with references {1}".format(
+            exp_type, reference_files
+        )
+    )
     return pipeline
 
 
@@ -59,12 +66,20 @@ def imaging(input_model, reference_files):
         The WCS pipeline.
     """
     # Create coordinate frames for the ``imaging`` mode.
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
-                      unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
-                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
-    world = cf.CelestialFrame(name='world', reference_frame=coord.ICRS())
+    detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
+    v2v3 = cf.Frame2D(
+        name="v2v3",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    v2v3vacorr = cf.Frame2D(
+        name="v2v3vacorr",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    world = cf.CelestialFrame(name="world", reference_frame=coord.ICRS())
 
     # Create the v2v3 to sky transform.
     tel2sky = pointing.v23tosky(input_model)
@@ -83,13 +98,15 @@ def imaging(input_model, reference_files):
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
     )
 
-    pipeline = [(detector, distortion),
-                (v2v3, va_corr),
-                (v2v3vacorr, tel2sky),
-                (world, None)]
+    pipeline = [
+        (detector, distortion),
+        (v2v3, va_corr),
+        (v2v3vacorr, tel2sky),
+        (world, None),
+    ]
     return pipeline
 
 
@@ -97,7 +114,7 @@ def imaging_distortion(input_model, reference_files):
     """
     Create the transform from "detector" to "v2v3".
     """
-    dist = DistortionModel(reference_files['distortion'])
+    dist = DistortionModel(reference_files["distortion"])
     transform = dist.model
 
     # Check if the transform in the reference file has a ``bounding_box``.
@@ -112,9 +129,10 @@ def imaging_distortion(input_model, reference_files):
 
 # EXP_TYPE to function mapping.
 # The function creates the WCS pipeline.
-exp_type2transform = {'fgs_image': imaging,
-                      'fgs_focus': imaging,
-                      'fgs_skyflat': not_implemented_mode,
-                      'fgs_intflat': not_implemented_mode,
-                      'fgs_dark': not_implemented_mode
-                      }
+exp_type2transform = {
+    "fgs_image": imaging,
+    "fgs_focus": imaging,
+    "fgs_skyflat": not_implemented_mode,
+    "fgs_intflat": not_implemented_mode,
+    "fgs_dark": not_implemented_mode,
+}

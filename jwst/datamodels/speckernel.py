@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['SpecKernelModel']
+__all__ = ["SpecKernelModel"]
 
 
 class SpecKernelModel(ReferenceFileModel):
@@ -16,4 +16,5 @@ class SpecKernelModel(ReferenceFileModel):
     kernels : numpy float32 array
          Kernel values
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/speckernel.schema"

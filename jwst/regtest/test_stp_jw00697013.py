@@ -26,60 +26,62 @@ import jwst.lib.set_telescope_pointing as stp
 from jwst.lib.tests import engdb_mock
 
 # Requires pysiaf
-pytest.importorskip('pysiaf')
+pytest.importorskip("pysiaf")
 
-EXPS = ['jw00697013001_03101_00001_nrcblong_uncal',
-        'jw00697013004_03103_00001_nrcb1_uncal',
-        'jw00697013007_03101_00001_nrca4_uncal',
-        'jw00697013009_03105_00001_nrcb1_uncal',
-        'jw00697013002_03105_00001_nrcb3_uncal',
-        'jw00697013008_03101_00001_nrcb2_uncal',
-        'jw00697013008_03103_00001_nrcb3_uncal',
-        'jw00697013002_03107_00001_nrcblong_uncal',
-        'jw00697013007_03105_00001_nrcalong_uncal',
-        'jw00697013003_03101_00001_nrcb1_uncal',
-        'jw00697013006_03103_00001_nrca3_uncal']
+EXPS = [
+    "jw00697013001_03101_00001_nrcblong_uncal",
+    "jw00697013004_03103_00001_nrcb1_uncal",
+    "jw00697013007_03101_00001_nrca4_uncal",
+    "jw00697013009_03105_00001_nrcb1_uncal",
+    "jw00697013002_03105_00001_nrcb3_uncal",
+    "jw00697013008_03101_00001_nrcb2_uncal",
+    "jw00697013008_03103_00001_nrcb3_uncal",
+    "jw00697013002_03107_00001_nrcblong_uncal",
+    "jw00697013007_03105_00001_nrcalong_uncal",
+    "jw00697013003_03101_00001_nrcb1_uncal",
+    "jw00697013006_03103_00001_nrca3_uncal",
+]
 
 
 @pytest.mark.bigdata
 def test_aperture_ra(calc_wcs):
     """Compare aperture WCS information"""
-    model, _,wcsinfo, _, _ = calc_wcs
+    model, _, wcsinfo, _, _ = calc_wcs
     assert np.isclose(model.meta.wcsinfo.ra_ref, wcsinfo.ra)
 
 
 @pytest.mark.bigdata
 def test_aperture_dec(calc_wcs):
     """Compare aperture WCS information"""
-    model, _,wcsinfo, _, _ = calc_wcs
+    model, _, wcsinfo, _, _ = calc_wcs
     assert np.isclose(model.meta.wcsinfo.dec_ref, wcsinfo.dec)
 
 
 @pytest.mark.bigdata
 def test_aperture_pa(calc_wcs):
     """Compare aperture WCS information"""
-    model, _,wcsinfo, _, _ = calc_wcs
+    model, _, wcsinfo, _, _ = calc_wcs
     assert np.isclose(model.meta.aperture.position_angle, wcsinfo.pa)
 
 
 @pytest.mark.bigdata
 def test_v1_ra(calc_wcs):
     """Compare v1 WCS information"""
-    model, _,_, vinfo, _ = calc_wcs
+    model, _, _, vinfo, _ = calc_wcs
     assert np.isclose(model.meta.pointing.ra_v1, vinfo.ra)
 
 
 @pytest.mark.bigdata
 def test_v1_dec(calc_wcs):
     """Compare v1 WCS information"""
-    model, _,_, vinfo, _ = calc_wcs
+    model, _, _, vinfo, _ = calc_wcs
     assert np.isclose(model.meta.pointing.dec_v1, vinfo.dec)
 
 
 @pytest.mark.bigdata
 def test_v1_pa(calc_wcs):
     """Compare v1 WCS information"""
-    model, _,_, vinfo, _ = calc_wcs
+    model, _, _, vinfo, _ = calc_wcs
     assert np.isclose(model.meta.pointing.pa_v3, vinfo.pa)
 
 
@@ -91,24 +93,26 @@ def test_roll_ref(calc_wcs):
     assert np.isclose(model.meta.wcsinfo.roll_ref, roll_ref)
 
 
-@pytest.fixture(scope='module', params=EXPS)
+@pytest.fixture(scope="module", params=EXPS)
 def calc_wcs(databases, request):
-    """Calculate the V1 and aperture """
+    """Calculate the V1 and aperture"""
     exposure = request.param
     siaf_db, metas = databases
 
     with dm.ImageModel((10, 10)) as model:
-        model.update({'meta': metas[exposure]})
+        model.update({"meta": metas[exposure]})
 
         # Calculate the pointing information
-        t_pars = stp.t_pars_from_model(model, siaf_db=siaf_db, engdb_url='http://localhost')
+        t_pars = stp.t_pars_from_model(
+            model, siaf_db=siaf_db, engdb_url="http://localhost"
+        )
         t_pars.update_pointing()
         wcsinfo, vinfo, transforms = stp.calc_wcs(t_pars)
 
         return model, t_pars, wcsinfo, vinfo, transforms
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def databases(rtdata_module):
     """Create the necessary databases needed to run pointing code
 
@@ -124,15 +128,15 @@ def databases(rtdata_module):
     siaf_db = siafdb.SiafDb()
 
     # Get the exposures' meta information
-    metas_path = rtdata_module.get_data('pointing/jw00697013_metas.asdf')
+    metas_path = rtdata_module.get_data("pointing/jw00697013_metas.asdf")
     with asdf.open(metas_path) as metas_asdf:
-        metas = metas_asdf['metas']
+        metas = metas_asdf["metas"]
 
     # Setup the engineering database
-    engdb_path = Path('engdb')
+    engdb_path = Path("engdb")
     engdb_path.mkdir()
     with pushdir(engdb_path):
-        paths = rtdata_module.data_glob('pointing/jw00697013_engdb')
+        paths = rtdata_module.data_glob("pointing/jw00697013_engdb")
         for path in paths:
             rtdata_module.get_data(path)
 

@@ -8,12 +8,19 @@ import gwcs.coordinate_frames as cf
 import asdf
 
 from . import pointing
-from .util import (not_implemented_mode, subarray_transform, velocity_correction,
-                   transform_bbox_from_shape, bounding_box_from_subarray)
-from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
-from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
-                                 NIRCAMForwardColumnGrismDispersion,
-                                 NIRCAMBackwardGrismDispersion)
+from .util import (
+    not_implemented_mode,
+    subarray_transform,
+    velocity_correction,
+    transform_bbox_from_shape,
+    bounding_box_from_subarray,
+)
+from ..datamodels import ImageModel, NIRCAMGrismModel, DistortionModel
+from ..transforms.models import (
+    NIRCAMForwardRowGrismDispersion,
+    NIRCAMForwardColumnGrismDispersion,
+    NIRCAMBackwardGrismDispersion,
+)
 from ..lib.reffile_utils import find_row
 
 
@@ -42,7 +49,7 @@ def create_pipeline(input_model, reference_files):
         input into  gwcs.wcs.WCS to create a GWCS object.
     """
 
-    log.debug(f'reference files used in NIRCAM WCS pipeline: {reference_files}')
+    log.debug(f"reference files used in NIRCAM WCS pipeline: {reference_files}")
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -72,12 +79,20 @@ def imaging(input_model, reference_files):
     It includes three coordinate frames - "detector", "v2v3", and "world",
     and uses the "distortion" reference file.
     """
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
-                      unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
-                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
-    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+    detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
+    v2v3 = cf.Frame2D(
+        name="v2v3",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    v2v3vacorr = cf.Frame2D(
+        name="v2v3vacorr",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name="world")
 
     distortion = imaging_distortion(input_model, reference_files)
     subarray2full = subarray_transform(input_model)
@@ -89,14 +104,16 @@ def imaging(input_model, reference_files):
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
     )
 
     tel2sky = pointing.v23tosky(input_model)
-    pipeline = [(detector, distortion),
-                (v2v3, va_corr),
-                (v2v3vacorr, tel2sky),
-                (world, None)]
+    pipeline = [
+        (detector, distortion),
+        (v2v3, va_corr),
+        (v2v3vacorr, tel2sky),
+        (world, None),
+    ]
     return pipeline
 
 
@@ -116,7 +133,7 @@ def imaging_distortion(input_model, reference_files):
     The transform model
 
     """
-    dist = DistortionModel(reference_files['distortion'])
+    dist = DistortionModel(reference_files["distortion"])
     transform = dist.model
 
     try:
@@ -129,19 +146,19 @@ def imaging_distortion(input_model, reference_files):
     dist.close()
 
     # Add an offset for the filter
-    if reference_files['filteroffset'] is not None:
+    if reference_files["filteroffset"] is not None:
         obsfilter = input_model.meta.instrument.filter
         obspupil = input_model.meta.instrument.pupil
-        with asdf.open(reference_files['filteroffset']) as filter_offset:
-            filters = filter_offset.tree['filters']
+        with asdf.open(reference_files["filteroffset"]) as filter_offset:
+            filters = filter_offset.tree["filters"]
 
-        match_keys = {'filter': obsfilter, 'pupil': obspupil}
+        match_keys = {"filter": obsfilter, "pupil": obspupil}
         row = find_row(filters, match_keys)
         if row is not None:
-            col_offset = row.get('column_offset', 'N/A')
-            row_offset = row.get('row_offset', 'N/A')
+            col_offset = row.get("column_offset", "N/A")
+            row_offset = row.get("row_offset", "N/A")
             log.debug(f"Offsets from filteroffset file are {col_offset}, {row_offset}")
-            if col_offset != 'N/A' and row_offset != 'N/A':
+            if col_offset != "N/A" and row_offset != "N/A":
                 transform = Shift(col_offset) & Shift(row_offset) | transform
         else:
             log.debug("No match in fitleroffset file.")
@@ -181,20 +198,20 @@ def tsgrism(input_model, reference_files):
 
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
-        raise ValueError('The input exposure is not a NIRCAM time series grism')
+        raise ValueError("The input exposure is not a NIRCAM time series grism")
 
     if input_model.meta.instrument.module != "A":
-        raise ValueError('NRC_TSGRISM mode only supports module A')
+        raise ValueError("NRC_TSGRISM mode only supports module A")
 
     if input_model.meta.instrument.pupil != "GRISMR":
-        raise ValueError('NRC_TSGRIM mode only supports GRISMR')
+        raise ValueError("NRC_TSGRIM mode only supports GRISMR")
 
     frames = create_coord_frames()
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
     # spectral order
-    with NIRCAMGrismModel(reference_files['specwcs']) as f:
+    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
         displ = f.displ
         dispx = f.dispx
         dispy = f.dispy
@@ -203,15 +220,13 @@ def tsgrism(input_model, reference_files):
         orders = f.orders
 
     # now create the appropriate model for the grismr
-    det2det = NIRCAMForwardRowGrismDispersion(orders,
-                                              lmodels=displ,
-                                              xmodels=invdispx,
-                                              ymodels=dispy)
+    det2det = NIRCAMForwardRowGrismDispersion(
+        orders, lmodels=displ, xmodels=invdispx, ymodels=dispy
+    )
 
-    det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
-                                                    lmodels=invdispl,
-                                                    xmodels=dispx,
-                                                    ymodels=dispy)
+    det2det.inverse = NIRCAMBackwardGrismDispersion(
+        orders, lmodels=invdispl, xmodels=dispx, ymodels=dispy
+    )
 
     # Add in the wavelength shift from the velocity dispersion
     try:
@@ -220,8 +235,14 @@ def tsgrism(input_model, reference_files):
         pass
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
-        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        log.info(
+            "Added Barycentric velocity correction: {}".format(
+                velocity_corr[1].amplitude.value
+            )
+        )
+        det2det = (
+            det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        )
 
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
@@ -233,13 +254,16 @@ def tsgrism(input_model, reference_files):
     # TSGRISM mode places the sources at crpix, and all subarrays
     # begin at 0,0, so no need to translate the crpix to full frame
     # because they already are in full frame coordinates.
-    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+    xc, yc = (
+        input_model.meta.wcsinfo.siaf_xref_sci,
+        input_model.meta.wcsinfo.siaf_yref_sci,
+    )
 
     if xc is None:
-        raise ValueError('XREF_SCI is missing.')
+        raise ValueError("XREF_SCI is missing.")
 
     if yc is None:
-        raise ValueError('YREF_SCI is missing.')
+        raise ValueError("YREF_SCI is missing.")
 
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
@@ -255,13 +279,18 @@ def tsgrism(input_model, reference_files):
     # get the shift to full frame coordinates
     sub_trans = subarray_transform(input_model)
     if sub_trans is not None:
-        sub2direct = (sub_trans & Identity(1) | Mapping((0, 1, 0, 1, 2)) |
-                      (Identity(2) & xcenter & ycenter & Identity(1)) |
-                      det2det)
+        sub2direct = (
+            sub_trans & Identity(1)
+            | Mapping((0, 1, 0, 1, 2))
+            | (Identity(2) & xcenter & ycenter & Identity(1))
+            | det2det
+        )
     else:
-        sub2direct = (Mapping((0, 1, 0, 1, 2)) |
-                      (Identity(2) & xcenter & ycenter & Identity(1)) |
-                      det2det)
+        sub2direct = (
+            Mapping((0, 1, 0, 1, 2))
+            | (Identity(2) & xcenter & ycenter & Identity(1))
+            | det2det
+        )
 
     # take us from full frame detector to v2v3
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
@@ -270,7 +299,7 @@ def tsgrism(input_model, reference_files):
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
     ) & Identity(2)
 
     # v2v3 to the sky
@@ -283,11 +312,13 @@ def tsgrism(input_model, reference_files):
     newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
     tel2sky.inverse = newinverse
 
-    pipeline = [(frames['grism_detector'], sub2direct),
-                (frames['direct_image'], distortion),
-                (frames['v2v3'], va_corr),
-                (frames['v2v3vacorr'], tel2sky),
-                (frames['world'], None)]
+    pipeline = [
+        (frames["grism_detector"], sub2direct),
+        (frames["direct_image"], distortion),
+        (frames["v2v3"], va_corr),
+        (frames["v2v3vacorr"], tel2sky),
+        (frames["world"], None),
+    ]
 
     return pipeline
 
@@ -342,22 +373,27 @@ def wfss(input_model, reference_files):
 
     # The input is the grism image
     if not isinstance(input_model, ImageModel):
-        raise TypeError('The input data model must be an ImageModel.')
+        raise TypeError("The input data model must be an ImageModel.")
 
     # make sure this is a grism image
     if "NRC_WFSS" not in input_model.meta.exposure.type:
-        raise ValueError('The input exposure is not a NIRCAM grism')
+        raise ValueError("The input exposure is not a NIRCAM grism")
 
     # Create the empty detector as a 2D coordinate frame in pixel units
-    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
-                           axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
-                            axes_names=('wavelength',))
+    gdetector = cf.Frame2D(
+        name="grism_detector",
+        axes_order=(0, 1),
+        axes_names=("x_grism", "y_grism"),
+        unit=(u.pix, u.pix),
+    )
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
     # spectral order
-    with NIRCAMGrismModel(reference_files['specwcs']) as f:
+    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
         displ = f.displ
         dispx = f.dispx
         dispy = f.dispy
@@ -368,21 +404,18 @@ def wfss(input_model, reference_files):
 
     # now create the appropriate model for the grism[R/C]
     if "GRISMR" in input_model.meta.instrument.pupil:
-        det2det = NIRCAMForwardRowGrismDispersion(orders,
-                                                  lmodels=displ,
-                                                  xmodels=invdispx,
-                                                  ymodels=dispy)
+        det2det = NIRCAMForwardRowGrismDispersion(
+            orders, lmodels=displ, xmodels=invdispx, ymodels=dispy
+        )
 
     elif "GRISMC" in input_model.meta.instrument.pupil:
-        det2det = NIRCAMForwardColumnGrismDispersion(orders,
-                                                     lmodels=displ,
-                                                     xmodels=dispx,
-                                                     ymodels=invdispy)
+        det2det = NIRCAMForwardColumnGrismDispersion(
+            orders, lmodels=displ, xmodels=dispx, ymodels=invdispy
+        )
 
-    det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
-                                                    lmodels=invdispl,
-                                                    xmodels=dispx,
-                                                    ymodels=dispy)
+    det2det.inverse = NIRCAMBackwardGrismDispersion(
+        orders, lmodels=invdispl, xmodels=dispx, ymodels=dispy
+    )
 
     # Add in the wavelength shift from the velocity dispersion
     try:
@@ -391,8 +424,14 @@ def wfss(input_model, reference_files):
         pass
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
-        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        log.info(
+            "Added Barycentric velocity correction: {}".format(
+                velocity_corr[1].amplitude.value
+            )
+        )
+        det2det = (
+            det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        )
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
@@ -412,51 +451,67 @@ def wfss(input_model, reference_files):
     # pass the x0,y0, wave, order, through the pipeline
     imagepipe = []
     world = image_pipeline.pop()[0]
-    world.name = 'sky'
+    world.name = "sky"
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
         name = cframe.name
-        cframe.name = name + 'spatial'
-        spatial_and_spectral = cf.CompositeFrame([cframe, spec],
-                                                 name=name)
+        cframe.name = name + "spatial"
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)
         imagepipe.append((spatial_and_spectral, trans))
 
     # Output frame is Celestial + Spectral
-    imagepipe.append((cf.CompositeFrame([world, spec], name='world'), None))
+    imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
     grism_pipeline.extend(imagepipe)
     return grism_pipeline
 
 
 def create_coord_frames():
-    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    detector = cf.Frame2D(name='full_detector', axes_order=(0, 1),
-                          axes_names=('dx', 'dy'), unit=(u.pix, u.pix))
-    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
-                              axes_names=('v2', 'v3'), unit=(u.deg, u.deg))
-    v2v3vacorr_spatial = cf.Frame2D(name='v2v3vacorr_spatial', axes_order=(0, 1),
-                                    axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
-    sky_frame = cf.CelestialFrame(reference_frame=coord.ICRS(), name='icrs')
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
-                            axes_names=('wavelength',))
-    frames = {'grism_detector': gdetector,
-              'direct_image': cf.CompositeFrame([detector, spec], name='direct_image'),
-              'v2v3': cf.CompositeFrame([v2v3_spatial, spec], name='v2v3'),
-              'v2v3vacorr': cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr'),
-              'world': cf.CompositeFrame([sky_frame, spec], name='world')
-              }
+    gdetector = cf.Frame2D(
+        name="grism_detector", axes_order=(0, 1), unit=(u.pix, u.pix)
+    )
+    detector = cf.Frame2D(
+        name="full_detector",
+        axes_order=(0, 1),
+        axes_names=("dx", "dy"),
+        unit=(u.pix, u.pix),
+    )
+    v2v3_spatial = cf.Frame2D(
+        name="v2v3_spatial",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.deg, u.deg),
+    )
+    v2v3vacorr_spatial = cf.Frame2D(
+        name="v2v3vacorr_spatial",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    sky_frame = cf.CelestialFrame(reference_frame=coord.ICRS(), name="icrs")
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
+    frames = {
+        "grism_detector": gdetector,
+        "direct_image": cf.CompositeFrame([detector, spec], name="direct_image"),
+        "v2v3": cf.CompositeFrame([v2v3_spatial, spec], name="v2v3"),
+        "v2v3vacorr": cf.CompositeFrame([v2v3vacorr_spatial, spec], name="v2v3vacorr"),
+        "world": cf.CompositeFrame([sky_frame, spec], name="world"),
+    }
     return frames
 
 
-exp_type2transform = {'nrc_image': imaging,
-                      'nrc_wfss': wfss,
-                      'nrc_tacq': imaging,
-                      'nrc_taconfirm': imaging,
-                      'nrc_coron': imaging,
-                      'nrc_focus': imaging,
-                      'nrc_tsimage': imaging,
-                      'nrc_tsgrism': tsgrism,
-                      'nrc_led': not_implemented_mode,
-                      'nrc_dark': not_implemented_mode,
-                      'nrc_flat': not_implemented_mode,
-                      'nrc_grism': not_implemented_mode,
-                      }
+exp_type2transform = {
+    "nrc_image": imaging,
+    "nrc_wfss": wfss,
+    "nrc_tacq": imaging,
+    "nrc_taconfirm": imaging,
+    "nrc_coron": imaging,
+    "nrc_focus": imaging,
+    "nrc_tsimage": imaging,
+    "nrc_tsgrism": tsgrism,
+    "nrc_led": not_implemented_mode,
+    "nrc_dark": not_implemented_mode,
+    "nrc_flat": not_implemented_mode,
+    "nrc_grism": not_implemented_mode,
+}

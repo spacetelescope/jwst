@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['IFUCubeModel']
+__all__ = ["IFUCubeModel"]
 
 
 class IFUCubeModel(JwstDataModel):
@@ -25,6 +25,7 @@ class IFUCubeModel(JwstDataModel):
     wavetable : numpy table
          Wavelength value for slices
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/ifucube.schema"
 
     def __init__(self, init=None, **kwargs):

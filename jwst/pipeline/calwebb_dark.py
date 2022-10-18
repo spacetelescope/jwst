@@ -17,7 +17,7 @@ from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
-__all__ = ['DarkPipeline']
+__all__ = ["DarkPipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
@@ -37,32 +37,33 @@ class DarkPipeline(Pipeline):
     class_alias = "calwebb_dark"
 
     # Define aliases to steps
-    step_defs = {'group_scale': group_scale_step.GroupScaleStep,
-                 'dq_init': dq_init_step.DQInitStep,
-                 'saturation': saturation_step.SaturationStep,
-                 'ipc': ipc_step.IPCStep,
-                 'superbias': superbias_step.SuperBiasStep,
-                 'refpix': refpix_step.RefPixStep,
-                 'reset': reset_step.ResetStep,
-                 'rscd': rscd_step.RscdStep,
-                 'firstframe': firstframe_step.FirstFrameStep,
-                 'lastframe': lastframe_step.LastFrameStep,
-                 'linearity': linearity_step.LinearityStep,
-                 }
+    step_defs = {
+        "group_scale": group_scale_step.GroupScaleStep,
+        "dq_init": dq_init_step.DQInitStep,
+        "saturation": saturation_step.SaturationStep,
+        "ipc": ipc_step.IPCStep,
+        "superbias": superbias_step.SuperBiasStep,
+        "refpix": refpix_step.RefPixStep,
+        "reset": reset_step.ResetStep,
+        "rscd": rscd_step.RscdStep,
+        "firstframe": firstframe_step.FirstFrameStep,
+        "lastframe": lastframe_step.LastFrameStep,
+        "linearity": linearity_step.LinearityStep,
+    }
 
     # start the actual processing
     def process(self, input):
 
-        log.info('Starting calwebb_dark ...')
+        log.info("Starting calwebb_dark ...")
 
         # open the input
         input = datamodels.RampModel(input)
 
-        if input.meta.instrument.name == 'MIRI':
+        if input.meta.instrument.name == "MIRI":
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
-            log.debug('Processing a MIRI exposure')
+            log.debug("Processing a MIRI exposure")
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -77,7 +78,7 @@ class DarkPipeline(Pipeline):
         else:
 
             # process Near-IR exposures
-            log.debug('Processing a Near-IR exposure')
+            log.debug("Processing a Near-IR exposure")
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -87,6 +88,6 @@ class DarkPipeline(Pipeline):
             input = self.refpix(input)
             input = self.linearity(input)
 
-        log.info('... ending calwebb_dark')
+        log.info("... ending calwebb_dark")
 
         return input

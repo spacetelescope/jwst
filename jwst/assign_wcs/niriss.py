@@ -8,14 +8,20 @@ from astropy.modeling.bounding_box import CompoundBoundingBox
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
-from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction, bounding_box_from_subarray,
-                   transform_bbox_from_shape)
+from .util import (
+    not_implemented_mode,
+    subarray_transform,
+    velocity_correction,
+    bounding_box_from_subarray,
+    transform_bbox_from_shape,
+)
 from . import pointing
-from ..transforms.models import (NirissSOSSModel,
-                                 NIRISSForwardRowGrismDispersion,
-                                 NIRISSBackwardGrismDispersion,
-                                 NIRISSForwardColumnGrismDispersion)
+from ..transforms.models import (
+    NirissSOSSModel,
+    NIRISSForwardRowGrismDispersion,
+    NIRISSBackwardGrismDispersion,
+    NIRISSForwardColumnGrismDispersion,
+)
 from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 from stdatamodels import s3_utils
 from ..lib.reffile_utils import find_row
@@ -43,7 +49,7 @@ def create_pipeline(input_model, reference_files):
         The pipeline list that is returned is suitable for
         input into  gwcs.wcs.WCS to create a GWCS object.
     """
-    log.debug(f'reference files used in NIRISS WCS pipeline: {reference_files}')
+    log.debug(f"reference files used in NIRISS WCS pipeline: {reference_files}")
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -69,28 +75,32 @@ def niriss_soss_set_input(model, order_number):
 
     # Make sure the spectral order is available.
     if order_number < 1 or order_number > 3:
-        raise ValueError('Order must be between 1 and 3')
+        raise ValueError("Order must be between 1 and 3")
 
     # Return the correct transform based on the order_number
     obj = model.meta.wcs.forward_transform.get_model(order_number)
 
     # use the size of the input subarray
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
-                            axes_names=('wavelength',))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS(),
-                            axes_names=('ra', 'dec'),
-                            axes_order=(0, 1), unit=(u.deg, u.deg), name='sky')
-    world = cf.CompositeFrame([sky, spec], name='world')
-    pipeline = [(detector, obj),
-                (world, None)
-                ]
+    detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
+    sky = cf.CelestialFrame(
+        reference_frame=coord.ICRS(),
+        axes_names=("ra", "dec"),
+        axes_order=(0, 1),
+        unit=(u.deg, u.deg),
+        name="sky",
+    )
+    world = cf.CompositeFrame([sky, spec], name="world")
+    pipeline = [(detector, obj), (world, None)]
 
     return wcs.WCS(pipeline)
 
 
 def _niriss_order_bounding_box(input_model, order):
     import numpy as np
+
     bbox_y = np.array([-0.5, input_model.meta.subarray.ysize - 0.5])
     bbox_x = np.array([-0.5, input_model.meta.subarray.xsize - 0.5])
 
@@ -101,14 +111,19 @@ def _niriss_order_bounding_box(input_model, order):
     elif order == 3:
         return tuple(bbox_y), tuple(bbox_x)
     else:
-        raise ValueError(f'Invalid spectral order: {order} provided. Spectral order must be 1, 2, or 3.')
+        raise ValueError(
+            f"Invalid spectral order: {order} provided. Spectral order must be 1, 2, or 3."
+        )
 
 
 def niriss_bounding_box(input_model):
-    bbox = {(order,): _niriss_order_bounding_box(input_model, order)
-            for order in [1, 2, 3]}
+    bbox = {
+        (order,): _niriss_order_bounding_box(input_model, order) for order in [1, 2, 3]
+    }
     model = input_model.meta.wcs.forward_transform
-    return CompoundBoundingBox.validate(model, bbox, slice_args=[('spectral_order', True)], order='F')
+    return CompoundBoundingBox.validate(
+        model, bbox, slice_args=[("spectral_order", True)], order="F"
+    )
 
 
 def niriss_soss(input_model, reference_files):
@@ -144,31 +159,42 @@ def niriss_soss(input_model, reference_files):
         target_dec = float(input_model.meta.target.dec)
     except TypeError:
         # There was an error getting the target RA and DEC, so we are not going to continue.
-        raise ValueError('Problem getting the TARG_RA or TARG_DEC from input model {}'.format(input_model))
+        raise ValueError(
+            "Problem getting the TARG_RA or TARG_DEC from input model {}".format(
+                input_model
+            )
+        )
 
     # Define the frames
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
-                            axes_names=('wavelength',))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS(),
-                            axes_names=('ra', 'dec'),
-                            axes_order=(0, 1), unit=(u.deg, u.deg), name='sky')
-    world = cf.CompositeFrame([sky, spec], name='world')
+    detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
+    sky = cf.CelestialFrame(
+        reference_frame=coord.ICRS(),
+        axes_names=("ra", "dec"),
+        axes_order=(0, 1),
+        unit=(u.deg, u.deg),
+        name="sky",
+    )
+    world = cf.CompositeFrame([sky, spec], name="world")
 
     try:
         # We'd like to open this file as a DataModel, so we can consolidate
         # the S3 URI handling to one place.  The S3-related code here can
         # be removed once we have a specwcs DataModel subclass.
-        if s3_utils.is_s3_uri(reference_files['specwcs']):
-            bytesio_or_path = s3_utils.get_object(reference_files['specwcs'])
+        if s3_utils.is_s3_uri(reference_files["specwcs"]):
+            bytesio_or_path = s3_utils.get_object(reference_files["specwcs"])
         else:
-            bytesio_or_path = reference_files['specwcs']
+            bytesio_or_path = reference_files["specwcs"]
         with asdf.open(bytesio_or_path) as af:
             wl1 = af.tree[1].copy()
             wl2 = af.tree[2].copy()
             wl3 = af.tree[3].copy()
     except Exception as e:
-        raise IOError(f"Error reading wavelength correction from {reference_files['specwcs']}") from e
+        raise IOError(
+            f"Error reading wavelength correction from {reference_files['specwcs']}"
+        ) from e
 
     velosys = input_model.meta.wcsinfo.velosys
     if velosys is not None:
@@ -176,19 +202,21 @@ def niriss_soss(input_model, reference_files):
         wl1 = wl1 | velocity_corr
         wl2 = wl2 | velocity_corr
         wl2 = wl3 | velocity_corr
-        log.info(f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+        log.info(
+            f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}"
+        )
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
     # Consider changing it in modeling ?
-    cm_order1 = (Mapping((0, 1, 1, 0)) |
-                 (Const1D(target_ra) & Const1D(target_dec) & wl1)
-                 ).rename('Order1')
-    cm_order2 = (Mapping((0, 1, 1, 0)) |
-                 (Const1D(target_ra) & Const1D(target_dec) & wl2)
-                 ).rename('Order2')
-    cm_order3 = (Mapping((0, 1, 1, 0)) |
-                 (Const1D(target_ra) & Const1D(target_dec) & wl3)
-                 ).rename('Order3')
+    cm_order1 = (
+        Mapping((0, 1, 1, 0)) | (Const1D(target_ra) & Const1D(target_dec) & wl1)
+    ).rename("Order1")
+    cm_order2 = (
+        Mapping((0, 1, 1, 0)) | (Const1D(target_ra) & Const1D(target_dec) & wl2)
+    ).rename("Order2")
+    cm_order3 = (
+        Mapping((0, 1, 1, 0)) | (Const1D(target_ra) & Const1D(target_dec) & wl3)
+    ).rename("Order3")
 
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
@@ -196,21 +224,21 @@ def niriss_soss(input_model, reference_files):
         cm_order2 = subarray2full | cm_order2
         cm_order3 = subarray2full | cm_order3
 
-        bbox = ((-0.5, input_model.meta.subarray.ysize - 0.5),
-                (-0.5, input_model.meta.subarray.xsize - 0.5))
+        bbox = (
+            (-0.5, input_model.meta.subarray.ysize - 0.5),
+            (-0.5, input_model.meta.subarray.xsize - 0.5),
+        )
         cm_order1.bounding_box = bbox
         cm_order2.bounding_box = bbox
         cm_order3.bounding_box = bbox
 
     # Define the transforms, they should accept (x,y) and return (ra, dec, lambda)
-    soss_model = NirissSOSSModel([1, 2, 3],
-                                 [cm_order1, cm_order2, cm_order3]
-                                 ).rename('3-order SOSS Model')
+    soss_model = NirissSOSSModel([1, 2, 3], [cm_order1, cm_order2, cm_order3]).rename(
+        "3-order SOSS Model"
+    )
 
     # Define the pipeline based on the frames and models above.
-    pipeline = [(detector, soss_model),
-                (world, None)
-                ]
+    pipeline = [(detector, soss_model), (world, None)]
 
     return pipeline
 
@@ -239,12 +267,20 @@ def imaging(input_model, reference_files):
     "detector" "v2v3" and "world".
     It uses the "distortion" reference file.
     """
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
-                      unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
-                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
-    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+    detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
+    v2v3 = cf.Frame2D(
+        name="v2v3",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    v2v3vacorr = cf.Frame2D(
+        name="v2v3vacorr",
+        axes_order=(0, 1),
+        axes_names=("v2", "v3"),
+        unit=(u.arcsec, u.arcsec),
+    )
+    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name="world")
 
     distortion = imaging_distortion(input_model, reference_files)
 
@@ -252,7 +288,7 @@ def imaging(input_model, reference_files):
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
     )
 
     subarray2full = subarray_transform(input_model)
@@ -261,15 +297,17 @@ def imaging(input_model, reference_files):
         distortion.bounding_box = bounding_box_from_subarray(input_model)
 
     tel2sky = pointing.v23tosky(input_model)
-    pipeline = [(detector, distortion),
-                (v2v3, va_corr),
-                (v2v3vacorr, tel2sky),
-                (world, None)]
+    pipeline = [
+        (detector, distortion),
+        (v2v3, va_corr),
+        (v2v3vacorr, tel2sky),
+        (world, None),
+    ]
     return pipeline
 
 
 def imaging_distortion(input_model, reference_files):
-    """ Create the transform from "detector" to "v2v3".
+    """Create the transform from "detector" to "v2v3".
 
     Parameters
     ----------
@@ -283,7 +321,7 @@ def imaging_distortion(input_model, reference_files):
     The transform model
 
     """
-    dist = DistortionModel(reference_files['distortion'])
+    dist = DistortionModel(reference_files["distortion"])
     distortion = dist.model
 
     try:
@@ -296,20 +334,20 @@ def imaging_distortion(input_model, reference_files):
     dist.close()
 
     # Add an offset for the filter
-    if reference_files['filteroffset'] is not None:
+    if reference_files["filteroffset"] is not None:
         obsfilter = input_model.meta.instrument.filter
         obspupil = input_model.meta.instrument.pupil
-        with asdf.open(reference_files['filteroffset']) as filter_offset:
-            filters = filter_offset.tree['filters']
+        with asdf.open(reference_files["filteroffset"]) as filter_offset:
+            filters = filter_offset.tree["filters"]
 
-        match_keys = {'filter': obsfilter, 'pupil': obspupil}
+        match_keys = {"filter": obsfilter, "pupil": obspupil}
         row = find_row(filters, match_keys)
         if row is not None:
-            col_offset = row.get('column_offset', 'N/A')
-            row_offset = row.get('row_offset', 'N/A')
+            col_offset = row.get("column_offset", "N/A")
+            row_offset = row.get("row_offset", "N/A")
             log.info(f"Offsets from filteroffset file are {col_offset}, {row_offset}")
 
-            if col_offset != 'N/A' and row_offset != 'N/A':
+            if col_offset != "N/A" and row_offset != "N/A":
                 distortion = Shift(col_offset) & Shift(row_offset) | distortion
         else:
             log.debug("No match in fitleroffset file.")
@@ -387,22 +425,27 @@ def wfss(input_model, reference_files):
 
     # The input is the grism image
     if not isinstance(input_model, ImageModel):
-        raise TypeError('The input data model must be an ImageModel.')
+        raise TypeError("The input data model must be an ImageModel.")
 
     # make sure this is a grism image
     if "NIS_WFSS" != input_model.meta.exposure.type:
-        raise ValueError('The input exposure is not NIRISS grism')
+        raise ValueError("The input exposure is not NIRISS grism")
 
     # Create the empty detector as a 2D coordinate frame in pixel units
-    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
-                           axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
-                            axes_names=('wavelength',))
+    gdetector = cf.Frame2D(
+        name="grism_detector",
+        axes_order=(0, 1),
+        axes_names=("x_grism", "y_grism"),
+        unit=(u.pix, u.pix),
+    )
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
     # spectral order
-    with NIRISSGrismModel(reference_files['specwcs']) as f:
+    with NIRISSGrismModel(reference_files["specwcs"]) as f:
         dispx = f.dispx
         dispy = f.dispy
         displ = f.displ
@@ -413,33 +456,40 @@ def wfss(input_model, reference_files):
     # This is the actual rotation from the input model
     fwcpos = input_model.meta.instrument.filter_position
     if fwcpos is None:
-        raise ValueError('FWCPOS keyword value not found in input image')
+        raise ValueError("FWCPOS keyword value not found in input image")
 
     # sep the row and column grism models
     # In "DMS" orientation (same parity as the sky), the GR150C spectra
     # are aligned more closely with the rows, and the GR150R spectra are
     # aligned more closely with the columns.
-    if input_model.meta.instrument.filter.endswith('C'):
-        det2det = NIRISSForwardRowGrismDispersion(orders,
-                                                  lmodels=displ,
-                                                  xmodels=dispx,
-                                                  ymodels=dispy,
-                                                  theta=fwcpos - fwcpos_ref)
-    elif input_model.meta.instrument.filter.endswith('R'):
-        det2det = NIRISSForwardColumnGrismDispersion(orders,
-                                                     lmodels=displ,
-                                                     xmodels=dispx,
-                                                     ymodels=dispy,
-                                                     theta=fwcpos - fwcpos_ref)
+    if input_model.meta.instrument.filter.endswith("C"):
+        det2det = NIRISSForwardRowGrismDispersion(
+            orders,
+            lmodels=displ,
+            xmodels=dispx,
+            ymodels=dispy,
+            theta=fwcpos - fwcpos_ref,
+        )
+    elif input_model.meta.instrument.filter.endswith("R"):
+        det2det = NIRISSForwardColumnGrismDispersion(
+            orders,
+            lmodels=displ,
+            xmodels=dispx,
+            ymodels=dispy,
+            theta=fwcpos - fwcpos_ref,
+        )
     else:
-        raise ValueError("FILTER keyword {} is not valid."
-                         .format(input_model.meta.instrument.filter))
+        raise ValueError(
+            "FILTER keyword {} is not valid.".format(input_model.meta.instrument.filter)
+        )
 
-    backward = NIRISSBackwardGrismDispersion(orders,
-                                             lmodels=invdispl,
-                                             xmodels=dispx,
-                                             ymodels=dispy,
-                                             theta=-(fwcpos - fwcpos_ref))
+    backward = NIRISSBackwardGrismDispersion(
+        orders,
+        lmodels=invdispl,
+        xmodels=dispx,
+        ymodels=dispy,
+        theta=-(fwcpos - fwcpos_ref),
+    )
     det2det.inverse = backward
 
     # Add in the wavelength shift from the velocity dispersion
@@ -449,8 +499,14 @@ def wfss(input_model, reference_files):
         pass
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
-        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        log.info(
+            "Added Barycentric velocity correction: {}".format(
+                velocity_corr[1].amplitude.value
+            )
+        )
+        det2det = (
+            det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        )
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
@@ -474,26 +530,27 @@ def wfss(input_model, reference_files):
 
     imagepipe = []
     world = image_pipeline.pop()[0]
-    world.name = 'sky'
+    world.name = "sky"
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
         name = cframe.name
-        cframe.name = name + 'spatial'
+        cframe.name = name + "spatial"
         spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)
         imagepipe.append((spatial_and_spectral, trans))
-    imagepipe.append((cf.CompositeFrame([world, spec], name='world'), None))
+    imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
     grism_pipeline.extend(imagepipe)
 
     return grism_pipeline
 
 
-exp_type2transform = {'nis_image': imaging,
-                      'nis_wfss': wfss,
-                      'nis_soss': niriss_soss,
-                      'nis_ami': imaging,
-                      'nis_tacq': imaging,
-                      'nis_taconfirm': imaging,
-                      'nis_focus': imaging,
-                      'nis_dark': not_implemented_mode,
-                      'nis_lamp': not_implemented_mode,
-                      }
+exp_type2transform = {
+    "nis_image": imaging,
+    "nis_wfss": wfss,
+    "nis_soss": niriss_soss,
+    "nis_ami": imaging,
+    "nis_tacq": imaging,
+    "nis_taconfirm": imaging,
+    "nis_focus": imaging,
+    "nis_dark": not_implemented_mode,
+    "nis_lamp": not_implemented_mode,
+}

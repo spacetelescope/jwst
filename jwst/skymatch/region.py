@@ -20,9 +20,9 @@ Polygon filling algorithm.
 from collections import OrderedDict
 import numpy as np
 
-__all__ = ['Region', 'Edge', 'Polygon']
-__taskname__ = 'region'
-__author__ = 'Nadezhda Dencheva, Mihai Cara'
+__all__ = ["Region", "Edge", "Polygon"]
+__taskname__ = "region"
+__author__ = "Nadezhda Dencheva, Mihai Cara"
 
 
 class ValidationError(Exception):
@@ -33,7 +33,7 @@ class ValidationError(Exception):
         return self._message
 
 
-class Region():
+class Region:
     """
     Base class for regions.
 
@@ -103,8 +103,9 @@ class Polygon(Region):
     """
 
     def __init__(self, rid, vertices, coord_system="Cartesian"):
-        assert len(vertices) >= 4, ("Expected vertices to be "
-                                    "a list of minimum 4 tuples (x,y)")
+        assert len(vertices) >= 4, (
+            "Expected vertices to be " "a list of minimum 4 tuples (x,y)"
+        )
         super(Polygon, self).__init__(rid, coord_system)
 
         # self._shiftx & self._shifty are introduced to shift the bottom-left
@@ -129,8 +130,9 @@ class Polygon(Region):
         self._shifty = int(round(self._shifty))
 
         self._bbox = self._get_bounding_box()
-        self._scan_line_range = \
-            list(range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1))
+        self._scan_line_range = list(
+            range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1)
+        )
         # constructs a Global Edge Table (GET) in bbox coordinates
         self._GET = self._construct_ordered_GET()
 
@@ -164,7 +166,7 @@ class Polygon(Region):
             ymin_ind = (ymin == i).nonzero()[0]
             # a hack for incomplete filling .any() fails if 0 is in ymin_ind
             # if ymin_ind.any():
-            yminindlen, = ymin_ind.shape
+            (yminindlen,) = ymin_ind.shape
             if yminindlen:
                 GET[i] = [edges[ymin_ind[0]]]
                 for j in ymin_ind[1:]:
@@ -177,8 +179,10 @@ class Polygon(Region):
         """
         edges = []
         for i in range(1, len(self._vertices)):
-            name = 'E' + str(i - 1)
-            edges.append(Edge(name=name, start=self._vertices[i - 1], stop=self._vertices[i]))
+            name = "E" + str(i - 1)
+            edges.append(
+                Edge(name=name, start=self._vertices[i - 1], stop=self._vertices[i])
+            )
         return edges
 
     def scan(self, data):
@@ -230,9 +234,16 @@ class Polygon(Region):
                 y += 1
                 continue
 
-            scan_line = Edge('scan_line', start=[self._bbox[0], y],
-                             stop=[self._bbox[0] + self._bbox[2], y])
-            x = [int(np.ceil(e.compute_AET_entry(scan_line)[1])) for e in AET if e is not None]
+            scan_line = Edge(
+                "scan_line",
+                start=[self._bbox[0], y],
+                stop=[self._bbox[0] + self._bbox[2], y],
+            )
+            x = [
+                int(np.ceil(e.compute_AET_entry(scan_line)[1]))
+                for e in AET
+                if e is not None
+            ]
             xnew = np.sort(x)
             ysh = y + self._shifty
 
@@ -243,7 +254,7 @@ class Polygon(Region):
             for i, j in zip(xnew[::2], xnew[1::2]):
                 xstart = max(0, i + self._shiftx)
                 xend = min(j + self._shiftx, nx - 1)
-                data[ysh][xstart:xend + 1] = self._rid
+                data[ysh][xstart : xend + 1] = self._rid
 
             y += 1
 
@@ -276,11 +287,15 @@ class Polygon(Region):
         # maxx = self._vertices[:,0].max()
         # miny = self._vertices[:,1].min()
         # maxy = self._vertices[:,1].max()
-        return px[0] >= self._bbox[0] and px[0] <= self._bbox[0] + self._bbox[2] and \
-            px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
+        return (
+            px[0] >= self._bbox[0]
+            and px[0] <= self._bbox[0] + self._bbox[2]
+            and px[1] >= self._bbox[1]
+            and px[1] <= self._bbox[1] + self._bbox[3]
+        )
 
 
-class Edge():
+class Edge:
     """
     Edge representation
 
@@ -349,7 +364,12 @@ class Edge():
             if np.diff(earr[:, 1]).item() == 0:
                 return None
             else:
-                entry = [self._ymax, self._yminx, (np.diff(earr[:, 0]) / np.diff(earr[:, 1])).item(), None]
+                entry = [
+                    self._ymax,
+                    self._yminx,
+                    (np.diff(earr[:, 0]) / np.diff(earr[:, 1])).item(),
+                    None,
+                ]
         return entry
 
     def compute_AET_entry(self, edge):
@@ -393,8 +413,7 @@ class Edge():
         w = self._start - edge._start
         D = np.cross(u, v)
 
-        if np.allclose(np.cross(u, v), 0, rtol=0,
-                       atol=1e2 * np.finfo(float).eps):
+        if np.allclose(np.cross(u, v), 0, rtol=0, atol=1e2 * np.finfo(float).eps):
             return np.array(self._start)
 
         return np.cross(v, w) / D * u + self._start
@@ -402,8 +421,7 @@ class Edge():
     def is_parallel(self, edge):
         u = self._stop - self._start
         v = edge._stop - edge._start
-        return np.allclose(np.cross(u, v), 0, rtol=0,
-                           atol=1e2 * np.finfo(float).eps)
+        return np.allclose(np.cross(u, v), 0, rtol=0, atol=1e2 * np.finfo(float).eps)
 
 
 def _round_vertex(v):

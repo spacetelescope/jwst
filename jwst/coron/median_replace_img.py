@@ -44,12 +44,12 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     # Extract the region of interest for the data
     try:
-        data_array = input_array[xc - hbox:xc + hbox + 1, yc - hbox: yc + hbox + 1]
-        dq_array = input_dq_array[xc - hbox:xc + hbox + 1, yc - hbox: yc + hbox + 1]
+        data_array = input_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
+        dq_array = input_dq_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
     except IndexError:
         # If the box is outside the data return 0
-        log.warning('Box for median filter is outside the data.')
-        return 0.
+        log.warning("Box for median filter is outside the data.")
+        return 0.0
 
     # Calculate the median value using only good pixels
     filtered_array = data_array[np.bitwise_and(dq_array, bad_bitvalue) == 0]
@@ -57,8 +57,8 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     if np.isnan(median_value):
         # If the median fails return 0
-        log.debug('Median filter returned NaN; setting value to 0.')
-        median_value = 0.
+        log.debug("Median filter returned NaN; setting value to 0.")
+        median_value = 0.0
 
     return median_value
 
@@ -92,13 +92,17 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
         # Bad locations are defined as pixels set to NaN and/or pixels with
         # DQ flags contained in the list of bad dq bits
-        bad_locations = np.where(np.bitwise_and(img_dq, bad_bitvalue) | np.isnan(img_int))
+        bad_locations = np.where(
+            np.bitwise_and(img_dq, bad_bitvalue) | np.isnan(img_int)
+        )
 
         # If it's MIRI coronagraphy, only use the bad locations that are in the
         # science aperture (i.e. not flagged as NON_SCIENCE). Set the others to 0
         # directly to avoid thousands of logging warnings.
-        if img_model.meta.instrument.name == 'MIRI':
-            bad_locations, non_science = separate_non_science_pixels(img_dq, bad_locations)
+        if img_model.meta.instrument.name == "MIRI":
+            bad_locations, non_science = separate_non_science_pixels(
+                img_dq, bad_locations
+            )
             # skip the median filter for non-science pixels
             img_int[non_science[0], non_science[1]] = 0
 
@@ -108,8 +112,9 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
             # consistent with their usage here so it's all OK
             x_box_pos = bad_locations[0][i_pos]
             y_box_pos = bad_locations[1][i_pos]
-            median_fill = median_fill_value(img_int, img_dq, box_size,
-                                            bad_bitvalue, x_box_pos, y_box_pos)
+            median_fill = median_fill_value(
+                img_int, img_dq, box_size, bad_bitvalue, x_box_pos, y_box_pos
+            )
             img_int[x_box_pos, y_box_pos] = median_fill
 
         img_model.data[nimage] = img_int
@@ -144,7 +149,7 @@ def separate_non_science_pixels(img_dq, bad_locations):
         # return True if pixel is for science, False if flagged NON_SCIENCE
         val = img_dq[pix[0], pix[1]]
         # check for the NON_SCIENCE flag
-        flagged = np.bitwise_and(val, dqflags.pixel['NON_SCIENCE'])
+        flagged = np.bitwise_and(val, dqflags.pixel["NON_SCIENCE"])
         # if `flagged` is 0, it's a science pixel so return True.
         science_pixel = ~flagged.any()
         return science_pixel

@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['ImageModel']
+__all__ = ["ImageModel"]
 
 
 class ImageModel(JwstDataModel):
@@ -37,4 +37,5 @@ class ImageModel(JwstDataModel):
     pathloss_uniform : numpy float32 array
          Pathloss correction for uniform source
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/image.schema"

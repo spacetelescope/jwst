@@ -9,7 +9,7 @@ from ..resample import resample_step
 from ..outlier_detection import outlier_detection_step
 from ..source_catalog import source_catalog_step
 
-__all__ = ['Image3Pipeline']
+__all__ = ["Image3Pipeline"]
 
 
 class Image3Pipeline(Pipeline):
@@ -33,12 +33,12 @@ class Image3Pipeline(Pipeline):
 
     # Define alias to steps
     step_defs = {
-        'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
-        'tweakreg': tweakreg_step.TweakRegStep,
-        'skymatch': skymatch_step.SkyMatchStep,
-        'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-        'resample': resample_step.ResampleStep,
-        'source_catalog': source_catalog_step.SourceCatalogStep
+        "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
+        "tweakreg": tweakreg_step.TweakRegStep,
+        "skymatch": skymatch_step.SkyMatchStep,
+        "outlier_detection": outlier_detection_step.OutlierDetectionStep,
+        "resample": resample_step.ResampleStep,
+        "source_catalog": source_catalog_step.SourceCatalogStep,
     }
 
     def process(self, input_data):
@@ -50,17 +50,17 @@ class Image3Pipeline(Pipeline):
         input_data: Level3 Association, or ~jwst.datamodels.ModelContainer
             The exposures to process
         """
-        self.log.info('Starting calwebb_image3 ...')
+        self.log.info("Starting calwebb_image3 ...")
 
         # Only load science members from input ASN;
         # background and target-acq members are not needed.
-        asn_exptypes = ['science']
+        asn_exptypes = ["science"]
 
         # Configure settings for saving results files
-        self.outlier_detection.suffix = 'crf'
+        self.outlier_detection.suffix = "crf"
         self.outlier_detection.save_results = self.save_results
 
-        self.resample.suffix = 'i2d'
+        self.resample.suffix = "i2d"
         self.resample.save_results = self.save_results
 
         self.source_catalog.save_results = self.save_results
@@ -88,13 +88,18 @@ class Image3Pipeline(Pipeline):
                 input_models = self.skymatch(input_models)
                 input_models = self.outlier_detection(input_models)
 
-            elif self.skymatch.skymethod == 'match':
-                self.log.warning("Turning 'skymatch' step off for a single "
-                                 "input image when 'skymethod' is 'match'")
+            elif self.skymatch.skymethod == "match":
+                self.log.warning(
+                    "Turning 'skymatch' step off for a single "
+                    "input image when 'skymethod' is 'match'"
+                )
 
             else:
                 input_models = self.skymatch(input_models)
 
             result = self.resample(input_models)
-            if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
+            if (
+                isinstance(result, datamodels.ImageModel)
+                and result.meta.cal_step.resample == "COMPLETE"
+            ):
                 self.source_catalog(result)

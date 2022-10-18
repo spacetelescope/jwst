@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['ThroughputModel']
+__all__ = ["ThroughputModel"]
 
 
 class ThroughputModel(ReferenceFileModel):
@@ -13,4 +13,5 @@ class ThroughputModel(ReferenceFileModel):
     filter_table : numpy table
          Filter throughput table
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/throughput.schema"

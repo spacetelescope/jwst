@@ -7,6 +7,7 @@ from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -48,7 +49,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     bkg_model = average_background(bkg_list, sigma, maxiters)
 
     # Subtract the average background from the member
-    log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
+    log.debug(" subtracting avg bkg from {}".format(input_model.meta.filename))
 
     result = subtract_images.subtract(input_model, bkg_model)
 
@@ -95,7 +96,7 @@ def average_background(bkg_list, sigma, maxiters):
 
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
-        log.info(f'Accumulate bkg from {bkg_file}')
+        log.info(f"Accumulate bkg from {bkg_file}")
         bkg_model = datamodels.open(bkg_file)
 
         if bkg_dim == 2:
@@ -108,8 +109,12 @@ def average_background(bkg_list, sigma, maxiters):
 
         if bkg_dim == 3:
             # Sigma clip the bkg model's data and err along the integration axis
-            sc_bkg_data = sigma_clip(bkg_model.data, sigma=sigma, maxiters=maxiters, axis=0)
-            sc_bkg_err = sigma_clip(bkg_model.err * bkg_model.err, sigma=sigma, maxiters=maxiters, axis=0)
+            sc_bkg_data = sigma_clip(
+                bkg_model.data, sigma=sigma, maxiters=maxiters, axis=0
+            )
+            sc_bkg_err = sigma_clip(
+                bkg_model.err * bkg_model.err, sigma=sigma, maxiters=maxiters, axis=0
+            )
 
             # Accumulate the integ-averaged clipped data and err for the file
             cdata[i] = sc_bkg_data.mean(axis=0)
@@ -123,7 +128,7 @@ def average_background(bkg_list, sigma, maxiters):
             bkg_model.close()
 
     # Clip the background data
-    log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
+    log.debug("clip with sigma={} maxiters={}".format(sigma, maxiters))
     mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
     # Compute the mean of the non-clipped values
@@ -186,23 +191,27 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
     # Exclude pixel values in the lower and upper 25% of the histogram.
-    lowlim = 25.
-    highlim = 75.
-    sci_mean = robust_mean(input_model.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
-    bkg_mean = robust_mean(bkg_ref.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
+    lowlim = 25.0
+    highlim = 75.0
+    sci_mean = robust_mean(input_model.data[bkg_mask], lowlim=lowlim, highlim=highlim)
+    bkg_mean = robust_mean(bkg_ref.data[bkg_mask], lowlim=lowlim, highlim=highlim)
 
-    log.debug("mean of [{}, {}] percentile grism image = {}"
-              .format(lowlim, highlim, sci_mean))
-    log.debug("mean of [{}, {}] percentile background image = {}"
-              .format(lowlim, highlim, bkg_mean))
+    log.debug(
+        "mean of [{}, {}] percentile grism image = {}".format(lowlim, highlim, sci_mean)
+    )
+    log.debug(
+        "mean of [{}, {}] percentile background image = {}".format(
+            lowlim, highlim, bkg_mean
+        )
+    )
 
     result = input_model.copy()
-    if bkg_mean != 0.:
+    if bkg_mean != 0.0:
         subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
         result.data = input_model.data - subtract_this
-        log.info(f"Average of background image subtracted = {subtract_this.mean(dtype=float)}")
+        log.info(
+            f"Average of background image subtracted = {subtract_this.mean(dtype=float)}"
+        )
     else:
         log.warning("Background image has zero mean; nothing will be subtracted.")
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
@@ -212,7 +221,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     return result
 
 
-def no_NaN(model, fill_value=0.):
+def no_NaN(model, fill_value=0.0):
     """Replace NaNs with a harmless value.
 
     Parameters
@@ -271,7 +280,7 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
         for order in order_bounding.keys():
             ((ymin, ymax), (xmin, xmax)) = order_bounding[order]
             xmin = int(math.floor(xmin))
-            xmax = int(math.ceil(xmax)) + 1     # convert to slice limit
+            xmax = int(math.ceil(xmax)) + 1  # convert to slice limit
             ymin = int(math.floor(ymin))
             ymax = int(math.ceil(ymax)) + 1
             xmin = max(xmin, 0)
@@ -283,7 +292,7 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     return bkg_mask
 
 
-def robust_mean(x, lowlim=25., highlim=75.):
+def robust_mean(x, lowlim=25.0, highlim=75.0):
     """Compute a mean value, excluding outliers.
 
     Parameters

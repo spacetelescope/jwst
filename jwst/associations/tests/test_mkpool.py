@@ -12,21 +12,20 @@ from jwst.associations import AssociationPool
 from jwst.associations.mkpool import from_cmdline, mkpool
 
 # Optional column settings
-OPT_COLS = [('asn_candidate', [('a3001', 'coron')]),
-            ('dms_note', 'a note from dms'),
-            ('is_imprt', 't'),
-            ('is_psf', 't'),
-            ('pntgtype', 'target_acquisition')]
+OPT_COLS = [
+    ("asn_candidate", [("a3001", "coron")]),
+    ("dms_note", "a note from dms"),
+    ("is_imprt", "t"),
+    ("is_psf", "t"),
+    ("pntgtype", "target_acquisition"),
+]
 
 # Required column names
-REQUIRED_PARAMS = set(('program', 'filename'))
+REQUIRED_PARAMS = set(("program", "filename"))
 
 
 def test_hdu(exposures):
-    hdus = [
-        fits.open(exposure)[0]
-        for exposure in exposures
-    ]
+    hdus = [fits.open(exposure)[0] for exposure in exposures]
     pool = mkpool(hdus)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
@@ -34,10 +33,7 @@ def test_hdu(exposures):
 
 
 def test_hdulist(exposures):
-    hduls = [
-        fits.open(exposure)
-        for exposure in exposures
-    ]
+    hduls = [fits.open(exposure) for exposure in exposures]
     pool = mkpool(hduls)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
@@ -49,20 +45,17 @@ def test_mkpool(exposures):
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
-    filenames = [
-        filename
-        for filename in pool['filename']
-    ]
+    filenames = [filename for filename in pool["filename"]]
     assert set(exposures) == set(filenames)
 
 
-@pytest.mark.parametrize('opt_cols', OPT_COLS)
+@pytest.mark.parametrize("opt_cols", OPT_COLS)
 def test_opt_cols(mkpool_with_args, opt_cols):
     """Ensure that optional arguments are properly used"""
     _test_opt_cols(mkpool_with_args, opt_cols)
 
 
-@pytest.mark.parametrize('opt_cols', OPT_COLS)
+@pytest.mark.parametrize("opt_cols", OPT_COLS)
 def test_opt_cols_cmdline(mkpool_cmdline, opt_cols):
     """Ensure that the command line with optional arguments are properly used"""
     _test_opt_cols(mkpool_cmdline, opt_cols)
@@ -71,22 +64,20 @@ def test_opt_cols_cmdline(mkpool_cmdline, opt_cols):
 # ####################
 # Fixtures & Utilities
 # ####################
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def exposures():
-    exposure_path = helpers.t_path(
-        'data/exposures'
-    )
-    exposures = glob(os.path.join(exposure_path, '*.fits'))
+    exposure_path = helpers.t_path("data/exposures")
+    exposures = glob(os.path.join(exposure_path, "*.fits"))
     return exposures
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def mkpool_cmdline(exposures):
     """Create a pool with optional arguments from the commandline"""
-    args = ['pool.csv']
+    args = ["pool.csv"]
     for column, value in OPT_COLS:
         args.append(f'--{column.replace("_", "-")}')
-        args.append(f'{value}')
+        args.append(f"{value}")
     for exposure in exposures:
         args.append(exposure)
 
@@ -95,7 +86,7 @@ def mkpool_cmdline(exposures):
     return pool
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def mkpool_with_args(exposures):
     """Create a pool with all optional arguments specified"""
     kargs = {column: value for column, value in OPT_COLS}
@@ -107,6 +98,6 @@ def mkpool_with_args(exposures):
 def _test_opt_cols(mkpool_with_args, opt_cols):
     """Ensure that optional arguments are properly used"""
     column, expected = opt_cols
-    if column == 'asn_candidate':
-        expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
+    if column == "asn_candidate":
+        expected = "[" + str(("o001", "observation")) + ", " + str(expected)[1:]
     assert mkpool_with_args[0][column] == expected

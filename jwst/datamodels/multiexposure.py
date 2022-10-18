@@ -8,7 +8,7 @@ from .image import ImageModel
 from .slit import SlitModel, SlitDataModel
 
 
-__all__ = ['MultiExposureModel']
+__all__ = ["MultiExposureModel"]
 
 
 class MultiExposureModel(JwstDataModel):
@@ -44,8 +44,9 @@ class MultiExposureModel(JwstDataModel):
 
     exposures.items.area : numpy float32 array
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/multiexposure.schema"
-    core_schema_url = 'http://stsci.edu/schemas/jwst_datamodel/core.schema'
+    core_schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
     def __init__(self, init=None, **kwargs):
 
@@ -53,11 +54,7 @@ class MultiExposureModel(JwstDataModel):
         schema = self._build_schema()
 
         if isinstance(init, (SlitModel, SlitDataModel, ImageModel)):
-            super(MultiExposureModel, self).__init__(
-                init=None,
-                schema=schema,
-                **kwargs
-            )
+            super(MultiExposureModel, self).__init__(init=None, schema=schema, **kwargs)
             self.update(init)
             self.exposures.append(self.exposures.item())
             self.exposures[0].data = init.data
@@ -77,34 +74,26 @@ class MultiExposureModel(JwstDataModel):
             self.exposures[0].area = init.area
             return
 
-        super(MultiExposureModel, self).__init__(
-            init=init,
-            schema=schema,
-            **kwargs
-        )
+        super(MultiExposureModel, self).__init__(init=init, schema=schema, **kwargs)
 
     def _build_schema(self):
         """Build the schema, incorporating the core."""
         # Get the schemas
         schema = asdf_schema.load_schema(
-            self.schema_url,
-            resolver=AsdfFile().resolver,
-            resolve_references=True
+            self.schema_url, resolver=AsdfFile().resolver, resolve_references=True
         )
         core_schema = asdf_schema.load_schema(
-            self.core_schema_url,
-            resolver=AsdfFile().resolver,
-            resolve_references=True
+            self.core_schema_url, resolver=AsdfFile().resolver, resolve_references=True
         )
 
         # Create a new core.meta that will co-locate
         # with each exposure entry. This is done
         # by saving the meta information in a separate
         # FITS HDU.
-        core_meta_schema = deepcopy(core_schema['properties']['meta'])
+        core_meta_schema = deepcopy(core_schema["properties"]["meta"])
         treeutil.walk(core_meta_schema, remove_fits)
-        exposure_schema = schema['allOf'][1]['properties']['exposures']['items']
-        exposure_meta_schema = exposure_schema['allOf'][1]['properties']['meta']
+        exposure_schema = schema["allOf"][1]["properties"]["exposures"]["items"]
+        exposure_meta_schema = exposure_schema["allOf"][1]["properties"]["meta"]
         exposure_meta_schema.update(core_meta_schema)
 
         # That's all folks
@@ -112,21 +101,21 @@ class MultiExposureModel(JwstDataModel):
 
 
 # Utilities
-def set_hdu(obj, hdu_id='EXP'):
+def set_hdu(obj, hdu_id="EXP"):
     """Add fits_hdu specification to fits-connected properties"""
     try:
-        if 'fits_keyword' in obj.keys():
-            obj['fits_hdu'] = hdu_id
+        if "fits_keyword" in obj.keys():
+            obj["fits_hdu"] = hdu_id
     except AttributeError:
         pass
 
 
 def remove_fits(obj):
     try:
-        obj.pop('fits_keyword', None)
+        obj.pop("fits_keyword", None)
     except (AttributeError, KeyError, TypeError):
         pass
     try:
-        obj.pop('fits_hdu', None)
+        obj.pop("fits_hdu", None)
     except (AttributeError, KeyError, TypeError):
         pass

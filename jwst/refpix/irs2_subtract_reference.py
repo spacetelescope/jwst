@@ -7,8 +7,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_model(input_model, irs2_model,
-                  scipix_n_default=16, refpix_r_default=4, pad=8):
+def correct_model(
+    input_model, irs2_model, scipix_n_default=16, refpix_r_default=4, pad=8
+):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
@@ -69,7 +70,7 @@ def correct_model(input_model, irs2_model,
     # Only copy in SCI data array for now; that's all we need. The rest
     # of the input model will be copied to output at the end of the step.
     data = input_model.data.copy()
-    input_model.meta.cal_step.refpix = 'not specified yet'
+    input_model.meta.cal_step.refpix = "not specified yet"
 
     # Load the reference file data.
     # The reference file data are complex, but they're stored as float, with
@@ -79,9 +80,11 @@ def correct_model(input_model, irs2_model,
     nrows = len(irs2_model.irs2_table.field("alpha_0"))
     expected_nrows = 2 * 712 * 2048
     if nrows != expected_nrows:
-        log.error("Number of rows in reference file = {},"
-                  " but it should be {}.".format(nrows, expected_nrows))
-        input_model.meta.cal_step.refpix = 'SKIPPED'
+        log.error(
+            "Number of rows in reference file = {},"
+            " but it should be {}.".format(nrows, expected_nrows)
+        )
+        input_model.meta.cal_step.refpix = "SKIPPED"
         return input_model
     alpha = np.ones((4, nrows // 2), dtype=np.complex64)
     beta = np.zeros((4, nrows // 2), dtype=np.complex64)
@@ -98,14 +101,16 @@ def correct_model(input_model, irs2_model,
 
     scipix_n = input_model.meta.exposure.nrs_normal
     if scipix_n is None:
-        log.warning("Keyword NRS_NORM not found; using default value %d" %
-                    scipix_n_default)
+        log.warning(
+            "Keyword NRS_NORM not found; using default value %d" % scipix_n_default
+        )
         scipix_n = scipix_n_default
 
     refpix_r = input_model.meta.exposure.nrs_reference
     if refpix_r is None:
-        log.warning("Keyword NRS_REF not found; using default value %d" %
-                    refpix_r_default)
+        log.warning(
+            "Keyword NRS_REF not found; using default value %d" % refpix_r_default
+        )
         refpix_r = refpix_r_default
 
     # Convert from sky (DMS) orientation to detector orientation.
@@ -115,12 +120,13 @@ def correct_model(input_model, irs2_model,
     elif detector == "NRS2":
         data = np.swapaxes(data, 2, 3)[:, :, ::-1, ::-1]
     else:
-        log.warning("Detector '%s'; not changing orientation (sky vs detector)"
-                    % detector)
+        log.warning(
+            "Detector '%s'; not changing orientation (sky vs detector)" % detector
+        )
 
-    n_int = data.shape[0]               # number of integrations in file
-    ny = data.shape[-2]                 # 2048
-    nx = data.shape[-1]                 # 3200
+    n_int = data.shape[0]  # number of integrations in file
+    ny = data.shape[-2]  # 2048
+    nx = data.shape[-1]  # 3200
 
     # Create a mask that indicates the locations of normal vs interspersed
     # reference pixels. True flags normal pixels, False is reference pixels.
@@ -128,7 +134,7 @@ def correct_model(input_model, irs2_model,
 
     # If the IRS2 reference file includes data quality info, use that to
     # set bad reference pixel values to zero.
-    if hasattr(irs2_model, 'dq_table') and len(irs2_model.dq_table) > 0:
+    if hasattr(irs2_model, "dq_table") and len(irs2_model.dq_table) > 0:
         output = irs2_model.dq_table.field("output")
         odd_even = irs2_model.dq_table.field("odd_even")
         mask = irs2_model.dq_table.field("mask")
@@ -140,24 +146,26 @@ def correct_model(input_model, irs2_model,
 
     # Compute and apply the correction to one integration at a time
     for integ in range(n_int):
-        log.info(f'Working on integration {integ+1}')
+        log.info(f"Working on integration {integ+1}")
 
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
         # Y axis.  This is the reason for the slice `nx-ny:` that is used
         # below.  The last axis of output_model.data should be 2048.
         data0 = data[integ, :, :, :]
-        data0 = subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad)
-        data[integ, :, :, nx - ny:] = data0
+        data0 = subtract_reference(
+            data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad
+        )
+        data[integ, :, :, nx - ny :] = data0
 
     # Convert corrected data back to sky orientation
     output_model = input_model.copy()
-    temp_data = data[:, :, :, nx - ny:]
+    temp_data = data[:, :, :, nx - ny :]
     if detector == "NRS1":
         output_model.data = np.swapaxes(temp_data, 2, 3)
     elif detector == "NRS2":
         output_model.data = np.swapaxes(temp_data[:, :, ::-1, ::-1], 2, 3)
-    else:                       # don't change orientation
+    else:  # don't change orientation
         output_model.data = temp_data
 
     # Strip interleaved ref pixels from the PIXELDQ, GROUPDQ, and ERR extensions.
@@ -194,24 +202,22 @@ def make_irs2_mask(nx, ny, scipix_n, refpix_r):
     # locations regardless of readout direction.
     if stuff_at_end == scipix_n // 2:
         # Yes, they are in the same locations.
-        for i in range(refout + scipix_n // 2, irs2_nx + 1,
-                       scipix_n + refpix_r):
-            irs2_mask[i:i + refpix_r] = False
+        for i in range(refout + scipix_n // 2, irs2_nx + 1, scipix_n + refpix_r):
+            irs2_mask[i : i + refpix_r] = False
     else:
         # Set the flags for each readout direction separately.
-        nelem = refout                  # number of elements per output
+        nelem = refout  # number of elements per output
         temp = np.ones(nelem, dtype=bool)
-        for i in range(scipix_n // 2, nelem + 1,
-                       scipix_n + refpix_r):
-            temp[i:i + refpix_r] = False
+        for i in range(scipix_n // 2, nelem + 1, scipix_n + refpix_r):
+            temp[i : i + refpix_r] = False
         j = refout
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j += nelem
-        irs2_mask[j:j + nelem] = temp[::-1].copy()
+        irs2_mask[j : j + nelem] = temp[::-1].copy()
         j += nelem
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j += nelem
-        irs2_mask[j:j + nelem] = temp[::-1].copy()
+        irs2_mask[j : j + nelem] = temp[::-1].copy()
 
     return irs2_mask
 
@@ -318,28 +324,34 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
         regular samples.
     """
 
-    nx = data.shape[-1]                 # 3200
+    nx = data.shape[-1]  # 3200
     nrows = len(output)
 
     for row in range(nrows):
         # `offset` is the offset in pixels from the beginning of the row
         # to the start of the current amp output.  `offset` starts with
         # 640 in order to skip over the reference output.
-        offset = output[row] * (nx // 5)                # nx // 5 is 640
+        offset = output[row] * (nx // 5)  # nx // 5 is 640
         # The readout direction alternates from one amp output to the next.
         if output[row] // 2 * 2 == output[row]:
-            odd_even_row = 3 - odd_even[row]            # 1 --> 2;  2 --> 1
+            odd_even_row = 3 - odd_even[row]  # 1 --> 2;  2 --> 1
         else:
             odd_even_row = odd_even[row]
         bits = decode_mask(output[row], mask[row])
-        log.debug("output {}  odd_even {}  mask {}  DQ bits {}"
-                  .format(output[row], odd_even[row], mask[row], bits))
+        log.debug(
+            "output {}  odd_even {}  mask {}  DQ bits {}".format(
+                output[row], odd_even[row], mask[row], bits
+            )
+        )
         for k in bits:
-            ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
-                   2 * (odd_even_row - 1))
-            log.debug("bad interleaved reference at pixels {} {}"
-                      .format(ref, ref + 1))
-            data[..., ref:ref + 2] = 0.
+            ref = (
+                offset
+                + scipix_n // 2
+                + k * (scipix_n + refpix_r)
+                + 2 * (odd_even_row - 1)
+            )
+            log.debug("bad interleaved reference at pixels {} {}".format(ref, ref + 1))
+            data[..., ref : ref + 2] = 0.0
 
 
 def decode_mask(output, mask):
@@ -521,7 +533,9 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
 
     # Fill in bad pixels, gaps, and reference data locations in the normal
     # data, using Fourier filtering/interpolation
-    fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1)
+    fill_bad_regions(
+        data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1
+    )
 
     # Setup various lists of indices that will be used in subsequent
     # sections for keeping/shuffling reference pixels in various arrays
@@ -529,13 +543,13 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     # The comments are for scipix_n = 16, refpix_r = 4
     n0 = 512 // scipix_n
     n1 = scipix_n + refpix_r + 2
-    ht = np.arange(n0 * n1, dtype=np.int32).reshape((n0, n1))   # (32, 22)
-    ht[:, 0:(scipix_n - refpix_r) // 2 + 1] = -1
-    ht[:, scipix_n // 2 + 1 + 3 * refpix_r // 2:] = -1
+    ht = np.arange(n0 * n1, dtype=np.int32).reshape((n0, n1))  # (32, 22)
+    ht[:, 0 : (scipix_n - refpix_r) // 2 + 1] = -1
+    ht[:, scipix_n // 2 + 1 + 3 * refpix_r // 2 :] = -1
     hs = ht.copy()
     # ht is like href1, but extended over gaps and first and last norm pix
-    mask = (ht >= 0)
-    ht = ht[mask]               # 1-D, length = 2 * refpix_r * 512 / scipix_n
+    mask = ht >= 0
+    ht = ht[mask]  # 1-D, length = 2 * refpix_r * 512 / scipix_n
 
     # IDL:  hs[scipix_n/2 + 1-refpix_r/2:scipix_n/2 + refpix_r + refpix_r/2,*] =
     #       hs[reform([transpose(reform(indgen(refpix_r),refpix_r/2,2)),
@@ -553,11 +567,18 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     #  [1 3 1 3]]
     # After flattening, two_indr_t = [0 2 0 2 1 3 1 3].
     two_indr_t = np.concatenate((indr_t, indr_t), axis=1).flatten()
-    two_indr_t += (scipix_n // 2 + 1)     # [9 11 9 11 10 12 10 12]
-    hs[:, scipix_n // 2 + 1 - refpix_r // 2:
-       scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
-    mask = (hs >= 0)
-    hs = hs[mask]    # hs is now 1-D
+    two_indr_t += scipix_n // 2 + 1  # [9 11 9 11 10 12 10 12]
+    hs[
+        :,
+        scipix_n // 2
+        + 1
+        - refpix_r // 2 : scipix_n // 2
+        + 1
+        + refpix_r // 2
+        + refpix_r,
+    ] = hs[:, two_indr_t]
+    mask = hs >= 0
+    hs = hs[mask]  # hs is now 1-D
 
     if refpix_r % 4 == 2:
         len_hs = len(hs)
@@ -571,7 +592,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     # the corrections are subtracted from each sector independently.
     shape_d = data0.shape
     for k in range(1, 5):
-        log.debug(f'processing sector {k}')
+        log.debug(f"processing sector {k}")
 
         # At this point in the processing data0 has shape (5, ngroups, 2048, 712),
         # assuming normal IRS2 readout settings. r0k contains a subset of the
@@ -618,7 +639,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
         # IDL:  for k=0,3 do oBridge[k]->Execute,
         #           "for i=0, s3-1 do r0[*,i] += beta * refout0[*,i]"
         if beta is not None:
-            r0k_fft += (alpha[k - 1] * refout0)
+            r0k_fft += alpha[k - 1] * refout0
         del refout0
 
         # IDL:  for k=0,3 do oBridge[k]->Execute,
@@ -680,9 +701,9 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm
 
     mm = np.zeros((ny, row), dtype=np.int8)
     mm[:, hnorm1] = mask0[:, hnorm]
-    hm = (mm != 0)                      # 2-D boolean mask
+    hm = mm != 0  # 2-D boolean mask
     for j in range(ngroups):
-        dd = dd0[j, :, :].copy()        # make a copy, not a view
+        dd = dd0[j, :, :].copy()  # make a copy, not a view
         p = dd.flatten()
         for it in range(n_iter_norm):
             pp = np.fft.fft(p)
@@ -698,7 +719,7 @@ def ols_line(x, y):
     xf = x.ravel()
     yf = y.ravel()
     if len(xf) < 1 or len(yf) < 1:
-        return 0., 0.
+        return 0.0, 0.0
 
     groups = float(len(xf))
     mean_x = xf.mean()
@@ -706,8 +727,7 @@ def ols_line(x, y):
     sum_x2 = (xf**2).sum()
     sum_xy = (xf * yf).sum()
 
-    slope = (sum_xy - groups * mean_x * mean_y) / \
-            (sum_x2 - groups * mean_x**2)
+    slope = (sum_xy - groups * mean_x * mean_y) / (sum_x2 - groups * mean_x**2)
     intercept = mean_y - slope * mean_x
 
     return intercept, slope
@@ -727,18 +747,18 @@ def remove_slopes(data0, ngroups, ny, row):
     for i in range(5):
         for k in range(ngroups):
             # mask is 2-D, since both row4plus4 and : have more than one element.
-            mask = (data0[i, k, row4plus4, :] != 0.)
-            (intercept, slope) = ols_line(time_arr[row4plus4, :][mask],
-                                          data0[i, k, row4plus4, :][mask])
+            mask = data0[i, k, row4plus4, :] != 0.0
+            (intercept, slope) = ols_line(
+                time_arr[row4plus4, :][mask], data0[i, k, row4plus4, :][mask]
+            )
             ab_3[0, k, i] = intercept
             ab_3[1, k, i] = slope
 
     for i in range(5):
         for k in range(ngroups):
             # weight is 0 where data0 is 0, else 1.
-            weight = (data0[i, k, :, :] != 0.).astype(np.int8)
-            data0[i, k, :, :] -= (ab_3[0, k, i] +
-                                  time_arr * ab_3[1, k, i]) * weight
+            weight = (data0[i, k, :, :] != 0.0).astype(np.int8)
+            data0[i, k, :, :] -= (ab_3[0, k, i] + time_arr * ab_3[1, k, i]) * weight
 
 
 def replace_bad_pixels(data0, ngroups, ny, row):
@@ -747,25 +767,27 @@ def replace_bad_pixels(data0, ngroups, ny, row):
     # pixels and gaps. (initial guess)
 
     # s[1] = nx  s[2] = ny  s[3] = ngroups
-    w_ind = np.arange(1, 32, dtype=np.float32) / 32.
+    w_ind = np.arange(1, 32, dtype=np.float32) / 32.0
     w = np.sin(w_ind * np.pi)
     kk = 0
     for jj in range(ngroups):
         dat = data0[kk, jj, :, :].reshape(row * ny)
-        mask = (dat != 0.).astype(np.float32)
-        numerator = convolve1d(dat, w, mode='wrap')
-        denominator = convolve1d(mask, w, mode='wrap')
-        div_zero = (denominator == 0.)          # check for divide by zero
-        numerator = np.where(div_zero, 0., numerator)
-        denominator = np.where(div_zero, 1., denominator)
+        mask = (dat != 0.0).astype(np.float32)
+        numerator = convolve1d(dat, w, mode="wrap")
+        denominator = convolve1d(mask, w, mode="wrap")
+        div_zero = denominator == 0.0  # check for divide by zero
+        numerator = np.where(div_zero, 0.0, numerator)
+        denominator = np.where(div_zero, 1.0, denominator)
         dat = numerator / denominator
         dat = dat.reshape(ny, row)
         mask = mask.reshape(ny, row)
         # xxx why '+=' instead of just '=' ?
-        data0[kk, jj, :, :] += dat * (1. - mask)
+        data0[kk, jj, :, :] += dat * (1.0 - mask)
 
 
-def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1):
+def fill_bad_regions(
+    data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1
+):
 
     # Use Fourier filter/interpolation to replace
     # (a) bad pixel, gaps, and reference data in the time-ordered normal data
@@ -777,23 +799,28 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
     elen = 110000 // (scipix_n + refpix_r + 2)
 
     # max unfiltered frequency
-    blen = (512 + 512 // scipix_n * (refpix_r + 2) + pad) // \
-           (scipix_n + refpix_r + 2) * ny // 2 - elen // 2
+    blen = (512 + 512 // scipix_n * (refpix_r + 2) + pad) // (
+        scipix_n + refpix_r + 2
+    ) * ny // 2 - elen // 2
 
     # Construct the filter [1, cos, 0, cos, 1].
-    temp_a1 = (np.cos(np.arange(elen, dtype=np.float32) *
-                      np.pi / float(elen)) + 1.) / 2.
+    temp_a1 = (
+        np.cos(np.arange(elen, dtype=np.float32) * np.pi / float(elen)) + 1.0
+    ) / 2.0
 
     # elen = 5000
     # blen = 30268
     # row * ny // 2 - 2 * blen - 2 * elen = 658552
     # len(temp_a2) = 729088
-    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float32),
-                              temp_a1.copy(),
-                              np.zeros(row * ny // 2 - 2 * blen - 2 * elen,
-                                       dtype=np.float32),
-                              temp_a1[::-1].copy(),
-                              np.ones(blen, dtype=np.float32)))
+    temp_a2 = np.concatenate(
+        (
+            np.ones(blen, dtype=np.float32),
+            temp_a1.copy(),
+            np.zeros(row * ny // 2 - 2 * blen - 2 * elen, dtype=np.float32),
+            temp_a1[::-1].copy(),
+            np.ones(blen, dtype=np.float32),
+        )
+    )
 
     roll_a2 = np.roll(temp_a2, -1)
     aa = np.concatenate((temp_a2, roll_a2[::-1]))
@@ -807,9 +834,17 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
     dd0 = data0[0, :, :, :]
     # IDL:  fft_interp_norm, dd0, 2, replicate(1, s[1] / 4, s[2], 4),
     #                        row, hnorm, hnorm1, s, aa , n_iter_norm
-    fft_interp_norm(dd0, np.ones((ny, nx // 4), dtype=np.int64),
-                    row, hnorm, hnorm1,
-                    ny, ngroups, aa, n_iter_norm)
+    fft_interp_norm(
+        dd0,
+        np.ones((ny, nx // 4), dtype=np.int64),
+        row,
+        hnorm,
+        hnorm1,
+        ny,
+        ngroups,
+        aa,
+        n_iter_norm,
+    )
 
     data0[0, :, :, :] = dd0.copy()
     del aa, dd0

@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['FringeFreqModel']
+__all__ = ["FringeFreqModel"]
 
 
 class FringeFreqModel(ReferenceFileModel):
@@ -14,4 +14,5 @@ class FringeFreqModel(ReferenceFileModel):
     rfc_freq_long : numpy table
     max_amp : numpy table
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/fringe_freq.schema"

@@ -48,7 +48,7 @@ class JwstStep(Step):
         from ..associations.lib.update_path import update_key_value
 
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
-        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
     def load_as_level3_asn(self, obj):
@@ -72,12 +72,12 @@ class JwstStep(Step):
         from ..associations.lib.update_path import update_key_value
 
         asn = LoadAsAssociation.load(obj)
-        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
     def finalize_result(self, result, reference_files_used):
         if isinstance(result, DataModel):
-            result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
+            result.meta.calibration_software_revision = __version_commit__ or "RELEASE"
             result.meta.calibration_software_version = __version__
 
             if len(reference_files_used) > 0:
@@ -85,9 +85,13 @@ class JwstStep(Step):
                     if hasattr(result.meta.ref_file, ref_name):
                         getattr(result.meta.ref_file, ref_name).name = filename
                 result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                result.meta.ref_file.crds.context_used = crds_client.get_context_used(result.crds_observatory)
+                result.meta.ref_file.crds.context_used = crds_client.get_context_used(
+                    result.crds_observatory
+                )
                 if self.parent is None:
-                    log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
+                    log.info(
+                        f"Results used CRDS context: {result.meta.ref_file.crds.context_used}"
+                    )
 
     def record_step_status(self, datamodel, cal_step, success=True):
         """Record whether or not a step completed in meta.cal_step
@@ -104,9 +108,9 @@ class JwstStep(Step):
             If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
         """
         if success:
-            status = 'COMPLETE'
+            status = "COMPLETE"
         else:
-            status = 'SKIPPED'
+            status = "SKIPPED"
             self.skip = True
 
         if isinstance(datamodel, Sequence):
@@ -127,4 +131,6 @@ class JwstStep(Step):
 class JwstPipeline(Pipeline, JwstStep):
     def finalize_result(self, result, reference_files_used):
         if isinstance(result, DataModel):
-            log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
+            log.info(
+                f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}"
+            )

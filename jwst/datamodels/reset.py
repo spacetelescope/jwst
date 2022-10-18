@@ -1,10 +1,9 @@
-
 from stcal.dynamicdq import dynamic_mask
 from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['ResetModel']
+__all__ = ["ResetModel"]
 
 
 class ResetModel(ReferenceFileModel):
@@ -25,6 +24,7 @@ class ResetModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/reset.schema"
 
     def __init__(self, init=None, **kwargs):

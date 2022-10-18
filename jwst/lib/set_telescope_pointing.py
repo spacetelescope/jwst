@@ -61,7 +61,7 @@ from copy import copy
 import dataclasses
 from enum import Enum
 import logging
-from math import (cos, sin, sqrt)
+from math import cos, sin, sqrt
 import typing
 
 from astropy.time import Time
@@ -78,16 +78,16 @@ from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso
 
 __all__ = [
-    'Methods',
-    'TransformParameters',
-    'Transforms',
-    'WCSRef',
-    'add_wcs',
-    'calc_transforms',
-    'calc_transforms_ops_tr_202111',
-    'calc_wcs',
-    'calc_wcs_over_time',
-    'update_wcs',
+    "Methods",
+    "TransformParameters",
+    "Transforms",
+    "WCSRef",
+    "add_wcs",
+    "calc_transforms",
+    "calc_transforms_ops_tr_202111",
+    "calc_wcs",
+    "calc_wcs_over_time",
+    "update_wcs",
 ]
 
 # Setup logging
@@ -105,30 +105,30 @@ TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 # Mnemonics for each transformation method.
 # dict where value indicates whether the mnemonic is required or not.
 COURSE_TR_202111_MNEMONICS = {
-    'SA_ZATTEST1': True,
-    'SA_ZATTEST2': True,
-    'SA_ZATTEST3': True,
-    'SA_ZATTEST4': True,
-    'SA_ZRFGS2J11': True,
-    'SA_ZRFGS2J12': True,
-    'SA_ZRFGS2J13': True,
-    'SA_ZRFGS2J21': True,
-    'SA_ZRFGS2J22': True,
-    'SA_ZRFGS2J23': True,
-    'SA_ZRFGS2J31': True,
-    'SA_ZRFGS2J32': True,
-    'SA_ZRFGS2J33': True,
-    'SA_ZADUCMDX': False,
-    'SA_ZADUCMDY': False,
-    'SA_ZFGGSCMDX': False,
-    'SA_ZFGGSCMDY': False,
-    'SA_ZFGDETID': False,
+    "SA_ZATTEST1": True,
+    "SA_ZATTEST2": True,
+    "SA_ZATTEST3": True,
+    "SA_ZATTEST4": True,
+    "SA_ZRFGS2J11": True,
+    "SA_ZRFGS2J12": True,
+    "SA_ZRFGS2J13": True,
+    "SA_ZRFGS2J21": True,
+    "SA_ZRFGS2J22": True,
+    "SA_ZRFGS2J23": True,
+    "SA_ZRFGS2J31": True,
+    "SA_ZRFGS2J32": True,
+    "SA_ZRFGS2J33": True,
+    "SA_ZADUCMDX": False,
+    "SA_ZADUCMDY": False,
+    "SA_ZFGGSCMDX": False,
+    "SA_ZFGGSCMDY": False,
+    "SA_ZFGDETID": False,
 }
 
 TRACK_TR_202111_MNEMONICS = {
     **COURSE_TR_202111_MNEMONICS,
-    'SA_ZFGGSPOSX': False,
-    'SA_ZFGGSPOSY': False,
+    "SA_ZFGGSPOSX": False,
+    "SA_ZFGGSPOSY": False,
 }
 
 
@@ -139,12 +139,28 @@ class Methods(Enum):
     Current state-of-art is OPS_TR_202111. This method chooses either COARSE_TR_202111 or
     TRACK_TR_202111 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
+
     #: COARSE tracking mode algorithm, TR version 2021-11.
-    COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111', COURSE_TR_202111_MNEMONICS)
+    COARSE_TR_202111 = (
+        "coarse_tr_202111",
+        "calc_transforms_coarse_tr_202111",
+        "calc_wcs_tr_202111",
+        COURSE_TR_202111_MNEMONICS,
+    )
     #: Method to use in OPS to use TR version 2021-11
-    OPS_TR_202111 = ('ops_tr_202111', 'calc_transforms_ops_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
+    OPS_TR_202111 = (
+        "ops_tr_202111",
+        "calc_transforms_ops_tr_202111",
+        "calc_wcs_tr_202111",
+        TRACK_TR_202111_MNEMONICS,
+    )
     #: TRACK and FINEGUIDE mode algorithm, TR version 2021-11
-    TRACK_TR_202111 = ('track_tr_202111', 'calc_transforms_track_tr_202111', 'calc_wcs_tr_202111', TRACK_TR_202111_MNEMONICS)
+    TRACK_TR_202111 = (
+        "track_tr_202111",
+        "calc_transforms_track_tr_202111",
+        "calc_wcs_tr_202111",
+        TRACK_TR_202111_MNEMONICS,
+    )
 
     # Aliases
     #: Algorithm to use by default. Used by Operations.
@@ -156,7 +172,9 @@ class Methods(Enum):
     #: Default algorithm under PCS_MODE TRACK/FINEGUIDE/MOVING.
     TRACK = TRACK_TR_202111
 
-    def __new__(cls: object, value: str, func_name: str, calc_func: str, mnemonics: dict):
+    def __new__(
+        cls: object, value: str, func_name: str, calc_func: str, mnemonics: dict
+    ):
         obj = object.__new__(cls)
         obj._value_ = value
         obj._func_name = func_name
@@ -183,7 +201,7 @@ class Methods(Enum):
 
 
 # FGS id to aperture name
-FGSId2Aper = {1: 'FGS1_FULL_OSS', 2: 'FGS2_FULL_OSS'}
+FGSId2Aper = {1: "FGS1_FULL_OSS", 2: "FGS2_FULL_OSS"}
 
 # FGS Ids
 FGSIDS = [1, 2]
@@ -196,55 +214,56 @@ SECONDS2MJD = 1 / 24 / 60 / 60
 
 # Default transformation matrices
 FGS12SIFOV_DEFAULT = np.array(
-    [[0.9999994955442, 0.0000000000000, 0.0010044457459],
-     [0.0000011174826, 0.9999993811310, -0.0011125359826],
-     [-0.0010044451243, 0.0011125365439, 0.9999988766756]]
+    [
+        [0.9999994955442, 0.0000000000000, 0.0010044457459],
+        [0.0000011174826, 0.9999993811310, -0.0011125359826],
+        [-0.0010044451243, 0.0011125365439, 0.9999988766756],
+    ]
 )
 
-J2FGS_MATRIX_DEFAULT = np.array([
-    [-0.0010044400033, 0.9999994955442, 0.0000033964915],
-    [0.0033814583568, 0.0000000000000, 0.9999942828533],
-    [0.9999937784005, 0.0010044457459, -0.0033814566510]
-])
+J2FGS_MATRIX_DEFAULT = np.array(
+    [
+        [-0.0010044400033, 0.9999994955442, 0.0000033964915],
+        [0.0033814583568, 0.0000000000000, 0.9999942828533],
+        [0.9999937784005, 0.0010044457459, -0.0033814566510],
+    ]
+)
 
 SIFOV2V_DEFAULT = np.array(
-    [[0.99999742598, 0., 0.00226892608],
-     [0., 1., 0.],
-     [-0.00226892608, 0., 0.99999742598]]
+    [
+        [0.99999742598, 0.0, 0.00226892608],
+        [0.0, 1.0, 0.0],
+        [-0.00226892608, 0.0, 0.99999742598],
+    ]
 )
 
 # Define the transformation matrices to move between the Idealized Coordinate System (ICS)
 # and the Idealized Coordinate System (Idl). ICS is the spacecraft-centric system used by
 # all frames up through the V-frame. Idl is used by the instruments.
 # Reference: Eqs. 1 & 2 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
-M_idl2ics = MX2Z = np.array(
-    [[0, 1, 0],
-     [0, 0, 1],
-     [1, 0, 0]]
-)
-M_ics2idl = MZ2X = np.array(
-    [[0, 0, 1],
-     [1, 0, 0],
-     [0, 1, 0]]
-)
+M_idl2ics = MX2Z = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+M_ics2idl = MZ2X = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
 
 # Degree, radian, angle transformations
-R2D = 180. / np.pi
-D2R = np.pi / 180.
-A2R = D2R / 3600.
-R2A = 3600. * R2D
-PI2 = np.pi * 2.
+R2D = 180.0 / np.pi
+D2R = np.pi / 180.0
+A2R = D2R / 3600.0
+R2A = 3600.0 * R2D
+PI2 = np.pi * 2.0
 
 # Pointing container
-Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid', 'gs_position'])
-Pointing.__new__.__defaults__ = ((None,) * 5)
+Pointing = namedtuple(
+    "Pointing",
+    ["q", "j2fgs_matrix", "fsmcorr", "obstime", "gs_commanded", "fgsid", "gs_position"],
+)
+Pointing.__new__.__defaults__ = (None,) * 5
 
 
 # Transforms
 @dataclasses.dataclass
 class Transforms:
-    """The matrices used in calculation of the M_eci2siaf transformation
-    """
+    """The matrices used in calculation of the M_eci2siaf transformation"""
+
     #: ECI to FGS1
     m_eci2fgs1: np.array = None
     #: ECI to Guide Star
@@ -289,10 +308,10 @@ class Transforms:
             The Transforms instance.
         """
         if isinstance(asdf_file, asdf.AsdfFile):
-            transforms = asdf_file.tree['transforms']
+            transforms = asdf_file.tree["transforms"]
         else:
             with asdf.open(asdf_file, copy_arrays=True, lazy_load=False) as af:
-                transforms = af.tree['transforms']
+                transforms = af.tree["transforms"]
 
         return cls(**transforms)
 
@@ -310,8 +329,8 @@ class Transforms:
         automatically represent what is in the override.
         """
         self_dict = dataclasses.asdict(self)
-        del self_dict['override']  # Do not serialize the override transforms
-        asdf_file = asdf.AsdfFile({'transforms': self_dict})
+        del self_dict["override"]  # Do not serialize the override transforms
+        asdf_file = asdf.AsdfFile({"transforms": self_dict})
         return asdf_file
 
     def write_to_asdf(self, path):
@@ -322,7 +341,7 @@ class Transforms:
         path : Stream-like
         """
         asdf_file = self.to_asdf()
-        asdf_file.write_to(path, all_array_storage='inline')
+        asdf_file.write_to(path, all_array_storage="inline")
 
     def __getattribute__(self, name):
         """If an override has been specified, return that value regardless
@@ -332,12 +351,16 @@ class Transforms:
         This dunder method is called for ALL attributes. Tread carefully.
         """
         # If the attribute is not a field, just return its value. Like NOW.
-        if name.startswith('_') or name not in self._fields or name == 'override':
+        if name.startswith("_") or name not in self._fields or name == "override":
             return object.__getattribute__(self, name)
 
         override = self.override
         override_value = getattr(override, name) if override else None
-        return override_value if override_value is not None else object.__getattribute__(self, name)
+        return (
+            override_value
+            if override_value is not None
+            else object.__getattribute__(self, name)
+        )
 
     def __post_init__(self):
         """Post-initialization of a DataClass"""
@@ -347,18 +370,18 @@ class Transforms:
 
 
 # WCS reference container
-WCSRef = namedtuple('WCSRef', ['ra', 'dec', 'pa'])
+WCSRef = namedtuple("WCSRef", ["ra", "dec", "pa"])
 WCSRef.__new__.__defaults__ = (None, None, None)
 
 
 @dataclasses.dataclass
 class TransformParameters:
-    """Parameters required the calculations
-    """
+    """Parameters required the calculations"""
+
     #: If telemetry cannot be determined, use existing information in the observation's header.
     allow_default: bool = False
     #: The V3 position angle to use if the pointing information is not found.
-    default_pa_v3: float = 0.
+    default_pa_v3: float = 0.0
     #: Detector in use.
     detector: str = None
     #: Do not write out the modified file.
@@ -370,9 +393,9 @@ class TransformParameters:
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
     fgsid: int = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
-    fsmcorr_version: str = 'latest'
+    fsmcorr_version: str = "latest"
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
-    fsmcorr_units: str = 'arcsec'
+    fsmcorr_units: str = "arcsec"
     #: Guide star WCS info, typically from the input model.
     guide_star_wcs: WCSRef = WCSRef()
     #: Transpose the `j2fgs1` matrix.
@@ -399,7 +422,7 @@ class TransformParameters:
     siaf_db: SiafDb = None
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
-    tolerance: float = 60.
+    tolerance: float = 60.0
     #: The date of observation (`jwst.datamodel.DataModel.meta.date`)
     useafter: str = None
     #: V3 position angle at Guide Star (`jwst.datamodel.DataModel.meta.guide_star.gs_v3_pa_science`)
@@ -407,21 +430,40 @@ class TransformParameters:
 
     def as_reprdict(self):
         """Return a dict where all values are REPR of their values"""
-        r = dict((field.name, repr(getattr(self, field.name))) for field in dataclasses.fields(self))
+        r = dict(
+            (field.name, repr(getattr(self, field.name)))
+            for field in dataclasses.fields(self)
+        )
         return r
 
     def update_pointing(self):
         """Update pointing information"""
-        self.pointing = get_pointing(self.obsstart, self.obsend,
-                                     mnemonics_to_read=self.method.mnemonics,
-                                     engdb_url=self.engdb_url,
-                                     tolerance=self.tolerance, reduce_func=self.reduce_func)
+        self.pointing = get_pointing(
+            self.obsstart,
+            self.obsend,
+            mnemonics_to_read=self.method.mnemonics,
+            engdb_url=self.engdb_url,
+            tolerance=self.tolerance,
+            reduce_func=self.reduce_func,
+        )
 
 
-def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
-            default_pa_v3=0., siaf_path=None, prd=None, engdb_url=None,
-            fgsid=None, tolerance=60, allow_default=False, reduce_func=None,
-            dry_run=False, save_transforms=None, **transform_kwargs):
+def add_wcs(
+    filename,
+    allow_any_file=False,
+    force_level1bmodel=False,
+    default_pa_v3=0.0,
+    siaf_path=None,
+    prd=None,
+    engdb_url=None,
+    fgsid=None,
+    tolerance=60,
+    allow_default=False,
+    reduce_func=None,
+    dry_run=False,
+    save_transforms=None,
+    **transform_kwargs,
+):
     """Add WCS information to a JWST DataModel.
 
     Telescope orientation is attempted to be obtained from
@@ -525,24 +567,30 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
     in the header other than what is required by the standard.
 
     """
-    logger.info('Updating WCS info for file %s', filename)
+    logger.info("Updating WCS info for file %s", filename)
     try:
         model = datamodels.open(filename, guess=allow_any_file)
     except TypeError:
         if force_level1bmodel:
-            logger.warning(f'Input {filename} is an unknown model, opening as a Level1bModel.')
+            logger.warning(
+                f"Input {filename} is an unknown model, opening as a Level1bModel."
+            )
             model = datamodels.Level1bModel(filename)
         else:
             raise
 
     try:
         if type(model) not in EXPECTED_MODELS:
-            logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)'
-                           '\n    Updating pointing may have no effect or detrimental effects on the WCS information,'
-                           '\n    especially if the input is the result of Level2b or higher calibration.')
+            logger.warning(
+                f"Input {model} is not of an expected type (uncal, rate, rateints)"
+                "\n    Updating pointing may have no effect or detrimental effects on the WCS information,"
+                "\n    especially if the input is the result of Level2b or higher calibration."
+            )
             if not allow_any_file:
-                raise TypeError(f'Input model {model} is not one of {EXPECTED_MODELS} and `allow_any_file` is `False`.'
-                                '\n\tFailing WCS processing.')
+                raise TypeError(
+                    f"Input model {model} is not one of {EXPECTED_MODELS} and `allow_any_file` is `False`."
+                    "\n\tFailing WCS processing."
+                )
 
         t_pars, transforms = update_wcs(
             model,
@@ -554,11 +602,11 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
             tolerance=tolerance,
             allow_default=allow_default,
             reduce_func=reduce_func,
-            **transform_kwargs
+            **transform_kwargs,
         )
 
         try:
-            if model.meta.target.type.lower() == 'moving':
+            if model.meta.target.type.lower() == "moving":
                 update_mt_kwds(model)
         except AttributeError:
             pass
@@ -566,17 +614,17 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
         model.meta.model_type = None
 
         if dry_run:
-            logger.info('Dry run requested; results are not saved.')
+            logger.info("Dry run requested; results are not saved.")
         else:
-            logger.info('Saving updated model %s', filename)
+            logger.info("Saving updated model %s", filename)
             model.save(filename)
             if transforms and save_transforms:
-                logger.info('Saving transform matrices to %s', save_transforms)
+                logger.info("Saving transform matrices to %s", save_transforms)
                 transforms.write_to_asdf(save_transforms)
     finally:
         model.close()
 
-    logger.info('...update completed')
+    logger.info("...update completed")
 
 
 def update_mt_kwds(model):
@@ -587,8 +635,8 @@ def update_mt_kwds(model):
     and insert or update MT_RA & MT_DEC.
     """
 
-    if model.hasattr('moving_target'):
-        time_mt = Time(model.moving_target.time, format='isot')
+    if model.hasattr("moving_target"):
+        time_mt = Time(model.moving_target.time, format="isot")
         time_mt = [t.mjd for t in time_mt]
         exp_midpt_mjd = model.meta.exposure.mid_time
         # check to see if the midpoint of the observation is contained within
@@ -603,8 +651,13 @@ def update_mt_kwds(model):
             model.meta.target.ra = f_ra(exp_midpt_mjd).item(0)
             model.meta.target.dec = f_dec(exp_midpt_mjd).item(0)
         else:
-            logger.info('Exposure midpoint %s is not in the moving_target '
-                        'table range of %s to %s', exp_midpt_mjd, time_mt[0], time_mt[-1])
+            logger.info(
+                "Exposure midpoint %s is not in the moving_target "
+                "table range of %s to %s",
+                exp_midpt_mjd,
+                time_mt[0],
+                time_mt[-1],
+            )
             return
     else:
         logger.info("Moving target position table not found in the file")
@@ -614,9 +667,19 @@ def update_mt_kwds(model):
     return model
 
 
-def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd=None, engdb_url=None,
-               fgsid=None, tolerance=60, allow_default=False,
-               reduce_func=None, **transform_kwargs):
+def update_wcs(
+    model,
+    default_pa_v3=0.0,
+    default_roll_ref=0.0,
+    siaf_path=None,
+    prd=None,
+    engdb_url=None,
+    fgsid=None,
+    tolerance=60,
+    allow_default=False,
+    reduce_func=None,
+    **transform_kwargs,
+):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -683,10 +746,14 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     # Configure transformation parameters.
     t_pars = t_pars_from_model(
         model,
-        default_pa_v3=default_pa_v3, engdb_url=engdb_url,
-        tolerance=tolerance, allow_default=allow_default,
-        reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
-        **transform_kwargs
+        default_pa_v3=default_pa_v3,
+        engdb_url=engdb_url,
+        tolerance=tolerance,
+        allow_default=allow_default,
+        reduce_func=reduce_func,
+        siaf_db=siaf_db,
+        useafter=useafter,
+        **transform_kwargs,
     )
     if fgsid:
         t_pars.fgsid = fgsid
@@ -694,15 +761,13 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     # Populate header with SIAF information.
     if t_pars.siaf is None:
         if t_pars.exp_type not in FGS_GUIDE_EXP_TYPES:
-            raise ValueError('Insufficient SIAF information found in header.')
+            raise ValueError("Insufficient SIAF information found in header.")
     else:
         populate_model_from_siaf(model, t_pars.siaf)
 
     # Calculate WCS.
     if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
-        update_wcs_from_fgs_guiding(
-            model, t_pars, default_roll_ref=default_roll_ref
-        )
+        update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=default_roll_ref)
         transforms = None
     else:
         transforms = update_wcs_from_telem(model, t_pars)
@@ -710,8 +775,10 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     return t_pars, transforms
 
 
-def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
-    """ Update WCS pointing from header information
+def update_wcs_from_fgs_guiding(
+    model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0
+):
+    """Update WCS pointing from header information
 
     For Fine Guidance guiding observations, nearly everything
     in the `wcsinfo` meta information is already populated,
@@ -736,13 +803,19 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
         OSS aperture.
     """
 
-    logger.info('Updating WCS for Fine Guidance.')
+    logger.info("Updating WCS for Fine Guidance.")
 
     # Get position angle
     try:
-        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
+        roll_ref = (
+            model.meta.wcsinfo.roll_ref
+            if model.meta.wcsinfo.roll_ref is not None
+            else default_roll_ref
+        )
     except AttributeError:
-        logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
+        logger.warning(
+            "Keyword `ROLL_REF` not found. Using %s as default value", default_roll_ref
+        )
         roll_ref = default_roll_ref
 
     roll_ref = np.deg2rad(roll_ref)
@@ -751,20 +824,24 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     try:
         vparity = model.meta.wcsinfo.vparity
     except AttributeError:
-        logger.warning('Keyword "VPARITY" not found. Using %s as default value', default_vparity)
+        logger.warning(
+            'Keyword "VPARITY" not found. Using %s as default value', default_vparity
+        )
         vparity = default_vparity
 
     try:
         v3i_yang = model.meta.wcsinfo.v3yangle
     except AttributeError:
-        logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
+        logger.warning(
+            'Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle
+        )
         v3i_yang = default_v3yangle
 
     (
         model.meta.wcsinfo.pc1_1,
         model.meta.wcsinfo.pc1_2,
         model.meta.wcsinfo.pc2_1,
-        model.meta.wcsinfo.pc2_2
+        model.meta.wcsinfo.pc2_2,
     ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
 
     # Set CRVAL as the guide star coordinates.
@@ -794,15 +871,11 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     transforms : Transforms or None
         If available, the transformation matrices.
     """
-    logger.info('Updating wcs from telemetry.')
+    logger.info("Updating wcs from telemetry.")
     transforms = None  # Assume no transforms are calculated.
 
     # Setup default WCS info if actual pointing and calculations fail.
-    wcsinfo = WCSRef(
-        model.meta.target.ra,
-        model.meta.target.dec,
-        t_pars.default_pa_v3
-    )
+    wcsinfo = WCSRef(model.meta.target.ra, model.meta.target.dec, t_pars.default_pa_v3)
     vinfo = wcsinfo
 
     # Get the pointing information
@@ -813,37 +886,37 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
             raise
         else:
             logger.warning(
-                'Cannot retrieve valid telescope pointing.'
-                ' Default pointing parameters will be used.'
+                "Cannot retrieve valid telescope pointing."
+                " Default pointing parameters will be used."
             )
-            logger.warning('Exception is %s', exception)
+            logger.warning("Exception is %s", exception)
             logger.info("Setting ENGQLPTG keyword to PLANNED")
             model.meta.visit.engdb_pointing_quality = "PLANNED"
             t_pars.pointing = None
     else:
-        logger.info('Successful read of engineering quaternions:')
-        logger.info('\tPointing: %s', t_pars.pointing)
+        logger.info("Successful read of engineering quaternions:")
+        logger.info("\tPointing: %s", t_pars.pointing)
 
     # If pointing is available, attempt to calculate WCS information
     if t_pars.pointing is not None:
         try:
             wcsinfo, vinfo, transforms = calc_wcs(t_pars)
-            pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
-            logger.info('Setting ENGQLPTG keyword to %s', pointing_engdb_quality)
+            pointing_engdb_quality = f"CALCULATED_{t_pars.method.value.upper()}"
+            logger.info("Setting ENGQLPTG keyword to %s", pointing_engdb_quality)
             model.meta.visit.engdb_pointing_quality = pointing_engdb_quality
         except Exception as e:
             logger.warning(
-                'WCS calculation has failed and will be skipped.'
-                'Default pointing parameters will be used.'
+                "WCS calculation has failed and will be skipped."
+                "Default pointing parameters will be used."
             )
-            logger.warning('Exception is %s', e)
+            logger.warning("Exception is %s", e)
             if not t_pars.allow_default:
                 raise
             else:
                 logger.info("Setting ENGQLPTG keyword to PLANNED")
                 model.meta.visit.engdb_pointing_quality = "PLANNED"
-    logger.info('Aperture WCS info: %s', wcsinfo)
-    logger.info('V1 WCS info: %s', vinfo)
+    logger.info("Aperture WCS info: %s", wcsinfo)
+    logger.info("V1 WCS info: %s", vinfo)
 
     # Update V1 pointing
     model.meta.pointing.ra_v1 = vinfo.ra
@@ -862,11 +935,11 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
             model.meta.wcsinfo.pc1_1,
             model.meta.wcsinfo.pc1_2,
             model.meta.wcsinfo.pc2_1,
-            model.meta.wcsinfo.pc2_2
+            model.meta.wcsinfo.pc2_2,
         ) = calc_rotation_matrix(
             np.deg2rad(model.meta.wcsinfo.roll_ref),
             np.deg2rad(model.meta.wcsinfo.v3yangle),
-            vparity=t_pars.siaf.vparity
+            vparity=t_pars.siaf.vparity,
         )
 
     # Calculate S_REGION with the footprint
@@ -874,8 +947,8 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     try:
         update_s_region(model, t_pars.siaf)
     except Exception as e:
-        logger.warning('Calculation of S_REGION failed and will be skipped.')
-        logger.warning('Exception is %s', e)
+        logger.warning("Calculation of S_REGION failed and will be skipped.")
+        logger.warning("Exception is %s", e)
 
     return transforms
 
@@ -900,14 +973,13 @@ def update_s_region(model, siaf):
 
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3
+
     vparity = model.meta.wcsinfo.vparity
     v3yangle = model.meta.wcsinfo.v3yangle
 
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(
-        v3yangle,
-        model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v3_ref,
-        vparity
+        v3yangle, model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v3_ref, vparity
     )
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
@@ -944,10 +1016,17 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
 
     # Calculate WCS
     try:
-        pointings = get_pointing(obsstart, obsend, engdb_url=t_pars.engdb_url,
-                                 tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+        pointings = get_pointing(
+            obsstart,
+            obsend,
+            engdb_url=t_pars.engdb_url,
+            tolerance=t_pars.tolerance,
+            reduce_func=t_pars.reduce_func,
+        )
     except ValueError:
-        logger.warning("Cannot get valid engineering mnemonics from engineering database")
+        logger.warning(
+            "Cannot get valid engineering mnemonics from engineering database"
+        )
         raise
     if not isinstance(pointings, list):
         pointings = [pointings]
@@ -1086,7 +1165,9 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
             M_eci_to_gs = ECI to Guide star
 
     """
-    logger.info('Calculating transforms using TR 202111 COARSE Tracking with SIAF modification method...')
+    logger.info(
+        "Calculating transforms using TR 202111 COARSE Tracking with SIAF modification method..."
+    )
     t_pars.method = Methods.COARSE_TR_202111
 
     # Choose the FGS to use.
@@ -1094,15 +1175,17 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     fgsid = t_pars.fgsid
     if t_pars.detector is not None:
         detector = t_pars.detector.lower()
-        if detector in ['guider1', 'guider2']:
+        if detector in ["guider1", "guider2"]:
             fgsid = 1
-            if detector == 'guider1':
+            if detector == "guider1":
                 fgsid = 2
-            logger.info(f'COARSE mode using detector {detector} implies use of FGS{fgsid}')
+            logger.info(
+                f"COARSE mode using detector {detector} implies use of FGS{fgsid}"
+            )
     if fgsid not in FGSIDS:
         fgsid = 1
     t_pars.fgsid = fgsid
-    logger.info('Using FGS%s.', t_pars.fgsid)
+    logger.info("Using FGS%s.", t_pars.fgsid)
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
@@ -1114,15 +1197,17 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
-    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs])
-    logger.debug('M_eci2v: %s', t.m_eci2v)
+    t.m_eci2v = np.linalg.multi_dot(
+        [np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), M_idl2ics, t.m_eci2gs]
+    )
+    logger.debug("M_eci2v: %s", t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate full transformation
     t.m_eci2siaf = np.linalg.multi_dot([M_ics2idl, t.m_v2siaf, t.m_eci2v])
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
+    logger.debug("m_eci2siaf: %s", t.m_eci2siaf)
 
     return t
 
@@ -1166,26 +1251,34 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
             M_eci_to_v = Conversion of the attitude to a DCM
 
     """
-    logger.info('Calculating transforms using TR 202111 TRACK/FINEGUIDE Tracking method...')
+    logger.info(
+        "Calculating transforms using TR 202111 TRACK/FINEGUIDE Tracking method..."
+    )
     t_pars.method = Methods.TRACK_TR_202111
-    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
+    t = Transforms(
+        override=t_pars.override_transforms
+    )  # Shorthand the resultant transforms
 
     # Check on telemetry for FGS ID. If invalid, use either user-specified or default to 1.
     fgsid = t_pars.pointing.fgsid
     if fgsid not in FGSIDS:
-        logger.warning(f'Method {t_pars.method} requires a valid FGS ID in telementry.'
-                       '\nHowever telemetry reports an invalid id of {fgsid}')
+        logger.warning(
+            f"Method {t_pars.method} requires a valid FGS ID in telementry."
+            "\nHowever telemetry reports an invalid id of {fgsid}"
+        )
         if t_pars.fgsid in FGSIDS:
             fgsid = t_pars.fgsid
-            logger.warning(f'Using user-specified ID of {fgsid}')
+            logger.warning(f"Using user-specified ID of {fgsid}")
         else:
             fgsid = 1
-            logger.warning(f'Using FGS{fgsid} as the default for the guiding FGS')
+            logger.warning(f"Using FGS{fgsid} as the default for the guiding FGS")
     t_pars.fgsid = fgsid
 
     # Determine V3PA@GS
     v3pags = calc_v3pags(t_pars)
-    t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
+    t_pars.guide_star_wcs = WCSRef(
+        t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags
+    )
 
     # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
     gs_pos_v23 = trans_fgs2v(t_pars.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
@@ -1199,7 +1292,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
 
     # Calculate the full ECI to SIAF transform matrix
     t.m_eci2siaf = np.linalg.multi_dot([M_ics2idl, t.m_v2siaf, t.m_eci2v])
-    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
+    logger.debug("m_eci2siaf: %s", t.m_eci2siaf)
 
     return t
 
@@ -1253,21 +1346,28 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     """
     # Check velocity. If present, negate the velocity since
     # the desire is to remove the correction.
-    if jwst_velocity is None or any(jwst_velocity == None):  # noqa Syntax needed for numpy arrays.
-        logger.warning('Velocity: %s contains None. Cannot calculate aberration. Returning identity matrix', jwst_velocity)
+    if jwst_velocity is None or any(
+        jwst_velocity == None
+    ):  # noqa Syntax needed for numpy arrays.
+        logger.warning(
+            "Velocity: %s contains None. Cannot calculate aberration. Returning identity matrix",
+            jwst_velocity,
+        )
         return np.identity(3)
     velocity = -1 * jwst_velocity
 
     # Eq. 35: Guide star position vector
-    uz = np.array([0., 0., 1.])
+    uz = np.array([0.0, 0.0, 1.0])
     u_gseci = np.dot(np.transpose(m_eci2gsics), uz)
 
     # Eq. 36: Compute the apparent shift due to velocity aberration.
     try:
         scale_factor, u_gseci_app = compute_va_effects_vector(*velocity, u_gseci)
     except TypeError:
-        logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
-        logger.warning('Exception: %s', sys.exc_info())
+        logger.warning(
+            "Failure in computing velocity aberration. Returning identity matrix."
+        )
+        logger.warning("Exception: %s", sys.exc_info())
         return np.identity(3)
 
     # Eq. 39: Rotate from ICS into the guide star frame.
@@ -1277,16 +1377,22 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     u_prod = np.cross(uz, u_gs_app)
     u_prod_mag = np.linalg.norm(u_prod)
     a_hat = u_prod / u_prod_mag
-    m_a_hat = np.array([[0., -a_hat[2], a_hat[1]],
-                        [a_hat[2], 0., -a_hat[0]],
-                        [-a_hat[1], a_hat[0], 0.]])
+    m_a_hat = np.array(
+        [
+            [0.0, -a_hat[2], a_hat[1]],
+            [a_hat[2], 0.0, -a_hat[0]],
+            [-a_hat[1], a_hat[0], 0.0],
+        ]
+    )
     theta = np.arcsin(u_prod_mag)
 
-    m_gs2gsapp = np.identity(3) \
-        - (m_a_hat * np.sin(theta)) \
-        + (2 * m_a_hat**2 * np.sin(theta / 2.)**2)
+    m_gs2gsapp = (
+        np.identity(3)
+        - (m_a_hat * np.sin(theta))
+        + (2 * m_a_hat**2 * np.sin(theta / 2.0) ** 2)
+    )
 
-    logger.debug('m_gs2gsapp: %s', m_gs2gsapp)
+    logger.debug("m_gs2gsapp: %s", m_gs2gsapp)
     return m_gs2gsapp
 
 
@@ -1322,16 +1428,18 @@ def calc_attitude_matrix(wcs, yangle, position):
     # Create the matrices
     r1 = dcm(ra, dec, yangle_ra)
 
-    r2 = np.array([
-        [cos(v2) * cos(v3), -sin(v2), -cos(v2) * sin(v3)],
-        [sin(v2) * cos(v3), cos(v2), -sin(v2) * sin(v3)],
-        [sin(v3), 0., cos(v3)]
-    ])
+    r2 = np.array(
+        [
+            [cos(v2) * cos(v3), -sin(v2), -cos(v2) * sin(v3)],
+            [sin(v2) * cos(v3), cos(v2), -sin(v2) * sin(v3)],
+            [sin(v3), 0.0, cos(v3)],
+        ]
+    )
 
     # Final transformation
     m = np.dot(r2, r1)
 
-    logger.debug('attitude DCM: %s', m)
+    logger.debug("attitude DCM: %s", m)
     return m
 
 
@@ -1360,13 +1468,9 @@ def calc_wcs_from_matrix(m):
     v1_pa = calc_position_angle(wcs, v3wcs)
 
     # Convert to degrees
-    wcs = WCSRef(
-        ra=wcs.ra * R2D,
-        dec=wcs.dec * R2D,
-        pa=v1_pa * R2D
-    )
+    wcs = WCSRef(ra=wcs.ra * R2D, dec=wcs.dec * R2D, pa=v1_pa * R2D)
 
-    logger.debug('wcs: %s', wcs)
+    logger.debug("wcs: %s", wcs)
     return wcs
 
 
@@ -1394,18 +1498,26 @@ def calc_eci2j_matrix(q):
     """
     q1, q2, q3, q4 = q
     transform = np.array(
-        [[1. - 2. * q2 * q2 - 2. * q3 * q3,
-          2. * (q1 * q2 + q3 * q4),
-          2. * (q3 * q1 - q2 * q4)],
-         [2. * (q1 * q2 - q3 * q4),
-          1. - 2. * q3 * q3 - 2. * q1 * q1,
-          2. * (q2 * q3 + q1 * q4)],
-         [2. * (q3 * q1 + q2 * q4),
-          2. * (q2 * q3 - q1 * q4),
-          1. - 2. * q1 * q1 - 2. * q2 * q2]]
+        [
+            [
+                1.0 - 2.0 * q2 * q2 - 2.0 * q3 * q3,
+                2.0 * (q1 * q2 + q3 * q4),
+                2.0 * (q3 * q1 - q2 * q4),
+            ],
+            [
+                2.0 * (q1 * q2 - q3 * q4),
+                1.0 - 2.0 * q3 * q3 - 2.0 * q1 * q1,
+                2.0 * (q2 * q3 + q1 * q4),
+            ],
+            [
+                2.0 * (q3 * q1 + q2 * q4),
+                2.0 * (q2 * q3 - q1 * q4),
+                1.0 - 2.0 * q1 * q1 - 2.0 * q2 * q2,
+            ],
+        ]
     )
 
-    logger.debug('quaternion: %s', transform)
+    logger.debug("quaternion: %s", transform)
     return transform
 
 
@@ -1438,27 +1550,29 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
     FGS1-to-J-frame. However, all documentation has always
     referred to this J-to-FGS1.
     """
-    if np.isclose(j2fgs_matrix, 0.).all():
-        logger.warning('J-Frame to FGS1 engineering parameters are all zero.')
-        logger.warning('Using default matrix')
+    if np.isclose(j2fgs_matrix, 0.0).all():
+        logger.warning("J-Frame to FGS1 engineering parameters are all zero.")
+        logger.warning("Using default matrix")
         transform = J2FGS_MATRIX_DEFAULT
 
     else:
         logger.info(
-            'Using J-Frame to FGS1 engineering parameters'
-            ' for the J-Frame to FGS1 transformation.'
+            "Using J-Frame to FGS1 engineering parameters"
+            " for the J-Frame to FGS1 transformation."
         )
         transform = np.array(j2fgs_matrix).reshape((3, 3))
 
     if transpose:
-        logger.info('Transposing the J-Frame to FGS matrix.')
+        logger.info("Transposing the J-Frame to FGS matrix.")
         transform = transform.transpose()
 
-    logger.debug('j2fgs1: %s', transform)
+    logger.debug("j2fgs1: %s", transform)
     return transform
 
 
-def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units='arcsec'):
+def calc_sifov_fsm_delta_matrix(
+    fsmcorr, fsmcorr_version="latest", fsmcorr_units="arcsec"
+):
     """Calculate Fine Steering Mirror correction matrix
 
     Parameters
@@ -1485,51 +1599,44 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     """
     version = fsmcorr_version.lower()
     units = fsmcorr_units.lower()
-    logger.debug('Using version %s', version)
-    logger.debug('Using units %s', units)
+    logger.debug("Using version %s", version)
+    logger.debug("Using units %s", units)
 
     x = fsmcorr[0]  # SA_ZADUCMDX
     y = fsmcorr[1]  # SA_ZADUCMDY
 
     # If FSMCORR values are in arcsec, convert to radians
-    if units == 'arcsec':
-        x *= D2R / 3600.
-        y *= D2R / 3600.
+    if units == "arcsec":
+        x *= D2R / 3600.0
+        y *= D2R / 3600.0
 
     # `V1`: Linear approximation calculation
-    if version == 'v1':
+    if version == "v1":
         transform = np.array(
             [
-                [1., x / 22.01, y / 21.68],
-                [-x / 22.01, 1., 0.],
-                [-y / 21.68, 0., 1.]
+                [1.0, x / 22.01, y / 21.68],
+                [-x / 22.01, 1.0, 0.0],
+                [-y / 21.68, 0.0, 1.0],
             ]
         )
 
     # Default or `V2`: Direct spherical calculation
     # Note: With the "0.0" in the lower middle Y transform
     else:
-        if version not in ('latest', 'v2'):
+        if version not in ("latest", "v2"):
             logger.warning(
-                'Unknown version "%s" specified. Using the latest (spherical) calculation.', version
+                'Unknown version "%s" specified. Using the latest (spherical) calculation.',
+                version,
             )
         m_x_partial = np.array(
-            [
-                [1., 0., 0.],
-                [0., cos(x), sin(x)],
-                [0., -sin(x), cos(x)]
-            ]
+            [[1.0, 0.0, 0.0], [0.0, cos(x), sin(x)], [0.0, -sin(x), cos(x)]]
         )
         m_y_partial = np.array(
-            [
-                [cos(y), 0., -sin(y)],
-                [0., 1., 0.],
-                [sin(y), 0., cos(y)]
-            ]
+            [[cos(y), 0.0, -sin(y)], [0.0, 1.0, 0.0], [sin(y), 0.0, cos(y)]]
         )
         transform = np.dot(m_x_partial, m_y_partial)
 
-    logger.debug('fsm_delta_matrix: %s', transform)
+    logger.debug("fsm_delta_matrix: %s", transform)
     return transform
 
 
@@ -1564,16 +1671,13 @@ def calc_v2siaf_matrix(siaf):
         The V1 to SIAF transformation matrix
 
     """
-    v2, v3, v3idlyang, vparity = (siaf.v2_ref, siaf.v3_ref,
-                                  siaf.v3yangle, siaf.vparity)
+    v2, v3, v3idlyang, vparity = (siaf.v2_ref, siaf.v3_ref, siaf.v3yangle, siaf.vparity)
     mat = dcm(v2 * A2R, v3 * A2R, v3idlyang * D2R)
-    pmat = np.array([[0., vparity, 0.],
-                     [0., 0., 1.],
-                     [1., 0., 0.]])
+    pmat = np.array([[0.0, vparity, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
 
     transform = np.dot(pmat, mat)
 
-    logger.debug('transform: %s', transform)
+    logger.debug("transform: %s", transform)
     return transform
 
 
@@ -1606,20 +1710,27 @@ def calc_position_angle(point, ref):
       The POINT position angle, in radians
     """
     y = cos(ref.dec) * sin(ref.ra - point.ra)
-    x = sin(ref.dec) * cos(point.dec) - \
-        cos(ref.dec) * sin(point.dec) * cos((ref.ra - point.ra))
+    x = sin(ref.dec) * cos(point.dec) - cos(ref.dec) * sin(point.dec) * cos(
+        (ref.ra - point.ra)
+    )
     point_pa = np.arctan2(y, x)
     if point_pa < 0:
         point_pa += PI2
     if point_pa >= PI2:
         point_pa -= PI2
 
-    logger.debug('Given reference: %s, point: %s, then PA: %s', ref, point, point_pa)
+    logger.debug("Given reference: %s, point: %s, then PA: %s", ref, point, point_pa)
     return point_pa
 
 
-def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
-                 engdb_url=None, tolerance=60, reduce_func=None):
+def get_pointing(
+    obsstart,
+    obsend,
+    mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
+    engdb_url=None,
+    tolerance=60,
+    reduce_func=None,
+):
     """
     Get telescope pointing engineering data.
 
@@ -1666,19 +1777,24 @@ def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
     if reduce_func is None:
         reduce_func = pointing_from_average
 
-    logger.info('Determining pointing between observations times (mjd):')
-    logger.info('obsstart: %s obsend: %s', obsstart, obsend)
-    logger.info('Telemetry search tolerance: %s', tolerance)
-    logger.info('Reduction function: %s', reduce_func)
+    logger.info("Determining pointing between observations times (mjd):")
+    logger.info("obsstart: %s obsend: %s", obsstart, obsend)
+    logger.info("Telemetry search tolerance: %s", tolerance)
+    logger.info("Reduction function: %s", reduce_func)
 
-    mnemonics = get_mnemonics(obsstart, obsend, mnemonics_to_read=mnemonics_to_read,
-                              tolerance=tolerance, engdb_url=engdb_url)
+    mnemonics = get_mnemonics(
+        obsstart,
+        obsend,
+        mnemonics_to_read=mnemonics_to_read,
+        tolerance=tolerance,
+        engdb_url=engdb_url,
+    )
     reduced = reduce_func(mnemonics_to_read, mnemonics)
 
-    logger.log(DEBUG_FULL, 'Mnemonics found:')
-    logger.log(DEBUG_FULL, '%s', mnemonics)
-    logger.info('Reduced set of pointings:')
-    logger.info('%s', reduced)
+    logger.log(DEBUG_FULL, "Mnemonics found:")
+    logger.log(DEBUG_FULL, "%s", mnemonics)
+    logger.info("Reduced set of pointings:")
+    logger.info("%s", reduced)
 
     return reduced
 
@@ -1706,8 +1822,8 @@ def vector_to_angle(v):
     """
     alpha = np.arctan2(v[1], v[0])
     delta = np.arcsin(v[2])
-    if alpha < 0.:
-        alpha += 2. * np.pi
+    if alpha < 0.0:
+        alpha += 2.0 * np.pi
     return alpha, delta
 
 
@@ -1761,31 +1877,44 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
     pa_v3 = np.deg2rad(pa_v3)
 
     M = np.array(
-        [[cos(ra_ref) * cos(dec_ref),
-          -sin(ra_ref) * cos(pa_v3) + cos(ra_ref) * sin(dec_ref) * sin(pa_v3),
-          -sin(ra_ref) * sin(pa_v3) - cos(ra_ref) * sin(dec_ref) * cos(pa_v3)],
-         [sin(ra_ref) * cos(dec_ref),
-          cos(ra_ref) * cos(pa_v3) + sin(ra_ref) * sin(dec_ref) * sin(pa_v3),
-          cos(ra_ref) * sin(pa_v3) - sin(ra_ref) * sin(dec_ref) * cos(pa_v3)],
-         [sin(dec_ref),
-          -cos(dec_ref) * sin(pa_v3),
-          cos(dec_ref) * cos(pa_v3)]]
+        [
+            [
+                cos(ra_ref) * cos(dec_ref),
+                -sin(ra_ref) * cos(pa_v3) + cos(ra_ref) * sin(dec_ref) * sin(pa_v3),
+                -sin(ra_ref) * sin(pa_v3) - cos(ra_ref) * sin(dec_ref) * cos(pa_v3),
+            ],
+            [
+                sin(ra_ref) * cos(dec_ref),
+                cos(ra_ref) * cos(pa_v3) + sin(ra_ref) * sin(dec_ref) * sin(pa_v3),
+                cos(ra_ref) * sin(pa_v3) - sin(ra_ref) * sin(dec_ref) * cos(pa_v3),
+            ],
+            [sin(dec_ref), -cos(dec_ref) * sin(pa_v3), cos(dec_ref) * cos(pa_v3)],
+        ]
     )
 
     return _roll_angle_from_matrix(M, v2, v3)
 
 
 def _roll_angle_from_matrix(matrix, v2, v3):
-    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
-    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
-        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[
+        2, 2
+    ] * np.cos(v3)
+    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + (
+        matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]
+    ) * np.sin(v2)
     new_roll = np.rad2deg(np.arctan2(Y, X))
     if new_roll < 0:
         new_roll += 360
     return new_roll
 
 
-def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111_MNEMONICS, engdb_url=None):
+def get_mnemonics(
+    obsstart,
+    obsend,
+    tolerance,
+    mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
+    engdb_url=None,
+):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
@@ -1820,18 +1949,12 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
         engdb = ENGDB_Service(base_url=engdb_url)
     except Exception as exception:
         raise ValueError(
-            'Cannot open engineering DB connection'
-            '\nException: {}'.format(exception)
+            "Cannot open engineering DB connection" "\nException: {}".format(exception)
         )
-    logger.info(
-        'Querying engineering DB: %s', engdb.base_url
-    )
+    logger.info("Querying engineering DB: %s", engdb.base_url)
 
     # Construct the mnemonic values structure.
-    mnemonics = {
-        mnemonic: None
-        for mnemonic in mnemonics_to_read
-    }
+    mnemonics = {mnemonic: None for mnemonic in mnemonics_to_read}
 
     # Retrieve the mnemonics from the engineering database.
     # Check for whether the bracket values are used and
@@ -1839,20 +1962,29 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
     for mnemonic in mnemonics:
         try:
             mnemonics[mnemonic] = engdb.get_values(
-                mnemonic, obsstart, obsend,
-                time_format='mjd', include_obstime=True,
-                include_bracket_values=True
+                mnemonic,
+                obsstart,
+                obsend,
+                time_format="mjd",
+                include_obstime=True,
+                include_bracket_values=True,
             )
         except Exception as exception:
-            raise ValueError(f'Cannot retrieve {mnemonic} from engineering.') from exception
+            raise ValueError(
+                f"Cannot retrieve {mnemonic} from engineering."
+            ) from exception
 
         # If more than two points exist, throw off the bracket values.
         # Else, ensure the bracket values are within the allowed time.
         if len(mnemonics[mnemonic]) > 2:
             mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
         else:
-            logger.warning('Mnemonic %s has no telemetry within the observation time.', mnemonic)
-            logger.warning('Attempting to use bracket values within %s seconds', tolerance)
+            logger.warning(
+                "Mnemonic %s has no telemetry within the observation time.", mnemonic
+            )
+            logger.warning(
+                "Attempting to use bracket values within %s seconds", tolerance
+            )
 
             tolerance_mjd = tolerance * SECONDS2MJD
             allowed_start = obsstart - tolerance_mjd
@@ -1864,17 +1996,17 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
             ]
             if not len(allowed):
                 raise ValueError(
-                    'No telemetry exists for mnemonic {} within {} and {}'.format(
+                    "No telemetry exists for mnemonic {} within {} and {}".format(
                         mnemonic,
-                        Time(allowed_start, format='mjd').isot,
-                        Time(allowed_end, format='mjd').isot
+                        Time(allowed_start, format="mjd").isot,
+                        Time(allowed_end, format="mjd").isot,
                     )
                 )
             mnemonics[mnemonic] = allowed
 
     # All mnemonics must have some values.
     if not all([len(mnemonic) for mnemonic in mnemonics.values()]):
-        raise ValueError('Incomplete set of pointing mnemonics')
+        raise ValueError("Incomplete set of pointing mnemonics")
 
     return mnemonics
 
@@ -1902,54 +2034,67 @@ def all_pointings(mnemonics_to_read, mnemonics):
     for obstime, mnemonics_at_time in filled.items():
 
         # Fill out the matrices
-        q = np.array([
-            mnemonics_at_time['SA_ZATTEST1'].value,
-            mnemonics_at_time['SA_ZATTEST2'].value,
-            mnemonics_at_time['SA_ZATTEST3'].value,
-            mnemonics_at_time['SA_ZATTEST4'].value,
-        ])
+        q = np.array(
+            [
+                mnemonics_at_time["SA_ZATTEST1"].value,
+                mnemonics_at_time["SA_ZATTEST2"].value,
+                mnemonics_at_time["SA_ZATTEST3"].value,
+                mnemonics_at_time["SA_ZATTEST4"].value,
+            ]
+        )
 
-        j2fgs_matrix = np.array([
-            mnemonics_at_time['SA_ZRFGS2J11'].value,
-            mnemonics_at_time['SA_ZRFGS2J12'].value,
-            mnemonics_at_time['SA_ZRFGS2J13'].value,
-            mnemonics_at_time['SA_ZRFGS2J21'].value,
-            mnemonics_at_time['SA_ZRFGS2J22'].value,
-            mnemonics_at_time['SA_ZRFGS2J23'].value,
-            mnemonics_at_time['SA_ZRFGS2J31'].value,
-            mnemonics_at_time['SA_ZRFGS2J32'].value,
-            mnemonics_at_time['SA_ZRFGS2J33'].value,
-        ])
+        j2fgs_matrix = np.array(
+            [
+                mnemonics_at_time["SA_ZRFGS2J11"].value,
+                mnemonics_at_time["SA_ZRFGS2J12"].value,
+                mnemonics_at_time["SA_ZRFGS2J13"].value,
+                mnemonics_at_time["SA_ZRFGS2J21"].value,
+                mnemonics_at_time["SA_ZRFGS2J22"].value,
+                mnemonics_at_time["SA_ZRFGS2J23"].value,
+                mnemonics_at_time["SA_ZRFGS2J31"].value,
+                mnemonics_at_time["SA_ZRFGS2J32"].value,
+                mnemonics_at_time["SA_ZRFGS2J33"].value,
+            ]
+        )
 
-        fsmcorr = np.array([
-            mnemonics_at_time['SA_ZADUCMDX'].value,
-            mnemonics_at_time['SA_ZADUCMDY'].value,
+        fsmcorr = np.array(
+            [
+                mnemonics_at_time["SA_ZADUCMDX"].value,
+                mnemonics_at_time["SA_ZADUCMDY"].value,
+            ]
+        )
 
-        ])
-
-        gs_commanded = np.array([
-            mnemonics_at_time['SA_ZFGGSCMDX'].value,
-            mnemonics_at_time['SA_ZFGGSCMDY'].value
-
-        ])
+        gs_commanded = np.array(
+            [
+                mnemonics_at_time["SA_ZFGGSCMDX"].value,
+                mnemonics_at_time["SA_ZFGGSCMDY"].value,
+            ]
+        )
 
         gs_position = None
-        if all(k in mnemonics for k in ('SA_ZFGGSPOSX', 'SA_ZFGGSPOSY')):
-            gs_position = np.array([
-                mnemonics_at_time['SA_ZFGGSPOSX'].value,
-                mnemonics_at_time['SA_ZFGGSPOSY'].value
+        if all(k in mnemonics for k in ("SA_ZFGGSPOSX", "SA_ZFGGSPOSY")):
+            gs_position = np.array(
+                [
+                    mnemonics_at_time["SA_ZFGGSPOSX"].value,
+                    mnemonics_at_time["SA_ZFGGSPOSY"].value,
+                ]
+            )
 
-            ])
+        fgsid = mnemonics_at_time["SA_ZFGDETID"].value
 
-        fgsid = mnemonics_at_time['SA_ZFGDETID'].value
-
-        pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
-                            fsmcorr=fsmcorr, gs_commanded=gs_commanded,
-                            fgsid=fgsid, gs_position=gs_position)
+        pointing = Pointing(
+            q=q,
+            obstime=obstime,
+            j2fgs_matrix=j2fgs_matrix,
+            fsmcorr=fsmcorr,
+            gs_commanded=gs_commanded,
+            fgsid=fgsid,
+            gs_position=gs_position,
+        )
         pointings.append(pointing)
 
     if not len(pointings):
-        raise ValueError('No non-zero quaternion found.')
+        raise ValueError("No non-zero quaternion found.")
 
     return pointings
 
@@ -1973,9 +2118,9 @@ def populate_model_from_siaf(model, siaf):
 
     # For imaging modes, also update the basic FITS WCS keywords
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
-        logger.info('Setting basic FITS WCS keywords for imaging')
-        model.meta.wcsinfo.ctype1 = 'RA---TAN'
-        model.meta.wcsinfo.ctype2 = 'DEC--TAN'
+        logger.info("Setting basic FITS WCS keywords for imaging")
+        model.meta.wcsinfo.ctype1 = "RA---TAN"
+        model.meta.wcsinfo.ctype2 = "DEC--TAN"
         model.meta.wcsinfo.wcsaxes = 2
         model.meta.wcsinfo.cunit1 = "deg"
         model.meta.wcsinfo.cunit2 = "deg"
@@ -1992,10 +2137,13 @@ def populate_model_from_siaf(model, siaf):
     # a check on EXP_TYPE, because there are rare corner cases
     # where EXP_TIME=NRC_TSGRISM, TSOVISIT=False, NINTS=1, which
     # normally return False, but we want to treat it as TSO anyway.
-    if is_tso(model) or model.meta.exposure.type.lower() in ['nrc_tsimage', 'nrc_tsgrism']:
-        logger.info('TSO exposure:')
-        logger.info(' setting xref_sci to %s', siaf.crpix1)
-        logger.info(' setting yref_sci to %s', siaf.crpix2)
+    if is_tso(model) or model.meta.exposure.type.lower() in [
+        "nrc_tsimage",
+        "nrc_tsgrism",
+    ]:
+        logger.info("TSO exposure:")
+        logger.info(" setting xref_sci to %s", siaf.crpix1)
+        logger.info(" setting yref_sci to %s", siaf.crpix2)
         model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
         model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 
@@ -2050,7 +2198,7 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
         if eng_param.obstime.unix != 0.0
     ]
     if len(times) > 0:
-        obstime = Time(np.average(times), format='unix')
+        obstime = Time(np.average(times), format="unix")
     else:
         raise ValueError("No valid times in range")
 
@@ -2058,10 +2206,7 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
     mnemonic_averages = {}
     zero_mnemonics = []
     for mnemonic in mnemonics:
-        values = [
-            eng_param.value
-            for eng_param in mnemonics[mnemonic]
-        ]
+        values = [eng_param.value for eng_param in mnemonics[mnemonic]]
         # Weed out mnemonic entries that are zero, though some are OK to be zero.
         if mnemonics_to_read[mnemonic]:
             good_mnemonic = []
@@ -2077,56 +2222,63 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
 
     # Raise exception if there are mnemonics with only zeros in the time range
     if len(zero_mnemonics):
-        logger.warning("The following engineering mnemonics only contained zeros in the requested time interval:")
-        badmnemonicsstring = ' '.join(zero_mnemonics)
+        logger.warning(
+            "The following engineering mnemonics only contained zeros in the requested time interval:"
+        )
+        badmnemonicsstring = " ".join(zero_mnemonics)
         logger.info(badmnemonicsstring)
         raise ValueError("Bad telemetry values")
 
     # Fill out the pointing matrices.
-    q = np.array([
-        mnemonic_averages['SA_ZATTEST1'],
-        mnemonic_averages['SA_ZATTEST2'],
-        mnemonic_averages['SA_ZATTEST3'],
-        mnemonic_averages['SA_ZATTEST4']
-    ])
+    q = np.array(
+        [
+            mnemonic_averages["SA_ZATTEST1"],
+            mnemonic_averages["SA_ZATTEST2"],
+            mnemonic_averages["SA_ZATTEST3"],
+            mnemonic_averages["SA_ZATTEST4"],
+        ]
+    )
 
-    j2fgs_matrix = np.array([
-        mnemonic_averages['SA_ZRFGS2J11'],
-        mnemonic_averages['SA_ZRFGS2J12'],
-        mnemonic_averages['SA_ZRFGS2J13'],
-        mnemonic_averages['SA_ZRFGS2J21'],
-        mnemonic_averages['SA_ZRFGS2J22'],
-        mnemonic_averages['SA_ZRFGS2J23'],
-        mnemonic_averages['SA_ZRFGS2J31'],
-        mnemonic_averages['SA_ZRFGS2J32'],
-        mnemonic_averages['SA_ZRFGS2J33']
-    ])
+    j2fgs_matrix = np.array(
+        [
+            mnemonic_averages["SA_ZRFGS2J11"],
+            mnemonic_averages["SA_ZRFGS2J12"],
+            mnemonic_averages["SA_ZRFGS2J13"],
+            mnemonic_averages["SA_ZRFGS2J21"],
+            mnemonic_averages["SA_ZRFGS2J22"],
+            mnemonic_averages["SA_ZRFGS2J23"],
+            mnemonic_averages["SA_ZRFGS2J31"],
+            mnemonic_averages["SA_ZRFGS2J32"],
+            mnemonic_averages["SA_ZRFGS2J33"],
+        ]
+    )
 
-    fsmcorr = np.array([
-        mnemonic_averages['SA_ZADUCMDX'],
-        mnemonic_averages['SA_ZADUCMDY']
+    fsmcorr = np.array(
+        [mnemonic_averages["SA_ZADUCMDX"], mnemonic_averages["SA_ZADUCMDY"]]
+    )
 
-    ])
-
-    gs_commanded = np.array([
-        mnemonic_averages['SA_ZFGGSCMDX'],
-        mnemonic_averages['SA_ZFGGSCMDY']
-
-    ])
+    gs_commanded = np.array(
+        [mnemonic_averages["SA_ZFGGSCMDX"], mnemonic_averages["SA_ZFGGSCMDY"]]
+    )
 
     gs_position = None
-    if all(k in mnemonic_averages for k in ('SA_ZFGGSPOSX', 'SA_ZFGGSPOSY')):
-        gs_position = np.array([
-            mnemonic_averages['SA_ZFGGSPOSX'],
-            mnemonic_averages['SA_ZFGGSPOSY']
-        ])
+    if all(k in mnemonic_averages for k in ("SA_ZFGGSPOSX", "SA_ZFGGSPOSY")):
+        gs_position = np.array(
+            [mnemonic_averages["SA_ZFGGSPOSX"], mnemonic_averages["SA_ZFGGSPOSY"]]
+        )
 
     # For FGS ID, just take the first one.
-    fgsid = mnemonics['SA_ZFGDETID'][0].value
+    fgsid = mnemonics["SA_ZFGDETID"][0].value
 
-    pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
-                        fsmcorr=fsmcorr, gs_commanded=gs_commanded,
-                        fgsid=fgsid, gs_position=gs_position)
+    pointing = Pointing(
+        obstime=obstime,
+        q=q,
+        j2fgs_matrix=j2fgs_matrix,
+        fsmcorr=fsmcorr,
+        gs_commanded=gs_commanded,
+        fgsid=fgsid,
+        gs_position=gs_position,
+    )
     # That's all folks
     return pointing
 
@@ -2168,10 +2320,7 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
             # Engineering data may be present, but all zeros.
             # Filter out this situation also.
             if filled_only:
-                values = [
-                    value.value
-                    for value in last_obstime.values()
-                ]
+                values = [value.value for value in last_obstime.values()]
                 if not any(values):
                     continue
 
@@ -2204,7 +2353,7 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
     # Determine the wcs
     wcs = calc_wcs_from_matrix(m_eci2gs)
 
-    logger.debug('wcs: %s', wcs)
+    logger.debug("wcs: %s", wcs)
     return wcs
 
 
@@ -2228,12 +2377,14 @@ def calc_v3pags(t_pars: TransformParameters):
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
     # Retrieve the Ideal Y-angle for the desired FGS
-    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid], useafter=t_pars.useafter)
+    fgs_siaf = t_pars.siaf_db.get_wcs(
+        FGSId2Aper[t_pars.fgsid], useafter=t_pars.useafter
+    )
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
 
-    logger.debug('v3pags: %s', v3pags)
+    logger.debug("v3pags: %s", v3pags)
     return v3pags
 
 
@@ -2288,20 +2439,24 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     t = Transforms(override=t_pars.override_transforms)
 
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
+    t.m_j2fgs1 = calc_j2fgs1_matrix(
+        t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose
+    )
     t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     # Apply the Velocity Aberration. To do so, the M_eci2gsics matrix must be created. This
     # is used to calculate the aberration matrix.
     # Also, since the aberration is to be removed, the velocity is negated.
-    m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_fgs12fgsx, t.m_j2fgs1, t.m_eci2j])
-    logger.debug('m_eci2gsics: %s', m_eci2gsics)
+    m_eci2gsics = np.linalg.multi_dot(
+        [t.m_fgsx2gs, t.m_fgs12fgsx, t.m_j2fgs1, t.m_eci2j]
+    )
+    logger.debug("m_eci2gsics: %s", m_eci2gsics)
     t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
 
     # Put it all together
     t.m_eci2gs = np.linalg.multi_dot([M_ics2idl, t.m_gs2gsapp, m_eci2gsics])
-    logger.debug('m_eci2gs: %s', t.m_eci2gs)
+    logger.debug("m_eci2gs: %s", t.m_eci2gs)
 
     # That's all folks
     return t
@@ -2339,11 +2494,11 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
     # Simply return the identity matrix.
     if fgsid == 1:
         m_fgs12fgsx = np.identity(3)
-        logger.debug('FGS1 is in use, the identity matrix is returned: %s', m_fgs12fgsx)
+        logger.debug("FGS1 is in use, the identity matrix is returned: %s", m_fgs12fgsx)
         return m_fgs12fgsx
 
     if fgsid != 2:
-        raise ValueError(f'fgsid == {fgsid} is invalid. Must be 1 or 2')
+        raise ValueError(f"fgsid == {fgsid} is invalid. Must be 1 or 2")
 
     # FGS2 is in use. Calculate the transform from FGS1 to FGS2
     fgs1_siaf = siaf_db.get_wcs(FGSId2Aper[1])
@@ -2353,7 +2508,7 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
 
     m_fgs12fgsx = np.dot(m_fgs2, m_fgs1.transpose())
 
-    logger.debug('m_fgs12fgsx: %s', m_fgs12fgsx)
+    logger.debug("m_fgs12fgsx: %s", m_fgs12fgsx)
     return m_fgs12fgsx
 
 
@@ -2376,7 +2531,7 @@ def calc_m_fgsx2gs(gs_commanded):
     m_gs2fgsx = calc_m_gs2fgsx(gs_commanded)
     m_fgsx2gs = m_gs2fgsx.transpose()
 
-    logger.debug('m_fgsx2gs: %s', m_fgsx2gs)
+    logger.debug("m_fgsx2gs: %s", m_fgsx2gs)
     return m_fgsx2gs
 
 
@@ -2398,19 +2553,11 @@ def calc_m_gs2fgsx(gs_commanded):
     """
     in_rads = gs_commanded * A2R
     x, y = in_rads
-    m_x = np.array([
-        [cos(-x), 0., -sin(-x)],
-        [0., 1., 0.],
-        [sin(-x), 0., cos(-x)]
-    ])
-    m_y = np.array([
-        [1.0, 0.0, 0.0],
-        [0., cos(y), sin(y)],
-        [0., -sin(y), cos(y)]
-    ])
+    m_x = np.array([[cos(-x), 0.0, -sin(-x)], [0.0, 1.0, 0.0], [sin(-x), 0.0, cos(-x)]])
+    m_y = np.array([[1.0, 0.0, 0.0], [0.0, cos(y), sin(y)], [0.0, -sin(y), cos(y)]])
     m_gs2fgsx = np.dot(m_y, m_x)
 
-    logger.debug('m_gs2fgsx: %s', m_gs2fgsx)
+    logger.debug("m_gs2fgsx: %s", m_gs2fgsx)
     return m_gs2fgsx
 
 
@@ -2441,7 +2588,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
     v_rads = np.array(vector_to_angle(v_vec))
     v = v_rads * R2A
 
-    logger.debug('FGS%s %s -> V %s', fgsid, ideal, v)
+    logger.debug("FGS%s %s -> V %s", fgsid, ideal, v)
     return v
 
 
@@ -2466,11 +2613,7 @@ def cart_to_vector(coord):
     vector : numpy.array(3)
         The vector version
     """
-    vector = np.array([
-        coord[0],
-        coord[1],
-        sqrt(1 - coord[0]**2 - coord[1]**2)
-    ])
+    vector = np.array([coord[0], coord[1], sqrt(1 - coord[0] ** 2 - coord[1] ** 2)])
 
     return vector
 
@@ -2525,7 +2668,7 @@ def t_pars_from_model(model, **t_pars_kwargs):
                 siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
         t_pars.siaf = siaf
         t_pars.useafter = useafter
-    logger.debug('SIAF: %s', t_pars.siaf)
+    logger.debug("SIAF: %s", t_pars.siaf)
 
     # Instrument details
     t_pars.detector = model.meta.instrument.detector
@@ -2533,25 +2676,27 @@ def t_pars_from_model(model, **t_pars_kwargs):
     # observation parameters
     t_pars.obsstart = model.meta.exposure.start_time
     t_pars.obsend = model.meta.exposure.end_time
-    logger.debug('Observation time: %s - %s', t_pars.obsstart, t_pars.obsend)
+    logger.debug("Observation time: %s - %s", t_pars.obsstart, t_pars.obsend)
 
     # Get Guide Star information
     t_pars.guide_star_wcs = WCSRef(
         model.meta.guidestar.gs_ra,
         model.meta.guidestar.gs_dec,
-        model.meta.guidestar.gs_v3_pa_science
+        model.meta.guidestar.gs_v3_pa_science,
     )
     t_pars.pcs_mode = model.meta.guidestar.gs_pcs_mode
-    logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
-    logger.debug('PCS_MODE: %s', t_pars.pcs_mode)
+    logger.debug("guide_star_wcs from model: %s", t_pars.guide_star_wcs)
+    logger.debug("PCS_MODE: %s", t_pars.pcs_mode)
 
     # Get jwst velocity
-    t_pars.jwst_velocity = np.array([
-        model.meta.ephemeris.velocity_x_bary,
-        model.meta.ephemeris.velocity_y_bary,
-        model.meta.ephemeris.velocity_z_bary,
-    ])
-    logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
+    t_pars.jwst_velocity = np.array(
+        [
+            model.meta.ephemeris.velocity_x_bary,
+            model.meta.ephemeris.velocity_y_bary,
+            model.meta.ephemeris.velocity_z_bary,
+        ]
+    )
+    logger.debug("JWST Velocity: %s", t_pars.jwst_velocity)
 
     # Set the transform and WCS calculation method.
     t_pars.method = method_from_pcs_mode(t_pars.pcs_mode)
@@ -2582,15 +2727,20 @@ def dcm(alpha, delta, angle):
         The 3x3 direction cosine matrix
     """
     dcm = np.array(
-        [[cos(delta) * cos(alpha),
-          cos(delta) * sin(alpha),
-          sin(delta)],
-         [-cos(angle) * sin(alpha) + sin(angle) * sin(delta) * cos(alpha),
-          cos(angle) * cos(alpha) + sin(angle) * sin(delta) * sin(alpha),
-          -sin(angle) * cos(delta)],
-         [-sin(angle) * sin(alpha) - cos(angle) * sin(delta) * cos(alpha),
-          sin(angle) * cos(alpha) - cos(angle) * sin(delta) * sin(alpha),
-          cos(angle) * cos(delta)]])
+        [
+            [cos(delta) * cos(alpha), cos(delta) * sin(alpha), sin(delta)],
+            [
+                -cos(angle) * sin(alpha) + sin(angle) * sin(delta) * cos(alpha),
+                cos(angle) * cos(alpha) + sin(angle) * sin(delta) * sin(alpha),
+                -sin(angle) * cos(delta),
+            ],
+            [
+                -sin(angle) * sin(alpha) - cos(angle) * sin(delta) * cos(alpha),
+                sin(angle) * cos(alpha) - cos(angle) * sin(delta) * sin(alpha),
+                cos(angle) * cos(delta),
+            ],
+        ]
+    )
 
     return dcm
 
@@ -2618,9 +2768,9 @@ def method_from_pcs_mode(pcs_mode):
     ValueError
         If `pcs_mode` does not uniquely define the method to use.
     """
-    if pcs_mode is None or pcs_mode in ['NONE', 'COARSE']:
+    if pcs_mode is None or pcs_mode in ["NONE", "COARSE"]:
         return Methods.COARSE_TR_202111
-    elif pcs_mode in ['FINEGUIDE', 'MOVING', 'TRACK']:
+    elif pcs_mode in ["FINEGUIDE", "MOVING", "TRACK"]:
         return Methods.TRACK_TR_202111
     else:
         raise ValueError(
@@ -2632,6 +2782,10 @@ def check_prd_versions(model, siaf_db):
     """Check on consistency between the model and the current PRD"""
     if siaf_db.prd_version:
         if model.meta.prd_software_version != siaf_db.prd_version:
-            logger.warning('PRD versions between the model %s and pysiaf %s are different.'
-                           'This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.',
-                           model.meta.prd_software_version, siaf_db.prd_version, model.meta.prd_software_version)
+            logger.warning(
+                "PRD versions between the model %s and pysiaf %s are different."
+                "This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.",
+                model.meta.prd_software_version,
+                siaf_db.prd_version,
+                model.meta.prd_software_version,
+            )

@@ -9,12 +9,12 @@ from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 def test_hdu():
     hdu = fits.HDUList()
     phdu = fits.PrimaryHDU()
-    phdu.header['telescop'] = "JWST"
-    phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2017-09-05'
+    phdu.header["telescop"] = "JWST"
+    phdu.header["time-obs"] = "8:59:37"
+    phdu.header["date-obs"] = "2017-09-05"
 
     scihdu = fits.ImageHDU()
-    scihdu.header['EXTNAME'] = "SCI"
+    scihdu.header["EXTNAME"] = "SCI"
     hdu.append(phdu)
     hdu.append(scihdu)
     return hdu

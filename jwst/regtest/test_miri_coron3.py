@@ -12,7 +12,8 @@ def run_pipeline(jail, rtdata_module):
 
     # Run the calwebb_coron3 pipeline on the association
     args = [
-        "calwebb_coron3", rtdata.input,
+        "calwebb_coron3",
+        rtdata.input,
     ]
     Step.from_cmdline(args)
 
@@ -45,6 +46,6 @@ def test_miri_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_coron3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

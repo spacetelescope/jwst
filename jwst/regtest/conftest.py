@@ -25,8 +25,8 @@ conf.use_memmap = False
 def artifactory_repos(pytestconfig):
     """Provides Artifactory inputs_root and results_root"""
     try:
-        inputs_root = pytestconfig.getini('inputs_root')[0]
-        results_root = pytestconfig.getini('results_root')[0]
+        inputs_root = pytestconfig.getini("inputs_root")[0]
+        results_root = pytestconfig.getini("results_root")[0]
     except IndexError:
         inputs_root = "jwst-pipeline"
         results_root = "jwst-pipeline-results"
@@ -48,8 +48,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def postmortem(request, fixturename):
-    """Retrieve a fixture object if a test failed, else return None
-    """
+    """Retrieve a fixture object if a test failed, else return None"""
     try:
         if request.node.report_setup.passed:
             try:
@@ -64,7 +63,7 @@ def postmortem(request, fixturename):
         return None
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def generate_artifactory_json(request, artifactory_repos):
     """Pytest fixture that leaves behind JSON upload and okify specfiles
     if the rtdata or rtdata_module fixtures are used in either a test or a
@@ -75,11 +74,11 @@ def generate_artifactory_json(request, artifactory_repos):
 
     def artifactory_result_path():
         # Generate the Artifactory result path
-        whoami = getpass.getuser() or 'nobody'
-        user_tag = 'NOT_CI_{}'.format(whoami)
-        build_tag = os.environ.get('BUILD_TAG', user_tag)
-        build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
-        subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
+        whoami = getpass.getuser() or "nobody"
+        user_tag = "NOT_CI_{}".format(whoami)
+        build_tag = os.environ.get("BUILD_TAG", user_tag)
+        build_matrix_suffix = os.environ.get("BUILD_MATRIX_SUFFIX", "0")
+        subdir = "{}_{}_{}".format(TODAYS_DATE, build_tag, build_matrix_suffix)
         testname = request.node.originalname or request.node.name
 
         return os.path.join(results_root, subdir, testname) + os.sep
@@ -89,16 +88,18 @@ def generate_artifactory_json(request, artifactory_repos):
     upload_schema_pattern = []
     okify_schema_pattern = []
 
-    rtdata = postmortem(request, 'rtdata') or \
-        postmortem(request, 'rtdata_module') or \
-        postmortem(request, 'sdpdata_module')
+    rtdata = (
+        postmortem(request, "rtdata")
+        or postmortem(request, "rtdata_module")
+        or postmortem(request, "sdpdata_module")
+    )
     if rtdata:
         try:
             # The _jail fixture from ci_watson sets tmp_path
-            cwd = str(request.node.funcargs['tmp_path'])
+            cwd = str(request.node.funcargs["tmp_path"])
         except KeyError:
             # The jail fixture (module-scoped) returns the path
-            cwd = str(request.node.funcargs['jail'])
+            cwd = str(request.node.funcargs["jail"])
         rtdata.remote_results_path = artifactory_result_path()
         rtdata.test_name = request.node.name
         # Dump the failed test traceback into rtdata
@@ -112,35 +113,42 @@ def generate_artifactory_json(request, artifactory_repos):
             rtdata.to_asdf(path_asdf)
 
             # Generate an OKify JSON file
-            pattern = os.path.join(rtdata.remote_results_path,
-                                   os.path.basename(rtdata.output))
+            pattern = os.path.join(
+                rtdata.remote_results_path, os.path.basename(rtdata.output)
+            )
             okify_schema_pattern.append(pattern)
-            okify_schema = generate_upload_schema(okify_schema_pattern,
-                                                  f"{os.path.dirname(rtdata.truth_remote)}/")
+            okify_schema = generate_upload_schema(
+                okify_schema_pattern, f"{os.path.dirname(rtdata.truth_remote)}/"
+            )
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
-            with open(jsonfile, 'w') as fd:
+            with open(jsonfile, "w") as fd:
                 json.dump(okify_schema, fd, indent=2)
 
             # Generate an upload JSON file, including the OKify, asdf file
             upload_schema_pattern.append(os.path.abspath(jsonfile))
             upload_schema_pattern.append(path_asdf)
-            upload_schema = generate_upload_schema(upload_schema_pattern,
-                                                   rtdata.remote_results_path)
+            upload_schema = generate_upload_schema(
+                upload_schema_pattern, rtdata.remote_results_path
+            )
 
-            if rtdata.okify_op == 'file_copy':
-                upload_schema = generate_upload_schema(rtdata.output,
-                                                       rtdata.remote_results_path,
-                                                       schema=upload_schema)
-            elif rtdata.okify_op == 'folder_copy':
-                output = rtdata.output + '/'
-                target = rtdata.remote_results_path + os.path.basename(rtdata.output) + '/'
-                upload_schema = generate_upload_schema(output, target, schema=upload_schema)
+            if rtdata.okify_op == "file_copy":
+                upload_schema = generate_upload_schema(
+                    rtdata.output, rtdata.remote_results_path, schema=upload_schema
+                )
+            elif rtdata.okify_op == "folder_copy":
+                output = rtdata.output + "/"
+                target = (
+                    rtdata.remote_results_path + os.path.basename(rtdata.output) + "/"
+                )
+                upload_schema = generate_upload_schema(
+                    output, target, schema=upload_schema
+                )
             else:
-                raise RuntimeError(f'Unknown artifactory operation: {rtdata.okify_op}')
+                raise RuntimeError(f"Unknown artifactory operation: {rtdata.okify_op}")
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
-            with open(jsonfile, 'w') as fd:
+            with open(jsonfile, "w") as fd:
                 json.dump(upload_schema, fd, indent=2)
 
 
@@ -185,8 +193,7 @@ def generate_upload_schema(pattern, target, recursive=False, schema=None):
 
     for p in pattern:
         temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
-        temp_schema.update({"pattern": p, "target": target,
-                            "recursive": recursive})
+        temp_schema.update({"pattern": p, "target": target, "recursive": recursive})
         upload_schema["files"].append(temp_schema)
 
     return upload_schema
@@ -195,16 +202,15 @@ def generate_upload_schema(pattern, target, recursive=False, schema=None):
 def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
     """Provides the RemoteResource class"""
     inputs_root, results_root = artifactory_repos
-    return RegtestData(env=envopt, inputs_root=inputs_root,
-                       results_root=results_root)
+    return RegtestData(env=envopt, inputs_root=inputs_root, results_root=results_root)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def rtdata(artifactory_repos, envopt, request, _jail):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def rtdata_module(artifactory_repos, envopt, request, jail):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
@@ -212,21 +218,29 @@ def rtdata_module(artifactory_repos, envopt, request, jail):
 def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
     """Provides the RemoteResource class"""
     inputs_root, results_root = artifactory_repos
-    return SDPPoolsSource(env=envopt, inputs_root=inputs_root,
-                          results_root=results_root)
+    return SDPPoolsSource(
+        env=envopt, inputs_root=inputs_root, results_root=results_root
+    )
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def sdpdata_module(artifactory_repos, envopt, request, jail):
     return _sdpdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture
 def fitsdiff_default_kwargs():
-    ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX',
-                       'NAXIS1', 'TFORM*']
+    ignore_keywords = [
+        "DATE",
+        "CAL_VER",
+        "CAL_VCS",
+        "CRDS_VER",
+        "CRDS_CTX",
+        "NAXIS1",
+        "TFORM*",
+    ]
     return dict(
-        ignore_hdus=['ASDF'],
+        ignore_hdus=["ASDF"],
         ignore_keywords=ignore_keywords,
         ignore_fields=ignore_keywords,
         rtol=1e-5,
@@ -275,13 +289,15 @@ def diff_astropy_tables():
 
                 if truth[col_name].dtype.kind == "f":
                     try:
-                        assert_allclose(result[col_name], truth[col_name],
-                                        rtol=rtol, atol=atol)
+                        assert_allclose(
+                            result[col_name], truth[col_name], rtol=rtol, atol=atol
+                        )
                     except AssertionError as err:
-                        diffs.append("\n----------------------------------\n"
-                                     + f"Column '{col_name}' values do not "
-                                     + f"match (within tolerances) \n{err}"
-                                     )
+                        diffs.append(
+                            "\n----------------------------------\n"
+                            + f"Column '{col_name}' values do not "
+                            + f"match (within tolerances) \n{err}"
+                        )
                 else:
                     try:
                         assert_equal(result[col_name], truth[col_name])
@@ -300,35 +316,40 @@ def diff_astropy_tables():
 
     return _diff_astropy_tables
 
+
 # Add option to specify a single pool name
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        '--sdp-pool', metavar='sdp_pool', default=None,
-        help='SDP test pool to run. Specify the name only, not extension or path'
+        "--sdp-pool",
+        metavar="sdp_pool",
+        default=None,
+        help="SDP test pool to run. Specify the name only, not extension or path",
     )
     parser.addoption(
-        '--standard-pool', metavar='standard_pool', default=None,
-        help='Standard test pool to run. Specify the name only, not extension or path'
+        "--standard-pool",
+        metavar="standard_pool",
+        default=None,
+        help="Standard test pool to run. Specify the name only, not extension or path",
     )
 
 
 @pytest.fixture
 def sdp_pool(request):
     """Retrieve a specific SDP pool to test"""
-    return request.config.getoption('--sdp-pool')
+    return request.config.getoption("--sdp-pool")
 
 
 @pytest.fixture
 def standard_pool(request):
     """Retrieve a specific standard pool to test"""
-    return request.config.getoption('--standard-pool')
+    return request.config.getoption("--standard-pool")
 
 
 def pytest_generate_tests(metafunc):
     """Prefetch and parametrize a set of test pools"""
-    if 'pool_path' in metafunc.fixturenames:
+    if "pool_path" in metafunc.fixturenames:
         pool_path_fixture(metafunc)
 
 
@@ -345,15 +366,17 @@ def pool_path_fixture(metafunc):
     """
     # If doing "big data" regressions has not been requested,
     # do not invoke any tests.
-    if not metafunc.config.getoption('bigdata'):
-        skip = pytest.skip('For "pool_path" fixtures, option "--bigdata" was not specified.')
-        metafunc.parametrize('pool_path', skip)
+    if not metafunc.config.getoption("bigdata"):
+        skip = pytest.skip(
+            'For "pool_path" fixtures, option "--bigdata" was not specified.'
+        )
+        metafunc.parametrize("pool_path", skip)
         return
 
     try:
-        inputs_root = metafunc.config.getini('inputs_root')[0]
-        results_root = metafunc.config.getini('results_root')[0]
-        env = metafunc.config.getoption('env')
+        inputs_root = metafunc.config.getini("inputs_root")[0]
+        results_root = metafunc.config.getini("results_root")[0]
+        env = metafunc.config.getoption("env")
     except IndexError:
         inputs_root = "jwst-pipeline"
         results_root = "jwst-pipeline-results"
@@ -366,9 +389,6 @@ def pool_path_fixture(metafunc):
     except Exception:
         pool_paths = []
 
-    ids = [
-        Path(pool_path).stem
-        for pool_path in pool_paths
-    ]
+    ids = [Path(pool_path).stem for pool_path in pool_paths]
 
-    metafunc.parametrize('pool_path', pool_paths, ids=ids)
+    metafunc.parametrize("pool_path", pool_paths, ids=ids)

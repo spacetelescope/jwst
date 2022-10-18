@@ -1,8 +1,12 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel',
-           'NirspecIfuAreaModel']
+__all__ = [
+    "PixelAreaModel",
+    "NirspecSlitAreaModel",
+    "NirspecMosAreaModel",
+    "NirspecIfuAreaModel",
+]
 
 
 class PixelAreaModel(ReferenceFileModel):
@@ -14,6 +18,7 @@ class PixelAreaModel(ReferenceFileModel):
     data : numpy float32 array
          The pixel area array
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/pixelarea.schema"
 
 
@@ -32,6 +37,7 @@ class NirspecSlitAreaModel(ReferenceFileModel):
          - slit_id: str[15]
          - pixarea: float32
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nirspec_area_slit.schema"
 
 
@@ -52,6 +58,7 @@ class NirspecMosAreaModel(ReferenceFileModel):
          - shutter_y: int16
          - pixarea: float32
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nirspec_area_mos.schema"
 
 
@@ -70,4 +77,5 @@ class NirspecIfuAreaModel(ReferenceFileModel):
          - slice_id: int16
          - pixarea: float32
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nirspec_area_ifu.schema"

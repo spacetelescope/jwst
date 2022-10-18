@@ -22,12 +22,12 @@ from ..combine_1d import combine_1d_step
 from ..photom import photom_step
 
 
-__all__ = ['Spec3Pipeline']
+__all__ = ["Spec3Pipeline"]
 
 # Group exposure types
-MULTISOURCE_MODELS = ['MultiSlitModel']
-IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NRC_WFSS']
+MULTISOURCE_MODELS = ["MultiSlitModel"]
+IFU_EXPTYPES = ["MIR_MRS", "NRS_IFU"]
+SLITLESS_TYPES = ["NIS_SOSS", "NIS_WFSS", "NRC_WFSS"]
 
 
 class Spec3Pipeline(Pipeline):
@@ -53,15 +53,15 @@ class Spec3Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {
-        'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
-        'master_background': master_background_step.MasterBackgroundStep,
-        'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
-        'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-        'resample_spec': resample_spec_step.ResampleSpecStep,
-        'cube_build': cube_build_step.CubeBuildStep,
-        'extract_1d': extract_1d_step.Extract1dStep,
-        'photom': photom_step.PhotomStep,
-        'combine_1d': combine_1d_step.Combine1dStep
+        "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
+        "master_background": master_background_step.MasterBackgroundStep,
+        "mrs_imatch": mrs_imatch_step.MRSIMatchStep,
+        "outlier_detection": outlier_detection_step.OutlierDetectionStep,
+        "resample_spec": resample_spec_step.ResampleSpecStep,
+        "cube_build": cube_build_step.CubeBuildStep,
+        "extract_1d": extract_1d_step.Extract1dStep,
+        "photom": photom_step.PhotomStep,
+        "combine_1d": combine_1d_step.Combine1dStep,
     }
 
     # Main processing
@@ -73,21 +73,21 @@ class Spec3Pipeline(Pipeline):
         input: str, Level3 Association, or ~jwst.datamodels.DataModel
             The exposure or association of exposures to process
         """
-        self.log.info('Starting calwebb_spec3 ...')
-        asn_exptypes = ['science', 'background']
+        self.log.info("Starting calwebb_spec3 ...")
+        asn_exptypes = ["science", "background"]
 
         # Setup sub-step defaults
-        self.master_background.suffix = 'mbsub'
-        self.mrs_imatch.suffix = 'mrs_imatch'
-        self.outlier_detection.suffix = 'crf'
+        self.master_background.suffix = "mbsub"
+        self.mrs_imatch.suffix = "mrs_imatch"
+        self.outlier_detection.suffix = "crf"
         self.outlier_detection.save_results = self.save_results
-        self.resample_spec.suffix = 's2d'
+        self.resample_spec.suffix = "s2d"
         self.resample_spec.save_results = self.save_results
-        self.cube_build.suffix = 's3d'
+        self.cube_build.suffix = "s3d"
         self.cube_build.save_results = self.save_results
-        self.extract_1d.suffix = 'x1d'
+        self.extract_1d.suffix = "x1d"
         self.extract_1d.save_results = self.save_results
-        self.combine_1d.suffix = 'c1d'
+        self.combine_1d.suffix = "c1d"
         self.combine_1d.save_results = self.save_results
 
         # Retrieve the inputs:
@@ -116,15 +116,15 @@ class Spec3Pipeline(Pipeline):
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         product = input_models.meta.asn_table.products[0].instance
-        for member in product['members']:
-            members_by_type[member['exptype'].lower()].append(member['expname'])
+        for member in product["members"]:
+            members_by_type[member["exptype"].lower()].append(member["expname"])
 
         if is_moving_target(input_models):
             self.log.info("Assigning WCS to a Moving Target exposure.")
             input_models = self.assign_mtwcs(input_models)
 
         # If background data are present, call the master background step
-        if members_by_type['background']:
+        if members_by_type["background"]:
             source_models = self.master_background(input_models)
             source_models.meta.asn_table = input_models.meta.asn_table
 
@@ -157,7 +157,7 @@ class Spec3Pipeline(Pipeline):
         # a single ModelContainer.
         sources = [source_models]
         if model_type in MULTISOURCE_MODELS:
-            self.log.info('Convert from exposure-based to source-based data.')
+            self.log.info("Convert from exposure-based to source-based data.")
             sources = [
                 (name, model)
                 for name, model in multislit_to_container(source_models).items()
@@ -165,8 +165,10 @@ class Spec3Pipeline(Pipeline):
 
             # Check for negative and large source_id values
             if len(sources) > 99999:
-                self.log.critical("Data contain more than 100,000 sources;"
-                                  "filename does not support 6 digit source ids.")
+                self.log.critical(
+                    "Data contain more than 100,000 sources;"
+                    "filename does not support 6 digit source ids."
+                )
                 raise Exception
 
             available_src_ids = set(np.arange(99999) + 1)
@@ -187,7 +189,9 @@ class Spec3Pipeline(Pipeline):
                 if src_id < 0 or src_id > 99999:
                     src_id_new = available_src_ids.pop()
                     self.log.info(f"Source ID {src_id} falls outside allowed range.")
-                    self.log.info(f"Reassigning {src_id} to {str(src_id_new).zfill(5)}.")
+                    self.log.info(
+                        f"Reassigning {src_id} to {str(src_id_new).zfill(5)}."
+                    )
                     # Replace source_id for each model in the SourceModelContainers
                     for contained_model in model:
                         contained_model.source_id = src_id_new
@@ -211,10 +215,10 @@ class Spec3Pipeline(Pipeline):
 
             # The MultiExposureModel is a required output.
             if isinstance(result, datamodels.SourceModelContainer):
-                self.save_model(result, 'cal')
+                self.save_model(result, "cal")
 
             # Call the skymatch step for MIRI MRS data
-            if exptype in ['MIR_MRS']:
+            if exptype in ["MIR_MRS"]:
                 result = self.mrs_imatch(result)
 
             # Call outlier detection
@@ -223,7 +227,9 @@ class Spec3Pipeline(Pipeline):
                 # the downstream products have the correct table name since
                 # the _cal files are not saved they will not be updated
                 for cal_array in result:
-                    cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
+                    cal_array.meta.asn.table_name = op.basename(
+                        input_models.asn_table_name
+                    )
                 result = self.outlier_detection(result)
 
                 # Resample time. Dependent on whether the data is IFU or not.
@@ -246,7 +252,7 @@ class Spec3Pipeline(Pipeline):
 
                 # For slitless data, extract 1D spectra and then combine them
 
-                if exptype in ['NIS_SOSS']:
+                if exptype in ["NIS_SOSS"]:
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.
@@ -256,14 +262,17 @@ class Spec3Pipeline(Pipeline):
                     # SOSS F277W may return None - don't bother with that.
                     if result is not None:
                         self.photom.save_results = self.save_results
-                        self.photom.suffix = 'x1d'
+                        self.photom.suffix = "x1d"
                         result = self.photom(result)
                 else:
                     result = self.extract_1d(result)
 
                 result = self.combine_1d(result)
 
-            elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
+            elif (
+                resample_complete is not None
+                and resample_complete.upper() == "COMPLETE"
+            ):
 
                 # If 2D data were resampled and combined, just do a 1D extraction
                 if exptype in IFU_EXPTYPES:
@@ -271,11 +280,9 @@ class Spec3Pipeline(Pipeline):
                 result = self.extract_1d(result)
 
             else:
-                self.log.warning(
-                    'Resampling was not completed. Skipping extract_1d.'
-                )
+                self.log.warning("Resampling was not completed. Skipping extract_1d.")
 
         input_models.close()
 
-        self.log.info('Ending calwebb_spec3')
+        self.log.info("Ending calwebb_spec3")
         return

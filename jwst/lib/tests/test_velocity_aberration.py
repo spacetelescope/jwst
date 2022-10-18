@@ -33,18 +33,24 @@ def test_compute_va_effects_zero_velocity():
 def test_velocity_aberration_script(tmpdir):
     """Test the whole script on a FITS file"""
     path = str(tmpdir.join("velocity_aberration_tmpfile.fits"))
-    hdulist = fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU(name='SCI')])
-    hdulist['SCI'].header['JWST_DX'] = GOOD_VELOCITY[0]
-    hdulist['SCI'].header['JWST_DY'] = GOOD_VELOCITY[1]
-    hdulist['SCI'].header['JWST_DZ'] = GOOD_VELOCITY[2]
-    hdulist['SCI'].header['RA_REF'] = GOOD_POS[0]
-    hdulist['SCI'].header['DEC_REF'] = GOOD_POS[1]
+    hdulist = fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU(name="SCI")])
+    hdulist["SCI"].header["JWST_DX"] = GOOD_VELOCITY[0]
+    hdulist["SCI"].header["JWST_DY"] = GOOD_VELOCITY[1]
+    hdulist["SCI"].header["JWST_DZ"] = GOOD_VELOCITY[2]
+    hdulist["SCI"].header["RA_REF"] = GOOD_POS[0]
+    hdulist["SCI"].header["DEC_REF"] = GOOD_POS[1]
     hdulist.writeto(path)
     hdulist.close()
 
     subprocess.check_call(["set_velocity_aberration.py", path])
 
     with fits.open(path) as hdulist_in:
-        assert isclose(hdulist_in[0].header['VA_RA'], GOOD_APPARENT_RA, rtol=0, atol=1e-7)
-        assert isclose(hdulist_in[0].header['VA_DEC'], GOOD_APPARENT_DEC, rtol=0, atol=1e-7)
-        assert isclose(hdulist_in['SCI'].header['VA_SCALE'], GOOD_SCALE_FACTOR, rtol=0, atol=1e-7)
+        assert isclose(
+            hdulist_in[0].header["VA_RA"], GOOD_APPARENT_RA, rtol=0, atol=1e-7
+        )
+        assert isclose(
+            hdulist_in[0].header["VA_DEC"], GOOD_APPARENT_DEC, rtol=0, atol=1e-7
+        )
+        assert isclose(
+            hdulist_in["SCI"].header["VA_SCALE"], GOOD_SCALE_FACTOR, rtol=0, atol=1e-7
+        )

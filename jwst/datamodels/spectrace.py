@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['SpecTraceModel', 'SpecTraceSingleModel']
+__all__ = ["SpecTraceModel", "SpecTraceSingleModel"]
 
 
 class SpecTraceModel(ReferenceFileModel):
@@ -29,6 +29,7 @@ class SpecTraceModel(ReferenceFileModel):
          Spectral trace data
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/spectrace.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -51,4 +52,5 @@ class SpecTraceSingleModel(ReferenceFileModel):
     data : numpy table
          Trace values
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/spectracesingle.schema"

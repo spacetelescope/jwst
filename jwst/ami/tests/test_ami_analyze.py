@@ -24,7 +24,7 @@ from numpy.testing import assert_allclose
 # utils module tests:
 #
 def test_utils_rebin():
-    ''' Test of rebin() and krebin() in utils module '''
+    """Test of rebin() and krebin() in utils module"""
 
     arr = np.arange(24).reshape((3, 8)) / 10.0
     rc = tuple((2, 2))
@@ -36,9 +36,11 @@ def test_utils_rebin():
 
 
 def test_utils_quadratic():
-    ''' Test of quadratic in utils module '''
+    """Test of quadratic in utils module"""
 
-    x = np.array([0.5, 0.55, 0.55, 0.65, 0.70, 0.8, 0.85, 1.0, 1.01, 1.02, 1.03, 1.04, 1.05])
+    x = np.array(
+        [0.5, 0.55, 0.55, 0.65, 0.70, 0.8, 0.85, 1.0, 1.01, 1.02, 1.03, 1.04, 1.05]
+    )
     p = np.array([-2.0, 3.0, 7.0])
 
     maxx, maxy, fit_vals = utils.quadratic(p, x)
@@ -48,13 +50,27 @@ def test_utils_quadratic():
     assert_allclose([maxx, maxy], [true_maxx, true_maxy])
 
     true_fit_vals = np.array(
-        [8.0, 8.045, 8.045, 8.105, 8.12, 8.12, 8.105, 8.0, 7.9898, 7.9792, 7.9682, 7.9568, 7.945]
+        [
+            8.0,
+            8.045,
+            8.045,
+            8.105,
+            8.12,
+            8.12,
+            8.105,
+            8.0,
+            7.9898,
+            7.9792,
+            7.9682,
+            7.9568,
+            7.945,
+        ]
     )
     assert_allclose(fit_vals, true_fit_vals)
 
 
 def test_utils_findmax():
-    ''' Test of findmax in utils module '''
+    """Test of findmax in utils module"""
 
     mag = np.arange(9) + 1.0
     delt = 1.0e-7
@@ -77,7 +93,7 @@ def test_utils_findmax():
 
 
 def test_utils_makeA():
-    ''' Test of makeA in utils module '''
+    """Test of makeA in utils module"""
 
     nh = 4  # number of holes
     arr = utils.makeA(nh)
@@ -96,7 +112,7 @@ def test_utils_makeA():
 
 
 def test_utils_fringes2pistons():
-    ''' Test of fringes2pistons in utils module  '''
+    """Test of fringes2pistons in utils module"""
 
     fringephases = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1])
     nholes = 5
@@ -108,7 +124,7 @@ def test_utils_fringes2pistons():
 
 
 def test_utils_rcrosscorrelate():
-    ''' Test of rcrosscorrelate() in utils module '''
+    """Test of rcrosscorrelate() in utils module"""
 
     a = np.array(
         [
@@ -142,7 +158,7 @@ def test_utils_rcrosscorrelate():
 
 
 def test_utils_crosscorrelate():
-    ''' Test of crosscorrelate() in utils module '''
+    """Test of crosscorrelate() in utils module"""
 
     a = np.array(
         [
@@ -176,7 +192,7 @@ def test_utils_crosscorrelate():
 
 
 def test_utils_imgmedian():
-    '''Test of img_median_replace() in utils module'''
+    """Test of img_median_replace() in utils module"""
 
     # create input image model containing NaN's and DO_NOT_USE flags
     data = np.array(
@@ -186,7 +202,8 @@ def test_utils_imgmedian():
             [11.0, 12.0, 13.0, 14.0, 15.0],
             [16.0, 17.0, np.nan, 0.0, 20.0],
             [21.0, 22.0, 23.0, 24.0, 25.0],
-        ], dtype=np.float32,
+        ],
+        dtype=np.float32,
     )
 
     dq = np.array(
@@ -196,7 +213,8 @@ def test_utils_imgmedian():
             [0, 0, 0, 0, 0],
             [0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0],
-        ], dtype=np.uint32,
+        ],
+        dtype=np.uint32,
     )
 
     input_model = datamodels.ImageModel(data=data, dq=dq)
@@ -211,7 +229,8 @@ def test_utils_imgmedian():
             [11.0, 12.0, 13.0, 14.0, 15.0],
             [16.0, 17.0, 17.0, 18.5, 20.0],
             [21.0, 22.0, 23.0, 24.0, 25.0],
-        ], dtype=np.float32,
+        ],
+        dtype=np.float32,
     )
 
     assert_allclose(input_model.data, expected_result)
@@ -229,7 +248,12 @@ def test_leastsqnrm_rotatevectors():
     rot_vec = leastsqnrm.rotatevectors(vec, thetarad=0.001)
 
     true_rot_vec = np.array(
-        [[0.9979995, 2.000999], [2.9959985, 4.002998], [4.9939975, 6.004997], [6.9919965, 8.006996]]
+        [
+            [0.9979995, 2.000999],
+            [2.9959985, 4.002998],
+            [4.9939975, 6.004997],
+            [6.9919965, 8.006996],
+        ]
     )
     assert_allclose(rot_vec, true_rot_vec)
 
@@ -267,7 +291,7 @@ def test_leastsqnrm_rad2mas():
     theta_rad = 1.0e-6
     mas = leastsqnrm.rad2mas(theta_rad)
 
-    true_mas = theta_rad * (3600.0 * 180 / np.pi) * 10.0 ** 3
+    true_mas = theta_rad * (3600.0 * 180 / np.pi) * 10.0**3
     assert_allclose(mas, true_mas)
 
 
@@ -331,7 +355,7 @@ def test_leastsqnrm_hexpb():
     hexpb.offx = 28.0
     hexpb.offy = 28.0
     hexpb.pitch = 1.0e-07
-    hexpb.shape = 'hex'
+    hexpb.shape = "hex"
     hexpb.size = (3, 3)
 
     hexpb_arr = hexpb()
@@ -568,7 +592,23 @@ def test_leastsqnrm_closurephase():
     cps = closurephase(deltap, n=n)
 
     true_cps = np.array(
-        [0.25, 0.5, 0.0, 0.07, 0.3, -0.8, 0.55, 0.03, 0.75, -0.35, -0.35, -0.65, 0.8, 1.2, 0.0]
+        [
+            0.25,
+            0.5,
+            0.0,
+            0.07,
+            0.3,
+            -0.8,
+            0.55,
+            0.03,
+            0.75,
+            -0.35,
+            -0.35,
+            -0.65,
+            0.8,
+            1.2,
+            0.0,
+        ]
     )
     assert_allclose(cps, true_cps, atol=1e-8)
 
@@ -771,9 +811,21 @@ def test_hexee_g_eeAG():
 
     true_g = np.array(
         [
-            [-0.04454286 + 0.05015766j, -0.04164985 + 0.06041733j, -0.03830953 + 0.07099764j],
-            [-0.04072437 + 0.05375103j, -0.03729262 + 0.06415232j, -0.03340318 + 0.07486623j],
-            [-0.03657856 + 0.05703437j, -0.03258885 + 0.06754246j, -0.02813134 + 0.07835476j],
+            [
+                -0.04454286 + 0.05015766j,
+                -0.04164985 + 0.06041733j,
+                -0.03830953 + 0.07099764j,
+            ],
+            [
+                -0.04072437 + 0.05375103j,
+                -0.03729262 + 0.06415232j,
+                -0.03340318 + 0.07486623j,
+            ],
+            [
+                -0.03657856 + 0.05703437j,
+                -0.03258885 + 0.06754246j,
+                -0.02813134 + 0.07835476j,
+            ],
         ]
     )
 
@@ -790,9 +842,21 @@ def test_hexee_glimit():
 
     true_g = np.array(
         [
-            [0.07105571 + 0.28088478j, 0.07105571 + 0.28088478j, 0.07105571 + 0.28088478j],
-            [0.08609692 + 0.28598645j, 0.08609692 + 0.28598645j, 0.08609692 + 0.28598645j],
-            [0.10178022 + 0.29008864j, 0.10178022 + 0.29008864j, 0.10178022 + 0.29008864j],
+            [
+                0.07105571 + 0.28088478j,
+                0.07105571 + 0.28088478j,
+                0.07105571 + 0.28088478j,
+            ],
+            [
+                0.08609692 + 0.28598645j,
+                0.08609692 + 0.28598645j,
+                0.08609692 + 0.28598645j,
+            ],
+            [
+                0.10178022 + 0.29008864j,
+                0.10178022 + 0.29008864j,
+                0.10178022 + 0.29008864j,
+            ],
         ]
     )
 
@@ -803,19 +867,28 @@ def test_hexee_glimit():
 # analyticnrm2 module tests:
 #
 def test_analyticnrm2_psf(setup_sf):
-    ''' Test of psf() in the analyticnrm2 module '''
+    """Test of psf() in the analyticnrm2 module"""
 
     pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
     shape = "hex"
 
-    computed_psf = psf(pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj, shape=shape)
+    computed_psf = psf(
+        pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj, shape=shape
+    )
 
     true_psf = np.array(
         [
             [1.14249135, 0.65831385, 0.45119464, 0.66864436, 1.10501352, 2.04851966],
             [2.2221824, 0.62716999, 0.87062628, 1.97855142, 1.72666739, 0.28363866],
             [4.37562298, 2.64951632, 6.40126821, 12.22910105, 13.17326852, 7.49323549],
-            [5.93942383, 4.58894785, 12.68235611, 24.87843624, 29.17900067, 20.64525322],
+            [
+                5.93942383,
+                4.58894785,
+                12.68235611,
+                24.87843624,
+                29.17900067,
+                20.64525322,
+            ],
             [5.38441424, 3.73680387, 13.26524812, 28.96518165, 36.75, 28.96518165],
             [3.98599305, 1.08124031, 7.38628086, 20.64525322, 29.17900067, 24.87843625],
         ]
@@ -825,7 +898,7 @@ def test_analyticnrm2_psf(setup_sf):
 
 
 def test_analyticnrm2_asf_hex(setup_sf):
-    ''' Test of asf_hex() in the analyticnrm2 module FOR HEX '''
+    """Test of asf_hex() in the analyticnrm2 module FOR HEX"""
 
     pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
 
@@ -888,7 +961,7 @@ def test_analyticnrm2_asf_hex(setup_sf):
 
 
 def test_analyticnrm2_interf(setup_sf):
-    ''' Test of interf() in the analyticnrm2 module '''
+    """Test of interf() in the analyticnrm2 module"""
 
     ASIZE = 4
     kx = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
@@ -918,7 +991,9 @@ def test_analyticnrm2_interf(setup_sf):
     c = (ASIZE / 2.0, ASIZE / 2)
     interf.c = (ASIZE / 2.0, ASIZE / 2)
 
-    interference = interf(kx, ky, ctrs=ctrs, phi=phi, lam=lam, pitch=pitch, c=c, affine2d=aff_obj)
+    interference = interf(
+        kx, ky, ctrs=ctrs, phi=phi, lam=lam, pitch=pitch, c=c, affine2d=aff_obj
+    )
 
     true_interference = np.array(
         [
@@ -953,7 +1028,7 @@ def test_analyticnrm2_interf(setup_sf):
 
 
 def test_analyticnrm2_phasor():
-    ''' Test of phasor() in the analyticnrm2 module '''
+    """Test of phasor() in the analyticnrm2 module"""
 
     ASIZE = 4
     kx = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
@@ -1023,7 +1098,7 @@ def test_webb_psf():
 
     wavelength = np.linspace(min_wl, max_wl, nelem, endpoint=True, dtype=np.float32)
     throughput = create_throughput(nelem)
-    dtype = np.dtype([('wavelength', '<f4'), ('throughput', '<f4')])
+    dtype = np.dtype([("wavelength", "<f4"), ("throughput", "<f4")])
 
     filt_tab = np.array(list(zip(wavelength, throughput)), dtype=dtype)
     filter_model = datamodels.ThroughputModel(filter_table=filt_tab)
@@ -1144,11 +1219,11 @@ def setup_hexee():
         eta[:, ii] = ii
 
     kwargs = {
-        'd': 0.8,
-        'c': (28.0, 28.0),
-        'lam': 2.3965000082171173e-06,
-        'pixel': 1.0375012775744072e-07,
-        'minus': False,
+        "d": 0.8,
+        "c": (28.0, 28.0),
+        "lam": 2.3965000082171173e-06,
+        "pixel": 1.0375012775744072e-07,
+        "minus": False,
     }
 
     return xi, eta, kwargs

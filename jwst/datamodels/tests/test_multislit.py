@@ -9,8 +9,8 @@ from jwst.datamodels import MultiSlitModel, ImageModel
 
 
 def test_multislit_model():
-    array1 = np.asarray(np.random.rand(2, 2), dtype='float32')
-    array2 = np.asarray(np.random.rand(2, 2), dtype='float32')
+    array1 = np.asarray(np.random.rand(2, 2), dtype="float32")
+    array2 = np.asarray(np.random.rand(2, 2), dtype="float32")
 
     with MultiSlitModel() as ms:
         assert len(ms.slits) == 0
@@ -36,7 +36,7 @@ def test_multislit_move_from_fits(tmp_path):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
     for i in range(5):
-        hdu = fits.ImageHDU(data=np.zeros((64, 64)), name='SCI')
+        hdu = fits.ImageHDU(data=np.zeros((64, 64)), name="SCI")
         hdu.ver = i + 1
         hdulist.append(hdu)
 
@@ -52,7 +52,7 @@ def test_multislit_move_from_fits(tmp_path):
 def test_multislit_append_string():
     with pytest.raises(jsonschema.ValidationError):
         m = MultiSlitModel(strict_validation=True)
-        m.slits.append('junk')
+        m.slits.append("junk")
 
 
 def test_multislit():

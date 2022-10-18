@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['CubeModel']
+__all__ = ["CubeModel"]
 
 
 class CubeModel(JwstDataModel):
@@ -37,6 +37,7 @@ class CubeModel(JwstDataModel):
     var_rnoise : numpy float32 array
          Integration-specific variances of slope due to read noise
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/cube.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -55,8 +56,14 @@ class CubeModel(JwstDataModel):
         for plane in range(self.shape[0]):
             image = ImageModel()
             for attribute in [
-                    'data', 'dq', 'err', 'zeroframe', 'area',
-                    'var_poisson', 'var_rnoise', 'var_flat'
+                "data",
+                "dq",
+                "err",
+                "zeroframe",
+                "area",
+                "var_poisson",
+                "var_rnoise",
+                "var_flat",
             ]:
                 try:
                     setattr(image, attribute, self.getarray_noinit(attribute)[plane])

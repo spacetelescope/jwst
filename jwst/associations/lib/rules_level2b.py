@@ -6,7 +6,7 @@ import logging
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
+from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
@@ -18,27 +18,27 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
-from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
+from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
-    'Asn_Lv2FGS',
-    'Asn_Lv2Image',
-    'Asn_Lv2ImageNonScience',
-    'Asn_Lv2ImageSpecial',
-    'Asn_Lv2ImageTSO',
-    'Asn_Lv2MIRLRSFixedSlitNod',
-    'Asn_Lv2NRSFSS',
-    'Asn_Lv2NRSIFUNod',
-    'Asn_Lv2NRSLAMPSpectral',
-    'Asn_Lv2NRSMSA',
-    'Asn_Lv2Spec',
-    'Asn_Lv2SpecSpecial',
-    'Asn_Lv2SpecTSO',
-    'Asn_Lv2WFSSNIS',
-    'Asn_Lv2WFSSNRC',
-    'Asn_Lv2WFSC',
+    "Asn_Lv2FGS",
+    "Asn_Lv2Image",
+    "Asn_Lv2ImageNonScience",
+    "Asn_Lv2ImageSpecial",
+    "Asn_Lv2ImageTSO",
+    "Asn_Lv2MIRLRSFixedSlitNod",
+    "Asn_Lv2NRSFSS",
+    "Asn_Lv2NRSIFUNod",
+    "Asn_Lv2NRSLAMPSpectral",
+    "Asn_Lv2NRSMSA",
+    "Asn_Lv2Spec",
+    "Asn_Lv2SpecSpecial",
+    "Asn_Lv2SpecTSO",
+    "Asn_Lv2WFSSNIS",
+    "Asn_Lv2WFSSNRC",
+    "Asn_Lv2WFSC",
 ]
 
 # Configure logging
@@ -50,10 +50,7 @@ logger.addHandler(logging.NullHandler())
 # Start of the User-level rules
 # --------------------------------
 @RegistryMarker.rule
-class Asn_Lv2Image(
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
+class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
     """Level2b Non-TSO Science Image Association
 
     Characteristics:
@@ -67,36 +64,33 @@ class Asn_Lv2Image(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint_Image_Science(),
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
-            Constraint(
-                [
-                    SimpleConstraint(
-                        value='background',
-                        test=lambda value, item: self.get_exposure_type(item) == value,
-                        force_unique=False,
-                    ),
-                    Constraint_Single_Science(self.has_science),
-                ], reduce=Constraint.any
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint_Image_Science(),
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                Constraint(
+                    [
+                        SimpleConstraint(
+                            value="background",
+                            test=lambda value, item: self.get_exposure_type(item)
+                            == value,
+                            force_unique=False,
+                        ),
+                        Constraint_Single_Science(self.has_science),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2ImageNonScience(
-        AsnMixin_Lv2Special,
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
+class Asn_Lv2ImageNonScience(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase):
     """Level2b Non-science Image Association
 
     Characteristics:
@@ -109,22 +103,20 @@ class Asn_Lv2ImageNonScience(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Image_Nonscience(),
-            Constraint_Single_Science(self.has_science),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Image_Nonscience(),
+                Constraint_Single_Science(self.has_science),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2ImageSpecial(
-        AsnMixin_Lv2Special,
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
+class Asn_Lv2ImageSpecial(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase):
     """Level2b Auxiliary Science Image Association
 
     Characteristics:
@@ -138,23 +130,22 @@ class Asn_Lv2ImageSpecial(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint_Image_Science(),
-            Constraint_Single_Science(self.has_science),
-            Constraint_Special(),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint_Image_Science(),
+                Constraint_Single_Science(self.has_science),
+                Constraint_Special(),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2ImageSpecial, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2ImageTSO(
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
+class Asn_Lv2ImageTSO(AsnMixin_Lv2Image, DMSLevel2bBase):
     """Level2b Time Series Science Image Association
 
     Characteristics:
@@ -167,13 +158,15 @@ class Asn_Lv2ImageTSO(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint_Image_Science(),
-            Constraint_Single_Science(self.has_science),
-            Constraint_TSO(),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint_Image_Science(),
+                Constraint_Single_Science(self.has_science),
+                Constraint_TSO(),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2ImageTSO, self).__init__(*args, **kwargs)
@@ -182,14 +175,11 @@ class Asn_Lv2ImageTSO(
         """Post-check and pre-add initialization"""
 
         super(Asn_Lv2ImageTSO, self)._init_hook(item)
-        self.data['asn_type'] = 'tso-image2'
+        self.data["asn_type"] = "tso-image2"
 
 
 @RegistryMarker.rule
-class Asn_Lv2FGS(
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
+class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
     """Level2b FGS Association
 
     Characteristics:
@@ -202,31 +192,24 @@ class Asn_Lv2FGS(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'fgs_image'
-                    '|fgs_focus'
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Single_Science(self.has_science),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("fgs_image" "|fgs_focus"),
                 ),
-            ),
-            Constraint(
-                [Constraint_WFSC()],
-                reduce=Constraint.notany
-            )
-        ])
+                Constraint([Constraint_WFSC()], reduce=Constraint.notany),
+            ]
+        )
 
         super(Asn_Lv2FGS, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2Spec(
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2Spec(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b Science Spectral Association
 
     Characteristics:
@@ -241,46 +224,50 @@ class Asn_Lv2Spec(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint_Spectral_Science(
-                exclude_exp_types=['nis_wfss', 'nrc_wfss', 'nrs_fixedslit', 'nrs_msaspec']
-            ),
-            Constraint(
-                [
-                    Constraint_Single_Science(self.has_science),
-                    SimpleConstraint(
-                        value='science',
-                        test=lambda value, item: self.get_exposure_type(item) != value,
-                        force_unique=False,
-                    )
-                ],
-                reduce=Constraint.any
-            ),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                    DMSAttrConstraint(
-                        name='patttype',
-                        sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
-                    )
-                ],
-                reduce=Constraint.notany
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint_Spectral_Science(
+                    exclude_exp_types=[
+                        "nis_wfss",
+                        "nrc_wfss",
+                        "nrs_fixedslit",
+                        "nrs_msaspec",
+                    ]
+                ),
+                Constraint(
+                    [
+                        Constraint_Single_Science(self.has_science),
+                        SimpleConstraint(
+                            value="science",
+                            test=lambda value, item: self.get_exposure_type(item)
+                            != value,
+                            force_unique=False,
+                        ),
+                    ],
+                    reduce=Constraint.any,
+                ),
+                Constraint(
+                    [
+                        Constraint_TSO(),
+                        DMSAttrConstraint(
+                            name="patttype",
+                            sources=["patttype"],
+                            value=["2-point-nod|4-point-nod"],
+                        ),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2Spec, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2SpecSpecial(
-        AsnMixin_Lv2Special,
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2SpecSpecial(AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b Auxiliary Science Spectral Association
 
     Characteristics:
@@ -293,23 +280,22 @@ class Asn_Lv2SpecSpecial(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint_Spectral_Science(),
-            Constraint_Single_Science(self.has_science),
-            Constraint_Special(),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint_Spectral_Science(),
+                Constraint_Single_Science(self.has_science),
+                Constraint_Special(),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2SpecTSO(
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b Time Series Science Spectral Association
 
     Characteristics:
@@ -323,32 +309,36 @@ class Asn_Lv2SpecTSO(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint_Spectral_Science(
-                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
-            ),
-            Constraint_Single_Science(self.has_science),
-            Constraint_TSO(),
-            Constraint(
-                [
-                    Constraint([
-                        DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value=['nrc_tsgrism'],
-                        ),
-                        DMSAttrConstraint(
-                            name='pupil',
-                            sources=['pupil'],
-                            value=['clear'],
-                        )],
-                    )
-                ],
-                reduce=Constraint.notany
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint_Spectral_Science(
+                    exclude_exp_types=["nrs_msaspec", "nrs_fixedslit"]
+                ),
+                Constraint_Single_Science(self.has_science),
+                Constraint_TSO(),
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="exp_type",
+                                    sources=["exp_type"],
+                                    value=["nrc_tsgrism"],
+                                ),
+                                DMSAttrConstraint(
+                                    name="pupil",
+                                    sources=["pupil"],
+                                    value=["clear"],
+                                ),
+                            ],
+                        )
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2SpecTSO, self).__init__(*args, **kwargs)
@@ -357,14 +347,11 @@ class Asn_Lv2SpecTSO(
         """Post-check and pre-add initialization"""
 
         super(Asn_Lv2SpecTSO, self)._init_hook(item)
-        self.data['asn_type'] = 'tso-spec2'
+        self.data["asn_type"] = "tso-spec2"
 
 
 @RegistryMarker.rule
-class Asn_Lv2MIRLRSFixedSlitNod(
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b MIRI LRS Fixed Slit background nods Association
 
     Characteristics:
@@ -378,64 +365,66 @@ class Asn_Lv2MIRLRSFixedSlitNod(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='mir_lrs-fixedslit'
-            ),
-            DMSAttrConstraint(
-                name='patttype',
-                sources=['patttype'],
-                value=['along-slit-nod'],
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: self.acid.type != 'background',
-                force_unique=False
-            ),
-            Constraint(
-                [
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                name='patt_num',
-                                sources=['patt_num'],
-                            ),
-                            Constraint_Single_Science(
-                                self.has_science,
-                                reprocess_on_match=True,
-                                work_over=ProcessList.EXISTING
-                            )
-                        ]
-                    ),
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                name='is_current_patt_num',
-                                sources=['patt_num'],
-                                value=lambda: '((?!{}).)*'.format(self.constraints['patt_num'].value),
-                            ),
-                            SimpleConstraint(
-                                name='force_match',
-                                value=None,
-                                sources=lambda item: False,
-                                test=lambda constraint, obj: True,
-                                force_unique=True,
-                            )
-                        ]
-                    )
-                ],
-                reduce=Constraint.any
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                DMSAttrConstraint(
+                    name="exp_type", sources=["exp_type"], value="mir_lrs-fixedslit"
+                ),
+                DMSAttrConstraint(
+                    name="patttype",
+                    sources=["patttype"],
+                    value=["along-slit-nod"],
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: self.acid.type != "background",
+                    force_unique=False,
+                ),
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="patt_num",
+                                    sources=["patt_num"],
+                                ),
+                                Constraint_Single_Science(
+                                    self.has_science,
+                                    reprocess_on_match=True,
+                                    work_over=ProcessList.EXISTING,
+                                ),
+                            ]
+                        ),
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="is_current_patt_num",
+                                    sources=["patt_num"],
+                                    value=lambda: "((?!{}).)*".format(
+                                        self.constraints["patt_num"].value
+                                    ),
+                                ),
+                                SimpleConstraint(
+                                    name="force_match",
+                                    value=None,
+                                    sources=lambda item: False,
+                                    test=lambda constraint, obj: True,
+                                    force_unique=True,
+                                ),
+                            ]
+                        ),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2MIRLRSFixedSlitNod, self).__init__(*args, **kwargs)
 
-    def get_exposure_type(self, item, default='science'):
+    def get_exposure_type(self, item, default="science"):
         """Modify exposure type depending on dither pointing index
 
         Behaves as the superclass method. However, if the constraint
@@ -445,18 +434,14 @@ class Asn_Lv2MIRLRSFixedSlitNod(
         exp_type = super(Asn_Lv2MIRLRSFixedSlitNod, self).get_exposure_type(
             item, default
         )
-        if exp_type == 'science' and self.constraints['is_current_patt_num'].matched:
-            exp_type = 'background'
+        if exp_type == "science" and self.constraints["is_current_patt_num"].matched:
+            exp_type = "background"
 
         return exp_type
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSLAMPImage(
-        AsnMixin_Lv2Image,
-        AsnMixin_Lv2Special,
-        DMSLevel2bBase
-):
+class Asn_Lv2NRSLAMPImage(AsnMixin_Lv2Image, AsnMixin_Lv2Special, DMSLevel2bBase):
     """Level2b NIRSpec image Lamp Calibrations Association
 
     Characteristics:
@@ -468,33 +453,23 @@ class Asn_Lv2NRSLAMPImage(
 
     def __init__(self, *args, **kwargs):
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nrs_lamp'
-            ),
-            DMSAttrConstraint(
-                sources=['grating'],
-                value='mirror'
-            ),
-            DMSAttrConstraint(
-                sources=['opmode'],
-                value='image',
-                required=False
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Single_Science(self.has_science),
+                DMSAttrConstraint(
+                    name="exp_type", sources=["exp_type"], value="nrs_lamp"
+                ),
+                DMSAttrConstraint(sources=["grating"], value="mirror"),
+                DMSAttrConstraint(sources=["opmode"], value="image", required=False),
+            ]
+        )
 
         super(Asn_Lv2NRSLAMPImage, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSLAMPSpectral(
-        AsnMixin_Lv2Special,
-        DMSLevel2bBase
-):
+class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
     """Level2b NIRSpec spectral Lamp Calibrations Association
 
     Characteristics:
@@ -506,73 +481,68 @@ class Asn_Lv2NRSLAMPSpectral(
 
     def __init__(self, *args, **kwargs):
 
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nrs_autoflat|nrs_autowave|nrs_lamp'
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='opaque'
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrslamp_valid_detector(item),
-                force_unique=False
-            ),
-            Constraint(
-                [
-                    Constraint(
-                        [DMSAttrConstraint(
-                            name='opmode',
-                            sources=['opmode'],
-                            value='msaspec',
-                        )],
-                        reduce=Constraint.notany
-                    ),
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                sources=['opmode'],
-                                value='msaspec'
-                            ),
-                            DMSAttrConstraint(
-                                sources=['msametfl']
-                            )
-                        ]
-                    ),
-                ],
-                reduce=Constraint.any
-            ),
-            DMSAttrConstraint(
-                name='lamp',
-                sources=['lamp'],
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        sources=['grating'],
-                        value='mirror',
-                        force_unique=False,
-                    ),
-                    DMSAttrConstraint(
-                        sources=['opmode'],
-                        value='grating-only',
-                        force_unique=False,
-                    ),
-                    DMSAttrConstraint(
-                        sources=['lamp'],
-                        value='nolamp',
-                        force_unique=False,
-                    ),
-                ],
-                reduce=Constraint.notany
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Single_Science(self.has_science),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nrs_autoflat|nrs_autowave|nrs_lamp",
+                ),
+                DMSAttrConstraint(name="opt_elem", sources=["filter"], value="opaque"),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrslamp_valid_detector(item),
+                    force_unique=False,
+                ),
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="opmode",
+                                    sources=["opmode"],
+                                    value="msaspec",
+                                )
+                            ],
+                            reduce=Constraint.notany,
+                        ),
+                        Constraint(
+                            [
+                                DMSAttrConstraint(sources=["opmode"], value="msaspec"),
+                                DMSAttrConstraint(sources=["msametfl"]),
+                            ]
+                        ),
+                    ],
+                    reduce=Constraint.any,
+                ),
+                DMSAttrConstraint(
+                    name="lamp",
+                    sources=["lamp"],
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            sources=["grating"],
+                            value="mirror",
+                            force_unique=False,
+                        ),
+                        DMSAttrConstraint(
+                            sources=["opmode"],
+                            value="grating-only",
+                            force_unique=False,
+                        ),
+                        DMSAttrConstraint(
+                            sources=["lamp"],
+                            value="nolamp",
+                            force_unique=False,
+                        ),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         super(Asn_Lv2NRSLAMPSpectral, self).__init__(*args, **kwargs)
 
@@ -580,13 +550,13 @@ class Asn_Lv2NRSLAMPSpectral(
         """Post-check and pre-add initialization"""
 
         super(Asn_Lv2NRSLAMPSpectral, self)._init_hook(item)
-        self.data['asn_type'] = 'nrslamp-spec2'
+        self.data["asn_type"] = "nrslamp-spec2"
 
 
 @RegistryMarker.rule
 class Asn_Lv2WFSSNIS(
-        AsnMixin_Lv2WFSS,
-        AsnMixin_Lv2Spectral,
+    AsnMixin_Lv2WFSS,
+    AsnMixin_Lv2Spectral,
 ):
     """Level2b WFSS/GRISM Association
 
@@ -600,48 +570,57 @@ class Asn_Lv2WFSSNIS(
 
     def __init__(self, *args, **kwargs):
 
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Target(),
-            Constraint([
-                DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value='nis_wfss',
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Target(),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nis_wfss",
+                        ),
+                        DMSAttrConstraint(
+                            name="image_exp_type",
+                            sources=["exp_type"],
+                            value="nis_image",
+                            force_reprocess=ProcessList.NONSCIENCE,
+                            only_on_match=True,
+                        ),
+                    ],
+                    reduce=Constraint.any,
                 ),
                 DMSAttrConstraint(
-                    name='image_exp_type',
-                    sources=['exp_type'],
-                    value='nis_image',
-                    force_reprocess=ProcessList.NONSCIENCE,
-                    only_on_match=True,
+                    name="instrument",
+                    sources=["instrume"],
                 ),
-            ], reduce=Constraint.any),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-            ),
-            DMSAttrConstraint(
-                name='pupil',
-                sources=['pupil'],
-            ),
-            Constraint([
-                SimpleConstraint(
-                    value='science',
-                    test=lambda value, item: self.get_exposure_type(item) != value,
-                    force_unique=False,
-                    ),
-                Constraint_Single_Science(self.has_science),
-            ], reduce=Constraint.any)
-        ])
+                DMSAttrConstraint(
+                    name="pupil",
+                    sources=["pupil"],
+                ),
+                Constraint(
+                    [
+                        SimpleConstraint(
+                            value="science",
+                            test=lambda value, item: self.get_exposure_type(item)
+                            != value,
+                            force_unique=False,
+                        ),
+                        Constraint_Single_Science(self.has_science),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         super(Asn_Lv2WFSSNIS, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
 class Asn_Lv2WFSSNRC(
-        AsnMixin_Lv2WFSS,
-        AsnMixin_Lv2Spectral,
+    AsnMixin_Lv2WFSS,
+    AsnMixin_Lv2Spectral,
 ):
     """Level2b WFSS/GRISM Association
 
@@ -655,50 +634,55 @@ class Asn_Lv2WFSSNRC(
 
     def __init__(self, *args, **kwargs):
 
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Target(),
-            Constraint([
-                DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value='nrc_wfss',
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Target(),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nrc_wfss",
+                        ),
+                        DMSAttrConstraint(
+                            name="image_exp_type",
+                            sources=["exp_type"],
+                            value="nrc_image",
+                            force_reprocess=ProcessList.NONSCIENCE,
+                            only_on_match=True,
+                        ),
+                    ],
+                    reduce=Constraint.any,
                 ),
                 DMSAttrConstraint(
-                    name='image_exp_type',
-                    sources=['exp_type'],
-                    value='nrc_image',
-                    force_reprocess=ProcessList.NONSCIENCE,
-                    only_on_match=True,
+                    name="instrument",
+                    sources=["instrume"],
                 ),
-            ], reduce=Constraint.any),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-            ),
-            DMSAttrConstraint(
-                name='detector',
-                sources=['detector'],
-            ),
-            Constraint([
-                SimpleConstraint(
-                    value='science',
-                    test=lambda value, item: self.get_exposure_type(item) != value,
-                    force_unique=False,
-                    ),
-                Constraint_Single_Science(self.has_science),
-            ], reduce=Constraint.any)
-        ])
+                DMSAttrConstraint(
+                    name="detector",
+                    sources=["detector"],
+                ),
+                Constraint(
+                    [
+                        SimpleConstraint(
+                            value="science",
+                            test=lambda value, item: self.get_exposure_type(item)
+                            != value,
+                            force_unique=False,
+                        ),
+                        Constraint_Single_Science(self.has_science),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         super(Asn_Lv2WFSSNRC, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSMSA(
-        AsnMixin_Lv2Nod,
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2NRSMSA(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b NIRSpec MSA Association
 
     Characteristics:
@@ -712,37 +696,31 @@ class Asn_Lv2NRSMSA(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrs_msaspec'
-                    ),
-                    DMSAttrConstraint(
-                        sources=['msametfl']
-                    ),
-                    DMSAttrConstraint(
-                        name='expspcin',
-                        sources=['expspcin'],
-                    )
-                ]
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type", sources=["exp_type"], value="nrs_msaspec"
+                        ),
+                        DMSAttrConstraint(sources=["msametfl"]),
+                        DMSAttrConstraint(
+                            name="expspcin",
+                            sources=["expspcin"],
+                        ),
+                    ]
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSFSS(
-        AsnMixin_Lv2Nod,
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b NIRSpec Fixed-slit Association
 
     Notes
@@ -762,62 +740,62 @@ class Asn_Lv2NRSFSS(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nrs_fixedslit'
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsfss_valid_detector(item),
-                force_unique=False
-            ),
-            Constraint(
-                [
-                    SimpleConstraint(
-                        value='science',
-                        test=lambda value, item: self.get_exposure_type(item) != value,
-                        force_unique=False
-                    ),
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                name='expspcin',
-                                sources=['expspcin'],
-                            ),
-                            DMSAttrConstraint(
-                                name='nods',
-                                sources=['numdthpt'],
-                            ),
-                            DMSAttrConstraint(
-                                name='subpxpts',
-                                sources=['subpxpns', 'subpxpts'],
-                            ),
-                            SimpleConstraint(
-                                value='science',
-                                test=lambda value, item: self.get_exposure_type(item) == value,
-                                force_unique=False
-                            )
-                        ]
-                    ),
-                ],
-                reduce=Constraint.any
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                DMSAttrConstraint(
+                    name="exp_type", sources=["exp_type"], value="nrs_fixedslit"
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrsfss_valid_detector(item),
+                    force_unique=False,
+                ),
+                Constraint(
+                    [
+                        SimpleConstraint(
+                            value="science",
+                            test=lambda value, item: self.get_exposure_type(item)
+                            != value,
+                            force_unique=False,
+                        ),
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="expspcin",
+                                    sources=["expspcin"],
+                                ),
+                                DMSAttrConstraint(
+                                    name="nods",
+                                    sources=["numdthpt"],
+                                ),
+                                DMSAttrConstraint(
+                                    name="subpxpts",
+                                    sources=["subpxpns", "subpxpts"],
+                                ),
+                                SimpleConstraint(
+                                    value="science",
+                                    test=lambda value, item: self.get_exposure_type(
+                                        item
+                                    )
+                                    == value,
+                                    force_unique=False,
+                                ),
+                            ]
+                        ),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSIFUNod(
-        AsnMixin_Lv2Nod,
-        AsnMixin_Lv2Spectral,
-        DMSLevel2bBase
-):
+class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """Level2b NIRSpec IFU Association
 
     Characteristics:
@@ -831,39 +809,37 @@ class Asn_Lv2NRSIFUNod(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Mode(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nrs_ifu'
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsifu_valid_detector(item),
-                force_unique=False
-            ),
-            DMSAttrConstraint(
-                name='expspcin',
-                sources=['expspcin'],
-            ),
-            DMSAttrConstraint(
-                name='patttype',
-                sources=['patttype'],
-                value=['2-point-nod|4-point-nod'],
-                force_unique=True
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Mode(),
+                DMSAttrConstraint(
+                    name="exp_type", sources=["exp_type"], value="nrs_ifu"
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrsifu_valid_detector(item),
+                    force_unique=False,
+                ),
+                DMSAttrConstraint(
+                    name="expspcin",
+                    sources=["expspcin"],
+                ),
+                DMSAttrConstraint(
+                    name="patttype",
+                    sources=["patttype"],
+                    value=["2-point-nod|4-point-nod"],
+                    force_unique=True,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_Lv2WFSC(
-        DMSLevel2bBase
-):
+class Asn_Lv2WFSC(DMSLevel2bBase):
     """Level2b Wavefront Sensing & Control Association
 
     Characteristics:
@@ -876,28 +852,27 @@ class Asn_Lv2WFSC(
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Image_Science(),
-            Constraint_Single_Science(self.has_science),
-            Constraint_WFSC(),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='dms_note',
-                        sources=['dms_note'],
-                        value=['wfsc_los_jitter'],
-                    ),
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrc_image'
-                    ),
-
-                ],
-                reduce=Constraint.notall
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Image_Science(),
+                Constraint_Single_Science(self.has_science),
+                Constraint_WFSC(),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="dms_note",
+                            sources=["dms_note"],
+                            value=["wfsc_los_jitter"],
+                        ),
+                        DMSAttrConstraint(
+                            name="exp_type", sources=["exp_type"], value="nrc_image"
+                        ),
+                    ],
+                    reduce=Constraint.notall,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv2WFSC, self).__init__(*args, **kwargs)
@@ -906,7 +881,7 @@ class Asn_Lv2WFSC(
         """Post-check and pre-add initialization"""
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
-        self.data['asn_type'] = 'wfs-image2'
+        self.data["asn_type"] = "wfs-image2"
 
 
 @RegistryMarker.rule
@@ -916,20 +891,22 @@ class Asn_Force_Reprocess(DMSLevel2bBase):
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
-        self.constraints = Constraint([
-            SimpleConstraint(
-                value='background',
-                sources=self.get_exposure_type,
-                force_unique=False,
-            ),
-            SimpleConstraint(
-                name='force_fail',
-                test=lambda x, y: False,
-                value='anything but None',
-                reprocess_on_fail=True,
-                work_over=ProcessList.EXISTING,
-                reprocess_rules=[]
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                SimpleConstraint(
+                    value="background",
+                    sources=self.get_exposure_type,
+                    force_unique=False,
+                ),
+                SimpleConstraint(
+                    name="force_fail",
+                    test=lambda x, y: False,
+                    value="anything but None",
+                    reprocess_on_fail=True,
+                    work_over=ProcessList.EXISTING,
+                    reprocess_rules=[],
+                ),
+            ]
+        )
 
         super(Asn_Force_Reprocess, self).__init__(*args, **kwargs)

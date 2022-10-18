@@ -15,12 +15,12 @@ from jwst.master_background.master_background_step import (
 )
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def user_background(tmpdir_factory):
     """Generate a user background spectrum"""
 
-    filename = tmpdir_factory.mktemp('master_background_user_input')
-    filename = str(filename.join('user_background.fits'))
+    filename = tmpdir_factory.mktemp("master_background_user_input")
+    filename = str(filename.join("user_background.fits"))
     wavelength = np.linspace(0.5, 25, num=100)
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
@@ -28,16 +28,16 @@ def user_background(tmpdir_factory):
     return filename
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def science_image():
-    """Generate science image """
+    """Generate science image"""
 
     image = datamodels.ImageModel((10, 10))
-    image.meta.instrument.name = 'MIRI'
-    image.meta.instrument.detector = 'MIRIMAGE'
-    image.meta.exposure.type = 'MIR_LRS-FIXEDSLIT'
-    image.meta.observation.date = '2018-01-01'
-    image.meta.observation.time = '00:00:00'
+    image.meta.instrument.name = "MIRI"
+    image.meta.instrument.detector = "MIRIMAGE"
+    image.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    image.meta.observation.date = "2018-01-01"
+    image.meta.observation.time = "00:00:00"
     image.meta.subarray.xstart = 1
     image.meta.subarray.ystart = 1
     image.meta.wcsinfo.v2_ref = 0
@@ -60,15 +60,15 @@ def test_master_background_userbg(_jail, user_background, science_image):
 
     assert type(science_image) is type(result)
     assert result is not science_image
-    assert result.meta.cal_step.master_background == 'COMPLETE'
-    assert result.meta.background.master_background_file == 'user_background.fits'
+    assert result.meta.cal_step.master_background == "COMPLETE"
+    assert result.meta.background.master_background_file == "user_background.fits"
 
 
 def test_master_background_logic(_jail, user_background, science_image):
     """Verify if calspec 2 background step was run the master background step will be skipped"""
 
     # the background step in calspec2 was done
-    science_image.meta.cal_step.back_sub = 'COMPLETE'
+    science_image.meta.cal_step.back_sub = "COMPLETE"
 
     # Run with a user-supplied background
     result = MasterBackgroundStep.call(
@@ -76,17 +76,15 @@ def test_master_background_logic(_jail, user_background, science_image):
         user_background=user_background,
     )
 
-    assert result.meta.cal_step.master_background == 'SKIPPED'
+    assert result.meta.cal_step.master_background == "SKIPPED"
     assert type(science_image) is type(result)
 
     # Now force it
     result = MasterBackgroundStep.call(
-        science_image,
-        user_background=user_background,
-        force_subtract=True
+        science_image, user_background=user_background, force_subtract=True
     )
 
-    assert result.meta.cal_step.master_background == 'COMPLETE'
+    assert result.meta.cal_step.master_background == "COMPLETE"
     assert type(science_image) is type(result)
 
 
@@ -95,20 +93,20 @@ def test_copy_background_to_surf_bright():
 
     wavelength = np.linspace(0.5, 25, num=100)
     surf_bright = np.linspace(2.0, 2.2, num=100) + (np.random.random(100) - 0.5) * 0.001
-    sb_error = np.random.random(100) * 0.01 + 17.       # different from berror
+    sb_error = np.random.random(100) * 0.01 + 17.0  # different from berror
     background = np.random.random(100) * 0.01 + 1
     berror = np.random.random(100) * 0.01
     data = create_background(wavelength, surf_bright)
-    data.spec[0].spec_table['sb_error'] = sb_error
-    data.spec[0].spec_table['background'] = background
-    data.spec[0].spec_table['bkgd_error'] = berror
+    data.spec[0].spec_table["sb_error"] = sb_error
+    data.spec[0].spec_table["background"] = background
+    data.spec[0].spec_table["bkgd_error"] = berror
 
     newdata = data.copy()
     copy_background_to_surf_bright(newdata)
 
-    assert (newdata.spec[0].spec_table['surf_bright'] == background).all()
-    assert (newdata.spec[0].spec_table['sb_error'] == berror).all()
-    assert (newdata.spec[0].spec_table['background'] == 0).all()
+    assert (newdata.spec[0].spec_table["surf_bright"] == background).all()
+    assert (newdata.spec[0].spec_table["sb_error"] == berror).all()
+    assert (newdata.spec[0].spec_table["background"] == 0).all()
 
 
 def test_split_container(tmp_path):
@@ -125,22 +123,16 @@ def test_split_container(tmp_path):
         "products": [
             {
                 "members": [
-                    {
-                        "expname": f"{path1}",
-                        "exptype": "science"
-                    },
-                    {
-                        "expname": f"{path2}",
-                        "exptype": "background"
-                    },
+                    {"expname": f"{path1}", "exptype": "science"},
+                    {"expname": f"{path2}", "exptype": "background"},
                 ]
             }
-        ]
+        ],
     }
-    with open(tmp_path / 'tmp_asn.json', 'w') as f:
+    with open(tmp_path / "tmp_asn.json", "w") as f:
         json.dump(asn_table, f)
 
-    container = datamodels.open(tmp_path / 'tmp_asn.json')
+    container = datamodels.open(tmp_path / "tmp_asn.json")
 
     sci, bkg = split_container(container)
 

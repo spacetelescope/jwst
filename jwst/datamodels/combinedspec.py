@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['CombinedSpecModel']
+__all__ = ["CombinedSpecModel"]
 
 
 class CombinedSpecModel(JwstDataModel):
@@ -13,4 +13,5 @@ class CombinedSpecModel(JwstDataModel):
     spec_table : numpy table
          Combined, extracted spectral data table
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/combinedspec.schema"

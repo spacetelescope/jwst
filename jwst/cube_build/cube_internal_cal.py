@@ -7,15 +7,23 @@ from jwst.transforms.models import _toindex
 from .cube_match_internal import cube_wrapper_internal  # c extension
 
 
-def match_det2cube(instrument,
-                   x, y, sliceno,
-                   input_model,
-                   transform,
-                   acoord, zcoord,
-                   crval_along, crval3,
-                   cdelt_along, cdelt3,
-                   naxis1, naxis2):
-    """ Match detector pixels to output plane in local IFU coordinate system
+def match_det2cube(
+    instrument,
+    x,
+    y,
+    sliceno,
+    input_model,
+    transform,
+    acoord,
+    zcoord,
+    crval_along,
+    crval3,
+    cdelt_along,
+    cdelt3,
+    naxis1,
+    naxis2,
+):
+    """Match detector pixels to output plane in local IFU coordinate system
 
     This routine assumes a 1-1 mapping in across slice to slice no.
     This routine assumes the output coordinate systems is local IFU plane.
@@ -49,7 +57,7 @@ def match_det2cube(instrument,
     y = _toindex(y)
     pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE'])
+    all_flags = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]
     # find the location of all the values to reject in cube building
     good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
 
@@ -66,7 +74,7 @@ def match_det2cube(instrument,
     xx_left = x
     xx_right = x + 1
     # along slice dimension is second coordinate returned from transform
-    if instrument == 'NIRSPEC':
+    if instrument == "NIRSPEC":
         b1, a1, lam1 = transform(xx_left, yy_bot)
         b2, a2, lam2 = transform(xx_right, yy_bot)
         b3, a3, lam3 = transform(xx_right, yy_top)
@@ -80,7 +88,7 @@ def match_det2cube(instrument,
             lam3 = lam3 * 1.0e6
             lam4 = lam4 * 1.0e6
 
-    if instrument == 'MIRI':
+    if instrument == "MIRI":
         a1, b1, lam1 = transform(xx_left, yy_bot)
         a2, b2, lam2 = transform(xx_right, yy_bot)
         a3, b3, lam3 = transform(xx_right, yy_top)
@@ -115,16 +123,33 @@ def match_det2cube(instrument,
     pixel_err = input_model.err[y, x]
 
     # 1-1 mapping in across slice direction (x for NIRSPEC, y for MIRI)
-    if instrument == 'NIRSPEC':
+    if instrument == "NIRSPEC":
         ss = sliceno
         instrument_no = 1
-    if instrument == 'MIRI':
+    if instrument == "MIRI":
         ss = sliceno
         instrument_no = 0
-    result = cube_wrapper_internal(instrument_no, naxis1, naxis2,
-                                   crval_along, cdelt_along, crval3, cdelt3,
-                                   a1, a2, a3, a4, lam1, lam2, lam3, lam4,
-                                   acoord, zcoord, ss,
-                                   pixel_flux, pixel_err)
+    result = cube_wrapper_internal(
+        instrument_no,
+        naxis1,
+        naxis2,
+        crval_along,
+        cdelt_along,
+        crval3,
+        cdelt3,
+        a1,
+        a2,
+        a3,
+        a4,
+        lam1,
+        lam2,
+        lam3,
+        lam4,
+        acoord,
+        zcoord,
+        ss,
+        pixel_flux,
+        pixel_err,
+    )
 
     return result

@@ -3,7 +3,7 @@ from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['NirspecFlatModel', 'NirspecQuadFlatModel']
+__all__ = ["NirspecFlatModel", "NirspecQuadFlatModel"]
 
 
 class NirspecFlatModel(ReferenceFileModel):

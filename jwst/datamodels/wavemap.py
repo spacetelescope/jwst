@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['WaveMapModel', 'WaveMapSingleModel']
+__all__ = ["WaveMapModel", "WaveMapSingleModel"]
 
 
 class WaveMapModel(ReferenceFileModel):
@@ -29,6 +29,7 @@ class WaveMapModel(ReferenceFileModel):
          Wavelength map data
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/wavemap.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -51,4 +52,5 @@ class WaveMapSingleModel(ReferenceFileModel):
     data : numpy float32 array
          Wavelength values
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/wavemapsingle.schema"

@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['ReadnoiseModel']
+__all__ = ["ReadnoiseModel"]
 
 
 class ReadnoiseModel(ReferenceFileModel):
@@ -13,4 +13,5 @@ class ReadnoiseModel(ReferenceFileModel):
     data : numpy float32 array
          Read noise
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/readnoise.schema"

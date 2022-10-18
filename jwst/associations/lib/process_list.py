@@ -1,13 +1,8 @@
 """Reprocessing List"""
-from collections import (defaultdict, deque)
+from collections import defaultdict, deque
 from functools import reduce
 
-__all__ = [
-    'ProcessList',
-    'ProcessItem',
-    'ProcessQueue',
-    'ProcessQueueSorted'
-]
+__all__ = ["ProcessList", "ProcessItem", "ProcessQueue", "ProcessQueueSorted"]
 
 
 class ProcessItem:
@@ -19,6 +14,7 @@ class ProcessItem:
         The object to make a `ProcessItem`.
         Objects must be equatable.
     """
+
     def __init__(self, obj):
         self.obj = obj
 
@@ -88,32 +84,26 @@ class ProcessList:
     to process
     """
 
-    _str_attrs = ('rules', 'work_over', 'only_on_match')
+    _str_attrs = ("rules", "work_over", "only_on_match")
 
-    def __init__(self,
-                 items=None,
-                 rules=None,
-                 work_over=BOTH,
-                 only_on_match=False):
+    def __init__(self, items=None, rules=None, work_over=BOTH, only_on_match=False):
         self.items = items
         self.rules = rules
         self.work_over = work_over
         self.only_on_match = only_on_match
 
     def __str__(self):
-        result = '{}(n_items: {}, {})'.format(
+        result = "{}(n_items: {}, {})".format(
             self.__class__.__name__,
             len(self.items),
-            {
-                str_attr: getattr(self, str_attr)
-                for str_attr in self._str_attrs
-            }
+            {str_attr: getattr(self, str_attr) for str_attr in self._str_attrs},
         )
         return result
 
 
 class ProcessQueue(deque):
     """Make a deque iterable and mutable"""
+
     def __iter__(self):
         while True:
             try:
@@ -133,6 +123,7 @@ class ProcessQueueNoDups:
     init : [obj[,...]] or None
         List of objects to put on the queue
     """
+
     def __init__(self, init=None):
 
         self._members = set()
@@ -180,6 +171,7 @@ class ProcessQueueSorted:
     init : [ProcessList[,...]]
         List of `ProcessList` to start the queue with.
     """
+
     def __init__(self, init=None):
         self.queues = [
             ProcessQueue(),

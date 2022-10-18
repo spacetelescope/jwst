@@ -18,7 +18,7 @@ __all__ = ["ResampleStep"]
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleStep(Step):
@@ -50,7 +50,7 @@ class ResampleStep(Step):
         in_memory = boolean(default=True)
     """
 
-    reference_file_types = ['drizpars']
+    reference_file_types = ["drizpars"]
 
     def process(self, input):
 
@@ -79,43 +79,44 @@ class ResampleStep(Step):
 
         #  Get drizzle parameters reference file, if there is one
         self.wht_type = self.weight_type
-        if 'drizpars' in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], 'drizpars')
+        if "drizpars" in self.reference_file_types:
+            ref_filename = self.get_reference_file(input_models[0], "drizpars")
         else:  # no drizpars reference file found
-            ref_filename = 'N/A'
+            ref_filename = "N/A"
 
-        if ref_filename == 'N/A':
-            self.log.info('No drizpars reference file found.')
+        if ref_filename == "N/A":
+            self.log.info("No drizpars reference file found.")
             kwargs = self._set_spec_defaults()
         else:
-            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
+            self.log.info("Using drizpars reference file: {}".format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
 
-        kwargs['allowed_memory'] = self.allowed_memory
+        kwargs["allowed_memory"] = self.allowed_memory
 
         # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
+        if self.wht_type == "exptime":
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
 
         # Custom output WCS parameters.
         # Modify get_drizpars if any of these get into reference files:
-        kwargs['ref_wcs'] = None  # TODO: add mechanism of specifying a ref WCS
-        kwargs['out_shape'] = _check_list_pars(self.output_shape, 'output_shape',
-                                               min_vals=[1, 1])
-        kwargs['crpix'] = _check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = _check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs['in_memory'] = self.in_memory
+        kwargs["ref_wcs"] = None  # TODO: add mechanism of specifying a ref WCS
+        kwargs["out_shape"] = _check_list_pars(
+            self.output_shape, "output_shape", min_vals=[1, 1]
+        )
+        kwargs["crpix"] = _check_list_pars(self.crpix, "crpix")
+        kwargs["crval"] = _check_list_pars(self.crval, "crval")
+        kwargs["rotation"] = self.rotation
+        kwargs["pscale"] = self.pixel_scale
+        kwargs["pscale_ratio"] = self.pixel_scale_ratio
+        kwargs["in_memory"] = self.in_memory
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
         result = resamp.do_drizzle()
 
         for model in result:
-            model.meta.cal_step.resample = 'COMPLETE'
+            model.meta.cal_step.resample = "COMPLETE"
             self.update_fits_wcs(model)
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
@@ -127,8 +128,10 @@ class ResampleStep(Step):
             if not self.pixel_scale:
                 model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
             else:
-                model.meta.resample.pixel_scale_ratio = self.pixel_scale / np.sqrt(model.meta.photometry.pixelarea_arcsecsq)
-            model.meta.resample.pixfrac = kwargs['pixfrac']
+                model.meta.resample.pixel_scale_ratio = self.pixel_scale / np.sqrt(
+                    model.meta.photometry.pixelarea_arcsecsq
+                )
+            model.meta.resample.pixfrac = kwargs["pixfrac"]
             self.update_phot_keywords(model)
 
         if len(result) == 1:
@@ -140,9 +143,13 @@ class ResampleStep(Step):
     def update_phot_keywords(self, model):
         """Update pixel scale keywords"""
         if model.meta.photometry.pixelarea_steradians is not None:
-            model.meta.photometry.pixelarea_steradians *= model.meta.resample.pixel_scale_ratio**2
+            model.meta.photometry.pixelarea_steradians *= (
+                model.meta.resample.pixel_scale_ratio**2
+            )
         if model.meta.photometry.pixelarea_arcsecsq is not None:
-            model.meta.photometry.pixelarea_arcsecsq *= model.meta.resample.pixel_scale_ratio**2
+            model.meta.photometry.pixelarea_arcsecsq *= (
+                model.meta.resample.pixel_scale_ratio**2
+            )
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -171,8 +178,8 @@ class ResampleStep(Step):
         # look for row that applies to this set of input data models
         for n, filt, num in zip(
             range(0, len(drizpars_table)),
-            drizpars_table['filter'],
-            drizpars_table['numimages']
+            drizpars_table["filter"],
+            drizpars_table["numimages"],
         ):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
@@ -215,20 +222,18 @@ class ResampleStep(Step):
         # Convert the strings in the FITS binary table from np.bytes_ to str
         for k, v in reffile_drizpars.items():
             if isinstance(v, np.bytes_):
-                reffile_drizpars[k] = v.decode('UTF-8')
+                reffile_drizpars[k] = v.decode("UTF-8")
 
         all_drizpars = {**reffile_drizpars, **user_drizpars}
 
         kwargs = dict(
-            good_bits=GOOD_BITS,
-            single=self.single,
-            blendheaders=self.blendheaders
+            good_bits=GOOD_BITS, single=self.single, blendheaders=self.blendheaders
         )
 
         kwargs.update(all_drizpars)
 
         for k, v in kwargs.items():
-            self.log.debug('   {}={}'.format(k, v))
+            self.log.debug("   {}={}".format(k, v))
 
         return kwargs
 
@@ -246,26 +251,26 @@ class ResampleStep(Step):
         if self.pixfrac is None:
             self.pixfrac = 1.0
         if self.kernel is None:
-            self.kernel = 'square'
+            self.kernel = "square"
         if self.fillval is None:
-            self.fillval = 'INDEF'
+            self.fillval = "INDEF"
         # Force definition of good bits
-        kwargs['good_bits'] = GOOD_BITS
-        kwargs['pixfrac'] = self.pixfrac
-        kwargs['kernel'] = str(self.kernel)
-        kwargs['fillval'] = str(self.fillval)
+        kwargs["good_bits"] = GOOD_BITS
+        kwargs["pixfrac"] = self.pixfrac
+        kwargs["kernel"] = str(self.kernel)
+        kwargs["fillval"] = str(self.fillval)
         #  self.weight_type has a default value of None
         # The other instruments read this parameter from a reference file
         if self.wht_type is None:
-            self.wht_type = 'ivm'
+            self.wht_type = "ivm"
 
-        kwargs['wht_type'] = str(self.wht_type)
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs.pop('pixel_scale_ratio')
+        kwargs["wht_type"] = str(self.wht_type)
+        kwargs["pscale_ratio"] = self.pixel_scale_ratio
+        kwargs.pop("pixel_scale_ratio")
 
         for k, v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'wht_type', 'pscale_ratio']:
-                log.info('  using: %s=%s', k, repr(v))
+            if k in ["pixfrac", "kernel", "fillval", "wht_type", "pscale_ratio"]:
+                log.info("  using: %s=%s", k, repr(v))
 
         return kwargs
 
@@ -300,8 +305,15 @@ class ResampleStep(Step):
         model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
         # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
+        rm_keys = [
+            "v2_ref",
+            "v3_ref",
+            "ra_ref",
+            "dec_ref",
+            "roll_ref",
+            "v3yangle",
+            "vparity",
+        ]
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
@@ -317,7 +329,9 @@ def _check_list_pars(vals, name, min_vals=None):
         return None
     elif n == 0:
         if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
-            raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
+            raise ValueError(
+                f"'{name}' values must be larger or equal to {list(min_vals)}"
+            )
         return list(vals)
     else:
         raise ValueError(f"Both '{name}' values must be either None or not None.")

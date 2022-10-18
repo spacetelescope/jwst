@@ -41,26 +41,32 @@ from astropy.time import Time
 from . import util
 from jwst import __version__
 
-bool = __builtins__['bool']
-str = __builtins__['str']
-int = __builtins__['int']
-float = __builtins__['float']
+bool = __builtins__["bool"]
+str = __builtins__["str"]
+int = __builtins__["int"]
+float = __builtins__["float"]
+
 
 def date_and_time_to_cds(date_str, time_str):
     """
     Given a date and a time from different source keywords,
     *date_key* and *time_key*, generates a CDS number.
     """
-    date = datetime.datetime.strptime(
-        date_str, "%Y-%m-%d")
-    time = datetime.datetime.strptime(
-        time_str[:time_str.find('.')], "%H:%M:%S")
+    date = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    time = datetime.datetime.strptime(time_str[: time_str.find(".")], "%H:%M:%S")
 
     dt = datetime.datetime(
-        date.year, date.month, date.day,
-        time.hour, time.minute, time.second, time.microsecond)
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+        time.second,
+        time.microsecond,
+    )
 
     return util.datetime2cds(dt)
+
 
 def map(value, mapping={}):
     """
@@ -70,10 +76,10 @@ def map(value, mapping={}):
     the destination key.
     """
     if value not in mapping:
-        raise ValueError(
-            "Unexpected source value '%s'" % value)
+        raise ValueError("Unexpected source value '%s'" % value)
 
     return mapping[value]
+
 
 def now(date_only=False):
     """
@@ -85,11 +91,13 @@ def now(date_only=False):
     else:
         return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
+
 def version():
     """
     Generates the version of fits_generator software
     """
     return __version__
+
 
 def substr(value, start=0, end=None):
     """
@@ -99,36 +107,41 @@ def substr(value, start=0, end=None):
     """
     if start >= len(value) or end >= len(value):
         raise ValueError(
-            "Value shorter than expected.  Wanted [%d:%d], got %d" %
-            (start, end, len(value)))
+            "Value shorter than expected.  Wanted [%d:%d], got %d"
+            % (start, end, len(value))
+        )
 
     return value[start:end]
+
 
 def fromfitstime(fitstimestring):
     return datetime.datetime.strptime(fitstimestring, "%Y-%m-%dT%H:%M:%S.%f")
 
+
 def tofitstime(datetimeobject):
     return datetimeobject.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
 
 def toMJD(timestring):
     #
     # Convert date-time to MJD for EXPSTART, EXPMID and EXPEND keywords
-    oldtime = Time(timestring, format='isot', scale='utc')
+    oldtime = Time(timestring, format="isot", scale="utc")
     return oldtime.mjd
+
 
 T = True
 F = False
 
 __all__ = [
-    'substr',
-    'bool',
-    'date_and_time_to_cds',
-    'map',
-    'now',
-    'version',
-    'fromfitstime',
-    'tofitstime',
-    'toMJD',
-    'T',
-    'F',
-    ]
+    "substr",
+    "bool",
+    "date_and_time_to_cds",
+    "map",
+    "now",
+    "version",
+    "fromfitstime",
+    "tofitstime",
+    "toMJD",
+    "T",
+    "F",
+]

@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['GuiderRawModel', 'GuiderCalModel']
+__all__ = ["GuiderRawModel", "GuiderCalModel"]
 
 
 class GuiderRawModel(JwstDataModel):

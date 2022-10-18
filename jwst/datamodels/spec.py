@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['SpecModel']
+__all__ = ["SpecModel"]
 
 
 class SpecModel(JwstDataModel):
@@ -15,4 +15,5 @@ class SpecModel(JwstDataModel):
         A table with at least four columns:  wavelength, flux, an error
         estimate for the flux, and data quality flags.
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/spec.schema"

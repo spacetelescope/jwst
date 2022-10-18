@@ -22,7 +22,7 @@ from .skycube import SkyCube
 from ..skymatch.skystatistics import SkyStats
 from ..datamodels.dqflags import pixel
 
-__all__ = ['CubeSkyMatchStep']
+__all__ = ["CubeSkyMatchStep"]
 
 
 class CubeSkyMatchStep(Step):
@@ -65,7 +65,7 @@ class CubeSkyMatchStep(Step):
             nclip=self.nclip,
             lsig=self.lsigma,
             usig=self.usigma,
-            binwidth=self.binwidth
+            binwidth=self.binwidth,
         )
 
         # At this moment running 'cube_skymatch' on images whose
@@ -81,22 +81,19 @@ class CubeSkyMatchStep(Step):
 
         for cm in cube_models:
             # process weights and combine with DQ:
-            if not hasattr(cm, 'weightmap') or cm.weightmap is None:
+            if not hasattr(cm, "weightmap") or cm.weightmap is None:
                 weights = np.ones_like(cm.data, dtype=np.float64)
             else:
                 weights = cm.weightmap.copy()
 
             if dqbits is not None:
                 dq = bitfield_to_boolean_mask(
-                    cm.dq,
-                    self._dqbits,
-                    good_mask_value=0,
-                    dtype=bool
+                    cm.dq, self._dqbits, good_mask_value=0, dtype=bool
                 )
                 weights[dq] = 0.0
 
-            wcs = cm.meta.wcs if hasattr(cm.meta, 'wcs') else None
-            wcsinfo = cm.meta.wcsinfo if hasattr(cm.meta, 'wcsinfo') else None
+            wcs = cm.meta.wcs if hasattr(cm.meta, "wcs") else None
+            wcsinfo = cm.meta.wcsinfo if hasattr(cm.meta, "wcsinfo") else None
 
             exptime = cm.meta.exposure.exposure_time
             if exptime is None:
@@ -111,7 +108,7 @@ class CubeSkyMatchStep(Step):
                 bkg_deg=self.bkg_degree,
                 bkg_center=None,
                 id=None,
-                meta={'original_cube_model': cm}
+                meta={"original_cube_model": cm},
             )
 
             skycubes.append(sc)
@@ -119,27 +116,24 @@ class CubeSkyMatchStep(Step):
         skymatch_cubes, nsubspace = match(skycubes, subtract=self.subtract)
 
         if nsubspace > 1:
-            self.log.warning("Not all cubes have been sky matched as "
-                             "some of them do not overlap.")
+            self.log.warning(
+                "Not all cubes have been sky matched as " "some of them do not overlap."
+            )
 
         # save background info in 'meta' and subtract sky from 2D images
         # if requested:
         # model.meta.instrument.channel
 
         for c in skymatch_cubes:
-            self._set_cube_bkg_meta(c.meta['original_cube_model'], c)
+            self._set_cube_bkg_meta(c.meta["original_cube_model"], c)
             model2d, channel = _find_associated_2d_image(
-                c.meta['original_cube_model'], models2d
+                c.meta["original_cube_model"], models2d
             )
 
             if model2d is None:
                 continue
 
-            self._set_model2d_bkg_meta(
-                c.meta['original_cube_model'],
-                model2d,
-                channel
-            )
+            self._set_model2d_bkg_meta(c.meta["original_cube_model"], model2d, channel)
 
             if self.subtract2d:
                 self._apply_sky_2d(model2d, channel)
@@ -154,14 +148,18 @@ class CubeSkyMatchStep(Step):
             if m.meta.background.subtracted is None:
                 if m.meta.background.level is not None:
                     # report inconsistency:
-                    raise ValueError("Background level was set but the "
-                                     "'subtracted' property is undefined "
-                                     "(None).")
+                    raise ValueError(
+                        "Background level was set but the "
+                        "'subtracted' property is undefined "
+                        "(None)."
+                    )
 
             elif m.meta.background.subtracted:
-                raise ValueError("'cube_skymatch' step cannot be run on "
-                                 "data whose background has been previously "
-                                 "subtracted.")
+                raise ValueError(
+                    "'cube_skymatch' step cannot be run on "
+                    "data whose background has been previously "
+                    "subtracted."
+                )
 
     def _reset_background(self, models):
         for m in models:
@@ -170,16 +168,18 @@ class CubeSkyMatchStep(Step):
     def _set_cube_bkg_meta(self, model, sky_cube):
         np = len(model.meta.background.polynomial_info)
         if np > 1 or (np == 1 and model.meta.background.polynomial_info[0].channel):
-            raise ValueError("Cube's 'polynomial_info' must be empty or "
-                             "contain at most one element with a 'channel' "
-                             "property set to None.")
+            raise ValueError(
+                "Cube's 'polynomial_info' must be empty or "
+                "contain at most one element with a 'channel' "
+                "property set to None."
+            )
 
         pinfo = {
-            'degree': list(sky_cube.bkg_degree),
-            'refpoint': list(sky_cube.bkg_center),
-            'cs_type': "image" if sky_cube.wcs is None else "world",
-            'coefficients': sky_cube.bkg_coeff.ravel().tolist(),
-            'wcs': sky_cube.wcs
+            "degree": list(sky_cube.bkg_degree),
+            "refpoint": list(sky_cube.bkg_center),
+            "cs_type": "image" if sky_cube.wcs is None else "world",
+            "coefficients": sky_cube.bkg_coeff.ravel().tolist(),
+            "wcs": sky_cube.wcs,
         }
 
         model.meta.background.subtract = self.subtract
@@ -203,7 +203,7 @@ class CubeSkyMatchStep(Step):
             "cs_type": cubebkg.cs_type,
             "wcs": cubebkg.wcs,
             "coefficients": list(cubebkg.coefficients),
-            "channel": channel
+            "channel": channel,
         }
 
         model2d.meta.background.subtract = self.subtract2d
@@ -214,13 +214,14 @@ class CubeSkyMatchStep(Step):
             model2d.meta.background.polynomial_info[index] = bkgmeta
 
     def _apply_sky_2d(self, model2d, channel):
-        """ Apply/subtract sky from 2D image data. """
+        """Apply/subtract sky from 2D image data."""
 
         index = _find_channel_bkg_index(model2d, channel)
         if index is None:
-            raise ValueError("Background data for channel '{}' not present in "
-                             "2D model '{}'"
-                             .format(channel, model2d.meta.filename))
+            raise ValueError(
+                "Background data for channel '{}' not present in "
+                "2D model '{}'".format(channel, model2d.meta.filename)
+            )
 
         # get may parameters of the background polynomial:
         bkgmeta = model2d.meta.background.polynomial_info[index]
@@ -237,13 +238,11 @@ class CubeSkyMatchStep(Step):
         y = y.ravel()
 
         # convert to RA/DEC:
-        ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float),
-                                        y.astype(dtype=float))
+        ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float), y.astype(dtype=float))
 
         # some pixels may be NaNs and so throw them out:
         m = np.logical_and(
-            np.logical_and(np.isfinite(ra), np.isfinite(dec)),
-            np.isfinite(lam)
+            np.logical_and(np.isfinite(ra), np.isfinite(dec)), np.isfinite(lam)
         )
         x = x[m]
         y = y[m]
@@ -252,9 +251,11 @@ class CubeSkyMatchStep(Step):
         lam = lam[m]
 
         if cs_type == "image":
-            raise ValueError("Polynomials must be defined in world coords in "
-                             "order to be able to perform sky subtraction "
-                             "on 2D DataModel.")
+            raise ValueError(
+                "Polynomials must be defined in world coords in "
+                "order to be able to perform sky subtraction "
+                "on 2D DataModel."
+            )
 
         elif cs_type != "world":
             raise ValueError("Unsupported background polynomial's cs_type'.")
@@ -276,7 +277,7 @@ class CubeSkyMatchStep(Step):
         # in this function.
         y, x = np.indices((1024, 512))
 
-        if channel in ['1', '3']:
+        if channel in ["1", "3"]:
             return x + 4, y
         else:
             return x + 516, y

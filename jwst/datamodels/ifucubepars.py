@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel']
+__all__ = ["NirspecIFUCubeParsModel", "MiriIFUCubeParsModel"]
 
 
 class NirspecIFUCubeParsModel(ReferenceFileModel):
@@ -35,6 +35,7 @@ class NirspecIFUCubeParsModel(ReferenceFileModel):
     ifucubepars_high_emsm_wavetable : numpy table
          default IFU cube high resolution emsm  wavetable
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nirspec_ifucubepars.schema"
 
 
@@ -63,4 +64,5 @@ class MiriIFUCubeParsModel(ReferenceFileModel):
          default IFU cube driz wavetable
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/miri_ifucubepars.schema"

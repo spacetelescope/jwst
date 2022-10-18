@@ -6,21 +6,21 @@ from jwst.datamodels import JwstDataModel
 
 
 def test_data_array(tmp_path):
-    """Test lots of things
-    """
+    """Test lots of things"""
     path = str(tmp_path / "data_array.fits")
     data_array_schema = {
         "allOf": [
-            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
-                                resolve_references=True),
+            mschema.load_schema(
+                "http://stsci.edu/schemas/jwst_datamodel/core.schema",
+                resolve_references=True,
+            ),
             {
                 "type": "object",
                 "properties": {
                     "arr": {
-                        'title': 'An array of data',
-                        'type': 'array',
+                        "title": "An array of data",
+                        "type": "array",
                         "fits_hdu": ["FOO", "DQ"],
-
                         "items": {
                             "title": "entry",
                             "type": "object",
@@ -29,18 +29,18 @@ def test_data_array(tmp_path):
                                     "fits_hdu": "FOO",
                                     "default": 0.0,
                                     "max_ndim": 2,
-                                    "datatype": "float64"
+                                    "datatype": "float64",
                                 },
                                 "dq": {
                                     "fits_hdu": "DQ",
                                     "default": 1,
-                                    "datatype": "uint8"
+                                    "datatype": "uint8",
                                 },
-                            }
-                        }
+                            },
+                        },
                     }
-                }
-            }
+                },
+            },
         ]
     }
 
@@ -71,24 +71,26 @@ def test_data_array(tmp_path):
 
         x.arr = []
         assert len(x.arr) == 0
-        x.arr.append({'data': np.empty((5, 5))})
+        x.arr.append({"data": np.empty((5, 5))})
         assert len(x.arr) == 1
-        x.arr.extend([
-            x.arr.item(data=np.empty((5, 5))),
-            x.arr.item(data=np.empty((5, 5)),
-                       dq=np.empty((5, 5), dtype=np.uint8))])
+        x.arr.extend(
+            [
+                x.arr.item(data=np.empty((5, 5))),
+                x.arr.item(data=np.empty((5, 5)), dq=np.empty((5, 5), dtype=np.uint8)),
+            ]
+        )
         assert len(x.arr) == 3
         del x.arr[1]
         assert len(x.arr) == 2
         x.save(path)
 
     from astropy.io import fits
+
     with fits.open(path) as hdulist:
         x = set()
         for hdu in hdulist:
-            x.add((hdu.header.get('EXTNAME'),
-                   hdu.header.get('EXTVER')))
+            x.add((hdu.header.get("EXTNAME"), hdu.header.get("EXTVER")))
 
         assert x == set(
-            [('FOO', 2), ('FOO', 1), ('ASDF', None), ('DQ', 2),
-             (None, None)])
+            [("FOO", 2), ("FOO", 1), ("ASDF", None), ("DQ", 2), (None, None)]
+        )

@@ -28,7 +28,8 @@ class JwstDataModel(_DataModel):
         dict
         """
         return {
-            key: val for key, val in self.to_flat_dict(include_arrays=False).items()
+            key: val
+            for key, val in self.to_flat_dict(include_arrays=False).items()
             if isinstance(val, (str, int, float, complex, bool))
         }
 

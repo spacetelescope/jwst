@@ -15,7 +15,7 @@ from ..photom import photom_step
 from ..lib.pipe_utils import is_tso
 from astropy.io.fits import FITS_rec
 
-__all__ = ['Tso3Pipeline']
+__all__ = ["Tso3Pipeline"]
 
 
 class Tso3Pipeline(Pipeline):
@@ -39,14 +39,14 @@ class Tso3Pipeline(Pipeline):
     """
 
     # Define alias to steps
-    step_defs = {'outlier_detection':
-                 outlier_detection_step.OutlierDetectionStep,
-                 'tso_photometry': tso_photometry_step.TSOPhotometryStep,
-                 'extract_1d': extract_1d_step.Extract1dStep,
-                 'photom': photom_step.PhotomStep,
-                 'white_light': white_light_step.WhiteLightStep
-                 }
-    reference_file_types = ['gain', 'readnoise']
+    step_defs = {
+        "outlier_detection": outlier_detection_step.OutlierDetectionStep,
+        "tso_photometry": tso_photometry_step.TSOPhotometryStep,
+        "extract_1d": extract_1d_step.Extract1dStep,
+        "photom": photom_step.PhotomStep,
+        "white_light": white_light_step.WhiteLightStep,
+    }
+    reference_file_types = ["gain", "readnoise"]
 
     def process(self, input):
         """
@@ -58,15 +58,15 @@ class Tso3Pipeline(Pipeline):
             The exposures to process
         """
 
-        self.log.info('Starting calwebb_tso3...')
-        asn_exptypes = ['science']
+        self.log.info("Starting calwebb_tso3...")
+        asn_exptypes = ["science"]
 
         input_models = datamodels.open(input, asn_exptypes=asn_exptypes)
 
         # Sanity check the input data
         input_tsovisit = is_tso(input_models[0])
         if not input_tsovisit:
-            self.log.error('INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.')
+            self.log.error("INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.")
             return
 
         if self.output_file is None:
@@ -81,7 +81,7 @@ class Tso3Pipeline(Pipeline):
 
             # Can't do outlier detection if there isn't a stack of images
             if len(cube.data.shape) < 3:
-                self.log.warning('Input data are 2D; skipping outlier_detection')
+                self.log.warning("Input data are 2D; skipping outlier_detection")
                 break
 
             # Perform regular outlier detection
@@ -92,8 +92,9 @@ class Tso3Pipeline(Pipeline):
                 input_2dmodels = datamodels.ModelContainer()
                 for i in range(cube.data.shape[0]):
                     # convert each plane of data cube into its own array
-                    image = datamodels.ImageModel(data=cube.data[i],
-                                                  err=cube.err[i], dq=cube.dq[i])
+                    image = datamodels.ImageModel(
+                        data=cube.data[i], err=cube.err[i], dq=cube.dq[i]
+                    )
                     image.update(cube)
                     image.meta.wcs = cube.meta.wcs
                     input_2dmodels.append(image)
@@ -106,8 +107,9 @@ class Tso3Pipeline(Pipeline):
                     # Update DQ arrays with those from outlier_detection step
                     cube.dq[i] = np.bitwise_or(cube.dq[i], input_2dmodels[i].dq)
 
-                cube.meta.cal_step.outlier_detection = \
-                    input_2dmodels[0].meta.cal_step.outlier_detection
+                cube.meta.cal_step.outlier_detection = input_2dmodels[
+                    0
+                ].meta.cal_step.outlier_detection
 
                 del input_2dmodels
 
@@ -117,14 +119,16 @@ class Tso3Pipeline(Pipeline):
                 cube = self.outlier_detection(cube)
 
         # Save crfints products
-        if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
+        if input_models[0].meta.cal_step.outlier_detection == "COMPLETE":
             self.log.info("Saving crfints products with updated DQ arrays ...")
             for cube in input_models:
                 # preserve output filename
                 original_filename = cube.meta.filename
                 self.save_model(
-                    cube, output_file=original_filename, suffix='crfints',
-                    asn_id=input_models.meta.asn_table.asn_id
+                    cube,
+                    output_file=original_filename,
+                    suffix="crfints",
+                    asn_id=input_models.meta.asn_table.asn_id,
                 )
                 cube.meta.filename = original_filename
 
@@ -133,11 +137,12 @@ class Tso3Pipeline(Pipeline):
         phot_result_list = []
 
         # Imaging
-        if (input_exptype == 'NRC_TSIMAGE' or
-                (input_exptype == 'MIR_IMAGE' and input_tsovisit)):
+        if input_exptype == "NRC_TSIMAGE" or (
+            input_exptype == "MIR_IMAGE" and input_tsovisit
+        ):
 
             # Create name for extracted photometry (Level 3) product
-            phot_tab_suffix = 'phot'
+            phot_tab_suffix = "phot"
 
             for cube in input_models:
                 # Extract Photometry from imaging data
@@ -146,14 +151,16 @@ class Tso3Pipeline(Pipeline):
         # Spectroscopy
         else:
             # Create name for extracted white-light (Level 3) product
-            phot_tab_suffix = 'whtlt'
+            phot_tab_suffix = "whtlt"
 
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
-            x1d_result.int_times = FITS_rec.from_columns(input_models[0].int_times.columns,
-                                                         nrows=input_models[0].meta.exposure.nints)
+            x1d_result.int_times = FITS_rec.from_columns(
+                input_models[0].int_times.columns,
+                nrows=input_models[0].meta.exposure.nints,
+            )
 
             # Remove source_type from the output model, if it exists, to prevent
             # the creation of an empty SCI extension just for that keyword.
@@ -171,7 +178,7 @@ class Tso3Pipeline(Pipeline):
 
                 # SOSS F277W may return None - don't bother with that
                 if result is not None:
-                    if input_exptype == 'NIS_SOSS':
+                    if input_exptype == "NIS_SOSS":
                         # SOSS data have yet to be photometrically calibrated
                         # Calibrate 1D spectra here.
                         result = self.photom(result)
@@ -187,7 +194,7 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
-            self.save_model(x1d_result, suffix='x1dints')
+            self.save_model(x1d_result, suffix="x1dints")
 
         # Done with all the inputs
         input_models.close()
@@ -195,14 +202,16 @@ class Tso3Pipeline(Pipeline):
         # Check for all null photometry results before saving
         all_none = np.all([(x is None) for x in phot_result_list])
         if all_none:
-            self.log.warning("Could not create a photometric catalog; all results are null")
+            self.log.warning(
+                "Could not create a photometric catalog; all results are null"
+            )
         else:
             # Otherwise, save results to a photometry catalog file
             phot_results = vstack(phot_result_list)
-            phot_results.meta['number_of_integrations'] = len(phot_results)
-            phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
+            phot_results.meta["number_of_integrations"] = len(phot_results)
+            phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext="ecsv")
             self.log.info(f"Writing Level 3 photometry catalog {phot_tab_name}")
-            phot_results.write(phot_tab_name, format='ascii.ecsv', overwrite=True)
+            phot_results.write(phot_tab_name, format="ascii.ecsv", overwrite=True)
 
         # All done. Nothing to return, because all products have
         # been created here.

@@ -42,7 +42,7 @@ class AmiNormalizeStep(Step):
         # Call the normalization routine
         result = ami_normalize.normalize_LG(target_model, reference_model)
 
-        result.meta.cal_step.ami_normalize = 'COMPLETE'
+        result.meta.cal_step.ami_normalize = "COMPLETE"
 
         # Close the input models
         target_model.close()

@@ -10,7 +10,9 @@ import jwst.step
 def test_get_steps():
     tuples = get_steps()
 
-    assert {t[0].split(".")[-1] for t in tuples} == set(jwst.step.__all__ + jwst.pipeline.__all__)
+    assert {t[0].split(".")[-1] for t in tuples} == set(
+        jwst.step.__all__ + jwst.pipeline.__all__
+    )
 
     for class_name, class_alias, is_pipeline in tuples:
         step_class = import_class(class_name)

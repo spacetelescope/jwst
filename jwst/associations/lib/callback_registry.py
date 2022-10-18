@@ -2,10 +2,10 @@
 
 from jwst.lib.signal_slot import Signal
 
-__all__ = ['CallbackRegistry']
+__all__ = ["CallbackRegistry"]
 
 
-class CallbackRegistry():
+class CallbackRegistry:
     """Callback registry"""
 
     def __init__(self):
@@ -58,9 +58,11 @@ class CallbackRegistry():
         event : str
             The name of event to attach the object to.
         """
+
         def decorator(func):
             self.add(event, func)
             return func
+
         return decorator
 
     __call__ = add_decorator

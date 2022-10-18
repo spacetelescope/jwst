@@ -10,10 +10,10 @@ generalized step: ``cube_skymatch``.
 import numpy as np
 
 
-__all__ = ['SkyCube']
+__all__ = ["SkyCube"]
 
 
-class SkyCube():
+class SkyCube:
     r"""
     Container that holds information about properties of a *single*
     image such as:
@@ -41,11 +41,19 @@ class SkyCube():
     image/cube coordinates (x, y, z).
     """
 
-    def __init__(self, data, wcs=None, wcsinfo=None,
-                 weights=None, cube_weight=1.0,
-                 bkg_deg=0, bkg_center=None,
-                 id=None, meta=None):
-        r""" Initializes the SkyCube object.
+    def __init__(
+        self,
+        data,
+        wcs=None,
+        wcsinfo=None,
+        weights=None,
+        cube_weight=1.0,
+        bkg_deg=0,
+        bkg_center=None,
+        id=None,
+        meta=None,
+    ):
+        r"""Initializes the SkyCube object.
 
         Parameters
         ----------
@@ -113,12 +121,18 @@ class SkyCube():
         if weights is not None and weights.shape != data.shape:
             raise ValueError("'weights' must have same shape as 'data' array.")
 
-        wcsinfo_is_None = (wcsinfo is None or wcsinfo.crval1 is None or
-                           wcsinfo.crval2 is None or wcsinfo.crval3 is None)
+        wcsinfo_is_None = (
+            wcsinfo is None
+            or wcsinfo.crval1 is None
+            or wcsinfo.crval2 is None
+            or wcsinfo.crval3 is None
+        )
 
         if wcsinfo_is_None and wcs is not None:
-            raise ValueError("'wcsinfo' cannot be None or have its 'crvaln' "
-                             "set to None when 'wcs' is not None.")
+            raise ValueError(
+                "'wcsinfo' cannot be None or have its 'crvaln' "
+                "set to None when 'wcs' is not None."
+            )
 
         self._data = data
         self.weights = weights
@@ -130,13 +144,14 @@ class SkyCube():
         self._wcsinfo = wcsinfo
 
         # set background degree:
-        if hasattr(bkg_deg, '__iter__'):
+        if hasattr(bkg_deg, "__iter__"):
             if len(bkg_deg) != 3:
-                raise ValueError("When 'bkg_deg' is an iterable it must have "
-                                 "three elements.")
+                raise ValueError(
+                    "When 'bkg_deg' is an iterable it must have " "three elements."
+                )
             self._bkg_degree = tuple(map(int, bkg_deg))
         else:
-            self._bkg_degree = 3 * (int(bkg_deg), )
+            self._bkg_degree = 3 * (int(bkg_deg),)
 
         # set center of the background polynomials:
         self._set_bkg_center(bkg_center)
@@ -173,7 +188,7 @@ class SkyCube():
 
     @property
     def weights(self):
-        """ Set or get ``weights`` cube. """
+        """Set or get ``weights`` cube."""
         return self._weights
 
     @weights.setter
@@ -183,31 +198,30 @@ class SkyCube():
             self._mask = np.ones_like(self.data, dtype=bool)
         else:
             if weights.shape != self.data.shape:
-                raise ValueError("Weight map must have the same shape as "
-                                 "the image cube")
+                raise ValueError(
+                    "Weight map must have the same shape as " "the image cube"
+                )
             self._weights = weights
             self._mask = weights > 0.0
 
     @property
     def mask(self):
-        """ Get mask of valid voxels computed from weights cube. """
+        """Get mask of valid voxels computed from weights cube."""
         return self._mask
 
     @property
     def wcs(self):
-        """ Get WCS. """
+        """Get WCS."""
         return self._wcs
 
     @property
     def data(self):
-        """ Get cube data.
-        """
+        """Get cube data."""
         return self._data
 
     @property
     def cube_weight(self):
-        """ Set or get cube's weight.
-        """
+        """Set or get cube's weight."""
         return self._cube_weight
 
     @cube_weight.setter
@@ -219,15 +233,14 @@ class SkyCube():
 
     @property
     def bkg_coeff(self):
-        """ Get background polynomial coefficients [].
+        """Get background polynomial coefficients [].
         Returns a 3D ``numpy.ndarray``.
         """
         return self._bkg_coeff
 
     @property
     def bkg_degree(self):
-        """ Get background polynomial degree.
-        """
+        """Get background polynomial degree."""
         return self._bkg_degree
 
     @property
@@ -258,14 +271,14 @@ class SkyCube():
 
     @property
     def skysub_data(self):
-        """ Retrieve sky background-subtracted data. """
+        """Retrieve sky background-subtracted data."""
         if self._bkg_status > 0:
             return self._data
 
         return self._data - self.bkg_cube
 
     def subtract_sky(self):
-        """ Subtract computed sky from cube data. """
+        """Subtract computed sky from cube data."""
         if self._bkg_status > 0:
             return self._data
 
@@ -297,16 +310,12 @@ class SkyCube():
 
         # compute pseudo-Vandermonde matrix:
         v = np.polynomial.polynomial.polyvander3d(
-            self._mgx,
-            self._mgy,
-            self._mgz,
-            self._bkg_degree
+            self._mgx, self._mgy, self._mgz, self._bkg_degree
         )
         self._vander = v.reshape((-1, v.shape[-1]))
 
     def free_intermediate_arrays(self):
-        """ Releases references to internal intermediate arrays.
-        """
+        """Releases references to internal intermediate arrays."""
         self._mgx = None
         self._mgy = None
         self._mgz = None
@@ -326,15 +335,11 @@ class SkyCube():
             mz = self._mgz
 
         elif not all([mx is not None, my is not None, mz is not None]):
-            raise ValueError("All mesh grids must simultaneously be either "
-                             "None or not None.")
+            raise ValueError(
+                "All mesh grids must simultaneously be either " "None or not None."
+            )
 
-        self._bkg_cube = np.polynomial.polynomial.polyval3d(
-            mx,
-            my,
-            mz,
-            self._bkg_coeff
-        )
+        self._bkg_cube = np.polynomial.polynomial.polyval3d(mx, my, mz, self._bkg_coeff)
 
         self._bkg_cube_dirty = False
 
@@ -368,7 +373,7 @@ class SkyCube():
 
     @property
     def skystat(self):
-        """ Stores/retrieves a callable object that takes a either a 2D image
+        """Stores/retrieves a callable object that takes a either a 2D image
         (2D `numpy.ndarray`) or a list of pixel values (a Nx1 array) and
         returns a tuple of two values: some statistics
         (e.g., mean, median, etc.) and number of pixels/values from the input

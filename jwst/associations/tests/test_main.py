@@ -11,50 +11,53 @@ from jwst.associations.main import Main
 
 
 # Basic pool
-POOL_PATH = 'pool_018_all_exptypes.csv'
+POOL_PATH = "pool_018_all_exptypes.csv"
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def pool():
     """Retrieve pool path"""
-    pool_path = t_path(os.path.join('data', POOL_PATH))
+    pool_path = t_path(os.path.join("data", POOL_PATH))
     pool = combine_pools(pool_path)
 
     return pool
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def all_candidates(pool):
-    """"Retrieve the all exposure pool"""
-    all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
+    """ "Retrieve the all exposure pool"""
+    all_candidates = Main(["--dry-run", "--all-candidates"], pool=pool)
     return all_candidates
 
 
 @pytest.mark.parametrize(
-    'args',
+    "args",
     [
         [
-            '--dry-run',
-            '--discover',
-            '--all-candidates',
-            '-i', 'o001',
+            "--dry-run",
+            "--discover",
+            "--all-candidates",
+            "-i",
+            "o001",
         ],
         [
-            '--dry-run',
-            '--discover',
-            '--all-candidates',
+            "--dry-run",
+            "--discover",
+            "--all-candidates",
         ],
         [
-            '--dry-run',
-            '--discover',
-            '-i', 'o001',
+            "--dry-run",
+            "--discover",
+            "-i",
+            "o001",
         ],
         [
-            '--dry-run',
-            '--all-candidates',
-            '-i', 'o001',
-        ]
-    ]
+            "--dry-run",
+            "--all-candidates",
+            "-i",
+            "o001",
+        ],
+    ],
 )
 def test_toomanyoptions(args):
     """Test argument parsing for failures"""
@@ -65,21 +68,22 @@ def test_toomanyoptions(args):
 
 
 @pytest.mark.parametrize(
-    'case', [
+    "case",
+    [
         (None, 59),  # Don't re-run, just compare to the generator fixture results
-        (['-i', 'o001'], 2),
-        (['-i', 'o001', 'o002'], 3),
-        (['-i', 'c1001'], 1),
-        (['-i', 'o001', 'c1001'], 3),
-        (['-i', 'c1001', 'c1002'], 2),
-    ]
+        (["-i", "o001"], 2),
+        (["-i", "o001", "o002"], 3),
+        (["-i", "c1001"], 1),
+        (["-i", "o001", "c1001"], 3),
+        (["-i", "c1001", "c1002"], 2),
+    ],
 )
 def test_asn_candidates(pool, all_candidates, case):
     """Test candidate selection option"""
     args, n_expected = case
 
     if args:
-        generated = Main(['--dry-run'] + args, pool=pool)
+        generated = Main(["--dry-run"] + args, pool=pool)
         n_actual = len(generated.associations)
     else:
         n_actual = len(all_candidates.associations)
@@ -88,15 +92,16 @@ def test_asn_candidates(pool, all_candidates, case):
 
 
 @pytest.mark.parametrize(
-    'version_id, expected', [
-        ('', r'\d{3}t\d{6}'),
-        ('mytestid', r'mytestid'),
-    ]
+    "version_id, expected",
+    [
+        ("", r"\d{3}t\d{6}"),
+        ("mytestid", r"mytestid"),
+    ],
 )
 def test_generate_version_id(version_id, expected, pool):
     """Check that an association has been given the appropriate version id"""
     regex = re.compile(expected)
-    args = ['--dry-run', '-i', 'o001', '--version-id']
+    args = ["--dry-run", "-i", "o001", "--version-id"]
     if version_id:
         args.append(version_id)
     generated = Main(args, pool=pool)

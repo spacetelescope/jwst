@@ -38,12 +38,14 @@ import textwrap
 from astropy.io import fits as pyfits
 from astropy.time import Time
 
+
 def get_templates_dir():
     """
     Returns a path to the directory containing definitions of the file
     types.
     """
-    return os.path.join(os.path.dirname(__file__), 'templates')
+    return os.path.join(os.path.dirname(__file__), "templates")
+
 
 def get_fitsfile(fitsfile):
     """
@@ -51,6 +53,7 @@ def get_fitsfile(fitsfile):
     pyfits.HDUList, opened) triple.
     """
     from . import input_file_types
+
     if isinstance(fitsfile, str):
         return fitsfile, pyfits.open(fitsfile), True
     elif isinstance(fitsfile, pyfits.HDUList):
@@ -58,51 +61,63 @@ def get_fitsfile(fitsfile):
     elif isinstance(fitsfile, input_file_types.InputFITSFile):
         return fitsfile._hdulist.filename, fitsfile._hdulist, False
 
+
 def get_error_collector(error_collector=None):
     """
     Get a usable error collecting function.  If `error_collector` is
     `None`, returns a default function that writes to `stderr`.
     """
+
     def error_collector_stderr(s, state):
         content = "%s: %s" % (str(state), s)
-        wrapped = textwrap.fill(content, subsequent_indent='    ')
+        wrapped = textwrap.fill(content, subsequent_indent="    ")
         sys.stderr.write(wrapped)
-        sys.stderr.write('\n')
+        sys.stderr.write("\n")
 
     if error_collector is None:
         return error_collector_stderr
     # TODO: Assert it's callable
     return error_collector
 
+
 def datetime2cds(dt):
     # SPEC: What is the epoch for a CDS value?
     delta = dt - datetime.datetime(1970, 1, 1)
-    cds = ((int(delta.days) & 0xffff) << (16 + 32) |
-           (int(delta.seconds * 1000) + int(delta.microseconds / 1000.) & 0xffffffff) << 16 |
-           (int(delta.microseconds % 1000) & 0xffff))
+    cds = (
+        (int(delta.days) & 0xFFFF) << (16 + 32)
+        | (int(delta.seconds * 1000) + int(delta.microseconds / 1000.0) & 0xFFFFFFFF)
+        << 16
+        | (int(delta.microseconds % 1000) & 0xFFFF)
+    )
     return cds
+
 
 def toMJD(timestring):
     #
     # Convert date-time to MJD for EXPSTART, EXPMID and EXPEND keywords
-    oldtime = Time(timestring, format='isot', scale='utc')
+    oldtime = Time(timestring, format="isot", scale="utc")
     return oldtime.mjd
+
 
 def issequence(obj):
     """
     Returns True if object quacks like a sequence.
     """
-    return getattr(obj, '__iter__', False)
+    return getattr(obj, "__iter__", False)
+
 
 if sys.hexversion >= 0x02060000:
+
     def iscallable(obj):
         """
         Returns True if object quacks like a callable.
         """
         return isinstance(obj, collections.abc.Callable)
+
 else:
+
     def iscallable(obj):
         """
         Returns True if object quacks like a callable.
         """
-        return hasattr(obj, '__call__')
+        return hasattr(obj, "__call__")

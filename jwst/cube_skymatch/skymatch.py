@@ -10,10 +10,10 @@ import copy
 from datetime import datetime
 
 
-__all__ = ['match']
+__all__ = ["match"]
 
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
 
 log = logging.getLogger(__name__)
@@ -93,8 +93,9 @@ def match(skycubes, subtract=False):
 
         if c1 is None:
             if nsubspace == 0:
-                log.warning("Input images do not overlap. Cannot match sky "
-                            "background.")
+                log.warning(
+                    "Input images do not overlap. Cannot match sky " "background."
+                )
             break
 
         out_skycubes.append(c1)
@@ -151,10 +152,14 @@ def match(skycubes, subtract=False):
     # log running time:
     runtime_end = datetime.now()
     log.info(" ")
-    log.info("***** {:s}.{:s}() ended on {}"
-             .format(__name__, function_name, runtime_end))
-    log.info("***** {:s}.{:s}() TOTAL RUN TIME: {}"
-             .format(__name__, function_name, runtime_end - runtime_begin))
+    log.info(
+        "***** {:s}.{:s}() ended on {}".format(__name__, function_name, runtime_end)
+    )
+    log.info(
+        "***** {:s}.{:s}() TOTAL RUN TIME: {}".format(
+            __name__, function_name, runtime_end - runtime_begin
+        )
+    )
     log.info(" ")
 
     return out_skycubes, nsubspace

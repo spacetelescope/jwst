@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['GainModel']
+__all__ = ["GainModel"]
 
 
 class GainModel(ReferenceFileModel):
@@ -13,4 +13,5 @@ class GainModel(ReferenceFileModel):
     data : numpy float32 array
          The gain
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/gain.schema"

@@ -35,7 +35,7 @@ class AssignMTWcsStep(Step):
         if not isinstance(input, datamodels.ModelContainer):
             log.warning("Input data type is not supported.")
             # raise ValueError("Expected input to be an association file name or a ModelContainer.")
-            input.meta.cal_step.assign_mtwcs = 'SKIPPED'
+            input.meta.cal_step.assign_mtwcs = "SKIPPED"
             return input
 
         # Apply the step

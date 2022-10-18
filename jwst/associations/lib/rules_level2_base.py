@@ -2,18 +2,11 @@
 from collections import deque
 import copy
 import logging
-from os.path import (
-    basename,
-    split,
-    splitext
-)
+from os.path import basename, split, splitext
 import re
 import warnings
 
-from jwst.associations import (
-    Association,
-    libpath
-)
+from jwst.associations import Association, libpath
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.acid import ACID
@@ -43,41 +36,41 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 __all__ = [
-    '_EMPTY',
-    'ASN_SCHEMA',
-    'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2Nod',
-    'AsnMixin_Lv2Special',
-    'AsnMixin_Lv2Spectral',
-    'AsnMixin_Lv2WFSS',
-    'Constraint_Base',
-    'Constraint_ExtCal',
-    'Constraint_Image_Nonscience',
-    'Constraint_Image_Science',
-    'Constraint_Mode',
-    'Constraint_Single_Science',
-    'Constraint_Special',
-    'Constraint_Spectral_Science',
-    'Constraint_Target',
-    'DMSLevel2bBase',
-    'DMSAttrConstraint',
-    'Utility'
+    "_EMPTY",
+    "ASN_SCHEMA",
+    "AsnMixin_Lv2Image",
+    "AsnMixin_Lv2Nod",
+    "AsnMixin_Lv2Special",
+    "AsnMixin_Lv2Spectral",
+    "AsnMixin_Lv2WFSS",
+    "Constraint_Base",
+    "Constraint_ExtCal",
+    "Constraint_Image_Nonscience",
+    "Constraint_Image_Science",
+    "Constraint_Mode",
+    "Constraint_Single_Science",
+    "Constraint_Special",
+    "Constraint_Spectral_Science",
+    "Constraint_Target",
+    "DMSLevel2bBase",
+    "DMSAttrConstraint",
+    "Utility",
 ]
 
 # The schema that these associations must adhere to.
-ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level2b.json'))
+ASN_SCHEMA = RegistryMarker.schema(libpath("asn_schema_jw_level2b.json"))
 
 # Flag to exposure type
 FLAG_TO_EXPTYPE = {
-    'background': 'background',
+    "background": "background",
 }
 
 # File templates
-_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
-_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r"jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool"
+_LEVEL1B_REGEX = r"(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)"
 
 # Key that uniquely identifies items.
-KEY = 'expname'
+KEY = "expname"
 
 
 class DMSLevel2bBase(DMSBaseMixin, Association):
@@ -95,25 +88,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
 
         # Initialize validity checks
-        self.validity.update({
-            'has_science': {
-                'validated': False,
-                'check': lambda member: member['exptype'] == 'science'
-            },
-            'allowed_candidates': {
-                'validated': False,
-                'check': self.validate_candidates
+        self.validity.update(
+            {
+                "has_science": {
+                    "validated": False,
+                    "check": lambda member: member["exptype"] == "science",
+                },
+                "allowed_candidates": {
+                    "validated": False,
+                    "check": self.validate_candidates,
+                },
             }
-        })
+        )
         # Other presumptions on the association
-        if 'constraints' not in self.data:
-            self.data['constraints'] = 'No constraints'
-        if 'asn_type' not in self.data:
-            self.data['asn_type'] = 'user_built'
-        if 'asn_id' not in self.data:
-            self.data['asn_id'] = 'a3001'
-        if 'asn_pool' not in self.data:
-            self.data['asn_pool'] = 'none'
+        if "constraints" not in self.data:
+            self.data["constraints"] = "No constraints"
+        if "asn_type" not in self.data:
+            self.data["asn_type"] = "user_built"
+        if "asn_id" not in self.data:
+            self.data["asn_id"] = "a3001"
+        if "asn_pool" not in self.data:
+            self.data["asn_pool"] = "none"
 
     def check_and_set_constraints(self, item):
         """Override of Association method
@@ -123,7 +118,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         OBSERVATION and BACKGROUND candidates.
         """
         match, reprocess = super(DMSLevel2bBase, self).check_and_set_constraints(item)
-        if match and not self.acid.type in ['observation', 'background']:
+        if match and not self.acid.type in ["observation", "background"]:
             return False, []
         else:
             return match, reprocess
@@ -132,14 +127,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """Get list of members by their exposure type"""
         member_type = member_type.lower()
         try:
-            members = self.current_product['members']
+            members = self.current_product["members"]
         except KeyError:
             result = []
         else:
             result = [
-                member
-                for member in members
-                if member_type == member['exptype'].lower()
+                member for member in members if member_type == member["exptype"].lower()
             ]
 
         return result
@@ -151,13 +144,13 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         bool
             True if it does.
         """
-        limit_reached = len(self.members_by_type('science')) >= 1
+        limit_reached = len(self.members_by_type("science")) >= 1
         return limit_reached
 
     def __eq__(self, other):
         """Compare equality of two associations"""
         if isinstance(other, DMSLevel2bBase):
-            result = self.data['asn_type'] == other.data['asn_type']
+            result = self.data["asn_type"] == other.data["asn_type"]
             result = result and (self.member_ids == other.member_ids)
             return result
 
@@ -173,12 +166,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def dms_product_name(self):
         """Define product name."""
         try:
-            science = self.members_by_type('science')[0]
+            science = self.members_by_type("science")[0]
         except IndexError:
             return PRODUCT_NAME_DEFAULT
 
         try:
-            science_path, ext = splitext(science['expname'])
+            science_path, ext = splitext(science["expname"])
         except Exception:
             return PRODUCT_NAME_DEFAULT
 
@@ -201,7 +194,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         # Set exposure error status.
         try:
-            exposerr = item['exposerr']
+            exposerr = item["exposerr"]
         except KeyError:
             exposerr = None
 
@@ -212,27 +205,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # it does remain in the separate integrations.
         member = Member(
             {
-                'expname': Utility.rename_to_level2a(
-                    item['filename'],
-                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+                "expname": Utility.rename_to_level2a(
+                    item["filename"],
+                    use_integrations=self.is_item_tso(
+                        item, other_exp_types=CORON_EXP_TYPES
+                    ),
                 ),
-                'exptype': self.get_exposure_type(item),
-                'exposerr': exposerr,
+                "exptype": self.get_exposure_type(item),
+                "exposerr": exposerr,
             },
-            item=item
+            item=item,
         )
 
         return member
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        self.data['target'] = item['targetid']
-        self.data['program'] = '{:0>5s}'.format(item['program'])
-        self.data['asn_pool'] = basename(
-            item.meta['pool_file']
-        )
-        self.data['constraints'] = str(self.constraints)
-        self.data['asn_id'] = self.acid.id
+        self.data["target"] = item["targetid"]
+        self.data["program"] = "{:0>5s}".format(item["program"])
+        self.data["asn_pool"] = basename(item.meta["pool_file"])
+        self.data["constraints"] = str(self.constraints)
+        self.data["asn_id"] = self.acid.id
         self.new_product(self.dms_product_name())
 
     def _add(self, item):
@@ -244,19 +237,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             The item to be adding.
         """
         member = self.make_member(item)
-        members = self.current_product['members']
+        members = self.current_product["members"]
         members.append(member)
         self.update_validity(member)
 
         # Update association state due to new member
         self.update_asn()
 
-    def _add_items(self,
-                   items,
-                   meta=None,
-                   product_name_func=None,
-                   acid='o999',
-                   **kwargs):
+    def _add_items(
+        self, items, meta=None, product_name_func=None, acid="o999", **kwargs
+    ):
         """Force adding items to the association
 
         Parameters
@@ -302,10 +292,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             meta = {}
 
         # Setup association candidate.
-        if acid.startswith('o'):
-            ac_type = 'observation'
-        elif acid.startswith('c'):
-            ac_type = 'background'
+        if acid.startswith("o"):
+            ac_type = "observation"
+        elif acid.startswith("c"):
+            ac_type = "background"
         else:
             raise ValueError(
                 'Invalid association id specified: "{}"'
@@ -314,11 +304,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self._acid = ACID((acid, ac_type))
 
         # set the default exptype
-        exptype = 'science'
+        exptype = "science"
 
         for idx, item in enumerate(items, start=1):
             self.new_product()
-            members = self.current_product['members']
+            members = self.current_product["members"]
             if isinstance(item, tuple):
                 expname = item[0]
             else:
@@ -326,15 +316,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
             # check to see if kwargs are passed and if exptype is given
             if kwargs:
-                if 'with_exptype' in kwargs:
+                if "with_exptype" in kwargs:
                     if item[1]:
                         exptype = item[1]
                     else:
-                        exptype = 'science'
-            member = Member({
-                'expname': expname,
-                'exptype': exptype
-            }, item=item)
+                        exptype = "science"
+            member = Member({"expname": expname, "exptype": exptype}, item=item)
             members.append(member)
             self.update_validity(member)
             self.update_asn()
@@ -343,11 +330,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             # to use.
             if product_name_func is not None:
                 try:
-                    self.current_product['name'] = product_name_func(item, idx)
+                    self.current_product["name"] = product_name_func(item, idx)
                 except Exception:
                     logger.debug(
-                        'Attempted use of product_name_func failed.'
-                        ' Default product name used.'
+                        "Attempted use of product_name_func failed."
+                        " Default product name used."
                     )
 
         self.data.update(meta)
@@ -356,7 +343,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def update_asn(self):
         """Update association info based on current members"""
         super(DMSLevel2bBase, self).update_asn()
-        self.current_product['name'] = self.dms_product_name()
+        self.current_product["name"] = self.dms_product_name()
 
     def validate_candidates(self, member):
         """Allow only OBSERVATION or BACKGROUND candidates
@@ -375,14 +362,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """
 
         # If an observation, then we're good.
-        if self.acid.type.lower() == 'observation':
+        if self.acid.type.lower() == "observation":
             return True
 
         # If a background, check that there is a background
         # exposure
-        if self.acid.type.lower() == 'background':
-            for entry in self.current_product['members']:
-                if entry['exptype'].lower() == 'background':
+        if self.acid.type.lower() == "background":
+            for entry in self.current_product["members"]:
+                if entry["exptype"].lower() == "background":
                     return True
 
         # If not background member, or some other candidate type,
@@ -408,21 +395,17 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         """
 
-        for product in self['products']:
-            members = product['members']
+        for product in self["products"]:
+            members = product["members"]
 
             # Split out the science vs. non-science
             # The non-science exposures will get attached
             # to every resulting association.
             science_exps = [
-                member
-                for member in members
-                if member['exptype'] == 'science'
+                member for member in members if member["exptype"] == "science"
             ]
             nonscience_exps = [
-                member
-                for member in members
-                if member['exptype'] != 'science'
+                member for member in members if member["exptype"] != "science"
             ]
 
             # Create new associations for each science, using
@@ -430,43 +413,47 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             results = []
             for science_exp in science_exps:
                 asn = copy.deepcopy(self)
-                asn.data['products'] = None
+                asn.data["products"] = None
 
                 product_name = remove_suffix(
-                    splitext(split(science_exp['expname'])[1])[0]
+                    splitext(split(science_exp["expname"])[1])[0]
                 )[0]
                 asn.new_product(product_name)
-                new_members = asn.current_product['members']
+                new_members = asn.current_product["members"]
                 new_members.append(science_exp)
 
                 for other_science in science_exps:
-                    if other_science['expname'] != science_exp['expname']:
-                        if science_exp.item['exp_type'] == 'nrs_fixedslit':
+                    if other_science["expname"] != science_exp["expname"]:
+                        if science_exp.item["exp_type"] == "nrs_fixedslit":
                             try:
-                                sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
-                                                  int(science_exp.item['subpxpts'])
-                                other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
-                                                    int(other_science.item['subpxpts'])
+                                sci_prim_dithpt = (
+                                    int(science_exp.item["patt_num"]) - 1
+                                ) // int(science_exp.item["subpxpts"])
+                                other_prim_dithpt = (
+                                    int(other_science.item["patt_num"]) - 1
+                                ) // int(other_science.item["subpxpts"])
                                 if sci_prim_dithpt != other_prim_dithpt:
                                     now_background = Member(other_science)
-                                    now_background['exptype'] = 'background'
+                                    now_background["exptype"] = "background"
                                     new_members.append(now_background)
                             #  Catch missing values with KeyError, NULL values with ValueError
                             except (ValueError, KeyError):
                                 try:
-                                    sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
-                                                      int(science_exp.item['subpxpns'])
-                                    other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
-                                                        int(other_science.item['subpxpns'])
+                                    sci_prim_dithpt = (
+                                        int(science_exp.item["patt_num"]) - 1
+                                    ) // int(science_exp.item["subpxpns"])
+                                    other_prim_dithpt = (
+                                        int(other_science.item["patt_num"]) - 1
+                                    ) // int(other_science.item["subpxpns"])
                                     if sci_prim_dithpt != other_prim_dithpt:
                                         now_background = Member(other_science)
-                                        now_background['exptype'] = 'background'
+                                        now_background["exptype"] = "background"
                                         new_members.append(now_background)
                                 except (ValueError, KeyError, ZeroDivisionError):
                                     pass
                         else:
                             now_background = Member(other_science)
-                            now_background['exptype'] = 'background'
+                            now_background["exptype"] = "background"
                             new_members.append(now_background)
 
                 new_members += nonscience_exps
@@ -478,55 +465,51 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def __repr__(self):
         try:
-            file_name, json_repr = self.ioregistry['json'].dump(self)
+            file_name, json_repr = self.ioregistry["json"].dump(self)
         except Exception:
             return str(self.__class__)
         return json_repr
 
     def __str__(self):
-        """Create human readable version of the association
-        """
+        """Create human readable version of the association"""
 
-        result = ['Association {:s}'.format(self.asn_name)]
+        result = ["Association {:s}".format(self.asn_name)]
 
         # Parameters of the association
         result.append(
-            '    Parameters:'
-            '        Product type: {asn_type:s}'
-            '        Rule:         {asn_rule:s}'
-            '        Program:      {program:s}'
-            '        Target:       {target:s}'
-            '        Pool:         {asn_pool:s}'.format(
-                asn_type=getattr(self.data, 'asn_type', 'indetermined'),
-                asn_rule=getattr(self.data, 'asn_rule', 'indetermined'),
-                program=getattr(self.data, 'program', 'indetermined'),
-                target=getattr(self.data, 'target', 'indetermined'),
-                asn_pool=getattr(self.data, 'asn_pool', 'indetermined'),
+            "    Parameters:"
+            "        Product type: {asn_type:s}"
+            "        Rule:         {asn_rule:s}"
+            "        Program:      {program:s}"
+            "        Target:       {target:s}"
+            "        Pool:         {asn_pool:s}".format(
+                asn_type=getattr(self.data, "asn_type", "indetermined"),
+                asn_rule=getattr(self.data, "asn_rule", "indetermined"),
+                program=getattr(self.data, "program", "indetermined"),
+                target=getattr(self.data, "target", "indetermined"),
+                asn_pool=getattr(self.data, "asn_pool", "indetermined"),
             )
         )
 
-        result.append('        {:s}'.format(str(self.constraints)))
+        result.append("        {:s}".format(str(self.constraints)))
 
         # Products of the association
-        for product in self.data['products']:
+        for product in self.data["products"]:
             result.append(
-                '\t{} with {} members'.format(
-                    product['name'],
-                    len(product['members'])
-                )
+                "\t{} with {} members".format(product["name"], len(product["members"]))
             )
 
         # That's all folks
-        result.append('\n')
-        return '\n'.join(result)
+        result.append("\n")
+        return "\n".join(result)
 
 
 @RegistryMarker.utility
-class Utility():
+class Utility:
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    @RegistryMarker.callback('finalize')
+    @RegistryMarker.callback("finalize")
     def finalize(associations):
         """Check validity and duplications in an association list
 
@@ -553,7 +536,7 @@ class Utility():
         # Having duplicate Level 2 associations is expected.
         # Suppress warnings.
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
+            warnings.simplefilter("ignore")
             lv2_asns = prune_duplicate_products(lv2_asns)
 
         # Ensure sequencing is correct.
@@ -606,24 +589,21 @@ class Utility():
             The Level 2a name
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
-        if match is None or match.group('type') != '_uncal':
-            logger.warning((
-                'Item FILENAME="{}" is not a Level 1b name. '
-                'Cannot transform to Level 2a.'
-            ).format(
-                level1b_name
-            ))
+        if match is None or match.group("type") != "_uncal":
+            logger.warning(
+                (
+                    'Item FILENAME="{}" is not a Level 1b name. '
+                    "Cannot transform to Level 2a."
+                ).format(level1b_name)
+            )
             return level1b_name
 
-        suffix = 'rate'
+        suffix = "rate"
         if use_integrations:
-            suffix = 'rateints'
-        level2a_name = ''.join([
-            match.group('path'),
-            '_',
-            suffix,
-            match.group('extension')
-        ])
+            suffix = "rateints"
+        level2a_name = "".join(
+            [match.group("path"), "_", suffix, match.group("extension")]
+        )
         return level2a_name
 
     @staticmethod
@@ -653,7 +633,7 @@ class Utility():
 
         If this changes, a comparison function will need be implemented
         """
-        return sorted(asns, key=lambda asn: asn['asn_id'])
+        return sorted(asns, key=lambda asn: asn["asn_id"])
 
     @staticmethod
     def _merge_asns(asns):
@@ -671,41 +651,34 @@ class Utility():
         """
         merged = {}
         for asn in asns:
-            idx = '_'.join([asn['asn_type'], asn['asn_id']])
+            idx = "_".join([asn["asn_type"], asn["asn_id"]])
             try:
                 current_asn = merged[idx]
             except KeyError:
                 merged[idx] = asn
                 current_asn = asn
-            for product in asn['products']:
+            for product in asn["products"]:
                 merge_occurred = False
-                for current_product in current_asn['products']:
-                    if product['name'] == current_product['name']:
-                        member_names = set([
-                            member['expname']
-                            for member in product['members']
-                        ])
-                        current_member_names = [
-                            member['expname']
-                            for member in current_product['members']
-                        ]
-                        new_names = member_names.difference(
-                            current_member_names
+                for current_product in current_asn["products"]:
+                    if product["name"] == current_product["name"]:
+                        member_names = set(
+                            [member["expname"] for member in product["members"]]
                         )
+                        current_member_names = [
+                            member["expname"] for member in current_product["members"]
+                        ]
+                        new_names = member_names.difference(current_member_names)
                         new_members = [
                             member
-                            for member in product['members']
-                            if member['expname'] in new_names
+                            for member in product["members"]
+                            if member["expname"] in new_names
                         ]
-                        current_product['members'].extend(new_members)
+                        current_product["members"].extend(new_members)
                         merge_occurred = True
                 if not merge_occurred:
-                    current_asn['products'].append(product)
+                    current_asn["products"].append(product)
 
-        merged_asns = [
-            asn
-            for asn in merged.values()
-        ]
+        merged_asns = [asn for asn in merged.values()]
         return merged_asns
 
 
@@ -716,34 +689,31 @@ class Constraint_Base(Constraint):
     """Select on program and instrument"""
 
     def __init__(self):
-        super(Constraint_Base, self).__init__([
-            DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
-                name='is_tso',
-                sources=['tsovisit'],
-                required=False,
-                force_unique=True,
-            )
-        ])
+        super(Constraint_Base, self).__init__(
+            [
+                DMSAttrConstraint(name="program", sources=["program"]),
+                DMSAttrConstraint(
+                    name="is_tso",
+                    sources=["tsovisit"],
+                    required=False,
+                    force_unique=True,
+                ),
+            ]
+        )
 
 
 class Constraint_ExtCal(Constraint):
     """Remove any nis_extcals from the associations, they
-       are NOT to receive level-2b or level-3 processing!"""
+    are NOT to receive level-2b or level-3 processing!"""
 
     def __init__(self):
         super(Constraint_ExtCal, self).__init__(
             [
                 DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value='nis_extcal'
+                    name="exp_type", sources=["exp_type"], value="nis_extcal"
                 )
             ],
-            reduce=Constraint.notany
+            reduce=Constraint.notany,
         )
 
 
@@ -751,80 +721,61 @@ class Constraint_Mode(Constraint):
     """Select on instrument and optical path"""
 
     def __init__(self):
-        super(Constraint_Mode, self).__init__([
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume']
-            ),
-            DMSAttrConstraint(
-                name='detector',
-                sources=['detector']
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter', 'band']
-            ),
-            DMSAttrConstraint(
-                name='opt_elem2',
-                sources=['pupil', 'grating'],
-                required=False,
-            ),
-            DMSAttrConstraint(
-                name='opt_elem3',
-                sources=['fxd_slit'],
-                required=False,
-            ),
-            DMSAttrConstraint(
-                name='subarray',
-                sources=['subarray'],
-                required=False,
-            ),
-            DMSAttrConstraint(
-                name='channel',
-                sources=['channel'],
-                required=False,
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        sources=['detector'],
-                        value='nirspec'
-                    ),
-                    DMSAttrConstraint(
-                        sources=['filter'],
-                        value='opaque'
-                    ),
-                ],
-                reduce=Constraint.notany
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        sources=['detector'],
-                        value='nrcblong'
-                    ),
-                    DMSAttrConstraint(
-                        sources=['exp_type'],
-                        value='nrc_tsgrism'
-                    )
-                ],
-                reduce=Constraint.notall
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        sources=['visitype'],
-                        value='.+wfsc.+',
-                    ),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='slit',
-                sources=['fxd_slit'],
-                required=False,
-            )
-        ])
+        super(Constraint_Mode, self).__init__(
+            [
+                DMSAttrConstraint(name="instrument", sources=["instrume"]),
+                DMSAttrConstraint(name="detector", sources=["detector"]),
+                DMSAttrConstraint(name="opt_elem", sources=["filter", "band"]),
+                DMSAttrConstraint(
+                    name="opt_elem2",
+                    sources=["pupil", "grating"],
+                    required=False,
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem3",
+                    sources=["fxd_slit"],
+                    required=False,
+                ),
+                DMSAttrConstraint(
+                    name="subarray",
+                    sources=["subarray"],
+                    required=False,
+                ),
+                DMSAttrConstraint(
+                    name="channel",
+                    sources=["channel"],
+                    required=False,
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(sources=["detector"], value="nirspec"),
+                        DMSAttrConstraint(sources=["filter"], value="opaque"),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(sources=["detector"], value="nrcblong"),
+                        DMSAttrConstraint(sources=["exp_type"], value="nrc_tsgrism"),
+                    ],
+                    reduce=Constraint.notall,
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            sources=["visitype"],
+                            value=".+wfsc.+",
+                        ),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                DMSAttrConstraint(
+                    name="slit",
+                    sources=["fxd_slit"],
+                    required=False,
+                ),
+            ]
+        )
 
 
 class Constraint_Image_Science(DMSAttrConstraint):
@@ -832,9 +783,9 @@ class Constraint_Image_Science(DMSAttrConstraint):
 
     def __init__(self):
         super(Constraint_Image_Science, self).__init__(
-            name='exp_type',
-            sources=['exp_type'],
-            value='|'.join(IMAGE2_SCIENCE_EXP_TYPES)
+            name="exp_type",
+            sources=["exp_type"],
+            value="|".join(IMAGE2_SCIENCE_EXP_TYPES),
         )
 
 
@@ -846,29 +797,23 @@ class Constraint_Image_Nonscience(Constraint):
             [
                 Constraint_TargetAcq(),
                 DMSAttrConstraint(
-                    name='non_science',
-                    sources=['exp_type'],
-                    value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+                    name="non_science",
+                    sources=["exp_type"],
+                    value="|".join(IMAGE2_NONSCIENCE_EXP_TYPES),
                 ),
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value='nrs_msaspec'
+                            name="exp_type", sources=["exp_type"], value="nrs_msaspec"
                         ),
                         DMSAttrConstraint(
-                            sources=['msastate'],
-                            value='primarypark_allopen'
+                            sources=["msastate"], value="primarypark_allopen"
                         ),
-                        DMSAttrConstraint(
-                            sources=['grating'],
-                            value='mirror'
-                        )
+                        DMSAttrConstraint(sources=["grating"], value="mirror"),
                     ]
-                )
+                ),
             ],
-            reduce=Constraint.any
+            reduce=Constraint.any,
         )
 
 
@@ -894,7 +839,7 @@ class Constraint_Single_Science(SimpleConstraint):
 
     def __init__(self, has_science_fn, **sc_kwargs):
         super(Constraint_Single_Science, self).__init__(
-            name='single_science',
+            name="single_science",
             value=False,
             sources=lambda item: has_science_fn(),
             **sc_kwargs
@@ -906,11 +851,8 @@ class Constraint_Special(DMSAttrConstraint):
 
     def __init__(self):
         super(Constraint_Special, self).__init__(
-            name='is_special',
-            sources=[
-                'bkgdtarg',
-                'is_psf'
-            ],
+            name="is_special",
+            sources=["bkgdtarg", "is_psf"],
         )
 
 
@@ -934,12 +876,12 @@ class Constraint_Spectral_Science(Constraint):
         super(Constraint_Spectral_Science, self).__init__(
             [
                 DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value='|'.join(general_science)
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="|".join(general_science),
                 )
             ],
-            reduce=Constraint.any
+            reduce=Constraint.any,
         )
 
 
@@ -948,8 +890,8 @@ class Constraint_Target(DMSAttrConstraint):
 
     def __init__(self):
         super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
+            name="target",
+            sources=["targetid"],
         )
 
 
@@ -963,7 +905,7 @@ class AsnMixin_Lv2Image:
         """Post-check and pre-add initialization"""
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
-        self.data['asn_type'] = 'image2'
+        self.data["asn_type"] = "image2"
 
 
 class AsnMixin_Lv2Nod:
@@ -1002,10 +944,9 @@ class AsnMixin_Lv2Nod:
 
 
 class AsnMixin_Lv2Special:
-    """Process special and non-science exposures as science.
-    """
+    """Process special and non-science exposures as science."""
 
-    def get_exposure_type(self, item, default='science'):
+    def get_exposure_type(self, item, default="science"):
         """Override to force exposure type to always be science
         Parameters
         ----------
@@ -1019,7 +960,7 @@ class AsnMixin_Lv2Special:
         exposure_type : 'science'
             Always returns as science
         """
-        return 'science'
+        return "science"
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
@@ -1029,7 +970,7 @@ class AsnMixin_Lv2Spectral(DMSLevel2bBase):
         """Post-check and pre-add initialization"""
 
         super(AsnMixin_Lv2Spectral, self)._init_hook(item)
-        self.data['asn_type'] = 'spec2'
+        self.data["asn_type"] = "spec2"
 
 
 class AsnMixin_Lv2WFSS:
@@ -1037,20 +978,18 @@ class AsnMixin_Lv2WFSS:
 
     def add_catalog_members(self):
         """Add catalog and direct image member based on direct image members"""
-        directs = self.members_by_type('direct_image')
+        directs = self.members_by_type("direct_image")
         if not directs:
             raise AssociationNotValidError(
-                '{} has no required direct image exposures'.format(
+                "{} has no required direct image exposures".format(
                     self.__class__.__name__
                 )
             )
 
-        sciences = self.members_by_type('science')
+        sciences = self.members_by_type("science")
         if not sciences:
             raise AssociationNotValidError(
-                '{} has no required science exposure'.format(
-                    self.__class__.__name__
-                )
+                "{} has no required science exposure".format(self.__class__.__name__)
             )
         science = sciences[0]
 
@@ -1058,20 +997,20 @@ class AsnMixin_Lv2WFSS:
         # the direct image greater than but closest to this value.
         closest = directs[0]  # If the search fails, just use the first.
         try:
-            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+            expspcin = int(getattr_from_list(science.item, ["expspcin"], _EMPTY)[1])
         except KeyError:
             # If exposure sequence cannot be determined, just fall through.
-            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
+            logger.debug("Science exposure %s has no EXPSPCIN defined.", science)
         else:
-            min_diff = 9999         # Initialize to an invalid value.
+            min_diff = 9999  # Initialize to an invalid value.
             for direct in directs:
                 try:
-                    direct_expspcin = int(getattr_from_list(
-                        direct.item, ['expspcin'], _EMPTY
-                    )[1])
+                    direct_expspcin = int(
+                        getattr_from_list(direct.item, ["expspcin"], _EMPTY)[1]
+                    )
                 except KeyError:
                     # Try the next one.
-                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
+                    logger.debug("Direct image %s has no EXPSPCIN defined.", direct)
                     continue
                 diff = direct_expspcin - expspcin
                 if diff < min_diff and diff > 0:
@@ -1082,36 +1021,33 @@ class AsnMixin_Lv2WFSS:
         self.direct_image = closest
 
         # Remove all direct images from the association.
-        members = self.current_product['members']
+        members = self.current_product["members"]
         direct_idxs = [
             idx
             for idx, member in enumerate(members)
-            if member['exptype'] == 'direct_image'
+            if member["exptype"] == "direct_image"
         ]
-        deque((
-            list.pop(members, idx)
-            for idx in sorted(direct_idxs, reverse=True)
-        ))
+        deque((list.pop(members, idx) for idx in sorted(direct_idxs, reverse=True)))
 
         # Add the Level3 catalog, direct image, and segmentation map members
         lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
         members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_i2d.fits',
-                'exptype': 'direct_image'
-            })
+            Member(
+                {
+                    "expname": lv3_direct_image_root + "_i2d.fits",
+                    "exptype": "direct_image",
+                }
+            )
         )
         members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_cat.ecsv',
-                'exptype': 'sourcecat'
-            })
+            Member(
+                {"expname": lv3_direct_image_root + "_cat.ecsv", "exptype": "sourcecat"}
+            )
         )
         members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_segm.fits',
-                'exptype': 'segmap'
-            })
+            Member(
+                {"expname": lv3_direct_image_root + "_segm.fits", "exptype": "segmap"}
+            )
         )
 
     def finalize(self):
@@ -1124,24 +1060,19 @@ class AsnMixin_Lv2WFSS:
         try:
             self.add_catalog_members()
         except AssociationNotValidError as err:
-            logger.debug(
-                '%s: %s',
-                self.__class__.__name__, str(err)
-            )
+            logger.debug("%s: %s", self.__class__.__name__, str(err))
             return None
 
         return super(AsnMixin_Lv2WFSS, self).finalize()
 
-    def get_exposure_type(self, item, default='science'):
+    def get_exposure_type(self, item, default="science"):
         """Modify exposure type depending on dither pointing index
 
         If an imaging exposure as been found, treat is as a direct image.
         """
-        exp_type = super(AsnMixin_Lv2WFSS, self).get_exposure_type(
-            item, default
-        )
-        if exp_type == 'science' and item['exp_type'] in ['nis_image', 'nrc_image']:
-            exp_type = 'direct_image'
+        exp_type = super(AsnMixin_Lv2WFSS, self).get_exposure_type(item, default)
+        if exp_type == "science" and item["exp_type"] in ["nis_image", "nrc_image"]:
+            exp_type = "direct_image"
 
         return exp_type
 
@@ -1162,15 +1093,13 @@ class AsnMixin_Lv2WFSS:
         """
         item = self.direct_image.item
         opt_elems = []
-        for keys in [['filter', 'band'], ['pupil', 'grating']]:
-            opt_elem = getattr_from_list_nofail(
-                item, keys, _EMPTY
-            )[1]
+        for keys in [["filter", "band"], ["pupil", "grating"]]:
+            opt_elem = getattr_from_list_nofail(item, keys, _EMPTY)[1]
             if opt_elem:
                 opt_elems.append(opt_elem)
         opt_elems.sort(key=str.lower)
-        full_opt_elem = '-'.join(opt_elems)
-        if full_opt_elem == '':
-            full_opt_elem = 'clear'
+        full_opt_elem = "-".join(opt_elems)
+        if full_opt_elem == "":
+            full_opt_elem = "clear"
 
         return full_opt_elem

@@ -11,7 +11,7 @@ def make_guider_image():
 
     image = datamodels.GuiderRawModel()
 
-    image.meta.instrument.name = 'FGS'
+    image.meta.instrument.name = "FGS"
     image.meta.exposure.frame_time = 234.3423235
     image.meta.exposure.ngroups = 4
     image.meta.exposure.group_time = 465.643643
@@ -60,7 +60,7 @@ def test_guider_cds_fineguide_mode(make_guider_image):
     assert np.allclose(result.data, truth)
 
 
-@pytest.mark.parametrize("exptype", ['FGS_ACQ1', 'FGS_ACQ2', 'FGS_TRACK'])
+@pytest.mark.parametrize("exptype", ["FGS_ACQ1", "FGS_ACQ2", "FGS_TRACK"])
 def test_guider_cds_acq_track_modes(exptype, make_guider_image):
     """Test acq and track exptypes"""
 
@@ -86,7 +86,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
     assert np.allclose(result.data, truth)
 
 
-@pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
+@pytest.mark.parametrize("exptype", ["FGS_ID-IMAGE", "FGS_ID-STACK"])
 def test_guider_cds_id_modes(exptype, make_guider_image):
     """Test fgs id exptypes"""
 
@@ -122,7 +122,7 @@ def test_unit_assignment(make_guider_image):
 
     result = guider_cds(model)
 
-    assert result.meta.bunit_data == 'DN/s'
+    assert result.meta.bunit_data == "DN/s"
 
 
 def test_table_extensions(make_guider_image):
@@ -138,8 +138,8 @@ def test_table_extensions(make_guider_image):
 
     result = guider_cds(model)
 
-    assert 'planned_star_table' in result
-    assert 'flight_star_table' in result
-    assert 'pointing_table' in result
-    assert 'centroid_table' in result
-    assert 'track_sub_table' in result
+    assert "planned_star_table" in result
+    assert "flight_star_table" in result
+    assert "pointing_table" in result
+    assert "centroid_table" in result
+    assert "track_sub_table" in result

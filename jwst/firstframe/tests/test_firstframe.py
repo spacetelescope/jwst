@@ -32,22 +32,22 @@ def test_firstframe_set_groupdq():
     #   the 'do_not_use' flag
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          dqflags.group['DO_NOT_USE'],
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                  + 'equal to the DO_NOT_USE flag')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+    )
 
     # test that the groupdq flags are not changed for the rest of the groups
-    dq_diff = (dm_ramp_firstframe.groupdq[0, 1:ngroups, :, :]
-               - dm_ramp.groupdq[0, 1:ngroups, :, :])
-    np.testing.assert_array_equal(np.full((ngroups - 1, ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='n >= 2 groupdq flags changes '
-                                  + 'and they should not be')
+    dq_diff = (
+        dm_ramp_firstframe.groupdq[0, 1:ngroups, :, :]
+        - dm_ramp.groupdq[0, 1:ngroups, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((ngroups - 1, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="n >= 2 groupdq flags changes " + "and they should not be",
+    )
 
 
 def test_firstframe_single_group():
@@ -77,12 +77,11 @@ def test_firstframe_single_group():
 
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='groupdq changed for single group '
-                                  + 'when it should not')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq changed for single group " + "when it should not",
+    )
 
 
 def test_firstframe_add1_groupdq():
@@ -141,12 +140,11 @@ def test_firstframe_3groups():
     #  0 since the step should not run if frames 3 or fewer
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                  + 'equal to 0')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to 0",
+    )
 
 
 def test_nircam():
@@ -165,8 +163,8 @@ def test_nircam():
     # create a JWST datamodel for data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
-    dm_ramp.meta.instrument.name = 'NIRCAM'
-    dm_ramp.meta.instrument.detector = 'NRCA1'
+    dm_ramp.meta.instrument.name = "NIRCAM"
+    dm_ramp.meta.instrument.detector = "NRCA1"
 
     # run the first frame correction step
     dm_ramp_firstframe = FirstFrameStep.call(dm_ramp)
@@ -175,12 +173,11 @@ def test_nircam():
     #   the 0 since the step should not run for NIR data
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                          + 'equal to 0')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to 0",
+    )
 
 
 def test_miri():
@@ -199,8 +196,8 @@ def test_miri():
     # create a JWST datamodel for data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
-    dm_ramp.meta.instrument.name = 'MIRI'
-    dm_ramp.meta.instrument.detector = 'MIRIMAGE'
+    dm_ramp.meta.instrument.name = "MIRI"
+    dm_ramp.meta.instrument.detector = "MIRIMAGE"
 
     # run the first frame correction step
     dm_ramp_firstframe = FirstFrameStep.call(dm_ramp)
@@ -209,9 +206,8 @@ def test_miri():
     #  DO_NOT_USE flag
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
 
-    np.testing.assert_array_equal(np.full((ysize, xsize),
-                                          dqflags.group['DO_NOT_USE'],
-                                          dtype=int),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                          + 'equal to DO_NOT_USE')
+    np.testing.assert_array_equal(
+        np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not " + "equal to DO_NOT_USE",
+    )

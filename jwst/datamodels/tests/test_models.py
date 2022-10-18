@@ -9,19 +9,31 @@ import numpy as np
 import pytest
 
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, AsnModel,
-                             MultiSlitModel, ModelContainer, SlitModel,
-                             MultiExposureModel, SourceModelContainer,
-                             DrizProductModel, MultiProductModel, MIRIRampModel,
-                             SlitDataModel, IFUImageModel, ABVegaOffsetModel)
+from jwst.datamodels import (
+    JwstDataModel,
+    ImageModel,
+    MaskModel,
+    AsnModel,
+    MultiSlitModel,
+    ModelContainer,
+    SlitModel,
+    MultiExposureModel,
+    SourceModelContainer,
+    DrizProductModel,
+    MultiProductModel,
+    MIRIRampModel,
+    SlitDataModel,
+    IFUImageModel,
+    ABVegaOffsetModel,
+)
 from jwst import datamodels
 from jwst.lib.file_utils import pushdir
 from jwst.datamodels import _defined_models as defined_models
 
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
-FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
-ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
+ROOT_DIR = os.path.join(os.path.dirname(__file__), "data")
+FITS_FILE = os.path.join(ROOT_DIR, "test.fits")
+ASN_FILE = os.path.join(ROOT_DIR, "association.json")
 
 
 @pytest.fixture
@@ -34,19 +46,16 @@ def make_models(tmp_path):
         `path_just_fits` is a FITS file of `JwstDataModel` without the ASDF extension.
         `path_model` is a FITS file of `JwstDataModel` with the ASDF extension.
     """
-    path_just_fits = tmp_path / 'just_fits.fits'
-    path_model = tmp_path / 'model.fits'
+    path_just_fits = tmp_path / "just_fits.fits"
+    path_model = tmp_path / "model.fits"
     primary_hdu = fits.PrimaryHDU()
-    primary_hdu.header['EXP_TYPE'] = 'NRC_IMAGE'
-    primary_hdu.header['DATAMODL'] = "JwstDataModel"
+    primary_hdu.header["EXP_TYPE"] = "NRC_IMAGE"
+    primary_hdu.header["DATAMODL"] = "JwstDataModel"
     hduls = fits.HDUList([primary_hdu])
     hduls.writeto(path_just_fits)
     model = JwstDataModel(hduls)
     model.save(path_model)
-    return {
-        'just_fits': path_just_fits,
-        'model': path_model
-    }
+    return {"just_fits": path_just_fits, "model": path_model}
 
 
 def test_init_from_pathlib(tmp_path):
@@ -60,39 +69,37 @@ def test_init_from_pathlib(tmp_path):
     assert isinstance(model, ImageModel)
 
 
-@pytest.mark.parametrize('which_file, skip_fits_update, expected_exp_type',
-                         [
-                             ('just_fits', None, 'FGS_DARK'),
-                             ('just_fits', False, 'FGS_DARK'),
-                             ('just_fits', True, 'FGS_DARK'),
-                             ('model', None, 'FGS_DARK'),
-                             ('model', False, 'FGS_DARK'),
-                             ('model', True, 'NRC_IMAGE')
-                         ]
-                         )
-@pytest.mark.parametrize('use_env', [False, True])
-def test_skip_fits_update(jail_environ,
-                          use_env,
-                          make_models,
-                          which_file,
-                          skip_fits_update,
-                          expected_exp_type):
+@pytest.mark.parametrize(
+    "which_file, skip_fits_update, expected_exp_type",
+    [
+        ("just_fits", None, "FGS_DARK"),
+        ("just_fits", False, "FGS_DARK"),
+        ("just_fits", True, "FGS_DARK"),
+        ("model", None, "FGS_DARK"),
+        ("model", False, "FGS_DARK"),
+        ("model", True, "NRC_IMAGE"),
+    ],
+)
+@pytest.mark.parametrize("use_env", [False, True])
+def test_skip_fits_update(
+    jail_environ, use_env, make_models, which_file, skip_fits_update, expected_exp_type
+):
     """Test skip_fits_update setting"""
     # Setup the FITS file, modifying a header value
     path = make_models[which_file]
     hduls = fits.open(path)
-    hduls[0].header['exp_type'] = 'FGS_DARK'
+    hduls[0].header["exp_type"] = "FGS_DARK"
 
     # Decide how to skip. If using the environmental,
     # set that and pass None to the open function.
     try:
-        del os.environ['SKIP_FITS_UPDATE']
+        del os.environ["SKIP_FITS_UPDATE"]
     except KeyError:
         # No need to worry, environmental doesn't exist anyways
         pass
     if use_env:
         if skip_fits_update is not None:
-            os.environ['SKIP_FITS_UPDATE'] = str(skip_fits_update)
+            os.environ["SKIP_FITS_UPDATE"] = str(skip_fits_update)
             skip_fits_update = None
 
     with datamodels.open(hduls, skip_fits_update=skip_fits_update) as model:
@@ -126,10 +133,10 @@ def test_model_with_nonstandard_primary_array():
         # The wavelength array is the primary array.
         # Try commenting this function out and the problem goes away.
         def get_primary_array_name(self):
-            return 'wavelength'
+            return "wavelength"
 
     m = NonstandardPrimaryArrayModel((10,))
-    assert 'wavelength' in list(m.keys())
+    assert "wavelength" in list(m.keys())
     assert m.wavelength.sum() == 0
 
 
@@ -140,8 +147,9 @@ def test_image_with_extra_keyword_to_multislit(tmp_path):
         im.save(path)
 
     from astropy.io import fits
+
     with fits.open(path, mode="update", memmap=False) as hdulist:
-        hdulist[1].header['BUNIT'] = 'x'
+        hdulist[1].header["BUNIT"] = "x"
 
     with ImageModel(path) as im:
         with MultiSlitModel() as ms:
@@ -188,8 +196,8 @@ def test_update_from_datamodel(tmp_path, datamodel_for_update, only, extra_fits)
             # Verify the fixture returns keywords we expect
             assert oldim.meta.telescope == "JWST"
             assert oldim.meta.wcsinfo.crval1 == 5
-            assert oldim.extra_fits.PRIMARY.header == [['FOO', 'BAR', '']]
-            assert oldim.extra_fits.SCI.header == [['BAZ', 'BUZ', '']]
+            assert oldim.extra_fits.PRIMARY.header == [["FOO", "BAR", ""]]
+            assert oldim.extra_fits.SCI.header == [["BAZ", "BUZ", ""]]
 
             newim.update(oldim, only=only, extra_fits=extra_fits)
         newim.save(path)
@@ -252,15 +260,15 @@ def container():
     with pushdir(asn_file_path):
         with ModelContainer(asn_file_name) as c:
             for m in c:
-                m.meta.observation.program_number = '0001'
-                m.meta.observation.observation_number = '1'
-                m.meta.observation.visit_number = '1'
-                m.meta.observation.visit_group = '1'
-                m.meta.observation.sequence_id = '01'
-                m.meta.observation.activity_id = '1'
-                m.meta.observation.exposure_number = '1'
-                m.meta.instrument.name = 'NIRCAM'
-                m.meta.instrument.channel = 'SHORT'
+                m.meta.observation.program_number = "0001"
+                m.meta.observation.observation_number = "1"
+                m.meta.observation.visit_number = "1"
+                m.meta.observation.visit_group = "1"
+                m.meta.observation.sequence_id = "01"
+                m.meta.observation.activity_id = "1"
+                m.meta.observation.exposure_number = "1"
+                m.meta.instrument.name = "NIRCAM"
+                m.meta.instrument.channel = "SHORT"
         yield c
 
 
@@ -275,7 +283,7 @@ def reset_group_id(container):
 
 def test_modelcontainer_iteration(container):
     for model in container:
-        assert model.meta.telescope == 'JWST'
+        assert model.meta.telescope == "JWST"
 
 
 def test_modelcontainer_indexing(container):
@@ -290,18 +298,18 @@ def test_modelcontainer_group1(container):
 
 
 def test_modelcontainer_group2(container):
-    container[0].meta.observation.exposure_number = '2'
+    container[0].meta.observation.exposure_number = "2"
     for group in container.models_grouped:
         assert len(group) == 1
         for model in group:
             pass
-    container[0].meta.observation.exposure_number = '1'
+    container[0].meta.observation.exposure_number = "1"
 
 
 def test_modelcontainer_group_names(container):
     assert len(container.group_names) == 1
     reset_group_id(container)
-    container[0].meta.observation.exposure_number = '2'
+    container[0].meta.observation.exposure_number = "2"
     assert len(container.group_names) == 2
 
 
@@ -331,12 +339,12 @@ def test_multislit_model():
     ms = MultiSlitModel()
     ms.slits.append(s0)
     ms.slits.append(s1)
-    ms.meta.instrument.name = 'NIRSPEC'
-    ms.meta.exposure.type = 'NRS_IMAGE'
+    ms.meta.instrument.name = "NIRSPEC"
+    ms.meta.exposure.type = "NRS_IMAGE"
     slit1 = ms[1]
     assert isinstance(slit1, SlitModel)
-    assert slit1.meta.instrument.name == 'NIRSPEC'
-    assert slit1.meta.exposure.type == 'NRS_IMAGE'
+    assert slit1.meta.instrument.name == "NIRSPEC"
+    assert slit1.meta.exposure.type == "NRS_IMAGE"
     assert_allclose(slit1.data, data + 1)
 
 
@@ -346,14 +354,14 @@ def test_slit_from_image():
     im.meta.instrument.name = "MIRI"
     slit_dm = SlitDataModel(im)
     assert_allclose(im.data, slit_dm.data)
-    assert hasattr(slit_dm, 'wavelength')
+    assert hasattr(slit_dm, "wavelength")
     # this should be enabled after gwcs starts using non-coordinate inputs
     # assert not hasattr(slit_dm, 'meta')
 
     slit = SlitModel(im)
     assert_allclose(im.data, slit.data)
     assert_allclose(im.err, slit.err)
-    assert hasattr(slit, 'wavelength')
+    assert hasattr(slit, "wavelength")
     assert slit.meta.instrument.name == "MIRI"
 
     im = ImageModel(slit)
@@ -376,12 +384,12 @@ def test_ifuimage():
 
 
 def test_abvega_offset_model():
-    path = os.path.join(ROOT_DIR, 'nircam_abvega_offset.asdf')
+    path = os.path.join(ROOT_DIR, "nircam_abvega_offset.asdf")
     with ABVegaOffsetModel(path) as model:
         assert isinstance(model, ABVegaOffsetModel)
-        assert hasattr(model, 'abvega_offset')
+        assert hasattr(model, "abvega_offset")
         assert isinstance(model.abvega_offset, Table)
-        assert model.abvega_offset.colnames == ['filter', 'pupil', 'abvega_offset']
+        assert model.abvega_offset.colnames == ["filter", "pupil", "abvega_offset"]
         model.validate()
 
 
@@ -411,7 +419,7 @@ def test_meta_date_management(tmp_path):
 
 
 def test_model_container_ind_asn_exptype(container):
-    ind = container.ind_asn_type('science')
+    ind = container.ind_asn_type("science")
     assert ind == [0, 1]
 
 
@@ -423,8 +431,8 @@ def test_ramp_model_zero_frame_open_file(tmpdir):
     dims = nints, ngroups, nrows, ncols
     zdims = (nints, nrows, ncols)
 
-    dbase = 1000.
-    zbase = dbase * .75
+    dbase = 1000.0
+    zbase = dbase * 0.75
 
     data = np.ones(dims, dtype=float) * dbase
     err = np.zeros(dims, dtype=float)
@@ -446,7 +454,7 @@ def test_ramp_model_zero_frame_open_file(tmpdir):
         assert ramp1.zeroframe.shape == ramp.zeroframe.shape
         zframe0 = ramp.zeroframe
         zframe1 = ramp1.zeroframe
-        np.testing.assert_allclose(zframe0, zframe1, 1.e-5)
+        np.testing.assert_allclose(zframe0, zframe1, 1.0e-5)
 
 
 def test_ramp_model_zero_frame_by_dimensions():

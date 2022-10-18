@@ -26,6 +26,6 @@ class StackRefsStep(Step):
             # Call the stacking routine
             output_model = stack_refs.make_cube(input_models)
 
-            output_model.meta.cal_step.stack_psfs = 'COMPLETE'
+            output_model.meta.cal_step.stack_psfs = "COMPLETE"
 
         return output_model

@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['PathlossModel', 'MirLrsPathlossModel']
+__all__ = ["PathlossModel", "MirLrsPathlossModel"]
 
 
 class PathlossModel(ReferenceFileModel):
@@ -22,6 +22,7 @@ class PathlossModel(ReferenceFileModel):
     apertures.items.uniform_err : numpy float32 array
          Uniform source pathloss variance
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/pathloss.schema"
 
 
@@ -32,4 +33,5 @@ class MirLrsPathlossModel(ReferenceFileModel):
     Parameters
     __________
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirlrs_pathloss.schema"

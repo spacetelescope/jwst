@@ -9,17 +9,12 @@ import os
 import warnings
 
 from . import __version__
-from .exceptions import (
-    AssociationNotValidError
-)
-from .lib.constraint import (
-    Constraint,
-    meets_conditions
-)
+from .exceptions import AssociationNotValidError
+from .lib.constraint import Constraint, meets_conditions
 from stpipe.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
-__all__ = ['Association']
+__all__ = ["Association"]
 
 
 # Configure logging
@@ -27,7 +22,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Timestamp template
-_TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
+_TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"
 
 
 class Association(MutableMapping):
@@ -89,8 +84,8 @@ class Association(MutableMapping):
     """The association IO registry"""
 
     def __init__(
-            self,
-            version_id=None,
+        self,
+        version_id=None,
     ):
 
         self.data = dict()
@@ -99,12 +94,14 @@ class Association(MutableMapping):
 
         self.version_id = version_id
 
-        self.data.update({
-            'asn_type': 'None',
-            'asn_rule': self.asn_rule,
-            'version_id': self.version_id,
-            'code_version': __version__,
-        })
+        self.data.update(
+            {
+                "asn_type": "None",
+                "asn_rule": self.asn_rule,
+                "version_id": self.version_id,
+                "code_version": __version__,
+            }
+        )
 
         # Setup constraints
         # These may be predefined by a rule.
@@ -146,7 +143,7 @@ class Association(MutableMapping):
     @property
     def asn_name(self):
         """Suggest filename for the association"""
-        return 'unnamed_association'
+        return "unnamed_association"
 
     @classmethod
     def _asn_rule(cls):
@@ -182,9 +179,9 @@ class Association(MutableMapping):
         If the rule class does not define a schema, a warning is issued
         but the routine will return True.
         """
-        if not hasattr(cls, 'schema_file'):
+        if not hasattr(cls, "schema_file"):
             logger.warning(
-                'Cannot validate: {} has no schema. Presuming OK.'.format(cls)
+                "Cannot validate: {} has no schema. Presuming OK.".format(cls)
             )
             return True
 
@@ -193,18 +190,18 @@ class Association(MutableMapping):
         else:
             asn_data = asn
 
-        with open(cls.schema_file, 'r') as schema_file:
+        with open(cls.schema_file, "r") as schema_file:
             asn_schema = json.load(schema_file)
 
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            logger.debug('Validation failed:\n%s', err)
-            raise AssociationNotValidError('Validation failed') from err
+            logger.debug("Validation failed:\n%s", err)
+            raise AssociationNotValidError("Validation failed") from err
 
         # Validate no path data for expnames
         for product in asn_data["products"]:
-            members = product['members']
+            members = product["members"]
             for member in members:
                 fpath, fname = os.path.split(member["expname"])
                 if len(fpath) > 0:
@@ -215,7 +212,7 @@ class Association(MutableMapping):
                     warnings.warn(err_str, UserWarning)
         return True
 
-    def dump(self, format='json', **kwargs):
+    def dump(self, format="json", **kwargs):
         """Serialize the association
 
         Parameters
@@ -245,18 +242,10 @@ class Association(MutableMapping):
         if self.is_valid:
             return self.ioregistry[format].dump(self, **kwargs)
         else:
-            raise AssociationNotValidError(
-                'Association {} is not valid'.format(self)
-            )
+            raise AssociationNotValidError("Association {} is not valid".format(self))
 
     @classmethod
-    def load(
-            cls,
-            serialized,
-            format=None,
-            validate=True,
-            **kwargs
-    ):
+    def load(cls, serialized, format=None, validate=True, **kwargs):
         """Marshall a previously serialized association
 
         Parameters
@@ -292,17 +281,14 @@ class Association(MutableMapping):
         """
         if format is None:
             formats = [
-                format_func
-                for format_name, format_func in cls.ioregistry.items()
+                format_func for format_name, format_func in cls.ioregistry.items()
             ]
         else:
             formats = [cls.ioregistry[format]]
 
         for format_func in formats:
             try:
-                asn = format_func.load(
-                    cls, serialized, **kwargs
-                )
+                asn = format_func.load(cls, serialized, **kwargs)
             except AssociationNotValidError:
                 continue
             else:
@@ -362,7 +348,7 @@ class Association(MutableMapping):
         # If a constraint `force_match` exists, set the `match`
         # result to the value of the constraint.
         try:
-            force_match = self.constraints['force_match'].value
+            force_match = self.constraints["force_match"].value
         except (KeyError, TypeError):
             pass
         else:
@@ -423,21 +409,20 @@ class Association(MutableMapping):
                 - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
-        evaled_str = conditions['inputs'](item)
-        if conditions['value'] is not None:
-            if not meets_conditions(
-                    evaled_str, conditions['value']
-            ):
+        evaled_str = conditions["inputs"](item)
+        if conditions["value"] is not None:
+            if not meets_conditions(evaled_str, conditions["value"]):
                 return False, reprocess
 
         # At this point, the constraint has passed.
         # Fix the conditions.
         escaped_value = re.escape(evaled_str)
-        conditions['found_values'].add(escaped_value)
-        if conditions['value'] is None or \
-           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = escaped_value
-            conditions['force_unique'] = False
+        conditions["found_values"].add(escaped_value)
+        if conditions["value"] is None or conditions.get(
+            "force_unique", self.DEFAULT_FORCE_UNIQUE
+        ):
+            conditions["value"] = escaped_value
+            conditions["force_unique"] = False
 
         # That's all folks
         return True, reprocess
@@ -476,7 +461,7 @@ class Association(MutableMapping):
             True if item is a member.
         """
         raise NotImplementedError(
-            'Association.is_item_member must be implemented by a specific association rule.'
+            "Association.is_item_member must be implemented by a specific association rule."
         )
 
     def _init_hook(self, item):
@@ -486,11 +471,11 @@ class Association(MutableMapping):
     def _add(self, item):
         """Add a item, association-specific"""
         raise NotImplementedError(
-            'Association._add must be implemented by a specific association rule.'
+            "Association._add must be implemented by a specific association rule."
         )
 
     def _add_items(self, items, **kwargs):
-        """ Force adding items to the association
+        """Force adding items to the association
 
         Parameters
         ----------
@@ -504,9 +489,9 @@ class Association(MutableMapping):
         by-passed, resulting in a potentially unusable association.
         """
         try:
-            self['members'].update(items)
+            self["members"].update(items)
         except KeyError:
-            self['members'] = items
+            self["members"] = items
 
     # #################################################
     # Methods required for implementing MutableMapping
@@ -555,17 +540,14 @@ def finalize(asns):
        from jwst.associations.association import finalize as generic_finalize
        RegistryMarker.callback('finalize')(generic_finalize)
     """
-    finalized_asns = list(filter(
-        lambda asn: asn is not None,
-        map(lambda asn: asn.finalize(), asns)
-    ))
+    finalized_asns = list(
+        filter(lambda asn: asn is not None, map(lambda asn: asn.finalize(), asns))
+    )
     return finalized_asns
 
 
 def make_timestamp():
-    timestamp = datetime.utcnow().strftime(
-        _TIMESTAMP_TEMPLATE
-    )
+    timestamp = datetime.utcnow().strftime(_TIMESTAMP_TEMPLATE)
     return timestamp
 
 

@@ -3,7 +3,7 @@ from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['LinearityModel']
+__all__ = ["LinearityModel"]
 
 
 class LinearityModel(ReferenceFileModel):
@@ -21,6 +21,7 @@ class LinearityModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/linearity.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -38,4 +39,4 @@ class LinearityModel(ReferenceFileModel):
         This is intended to be overridden in the subclasses if the
         primary array's name is not "data".
         """
-        return 'coeffs'
+        return "coeffs"

@@ -1,10 +1,18 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['FgsImgApcorrModel', 'MirImgApcorrModel',
-           'NrcImgApcorrModel', 'NisImgApcorrModel',
-           'MirLrsApcorrModel', 'MirMrsApcorrModel',
-           'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-           'NrsMosApcorrModel', 'NrsIfuApcorrModel', 'NrsFsApcorrModel']
+__all__ = [
+    "FgsImgApcorrModel",
+    "MirImgApcorrModel",
+    "NrcImgApcorrModel",
+    "NisImgApcorrModel",
+    "MirLrsApcorrModel",
+    "MirMrsApcorrModel",
+    "NrcWfssApcorrModel",
+    "NisWfssApcorrModel",
+    "NrsMosApcorrModel",
+    "NrsIfuApcorrModel",
+    "NrsFsApcorrModel",
+]
 
 
 class FgsImgApcorrModel(ReferenceFileModel):
@@ -26,6 +34,7 @@ class FgsImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/fgsimg_apcorr.schema"
 
 
@@ -50,6 +59,7 @@ class MirImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirimg_apcorr.schema"
 
 
@@ -74,6 +84,7 @@ class MirLrsApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 2D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirlrs_apcorr.schema"
 
 
@@ -95,6 +106,7 @@ class MirMrsApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 2D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
 
 
@@ -119,6 +131,7 @@ class NrcImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcimg_apcorr.schema"
 
 
@@ -144,6 +157,7 @@ class NrcWfssApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 2D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcwfss_apcorr.schema"
 
 
@@ -168,6 +182,7 @@ class NisImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nisimg_apcorr.schema"
 
 
@@ -193,6 +208,7 @@ class NisWfssApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 2D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/niswfss_apcorr.schema"
 
 
@@ -219,6 +235,7 @@ class NrsMosApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 3D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsmos_apcorr.schema"
 
 
@@ -242,6 +259,7 @@ class NrsIfuApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 3D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsifu_apcorr.schema"
 
 
@@ -269,4 +287,5 @@ class NrsFsApcorrModel(ReferenceFileModel):
         - apcorr_err: float32 3D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsfs_apcorr.schema"

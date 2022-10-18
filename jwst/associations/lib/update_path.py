@@ -1,8 +1,8 @@
 """Update path of members in an association"""
-from os.path import (join, basename)
+from os.path import join, basename
 
 
-def update_path(asn, file_path, target='expname'):
+def update_path(asn, file_path, target="expname"):
     """Update path of members in an association
 
     Parameters
@@ -16,7 +16,7 @@ def update_path(asn, file_path, target='expname'):
     target : str
         Key to replace
     """
-    update_key_value(asn, target, (file_path, ), mod_func=_replace_path)
+    update_key_value(asn, target, (file_path,), mod_func=_replace_path)
 
 
 def update_key_value(obj, target, func_args, mod_func=None):
@@ -46,7 +46,7 @@ def update_key_value(obj, target, func_args, mod_func=None):
     if mod_func is None:
         mod_func = lambda value, args: args
 
-    if hasattr(obj, 'items'):
+    if hasattr(obj, "items"):
         for key, value in obj.items():
             if key == target:
                 obj[key] = mod_func(value, *func_args)
@@ -82,30 +82,22 @@ def _replace_path(old_path, new_path):
 # Tests
 # #####
 _test_obj = {
-    'a': 'change',
-    'b': 'nochange',
-    'c': {
-        'a': 'change',
-        'b': 'nochange'
-    },
-    'd': [
-        {
-            'a': 'change',
-            'b': 'nochange'
-        },
-        {
-            'a': 'change',
-            'b': 'nochange'
-        },
-    ]
+    "a": "change",
+    "b": "nochange",
+    "c": {"a": "change", "b": "nochange"},
+    "d": [
+        {"a": "change", "b": "nochange"},
+        {"a": "change", "b": "nochange"},
+    ],
 }
 
 
 def test_update_key_value_default():
     from copy import deepcopy
+
     obj = deepcopy(_test_obj)
-    target = 'a'
-    new_value = 'changed'
+    target = "a"
+    new_value = "changed"
     update_key_value(obj, target, (new_value,))
     for value in _gen_dict_extract(target, obj):
         assert value == new_value
@@ -113,32 +105,29 @@ def test_update_key_value_default():
 
 def test_update_key_value_mod_func():
     from copy import deepcopy
+
     obj = deepcopy(_test_obj)
-    target = 'a'
-    new_value = 'changed'
+    target = "a"
+    new_value = "changed"
     mod_func = lambda v, suffix: v + suffix
     update_key_value(obj, target, (new_value,), mod_func=mod_func)
     assert_values = [
-        mod_func(value, new_value)
-        for value in _gen_dict_extract(target, _test_obj)
+        mod_func(value, new_value) for value in _gen_dict_extract(target, _test_obj)
     ]
     for value in _gen_dict_extract(target, obj):
         assert assert_values.pop(0) == value
 
 
 def test_replace_path():
-    new_path = join('hello', 'there')
-    base = 'base.me'
+    new_path = join("hello", "there")
+    base = "base.me"
     assert_value = join(new_path, base)
     assert assert_value == _replace_path(base, new_path)
-    assert assert_value == _replace_path(
-        join('somepath', base),
-        new_path
-    )
+    assert assert_value == _replace_path(join("somepath", base), new_path)
 
 
 def _gen_dict_extract(key, var):
-    if hasattr(var, 'items'):
+    if hasattr(var, "items"):
         for k, v in var.items():
             if k == key:
                 yield v

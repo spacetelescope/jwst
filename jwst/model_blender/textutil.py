@@ -14,11 +14,16 @@ def wrap(text, width, *args, **kwargs):
     :func:`textwrap.wrap`
     """
 
-    return sum([textwrap.wrap(line, width, *args, **kwargs)
-                if line else [''] for line in text.splitlines()], [])
+    return sum(
+        [
+            textwrap.wrap(line, width, *args, **kwargs) if line else [""]
+            for line in text.splitlines()
+        ],
+        [],
+    )
 
 
-def textbox(text, width=78, boxchar='#', indent=0):
+def textbox(text, width=78, boxchar="#", indent=0):
     """
     Outputs line-wrapped text wrapped in a box drawn with a repeated (usually
     ASCII) character.
@@ -55,18 +60,19 @@ def textbox(text, width=78, boxchar='#', indent=0):
 
     min_width = len(boxchar) * 2 + 3
     width = max(width - indent, min_width)
-    indentspace = indent * ' '
+    indentspace = indent * " "
 
     wrap_width = width - min_width + 1
 
     q, r = divmod(width, len(boxchar))
     # The top/bottom border
     top_border = indentspace + boxchar * q + boxchar[:r]
-    top_padding = indentspace + boxchar + ' ' * (width - len(boxchar) * 2) + boxchar
+    top_padding = indentspace + boxchar + " " * (width - len(boxchar) * 2) + boxchar
 
-    lines = ['%s%s %s %s' % (indentspace, boxchar, line.ljust(wrap_width),
-                             boxchar)
-             for line in wrap(text, wrap_width)]
+    lines = [
+        "%s%s %s %s" % (indentspace, boxchar, line.ljust(wrap_width), boxchar)
+        for line in wrap(text, wrap_width)
+    ]
     top = [top_border, top_padding]
     bottom = [top_padding, top_border]
-    return '\n'.join(top + lines + bottom)
+    return "\n".join(top + lines + bottom)

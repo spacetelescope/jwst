@@ -12,13 +12,16 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Get the ASN file and input exposures
-    rtdata.get_asn('nirspec/fs/jw93045-o010_20180725t035735_spec3_001_asn.json')
+    rtdata.get_asn("nirspec/fs/jw93045-o010_20180725t035735_spec3_001_asn.json")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
-    args = ["calwebb_spec3", rtdata.input,
-            "--steps.outlier_detection.save_results=true",
-            "--steps.resample_spec.save_results=true",
-            "--steps.extract_1d.save_results=true"]
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        "--steps.outlier_detection.save_results=true",
+        "--steps.resample_spec.save_results=true",
+        "--steps.extract_1d.save_results=true",
+    ]
     Step.from_cmdline(args)
 
 

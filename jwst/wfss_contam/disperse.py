@@ -6,10 +6,27 @@ from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
 
 
-def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
-                    oversample_factor=2, extrapolate_sed=False, xoffset=0,
-                    yoffset=0):
+def dispersed_pixel(
+    x0,
+    y0,
+    width,
+    height,
+    lams,
+    flxs,
+    order,
+    wmin,
+    wmax,
+    sens_waves,
+    sens_resp,
+    seg_wcs,
+    grism_wcs,
+    ID,
+    naxis,
+    oversample_factor=2,
+    extrapolate_sed=False,
+    xoffset=0,
+    yoffset=0,
+):
     """
     This function take a list of pixels and disperses them using the information contained
     in the grism image WCS object and returns a list of dispersed pixels and fluxes.
@@ -78,8 +95,8 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     """
 
     # Setup the transforms we need from the input WCS objects
-    sky_to_imgxy = grism_wcs.get_transform('world', 'detector')
-    imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
+    sky_to_imgxy = grism_wcs.get_transform("world", "detector")
+    imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
     # The WCS comes from the first 2D cutout in the grism image, which has
     # the offset from the full-frame origin to the cutout origin in it.
@@ -97,7 +114,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         # we have the option to extrapolate the fluxes outside the
         # wavelength range of the direct images
         if extrapolate_sed is False:
-            flux = interp1d(lams, flxs, fill_value=0., bounds_error=False)
+            flux = interp1d(lams, flxs, fill_value=0.0, bounds_error=False)
         else:
             flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
     else:
@@ -141,7 +158,9 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # then convert to x/y in grism frame.
     x0_sky, y0_sky = seg_wcs([x0] * n_lam, [y0] * n_lam)
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, [order] * n_lam)
-    x0s, y0s = imgxy_to_grismxy(x0_xy + offset_x, y0_xy + offset_y, lambdas, [order] * n_lam)
+    x0s, y0s = imgxy_to_grismxy(
+        x0_xy + offset_x, y0_xy + offset_y, lambdas, [order] * n_lam
+    )
 
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
@@ -151,10 +170,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # Compute arrays of dispersed pixel locations and areas
     padding = 1
     xs, ys, areas, index = get_clipped_pixels(
-        x0s, y0s,
-        padding,
-        naxis[0], naxis[1],
-        width, height
+        x0s, y0s, padding, naxis[0], naxis[1], width, height
     )
     lams = np.take(lambdas, index)
 
@@ -170,6 +186,6 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # the sensitivity (flux calibration) values to convert to units of
     # countrate (DN/s).
     counts = flux(lams) * areas / sens
-    counts[no_cal] = 0.  # set to zero where no flux cal info available
+    counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
     return xs, ys, areas, lams, counts, ID

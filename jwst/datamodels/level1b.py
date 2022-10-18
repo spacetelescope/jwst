@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['Level1bModel']
+__all__ = ["Level1bModel"]
 
 
 class Level1bModel(JwstDataModel):
@@ -26,4 +26,5 @@ class Level1bModel(JwstDataModel):
          table of times for each integration
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/level1b.schema"

@@ -3,7 +3,7 @@ from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['DarkMIRIModel']
+__all__ = ["DarkMIRIModel"]
 
 
 class DarkMIRIModel(ReferenceFileModel):
@@ -24,6 +24,7 @@ class DarkMIRIModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/darkMIRI.schema"
 
     def __init__(self, init=None, **kwargs):

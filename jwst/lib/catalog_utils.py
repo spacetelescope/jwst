@@ -7,8 +7,9 @@ from os.path import split, splitext, join, abspath, expanduser
 from collections import namedtuple
 
 
-def replace_suffix_ext(filename, old_suffix_list, new_suffix,
-                       output_ext='ecsv', output_dir=None):
+def replace_suffix_ext(
+    filename, old_suffix_list, new_suffix, output_ext="ecsv", output_dir=None
+):
     """
     Replace the suffix and extension of a filename.
 
@@ -64,29 +65,36 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
 
     path, filename = split(filename)
     name, ext = splitext(filename)
-    remove_suffix = '^(.+?)(_(' + '|'.join(old_suffix_list) + '))?$'
+    remove_suffix = "^(.+?)(_(" + "|".join(old_suffix_list) + "))?$"
     match = re.match(remove_suffix, name)
     name = match.group(1)
 
-    output_path = '{0}_{1}.{2}'.format(name, new_suffix, output_ext)
+    output_path = "{0}_{1}.{2}".format(name, new_suffix, output_ext)
     if output_dir is not None:
         output_path = abspath(expanduser(join(output_dir, output_path)))
 
     return output_path
 
 
-class SkyObject(namedtuple('SkyObject', ("label",
-                                         "xcentroid",
-                                         "ycentroid",
-                                         "sky_centroid",
-                                         "isophotal_abmag",
-                                         "isophotal_abmag_err",
-                                         "sky_bbox_ll",
-                                         "sky_bbox_lr",
-                                         "sky_bbox_ul",
-                                         "sky_bbox_ur",
-                                         "is_extended",
-                                         ), rename=False)):
+class SkyObject(
+    namedtuple(
+        "SkyObject",
+        (
+            "label",
+            "xcentroid",
+            "ycentroid",
+            "sky_centroid",
+            "isophotal_abmag",
+            "isophotal_abmag_err",
+            "sky_bbox_ll",
+            "sky_bbox_lr",
+            "sky_bbox_ul",
+            "sky_bbox_ur",
+            "is_extended",
+        ),
+        rename=False,
+    )
+):
 
     """
     Sky Object container for WFSS catalog information.
@@ -125,55 +133,60 @@ class SkyObject(namedtuple('SkyObject', ("label",
 
     __slots__ = ()  # prevent instance dictionary creation for lower mem
 
-    def __new__(cls, label=None,
-                xcentroid=None,
-                ycentroid=None,
-                sky_centroid=None,
-                isophotal_abmag=None,
-                isophotal_abmag_err=None,
-                sky_bbox_ll=None,
-                sky_bbox_lr=None,
-                sky_bbox_ul=None,
-                sky_bbox_ur=None,
-                is_extended=None,):
+    def __new__(
+        cls,
+        label=None,
+        xcentroid=None,
+        ycentroid=None,
+        sky_centroid=None,
+        isophotal_abmag=None,
+        isophotal_abmag_err=None,
+        sky_bbox_ll=None,
+        sky_bbox_lr=None,
+        sky_bbox_ul=None,
+        sky_bbox_ur=None,
+        is_extended=None,
+    ):
 
-        return super(SkyObject, cls).__new__(cls,
-                                             label=label,
-                                             xcentroid=xcentroid,
-                                             ycentroid=ycentroid,
-                                             sky_centroid=sky_centroid,
-                                             isophotal_abmag=isophotal_abmag,
-                                             isophotal_abmag_err=isophotal_abmag_err,
-                                             sky_bbox_ll=sky_bbox_ll,
-                                             sky_bbox_lr=sky_bbox_lr,
-                                             sky_bbox_ul=sky_bbox_ul,
-                                             sky_bbox_ur=sky_bbox_ur,
-                                             is_extended=is_extended
-                                             )
+        return super(SkyObject, cls).__new__(
+            cls,
+            label=label,
+            xcentroid=xcentroid,
+            ycentroid=ycentroid,
+            sky_centroid=sky_centroid,
+            isophotal_abmag=isophotal_abmag,
+            isophotal_abmag_err=isophotal_abmag_err,
+            sky_bbox_ll=sky_bbox_ll,
+            sky_bbox_lr=sky_bbox_lr,
+            sky_bbox_ul=sky_bbox_ul,
+            sky_bbox_ur=sky_bbox_ur,
+            is_extended=is_extended,
+        )
 
     def __str__(self):
         """Return a pretty print for the object information."""
-        return ("label: {0}\n"
-                "xcentroid: {1}\n"
-                "ycentroid: {2}\n"
-                "sky_centroid: {3}\n"
-                "isophotal_abmag: {4}\n"
-                "isophotal_abmag_err: {5}\n"
-                "sky_bbox_ll: {6}\n"
-                "sky_bbox_lr: {7}\n"
-                "sky_bbox_ul: {8}\n"
-                "sky_bbox_ur: {9}\n"
-                "is_extended: {10}"
-                .format(self.label,
-                        self.xcentroid,
-                        self.ycentroid,
-                        str(self.sky_centroid),
-                        self.isophotal_abmag,
-                        self.isophotal_abmag_err,
-                        str(self.sky_bbox_ll),
-                        str(self.sky_bbox_lr),
-                        str(self.sky_bbox_ul),
-                        str(self.sky_bbox_ur),
-                        str(self.is_extended)
-                        )
-                )
+        return (
+            "label: {0}\n"
+            "xcentroid: {1}\n"
+            "ycentroid: {2}\n"
+            "sky_centroid: {3}\n"
+            "isophotal_abmag: {4}\n"
+            "isophotal_abmag_err: {5}\n"
+            "sky_bbox_ll: {6}\n"
+            "sky_bbox_lr: {7}\n"
+            "sky_bbox_ul: {8}\n"
+            "sky_bbox_ur: {9}\n"
+            "is_extended: {10}".format(
+                self.label,
+                self.xcentroid,
+                self.ycentroid,
+                str(self.sky_centroid),
+                self.isophotal_abmag,
+                self.isophotal_abmag_err,
+                str(self.sky_bbox_ll),
+                str(self.sky_bbox_lr),
+                str(self.sky_bbox_ul),
+                str(self.sky_bbox_ur),
+                str(self.is_extended),
+            )
+        )

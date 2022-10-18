@@ -12,10 +12,15 @@ mm = 1.0e-3 * m
 um = 1.0e-6 * m
 
 
-class NRM_mask_definitions():
-
-    def __init__(self, maskname=None, rotdeg=None, holeshape="circ", rescale=False,
-                 chooseholes=None):
+class NRM_mask_definitions:
+    def __init__(
+        self,
+        maskname=None,
+        rotdeg=None,
+        holeshape="circ",
+        rescale=False,
+        chooseholes=None,
+    ):
         """
         Short Summary
         -------------
@@ -43,13 +48,24 @@ class NRM_mask_definitions():
         None
         """
 
-        if maskname not in ["gpi_g10s40", "jwst_g7s6", "jwst_g7s6c", "visir_sam",
-                            "p1640", "keck_nirc2", "pharo", "NIRC2_9NRM"]:
+        if maskname not in [
+            "gpi_g10s40",
+            "jwst_g7s6",
+            "jwst_g7s6c",
+            "visir_sam",
+            "p1640",
+            "keck_nirc2",
+            "pharo",
+            "NIRC2_9NRM",
+        ]:
             raise ValueError("mask not supported")
         if holeshape is None:
-            holeshape = 'circ'
+            holeshape = "circ"
 
-        if holeshape not in ["circ", "hex", ]:
+        if holeshape not in [
+            "circ",
+            "hex",
+        ]:
             raise ValueError("Unsupported mask holeshape" + maskname)
         self.maskname = maskname
 
@@ -57,8 +73,12 @@ class NRM_mask_definitions():
             # activeD and D taken from webbpsf-data/NIRISS/coronagraph/MASK_NRM.fits
 
             self.hdia, self.ctrs = jwst_g7s6c(chooseholes=chooseholes)
-            self.activeD = 6.559 * m  # webbpsf kwd DIAM  - not a 'circle including all holes'
-            self.OD = 6.610645669291339 * m  # Full pupil file size, incl padding, webbpsf kwd PUPLDIAM
+            self.activeD = (
+                6.559 * m
+            )  # webbpsf kwd DIAM  - not a 'circle including all holes'
+            self.OD = (
+                6.610645669291339 * m
+            )  # Full pupil file size, incl padding, webbpsf kwd PUPLDIAM
             if rotdeg is not None:
                 self.rotdeg = rotdeg
 
@@ -107,16 +127,16 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
     # Assemble holes by actual open segment names (as_built).  Either the full mask or the
     # subset-of-holes mask will be V2-reversed after the as_designed centers  are defined
     # Debug orientations with b4,c6,[c2]
-    allholes = ('b4', 'c2', 'b5', 'b2', 'c1', 'b6', 'c6')
+    allholes = ("b4", "c2", "b5", "b2", "c1", "b6", "c6")
 
     #                                             design  built
-    holedict['b4'] = [0.00000000, -2.640000]       # B4 -> B4
-    holedict['c2'] = [-2.2863100, 0.0000000]       # C5 -> C2
-    holedict['b5'] = [2.2863100, -1.3200001]       # B3 -> B5
-    holedict['b2'] = [-2.2863100, 1.3200001]       # B6 -> B2
-    holedict['c1'] = [-1.1431500, 1.9800000]       # C6 -> C1
-    holedict['b6'] = [2.2863100, 1.3200001]        # B2 -> B6
-    holedict['c6'] = [1.1431500, 1.9800000]        # C1 -> C6
+    holedict["b4"] = [0.00000000, -2.640000]  # B4 -> B4
+    holedict["c2"] = [-2.2863100, 0.0000000]  # C5 -> C2
+    holedict["b5"] = [2.2863100, -1.3200001]  # B3 -> B5
+    holedict["b2"] = [-2.2863100, 1.3200001]  # B6 -> B2
+    holedict["c1"] = [-1.1431500, 1.9800000]  # C6 -> C1
+    holedict["b6"] = [2.2863100, 1.3200001]  # B2 -> B6
+    holedict["c6"] = [1.1431500, 1.9800000]  # C1 -> C6
 
     # as designed MB coordinates (Mathilde Beaulieu, Peter, Anand).
     # as designed: segments C5 open, C2 closed, meters V2V3 per Paul Lightsey def
@@ -133,14 +153,17 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
     else:
         # the REAL THING - as_designed 7 hole, m in PM space, no distortion
         # ... shape (7,2)
-        ctrs_asdesigned = np.array([
-            [0.00000000, -2.640000],     # B4 -> B4  as-designed -> as-built mapping
-            [-2.2863100, 0.0000000],     # C5 -> C2
-            [2.2863100, -1.3200001],     # B3 -> B5
-            [-2.2863100, 1.3200001],     # B6 -> B2
-            [-1.1431500, 1.9800000],     # C6 -> C1
-            [2.2863100, 1.3200001],      # B2 -> B6
-            [1.1431500, 1.9800000]])     # C1 -> C6
+        ctrs_asdesigned = np.array(
+            [
+                [0.00000000, -2.640000],  # B4 -> B4  as-designed -> as-built mapping
+                [-2.2863100, 0.0000000],  # C5 -> C2
+                [2.2863100, -1.3200001],  # B3 -> B5
+                [-2.2863100, 1.3200001],  # B6 -> B2
+                [-1.1431500, 1.9800000],  # C6 -> C1
+                [2.2863100, 1.3200001],  # B2 -> B6
+                [1.1431500, 1.9800000],
+            ]
+        )  # C1 -> C6
 
     # Preserve ctrs.as-designed (treat as immutable)
     # Reverse V2 axis coordinates to close C5 open C2, and others follow suit...

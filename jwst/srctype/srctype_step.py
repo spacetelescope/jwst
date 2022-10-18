@@ -38,8 +38,8 @@ class SourceTypeStep(Step):
         # Set the step status in the output model
         if result is None:
             result = input_model
-            result.meta.cal_step.srctype = 'SKIPPED'
+            result.meta.cal_step.srctype = "SKIPPED"
         else:
-            result.meta.cal_step.srctype = 'COMPLETE'
+            result.meta.cal_step.srctype = "COMPLETE"
 
         return result

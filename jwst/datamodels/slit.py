@@ -2,7 +2,7 @@ from .model_base import JwstDataModel
 from .image import ImageModel
 
 
-__all__ = ['SlitModel', 'SlitDataModel']
+__all__ = ["SlitModel", "SlitDataModel"]
 
 
 class SlitDataModel(JwstDataModel):
@@ -63,16 +63,16 @@ class SlitDataModel(JwstDataModel):
             self.dq = init.dq
             self.err = init.err
             self.area = init.area
-            if init.hasattr('var_poisson'):
+            if init.hasattr("var_poisson"):
                 self.var_poisson = init.var_poisson
-            if init.hasattr('var_rnoise'):
+            if init.hasattr("var_rnoise"):
                 self.var_rnoise = init.var_rnoise
-            if init.hasattr('wavelength'):
+            if init.hasattr("wavelength"):
                 self.wavelength = init.wavelength
             for key in kwargs:
                 setattr(self, key, kwargs[key])
 
-            if init.meta.hasattr('wcs'):
+            if init.meta.hasattr("wcs"):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
@@ -134,6 +134,7 @@ class SlitModel(JwstDataModel):
     int_times : numpy table
          table of times for each integration
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/slit.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -144,15 +145,15 @@ class SlitModel(JwstDataModel):
             self.dq = init.dq
             self.err = init.err
             self.area = init.area
-            if init.hasattr('var_poisson'):
+            if init.hasattr("var_poisson"):
                 self.var_poisson = init.var_poisson
-            if init.hasattr('var_rnoise'):
+            if init.hasattr("var_rnoise"):
                 self.var_rnoise = init.var_rnoise
-            if init.hasattr('wavelength'):
+            if init.hasattr("wavelength"):
                 self.wavelength = init.wavelength
-            if init.hasattr('int_times'):
+            if init.hasattr("int_times"):
                 self.int_times = init.int_times
-            if init.meta.hasattr('wcs'):
+            if init.meta.hasattr("wcs"):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None

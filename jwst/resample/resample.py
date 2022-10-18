@@ -37,9 +37,21 @@ class ResampleData:
          a record of metadata from all input models.
     """
 
-    def __init__(self, input_models, output=None, single=False, blendheaders=True,
-                 pixfrac=1.0, kernel="square", fillval="INDEF", wht_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
+    def __init__(
+        self,
+        input_models,
+        output=None,
+        single=False,
+        blendheaders=True,
+        pixfrac=1.0,
+        kernel="square",
+        fillval="INDEF",
+        wht_type="ivm",
+        good_bits=0,
+        pscale_ratio=1.0,
+        pscale=None,
+        **kwargs,
+    ):
         """
         Parameters
         ----------
@@ -72,24 +84,24 @@ class ResampleData:
         self.fillval = fillval
         self.weight_type = wht_type
         self.good_bits = good_bits
-        self.in_memory = kwargs.get('in_memory', True)
+        self.in_memory = kwargs.get("in_memory", True)
 
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
         log.info(f"Driz parameter weight_type: {self.weight_type}")
 
-        ref_wcs = kwargs.get('ref_wcs', None)
-        out_shape = kwargs.get('out_shape', None)
-        crpix = kwargs.get('crpix', None)
-        crval = kwargs.get('crval', None)
-        rotation = kwargs.get('rotation', None)
+        ref_wcs = kwargs.get("ref_wcs", None)
+        out_shape = kwargs.get("out_shape", None)
+        crpix = kwargs.get("crpix", None)
+        crval = kwargs.get("crval", None)
+        rotation = kwargs.get("rotation", None)
 
         if pscale is not None:
-            log.info(f'Output pixel scale: {pscale} arcsec.')
+            log.info(f"Output pixel scale: {pscale} arcsec.")
             pscale /= 3600.0
         else:
-            log.info(f'Output pixel scale ratio: {pscale_ratio}')
+            log.info(f"Output pixel scale ratio: {pscale_ratio}")
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(
@@ -100,18 +112,18 @@ class ResampleData:
             rotation=rotation,
             shape=out_shape if out_shape is None else out_shape[::-1],
             crpix=crpix,
-            crval=crval
+            crval=crval,
         )
 
-        log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
+        log.debug("Output mosaic size: {}".format(self.output_wcs.array_shape))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
-            self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
+            self.output_wcs.array_shape, kwargs["allowed_memory"], datamodels.ImageModel
         )
         if not can_allocate:
             raise OutputTooLargeError(
-                f'Combined ImageModel size {self.output_wcs.array_shape} '
-                f'requires {bytes2human(required_memory)}. '
-                f'Model cannot be instantiated.'
+                f"Combined ImageModel size {self.output_wcs.array_shape} "
+                f"requires {bytes2human(required_memory)}. "
+                f"Model cannot be instantiated."
             )
         self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
 
@@ -122,8 +134,7 @@ class ResampleData:
         self.output_models = datamodels.ModelContainer(open_models=False)
 
     def do_drizzle(self):
-        """Pick the correct drizzling mode based on self.single
-        """
+        """Pick the correct drizzling mode based on self.single"""
         if self.single:
             return self.resample_many_to_many()
         else:
@@ -134,8 +145,10 @@ class ResampleData:
         # Run fitsblender on output product
         output_file = output_model.meta.filename
 
-        log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(output_model, inputs=self.input_models, output=output_file)
+        log.info("Blending metadata for {}".format(output_file))
+        blendmeta.blendmodels(
+            output_model, inputs=self.input_models, output=output_file
+        )
 
     def resample_many_to_many(self):
         """Resample many inputs to many outputs where outputs have a common frame.
@@ -150,22 +163,28 @@ class ResampleData:
             output_model = self.blank_output
             # Determine output file type from input exposure filenames
             # Use this for defining the output filename
-            indx = exposure[0].meta.filename.rfind('.')
+            indx = exposure[0].meta.filename.rfind(".")
             output_type = exposure[0].meta.filename[indx:]
-            output_root = '_'.join(exposure[0].meta.filename.replace(
-                output_type, '').split('_')[:-1])
-            output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+            output_root = "_".join(
+                exposure[0].meta.filename.replace(output_type, "").split("_")[:-1]
+            )
+            output_model.meta.filename = f"{output_root}_outlier_i2d{output_type}"
 
             # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                            kernel=self.kernel, fillval=self.fillval)
+            driz = gwcs_drizzle.GWCSDrizzle(
+                output_model,
+                pixfrac=self.pixfrac,
+                kernel=self.kernel,
+                fillval=self.fillval,
+            )
 
             log.info(f"{len(exposure)} exposures to drizzle together")
             for img in exposure:
                 img = datamodels.open(img)
                 # TODO: should weight_type=None here?
-                inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
-                                                         good_bits=self.good_bits)
+                inwht = resample_utils.build_driz_weight(
+                    img, weight_type=self.weight_type, good_bits=self.good_bits
+                )
 
                 # apply sky subtraction
                 blevel = img.meta.background.level
@@ -186,8 +205,8 @@ class ResampleData:
                 self.output_models.append(output_name)
             else:
                 self.output_models.append(output_model.copy())
-            output_model.data *= 0.
-            output_model.wht *= 0.
+            output_model.data *= 0.0
+            output_model.wht *= 0.0
 
         return self.output_models
 
@@ -205,14 +224,15 @@ class ResampleData:
             self.blend_output_metadata(output_model)
 
         # Initialize the output with the wcs
-        driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                        kernel=self.kernel, fillval=self.fillval)
+        driz = gwcs_drizzle.GWCSDrizzle(
+            output_model, pixfrac=self.pixfrac, kernel=self.kernel, fillval=self.fillval
+        )
 
         log.info("Resampling science data")
         for img in self.input_models:
-            inwht = resample_utils.build_driz_weight(img,
-                                                     weight_type=self.weight_type,
-                                                     good_bits=self.good_bits)
+            inwht = resample_utils.build_driz_weight(
+                img, weight_type=self.weight_type, good_bits=self.good_bits
+            )
             # apply sky subtraction
             blevel = img.meta.background.level
             if not img.meta.background.subtracted and blevel is not None:
@@ -232,9 +252,9 @@ class ResampleData:
                 [
                     output_model.var_rnoise,
                     output_model.var_poisson,
-                    output_model.var_flat
+                    output_model.var_flat,
                 ],
-                axis=0
+                axis=0,
             )
         )
 
@@ -273,9 +293,7 @@ class ResampleData:
 
             # Make input weight map of unity where there is science data
             inwht = resample_utils.build_driz_weight(
-                model,
-                weight_type=None,
-                good_bits="~NON_SCIENCE+REFERENCE_PIXEL"
+                model, weight_type=None, good_bits="~NON_SCIENCE+REFERENCE_PIXEL"
             )
 
             resampled_variance = np.zeros_like(output_model.data)
@@ -283,10 +301,18 @@ class ResampleData:
             outcon = np.zeros_like(output_model.con)
 
             # Resample the variance array. Fill "unpopulated" pixels with NaNs.
-            self.drizzle_arrays(variance, inwht, model.meta.wcs,
-                                output_wcs, resampled_variance, outwht, outcon,
-                                pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.nan)
+            self.drizzle_arrays(
+                variance,
+                inwht,
+                model.meta.wcs,
+                output_wcs,
+                resampled_variance,
+                outwht,
+                outcon,
+                pixfrac=self.pixfrac,
+                kernel=self.kernel,
+                fillval=np.nan,
+            )
 
             # Add the inverse of the resampled variance to a running sum.
             # Update only pixels (in the running sum) with valid new values:
@@ -294,7 +320,7 @@ class ResampleData:
 
             inverse_variance_sum[mask] = np.nansum(
                 [inverse_variance_sum[mask], np.reciprocal(resampled_variance[mask])],
-                axis=0
+                axis=0,
             )
 
         # We now have a sum of the inverse resampled variances.  We need the
@@ -305,23 +331,38 @@ class ResampleData:
 
     def update_exposure_times(self, output_model):
         """Modify exposure time metadata in-place"""
-        total_exposure_time = 0.
-        exposure_times = {'start': [], 'end': []}
+        total_exposure_time = 0.0
+        exposure_times = {"start": [], "end": []}
         for exposure in self.input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
-            exposure_times['start'].append(exposure[0].meta.exposure.start_time)
-            exposure_times['end'].append(exposure[0].meta.exposure.end_time)
+            exposure_times["start"].append(exposure[0].meta.exposure.start_time)
+            exposure_times["end"].append(exposure[0].meta.exposure.end_time)
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
-        output_model.meta.exposure.start_time = min(exposure_times['start'])
-        output_model.meta.exposure.end_time = max(exposure_times['end'])
+        output_model.meta.exposure.start_time = min(exposure_times["start"])
+        output_model.meta.exposure.end_time = max(exposure_times["end"])
         output_model.meta.resample.product_exposure_time = total_exposure_time
 
     @staticmethod
-    def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht, outcon,
-                       uniqid=1, xmin=None, xmax=None, ymin=None, ymax=None,
-                       pixfrac=1.0, kernel='square', fillval="INDEF", wtscale=1.0):
+    def drizzle_arrays(
+        insci,
+        inwht,
+        input_wcs,
+        output_wcs,
+        outsci,
+        outwht,
+        outcon,
+        uniqid=1,
+        xmin=None,
+        xmax=None,
+        ymin=None,
+        ymax=None,
+        pixfrac=1.0,
+        kernel="square",
+        fillval="INDEF",
+        wtscale=1.0,
+    ):
         """
         Low level routine for performing 'drizzle' operation on one image.
 
@@ -422,7 +463,7 @@ class ResampleData:
 
         # Insure that the fillval parameter gets properly interpreted for use with tdriz
         if util.is_blank(str(fillval)):
-            fillval = 'INDEF'
+            fillval = "INDEF"
         else:
             fillval = str(fillval)
 
@@ -471,15 +512,21 @@ class ResampleData:
         log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
 
         _vers, _nmiss, _nskip = cdrizzle.tdriz(
-            insci, inwht, pixmap,
-            outsci, outwht, outcon,
+            insci,
+            inwht,
+            pixmap,
+            outsci,
+            outwht,
+            outcon,
             uniqid=uniqid,
-            xmin=xmin, xmax=xmax,
-            ymin=ymin, ymax=ymax,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
             pixfrac=pixfrac,
             kernel=kernel,
             in_units="cps",
             expscale=1.0,
             wtscale=wtscale,
-            fillstr=fillval
+            fillstr=fillval,
         )

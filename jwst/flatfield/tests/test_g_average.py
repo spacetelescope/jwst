@@ -21,25 +21,27 @@ def test_g_average():
     """
 
     # Generate an array (tab_wl) of wavelengths, not uniformly spaced.
-    wl_coeff = {'c0': 5., 'c1': 1., 'c2': -0.05}
+    wl_coeff = {"c0": 5.0, "c1": 1.0, "c2": -0.05}
     wl_poly = polynomial.Polynomial1D(degree=2, **wl_coeff)
-    tab_index = np.arange(6000, dtype=np.float64) / 1000.
+    tab_index = np.arange(6000, dtype=np.float64) / 1000.0
     tab_wl = wl_poly(tab_index)
     del tab_index
 
-    coeff = {'c0': -41.9,
-             'c1': 30.7,
-             'c2': -8.3,
-             'c3': 1.15,
-             'c4': -7.8e-2,
-             'c5': 2.0e-3}
+    coeff = {
+        "c0": -41.9,
+        "c1": 30.7,
+        "c2": -8.3,
+        "c3": 1.15,
+        "c4": -7.8e-2,
+        "c5": 2.0e-3,
+    }
     poly = polynomial.Polynomial1D(degree=5, **coeff)
     tab_flat = poly(tab_wl)
 
     wl0 = 7.37
     dwl0 = 2.99
-    lower = wl0 - dwl0 / 2.
-    upper = wl0 + dwl0 / 2.
+    lower = wl0 - dwl0 / 2.0
+    upper = wl0 + dwl0 / 2.0
     # Compute the integral of the polynomial over wavelength.
     # This function returns a tuple, the integral and an error estimate.
     integral = quad(poly, lower, upper)[0]
@@ -47,9 +49,9 @@ def test_g_average():
     correct_value = integral / (upper - lower)
 
     # These three lines were copied from combine_fast_slow in flat_field.py
-    d = math.sqrt(0.6) / 2.
-    dx = np.array([-d, 0., d])
-    wgt = np.array([5., 8., 5.]) / 18.
+    d = math.sqrt(0.6) / 2.0
+    dx = np.array([-d, 0.0, d])
+    wgt = np.array([5.0, 8.0, 5.0]) / 18.0
 
     value = g_average(wl0, dwl0, tab_wl, tab_flat, dx, wgt)
-    assert math.isclose(value, correct_value, rel_tol=1.e-8, abs_tol=1.e-8)
+    assert math.isclose(value, correct_value, rel_tol=1.0e-8, abs_tol=1.0e-8)

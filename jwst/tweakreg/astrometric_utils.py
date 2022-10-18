@@ -10,7 +10,7 @@ from ..resample import resample_utils
 from ..assign_wcs import util as wcsutil
 
 ASTROMETRIC_CAT_ENVVAR = "ASTROMETRIC_CATALOG_URL"
-DEF_CAT_URL = 'http://gsss.stsci.edu/webservices'
+DEF_CAT_URL = "http://gsss.stsci.edu/webservices"
 
 if ASTROMETRIC_CAT_ENVVAR in os.environ:
     SERVICELOCATION = os.environ[ASTROMETRIC_CAT_ENVVAR]
@@ -24,9 +24,15 @@ Primary function for creating an astrometric reference catalog.
 """
 
 
-def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.ecsv",
-                               gaia_only=False, table_format="ascii.ecsv",
-                               existing_wcs=None, num_sources=None):
+def create_astrometric_catalog(
+    input_models,
+    catalog="GAIADR2",
+    output="ref_cat.ecsv",
+    gaia_only=False,
+    table_format="ascii.ecsv",
+    existing_wcs=None,
+    num_sources=None,
+):
     """Create an astrometric catalog that covers the inputs' field-of-view.
 
     Parameters
@@ -80,34 +86,34 @@ def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.
 
     # perform query for this field-of-view
     ref_dict = get_catalog(fiducial[0], fiducial[1], sr=radius, catalog=catalog)
-    colnames = ('ra', 'dec', 'mag', 'objID')
+    colnames = ("ra", "dec", "mag", "objID")
 
     ref_table = ref_dict[colnames]
 
     # Add catalog name as meta data
-    ref_table.meta['catalog'] = catalog
-    ref_table.meta['gaia_only'] = gaia_only
+    ref_table.meta["catalog"] = catalog
+    ref_table.meta["gaia_only"] = gaia_only
 
     # rename coordinate columns to be consistent with tweakwcs
-    ref_table.rename_column('ra', 'RA')
-    ref_table.rename_column('dec', 'DEC')
+    ref_table.rename_column("ra", "RA")
+    ref_table.rename_column("dec", "DEC")
 
     # Append GAIA ID as a new column to the table...
     gaia_sources = []
     for source in ref_dict:
-        if 'GAIAsourceID' in source:
-            g = source['GAIAsourceID']
-            if gaia_only and g.strip() == '':
+        if "GAIAsourceID" in source:
+            g = source["GAIAsourceID"]
+            if gaia_only and g.strip() == "":
                 continue
         else:
             g = "-1"  # indicator for no source ID extracted
         gaia_sources.append(g)
 
-    gaia_col = table.Column(data=gaia_sources, name='GaiaID', dtype='U25')
+    gaia_col = table.Column(data=gaia_sources, name="GaiaID", dtype="U25")
     ref_table.add_column(gaia_col)
 
     # sort table by magnitude, fainter to brightest
-    ref_table.sort('mag', reverse=True)
+    ref_table.sort("mag", reverse=True)
 
     # If specified by the use through the 'num_sources' parameter,
     # trim the returned catalog down to just the brightest 'num_sources' sources
@@ -137,15 +143,14 @@ def compute_radius(wcs):
     fiducial = wcsutil.compute_fiducial([wcs], wcs.bounding_box)
     img_center = SkyCoord(ra=fiducial[0] * u.degree, dec=fiducial[1] * u.degree)
     wcs_foot = wcs.footprint()
-    img_corners = SkyCoord(ra=wcs_foot[:, 0] * u.degree,
-                           dec=wcs_foot[:, 1] * u.degree)
+    img_corners = SkyCoord(ra=wcs_foot[:, 0] * u.degree, dec=wcs_foot[:, 1] * u.degree)
     radius = img_center.separation(img_corners).max().value
 
     return radius, fiducial
 
 
-def get_catalog(ra, dec, sr=0.1, catalog='GSC241'):
-    """ Extract catalog from VO web service.
+def get_catalog(ra, dec, sr=0.1, catalog="GSC241"):
+    """Extract catalog from VO web service.
 
     Parameters
     ----------
@@ -168,18 +173,18 @@ def get_catalog(ra, dec, sr=0.1, catalog='GSC241'):
         CSV object of returned sources with all columns as provided by catalog
 
     """
-    service_type = 'vo/CatalogSearch.aspx'
-    spec_str = 'RA={}&DEC={}&SR={}&FORMAT={}&CAT={}&MINDET=5'
-    headers = {'Content-Type': 'text/csv'}
-    fmt = 'CSV'
+    service_type = "vo/CatalogSearch.aspx"
+    spec_str = "RA={}&DEC={}&SR={}&FORMAT={}&CAT={}&MINDET=5"
+    headers = {"Content-Type": "text/csv"}
+    fmt = "CSV"
 
     spec = spec_str.format(ra, dec, sr, fmt, catalog)
-    service_url = '{}/{}?{}'.format(SERVICELOCATION, service_type, spec)
+    service_url = "{}/{}?{}".format(SERVICELOCATION, service_type, spec)
     rawcat = requests.get(service_url, headers=headers)
     r_contents = rawcat.content.decode()  # convert from bytes to a String
-    rstr = r_contents.split('\r\n')
+    rstr = r_contents.split("\r\n")
     # remove initial line describing the number of sources returned
     # CRITICAL to proper interpretation of CSV data
     del rstr[0]
 
-    return Table.read(rstr, format='csv')
+    return Table.read(rstr, format="csv")

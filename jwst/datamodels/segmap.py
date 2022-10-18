@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['SegmentationMapModel']
+__all__ = ["SegmentationMapModel"]
 
 
 class SegmentationMapModel(JwstDataModel):
@@ -13,4 +13,5 @@ class SegmentationMapModel(JwstDataModel):
     data : numpy uint32 array
          The segmentation map
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/segmap.schema"

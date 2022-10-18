@@ -13,14 +13,18 @@ def config():
     s1 = StepConfig("some.StepClass", "Step1", {"woo": "hoo"}, [])
     s2 = StepConfig("some.other.StepClass", "Step2", {"yee": "haw"}, [])
 
-    return StepConfig("some.PipelineClass", "Pipeline", {"foo": "bar", "baz": 42}, [s1, s2])
+    return StepConfig(
+        "some.PipelineClass", "Pipeline", {"foo": "bar", "baz": 42}, [s1, s2]
+    )
 
 
 def test_step_config_equality(config):
     other = StepConfig(config.class_name, config.name, config.parameters, config.steps)
     assert config == other
 
-    other = StepConfig("some.other.pipeline.Name", config.name, config.parameters, config.steps)
+    other = StepConfig(
+        "some.other.pipeline.Name", config.name, config.parameters, config.steps
+    )
     assert config != other
 
     other = StepConfig(config.class_name, "Hildegaard", config.parameters, config.steps)
@@ -29,7 +33,9 @@ def test_step_config_equality(config):
     other = StepConfig(config.class_name, config.name, {"foo": "foz"}, config.steps)
     assert config != other
 
-    other = StepConfig(config.class_name, config.name, config.parameters, [config.steps[0]])
+    other = StepConfig(
+        config.class_name, config.name, config.parameters, [config.steps[0]]
+    )
     assert config != other
 
     assert config != object()
@@ -56,8 +62,13 @@ def test_step_config_to_asdf(config):
     assert asdf_file["parameters"] == config.parameters
     assert asdf_file["steps"] == [s.to_asdf().tree for s in config.steps]
     assert asdf_file["meta"]["author"] == "<SPECIFY>"
-    assert (datetime.utcnow() - datetime.fromisoformat(asdf_file["meta"]["date"])) < timedelta(seconds=10)
-    assert asdf_file["meta"]["description"] == "Parameters for calibration step some.PipelineClass"
+    assert (
+        datetime.utcnow() - datetime.fromisoformat(asdf_file["meta"]["date"])
+    ) < timedelta(seconds=10)
+    assert (
+        asdf_file["meta"]["description"]
+        == "Parameters for calibration step some.PipelineClass"
+    )
     assert asdf_file["meta"]["instrument"]["name"] == "<SPECIFY>"
     assert asdf_file["meta"]["origin"] == "<SPECIFY>"
     assert asdf_file["meta"]["pedigree"] == "<SPECIFY>"
@@ -72,7 +83,9 @@ def test_step_config_to_asdf(config):
     # is still present:
     with pytest.raises(asdf.ValidationError):
         with asdf.AsdfFile(asdf_file.tree) as af:
-            _validate_asdf(af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0")
+            _validate_asdf(
+                af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0"
+            )
 
     asdf_file["meta"]["author"] = "Yours Truly"
     asdf_file["meta"]["instrument"]["name"] = "EYEBALLS"
@@ -83,7 +96,9 @@ def test_step_config_to_asdf(config):
     asdf_file["meta"]["useafter"] = "2020-11-20T00:00:00"
     # No validation errors now:
     with asdf.AsdfFile(asdf_file.tree) as af:
-        _validate_asdf(af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0")
+        _validate_asdf(
+            af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0"
+        )
 
 
 def test_step_config_from_asdf(config):
@@ -109,7 +124,10 @@ def test_step_config_from_legacy_asdf(config):
 
     parameters["steps"] = steps
 
-    asdf_file = asdf.AsdfFile({"parameters": parameters}, custom_schema="http://stsci.edu/schemas/stpipe/step_config-0.1.0")
+    asdf_file = asdf.AsdfFile(
+        {"parameters": parameters},
+        custom_schema="http://stsci.edu/schemas/stpipe/step_config-0.1.0",
+    )
 
     # We lose the step class names so the configs won't be equal:
     legacy_config = StepConfig.from_asdf(asdf_file)

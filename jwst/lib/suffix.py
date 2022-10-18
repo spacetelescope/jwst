@@ -23,10 +23,10 @@ Hence, to update `KNOW_SUFFIXES`, update both `SUFFIXES_TO_ADD` and
 from importlib import import_module
 import itertools
 import logging
-from os import (listdir, path)
+from os import listdir, path
 import re
 
-__all__ = ['remove_suffix']
+__all__ = ["remove_suffix"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -36,159 +36,186 @@ logger.addHandler(logging.NullHandler())
 # have to exist. Used by `find_suffixes` to
 # add to the result it produces.
 SUFFIXES_TO_ADD = [
-    'ami', 'amiavg', 'aminorm',
-    'blot', 'bsub', 'bsubints',
-    'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
-    'dark',
-    'i2d',
-    'median',
-    'phot', 'psf-amiavg', 'psfalign', 'psfstack', 'psfsub',
-    'ramp', 'rate', 'rateints','residual_fringe',
-    's2d', 's3d', 'snr',
-    'uncal',
-    'wfscmb', 'whtlt',
-    'x1d', 'x1dints',
+    "ami",
+    "amiavg",
+    "aminorm",
+    "blot",
+    "bsub",
+    "bsubints",
+    "c1d",
+    "cal",
+    "calints",
+    "cat",
+    "crf",
+    "crfints",
+    "dark",
+    "i2d",
+    "median",
+    "phot",
+    "psf-amiavg",
+    "psfalign",
+    "psfstack",
+    "psfsub",
+    "ramp",
+    "rate",
+    "rateints",
+    "residual_fringe",
+    "s2d",
+    "s3d",
+    "snr",
+    "uncal",
+    "wfscmb",
+    "whtlt",
+    "x1d",
+    "x1dints",
 ]
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall']
+SUFFIXES_TO_DISCARD = [
+    "engdblogstep",
+    "functionwrapper",
+    "pipeline",
+    "rscd_step",
+    "step",
+    "systemcall",
+]
 
 
 # Calculated suffixes.
 # This is produced by the `find_suffixes` function below
 _calculated_suffixes = {
-    'masterbackgroundmosstep',
-    'ami3pipeline',
-    'whitelightstep',
-    'ami_average',
-    'spec3pipeline',
-    'wfscombine',
-    'fringe',
-    'resamplestep',
-    'resample_spec',
-    'saturationstep',
-    'firstframestep',
-    'cat',
-    'systemcall',
-    'alignrefsstep',
-    'functionwrapper',
-    'darkcurrentstep',
-    'imprintstep',
-    'source_catalog',
-    'straylight',
-    'amiaveragestep',
-    'ami_normalize',
-    'jumpstep',
-    'resample',
-    'sourcetypestep',
-    'spec2pipeline',
-    'tweakreg',
-    'msaflagopenstep',
-    'outlierdetectionstep',
-    'saturation',
-    'pathloss',
-    'groupscalestep',
-    'ramp_fit',
-    'lastframe',
-    'darkpipeline',
-    'image2pipeline',
-    'outlierdetectionstackstep',
-    'tso3pipeline',
-    'straylightstep',
-    'sourcecatalogstep',
-    'dark_current',
-    'mrs_imatch',
-    'assignwcsstep',
-    'skymatch',
-    'extract_2d',
-    'cubebuildstep',
-    'residualfringestep',
-    'residual_fringe',
-    'spec2nrslamp',
-    'ipc',
-    'refpix',
-    'image3pipeline',
-    'superbiasstep',
-    'hlspstep',
-    'reset',
-    's2d',
-    'ami_analyze',
-    'flatfieldstep',
-    'tsophotometrystep',
-    'combine_1d',
-    'step',
-    'cubeskymatchstep',
-    'i2d',
-    'group_scale',
-    'rscdstep',
-    'stackrefsstep',
-    'flat_field',
-    'guidercdsstep',
-    'mrsimatchstep',
-    'align_refs',
-    'dqinitstep',
-    'outlierdetectionscaledstep',
-    'superbias',
-    'assign_wcs',
-    'guider_cds',
-    'firstframe',
-    'masterbackgroundstep',
-    'master_background',
-    'skymatchstep',
-    'white_light',
-    'persistencestep',
-    'amianalyzestep',
-    'backgroundstep',
-    'photomstep',
-    'background',
-    'photom',
-    'extract_1d',
-    'cube_build',
-    'wfscombinestep',
-    'lastframestep',
-    'aminormalizestep',
-    'linearity',
-    'rscd',
-    'rampfitstep',
-    'pipeline',
-    'engdblog',
-    'resamplespecstep',
-    'persistence',
-    'klip',
-    'dq_init',
-    'barshadowstep',
-    'klipstep',
-    'linearitystep',
-    'hlsp',
-    'pathlossstep',
-    'refpixstep',
-    'gainscalestep',
-    'extract2dstep',
-    'detector1pipeline',
-    'fringestep',
-    'dark',
-    'whtlt',
-    'guiderpipeline',
-    'stackrefs',
-    'imprint',
-    'coron3pipeline',
-    'resetstep',
-    'combine1dstep',
-    'outlier_detection_scaled',
-    'outlier_detection_stack',
-    'srctype',
-    'outlier_detection',
-    'engdblogstep',
-    'gain_scale',
-    'ipcstep',
-    'jump',
-    'extract1dstep',
-    'tweakregstep',
-    'assignmtwcsstep',
-    'assign_mtwcs',
-    'wavecorrstep',
-    'wfsscontamstep',
+    "masterbackgroundmosstep",
+    "ami3pipeline",
+    "whitelightstep",
+    "ami_average",
+    "spec3pipeline",
+    "wfscombine",
+    "fringe",
+    "resamplestep",
+    "resample_spec",
+    "saturationstep",
+    "firstframestep",
+    "cat",
+    "systemcall",
+    "alignrefsstep",
+    "functionwrapper",
+    "darkcurrentstep",
+    "imprintstep",
+    "source_catalog",
+    "straylight",
+    "amiaveragestep",
+    "ami_normalize",
+    "jumpstep",
+    "resample",
+    "sourcetypestep",
+    "spec2pipeline",
+    "tweakreg",
+    "msaflagopenstep",
+    "outlierdetectionstep",
+    "saturation",
+    "pathloss",
+    "groupscalestep",
+    "ramp_fit",
+    "lastframe",
+    "darkpipeline",
+    "image2pipeline",
+    "outlierdetectionstackstep",
+    "tso3pipeline",
+    "straylightstep",
+    "sourcecatalogstep",
+    "dark_current",
+    "mrs_imatch",
+    "assignwcsstep",
+    "skymatch",
+    "extract_2d",
+    "cubebuildstep",
+    "residualfringestep",
+    "residual_fringe",
+    "spec2nrslamp",
+    "ipc",
+    "refpix",
+    "image3pipeline",
+    "superbiasstep",
+    "hlspstep",
+    "reset",
+    "s2d",
+    "ami_analyze",
+    "flatfieldstep",
+    "tsophotometrystep",
+    "combine_1d",
+    "step",
+    "cubeskymatchstep",
+    "i2d",
+    "group_scale",
+    "rscdstep",
+    "stackrefsstep",
+    "flat_field",
+    "guidercdsstep",
+    "mrsimatchstep",
+    "align_refs",
+    "dqinitstep",
+    "outlierdetectionscaledstep",
+    "superbias",
+    "assign_wcs",
+    "guider_cds",
+    "firstframe",
+    "masterbackgroundstep",
+    "master_background",
+    "skymatchstep",
+    "white_light",
+    "persistencestep",
+    "amianalyzestep",
+    "backgroundstep",
+    "photomstep",
+    "background",
+    "photom",
+    "extract_1d",
+    "cube_build",
+    "wfscombinestep",
+    "lastframestep",
+    "aminormalizestep",
+    "linearity",
+    "rscd",
+    "rampfitstep",
+    "pipeline",
+    "engdblog",
+    "resamplespecstep",
+    "persistence",
+    "klip",
+    "dq_init",
+    "barshadowstep",
+    "klipstep",
+    "linearitystep",
+    "hlsp",
+    "pathlossstep",
+    "refpixstep",
+    "gainscalestep",
+    "extract2dstep",
+    "detector1pipeline",
+    "fringestep",
+    "dark",
+    "whtlt",
+    "guiderpipeline",
+    "stackrefs",
+    "imprint",
+    "coron3pipeline",
+    "resetstep",
+    "combine1dstep",
+    "outlier_detection_scaled",
+    "outlier_detection_stack",
+    "srctype",
+    "outlier_detection",
+    "engdblogstep",
+    "gain_scale",
+    "ipcstep",
+    "jump",
+    "extract1dstep",
+    "tweakregstep",
+    "assignmtwcsstep",
+    "assign_mtwcs",
+    "wavecorrstep",
+    "wfsscontamstep",
 }
 
 
@@ -200,12 +227,12 @@ def remove_suffix(name):
     separator = None
     match = REMOVE_SUFFIX_REGEX.match(name)
     try:
-        name = match.group('root')
-        separator = match.group('separator')
+        name = match.group("root")
+        separator = match.group("separator")
     except AttributeError:
         pass
     if separator is None:
-        separator = '_'
+        separator = "_"
     return name, separator
 
 
@@ -229,8 +256,7 @@ def replace_suffix(name, new_suffix):
 # Functions to generate `KNOW_SUFFIXES`
 # #####################################
 def combine_suffixes(
-        to_add=(_calculated_suffixes, SUFFIXES_TO_ADD),
-        to_remove=(SUFFIXES_TO_DISCARD,)
+    to_add=(_calculated_suffixes, SUFFIXES_TO_ADD), to_remove=(SUFFIXES_TO_DISCARD,)
 ):
     """Combine the suffix lists into a single list
 
@@ -272,29 +298,24 @@ def find_suffixes():
     from jwst.stpipe import Step
     from jwst.stpipe.utilities import all_steps
 
-    jwst = import_module('jwst')
+    jwst = import_module("jwst")
     jwst_fpath = path.split(jwst.__file__)[0]
 
     # First traverse the code base and find all
     # `Step` classes. The default suffix is the
     # class name.
-    suffixes = set(
-        klass_name.lower()
-        for klass_name, klass in all_steps().items()
-    )
+    suffixes = set(klass_name.lower() for klass_name, klass in all_steps().items())
 
     # Instantiate Steps/Pipelines from their configuration files.
     # Different names and suffixes can be defined in this way.
     # Note: Based on the `collect_pipeline_cfgs` script
-    config_path = path.join(jwst_fpath, 'pipeline')
+    config_path = path.join(jwst_fpath, "pipeline")
     for config_file in listdir(config_path):
-        if config_file.endswith('.cfg'):
+        if config_file.endswith(".cfg"):
             try:
-                step = Step.from_config_file(
-                    path.join(config_path, config_file)
-                )
+                step = Step.from_config_file(path.join(config_path, config_file))
             except Exception as err:
-                logger.debug(f'Configuration {config_file} failed: {str(err)}')
+                logger.debug(f"Configuration {config_file} failed: {str(err)}")
             else:
                 suffixes.add(step.name.lower())
                 if step.suffix is not None:
@@ -315,8 +336,7 @@ KNOW_SUFFIXES = combine_suffixes()
 
 # Regex for removal
 REMOVE_SUFFIX_REGEX = re.compile(
-    '^(?P<root>.+?)((?P<separator>_|-)(' +
-    '|'.join(KNOW_SUFFIXES) + '))?$'
+    "^(?P<root>.+?)((?P<separator>_|-)(" + "|".join(KNOW_SUFFIXES) + "))?$"
 )
 
 
@@ -324,22 +344,20 @@ REMOVE_SUFFIX_REGEX = re.compile(
 # Main
 # Find and report differences from known list.
 # ############################################
-if __name__ == '__main__':
-    print('Searching code base for calibration suffixes...')
+if __name__ == "__main__":
+    print("Searching code base for calibration suffixes...")
     calculated_suffixes = find_suffixes()
     found_suffixes = combine_suffixes(
-        to_add=(calculated_suffixes, SUFFIXES_TO_ADD),
-        to_remove=(SUFFIXES_TO_DISCARD, )
+        to_add=(calculated_suffixes, SUFFIXES_TO_ADD), to_remove=(SUFFIXES_TO_DISCARD,)
     )
     print(
-        'Known list has {known_len} suffixes.'
-        ' Found {new_len} suffixes.'.format(
-            known_len=len(KNOW_SUFFIXES),
-            new_len=len(found_suffixes)
+        "Known list has {known_len} suffixes."
+        " Found {new_len} suffixes.".format(
+            known_len=len(KNOW_SUFFIXES), new_len=len(found_suffixes)
         )
     )
     print(
-        'Suffixes that have changed are {}'.format(
+        "Suffixes that have changed are {}".format(
             set(found_suffixes).symmetric_difference(KNOW_SUFFIXES)
         )
     )

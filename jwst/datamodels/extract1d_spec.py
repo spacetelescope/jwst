@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['Extract1dIFUModel']
+__all__ = ["Extract1dIFUModel"]
 
 
 class Extract1dIFUModel(ReferenceFileModel):
@@ -27,4 +27,5 @@ class Extract1dIFUModel(ReferenceFileModel):
         - axis_pa: float32 1D array
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/extract1difu.schema"

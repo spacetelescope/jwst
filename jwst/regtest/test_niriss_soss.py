@@ -10,16 +10,22 @@ def run_tso_spec2(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
-    rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.flat_field.save_results=True",
-            "--steps.srctype.save_results=True",
-            ]
+    rtdata.get_data(
+        "niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits"
+    )
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.flat_field.save_results=True",
+        "--steps.srctype.save_results=True",
+    ]
     Step.from_cmdline(args)
 
     # Run tso-spec2 pipeline on the second _rateints file, without saving or
     # checking any results (simply create a fresh input for level-3 test)
-    rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
+    rtdata.get_data(
+        "niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits"
+    )
     args = ["calwebb_spec2", rtdata.input]
     Step.from_cmdline(args)
 
@@ -37,7 +43,9 @@ def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints"])
-def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):
+def test_niriss_soss_stage2(
+    rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix
+):
     """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
     rtdata = rtdata_module
     output = f"jw01091002001_03101_00001-seg001_nis_short_{suffix}.fits"
@@ -50,7 +58,9 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
 
 @pytest.mark.bigdata
-def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
+def test_niriss_soss_stage3_crfints(
+    rtdata_module, run_tso_spec3, fitsdiff_default_kwargs
+):
     """Regression test of tso-spec3 pipeline outlier_detection results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
     output = "jw01091002001_03101_00001-seg001_nis_short_o002_crfints.fits"
@@ -63,7 +73,9 @@ def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
 
 
 @pytest.mark.bigdata
-def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_default_kwargs):
+def test_niriss_soss_stage3_x1dints(
+    run_tso_spec3, rtdata_module, fitsdiff_default_kwargs
+):
     """Regression test of tso-spec3 pipeline extract_1d results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 

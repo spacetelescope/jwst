@@ -33,6 +33,6 @@ class WhiteLightStep(Step):
             # Write the output catalog
             if self.save_results:
                 output_path = self.make_output_path()
-                result.write(output_path, format='ascii.ecsv', overwrite=True)
+                result.write(output_path, format="ascii.ecsv", overwrite=True)
 
         return result

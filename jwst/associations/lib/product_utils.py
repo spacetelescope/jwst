@@ -33,7 +33,7 @@ def sort_by_candidate(asns):
 
     If this changes, a comparison function will need be implemented
     """
-    return sorted(asns, key=lambda asn: asn['asn_id'])
+    return sorted(asns, key=lambda asn: asn["asn_id"])
 
 
 def get_product_names(asns):
@@ -48,20 +48,11 @@ def get_product_names(asns):
     product_names, duplicates : set(str[, ...]), [str[,...]]
         2-tuple consisting of the set of product names and the list of duplicates.
     """
-    product_names = [
-        asn['products'][0]['name']
-        for asn in asns
-    ]
+    product_names = [asn["products"][0]["name"] for asn in asns]
 
-    dups = [
-        name
-        for name, count in Counter(product_names).items()
-        if count > 1
-    ]
+    dups = [name for name, count in Counter(product_names).items() if count > 1]
     if dups:
-        logger.debug(
-            'Duplicate product names: %s', dups
-        )
+        logger.debug("Duplicate product names: %s", dups)
 
     return set(product_names), dups
 
@@ -98,7 +89,7 @@ def prune_duplicate_associations(asns):
         to_prune = list()
         for asn in ordered_asns:
             try:
-                compare_product_membership(original['products'][0], asn['products'][0])
+                compare_product_membership(original["products"][0], asn["products"][0])
             except AssertionError:
                 continue
             to_prune.append(asn)
@@ -128,16 +119,20 @@ def prune_duplicate_products(asns):
     if not dups:
         return asns
 
-    warnings.warn(f'Duplicate associations exist: {dups}', RuntimeWarning)
+    warnings.warn(f"Duplicate associations exist: {dups}", RuntimeWarning)
     if config.DEBUG:
-        warnings.warn('Duplicate associations will have "dupXXX" prepended to their names, where "XXX" is a 3-digit sequence.')
+        warnings.warn(
+            'Duplicate associations will have "dupXXX" prepended to their names, where "XXX" is a 3-digit sequence.'
+        )
     else:
-        warnings.warn('Duplicates will be removed, leaving only one of each.', RuntimeWarning)
+        warnings.warn(
+            "Duplicates will be removed, leaving only one of each.", RuntimeWarning
+        )
 
     pruned = copy.copy(asns)
     to_prune = defaultdict(list)
     for asn in asns:
-        product_name = asn['products'][0]['name']
+        product_name = asn["products"][0]["name"]
         if product_name in dups:
             to_prune[product_name].append(asn)
 
@@ -147,7 +142,7 @@ def prune_duplicate_products(asns):
         for asn in asns_to_prune[1:]:
             if config.DEBUG:
                 dup_count += 1
-                asn.asn_name = f'dup{dup_count:03d}_{asn.asn_name}'
+                asn.asn_name = f"dup{dup_count:03d}_{asn.asn_name}"
             else:
                 pruned.remove(asn)
 

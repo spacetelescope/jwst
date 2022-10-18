@@ -42,10 +42,10 @@ import jwst.datamodels as dm
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-__all__ = ['Delta', 'calc_pointing_deltas', 'calc_deltas']
+__all__ = ["Delta", "calc_pointing_deltas", "calc_deltas"]
 
 # Basic delta structure
-Delta = namedtuple('Delta', 'target, v1, refpoint, delta_v1, delta_refpoint')
+Delta = namedtuple("Delta", "target, v1, refpoint, delta_v1, delta_refpoint")
 
 
 def calc_pointing_deltas(model):
@@ -70,8 +70,12 @@ def calc_pointing_deltas(model):
     """
     # Retrieve the info from the model
     target = SkyCoord(model.meta.target.ra * u.degree, model.meta.target.dec * u.degree)
-    v1 = SkyCoord(model.meta.pointing.ra_v1 * u.degree, model.meta.pointing.dec_v1 * u.degree)
-    refpoint = SkyCoord(model.meta.wcsinfo.ra_ref * u.degree, model.meta.wcsinfo.dec_ref * u.degree)
+    v1 = SkyCoord(
+        model.meta.pointing.ra_v1 * u.degree, model.meta.pointing.dec_v1 * u.degree
+    )
+    refpoint = SkyCoord(
+        model.meta.wcsinfo.ra_ref * u.degree, model.meta.wcsinfo.dec_ref * u.degree
+    )
 
     # Calculate separations
     delta = Delta(
@@ -122,7 +126,9 @@ def calc_deltas(exposures, extra_meta=None):
     for exposure in exposures:
         with dm.open(exposure) as model:
             delta = calc_pointing_deltas(model)
-            logger.info(f'{model}: delta v1={delta.delta_v1} delta refpoint={delta.delta_refpoint}')
+            logger.info(
+                f"{model}: delta v1={delta.delta_v1} delta refpoint={delta.delta_refpoint}"
+            )
 
             targets.append(delta.target)
             v1s.append(delta.v1)
@@ -135,12 +141,12 @@ def calc_deltas(exposures, extra_meta=None):
 
     # Places results into a Table.
     deltas_dict = {
-        'exposure': exposures,
-        'target': targets,
-        'v1': v1s,
-        'refpoint': refpoints,
-        'delta_v1': delta_v1s,
-        'delta_refpoint': delta_refpoints,
+        "exposure": exposures,
+        "target": targets,
+        "v1": v1s,
+        "refpoint": refpoints,
+        "delta_v1": delta_v1s,
+        "delta_refpoint": delta_refpoints,
     }
     deltas_dict.update(extra_meta_values)
     deltas = Table(deltas_dict)

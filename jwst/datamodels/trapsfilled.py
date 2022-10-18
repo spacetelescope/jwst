@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['TrapsFilledModel']
+__all__ = ["TrapsFilledModel"]
 
 
 class TrapsFilledModel(JwstDataModel):
@@ -16,4 +16,5 @@ class TrapsFilledModel(JwstDataModel):
         The map of the number of traps filled over the detector, with
         one plane for each "trap family."
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/trapsfilled.schema"

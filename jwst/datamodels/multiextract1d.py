@@ -2,7 +2,7 @@ from .reference import ReferenceFileModel
 from .extract1dimage import Extract1dImageModel
 
 
-__all__ = ['MultiExtract1dImageModel']
+__all__ = ["MultiExtract1dImageModel"]
 
 
 class MultiExtract1dImageModel(ReferenceFileModel):
@@ -27,6 +27,7 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     __________
     images.items.data : numpy float32 array
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/multiextract1d.schema"
 
     def __init__(self, init=None, **kwargs):

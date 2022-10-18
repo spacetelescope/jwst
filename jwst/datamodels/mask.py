@@ -2,7 +2,7 @@ from .reference import ReferenceFileModel
 from stcal.dynamicdq import dynamic_mask
 from .dqflags import pixel
 
-__all__ = ['MaskModel']
+__all__ = ["MaskModel"]
 
 
 class MaskModel(ReferenceFileModel):
@@ -17,6 +17,7 @@ class MaskModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mask.schema"
 
     def __init__(self, init=None, **kwargs):
@@ -35,4 +36,4 @@ class MaskModel(ReferenceFileModel):
         This is intended to be overridden in the subclasses if the
         primary array's name is not "data".
         """
-        return 'dq'
+        return "dq"

@@ -28,7 +28,7 @@ class ImprintStep(Step):
             result = subtract_images.subtract(input_model, imprint_model)
 
             # Update the step status and close the imprint model
-            result.meta.cal_step.imprint = 'COMPLETE'
+            result.meta.cal_step.imprint = "COMPLETE"
             imprint_model.close()
 
         return result

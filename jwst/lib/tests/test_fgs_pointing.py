@@ -17,26 +17,26 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-DATA_PATH = Path(__file__).parent / 'data'
-siaf_path = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
+DATA_PATH = Path(__file__).parent / "data"
+siaf_path = DATA_PATH / "xml_data_siafxml" / "SIAFXML"
 
 # Define minimal model meta structure
 WCS_META = {
-    'meta': {
-        'exposure': {
-            'type': 'FGS_ACQ1',
+    "meta": {
+        "exposure": {
+            "type": "FGS_ACQ1",
         },
-        'aperture': {
-            'name': 'FGS1_FULL',
+        "aperture": {
+            "name": "FGS1_FULL",
         },
-        'observation': {
-            'date': '2017-01-01',
-        }
+        "observation": {
+            "date": "2017-01-01",
+        },
     }
 }
 
 
-@pytest.mark.xfail(reason='See JP-2658')
+@pytest.mark.xfail(reason="See JP-2658")
 def test_fgs_pointing():
     model = make_level1b()
     stp.update_wcs(model, siaf_path=siaf_path)
@@ -51,7 +51,7 @@ def test_fgs_pointing():
 # Utilities
 # ---------
 def make_level1b():
-    data = array([1.])
+    data = array([1.0])
     data.shape = (1, 1, 1, 1)
     model = Level1bModel(data)
     model.update(WCS_META)

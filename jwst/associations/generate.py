@@ -1,17 +1,14 @@
 import logging
 
 from .association import make_timestamp
-from .lib.process_list import (
-    ProcessList,
-    ProcessQueueSorted
-)
+from .lib.process_list import ProcessList, ProcessQueueSorted
 from .pool import PoolRow
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-__all__ = ['generate']
+__all__ = ["generate"]
 
 
 def generate(pool, rules, version_id=None):
@@ -44,12 +41,9 @@ def generate(pool, rules, version_id=None):
     associations = []
     if type(version_id) is bool:
         version_id = make_timestamp()
-    process_queue = ProcessQueueSorted([
-        ProcessList(
-            items=pool,
-            rules=[rule for _, rule in rules.items()]
-        )
-    ])
+    process_queue = ProcessQueueSorted(
+        [ProcessList(items=pool, rules=[rule for _, rule in rules.items()])]
+    )
 
     for process_list in process_queue:
         # logger.debug(
@@ -64,11 +58,7 @@ def generate(pool, rules, version_id=None):
 
             # logger.debug(f'Processing item {item}')
             existing_asns, new_asns, to_process = generate_from_item(
-                item,
-                version_id,
-                associations,
-                rules,
-                process_list
+                item, version_id, associations, rules, process_list
             )
             # logger.debug(f'Associations updated: {existing_asns}')
             # logger.debug(f'New associations: {new_asns}')
@@ -86,21 +76,16 @@ def generate(pool, rules, version_id=None):
             process_queue.extend(to_process)
 
     # Finalize found associations
-    logger.debug('# associations before finalization: %s', len(associations))
+    logger.debug("# associations before finalization: %s", len(associations))
     try:
-        finalized_asns = rules.callback.reduce('finalize', associations)
+        finalized_asns = rules.callback.reduce("finalize", associations)
     except KeyError:
         finalized_asns = associations
 
     return finalized_asns
 
 
-def generate_from_item(
-        item,
-        version_id,
-        associations,
-        rules,
-        process_list):
+def generate_from_item(item, version_id, associations, rules, process_list):
     """Either match or generate a new association
 
     Parameters
@@ -146,31 +131,29 @@ def generate_from_item(
     existing_asns = []
     reprocess_list = []
     if process_list.work_over in (
-            ProcessList.BOTH,
-            ProcessList.EXISTING,
-            ProcessList.NONSCIENCE,
+        ProcessList.BOTH,
+        ProcessList.EXISTING,
+        ProcessList.NONSCIENCE,
     ):
-        associations = [
-            asn
-            for asn in associations
-            if type(asn) in allowed_rules
-        ]
+        associations = [asn for asn in associations if type(asn) in allowed_rules]
         # logger.debug(
         #     f'Checking against {len(associations)} existing associations'
         # )
-        existing_asns, reprocess_list = match_item(
-            item, associations
-        )
+        existing_asns, reprocess_list = match_item(item, associations)
 
     # Now see if this item will create new associations.
     # By default, a item will not be allowed to create
     # an association based on rules of existing associations.
     reprocess = []
     new_asns = []
-    if process_list.work_over in (
+    if (
+        process_list.work_over
+        in (
             ProcessList.BOTH,
             ProcessList.RULES,
-    ) and rules is not None:
+        )
+        and rules is not None
+    ):
         ignore_asns = set([type(asn) for asn in existing_asns])
         # logger.debug(f'Ignore asns {ignore_asns}')
         new_asns, reprocess = rules.match(

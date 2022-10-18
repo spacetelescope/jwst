@@ -20,10 +20,26 @@ from . import blender
 # with this code
 __rules_version__ = 2.1
 
-__all__ = ['find_keywords_in_section', 'first', 'float_one', 'int_one',
-           'interpret_attr_line', 'interpret_entry', 'last', 'maxdate',
-           'maxdatetime', 'maxtime', 'mindate', 'mindatetime', 'mintime',
-           'multi', 'multi1', 'zero', 'KeywordRules', 'KwRule']
+__all__ = [
+    "find_keywords_in_section",
+    "first",
+    "float_one",
+    "int_one",
+    "interpret_attr_line",
+    "interpret_entry",
+    "last",
+    "maxdate",
+    "maxdatetime",
+    "maxtime",
+    "mindate",
+    "mindatetime",
+    "mintime",
+    "multi",
+    "multi1",
+    "zero",
+    "KeywordRules",
+    "KwRule",
+]
 
 
 # Custom blending functions
@@ -58,32 +74,29 @@ def multi1(vals):
 
 
 def float_one(vals):
-    """ Return a constant floating point value of 1.0
-    """
+    """Return a constant floating point value of 1.0"""
     return 1.0
 
 
 def int_one(vals):
-    """ Return an integer value of 1
-    """
+    """Return an integer value of 1"""
     return int(1)
 
 
 def zero(vals):
-    """ Return a value of 0
-    """
+    """Return a value of 0"""
     return 0
 
 
 def first(items):
-    """ Return first item from list of values"""
+    """Return first item from list of values"""
     if len(items):
         return items[0]
     return None
 
 
 def last(items):
-    """ Return last item from list of values"""
+    """Return last item from list of values"""
     if len(items):
         return items[-1]
     return None
@@ -124,39 +137,40 @@ def maxtime(items):
 
 
 def _isotime(time_str):
-    hms = [float(i) for i in time_str.split(':')]
+    hms = [float(i) for i in time_str.split(":")]
     sec_ms = hms[2] - int(hms[2])
     isotime = time(int(hms[0]), int(hms[1]), int(hms[2]), int(sec_ms * 1000000))
     return isotime
 
 
 # translation dictionary for function entries from rules files
-blender_funcs = {'first': first,
-                 'last': last,
-                 'float_one': float_one,
-                 'int_one': int_one,
-                 'zero': zero,
-                 'multi': multi,
-                 'multi?': multi1,
-                 'mean': np.mean,
-                 'sum': np.sum,
-                 'max': np.max,
-                 'min': np.min,
-                 'stddev': np.std,
-                 'mintime': mintime,
-                 'maxtime': maxtime,
-                 'mindate': mindate,
-                 'maxdate': maxdate,
-                 'mindatetime': mindatetime,
-                 'maxdatetime': maxdatetime}
+blender_funcs = {
+    "first": first,
+    "last": last,
+    "float_one": float_one,
+    "int_one": int_one,
+    "zero": zero,
+    "multi": multi,
+    "multi?": multi1,
+    "mean": np.mean,
+    "sum": np.sum,
+    "max": np.max,
+    "min": np.min,
+    "stddev": np.std,
+    "mintime": mintime,
+    "maxtime": maxtime,
+    "mindate": mindate,
+    "maxdate": maxdate,
+    "mindatetime": mindatetime,
+    "maxdatetime": maxdatetime,
+}
 
 
 # Classes for managing keyword rules
-class KeywordRules():
-
+class KeywordRules:
     def __init__(self, model):
-        """ Read in the rules used to interpret the keywords from the specified
-            instrument image header.
+        """Read in the rules used to interpret the keywords from the specified
+        instrument image header.
         """
         self.instrument = model.meta.instrument.name.lower()
         self.new_header = None
@@ -170,7 +184,7 @@ class KeywordRules():
         self.section_names = []
 
     def interpret_rules(self, hdrs):
-        """ Convert specifications for rules from rules file
+        """Convert specifications for rules from rules file
         into specific rules for this header(instrument/detector).
 
         Notes
@@ -246,12 +260,12 @@ class KeywordRules():
         self.rules.extend(k)
 
     def apply(self, models, tabhdu=False):
-        """ For a full list of metadata objects, apply the specified rules to
-            generate a dictionary of new values and a table using
-            blender.
+        """For a full list of metadata objects, apply the specified rules to
+        generate a dictionary of new values and a table using
+        blender.
 
-            This method returns the new metadata object and summary table
-            as `datamodels.model.ndmodel` and fits.binTableHDU objects.
+        This method returns the new metadata object and summary table
+        as `datamodels.model.ndmodel` and fits.binTableHDU objects.
         """
         # Apply rules to headers
         fbdict, fbtab = blender.metablender(models, self.rules)
@@ -275,14 +289,14 @@ class KeywordRules():
         # one extension to another.
         # new_model.update(fbdict)
         for attr in new_model.to_flat_dict():
-            if 'meta' in attr and attr in fbdict:
+            if "meta" in attr and attr in fbdict:
                 new_model[attr] = fbdict[attr]
 
         # Create summary table
         if len(tabcols) > 0:
             if tabhdu:
                 new_table = fits.BinTableHDU.from_columns(fbtab)
-                new_table.header['EXTNAME'] = 'HDRTAB'
+                new_table.header["EXTNAME"] = "HDRTAB"
             else:
                 new_table = fbtab
         else:
@@ -290,7 +304,7 @@ class KeywordRules():
         return new_model, new_table
 
     def add_rules_kws(self, hdr):
-        """ Update metadata with
+        """Update metadata with
         WARNING
         -------
         Needs to be modified to work with metadata.
@@ -299,13 +313,17 @@ class KeywordRules():
         rules used to create this header. Only non-comment lines from the
         rules file will be reported.
         """
-        hdr['meta.rules_version'] = (__rules_version__,
-                                     'Version ID for header kw rules file')
-        hdr['meta.blender_version'] = (__version__,
-                                       'Version of blendheader software used')
+        hdr["meta.rules_version"] = (
+            __rules_version__,
+            "Version ID for header kw rules file",
+        )
+        hdr["meta.blender_version"] = (
+            __version__,
+            "Version of blendheader software used",
+        )
 
     def index_of(self, kw):
-        """ Reports the index of the specified kw."""
+        """Reports the index of the specified kw."""
         indx = []
         for r, i in zip(self.rules, list(range(len(self.rules)))):
             if r[0] == kw:
@@ -313,7 +331,7 @@ class KeywordRules():
         return indx
 
 
-class KwRule():
+class KwRule:
     """
     This class encapsulates the logic needed for interpreting a single keyword
     rule from a text file.
@@ -368,7 +386,7 @@ class KwRule():
 
 # Utility functions.
 def _build_schema_rules_dict(schema):
-    """ Create a dict that extracts blend rules from an input schema.
+    """Create a dict that extracts blend rules from an input schema.
 
     Parameters
     ----------
@@ -382,30 +400,31 @@ def _build_schema_rules_dict(schema):
         as values
 
     """
+
     def build_rules_dict(subschema, path, combiner, ctx, recurse):
         # Only interpret elements of the meta component of the model
-        if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
-            for combiner in ['anyOf', 'oneOf']:
+        if len(path) > 1 and path[0] == "meta" and "items" not in path:
+            for combiner in ["anyOf", "oneOf"]:
                 if combiner in path:
-                    path = path[:path.index(combiner)]
+                    path = path[: path.index(combiner)]
                     break
-            attr = '.'.join(path)
-            if subschema.get('properties'):
+            attr = ".".join(path)
+            if subschema.get("properties"):
                 return  # Ignore ObjectNodes
 
             # Get blending info
-            kwrule = subschema.get('blend_rule')
-            kwtab = subschema.get('blend_table')
-            kwname = subschema.get('fits_keyword', attr)
+            kwrule = subschema.get("blend_rule")
+            kwtab = subschema.get("blend_table")
+            kwname = subschema.get("fits_keyword", attr)
 
             # If rules had already been set, only modify
             # the rules if there are explicit settings.
             rule_spec = None
             result = results.get(attr, [])
             if kwrule:
-                rule_spec = {attr: {'rule': kwrule}}
+                rule_spec = {attr: {"rule": kwrule}}
             elif not results.get(attr):
-                rule_spec = {attr: {'rule': 'first'}}
+                rule_spec = {attr: {"rule": "first"}}
             if rule_spec:
                 result.append(rule_spec)
 
@@ -426,7 +445,7 @@ def _build_schema_rules_dict(schema):
 
 
 def interpret_entry(line, hdr):
-    """ Generate the rule(s) specified by the entry from the rules file.
+    """Generate the rule(s) specified by the entry from the rules file.
 
     Notes
     -----
@@ -454,7 +473,7 @@ def interpret_entry(line, hdr):
         section_name = attr
         # Datamodel sections are just parent Nodes for each attribute
         keys = hdr[section_name].instance.keys()
-        kws = ['{}.{}'.format(section_name, k) for k in keys]
+        kws = ["{}.{}".format(section_name, k) for k in keys]
         #
         if kws is not None:
             for kw1 in kws:
@@ -473,21 +492,21 @@ def interpret_entry(line, hdr):
 
 
 def interpret_attr_line(attr, line_spec):
-    """ Generate rule for single attribute from input line from rules file."""
+    """Generate rule for single attribute from input line from rules file."""
     rules = []
 
     kws = [attr]
     if isinstance(line_spec, dict):
-        if 'output' in line_spec:
-            kws2 = [line_spec['output']]
+        if "output" in line_spec:
+            kws2 = [line_spec["output"]]
         else:
             kws2 = kws
     else:
         kws2 = [line_spec]
 
     lrule = None
-    if 'rule' in line_spec:
-        lrule = line_spec['rule']
+    if "rule" in line_spec:
+        lrule = line_spec["rule"]
 
     # Interpret short-hand rules using dict
     if lrule is not None and len(lrule) > 0:
@@ -523,7 +542,7 @@ def find_keywords_in_section(hdr, title):
             if title in str(hdr[i]):
                 sect_start = i
         else:
-            if '/' in str(hdr[i]) and hdr[i] not in ['N/A', ' ', '']:
+            if "/" in str(hdr[i]) and hdr[i] not in ["N/A", " ", ""]:
                 sect_end = i
                 break
     if sect_end is None:
@@ -533,9 +552,9 @@ def find_keywords_in_section(hdr, title):
 
     # Now, extract the keyword names from this section
     # section_keys = hdr.ascard[sect_start+1:sect_end-1].keys()
-    section_keys = list(hdr[sect_start + 1:sect_end - 1].keys())
+    section_keys = list(hdr[sect_start + 1 : sect_end - 1].keys())
     # remove any blank keywords
-    while section_keys.count('') > 0:
-        section_keys.remove('')
+    while section_keys.count("") > 0:
+        section_keys.remove("")
 
     return section_keys

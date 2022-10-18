@@ -3,11 +3,12 @@ cube_build step
 """
 import numpy as np
 import math
+
 # _______________________________________________________________________
 
 
 def radec2std(crval1, crval2, ra, dec, rot_angle=None):
-    """ Compute the tangent projection coordinates (xi,eta) from ra,dec
+    """Compute the tangent projection coordinates (xi,eta) from ra,dec
     using crval1 and crval2 (the tangent point).
 
     Parameters
@@ -44,8 +45,9 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
     h = np.sin(decr) * math.sin(dec0) + np.cos(decr) * math.cos(dec0) * np.cos(radiff)
 
     xi = np.cos(decr) * np.sin(radiff) / h
-    eta = (np.sin(decr) * math.cos(dec0) -
-           np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
+    eta = (
+        np.sin(decr) * math.cos(dec0) - np.cos(decr) * math.sin(dec0) * np.cos(radiff)
+    ) / h
 
     xi = -xi
     xi = xi * rad2arcsec
@@ -61,11 +63,13 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
         eta = temp2
 
     return xi, eta
+
+
 # ________________________________________________________________________________
 
 
 def std2radec(crval1, crval2, xi, eta):
-    """ Compute ra,dec from the tangent plane rectangular coordinates
+    """Compute ra,dec from the tangent plane rectangular coordinates
 
     Compute the ra,dec values of  tangent plane rectangular coordinates using
     crval1, crval2(the tangent point). This routine takes the rectangular
@@ -128,11 +132,12 @@ def std2radec(crval1, crval2, xi, eta):
     ra[mask] -= 360.0
     return ra, dec
 
+
 # _______________________________________________________________________
 
 
 def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
-    """ Estimation of ra and dec from the v2, v3 coordinates
+    """Estimation of ra and dec from the v2, v3 coordinates
 
     This routine is used for debugging purposes. It is not actually used
     in the cube_build step for routine IFU cube building.
@@ -167,8 +172,8 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     """
     d2r = math.pi / 180.0
 
-    v2deg = v2.copy() / 3600.0   # convert to degrees
-    v3deg = v3.copy() / 3600.0   # convert to degrees
+    v2deg = v2.copy() / 3600.0  # convert to degrees
+    v3deg = v3.copy() / 3600.0  # convert to degrees
 
     v2_ref = v2_ref / 3600.0  # covert to degrees
     v3_ref = v3_ref / 3600.0  # convert to degrees
@@ -176,7 +181,7 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     roll_ref_rad = roll_ref * d2r
 
     delta_v2 = (v2deg - v2_ref) * math.cos(v3_ref_rad)
-    delta_v3 = (v3deg - v3_ref)
+    delta_v3 = v3deg - v3_ref
     delta_ra = delta_v2 * math.cos(roll_ref_rad) + delta_v3 * math.sin(roll_ref_rad)
     delta_dec = -delta_v2 * math.sin(roll_ref_rad) + delta_v3 * math.cos(roll_ref_rad)
 
@@ -184,11 +189,13 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     dec = delta_dec + dec_ref
 
     return ra, dec
+
+
 # _______________________________________________________________________
 
 
 def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
-    """ Convert ra,dec to v2, v3
+    """Convert ra,dec to v2, v3
 
     This routine is used for debugging purposes. It is not actually used
     in the cube_build step for routine IFU cube building.
@@ -218,7 +225,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
        v2 coordinate in arc seconds
     v3 : float
        v2 coordinate in arc seconds
-     """
+    """
 
     d2r = math.pi / 180.0
     r2d = 180.0 / math.pi
@@ -234,7 +241,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
     this_dec = dec * d2r
 
     delta_ra = (this_ra - ra_ref_rad) * math.cos(dec_ref_rad)
-    delta_dec = (this_dec - dec_ref_rad)
+    delta_dec = this_dec - dec_ref_rad
 
     dv2 = delta_ra * math.cos(roll_ref_rad) - delta_dec * math.sin(roll_ref_rad)
     dv3 = delta_ra * math.sin(roll_ref_rad) + delta_dec * math.cos(roll_ref_rad)

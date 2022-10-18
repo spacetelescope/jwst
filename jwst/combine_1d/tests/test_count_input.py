@@ -23,7 +23,7 @@ def test_1a():
     truth_1a = truth_array_1a()
 
     # Compare wl with the correct values.
-    assert np.allclose(wl, truth_1a, rtol=1.e-10)
+    assert np.allclose(wl, truth_1a, rtol=1.0e-10)
 
 
 def test_1b():
@@ -33,7 +33,7 @@ def test_1b():
     truth_1b = truth_array_1b()
 
     # Compare n_input_spectra with the correct values.
-    assert np.allclose(n_input_spectra, truth_1b, rtol=1.e-10)
+    assert np.allclose(n_input_spectra, truth_1b, rtol=1.0e-10)
 
 
 def test_1c():
@@ -44,7 +44,7 @@ def test_1c():
 
     truth_1c = truth_array_1c()
 
-    assert np.allclose(output_wl, truth_1c, rtol=1.e-10)
+    assert np.allclose(output_wl, truth_1c, rtol=1.0e-10)
 
 
 def create_input_spectra_1():
@@ -59,20 +59,53 @@ def create_input_spectra_1():
     # will be clumped.  For this test, first specify the wavelengths in
     # these clumps.  Then assign the wavelengths for each input spectrum
     # by picking one element from each clump.
-    clumps = np.array([[1.372, 1.385, 1.391, 1.402],
-                       [1.701, 1.718, 1.719, 1.723],
-                       [1.979, 1.984, 1.991, 2.013],
-                       [2.212, 2.223, 2.228, 2.310],
-                       [2.475, 2.479, 2.487, 2.496],
-                       [2.716, 2.723, 2.729, 2.741]], dtype=np.float64)
+    clumps = np.array(
+        [
+            [1.372, 1.385, 1.391, 1.402],
+            [1.701, 1.718, 1.719, 1.723],
+            [1.979, 1.984, 1.991, 2.013],
+            [2.212, 2.223, 2.228, 2.310],
+            [2.475, 2.479, 2.487, 2.496],
+            [2.716, 2.723, 2.729, 2.741],
+        ],
+        dtype=np.float64,
+    )
 
-    spec = [clumps[0, 3], clumps[1, 0], clumps[2, 2], clumps[3, 1], clumps[4, 2], clumps[5, 1]]
+    spec = [
+        clumps[0, 3],
+        clumps[1, 0],
+        clumps[2, 2],
+        clumps[3, 1],
+        clumps[4, 2],
+        clumps[5, 1],
+    ]
     input_spectra.append(DummySpectra(np.array(spec)))
-    spec = [clumps[0, 0], clumps[1, 3], clumps[2, 0], clumps[3, 3], clumps[4, 0], clumps[5, 2]]
+    spec = [
+        clumps[0, 0],
+        clumps[1, 3],
+        clumps[2, 0],
+        clumps[3, 3],
+        clumps[4, 0],
+        clumps[5, 2],
+    ]
     input_spectra.append(DummySpectra(np.array(spec)))
-    spec = [clumps[0, 2], clumps[1, 1], clumps[2, 1], clumps[3, 2], clumps[4, 3], clumps[5, 0]]
+    spec = [
+        clumps[0, 2],
+        clumps[1, 1],
+        clumps[2, 1],
+        clumps[3, 2],
+        clumps[4, 3],
+        clumps[5, 0],
+    ]
     input_spectra.append(DummySpectra(np.array(spec)))
-    spec = [clumps[0, 1], clumps[1, 2], clumps[2, 3], clumps[3, 0], clumps[4, 1], clumps[5, 3]]
+    spec = [
+        clumps[0, 1],
+        clumps[1, 2],
+        clumps[2, 3],
+        clumps[3, 0],
+        clumps[4, 1],
+        clumps[5, 3],
+    ]
     input_spectra.append(DummySpectra(np.array(spec)))
 
     return input_spectra
@@ -82,10 +115,35 @@ def truth_array_1a():
     """Merged and sorted wavelengths from all input files."""
 
     # Wavelengths (merged and sorted) in input files.
-    return np.array([1.372, 1.385, 1.391, 1.402, 1.701, 1.718, 1.719, 1.723,
-                     1.979, 1.984, 1.991, 2.013, 2.212, 2.223, 2.228, 2.31,
-                     2.475, 2.479, 2.487, 2.496, 2.716, 2.723, 2.729, 2.741],
-                    dtype=np.float64)
+    return np.array(
+        [
+            1.372,
+            1.385,
+            1.391,
+            1.402,
+            1.701,
+            1.718,
+            1.719,
+            1.723,
+            1.979,
+            1.984,
+            1.991,
+            2.013,
+            2.212,
+            2.223,
+            2.228,
+            2.31,
+            2.475,
+            2.479,
+            2.487,
+            2.496,
+            2.716,
+            2.723,
+            2.729,
+            2.741,
+        ],
+        dtype=np.float64,
+    )
 
 
 def truth_array_1b():
@@ -109,8 +167,10 @@ def truth_array_1b():
     """
 
     # n_input_spectra
-    return np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-                     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], dtype=np.int64)
+    return np.array(
+        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+        dtype=np.int64,
+    )
 
 
 def truth_array_1c():
@@ -121,5 +181,6 @@ def truth_array_1c():
     between pixels.
     """
 
-    return np.array([1.3875, 1.71525, 1.99175, 2.24325, 2.48425, 2.72725],
-                    dtype=np.float64)
+    return np.array(
+        [1.3875, 1.71525, 1.99175, 2.24325, 2.48425, 2.72725], dtype=np.float64
+    )

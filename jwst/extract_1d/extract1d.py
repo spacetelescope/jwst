@@ -14,17 +14,29 @@ import copy
 import numpy as np
 from astropy.modeling import models, fitting
 
-__all__ = ['extract1d']
-__taskname__ = 'extract1d'
-__author__ = 'Mihai Cara'
+__all__ = ["extract1d"]
+__taskname__ = "extract1d"
+__author__ = "Mihai Cara"
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
-              p_src, p_bkg=None, independent_var="wavelength",
-              smoothing_length=0, bkg_fit="poly", bkg_order=0, weights=None):
+def extract1d(
+    image,
+    var_poisson,
+    var_rnoise,
+    var_flat,
+    lambdas,
+    disp_range,
+    p_src,
+    p_bkg=None,
+    independent_var="wavelength",
+    smoothing_length=0,
+    bkg_fit="poly",
+    bkg_order=0,
+    weights=None,
+):
     """Extract the spectrum, optionally subtracting background.
 
     Parameters:
@@ -131,21 +143,21 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
     # the independent variable (if not wavelength) at the first pixel of
     # the extracted spectrum.
 
-    if not (independent_var.startswith("pixel") or
-            independent_var.startswith("wavelength")):
-        log.warning("independent_var was '%s'; using 'pixel' instead.",
-                    independent_var)
+    if not (
+        independent_var.startswith("pixel") or independent_var.startswith("wavelength")
+    ):
+        log.warning("independent_var was '%s'; using 'pixel' instead.", independent_var)
         independent_var = "pixel"
     if independent_var.startswith("pixel"):
         # Temporary array for the independent variable.
         pixels = np.arange(disp_range[0], disp_range[1], dtype=np.float64)
 
-    srclim = []                 # this will be a list of lists, like p_src
+    srclim = []  # this will be a list of lists, like p_src
     n_srclim = len(p_src)
     for i in range(n_srclim):
         lower = p_src[i][0]
         upper = p_src[i][1]
-        if independent_var.startswith("wavelength"):    # OK if 'wavelengths'
+        if independent_var.startswith("wavelength"):  # OK if 'wavelengths'
             srclim.append([lower(lambdas), upper(lambdas)])
         else:
             srclim.append([lower(pixels), upper(pixels)])
@@ -154,7 +166,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         nbkglim = 0
     else:
         nbkglim = len(p_bkg)
-        bkglim = []             # this will be a list of lists, like p_bkg
+        bkglim = []  # this will be a list of lists, like p_bkg
         for i in range(nbkglim):
             lower = p_bkg[i][0]
             upper = p_bkg[i][1]
@@ -172,17 +184,21 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         lower = srclim[i][0]
         upper = srclim[i][1]
         diff = upper - lower
-        if diff.min() < 0.:
-            if diff.max() < 0.:
-                log.error("Lower and upper source extraction limits"
-                          " appear to be swapped.")
-                raise ValueError("Lower and upper source extraction limits"
-                                 " appear to be swapped.")
+        if diff.min() < 0.0:
+            if diff.max() < 0.0:
+                log.error(
+                    "Lower and upper source extraction limits" " appear to be swapped."
+                )
+                raise ValueError(
+                    "Lower and upper source extraction limits" " appear to be swapped."
+                )
             else:
-                log.error("Lower and upper source extraction limits"
-                          " cross each other.")
-                raise ValueError("Lower and upper source extraction limits"
-                                 " cross each other.")
+                log.error(
+                    "Lower and upper source extraction limits" " cross each other."
+                )
+                raise ValueError(
+                    "Lower and upper source extraction limits" " cross each other."
+                )
         del diff
         if np.any(lower < -0.5) or np.any(upper < -0.5):
             log.warning("Source extraction limit extends below -0.5")
@@ -197,17 +213,23 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         lower = bkglim[i][0]
         upper = bkglim[i][1]
         diff = upper - lower
-        if diff.min() < 0.:
-            if diff.max() < 0.:
-                log.error("Lower and upper background extraction limits"
-                          " appear to be swapped.")
-                raise ValueError("Lower and upper background extraction limits"
-                                 " appear to be swapped.")
+        if diff.min() < 0.0:
+            if diff.max() < 0.0:
+                log.error(
+                    "Lower and upper background extraction limits"
+                    " appear to be swapped."
+                )
+                raise ValueError(
+                    "Lower and upper background extraction limits"
+                    " appear to be swapped."
+                )
             else:
-                log.error("Lower and upper background extraction limits"
-                          " cross each other.")
-                raise ValueError("Lower and upper background extraction limits"
-                                 " cross each other.")
+                log.error(
+                    "Lower and upper background extraction limits" " cross each other."
+                )
+                raise ValueError(
+                    "Lower and upper background extraction limits" " cross each other."
+                )
         del diff
         if np.any(lower < -0.5) or np.any(upper < -0.5):
             log.warning("Background limit extends below -0.5")
@@ -255,34 +277,71 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
 
             # Compute the background for the current column,
             # using the (optionally) smoothed background.
-            (bkg_model, b_var_poisson_model, b_var_rnoise_model,
-             b_var_flat_model, bkg_npts) = _fit_background_model(
-                temp_image, var_poisson, var_rnoise, var_flat, x,
-                j, bkglim, bkg_fit, bkg_order
+            (
+                bkg_model,
+                b_var_poisson_model,
+                b_var_rnoise_model,
+                b_var_flat_model,
+                bkg_npts,
+            ) = _fit_background_model(
+                temp_image,
+                var_poisson,
+                var_rnoise,
+                var_flat,
+                x,
+                j,
+                bkglim,
+                bkg_fit,
+                bkg_order,
             )
 
             if bkg_npts == 0:
                 bkg_model = None
-                log.debug(f"Not enough valid pixels to determine background "
-                          f"for lambda={lam:.6f} (column {x:d})")
+                log.debug(
+                    f"Not enough valid pixels to determine background "
+                    f"for lambda={lam:.6f} (column {x:d})"
+                )
 
             elif len(bkg_model) < bkg_order:
-                log.debug(f"Not enough valid pixels to determine background "
-                          f"with the required order for lambda={lam:.6f} "
-                          f"(column {x:d})\n"
-                          f"Lowering background order to {len(bkg_model)}")
+                log.debug(
+                    f"Not enough valid pixels to determine background "
+                    f"with the required order for lambda={lam:.6f} "
+                    f"(column {x:d})\n"
+                    f"Lowering background order to {len(bkg_model)}"
+                )
 
         # Extract the source, and optionally subtract background using the
         # fit to the background for this column.  Even if
         # background smoothing was done, we must extract the source from
         # the original, unsmoothed image.
         # source total flux, background total flux, area, total weight
-        (temp_flux[j], f_var_poisson[j], f_var_rnoise[j], f_var_flat[j],
-         bkg_flux, b_var_poisson_val, b_var_rnoise_val, b_var_flat_val,
-         npixels[j], twht) = _extract_src_flux(
-            image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim,
-            weights=weights, bkgmodels=[bkg_model, b_var_poisson_model,
-                                        b_var_rnoise_model, b_var_flat_model]
+        (
+            temp_flux[j],
+            f_var_poisson[j],
+            f_var_rnoise[j],
+            f_var_flat[j],
+            bkg_flux,
+            b_var_poisson_val,
+            b_var_rnoise_val,
+            b_var_flat_val,
+            npixels[j],
+            twht,
+        ) = _extract_src_flux(
+            image,
+            var_poisson,
+            var_rnoise,
+            var_flat,
+            x,
+            j,
+            lam,
+            srclim,
+            weights=weights,
+            bkgmodels=[
+                bkg_model,
+                b_var_poisson_model,
+                b_var_rnoise_model,
+                b_var_flat_model,
+            ],
         )
         if nbkglim > 0:
             background[j] = bkg_flux
@@ -293,8 +352,17 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         x += 1
         continue
 
-    return (temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
+    return (
+        temp_flux,
+        f_var_poisson,
+        f_var_rnoise,
+        f_var_flat,
+        background,
+        b_var_poisson,
+        b_var_rnoise,
+        b_var_flat,
+        npixels,
+    )
 
 
 def bxcar(image, smoothing_length):
@@ -326,14 +394,16 @@ def bxcar(image, smoothing_length):
 
     i = 0
     for k in range(smoothing_length):
-        temp_im[..., i:i + width] += image
+        temp_im[..., i : i + width] += image
         i += 1
     temp_im /= float(smoothing_length)
 
-    return temp_im[..., half:half + width].astype(image.dtype)
+    return temp_im[..., half : half + width].astype(image.dtype)
 
 
-def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim, weights, bkgmodels):
+def _extract_src_flux(
+    image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim, weights, bkgmodels
+):
     """Extract the source and subtract background.
 
     Parameters:
@@ -483,12 +553,23 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
     b_var_rnoise = b_var_rnoise.sum(dtype=np.float64)
     b_var_flat = b_var_flat.sum(dtype=np.float64)
 
-    return (total_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            bkg_flux, b_var_poisson, b_var_rnoise, b_var_flat, tarea, twht)
+    return (
+        total_flux,
+        f_var_poisson,
+        f_var_rnoise,
+        f_var_flat,
+        bkg_flux,
+        b_var_poisson,
+        b_var_rnoise,
+        b_var_flat,
+        tarea,
+        twht,
+    )
 
 
-def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
-                          x, j, bkglim, bkg_fit, bkg_order):
+def _fit_background_model(
+    image, var_poisson, var_rnoise, var_flat, x, j, bkglim, bkg_fit, bkg_order
+):
     """Extract background pixels and fit a polynomial. If the number of good data
     points is <= 1, the fit model will be forced to 0 to avoid divergence.
 
@@ -560,8 +641,13 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
     npts = good.sum()
 
     if npts <= 1 or not np.any(good):
-        return (models.Polynomial1D(0), models.Polynomial1D(0),
-                models.Polynomial1D(0), models.Polynomial1D(0), 0)
+        return (
+            models.Polynomial1D(0),
+            models.Polynomial1D(0),
+            models.Polynomial1D(0),
+            models.Polynomial1D(0),
+            0,
+        )
 
     # filter-out bad values:
     val = val[good]
@@ -569,8 +655,13 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
     y = y[good]
 
     if wht.sum() == 0:
-        return (models.Polynomial1D(0), models.Polynomial1D(0),
-                models.Polynomial1D(0), models.Polynomial1D(0), 0)
+        return (
+            models.Polynomial1D(0),
+            models.Polynomial1D(0),
+            models.Polynomial1D(0),
+            models.Polynomial1D(0),
+            0,
+        )
 
     # Find values for each variance array according to locations of
     # "good" image values
@@ -582,36 +673,58 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
     var_flat_val = var_flat_val[good]
 
     # Compute the fit
-    if bkg_fit == 'poly':
+    if bkg_fit == "poly":
 
         # Fit the background values with a polynomial of the requested order
         lsqfitter = fitting.LinearLSQFitter()
-        bkg_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                              y, val, weights=wht)
-        b_var_poisson_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                        y, var_poisson_val, weights=wht)
-        b_var_rnoise_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                       y, var_rnoise_val, weights=wht)
-        b_var_flat_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                     y, var_flat_val, weights=wht)
+        bkg_model = lsqfitter(
+            models.Polynomial1D(min(bkg_order, npts - 1)), y, val, weights=wht
+        )
+        b_var_poisson_model = lsqfitter(
+            models.Polynomial1D(min(bkg_order, npts - 1)),
+            y,
+            var_poisson_val,
+            weights=wht,
+        )
+        b_var_rnoise_model = lsqfitter(
+            models.Polynomial1D(min(bkg_order, npts - 1)),
+            y,
+            var_rnoise_val,
+            weights=wht,
+        )
+        b_var_flat_model = lsqfitter(
+            models.Polynomial1D(min(bkg_order, npts - 1)), y, var_flat_val, weights=wht
+        )
 
-    elif bkg_fit == 'mean':
+    elif bkg_fit == "mean":
 
         # Compute the mean of the (good) background values
         # only use values with weight=1
         bkg_model = models.Polynomial1D(degree=0, c0=np.mean(val[wht == 1]))
-        b_var_poisson_model = models.Polynomial1D(degree=0, c0=np.mean(var_poisson_val[wht == 1]))
-        b_var_rnoise_model = models.Polynomial1D(degree=0, c0=np.mean(var_rnoise_val[wht == 1]))
-        b_var_flat_model = models.Polynomial1D(degree=0, c0=np.mean(var_flat_val[wht == 1]))
+        b_var_poisson_model = models.Polynomial1D(
+            degree=0, c0=np.mean(var_poisson_val[wht == 1])
+        )
+        b_var_rnoise_model = models.Polynomial1D(
+            degree=0, c0=np.mean(var_rnoise_val[wht == 1])
+        )
+        b_var_flat_model = models.Polynomial1D(
+            degree=0, c0=np.mean(var_flat_val[wht == 1])
+        )
 
-    elif bkg_fit == 'median':
+    elif bkg_fit == "median":
 
         # Compute the median of the (good) background values
         # only use values with weight=1
         bkg_model = models.Polynomial1D(degree=0, c0=np.median(val[wht == 1]))
-        b_var_poisson_model = models.Polynomial1D(degree=0, c0=np.median(var_poisson_val[wht == 1]))
-        b_var_rnoise_model = models.Polynomial1D(degree=0, c0=np.median(var_rnoise_val[wht == 1]))
-        b_var_flat_model = models.Polynomial1D(degree=0, c0=np.median(var_flat_val[wht == 1]))
+        b_var_poisson_model = models.Polynomial1D(
+            degree=0, c0=np.median(var_poisson_val[wht == 1])
+        )
+        b_var_rnoise_model = models.Polynomial1D(
+            degree=0, c0=np.median(var_rnoise_val[wht == 1])
+        )
+        b_var_flat_model = models.Polynomial1D(
+            degree=0, c0=np.median(var_flat_val[wht == 1])
+        )
 
     return bkg_model, b_var_poisson_model, b_var_rnoise_model, b_var_flat_model, npts
 
@@ -677,8 +790,14 @@ def _extract_colpix(image_data, x, j, limits):
     ns = image_data.shape[0] - 1
     ns12 = ns + 0.5
 
-    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) -
-                   max(0, int(math.floor(x[0] + 0.5))) + 1, intervals))
+    npts = sum(
+        map(
+            lambda x: min(ns, int(math.floor(x[1] + 0.5)))
+            - max(0, int(math.floor(x[0] + 0.5)))
+            + 1,
+            intervals,
+        )
+    )
     npts = max(npts, 1)
 
     # pre-allocate data arrays:
@@ -717,8 +836,8 @@ def _extract_colpix(image_data, x, j, limits):
         wht[kn] = divmod(i2 + 0.5, 1)[1] if i2 < ns12 else 1.0
 
         # c. all other intermediate pixels:
-        val[k + 1:kn] = image_data[ii1 + 1:ii2, x]
-        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float64)
+        val[k + 1 : kn] = image_data[ii1 + 1 : ii2, x]
+        y[k : kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float64)
 
         k += ii2 - ii1 + 1
 
@@ -750,19 +869,23 @@ def _coalesce_bounds(segments):
         # make sure each nested list is a list of two numbers:
         for x in intervals:
             if len(x) != 2:
-                raise ValueError("Each list in the 'segments' list must have "
-                                 "exactly two elements")
+                raise ValueError(
+                    "Each list in the 'segments' list must have " "exactly two elements"
+                )
             try:
                 map(float, x)
             except TypeError:
-                raise TypeError("Each segment in 'segments' must be a list of "
-                                "two numbers")
+                raise TypeError(
+                    "Each segment in 'segments' must be a list of " "two numbers"
+                )
     else:
         # we have a single "interval" (or "segment"):
         if len(intervals) != 2:
-            raise ValueError("'segments' list must be a list of lists of two "
-                             "numbers or 'segments' must be a list of exactly "
-                             "two numbers")
+            raise ValueError(
+                "'segments' list must be a list of lists of two "
+                "numbers or 'segments' must be a list of exactly "
+                "two numbers"
+            )
         try:
             map(float, intervals)
         except TypeError:

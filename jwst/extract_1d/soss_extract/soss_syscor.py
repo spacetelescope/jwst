@@ -22,7 +22,7 @@ def make_profile_mask(ref_2d_profile, threshold=1e-3):
         Pixel mask in the trace based on the 2d profile reference file.
     """
 
-    bkg_mask = (ref_2d_profile > threshold)
+    bkg_mask = ref_2d_profile > threshold
 
     return bkg_mask
 
@@ -90,13 +90,13 @@ def soss_background(scidata, scimask, bkg_mask=None):
     data_shape = scidata.shape
 
     if scimask.shape != data_shape:
-        msg = 'scidata and scimask must have the same shape.'
+        msg = "scidata and scimask must have the same shape."
         log.critical(msg)
         raise ValueError(msg)
 
     if bkg_mask is not None:
         if bkg_mask.shape != data_shape:
-            msg = 'scidata and bkg_mask must have the same shape.'
+            msg = "scidata and bkg_mask must have the same shape."
             log.critical(msg)
             raise ValueError(msg)
 
@@ -109,12 +109,12 @@ def soss_background(scidata, scimask, bkg_mask=None):
     scidata_masked = np.ma.array(scidata, mask=mask)
 
     # Mask additional pixels using sigma-clipping.
-    sigclip = SigmaClip(sigma=3, maxiters=None, cenfunc='mean')
+    sigclip = SigmaClip(sigma=3, maxiters=None, cenfunc="mean")
     scidata_clipped = sigclip(scidata_masked, axis=0)
 
     # Compute the mean for each column and record the number of pixels used.
     col_bkg = scidata_clipped.mean(axis=0)
-    col_bkg = np.where(np.all(scidata_clipped.mask, axis=0), 0., col_bkg)
+    col_bkg = np.where(np.all(scidata_clipped.mask, axis=0), 0.0, col_bkg)
     npix_bkg = (~scidata_clipped.mask).sum(axis=0)
 
     # Background subtract the science data.
@@ -155,8 +155,10 @@ def make_background_mask(deepstack, width=28):
     elif nrows == 2048:  # FULL
         quantile = 100 * (1 - 2 * width / 2048)  # Mask 2 orders worth of pixels.
     else:
-        msg = (f'Unexpected image dimensions, expected nrows = 96, 256 or 2048, '
-               f'got nrows = {nrows}.')
+        msg = (
+            f"Unexpected image dimensions, expected nrows = 96, 256 or 2048, "
+            f"got nrows = {nrows}."
+        )
         log.critical(msg)
         raise ValueError(msg)
 
@@ -164,14 +166,15 @@ def make_background_mask(deepstack, width=28):
     threshold = np.nanpercentile(deepstack, quantile)
 
     # Mask pixels above the threshold value.
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid="ignore"):
         bkg_mask = (deepstack > threshold) | ~np.isfinite(deepstack)
 
     return bkg_mask
 
 
-def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
-                             zero_bias=False):
+def soss_oneoverf_correction(
+    scidata, scimask, deepstack, bkg_mask=None, zero_bias=False
+):
     """Compute a column-wise correction to the 1/f noise on the difference image
     of an individual SOSS integration (i.e. an individual integration - a deep
     image of the same observation).
@@ -208,19 +211,19 @@ def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
     data_shape = scidata.shape
 
     if scimask.shape != data_shape:
-        msg = 'scidata and scimask must have the same shape.'
+        msg = "scidata and scimask must have the same shape."
         log.critical(msg)
         raise ValueError(msg)
 
     if deepstack.shape != data_shape:
-        msg = 'scidata and deepstack must have the same shape.'
+        msg = "scidata and deepstack must have the same shape."
         log.critical(msg)
         raise ValueError(msg)
 
     if bkg_mask is not None:
 
         if bkg_mask.shape != data_shape:
-            msg = 'scidata and bkg_mask must have the same shape.'
+            msg = "scidata and bkg_mask must have the same shape."
             log.critical(msg)
             raise ValueError(msg)
 
@@ -236,7 +239,7 @@ def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
     diffimage_masked = np.ma.array(diffimage, mask=mask)
 
     # Mask additional pixels using sigma-clipping.
-    sigclip = SigmaClip(sigma=3, maxiters=None, cenfunc='mean')
+    sigclip = SigmaClip(sigma=3, maxiters=None, cenfunc="mean")
     diffimage_clipped = sigclip(diffimage_masked, axis=0)
 
     # Compute the mean for each column and record the number of pixels used.

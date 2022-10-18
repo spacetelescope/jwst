@@ -38,5 +38,5 @@ def get_resource_mappings():
         DirectoryResourceMapping(
             resources_root / "metaschema",
             "http://stsci.edu/schemas/fits-schema/",
-        )
+        ),
     ]

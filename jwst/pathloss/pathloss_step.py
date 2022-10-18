@@ -20,7 +20,7 @@ class PathLossStep(Step):
         source_type = string(default=None)  # Process as specified source type.
     """
 
-    reference_file_types = ['pathloss']
+    reference_file_types = ["pathloss"]
 
     def process(self, input):
 
@@ -34,15 +34,15 @@ class PathLossStep(Step):
                 correction_pars = None
 
                 # Get the name of the pathloss reference file to use
-                self.pathloss_name = self.get_reference_file(input_model, 'pathloss')
-                self.log.info(f'Using PATHLOSS reference file {self.pathloss_name}')
+                self.pathloss_name = self.get_reference_file(input_model, "pathloss")
+                self.log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
 
                 # Check for a valid reference file
-                if self.pathloss_name == 'N/A':
-                    self.log.warning('No PATHLOSS reference file found')
-                    self.log.warning('Pathloss step will be skipped')
+                if self.pathloss_name == "N/A":
+                    self.log.warning("No PATHLOSS reference file found")
+                    self.log.warning("Pathloss step will be skipped")
                     result = input_model.copy()
-                    result.meta.cal_step.pathloss = 'SKIPPED'
+                    result.meta.cal_step.pathloss = "SKIPPED"
                     return result
 
                 # Open the pathloss ref file data model
@@ -53,8 +53,11 @@ class PathLossStep(Step):
 
             # Do the pathloss correction
             result, self.correction_pars = pathloss.do_correction(
-                input_model, pathloss_model,
-                inverse=self.inverse, source_type=self.source_type, correction_pars=correction_pars
+                input_model,
+                pathloss_model,
+                inverse=self.inverse,
+                source_type=self.source_type,
+                correction_pars=correction_pars,
             )
 
             if pathloss_model:

@@ -40,34 +40,36 @@ class _KeywordMapping:
     entry.
     """
 
-    def __init__(self, src_kwd, dst_name, agg_func=None, error_type="ignore",
-                 error_value=np.nan):
+    def __init__(
+        self, src_kwd, dst_name, agg_func=None, error_type="ignore", error_value=np.nan
+    ):
         if not isinstance(src_kwd, str):
-            raise TypeError(
-                "The source keyword name must be a string")
+            raise TypeError("The source keyword name must be a string")
 
         if not isinstance(dst_name, str):
-            raise TypeError(
-                "The destination name must be a string")
+            raise TypeError("The destination name must be a string")
 
         if agg_func is not None:
             try:
                 for i in agg_func:
-                    if not hasattr(i, '__call__'):
+                    if not hasattr(i, "__call__"):
                         raise TypeError(
-                            "The aggregating function must be a callable " +
-                            "object, None or a sequence of callables")
+                            "The aggregating function must be a callable "
+                            + "object, None or a sequence of callables"
+                        )
                 self.agg_func_is_sequence = True
             except TypeError:
-                if not hasattr(agg_func, '__call__'):
+                if not hasattr(agg_func, "__call__"):
                     raise TypeError(
                         "The aggregating function must be a callable object, "
-                        "None or a sequence of callables")
+                        "None or a sequence of callables"
+                    )
                 self.agg_func_is_sequence = False
 
-        if error_type not in ('ignore', 'raise', 'constant'):
+        if error_type not in ("ignore", "raise", "constant"):
             raise ValueError(
-                "The error type must be either 'ignore', 'raise' or 'constant'")
+                "The error type must be either 'ignore', 'raise' or 'constant'"
+            )
 
         self.src_kwd = src_kwd
         self.dst_name = dst_name
@@ -179,19 +181,20 @@ def metablender(input_models, spec):
         if not isinstance(model, DataModel):
             if not isinstance(model, str):
                 raise TypeError(
-                    "Each entry in the headers list must be either a " +
-                    "datamodels.DataModel instance or a filename (str)")
+                    "Each entry in the headers list must be either a "
+                    + "datamodels.DataModel instance or a filename (str)"
+                )
             model = datamodels.open(model)
         header = model.to_flat_dict()
-        filename = header['meta.filename']
+        filename = header["meta.filename"]
         for i, mapping in enumerate(mappings):
             if mapping.src_kwd in header:
                 value = model[mapping.src_kwd]
-            elif mapping.error_type == 'raise':
+            elif mapping.error_type == "raise":
                 raise ValueError(
-                    "%s is missing keyword '%s'" %
-                    (filename, mapping.src_kwd))
-            elif mapping.error_type == 'constant':
+                    "%s is missing keyword '%s'" % (filename, mapping.src_kwd)
+                )
+            elif mapping.error_type == "constant":
                 value = mapping.error_value
             else:
                 value = None
@@ -234,7 +237,7 @@ def metablender(input_models, spec):
             array = np.array(data[i])
             if np.issubdtype(np.int32, array.dtype):
                 # see about recasting as int32
-                if not np.any(array / (2**31 - 1) > 1.):
+                if not np.any(array / (2**31 - 1) > 1.0):
                     array = array.astype(np.int32)
             dtype.append((mapping.dst_name, array.dtype))
             arrays.append(array)

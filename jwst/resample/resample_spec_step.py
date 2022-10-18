@@ -8,7 +8,7 @@ from ..assign_wcs.util import update_s_region_spectral
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleSpecStep(ResampleStep):
@@ -52,20 +52,20 @@ class ResampleSpecStep(ResampleStep):
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
-        if ref_filename != 'N/A':
-            self.log.info('Drizpars reference file: {}'.format(ref_filename))
+        if ref_filename != "N/A":
+            self.log.info("Drizpars reference file: {}".format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
             # Deal with NIRSpec, which currently has no default drizpars reffile
             self.log.info("No DRIZPARS reffile")
             kwargs = self._set_spec_defaults()
-            kwargs['blendheaders'] = self.blendheaders
+            kwargs["blendheaders"] = self.blendheaders
 
-        kwargs['allowed_memory'] = self.allowed_memory
-        kwargs['output'] = output
+        kwargs["allowed_memory"] = self.allowed_memory
+        kwargs["output"] = output
 
         # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
+        if self.wht_type == "exptime":
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
 
@@ -165,10 +165,23 @@ class ResampleSpecStep(ResampleStep):
         the normal update() method doesn't work with them. Updates output_model
         in-place.
         """
-        for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                     'dispersion_direction', 'shutter_state']:
+        for attr in [
+            "name",
+            "xstart",
+            "xsize",
+            "ystart",
+            "ysize",
+            "slitlet_id",
+            "source_id",
+            "source_name",
+            "source_alias",
+            "stellarity",
+            "source_type",
+            "source_xpos",
+            "source_ypos",
+            "dispersion_direction",
+            "shutter_state",
+        ]:
             try:
                 val = getattr(self.input_models[-1], attr)
             except AttributeError:

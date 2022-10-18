@@ -7,7 +7,8 @@ from jwst.associations import (
     Association,
     AssociationError,
     AssociationRegistry,
-    generate)
+    generate,
+)
 from jwst.associations.registry import (
     import_from_file,
 )
@@ -17,13 +18,12 @@ from jwst.associations.lib.dms_base import DMSAttrConstraint
 # Basic Association object
 def test_read_assoc_defs():
     rules = AssociationRegistry(
-        [helpers.t_path('data/asn_rules_set1.py')],
-        include_default=False
+        [helpers.t_path("data/asn_rules_set1.py")], include_default=False
     )
     assert len(rules) >= 2
     rule_names = helpers.get_rule_names(rules)
-    assert 'DMS_Level3_Base_Set1' not in rules
-    valid_rules = ['Asn_Dither_Set1', 'Asn_WFS_Set1']
+    assert "DMS_Level3_Base_Set1" not in rules
+    valid_rules = ["Asn_Dither_Set1", "Asn_WFS_Set1"]
     for rule in valid_rules:
         assert rule in rule_names
 
@@ -32,8 +32,8 @@ def test_read_assoc_defs_fromdefault():
     rules = AssociationRegistry()
     assert len(rules) >= 3
     rule_names = helpers.get_rule_names(rules)
-    assert 'DMS_Level3_Base' not in rules
-    valid_rules = ['Asn_Lv3Image', 'Asn_Lv3WFSCMB']
+    assert "DMS_Level3_Base" not in rules
+    valid_rules = ["Asn_Lv3Image", "Asn_Lv3WFSCMB"]
     for rule in valid_rules:
         assert rule in rule_names
 
@@ -51,20 +51,15 @@ def test_nodefs():
 
 def test_multi_rules():
     rule_files = [
-        helpers.t_path('data/asn_rules_set1.py'),
-        helpers.t_path('data/asn_rules_set2.py')
+        helpers.t_path("data/asn_rules_set1.py"),
+        helpers.t_path("data/asn_rules_set2.py"),
     ]
     rules = AssociationRegistry(rule_files, include_default=False)
     assert len(rules) == 4
     rule_names = helpers.get_rule_names(rules)
-    assert 'DMS_Level3_Base_Set1' not in rule_names
-    assert 'DMS_Level3_Base_Set2' not in rule_names
-    valid_rules = [
-        'Asn_Dither_Set1',
-        'Asn_Dither_Set2',
-        'Asn_WFS_Set1',
-        'Asn_WFS_Set2'
-    ]
+    assert "DMS_Level3_Base_Set1" not in rule_names
+    assert "DMS_Level3_Base_Set2" not in rule_names
+    valid_rules = ["Asn_Dither_Set1", "Asn_Dither_Set2", "Asn_WFS_Set1", "Asn_WFS_Set2"]
 
     for rule in valid_rules:
         assert rule in rule_names
@@ -76,57 +71,49 @@ def test_base_instantiation():
 
 
 @pytest.mark.parametrize(
-    'constraints, pool, n_asns',
+    "constraints, pool, n_asns",
     [
         (
             DMSAttrConstraint(
-                name='obs_id',
-                value='V99009001001P0000000002101',
-                sources=['obs_id']
+                name="obs_id", value="V99009001001P0000000002101", sources=["obs_id"]
             ),
-            helpers.t_path('data/pool_018_all_exptypes.csv'),
+            helpers.t_path("data/pool_018_all_exptypes.csv"),
             1,
         ),
         (
-            DMSAttrConstraint(
-                name='obs_id',
-                value='junk',
-                sources=['obs_id']
-            ),
-            helpers.t_path('data/pool_001_candidates.csv'),
+            DMSAttrConstraint(name="obs_id", value="junk", sources=["obs_id"]),
+            helpers.t_path("data/pool_001_candidates.csv"),
             0,
         ),
         (
             DMSAttrConstraint(
-                name='asn_candidate_id',
-                value='.+(o001|o002).+',
-                sources=['asn_candidate'],
+                name="asn_candidate_id",
+                value=".+(o001|o002).+",
+                sources=["asn_candidate"],
                 force_unique=False,
                 is_acid=True,
                 evaluate=True,
             ),
-            helpers.t_path('data/pool_001_candidates.csv'),
+            helpers.t_path("data/pool_001_candidates.csv"),
             22,
         ),
         (
             DMSAttrConstraint(
-                name='asn_candidate_id',
-                value='.+(o001|o002).+',
-                sources=['asn_candidate'],
+                name="asn_candidate_id",
+                value=".+(o001|o002).+",
+                sources=["asn_candidate"],
                 force_unique=True,
                 is_acid=True,
                 evaluate=True,
             ),
-            helpers.t_path('data/pool_001_candidates.csv'),
+            helpers.t_path("data/pool_001_candidates.csv"),
             24,
         ),
-    ]
+    ],
 )
 def test_global_constraints(constraints, pool, n_asns):
     """Test that global constraints get applied to all rules"""
-    rules = AssociationRegistry(
-        global_constraints=constraints
-    )
+    rules = AssociationRegistry(global_constraints=constraints)
     assert len(rules) >= 3
     for constraint in constraints:
         for rule in rules:

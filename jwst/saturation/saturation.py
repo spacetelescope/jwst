@@ -1,4 +1,3 @@
-
 #  Module for 2d saturation
 #
 import logging
@@ -14,11 +13,11 @@ from stcal.saturation.saturation import flag_saturated_pixels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DONOTUSE = dqflags.pixel['DO_NOT_USE']
-SATURATED = dqflags.pixel['SATURATED']
-AD_FLOOR = dqflags.pixel['AD_FLOOR']
-NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
-ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
+DONOTUSE = dqflags.pixel["DO_NOT_USE"]
+SATURATED = dqflags.pixel["SATURATED"]
+AD_FLOOR = dqflags.pixel["AD_FLOOR"]
+NO_SAT_CHECK = dqflags.pixel["NO_SAT_CHECK"]
+ATOD_LIMIT = 65535.0  # Hard DN limit of 16-bit A-to-D converter
 
 
 def flag_saturation(input_model, ref_model, n_pix_grow_sat):
@@ -61,15 +60,23 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
-        log.info('Extracting reference file subarray to match science data')
+        log.info("Extracting reference file subarray to match science data")
         ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
         sat_thresh = ref_sub_model.data.copy()
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
-        data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
+        data,
+        gdq,
+        pdq,
+        sat_thresh,
+        sat_dq,
+        ATOD_LIMIT,
+        dqflags.pixel,
+        n_pix_grow_sat=n_pix_grow_sat,
+        zframe=zframe,
+    )
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -129,7 +136,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
-        log.info('Extracting reference file subarray to match science data')
+        log.info("Extracting reference file subarray to match science data")
         ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
         sat_thresh = ref_sub_model.data.copy()
         sat_dq = ref_sub_model.dq.copy()
@@ -155,8 +162,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     for ints in range(nints):
         for group in range(ngroups):
             # Update the 4D groupdq array with the saturation flag.
-            sci_temp = x_irs2.from_irs2(data[ints, group, :, :],
-                                        irs2_mask, detector)
+            sci_temp = x_irs2.from_irs2(data[ints, group, :, :], irs2_mask, detector)
             # check for saturation
             flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
             # check for A/D floor
@@ -172,11 +178,13 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
             # for saturation, the flag is set in the current plane
             # and all following planes.
-            np.bitwise_or(groupdq[ints, group:, :, :], flagarray,
-                          groupdq[ints, group:, :, :])
+            np.bitwise_or(
+                groupdq[ints, group:, :, :], flagarray, groupdq[ints, group:, :, :]
+            )
             # for A/D floor, the flag is only set of the current plane
-            np.bitwise_or(groupdq[ints, group, :, :], flaglowarray,
-                          groupdq[ints, group, :, :])
+            np.bitwise_or(
+                groupdq[ints, group, :, :], flaglowarray, groupdq[ints, group, :, :]
+            )
 
         # Process ZEROFRAME.  Instead of setting a ZEROFRAME DQ array, data
         # in the ZEROFRAME that is flagged will be set to 0.
@@ -197,7 +205,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
             np.bitwise_or(zdq[:, :], zflagarray, zdq[:, :])
             np.bitwise_or(zdq[:, :], zflaglowarray, zdq[:, :])
 
-            zplane[zdq != 0] = 0.
+            zplane[zdq != 0] = 0.0
             output_model.zeroframe[ints, :, :] = zplane[:, :]
             del zdq
 
@@ -205,13 +213,12 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     output_model.groupdq = groupdq
 
     n_sat = np.any(np.any(np.bitwise_and(groupdq, SATURATED), axis=0), axis=0).sum()
-    log.info(f'Detected {n_sat} saturated pixels')
+    log.info(f"Detected {n_sat} saturated pixels")
     n_floor = np.any(np.any(np.bitwise_and(groupdq, AD_FLOOR), axis=0), axis=0).sum()
-    log.info(f'Detected {n_floor} A/D floor pixels')
+    log.info(f"Detected {n_floor} A/D floor pixels")
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
-    pixeldq_temp = x_irs2.from_irs2(output_model.pixeldq, irs2_mask,
-                                    detector)
+    pixeldq_temp = x_irs2.from_irs2(output_model.pixeldq, irs2_mask, detector)
     pixeldq_temp = np.bitwise_or(pixeldq_temp, sat_dq)
     x_irs2.to_irs2(output_model.pixeldq, pixeldq_temp, irs2_mask, detector)
 

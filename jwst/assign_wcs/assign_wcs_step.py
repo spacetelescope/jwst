@@ -55,36 +55,56 @@ class AssignWcsStep(Step):
 
     """
 
-    reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
-                            'wavelengthrange', 'camera', 'collimator', 'disperser',
-                            'fore', 'fpa', 'msa', 'ote', 'ifupost',
-                            'ifufore', 'ifuslicer']
+    reference_file_types = [
+        "distortion",
+        "filteroffset",
+        "specwcs",
+        "regions",
+        "wavelengthrange",
+        "camera",
+        "collimator",
+        "disperser",
+        "fore",
+        "fpa",
+        "msa",
+        "ote",
+        "ifupost",
+        "ifufore",
+        "ifuslicer",
+    ]
 
     def process(self, input, *args, **kwargs):
         reference_file_names = {}
         with datamodels.open(input) as input_model:
             # If input type is not supported, log warning, set to 'skipped', exit
-            if not (isinstance(input_model, datamodels.ImageModel) or
-                    isinstance(input_model, datamodels.CubeModel) or
-                    isinstance(input_model, datamodels.IFUImageModel)):
+            if not (
+                isinstance(input_model, datamodels.ImageModel)
+                or isinstance(input_model, datamodels.CubeModel)
+                or isinstance(input_model, datamodels.IFUImageModel)
+            ):
                 log.warning("Input dataset type is not supported.")
-                log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
+                log.warning(
+                    "assign_wcs expects ImageModel, IFUImageModel or CubeModel as input."
+                )
                 log.warning("Skipping assign_wcs step.")
                 result = input_model.copy()
-                result.meta.cal_step.assign_wcs = 'SKIPPED'
+                result.meta.cal_step.assign_wcs = "SKIPPED"
                 return result
 
             for reftype in self.reference_file_types:
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
-            log.debug(f'reference files used in assign_wcs: {reference_file_names}')
+            log.debug(f"reference files used in assign_wcs: {reference_file_names}")
 
             # Get the MSA metadata file if needed and add to reffiles
             if input_model.meta.exposure.type == "NRS_MSASPEC":
                 msa_metadata_file = input_model.meta.instrument.msa_metadata_file
-                if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
+                if msa_metadata_file is not None and msa_metadata_file.strip() not in [
+                    "",
+                    "N/A",
+                ]:
                     msa_metadata_file = self.make_input_path(msa_metadata_file)
-                    reference_file_names['msametafile'] = msa_metadata_file
+                    reference_file_names["msametafile"] = msa_metadata_file
                 else:
                     message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
                     log.error(message)
@@ -104,11 +124,13 @@ class AssignWcsStep(Step):
                 max_inv_pix_error=self.sip_max_inv_pix_error,
                 inv_degree=self.sip_inv_degree,
                 npoints=self.sip_npoints,
-                crpix=None
+                crpix=None,
             )
 
         except (ValueError, RuntimeError) as e:
-            log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                        f'approximation. Reported error is:\n"{e.args[0]}"')
+            log.warning(
+                "Failed to update 'meta.wcsinfo' with FITS SIP "
+                f'approximation. Reported error is:\n"{e.args[0]}"'
+            )
 
         return result

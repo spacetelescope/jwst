@@ -35,14 +35,14 @@ def guider_cds(model):
     # get needed sizes and shapes
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
 
-    if exp_type[:6] == 'FGS_ID':  # force output to have single slice
+    if exp_type[:6] == "FGS_ID":  # force output to have single slice
         new_model = datamodels.GuiderCalModel((1,) + imshape)
     else:
         new_model = datamodels.GuiderCalModel()
 
     # set up output data arrays
     slope_int_cube = np.zeros((n_int,) + imshape, dtype=np.float32)
-    if exp_type[:6] == 'FGS_ID':
+    if exp_type[:6] == "FGS_ID":
         err = np.zeros((1,) + imshape, dtype=np.float32)
     else:
         err = np.zeros((n_int,) + imshape, dtype=np.float32)
@@ -53,12 +53,12 @@ def guider_cds(model):
     for num_int in range(0, n_int):
         data_sect = model.data[num_int, :, :, :]
 
-        if exp_type == 'FGS_FINEGUIDE':
+        if exp_type == "FGS_FINEGUIDE":
             first_4 = data_sect[:4, :, :].mean(axis=0)
             last_4 = data_sect[-4:, :, :].mean(axis=0)
             slope_int_cube[num_int, :, :] = last_4 - first_4
 
-        elif exp_type[:6] == 'FGS_ID':
+        elif exp_type[:6] == "FGS_ID":
             grp_last = data_sect[1, :, :]
             grp_first = data_sect[0, :, :]
 
@@ -72,7 +72,7 @@ def guider_cds(model):
             grp_first = data_sect[0, :, :]
             slope_int_cube[num_int, :, :] = grp_last - grp_first
 
-    if exp_type[:6] == 'FGS_ID':
+    if exp_type[:6] == "FGS_ID":
         new_model.data[0, :, :] = np.minimum(diff_int1, diff_int0) / grp_time
     else:  # FINEGUIDE, ACQ1, ACQ2, or TRACK
         new_model.data = slope_int_cube / grp_time
@@ -93,7 +93,7 @@ def guider_cds(model):
     new_model.update(model)
 
     # Update BUNIT to reflect count rate
-    new_model.meta.bunit_data = 'DN/s'
+    new_model.meta.bunit_data = "DN/s"
 
     return new_model
 
@@ -136,11 +136,11 @@ def get_dataset_info(model):
 
     imshape = (asize2, asize1)
 
-    log.info('Instrument: %s' % (instrume))
-    log.info('Exposure type: %s' % (exp_type))
-    log.info('Number of integrations: %d' % (n_int))
-    log.info('Number of groups per integration: %d' % (ngroups))
-    log.info('Group time: %s' % (grp_time))
-    log.info('Frame time: %10.5f' % (frame_time))
+    log.info("Instrument: %s" % (instrume))
+    log.info("Exposure type: %s" % (exp_type))
+    log.info("Number of integrations: %d" % (n_int))
+    log.info("Number of groups per integration: %d" % (ngroups))
+    log.info("Group time: %s" % (grp_time))
+    log.info("Frame time: %10.5f" % (frame_time))
 
     return imshape, n_int, grp_time, exp_type

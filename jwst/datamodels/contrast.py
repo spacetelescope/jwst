@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['ContrastModel']
+__all__ = ["ContrastModel"]
 
 
 class ContrastModel(JwstDataModel):
@@ -13,4 +13,5 @@ class ContrastModel(JwstDataModel):
     contrast_table : numpy table
          Contrast curve table
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/contrast.schema"

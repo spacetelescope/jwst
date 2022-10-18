@@ -9,7 +9,7 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
     """Run the calwebb_spec3 pipeline on an ASN of nodded MIRI LRS
-       fixed-slit exposures."""
+    fixed-slit exposures."""
 
     rtdata = rtdata_module
 
@@ -23,10 +23,12 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["s2d", "x1d"])
-def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+def test_miri_lrs_slit_spec3(
+    run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Regression test of the calwebb_spec3 pipeline on MIRI
-       LRS fixed-slit data using along-slit-nod pattern for
-       background subtraction."""
+    LRS fixed-slit data using along-slit-nod pattern for
+    background subtraction."""
 
     # Run the pipeline and retrieve outputs
     rtdata = rtdata_module

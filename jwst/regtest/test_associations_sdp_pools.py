@@ -17,90 +17,85 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Decompose pool name to retrieve proposal and version id.
-pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
+pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")
 
 
 # Mark expected failures. Key is the pool name
 # and value is the reason message.
-EXPECTED_FAILS = {
-}
+EXPECTED_FAILS = {}
 
 # Pools that require special handling
 SPECIAL_DEFAULT = {
-    'args': [],
-    'xfail': None,
-    'slow': False,
+    "args": [],
+    "xfail": None,
+    "slow": False,
 }
 SPECIAL_POOLS = {
-    'jw00623_20190607t021101_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw00623_20190607t021101_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw00628_20191102t153956_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw00628_20191102t153956_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw00629_20190605t025157_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw00629_20190605t025157_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw00632_20190819t190005_pool': {
-        'args': [],
-        'xfail': 'JSOCINT-TDB: WFSC ROUTINE VISIT issue',
-        'slow': False,
+    "jw00632_20190819t190005_pool": {
+        "args": [],
+        "xfail": "JSOCINT-TDB: WFSC ROUTINE VISIT issue",
+        "slow": False,
     },
-    'jw00676_20210403t114320_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw00676_20210403t114320_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw00675_20211225t181823_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw00675_20211225t181823_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw00676_20210403t114320_c1007_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw00676_20210403t114320_c1007_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw80600_20171108T041522_pool': {
-        'args': [],
-        'xfail': 'PR #3450',
-        'slow': False,
+    "jw80600_20171108T041522_pool": {
+        "args": [],
+        "xfail": "PR #3450",
+        "slow": False,
     },
-    'jw82600_20180921T023255_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True
+    "jw82600_20180921T023255_pool": {"args": [], "xfail": None, "slow": True},
+    "jw93065_20171108T041402_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw93065_20171108T041402_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw93135_20171108T041617_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw93135_20171108T041617_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw93135_20171108T041617-fixed_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw93135_20171108T041617-fixed_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
+    "jw94015_20171108T041516_pool": {
+        "args": [],
+        "xfail": None,
+        "slow": True,
     },
-    'jw94015_20171108T041516_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
-    },
-    'jw98010_20171108T062332_pool': {
-        'args': [],
-        'xfail': 'PR #3450',
-        'slow': False,
+    "jw98010_20171108T062332_pool": {
+        "args": [],
+        "xfail": "PR #3450",
+        "slow": False,
     },
 }
 
@@ -108,7 +103,7 @@ SPECIAL_POOLS = {
 # #####
 # Tests
 # #####
-@pytest.mark.filterwarnings('error')
+@pytest.mark.filterwarnings("error")
 def test_against_standard(sdpdata_module, pool_path, slow):
     """Compare a generated association against a standard
 
@@ -117,10 +112,10 @@ def test_against_standard(sdpdata_module, pool_path, slow):
 
     # Parse pool name
     pool = Path(pool_path).stem
-    proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
+    proposal, version_id = pool_regex.match(pool).group("proposal", "versionid")
     special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
 
-    if special['slow'] and not slow:
+    if special["slow"] and not slow:
         pytest.skip(f'Pool {pool} requires "--slow" option')
 
     # Setup test path
@@ -132,10 +127,12 @@ def test_against_standard(sdpdata_module, pool_path, slow):
         output_path = Path(pool)
         output_path.mkdir()
         sdpdata_module.output = str(output_path)
-        args = special['args'] + [
-            '-p', sdpdata_module.output,
-            '--version-id', version_id,
-            sdpdata_module.get_data(pool_path)
+        args = special["args"] + [
+            "-p",
+            sdpdata_module.output,
+            "--version-id",
+            version_id,
+            sdpdata_module.get_data(pool_path),
         ]
 
         # Create the associations
@@ -144,9 +141,9 @@ def test_against_standard(sdpdata_module, pool_path, slow):
         # Compare to the truth associations.
         truth_paths = sdpdata_module.truth_paths(pool)
         try:
-            compare_asn_files(output_path.glob('*.json'), truth_paths)
+            compare_asn_files(output_path.glob("*.json"), truth_paths)
         except AssertionError:
-            if special['xfail']:
-                pytest.xfail(special['xfail'])
+            if special["xfail"]:
+                pytest.xfail(special["xfail"])
             else:
                 raise

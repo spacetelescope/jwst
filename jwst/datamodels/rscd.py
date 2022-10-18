@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['RSCDModel']
+__all__ = ["RSCDModel"]
 
 
 class RSCDModel(ReferenceFileModel):
@@ -36,4 +36,5 @@ class RSCDModel(ReferenceFileModel):
         correction for integration 3 based on subarray, readpatt, even or odd row
 
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/rscd.schema"

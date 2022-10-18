@@ -18,18 +18,21 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("nirspec/fs/nrs1_group_subarray.fits")
 
-    args = ["calwebb_detector1", rtdata.input,
-            "--steps.group_scale.save_results=True"]
+    args = ["calwebb_detector1", rtdata.input, "--steps.group_scale.save_results=True"]
     Step.from_cmdline(args)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output", [
-    'nrs1_group_subarray_group_scale.fits',
-    'nrs1_group_subarray_rate.fits', ],
-    ids=['group_scale', 'rate'])
+@pytest.mark.parametrize(
+    "output",
+    [
+        "nrs1_group_subarray_group_scale.fits",
+        "nrs1_group_subarray_rate.fits",
+    ],
+    ids=["group_scale", "rate"],
+)
 def test_nirspec_detector1(run_pipeline, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_detector1 pipeline performed on NIRSpec data.

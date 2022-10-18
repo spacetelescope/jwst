@@ -39,7 +39,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, wavecorr_file):
-    """ Main wavecorr correction function for NIRSpec MOS and FS.
+    """Main wavecorr correction function for NIRSpec MOS and FS.
 
     Parameters
     ----------
@@ -49,24 +49,28 @@ def do_correction(input_model, wavecorr_file):
         Wavecorr reference file name.
     """
 
-    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
-                                'NRS_AUTOFLAT']
+    wavecorr_supported_modes = [
+        "NRS_FIXEDSLIT",
+        "NRS_MSASPEC",
+        "NRS_BRIGHTOBJ",
+        "NRS_AUTOFLAT",
+    ]
 
     # Check for valid exposure type
     exp_type = input_model.meta.exposure.type.upper()
     if exp_type not in wavecorr_supported_modes:
-        log.info(f'Skipping wavecorr correction for EXP_TYPE {exp_type}')
+        log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
         return input_model
 
     output_model = input_model.copy()
 
     # Get the primary slit for a FS exposure
-    if exp_type == 'NRS_FIXEDSLIT':
+    if exp_type == "NRS_FIXEDSLIT":
         primary_slit = input_model.meta.instrument.fixed_slit
-        if primary_slit is None or primary_slit == 'NONE':
-            log.warning('Primary slit name not found in input')
-            log.warning('Skipping wavecorr correction')
-            input_model.meta.cal_step.wavecorr = 'SKIPPED'
+        if primary_slit is None or primary_slit == "NONE":
+            log.warning("Primary slit name not found in input")
+            log.warning("Skipping wavecorr correction")
+            input_model.meta.cal_step.wavecorr = "SKIPPED"
             return input_model
 
     # For BRIGHTOBJ, operate on the single SlitModel
@@ -75,22 +79,27 @@ def do_correction(input_model, wavecorr_file):
             apply_zero_point_correction(output_model, wavecorr_file)
     else:
         # For FS only work on the primary slit
-        if exp_type == 'NRS_FIXEDSLIT':
+        if exp_type == "NRS_FIXEDSLIT":
             for slit in output_model.slits:
                 if slit.name == primary_slit:
                     if not hasattr(slit.meta, "dither"):
-                        log.warning('meta.dither is not populated for the primary slit')
-                        log.warning('Skipping wavecorr correction')
-                        input_model.meta.cal_step.wavecorr = 'SKIPPED'
+                        log.warning("meta.dither is not populated for the primary slit")
+                        log.warning("Skipping wavecorr correction")
+                        input_model.meta.cal_step.wavecorr = "SKIPPED"
                         break
-                    if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
-                        log.warning('dither.x(y)_offset values are None for primary slit')
-                        log.warning('Skipping wavecorr correction')
-                        input_model.meta.cal_step.wavecorr = 'SKIPPED'
+                    if (
+                        slit.meta.dither.x_offset is None
+                        or slit.meta.dither.y_offset is None
+                    ):
+                        log.warning(
+                            "dither.x(y)_offset values are None for primary slit"
+                        )
+                        log.warning("Skipping wavecorr correction")
+                        input_model.meta.cal_step.wavecorr = "SKIPPED"
                         break
                     if _is_point_source(slit, exp_type):
                         apply_zero_point_correction(slit, wavecorr_file)
-                        output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                        output_model.meta.cal_step.wavecorr = "COMPLETE"
                         break
 
         # For MOS work on all slits containing a point source
@@ -98,13 +107,13 @@ def do_correction(input_model, wavecorr_file):
             for slit in output_model.slits:
                 if _is_point_source(slit, exp_type):
                     apply_zero_point_correction(slit, wavecorr_file)
-                    output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                    output_model.meta.cal_step.wavecorr = "COMPLETE"
 
     return output_model
 
 
 def apply_zero_point_correction(slit, reffile):
-    """ Apply the NIRSpec wavelength zero-point correction.
+    """Apply the NIRSpec wavelength zero-point correction.
 
     Parameters
     ----------
@@ -113,11 +122,11 @@ def apply_zero_point_correction(slit, reffile):
     reffile : str
         The ``wavecorr`` reference file.
     """
-    log.info(f'slit name {slit.name}')
+    log.info(f"slit name {slit.name}")
     slit_wcs = slit.meta.wcs
 
     # Get the source position in the slit and set the aperture name
-    if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+    if slit.meta.exposure.type in ["NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         # pass lam = 2 microns
         # needed for wavecorr with fixed slits
         source_xpos = get_source_xpos(slit, slit_wcs, lam=2)
@@ -129,18 +138,20 @@ def apply_zero_point_correction(slit, reffile):
 
     lam = slit.wavelength.copy()
     dispersion = compute_dispersion(slit.meta.wcs)
-    corr, dq_lam = compute_zero_point_correction(lam, reffile, source_xpos,
-                                                 aperture_name, dispersion)
+    corr, dq_lam = compute_zero_point_correction(
+        lam, reffile, source_xpos, aperture_name, dispersion
+    )
     # TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
     # The only purpose of dq_lam is to set that flag.
 
     # Wavelength is in um, the correction is computed in meters.
-    slit.wavelength = slit.wavelength - corr * 10 ** 6
+    slit.wavelength = slit.wavelength - corr * 10**6
 
 
-def compute_zero_point_correction(lam, freference, source_xpos,
-                                  aperture_name, dispersion):
-    """ Compute the NIRSpec wavelength zero-point correction.
+def compute_zero_point_correction(
+    lam, freference, source_xpos, aperture_name, dispersion
+):
+    """Compute the NIRSpec wavelength zero-point correction.
 
     Parameters
     ----------
@@ -167,31 +178,35 @@ def compute_zero_point_correction(lam, freference, source_xpos,
     with datamodels.WaveCorrModel(freference) as wavecorr:
         for ap in wavecorr.apertures:
             if ap.aperture_name == aperture_name:
-                log.info(f'Using wavelength zero-point correction for aperture {ap.aperture_name}')
+                log.info(
+                    f"Using wavelength zero-point correction for aperture {ap.aperture_name}"
+                )
                 offset_model = ap.zero_point_offset.copy()
                 # TODO: implement variance
                 # variance = ap.variance.copy()
                 # width = ap.width
                 break
         else:
-            log.info(f'No wavelength zero-point correction found for slit {aperture_name}')
+            log.info(
+                f"No wavelength zero-point correction found for slit {aperture_name}"
+            )
 
     deltax = source_xpos
     lam = lam.copy()
     lam_no_nans = lam[~np.isnan(lam)]
     offset_model.bounds_error = False
-    correction = offset_model(lam_no_nans * 10 ** -6, [deltax] * lam_no_nans.size)
+    correction = offset_model(lam_no_nans * 10**-6, [deltax] * lam_no_nans.size)
     lam[~np.isnan(lam)] = correction
 
     # The correction for pixels outside the slit and wavelengths
     # outside the wave_range is 0.
-    lam[np.isnan(lam)] = 0.
+    lam[np.isnan(lam)] = 0.0
     lambda_cor = dispersion * lam
     return lambda_cor, lam
 
 
 def compute_dispersion(wcs, xpix=None, ypix=None):
-    """ Compute the pixel dispersion.
+    """Compute the pixel dispersion.
 
     Parameters
     ----------
@@ -215,7 +230,7 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     xright = xpix + 0.5
     _, _, lamright = wcs(xright, ypix)
     _, _, lamleft = wcs(xleft, ypix)
-    return (lamright - lamleft) * 10 ** -6
+    return (lamright - lamleft) * 10**-6
 
 
 def _is_point_source(slit, exp_type):
@@ -239,10 +254,10 @@ def _is_point_source(slit, exp_type):
     else:
         src_type = None
 
-    if src_type is not None and src_type.upper() in ['POINT', 'EXTENDED']:
+    if src_type is not None and src_type.upper() in ["POINT", "EXTENDED"]:
         # Use the supplied value
-        log.info(f'Detected a {src_type} source type in slit {slit.name}')
-        if src_type.strip().upper() == 'POINT':
+        log.info(f"Detected a {src_type} source type in slit {slit.name}")
+        if src_type.strip().upper() == "POINT":
             result = True
         else:
             result = False
@@ -281,15 +296,16 @@ def get_source_xpos(slit, slit_wcs, lam):
     log.debug("wcsinfo: {0}, {1}, {2}, {3}".format(v2ref, v3ref, v3idlyangle, vparity))
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
-    log.info(f'xoffset, yoffset, {xoffset}, {yoffset}')
+    log.info(f"xoffset, yoffset, {xoffset}, {yoffset}")
 
     # Position in the virtual slit
-    xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform('v2v3', 'slit_frame')(
-        xv, yv, 2)
+    xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform("v2v3", "slit_frame")(
+        xv, yv, 2
+    )
     # Update slit.source_xpos, slit.source_ypos
     slit.source_xpos = xpos_slit
     slit.source_ypos = ypos_slit
-    log.debug('Source X/Y position in V2V3: {0}, {1}'.format(xv, yv))
-    log.info('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
+    log.debug("Source X/Y position in V2V3: {0}, {1}".format(xv, yv))
+    log.info("Source X/Y position in the slit: {0}, {1}".format(xpos_slit, ypos_slit))
 
     return xpos_slit

@@ -2,7 +2,7 @@ import numpy as np
 from ..assign_wcs import niriss
 
 
-WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
+WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "NRC_TSGRISM"]
 
 
 def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
@@ -34,11 +34,15 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     # Use the existing wavelength array, if there is one
     if hasattr(model, "wavelength"):
         wl_array = model.wavelength.copy()
-        got_wavelength = True                   # may be reset below
+        got_wavelength = True  # may be reset below
     else:
         wl_array = None
-    if (wl_array is None or len(wl_array) == 0 or np.nanmin(wl_array) == 0.
-            and np.nanmax(wl_array) == 0.):
+    if (
+        wl_array is None
+        or len(wl_array) == 0
+        or np.nanmin(wl_array) == 0.0
+        and np.nanmax(wl_array) == 0.0
+    ):
         got_wavelength = False
         wl_array = None
 

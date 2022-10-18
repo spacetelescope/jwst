@@ -5,32 +5,26 @@ single datamodel or several data models stored in a ModelContainer.
 import os
 from .. import datamodels
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 # ******************************************************************************
-class DataTypes():
+class DataTypes:
 
-    """ Class to handle reading input data to cube_build.
-    """
+    """Class to handle reading input data to cube_build."""
 
-    template = {"asn_rule": "",
-                "target": "",
-                "asn_pool": "",
-                "asn_type": "",
-                "products": [
-                    {"name": "",
-                     "members": [
-                         {"exptype": "",
-                          "expname": ""}
-                     ]
-                     }
-                ]
-                }
+    template = {
+        "asn_rule": "",
+        "target": "",
+        "asn_pool": "",
+        "asn_type": "",
+        "products": [{"name": "", "members": [{"exptype": "", "expname": ""}]}],
+    }
 
     def __init__(self, input, single, output_file, output_dir):
-        """ Read in input data and determine what type of input data.
+        """Read in input data and determine what type of input data.
 
         Open the input data using datamodels and determine if data is
         a single input model, an association, or a set of input models
@@ -82,34 +76,35 @@ class DataTypes():
             self.output_name = self.build_product_name(self.filenames[0])
 
         elif isinstance(input_try, datamodels.ModelContainer):
-            self.output_name = 'Temp'
+            self.output_name = "Temp"
             if not single:  # find the name of the output file from the association
                 self.output_name = input_try.meta.asn_table.products[0].name
             for model in input_try:
                 # check if input data is an IFUImageModel
                 if not isinstance(model, datamodels.IFUImageModel):
                     raise NotIFUImageModel(
-                        f"Input data is not a IFUImageModel, instead it is {model}")
+                        f"Input data is not a IFUImageModel, instead it is {model}"
+                    )
                 self.filenames.append(model.meta.filename)
             self.input_models = input_try
 
         else:
             raise TypeError("Failed to process file type {}".format(type(input_try)))
 
-# if the user has set the output name - strip out *.fits
-# later suffixes will be added to this name to designate the
-# channel, subchannel or grating,filter the data is covers.
+        # if the user has set the output name - strip out *.fits
+        # later suffixes will be added to this name to designate the
+        # channel, subchannel or grating,filter the data is covers.
 
         if output_file is not None:
             basename, ext = os.path.splitext(os.path.basename(output_file))
             self.output_name = basename
 
         if output_dir is not None:
-            self.output_name = output_dir + '/' + self.output_name
+            self.output_name = output_dir + "/" + self.output_name
 
-# _______________________________________________________________________________
+    # _______________________________________________________________________________
     def build_product_name(self, filename):
-        """ Determine the base of output name if an input data is a fits filename.
+        """Determine the base of output name if an input data is a fits filename.
 
         Parameters
         ----------
@@ -123,9 +118,9 @@ class DataTypes():
           Output base filename.
         """
 
-        indx = filename.rfind('.fits')
-        indx_try = filename.rfind('_rate.fits')
-        indx_try2 = filename.rfind('_cal.fits')
+        indx = filename.rfind(".fits")
+        indx_try = filename.rfind("_rate.fits")
+        indx_try2 = filename.rfind("_cal.fits")
 
         if indx_try > 0:
             single_product = filename[:indx_try]
@@ -135,10 +130,11 @@ class DataTypes():
             single_product = filename[:indx]
         return single_product
 
+
 # _______________________________________________________________________________
 
 
 class NotIFUImageModel(Exception):
-    """ Raise Exception if data is not of type IFUImageModel
-    """
+    """Raise Exception if data is not of type IFUImageModel"""
+
     pass

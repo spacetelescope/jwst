@@ -64,67 +64,79 @@ class FlatFieldStep(Step):
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
 
     # Define a suffix for optional saved output of the interpolated flat for NRS
-    flat_suffix = 'interpolatedflat'
+    flat_suffix = "interpolatedflat"
 
     def process(self, input):
 
         input_model = datamodels.open(input)
         exposure_type = input_model.meta.exposure.type.upper()
 
-        self.log.debug("Input is {} of exposure type {}".format(
-            input_model.__class__.__name__, exposure_type))
+        self.log.debug(
+            "Input is {} of exposure type {}".format(
+                input_model.__class__.__name__, exposure_type
+            )
+        )
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
-            if (exposure_type not in NRS_SPEC_MODES and
-                    exposure_type not in NRS_IMAGING_MODES):
-                self.log.warning("Exposure type is %s; flat-fielding will be "
-                                 "skipped because it is not currently "
-                                 "supported for this mode.", exposure_type)
+            if (
+                exposure_type not in NRS_SPEC_MODES
+                and exposure_type not in NRS_IMAGING_MODES
+            ):
+                self.log.warning(
+                    "Exposure type is %s; flat-fielding will be "
+                    "skipped because it is not currently "
+                    "supported for this mode.",
+                    exposure_type,
+                )
                 return self.skip_step(input_model)
 
         # Check whether extract_2d has been run.
-        if (input_model.meta.cal_step.extract_2d == 'COMPLETE' and
-                exposure_type not in EXTRACT_2D_IS_OK):
-            self.log.warning("The extract_2d step has been run, but for "
-                             "%s data it should not have been run, so ...",
-                             exposure_type)
+        if (
+            input_model.meta.cal_step.extract_2d == "COMPLETE"
+            and exposure_type not in EXTRACT_2D_IS_OK
+        ):
+            self.log.warning(
+                "The extract_2d step has been run, but for "
+                "%s data it should not have been run, so ...",
+                exposure_type,
+            )
             self.log.warning("flat fielding will be skipped.")
             return self.skip_step(input_model)
 
         # Retrieve reference files only if no user-supplied flat is specified
         if self.user_supplied_flat is not None:
             self.log.info(
-                f'User-supplied flat {self.user_supplied_flat} given.'
-                ' Ignoring all flat reference files and flat creation.'
+                f"User-supplied flat {self.user_supplied_flat} given."
+                " Ignoring all flat reference files and flat creation."
             )
             reference_file_models = {
-                'user_supplied_flat': datamodels.open(self.user_supplied_flat)
+                "user_supplied_flat": datamodels.open(self.user_supplied_flat)
             }
 
             # Record the user-supplied flat as the FLAT reference type for recording
             # in the result header.
             self._reference_files_used.append(
-                ('flat', reference_file_models['user_supplied_flat'].meta.filename)
+                ("flat", reference_file_models["user_supplied_flat"].meta.filename)
             )
         elif self.use_correction_pars:
-            self.log.info(f'Using flat field from correction pars {self.correction_pars["flat"]}')
+            self.log.info(
+                f'Using flat field from correction pars {self.correction_pars["flat"]}'
+            )
             reference_file_models = {
-                'user_supplied_flat': datamodels.open(self.correction_pars['flat'])
+                "user_supplied_flat": datamodels.open(self.correction_pars["flat"])
             }
 
             # Record the flat as the FLAT reference type for recording
             # in the result header.
             self._reference_files_used.append(
-                ('flat', reference_file_models['user_supplied_flat'].meta.filename)
+                ("flat", reference_file_models["user_supplied_flat"].meta.filename)
             )
         else:
             reference_file_models = self._get_references(input_model, exposure_type)
 
         # Do the flat-field correction
         output_model, flat_applied = flat_field.do_correction(
-            input_model,
-            **reference_file_models,
-            inverse=self.inverse
+            input_model, **reference_file_models, inverse=self.inverse
         )
 
         # Close the input and reference files
@@ -141,7 +153,7 @@ class FlatFieldStep(Step):
 
         if not self.correction_pars:
             self.correction_pars = {}
-        self.correction_pars['flat'] = flat_applied
+        self.correction_pars["flat"] = flat_applied
 
         return output_model
 
@@ -179,7 +191,7 @@ class FlatFieldStep(Step):
         reference_file_names = {}
         for reftype in self.reference_file_types:
             reffile = self.get_reference_file(data, reftype)
-            reference_file_names[reftype] = reffile if reffile != 'N/A' else None
+            reference_file_names[reftype] = reffile if reffile != "N/A" else None
 
         # Define mapping between reftype and datamodel type
         model_type = dict(
@@ -196,9 +208,9 @@ class FlatFieldStep(Step):
         for reftype, reffile in reference_file_names.items():
             if reffile is not None:
                 reference_file_models[reftype] = model_type[reftype](reffile)
-                self.log.debug('Using %s reference file: %s', reftype.upper(), reffile)
+                self.log.debug("Using %s reference file: %s", reftype.upper(), reffile)
             else:
-                self.log.debug('No reference found for type %s', reftype.upper())
+                self.log.debug("No reference found for type %s", reftype.upper())
                 reference_file_models[reftype] = None
 
         return reference_file_models

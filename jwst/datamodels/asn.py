@@ -3,15 +3,16 @@ import os
 from .model_base import JwstDataModel
 
 
-__all__ = ['AsnModel']
+__all__ = ["AsnModel"]
 
 
 class AsnModel(JwstDataModel):
     """
     A data model for association tables.
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/asn.schema"
-    supported_formats = ['yaml', 'json', 'fits']
+    supported_formats = ["yaml", "json", "fits"]
 
     def __init__(self, init=None, **kwargs):
         super(AsnModel, self).__init__(init=init, **kwargs)
@@ -30,7 +31,7 @@ class AsnModel(JwstDataModel):
             return
 
         for i, etype in enumerate(self.asn_table.exptype):
-            if 'prod' in etype.lower():
+            if "prod" in etype.lower():
                 self.output_rootname = self.asn_table.expname[i]
                 for fmt in self.supported_formats:
                     fname = "{0}.{1}".format(self.output_rootname, fmt)

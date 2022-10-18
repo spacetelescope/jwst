@@ -3,7 +3,7 @@ from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['WfssBkgModel']
+__all__ = ["WfssBkgModel"]
 
 
 class WfssBkgModel(ReferenceFileModel):
@@ -24,6 +24,7 @@ class WfssBkgModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/wfssbkg.schema"
 
     def __init__(self, init=None, **kwargs):

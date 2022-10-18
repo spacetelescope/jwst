@@ -7,8 +7,8 @@ from jwst.associations.tests.helpers import (
     t_path,
 )
 
-from jwst.associations import (AssociationPool, generate)
-from jwst.associations.main import (Main, constrain_on_candidates)
+from jwst.associations import AssociationPool, generate
+from jwst.associations.main import Main, constrain_on_candidates
 
 
 def test_duplicate_names():
@@ -17,7 +17,7 @@ def test_duplicate_names():
     with the same product name. Generation should produce
     log messages indicating when duplicate names have been found.
     """
-    pool = AssociationPool.read(t_path('data/jw00632_dups.csv'))
+    pool = AssociationPool.read(t_path("data/jw00632_dups.csv"))
     constrain_all_candidates = constrain_on_candidates(None)
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
 
@@ -26,7 +26,6 @@ def test_duplicate_names():
 
     # There should only be one association left.
     assert len(asns) == 1
-
 
 
 def test_duplicate_generate():
@@ -42,37 +41,31 @@ def test_duplicate_generate():
     being a duplicate of the first. The third was an extraneous
     discovered candidate.
     """
-    pool = AssociationPool.read(t_path('data/pool_duplicate.csv'))
+    pool = AssociationPool.read(t_path("data/pool_duplicate.csv"))
     constrain_all_candidates = constrain_on_candidates(None)
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
     asns = generate(pool, rules)
     assert len(asns) == 1
     asn = asns[0]
-    assert asn['asn_type'] == 'image3'
-    assert asn['asn_id'] == 'o029'
+    assert asn["asn_type"] == "image3"
+    assert asn["asn_id"] == "o029"
 
 
 def test_duplicate_main():
-    """Test the same but with Main
-    """
+    """Test the same but with Main"""
     cmd_args = [
-        t_path('data/pool_duplicate.csv'),
-        '--dry-run',
-        '-r', level3_rule_path(),
-        '--ignore-default'
+        t_path("data/pool_duplicate.csv"),
+        "--dry-run",
+        "-r",
+        level3_rule_path(),
+        "--ignore-default",
     ]
 
     generated = Main(cmd_args)
     asns = generated.associations
     assert len(asns) == 2
-    asn_types = set([
-        asn['asn_type']
-        for asn in asns
-    ])
+    asn_types = set([asn["asn_type"] for asn in asns])
     assert len(asn_types) == 1
-    assert 'image3' in asn_types
-    asn_ids = set([
-        asn['asn_id']
-        for asn in asns
-    ])
-    assert asn_ids == set(('a3001', 'o029'))
+    assert "image3" in asn_types
+    asn_ids = set([asn["asn_id"] for asn in asns])
+    assert asn_ids == set(("a3001", "o029"))

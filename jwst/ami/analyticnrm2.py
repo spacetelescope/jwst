@@ -29,9 +29,11 @@ def jinc(x, y):
     jinc_2d: float array
         2d jinc at the given coordinates, with NaNs replaced by pi/4.
     """
-    R = (jinc.d / jinc.lam) * jinc.pitch *  \
-        np.sqrt((x - jinc.offx) * (x - jinc.offx) +
-                (y - jinc.offy) * (y - jinc.offy))
+    R = (
+        (jinc.d / jinc.lam)
+        * jinc.pitch
+        * np.sqrt((x - jinc.offx) * (x - jinc.offx) + (y - jinc.offy) * (y - jinc.offy))
+    )
 
     jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * R) / (2.0 * R))
 
@@ -70,14 +72,16 @@ def ffc(kx, ky, **kwargs):
         cosine terms of analytic model
     """
 
-    ko = kwargs['c']  # the PSF ctr
-    baseline = kwargs['baseline']  # hole centers' vector
-    lam = kwargs['lam']  # m
-    pitch = kwargs['pitch']  # pitch for calcn = detpixscale/oversample
-    affine2d = kwargs['affine2d']
+    ko = kwargs["c"]  # the PSF ctr
+    baseline = kwargs["baseline"]  # hole centers' vector
+    lam = kwargs["lam"]  # m
+    pitch = kwargs["pitch"]  # pitch for calcn = detpixscale/oversample
+    affine2d = kwargs["affine2d"]
     kxprime, kyprime = affine2d.distortFargs(kx - ko[0], ky - ko[1])
 
-    cos_array = 2 * np.cos(2 * np.pi * pitch * (kxprime * baseline[0] + kyprime * baseline[1]) / lam)
+    cos_array = 2 * np.cos(
+        2 * np.pi * pitch * (kxprime * baseline[0] + kyprime * baseline[1]) / lam
+    )
 
     return cos_array
 
@@ -113,14 +117,16 @@ def ffs(kx, ky, **kwargs):
     sin_array: 2D float array
         sine terms of analytic model
     """
-    ko = kwargs['c']  # the PSF ctr
-    baseline = kwargs['baseline']  # hole centers' vector
-    lam = kwargs['lam']  # m
-    pitch = kwargs['pitch']  # pitch for calcn = detpixscale/oversample
-    affine2d = kwargs['affine2d']
+    ko = kwargs["c"]  # the PSF ctr
+    baseline = kwargs["baseline"]  # hole centers' vector
+    lam = kwargs["lam"]  # m
+    pitch = kwargs["pitch"]  # pitch for calcn = detpixscale/oversample
+    affine2d = kwargs["affine2d"]
     kxprime, kyprime = affine2d.distortFargs(kx - ko[0], ky - ko[1])
 
-    sin_array = 2 * np.sin(2 * np.pi * pitch * (kxprime * baseline[0] + kyprime * baseline[1]) / lam)
+    sin_array = 2 * np.sin(
+        2 * np.pi * pitch * (kxprime * baseline[0] + kyprime * baseline[1]) / lam
+    )
 
     return sin_array
 
@@ -159,25 +165,37 @@ def harmonicfringes(**kwargs):
     -------
     Sine and cosine fringes: float arrays
     """
-    fov = kwargs['fov']  # in detpix
-    pitch = kwargs['pitch']  # detpixscale
-    psf_offset = kwargs['psf_offset']  # the PSF ctr, detpix
-    baseline = kwargs['baseline']  # hole centers' vector, m
-    lam = kwargs['lam']  # m
-    oversample = kwargs['oversample']
-    affine2d = kwargs['affine2d']
+    fov = kwargs["fov"]  # in detpix
+    pitch = kwargs["pitch"]  # detpixscale
+    psf_offset = kwargs["psf_offset"]  # the PSF ctr, detpix
+    baseline = kwargs["baseline"]  # hole centers' vector, m
+    lam = kwargs["lam"]  # m
+    oversample = kwargs["oversample"]
+    affine2d = kwargs["affine2d"]
 
     cpitch = pitch / oversample
     ImCtr = image_center(fov, oversample, psf_offset)
 
-    return (np.fromfunction(ffc, (fov * oversample, fov * oversample), c=ImCtr,
-                            baseline=baseline,
-                            lam=lam, pitch=cpitch,
-                            affine2d=affine2d),
-            np.fromfunction(ffs, (fov * oversample, fov * oversample), c=ImCtr,
-                            baseline=baseline,
-                            lam=lam, pitch=cpitch,
-                            affine2d=affine2d))
+    return (
+        np.fromfunction(
+            ffc,
+            (fov * oversample, fov * oversample),
+            c=ImCtr,
+            baseline=baseline,
+            lam=lam,
+            pitch=cpitch,
+            affine2d=affine2d,
+        ),
+        np.fromfunction(
+            ffs,
+            (fov * oversample, fov * oversample),
+            c=ImCtr,
+            baseline=baseline,
+            lam=lam,
+            pitch=cpitch,
+            affine2d=affine2d,
+        ),
+    )
 
 
 def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
@@ -213,9 +231,12 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
         Calculate wavefront for a single hole
     """
     kxprime, kyprime = affine2d.distortFargs(kx, ky)
-    return np.exp(-2 * np.pi * 1j *
-                  ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)) * \
-        affine2d.distortphase(kx, ky)
+    return np.exp(
+        -2
+        * np.pi
+        * 1j
+        * ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)
+    ) * affine2d.distortphase(kx, ky)
 
 
 def image_center(fov, oversample, psf_offset):
@@ -241,8 +262,10 @@ def image_center(fov, oversample, psf_offset):
         offset of the psf center from the array center.
     """
 
-    offsets_from_center = np.array(utils.centerpoint((oversample * fov, oversample * fov))) + \
-        np.array((psf_offset[1], psf_offset[0])) * oversample
+    offsets_from_center = (
+        np.array(utils.centerpoint((oversample * fov, oversample * fov)))
+        + np.array((psf_offset[1], psf_offset[0])) * oversample
+    )
 
     return offsets_from_center
 
@@ -282,24 +305,41 @@ def interf(kx, ky, **kwargs):
         interference for all holes
     """
 
-    psfctr = kwargs['c']
-    ctrs = kwargs['ctrs']  # hole centers
-    phi = kwargs['phi']
-    lam = kwargs['lam']
-    pitch = kwargs['pitch']  # detpixscale/oversample
-    affine2d = kwargs['affine2d']
+    psfctr = kwargs["c"]
+    ctrs = kwargs["ctrs"]  # hole centers
+    phi = kwargs["phi"]
+    lam = kwargs["lam"]
+    pitch = kwargs["pitch"]  # detpixscale/oversample
+    affine2d = kwargs["affine2d"]
 
     fringe_complexamp = 0j
     for hole, ctr in enumerate(ctrs):
-        fringe_complexamp += phasor((kx - psfctr[0]), (ky - psfctr[1]),
-                                    ctr[0], ctr[1], lam, phi[hole], pitch, affine2d)
+        fringe_complexamp += phasor(
+            (kx - psfctr[0]),
+            (ky - psfctr[1]),
+            ctr[0],
+            ctr[1],
+            lam,
+            phi[hole],
+            pitch,
+            affine2d,
+        )
 
     return fringe_complexamp
 
 
-def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
-                phi=None,
-                shape='circ', affine2d=None):
+def model_array(
+    ctrs,
+    lam,
+    oversample,
+    pitch,
+    fov,
+    d,
+    psf_offset=(0, 0),
+    phi=None,
+    shape="circ",
+    affine2d=None,
+):
     """
     Short Summary
     -------------
@@ -347,16 +387,23 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
     nholes = ctrs.shape[0]
     if phi is None:
         np.zeros((nholes,))  # no phase errors in the model slices...
-    modelshape = (fov * oversample, fov * oversample)  # spatial extent of image model - the oversampled array
+    modelshape = (
+        fov * oversample,
+        fov * oversample,
+    )  # spatial extent of image model - the oversampled array
 
     # calculate primary beam envelope (non-negative real)
-    if shape == 'circ':
+    if shape == "circ":
         asf_pb = asf(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
-    elif shape == 'hex':
-        asf_pb = asf_hex(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+    elif shape == "hex":
+        asf_pb = asf_hex(
+            pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d
+        )
     else:
-        raise KeyError("Must provide a valid hole shape. Current supported shapes are"
-                       " 'circ' and 'hex'.")
+        raise KeyError(
+            "Must provide a valid hole shape. Current supported shapes are"
+            " 'circ' and 'hex'."
+        )
 
     primary_beam = (asf_pb * asf_pb.conj()).real
 
@@ -372,9 +419,15 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
     ffmodel.append(nholes * np.ones(modelshape))
     for basepair in alist:
         baseline = ctrs[int(basepair[0])] - ctrs[int(basepair[1])]
-        cosfringe, sinfringe = harmonicfringes(fov=fov, pitch=pitch, psf_offset=psf_offset,
-                                               baseline=baseline, oversample=oversample,
-                                               lam=lam, affine2d=affine2d)
+        cosfringe, sinfringe = harmonicfringes(
+            fov=fov,
+            pitch=pitch,
+            psf_offset=psf_offset,
+            baseline=baseline,
+            oversample=oversample,
+            lam=lam,
+            affine2d=affine2d,
+        )
         ffmodel.append(cosfringe)
         ffmodel.append(sinfringe)
 
@@ -425,12 +478,15 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     pitch = detpixel / float(oversample)
     ImCtr = image_center(fov, oversample, psf_offset)
 
-    return np.fromfunction(jinc, (oversample * fov, oversample * fov),
-                           c=ImCtr,
-                           D=d,
-                           lam=lam,
-                           pitch=pitch,
-                           affine2d=affine2d)
+    return np.fromfunction(
+        jinc,
+        (oversample * fov, oversample * fov),
+        c=ImCtr,
+        D=d,
+        lam=lam,
+        pitch=pitch,
+        affine2d=affine2d,
+    )
 
 
 def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
@@ -474,13 +530,16 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
     pitch = detpixel / float(oversample)
     ImCtr = image_center(fov, oversample, psf_offset)
 
-    return np.fromfunction(interf, (oversample * fov, oversample * fov),
-                           c=ImCtr,
-                           ctrs=ctrs,
-                           phi=phi,
-                           lam=lam,
-                           pitch=pitch,
-                           affine2d=affine2d)
+    return np.fromfunction(
+        interf,
+        (oversample * fov, oversample * fov),
+        c=ImCtr,
+        ctrs=ctrs,
+        phi=phi,
+        lam=lam,
+        pitch=pitch,
+        affine2d=affine2d,
+    )
 
 
 def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
@@ -528,16 +587,19 @@ def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
 
     ImCtr = image_center(fov, oversample, psf_offset)
 
-    return hextransformee.hextransform(s=(oversample * fov, oversample * fov),
-                                       c=ImCtr,
-                                       d=d,
-                                       lam=lam,
-                                       pitch=pitch,
-                                       affine2d=affine2d)
+    return hextransformee.hextransform(
+        s=(oversample * fov, oversample * fov),
+        c=ImCtr,
+        d=d,
+        lam=lam,
+        pitch=pitch,
+        affine2d=affine2d,
+    )
 
 
-def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
-        shape='circ'):
+def psf(
+    detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shape="circ"
+):
     """
     Short Summary
     -------------
@@ -580,25 +642,40 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
     """
 
     # Now deal with primary beam shapes...
-    if shape == 'circ':
-        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf_2d = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+    if shape == "circ":
+        asf_fringe = asffringe(
+            detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
+        )
+        asf_2d = (
+            asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+            * asf_fringe
+        )
 
-    elif shape == 'circonly':
+    elif shape == "circonly":
         asf_2d = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
 
-    elif shape == 'hex':
-        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf_2d = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+    elif shape == "hex":
+        asf_fringe = asffringe(
+            detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
+        )
+        asf_2d = (
+            asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+            * asf_fringe
+        )
 
-    elif shape == 'hexonly':
-        asf_2d = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+    elif shape == "hexonly":
+        asf_2d = asf_hex(
+            detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d
+        )
 
-    elif shape == 'fringeonly':
-        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+    elif shape == "fringeonly":
+        asf_fringe = asffringe(
+            detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
+        )
     else:
         raise ValueError(
             "pupil shape %s not supported - choices: 'circonly', 'circ', 'hexonly', 'hex', 'fringeonly'"
-            % shape)
+            % shape
+        )
 
     return (asf_2d * asf_2d.conj()).real

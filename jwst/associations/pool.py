@@ -9,10 +9,10 @@ from collections import UserDict
 from astropy.io.ascii import convert_numpy
 from astropy.table import Row, Table
 
-__all__ = ['AssociationPool']
+__all__ = ["AssociationPool"]
 
-DEFAULT_DELIMITER = '|'
-DEFAULT_FORMAT = 'ascii'
+DEFAULT_DELIMITER = "|"
+DEFAULT_FORMAT = "ascii"
 
 
 class AssociationPool(Table):
@@ -24,17 +24,14 @@ class AssociationPool(Table):
     - ASCII tables with a default delimiter of `|`
     - All values are read in as strings
     """
+
     def __init__(self, *args, **kwargs):
         super(AssociationPool, self).__init__(*args, **kwargs)
-        self.meta['pool_file'] = self.meta.get('pool_file', 'in-memory')
+        self.meta["pool_file"] = self.meta.get("pool_file", "in-memory")
 
     @classmethod
     def read(
-            cls,
-            filename,
-            delimiter=DEFAULT_DELIMITER,
-            format=DEFAULT_FORMAT,
-            **kwargs
+        cls, filename, delimiter=DEFAULT_DELIMITER, format=DEFAULT_FORMAT, **kwargs
     ):
         """Read in a Pool file
 
@@ -55,13 +52,15 @@ class AssociationPool(Table):
             The ``AssociationPool`` representation of the file.
         """
         table = super(AssociationPool, cls).read(
-            filename, delimiter=delimiter,
+            filename,
+            delimiter=delimiter,
             format=format,
-            converters=convert_to_str, **kwargs
+            converters=convert_to_str,
+            **kwargs
         )
 
         # If anything has been masked, just fill
-        table = table.filled('null')
+        table = table.filled("null")
 
         # Lowercase the column names
         # Note: Cannot do in-place because modifying the
@@ -70,7 +69,7 @@ class AssociationPool(Table):
         for c in columns:
             c.name = c.name.lower()
 
-        table.meta['pool_file'] = filename
+        table.meta["pool_file"] = filename
         return table
 
     def write(self, *args, **kwargs):
@@ -92,8 +91,8 @@ class AssociationPool(Table):
         args, kwargs : obj
             Other parameters that ``astropy.io.ascii.write`` can accept.
         """
-        delimiter = kwargs.pop('delimiter', DEFAULT_DELIMITER)
-        format = kwargs.pop('format', DEFAULT_FORMAT)
+        delimiter = kwargs.pop("delimiter", DEFAULT_DELIMITER)
+        format = kwargs.pop("format", DEFAULT_FORMAT)
         try:
             super(AssociationPool, self).write(
                 *args, delimiter=delimiter, format=format, **kwargs
@@ -103,9 +102,8 @@ class AssociationPool(Table):
             # does not handle `delimiter`. `jsviewer` is one
             # such format.
             # So, try again without a delimiter.
-            super(AssociationPool, self).write(
-                *args, format=format, **kwargs
-            )
+            super(AssociationPool, self).write(*args, format=format, **kwargs)
+
 
 class PoolRow(UserDict):
     """A row from an AssociationPool
@@ -113,6 +111,7 @@ class PoolRow(UserDict):
     Class to create a copy of an AssociationPool row without copying
     all of the astropy.Table.Row private attributes.
     """
+
     def __init__(self, init=None):
         dict_init = dict(init)
         super().__init__(dict_init)
@@ -142,7 +141,7 @@ class _ConvertToStr(dict):
         return self.__getitem__(k)
 
 
-if parse_version(get_distribution('astropy').version) >= parse_version('5.0.dev'):
-    convert_to_str = {'*': _convert_to_str()}
+if parse_version(get_distribution("astropy").version) >= parse_version("5.0.dev"):
+    convert_to_str = {"*": _convert_to_str()}
 else:
     convert_to_str = _ConvertToStr()

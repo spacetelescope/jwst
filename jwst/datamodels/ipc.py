@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['IPCModel']
+__all__ = ["IPCModel"]
 
 
 class IPCModel(ReferenceFileModel):
@@ -12,4 +12,5 @@ class IPCModel(ReferenceFileModel):
     data : numpy float32 array
          IPC deconvolution kernel
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/ipc.schema"

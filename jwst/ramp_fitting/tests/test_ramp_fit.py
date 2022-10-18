@@ -23,23 +23,29 @@ DELIM = "-" * 70
 
 
 def test_one_group_small_buffer_fit_ols():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
+    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+        ngroups=1, gain=1, readnoise=10
+    )
     model1.data[0, 0, 50, 50] = 10.0
 
     slopes, cube, optional, gls_dummy = ramp_fit(
-        model1, 512, True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1, 512, True, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+    )
 
     data = slopes[0]
     np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
 
 
 def test_drop_frames1_not_set():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
+    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+        ngroups=1, gain=1, readnoise=10
+    )
     model1.data[0, 0, 50, 50] = 10.0
     model1.meta.exposure.drop_frames1 = None
 
     slopes, cube, optional, gls_dummy = ramp_fit(
-        model1, 512, True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1, 512, True, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+    )
 
     data = slopes[0]
     np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
@@ -84,45 +90,81 @@ def test_mixed_crs_and_donotuse():
 
 @pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
 def test_one_group_small_buffer_fit_gls():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
+    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+        ngroups=1, gain=1, readnoise=10
+    )
     model1.data[0, 0, 50, 50] = 10.0
 
     slopes, cube, optional, gls_dummy = ramp_fit(
-        model1, 512, True, rnoise, gain, 'GLS', 'optimal', 'none', dqflags.pixel)
+        model1, 512, True, rnoise, gain, "GLS", "optimal", "none", dqflags.pixel
+    )
 
     data = slopes[0]
     np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
 
 
 def test_one_group_two_ints_fit_ols():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10, nints=2)
+    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+        ngroups=1, gain=1, readnoise=10, nints=2
+    )
     model1.data[0, 0, 50, 50] = 10.0
     model1.data[1, 0, 50, 50] = 12.0
 
     slopes, cube, optional, gls_dummy = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     data = slopes[0]
     np.testing.assert_allclose(data[50, 50], 11.0, 1e-6)
 
 
-@pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
+@pytest.mark.skip(
+    reason="GLS does not correctly combine the slopes for integrations into the exposure slope."
+)
 def test_gls_vs_ols_two_ints_ols():
     """
     A test to see if GLS is correctly combining integrations. The combination should only use the read noise variance.
     The current version of GLS does not work correctly.
     """
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=11, gain=5, readnoise=1, nints=2)
+    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+        ngroups=11, gain=5, readnoise=1, nints=2
+    )
     ramp = np.asarray([x * 100 for x in range(11)])
     model1.data[0, :, 50, 50] = ramp
     model1.data[1, :, 50, 50] = ramp * 2
 
     slopes = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
     np.testing.assert_allclose(slopes[0].data[50, 50], 150.0, 1e-6)
 
     slopes_gls = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'GLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "GLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
     np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
 
 
@@ -132,7 +174,8 @@ def test_multiprocessing():
     ncols = nrows  # make sure these are the same, so the loops below work
 
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols)
+        ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols
+    )
 
     delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
@@ -143,10 +186,18 @@ def test_multiprocessing():
 
     model1.data[:, :, :, :] = 0
     for j in range(ngroups - 1):
-        model1.data[0, j + 1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
-        model1.data[1, j + 1, :, :] = model1.data[1, j, :, :] + delta_plane1 + delta_plane2
-        model1.data[2, j + 1, :, :] = model1.data[2, j, :, :] + delta_plane1 + delta_plane2
-    model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
+        model1.data[0, j + 1, :, :] = (
+            model1.data[0, j, :, :] + delta_plane1 + delta_plane2
+        )
+        model1.data[1, j + 1, :, :] = (
+            model1.data[1, j, :, :] + delta_plane1 + delta_plane2
+        )
+        model1.data[2, j + 1, :, :] = (
+            model1.data[2, j, :, :] + delta_plane1 + delta_plane2
+        )
+    model1.data = np.round(
+        model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows))
+    )
 
     model2 = model1.copy()
     gain2 = gain.copy()
@@ -156,10 +207,28 @@ def test_multiprocessing():
     algo = "OLS"
     # algo = "GLS"
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., False, rnoise, gain, algo, 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        False,
+        rnoise,
+        gain,
+        algo,
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
-        model2, 1024 * 30000., False, rnoise2, gain2, algo, 'optimal', 'all', dqflags.pixel)
+        model2,
+        1024 * 30000.0,
+        False,
+        rnoise2,
+        gain2,
+        algo,
+        "optimal",
+        "all",
+        dqflags.pixel,
+    )
 
     np.testing.assert_allclose(slopes[0], slopes_multi[0], rtol=1e-5)
 
@@ -169,7 +238,8 @@ def test_multiprocessing2():
     nints, ngroups, nrows = 1, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols)
+        ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols
+    )
 
     delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
@@ -180,8 +250,12 @@ def test_multiprocessing2():
 
     model1.data[:, :, :, :] = 0
     for j in range(ngroups - 1):
-        model1.data[0, j + 1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
-    model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
+        model1.data[0, j + 1, :, :] = (
+            model1.data[0, j, :, :] + delta_plane1 + delta_plane2
+        )
+    model1.data = np.round(
+        model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows))
+    )
 
     model2 = model1.copy()
     gain2 = gain.copy()
@@ -191,39 +265,69 @@ def test_multiprocessing2():
     algo = "OLS"
     # algo = "GLS"
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., False, rnoise, gain, algo, 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        False,
+        rnoise,
+        gain,
+        algo,
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
-        model2, 1024 * 30000., False, rnoise2, gain2, algo, 'optimal', 'all', dqflags.pixel)
+        model2,
+        1024 * 30000.0,
+        False,
+        rnoise2,
+        gain2,
+        algo,
+        "optimal",
+        "all",
+        dqflags.pixel,
+    )
 
     np.testing.assert_allclose(slopes[0], slopes_multi[0], rtol=1e-5)
 
 
 @pytest.mark.xfail(reason="GLS code does not [yet] handle single group integrations.")
 def test_one_group_two_ints_fit_gls():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10, nints=2)
+    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+        ngroups=1, gain=1, readnoise=10, nints=2
+    )
     model1.data[0, 0, 50, 50] = 10.0
     model1.data[1, 0, 50, 50] = 12.0
 
     slopes = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'GLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "GLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     np.testing.assert_allclose(slopes[0].data[50, 50], 11.0, 1e-6)
+
 
 # tests that apply to both 'ols' and 'gls' are in the TestMethods class so
 # that both can use the parameterized 'method'
 
 
 # @pytest.mark.parametrize("method", ['OLS', 'GLS'])  # don't do GLS to see if it causes hang
-@pytest.mark.parametrize("method", ['OLS'])  # don't do GLS to see if it causes hang
+@pytest.mark.parametrize("method", ["OLS"])  # don't do GLS to see if it causes hang
 class TestMethods:
-
     def test_nocrs_noflux(self, method):
         # all pixel values are zero. So slope should be zero
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 60000, False, rnoise, gain, method, 'optimal', 'none', dqflags.pixel)
+            model1, 60000, False, rnoise, gain, method, "optimal", "none", dqflags.pixel
+        )
 
         data = slopes[0]
         assert 0 == np.max(data)
@@ -234,7 +338,8 @@ class TestMethods:
         model1.data[0, :, 0:12, :] = np.nan
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 60000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1, 60000, False, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+        )
 
         data = slopes[0]
         assert 0 == np.max(data)
@@ -247,7 +352,8 @@ class TestMethods:
         model1.meta.exposure.frame_time = None
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 64000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1, 64000, False, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+        )
 
         data = slopes.data
         assert 0 == np.max(data)
@@ -259,7 +365,12 @@ class TestMethods:
         inreadnoise = 7
         ngroups = 5
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime, nints=2)
+            ngroups=ngroups,
+            gain=ingain,
+            readnoise=inreadnoise,
+            deltatime=grouptime,
+            nints=2,
+        )
 
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
@@ -273,7 +384,16 @@ class TestMethods:
         model1.data[1, 4, 50, 50] = 160.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         out_slope = slopes[0][50, 50]
         deltaDN1 = 50
@@ -286,7 +406,8 @@ class TestMethods:
         model1.meta.exposure.ngroups = 11
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 64000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1, 64000, False, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+        )
 
         data = slopes[0]
         assert 0 == np.max(data)
@@ -300,7 +421,8 @@ class TestMethods:
         gain.data[20, 20] = np.nan
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 64000, False, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1, 64000, False, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+        )
 
         data = slopes[0]
         dq = slopes[1]
@@ -324,7 +446,8 @@ class TestMethods:
         model1.data[0, 9, 50, 50] = 190.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 64000, True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1, 64000, True, rnoise, gain, "OLS", "optimal", "none", dqflags.pixel
+        )
 
         # take the ratio of the slopes to get the relative error
         data = slopes[0]
@@ -339,7 +462,16 @@ class TestMethods:
         model1.data[0, 4, 50, 50] = 60.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         xvalues = np.arange(5) * 1.0
         yvalues = np.array([10, 15, 25, 33, 60])
@@ -349,7 +481,9 @@ class TestMethods:
         np.testing.assert_allclose(data[50, 50], coeff[0], 1e-6)
 
     def test_photon_noise_only_fit(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=5, gain=1000, readnoise=1
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
@@ -358,13 +492,24 @@ class TestMethods:
         cds_slope = (model1.data[0, 4, 50, 50] - model1.data[0, 0, 50, 50]) / 4.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-2)
 
     def test_photon_noise_only_bad_last_frame(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=5, gain=1000, readnoise=1
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
@@ -374,28 +519,52 @@ class TestMethods:
         cds_slope = (model1.data[0, 3, 50, 50] - model1.data[0, 0, 50, 50]) / 3.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-2)
 
-    @pytest.mark.xfail(reason="Fails, bad last frame yields only one good one. \
-        This should not every happen. When ngroups==2 the last frame doesn't get flagged.")
+    @pytest.mark.xfail(
+        reason="Fails, bad last frame yields only one good one. \
+        This should not every happen. When ngroups==2 the last frame doesn't get flagged."
+    )
     def test_photon_noise_only_bad_last_frame_two_groups(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=2, gain=1000, readnoise=1)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=2, gain=1000, readnoise=1
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.groupdq[0, 1, :, :] = DO_NOT_USE
         cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50]) / 1.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes.data
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-6)
 
     def test_photon_noise_with_unweighted_fit(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=5, gain=1000, readnoise=1
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
@@ -403,7 +572,16 @@ class TestMethods:
         model1.data[0, 4, 50, 50] = 60.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'unweighted', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "unweighted",
+            "none",
+            dqflags.pixel,
+        )
 
         # cds_slope = (model1.data[0,4,500,500] - model1.data[0,0,500,500])/ 4.0
         xvalues = np.arange(5) * 1.0
@@ -414,7 +592,9 @@ class TestMethods:
         np.testing.assert_allclose(data[50, 50], coeff[0], 1e-6)
 
     def test_two_groups_fit(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=2, gain=1, readnoise=10)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=2, gain=1, readnoise=10
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 0, 50, 51] = 20.0
@@ -427,10 +607,19 @@ class TestMethods:
         # 1st group is saturated
         model1.groupdq[0, 0, 50, 52] = SATURATED
         model1.groupdq[0, 1, 50, 52] = SATURATED  # should not be set this way
-        cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50])
+        cds_slope = model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50]
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-6)
@@ -442,40 +631,64 @@ class TestMethods:
         assert dq[50, 52] == SATURATED + DO_NOT_USE
 
     def test_four_groups_oneCR_orphangroupatend_fit(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=4, gain=1, readnoise=10
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 20.0
         model1.data[0, 3, 50, 50] = 145.0
         model1.groupdq[0, 3, 50, 50] = JUMP_DET
-        cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50])
+        cds_slope = model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50]
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-6)
 
     # @pytest.mark.skip(reason="not using now")
     def test_four_groups_two_CRs_at_end(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=4, gain=1, readnoise=10
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
         model1.data[0, 3, 50, 50] = 145.0
         model1.groupdq[0, 2, 50, 50] = JUMP_DET
         model1.groupdq[0, 3, 50, 50] = JUMP_DET
-        cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50])
+        cds_slope = model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50]
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-6)
 
     def test_four_groups_four_CRs(self, method):
         #
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=4, gain=1, readnoise=10
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
@@ -486,13 +699,24 @@ class TestMethods:
         model1.groupdq[0, 3, 50, 50] = JUMP_DET
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], 0, 1e-6)
 
     def test_four_groups_three_CRs_at_end(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=4, gain=1, readnoise=10
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
@@ -502,14 +726,25 @@ class TestMethods:
         model1.groupdq[0, 3, 50, 50] = JUMP_DET
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         expected_slope = 10.0
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], expected_slope, 1e-6)
 
     def test_four_groups_CR_causes_orphan_1st_group(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=.01, readnoise=10000)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=4, gain=0.01, readnoise=10000
+        )
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 125.0
         model1.data[0, 2, 50, 50] = 145.0
@@ -517,18 +752,38 @@ class TestMethods:
         model1.groupdq[0, 1, 50, 50] = JUMP_DET
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         expected_slope = 20.0
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], expected_slope, 1e-6)
 
     def test_one_group_fit(self, method):
-        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
+        model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
+            ngroups=1, gain=1, readnoise=10
+        )
         model1.data[0, 0, 50, 50] = 10.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
@@ -540,33 +795,52 @@ class TestMethods:
         inreadnoise = 10
         ngroups = 2
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+        )
 
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 10.0 + deltaDN
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         data, dq, var_poisson, var_rnoise, err = slopes
         # delta_electrons = deltaDN * ingain
         single_sample_readnoise = inreadnoise / np.sqrt(2)
         np.testing.assert_allclose(
-            var_poisson[50, 50],
-            ((deltaDN / ingain) / grouptime**2),
-            1e-6)
+            var_poisson[50, 50], ((deltaDN / ingain) / grouptime**2), 1e-6
+        )
+        np.testing.assert_allclose(
+            var_rnoise[50, 50], (inreadnoise**2 / grouptime**2), 1e-6
+        )
         np.testing.assert_allclose(
             var_rnoise[50, 50],
-            (inreadnoise**2 / grouptime**2),
-            1e-6)
-        np.testing.assert_allclose(
-            var_rnoise[50, 50],
-            (12 * single_sample_readnoise**2 / (ngroups * (ngroups**2 - 1) * grouptime**2)),
-            1e-6)
+            (
+                12
+                * single_sample_readnoise**2
+                / (ngroups * (ngroups**2 - 1) * grouptime**2)
+            ),
+            1e-6,
+        )
         np.testing.assert_allclose(
             err[50, 50],
-            (np.sqrt((deltaDN / ingain) / grouptime**2 + (inreadnoise**2 / grouptime**2))),
-            1e-6)
+            (
+                np.sqrt(
+                    (deltaDN / ingain) / grouptime**2
+                    + (inreadnoise**2 / grouptime**2)
+                )
+            ),
+            1e-6,
+        )
 
     def test_five_groups_unc(self, method):
         grouptime = 3.0
@@ -575,7 +849,8 @@ class TestMethods:
         inreadnoise = 7
         ngroups = 5
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+        )
 
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
@@ -584,7 +859,16 @@ class TestMethods:
         model1.data[0, 4, 50, 50] = 60.0
 
         slopes, cube, optional, gls_dummy = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         # out_slope=slopes[0].data[500, 500]
         median_slope = np.median(np.diff(model1.data[0, :, 50, 50])) / grouptime
@@ -596,17 +880,20 @@ class TestMethods:
         data, dq, var_poisson, var_rnoise, err = slopes
 
         np.testing.assert_allclose(
-            var_poisson[50, 50],
-            ((median_slope) / (ingain * delta_time)),
-            1e-6)
+            var_poisson[50, 50], ((median_slope) / (ingain * delta_time)), 1e-6
+        )
         np.testing.assert_allclose(
             var_rnoise[50, 50],
-            (12 * single_sample_readnoise**2 / (ngroups * (ngroups**2 - 1) * grouptime**2)),
-            1e-6)
+            (
+                12
+                * single_sample_readnoise**2
+                / (ngroups * (ngroups**2 - 1) * grouptime**2)
+            ),
+            1e-6,
+        )
         np.testing.assert_allclose(
-            err[50, 50],
-            np.sqrt(var_poisson[50, 50] + var_rnoise[50, 50]),
-            1e-6)
+            err[50, 50], np.sqrt(var_poisson[50, 50] + var_rnoise[50, 50]), 1e-6
+        )
 
     def test_oneCR_10_groups_combination(self, method):
         grouptime = 3.0
@@ -616,7 +903,8 @@ class TestMethods:
         ngroups = 10
 
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+        )
 
         # two segments perfect fit, second segment has twice the slope
         model1.data[0, 0, 50, 50] = 15.0
@@ -632,7 +920,16 @@ class TestMethods:
         model1.groupdq[0, 5, 50, 50] = JUMP_DET
 
         slopes, int_info, opt_info, gls_opt_model = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         segment_groups = 5
         single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
@@ -641,9 +938,13 @@ class TestMethods:
         ovar_rnoise = opt_info[3]
         np.testing.assert_allclose(
             ovar_rnoise[0, 0, 50, 50],
-            (12.0 * single_sample_readnoise**2 /
-                (segment_groups * (segment_groups**2 - 1) * grouptime**2)),
-            rtol=1e-6)
+            (
+                12.0
+                * single_sample_readnoise**2
+                / (segment_groups * (segment_groups**2 - 1) * grouptime**2)
+            ),
+            rtol=1e-6,
+        )
 
         # check the combined slope is the average of the two segments since they have the same number of groups
         data = slopes[0]
@@ -661,7 +962,8 @@ class TestMethods:
         inreadnoise = 7
         ngroups = 10
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+        )
 
         # two segments perfect fit, second segment has twice the slope
         model1.data[0, 0, 50, 50] = 15.0
@@ -677,7 +979,16 @@ class TestMethods:
         model1.groupdq[0, 5, 50, 50] = JUMP_DET
 
         slopes, int_info, opt_info, gls_opt_model = ramp_fit(
-            model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+            model1,
+            1024 * 30000.0,
+            True,
+            rnoise,
+            gain,
+            "OLS",
+            "optimal",
+            "none",
+            dqflags.pixel,
+        )
 
         oslope = opt_info[0]
         avg_slope = (oslope[0, 0, 50, 50] + oslope[0, 1, 50, 50]) / 2.0
@@ -693,43 +1004,61 @@ def test_twenty_groups_two_segments():
     Test to verify weighting of multiple segments in combination:
     a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
     """
-    (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.)
+    (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.0)
     model1, gdq, rnoise, pixdq, err, gain = setup_small_cube(
-        ngroups, nints, nrows, ncols, deltatime)
+        ngroups, nints, nrows, ncols, deltatime
+    )
 
     # a) ramp having gdq all 0
-    model1.data[0, :, 0, 0] = np.arange(ngroups) * 10. + 30.
+    model1.data[0, :, 0, 0] = np.arange(ngroups) * 10.0 + 30.0
 
     # b) ramp having 1 CR at group 15; 2 segments
-    model1.data[0, :, 0, 1] = np.arange(ngroups) * 10. + 50.
+    model1.data[0, :, 0, 1] = np.arange(ngroups) * 10.0 + 50.0
     gdq[0, 15, 0, 1] = JUMP_DET
-    model1.data[0, 15:, 0, 1] += 1000.
+    model1.data[0, 15:, 0, 1] += 1000.0
 
     # c) ramp having 1 CR at group 2; SAT starting in group 15
-    model1.data[0, :, 0, 2] = np.arange(ngroups) * 10. + 70.
+    model1.data[0, :, 0, 2] = np.arange(ngroups) * 10.0 + 70.0
     gdq[0, 2, 0, 2] = JUMP_DET
-    model1.data[0, 2:, 0, 2] += 2000.
+    model1.data[0, 2:, 0, 2] += 2000.0
     gdq[0, 15:, 0, 2] = SATURATED
-    model1.data[0, 15:, 0, 2] = 25000.
+    model1.data[0, 15:, 0, 2] = 25000.0
 
     new_mod, int_model, opt_info, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     # Check some PRI & OPT output arrays
     data = new_mod[0]
-    np.testing.assert_allclose(data, 10. / deltatime, rtol=1E-4)
+    np.testing.assert_allclose(data, 10.0 / deltatime, rtol=1e-4)
 
-    (oslope, sigslope, var_poisson, var_rnoise,
-        oyint, sigyint, opedestal, weights, crmag) = opt_info
+    (
+        oslope,
+        sigslope,
+        var_poisson,
+        var_rnoise,
+        oyint,
+        sigyint,
+        opedestal,
+        weights,
+        crmag,
+    ) = opt_info
 
-    wh_data = oslope != 0.  # only test existing segments
-    np.testing.assert_allclose(oslope[wh_data], 10. / deltatime, rtol=1E-4)
-    np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
+    wh_data = oslope != 0.0  # only test existing segments
+    np.testing.assert_allclose(oslope[wh_data], 10.0 / deltatime, rtol=1e-4)
+    np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1e-5)
 
     np.testing.assert_allclose(
-        opedestal[0, 0, :],
-        model1.data[0, 0, 0, :] - 10.,
-        rtol=1E-5)
+        opedestal[0, 0, :], model1.data[0, 0, 0, :] - 10.0, rtol=1e-5
+    )
 
 
 def test_miri_all_sat():
@@ -737,14 +1066,24 @@ def test_miri_all_sat():
     Test of all groups in all integrations being saturated; all output arrays
     (particularly variances) should be 0.
     """
-    (ngroups, nints, nrows, ncols, deltatime) = (3, 2, 2, 2, 6.)
+    (ngroups, nints, nrows, ncols, deltatime) = (3, 2, 2, 2, 6.0)
     model1, gdq, rnoise, pixdq, err, gain = setup_small_cube(
-        ngroups, nints, nrows, ncols, deltatime)
+        ngroups, nints, nrows, ncols, deltatime
+    )
 
     model1.groupdq[:, :, :, :] = SATURATED
 
     image_info, integ_info, opt_info, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     assert image_info is None
     assert integ_info is None
@@ -761,21 +1100,30 @@ def test_miri_first_last():
     """
     # (ngroups, nints, nrows, ncols, deltatime) = (10, 1, 2, 2, 3.)
     nints, ngroups, nrows, ncols = 1, 10, 2, 2
-    deltatime = 3.
+    deltatime = 3.0
     model1, gdq, rnoise, pixdq, err, gain = setup_small_cube(
-        ngroups, nints, nrows, ncols, deltatime)
+        ngroups, nints, nrows, ncols, deltatime
+    )
 
     # Make smooth ramps having outlier SCI values in the 0th and final groups
     #   to reveal if they are included in the fit (they shouldn't be, as those
     #   groups are flagged as DO_NOT_USE)
     model1.data[0, :, 0, 0] = np.array(
-        [-200., 30., 40., 50., 60., 70., 80., 90., 100., -500.], dtype=np.float32)
+        [-200.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, -500.0],
+        dtype=np.float32,
+    )
     model1.data[0, :, 0, 1] = np.array(
-        [-300., 80., 90., 100., 110., 120., 130., 140., 150., -600.], dtype=np.float32)
+        [-300.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, -600.0],
+        dtype=np.float32,
+    )
     model1.data[0, :, 1, 0] = np.array(
-        [-200., 40., 50., 60., 70., 80., 90., 100., 110., 900.], dtype=np.float32)
+        [-200.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 900.0],
+        dtype=np.float32,
+    )
     model1.data[0, :, 1, 1] = np.array(
-        [-600., 140., 150., 160., 170., 180., 190., 200., 210., -400.], dtype=np.float32)
+        [-600.0, 140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, -400.0],
+        dtype=np.float32,
+    )
 
     # For all pixels, set gdq for 0th and final groups to DO_NOT_USE
     model1.groupdq[:, 0, :, :] = DO_NOT_USE
@@ -785,10 +1133,19 @@ def test_miri_first_last():
     model1.groupdq[0, 1, 1, 1] = JUMP_DET
 
     image_info, int_model, opt_model, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     data = image_info[0]
-    np.testing.assert_allclose(data, 10. / 3., rtol=1E-5)
+    np.testing.assert_allclose(data, 10.0 / 3.0, rtol=1e-5)
 
 
 def test_miri_no_good_pixel():
@@ -798,22 +1155,32 @@ def test_miri_no_good_pixel():
     ramp_fit.  This test is to force this return of NoneType.
     """
     nints, ngroups, nrows, ncols = 1, 2, 2, 2
-    deltatime = 3.
+    deltatime = 3.0
     model1, gdq, rnoise, pixdq, err, gain = setup_small_cube(
-        ngroups, nints, nrows, ncols, deltatime)
+        ngroups, nints, nrows, ncols, deltatime
+    )
 
     # Dummy non-zero data to make sure if processing occurs a non-NoneType gets
     # returned.  Processing should not occur and a NoneType should be returned.
-    model1.data[0, :, 0, 0] = np.array([-200., -500.], dtype=np.float32)
-    model1.data[0, :, 0, 1] = np.array([-300., -600.], dtype=np.float32)
-    model1.data[0, :, 1, 0] = np.array([-200., 900.], dtype=np.float32)
-    model1.data[0, :, 1, 1] = np.array([-600., -400.], dtype=np.float32)
+    model1.data[0, :, 0, 0] = np.array([-200.0, -500.0], dtype=np.float32)
+    model1.data[0, :, 0, 1] = np.array([-300.0, -600.0], dtype=np.float32)
+    model1.data[0, :, 1, 0] = np.array([-200.0, 900.0], dtype=np.float32)
+    model1.data[0, :, 1, 1] = np.array([-600.0, -400.0], dtype=np.float32)
 
     # Set all groups to DO_NOT_USE
     model1.groupdq[:, :, :, :] = DO_NOT_USE
 
     image_info, int_model, opt_model, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model1,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     assert image_info is None
 
@@ -832,13 +1199,14 @@ def test_zero_frame_usage():
         - The zero group will be replaced and the ZEROFRAME data.
         - The groupdq flag for group 0 will be set to GOOD.
     """
-    dims = 2, 5, 1, 3       # nints, ngroups, nrows, ncols
+    dims = 2, 5, 1, 3  # nints, ngroups, nrows, ncols
     nints, ngroups, nrows, ncols = dims
-    frame_data = 4, 1       # nframes, groupgap
-    timing = 10.736, 0, 0.  # tframe, tgroup, tgroup0
-    variance = 10., 5.      # rnoise, gain
+    frame_data = 4, 1  # nframes, groupgap
+    timing = 10.736, 0, 0.0  # tframe, tgroup, tgroup0
+    variance = 10.0, 5.0  # rnoise, gain
     model, gmodel, rnmodel = setup_inputs_ramp_model_new(
-        dims, frame_data, timing, variance)
+        dims, frame_data, timing, variance
+    )
 
     gain = gmodel.data
     rnoise = rnmodel.data
@@ -848,19 +1216,19 @@ def test_zero_frame_usage():
         model.zeroframe = np.zeros(correct_shape, dtype=model.data.dtype)
 
     base_slope = 50.0
-    base_arr = [10000. + k * base_slope for k in range(ngroups)]
+    base_arr = [10000.0 + k * base_slope for k in range(ngroups)]
     base_ramp = np.array(base_arr, dtype=np.float32)
 
     # Make all data ramps the same.  The only difference will be in the ZEROFRAME.
     model.data[0, :, 0, 0] = base_ramp
     model.data[0, :, 0, 1] = base_ramp
     model.data[0, :, 0, 2] = base_ramp
-    model.data[1, :, :, :] = model.data[0, :, :, :] / 2.
+    model.data[1, :, :, :] = model.data[0, :, :, :] / 2.0
 
-    model.zeroframe[0, 0, 0] = model.data[0, 0, 0, 0] / 2.
-    model.zeroframe[0, 0, 1] = 0.  # Indicates bad ZEROFRAME data.
-    model.zeroframe[0, 0, 2] = model.data[0, 0, 0, 2] / 2.
-    model.zeroframe[1, :, :] = model.zeroframe[0, :, :] / 2.
+    model.zeroframe[0, 0, 0] = model.data[0, 0, 0, 0] / 2.0
+    model.zeroframe[0, 0, 1] = 0.0  # Indicates bad ZEROFRAME data.
+    model.zeroframe[0, 0, 2] = model.data[0, 0, 0, 2] / 2.0
+    model.zeroframe[1, :, :] = model.zeroframe[0, :, :] / 2.0
 
     # Set all groups to SATURATED, except for group 0 in ramp 0.
     model.groupdq[0, :, :, :] = SATURATED
@@ -870,11 +1238,20 @@ def test_zero_frame_usage():
     model.meta.exposure.zero_frame = True
 
     slopes, cube, _, _ = ramp_fit(
-        model, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
+        model,
+        1024 * 30000.0,
+        True,
+        rnoise,
+        gain,
+        "OLS",
+        "optimal",
+        "none",
+        dqflags.pixel,
+    )
 
     # Make sure the group 0 info changed for ramp 2 in the data
     # and groupdq arrays.
-    tol = 1.e-5
+    tol = 1.0e-5
 
     # Check slopes information
     sdata, sdq, svp, svr, serr = slopes
@@ -897,24 +1274,30 @@ def test_zero_frame_usage():
     # Check slopes information
     cdata, cdq, cvp, cvr, cerr = cube
 
-    check = np.array([[[186.28912, 0., 93.14456]],
-                      [[0.46572027, 0.46572033, 0.46572033]]])
+    check = np.array(
+        [[[186.28912, 0.0, 93.14456]], [[0.46572027, 0.46572033, 0.46572033]]]
+    )
     np.testing.assert_allclose(cdata, check, tol, tol)
 
-    check = np.array([[[2, 3, 2]],
-                      [[0, 0, 0]]])
+    check = np.array([[[2, 3, 2]], [[0, 0, 0]]])
     np.testing.assert_allclose(cdq, check, tol, tol)
 
-    check = np.array([[[3.4790397e-01, 0.0000000e+00, 4.3422928e+00]],
-                      [[8.6975992e-02, 2.1689695e-04, 2.1711464e-01]]])
+    check = np.array(
+        [
+            [[3.4790397e-01, 0.0000000e00, 4.3422928e00]],
+            [[8.6975992e-02, 2.1689695e-04, 2.1711464e-01]],
+        ]
+    )
     np.testing.assert_allclose(cvp, check, tol, tol)
 
-    check = np.array([[[0.00867591, 0., 0.21689774]],
-                      [[0.0004338, 0.0004338, 0.0004338]]])
+    check = np.array(
+        [[[0.00867591, 0.0, 0.21689774]], [[0.0004338, 0.0004338, 0.0004338]]]
+    )
     np.testing.assert_allclose(cvr, check, tol, tol)
 
-    check = np.array([[[0.5971431, 0., 2.1352262]],
-                      [[0.29565147, 0.02550867, 0.4664209]]])
+    check = np.array(
+        [[[0.5971431, 0.0, 2.1352262]], [[0.29565147, 0.02550867, 0.4664209]]]
+    )
     np.testing.assert_allclose(cerr, check, tol, tol)
 
 
@@ -944,20 +1327,20 @@ def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
     int_times = np.zeros((nints,))
     rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
-    rampmodel.meta.instrument.name = 'MIRI'
-    rampmodel.meta.instrument.detector = 'MIRIMAGE'
-    rampmodel.meta.instrument.filter = 'F480M'
+    rampmodel.meta.instrument.name = "MIRI"
+    rampmodel.meta.instrument.detector = "MIRIMAGE"
+    rampmodel.meta.instrument.filter = "F480M"
 
-    rampmodel.meta.observation.date = '2015-10-13'
+    rampmodel.meta.observation.date = "2015-10-13"
 
-    rampmodel.meta.exposure.type = 'MIR_IMAGE'
+    rampmodel.meta.exposure.type = "MIR_IMAGE"
     rampmodel.meta.exposure.frame_time = frame_time
     rampmodel.meta.exposure.group_time = group_time
     rampmodel.meta.exposure.groupgap = groupgap
     rampmodel.meta.exposure.ngroups = ngroups
     rampmodel.meta.exposure.nframes = nframes
 
-    rampmodel.meta.subarray.name = 'FULL'
+    rampmodel.meta.subarray.name = "FULL"
     rampmodel.meta.subarray.xstart = 1
     rampmodel.meta.subarray.ystart = 1
     rampmodel.meta.subarray.xsize = ncols
@@ -966,7 +1349,7 @@ def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
     # Set up the gain model
     garray = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     gmodel = GainModel(data=garray)
-    gmodel.meta.instrument.name = 'MIRI'
+    gmodel.meta.instrument.name = "MIRI"
     gmodel.meta.subarray.xstart = 1
     gmodel.meta.subarray.ystart = 1
     gmodel.meta.subarray.xsize = ncols
@@ -975,7 +1358,7 @@ def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
     # Set up the read noise model
     read_noise = np.full((nrows, ncols), rnoise, dtype=np.float64)
     rnmodel = ReadnoiseModel(data=read_noise)
-    rnmodel.meta.instrument.name = 'MIRI'
+    rnmodel.meta.instrument.name = "MIRI"
     rnmodel.meta.subarray.xstart = 1
     rnmodel.meta.subarray.ystart = 1
     rnmodel.meta.subarray.xsize = ncols
@@ -984,8 +1367,9 @@ def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
     return rampmodel, gmodel, rnmodel
 
 
-def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
-                     gain=1., readnoise=10.):
+def setup_small_cube(
+    ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.0, gain=1.0, readnoise=10.0
+):
     """
     Create input MIRI datacube having the specified dimensions
     """
@@ -997,13 +1381,13 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
 
-    model1.meta.instrument.name = 'MIRI'
-    model1.meta.instrument.detector = 'MIRIMAGE'
-    model1.meta.instrument.filter = 'F480M'
-    model1.meta.observation.date = '2015-10-13'
-    model1.meta.exposure.type = 'MIR_IMAGE'
+    model1.meta.instrument.name = "MIRI"
+    model1.meta.instrument.detector = "MIRIMAGE"
+    model1.meta.instrument.filter = "F480M"
+    model1.meta.observation.date = "2015-10-13"
+    model1.meta.exposure.type = "MIR_IMAGE"
     model1.meta.exposure.group_time = deltatime
-    model1.meta.subarray.name = 'FULL'
+    model1.meta.subarray.name = "FULL"
 
     model1.meta.subarray.xstart = 1
     model1.meta.subarray.ystart = 1
@@ -1020,8 +1404,17 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 
 
 # Need test for multi-ints near zero with positive and negative slopes
-def setup_inputs(ngroups=10, readnoise=10, nints=1,
-                 nrows=103, ncols=102, nframes=1, grouptime=1.0, gain=1, deltatime=1):
+def setup_inputs(
+    ngroups=10,
+    readnoise=10,
+    nints=1,
+    nrows=103,
+    ncols=102,
+    nframes=1,
+    grouptime=1.0,
+    gain=1,
+    deltatime=1,
+):
 
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
@@ -1031,14 +1424,16 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     rnoise = np.full((nrows, ncols), readnoise, dtype=np.float32)
     int_times = np.zeros((nints,))
 
-    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times)
-    model1.meta.instrument.name = 'MIRI'
-    model1.meta.instrument.detector = 'MIRIMAGE'
-    model1.meta.instrument.filter = 'F480M'
-    model1.meta.observation.date = '2015-10-13'
-    model1.meta.exposure.type = 'MIR_IMAGE'
+    model1 = RampModel(
+        data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times
+    )
+    model1.meta.instrument.name = "MIRI"
+    model1.meta.instrument.detector = "MIRIMAGE"
+    model1.meta.instrument.filter = "F480M"
+    model1.meta.observation.date = "2015-10-13"
+    model1.meta.exposure.type = "MIR_IMAGE"
     model1.meta.exposure.group_time = deltatime
-    model1.meta.subarray.name = 'FULL'
+    model1.meta.subarray.name = "FULL"
     model1.meta.subarray.xstart = 1
     model1.meta.subarray.ystart = 1
     model1.meta.subarray.xsize = ncols

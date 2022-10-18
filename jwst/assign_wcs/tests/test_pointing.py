@@ -5,7 +5,9 @@ from astropy.modeling.models import Identity
 
 
 def test_dva_corr_noop_missing_meta_values():
-    assert isinstance(pointing.dva_corr_model(va_scale=None, v2_ref=1, v3_ref=1), Identity)
+    assert isinstance(
+        pointing.dva_corr_model(va_scale=None, v2_ref=1, v3_ref=1), Identity
+    )
     assert isinstance(pointing.dva_corr_model(va_scale=1, v2_ref=2, v3_ref=3), Identity)
 
 

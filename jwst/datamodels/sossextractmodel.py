@@ -1,6 +1,6 @@
 from .model_base import JwstDataModel
 
-__all__ = ['SossExtractModel']
+__all__ = ["SossExtractModel"]
 
 
 class SossExtractModel(JwstDataModel):
@@ -37,4 +37,5 @@ class SossExtractModel(JwstDataModel):
         2-D array storing the pixel weights for box-extracting
         spectral order 3
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/sossextractmodel.schema"

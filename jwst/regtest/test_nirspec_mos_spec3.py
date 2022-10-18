@@ -19,8 +19,9 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
-@pytest.mark.parametrize("source_id", ["s00000", "s00227", "s00279", "s00443",
-                                       "s00482", "s02315"])
+@pytest.mark.parametrize(
+    "source_id", ["s00000", "s00227", "s00279", "s00443", "s00482", "s02315"]
+)
 def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwargs):
     """Check results of calwebb_spec3"""
     rtdata = run_pipeline

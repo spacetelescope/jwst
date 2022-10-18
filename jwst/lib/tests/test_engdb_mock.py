@@ -13,16 +13,16 @@ from jwst.lib.tests import engdb_mock
 from jwst.lib import engdb_direct, engdb_tools
 
 # For mocking, just use localhost
-ENGDB_MOCK_URL = 'http://localhost/'
+ENGDB_MOCK_URL = "http://localhost/"
 
 # Midpoint is about 2021-01-26T02:32:26.205
-GOOD_STARTTIME = '2021-01-26 02:29:02.188'
-GOOD_ENDTIME = '2021-01-26 02:35:50.185'
-GOOD_MNEMONIC = 'inrsi_gwa_y_tilt_avged'
-EARLY_STARTTIME = '2014-01-01'
-EARLY_ENDTIME = '2014-01-02'
-LATE_STARTTIME = '2034-01-01'
-LATE_ENDTIME = '2034-01-02'
+GOOD_STARTTIME = "2021-01-26 02:29:02.188"
+GOOD_ENDTIME = "2021-01-26 02:35:50.185"
+GOOD_MNEMONIC = "inrsi_gwa_y_tilt_avged"
+EARLY_STARTTIME = "2014-01-01"
+EARLY_ENDTIME = "2014-01-02"
+LATE_STARTTIME = "2034-01-01"
+LATE_ENDTIME = "2034-01-02"
 
 
 def test_file_names():
@@ -47,26 +47,16 @@ def test_cache_engdb(engdb):
             mnemonics=[GOOD_MNEMONIC],
             starttime=GOOD_STARTTIME,
             endtime=GOOD_ENDTIME,
-            db_path=db_path
+            db_path=db_path,
         )
 
-        assert os.path.isfile(os.path.join(
-            db_path, engdb_mock.META
-        ))
-        assert os.path.isfile(os.path.join(
-            db_path,
-            engdb_mock.mnemonic_data_fname(GOOD_MNEMONIC)
-        ))
+        assert os.path.isfile(os.path.join(db_path, engdb_mock.META))
+        assert os.path.isfile(
+            os.path.join(db_path, engdb_mock.mnemonic_data_fname(GOOD_MNEMONIC))
+        )
 
 
-@pytest.mark.parametrize(
-    "mnemonic",
-    [
-        GOOD_MNEMONIC,
-        'CAL',
-        ''
-    ]
-)
+@pytest.mark.parametrize("mnemonic", [GOOD_MNEMONIC, "CAL", ""])
 def test_cache_meta(db_cache, engdb, mnemonic):
     """
     Test read of the meta information
@@ -90,22 +80,13 @@ def test_cache_partial_data(db_cache, engdb):
     Test read of some data.
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    assert data['Count'] > 4  # Just to make sure we have some data
+    assert data["Count"] > 4  # Just to make sure we have some data
     endtime = Time(
-        engdb_direct.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
-        format='unix'
+        engdb_direct.extract_db_time(data["Data"][1]["ObsTime"]) / 1000.0, format="unix"
     )
 
-    data_short = db_cache.fetch_data(
-        GOOD_MNEMONIC,
-        GOOD_STARTTIME,
-        endtime.iso
-    )
-    live_data_short = engdb._get_records(
-        GOOD_MNEMONIC,
-        GOOD_STARTTIME,
-        endtime.iso
-    )
+    data_short = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, endtime.iso)
+    live_data_short = engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, endtime.iso)
     assert data_short == live_data_short
 
 
@@ -114,83 +95,62 @@ def test_cache_end_data(db_cache, engdb):
     Test read of some data.
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    assert data['Count'] > 4  # Just to make sure we have some data
+    assert data["Count"] > 4  # Just to make sure we have some data
 
     # First test pre-data.
-    data_short = db_cache.fetch_data(
-        GOOD_MNEMONIC,
-        EARLY_STARTTIME,
-        EARLY_ENDTIME
-    )
-    live_data_short = engdb._get_records(
-        GOOD_MNEMONIC,
-        EARLY_STARTTIME,
-        EARLY_ENDTIME
-    )
+    data_short = db_cache.fetch_data(GOOD_MNEMONIC, EARLY_STARTTIME, EARLY_ENDTIME)
+    live_data_short = engdb._get_records(GOOD_MNEMONIC, EARLY_STARTTIME, EARLY_ENDTIME)
     # We only check counts because the actual data may be different.
-    assert data_short['Count'] == live_data_short['Count']
+    assert data_short["Count"] == live_data_short["Count"]
 
     # Filter ERFA warnings for times far into the future, LATE_STARTTIME and
     # LATE_ENDTIME.  We don't know leap seconds between now and 2034.
-    warnings.filterwarnings('ignore', message='ERFA function ')
+    warnings.filterwarnings("ignore", message="ERFA function ")
 
     # Now for post data
-    data_short = db_cache.fetch_data(
-        GOOD_MNEMONIC,
-        LATE_STARTTIME,
-        LATE_ENDTIME
-    )
-    live_data_short = engdb._get_records(
-        GOOD_MNEMONIC,
-        LATE_STARTTIME,
-        LATE_ENDTIME
-    )
+    data_short = db_cache.fetch_data(GOOD_MNEMONIC, LATE_STARTTIME, LATE_ENDTIME)
+    live_data_short = engdb._get_records(GOOD_MNEMONIC, LATE_STARTTIME, LATE_ENDTIME)
     # We only check counts because the actual data may be different.
-    assert data_short['Count'] == live_data_short['Count']
+    assert data_short["Count"] == live_data_short["Count"]
 
 
 def test_mocker_alive(db_cache):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
-        query = ''.join([
-            ENGDB_MOCK_URL,
-            engdb_direct.ENGDB_METADATA
-        ])
+        query = "".join([ENGDB_MOCK_URL, engdb_direct.ENGDB_METADATA])
         response = requests.get(query)
         assert response.status_code == 200
 
 
 @pytest.mark.parametrize(
-    'mnemonic, count',
+    "mnemonic, count",
     [
         (GOOD_MNEMONIC, 1),
-        ('CAL', 14),
-        ('', 2100),
-    ]
+        ("CAL", 14),
+        ("", 2100),
+    ],
 )
 def test_mocker_meta(db_cache, mnemonic, count):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
-        query = ''.join([
-            ENGDB_MOCK_URL,
-            engdb_direct.ENGDB_METADATA,
-            mnemonic
-        ])
+        query = "".join([ENGDB_MOCK_URL, engdb_direct.ENGDB_METADATA, mnemonic])
         response = requests.get(query)
         assert response.status_code == 200
         meta = response.json()
-        assert meta['Count'] >= count
+        assert meta["Count"] >= count
 
 
 def test_mocker_data(db_cache, engdb):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
-        query = ''.join([
-            ENGDB_MOCK_URL,
-            engdb_direct.ENGDB_DATA,
-            GOOD_MNEMONIC,
-            '?sTime=',
-            GOOD_STARTTIME,
-            '&eTime=',
-            GOOD_ENDTIME
-        ])
+        query = "".join(
+            [
+                ENGDB_MOCK_URL,
+                engdb_direct.ENGDB_DATA,
+                GOOD_MNEMONIC,
+                "?sTime=",
+                GOOD_STARTTIME,
+                "&eTime=",
+                GOOD_ENDTIME,
+            ]
+        )
         response = requests.get(query)
 
     live_data = engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
@@ -206,13 +166,13 @@ def engdb(jail_environ):
     Ensure the live engineering RESTful service is available
     """
     try:
-        del os.environ['MAST_API_TOKEN']
+        del os.environ["MAST_API_TOKEN"]
     except KeyError:
         pass
     try:
         engdb = engdb_tools.ENGDB_Service()
     except Exception as exception:
-        pytest.skip(f'ENGDB service is not accessible: {exception}')
+        pytest.skip(f"ENGDB service is not accessible: {exception}")
     else:
         return engdb
 
@@ -235,7 +195,7 @@ def db_cache(engdb, db_path):
         mnemonics=[GOOD_MNEMONIC],
         starttime=GOOD_STARTTIME,
         endtime=GOOD_ENDTIME,
-        db_path=db_path
+        db_path=db_path,
     )
 
     return engdb_mock.EngDB_Local(db_path=db_path)

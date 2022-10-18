@@ -10,8 +10,14 @@ log.setLevel(logging.DEBUG)
 
 
 # FGS guide star mode exposure types
-guider_list = ['FGS_ID-IMAGE', 'FGS_ID-STACK', 'FGS_ACQ1', 'FGS_ACQ2',
-               'FGS_TRACK', 'FGS_FINEGUIDE']
+guider_list = [
+    "FGS_ID-IMAGE",
+    "FGS_ID-STACK",
+    "FGS_ACQ1",
+    "FGS_ACQ2",
+    "FGS_TRACK",
+    "FGS_FINEGUIDE",
+]
 
 
 def correct_model(input_model, mask_model):
@@ -63,9 +69,8 @@ def do_dqinit(input_model, mask_model):
     if reffile_utils.ref_matches_sci(output_model, mask_model):
         mask_array = mask_model.dq
     else:
-        log.info('Extracting mask subarray to match science data')
-        mask_sub_model = reffile_utils.get_subarray_model(output_model,
-                                                          mask_model)
+        log.info("Extracting mask subarray to match science data")
+        mask_sub_model = reffile_utils.get_subarray_model(output_model, mask_model)
         mask_array = mask_sub_model.dq.copy()
         mask_sub_model.close()
 
@@ -77,7 +82,7 @@ def do_dqinit(input_model, mask_model):
         dq = np.bitwise_or(input_model.pixeldq, mask_array)
         output_model.pixeldq = dq
 
-    output_model.meta.cal_step.dq_init = 'COMPLETE'
+    output_model.meta.cal_step.dq_init = "COMPLETE"
 
     return output_model
 
@@ -108,29 +113,33 @@ def check_dimensions(input_model):
             # a shape of (0,0).
             # If that's the case, create the array
             if input_model.dq.shape == (0, 0):
-                input_model.dq = np.zeros((input_shape[-2:])).astype('uint32')
+                input_model.dq = np.zeros((input_shape[-2:])).astype("uint32")
             else:
-                log.error("DQ array has the wrong shape: (%d, %d)" %
-                          input_model.dq.shape)
+                log.error(
+                    "DQ array has the wrong shape: (%d, %d)" % input_model.dq.shape
+                )
 
-    else:   # RampModel
+    else:  # RampModel
         if input_model.pixeldq.shape != input_shape[-2:]:
 
             # If the shape is different, then the mask model should have
             # a shape of (0,0).
             # If that's the case, create the array
             if input_model.pixeldq.shape == (0, 0):
-                input_model.pixeldq = \
-                    np.zeros((input_shape[-2:])).astype('uint32')
+                input_model.pixeldq = np.zeros((input_shape[-2:])).astype("uint32")
             else:
-                log.error("Pixeldq array has the wrong shape: (%d, %d)" %
-                          input_model.pixeldq.shape)
+                log.error(
+                    "Pixeldq array has the wrong shape: (%d, %d)"
+                    % input_model.pixeldq.shape
+                )
 
         # Perform the same check for the input model groupdq array
         if input_model.groupdq.shape != input_shape:
             if input_model.groupdq.shape == (0, 0, 0, 0):
-                input_model.groupdq = np.zeros((input_shape)).astype('uint8')
+                input_model.groupdq = np.zeros((input_shape)).astype("uint8")
             else:
-                log.error("Groupdq array has wrong shape: (%d, %d, %d, %d)" %
-                          input_model.groupdq.shape)
+                log.error(
+                    "Groupdq array has wrong shape: (%d, %d, %d, %d)"
+                    % input_model.groupdq.shape
+                )
     return

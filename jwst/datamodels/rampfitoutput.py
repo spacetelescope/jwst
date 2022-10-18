@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['RampFitOutputModel']
+__all__ = ["RampFitOutputModel"]
 
 
 class RampFitOutputModel(JwstDataModel):
@@ -43,4 +43,5 @@ class RampFitOutputModel(JwstDataModel):
     crmag : numpy float32 array (n_int, max_seg, ny, nx)
         Approximate CR magnitudes
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/rampfitoutput.schema"

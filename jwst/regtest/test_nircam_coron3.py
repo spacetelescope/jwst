@@ -55,10 +55,12 @@ def test_nircam_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     """Check final products of calwebb_coron3"""
     rtdata = run_pipeline
 
-    output = "jw01386-c1020_t001_nircam_f410m-maskrnd-sub320a335r_mini_" + suffix + ".fits"
+    output = (
+        "jw01386-c1020_t001_nircam_f410m-maskrnd-sub320a335r_mini_" + suffix + ".fits"
+    )
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_coron3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

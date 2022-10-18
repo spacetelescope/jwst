@@ -8,12 +8,12 @@ JWST pipeline step for image intensity matching for MIRI images.
 
 import numpy as np
 
-from .. stpipe import Step
+from ..stpipe import Step
 from .. import datamodels
 from wiimatch.match import match_lsq
 from astropy.stats import sigma_clipped_stats as sigclip
 
-__all__ = ['MRSIMatchStep', 'apply_background_2d']
+__all__ = ["MRSIMatchStep", "apply_background_2d"]
 
 
 class MRSIMatchStep(Step):
@@ -53,8 +53,10 @@ class MRSIMatchStep(Step):
         for ch in chm.keys():
             for c in map(int, list(ch)):
                 if c in single_ch:
-                    raise ValueError("Channel '{:d}' appears in multiple "
-                                     "combinations of channels.".format(c))
+                    raise ValueError(
+                        "Channel '{:d}' appears in multiple "
+                        "combinations of channels.".format(c)
+                    )
                 single_ch[c] = chm[ch]
 
         # At this moment running 'cube_skymatch' on images whose
@@ -69,10 +71,12 @@ class MRSIMatchStep(Step):
 
         # check that 'degree' has the same length as the number of dimensions
         # in image arrays:
-        if hasattr(self.bkg_degree, '__iter__'):
+        if hasattr(self.bkg_degree, "__iter__"):
             if len(self.bkg_degree) != 3:
-                raise ValueError("The length of 'bkg_degree' parameter must "
-                                 "be 3 or 'bkg_degree' must be an integer.")
+                raise ValueError(
+                    "The length of 'bkg_degree' parameter must "
+                    "be 3 or 'bkg_degree' must be an integer."
+                )
             degree = tuple([int(d) for d in self.bkg_degree])
 
         else:
@@ -85,17 +89,17 @@ class MRSIMatchStep(Step):
 
         # subtract the background, if requested
         if self.subtract:
-            self.log.info('Subtracting background offsets from input images')
+            self.log.info("Subtracting background offsets from input images")
             for m in all_models2d:
                 apply_background_2d(m)
                 m.meta.background.subtracted = True
 
         # set step completion status in the input images
         for m in all_models2d:
-            if m.meta.cal_step.mrs_imatch == 'SKIPPED':
-                self.log.info('Background can not be determined, skipping mrs_imatch')
+            if m.meta.cal_step.mrs_imatch == "SKIPPED":
+                self.log.info("Background can not be determined, skipping mrs_imatch")
             else:
-                m.meta.cal_step.mrs_imatch = 'COMPLETE'
+                m.meta.cal_step.mrs_imatch = "COMPLETE"
 
         return images
 
@@ -107,14 +111,18 @@ class MRSIMatchStep(Step):
             if m.meta.background.subtracted is None:
                 if m.meta.background.level is not None:
                     # report inconsistency:
-                    raise ValueError("Background level was set but the "
-                                     "'subtracted' property is undefined "
-                                     "(None).")
+                    raise ValueError(
+                        "Background level was set but the "
+                        "'subtracted' property is undefined "
+                        "(None)."
+                    )
 
             elif m.meta.background.subtracted:
-                raise ValueError("'cube_skymatch' step cannot be run on "
-                                 "data whose background has been previously "
-                                 "subtracted.")
+                raise ValueError(
+                    "'cube_skymatch' step cannot be run on "
+                    "data whose background has been previously "
+                    "subtracted."
+                )
 
     def _reset_background(self, models):
         for m in models:
@@ -122,42 +130,42 @@ class MRSIMatchStep(Step):
 
 
 def apply_background_2d(model2d, channel=None, subtract=True):
-    """ Apply (subtract or add back) background values computed from
-        ``meta.background`` polynomials to 2D image data.
+    """Apply (subtract or add back) background values computed from
+    ``meta.background`` polynomials to 2D image data.
 
-        This function modifies the input ``model2d``'s data.
+    This function modifies the input ``model2d``'s data.
 
-        .. warning::
-           This function does not check whether background was previously
-           applied to image data (through ``meta.background.subtracted``).
+    .. warning::
+       This function does not check whether background was previously
+       applied to image data (through ``meta.background.subtracted``).
 
-        .. warning::
-           This function does not modify input model's
-           ``meta.background.subtracted`` attribute to indicate that
-           background has been applied to model's data. User is responsible
-           for setting ``meta.background.subtracted`` after background
-           was applied to all channels. Partial application of background
-           (i.e., to only *some channels* as opposite to *all* channels) is
-           not recommended.
+    .. warning::
+       This function does not modify input model's
+       ``meta.background.subtracted`` attribute to indicate that
+       background has been applied to model's data. User is responsible
+       for setting ``meta.background.subtracted`` after background
+       was applied to all channels. Partial application of background
+       (i.e., to only *some channels* as opposite to *all* channels) is
+       not recommended.
 
-        Parameters
-        ----------
-        model2d : `jwst.datamodels.image.ImageModel`
-            A `jwst.datamodels.image.ImageModel` from whose data background
-            needs to be subtracted (or added back).
+    Parameters
+    ----------
+    model2d : `jwst.datamodels.image.ImageModel`
+        A `jwst.datamodels.image.ImageModel` from whose data background
+        needs to be subtracted (or added back).
 
-        channel : str, int, list, None, optional
-            This parameter indicates for which channel background values should
-            be applied. An integer value is automatically converted to a string
-            type. A string type input value indicates **a single** channel
-            to which background should be applied. ``channel`` can also be a
-            list of several string or integer single channel values.
-            The default value of `None` indicates that background should be
-            applied to all channels.
+    channel : str, int, list, None, optional
+        This parameter indicates for which channel background values should
+        be applied. An integer value is automatically converted to a string
+        type. A string type input value indicates **a single** channel
+        to which background should be applied. ``channel`` can also be a
+        list of several string or integer single channel values.
+        The default value of `None` indicates that background should be
+        applied to all channels.
 
-        subtract : bool, optional
-            Indicates whether to subtract or add back background values to
-            input model data. By default background is subtracted from data.
+    subtract : bool, optional
+        Indicates whether to subtract or add back background values to
+        input model data. By default background is subtracted from data.
 
     """
 
@@ -175,14 +183,15 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     elif isinstance(channel, str):
         pass
 
-    elif hasattr(channel, '__iter__'):
+    elif hasattr(channel, "__iter__"):
         available_channels = [pi.channel for pi in mpolyinfo]
         diff = sorted(set(map(str, channel)).difference(available_channels))
         if len(diff) > 0:
-            missing_channels = ', '.join(diff)
-            raise ValueError("Background data for channel(s) '{}' not present "
-                             "in 2D model '{}'"
-                             .format(missing_channels, model2d.meta.filename))
+            missing_channels = ", ".join(diff)
+            raise ValueError(
+                "Background data for channel(s) '{}' not present "
+                "in 2D model '{}'".format(missing_channels, model2d.meta.filename)
+            )
         for ch in channel:
             apply_background_2d(model2d, channel=ch, subtract=subtract)
         return
@@ -192,9 +201,10 @@ def apply_background_2d(model2d, channel=None, subtract=True):
 
     index = _find_channel_bkg_index(model2d, channel)
     if index is None:
-        raise ValueError("Background data for channel '{}' not present in "
-                         "2D model '{}'"
-                         .format(channel, model2d.meta.filename))
+        raise ValueError(
+            "Background data for channel '{}' not present in "
+            "2D model '{}'".format(channel, model2d.meta.filename)
+        )
 
     # get may parameters of the background polynomial:
     bkgmeta = mpolyinfo[index]
@@ -209,13 +219,11 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     y = y.ravel()
 
     # convert to RA/DEC:
-    ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float),
-                                    y.astype(dtype=float))
+    ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float), y.astype(dtype=float))
 
     # some pixels may be NaNs and so throw them out:
     m = np.logical_and(
-        np.logical_and(np.isfinite(ra), np.isfinite(dec)),
-        np.isfinite(lam)
+        np.logical_and(np.isfinite(ra), np.isfinite(dec)), np.isfinite(lam)
     )
     x = x[m]
     y = y[m]
@@ -247,45 +255,48 @@ def _get_2d_pixgrid(model2d, channel):
 
     y, x = np.indices((1024, 512))
 
-    if channel in ['1', '4']:
+    if channel in ["1", "4"]:
         return x + 4, y
     else:
         return x + 516, y
 
 
-def _match_models(models, channel, degree, center=None, center_cs='image'):
-    from .. cube_build import CubeBuildStep
+def _match_models(models, channel, degree, center=None, center_cs="image"):
+    from ..cube_build import CubeBuildStep
 
     # create a list of cubes:
     cbs = CubeBuildStep()
     cbs.channel = str(channel)
-    cbs.band = 'ALL'
+    cbs.band = "ALL"
     cbs.single = True
-    cbs.weighting = 'drizzle'
+    cbs.weighting = "drizzle"
     cube_models = cbs.process(models)
     if len(cube_models) != len(models):
-        raise RuntimeError("The number of generated cube models does not "
-                           "match the number of input 2D images.")
+        raise RuntimeError(
+            "The number of generated cube models does not "
+            "match the number of input 2D images."
+        )
 
     # retrieve WCS (all cubes must have identical WCS so we use the first):
     meta = cube_models[0].meta
 
-    if hasattr(meta, 'wcs'):
+    if hasattr(meta, "wcs"):
         wcs = meta.wcs
     else:
-        raise ValueError("Cubes build from input 2D images do not contain WCS."
-                         " Unable to proceed.")
+        raise ValueError(
+            "Cubes build from input 2D images do not contain WCS." " Unable to proceed."
+        )
 
-    wcsinfo = meta.wcsinfo if hasattr(meta, 'wcsinfo') else None
-    if wcsinfo is not None and (wcsinfo.crval1 is None or
-                                wcsinfo.crval2 is None or
-                                wcsinfo.crval3 is None):
+    wcsinfo = meta.wcsinfo if hasattr(meta, "wcsinfo") else None
+    if wcsinfo is not None and (
+        wcsinfo.crval1 is None or wcsinfo.crval2 is None or wcsinfo.crval3 is None
+    ):
         raise ValueError("'wcsinfo' cannot have its 'crvaln' set to None.")
 
     # set center of the coordinate system to CRVAL if available:
     if center is None and wcsinfo is not None:
         center = (wcsinfo.crval1, wcsinfo.crval2, wcsinfo.crval3)
-        center_cs = 'world'
+        center_cs = "world"
 
     # build lists of data, masks, and sigmas (weights)
     image_data = []
@@ -301,7 +312,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             exptime = 1.0
 
         # process weights and create masks:
-        if not hasattr(cm, 'weightmap') or cm.weightmap is None:
+        if not hasattr(cm, "weightmap") or cm.weightmap is None:
             weights = np.ones_like(cm.data, dtype=np.float64)
             sigmas = weights / np.sqrt(exptime)
             mask = np.ones_like(weights, dtype=np.uint8)
@@ -343,11 +354,11 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             # Avoid bug in sigma_clipped_stats (fixed in astropy 4.0.2) which
             # fails on all-zero arrays passed when mask_value=0
             if not np.any(thisimg):
-                themed = 0.
-                clipsig = 0.
+                themed = 0.0
+                clipsig = 0.0
             else:
                 # Sigma clipped statistics, ignoring zeros where no data
-                _, themed, clipsig = sigclip(thisimg, mask_value=0.)
+                _, themed, clipsig = sigclip(thisimg, mask_value=0.0)
             # Reject beyond 3 sigma
             reject = np.where(np.abs(thisimg - themed) > 3 * clipsig)
             thismask[reject] = 0
@@ -360,10 +371,10 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         center=center,
         image2world=wcs.__call__,
         center_cs=center_cs,
-        ext_return=True
+        ext_return=True,
     )
 
-    if cs != 'world':
+    if cs != "world":
         raise RuntimeError("Unexpected coordinate system.")
 
     # TODO: try to identify if all images overlap
@@ -378,7 +389,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     if np.isnan(bkg_poly_coef).any():
         bkg_poly_coef = None
         for im in models:
-            im.meta.cal_step.mrs_imatch = 'SKIPPED'
+            im.meta.cal_step.mrs_imatch = "SKIPPED"
             im.meta.background.subtracted = False
     else:
         # set 2D models' background meta info:
@@ -386,10 +397,10 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             im.meta.background.subtracted = False
             im.meta.background.polynomial_info.append(
                 {
-                    'degree': degree,
-                    'refpoint': center,
-                    'coefficients': poly.ravel().tolist(),
-                    'channel': channel
+                    "degree": degree,
+                    "refpoint": center,
+                    "coefficients": poly.ravel().tolist(),
+                    "channel": channel,
                 }
             )
 

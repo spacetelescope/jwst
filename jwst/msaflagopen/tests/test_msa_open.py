@@ -10,7 +10,7 @@ from jwst.msaflagopen.msaflag_open import (
     get_failed_open_shutters,
     id_from_xy,
     or_subarray_with_array,
-    wcs_to_dq
+    wcs_to_dq,
 )
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.assign_wcs.tests import data
@@ -50,13 +50,20 @@ def test_id_from_xy():
     """Test id from x y location of shutter"""
 
     # First row of msaoper.json
-    data = {"Q": 1, "x": 1, "y": 1, "state": "closed", "TA state": "closed",
-            "Internal state": "normal", "Vignetted": "yes"}
+    data = {
+        "Q": 1,
+        "x": 1,
+        "y": 1,
+        "state": "closed",
+        "TA state": "closed",
+        "Internal state": "normal",
+        "Vignetted": "yes",
+    }
 
     shutters_per_row = 365
 
-    x = data['x']
-    y = data['y']
+    x = data["x"]
+    y = data["y"]
 
     result = id_from_xy(x, y)
 
@@ -68,37 +75,53 @@ def test_get_failed_open_shutters():
 
     # Set up data model to retrieve reference file
     dm = ImageModel()
-    dm.meta.instrument.name = 'NIRSPEC'
-    dm.meta.observation.date = '2016-09-05'
-    dm.meta.observation.time = '8:59:37'
+    dm.meta.instrument.name = "NIRSPEC"
+    dm.meta.observation.date = "2016-09-05"
+    dm.meta.observation.time = "8:59:37"
 
     # Get reference file and return all failed open shutters
-    msa_oper = Step().get_reference_file(dm, 'msaoper')
+    msa_oper = Step().get_reference_file(dm, "msaoper")
     result = get_failed_open_shutters(msa_oper)
 
     # get_failed_open_shutters returns 3 flaggable states
     # state, Internal state, and TA state.
     for shutter in result:
-        assert shutter['state'] == 'open' \
-            or shutter['Internal state'] == 'open' \
-            or shutter['TA state'] == 'open'
+        assert (
+            shutter["state"] == "open"
+            or shutter["Internal state"] == "open"
+            or shutter["TA state"] == "open"
+        )
 
 
 def test_create_slitlets():
     """Test that slitlets are Slit type and have all the necessary fields"""
 
     dm = ImageModel()
-    dm.meta.instrument.name = 'NIRSPEC'
-    dm.meta.observation.date = '2016-09-05'
-    dm.meta.observation.time = '8:59:37'
-    msa_oper = Step().get_reference_file(dm, 'msaoper')
+    dm.meta.instrument.name = "NIRSPEC"
+    dm.meta.observation.date = "2016-09-05"
+    dm.meta.observation.time = "8:59:37"
+    msa_oper = Step().get_reference_file(dm, "msaoper")
     result = create_slitlets(dm, msa_oper)
 
-    slit_fields = ('name', 'shutter_id', 'dither_position', 'xcen',
-                   'ycen', 'ymin', 'ymax', 'quadrant', 'source_id',
-                   'shutter_state', 'source_name', 'source_alias',
-                   'stellarity', 'source_xpos', 'source_ypos',
-                   'source_ra', 'source_dec')
+    slit_fields = (
+        "name",
+        "shutter_id",
+        "dither_position",
+        "xcen",
+        "ycen",
+        "ymin",
+        "ymax",
+        "quadrant",
+        "source_id",
+        "shutter_state",
+        "source_name",
+        "source_alias",
+        "stellarity",
+        "source_xpos",
+        "source_ypos",
+        "source_ra",
+        "source_dec",
+    )
 
     for slit in result:
         # Test the returned data type and fields.
@@ -138,47 +161,48 @@ def test_boundingbox_from_indices():
 def test_msaflagopen_step():
     im = ImageModel((2048, 2048))
     im.meta.wcsinfo = {
-        'dec_ref': -0.00601415671349804,
-        'ra_ref': -0.02073605215697509,
-        'roll_ref': -0.0,
-        'v2_ref': -453.5134,
-        'v3_ref': -373.4826,
-        'v3yangle': 0.0,
-        'vparity': -1}
+        "dec_ref": -0.00601415671349804,
+        "ra_ref": -0.02073605215697509,
+        "roll_ref": -0.0,
+        "v2_ref": -453.5134,
+        "v3_ref": -373.4826,
+        "v3yangle": 0.0,
+        "vparity": -1,
+    }
 
     im.meta.instrument = {
-        'detector': 'NRS1',
-        'filter': 'F100LP',
-        'grating': 'G140M',
-        'name': 'NIRSPEC',
-        'gwa_tilt': 37.0610,
-        'gwa_xtilt': 0.0001,
-        'gwa_ytilt': 0.0001,
-        'msa_metadata_id': 12}
+        "detector": "NRS1",
+        "filter": "F100LP",
+        "grating": "G140M",
+        "name": "NIRSPEC",
+        "gwa_tilt": 37.0610,
+        "gwa_xtilt": 0.0001,
+        "gwa_ytilt": 0.0001,
+        "msa_metadata_id": 12,
+    }
 
-    im.meta.observation = {
-        'date': '2016-09-05',
-        'time': '8:59:37'}
+    im.meta.observation = {"date": "2016-09-05", "time": "8:59:37"}
 
     im.meta.exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 100,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'readpatt': 'NRSRAPID',
-        'sample_time': 10.0,
-        'start_time': 58119.8333,
-        'type': 'NRS_MSASPEC',
-        'zero_frame': False}
-    im.meta.instrument.msa_metadata_file = get_file_path('msa_configuration.fits')
+        "duration": 11.805952,
+        "end_time": 58119.85416,
+        "exposure_time": 11.776,
+        "frame_time": 0.11776,
+        "group_time": 0.11776,
+        "groupgap": 0,
+        "integration_time": 11.776,
+        "nframes": 1,
+        "ngroups": 100,
+        "nints": 1,
+        "nresets_between_ints": 0,
+        "nsamples": 1,
+        "readpatt": "NRSRAPID",
+        "sample_time": 10.0,
+        "start_time": 58119.8333,
+        "type": "NRS_MSASPEC",
+        "zero_frame": False,
+    }
+    im.meta.instrument.msa_metadata_file = get_file_path("msa_configuration.fits")
     im.meta.dither.position_number = 1
 
     im = AssignWcsStep.call(im)

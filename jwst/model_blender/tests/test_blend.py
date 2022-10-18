@@ -14,12 +14,15 @@ N_MODELS = 3  # Number of input models made. All below lists should be this leng
 START_TIMES = [57877.00359994354, 57877.0168373584, 57877.03126958496]
 EXP_TIMES = [107.3676, 107.3676, 107.3676]
 END_TIMES = [57877.0048426241, 57877.01808003896, 57877.03251226551]
-FILENAMES = ['image1_cal.fits', 'image2_cal.fits', 'image3_cal.fits']
-DATETIMES = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
-             '2017-11-11T15:15:06.118']
-DATES = ['2017-11-30', '2017-11-11', '2017-12-10']
-INSTRUMENT_NAMES = ['NIRCAM'] * 3
-CORONAGRAPHS = ['4QPM', '4QPM_1065', '4QPM_1140']
+FILENAMES = ["image1_cal.fits", "image2_cal.fits", "image3_cal.fits"]
+DATETIMES = [
+    "2017-11-30T13:52:20.367",
+    "2017-11-11T15:14:29.176",
+    "2017-11-11T15:15:06.118",
+]
+DATES = ["2017-11-30", "2017-11-11", "2017-12-10"]
+INSTRUMENT_NAMES = ["NIRCAM"] * 3
+CORONAGRAPHS = ["4QPM", "4QPM_1065", "4QPM_1140"]
 
 
 def _make_data():
@@ -39,26 +42,26 @@ def _make_data():
     models = [ImageModel() for i in range(N_MODELS)]
 
     input_values = {
-        'meta.exposure.start_time': START_TIMES,
-        'meta.exposure.exposure_time': EXP_TIMES,
-        'meta.exposure.end_time': END_TIMES,
-        'meta.filename': FILENAMES,
-        'meta.instrument.coronagraph': CORONAGRAPHS,
-        'meta.instrument.name': INSTRUMENT_NAMES,
-        'meta.date': DATETIMES,
-        'meta.observation.date': DATES,
-        'meta.observation.date_beg': DATETIMES,
+        "meta.exposure.start_time": START_TIMES,
+        "meta.exposure.exposure_time": EXP_TIMES,
+        "meta.exposure.end_time": END_TIMES,
+        "meta.filename": FILENAMES,
+        "meta.instrument.coronagraph": CORONAGRAPHS,
+        "meta.instrument.name": INSTRUMENT_NAMES,
+        "meta.date": DATETIMES,
+        "meta.observation.date": DATES,
+        "meta.observation.date_beg": DATETIMES,
     }
     output_values = {
-        'meta.exposure.start_time': START_TIMES[0],
-        'meta.exposure.exposure_time': np.sum(EXP_TIMES),
-        'meta.exposure.end_time': END_TIMES[-1],
-        'meta.filename': FILENAMES[0],
-        'meta.instrument.coronagraph': CORONAGRAPHS[0],
-        'meta.instrument.name': INSTRUMENT_NAMES[0],
-        'meta.date': DATETIMES[0],
-        'meta.observation.date': DATES[1],
-        'meta.observation.date_beg': DATETIMES[1]
+        "meta.exposure.start_time": START_TIMES[0],
+        "meta.exposure.exposure_time": np.sum(EXP_TIMES),
+        "meta.exposure.end_time": END_TIMES[-1],
+        "meta.filename": FILENAMES[0],
+        "meta.instrument.coronagraph": CORONAGRAPHS[0],
+        "meta.instrument.name": INSTRUMENT_NAMES[0],
+        "meta.date": DATETIMES[0],
+        "meta.observation.date": DATES[1],
+        "meta.observation.date_beg": DATETIMES[1],
     }
 
     for i, model in enumerate(models):
@@ -71,12 +74,12 @@ def _make_data():
 # The fixture decorator is separated from the actual
 # function to allow access to `_make_data` outside the
 # `pytest` framework.
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def make_data():
     return _make_data()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def blend(make_data):
     """Blend the meta data
 
@@ -122,12 +125,13 @@ def build_fits_dict(schema):
         attributes as values
 
     """
+
     def build_fits_dict(subschema, path, combiner, ctx, recurse):
-        if len(path) and path[0] == 'extra_fits':
+        if len(path) and path[0] == "extra_fits":
             return True
-        kw = subschema.get('fits_keyword')
+        kw = subschema.get("fits_keyword")
         if kw is not None:
-            results[kw] = '.'.join(path)
+            results[kw] = ".".join(path)
 
     results = {}
     walk_schema(schema, build_fits_dict, results)
@@ -149,10 +153,7 @@ def test_blendtab(blend):
     # needs to be determined.
     fits_to_meta = build_fits_dict(models[0].schema)
     meta_to_fits = dict(map(reversed, fits_to_meta.items()))
-    fits_expected = set(
-        meta_to_fits[meta]
-        for meta in input_values
-    )
+    fits_expected = set(meta_to_fits[meta] for meta in input_values)
 
     # Ensure all the expected FITS keywords are in the table.
     table = Table(newtab.data)

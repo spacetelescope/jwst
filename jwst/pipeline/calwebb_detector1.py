@@ -21,7 +21,7 @@ from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
-__all__ = ['Detector1Pipeline']
+__all__ = ["Detector1Pipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
@@ -44,28 +44,29 @@ class Detector1Pipeline(Pipeline):
     """
 
     # Define aliases to steps
-    step_defs = {'group_scale': group_scale_step.GroupScaleStep,
-                 'dq_init': dq_init_step.DQInitStep,
-                 'saturation': saturation_step.SaturationStep,
-                 'ipc': ipc_step.IPCStep,
-                 'superbias': superbias_step.SuperBiasStep,
-                 'refpix': refpix_step.RefPixStep,
-                 'rscd': rscd_step.RscdStep,
-                 'firstframe': firstframe_step.FirstFrameStep,
-                 'lastframe': lastframe_step.LastFrameStep,
-                 'linearity': linearity_step.LinearityStep,
-                 'dark_current': dark_current_step.DarkCurrentStep,
-                 'reset': reset_step.ResetStep,
-                 'persistence': persistence_step.PersistenceStep,
-                 'jump': jump_step.JumpStep,
-                 'ramp_fit': ramp_fit_step.RampFitStep,
-                 'gain_scale': gain_scale_step.GainScaleStep,
-                 }
+    step_defs = {
+        "group_scale": group_scale_step.GroupScaleStep,
+        "dq_init": dq_init_step.DQInitStep,
+        "saturation": saturation_step.SaturationStep,
+        "ipc": ipc_step.IPCStep,
+        "superbias": superbias_step.SuperBiasStep,
+        "refpix": refpix_step.RefPixStep,
+        "rscd": rscd_step.RscdStep,
+        "firstframe": firstframe_step.FirstFrameStep,
+        "lastframe": lastframe_step.LastFrameStep,
+        "linearity": linearity_step.LinearityStep,
+        "dark_current": dark_current_step.DarkCurrentStep,
+        "reset": reset_step.ResetStep,
+        "persistence": persistence_step.PersistenceStep,
+        "jump": jump_step.JumpStep,
+        "ramp_fit": ramp_fit_step.RampFitStep,
+        "gain_scale": gain_scale_step.GainScaleStep,
+    }
 
     # start the actual processing
     def process(self, input):
 
-        log.info('Starting calwebb_detector1 ...')
+        log.info("Starting calwebb_detector1 ...")
 
         # open the input as a RampModel
         input = datamodels.RampModel(input)
@@ -75,11 +76,11 @@ class Detector1Pipeline(Pipeline):
         self.ramp_fit.output_dir = self.output_dir
 
         instrument = input.meta.instrument.name
-        if instrument == 'MIRI':
+        if instrument == "MIRI":
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
-            log.debug('Processing a MIRI exposure')
+            log.debug("Processing a MIRI exposure")
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -99,7 +100,7 @@ class Detector1Pipeline(Pipeline):
         else:
 
             # process Near-IR exposures
-            log.debug('Processing a Near-IR exposure')
+            log.debug("Processing a Near-IR exposure")
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -110,7 +111,7 @@ class Detector1Pipeline(Pipeline):
             input = self.linearity(input)
 
             # skip persistence for NIRSpec
-            if instrument != 'NIRSPEC':
+            if instrument != "NIRSPEC":
                 input = self.persistence(input)
 
             input = self.dark_current(input)
@@ -120,7 +121,7 @@ class Detector1Pipeline(Pipeline):
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
-            self.save_model(input, 'ramp')
+            self.save_model(input, "ramp")
 
         # apply the ramp_fit step
         # This explicit test on self.ramp_fit.skip is a temporary workaround
@@ -135,7 +136,7 @@ class Detector1Pipeline(Pipeline):
 
         # apply the gain_scale step to the exposure-level product
         if input is not None:
-            self.gain_scale.suffix = 'gain_scale'
+            self.gain_scale.suffix = "gain_scale"
             input = self.gain_scale(input)
         else:
             log.info("NoneType returned from ramp_fit.  Gain Scale step skipped.")
@@ -143,14 +144,14 @@ class Detector1Pipeline(Pipeline):
         # apply the gain scale step to the multi-integration product,
         # if it exists, and then save it
         if ints_model is not None:
-            self.gain_scale.suffix = 'gain_scaleints'
+            self.gain_scale.suffix = "gain_scaleints"
             ints_model = self.gain_scale(ints_model)
-            self.save_model(ints_model, 'rateints')
+            self.save_model(ints_model, "rateints")
 
         # setup output_file for saving
         self.setup_output(input)
 
-        log.info('... ending calwebb_detector1')
+        log.info("... ending calwebb_detector1")
 
         return input
 
@@ -158,7 +159,7 @@ class Detector1Pipeline(Pipeline):
         if input is None:
             return None
         # Determine the proper file name suffix to use later
-        if input.meta.cal_step.ramp_fit == 'COMPLETE':
-            self.suffix = 'rate'
+        if input.meta.cal_step.ramp_fit == "COMPLETE":
+            self.suffix = "rate"
         else:
-            self.suffix = 'ramp'
+            self.suffix = "ramp"

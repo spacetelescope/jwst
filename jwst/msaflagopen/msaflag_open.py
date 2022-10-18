@@ -14,11 +14,11 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-FAILEDOPENFLAG = datamodels.dqflags.pixel['MSA_FAILED_OPEN']
+FAILEDOPENFLAG = datamodels.dqflags.pixel["MSA_FAILED_OPEN"]
 SHUTTERS_PER_ROW = 365
 #
 # States in the msaoper file that are to flagged when set to 'open'
-FLAGGABLE_STATES = ['Internal state', 'TA state', 'state']
+FLAGGABLE_STATES = ["Internal state", "TA state", "state"]
 
 
 def do_correction(input_model, shutter_refname, wcs_refnames):
@@ -51,7 +51,7 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
     # Flag the stuck open hutters
     output_model = flag(input_model, failed_slitlets, wcs_refnames)
 
-    output_model.meta.cal_step.msa_flagging = 'COMPLETE'
+    output_model.meta.cal_step.msa_flagging = "COMPLETE"
 
     return output_model
 
@@ -92,7 +92,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     # are calculating where stuck open slits affect the data
     temporary_copy = input_datamodel.copy()
     temporary_copy.meta.wcs = wcs
-    temporary_copy.meta.exposure.type = 'NRS_MSASPEC'
+    temporary_copy.meta.exposure.type = "NRS_MSASPEC"
     dq_array = input_datamodel.dq
     for slitlet in failed_slitlets:
         #
@@ -100,8 +100,9 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
         thiswcs = nrs_wcs_set_input(temporary_copy, slitlet.name)
         #
         # Convert the bounding box for this slitlet to a set of indices to use as a slice
-        xmin, xmax, ymin, ymax = boundingbox_to_indices(temporary_copy,
-                                                        thiswcs.bounding_box)
+        xmin, xmax, ymin, ymax = boundingbox_to_indices(
+            temporary_copy, thiswcs.bounding_box
+        )
         #
         # Make a grid of points within the slice
         y_indices, x_indices = np.mgrid[ymin:ymax, xmin:xmax]
@@ -175,14 +176,14 @@ def get_failed_open_shutters(shutter_refname):
     least one of the states in FLAGGABLE_STATES is set to 'open'
     """
     # Open the bad shutter reference file data model
-    f1 = open(shutter_refname, 'r')
+    f1 = open(shutter_refname, "r")
     shutters = json.load(f1)
     f1.close()
 
     failedopen = []
-    for shutter in shutters['msaoper']:
+    for shutter in shutters["msaoper"]:
         for state in FLAGGABLE_STATES:
-            if shutter[state] == 'open':
+            if shutter[state] == "open":
                 failedopen.append(shutter)
                 break
     return failedopen
@@ -217,12 +218,28 @@ def create_slitlets(input_model, shutter_refname):
     counter = 0
     for shutter in failedopenlist:
         counter = counter + 1
-        x = shutter['x']
-        y = shutter['y']
+        x = shutter["x"]
+        y = shutter["y"]
         shutter_id = id_from_xy(x, y)
-        slitlets.append(Slit(str(counter), shutter_id, 0, x, y, -0.5, 0.5,
-                             shutter['Q'], 0, 1, "", "", 0.0, 0.0, 0.0)
-                        )
+        slitlets.append(
+            Slit(
+                str(counter),
+                shutter_id,
+                0,
+                x,
+                y,
+                -0.5,
+                0.5,
+                shutter["Q"],
+                0,
+                1,
+                "",
+                "",
+                0.0,
+                0.0,
+                0.0,
+            )
+        )
     return slitlets
 
 
@@ -240,5 +257,7 @@ def or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax):
     Bitwise-or the slice of the dq array with the section corresponding to the
     failed open shutter
     """
-    dq_array[ymin:ymax, xmin:xmax] = np.bitwise_or(dq_array[ymin:ymax, xmin:xmax], dq_subarray)
+    dq_array[ymin:ymax, xmin:xmax] = np.bitwise_or(
+        dq_array[ymin:ymax, xmin:xmax], dq_subarray
+    )
     return dq_array

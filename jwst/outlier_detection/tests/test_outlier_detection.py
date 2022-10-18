@@ -49,7 +49,7 @@ def sci_blot_image_pair():
     signal = 20 * sigma
     sci.data[10, 10] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci.err[10, 10] = np.sqrt(sigma ** 2 + signal)
+    sci.err[10, 10] = np.sqrt(sigma**2 + signal)
 
     # The blot image is just a smoothed version of the science image that has
     # its background subtracted
@@ -136,7 +136,7 @@ def we_many_sci(
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci1.err[7, 7] = np.sqrt(sigma ** 2 + signal)
+    sci1.err[7, 7] = np.sqrt(sigma**2 + signal)
     sci1.var_rnoise = np.zeros(shape) + 1.0
     sci1.meta.filename = "foo1_cal.fits"
 

@@ -21,6 +21,7 @@ class Member(UserDict):
     item: obj
         The original item that created this member.
     """
+
     def __init__(self, initialdata=None, item=None):
         self.item = None
 

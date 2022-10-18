@@ -26,12 +26,13 @@
 
 import xml.etree.ElementTree as et
 
+
 def get_detectors(filename):
     tree = et.parse(filename)
     proposal = tree.getroot()
     ObservationNum = 0
     detectors = []
-    ProposalNum = filename.split('.')[0]
+    ProposalNum = filename.split(".")[0]
     for observation in proposal:
         ObservationNum = ObservationNum + 1
         VisitNum = 0
@@ -51,17 +52,23 @@ def get_detectors(filename):
                             ExposureNum = ExposureNum + 1
                             DetectorNum = 0
                             for detector in exposure:
-                                subarray = detector.find('subarray').text
-                                base = detector.find('base').text
-                                exp_type = detector.find('exp_type').text
-                                id = ProposalNum + '%03d%03d%02d%d%02d%05d' % (ObservationNum,
-                                                                               VisitNum,
-                                                                               VisitGroupNum,
-                                                                               ParallelSequenceIDNum,
-                                                                               ActivityNum,
-                                                                               ExposureNum)
-                                detectors.append({'base': base,
-                                                  'subarray': subarray,
-                                                  'exp_type': exp_type,
-                                                  'id': id})
+                                subarray = detector.find("subarray").text
+                                base = detector.find("base").text
+                                exp_type = detector.find("exp_type").text
+                                id = ProposalNum + "%03d%03d%02d%d%02d%05d" % (
+                                    ObservationNum,
+                                    VisitNum,
+                                    VisitGroupNum,
+                                    ParallelSequenceIDNum,
+                                    ActivityNum,
+                                    ExposureNum,
+                                )
+                                detectors.append(
+                                    {
+                                        "base": base,
+                                        "subarray": subarray,
+                                        "exp_type": exp_type,
+                                        "id": id,
+                                    }
+                                )
     return detectors

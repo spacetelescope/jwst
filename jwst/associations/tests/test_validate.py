@@ -2,11 +2,7 @@ import pytest
 
 from jwst.associations.tests import helpers
 
-from jwst.associations import (
-    AssociationRegistry,
-    AssociationNotValidError,
-    load_asn
-)
+from jwst.associations import AssociationRegistry, AssociationNotValidError, load_asn
 
 
 def test_invalid():
@@ -17,10 +13,8 @@ def test_invalid():
 
 def test_valid():
     rules = AssociationRegistry()
-    asn_file = helpers.t_path(
-        'data/test_image_asn.json'
-    )
-    with open(asn_file, 'r') as asn_fp:
+    asn_file = helpers.t_path("data/test_image_asn.json")
+    with open(asn_file, "r") as asn_fp:
         asn = load_asn(asn_fp)
     valid_schema_list = rules.validate(asn)
     assert isinstance(valid_schema_list, list)

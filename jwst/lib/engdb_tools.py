@@ -98,13 +98,13 @@ def ENGDB_Service(base_url=None, **service_kwargs):
         try:
             service = db_attempt(base_url=base_url, **service_kwargs)
         except RuntimeError as excp:
-            logger.debug('Service %s cannot use base_url %s.', db_attempt, base_url)
-            logger.debug('Exception: %s', excp)
+            logger.debug("Service %s cannot use base_url %s.", db_attempt, base_url)
+            logger.debug("Exception: %s", excp)
         else:
             # Found the working service. Continue on.
             break
     else:
-        raise RuntimeError(f'Base URL of {base_url} cannot be accessed.')
+        raise RuntimeError(f"Base URL of {base_url} cannot be accessed.")
 
     # Service is in hand.
     return service

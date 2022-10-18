@@ -20,8 +20,17 @@ class DataSet:
 
     """
 
-    def __init__(self, infile_1, infile_2, outfile, do_refine, flip_dithers, psf_size,
-                 blur_size, n_size):
+    def __init__(
+        self,
+        infile_1,
+        infile_2,
+        outfile,
+        do_refine,
+        flip_dithers,
+        psf_size,
+        blur_size,
+        n_size,
+    ):
         """
         Short Summary
         -------------
@@ -48,23 +57,24 @@ class DataSet:
         """
 
         if outfile == "":
-            log.error('No output product specified in the association table.')
+            log.error("No output product specified in the association table.")
 
         try:
             self.input_1 = datamodels.open(infile_1)
             self.input_2 = datamodels.open(infile_2)
         except IOError:
-            log.error('Error creating a model from at least 1 of : %s %s',
-                      infile_1, infile_2)
+            log.error(
+                "Error creating a model from at least 1 of : %s %s", infile_1, infile_2
+            )
 
         self.do_refine = do_refine
 
         if self.input_1.data.shape != self.input_2.data.shape:
-            log.error('Incompatible sizes for input files')
+            log.error("Incompatible sizes for input files")
 
-        log.info('Output file: %s', outfile)
-        log.info('do_refine: %s', do_refine)
-        log.info('flip_dithers: %s', flip_dithers)
+        log.info("Output file: %s", outfile)
+        log.info("do_refine: %s", do_refine)
+        log.info("flip_dithers: %s", flip_dithers)
         self.file1 = infile_1
         self.file2 = infile_2
         self.off_x = 0
@@ -100,16 +110,16 @@ class DataSet:
             self.input_2.close()
             self.input_1 = datamodels.open(self.file2)
             self.input_2 = datamodels.open(self.file1)
-            log.info('File 1 to combine: %s', self.file2)
-            log.info('File 2 to combine: %s', self.file1)
+            log.info("File 1 to combine: %s", self.file2)
+            log.info("File 2 to combine: %s", self.file1)
         else:
-            log.info('File 1 to combine: %s', self.file1)
-            log.info('File 2 to combine: %s', self.file2)
+            log.info("File 1 to combine: %s", self.file1)
+            log.info("File 2 to combine: %s", self.file2)
 
         # Input SCI arrays may have nan's so replace with 0's to prevent
         # later annoyances (hopefully this can be removed later)
-        self.input_1.data[np.isnan(self.input_1.data)] = 0.
-        self.input_2.data[np.isnan(self.input_2.data)] = 0.
+        self.input_1.data[np.isnan(self.input_1.data)] = 0.0
+        self.input_2.data[np.isnan(self.input_2.data)] = 0.0
         im_1_a = self.input_1.copy()  # Aligned image #1 (already aligned)
         im_2_a = self.create_aligned_2()  # Aligned image #2
 
@@ -122,12 +132,26 @@ class DataSet:
         # Create a new model using the combined arrays...
         new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
         new_model.update(self.input_1)
-        new_model.history.append('Flip dithers = {}'.format(self.flip_dithers))
-        new_model.history.append('WFS_COMBINE refine offset = {}'.format(self.do_refine))
-        new_model.history.append('WFS_COMBINE X offset applied ' + str(self.off_x) + ' pixels ' +
-                                 'actual offset ' + str(round(self.flt_off_x, 2)) + ' pixels')
-        new_model.history.append('WFS_COMBINE Y offset applied ' + str(self.off_y) + ' pixels ' +
-                                 'actual offset ' + str(round(self.flt_off_y, 2)) + ' pixels')
+        new_model.history.append("Flip dithers = {}".format(self.flip_dithers))
+        new_model.history.append(
+            "WFS_COMBINE refine offset = {}".format(self.do_refine)
+        )
+        new_model.history.append(
+            "WFS_COMBINE X offset applied "
+            + str(self.off_x)
+            + " pixels "
+            + "actual offset "
+            + str(round(self.flt_off_x, 2))
+            + " pixels"
+        )
+        new_model.history.append(
+            "WFS_COMBINE Y offset applied "
+            + str(self.off_y)
+            + " pixels "
+            + "actual offset "
+            + str(round(self.flt_off_y, 2))
+            + " pixels"
+        )
         return new_model
 
     def create_aligned_2(self):
@@ -177,7 +201,7 @@ class DataSet:
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
             g = gauss_kern(self.blur_size, sizey=None)
-            s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
+            s_data_1 = scipy.signal.convolve(data_1, g, mode="valid")
 
             # 2. Find approximate center of PSF in unsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
@@ -188,8 +212,11 @@ class DataSet:
             ctrd_x = wh_data_hi[1].mean() + self.blur_size
             ctrd_y = wh_data_hi[0].mean() + self.blur_size
 
-            log.info('Approximate centroid of image 1 PSF has x,y : %s %s',
-                     round(ctrd_x), round(ctrd_y))
+            log.info(
+                "Approximate centroid of image 1 PSF has x,y : %s %s",
+                round(ctrd_x),
+                round(ctrd_y),
+            )
 
             # 3. Set limits of the subarrays (in frames of input data)
             #    for interpolation by taking this centroid +/- psf_size
@@ -200,23 +227,29 @@ class DataSet:
             ymax = int(round(min(self.input_1.data.shape[0], ctrd_y + self.psf_size)))
 
             # 3a. Set subarrays and interpolate over bad pixels
-            data_sub_1 = self.input_1.data[ymin: ymax, xmin: xmax]
-            dq_sub_1 = self.input_1.dq[ymin: ymax, xmin: xmax]
+            data_sub_1 = self.input_1.data[ymin:ymax, xmin:xmax]
+            dq_sub_1 = self.input_1.dq[ymin:ymax, xmin:xmax]
             sci_int_1 = interp_array(data_sub_1, dq_sub_1, self.n_size)
 
-            data_sub_2 = self.input_2.data[ymin: ymax, xmin: xmax]
-            dq_sub_2 = self.input_2.dq[ymin: ymax, xmin: xmax]
+            data_sub_2 = self.input_2.data[ymin:ymax, xmin:xmax]
+            dq_sub_2 = self.input_2.dq[ymin:ymax, xmin:xmax]
             sci_int_2 = interp_array(data_sub_2, dq_sub_2, self.n_size)
 
             # 4. Determine overlap of these interpolated images, and
             #    return nominally aligned, interpolated images
-            sci_nai_1, sci_nai_2 = get_overlap(sci_int_1, sci_int_2,
-                                               self.off_x, self.off_y)
+            sci_nai_1, sci_nai_2 = get_overlap(
+                sci_int_1, sci_int_2, self.off_x, self.off_y
+            )
             # 5. Around this nominal alignment, get refined (delta) offsets
-            ref_del_off_x, ref_del_off_y = calc_refined_offsets(sci_nai_1, sci_nai_2, 0, 0, self.psf_size)
-            log.info('From the refined offsets calculation,'
-                     'the x,y changes in offsets are: %s %s',
-                     round(ref_del_off_x, 2), round(ref_del_off_y, 2))
+            ref_del_off_x, ref_del_off_y = calc_refined_offsets(
+                sci_nai_1, sci_nai_2, 0, 0, self.psf_size
+            )
+            log.info(
+                "From the refined offsets calculation,"
+                "the x,y changes in offsets are: %s %s",
+                round(ref_del_off_x, 2),
+                round(ref_del_off_y, 2),
+            )
 
             # 6. Add the refined delta offsets to the nominal offsets
             self.flt_off_x = self.off_x + ref_del_off_x
@@ -281,8 +314,8 @@ class DataSet:
         """
         wcs1 = self.input_1.meta.wcs
         wcs2 = self.input_2.meta.wcs
-        tr1 = wcs1.get_transform('detector', 'world')
-        tr2 = wcs2.get_transform('world', 'detector')
+        tr1 = wcs1.get_transform("detector", "world")
+        tr2 = wcs2.get_transform("world", "detector")
 
         # Get coords of center pixel
         xcen = int(self.input_1.data.shape[1] / 2)
@@ -292,8 +325,11 @@ class DataSet:
         pixels = tr2(radec[0], radec[1])
         off_x = pixels[0] - xcen
         off_y = pixels[1] - ycen
-        log.info('From the WCS the x,y pixel offsets are: %s %s',
-                 round(off_x, 2), round(off_y, 2))
+        log.info(
+            "From the WCS the x,y pixel offsets are: %s %s",
+            round(off_x, 2),
+            round(off_y, 2),
+        )
         self.flt_off_x = off_x
         self.flt_off_y = off_y
         off_x = int(round(off_x))  # Offsets required to be integers
@@ -376,7 +412,7 @@ class DataSet:
         err_comb[good2 & bad1] = err2[good2 & bad1]
 
         data_diff = np.zeros_like(data1)
-        data_diff[good1 & good2] = (data1[good1 & good2] - data2[good1 & good2])
+        data_diff[good1 & good2] = data1[good1 & good2] - data2[good1 & good2]
         data_diff[good1 & bad2] = 0
         data_diff[good2 & bad1] = 0
 
@@ -465,7 +501,7 @@ def gauss_kern(size, sizey=None):
     else:
         sizey = int(sizey)
 
-    x, y = np.mgrid[-size:size + 1, -sizey:sizey + 1]
+    x, y = np.mgrid[-size : size + 1, -sizey : sizey + 1]
     g = np.exp(-(x**2 / float(size) + y**2 / float(sizey)))
 
     return g / g.sum()
@@ -510,12 +546,12 @@ def interp_array(sci_data, dq_data, n_size):
         y = bad_dq[jj][0]
 
         # Linearly interpolate using scipy's griddata to fill in missing value
-        sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='linear')
+        sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method="linear")
 
         # For those interpolations just done that result in a nan (because
         #    there may be too few pixels), check and redo with 'nearest'
         if np.isnan(sci_data[y, x]):
-            sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='nearest')
+            sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method="nearest")
 
     return sci_data
 
@@ -661,8 +697,12 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
 
     # From the nominal offsets, determine array indices to shift image #2
     #     onto frame #1
-    initial_x_1, final_x_1, initial_x_2, final_x_2 = get_index_range(nom_off_x, sci_int_2.shape[1])
-    initial_y_1, final_y_1, initial_y_2, final_y_2 = get_index_range(nom_off_y, sci_int_2.shape[0])
+    initial_x_1, final_x_1, initial_x_2, final_x_2 = get_index_range(
+        nom_off_x, sci_int_2.shape[1]
+    )
+    initial_y_1, final_y_1, initial_y_2, final_y_2 = get_index_range(
+        nom_off_y, sci_int_2.shape[0]
+    )
 
     sub_1 = sci_int_1[initial_y_1:final_y_1, initial_x_1:final_x_1]
     sub_2 = sci_int_2[initial_y_2:final_y_2, initial_x_2:final_x_2]
@@ -708,8 +748,8 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
 
     # Raise (fatal) exception if there are no overlapping pixels
     if num_pix == 0:
-        log.error('Applying offsets to image #2 results in 0 overlapping pix')
-        raise RuntimeWarning('No overlapping pixels in 2 images')
+        log.error("Applying offsets to image #2 results in 0 overlapping pix")
+        raise RuntimeWarning("No overlapping pixels in 2 images")
 
     # Set limits for subarrays, centered on the overlap and +/- psf half width,
     #   taking edges into account
@@ -727,16 +767,20 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     sub_1_sub = sub_1[ymin:ymax, xmin:xmax]
     sub_2_sub = sub_2[ymin:ymax, xmin:xmax]
     # Create the cross correlation image
-    cross_cor = scipy.signal.correlate2d(sub_2_sub - scipy.ndimage.gaussian_filter(sub_2_sub, 5), sub_1_sub -
-                                         scipy.ndimage.gaussian_filter(sub_1_sub, 5))
+    cross_cor = scipy.signal.correlate2d(
+        sub_2_sub - scipy.ndimage.gaussian_filter(sub_2_sub, 5),
+        sub_1_sub - scipy.ndimage.gaussian_filter(sub_1_sub, 5),
+    )
     maximum_pixel = np.unravel_index(np.argmax(cross_cor), cross_cor.shape)
 
     ymax = maximum_pixel[0] - sub_1_sub.shape[0] + 1
     xmax = maximum_pixel[1] - sub_1_sub.shape[1] + 1
     # Slice out a box center on the peak of the cross correlation image. The centroid of this box will give a
     # accurate estimate of the x and y offsets.
-    central_cutout = cross_cor[maximum_pixel[0] - centroid_size:maximum_pixel[0] + centroid_size + 1,
-                               maximum_pixel[1] - centroid_size:maximum_pixel[1] + centroid_size + 1]
+    central_cutout = cross_cor[
+        maximum_pixel[0] - centroid_size : maximum_pixel[0] + centroid_size + 1,
+        maximum_pixel[1] - centroid_size : maximum_pixel[1] + centroid_size + 1,
+    ]
     centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
     refined_x = xmax + centroid[1] - centroid_size
     refined_y = ymax + centroid[0] - centroid_size

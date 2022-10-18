@@ -13,7 +13,7 @@ class LinearityStep(Step):
 
     class_alias = "linearity"
 
-    reference_file_types = ['linearity']
+    reference_file_types = ["linearity"]
 
     def process(self, input):
 
@@ -21,15 +21,15 @@ class LinearityStep(Step):
         with datamodels.RampModel(input) as input_model:
 
             # Get the name of the linearity reference file to use
-            self.lin_name = self.get_reference_file(input_model, 'linearity')
-            self.log.info('Using Linearity reference file %s', self.lin_name)
+            self.lin_name = self.get_reference_file(input_model, "linearity")
+            self.log.info("Using Linearity reference file %s", self.lin_name)
 
             # Check for a valid reference file
-            if self.lin_name == 'N/A':
-                self.log.warning('No Linearity reference file found')
-                self.log.warning('Linearity step will be skipped')
+            if self.lin_name == "N/A":
+                self.log.warning("No Linearity reference file found")
+                self.log.warning("Linearity step will be skipped")
                 result = input_model.copy()
-                result.meta.cal_step.linearity = 'SKIPPED'
+                result.meta.cal_step.linearity = "SKIPPED"
                 return result
 
             # Open the linearity reference file data model
@@ -40,6 +40,6 @@ class LinearityStep(Step):
 
             # Close the reference file and update the step status
             lin_model.close()
-            result.meta.cal_step.linearity = 'COMPLETE'
+            result.meta.cal_step.linearity = "COMPLETE"
 
         return result

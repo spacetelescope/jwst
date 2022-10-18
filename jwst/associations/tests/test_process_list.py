@@ -1,15 +1,12 @@
 """Test ProcessList, ProcessQueue, ProcessQueueSorted"""
 
-from jwst.associations.tests.helpers import (
-    combine_pools,
-    t_path
-)
+from jwst.associations.tests.helpers import combine_pools, t_path
 
 from jwst.associations.lib.process_list import *
 
 
 def test_item():
-    pool = combine_pools(t_path('data/pool_013_coron_nircam.csv'))
+    pool = combine_pools(t_path("data/pool_013_coron_nircam.csv"))
     item1 = ProcessItem(pool[0])
     item2 = ProcessItem(pool[1])
     assert item1 == item1
@@ -19,7 +16,7 @@ def test_item():
 
 
 def test_item_iterable():
-    pool = combine_pools(t_path('data/pool_013_coron_nircam.csv'))
+    pool = combine_pools(t_path("data/pool_013_coron_nircam.csv"))
     process_items = ProcessItem.to_process_items(pool)
     for process_item in process_items:
         assert isinstance(process_item, ProcessItem)
@@ -31,7 +28,7 @@ def test_process_queue():
         [1],
         [2, 3, 4],
         # [3, 4],  # Neither should get added but not implemented
-        [5]
+        [5],
     ]
     standard = [1, 2, 3, 4, 5]
 

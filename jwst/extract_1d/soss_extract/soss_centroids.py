@@ -27,7 +27,7 @@ def center_of_mass(column, ypos, halfwidth):
     """
 
     # Get the column shape and create a corresponding array of positions.
-    dimy, = column.shape
+    (dimy,) = column.shape
     ypix = np.arange(dimy)
 
     # Find the indices of the window.
@@ -35,9 +35,10 @@ def center_of_mass(column, ypos, halfwidth):
     maxy = np.int(np.fmin(np.around(ypos + halfwidth + 1), dimy))
 
     # Compute the center of mass on the window.
-    with np.errstate(invalid='ignore'):
-        ycom = (np.nansum(column[miny:maxy] * ypix[miny:maxy]) /
-                np.nansum(column[miny:maxy]))
+    with np.errstate(invalid="ignore"):
+        ycom = np.nansum(column[miny:maxy] * ypix[miny:maxy]) / np.nansum(
+            column[miny:maxy]
+        )
 
     return ycom
 
@@ -71,10 +72,12 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
 
     # If no mask was given use all pixels.
     if mask is None:
-        mask = np.zeros_like(scidata_bkg, dtype='bool')
+        mask = np.zeros_like(scidata_bkg, dtype="bool")
 
     # Call the script that determines the dimensions of the stack.
-    dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask = get_image_dim(scidata_bkg, header=header)
+    dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask = get_image_dim(
+        scidata_bkg, header=header
+    )
 
     # Replace masked pixel values with NaNs.
     scidata_bkg_masked = np.where(mask | ~refpix_mask, np.nan, scidata_bkg)
@@ -93,8 +96,10 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
     _, ygrid = np.meshgrid(xpix, ypix)
 
     # CoM analysis to find initial positions using all rows.
-    with np.errstate(invalid='ignore'):
-        ytrace = np.nansum(scidata_norm * ygrid, axis=0) / np.nansum(scidata_norm, axis=0)
+    with np.errstate(invalid="ignore"):
+        ytrace = np.nansum(scidata_norm * ygrid, axis=0) / np.nansum(
+            scidata_norm, axis=0
+        )
         ytrace = np.where(np.abs(ytrace) == np.inf, np.nan, ytrace)
 
     # Second pass - use a windowed CoM at the previous position.
@@ -129,8 +134,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
     halfwidth = 16 * yos
     for icol in range(dimx):
 
-        ytrace[icol] = center_of_mass(scidata_norm[:, icol], ytrace[icol],
-                                      halfwidth)
+        ytrace[icol] = center_of_mass(scidata_norm[:, icol], ytrace[icol], halfwidth)
 
     # Fit the y-positions with a polynomial and use result as true y-positions.
     xtrace = np.arange(dimx)

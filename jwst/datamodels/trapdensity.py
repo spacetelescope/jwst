@@ -3,7 +3,7 @@ from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['TrapDensityModel']
+__all__ = ["TrapDensityModel"]
 
 
 class TrapDensityModel(ReferenceFileModel):
@@ -21,6 +21,7 @@ class TrapDensityModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/trapdensity.schema"
 
     def __init__(self, init=None, **kwargs):

@@ -11,39 +11,36 @@ from jwst.associations import load_asn
 from jwst.associations.main import constrain_on_candidates
 
 LEVEL3_ASN_ACID_NAME_REGEX = (
-    r'jw'
-    r'(?P<program>\d{5})'
-    r'-(?P<acid>(o|c)\d{3,4})'
-    r'_(?P<asn_type>\w+)'
-    r'_(?P<sequence>\d{5})'
-    r'_asn'
+    r"jw"
+    r"(?P<program>\d{5})"
+    r"-(?P<acid>(o|c)\d{3,4})"
+    r"_(?P<asn_type>\w+)"
+    r"_(?P<sequence>\d{5})"
+    r"_asn"
 )
 LEVEL3_ASN_DISCOVERED_NAME_REGEX = (
-    r'jw'
-    r'(?P<program>\d{5})'
-    r'-(?P<acid>a\d{4})'
-    r'_(?P<asn_type>\w+)'
-    r'_(?P<sequence>\d{5})'
-    r'_asn'
+    r"jw"
+    r"(?P<program>\d{5})"
+    r"-(?P<acid>a\d{4})"
+    r"_(?P<asn_type>\w+)"
+    r"_(?P<sequence>\d{5})"
+    r"_asn"
 )
 
 LEVEL3_ASN_WITH_VERSION = (
-    r'jw'
-    r'(?P<program>\d{5})'
-    r'-(?P<acid>[a-z]\d{3,4})'
-    r'_(?P<stamp>.+)'
-    r'_(?P<asn_type>.+)'
-    r'_(?P<sequence>\d{5})'
-    r'_asn'
+    r"jw"
+    r"(?P<program>\d{5})"
+    r"-(?P<acid>[a-z]\d{3,4})"
+    r"_(?P<stamp>.+)"
+    r"_(?P<asn_type>.+)"
+    r"_(?P<sequence>\d{5})"
+    r"_asn"
 )
 
 all_candidates = constrain_on_candidates(None)
 
 pool_params = pytest.fixture(
-    scope='module',
-    params=[
-        'data/pool_020_00009_image_miri.csv'
-    ]
+    scope="module", params=["data/pool_020_00009_image_miri.csv"]
 )(helpers.generate_params)
 
 
@@ -55,10 +52,7 @@ def test_level3_asn_names(pool_params):
     assert len(asns) > 0
     for asn in asns:
         name = asn.asn_name
-        if any(
-                getattr(c, 'is_acid', False)
-                for c in asn.constraints
-        ):
+        if any(getattr(c, "is_acid", False) for c in asn.constraints):
             m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
         else:
             m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)
@@ -85,10 +79,7 @@ def test_level2_asn_names(pool_params):
     assert len(asns) > 0
     for asn in asns:
         name = asn.asn_name
-        if any(
-                getattr(c, 'is_acid', False)
-                for c in asn.constraints
-        ):
+        if any(getattr(c, "is_acid", False) for c in asn.constraints):
             m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
         else:
             m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)

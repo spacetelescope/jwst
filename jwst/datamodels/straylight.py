@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['StrayLightModel']
+__all__ = ["StrayLightModel"]
 
 
 class StrayLightModel(ReferenceFileModel):
@@ -13,4 +13,5 @@ class StrayLightModel(ReferenceFileModel):
     data : numpy uint8 array
          Straylight mask
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/straylight.schema"

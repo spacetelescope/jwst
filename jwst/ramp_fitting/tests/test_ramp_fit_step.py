@@ -36,9 +36,17 @@ def generate_miri_reffiles():
 
 @pytest.fixture
 def setup_inputs():
-
-    def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
-               nframes=1, grouptime=1.0, gain=1, deltatime=1):
+    def _setup(
+        ngroups=10,
+        readnoise=10,
+        nints=1,
+        nrows=1024,
+        ncols=1032,
+        nframes=1,
+        grouptime=1.0,
+        gain=1,
+        deltatime=1,
+    ):
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
@@ -48,13 +56,13 @@ def setup_inputs():
 
         rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
-        rampmodel.meta.instrument.name = 'MIRI'
-        rampmodel.meta.instrument.detector = 'MIRIMAGE'
-        rampmodel.meta.instrument.filter = 'F480M'
-        rampmodel.meta.observation.date = '2015-10-13'
-        rampmodel.meta.exposure.type = 'MIR_IMAGE'
+        rampmodel.meta.instrument.name = "MIRI"
+        rampmodel.meta.instrument.detector = "MIRIMAGE"
+        rampmodel.meta.instrument.filter = "F480M"
+        rampmodel.meta.observation.date = "2015-10-13"
+        rampmodel.meta.exposure.type = "MIR_IMAGE"
         rampmodel.meta.exposure.group_time = deltatime
-        rampmodel.meta.subarray.name = 'FULL'
+        rampmodel.meta.subarray.name = "FULL"
         rampmodel.meta.subarray.xstart = 1
         rampmodel.meta.subarray.ystart = 1
         rampmodel.meta.subarray.xsize = ncols
@@ -66,14 +74,14 @@ def setup_inputs():
         rampmodel.meta.exposure.groupgap = 0
 
         gain = GainModel(data=gain)
-        gain.meta.instrument.name = 'MIRI'
+        gain.meta.instrument.name = "MIRI"
         gain.meta.subarray.xstart = 1
         gain.meta.subarray.ystart = 1
         gain.meta.subarray.xsize = ncols
         gain.meta.subarray.ysize = nrows
 
         rnmodel = ReadnoiseModel(data=read_noise)
-        rnmodel.meta.instrument.name = 'MIRI'
+        rnmodel.meta.instrument.name = "MIRI"
         rnmodel.meta.subarray.xstart = 1
         rnmodel.meta.subarray.ystart = 1
         rnmodel.meta.subarray.xsize = ncols
@@ -85,10 +93,20 @@ def setup_inputs():
 
 
 def setup_subarray_inputs(
-        nints=1, ngroups=10, nrows=1032, ncols=1024,
-        subxstart=1, subxsize=1024, subystart=1, subysize=1032,
-        nframes=1, grouptime=1.0, deltatime=1,
-        readnoise=10, gain=1):
+    nints=1,
+    ngroups=10,
+    nrows=1032,
+    ncols=1024,
+    subxstart=1,
+    subxsize=1024,
+    subystart=1,
+    subysize=1032,
+    nframes=1,
+    grouptime=1.0,
+    deltatime=1,
+    readnoise=10,
+    gain=1,
+):
 
     data = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.float32)
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
@@ -99,13 +117,13 @@ def setup_subarray_inputs(
     times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
 
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
-    model1.meta.instrument.name = 'MIRI'
-    model1.meta.instrument.detector = 'MIRIMAGE'
-    model1.meta.instrument.filter = 'F480M'
-    model1.meta.observation.date = '2015-10-13'
-    model1.meta.exposure.type = 'MIR_IMAGE'
+    model1.meta.instrument.name = "MIRI"
+    model1.meta.instrument.detector = "MIRIMAGE"
+    model1.meta.instrument.filter = "F480M"
+    model1.meta.observation.date = "2015-10-13"
+    model1.meta.exposure.type = "MIR_IMAGE"
     model1.meta.exposure.group_time = deltatime
-    model1.meta.subarray.name = 'FULL'
+    model1.meta.subarray.name = "FULL"
     model1.meta.subarray.xstart = subxstart
     model1.meta.subarray.ystart = subystart
     model1.meta.subarray.xsize = subxsize
@@ -117,14 +135,14 @@ def setup_subarray_inputs(
     model1.meta.exposure.groupgap = 0
 
     gain = GainModel(data=gain)
-    gain.meta.instrument.name = 'MIRI'
+    gain.meta.instrument.name = "MIRI"
     gain.meta.subarray.xstart = 1
     gain.meta.subarray.ystart = 1
     gain.meta.subarray.xsize = 1024
     gain.meta.subarray.ysize = 1032
 
     rnModel = ReadnoiseModel(data=read_noise)
-    rnModel.meta.instrument.name = 'MIRI'
+    rnModel.meta.instrument.name = "MIRI"
     rnModel.meta.subarray.xstart = 1
     rnModel.meta.subarray.ystart = 1
     rnModel.meta.subarray.xsize = 1024
@@ -143,13 +161,19 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     grouptime = 3.0
     nints, ngroups, nrows, ncols = 1, 5, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=ingain, deltatime=grouptime)
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
     # Add basic ramps to each pixel
     pix = [(0, 0), (0, 1), (1, 0), (1, 1)]
     base_ramp = np.array([k + 1 for k in range(ngroups)])
-    ans_slopes = np.zeros(shape=(2,2))
+    ans_slopes = np.zeros(shape=(2, 2))
     for k, p in enumerate(pix):
         ramp = base_ramp * (k + 1)  # A simple linear ramp
         x, y = p
@@ -158,8 +182,11 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        model,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores="none",
+    )
 
     assert slopes is not None
     assert cube_model is not None
@@ -172,10 +199,11 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
 def test_subarray_5groups(tmpdir_factory):
     # all pixel values are zero. So slope should be zero
     gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
-    readnoisefile = str(tmpdir_factory.mktemp("data").join('readnoise.fits'))
+    readnoisefile = str(tmpdir_factory.mktemp("data").join("readnoise.fits"))
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
-        ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
+        ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50
+    )
     gain.save(gainfile)
     rnModel.save(readnoisefile)
 
@@ -188,8 +216,12 @@ def test_subarray_5groups(tmpdir_factory):
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model1, override_gain=gainfile, override_readnoise=readnoisefile,
-        maximum_cores="none", save_opt=True)
+        model1,
+        override_gain=gainfile,
+        override_readnoise=readnoisefile,
+        maximum_cores="none",
+        save_opt=True,
+    )
 
     assert slopes is not None
     assert cube_model is not None
@@ -208,16 +240,25 @@ def test_int_times1(generate_miri_reffiles, setup_inputs):
     grouptime = 3.0
     nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=ingain, deltatime=grouptime)
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
     # Set TSOVISIT false, despite which the int_times table should come back populated
     model.meta.visit.tsovisit = False
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        model,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores="none",
+    )
 
     assert slopes is not None
     assert cube_model is not None
@@ -232,16 +273,25 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     grouptime = 3.0
     nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=ingain, deltatime=grouptime)
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
     # Set TSOVISIT true, in which case the int_times table should come back with all content
     model.meta.visit.tsovisit = True
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        model,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores="none",
+    )
 
     assert slopes is not None
     assert cube_model is not None
@@ -265,8 +315,14 @@ def one_group_suppressed(nints, suppress, setup_inputs):
     rnoise, gain = 10, 1
     group_time, frame_time = 5.0, 1
     rampmodel, gdq, rnModel, pixdq, err, gmodel = setup_inputs(
-        ngroups=ngroups, readnoise=rnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=gain, deltatime=group_time)
+        ngroups=ngroups,
+        readnoise=rnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=gain,
+        deltatime=group_time,
+    )
 
     rampmodel.meta.exposure.frame_time = frame_time
 
@@ -283,7 +339,7 @@ def one_group_suppressed(nints, suppress, setup_inputs):
     rampmodel.groupdq[0, :, 0, 0] = sat_dq  # All groups sat
     rampmodel.groupdq[0, :, 0, 1] = sat_dq  # 0th good, all others sat
     rampmodel.groupdq[0, 0, 0, 1] = 0
-    rampmodel.groupdq[0, :, 0, 2] = zdq     # All groups good
+    rampmodel.groupdq[0, :, 0, 2] = zdq  # All groups good
 
     if nints > 1:
         rampmodel.data[1, :, 0, 0] = arr
@@ -303,7 +359,8 @@ def one_group_suppressed(nints, suppress, setup_inputs):
         override_gain=gmodel,
         override_readnoise=rnModel,
         suppress_one_group=suppress,
-        maximum_cores="none")
+        maximum_cores="none",
+    )
 
     return slopes, cube_model, dims
 
@@ -323,35 +380,35 @@ def test_one_group_not_suppressed_one_integration(setup_inputs):
     tol = 1e-5
 
     # Check slopes information
-    check = np.array([[0., 1., 1.0000002]])
+    check = np.array([[0.0, 1.0, 1.0000002]])
     np.testing.assert_allclose(slopes.data, check, tol)
 
     check = np.array([[3, 2, 0]])
     np.testing.assert_allclose(slopes.dq, check, tol)
 
-    check = np.array([[0., 0.04, 0.01]])
+    check = np.array([[0.0, 0.04, 0.01]])
     np.testing.assert_allclose(slopes.var_poisson, check, tol)
 
-    check = np.array([[0., 3.9999995, 0.19999999]])
+    check = np.array([[0.0, 3.9999995, 0.19999999]])
     np.testing.assert_allclose(slopes.var_rnoise, check, tol)
 
-    check = np.array([[0., 2.009975, 0.45825756]])
+    check = np.array([[0.0, 2.009975, 0.45825756]])
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., 1., 1.0000001]]])
+    check = np.array([[[0.0, 1.0, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
     check = np.array([[[3, 2, 0]]])
     np.testing.assert_allclose(cube.dq, check, tol)
 
-    check = np.array([[[0., 0.04, 0.01]]])
+    check = np.array([[[0.0, 0.04, 0.01]]])
     np.testing.assert_allclose(cube.var_poisson, check, tol)
 
-    check = np.array([[[0., 3.9999995, 0.19999999]]])
+    check = np.array([[[0.0, 3.9999995, 0.19999999]]])
     np.testing.assert_allclose(cube.var_rnoise, check, tol)
 
-    check = np.array([[[0., 2.0099752, 0.4582576]]])
+    check = np.array([[[0.0, 2.0099752, 0.4582576]]])
     np.testing.assert_allclose(cube.err, check, tol)
 
 
@@ -370,35 +427,35 @@ def test_one_group_suppressed_one_integration(setup_inputs):
     tol = 1e-5
 
     # Check slopes information
-    check = np.array([[0., 0., 1.0000002]])
+    check = np.array([[0.0, 0.0, 1.0000002]])
     np.testing.assert_allclose(slopes.data, check, tol)
 
     check = np.array([[3, 3, 0]])
     np.testing.assert_allclose(slopes.dq, check, tol)
 
-    check = np.array([[0., 0., 0.01]])
+    check = np.array([[0.0, 0.0, 0.01]])
     np.testing.assert_allclose(slopes.var_poisson, check, tol)
 
-    check = np.array([[0., 0., 0.19999999]])
+    check = np.array([[0.0, 0.0, 0.19999999]])
     np.testing.assert_allclose(slopes.var_rnoise, check, tol)
 
-    check = np.array([[0., 0., 0.45825756]])
+    check = np.array([[0.0, 0.0, 0.45825756]])
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., 0., 1.0000001]]])
+    check = np.array([[[0.0, 0.0, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
     check = np.array([[[3, 3, 0]]])
     np.testing.assert_allclose(cube.dq, check, tol)
 
-    check = np.array([[[0., 0., 0.01]]])
+    check = np.array([[[0.0, 0.0, 0.01]]])
     np.testing.assert_allclose(cube.var_poisson, check, tol)
 
-    check = np.array([[[0., 0., 0.19999999]]])
+    check = np.array([[[0.0, 0.0, 0.19999999]]])
     np.testing.assert_allclose(cube.var_rnoise, check, tol)
 
-    check = np.array([[[0., 0., 0.4582576]]])
+    check = np.array([[[0.0, 0.0, 0.4582576]]])
     np.testing.assert_allclose(cube.err, check, tol)
 
 
@@ -435,24 +492,23 @@ def test_one_group_not_suppressed_two_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0.,        1.,        1.0000001]],
-                      [[1.0000001, 1.0000001, 1.0000001]]])
+    check = np.array([[[0.0, 1.0, 1.0000001]], [[1.0000001, 1.0000001, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
-    check = np.array([[[3, 2, 0]],
-                      [[0, 0, 0]]])
+    check = np.array([[[3, 2, 0]], [[0, 0, 0]]])
     np.testing.assert_allclose(cube.dq, check, tol)
 
-    check = np.array([[[0.,    0.04, 0.01]],
-                      [[0.005, 0.01, 0.01]]])
+    check = np.array([[[0.0, 0.04, 0.01]], [[0.005, 0.01, 0.01]]])
     np.testing.assert_allclose(cube.var_poisson, check, tol)
 
-    check = np.array([[[0.,         3.9999995,  0.19999999]],
-                      [[0.19999999, 0.19999999, 0.19999999]]])
+    check = np.array(
+        [[[0.0, 3.9999995, 0.19999999]], [[0.19999999, 0.19999999, 0.19999999]]]
+    )
     np.testing.assert_allclose(cube.var_rnoise, check, tol)
 
-    check = np.array([[[0.,         2.0099752, 0.4582576]],
-                      [[0.45276922, 0.4582576, 0.4582576]]])
+    check = np.array(
+        [[[0.0, 2.0099752, 0.4582576]], [[0.45276922, 0.4582576, 0.4582576]]]
+    )
     np.testing.assert_allclose(cube.err, check, tol)
 
 
@@ -489,22 +545,17 @@ def test_one_group_suppressed_two_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., 0., 1.0000001]],
-                      [[1.0000001, 1.0000001, 1.0000001]]])
+    check = np.array([[[0.0, 0.0, 1.0000001]], [[1.0000001, 1.0000001, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
-    check = np.array([[[3, 3, 0]],
-                      [[0, 0, 0]]])
+    check = np.array([[[3, 3, 0]], [[0, 0, 0]]])
     np.testing.assert_allclose(cube.dq, check, tol)
 
-    check = np.array([[[0.,    0.,    0.01]],
-                      [[0.005, 0.01, 0.01]]])
+    check = np.array([[[0.0, 0.0, 0.01]], [[0.005, 0.01, 0.01]]])
     np.testing.assert_allclose(cube.var_poisson, check, tol)
 
-    check = np.array([[[0.,         0.,         0.19999999]],
-                      [[0.19999999, 0.19999999, 0.19999999]]])
+    check = np.array([[[0.0, 0.0, 0.19999999]], [[0.19999999, 0.19999999, 0.19999999]]])
     np.testing.assert_allclose(cube.var_rnoise, check, tol)
 
-    check = np.array([[[0.,         0.,         0.4582576]],
-                      [[0.45276922, 0.4582576, 0.4582576]]])
+    check = np.array([[[0.0, 0.0, 0.4582576]], [[0.45276922, 0.4582576, 0.4582576]]])
     np.testing.assert_allclose(cube.err, check, tol)

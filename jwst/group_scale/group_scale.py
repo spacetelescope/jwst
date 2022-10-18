@@ -30,17 +30,17 @@ def do_correction(model):
     nframes = model.meta.exposure.nframes
     frame_divisor = model.meta.exposure.frame_divisor
     if nframes is None or frame_divisor is None:
-        log.warning('Necessary meta data not found')
-        log.warning('Step will be skipped')
-        model.meta.cal_step.group_scale = 'SKIPPED'
+        log.warning("Necessary meta data not found")
+        log.warning("Step will be skipped")
+        model.meta.cal_step.group_scale = "SKIPPED"
         return
 
-    log.info('NFRAMES={}, FRMDIVSR={}'.format(nframes, frame_divisor))
-    log.info('Rescaling all groups by {}/{}'.format(frame_divisor, nframes))
+    log.info("NFRAMES={}, FRMDIVSR={}".format(nframes, frame_divisor))
+    log.info("Rescaling all groups by {}/{}".format(frame_divisor, nframes))
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
     model.data *= scale
-    model.meta.cal_step.group_scale = 'COMPLETE'
+    model.meta.cal_step.group_scale = "COMPLETE"
 
     return

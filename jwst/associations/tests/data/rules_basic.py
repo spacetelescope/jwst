@@ -15,10 +15,10 @@ class Rule_1(Association):
     def __init__(self, version_id=None):
         self.constraints = ConstraintTrue()
         super(Rule_1, self).__init__(version_id=version_id)
-        self.data['members'] = []
+        self.data["members"] = []
 
     def _add(self, item):
-        self.data['members'].append(item)
+        self.data["members"].append(item)
 
     def is_item_member(self, item):
         """Check if item is already a member of this association
@@ -33,4 +33,4 @@ class Rule_1(Association):
         is_item_member: bool
             True if item is a member.
         """
-        return item in self.data['members']
+        return item in self.data["members"]

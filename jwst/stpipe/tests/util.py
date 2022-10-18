@@ -28,7 +28,7 @@ def capture_log():
        # log is a list of all the captured LogRecords
     """
     handler = ListHandler()
-    log = logging.getLogger('stpipe')
+    log = logging.getLogger("stpipe")
     log.addHandler(handler)
     yield handler.records
     log.removeHandler(handler)
@@ -41,11 +41,11 @@ def pattern_to_re(pattern):
     """
     regex = []
     while pattern:
-        verbatim, sep, pattern = pattern.partition('{{')
+        verbatim, sep, pattern = pattern.partition("{{")
         regex.append(re.escape(verbatim))
-        exp, sep, pattern = pattern.partition('}}')
+        exp, sep, pattern = pattern.partition("}}")
         regex.append(exp)
-    return '^{0}$'.format(''.join(regex))
+    return "^{0}$".format("".join(regex))
 
 
 def match_log(log, expected):
@@ -71,20 +71,21 @@ def match_log(log, expected):
         regex = pattern_to_re(b)
         match = re.match(regex, msg)
         if not match:
-            with open("correct.txt", 'w') as fd:
-                fd.write('[\n')
+            with open("correct.txt", "w") as fd:
+                fd.write("[\n")
                 for a in log:
-                    fd.write('    {0!r},\n'.format(a))
-                fd.write(']\n')
+                    fd.write("    {0!r},\n".format(a))
+                fd.write("]\n")
 
-            raise ValueError((
-                "Logs do not match."
-                "\nExpected:"
-                "\n   '{0}'"
-                "\nGot:"
-                "\n   '{1}'\n".format(
-                    b, msg
-                )))
+            raise ValueError(
+                (
+                    "Logs do not match."
+                    "\nExpected:"
+                    "\n   '{0}'"
+                    "\nGot:"
+                    "\n   '{1}'\n".format(b, msg)
+                )
+            )
 
 
 def t_path(partial_path):

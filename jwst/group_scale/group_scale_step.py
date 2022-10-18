@@ -31,26 +31,30 @@ class GroupScaleStep(Step):
             # If we didn't find NFRAMES, we don't have enough info
             # to continue. Skip the step.
             if nframes is None:
-                self.log.warning('NFRAMES value not found')
-                self.log.warning('Step will be skipped')
-                result.meta.cal_step.group_scale = 'SKIPPED'
+                self.log.warning("NFRAMES value not found")
+                self.log.warning("Step will be skipped")
+                result.meta.cal_step.group_scale = "SKIPPED"
                 return result
 
             # If we didn't find FRMDIVSR, then check to see if NFRAMES
             # is a power of 2. If it is, rescaling isn't needed.
             if frame_divisor is None:
-                if (nframes & (nframes - 1) == 0):
-                    self.log.info('NFRAMES={} is a power of 2; correction not needed'.format(nframes))
-                    self.log.info('Step will be skipped')
-                    result.meta.cal_step.group_scale = 'SKIPPED'
+                if nframes & (nframes - 1) == 0:
+                    self.log.info(
+                        "NFRAMES={} is a power of 2; correction not needed".format(
+                            nframes
+                        )
+                    )
+                    self.log.info("Step will be skipped")
+                    result.meta.cal_step.group_scale = "SKIPPED"
                     return result
 
             # Compare NFRAMES and FRMDIVSR. If they're equal,
             # rescaling isn't needed.
             elif nframes == frame_divisor:
-                self.log.info('NFRAMES and FRMDIVSR are equal; correction not needed')
-                self.log.info('Step will be skipped')
-                result.meta.cal_step.group_scale = 'SKIPPED'
+                self.log.info("NFRAMES and FRMDIVSR are equal; correction not needed")
+                self.log.info("Step will be skipped")
+                result.meta.cal_step.group_scale = "SKIPPED"
                 return result
 
             # Do the scaling

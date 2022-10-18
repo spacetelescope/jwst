@@ -43,14 +43,16 @@ from ..fits_generator import util
 # the type definitions themselves.
 DEBUG_TYPES = True
 
-class ParseState():
+
+class ParseState:
     """
     Keeps track of the current state of the parser -- that is which
     HDU and card is currently being examined.  Used to give detailed
     information in error log messages.
     """
+
     def __init__(self):
-        self.file = ''
+        self.file = ""
         self.hdu = 0
         self.card = None
         self.depth = 0
@@ -62,10 +64,11 @@ class ParseState():
         return val
 
 
-class Object():
+class Object:
     """
     The base class of all objects that form the FITS file hierarchy.
     """
+
     def verify(self, value, error_collector, state):
         """
         Verifies *value* against the type.
@@ -93,8 +96,7 @@ class Object():
             Extra information about the error will be logged to the
             *error_collector* function.
         """
-        raise NotImplementedError(
-            "This method must be overridden in the subclass.")
+        raise NotImplementedError("This method must be overridden in the subclass.")
 
     def generate(self, input_files, error_collector, state):
         """
@@ -122,8 +124,7 @@ class Object():
         result : object
             The generated object.
         """
-        raise NotImplementedError(
-            "This method must be overridden in the subclass.")
+        raise NotImplementedError("This method must be overridden in the subclass.")
 
     def describe(self, stream, state):
         """
@@ -142,8 +143,7 @@ class Object():
         -------
         None
         """
-        raise NotImplementedError(
-            "This method must be overridden in the subclass.")
+        raise NotImplementedError("This method must be overridden in the subclass.")
 
     def _write_section(self, stream, content, state):
         sections = "=-~'"
@@ -158,8 +158,16 @@ class Card(Object):
     Defines how to verify and generate a key/value card.
 
     """
-    def __init__(self, name, value='#UNKNOWN', comment='',
-                 verify=None, generate=None, optional=True):
+
+    def __init__(
+        self,
+        name,
+        value="#UNKNOWN",
+        comment="",
+        verify=None,
+        generate=None,
+        optional=True,
+    ):
         """
         Parameters
         ----------
@@ -221,8 +229,8 @@ class Card(Object):
             raise TypeError("key must be a string")
         if not name == name.upper():
             raise TypeError(
-                "key must be a string with all uppercase letters, got '%s'" %
-                name)
+                "key must be a string with all uppercase letters, got '%s'" % name
+            )
         self.name = name
 
         if not isinstance(value, (str, int, float)):
@@ -234,8 +242,7 @@ class Card(Object):
         self.comment = comment
 
         if verify is not None and not util.iscallable(verify):
-            raise TypeError(
-                "verify must be a sequence of callables or a callable")
+            raise TypeError("verify must be a sequence of callables or a callable")
         self.verify_function = verify
 
         if generate is not None and not util.iscallable(generate):
@@ -260,27 +267,28 @@ class Card(Object):
                 error_collector(str(e), state)
                 success = False
         return success
+
     verify.__doc__ = Object.verify.__doc__
 
     def generate(self, header, fitsfiles, error_collector, state):
         key = self.name
         if self.generate_function is None:
-            value = '#NONE'
+            value = "#NONE"
         else:
             try:
-                value = self.generate_function(
-                    self, fitsfiles, error_collector, state)
+                value = self.generate_function(self, fitsfiles, error_collector, state)
             except Exception as e:
                 error_collector(str(e), state)
-                value = '#ERROR'
+                value = "#ERROR"
 
         try:
             comment = self.get_comment(fitsfiles, error_collector, state)
         except Exception as e:
             error_collector(str(e), state)
-            comment = '#ERROR'
+            comment = "#ERROR"
 
         header.insert(len(header), (key, value, comment), after=True)
+
     generate.__doc__ = Object.generate.__doc__
 
     def get_comment(self, fitsfiles, error_collector, state):
@@ -291,6 +299,7 @@ class Card(Object):
 
     def describe(self, stream, state):
         stream.write("``%s`` %s\n\n" % (self.name, self.comment))
+
     describe.__doc__ = Object.describe.__doc__
 
 
@@ -299,6 +308,7 @@ class Header(Object):
     Defines a header, specifically the order and substance of the
     key/value cards it should contain.
     """
+
     def __init__(self, cards=None):
         """
         Parameters
@@ -317,7 +327,8 @@ class Header(Object):
             for card in cards:
                 if not isinstance(card, (Card, str)):
                     raise TypeError(
-                        "Each element of cards sequence must be either a Card or a str")
+                        "Each element of cards sequence must be either a Card or a str"
+                    )
                 if isinstance(card, Card):
                     self.map[card.name] = card
             self._cards = cards[:]
@@ -344,8 +355,7 @@ class Header(Object):
             self._cards.append(item)
             self.map[item.name] = item
         else:
-            raise TypeError(
-                "Only strings and Card objects may be appended to a header")
+            raise TypeError("Only strings and Card objects may be appended to a header")
 
     def __iter__(self):
         return iter(self._cards)
@@ -366,11 +376,10 @@ class Header(Object):
                 found_cards[key] = None
         for key, val in self.map.items():
             if not val.optional and key not in found_cards:
-                error_collector(
-                    "Missing required card '%s'" % key,
-                    state)
+                error_collector("Missing required card '%s'" % key, state)
         state.header = None
         return success
+
     verify.__doc__ = Object.verify.__doc__
 
     def create_header(self, fitsfiles, error_collector, state):
@@ -385,10 +394,11 @@ class Header(Object):
                 card.generate(header, fitsfiles, error_collector, state)
                 state.card = None
             elif isinstance(card, str):
-                card_obj = pyfits.Card(' ', card)
+                card_obj = pyfits.Card(" ", card)
                 header.append(card_obj, useblanks=False)
 
         return header
+
     generate.__doc__ = Object.generate.__doc__
 
     def describe(self, stream, state):
@@ -398,7 +408,8 @@ class Header(Object):
                 card.describe(stream, state)
                 state.card = None
             elif isinstance(card, str):
-                stream.write('**%s**\n\n' % card)
+                stream.write("**%s**\n\n" % card)
+
     describe.__doc__ = Object.describe.__doc__
 
 
@@ -413,6 +424,7 @@ class Data(Object):
 
     def verify(self, value, error_collector, state):
         return True
+
     verify.__doc__ = Object.verify.__doc__
 
     def generate(self, fitsfiles, error_collector, state):
@@ -423,10 +435,12 @@ class Data(Object):
             except Exception as e:
                 error_collector(str(e), state)
             state.card = None
+
     generate.__doc__ = Object.generate.__doc__
 
     def describe(self, stream, state):
-        self._write_section(stream, 'Data', state)
+        self._write_section(stream, "Data", state)
+
     describe.__doc__ = Object.describe.__doc__
 
 
@@ -434,6 +448,7 @@ class HDU(Object):
     """
     Describes a single HDU (how a header and its data are bundled together.
     """
+
     def __init__(self, header=None, data=None, name=None):
         """
         Parameters
@@ -469,6 +484,7 @@ class HDU(Object):
             data = self.data.verify(value.data, error_collector, state)
 
         return header and data
+
     verify.__doc__ = Object.verify.__doc__
 
     def create_hdu(self, fitsfiles, error_collector, state):
@@ -476,10 +492,10 @@ class HDU(Object):
 
     def generate(self, fitsfiles, error_collector, state):
         hdu = self.create_hdu(fitsfiles, error_collector, state)
-        fitsfiles['output'].append(hdu)
+        fitsfiles["output"].append(hdu)
         # Append may have changed the class of the hdu so get it again
         # from pyfits
-        hdu = fitsfiles['output'][-1]
+        hdu = fitsfiles["output"][-1]
 
         if self.header is not None:
             assert isinstance(self.header, Header)
@@ -490,13 +506,14 @@ class HDU(Object):
             hdu.data = self.data.generate(fitsfiles, error_collector, state)
 
         return hdu
+
     generate.__doc__ = Object.generate.__doc__
 
     def describe(self, stream, state):
         if state.hdu == 0:
-            self._write_section(stream, 'Primary HDU', state)
+            self._write_section(stream, "Primary HDU", state)
         else:
-            self._write_section(stream, 'Extension HDU %d' % state.hdu, state)
+            self._write_section(stream, "Extension HDU %d" % state.hdu, state)
 
         state.depth += 1
 
@@ -509,6 +526,7 @@ class HDU(Object):
             self.data.describe(stream, state)
 
         state.depth -= 1
+
     describe.__doc__ = Object.describe.__doc__
 
 
@@ -517,7 +535,7 @@ class File(list, Object):
     Describes the order of the HDUs in a complete FITS file.
     """
 
-    def __init__(self, hdus=[], name='FITS File'):
+    def __init__(self, hdus=[], name="FITS File"):
         """
         Parameters
         ----------
@@ -545,11 +563,12 @@ class File(list, Object):
             if not hdudef.verify(hdu, error_collector, state):
                 success = False
         return success
+
     verify.__doc__ = Object.verify.__doc__
 
     def generate(self, fitsfiles, error_collector, state):
         output_hdulist = pyfits.HDUList()
-        fitsfiles['output'] = output_hdulist
+        fitsfiles["output"] = output_hdulist
 
         for i, hdudef in enumerate(self):
             assert isinstance(hdudef, HDU)
@@ -559,6 +578,7 @@ class File(list, Object):
         state.hdu = None
 
         return output_hdulist
+
     generate.__doc__ = Object.generate.__doc__
 
     def describe(self, stream, state):
@@ -570,4 +590,5 @@ class File(list, Object):
             state.depth += 1
             hdu = hdudef.describe(stream, state)
             state.depth -= 1
+
     describe.__doc__ = Object.describe.__doc__

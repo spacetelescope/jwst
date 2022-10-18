@@ -3,16 +3,13 @@ import pytest
 import numpy as np
 
 from jwst.exp_to_source.tests import helpers
-from jwst.datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
+from jwst.datamodels import MultiExposureModel, MultiSlitModel, ModelContainer
 from jwst.exp_to_source import exp_to_source, multislit_to_container
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_exp_to_source():
-    inputs = [
-        MultiSlitModel(f)
-        for f in helpers.INPUT_FILES
-    ]
+    inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
     outputs = exp_to_source(inputs)
     yield inputs, outputs
     for model in inputs:
@@ -37,7 +34,7 @@ def test_model_roundtrip(tmpdir, run_exp_to_source):
     files = []
     path = str(tmpdir)
     for output in outputs:
-        file_path = os.path.join(path, output) + '.fits'
+        file_path = os.path.join(path, output) + ".fits"
         outputs[output].save(file_path)
         files.append(file_path)
     for file_path in files:

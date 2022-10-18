@@ -1,11 +1,20 @@
 from asdf.extension import ManifestExtension
 
-from .converters.jwst_models import (Gwa2SlitConverter, Slit2MsaConverter, LogicalConverter,
-                                     NirissSOSSConverter, RefractionIndexConverter,
-                                     MIRI_AB2SliceConverter, NIRCAMGrismDispersionConverter,
-                                     NIRISSGrismDispersionConverter, GratingEquationConverter,
-                                     SnellConverter, Rotation3DToGWAConverter,
-                                     CoordsConverter, V23ToSkyConverter)
+from .converters.jwst_models import (
+    Gwa2SlitConverter,
+    Slit2MsaConverter,
+    LogicalConverter,
+    NirissSOSSConverter,
+    RefractionIndexConverter,
+    MIRI_AB2SliceConverter,
+    NIRCAMGrismDispersionConverter,
+    NIRISSGrismDispersionConverter,
+    GratingEquationConverter,
+    SnellConverter,
+    Rotation3DToGWAConverter,
+    CoordsConverter,
+    V23ToSkyConverter,
+)
 
 
 JWST_TRANSFORM_CONVERTERS = [
@@ -28,7 +37,7 @@ JWST_TRANSFORM_CONVERTERS = [
 # that occur earlier in the list.
 TRANSFORM_MANIFEST_URIS = [
     "asdf://stsci.edu/jwst_pipeline/manifests/jwst_transforms-1.0.0",
-    "asdf://stsci.edu/jwst_pipeline/manifests/jwst_transforms-0.7.0"
+    "asdf://stsci.edu/jwst_pipeline/manifests/jwst_transforms-0.7.0",
 ]
 
 

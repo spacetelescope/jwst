@@ -16,40 +16,44 @@ import jwst.datamodels.schema_editor as se
 from jwst.lib.file_utils import pushdir
 
 # Define data locations in artifactory
-KEYWORD_DB = 'datamodels/keyword_db'
-FIXED_SCHEMA = 'fixed'
-SCHEMA_TRUTH = 'truth/test_schema_editor'
+KEYWORD_DB = "datamodels/keyword_db"
+FIXED_SCHEMA = "fixed"
+SCHEMA_TRUTH = "truth/test_schema_editor"
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def keyword_db(jail, rtdata_module):
     """Define the keyword database"""
     rt = rtdata_module
 
-    keyword_db = Path('keyword_db')
+    keyword_db = Path("keyword_db")
     keyword_db.mkdir()
     with pushdir(str(keyword_db)):
-        schemas = rt.data_glob(KEYWORD_DB, glob='*.json')
+        schemas = rt.data_glob(KEYWORD_DB, glob="*.json")
         for schema in schemas:
             rt.get_data(schema)
 
     return keyword_db
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def model_db():
     """Create a full Model_db"""
     models = se.Model_db()
     return models
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_editor_full(jail, keyword_db):
     """Just run the editor"""
 
     editor = se.Schema_editor(
-        input=str(keyword_db), output=FIXED_SCHEMA,
-        add=True, delete=True, edit=True, rename=True
+        input=str(keyword_db),
+        output=FIXED_SCHEMA,
+        add=True,
+        delete=True,
+        edit=True,
+        rename=True,
     )
     editor.change()
 
@@ -64,13 +68,14 @@ def test_limit_datamodels_from_file(jail, model_db, keyword_db, rtdata_module):
 
     # Create the exclusion file.
     exclude = list(model_db)[1:]
-    exclude_path = 'exclude.yaml'
-    with open(exclude_path, 'w') as fh:
+    exclude_path = "exclude.yaml"
+    with open(exclude_path, "w") as fh:
         yaml.dump(exclude, fh)
 
     # Run the editor
-    editor = se.Schema_editor(input=str(keyword_db), exclude_file=exclude_path,
-                              list=True, rename=True)
+    editor = se.Schema_editor(
+        input=str(keyword_db), exclude_file=exclude_path, list=True, rename=True
+    )
     editor.change()
     assert len(editor.model_db) == 1
 
@@ -86,23 +91,28 @@ def test_limit_datamodels(model_db):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'schema',
-    ['core.schema.yaml',
-     'extract1dimage.schema.yaml',
-     'guider_meta.schema.yaml',
-     'ifucube.schema.yaml',
-     'keyword_exptype.schema.yaml', 'keyword_pband.schema.yaml', 'keyword_readpatt.schema.yaml',
-     'multiextract1d.schema.yaml', 'multispec.schema.yaml',
-     'pathloss.schema.yaml',
-     'referencefile.schema.yaml',
-     'slitmeta.schema.yaml',
-     'wcsinfo.schema.yaml', ]
+    "schema",
+    [
+        "core.schema.yaml",
+        "extract1dimage.schema.yaml",
+        "guider_meta.schema.yaml",
+        "ifucube.schema.yaml",
+        "keyword_exptype.schema.yaml",
+        "keyword_pband.schema.yaml",
+        "keyword_readpatt.schema.yaml",
+        "multiextract1d.schema.yaml",
+        "multispec.schema.yaml",
+        "pathloss.schema.yaml",
+        "referencefile.schema.yaml",
+        "slitmeta.schema.yaml",
+        "wcsinfo.schema.yaml",
+    ],
 )
 def test_full_run(jail, schema, run_editor_full, rtdata_module):
     """Check fixed schema files"""
     rt = rtdata_module
     rt.output = os.path.join(run_editor_full, schema)
-    rt.get_truth(SCHEMA_TRUTH + '/' + schema)
+    rt.get_truth(SCHEMA_TRUTH + "/" + schema)
 
     assert text_diff(rt.output, rt.truth)
 
@@ -110,8 +120,6 @@ def test_full_run(jail, schema, run_editor_full, rtdata_module):
 @pytest.mark.bigdata
 def test_no_option_warning(jail, keyword_db):
     """If no operations is given, raise an error"""
-    editor = se.Schema_editor(
-        input=keyword_db
-    )
+    editor = se.Schema_editor(input=keyword_db)
     with pytest.raises(RuntimeError):
         editor.change()

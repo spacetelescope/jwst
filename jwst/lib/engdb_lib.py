@@ -2,14 +2,14 @@
 import abc
 from collections import namedtuple
 
-__all__ = ['EngDB_Value', 'EngdbABC']
+__all__ = ["EngDB_Value", "EngdbABC"]
 
 
 # Define the returned value tuple.
-EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
+EngDB_Value = namedtuple("EngDB_Value", ["obstime", "value"])
 
 # Path templates
-DATA = '_data.json'
+DATA = "_data.json"
 
 # HTTP status that should get retries
 # For statuses, just blanket cover the 4xx and 5xx errors
@@ -34,6 +34,7 @@ class EngdbABC(abc.ABC):
         Service-specific keyword arguments. Refer to the concrete implementations
         of EngdbABC.
     """
+
     @property
     @abc.abstractmethod
     def base_url(self):
@@ -62,7 +63,7 @@ class EngdbABC(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_meta(self, mnemonic='', **service_kwargs):
+    def get_meta(self, mnemonic="", **service_kwargs):
         """Get the mnemonics meta info
 
         Parameters
@@ -82,8 +83,16 @@ class EngdbABC(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_values(self, mnemonic, starttime, endtime,
-                   time_format=None, include_obstime=False, include_bracket_values=False, zip_results=True):
+    def get_values(
+        self,
+        mnemonic,
+        starttime,
+        endtime,
+        time_format=None,
+        include_obstime=False,
+        include_bracket_values=False,
+        zip_results=True,
+    ):
         """
         Retrieve all results for a mnemonic in the requested time range.
 

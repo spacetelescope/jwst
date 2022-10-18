@@ -43,15 +43,15 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
     """
     # Determine number of cpu's to use for multi-processing
-    if max_cores == 'none':
+    if max_cores == "none":
         ncpus = 1
     else:
         num_cores = multiprocessing.cpu_count()
-        if max_cores == 'quarter':
+        if max_cores == "quarter":
             ncpus = num_cores // 4 or 1
-        elif max_cores == 'half':
+        elif max_cores == "half":
             ncpus = num_cores // 2 or 1
-        elif max_cores == 'all':
+        elif max_cores == "all":
             ncpus = num_cores
         else:
             ncpus = 1
@@ -86,7 +86,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # the opposite. It has gratings in the FILTER wheel and filters in the
     # PUPIL wheel. So when processing NIRISS grism exposures the name of
     # filter needs to come from the PUPIL keyword value.
-    if input_model.meta.instrument.name == 'NIRISS':
+    if input_model.meta.instrument.name == "NIRISS":
         filter_name = pupil_kwd
     else:
         filter_name = filter_kwd
@@ -101,20 +101,29 @@ def contam_corr(input_model, waverange, photom, max_cores):
         wmin[order] = wavelength_range[order][0]
         wmax[order] = wavelength_range[order][1]
         # Load the sensitivity (inverse flux cal) data for this mode and order
-        sens_waves[order], sens_response[order] = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+        sens_waves[order], sens_response[order] = get_photom_data(
+            photom, filter_kwd, pupil_kwd, order
+        )
     log.debug(f"wmin={wmin}, wmax={wmax}")
 
     # Initialize the simulated image object
     simul_all = None
-    obs = Observation(image_names, seg_model, grism_wcs, filter_name,
-                      boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
+    obs = Observation(
+        image_names,
+        seg_model,
+        grism_wcs,
+        filter_name,
+        boundaries=[0, 2047, 0, 2047],
+        max_cpu=ncpus,
+    )
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
 
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order],
-                         sens_response[order])
+        obs.disperse_all(
+            order, wmin[order], wmax[order], sens_waves[order], sens_response[order]
+        )
 
         # Accumulate result for this order into the combined image
         if simul_all is None:
@@ -139,8 +148,14 @@ def contam_corr(input_model, waverange, photom, max_cores):
         chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
 
         obs.simulated_image = np.zeros(obs.dims)
-        obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order])
+        obs.disperse_chunk(
+            chunk,
+            order,
+            wmin[order],
+            wmax[order],
+            sens_waves[order],
+            sens_response[order],
+        )
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image minus this source
@@ -164,7 +179,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     contam_model.slits.extend(slits)
 
     # Set the step status to COMPLETE
-    output_model.meta.cal_step.wfss_contam = 'COMPLETE'
+    output_model.meta.cal_step.wfss_contam = "COMPLETE"
 
     return output_model, simul_model, contam_model
 
@@ -192,5 +207,7 @@ def copy_slit_info(input_slit, output_slit):
     output_slit.source_xpos = input_slit.source_xpos
     output_slit.source_ypos = input_slit.source_ypos
     output_slit.meta.wcsinfo.spectral_order = input_slit.meta.wcsinfo.spectral_order
-    output_slit.meta.wcsinfo.dispersion_direction = input_slit.meta.wcsinfo.dispersion_direction
+    output_slit.meta.wcsinfo.dispersion_direction = (
+        input_slit.meta.wcsinfo.dispersion_direction
+    )
     output_slit.meta.wcs = input_slit.meta.wcs

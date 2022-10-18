@@ -6,8 +6,8 @@ import os.path as ospath
 
 from astropy.io import fits
 
-frompath = '$DEVDIR/testdata/jwst/build7/jwstd/info/mary/b7_test/SIC_DIL/sdp.20161228/archive/level2b'
-outpath = './data/exposures'
+frompath = "$DEVDIR/testdata/jwst/build7/jwstd/info/mary/b7_test/SIC_DIL/sdp.20161228/archive/level2b"
+outpath = "./data/exposures"
 
 
 def actual_path(path):
@@ -34,7 +34,7 @@ def get_headers(files, outpath):
         nhdul.writeto(ospath.join(outpath, name))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     abs_frompath = actual_path(frompath)
-    files = glob(ospath.join(abs_frompath, '*.fits'))
+    files = glob(ospath.join(abs_frompath, "*.fits"))
     get_headers(files, actual_path(outpath))

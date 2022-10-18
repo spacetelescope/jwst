@@ -21,7 +21,7 @@ class ChiSqOutlierRejectionFitter:
         Weighting function dependent only on provided value (usualy a residual)
         """
 
-        kernal = (np.where(x**2 <= 1, 1 - x**2, 0.))**2
+        kernal = (np.where(x**2 <= 1, 1 - x**2, 0.0)) ** 2
         if weights is not None:
             kernal *= weights
 
@@ -30,7 +30,7 @@ class ChiSqOutlierRejectionFitter:
     @staticmethod
     def _chi(model, x, y, weights=None):
 
-        resid = (y - model(x))**2
+        resid = (y - model(x)) ** 2
         if weights is not None:
             resid *= weights
 

@@ -11,7 +11,7 @@ from jwst.extract_1d import Extract1dStep
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
     """Run the calwebb_spec2 pipeline on an ASN of nodded MIRI LRS
-       fixedslit exposures."""
+    fixedslit exposures."""
     rtdata = rtdata_module
 
     # Get the spec2 ASN and its members
@@ -19,26 +19,41 @@ def run_pipeline(jail, rtdata_module):
     rtdata.get_asn("miri/lrs/jw00623-o032_20191210t195246_spec2_001_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["calwebb_spec2", rtdata.input,
-            "--save_bsub=true",
-            "--steps.assign_wcs.save_results=true",
-            "--steps.flat_field.save_results=true",
-            "--steps.srctype.save_results=true",
-            "--steps.pathloss.save_results=true",
-            "--steps.pathloss.override_pathloss=MIRI_FM_MIRIMAGE_P750L_PATHLOSS_8C.00.00.fits",
-            "--steps.bkg_subtract.save_combined_background=true"
-            ]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--save_bsub=true",
+        "--steps.assign_wcs.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.srctype.save_results=true",
+        "--steps.pathloss.save_results=true",
+        "--steps.pathloss.override_pathloss=MIRI_FM_MIRIMAGE_P750L_PATHLOSS_8C.00.00.fits",
+        "--steps.bkg_subtract.save_combined_background=true",
+    ]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", [
-    "bsub", "flat_field", "assign_wcs", "srctype", "pathloss",
-    "combinedbackground", "cal", "s2d", "x1d"])
-def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtdata_module):
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "bsub",
+        "flat_field",
+        "assign_wcs",
+        "srctype",
+        "pathloss",
+        "combinedbackground",
+        "cal",
+        "s2d",
+        "x1d",
+    ],
+)
+def test_miri_lrs_slit_spec2(
+    run_pipeline, fitsdiff_default_kwargs, suffix, rtdata_module
+):
     """Regression test of the calwebb_spec2 pipeline on MIRI
-       LRS fixedslit data using along-slit-nod pattern for
-       background subtraction."""
+    LRS fixedslit data using along-slit-nod pattern for
+    background subtraction."""
     rtdata = rtdata_module
     output = f"jw00623032001_03102_00001_mirimage_{suffix}.fits"
     rtdata.output = output
@@ -52,7 +67,9 @@ def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtda
 
 
 @pytest.mark.bigdata
-def test_miri_lrs_extract1d_from_cal(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_lrs_extract1d_from_cal(
+    run_pipeline, rtdata_module, fitsdiff_default_kwargs
+):
     rtdata = rtdata_module
     rtdata.input = "jw00623032001_03102_00001_mirimage_cal.fits"
     Extract1dStep.call(rtdata.input, save_results=True)
@@ -64,15 +81,19 @@ def test_miri_lrs_extract1d_from_cal(run_pipeline, rtdata_module, fitsdiff_defau
 
 
 @pytest.mark.bigdata
-def test_miri_lrs_extract1d_image_ref(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_lrs_extract1d_image_ref(
+    run_pipeline, rtdata_module, fitsdiff_default_kwargs
+):
     rtdata = rtdata_module
 
     rtdata.get_data("miri/lrs/jw00623032001_03102_00001_mirimage_image_ref.fits")
     rtdata.input = "jw00623032001_03102_00001_mirimage_cal.fits"
-    Extract1dStep.call(rtdata.input,
-                       override_extract1d="jw00623032001_03102_00001_mirimage_image_ref.fits",
-                       suffix='x1dfromrefimage',
-                       save_results=True)
+    Extract1dStep.call(
+        rtdata.input,
+        override_extract1d="jw00623032001_03102_00001_mirimage_image_ref.fits",
+        suffix="x1dfromrefimage",
+        save_results=True,
+    )
     output = "jw00623032001_03102_00001_mirimage_x1dfromrefimage.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")
@@ -101,6 +122,8 @@ def test_miri_lrs_slit_wcs(run_pipeline, rtdata_module, fitsdiff_default_kwargs)
 
         # Test the inverse transform
         xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
-        xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth, lamtruth)
+        xtruth, ytruth = im_truth.meta.wcs.backward_transform(
+            ratruth, dectruth, lamtruth
+        )
         assert_allclose(xtest, xtruth)
         assert_allclose(ytest, ytruth)

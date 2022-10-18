@@ -5,19 +5,18 @@ import math
 import numpy as np
 import logging
 from .. import datamodels
-from .. datamodels import dqflags
+from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-SCALEFACTOR = 2.
+SCALEFACTOR = 2.0
 """This factor is to account for the difference in gain for charges freed
 from traps, compared with photon-generated charges.
 """
 
 
-def no_NaN(input_model, fill_value,
-           zap_nan=False, zap_zero=False):
+def no_NaN(input_model, fill_value, zap_nan=False, zap_zero=False):
     """Replace NaNs and/or zeros with a fill value.
 
     Parameters
@@ -46,13 +45,13 @@ def no_NaN(input_model, fill_value,
     mask = None
 
     if zap_nan:
-        mask = (np.isnan(input_model.data))
+        mask = np.isnan(input_model.data)
 
     if zap_zero:
         if mask is None:
-            mask = (input_model.data == 0.)
+            mask = input_model.data == 0.0
         else:
-            mask = np.logical_or(mask, (input_model.data == 0.))
+            mask = np.logical_or(mask, (input_model.data == 0.0))
 
     if mask is None or mask.sum(dtype=np.intp) == 0:
         return input_model
@@ -62,7 +61,7 @@ def no_NaN(input_model, fill_value,
         return temp
 
 
-class DataSet():
+class DataSet:
     """Input dataset to which persistence will be applied
 
     Attributes
@@ -114,10 +113,16 @@ class DataSet():
         The number of resets (frames) at the beginning of each integration.
     """
 
-    def __init__(self, output_obj, input_traps_filled,
-                 flag_pers_cutoff, save_persistence,
-                 trap_density_model, trappars_model,
-                 persat_model):
+    def __init__(
+        self,
+        output_obj,
+        input_traps_filled,
+        flag_pers_cutoff,
+        save_persistence,
+        trap_density_model,
+        trappars_model,
+        persat_model,
+    ):
         """Assign values to attributes.
 
         Parameters
@@ -166,8 +171,8 @@ class DataSet():
         self.persistencesat = persat_model
 
         # These will be populated from metadata.
-        self.tframe = 0.
-        self.tgroup = 0.
+        self.tframe = 0.0
+        self.tgroup = 0.0
         self.ngroups = 0
         self.nframes = 0
         self.groupgap = 0
@@ -220,7 +225,7 @@ class DataSet():
         # rely on that because there might not be an input traps_filled file.
         (det_ny, det_nx) = self.trap_density.data.shape
 
-        is_subarray = (shape[-2] != det_ny or shape[-1] != det_nx)
+        is_subarray = shape[-2] != det_ny or shape[-1] != det_nx
         if is_subarray:
             log.debug("The input is a subarray.")
         else:
@@ -229,8 +234,9 @@ class DataSet():
         if not self.traps_filled:
             have_traps_filled = False
             self.traps_filled = datamodels.TrapsFilledModel(
-                data=np.zeros((nfamilies, det_ny, det_nx),
-                              dtype=self.output_obj.data.dtype)
+                data=np.zeros(
+                    (nfamilies, det_ny, det_nx), dtype=self.output_obj.data.dtype
+                )
             )
             self.traps_filled.meta.subarray.xstart = 1
             self.traps_filled.meta.subarray.ystart = 1
@@ -238,12 +244,12 @@ class DataSet():
             self.traps_filled.meta.subarray.ysize = det_ny
         else:
             have_traps_filled = True
-            self.traps_filled = no_NaN(self.traps_filled, 0., zap_nan=True)
+            self.traps_filled = no_NaN(self.traps_filled, 0.0, zap_nan=True)
 
-        self.trap_density = no_NaN(self.trap_density, 0., zap_nan=True)
-        self.persistencesat = no_NaN(self.persistencesat, 1.e7, zap_nan=True)
+        self.trap_density = no_NaN(self.trap_density, 0.0, zap_nan=True)
+        self.persistencesat = no_NaN(self.persistencesat, 1.0e7, zap_nan=True)
 
-        if have_traps_filled:   # was there an actual traps_filled file?
+        if have_traps_filled:  # was there an actual traps_filled file?
             # Decrease traps_filled by the number of traps that decayed
             # in the time (to_start) from the end of the traps_filled file
             # to the start of the current exposure.
@@ -254,14 +260,16 @@ class DataSet():
             # Decays during the time covered by the reset (again, if any)
             # between integrations will be taken care of in the loop
             # over integrations.
-            to_start = (self.output_obj.meta.exposure.start_time
-                        - self.traps_filled.meta.exposure.end_time) * 86400.
-            log.debug("Decay time for previous traps-filled file = %g s",
-                      to_start)
+            to_start = (
+                self.output_obj.meta.exposure.start_time
+                - self.traps_filled.meta.exposure.end_time
+            ) * 86400.0
+            log.debug("Decay time for previous traps-filled file = %g s", to_start)
             for k in range(nfamilies):
                 decay_param_k = self.get_decay_param(par, k)
-                decay = self.compute_decay(self.traps_filled.data[k],
-                                           decay_param_k, to_start)
+                decay = self.compute_decay(
+                    self.traps_filled.data[k], decay_param_k, to_start
+                )
                 self.traps_filled.data[k, :, :] -= decay
                 del decay
 
@@ -301,9 +309,8 @@ class DataSet():
         # file are flagged as bad, set the corresponding data values to
         # zero, so the computed number of traps will also be zero.
         if hasattr(self.trap_density, "dq"):
-            mask = (np.bitwise_and(self.trap_density.dq,
-                                   dqflags.pixel["DO_NOT_USE"]) > 0)
-            self.trap_density.data[mask] = 0.
+            mask = np.bitwise_and(self.trap_density.dq, dqflags.pixel["DO_NOT_USE"]) > 0
+            self.trap_density.data[mask] = 0.0
             del mask
 
         slc = self.get_slice(self.persistencesat, self.output_obj)
@@ -313,7 +320,7 @@ class DataSet():
         # Initialize the optional output.
         if self.save_persistence:
             self.output_pers = self.output_obj.copy()
-            self.output_pers.data[:, :, :, :] = 0.
+            self.output_pers.data[:, :, :, :] = 0.0
             self.output_pers.pixeldq = None
             self.output_pers.groupdq = None
             self.output_pers.err = None
@@ -326,16 +333,16 @@ class DataSet():
 
         # self.traps_filled will be updated with each integration, to
         # account for charge capture and decay of traps.
-        filled = -1                             # just to ensure that it exists
+        filled = -1  # just to ensure that it exists
         for integ in range(nints):
-            self.get_group_info(integ)          # self.tgroup, etc.
-            decayed[:, :, :] = 0.               # initialize
+            self.get_group_info(integ)  # self.tgroup, etc.
+            decayed[:, :, :] = 0.0  # initialize
             # slope has to be computed early in the loop over integrations,
             # before the data are modified by subtracting persistence.
             # The slope is needed for computing charge captures.
             (grp_slope, slope) = self.compute_slope(integ)
             for group in range(ngroups):
-                persistence[:, :] = 0.          # initialize
+                persistence[:, :] = 0.0  # initialize
                 for k in range(nfamilies):
                     decay_param_k = self.get_decay_param(par, k)
                     # Compute and subtract the decays during the reset.
@@ -343,14 +350,14 @@ class DataSet():
                     # first integration have already been accounted for.
                     if integ > 0 and group == 0 and self.nresets > 0:
                         reset_time = self.tframe * self.nresets
-                        decay_during_reset = \
-                            self.compute_decay(self.traps_filled.data[k],
-                                               decay_param_k, reset_time)
+                        decay_during_reset = self.compute_decay(
+                            self.traps_filled.data[k], decay_param_k, reset_time
+                        )
                         self.traps_filled.data[k, :, :] -= decay_during_reset
                     # Decays during current group, for current trap family.
-                    decayed_in_group = \
-                        self.compute_decay(self.traps_filled.data[k],
-                                           decay_param_k, t_group)
+                    decayed_in_group = self.compute_decay(
+                        self.traps_filled.data[k], decay_param_k, t_group
+                    )
                     # Cumulative decay to the end of the current group.
                     decayed[k, :, :] += decayed_in_group
                     self.traps_filled.data[k, :, :] -= decayed_in_group
@@ -363,23 +370,21 @@ class DataSet():
                 # Persistence was computed in DN.
                 self.output_obj.data[integ, group, :, :] -= persistence
                 if self.save_persistence:
-                    self.output_pers.data[integ, group, :, :] = \
-                        persistence.copy()
+                    self.output_pers.data[integ, group, :, :] = persistence.copy()
                 if persistence.max() >= self.flag_pers_cutoff:
-                    mask = (persistence >= self.flag_pers_cutoff)
-                    self.output_obj.pixeldq[mask] |= dqflags.pixel['PERSISTENCE']
+                    mask = persistence >= self.flag_pers_cutoff
+                    self.output_obj.pixeldq[mask] |= dqflags.pixel["PERSISTENCE"]
 
             # Update traps_filled with the number of traps that captured
             # a charge during the current integration.
             for k in range(nfamilies):
                 capture_param_k = self.get_capture_param(par, k)
                 # This may be a subarray.
-                filled = self.predict_capture(capture_param_k,
-                                              self.trap_density.data,
-                                              integ, grp_slope, slope)
+                filled = self.predict_capture(
+                    capture_param_k, self.trap_density.data, integ, grp_slope, slope
+                )
                 if is_subarray:
-                    self.traps_filled.data[k, save_slice[0],
-                                           save_slice[1]] += filled
+                    self.traps_filled.data[k, save_slice[0], save_slice[1]] += filled
                 else:
                     self.traps_filled.data[k, :, :] += filled
 
@@ -439,11 +444,14 @@ class DataSet():
         ystop = ystart + sci_ny
 
         # Check for errors in the slice indexes
-        if (xstart < 0 or ystart < 0 or
-                xstop > ref.data.shape[-1] or ystop > ref.data.shape[-2]):
+        if (
+            xstart < 0
+            or ystart < 0
+            or xstop > ref.data.shape[-1]
+            or ystop > ref.data.shape[-2]
+        ):
             log.error("Science and reference file arrays not compatible")
-            raise ValueError("Can't extract matching subarray from "
-                             "reference data")
+            raise ValueError("Can't extract matching subarray from " "reference data")
 
         return slice(ystart, ystop), slice(xstart, xstop)
 
@@ -572,8 +580,10 @@ class DataSet():
             # This won't be accurate, because there's only one group.
             grp_slope = self.output_obj.data[integ, 0, :, :]
             if hasattr(self.persistencesat, "dq"):
-                mask = (np.bitwise_and(self.persistencesat.dq,
-                                       dqflags.pixel["DO_NOT_USE"]) > 0)
+                mask = (
+                    np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"])
+                    > 0
+                )
                 if mask.sum() == 0:
                     mask = None
             else:
@@ -582,9 +592,8 @@ class DataSet():
                 slope = grp_slope / (self.persistencesat.data * self.tgroup)
             else:
                 # Set to 1 so we don't divide by 0.
-                persat = np.where(mask, 1., self.persistencesat.data)
-                slope = np.where(mask, 0.,
-                                 grp_slope / (persat * self.tgroup))
+                persat = np.where(mask, 1.0, self.persistencesat.data)
+                slope = np.where(mask, 0.0, grp_slope / (persat * self.tgroup))
             return grp_slope, slope
 
         gdqflags = dqflags.group
@@ -604,12 +613,12 @@ class DataSet():
         diff = data[1:, :, :] - data[0:-1, :, :]
         max_diff = diff.max()
         # Larger than any actual data value
-        huge_diff = max(2. * max_diff, 1.e5)
+        huge_diff = max(2.0 * max_diff, 1.0e5)
         del max_diff
 
         # This assumes that the saturation step has already been run.
         # n_sat is a 2-D array of the number of saturated groups per pixel.
-        s_mask = (np.bitwise_and(gdq[1:, :, :], gdqflags["SATURATED"]) > 0)
+        s_mask = np.bitwise_and(gdq[1:, :, :], gdqflags["SATURATED"]) > 0
         diff[s_mask] = huge_diff
         sat = s_mask.astype(np.int32)
         n_sat = sat.sum(axis=0)
@@ -619,27 +628,28 @@ class DataSet():
         # Upper limit of good data (slice notation, i.e. exclusive).
         upper = diff.shape[0] - (n_cr + n_sat)
         really_bad = np.where(upper < 0)
-        upper[really_bad] = 0           # for the comparison with indx below
+        upper[really_bad] = 0  # for the comparison with indx below
         del really_bad
         temp = np.arange(ngroups - 1, dtype=np.int32)
         temp2 = np.repeat(temp, nx * ny)
         indx = temp2.reshape((ngroups - 1, ny, nx))
         mask = np.where(indx >= upper)
-        sdiff[mask] = 0.                # zero values won't affect the sum
+        sdiff[mask] = 0.0  # zero values won't affect the sum
         del temp, temp2, indx, mask
         bad = np.where(upper <= 0)
-        upper[bad] = 1                  # so we can divide by upper
+        upper[bad] = 1  # so we can divide by upper
 
         # grp_slope has units of DN / group
         grp_slope = np.sum(sdiff, axis=0) / upper.astype(np.float32)
-        grp_slope[bad] = 0.
+        grp_slope[bad] = 0.0
         del bad
 
         # slope will have units (DN / persistence_saturation_limit) / second,
         # where persistence_saturation_limit is in units of DN.
         if hasattr(self.persistencesat, "dq"):
-            mask = (np.bitwise_and(self.persistencesat.dq,
-                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            mask = (
+                np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
+            )
             if mask.sum() == 0:
                 mask = None
         else:
@@ -648,9 +658,8 @@ class DataSet():
             slope = grp_slope / (self.persistencesat.data * self.tgroup)
         else:
             # Set to 1 so we don't divide by 0.
-            persat = np.where(mask, 1., self.persistencesat.data)
-            slope = np.where(mask, 0.,
-                             grp_slope / (persat * self.tgroup))
+            persat = np.where(mask, 1.0, self.persistencesat.data)
+            slope = np.where(mask, 0.0, grp_slope / (persat * self.tgroup))
 
         return grp_slope, slope
 
@@ -728,8 +737,7 @@ class DataSet():
         ngroups = self.output_obj.meta.exposure.ngroups
         if ngroups != shape[-3]:
             log.warning("model.meta and data disagree about ngroups:")
-            log.warning("  %d vs %d; will use %d.",
-                        ngroups, shape[-3], shape[-3])
+            log.warning("  %d vs %d; will use %d.", ngroups, shape[-3], shape[-3])
         self.ngroups = shape[-3]
         self.nframes = self.output_obj.meta.exposure.nframes
         self.groupgap = self.output_obj.meta.exposure.groupgap
@@ -744,8 +752,7 @@ class DataSet():
             else:
                 self.nresets = 1
 
-    def predict_capture(self, capture_param_k, trap_density, integ,
-                        grp_slope, slope):
+    def predict_capture(self, capture_param_k, trap_density, integ, grp_slope, slope):
         """Compute the number of traps that will be filled in time dt.
 
         This is based on Michael Regan's trapcapturemodel.pro.
@@ -795,10 +802,11 @@ class DataSet():
         totaltime = ngroups * t_group + nresets * t_frame
 
         # Find pixels exceeding the persistence saturation limit (full well).
-        pflag = (data > self.persistencesat.data)
+        pflag = data > self.persistencesat.data
         if hasattr(self.persistencesat, "dq"):
-            mask = (np.bitwise_and(self.persistencesat.dq,
-                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            mask = (
+                np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
+            )
             mshape = mask.shape
             mask = mask.reshape((1,) + mshape)
             m3 = np.repeat(mask, ngroups, 0)
@@ -813,11 +821,11 @@ class DataSet():
 
         # Traps that were filled due to the linear portion of the ramp.
         ramp_traps_filled = self.predict_ramp_capture(
-            capture_param_k,
-            trap_density, slope, dt)
+            capture_param_k, trap_density, slope, dt
+        )
 
         filled = ramp_traps_filled.copy()
-        mask = (sat_count > 0)
+        mask = sat_count > 0
         any_saturated = np.any(mask)
         if any_saturated:
             # Traps that were filled due to the saturated portion of the ramp.
@@ -825,14 +833,16 @@ class DataSet():
                 capture_param_k,
                 trap_density[mask],
                 ramp_traps_filled[mask],
-                sattime[mask], sat_count[mask], ngroups)
+                sattime[mask],
+                sat_count[mask],
+                ngroups,
+            )
         del sat_count, sattime, ramp_traps_filled, mask
 
         # Traps that were filled due to cosmic-ray jumps.
         cr_filled = self.delta_fcn_capture(
-            capture_param_k,
-            trap_density, integ,
-            grp_slope, ngroups, t_group)
+            capture_param_k, trap_density, integ, grp_slope, ngroups, t_group
+        )
         filled += cr_filled
 
         return filled
@@ -872,23 +882,35 @@ class DataSet():
 
         (par0, par1, par2) = capture_param_k
         if par1 == 0:
-            log.error("Capture parameter is zero; parameters are %g, %g, %g",
-                      par0, par1, par2)
-            tau = 1.e10                 # arbitrary "big" number
+            log.error(
+                "Capture parameter is zero; parameters are %g, %g, %g", par0, par1, par2
+            )
+            tau = 1.0e10  # arbitrary "big" number
         else:
-            tau = 1. / abs(par1)
+            tau = 1.0 / abs(par1)
 
-        traps_filled = (trap_density * slope**2
-                        * (dt**2 * (par0 + par2) / 2.
-                           + par0 * (dt * tau + tau**2) * np.exp(-dt / tau)
-                           - par0 * tau**2))
+        traps_filled = (
+            trap_density
+            * slope**2
+            * (
+                dt**2 * (par0 + par2) / 2.0
+                + par0 * (dt * tau + tau**2) * np.exp(-dt / tau)
+                - par0 * tau**2
+            )
+        )
 
         traps_filled *= SCALEFACTOR
         return traps_filled
 
-    def predict_saturation_capture(self, capture_param_k, trap_density,
-                                   incoming_filled_traps,
-                                   sattime, sat_count, ngroups):
+    def predict_saturation_capture(
+        self,
+        capture_param_k,
+        trap_density,
+        incoming_filled_traps,
+        sattime,
+        sat_count,
+        ngroups,
+    ):
         """Compute number of traps filled due to saturated pixels.
 
         This is based on Michael Regan's predictsaturationcapture.pro.
@@ -937,11 +959,11 @@ class DataSet():
         """
 
         (par0, par1, par2) = capture_param_k
-        par1 = abs(par1)        # the minus sign will be specified explicitly
+        par1 = abs(par1)  # the minus sign will be specified explicitly
 
         # For each pixel that had no ramp before saturation, fill all the
         # instantaneous traps; otherwise, they were filled during the ramp.
-        flag = (sat_count == ngroups)
+        flag = sat_count == ngroups
         incoming_filled_traps[flag] = trap_density[flag] * par2
 
         # Find out how many exponential traps have already been filled.
@@ -954,13 +976,14 @@ class DataSet():
         # Filling of the empty traps depends only on the exponential
         # component; the instantaneous component would have been filled
         # during the ramp or above.
-        new_filled_traps = empty_traps * (1. - np.exp(-par1 * sattime))
+        new_filled_traps = empty_traps * (1.0 - np.exp(-par1 * sattime))
         total_filled_traps = incoming_filled_traps + new_filled_traps
 
         return total_filled_traps
 
-    def delta_fcn_capture(self, capture_param_k, trap_density, integ,
-                          grp_slope, ngroups, t_group):
+    def delta_fcn_capture(
+        self, capture_param_k, trap_density, integ, grp_slope, ngroups, t_group
+    ):
         """Compute number of traps filled due to cosmic-ray jumps.
 
         Extended Summary
@@ -1019,8 +1042,9 @@ class DataSet():
         # amplitude, so skip the first group.  Loop over all subsequent
         # groups, checking (via the groupdq extension) for cosmic-ray hits.
         for group in range(1, ngroups):
-            cr_flag = np.where(np.bitwise_and(gdq[group, :, :],
-                                              gdqflags['JUMP_DET']) > 0)
+            cr_flag = np.where(
+                np.bitwise_and(gdq[group, :, :], gdqflags["JUMP_DET"]) > 0
+            )
             if len(cr_flag[0]) > 0:
                 delta_t = (float(ngroups - group) - 0.5) * t_group
                 # z and z_prev are index arrays.
@@ -1028,13 +1052,16 @@ class DataSet():
                 z[:] = group
                 z_prev = z - 1
                 # jump is a 1-D array, just for the CRs in the current group.
-                jump = ((data[z, cr_flag[0], cr_flag[1]]
-                         - data[z_prev, cr_flag[0], cr_flag[1]])
-                        - grp_slope[cr_flag])
-                jump = np.where(jump < 0., 0., jump)
-                cr_filled[cr_flag] += trap_density[cr_flag] * jump \
-                    * (par0 * (1. - math.exp(par1 * delta_t))
-                       + par2)
+                jump = (
+                    data[z, cr_flag[0], cr_flag[1]]
+                    - data[z_prev, cr_flag[0], cr_flag[1]]
+                ) - grp_slope[cr_flag]
+                jump = np.where(jump < 0.0, 0.0, jump)
+                cr_filled[cr_flag] += (
+                    trap_density[cr_flag]
+                    * jump
+                    * (par0 * (1.0 - math.exp(par1 * delta_t)) + par2)
+                )
 
         cr_filled *= SCALEFACTOR
         return cr_filled
@@ -1066,10 +1093,10 @@ class DataSet():
             for the current trap family.
         """
 
-        if decay_param == 0.:
-            decayed = traps_filled * 0.
+        if decay_param == 0.0:
+            decayed = traps_filled * 0.0
         else:
-            tau = 1. / abs(decay_param)
-            decayed = traps_filled * (1. - math.exp(-delta_t / tau))
+            tau = 1.0 / abs(decay_param)
+            decayed = traps_filled * (1.0 - math.exp(-delta_t / tau))
 
         return decayed

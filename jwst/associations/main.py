@@ -17,19 +17,19 @@ from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.constraint import (
     ConstraintTrue,
 )
-from jwst.associations.lib.log_config import (log_config, DMS_config)
+from jwst.associations.lib.log_config import log_config, DMS_config
 
-__all__ = ['Main']
+__all__ = ["Main"]
 
 # Configure logging
 logger = log_config(name=__package__)
 
 # Ruleset names
-DISCOVER_RULESET = 'discover'
-CANDIDATE_RULESET = 'candidate'
+DISCOVER_RULESET = "discover"
+CANDIDATE_RULESET = "candidate"
 
 
-class Main():
+class Main:
     """
     Generate Associations from an Association Pool
 
@@ -68,117 +68,136 @@ class Main():
         if args is None:
             args = sys.argv[1:]
         if isinstance(args, str):
-            args = args.split(' ')
+            args = args.split(" ")
 
         parser = argparse.ArgumentParser(
-            description='Generate Assocation Data Products',
-            usage='asn_generate pool'
+            description="Generate Assocation Data Products", usage="asn_generate pool"
         )
         if pool is None:
-            parser.add_argument(
-                'pool', type=str, help='Association Pool'
-            )
+            parser.add_argument("pool", type=str, help="Association Pool")
         op_group = parser.add_mutually_exclusive_group()
         op_group.add_argument(
-            '-i', '--ids', nargs='+',
-            dest='asn_candidate_ids',
-            help='space-separated list of association candidate IDs to operate on.'
+            "-i",
+            "--ids",
+            nargs="+",
+            dest="asn_candidate_ids",
+            help="space-separated list of association candidate IDs to operate on.",
         )
         op_group.add_argument(
-            '--discover',
-            action='store_true',
-            help='Produce discovered associations'
+            "--discover", action="store_true", help="Produce discovered associations"
         )
         op_group.add_argument(
-            '--all-candidates',
-            action='store_true', dest='all_candidates',
-            help='Produce all association candidate-specific associations'
+            "--all-candidates",
+            action="store_true",
+            dest="all_candidates",
+            help="Produce all association candidate-specific associations",
         )
         parser.add_argument(
-            '-p', '--path', type=str,
-            default='.',
-            help='Folder to save the associations to. Default: "%(default)s"'
+            "-p",
+            "--path",
+            type=str,
+            default=".",
+            help='Folder to save the associations to. Default: "%(default)s"',
         )
         parser.add_argument(
-            '--save-orphans', dest='save_orphans',
-            nargs='?', const='orphaned.csv', default=False,
-            help='Save orphaned items into the specified table. Default: "%(default)s"'
+            "--save-orphans",
+            dest="save_orphans",
+            nargs="?",
+            const="orphaned.csv",
+            default=False,
+            help='Save orphaned items into the specified table. Default: "%(default)s"',
         )
         parser.add_argument(
-            '--version-id', dest='version_id',
-            nargs='?', const=True, default=None,
+            "--version-id",
+            dest="version_id",
+            nargs="?",
+            const=True,
+            default=None,
             help=(
-                'Version tag to add into association name and products.'
-                ' If not specified, no version will be used.'
-                ' If specified without a value, the current time is used.'
-                ' Otherwise, the specified string will be used.'
-            )
+                "Version tag to add into association name and products."
+                " If not specified, no version will be used."
+                " If specified without a value, the current time is used."
+                " Otherwise, the specified string will be used."
+            ),
         )
         parser.add_argument(
-            '-r', '--rules', action='append',
-            help='Association Rules file.'
+            "-r", "--rules", action="append", help="Association Rules file."
         )
         parser.add_argument(
-            '--ignore-default', action='store_true',
-            help='Do not include default rules. -r should be used if set.'
+            "--ignore-default",
+            action="store_true",
+            help="Do not include default rules. -r should be used if set.",
         )
         parser.add_argument(
-            '--dry-run',
-            action='store_true', dest='dry_run',
-            help='Execute but do not save results.'
+            "--dry-run",
+            action="store_true",
+            dest="dry_run",
+            help="Execute but do not save results.",
         )
         parser.add_argument(
-            '-d', '--delimiter', type=str,
-            default='|',
-            help='''Delimiter
+            "-d",
+            "--delimiter",
+            type=str,
+            default="|",
+            help="""Delimiter
             to use if pool files are comma-separated-value
             (csv) type files. Default: "%(default)s"
-            '''
+            """,
         )
         parser.add_argument(
-            '--pool-format', type=str,
-            default='ascii',
+            "--pool-format",
+            type=str,
+            default="ascii",
             help=(
-                'Format of the pool file.'
-                ' Any format allowed by the astropy'
-                ' Unified File I/O interface is allowed.'
+                "Format of the pool file."
+                " Any format allowed by the astropy"
+                " Unified File I/O interface is allowed."
                 ' Default: "%(default)s"'
-            )
+            ),
         )
         parser.add_argument(
-            '-v', '--verbose',
-            action='store_const', dest='loglevel',
-            const=logging.INFO, default=logging.NOTSET,
-            help='Output progress and results.'
+            "-v",
+            "--verbose",
+            action="store_const",
+            dest="loglevel",
+            const=logging.INFO,
+            default=logging.NOTSET,
+            help="Output progress and results.",
         )
         parser.add_argument(
-            '-D', '--debug',
-            action='store_const', dest='loglevel',
+            "-D",
+            "--debug",
+            action="store_const",
+            dest="loglevel",
             const=logging.DEBUG,
-            help='Output detailed debugging information.'
+            help="Output detailed debugging information.",
         )
         parser.add_argument(
-            '--DMS',
-            action='store_true', dest='DMS_enabled',
-            help='Running under DMS workflow conditions.'
+            "--DMS",
+            action="store_true",
+            dest="DMS_enabled",
+            help="Running under DMS workflow conditions.",
         )
         parser.add_argument(
-            '--format',
-            default='json',
-            help='Format of the association files. Default: "%(default)s"'
+            "--format",
+            default="json",
+            help='Format of the association files. Default: "%(default)s"',
         )
         parser.add_argument(
-            '--version', action='version',
-            version='%(prog)s {}'.format(__version__),
-            help='Version of the generator.'
+            "--version",
+            action="version",
+            version="%(prog)s {}".format(__version__),
+            help="Version of the generator.",
         )
         parser.add_argument(
-            '--merge', action='store_true',
-            help='Merge associations into single associations with multiple products'
+            "--merge",
+            action="store_true",
+            help="Merge associations into single associations with multiple products",
         )
         parser.add_argument(
-            '--no-merge', action=DeprecateNoMerge,
-            help='Deprecated: Default is to not merge. See "--merge".'
+            "--no-merge",
+            action=DeprecateNoMerge,
+            help='Deprecated: Default is to not merge. See "--merge".',
         )
 
         parsed = parser.parse_args(args=args)
@@ -192,13 +211,14 @@ class Main():
         config.DEBUG = (parsed.loglevel != 0) and (parsed.loglevel <= logging.DEBUG)
 
         # Preamble
-        logger.info('Command-line arguments: {}'.format(args))
-        logger.context.set('asn_candidate_ids', parsed.asn_candidate_ids)
+        logger.info("Command-line arguments: {}".format(args))
+        logger.context.set("asn_candidate_ids", parsed.asn_candidate_ids)
 
         if pool is None:
-            logger.info('Reading pool {}'.format(parsed.pool))
+            logger.info("Reading pool {}".format(parsed.pool))
             self.pool = AssociationPool.read(
-                parsed.pool, delimiter=parsed.delimiter,
+                parsed.pool,
+                delimiter=parsed.delimiter,
                 format=parsed.pool_format,
             )
         else:
@@ -206,7 +226,7 @@ class Main():
 
         # DMS: Add further info to logging.
         try:
-            logger.context.set('program', self.pool[0]['PROGRAM'])
+            logger.context.set("program", self.pool[0]["PROGRAM"])
         except KeyError:
             pass
 
@@ -215,26 +235,24 @@ class Main():
         #  2) Only discovered associations that do not match
         #     candidate associations
         #  3) Both discovered and all candidate associations.
-        logger.info('Reading rules.')
-        if not parsed.discover and\
-           not parsed.all_candidates and\
-           parsed.asn_candidate_ids is None:
+        logger.info("Reading rules.")
+        if (
+            not parsed.discover
+            and not parsed.all_candidates
+            and parsed.asn_candidate_ids is None
+        ):
             parsed.discover = True
             parsed.all_candidates = True
         if parsed.discover or parsed.all_candidates:
-            global_constraints = constrain_on_candidates(
-                None
-            )
+            global_constraints = constrain_on_candidates(None)
         elif parsed.asn_candidate_ids is not None:
-            global_constraints = constrain_on_candidates(
-                parsed.asn_candidate_ids
-            )
+            global_constraints = constrain_on_candidates(parsed.asn_candidate_ids)
 
         self.rules = AssociationRegistry(
             parsed.rules,
             include_default=not parsed.ignore_default,
             global_constraints=global_constraints,
-            name=CANDIDATE_RULESET
+            name=CANDIDATE_RULESET,
         )
 
         if parsed.discover:
@@ -242,18 +260,18 @@ class Main():
                 AssociationRegistry(
                     parsed.rules,
                     include_default=not parsed.ignore_default,
-                    name=DISCOVER_RULESET
+                    name=DISCOVER_RULESET,
                 )
             )
 
-        logger.info('Generating associations.')
+        logger.info("Generating associations.")
         self.associations = generate(
             self.pool, self.rules, version_id=parsed.version_id
         )
 
         if parsed.discover:
             logger.debug(
-                '# asns found before discover filtering={}'.format(
+                "# asns found before discover filtering={}".format(
                     len(self.associations)
                 )
             )
@@ -277,9 +295,7 @@ class Main():
 
         if not parsed.dry_run:
             self.save(
-                path=parsed.path,
-                format=parsed.format,
-                save_orphans=parsed.save_orphans
+                path=parsed.path, format=parsed.format, save_orphans=parsed.save_orphans
             )
 
     @property
@@ -299,17 +315,19 @@ class Main():
 
     def __str__(self):
         result = []
-        result.append((
-            'There where {:d} associations '
-            'and {:d} orphaned items found.\n'
-            'Associations found are:'
-        ).format(len(self.associations), len(self.orphaned)))
+        result.append(
+            (
+                "There where {:d} associations "
+                "and {:d} orphaned items found.\n"
+                "Associations found are:"
+            ).format(len(self.associations), len(self.orphaned))
+        )
         for assocs in self.associations:
             result.append(assocs.__str__())
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
-    def save(self, path='.', format='json', save_orphans=False):
+    def save(self, path=".", format="json", save_orphans=False):
         """Save the associations to disk.
 
         Parameters
@@ -325,14 +343,12 @@ class Main():
         """
         for asn in self.associations:
             (fname, serialized) = asn.dump(format=format)
-            with open(os.path.join(path, fname), 'w') as f:
+            with open(os.path.join(path, fname), "w") as f:
                 f.write(serialized)
 
         if save_orphans:
             self.orphaned.write(
-                os.path.join(path, save_orphans),
-                format='ascii',
-                delimiter='|'
+                os.path.join(path, save_orphans), format="ascii", delimiter="|"
             )
 
 
@@ -341,13 +357,17 @@ class Main():
 # #########
 class DeprecateNoMerge(argparse.Action):
     """Deprecate the `--no-merge` option"""
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
+        super(DeprecateNoMerge, self).__init__(
+            option_strings, dest, const=True, nargs=0, **kwargs
+        )
 
     def __call__(self, parser, namespace, values, option_string=None):
         logger.warning(
             'The "--no-merge" option is now the default and deprecated.'
-            ' Use "--merge" to force merging.')
+            ' Use "--merge" to force merging.'
+        )
         setattr(namespace, self.dest, values)
 
 
@@ -361,15 +381,13 @@ def constrain_on_candidates(candidates):
         If None, then all candidates are matched.
     """
     if candidates is not None and len(candidates):
-        c_list = '|'.join(candidates)
-        values = ''.join([
-            '.+(', c_list, ').+'
-        ])
+        c_list = "|".join(candidates)
+        values = "".join([".+(", c_list, ").+"])
     else:
         values = None
     constraint = DMSAttrConstraint(
-        name='asn_candidate',
-        sources=['asn_candidate'],
+        name="asn_candidate",
+        sources=["asn_candidate"],
         value=values,
         force_unique=True,
         is_acid=True,
@@ -380,10 +398,10 @@ def constrain_on_candidates(candidates):
 
 
 def filter_discovered_only(
-        associations,
-        discover_ruleset,
-        candidate_ruleset,
-        keep_candidates=True,
+    associations,
+    discover_ruleset,
+    candidate_ruleset,
+    keep_candidates=True,
 ):
     """Return only those associations that have multiple candidates
 
@@ -414,10 +432,7 @@ def filter_discovered_only(
     and then Association.load will not return proper results.
     """
     # Split the associations along discovered/not discovered lines
-    asn_by_ruleset = {
-        candidate_ruleset: [],
-        discover_ruleset: []
-    }
+    asn_by_ruleset = {candidate_ruleset: [], discover_ruleset: []}
     for asn in associations:
         asn_by_ruleset[asn.registry.name].append(asn)
     candidate_list = asn_by_ruleset[candidate_ruleset]
@@ -441,5 +456,5 @@ def filter_discovered_only(
     return discover_list
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Main()

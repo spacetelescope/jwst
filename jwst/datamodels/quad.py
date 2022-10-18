@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['QuadModel']
+__all__ = ["QuadModel"]
 
 
 class QuadModel(JwstDataModel):
@@ -19,6 +19,7 @@ class QuadModel(JwstDataModel):
     err : numpy float32 array
          Error array
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/quad.schema"
 
     def __init__(self, init=None, **kwargs):

@@ -4,9 +4,7 @@ Unit tests for master background NIRSpec corrections
 import numpy as np
 
 from jwst import datamodels
-from jwst.master_background.nirspec_utils import (
-    correct_nrs_ifu_bkg, correct_nrs_fs_bkg
-)
+from jwst.master_background.nirspec_utils import correct_nrs_ifu_bkg, correct_nrs_fs_bkg
 
 
 def test_ifu_pathloss_existence():
@@ -24,14 +22,14 @@ def test_ifu_correction():
     data = np.ones((5, 5))
     pl_ps = 2.1 * data
     pl_un = data / 1.9
-    input = datamodels.IFUImageModel(data=data,
-                                     pathloss_point=pl_ps,
-                                     pathloss_uniform=pl_un)
+    input = datamodels.IFUImageModel(
+        data=data, pathloss_point=pl_ps, pathloss_uniform=pl_un
+    )
 
     corrected = input.data * pl_un / pl_ps
     result = correct_nrs_ifu_bkg(input)
 
-    assert np.allclose(corrected, result.data, rtol=1.e-7)
+    assert np.allclose(corrected, result.data, rtol=1.0e-7)
 
 
 def test_fs_correction():
@@ -44,12 +42,17 @@ def test_fs_correction():
     pl_un = data / 2.1
     ph_ps = 1.1 * data
     ph_un = 1.23 * data
-    input = datamodels.SlitModel(data=data,
-                                 flatfield_point=ff_ps, flatfield_uniform=ff_un,
-                                 pathloss_point=pl_ps, pathloss_uniform=pl_un,
-                                 photom_point=ph_ps, photom_uniform=ph_un)
+    input = datamodels.SlitModel(
+        data=data,
+        flatfield_point=ff_ps,
+        flatfield_uniform=ff_un,
+        pathloss_point=pl_ps,
+        pathloss_uniform=pl_un,
+        photom_point=ph_ps,
+        photom_uniform=ph_un,
+    )
 
     corrected = input.data * (ff_un / ff_ps) * (pl_un / pl_ps) * (ph_ps / ph_un)
     result = correct_nrs_fs_bkg(input, primary_slit=True)
 
-    assert np.allclose(corrected, result.data, rtol=1.e-7)
+    assert np.allclose(corrected, result.data, rtol=1.0e-7)

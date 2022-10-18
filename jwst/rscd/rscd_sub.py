@@ -40,17 +40,21 @@ def do_correction(input_model, rscd_model, type):
     param = get_rscd_parameters(input_model, rscd_model)
 
     if not bool(param):  # empty dictionary
-        log.warning('READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped')
-        input_model.meta.cal_step.rscd = 'SKIPPED'
+        log.warning(
+            "READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped"
+        )
+        input_model.meta.cal_step.rscd = "SKIPPED"
         return input_model
 
-    if type == 'baseline':
-        group_skip = param['skip']
+    if type == "baseline":
+        group_skip = param["skip"]
         output = correction_skip_groups(input_model, group_skip)
     else:
         # enhanced algorithm is not enabled yet (updated code and validation needed)
-        log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
-        input_model.meta.cal_step.rscd = 'SKIPPED'
+        log.warning(
+            "Enhanced algorithm not support yet: RSCD correction will be skipped"
+        )
+        input_model.meta.cal_step.rscd = "SKIPPED"
         return input_model
         # decay function algorithm update needed
         # output = correction_decay_function(input_model, param)
@@ -80,11 +84,10 @@ def correction_skip_groups(input_model, group_skip):
     """
 
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]       # number of integrations
-    sci_ngroups = input_model.data.shape[1]     # number of groups
+    sci_nints = input_model.data.shape[0]  # number of integrations
+    sci_ngroups = input_model.data.shape[1]  # number of groups
 
-    log.debug("RSCD correction using: nints=%d, ngroups=%d" %
-              (sci_nints, sci_ngroups))
+    log.debug("RSCD correction using: nints=%d, ngroups=%d" % (sci_nints, sci_ngroups))
 
     # Create output as a copy of the input science data model
     output = input_model.copy()
@@ -95,14 +98,17 @@ def correction_skip_groups(input_model, group_skip):
     if sci_ngroups <= (group_skip + 3):
         log.warning("Too few groups to apply RSCD correction")
         log.warning("RSCD step will be skipped")
-        output.meta.cal_step.rscd = 'SKIPPED'
+        output.meta.cal_step.rscd = "SKIPPED"
         return output
 
     # If ngroups > group_skip+3, set all of the GROUPDQ in the first group to 'DO_NOT_USE'
-    output.groupdq[1:, 0:group_skip:, :] = \
-        np.bitwise_or(output.groupdq[1:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
-    log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
-    output.meta.cal_step.rscd = 'COMPLETE'
+    output.groupdq[1:, 0:group_skip:, :] = np.bitwise_or(
+        output.groupdq[1:, 0:group_skip, :, :], dqflags.group["DO_NOT_USE"]
+    )
+    log.debug(
+        f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups"
+    )
+    output.meta.cal_step.rscd = "COMPLETE"
 
     return output
 
@@ -146,68 +152,76 @@ def correction_decay_function(input_model, param):
     """
 
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]       # number of integrations
-    sci_ngroups = input_model.data.shape[1]     # number of groups
+    sci_nints = input_model.data.shape[0]  # number of integrations
+    sci_ngroups = input_model.data.shape[1]  # number of groups
 
-    log.debug("RSCD correction using: nints=%d, ngroups=%d" %
-              (sci_nints, sci_ngroups))
+    log.debug("RSCD correction using: nints=%d, ngroups=%d" % (sci_nints, sci_ngroups))
 
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
     # Check for valid parameters
     if sci_ngroups < 2:
-        log.warning('RSCD correction requires > 1 group per integration')
-        log.warning('Step will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
+        log.warning("RSCD correction requires > 1 group per integration")
+        log.warning("Step will be skipped")
+        output.meta.cal_step.rscd = "SKIPPED"
         return output
 
     if param is None:
-        log.warning('RSCD correction will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
+        log.warning("RSCD correction will be skipped")
+        output.meta.cal_step.rscd = "SKIPPED"
         return output
 
     # Determine the parameters that rely only on ngroups
     ngroups2 = sci_ngroups * sci_ngroups
-    b1_even = param['even']['ascale'] * (
-        param['even']['illum_zp'] +
-        param['even']['illum_slope'] * sci_ngroups +
-        param['even']['illum2'] * ngroups2)
+    b1_even = param["even"]["ascale"] * (
+        param["even"]["illum_zp"]
+        + param["even"]["illum_slope"] * sci_ngroups
+        + param["even"]["illum2"] * ngroups2
+    )
 
-    b1_odd = param['odd']['ascale'] * (
-        param['odd']['illum_zp'] +
-        param['odd']['illum_slope'] * sci_ngroups +
-        param['odd']['illum2'] * ngroups2)
+    b1_odd = param["odd"]["ascale"] * (
+        param["odd"]["illum_zp"]
+        + param["odd"]["illum_slope"] * sci_ngroups
+        + param["odd"]["illum2"] * ngroups2
+    )
 
     sat_final_slope_even = (
-        param['even']['sat_zp'] + param['even']['sat_slope'] * sci_ngroups +
-        param['even']['sat2'] * ngroups2 + param['even']['sat_rowterm'])
+        param["even"]["sat_zp"]
+        + param["even"]["sat_slope"] * sci_ngroups
+        + param["even"]["sat2"] * ngroups2
+        + param["even"]["sat_rowterm"]
+    )
 
     sat_final_slope_odd = (
-        param['odd']['sat_zp'] + param['odd']['sat_slope'] * sci_ngroups +
-        param['odd']['sat2'] * ngroups2 + param['odd']['sat_rowterm'])
+        param["odd"]["sat_zp"]
+        + param["odd"]["sat_slope"] * sci_ngroups
+        + param["odd"]["sat2"] * ngroups2
+        + param["odd"]["sat_rowterm"]
+    )
 
-    b2_even = param['even']['pow'].item()
-    b2_odd = param['odd']['pow'].item()
-    b3_even = param['even']['param3'].item()
-    b3_odd = param['odd']['param3'].item()
-    crossopt_even = param['even']['crossopt'].item()
-    crossopt_odd = param['odd']['crossopt'].item()
-    sat_mzp_even = param['even']['sat_mzp'].item()
-    sat_mzp_odd = param['odd']['sat_mzp'].item()
-    sat_scale_even = param['even']['sat_scale'].item()
-    sat_scale_odd = param['odd']['sat_scale'].item()
-    tau_even = param['even']['tau'].item()
-    tau_odd = param['odd']['tau'].item()
+    b2_even = param["even"]["pow"].item()
+    b2_odd = param["odd"]["pow"].item()
+    b3_even = param["even"]["param3"].item()
+    b3_odd = param["odd"]["param3"].item()
+    crossopt_even = param["even"]["crossopt"].item()
+    crossopt_odd = param["odd"]["crossopt"].item()
+    sat_mzp_even = param["even"]["sat_mzp"].item()
+    sat_mzp_odd = param["odd"]["sat_mzp"].item()
+    sat_scale_even = param["even"]["sat_scale"].item()
+    sat_scale_odd = param["odd"]["sat_scale"].item()
+    tau_even = param["even"]["tau"].item()
+    tau_odd = param["odd"]["tau"].item()
 
     # loop over all integrations except the first
     mdelta = int(sci_nints / 10) + 1
     for i in range(1, sci_nints):
         if ((i + 1) % mdelta) == 0:
-            log.info(' Working on integration %d', i + 1)
+            log.info(" Working on integration %d", i + 1)
 
-        sat, dn_last23, dn_lastfit = \
-            get_DNaccumulated_last_int(input_model, i, sci_ngroups)
+        sat, dn_last23, dn_lastfit = get_DNaccumulated_last_int(
+            input_model, i, sci_ngroups
+        )
 
         lastframe_even = dn_last23[1::2, :]
         lastframe_odd = dn_last23[0::2, :]
@@ -230,13 +244,11 @@ def correction_decay_function(input_model, param):
         good_odd = np.where((counts2_odd > 0) & np.isfinite(counts2_odd))
         # __________________________________________________________________
         # even row values
-        factor2_even[good_even] = 1.0 / \
-            (np.exp(counts2_even[good_even] / b3_even) - 1)
+        factor2_even[good_even] = 1.0 / (np.exp(counts2_even[good_even] / b3_even) - 1)
         a1_even = b1_even * (np.power(counts2_even, b2_even)) * factor2_even
         # ___________________________________________________________________
         # odd row values
-        factor2_odd[good_odd] = 1.0 / \
-            (np.exp(counts2_odd[good_odd] / b3_odd) - 1)
+        factor2_odd[good_odd] = 1.0 / (np.exp(counts2_odd[good_odd] / b3_odd) - 1)
         a1_odd = b1_odd * (np.power(counts2_odd, b2_odd)) * factor2_odd
         # ___________________________________________________________________
         # SATURATED DATA
@@ -253,7 +265,7 @@ def correction_decay_function(input_model, param):
         for j in range(sci_ngroups):
 
             # Compute the correction factors for even and odd rows
-            T = (j + 1)
+            T = j + 1
             eterm_even = np.exp(-T / tau_even)
             eterm_odd = np.exp(-T / tau_odd)
 
@@ -263,17 +275,15 @@ def correction_decay_function(input_model, param):
             correction_odd = lastframe_odd * a1_odd * 0.01 * eterm_odd
             correction_even = lastframe_even * a1_even * 0.01 * eterm_even
             correction_sat_odd = lastframe_odd * a1_sat_odd * 0.01 * eterm_odd
-            correction_sat_even = lastframe_even * a1_sat_even * 0.01 * \
-                eterm_even
+            correction_sat_even = lastframe_even * a1_sat_even * 0.01 * eterm_even
             sat_index_even = np.where(sat_even)
             sat_index_odd = np.where(sat_odd)
-            correction_even[sat_index_even] = \
-                correction_sat_even[sat_index_even]
+            correction_even[sat_index_even] = correction_sat_even[sat_index_even]
             correction_odd[sat_index_odd] = correction_sat_odd[sat_index_odd]
             output.data[i, j, 0::2, :] += correction_odd
             output.data[i, j, 1::2, :] += correction_even
 
-    output.meta.cal_step.rscd = 'COMPLETE'
+    output.meta.cal_step.rscd = "COMPLETE"
 
     return output
 
@@ -307,105 +317,105 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # Check for old values of the MIRI LRS slitless subarray name
     # in the science data and change to the new
-    if subarray.upper() == 'SUBPRISM':
-        subarray = 'SLITLESSPRISM'
+    if subarray.upper() == "SUBPRISM":
+        subarray = "SLITLESSPRISM"
 
     # read table 1: containing the number of groups to skip
     for tabdata in rscd_model.rscd_group_skip_table:
-        subarray_table = tabdata['subarray']
-        readpatt_table = tabdata['readpatt']
-        group_skip_table = tabdata['group_skip']
+        subarray_table = tabdata["subarray"]
+        readpatt_table = tabdata["readpatt"]
+        group_skip_table = tabdata["group_skip"]
         if subarray_table == subarray and readpatt_table == readpatt:
-            param['skip'] = group_skip_table
+            param["skip"] = group_skip_table
             break
 
     # read table 2: General RSCD enhanced parameters
     for tabdata in rscd_model.rscd_gen_table:
-        readpatt_gen = tabdata['readpatt']
-        subarray_gen = tabdata['subarray']
-        lower_cutoff_gen = tabdata['lower_cutoff']
-        alpha_even_gen = tabdata['alpha_even']
-        alpha_odd_gen = tabdata['alpha_even']
+        readpatt_gen = tabdata["readpatt"]
+        subarray_gen = tabdata["subarray"]
+        lower_cutoff_gen = tabdata["lower_cutoff"]
+        alpha_even_gen = tabdata["alpha_even"]
+        alpha_odd_gen = tabdata["alpha_even"]
         if subarray_gen == subarray and readpatt_gen == readpatt:
-            param['gen'] = {}
-            param['gen']['lower_cutoff'] = lower_cutoff_gen
-            param['gen']['lower_alpha_odd'] = alpha_odd_gen
-            param['gen']['lower_alpha_even'] = alpha_even_gen
+            param["gen"] = {}
+            param["gen"]["lower_cutoff"] = lower_cutoff_gen
+            param["gen"]["lower_alpha_odd"] = alpha_odd_gen
+            param["gen"]["lower_alpha_even"] = alpha_even_gen
             break
 
     # read table 3: Enhanced RSCD integration 1 parameters
     for tabdata in rscd_model.rscd_int1_table:
-        readpatt_int1 = tabdata['readpatt']
-        subarray_int1 = tabdata['subarray']
-        rows_int1 = tabdata['rows']
-        a0_int1 = tabdata['a0']
-        a1_int1 = tabdata['a1']
-        a2_int1 = tabdata['a2']
-        a3_int1 = tabdata['a3']
+        readpatt_int1 = tabdata["readpatt"]
+        subarray_int1 = tabdata["subarray"]
+        rows_int1 = tabdata["rows"]
+        a0_int1 = tabdata["a0"]
+        a1_int1 = tabdata["a1"]
+        a2_int1 = tabdata["a2"]
+        a3_int1 = tabdata["a3"]
         if subarray_int1 == subarray and readpatt_int1 == readpatt:
-            param['int1'] = {}
-            param['int1']['even'] = {}
-            param['int1']['odd'] = {}
-            if rows_int1 == 'EVEN':
-                param['int1']['even']['a0'] = a0_int1
-                param['int1']['even']['a1'] = a1_int1
-                param['int1']['even']['a2'] = a2_int1
-                param['int1']['even']['a3'] = a3_int1
-            if rows_int1 == 'ODD':
-                param['int1']['odd']['a0'] = a0_int1
-                param['int1']['odd']['a1'] = a1_int1
-                param['int1']['odd']['a2'] = a2_int1
-                param['int1']['odd']['a3'] = a3_int1
+            param["int1"] = {}
+            param["int1"]["even"] = {}
+            param["int1"]["odd"] = {}
+            if rows_int1 == "EVEN":
+                param["int1"]["even"]["a0"] = a0_int1
+                param["int1"]["even"]["a1"] = a1_int1
+                param["int1"]["even"]["a2"] = a2_int1
+                param["int1"]["even"]["a3"] = a3_int1
+            if rows_int1 == "ODD":
+                param["int1"]["odd"]["a0"] = a0_int1
+                param["int1"]["odd"]["a1"] = a1_int1
+                param["int1"]["odd"]["a2"] = a2_int1
+                param["int1"]["odd"]["a3"] = a3_int1
             break
 
     # read table 4: Enhanced RSCD integration 2 parameters
     for tabdata in rscd_model.rscd_int2_table:
-        readpatt_int2 = tabdata['readpatt']
-        subarray_int2 = tabdata['subarray']
-        rows_int2 = tabdata['rows']
-        a0_int2 = tabdata['b0']
-        a1_int2 = tabdata['b1']
-        a2_int2 = tabdata['b2']
-        a3_int2 = tabdata['b3']
+        readpatt_int2 = tabdata["readpatt"]
+        subarray_int2 = tabdata["subarray"]
+        rows_int2 = tabdata["rows"]
+        a0_int2 = tabdata["b0"]
+        a1_int2 = tabdata["b1"]
+        a2_int2 = tabdata["b2"]
+        a3_int2 = tabdata["b3"]
         if subarray_int2 == subarray and readpatt_int2 == readpatt:
-            param['int2'] = {}
-            param['int2']['even'] = {}
-            param['int2']['odd'] = {}
-            if rows_int2 == 'EVEN':
-                param['int2']['even']['a0'] = a0_int2
-                param['int2']['even']['a1'] = a1_int2
-                param['int2']['even']['a2'] = a2_int2
-                param['int2']['even']['a3'] = a3_int2
-            if rows_int2 == 'ODD':
-                param['int2']['odd']['a0'] = a0_int2
-                param['int2']['odd']['a1'] = a1_int2
-                param['int2']['odd']['a2'] = a2_int2
-                param['int2']['odd']['a3'] = a3_int2
+            param["int2"] = {}
+            param["int2"]["even"] = {}
+            param["int2"]["odd"] = {}
+            if rows_int2 == "EVEN":
+                param["int2"]["even"]["a0"] = a0_int2
+                param["int2"]["even"]["a1"] = a1_int2
+                param["int2"]["even"]["a2"] = a2_int2
+                param["int2"]["even"]["a3"] = a3_int2
+            if rows_int2 == "ODD":
+                param["int2"]["odd"]["a0"] = a0_int2
+                param["int2"]["odd"]["a1"] = a1_int2
+                param["int2"]["odd"]["a2"] = a2_int2
+                param["int2"]["odd"]["a3"] = a3_int2
             break
 
     # read table 5: Enhanced RSCD integration 3 parameters
     for tabdata in rscd_model.rscd_int3_table:
-        readpatt_int3 = tabdata['readpatt']
-        subarray_int3 = tabdata['subarray']
-        rows_int3 = tabdata['rows']
-        a0_int3 = tabdata['c0']
-        a1_int3 = tabdata['c1']
-        a2_int3 = tabdata['c2']
-        a3_int3 = tabdata['c3']
+        readpatt_int3 = tabdata["readpatt"]
+        subarray_int3 = tabdata["subarray"]
+        rows_int3 = tabdata["rows"]
+        a0_int3 = tabdata["c0"]
+        a1_int3 = tabdata["c1"]
+        a2_int3 = tabdata["c2"]
+        a3_int3 = tabdata["c3"]
         if subarray_int3 == subarray and readpatt_int3 == readpatt:
-            param['int3'] = {}
-            param['int3']['even'] = {}
-            param['int3']['odd'] = {}
-            if rows_int3 == 'EVEN':
-                param['int3']['even']['a0'] = a0_int3
-                param['int3']['even']['a1'] = a1_int3
-                param['int3']['even']['a2'] = a2_int3
-                param['int3']['even']['a3'] = a3_int3
-            if rows_int3 == 'ODD':
-                param['int3']['odd']['a0'] = a0_int3
-                param['int3']['odd']['a1'] = a1_int3
-                param['int3']['odd']['a2'] = a2_int3
-                param['int3']['odd']['a3'] = a3_int3
+            param["int3"] = {}
+            param["int3"]["even"] = {}
+            param["int3"]["odd"] = {}
+            if rows_int3 == "EVEN":
+                param["int3"]["even"]["a0"] = a0_int3
+                param["int3"]["even"]["a1"] = a1_int3
+                param["int3"]["even"]["a2"] = a2_int3
+                param["int3"]["even"]["a3"] = a3_int3
+            if rows_int3 == "ODD":
+                param["int3"]["odd"]["a0"] = a0_int3
+                param["int3"]["odd"]["a1"] = a1_int3
+                param["int3"]["odd"]["a2"] = a2_int3
+                param["int3"]["odd"]["a3"] = a3_int3
             break
 
     return param
@@ -445,17 +455,17 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     dn_lastframe23 = dn_lastframe2 + diff
 
     # get saturation and reference pixel DQ flag values
-    sat_flag = dqflags.group['SATURATED']
-    ref_flag = dqflags.pixel['REFERENCE_PIXEL']
+    sat_flag = dqflags.group["SATURATED"]
+    ref_flag = dqflags.pixel["REFERENCE_PIXEL"]
 
     # mark the locations of reference pixels
     refpix_2d = np.bitwise_and(input_model.pixeldq, ref_flag)
     dn_lastframe23[np.where(refpix_2d)] = 0.0
 
     # load the ramp data needed for computing slopes
-    ramp3d = input_model.data[i - 1, 1:sci_ngroups - 1]
-    groupdq3d = input_model.groupdq[i - 1, 1:sci_ngroups - 1]
-    satmask3d = (groupdq3d == sat_flag)
+    ramp3d = input_model.data[i - 1, 1 : sci_ngroups - 1]
+    groupdq3d = input_model.groupdq[i - 1, 1 : sci_ngroups - 1]
+    satmask3d = groupdq3d == sat_flag
     saturated = satmask3d.any(axis=0)
 
     # compute the slopes
@@ -482,12 +492,13 @@ def ols_fit(y, dq):
     non-saturating data.
     """
 
-    sat_flag = dqflags.group['SATURATED']
+    sat_flag = dqflags.group["SATURATED"]
     shape = y.shape
 
     # Find ramp values that are saturated
-    x = np.arange(shape[0], dtype=np.float64)[:, np.newaxis, np.newaxis] * \
-        np.ones(shape)
+    x = np.arange(shape[0], dtype=np.float64)[:, np.newaxis, np.newaxis] * np.ones(
+        shape
+    )
     good_data = np.bitwise_and(dq, sat_flag) == 0
     ngood = good_data.sum(axis=0)
 
@@ -500,7 +511,7 @@ def ols_fit(y, dq):
 
     # Compute the slopes and intercepts
     denom = nelem * sumxx - sumx * sumx
-    with np.errstate(invalid='ignore'):  # ignore division warnings
+    with np.errstate(invalid="ignore"):  # ignore division warnings
         slope = (nelem * sumxy - sumx * sumy) / denom
         intercept = (sumxx * sumy - sumx * sumxy) / denom
 

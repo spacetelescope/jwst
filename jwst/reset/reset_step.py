@@ -13,7 +13,7 @@ class ResetStep(Step):
 
     class_alias = "reset"
 
-    reference_file_types = ['reset']
+    reference_file_types = ["reset"]
 
     def process(self, input):
 
@@ -22,18 +22,18 @@ class ResetStep(Step):
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
-            if detector.startswith('MIR'):
+            if detector.startswith("MIR"):
 
                 # Get the name of the reset reference file to use
-                self.reset_name = self.get_reference_file(input_model, 'reset')
-                self.log.info('Using RESET reference file %s', self.reset_name)
+                self.reset_name = self.get_reference_file(input_model, "reset")
+                self.log.info("Using RESET reference file %s", self.reset_name)
 
                 # Check for a valid reference file
-                if self.reset_name == 'N/A':
-                    self.log.warning('No RESET reference file found')
-                    self.log.warning('Reset step will be skipped')
+                if self.reset_name == "N/A":
+                    self.log.warning("No RESET reference file found")
+                    self.log.warning("Reset step will be skipped")
                     result = input_model.copy()
-                    result.meta.cal_step.reset = 'SKIPPED'
+                    result.meta.cal_step.reset = "SKIPPED"
                     return result
 
                 # Open the reset ref file data model
@@ -44,12 +44,12 @@ class ResetStep(Step):
 
                 # Close the reference file and update the step status
                 reset_model.close()
-                result.meta.cal_step.reset = 'COMPLETE'
+                result.meta.cal_step.reset = "COMPLETE"
 
             else:
-                self.log.warning('Reset Correction is only for MIRI data')
-                self.log.warning('Reset step will be skipped')
+                self.log.warning("Reset Correction is only for MIRI data")
+                self.log.warning("Reset step will be skipped")
                 result = input_model.copy()
-                result.meta.cal_step.reset = 'SKIPPED'
+                result.meta.cal_step.reset = "SKIPPED"
 
         return result

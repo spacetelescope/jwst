@@ -132,6 +132,7 @@ def open(init=None, guess=True, memmap=False, **kwargs):
         elif file_type == "asn":
             # Read the file as an association / model container
             from . import container
+
             return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
@@ -165,6 +166,7 @@ def open(init=None, guess=True, memmap=False, **kwargs):
 
     elif is_association(init) or isinstance(init, list):
         from . import container
+
         return container.ModelContainer(init, **kwargs)
 
     # If we have it, determine the shape from the science hdu
@@ -173,14 +175,14 @@ def open(init=None, guess=True, memmap=False, **kwargs):
         init = hdulist
         info = init.fileinfo(0)
         if info is not None:
-            file_name = info.get('filename')
+            file_name = info.get("filename")
 
         try:
-            hdu = hdulist[('SCI', 1)]
+            hdu = hdulist[("SCI", 1)]
         except (KeyError, NameError):
             shape = ()
         else:
-            if hasattr(hdu, 'shape'):
+            if hasattr(hdu, "shape"):
                 shape = hdu.shape
             else:
                 shape = ()
@@ -189,7 +191,9 @@ def open(init=None, guess=True, memmap=False, **kwargs):
     new_class = _class_from_model_type(hdulist)
     has_model_type = new_class is not None
     if not guess and not has_model_type:
-        raise TypeError('Model type is not specifically defined and guessing has been disabled.')
+        raise TypeError(
+            "Model type is not specifically defined and guessing has been disabled."
+        )
 
     # Special handling for ramp files for backwards compatibility
     if new_class is None:
@@ -209,9 +213,9 @@ def open(init=None, guess=True, memmap=False, **kwargs):
 
     # Log a message about how the model was opened
     if file_name:
-        log.debug(f'Opening {file_name} as {new_class}')
+        log.debug(f"Opening {file_name} as {new_class}")
     else:
-        log.debug(f'Opening as {new_class}')
+        log.debug(f"Opening as {new_class}")
 
     # Actually open the model
     model = new_class(init, **kwargs)
@@ -230,11 +234,13 @@ def open(init=None, guess=True, memmap=False, **kwargs):
 
 def _handle_missing_model_type(model, file_name):
     if file_name:
-        class_name = model.__class__.__name__.split('.')[-1]
-        warnings.warn(f"model_type not found. Opening {file_name} as a {class_name}",
-                      NoTypeWarning)
+        class_name = model.__class__.__name__.split(".")[-1]
+        warnings.warn(
+            f"model_type not found. Opening {file_name} as a {class_name}",
+            NoTypeWarning,
+        )
     try:
-        delattr(model.meta, 'model_type')
+        delattr(model.meta, "model_type")
     except AttributeError:
         pass
 
@@ -256,10 +262,10 @@ def _class_from_model_type(init):
     if init:
         if isinstance(init, fits.hdu.hdulist.HDUList):
             primary = init[0]
-            model_type = primary.header.get('DATAMODL')
+            model_type = primary.header.get("DATAMODL")
         elif isinstance(init, asdf.AsdfFile):
             try:
-                model_type = init.tree['meta']['model_type']
+                model_type = init.tree["meta"]["model_type"]
             except KeyError:
                 model_type = None
 
@@ -282,9 +288,10 @@ def _class_from_ramp_type(hdulist, shape):
     else:
         if len(shape) == 4:
             try:
-                hdulist['DQ']
+                hdulist["DQ"]
             except KeyError:
                 from . import ramp
+
                 new_class = ramp.RampModel
             else:
                 new_class = None
@@ -303,12 +310,13 @@ def _class_from_reftype(hdulist, shape):
 
     else:
         primary = hdulist[0]
-        reftype = primary.header.get('REFTYPE')
+        reftype = primary.header.get("REFTYPE")
         if reftype is None:
             new_class = None
 
         else:
             from . import reference
+
             if len(shape) == 0:
                 new_class = reference.ReferenceFileModel
             elif len(shape) == 2:
@@ -329,23 +337,28 @@ def _class_from_shape(hdulist, shape):
     """
     if len(shape) == 0:
         from . import model_base
+
         new_class = model_base.JwstDataModel
     elif len(shape) == 4:
         from . import quad
+
         new_class = quad.QuadModel
     elif len(shape) == 3:
         from . import cube
+
         new_class = cube.CubeModel
     elif len(shape) == 2:
         try:
-            hdulist[('SCI', 2)]
+            hdulist[("SCI", 2)]
         except (KeyError, NameError):
             # It's an ImageModel
             from . import image
+
             new_class = image.ImageModel
         else:
             # It's a MultiSlitModel
             from . import multislit
+
             new_class = multislit.MultiSlitModel
     else:
         new_class = None
@@ -368,7 +381,7 @@ def can_broadcast(a, b):
 
 
 def to_camelcase(token):
-    return ''.join(x.capitalize() for x in token.split('_-'))
+    return "".join(x.capitalize() for x in token.split("_-"))
 
 
 def is_association(asn_data):
@@ -376,7 +389,7 @@ def is_association(asn_data):
     Test if an object is an association by checking for required fields
     """
     if isinstance(asn_data, dict):
-        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+        if "asn_id" in asn_data and "asn_pool" in asn_data:
             return True
     return False
 
@@ -409,7 +422,7 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
     """
     # Determine desired allowed amount.
     if allowed is None:
-        allowed = os.environ.get('DMODEL_ALLOWED_MEMORY', None)
+        allowed = os.environ.get("DMODEL_ALLOWED_MEMORY", None)
         if allowed is not None:
             allowed = float(allowed)
 
@@ -431,17 +444,19 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
 
     # Get available memory
     available = get_available_memory(include_swap=include_swap)
-    log.debug(f'Model size {bytes2human(size)} available system memory {bytes2human(available)}')
+    log.debug(
+        f"Model size {bytes2human(size)} available system memory {bytes2human(available)}"
+    )
 
     if size > available:
         log.warning(
-            f'Model {model_type} shape {shape} requires {bytes2human(size)} which is more than'
-            f' system available {bytes2human(available)}'
+            f"Model {model_type} shape {shape} requires {bytes2human(size)} which is more than"
+            f" system available {bytes2human(available)}"
         )
 
     if allowed and size > (allowed * available):
         log.debug(
-            f'Model size greater than allowed memory {bytes2human(allowed * available)}'
+            f"Model size greater than allowed memory {bytes2human(allowed * available)}"
         )
         return False, size
 
@@ -465,7 +480,7 @@ def get_available_memory(include_swap=True):
 
     # Apple MacOS
     log.debug(f'Running OS is "{system}"')
-    if system in ['Darwin']:
+    if system in ["Darwin"]:
         return get_available_memory_darwin(include_swap=include_swap)
 
     # Default to Linux-like:
@@ -521,11 +536,13 @@ def get_available_memory_darwin(include_swap=True):
 
         # Attempt to determine amount of free disk space on the boot partition.
         try:
-            swap = psutil.disk_usage('/private/var/vm').free
+            swap = psutil.disk_usage("/private/var/vm").free
         except FileNotFoundError as exception:
-            log.warn('Cannot determine available swap space.'
-                     f'Reason:\n'
-                     f'{"".join(traceback.format_exception(exception))}')
+            log.warn(
+                "Cannot determine available swap space."
+                f"Reason:\n"
+                f'{"".join(traceback.format_exception(exception))}'
+            )
             swap = 0
         available += swap
 

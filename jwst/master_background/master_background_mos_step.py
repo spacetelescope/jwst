@@ -9,11 +9,20 @@ from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..stpipe import Pipeline
 
-__all__ = ['MasterBackgroundMosStep']
+__all__ = ["MasterBackgroundMosStep"]
 
 # Step parameters to generally ignore when copying from the parent steps.
-GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
-                         'inverse', 'pre_hooks', 'post_hooks', 'save_results', 'suffix']
+GLOBAL_PARS_TO_IGNORE = [
+    "output_ext",
+    "output_file",
+    "output_use_model",
+    "output_use_index",
+    "inverse",
+    "pre_hooks",
+    "post_hooks",
+    "save_results",
+    "suffix",
+]
 
 
 class MasterBackgroundMosStep(Pipeline):
@@ -54,10 +63,10 @@ class MasterBackgroundMosStep(Pipeline):
 
     # Define aliases to steps
     step_defs = {
-        'flat_field': flat_field_step.FlatFieldStep,
-        'pathloss': pathloss_step.PathLossStep,
-        'barshadow': barshadow_step.BarShadowStep,
-        'photom': photom_step.PhotomStep,
+        "flat_field": flat_field_step.FlatFieldStep,
+        "pathloss": pathloss_step.PathLossStep,
+        "barshadow": barshadow_step.BarShadowStep,
+        "photom": photom_step.PhotomStep,
     }
 
     # No need to prefetch. This will have been done by the parent step.
@@ -104,52 +113,66 @@ class MasterBackgroundMosStep(Pipeline):
         with datamodels.open(data) as data_model:
             # If some type of background processing had already been done. Abort.
             # UNLESS forcing is enacted.
-            if not self.force_subtract and \
-               'COMPLETE' in [data_model.meta.cal_step.back_sub, data_model.meta.cal_step.master_background]:
-                self.log.info('Background subtraction has already occurred. Skipping.')
-                self.record_step_status(data, 'master_background', False)
+            if not self.force_subtract and "COMPLETE" in [
+                data_model.meta.cal_step.back_sub,
+                data_model.meta.cal_step.master_background,
+            ]:
+                self.log.info("Background subtraction has already occurred. Skipping.")
+                self.record_step_status(data, "master_background", False)
                 return data
 
             if self.user_background:
-                self.log.info(f'Calculating master background from user-supplied background {self.user_background}')
+                self.log.info(
+                    f"Calculating master background from user-supplied background {self.user_background}"
+                )
                 user_background = datamodels.open(self.user_background)
-                master_background, mb_multislit = self._calc_master_background(data_model, user_background)
+                master_background, mb_multislit = self._calc_master_background(
+                    data_model, user_background
+                )
             elif self.use_correction_pars:
-                self.log.info('Using pre-calculated correction parameters.')
-                master_background = self.correction_pars['masterbkg_1d']
-                mb_multislit = self.correction_pars['masterbkg_2d']
+                self.log.info("Using pre-calculated correction parameters.")
+                master_background = self.correction_pars["masterbkg_1d"]
+                mb_multislit = self.correction_pars["masterbkg_2d"]
             else:
                 num_bkg, num_src = self._classify_slits(data_model)
                 if num_bkg == 0:
-                    self.log.warning('No background slits available for creating master background. Skipping')
-                    self.record_step_status(data, 'master_background', False)
+                    self.log.warning(
+                        "No background slits available for creating master background. Skipping"
+                    )
+                    self.record_step_status(data, "master_background", False)
                     return data
                 elif num_src == 0:
-                    self.log.warning('No source slits for applying master background. Skipping')
-                    self.record_step_status(data, 'master_background', False)
+                    self.log.warning(
+                        "No source slits for applying master background. Skipping"
+                    )
+                    self.record_step_status(data, "master_background", False)
                     return data
 
-                self.log.info('Calculating master background')
-                master_background, mb_multislit = self._calc_master_background(data_model)
+                self.log.info("Calculating master background")
+                master_background, mb_multislit = self._calc_master_background(
+                    data_model
+                )
 
             # Check that a master background was actually determined.
             if master_background is None:
-                self.log.info('No master background could be calculated. Skipping.')
-                self.record_step_status(data, 'master_background', False)
+                self.log.info("No master background could be calculated. Skipping.")
+                self.record_step_status(data, "master_background", False)
                 return data
 
             # Now apply the de-calibrated background to the original science
-            result = nirspec_utils.apply_master_background(data_model, mb_multislit, inverse=self.inverse)
+            result = nirspec_utils.apply_master_background(
+                data_model, mb_multislit, inverse=self.inverse
+            )
 
             # Mark as completed and setup return data
-            self.record_step_status(result, 'master_background', True)
+            self.record_step_status(result, "master_background", True)
             self.correction_pars = {
-                'masterbkg_1d': master_background,
-                'masterbkg_2d': mb_multislit
+                "masterbkg_1d": master_background,
+                "masterbkg_2d": mb_multislit,
             }
             if self.save_background:
-                self.save_model(master_background, suffix='masterbg1d', force=True)
-                self.save_model(mb_multislit, suffix='masterbg2d', force=True)
+                self.save_model(master_background, suffix="masterbg1d", force=True)
+                self.save_model(mb_multislit, suffix="masterbg2d", force=True)
 
         return result
 
@@ -158,12 +181,12 @@ class MasterBackgroundMosStep(Pipeline):
         if not self.parent:
             return
 
-        steps = ['barshadow', 'flat_field', 'pathloss', 'photom']
+        steps = ["barshadow", "flat_field", "pathloss", "photom"]
         pars_to_ignore = {
-            'barshadow': ['source_type'],
-            'flat_field': ['save_interpolated_flat'],
-            'pathloss': ['source_type'],
-            'photom': ['source_type']
+            "barshadow": ["source_type"],
+            "flat_field": ["save_interpolated_flat"],
+            "pathloss": ["source_type"],
+            "photom": ["source_type"],
         }
 
         for step in steps:
@@ -229,9 +252,9 @@ class MasterBackgroundMosStep(Pipeline):
 
             # First pass: just do the calibration to determine the correction
             # arrays. However, force all slits to be processed as extended sources.
-            self.pathloss.source_type = 'EXTENDED'
-            self.barshadow.source_type = 'EXTENDED'
-            self.photom.source_type = 'EXTENDED'
+            self.pathloss.source_type = "EXTENDED"
+            self.barshadow.source_type = "EXTENDED"
+            self.photom.source_type = "EXTENDED"
 
             pre_calibrated = self.flat_field(data)
             pre_calibrated = self.pathloss(pre_calibrated)
@@ -240,20 +263,26 @@ class MasterBackgroundMosStep(Pipeline):
 
             # Create the 1D, fully calibrated master background.
             if user_background:
-                self.log.debug(f'User background provided {user_background}')
+                self.log.debug(f"User background provided {user_background}")
                 master_background = user_background
             else:
-                self.log.debug('Calculating 1D master background')
-                master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+                self.log.debug("Calculating 1D master background")
+                master_background = nirspec_utils.create_background_from_multislit(
+                    pre_calibrated
+                )
             if master_background is None:
-                self.log.debug('No master background could be calculated. Returning None')
+                self.log.debug(
+                    "No master background could be calculated. Returning None"
+                )
                 return None, None
 
             # Now decalibrate the master background for each individual science slit.
             # First step is to map the master background into a MultiSlitModel
             # where the science slits are replaced by the master background.
             # Here the broadcasting from 1D to 2D need also occur.
-            mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
+            mb_multislit = nirspec_utils.map_to_science_slits(
+                pre_calibrated, master_background
+            )
 
             # Now that the master background is pretending to be science,
             # walk backwards through the steps to uncalibrate, using the

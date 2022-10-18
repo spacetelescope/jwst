@@ -29,7 +29,7 @@ class KlipStep(Step):
 
             # Retrieve the parameter values
             truncate = self.truncate
-            self.log.info('KL transform truncation = %d', truncate)
+            self.log.info("KL transform truncation = %d", truncate)
 
             # Get the PSF reference images
             refs_model = datamodels.open(psfrefs)
@@ -38,7 +38,7 @@ class KlipStep(Step):
             psf_sub, psf_fit = klip.klip(target_model, refs_model, truncate)
 
         # Update the step completion status
-        psf_sub.meta.cal_step.klip = 'COMPLETE'
+        psf_sub.meta.cal_step.klip = "COMPLETE"
 
         # return psf_sub, psf_fit
         return psf_sub

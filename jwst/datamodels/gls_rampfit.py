@@ -1,7 +1,7 @@
 from .model_base import JwstDataModel
 
 
-__all__ = ['GLS_RampFitModel']
+__all__ = ["GLS_RampFitModel"]
 
 
 class GLS_RampFitModel(JwstDataModel):
@@ -26,4 +26,5 @@ class GLS_RampFitModel(JwstDataModel):
     sigcrmag : numpy float32 array
          Sigma for CR magnitudes
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/gls_rampfit.schema"

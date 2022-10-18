@@ -3,7 +3,7 @@ from .dqflags import pixel
 from .reference import ReferenceFileModel
 
 
-__all__ = ['SaturationModel']
+__all__ = ["SaturationModel"]
 
 
 class SaturationModel(ReferenceFileModel):
@@ -21,6 +21,7 @@ class SaturationModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/saturation.schema"
 
     def __init__(self, init=None, **kwargs):

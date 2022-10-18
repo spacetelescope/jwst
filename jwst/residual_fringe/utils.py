@@ -16,6 +16,7 @@ from astropy.modeling.fitting import SplineExactKnotsFitter
 from .fitter import ChiSqOutlierRejectionFitter
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 #
@@ -25,7 +26,7 @@ NUM_KNOTS = 80  # number of knots for bkg model if no other info provided
 
 
 def find_nearest(array, value):
-    """ Utility function to find the index of pixel with value in 'array' nearest to 'value'.
+    """Utility function to find the index of pixel with value in 'array' nearest to 'value'.
 
     Used by det_pixel_trace function
     """
@@ -34,16 +35,18 @@ def find_nearest(array, value):
 
 
 def slice_info(slice_map, c):
-    """ Function to take slice map and channel and find pixels in the slice and xrange of each slice
-    """
+    """Function to take slice map and channel and find pixels in the slice and xrange of each slice"""
 
     slice_inventory = np.unique(slice_map)
-    slices_in_band = slice_inventory[np.where((slice_inventory >= 100 * c)
-                                              & (slice_inventory < 100 * (c + 1)))]
+    slices_in_band = slice_inventory[
+        np.where((slice_inventory >= 100 * c) & (slice_inventory < 100 * (c + 1)))
+    ]
 
     log.info("Number of slices in band {} ".format(slices_in_band.shape[0]))
     slice_x_ranges = np.zeros((slices_in_band.shape[0], 3), dtype=int)
-    all_slice_masks = np.zeros((slices_in_band.shape[0], slice_map.shape[0], slice_map.shape[1]))
+    all_slice_masks = np.zeros(
+        (slices_in_band.shape[0], slice_map.shape[0], slice_map.shape[1])
+    )
     for n, s in enumerate(slices_in_band):
         # create a mask of the slice
         pixels = np.where(slice_map == s)
@@ -57,14 +60,23 @@ def slice_info(slice_map, c):
         # get the indices at the start and end of the slice
         collapsed_slice = np.sum(slice, axis=0)
         indices = np.where(collapsed_slice[:-1] != collapsed_slice[1:])[0]
-        slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2] = int(s), \
-            int(np.amin(indices)), int(np.amax(indices) + 1)
+        slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2] = (
+            int(s),
+            int(np.amin(indices)),
+            int(np.amax(indices) + 1),
+        )
 
-        log.debug("For slice {} x ranges of slices region {}, {}".
-                  format(slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2]))
+        log.debug(
+            "For slice {} x ranges of slices region {}, {}".format(
+                slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2]
+            )
+        )
 
-    log.debug("Min and max x pixel values of all slices in channel {} {}".
-              format(np.amin(slice_x_ranges[:, 1]), np.amax(slice_x_ranges[:, 2])))
+    log.debug(
+        "Min and max x pixel values of all slices in channel {} {}".format(
+            np.amin(slice_x_ranges[:, 1]), np.amax(slice_x_ranges[:, 2])
+        )
+    )
 
     xrange_channel = np.zeros(2)
     xrange_channel[0] = np.amin(slice_x_ranges[:, 1])
@@ -113,17 +125,17 @@ def fill_wavenumbers(wnums):
 def fit_quality_stats(stats):
     """Get simple statistics for the fits
 
-    :Parameters:
+     :Parameters:
 
-    fit_stats: np.array
-        the fringe contrast per fit
+     fit_stats: np.array
+         the fringe contrast per fit
 
-    :Returns:
+     :Returns:
 
-   median, stddev, max of stat numpy array
+    median, stddev, max of stat numpy array
 
     """
-    return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
+    return np.mean(stats), np.median(stats), np.std(stats), np.amax(stats)
 
 
 def multi_sine(n):
@@ -158,7 +170,7 @@ def multi_sine(n):
 
 
 def fit_envelope(wavenum, signal):
-    """ Fit the upper and lower envelope of signal using a univariate spline
+    """Fit the upper and lower envelope of signal using a univariate spline
 
     :param wavenum:
     :param signal:
@@ -172,12 +184,14 @@ def fit_envelope(wavenum, signal):
     u_y = [signal[0]]
 
     for k in np.arange(1, len(signal) - 1):
-        if ((np.sign(signal[k] - signal[k - 1]) == -1) and
-                ((np.sign(signal[k] - signal[k + 1])) == -1)):
+        if (np.sign(signal[k] - signal[k - 1]) == -1) and (
+            (np.sign(signal[k] - signal[k + 1])) == -1
+        ):
             l_x.append(wavenum[k])
             l_y.append(signal[k])
-        if ((np.sign(signal[k] - signal[k - 1]) == 1) and
-                ((np.sign(signal[k] - signal[k + 1])) == 1)):
+        if (np.sign(signal[k] - signal[k - 1]) == 1) and (
+            (np.sign(signal[k] - signal[k + 1])) == 1
+        ):
             u_x.append(wavenum[k])
             u_y.append(signal[k])
 
@@ -218,13 +232,15 @@ def find_lines_resfringe(signal, max_amp):
     u_y, u_x, l_y, l_x = [], [], [], []
 
     for x in r_x:
-        if ((np.sign(signal_check[x] - signal_check[x - 1]) == 1) and
-                (np.sign(signal_check[x] - signal_check[x + 1]) == 1)):
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (
+            np.sign(signal_check[x] - signal_check[x + 1]) == 1
+        ):
             u_y.append(signal_check[x])
             u_x.append(x)
 
-        if ((np.sign(signal_check[x] - signal_check[x - 1]) == -1) and
-                (np.sign(signal_check[x] - signal_check[x + 1]) == -1)):
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (
+            np.sign(signal_check[x] - signal_check[x + 1]) == -1
+        ):
             l_y.append(signal[x])
             l_x.append(x)
 
@@ -253,13 +269,15 @@ def find_lines(signal, max_amp):
     u_y, u_x, l_y, l_x = [], [], [], []
 
     for x in r_x:
-        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and \
-                (np.sign(signal_check[x] - signal_check[x + 1]) == 1):
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (
+            np.sign(signal_check[x] - signal_check[x + 1]) == 1
+        ):
             u_y.append(signal_check[x])
             u_x.append(x)
 
-        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and \
-                (np.sign(signal_check[x] - signal_check[x + 1]) == -1):
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (
+            np.sign(signal_check[x] - signal_check[x + 1]) == -1
+        ):
             l_y.append(signal[x])
             l_x.append(x)
 
@@ -344,7 +362,9 @@ def check_res_fringes(res_fringe_fit, max_amp):
     # get the indices of the nodes (where uenv slope goes from negative to positive), add 0 and 1023
     node_ind = [0]
     for k in np.arange(1, len(uenv_fit) - 1):
-        if (np.sign(uenv_fit[k] - uenv_fit[k - 1]) == -1) and ((np.sign(uenv_fit[k] - uenv_fit[k + 1])) == -1):
+        if (np.sign(uenv_fit[k] - uenv_fit[k - 1]) == -1) and (
+            (np.sign(uenv_fit[k] - uenv_fit[k + 1])) == -1
+        ):
             node_ind.append(k)
     node_ind.append(res_fringe_fit.shape[0] - 1)
     node_ind = np.asarray(node_ind)
@@ -355,7 +375,9 @@ def check_res_fringes(res_fringe_fit, max_amp):
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
-        log.debug("check_res_fringes: {} data points exceed threhold".format(len(runaway_rfc)))
+        log.debug(
+            "check_res_fringes: {} data points exceed threhold".format(len(runaway_rfc))
+        )
         log.debug("check_res_fringes: resetting fits to related beats")
         for i in runaway_rfc:
             # find where the index is compared to the nodes
@@ -364,8 +386,8 @@ def check_res_fringes(res_fringe_fit, max_amp):
             # set the res_fringes between the nodes to 1
             lind = node_ind[node_loc - 1]
             uind = node_ind[node_loc]
-            res_fringe_fit[lind[0]:uind[0]] = 0
-            flags[lind[0]:uind[0]] = 1  # set flag to 1 for reject fit region
+            res_fringe_fit[lind[0] : uind[0]] = 0
+            flags[lind[0] : uind[0]] = 1  # set flag to 1 for reject fit region
 
     return res_fringe_fit, flags
 
@@ -388,7 +410,9 @@ def interp_helper(mask):
     return mask < 1e-05, lambda z: z.nonzero()[0]
 
 
-def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, channel=1, test=False):
+def fit_1d_background_complex(
+    flux, weights, wavenum, order=2, ffreq=None, channel=1, test=False
+):
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
@@ -451,7 +475,11 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
 
     # now reduce by the weighted pixel fraction to see how many can be fitted
     nper_cor = int(nper * weighted_pix_frac)
-    log.debug("fit_1d_background_complex: column has {} weighted fringe periods".format(nper_cor))
+    log.debug(
+        "fit_1d_background_complex: column has {} weighted fringe periods".format(
+            nper_cor
+        )
+    )
 
     # require at least 5 sine periods to fit
     if nper < 5:
@@ -473,7 +501,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
         y = flux[::-1]
         w = weights[::-1]
     else:
-        raise ValueError('channel not in 1-4')
+        raise ValueError("channel not in 1-4")
 
     # Fit the spline
     # robust fitting causing problems for fringe 2 in channels 3 and 4, just use the fitter class
@@ -569,8 +597,17 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
     return contrast, quality
 
 
-def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
-                                      pgram_res, col_snr2):
+def new_fit_1d_fringes_bayes_evidence(
+    res_fringes,
+    weights,
+    wavenum,
+    ffreq,
+    dffreq,
+    min_nfringes,
+    max_nfringes,
+    pgram_res,
+    col_snr2,
+):
 
     """Fit the residual fringe signal.- Improved method
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
@@ -635,12 +672,10 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
     sftr = Fitter(wavenum, sdml)
     _ = sftr.fit(res_fringes, weights=weights)
     evidence1 = sftr.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
-    log.debug(
-        "fit_1d_fringes_bayes_evidence: Initial Evidence: {}".format(evidence1))
+    log.debug("fit_1d_fringes_bayes_evidence: Initial Evidence: {}".format(evidence1))
 
     for f in np.arange(max_nfringes):
-        log.debug(
-            "Starting fringe {}".format(f + 1))
+        log.debug("Starting fringe {}".format(f + 1))
 
         # get the scan arrays
         weights *= col_snr2
@@ -651,15 +686,21 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
         log.debug("fit_1d_fringes_bayes_evidence: get the periodogram")
         pgram = LombScargle(wavenum_scan[::-1], res_fringe_scan[::-1]).power(1 / freq)
 
-        log.debug("fit_1d_fringes_bayes_evidence: get the most significant frequency in the periodogram")
+        log.debug(
+            "fit_1d_fringes_bayes_evidence: get the most significant frequency in the periodogram"
+        )
         peak = np.argmax(pgram)
-        freqs = 1. / freq[peak]
+        freqs = 1.0 / freq[peak]
 
         # fix the most significant frequency in the fixed dict that is passed to fitter
         keep_ind = nfringes * 3
         keep_dict[keep_ind] = freqs
 
-        log.debug("fit_1d_fringes_bayes_evidence: creating multisine model of {} freqs".format(nfringes + 1))
+        log.debug(
+            "fit_1d_fringes_bayes_evidence: creating multisine model of {} freqs".format(
+                nfringes + 1
+            )
+        )
         mdl = multi_sine(nfringes + 1)
 
         # fit the multi-sine model and get evidence
@@ -678,7 +719,9 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
 
                 # try get evidence (may fail for large component fits to noisy data, set to very negative value
                 try:
-                    evidence2 = fitter.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
+                    evidence2 = fitter.getEvidence(
+                        limits=[-3, 10], noiseLimits=[0.001, 10]
+                    )
                 except ValueError:
                     evidence2 = -1e9
             except Exception:
@@ -697,26 +740,39 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
 
                 # try get evidence (may fail for large component fits to noisy data, set to very negative value
                 try:
-                    evidence2 = fitter.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
+                    evidence2 = fitter.getEvidence(
+                        limits=[-3, 10], noiseLimits=[0.001, 10]
+                    )
                 except ValueError:
                     evidence2 = -1e9
             except Exception:
                 evidence2 = -1e9
 
-        log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
+        log.debug(
+            "fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(
+                nfringes, evidence2, fitter.chisq
+            )
+        )
 
         bayes_factor = evidence2 - evidence1
-        log.debug(
-            "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
-        if bayes_factor > 1:  # strong evidence thresh (log(bayes factor)>1, Kass and Raftery 1995)
+        log.debug("fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
+        if (
+            bayes_factor > 1
+        ):  # strong evidence thresh (log(bayes factor)>1, Kass and Raftery 1995)
             evidence1 = evidence2
             best_mdl = mdl.copy()
             fitted_frequencies.append(freqs)
             log.debug(
-                "fit_1d_fringes_bayes_evidence: strong evidence for nfringes={} ".format(nfringes + 1))
+                "fit_1d_fringes_bayes_evidence: strong evidence for nfringes={} ".format(
+                    nfringes + 1
+                )
+            )
         else:
             log.debug(
-                "fit_1d_fringes_bayes_evidence: no evidence for nfringes={}".format(nfringes + 1))
+                "fit_1d_fringes_bayes_evidence: no evidence for nfringes={}".format(
+                    nfringes + 1
+                )
+            )
             break
 
         # subtract the fringes for this frequency
@@ -794,7 +850,9 @@ def new_make_knots(flux, nknots=20, weights=None):
     # if the weights array is supplied, determine the edges of good data and set knots there
     if weights is not None:
 
-        log.debug("new_make_knots: adding knots at edges of bad pixels in weights array")
+        log.debug(
+            "new_make_knots: adding knots at edges of bad pixels in weights array"
+        )
 
         # if there are bad pixels in the flux array with flux~0,
         # add these to weights array if not already there

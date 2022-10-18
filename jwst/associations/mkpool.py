@@ -8,7 +8,7 @@ from astropy.io.fits import getheader as fits_getheader
 
 from . import AssociationPool
 
-__all__ = ['mkpool']
+__all__ = ["mkpool"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -16,24 +16,28 @@ logger.addHandler(logging.NullHandler())
 LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Header keywords to ignore
-IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
+IGNORE_KEYS = ("", "COMMENT", "HISTORY")
 
 # Non-header columns that need to be defined
 NON_HEADER_COLS = {
-    'asn_candidate': None,
-    'dms_note': '',
-    'is_imprt': 'f',
-    'is_psf': 'f',
-    'pntgtype': 'science',
-    'targetid': '1',
+    "asn_candidate": None,
+    "dms_note": "",
+    "is_imprt": "f",
+    "is_psf": "f",
+    "pntgtype": "science",
+    "targetid": "1",
 }
 
 
-def mkpool(data,
-           asn_candidate=NON_HEADER_COLS['asn_candidate'], dms_note=NON_HEADER_COLS['dms_note'],
-           is_imprt=NON_HEADER_COLS['is_imprt'], is_psf=NON_HEADER_COLS['is_psf'],
-           pntgtype=NON_HEADER_COLS['pntgtype'],
-           **kwargs):
+def mkpool(
+    data,
+    asn_candidate=NON_HEADER_COLS["asn_candidate"],
+    dms_note=NON_HEADER_COLS["dms_note"],
+    is_imprt=NON_HEADER_COLS["is_imprt"],
+    is_psf=NON_HEADER_COLS["is_psf"],
+    pntgtype=NON_HEADER_COLS["pntgtype"],
+    **kwargs,
+):
     """Create an association pool from a list of FITS files.
 
     Normally, association pools and the associations generated from those pools
@@ -114,12 +118,17 @@ def mkpool(data,
     params = params.difference(IGNORE_KEYS)
     params = [item.lower() for item in params]
     params.sort()
-    defaults = {param: 'null' for param in params}
+    defaults = {param: "null" for param in params}
 
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     # Set default values for user-settable non-header parameters
-    non_header_params = {'dms_note': dms_note, 'is_imprt': is_imprt, 'is_psf': is_psf, 'pntgtype': pntgtype}
+    non_header_params = {
+        "dms_note": dms_note,
+        "is_imprt": is_imprt,
+        "is_psf": is_psf,
+        "pntgtype": pntgtype,
+    }
 
     # Setup for target id calculation
     targetid = 0  # Start off with no target id.
@@ -140,18 +149,20 @@ def mkpool(data,
         # Setup association candidates
         combined_asn_candidates = [(f"o{header['observtn']}", "observation")]
         if isinstance(asn_candidate, str):
-            combined_asn_candidates = f'[{combined_asn_candidates[0]}, {asn_candidate[1:]}'
+            combined_asn_candidates = (
+                f"[{combined_asn_candidates[0]}, {asn_candidate[1:]}"
+            )
         else:
             if asn_candidate is not None:
                 combined_asn_candidates += asn_candidate
             combined_asn_candidates = str(combined_asn_candidates)
-        valid_params['asn_candidate'] = combined_asn_candidates
+        valid_params["asn_candidate"] = combined_asn_candidates
 
         # Calculate target id.
-        if valid_params['targname'] not in target_names:
-            target_names.add(valid_params['targname'])
+        if valid_params["targname"] not in target_names:
+            target_names.add(valid_params["targname"])
             targetid += 1
-        valid_params['targetid'] = str(targetid)
+        valid_params["targetid"] = str(targetid)
 
         # Add the exposure
         final_params = copy(defaults)
@@ -175,41 +186,45 @@ def from_cmdline(args=None):
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Create an Association Pool file from a list of exposures'
+        description="Create an Association Pool file from a list of exposures"
+    )
+
+    parser.add_argument("pool", help="Name of the pool file to save to.")
+    parser.add_argument(
+        "data", nargs="+", help="List of exposures to create the Association Pool with."
     )
 
     parser.add_argument(
-        'pool',
-        help='Name of the pool file to save to.'
+        "--asn-candidate",
+        default=NON_HEADER_COLS["asn_candidate"],
+        help="Additional candidate information.",
     )
     parser.add_argument(
-        'data', nargs='+',
-        help='List of exposures to create the Association Pool with.'
-    )
-
-    parser.add_argument(
-        '--asn-candidate', default=NON_HEADER_COLS['asn_candidate'],
-        help='Additional candidate information.'
+        "--dms-note",
+        default=NON_HEADER_COLS["dms_note"],
+        help="Added notes that may be relevant to association creation.",
     )
     parser.add_argument(
-        '--dms-note', default=NON_HEADER_COLS['dms_note'],
-        help='Added notes that may be relevant to association creation.'
+        "--is-imprt",
+        default=NON_HEADER_COLS["is_imprt"],
+        help='A "t" indicates the exposure is an imprint exposure.',
     )
     parser.add_argument(
-        '--is-imprt', default=NON_HEADER_COLS['is_imprt'],
-        help='A "t" indicates the exposure is an imprint exposure.'
+        "--is-psf",
+        default=NON_HEADER_COLS["is_psf"],
+        help='A "t" indicate a PSF exposure.',
     )
     parser.add_argument(
-        '--is-psf', default=NON_HEADER_COLS['is_psf'],
-        help='A "t" indicate a PSF exposure.'
+        "--pntgtype",
+        default=NON_HEADER_COLS["pntgtype"],
+        help="The general class of exposure.",
     )
     parser.add_argument(
-        '--pntgtype', default=NON_HEADER_COLS['pntgtype'],
-        help='The general class of exposure.'
-    )
-    parser.add_argument(
-        '-v', '--verbose', action='count', default=0,
-        help='Increase verbosity. Specifying multiple times adds more output.'
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity. Specifying multiple times adds more output.",
     )
 
     parsed = parser.parse_args(args)
@@ -220,7 +235,7 @@ def from_cmdline(args=None):
 
     # That's all folks.
     mkpool_args = vars(parsed)
-    del mkpool_args['verbose']
+    del mkpool_args["verbose"]
     return mkpool_args
 
 
@@ -239,10 +254,10 @@ def getheader(datum, **kwargs):
 
     # Parse out HDU key
     try:
-        key = kwargs['ext']
+        key = kwargs["ext"]
     except KeyError:
         try:
-            key = (kwargs['extname'], kwargs.get('extver', 0))
+            key = (kwargs["extname"], kwargs.get("extver", 0))
         except KeyError:
             key = 0
 
@@ -257,9 +272,9 @@ def getheader(datum, **kwargs):
     except AttributeError:
         pass
     else:
-        header['FILENAME'] = hdu.fileinfo()['file'].name
+        header["FILENAME"] = hdu.fileinfo()["file"].name
         return header
 
     header = fits_getheader(datum, **kwargs)
-    header['FILENAME'] = str(datum)
+    header["FILENAME"] = str(datum)
     return header

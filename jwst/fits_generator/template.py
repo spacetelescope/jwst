@@ -42,6 +42,7 @@ from . import util
 from . import verifiers
 from pyparsing import *
 
+
 class TemplateParserBase:
     # This parser is a hybrid between hand-written parsing and
     # pyparsing LBNF.  Since pyparsing does not handle #include files
@@ -53,80 +54,51 @@ class TemplateParserBase:
         self._create_parser()
 
     def _raise(self, message):
-        return SyntaxError(
-            '%s:%d: %s' % (self._filename, self._lineno, message))
+        return SyntaxError("%s:%d: %s" % (self._filename, self._lineno, message))
 
     def _create_parser(self):
         # Newlines are meaningful in this grammar, so don't treat them
         # as ordinary whitespace
-        ParserElement.setDefaultWhitespaceChars(' \t')
+        ParserElement.setDefaultWhitespaceChars(" \t")
 
         identifier = Regex(r"[A-Za-z_][A-Za-z0-9_]*")
         keyword = Regex(r"[A-Z0-9_\-]{1,8}")
-        comment = (
-            Suppress('/') +
-            Regex(".*", re.DOTALL)
-            )
-        section_start = Suppress('<<')
-        section_end = Suppress('>>')
+        comment = Suppress("/") + Regex(".*", re.DOTALL)
+        section_start = Suppress("<<")
+        section_end = Suppress(">>")
 
         self._file_section_line = (
-            section_start +
-            Keyword('file') +
-            Optional(identifier, None) +
-            section_end
-            )
+            section_start + Keyword("file") + Optional(identifier, None) + section_end
+        )
         self._inherit_section_line = (
-            section_start +
-            Keyword('inherit') +
-            quotedString.setParseAction(removeQuotes) +
-            section_end
-            )
+            section_start
+            + Keyword("inherit")
+            + quotedString.setParseAction(removeQuotes)
+            + section_end
+        )
         self._header_section_line = (
-            section_start +
-            Keyword('header') +
-            Optional(identifier, None) +
-            section_end
-            )
-        self._data_section_line = (
-            section_start +
-            Keyword('data') +
-            section_end
-            )
+            section_start + Keyword("header") + Optional(identifier, None) + section_end
+        )
+        self._data_section_line = section_start + Keyword("data") + section_end
 
-        self._definition_line = (
-            Group(
-                Optional(
-                    keyword +
-                    Optional('?', '+') +
-                    Suppress('=') +
-                    # Read until the comment "/", except ignore "/"
-                    # inside of quotes.
-                    Regex("([^/\"']*(\"[^\"]*\")?('[^']*')?)*", re.DOTALL)
-                    )
-                ) +
+        self._definition_line = Group(
             Optional(
-                comment, ''
-                )
+                keyword
+                + Optional("?", "+")
+                + Suppress("=")
+                +
+                # Read until the comment "/", except ignore "/"
+                # inside of quotes.
+                Regex("([^/\"']*(\"[^\"]*\")?('[^']*')?)*", re.DOTALL)
             )
-        self._function_line = (
-            Group(
-                Optional(
-                    Regex(".*", re.DOTALL)
-                    )
-                ) +
-            Optional(
-                comment, ''
-                )
-            )
+        ) + Optional(comment, "")
+        self._function_line = Group(Optional(Regex(".*", re.DOTALL))) + Optional(
+            comment, ""
+        )
 
-        self._include_line = (
-            Suppress(
-                '#' +
-                Keyword('include')
-                ) +
-            quotedString.setParseAction(removeQuotes)
-            )
+        self._include_line = Suppress(
+            "#" + Keyword("include")
+        ) + quotedString.setParseAction(removeQuotes)
 
     def _line_iter(self, filename):
         """
@@ -137,7 +109,7 @@ class TemplateParserBase:
         self._filename = filename
 
         returned_line = []
-        with open(filename, 'rt') as f:
+        with open(filename, "rt") as f:
             i = 0
             for line in f:
                 line = line.rstrip()
@@ -145,28 +117,27 @@ class TemplateParserBase:
 
                 # See if the line looks like an include directive
                 try:
-                    include_filename, = self._include_line.parseString(
-                        line, True)
+                    (include_filename,) = self._include_line.parseString(line, True)
                 except ParseException:
                     # Handle ignored comments
-                    if line.startswith('#'):
+                    if line.startswith("#"):
                         continue
 
                     # It wasn't an include line, so yield it
                     self._lineno = i
-                    if len(line) and line[-1] == '\\':
+                    if len(line) and line[-1] == "\\":
                         # Continuation line
                         returned_line.append(line[:-1])
                     else:
                         returned_line.append(line)
-                        yield '\n'.join(returned_line)
+                        yield "\n".join(returned_line)
                         returned_line = []
                 else:
                     # Recurse into another included file and return
                     # its lines
                     for x in self._line_iter(
-                        os.path.join(os.path.dirname(filename),
-                                     include_filename)):
+                        os.path.join(os.path.dirname(filename), include_filename)
+                    ):
                         yield x
 
         self._filename = old_filename
@@ -212,11 +183,10 @@ class TemplateParserBase:
                 except StopIteration:
                     stop = True
                     break
-                if line.startswith('<<'):
+                if line.startswith("<<"):
                     break
                 try:
-                    definition, comment = self._definition_line.parseString(
-                        line, True)
+                    definition, comment = self._definition_line.parseString(line, True)
                 except ParseException:
                     raise self._raise("Expected keyword definition")
                 else:
@@ -244,15 +214,14 @@ class TemplateParserBase:
                 except StopIteration:
                     stop = True
                     break
-                if line.startswith('<<'):
+                if line.startswith("<<"):
                     break
                 try:
-                    function, comment = self._function_line.parseString(
-                        line, True)
+                    function, comment = self._function_line.parseString(line, True)
                 except ParseException:
                     raise self._raise("Expected function call")
                 function = function[0].strip()
-                if function != '':
+                if function != "":
                     self._parse_data_function(function)
             if stop:
                 break
@@ -292,35 +261,41 @@ class GeneratorTemplateParser(TemplateParserBase):
         def __getitem__(self, item):
             if item in self._fitsfiles:
                 return self._fitsfiles[item].get_getter(
-                    self._card.name, self._state.hdu)
+                    self._card.name, self._state.hdu
+                )
             elif hasattr(generators, item):
                 return getattr(generators, item)
             else:
                 raise NameError("Unknown identifier '%s'" % item)
 
     def _make_generator(self, s):
-        code = compile('(%s)' % s, '%s:%d' % (self._filename, self._lineno), 'eval')
+        code = compile("(%s)" % s, "%s:%d" % (self._filename, self._lineno), "eval")
 
         def run(self, fitsfiles, error_collector, state):
             return eval(
-                code, {},
+                code,
+                {},
                 GeneratorTemplateParser._KeywordGeneratorNamespace(
-                    self, fitsfiles, state))
+                    self, fitsfiles, state
+                ),
+            )
+
         return run
 
     def _add_card(self, header, definition, comment):
         if len(definition):
-            optional = definition[1] == '?'
+            optional = definition[1] == "?"
             expr = definition[2]
             try:
                 generator = self._make_generator(expr)
             except SyntaxError as e:
                 raise self._raise(
-                    "Invalid syntax: \n%s\n%s^\n" %
-                    (expr, ' ' * (e.offset - 1)))
+                    "Invalid syntax: \n%s\n%s^\n" % (expr, " " * (e.offset - 1))
+                )
             key = definition[0]
-            card = objects.Card(key, comment=comment, generate=generator,
-                                optional=optional)
+            card = objects.Card(
+                key, comment=comment, generate=generator, optional=optional
+            )
         else:
             card = comment
         header.append(card)
@@ -333,19 +308,23 @@ class GeneratorTemplateParser(TemplateParserBase):
         def __getitem__(self, item):
             if item in self._fitsfiles:
                 return self._fitsfiles[item].get_getter(None, None)
-            elif item == 'np':
+            elif item == "np":
                 return np
             else:
                 raise NameError("Unknown identifier '%s'" % item)
 
     def _add_data_function(self, data, function):
-        code = compile('(%s)' % function, '%s:%d' % (self._filename, self._lineno), 'eval')
+        code = compile(
+            "(%s)" % function, "%s:%d" % (self._filename, self._lineno), "eval"
+        )
 
         def run(fitsfiles, error_collector, state):
             return eval(
-                code, {},
-                GeneratorTemplateParser._DataGeneratorNamespace(
-                    fitsfiles, state))
+                code,
+                {},
+                GeneratorTemplateParser._DataGeneratorNamespace(fitsfiles, state),
+            )
+
         data.generate_function = run
 
 
@@ -356,11 +335,13 @@ class VerificationTemplateParser(TemplateParserBase):
             self._header = header
 
         def __getitem__(self, item):
-            if item == 'x':
+            if item == "x":
                 return self._val
-            elif item == 'output':
+            elif item == "output":
+
                 def getter(kwd):
                     return self._header[kwd]
+
                 return getter
             elif hasattr(verifiers, item):
                 return getattr(verifiers, item)
@@ -368,34 +349,38 @@ class VerificationTemplateParser(TemplateParserBase):
                 raise NameError("Unknown identifier '%s'" % item)
 
     def _make_verifier(self, s):
-        code = compile('(%s)' % s, '%s:%d' % (self._filename, self._lineno), 'eval')
+        code = compile("(%s)" % s, "%s:%d" % (self._filename, self._lineno), "eval")
 
         def run(val, error_collector, state):
             try:
                 result = eval(
-                    code, {},
-                    VerificationTemplateParser._VerifierNamespace(val, state.header))
+                    code,
+                    {},
+                    VerificationTemplateParser._VerifierNamespace(val, state.header),
+                )
             except ValueError as e:
                 error_collector("'%s': %s in '%s'" % (val, str(e), s), state)
                 return False
             if result is False:
                 error_collector("'%s' did not match '%s'" % (val, s), state)
             return result
+
         return run
 
     def _add_card(self, header, definition, comment):
         if len(definition):
-            optional = (definition[1] == '?')
+            optional = definition[1] == "?"
             expr = definition[2]
             try:
                 verifier = self._make_verifier(expr)
             except SyntaxError as e:
                 raise self._raise(
-                    "Invalid syntax: \n%s\n%s^\n" %
-                    (expr, ' ' * (e.offset - 1)))
+                    "Invalid syntax: \n%s\n%s^\n" % (expr, " " * (e.offset - 1))
+                )
             key = definition[0]
-            card = objects.Card(key, comment=comment, verify=verifier,
-                                optional=optional)
+            card = objects.Card(
+                key, comment=comment, verify=verifier, optional=optional
+            )
         else:
             card = comment
         header.append(card)
@@ -418,8 +403,7 @@ class DataTemplateParser(TemplateParserBase):
             try:
                 value = eval(definition[2])
             except Exception as e:
-                raise self._raise(
-                    "Can't parse as literal '%s'" % definition[2])
+                raise self._raise("Can't parse as literal '%s'" % definition[2])
             key = definition[0]
             card = objects.Card(key, value=value)
         else:
@@ -445,6 +429,7 @@ def merge_cards(gen, val, debug=False):
                 if card.name in val_hdu.header.map:
                     card.verify_function = val_hdu.header.map[card.name].verify_function
     return gen
+
 
 def get_generator(filetype, debug=False):
     """

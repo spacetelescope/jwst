@@ -8,7 +8,7 @@ from ..dq_init import dq_init_step
 from ..flatfield import flat_field_step
 from ..guider_cds import guider_cds_step
 
-__all__ = ['GuiderPipeline']
+__all__ = ["GuiderPipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
@@ -25,26 +25,29 @@ class GuiderPipeline(Pipeline):
     class_alias = "calwebb_guider"
 
     # Define aliases to steps
-    step_defs = {'dq_init': dq_init_step.DQInitStep,
-                 'guider_cds': guider_cds_step.GuiderCdsStep,
-                 'flat_field': flat_field_step.FlatFieldStep,
-                 }
+    step_defs = {
+        "dq_init": dq_init_step.DQInitStep,
+        "guider_cds": guider_cds_step.GuiderCdsStep,
+        "flat_field": flat_field_step.FlatFieldStep,
+    }
 
     # Start the processing
     def process(self, input):
 
         # Set the output product type
-        self.suffix = 'cal'
+        self.suffix = "cal"
 
-        log.info('Starting calwebb_guider ...')
+        log.info("Starting calwebb_guider ...")
 
         # Open the input:
         # If the first two steps are set to be skipped, assume
         # they've been run before and open the input as a Cal
         # model, appropriate for input to flat_field
         if self.dq_init.skip and self.guider_cds.skip:
-            log.info("dq_init and guider_cds are set to skip; assume they"
-                     " were run before and load data as GuiderCalModel")
+            log.info(
+                "dq_init and guider_cds are set to skip; assume they"
+                " were run before and load data as GuiderCalModel"
+            )
             input = datamodels.GuiderCalModel(input)
         else:
             input = datamodels.GuiderRawModel(input)
@@ -54,6 +57,6 @@ class GuiderPipeline(Pipeline):
         input = self.guider_cds(input)
         input = self.flat_field(input)
 
-        log.info('... ending calwebb_guider')
+        log.info("... ending calwebb_guider")
 
         return input

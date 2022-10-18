@@ -8,25 +8,21 @@ from jwst import datamodels
 from jwst.associations.lib import dms_base
 from jwst.lib.pipe_utils import is_tso
 
-all_exp_types = dms_base.IMAGE2_NONSCIENCE_EXP_TYPES + \
-    dms_base.IMAGE2_SCIENCE_EXP_TYPES + \
-    dms_base.SPEC2_SCIENCE_EXP_TYPES
+all_exp_types = (
+    dms_base.IMAGE2_NONSCIENCE_EXP_TYPES
+    + dms_base.IMAGE2_SCIENCE_EXP_TYPES
+    + dms_base.SPEC2_SCIENCE_EXP_TYPES
+)
 
 exp_types = [
     (exp_type, False)
     for exp_type in all_exp_types
     if exp_type not in dms_base.TSO_EXP_TYPES
 ]
-exp_types.extend([
-    (exp_type, True)
-    for exp_type in dms_base.TSO_EXP_TYPES
-])
+exp_types.extend([(exp_type, True) for exp_type in dms_base.TSO_EXP_TYPES])
 
 
-@pytest.mark.parametrize(
-    'exp_type, expected',
-    exp_types
-)
+@pytest.mark.parametrize("exp_type, expected", exp_types)
 def test_is_tso_from_exptype(exp_type, expected):
     """Test is_tso integrity based on exp_type"""
     model = datamodels.JwstDataModel()
@@ -35,11 +31,11 @@ def test_is_tso_from_exptype(exp_type, expected):
 
 
 @pytest.mark.parametrize(
-    'tsovisit, expected',
+    "tsovisit, expected",
     [
         (True, True),
         (False, False),
-    ]
+    ],
 )
 def test_is_tso_from_tsoflag(tsovisit, expected):
     """Test is_tso integrity based on the TSO flag"""
@@ -63,8 +59,10 @@ def test_is_tso_nrcgrism_nints1():
     assert not pipe_utils.is_tso(model)
 
     # with hardwired TSO EXP_TYPE's, should always be True
-    assert (is_tso(model) or model.meta.exposure.type.lower() in
-            ['nrc_tsimage', 'nrc_tsgrism'])
+    assert is_tso(model) or model.meta.exposure.type.lower() in [
+        "nrc_tsimage",
+        "nrc_tsgrism",
+    ]
 
 
 def test_is_irs2_1():

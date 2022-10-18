@@ -13,9 +13,17 @@ from astropy.io import fits
 from stdatamodels import DataModel
 from stdatamodels.validate import ValidationError, ValidationWarning
 
-from jwst.datamodels import (JwstDataModel, ModelContainer, ImageModel,
-                             RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
-                             ReferenceCubeModel, ReferenceQuadModel)
+from jwst.datamodels import (
+    JwstDataModel,
+    ModelContainer,
+    ImageModel,
+    RampModel,
+    CubeModel,
+    ReferenceFileModel,
+    ReferenceImageModel,
+    ReferenceCubeModel,
+    ReferenceQuadModel,
+)
 from jwst import datamodels
 from jwst.datamodels import util
 
@@ -25,10 +33,10 @@ import asdf
 MEMORY = 100  # 100 bytes
 
 
-@pytest.mark.parametrize('guess', [True, False])
+@pytest.mark.parametrize("guess", [True, False])
 def test_guess(guess):
     """Test the guess parameter to the open func"""
-    path = Path(t_path('test.fits'))
+    path = Path(t_path("test.fits"))
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
@@ -49,8 +57,8 @@ def test_mirirampmodel_deprecation(tmp_path):
     # Create a MIRIRampModel, working around the deprecation.
     model = datamodels.RampModel((1, 1, 10, 10))
     model.save(path)
-    hduls = fits.open(path, mode='update')
-    hduls[0].header['datamodl'] = 'MIRIRampModel'
+    hduls = fits.open(path, mode="update")
+    hduls[0].header["datamodl"] = "MIRIRampModel"
     hduls.close()
 
     # Test it.
@@ -66,45 +74,50 @@ def mock_get_available_memory(monkeypatch):
         if include_swap:
             available *= 2
         return available
-    monkeypatch.setattr(util, 'get_available_memory', mock)
+
+    monkeypatch.setattr(util, "get_available_memory", mock)
 
 
 @pytest.mark.parametrize(
-    'allowed_env, allowed_explicit, result',
+    "allowed_env, allowed_explicit, result",
     [
         (None, None, True),  # Perform no check.
         (0.1, None, False),  # Force too little memory.
-        (0.1, 1.0, True),    # Explicit overrides environment.
-        (1.0, 0.1, False),   # Explicit overrides environment.
+        (0.1, 1.0, True),  # Explicit overrides environment.
+        (1.0, 0.1, False),  # Explicit overrides environment.
         (None, 0.1, False),  # Explicit overrides environment.
-    ]
+    ],
 )
-def test_check_memory_allocation_env(monkeypatch, mock_get_available_memory,
-                                     allowed_env, allowed_explicit, result):
+def test_check_memory_allocation_env(
+    monkeypatch, mock_get_available_memory, allowed_env, allowed_explicit, result
+):
     """Check environmental control over memory check"""
     if allowed_env is None:
-        monkeypatch.delenv('DMODEL_ALLOWED_MEMORY', raising=False)
+        monkeypatch.delenv("DMODEL_ALLOWED_MEMORY", raising=False)
     else:
-        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', str(allowed_env))
+        monkeypatch.setenv("DMODEL_ALLOWED_MEMORY", str(allowed_env))
 
     # Allocate amount that would fit at 100% + swap.
     can_allocate, required = util.check_memory_allocation(
-        (MEMORY // 2, 1), allowed=allowed_explicit,
+        (MEMORY // 2, 1),
+        allowed=allowed_explicit,
     )
     assert can_allocate is result
 
 
 @pytest.mark.parametrize(
-    'dim, allowed, include_swap, result',
+    "dim, allowed, include_swap, result",
     [
-        (MEMORY // 2, 1.0, True, True),    # Fit within memory and swap
+        (MEMORY // 2, 1.0, True, True),  # Fit within memory and swap
         (MEMORY // 2, 1.0, False, False),  # Does not fit without swap
-        (MEMORY, 1.0, True, False),        # Does not fit at all
-        (MEMORY, None, True, True),        # Check disabled
-        (MEMORY // 2, 0.1, True, False),   # Does not fit in restricted memory
-    ]
+        (MEMORY, 1.0, True, False),  # Does not fit at all
+        (MEMORY, None, True, True),  # Check disabled
+        (MEMORY // 2, 0.1, True, False),  # Does not fit in restricted memory
+    ],
 )
-def test_check_memory_allocation(mock_get_available_memory, dim, allowed, include_swap, result):
+def test_check_memory_allocation(
+    mock_get_available_memory, dim, allowed, include_swap, result
+):
     """Check general operation of check_memory_allocation"""
     can_allocate, required = util.check_memory_allocation(
         (dim, 1), allowed=allowed, include_swap=include_swap
@@ -114,7 +127,7 @@ def test_check_memory_allocation(mock_get_available_memory, dim, allowed, includ
 
 def test_open_from_pathlib():
     """Test opening a PurePath object"""
-    path = Path(t_path('test.fits'))
+    path = Path(t_path("test.fits"))
     assert isinstance(path, PurePath)
 
     with warnings.catch_warnings():
@@ -127,7 +140,7 @@ def test_open_fits():
     """Test opening a model from a FITS file"""
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
-        fits_file = t_path('test.fits')
+        fits_file = t_path("test.fits")
         with datamodels.open(fits_file) as model:
             assert isinstance(model, JwstDataModel)
 
@@ -155,7 +168,7 @@ def test_open_asdf_s3(s3_root_dir):
 def test_open_association():
     """Test for opening an association"""
 
-    asn_file = t_path('association.json')
+    asn_file = t_path("association.json")
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
         with datamodels.open(asn_file) as c:
@@ -194,7 +207,7 @@ def test_open_hdulist(tmp_path):
     hdulist = fits.HDUList()
     primary = fits.PrimaryHDU()
     data = np.empty((50, 50), dtype=np.float32)
-    science = fits.ImageHDU(data=data, name='SCI', ver=1)
+    science = fits.ImageHDU(data=data, name="SCI", ver=1)
     hdulist.append(primary)
     hdulist.append(science)
 
@@ -238,12 +251,15 @@ def test_open_cube(tmp_path):
             assert isinstance(model, CubeModel)
 
 
-@pytest.mark.parametrize("model_class, shape", [
-    (ReferenceFileModel, None),
-    (ReferenceImageModel, (10, 10)),
-    (ReferenceCubeModel, (3, 3, 3)),
-    (ReferenceQuadModel, (2, 2, 2, 2)),
-])
+@pytest.mark.parametrize(
+    "model_class, shape",
+    [
+        (ReferenceFileModel, None),
+        (ReferenceImageModel, (10, 10)),
+        (ReferenceCubeModel, (3, 3, 3)),
+        (ReferenceQuadModel, (2, 2, 2, 2)),
+    ],
+)
 def test_open_reffiles(tmp_path, model_class, shape):
     """Try opening files with a REFTYPE keyword and different data/dq shapes"""
     path = str(tmp_path / "reffile.fits")
@@ -251,7 +267,9 @@ def test_open_reffiles(tmp_path, model_class, shape):
         hdulist["PRIMARY"].header.append(("REFTYPE", "foo"))
         if shape is not None:
             hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
-            hdulist.append(fits.ImageHDU(data=np.zeros(shape, dtype=np.uint), name="DQ", ver=1))
+            hdulist.append(
+                fits.ImageHDU(data=np.zeros(shape, dtype=np.uint), name="DQ", ver=1)
+            )
         hdulist.writeto(path)
 
     with pytest.warns(datamodels.util.NoTypeWarning):
@@ -265,24 +283,24 @@ def test_open_readonly(tmp_path, suffix):
     path = str(tmp_path / f"readonly{suffix}")
 
     with ImageModel(data=np.zeros((10, 10))) as model:
-        model.meta.telescope = 'JWST'
-        model.meta.instrument.name = 'NIRCAM'
-        model.meta.instrument.detector = 'NRCA4'
-        model.meta.instrument.channel = 'SHORT'
+        model.meta.telescope = "JWST"
+        model.meta.instrument.name = "NIRCAM"
+        model.meta.instrument.detector = "NRCA4"
+        model.meta.instrument.channel = "SHORT"
         model.save(path)
 
     os.chmod(path, 0o440)
     assert os.access(path, os.W_OK) is False
 
     with datamodels.open(path) as model:
-        assert model.meta.telescope == 'JWST'
+        assert model.meta.telescope == "JWST"
         assert isinstance(model, ImageModel)
 
 
 # Utilities
 def t_path(partial_path):
     """Construction the full path for test files"""
-    test_dir = os.path.join(os.path.dirname(__file__), 'data')
+    test_dir = os.path.join(os.path.dirname(__file__), "data")
     return os.path.join(test_dir, partial_path)
 
 

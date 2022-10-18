@@ -26,7 +26,7 @@ def average_LG(lg_products):
     """
 
     # Create the output model as a copy of the first input model
-    log.debug('create output as copy of %s', lg_products[0])
+    log.debug("create output as copy of %s", lg_products[0])
     output_model = datamodels.AmiLgModel(lg_products[0]).copy()
 
     # Find the input product with the smallest fit_image image size
@@ -36,12 +36,12 @@ def average_LG(lg_products):
         sizes.append(prod.fit_image.shape[0])
         prod.close()
     min_size = min(sizes)
-    log.debug('minimum size of fit_image=%d', min_size)
+    log.debug("minimum size of fit_image=%d", min_size)
 
     # Loop over inputs, adding their values to the output
     for prod_num, input in enumerate(lg_products):
 
-        log.info('Accumulate data from %s', input)
+        log.info("Accumulate data from %s", input)
         prod = datamodels.AmiLgModel(input)
 
         prod_size = prod.fit_image.shape[0]
@@ -49,7 +49,7 @@ def average_LG(lg_products):
             # If the fit_image in this input is bigger than the minimum,
             # trim extra rows/cols from the edges
             trim = int((prod_size - min_size) / 2)
-            log.debug('trim fit and resid images by %d pixels', trim)
+            log.debug("trim fit and resid images by %d pixels", trim)
             fit_image = prod.fit_image[trim:-trim, trim:-trim]
             resid_image = prod.resid_image[trim:-trim, trim:-trim]
 
@@ -68,24 +68,28 @@ def average_LG(lg_products):
         if prod_num > 0:
             output_model.fit_image += fit_image
             output_model.resid_image += resid_image
-            output_model.closure_amp_table['coeffs'] += prod.closure_amp_table['coeffs']
-            output_model.closure_phase_table['coeffs'] += prod.closure_phase_table['coeffs']
-            output_model.fringe_amp_table['coeffs'] += prod.fringe_amp_table['coeffs']
-            output_model.fringe_phase_table['coeffs'] += prod.fringe_phase_table['coeffs']
-            output_model.pupil_phase_table['coeffs'] += prod.pupil_phase_table['coeffs']
-            output_model.solns_table['coeffs'] += prod.solns_table['coeffs']
+            output_model.closure_amp_table["coeffs"] += prod.closure_amp_table["coeffs"]
+            output_model.closure_phase_table["coeffs"] += prod.closure_phase_table[
+                "coeffs"
+            ]
+            output_model.fringe_amp_table["coeffs"] += prod.fringe_amp_table["coeffs"]
+            output_model.fringe_phase_table["coeffs"] += prod.fringe_phase_table[
+                "coeffs"
+            ]
+            output_model.pupil_phase_table["coeffs"] += prod.pupil_phase_table["coeffs"]
+            output_model.solns_table["coeffs"] += prod.solns_table["coeffs"]
         prod.close()
 
     # Take the average of the accumulated results
-    log.debug('Divide accumulated results by %d', len(lg_products))
+    log.debug("Divide accumulated results by %d", len(lg_products))
     output_model.fit_image /= len(lg_products)
     output_model.resid_image /= len(lg_products)
-    output_model.closure_amp_table['coeffs'] /= len(lg_products)
-    output_model.closure_phase_table['coeffs'] /= len(lg_products)
-    output_model.fringe_amp_table['coeffs'] /= len(lg_products)
-    output_model.fringe_phase_table['coeffs'] /= len(lg_products)
-    output_model.pupil_phase_table['coeffs'] /= len(lg_products)
-    output_model.solns_table['coeffs'] /= len(lg_products)
+    output_model.closure_amp_table["coeffs"] /= len(lg_products)
+    output_model.closure_phase_table["coeffs"] /= len(lg_products)
+    output_model.fringe_amp_table["coeffs"] /= len(lg_products)
+    output_model.fringe_phase_table["coeffs"] /= len(lg_products)
+    output_model.pupil_phase_table["coeffs"] /= len(lg_products)
+    output_model.solns_table["coeffs"] /= len(lg_products)
 
     # Return the averaged model
     return output_model

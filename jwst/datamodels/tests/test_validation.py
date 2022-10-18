@@ -11,7 +11,7 @@ def test_strict_validation_enum():
         assert dm.meta.instrument.name is None
         with pytest.raises(jsonschema.ValidationError):
             # FOO is not in the allowed enumerated values
-            dm.meta.instrument.name = 'FOO'
+            dm.meta.instrument.name = "FOO"
 
 
 def test_strict_validation_type():
@@ -25,5 +25,5 @@ def test_strict_validation_date():
     with JwstDataModel(strict_validation=True) as dm:
         time_obj = time.Time(dm.meta.date)
         assert isinstance(time_obj, time.Time)
-        date_obj = datetime.strptime(dm.meta.date, '%Y-%m-%dT%H:%M:%S.%f')
+        date_obj = datetime.strptime(dm.meta.date, "%Y-%m-%dT%H:%M:%S.%f")
         assert isinstance(date_obj, datetime)

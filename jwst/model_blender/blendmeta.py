@@ -15,9 +15,9 @@ from stdatamodels import schema as dm_schema
 from .blendrules import KeywordRules
 
 
-EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
+EMPTY_LIST = [None, "", " ", "INDEF", "None"]
 
-__doctest_skip__ = ['blendmodels']
+__doctest_skip__ = ["blendmodels"]
 
 # Primary functional interface for the code
 
@@ -96,9 +96,9 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         else:
             input_filenames = inputs  # assume list of filenames as input
     if verbose:
-        print('Creating blended metadata from: ')
+        print("Creating blended metadata from: ")
         for i in input_filenames:
-            print('\t{}'.format(i))
+            print("\t{}".format(i))
 
     newmeta, newtab = get_blended_metadata(inputs, verbose=verbose)
 
@@ -108,24 +108,24 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     else:
         output_model = product
 
-    '''
+    """
     NOTE 17-Jan-2017:
      Effort needs to be made to insure that new blended values conform
      to the definitions of the attribute as provided by the schema.
      This will address #1650 for the jwst package.
        https://github.com/STScI-JWST/jwst/issues/1650
-    '''
+    """
 
     # Start by identifying elements of the model which need to be ignored
     ignore_list = _build_schema_ignore_list(newmeta._schema)
-    ignore_list += ['meta.wcs']  # Necessary since meta.wcs is not in schema
+    ignore_list += ["meta.wcs"]  # Necessary since meta.wcs is not in schema
 
     # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
 
     for attr in flat_new_metadata:
         attr_use = not [attr.startswith(i) for i in ignore_list].count(True)
-        if attr.startswith('meta') and attr_use:
+        if attr.startswith("meta") and attr_use:
             try:
                 output_model[attr] = newmeta[attr]
             except KeyError:
@@ -141,9 +141,9 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
 
     # Now, append HDRTAB as new element in datamodel
     newtab_schema = build_tab_schema(newtab)
-    if hasattr(output_model, 'hdrtab'):
+    if hasattr(output_model, "hdrtab"):
         del output_model.hdrtab
-    output_model.add_schema_entry('hdrtab', newtab_schema)
+    output_model.add_schema_entry("hdrtab", newtab_schema)
     output_model.hdrtab = fits_support.from_fits_hdu(newtab, newtab_schema)
 
     # Clean up for the next run
@@ -174,8 +174,9 @@ def get_blended_metadata(input_models, verbose=False):
         and each column corresponds to a single keyword listed in the rules.
 
     """
-    if not isinstance(input_models, list) and \
-       not isinstance(input_models, datamodels.ModelContainer):
+    if not isinstance(input_models, list) and not isinstance(
+        input_models, datamodels.ModelContainer
+    ):
         input_models = [input_models]
 
     # Turn input filenames into a set of metadata objects
@@ -224,7 +225,7 @@ def get_blended_metadata(input_models, verbose=False):
     if len(newtab) > 0:
         # Now merge the results for all the tables into single table extension
         new_table = fits.BinTableHDU.from_columns(newtab)
-        new_table.header['EXTNAME'] = 'HDRTAB'
+        new_table.header["EXTNAME"] = "HDRTAB"
     else:
         new_table = None
 
@@ -254,36 +255,37 @@ def extract_filenames_from_product(product):
     """
     asn_table = product.meta.asn.table_name
     asn = associations.load_asn(asn_table)
-    prod = asn['products'][0]
-    fnames = [m['expname'] for m in prod['members']
-              if m['exptype'].upper() == 'SCIENCE']
+    prod = asn["products"][0]
+    fnames = [
+        m["expname"] for m in prod["members"] if m["exptype"].upper() == "SCIENCE"
+    ]
     return fnames
 
 
 def build_tab_schema(new_table):
     """Return new schema definition that describes the input table."""
     hdrtab = OrderedDict()
-    hdrtab['title'] = 'Combined header table'
-    hdrtab['fits_hdu'] = 'HDRTAB'
+    hdrtab["title"] = "Combined header table"
+    hdrtab["fits_hdu"] = "HDRTAB"
     datatype = []
     for col in new_table.columns:
         cname = col.name
         ctype = convert_dtype(str(col.dtype))
         c = OrderedDict()
-        c['name'] = cname
-        c['datatype'] = ctype
+        c["name"] = cname
+        c["datatype"] = ctype
         datatype.append(c)
-    hdrtab['datatype'] = datatype
+    hdrtab["datatype"] = datatype
 
     return hdrtab
 
 
 def convert_dtype(value):
     """Convert numarray column dtype into YAML-compatible format description"""
-    if 'S' in value:
+    if "S" in value:
         # working with a string description
-        str_len = int(value[value.find('S') + 1:])
-        new_dtype = ['ascii', str_len]
+        str_len = int(value[value.find("S") + 1 :])
+        new_dtype = ["ascii", str_len]
     else:
         new_dtype = str(value)
 
@@ -291,7 +293,7 @@ def convert_dtype(value):
 
 
 def _build_schema_ignore_list(schema):
-    """ Create a list of metadata that should be ignored when blending.
+    """Create a list of metadata that should be ignored when blending.
 
     Parameters
     ----------
@@ -304,14 +306,15 @@ def _build_schema_ignore_list(schema):
         List with schema attributes that needs to be ignored
 
     """
+
     def build_rules_list(subschema, path, combiner, ctx, recurse):
         # Only interpret elements of the meta component of the model
-        if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
-            attr = '.'.join(path)
-            if subschema.get('properties'):
+        if len(path) > 1 and path[0] == "meta" and "items" not in path:
+            attr = ".".join(path)
+            if subschema.get("properties"):
                 return  # Ignore ObjectNodes
-            kwtype = subschema.get('type')
-            if kwtype == 'array':
+            kwtype = subschema.get("type")
+            if kwtype == "array":
                 results.append(attr)
         else:
             return

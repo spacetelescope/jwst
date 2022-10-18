@@ -10,7 +10,7 @@ Lifted from the `glue-viz`_ project.
 from functools import wraps
 
 
-__all__ = ['memoize', 'singleton', 'memoize_attr_check']
+__all__ = ["memoize", "singleton", "memoize_attr_check"]
 
 
 def _make_key(args, kwargs):
@@ -58,7 +58,7 @@ def clear_cache(func):
 
 
 def memoize_attr_check(attr):
-    """ Memoize a method call, cached both on arguments and given attribute
+    """Memoize a method call, cached both on arguments and given attribute
     of first argument (which is presumably self)
 
     Has the effect of re-calculating results if a specific attribute changes
@@ -91,4 +91,5 @@ def singleton(cls):
         if cls not in instances:
             instances[cls] = cls()
         return instances[cls]
+
     return getinstance

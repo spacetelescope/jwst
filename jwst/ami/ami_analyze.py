@@ -13,8 +13,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def apply_LG_plus(input_model, filter_model, oversample, rotation,
-                  psf_offset, rotsearch_parameters):
+def apply_LG_plus(
+    input_model, filter_model, oversample, rotation, psf_offset, rotsearch_parameters
+):
     """
     Short Summary
     -------------
@@ -45,7 +46,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
 
     # If the input data were taken in full-frame mode, extract a region
     # equivalent to the SUB80 subarray mode to make execution time acceptable.
-    if input_model.meta.subarray.name.upper() == 'FULL':
+    if input_model.meta.subarray.name.upper() == "FULL":
         log.info("Extracting 80x80 subarray from full-frame data")
         xstart = 1045
         ystart = 1
@@ -53,9 +54,9 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_copy.data = input_copy.data[ystart - 1:ystop, xstart - 1:xstop]
-        input_copy.dq = input_copy.dq[ystart - 1:ystop, xstart - 1:xstop]
-        input_copy.err = input_copy.err[ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.data = input_copy.data[ystart - 1 : ystop, xstart - 1 : xstop]
+        input_copy.dq = input_copy.dq[ystart - 1 : ystop, xstart - 1 : xstop]
+        input_copy.err = input_copy.err[ystart - 1 : ystop, xstart - 1 : xstop]
 
     # Replace NaN's and DO_NOT_USE pixels in the input image
     # with median of surrounding pixel values in a 3x3 box
@@ -80,25 +81,47 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
 
     lamc = 4.3e-6
     oversample = 11
-    bandpass = np.array([(1.0, lamc), ])
+    bandpass = np.array(
+        [
+            (1.0, lamc),
+        ]
+    )
     pixelscale_as = 0.0656
     arcsec2rad = u.arcsec.to(u.rad)
     PIXELSCALE_r = pixelscale_as * arcsec2rad
-    holeshape = 'hex'
+    holeshape = "hex"
     filt = "F430M"
-    rotsearch_d = np.append(np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
-                            rotsearch_parameters[1])
+    rotsearch_d = np.append(
+        np.arange(
+            rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
+        ),
+        rotsearch_parameters[1],
+    )
 
-    log.info(f'Initial values to use for rotation search {rotsearch_d}')
+    log.info(f"Initial values to use for rotation search {rotsearch_d}")
 
-    affine2d = find_rotation(data[:, :], psf_offset, rotsearch_d,
-                             mx, my, sx, sy, xo, yo,
-                             PIXELSCALE_r, dim, bandpass, oversample, holeshape)
+    affine2d = find_rotation(
+        data[:, :],
+        psf_offset,
+        rotsearch_d,
+        mx,
+        my,
+        sx,
+        sy,
+        xo,
+        yo,
+        PIXELSCALE_r,
+        dim,
+        bandpass,
+        oversample,
+        holeshape,
+    )
 
     niriss = instrument_data.NIRISS(filt, bandpass=bandpass, affine2d=affine2d)
 
-    ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff,
-                                 oversample=oversample)
+    ff_t = nrm_core.FringeFitter(
+        niriss, psf_offset_ff=psf_offset_ff, oversample=oversample
+    )
 
     output_model = ff_t.fit_fringes_all(input_copy)
 

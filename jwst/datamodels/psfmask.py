@@ -1,7 +1,7 @@
 from .reference import ReferenceFileModel
 
 
-__all__ = ['PsfMaskModel']
+__all__ = ["PsfMaskModel"]
 
 
 class PsfMaskModel(ReferenceFileModel):
@@ -13,4 +13,5 @@ class PsfMaskModel(ReferenceFileModel):
     data : numpy float32 array
          The PSF mask
     """
+
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/psfmask.schema"

@@ -20,39 +20,50 @@ from jwst.assign_wcs import niriss
 
 
 # Allowed settings for niriss
-niriss_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'v2v3vacorr', 'world']
-niriss_imaging_frames = ['detector', 'v2v3', 'v2v3vacorr', 'world']
-niriss_grisms = ['GR150R', 'GR150C']
+niriss_wfss_frames = ["grism_detector", "detector", "v2v3", "v2v3vacorr", "world"]
+niriss_imaging_frames = ["detector", "v2v3", "v2v3vacorr", "world"]
+niriss_grisms = ["GR150R", "GR150C"]
 
 # default wcs information
-wcs_kw = {'wcsaxes': 2, 'ra_ref': 53.16255, 'dec_ref': -27.791461111111,
-          'v2_ref': -289.966976, 'v3_ref': -697.723326, 'roll_ref': 0,
-          'crval1': 53.16255, 'crval2': -27.791461111111,
-          'crpix1': 1024.5, 'crpix2': 1024.5,
-          'cdelt1': 0.065398, 'cdelt2': 0.065893,
-          'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
-          'pc1_1': 1, 'pc1_2': 0,
-          'pc2_1': 0, 'pc2_2': 1,
-          'cunit1': 'deg', 'cunit2': 'deg',
-          }
+wcs_kw = {
+    "wcsaxes": 2,
+    "ra_ref": 53.16255,
+    "dec_ref": -27.791461111111,
+    "v2_ref": -289.966976,
+    "v3_ref": -697.723326,
+    "roll_ref": 0,
+    "crval1": 53.16255,
+    "crval2": -27.791461111111,
+    "crpix1": 1024.5,
+    "crpix2": 1024.5,
+    "cdelt1": 0.065398,
+    "cdelt2": 0.065893,
+    "ctype1": "RA---TAN",
+    "ctype2": "DEC--TAN",
+    "pc1_1": 1,
+    "pc1_2": 0,
+    "pc2_1": 0,
+    "pc2_2": 1,
+    "cunit1": "deg",
+    "cunit2": "deg",
+}
 
 
-def create_hdul(detector='NIS', filtername='CLEAR',
-                exptype='NIS_IMAGE', pupil='F200W'):
+def create_hdul(detector="NIS", filtername="CLEAR", exptype="NIS_IMAGE", pupil="F200W"):
     hdul = fits.HDUList()
     phdu = fits.PrimaryHDU()
-    phdu.header['telescop'] = "JWST"
-    phdu.header['filename'] = "test+" + filtername
-    phdu.header['instrume'] = 'NIRISS'
-    phdu.header['detector'] = detector
-    phdu.header['FILTER'] = filtername
-    phdu.header['PUPIL'] = pupil
-    phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2022-09-05'
-    phdu.header['exp_type'] = exptype
-    phdu.header['FWCPOS'] = 354.2111
+    phdu.header["telescop"] = "JWST"
+    phdu.header["filename"] = "test+" + filtername
+    phdu.header["instrume"] = "NIRISS"
+    phdu.header["detector"] = detector
+    phdu.header["FILTER"] = filtername
+    phdu.header["PUPIL"] = pupil
+    phdu.header["time-obs"] = "8:59:37"
+    phdu.header["date-obs"] = "2022-09-05"
+    phdu.header["exp_type"] = exptype
+    phdu.header["FWCPOS"] = 354.2111
     scihdu = fits.ImageHDU()
-    scihdu.header['EXTNAME'] = "SCI"
+    scihdu.header["EXTNAME"] = "SCI"
     scihdu.header.update(wcs_kw)
     hdul.append(phdu)
     hdul.append(scihdu)
@@ -67,8 +78,8 @@ def create_wcsobj(hdul):
     return wcsobj
 
 
-def create_wfss_wcs(filtername, pupil='F200W'):
-    hdul = create_hdul(filtername=filtername, pupil=pupil, exptype='NIS_WFSS')
+def create_wfss_wcs(filtername, pupil="F200W"):
+    hdul = create_hdul(filtername=filtername, pupil=pupil, exptype="NIS_WFSS")
     im = ImageModel(hdul)
     ref = get_reference_files(im)
     pipeline = niriss.create_pipeline(im, ref)
@@ -77,7 +88,7 @@ def create_wfss_wcs(filtername, pupil='F200W'):
 
 
 def create_imaging_wcs(filtername):
-    hdul = create_hdul(filtername=filtername, pupil='CLEAR')
+    hdul = create_hdul(filtername=filtername, pupil="CLEAR")
     im = ImageModel(hdul)
     ref = get_reference_files(im)
     print(ref)
@@ -92,7 +103,7 @@ def get_reference_files(datamodel):
     for reftype in AssignWcsStep.reference_file_types:
         val = step.get_reference_file(datamodel, reftype)
         print(reftype, val)
-        if val.strip() == 'N/A':
+        if val.strip() == "N/A":
             refs[reftype] = None
         else:
             refs[reftype] = val
@@ -101,7 +112,7 @@ def get_reference_files(datamodel):
 
 
 def test_niriss_wfss_available_frames():
-    for f in ['GR150R', 'GR150C']:
+    for f in ["GR150R", "GR150C"]:
         wcsobj = create_wfss_wcs(f)
         available_frames = wcsobj.available_frames
         assert all([a == b for a, b in zip(niriss_wfss_frames, available_frames)])
@@ -109,8 +120,8 @@ def test_niriss_wfss_available_frames():
 
 def traverse_wfss_trace(filtername):
     wcsobj = create_wfss_wcs(filtername)
-    detector_to_grism = wcsobj.get_transform('detector', 'grism_detector')
-    grism_to_detector = wcsobj.get_transform('grism_detector', 'detector')
+    detector_to_grism = wcsobj.get_transform("detector", "grism_detector")
+    grism_to_detector = wcsobj.get_transform("grism_detector", "detector")
 
     # check the round trip, grism pixel 100,100, source at 110,110,order 1
     xgrism, ygrism, xsource, ysource, orderin = (100, 100, 110, 110, 1)
@@ -135,8 +146,8 @@ def test_filter_rotation(theta=[-0.1, 0, 0.5, 20]):
     """Make sure that the filter rotation is reversable."""
     for f in niriss_grisms:
         wcsobj = create_wfss_wcs(f)
-        g2d = wcsobj.get_transform('grism_detector', 'detector')
-        d2g = wcsobj.get_transform('detector', 'grism_detector')
+        g2d = wcsobj.get_transform("grism_detector", "detector")
+        d2g = wcsobj.get_transform("detector", "grism_detector")
         for angle in theta:
             d2g.theta = angle
             g2d.theta = -angle
@@ -151,20 +162,20 @@ def test_filter_rotation(theta=[-0.1, 0, 0.5, 20]):
 
 def test_imaging_frames():
     """Verify the available imaging mode reference frames."""
-    wcsobj = create_imaging_wcs('F200W')
+    wcsobj = create_imaging_wcs("F200W")
     available_frames = wcsobj.available_frames
     assert all([a == b for a, b in zip(niriss_imaging_frames, available_frames)])
 
 
 def test_imaging_distortion():
     """Verify that the distortion correction roundtrips."""
-    wcsobj = create_imaging_wcs('F200W')
-    sky_to_detector = wcsobj.get_transform('world', 'detector')
-    detector_to_sky = wcsobj.get_transform('detector', 'world')
+    wcsobj = create_imaging_wcs("F200W")
+    sky_to_detector = wcsobj.get_transform("world", "detector")
+    detector_to_sky = wcsobj.get_transform("detector", "world")
 
     # we'll use the crpix as the simplest reference point
-    ra = wcs_kw['crval1']
-    dec = wcs_kw['crval2']
+    ra = wcs_kw["crval1"]
+    dec = wcs_kw["crval2"]
 
     x, y = sky_to_detector(ra, dec)
     raout, decout = detector_to_sky(x, y)

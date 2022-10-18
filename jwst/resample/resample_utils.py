@@ -17,10 +17,17 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def make_output_wcs(input_models, ref_wcs=None,
-                    pscale_ratio=None, pscale=None, rotation=None, shape=None,
-                    crpix=None, crval=None):
-    """ Generate output WCS here based on footprints of all input WCS objects
+def make_output_wcs(
+    input_models,
+    ref_wcs=None,
+    pscale_ratio=None,
+    pscale=None,
+    rotation=None,
+    shape=None,
+    crpix=None,
+    crval=None,
+):
+    """Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
     input_models : list of `~jwst.datamodel.DataModel`
@@ -69,8 +76,9 @@ def make_output_wcs(input_models, ref_wcs=None,
     naxes = wcslist[0].output_frame.naxes
 
     if naxes != 2:
-        raise RuntimeError("Output WCS needs 2 spatial axes. "
-                           f"{wcslist[0]} has {naxes}.")
+        raise RuntimeError(
+            "Output WCS needs 2 spatial axes. " f"{wcslist[0]} has {naxes}."
+        )
 
     output_wcs = wcs_from_footprints(
         input_models,
@@ -79,7 +87,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         rotation=rotation,
         shape=shape,
         crpix=crpix,
-        crval=crval
+        crval=crval,
     )
 
     # Check that the output data shape has no zero length dimensions
@@ -90,14 +98,12 @@ def make_output_wcs(input_models, ref_wcs=None,
 
 
 def shape_from_bounding_box(bounding_box):
-    """ Return a numpy shape based on the provided bounding_box
-    """
+    """Return a numpy shape based on the provided bounding_box"""
     return tuple(int(axs[1] - axs[0] + 0.5) for axs in bounding_box[::-1])
 
 
 def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
-    """ Return a pixel grid map from input frame to output frame.
-    """
+    """Return a pixel grid map from input frame to output frame."""
     if shape:
         bb = wcs_bbox_from_shape(shape)
         log.debug("Bounding box from data shape: {}".format(bb))
@@ -137,8 +143,10 @@ def reproject(wcs1, wcs2):
     elif issubclass(wcs1, Model):
         forward_transform = wcs1
     else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+        raise TypeError(
+            "Expected input to be astropy.wcs.WCS or gwcs.WCS "
+            "object or astropy.modeling.Model subclass"
+        )
 
     if isinstance(wcs2, fitswcs.WCS):
         backward_transform = wcs2.all_world2pix
@@ -147,8 +155,10 @@ def reproject(wcs1, wcs2):
     elif issubclass(wcs2, Model):
         backward_transform = wcs2.inverse
     else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+        raise TypeError(
+            "Expected input to be astropy.wcs.WCS or gwcs.WCS "
+            "object or astropy.modeling.Model subclass"
+        )
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
@@ -163,26 +173,31 @@ def reproject(wcs1, wcs2):
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
         return tuple(det_reshaped)
+
     return _reproject
 
 
 def build_driz_weight(model, weight_type=None, good_bits=None):
-    """Create a weight map for use by drizzle
-    """
+    """Create a weight map for use by drizzle"""
     dqmask = build_mask(model.dq, good_bits)
 
-    if weight_type == 'ivm':
-        if (model.hasattr("var_rnoise") and model.var_rnoise is not None and
-                model.var_rnoise.shape == model.data.shape):
+    if weight_type == "ivm":
+        if (
+            model.hasattr("var_rnoise")
+            and model.var_rnoise is not None
+            and model.var_rnoise.shape == model.data.shape
+        ):
             with np.errstate(divide="ignore", invalid="ignore"):
                 inv_variance = model.var_rnoise**-1
             inv_variance[~np.isfinite(inv_variance)] = 1
         else:
-            warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
-                          RuntimeWarning)
+            warnings.warn(
+                "var_rnoise array not available. Setting drizzle weight map to 1",
+                RuntimeWarning,
+            )
             inv_variance = 1.0
         result = inv_variance * dqmask
-    elif weight_type == 'exptime':
+    elif weight_type == "exptime":
         exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
     else:

@@ -42,7 +42,7 @@ def do_correction(input_model, bias_model):
     # Subtract the bias ref image from the science data
     output_model = subtract_bias(input_model, bias_model)
 
-    output_model.meta.cal_step.superbias = 'COMPLETE'
+    output_model.meta.cal_step.superbias = "COMPLETE"
 
     return output_model
 
@@ -82,8 +82,8 @@ def subtract_bias(input, bias):
     # If ZEROFRAME is present, subtract the super bias.  Zero values
     # indicate bad data, so should be kept zero.
     if input.meta.exposure.zero_frame:
-        wh_zero = np.where(output.zeroframe == 0.)
+        wh_zero = np.where(output.zeroframe == 0.0)
         output.zeroframe -= bias.data
-        output.zeroframe[wh_zero] = 0.  # Zero values indicate unusable data
+        output.zeroframe[wh_zero] = 0.0  # Zero values indicate unusable data
 
     return output
