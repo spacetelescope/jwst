@@ -1,3 +1,11 @@
+1.8.3 (unreleased)
+==================
+
+cube_build
+----------
+
+- Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
+
 1.8.2 (2022-10-19)
 ==================
 
