@@ -77,9 +77,9 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 +========================+====================================================+
 | label                  | Unique source identification label number          |
 +------------------------+----------------------------------------------------+
-| xcentroid              | X pixel value of the source centroid               |
+| xcentroid              | X pixel value of the source centroid (0 indexed)   |
 +------------------------+----------------------------------------------------+
-| ycentroid              | Y pixel value of the source centroid               |
+| ycentroid              | Y pixel value of the source centroid (0 indexed)   |
 +------------------------+----------------------------------------------------+
 | sky_centroid           | Sky coordinate of the source centroid              |
 +------------------------+----------------------------------------------------+
@@ -231,6 +231,11 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 | sky_bbox_ur            | Sky coordinate of the upper-right vertex of the    |
 |                        | minimal bounding box of the source                 |
 +------------------------+----------------------------------------------------+
+
+Note that pixel coordinates are 0 indexed, matching the Python 0-based
+indexing. That means pixel coordinate ``0`` is the center of the first
+pixel.
+
 
 Segmentation Map
 ^^^^^^^^^^^^^^^^
