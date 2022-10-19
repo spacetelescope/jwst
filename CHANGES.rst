@@ -42,6 +42,8 @@ set_telescope_pointing
 
 - Allow XML_DATA usage to override PRD specification [#7063]
 
+- Return non-zero status from the set_telescope_pointing command-line when an error occurs [#7056]
+
 1.8.0 (2022-10-10)
 ==================
 
@@ -132,8 +134,6 @@ set_telescope_pointing
 ----------------------
 
 - Migrate set_telescope_pointing to pysiaf-based exclusively [#6993]
-
-- Return non-zero status from the set_telescope_pointing command-line when an error occurs [#7056]
 
 tweakreg
 --------
