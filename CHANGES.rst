@@ -1,7 +1,10 @@
 1.8.2 (unreleased)
 ==================
 
+set_telescope_pointing
+----------------------
 
+-  Revert "JP-2940 Return non-zero status from the set_telescope_pointing" [#7301]
 
 1.8.1 (2022-10-17)
 ==================
