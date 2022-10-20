@@ -21,7 +21,7 @@ DEFAULT_GAIN_FILE = "jwst_fgs_gain_0010.fits"
 DEFAULT_READNOISE_FILE = "jwst_fgs_readnoise_0000.fits"
 
 
-def guider_cds(model, gain_model, readnoise_model):
+def guider_cds(model, gain_model=None, readnoise_model=None):
     """
     Extended Summary
     ----------------
@@ -128,7 +128,7 @@ def guider_cds(model, gain_model, readnoise_model):
     return new_model
 
 
-def get_ref_arr(model, imshape, gain_model, readnoise_model):
+def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     """
     Short Summary
     -------------
