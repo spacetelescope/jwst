@@ -378,6 +378,7 @@ class Extract1dStep(Step):
                 soss_kwargs['rtol'] = self.soss_rtol
                 soss_kwargs['max_grid_size'] = self.soss_max_grid_size
                 soss_kwargs['wave_grid'] = self.soss_wave_grid
+                soss_kwargs['estimate'] = self.soss_estimate
                 soss_kwargs['atoca'] = self.soss_atoca
                 # Set flag to output the model and the tikhonov tests
                 soss_kwargs['model'] = True if self.soss_modelname else False
