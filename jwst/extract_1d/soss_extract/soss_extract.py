@@ -951,7 +951,7 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
                 log.debug(f'Bad pixels in {order} are replaced with trace model.')
 
                 # Replace error estimate of the bad pixels using other valid pixels of similar value.
-                # The pixel to be estimate are the masked pixels in the region of extraction
+                # The pixel to be estimated are the masked pixels in the region of extraction
                 # with available model.
                 extraction_region = (box_w_ord > 0)
                 pix_to_estim = (extraction_region & scimask & is_modeled)
@@ -960,7 +960,8 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
                 scierr_ord = estim_error_nearest_data(scierr, decont, pix_to_estim, valid_pix)
 
                 # Update the scimask for box extraction:
-                # the pixels that are modeled are set not masked anymore, so set to False.
+                # the pixels that are modeled are not masked anymore, so set to False.
+                # Note that they have to be in the extraction region to ensure that scierr is also valid
                 scimask_ord = np.where(is_modeled, False, scimask)
 
             except KeyError:
@@ -1043,7 +1044,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     #       to allow for multiple orders? Create unpacking function.
     # Convert estimate to cubic spline if given.
     # It should be a SpecModel or a file name (string)
-    estimate = soss_kwargs.pop('soss_estimate')
+    estimate = soss_kwargs.pop('estimate')
     if estimate is not None:
         log.info('Converting the estimate of the flux to spline function.')
 
