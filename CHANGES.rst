@@ -3,13 +3,13 @@
 
 
 
-1.8.2 (2022-10-19)
+1.8.2 (2022-10-20)
 ==================
 
 set_telescope_pointing
 ----------------------
 
--  Revert "JP-2940 Return non-zero status from the set_telescope_pointing" [#7301]
+- Revert "JP-2940 Return non-zero status from the set_telescope_pointing" [#7301]
 
 1.8.1 (2022-10-17)
 ==================
@@ -24,7 +24,7 @@ cube_build
 ----------
 
 - Changed IFUALIGN convention for MIRI so that isobeta is along cube X instead of
-  isoalpha along cube Y.  [#7058]
+  isoalpha along cube Y. [#7058]
 
 datamodels
 ----------
@@ -82,7 +82,8 @@ datamodels
   loaded from associations into ModelContainer. Modify container method
   ``ind_asn_type`` to query this metadata. [#7046]
 
-- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file.
+- Added S_RESFRI and R_FRIFRQ keywords for the residual fringe correction
+  step and its reference file. [#7051]
 
 jump
 ----
