@@ -104,8 +104,9 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
     else:  # FINEGUIDE, ACQ1, ACQ2, or TRACK
         new_model.data = slope_int_cube / grp_time
 
-    # set err to sum of variances in quadrature
-    new_model.err = (var_rn * var_rn + var_pn * var_pn) ** 0.5
+    # set err to sqrt of sum of variances
+    var_pn[var_pn < 0] = 0.  # ensure variance is non-negative
+    new_model.err = (var_rn + var_pn) ** 0.5
 
     # Add all table extensions to be carried over to output
     if len(model.planned_star_table):
