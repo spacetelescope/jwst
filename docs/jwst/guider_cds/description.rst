@@ -40,6 +40,34 @@ first 4 groups from the average of the last 4 groups and
 dividing by the group time. The output data array is
 3D, with dimensions of (ncols x nrows x nints).
 
+For all modes, the values for the output ERR array are calculated for
+each segment in each integration from the two variances of the slope
+of the segment. The ERR array has the same dimensions as the output
+data array.
+
+The segment's variance due to read noise is:
+
+.. math::
+   var^R = \frac{2 \ R^2 }{tgroup^2 } \,,
+
+where :math:`R` is the noise (from the READNOISE reference file) in the
+difference between 2 groups (or, for the FineGuide mode, the difference
+between the averages of the
+4 groups at the beginning and the 4 groups at the end of the integration)
+and :math:`tgroup` is the group time in seconds (from the keyword TGROUP).
+
+
+The segment's variance due to Poisson noise is: 
+
+.. math::
+   var^P = \frac{ slope }{ tgroup \times gain }  \,,
+
+where :math:`gain` is the gain for the pixel (from the GAIN reference file),
+in e/DN. The :math:`slope` is the slope of the pixel,
+
+The square-root of the sum of the Poisson variance and read noise variance is
+written to the ERR extension.
+
 After successful completion of the step, the "BUNIT" keyword in
 the output data is updated to "DN/s" and the "S_GUICDS"
 keyword is set to "COMPLETE".
