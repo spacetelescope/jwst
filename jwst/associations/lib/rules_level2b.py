@@ -273,7 +273,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
                     )
                 ],
                 reduce=Constraint.notany
