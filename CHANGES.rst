@@ -6,6 +6,7 @@ guider_cds
 
 - JP-445 Calculate and output the ERR array based on the gain and readnoise variances. [#7309]
 
+
 1.8.2 (2022-10-20)
 ==================
 
