@@ -273,7 +273,7 @@ class Main():
             except AttributeError:
                 pass
 
-        logger.info(self.__str__())
+        logger.debug(self.__str__())
 
         if not parsed.dry_run:
             self.save(

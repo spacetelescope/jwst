@@ -1,6 +1,12 @@
 1.8.3 (unreleased)
 ==================
 
+associations
+------------
+
+- Moved text dump of associations to happen when using the '-D' option,
+  rather than the '-v' option. [#7068]
+
 
 
 1.8.2 (2022-10-20)
@@ -19,6 +25,7 @@ associations
 
 - Expand the sequence field in a file name for association files from
   3 characters to 5 characters. [#7061]
+
 
 cube_build
 ----------
