@@ -1039,7 +1039,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     # Save names for logging
     param_name = np.array(['theta', 'x-offset', 'y-offset'])
 
-
     # TODO: Maybe not unpack yet. Use SpecModel attributes
     #       to allow for multiple orders? Create unpacking function.
     # Convert estimate to cubic spline if given.
