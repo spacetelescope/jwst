@@ -422,7 +422,7 @@ def extract_grism_objects(input_model,
             # don't extract anything that ended up with zero dimensions in one axis
             # this means that it was identified as a partial order but only on one
             # row or column of the detector
-            if ymax - ymin > 0 and xmax - xmin > 0:
+            if ymax - ymin > 0.5 and xmax - xmin > 0.5:
                 subwcs = copy.deepcopy(inwcs)
                 log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
                 log.info("Subarray extents are: "
