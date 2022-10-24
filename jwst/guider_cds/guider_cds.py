@@ -41,14 +41,14 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
 
     Parameters
     ----------
-    model: data model
+    model : `datamodels.GuiderRawModel`
         input data model, assumed to be of type GuiderRawModel
 
-    gain_model: instance of gain Model or None
-        gain for all pixels
+    gain_model : `datamodels.GainModel` or None
+        Gain for all pixels
 
-    readnoise_model: instance of readnoise Model or None
-        readnoise for all pixels
+    readnoise_model : `datamodels.ReadnoiseModel` or None
+        Readnoise for all pixels
     """
     # get needed sizes and shapes
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
@@ -131,9 +131,8 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
 
 def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     """
-    Short Summary
-    -------------
-    Create gain and readnoise files from their reference files
+    Extract gain and readnoise arrays in appropriate shape for the sci data from
+    the reference files
 
     Parameters
     ----------
@@ -143,18 +142,18 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     imshape: (int, int) tuple
        shape of 2D image
 
-    gain_model: instance of gain Model or None
-        gain for all pixels
+    gain_model : `datamodels.GainModel` or None
+        Gain for all pixels
 
-    readnoise_model: instance of readnoise Model or None
-        readnoise for all pixels
+    readnoise_model : `datamodels.ReadnoiseModel` or None
+        Readnoise for all pixels
 
     Returns
     -------
-    gain_arr: ndarray, 2-D, float
+    gain_arr : ndarray, 2-D, float
         gain values from the ref file, or default value if ref file unavailable
 
-    readnoise_arr: ndarray, 2-D, float
+    readnoise_arr : ndarray, 2-D, float
         readnoise values from the ref file, or default value if ref file
         unavailable
     """
@@ -162,9 +161,9 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     if gain_model is None:  # no ref file, so set all pixel's gain to constant default
         gain_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_GAIN
 
-        log.info('The appropriate GAIN reference file could not be retrieved,')
-        log.info('so instead, from the reference file %s', DEFAULT_GAIN_FILE)
-        log.info('all gain values will be set to the mean of the SCI values (%s)', DEFAULT_GAIN)
+        log.info('A GAIN reference file could not be retrieved from CRDS.')
+        log.info('The mean of the SCI values in the FGC gain reference file %s', DEFAULT_GAIN_FILE)
+        log.info('will be used to populate the gain array.')
     else:
         # extract subarray from gain reference file, if necessary
         if reffile_utils.ref_matches_sci(model, gain_model):
@@ -172,16 +171,16 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
         else:
             log.info('Extracting reference file subarray to match science data')
             ref_sub_model = reffile_utils.get_subarray_model(model, gain_model)
-            gain_arr = ref_sub_model.data.copy()
+            gain_arr = ref_sub_model.data
             ref_sub_model.close()
 
     # if no readnoise_model was retrieved, use the default value for all pixels
     if readnoise_model is None:  # no ref file, so set all pixel's readnoise to constant
         readnoise_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_READNOISE
 
-        log.info('The appropriate READNOISE reference file could not be retrieved,')
-        log.info('so instead, from the reference file %s', DEFAULT_READNOISE_FILE)
-        log.info('all read noise values will be set to the mean of the SCI values (%s)', DEFAULT_READNOISE)
+        log.info('A READNOISE reference file could not be retrieved from CRDS.')
+        log.info('The mean of the SCI values in the FGC readnoise reference file %s', DEFAULT_READNOISE_FILE)
+        log.info('will be used to populate the readnoise array.')
     else:
         # extract subarray from readnoise reference file, if necessary
         if reffile_utils.ref_matches_sci(model, readnoise_model):
@@ -189,7 +188,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
         else:
             log.info('Extracting readnoise reference file subarray to match science data')
             ref_sub_model = reffile_utils.get_subarray_model(model, readnoise_model)
-            readnoise_arr = ref_sub_model.data.copy()
+            readnoise_arr = ref_sub_model.data
             ref_sub_model.close()
 
     return gain_arr, readnoise_arr

@@ -30,9 +30,8 @@ class GuiderCdsStep (Step):
                 gain_filename = self.get_reference_file(input_model, 'gain')
                 gain_model = datamodels.GainModel(gain_filename)
                 self.log.info('Using GAIN reference file: %s', gain_filename)
-            except CrdsLookupError as err:
-                msg = f'{err} Unable to retrieve GAIN ref file.'
-                self.log.warning(msg)
+            except CrdsLookupError:
+                self.log.warning('Unable to retrieve GAIN ref file.')
 
             # Get the readnoise reference file
             readnoise_model = None   # will overwrite if file can be retrieved
@@ -41,9 +40,8 @@ class GuiderCdsStep (Step):
                 readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
                 self.log.info('Using READNOISE reference file: %s',
                               readnoise_filename)
-            except CrdsLookupError as err:
-                msg = f'{err} Unable to retrieve READNOISE ref file.'
-                self.log.warning(msg)
+            except CrdsLookupError:
+                self.log.warning('Unable to retrieve READNOISE ref file.')
 
             out_model = guider_cds.guider_cds(input_model, gain_model, readnoise_model)
 
