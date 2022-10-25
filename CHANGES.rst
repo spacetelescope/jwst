@@ -6,8 +6,11 @@ associations
 
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
+  
+cube_build
+----------
 
-
+- Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
 
 1.8.2 (2022-10-20)
 ==================
