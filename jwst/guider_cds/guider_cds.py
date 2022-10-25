@@ -42,7 +42,7 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
     Parameters
     ----------
     model : `datamodels.GuiderRawModel`
-        input data model, assumed to be of type GuiderRawModel
+        input data model
 
     gain_model : `datamodels.GainModel` or None
         Gain for all pixels
@@ -136,8 +136,8 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
 
     Parameters
     ----------
-    model: data model
-        input data model, assumed to be of type GuiderRawModel
+    model : `datamodels.GuiderRawModel`
+        input data model
 
     imshape: (int, int) tuple
        shape of 2D image
@@ -162,7 +162,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
         gain_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_GAIN
 
         log.info('A GAIN reference file could not be retrieved from CRDS.')
-        log.info('The mean of the SCI values in the FGC gain reference file %s', DEFAULT_GAIN_FILE)
+        log.info('The mean of the SCI values in the FGS gain reference file %s', DEFAULT_GAIN_FILE)
         log.info('will be used to populate the gain array.')
     else:
         # extract subarray from gain reference file, if necessary
@@ -179,7 +179,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
         readnoise_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_READNOISE
 
         log.info('A READNOISE reference file could not be retrieved from CRDS.')
-        log.info('The mean of the SCI values in the FGC readnoise reference file %s', DEFAULT_READNOISE_FILE)
+        log.info('The mean of the SCI values in the FGS readnoise reference file %s', DEFAULT_READNOISE_FILE)
         log.info('will be used to populate the readnoise array.')
     else:
         # extract subarray from readnoise reference file, if necessary

@@ -63,7 +63,7 @@ The segment's variance due to Poisson noise is:
    var^P = \frac{ slope }{ tgroup \times gain }  \,,
 
 where :math:`gain` is the gain for the pixel (from the GAIN reference file),
-in e/DN. The :math:`slope` is the slope of the pixel,
+in e/DN. The :math:`slope` is the slope of the pixel.
 
 The square-root of the sum of the Poisson variance and read noise variance is
 written to the ERR extension.
