@@ -317,12 +317,12 @@ def compare_product_membership(left, right):
     # Check for duplicate members.
     try:
         check_duplicate_members(left)
-    except MultiDiffError as dup_member_errors:
-        diffs.extend(dup_member_errors)
+    except DuplicateMembersError as dup_member_error:
+        diffs.append(dup_member_error)
     try:
         check_duplicate_members(right)
-    except MultiDiffError as dup_member_errors:
-        diffs.extend(dup_member_errors)
+    except DuplicateMembersError as dup_member_error:
+        diffs.append(dup_member_error)
 
     if len(right['members']) != len(left['members']):
         diffs.append(MemberMismatchError(
