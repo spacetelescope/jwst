@@ -106,18 +106,21 @@ class Extract1dStep(Step):
         Filename or SpecModel of the estimate of the target flux. The estimate must
         be a SpecModel with wavelength and flux values.
 
-    soss_wave_grid : str or SpecModel or None
-        Filename of reference file or SpecModel containing the wavelength grid used by ATOCA
+    soss_wave_grid_in : str or SossWaveGrid or None
+        Filename or SossWaveGrid containing the wavelength grid used by ATOCA
         to model each pixel valid pixel of the detector. If not given, the grid is determined
         based on an estimate of the flux (soss_estimate), the relative tolerance (soss_rtol)
         required on each pixel model and the maximum grid size (soss_max_grid_size).
+
+    soss_wave_grid_out : str or None
+        Filename to hold the wavelength grid calculated by ATOCA.
 
     soss_rtol : float
         The relative tolerance needed on a pixel model. It is used to determine the sampling
         of the soss_wave_grid when not directly given.
 
     soss_max_grid_size: int
-        Maximum grid size allowed. It is used when soss_wave_grid is not directly
+        Maximum grid size allowed. It is used when soss_wave_grid is not provided
         to make sure the computation time or the memory used stays reasonable.
     """
 
@@ -136,7 +139,8 @@ class Extract1dStep(Step):
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
-    soss_wave_grid = input_file(default = None)  # Wavelength grid used to model the detector
+    soss_wave_grid_in = input_file(default = None)  # Input wavelength grid used to model the detector
+    soss_wave_grid_out = string(default = None)  # Output wavelength grid solution filename
     soss_estimate = input_file(default = None)  # Estimate used to generate the wavelength grid
     soss_rtol = float(default=1.0e-4)  # Relative tolerance needed on a pixel model
     soss_max_grid_size = integer(default=20000)  # Maximum grid size, if wave_grid not specified
@@ -377,7 +381,8 @@ class Extract1dStep(Step):
                 soss_kwargs['subtract_background'] = self.subtract_background
                 soss_kwargs['rtol'] = self.soss_rtol
                 soss_kwargs['max_grid_size'] = self.soss_max_grid_size
-                soss_kwargs['wave_grid'] = self.soss_wave_grid
+                soss_kwargs['wave_grid_in'] = self.soss_wave_grid_in
+                soss_kwargs['wave_grid_out'] = self.soss_wave_grid_out
                 soss_kwargs['estimate'] = self.soss_estimate
                 soss_kwargs['atoca'] = self.soss_atoca
                 # Set flag to output the model and the tikhonov tests
