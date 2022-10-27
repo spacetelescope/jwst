@@ -1818,11 +1818,13 @@ class IFUCubeData():
                 across1,along1,lam1 = detector2slicer(x, y - 0.49 * pixfrac)
                 across2,along2,lam2 = detector2slicer(x, y + 0.49 * pixfrac)
 
+                # Ensure that our ordering wraps around the footprint instead of crossing
+                # footprint on a diagonal
                 ra1, dec1, _ = slicer2world(across1 - across_width * pixfrac / 2, along1, lam1)
                 ra2, dec2, _ = slicer2world(across1 + across_width * pixfrac / 2, along1, lam1)
 
-                ra3, dec3, _ = slicer2world(across2 - across_width * pixfrac / 2, along2, lam2)
-                ra4, dec4, _ = slicer2world(across2 + across_width * pixfrac / 2, along2, lam2)
+                ra3, dec3, _ = slicer2world(across2 + across_width * pixfrac / 2, along2, lam2)
+                ra4, dec4, _ = slicer2world(across2 - across_width * pixfrac / 2, along2, lam2)
 
                 # near the slice boundaries the corners can become Nan - do not use pixels with
                 # Nan corners
@@ -1840,7 +1842,7 @@ class IFUCubeData():
                 ra2 = ra2[final]
                 dec2 = dec2[final]
                 ra3 = ra3[final]
-                dec3 = dec4[final]
+                dec3 = dec3[final]
                 ra4 = ra4[final]
                 dec4 = dec4[final]
                 dwave = dwave[final]
