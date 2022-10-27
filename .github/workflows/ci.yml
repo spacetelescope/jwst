@@ -80,17 +80,14 @@ jobs:
     name: cache current CRDS operational context
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       - uses: actions/cache@v3
         with:
           path: ${{ env.pythonLocation }}
-          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install -e ".[test]" pytest-xdist
+          key: cache-crds-${{ runner.os }}-${{ env.pythonLocation }}
+      - run: pip install crds
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
         if: github.event.inputs.crds_context == ''
