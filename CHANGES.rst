@@ -20,6 +20,7 @@ cube_build
 
 - Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
 
+
 datamodels
 ----------
 
@@ -30,10 +31,12 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+
 lib
 ---
 
 - Fix circular import in ``lib.wcs_utils``. [#7330]
+
 
 resample
 --------
@@ -46,7 +49,11 @@ tweakreg
 
 - Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
   has only one group group. This is a continuation of PR #6938. [#7326]
+  
+photom
+------
 
+- Pixel area extension is cutout from subarray region [#7319]
 
 1.8.2 (2022-10-20)
 ==================
