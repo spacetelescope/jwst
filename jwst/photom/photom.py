@@ -1040,7 +1040,7 @@ class DataSet():
                     
                     self.input.area = pix_area.data[ystart: yend,
                                                     xstart: xend]
-                    #self.input.area = pix_area.data
+
                 log.info('Pixel area map copied to output.')
             else:
                 self.save_area_nirspec(pix_area)
