@@ -31,7 +31,7 @@ jobs:
           sudo apt-get install graphviz texlive-latex-extra dvipng
 
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -49,7 +49,7 @@ jobs:
 
       - name: Upload coverage to codecov
         if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
           flags: unit
