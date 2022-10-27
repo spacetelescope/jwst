@@ -11,6 +11,12 @@ on:
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      crds_context:
+        type: string
+        description: CRDS context(s) to use with tests (defaults to operational context)
+        required: false
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
@@ -87,11 +93,16 @@ jobs:
       - run: pip install -e ".[test]" pytest-xdist
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
   test:
     name: test (${{ matrix.os }}, Python ${{ matrix.python }})
     needs: [ style, audit, dependencies, cache_crds ]
@@ -115,11 +126,16 @@ jobs:
       - run: pip install -e ".[test]" pytest-xdist
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto
   test_sdpdeps:
     name: run tests with the recent STScI DMS release pinned dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
@@ -146,11 +162,16 @@ jobs:
       - run: pip install -r requirements-sdp.txt
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto
   test_pyargs:
     name: run tests with --pyargs on installed package (${{ matrix.os }}, Python ${{ matrix.python }})
@@ -176,11 +197,16 @@ jobs:
       - run: pip install "./jwst/.[test]" pytest-xdist
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto --pyargs jwst
   test_devdeps:
     name: run tests with the latest developer version of key dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
@@ -208,11 +234,16 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto
   test_oldestdeps:
     name: run tests with the oldest supported version of key dependencies (${{ matrix.os }}, Python ${{ matrix.python }})
@@ -239,11 +270,16 @@ jobs:
       - run: pip install --ignore-installed -r requirements-min.txt
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto
   test_with_coverage:
     name: run tests with coverage
@@ -263,11 +299,16 @@ jobs:
       - run: pip install -e ".[test]" pytest-xdist pytest-cov
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
       - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto --cov-report=xml --cov=. --cov-config=setup.cfg
       - run: coverage report -m
       - uses: codecov/codecov-action@v3

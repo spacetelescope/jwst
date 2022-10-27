@@ -5,10 +5,15 @@ on:
     # Weekly Monday 6AM build
     - cron: "0 6 * * 1"
   workflow_dispatch:
+    inputs:
+      crds_context:
+        type: string
+        description: CRDS context(s) to use with tests (defaults to operational context)
+        required: false
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -28,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: echo "::set-output name=date::$(date +'%Y.%m.%d')"
         id: date
-      - uses: actions/cache@v3.0.5
+      - uses: actions/cache@v3
         with:
           path: ${{ env.pythonLocation }}
           key: test-devdeps-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}-${{ steps.date.outputs.date }}
@@ -36,9 +41,14 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: pip freeze
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
-      - uses: actions/cache@v3.0.5
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
+      - uses: actions/cache@v3
+        if: env.CRDS_CONTEXT != ''
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ env.CRDS_CONTEXT }}
       - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
+        if: env.CRDS_CONTEXT != ''
       - run: pytest -n auto
