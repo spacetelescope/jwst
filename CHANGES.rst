@@ -4,7 +4,7 @@
 assign_wcs
 ----------
 
-- Fix computation of bounding box corners for WFSS grism 2D cutouts.
+- Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
 
 associations
 ------------
@@ -25,7 +25,7 @@ datamodels
 extract_2d
 ----------
 
-- Fix slice limits used in extraction of WFSS 2D cutouts.
+- Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
 1.8.2 (2022-10-20)
 ==================
