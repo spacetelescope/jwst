@@ -40,5 +40,3 @@ allOf:
             type: number
           column_offset:
             type: number
-	
-	   
