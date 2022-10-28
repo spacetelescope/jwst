@@ -8,7 +8,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -25,32 +25,9 @@ jobs:
             python-version: 3.9
             toxenv: devdeps
     steps:
-      - name: Install system packages
-        if: ${{ contains(matrix.toxenv,'docs') }}
-        run: |
-          sudo apt-get install graphviz texlive-latex-extra dvipng
-
-      - name: Checkout the code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install tox
-        run: |
-          pip install tox
-
-      - name: Run tests
-        run: tox -e ${{ matrix.toxenv }}
-
-      - name: Upload coverage to codecov
-        if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          flags: unit
-          fail_ci_if_error: true
+      - run: pip install tox
+      - run: tox -e ${{ matrix.toxenv }}
