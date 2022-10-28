@@ -36,7 +36,6 @@ jobs:
           - name: Verify install_requires in setup.py
             toxenv: check-install
     steps:
-      - run: echo ${{ format('{0}/{1}', env.CRDS_PATH, 'references') }}
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -65,7 +64,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
+          key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
       - run: tox -e ${{ matrix.toxenv }}
   test:
     name: test (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -88,7 +87,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
+          key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv,'-cov') }}
         uses: codecov/codecov-action@v3
@@ -116,7 +115,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
+          key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
       - run: tox -e ${{ matrix.toxenv }}
   build:
     name: build distribution (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
