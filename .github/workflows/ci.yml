@@ -66,7 +66,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install tox
+      - run: pip install tox crds
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
         if: github.event.inputs.crds_context == ''
       - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
@@ -94,7 +94,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install tox
+      - run: pip install tox crds
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
         if: github.event.inputs.crds_context == ''
       - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
@@ -127,7 +127,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install tox
+      - run: pip install tox crds
       - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
         if: github.event.inputs.crds_context == ''
       - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
