@@ -28,15 +28,15 @@ jobs:
           - name: Code style check
             os: ubuntu-latest
             python-version: 3.9
-            toxenv: style
+            toxenv: check-style
           - name: Security audit
             os: ubuntu-latest
             python-version: 3.9
-            toxenv: security
+            toxenv: check-security
           - name: Verify install_requires in setup.py
             os: ubuntu-latest
             python-version: 3.9
-            toxenv: verify-install-requires
+            toxenv: check-install
     steps:
       - uses: actions/checkout@v3
         with:
@@ -55,7 +55,7 @@ jobs:
         include:
           - python-version: '3.10'
             os: ubuntu-latest
-            toxenv: py310
+            toxenv: test
     steps:
       - uses: actions/checkout@v3
         with:
@@ -78,10 +78,10 @@ jobs:
         include:
           - os: macos-latest
             python-version: 3.9
-            toxenv: py39
+            toxenv: test
           - os: ubuntu-latest
             python-version: 3.9
-            toxenv: pyargs
+            toxenv: test-pyargs
     steps:
       - uses: actions/checkout@v3
         with:
@@ -105,15 +105,15 @@ jobs:
           - name: Latest dependency versions w/coverage
             os: ubuntu-latest
             python-version: 3.9
-            toxenv: py39-cov
+            toxenv: test-cov
           - name: Oldest dependency versions w/coverage
             os: ubuntu-latest
             python-version: 3.8
-            toxenv: py38-oldestdeps-cov
+            toxenv: test-oldestdeps-cov
           - name: SDP dependencies in requirements-sdp.txt
             os: ubuntu-latest
             python-version: 3.9
-            toxenv: sdpdeps
+            toxenv: test-sdpdeps
     steps:
       - uses: actions/checkout@v3
         with:
@@ -136,7 +136,7 @@ jobs:
         include:
           - os: ubuntu-latest
             python-version: 3.10
-            toxenv: py310-cov
+            toxenv: test-cov
     steps:
       - uses: actions/checkout@v3
         with:
@@ -162,9 +162,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ 'ubuntu-latest', 'macos-latest' ]
+        os: [ ubuntu-latest, macos-latest ]
         python-version: [ '3.9', '3.10', '3.11' ]
-        toxenv: [ 'twine' ]
+        toxenv: [ build-twine ]
     steps:
       - uses: actions/checkout@v3
         with:
