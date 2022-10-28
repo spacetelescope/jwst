@@ -37,6 +37,13 @@ jobs:
             os: ubuntu-latest
             python-version: 3.9
             toxenv: verify-install-requires
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install tox
+      - run: tox -e ${{ matrix.toxenv }}
   quick_test:
     name: test Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }}
     needs: [ checks ]
