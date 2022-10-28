@@ -36,6 +36,7 @@ jobs:
           - name: Verify install_requires in setup.py
             toxenv: check-install
     steps:
+      - run: echo ${{ format('{0}/{1}', env.CRDS_PATH, 'references') }}
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -61,9 +62,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
-      - run: echo $HOME
-      - run: echo ${{ env.CRDS_PATH }}
-      - run: echo ${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
