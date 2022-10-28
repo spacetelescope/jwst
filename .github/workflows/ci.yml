@@ -67,7 +67,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(join([env.CRDS_PATH, 'references'], '/')) }}
+          key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
       - run: tox -e ${{ matrix.toxenv }}
   test:
     name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(join([env.CRDS_PATH, 'references'], '/')) }}
+          key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv,'-cov') }}
         uses: codecov/codecov-action@v3
@@ -118,7 +118,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(join([env.CRDS_PATH, 'references'], '/')) }}
+          key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
       - run: tox -e ${{ matrix.toxenv }}
   build:
     name: build distribution (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
