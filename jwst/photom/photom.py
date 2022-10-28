@@ -1033,11 +1033,9 @@ class DataSet():
                     self.input.slits[0].area = pix_area.data
                 else:
                     ystart = self.input.meta.subarray.ystart-1
-                    xstart  = self.input.meta.subarray.xstart-1
+                    xstart = self.input.meta.subarray.xstart-1
                     yend = ystart + self.input.meta.subarray.ysize
                     xend = xstart + self.input.meta.subarray.xsize
-                    print(xstart, ystart, xend, yend)
-                    
                     self.input.area = pix_area.data[ystart: yend,
                                                     xstart: xend]
                 log.info('Pixel area map copied to output.')
