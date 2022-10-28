@@ -71,32 +71,14 @@ jobs:
           key: crds-reference-files-${{ hashFiles('${{ env.CRDS_PATH }}/references') }}
       - run: tox -e ${{ matrix.toxenv }}
   test:
-    name: ${{ matrix.name }}
+    name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
     needs: [ quick_test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          - name: Latest dependency versions w/coverage
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: test-cov
-          - name: Oldest dependency versions w/coverage
-            os: ubuntu-latest
-            python-version: 3.8
-            toxenv: test-oldestdeps-cov
-          - name: SDP dependencies in requirements-sdp.txt
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: test-sdpdeps
-          - name: Installed package with --pyargs
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: test-pyargs
-          - name: MacOS
-            os: macos-latest
-            python-version: 3.9
-            toxenv: test
+        python-version: [ '3.8', '3.9', '3.10' ]
+        toxenv: [ test-pyargs, test-cov test-oldestdeps-cov, test-sdpdeps ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
