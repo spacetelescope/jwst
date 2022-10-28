@@ -39,6 +39,8 @@ jobs:
             toxenv: verify-install-requires
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -56,6 +58,8 @@ jobs:
             toxenv: py310
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -80,6 +84,8 @@ jobs:
             toxenv: pyargs
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -110,6 +116,8 @@ jobs:
             toxenv: sdpdeps
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -131,6 +139,8 @@ jobs:
             toxenv: py310-cov
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -157,6 +167,8 @@ jobs:
         toxenv: [ 'twine' ]
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
