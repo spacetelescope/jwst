@@ -11,7 +11,7 @@ associations
 
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
-  
+
 cube_build
 ----------
 
@@ -26,6 +26,13 @@ extract_2d
 ----------
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
+
+resample
+--------
+
+- Enhance spectral output WCS construction to guard against nearly identical
+  points. [#7321]
+
 
 1.8.2 (2022-10-20)
 ==================

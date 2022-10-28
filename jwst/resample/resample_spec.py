@@ -675,7 +675,7 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
     ra, dec, lambdas = refwcs(*grid)
 
     if mode == 'median':
-        ref_lam = np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0).tolist()
+        ref_lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
     else:
         ref_lam, _, _ = _find_nirspec_sampling_wavelengths(
             refwcs,
@@ -687,13 +687,15 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
     lam1 = ref_lam[0]
     lam2 = ref_lam[-1]
 
+    min_delta = np.fabs(np.ediff1d(ref_lam).min())
+
     image_lam = []
     for w in wcs_list[1:]:
         bbox = w.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
         ra, dec, lambdas = w(*grid)
         if mode == 'median':
-            lam = np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0).tolist()
+            lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
         else:
             lam, _, _ = _find_nirspec_sampling_wavelengths(
                 w,
@@ -702,6 +704,7 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
                 fast=mode == 'fast'
             )
         image_lam.append((lam, np.min(lam), np.max(lam)))
+        min_delta = min(min_delta, np.fabs(np.ediff1d(ref_lam).min()))
 
     # The code below is optimized for the case when wavelength is an increasing
     # function of the pixel index along the X-axis. It will not work correctly
@@ -736,6 +739,14 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
                 idx = np.flatnonzero(lam_ar > lam2)
                 ref_lam = ref_lam + lam_ar[idx].tolist()
                 lam2 = ref_lam[-1]
+
+    # In the resampled WCS, if two wavelengths are closer to each other
+    # than 1/10 of the minimum difference between two wavelengths,
+    # remove one of the points.
+    ediff = np.fabs(np.ediff1d(ref_lam))
+    idx = np.flatnonzero(ediff < max(0.1 * min_delta, 1e2 * np.finfo(1.0).eps))
+    for i in idx[::-1]:
+        del ref_lam[i]
 
     return ref_lam
 
