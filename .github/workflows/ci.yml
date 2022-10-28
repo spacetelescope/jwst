@@ -48,13 +48,13 @@ jobs:
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
   quick_test:
-    name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
+    name: test (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ check ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ '3.10' ]
         toxenv: [ test ]
+        python-version: [ '3.10' ]
         os: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v3
@@ -70,14 +70,14 @@ jobs:
           key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
       - run: tox -e ${{ matrix.toxenv }}
   test:
-    name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
+    name: test (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ quick_test ]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         toxenv: [ test-cov test-oldestdeps-cov, test-sdpdeps ]
+        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v3
@@ -99,13 +99,13 @@ jobs:
           flags: unit
           fail_ci_if_error: true
   test_pyargs:
-    name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
+    name: test installed package with `--pyargs` (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ quick_test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ '3.10' ]
         toxenv: [ test-pyargs ]
+        python-version: [ '3.10' ]
         os: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v3
@@ -121,14 +121,14 @@ jobs:
           key: crds-reference-files-${{ hashFiles(format('{0}/{1}', env.CRDS_PATH, 'references')) }}
       - run: tox -e ${{ matrix.toxenv }}
   build:
-    name: build distribution (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
+    name: build distribution (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        python-version: [ '3.9', '3.10', '3.11' ]
         toxenv: [ build-twine ]
+        python-version: [ '3.9', '3.10', '3.11' ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
