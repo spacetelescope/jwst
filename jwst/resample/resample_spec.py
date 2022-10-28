@@ -740,6 +740,9 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
                 ref_lam = ref_lam + lam_ar[idx].tolist()
                 lam2 = ref_lam[-1]
 
+    # In the resampled WCS, if two wavelengths are closer to each other
+    # than 1/10 of the minimum difference between two wavelengths,
+    # remove one of the points.
     ediff = np.fabs(np.ediff1d(ref_lam))
     idx = np.flatnonzero(ediff < max(0.1 * min_delta, 1e2 * np.finfo(1.0).eps))
     for i in idx[::-1]:
