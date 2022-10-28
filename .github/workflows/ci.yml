@@ -25,18 +25,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        toxenv: [ check-style, check-security, check-install ]
+        python-version: [ '3.9' ]
+        os: [ ubuntu-latest ]
         include:
           - name: Code style check
-            os: ubuntu-latest
-            python-version: 3.9
             toxenv: check-style
           - name: Security audit
-            os: ubuntu-latest
-            python-version: 3.9
             toxenv: check-security
           - name: Verify install_requires in setup.py
-            os: ubuntu-latest
-            python-version: 3.9
             toxenv: check-install
     steps:
       - uses: actions/checkout@v3
