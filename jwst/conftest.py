@@ -87,7 +87,7 @@ def jail(request, tmpdir_factory):
     os.chdir(old_dir)
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
     config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')

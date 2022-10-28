@@ -64,7 +64,7 @@ class BasePoolRule():
     # Each entry is the class name of the rule.
     valid_rules = []
 
-    def setup(self):
+    def setup_method(self):
         """You set me up...."""
 
     def tearDown(self):
