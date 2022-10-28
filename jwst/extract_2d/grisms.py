@@ -9,6 +9,7 @@ import numpy as np
 
 from astropy.modeling.models import Shift, Const1D, Mapping
 from gwcs.wcstools import grid_from_bounding_box
+from gwcs.utils import _toindex
 
 from .. import datamodels
 from ..assign_wcs import util
@@ -441,14 +442,14 @@ def extract_grism_objects(input_model,
                 order_model.inverse = Const1D(order)
 
                 tr = inwcs.get_transform('grism_detector', 'detector')
-
                 tr = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
                                                  xcenter_model &
                                                  ycenter_model &
                                                  order_model) | tr
-                from gwcs.utils import _toindex
-                y_slice = slice(_toindex(ymin), _toindex(ymax))
-                x_slice = slice(_toindex(xmin), _toindex(xmax))
+
+                y_slice = slice(_toindex(ymin), _toindex(ymax) + 1)
+                x_slice = slice(_toindex(xmin), _toindex(xmax) + 1)
+
                 ext_data = input_model.data[y_slice, x_slice].copy()
                 ext_err = input_model.err[y_slice, x_slice].copy()
                 ext_dq = input_model.dq[y_slice, x_slice].copy()

@@ -749,10 +749,10 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                     # didn't call this bounding box code. So I think it's safe to leave the subarray
                     # subtraction out, i.e. do not subtract x/ystart.
 
-                    xmin = int(np.nanmin(xstack))
-                    xmax = int(np.nanmax(xstack))
-                    ymin = int(np.nanmin(ystack))
-                    ymax = int(np.nanmax(ystack))
+                    xmin = np.nanmin(xstack)
+                    xmax = np.nanmax(xstack)
+                    ymin = np.nanmin(ystack)
+                    ymax = np.nanmax(ystack)
 
                     if wfss_extract_half_height is not None and not obj.is_extended:
                         if input_model.meta.wcsinfo.dispersion_direction == 2:
@@ -768,14 +768,17 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                         else:
                             raise ValueError("Cannot determine dispersion direction.")
 
-                    # don't add objects and orders which are entirely
-                    # off the detector partial_order marks partial
-                    # off-detector objects which are near enough to
-                    # cause spectra to be observed on the detector.
-                    # This is useful because the catalog often is
-                    # created from a resampled direct image that is
-                    # bigger than the detector FOV for a single grism
-                    # exposure.
+                    # Convert floating-point corner values to whole pixel indexes
+                    xmin = gwutils._toindex(xmin)
+                    xmax = gwutils._toindex(xmax)
+                    ymin = gwutils._toindex(ymin)
+                    ymax = gwutils._toindex(ymax)
+
+                    # Don't add objects and orders that are entirely off the detector.
+                    # "partial_order" marks objects that are near enough to the detector
+                    # edge to have some spectrum on the detector.
+                    # This is useful because the catalog often is created from a resampled direct
+                    # image that is bigger than the detector FOV for a single grism exposure.
                     exclude = False
                     ispartial = False
 

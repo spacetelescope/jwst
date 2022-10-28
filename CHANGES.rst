@@ -1,6 +1,11 @@
 1.8.3 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
+
 associations
 ------------
 
@@ -16,6 +21,11 @@ datamodels
 ----------
 
 - Add subarray keywords in filteroffset schema [#7317]
+
+extract_2d
+----------
+
+- Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
 1.8.2 (2022-10-20)
 ==================
