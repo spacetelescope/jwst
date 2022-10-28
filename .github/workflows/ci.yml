@@ -11,6 +11,12 @@ on:
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      crds_context:
+        type: string
+        description: CRDS context(s) to use with tests (defaults to operational context)
+        required: false
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
@@ -61,6 +67,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
@@ -84,6 +95,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
@@ -112,6 +128,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - run: echo "CRDS_CONTEXT=$(crds list --operational-context)" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context == ''
+      - run: echo "CRDS_CONTEXT=${{ github.event.inputs.crds_context }}" >> $GITHUB_ENV
+        if: github.event.inputs.crds_context != ''
+      - run: crds sync --contexts ${{ env.CRDS_CONTEXT }}
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
