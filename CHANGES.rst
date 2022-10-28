@@ -30,6 +30,11 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+general
+-------
+
+- refactor ``tox`` environment factors and set dependent CI jobs [#7323]
+
 lib
 ---
 
