@@ -1,8 +1,6 @@
 import logging
 from timeit import default_timer as timer
 
-from progress.bar import Bar
-
 from .association import make_timestamp
 from .lib.process_list import (
     ListCategory,
@@ -11,6 +9,7 @@ from .lib.process_list import (
     workover_filter
 )
 from .pool import PoolRow
+from ..lib.progress import Bar
 
 # Configure logging
 logger = logging.getLogger(__name__)
