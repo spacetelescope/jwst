@@ -61,6 +61,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - run: echo $HOME
+      - run: echo ${{ env.CRDS_PATH }}
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
