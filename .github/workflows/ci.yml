@@ -47,16 +47,14 @@ jobs:
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
   quick_test:
-    name: ${{ matrix.name }}
+    name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
     needs: [ check ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          - name: Python 3.10 tests
-            python-version: '3.10'
-            os: ubuntu-latest
-            toxenv: test
+        python-version: [ '3.10' ]
+        toxenv: [ test ]
+        os: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -76,8 +74,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
-        toxenv: [ test-pyargs, test-cov test-oldestdeps-cov, test-sdpdeps ]
+        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
+        toxenv: [ test-cov test-oldestdeps-cov, test-sdpdeps ]
         os: [ ubuntu-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v3
@@ -98,6 +96,28 @@ jobs:
           file: ./coverage.xml
           flags: unit
           fail_ci_if_error: true
+  test_pyargs:
+    name: test (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
+    needs: [ quick_test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [ '3.10' ]
+        toxenv: [ test-pyargs ]
+        os: [ ubuntu-latest ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-reference-files-${{ hashFiles('${{ env.CRDS_PATH }}/references') }}
+      - run: tox -e ${{ matrix.toxenv }}
   build:
     name: build distribution (Python ${{ matrix.python-version }}, tox testenv ${{ matrix.toxenv }}, ${{ matrix.os }})
     needs: [ test ]
