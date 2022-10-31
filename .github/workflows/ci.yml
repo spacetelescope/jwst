@@ -73,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toxenv: [ test-cov test-oldestdeps-cov, test-sdpdeps ]
+        toxenv: [ test-cov, test-oldestdeps-cov, test-sdpdeps ]
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest, macos-latest ]
     steps:
