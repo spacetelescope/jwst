@@ -66,6 +66,11 @@ jobs:
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
+      - run: echo '${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}' > reference_files_hash.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: reference_files_hash
+          path: reference_files_hash.txt
   test:
     name: test (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ quick_test ]
@@ -84,10 +89,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - uses: actions/download-artifact@v3
+        with:
+          name: reference_files_hash
+      - run: echo "REFERENCE_FILES_HASH=$(cat reference_files_hash.txt)" >> $GITHUB_ENV
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
+          key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv,'-cov') }}
         uses: codecov/codecov-action@v3
@@ -112,10 +121,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - uses: actions/download-artifact@v3
+        with:
+          name: reference_files_hash
+      - run: echo "REFERENCE_FILES_HASH=$(cat reference_files_hash.txt)" >> $GITHUB_ENV
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
+          key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
       - run: tox -e ${{ matrix.toxenv }}
   build:
     name: build distribution (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
