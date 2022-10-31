@@ -654,13 +654,8 @@ class NIRCAMForwardRowGrismDispersion(Model):
         if not len(self.xmodels):
             t = self.invdisp_interp(iorder, x0, y0, (x - x0))
         else:
-            t = self.xmodels[iorder](y - y0)
+            t = self.xmodels[iorder](x - x0)
 
-        if not len(self.xmodels):
-            pass
-        else:
-            xmodel = self.xmodels[iorder]
-        ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
 
         def apply_poly(coeff_model, inputs, t):
@@ -668,28 +663,28 @@ class NIRCAMForwardRowGrismDispersion(Model):
             ord_t = len(coeff_model)
             sumval = 0.
             for i in range(ord_t):
-                sumval += t ** i * coeff_model[i](*inputs)
+                sumval += t ** i * coeff_model[i](*inputs[:coeff_model[i].n_inputs])
             return sumval
 
-        l_poly = apply_poly(lmodel, (x0, y0), t)
+        l_poly = apply_poly(lmodel, (x - x0, y - y0), t)
 
         return x0, y0, l_poly, order
 
-    def invdisp_interp(self, order, x0, y0, dy):
+    def invdisp_interp(self, order, x0, y0, dx):
 
-        if len(dy.shape) == 2:
-            dy = dy[0, :]
+        if len(dx.shape) == 2:
+            dx = dx[0, :]
 
-        t_len = dy.shape[0]
+        t_len = dx.shape[0]
         t0 = np.linspace(0., 1., t_len)
 
         if len(self.inv_xmodels[order]) == 2:
             xr = self.inv_xmodels[order][0](x0, y0) + t0 * self.inv_xmodels[order][1](x0, y0)
         elif len(self.inv_xmodels[order]) == 3:
             xr = self.inv_xmodels[order][0](x0, y0) + t0 * self.inv_xmodels[order][1](x0, y0) + \
-                t0**2 * self.inv_xmodels[order][2](x0, y0)
+                 t0**2 * self.inv_xmodels[order][2](x0, y0)
         elif len(self.inv_xmodels[order].instance[0].inputs) == 1:
-            xr = self.inv_xmodels[order][0](y0)
+            xr = self.inv_xmodels[order][0](x0)
         else:
             raise Exception
 
@@ -697,9 +692,9 @@ class NIRCAMForwardRowGrismDispersion(Model):
             xr = xr[0, :]
 
         so = np.argsort(xr)
-        f = np.interp(dy, xr[so], t0[so])
+        f = np.interp(dx, xr[so], t0[so])
 
-        f = np.broadcast_to(f, dy.shape)
+        f = np.broadcast_to(f, dx.shape)
         return f
 
 
@@ -792,10 +787,10 @@ class NIRCAMForwardColumnGrismDispersion(Model):
             ord_t = len(coeff_model)
             sumval = 0.
             for i in range(ord_t):
-                sumval += t ** i * coeff_model[i](*inputs)
+                sumval += t ** i * coeff_model[i](*inputs[2-coeff_model[i].ninputs:])
             return sumval
 
-        l_poly = apply_poly(lmodel, (x0, y0), t)
+        l_poly = apply_poly(lmodel, (x - x0, y - y0), t)
 
         return x0, y0, l_poly, order
 
