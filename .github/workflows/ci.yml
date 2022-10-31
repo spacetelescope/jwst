@@ -62,11 +62,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
+      - run: echo "REFERENCE_FILES_HASH=${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}" >> $GITHUB_ENV
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-reference-files-${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}
-      - run: echo '${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}' > reference_files_hash.txt
+          key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
+      - run: echo ${{ env.REFERENCE_FILES_HASH }} > reference_files_hash.txt
       - uses: actions/upload-artifact@v3
         with:
           name: reference_files_hash
