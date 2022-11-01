@@ -79,7 +79,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toxenv: [ test-cov, test-oldestdeps-cov, test-sdpdeps ]
+        toxenv: [ test-xdist, test-oldestdeps, test-sdpdeps-xdist ]
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest, macos-latest ]
     steps:
@@ -99,15 +99,9 @@ jobs:
           path: ${{ env.CRDS_PATH }}
           key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
       - run: tox -e ${{ matrix.toxenv }}
-      - if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          flags: unit
-          fail_ci_if_error: true
   test_pyargs:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
-    needs: [ quick_test ]
+    needs: [ test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -131,6 +125,39 @@ jobs:
           path: ${{ env.CRDS_PATH }}
           key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
       - run: tox -e ${{ matrix.toxenv }}
+  test_with_coverage:
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        toxenv: [ test-cov ]
+        python-version: [ '3.x' ]
+        os: [ ubuntu-latest ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install tox
+      - uses: actions/download-artifact@v3
+        with:
+          name: reference_files_hash
+      - run: echo "REFERENCE_FILES_HASH=$(cat reference_files_hash.txt)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
+      - run: tox -e ${{ matrix.toxenv }}
+      - if: ${{ contains(matrix.toxenv,'-cov') }}
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unit
+          fail_ci_if_error: true
   build:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ test ]
