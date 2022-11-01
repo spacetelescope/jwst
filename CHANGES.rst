@@ -33,6 +33,12 @@ resample
 - Enhance spectral output WCS construction to guard against nearly identical
   points. [#7321]
 
+tweakreg
+--------
+
+- Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
+  has only one group group. This is a continuation of PR #6938. [#7326]
+
 
 1.8.2 (2022-10-20)
 ==================
