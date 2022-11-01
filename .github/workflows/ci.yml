@@ -43,6 +43,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: .tox
+          key: tox-${{ matrix.toxenv }}-${{ env.pythonLocation }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
   quick_test:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -61,6 +65,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: .tox
+          key: tox-${{ matrix.toxenv }}-${{ env.pythonLocation }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
       - run: echo "REFERENCE_FILES_HASH=${{ hashFiles(format('{0}/references/*', env.CRDS_PATH)) }}" >> $GITHUB_ENV
       - uses: actions/cache@v3
@@ -98,6 +106,10 @@ jobs:
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
+      - uses: actions/cache@v3
+        with:
+          path: .tox
+          key: tox-${{ matrix.toxenv }}-${{ env.pythonLocation }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
   test_pyargs:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -124,6 +136,10 @@ jobs:
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
+      - uses: actions/cache@v3
+        with:
+          path: .tox
+          key: tox-${{ matrix.toxenv }}-${{ env.pythonLocation }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
   test_with_coverage:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -151,6 +167,10 @@ jobs:
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
+      - uses: actions/cache@v3
+        with:
+          path: .tox
+          key: tox-${{ matrix.toxenv }}-${{ env.pythonLocation }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv,'-cov') }}
         uses: codecov/codecov-action@v3
@@ -175,4 +195,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: .tox
+          key: tox-${{ matrix.toxenv }}-${{ env.pythonLocation }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
