@@ -1,5 +1,4 @@
 import numpy as np
-#from ..assign_wcs import niriss
 
 
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
@@ -60,8 +59,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     if hasattr(model.meta, "wcs") and not got_wavelength:
         # Set up an appropriate WCS object
         if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
-            # wcs = niriss.niriss_soss_set_input(model, order)
-            wl_array = wcs(grid[1], grid[0], order)[2]
+            wl_array = model.meta.wcs(grid[1], grid[0], order)[2]
             return wl_array
 
         wcs = model.meta.wcs
