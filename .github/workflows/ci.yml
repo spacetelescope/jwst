@@ -45,7 +45,7 @@ jobs:
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
   quick_test:
-    name: test (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ check ]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -73,7 +73,7 @@ jobs:
           name: reference_files_hash
           path: reference_files_hash.txt
   test:
-    name: test (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ quick_test ]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -106,7 +106,7 @@ jobs:
           flags: unit
           fail_ci_if_error: true
   test_pyargs:
-    name: test installed package with `--pyargs` (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ quick_test ]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -132,7 +132,7 @@ jobs:
           key: crds-reference-files-${{ env.REFERENCE_FILES_HASH }}
       - run: tox -e ${{ matrix.toxenv }}
   build:
-    name: build distribution (${{ matrix.toxenv }}, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ test ]
     runs-on: ${{ matrix.os }}
     strategy:
