@@ -75,7 +75,7 @@ class Image3Pipeline(Pipeline):
 
             # Check if input is single or multiple exposures
             try:
-                has_groups = len(input_models.group_names) > 1
+                has_groups = len(input_models.group_names) >= 1
             except (AttributeError, TypeError, KeyError):
                 has_groups = False
 

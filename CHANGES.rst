@@ -4,13 +4,47 @@
 guider_cds
 ----------
 
-- JP-445 Calculate and output the ERR array based on the gain and readnoise variances. [#7309]
+- JP-445 Calculate and output the ERR array based on the gain and readnoise 
+  variances, and force the stack mode to use the default gain and readnoise
+  pixel values. [#7309]
+
+assign_wcs
+----------
+
+- Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
 
 associations
 ------------
 
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
+
+cube_build
+----------
+
+- Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
+
+datamodels
+----------
+
+- Add subarray keywords in filteroffset schema [#7317]
+
+extract_2d
+----------
+
+- Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
+
+resample
+--------
+
+- Enhance spectral output WCS construction to guard against nearly identical
+  points. [#7321]
+
+tweakreg
+--------
+
+- Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
+  has only one group group. This is a continuation of PR #6938. [#7326]
 
 1.8.2 (2022-10-20)
 ==================
