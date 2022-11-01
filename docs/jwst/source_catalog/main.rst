@@ -67,7 +67,7 @@ Output Products
 Source Catalog Table
 ^^^^^^^^^^^^^^^^^^^^
 The output source catalog table is saved in `ECSV format
-<https://docs.astropy.org/en/stable/io/ascii/write.html#ecsv-format>`_.
+<https://docs.astropy.org/en/stable/io/ascii/ecsv.html>`_.
 
 The table contains a row for each source, with the following default
 columns (assuming the default encircled energies of 30, 50, and 70):
