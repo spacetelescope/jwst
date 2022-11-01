@@ -356,7 +356,11 @@ def create_input(instrument, detector, exptype,
     input_model.meta.instrument.name = instrument
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = exptype
+    input_model.meta.subarray.xstart = 1
+    input_model.meta.subarray.ystart = 1
 
+    input_model.meta.subarray.xsize = data.shape[-1]
+    input_model.meta.subarray.ysize = data.shape[-2]
     if filter is not None:
         input_model.meta.instrument.filter = filter
     if pupil is not None:
