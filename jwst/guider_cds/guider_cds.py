@@ -49,18 +49,27 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
 
     readnoise_model : `datamodels.ReadnoiseModel` or None
         Readnoise for all pixels
+
+    Returns
+    -------
+    new_model : 'datamodels.GuiderCalModel'
+        output data model
     """
     # get needed sizes and shapes
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
 
+    # If exp_type is 'FGS_ID', force output to have single slice, and use
+    # default GAIN and READNOISE values by setting their ref models to None
+    if exp_type[:6] == 'FGS_ID':
+        new_model = datamodels.GuiderCalModel((1,) + imshape)
+        gain_model = None
+        readnoise_model = None
+    else:
+        new_model = datamodels.GuiderCalModel()
+
     # get gain and readnoise arrays to calculate ERR array
     gain_arr, readnoise_arr = get_ref_arr(model, imshape, gain_model,
                                           readnoise_model)
-
-    if exp_type[:6] == 'FGS_ID':  # force output to have single slice
-        new_model = datamodels.GuiderCalModel((1,) + imshape)
-    else:
-        new_model = datamodels.GuiderCalModel()
 
     # set up output data arrays
     slope_int_cube = np.zeros((n_int,) + imshape, dtype=np.float32)
@@ -101,6 +110,8 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
 
     if exp_type[:6] == 'FGS_ID':
         new_model.data[0, :, :] = np.minimum(diff_int1, diff_int0) / grp_time
+        var_rn[0, :, :] = 2 * (readnoise_arr / grp_time)**2
+        var_pn[0, :, :] = np.minimum(diff_int1, diff_int0) / (gain_arr * grp_time)
     else:  # FINEGUIDE, ACQ1, ACQ2, or TRACK
         new_model.data = slope_int_cube / grp_time
 
@@ -158,7 +169,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
         unavailable
     """
     # if no gain_model was retrieved, use the default value for all pixels
-    if gain_model is None:  # no ref file, so set all pixel's gain to constant default
+    if gain_model is None:
         gain_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_GAIN
 
         log.info('A GAIN reference file could not be retrieved from CRDS.')
@@ -175,7 +186,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
             ref_sub_model.close()
 
     # if no readnoise_model was retrieved, use the default value for all pixels
-    if readnoise_model is None:  # no ref file, so set all pixel's readnoise to constant
+    if readnoise_model is None:
         readnoise_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_READNOISE
 
         log.info('A READNOISE reference file could not be retrieved from CRDS.')
