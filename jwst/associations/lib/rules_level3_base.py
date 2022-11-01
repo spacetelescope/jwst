@@ -83,11 +83,8 @@ LEVEL2B_EXPTYPES.extend(IMAGE2_SCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
-# Association Candidates that should never make Level3 associations
-INVALID_AC_TYPES = ['background']
-
 # Association Candidates that should have more than one observations
-MULTI_OBS_AC_TYPES = ['group']
+MULTI_OBS_AC_TYPES = ['group', 'background']
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
@@ -465,21 +462,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             )
         result = '\n'.join(result_list)
         return result
-
-    def ok_candidate(self, member=None):
-        """Validation test for acceptable candidates
-
-        Parameters
-        ----------
-        member : Member
-            Member being added causing check.
-            Not used
-
-        Returns
-        -------
-        is_valid : bool
-        """
-        return self.acid.type.lower() not in INVALID_AC_TYPES
 
 
 @RegistryMarker.utility
