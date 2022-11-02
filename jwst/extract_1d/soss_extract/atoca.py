@@ -80,7 +80,7 @@ class _BaseOverlap:
             Boolean Mask of the detector pixels to mask for every extraction.
             Should not be related to a specific order (if so, use `mask_trace_profile` instead).
         mask_trace_profile: (N_ord, N, M) list or array of 2-D arrays[bool], optional
-            A list or array of the pixel that need to be used for extraction,
+            A list or array of the pixels that need to be used for extraction,
             for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
             If not given, `threshold` will be applied on spatial profiles to define the masks.
         orders: list, optional:
@@ -1161,7 +1161,7 @@ class _BaseOverlap:
         # Get the factor of the chosen mode
         best_fac = results[best_mode]
 
-        log.debug(f'mode chosen to find regularization factor is {best_mode}')
+        log.debug(f'Mode chosen to find regularization factor is {best_mode}')
 
         return best_fac, best_mode, results
 
