@@ -1058,7 +1058,7 @@ properties:
               PFLAT_CORON1065, PFLAT_CORON1140, PFLAT_CORON1550, PFLAT_CORONLYOT,
 
               # MIRI imaging
-              CYCLING, REULEAUX, SPARSE-CYCLING,
+              REULEAUX,
               2-POINT, 4-POINT-SETS,
               2-POINT-MIRI-F770W-WITH-NIRCAM, 3-POINT-MIRI-F770W-WITH-NIRCAM,
               4-POINT-MIRI-F770W-WITH-NIRCAM, 9-POINT-MIRI-F770W-WITH-NIRCAM,
@@ -1103,15 +1103,13 @@ properties:
               7x3-PIXEL-MAP-SLITLESS, 9x3-8x4-SCAN-MAPS-SLITLESS,
 
               # MIRI MRS
-              2-POINT, 4-POINT, SCAN-CALIBRATION,
+              4-POINT, SCAN-CALIBRATION,
 
               # NIRCam
-              FULL, FULLBOX, FULL-TIGHT,
-              INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
-              SUBARRAY-DITHER, WFSC, 1LOS,
+              FULL-TIGHT,
+              SUBARRAY-DITHER, 1LOS,
 
               # NIRISS
-              AMI, IMAGING, MIMF, WFSS,
 
               # NIRISS with NIRCam in parallel
               NIS-NRC-2L, NIS-NRC-2M,
@@ -1135,7 +1133,7 @@ properties:
               3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
 
               # NIRSpec IFU
-              2-POINT-NOD, 4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
 
               # Misc
               N/A, NONE, ANY]
