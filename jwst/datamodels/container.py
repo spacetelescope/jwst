@@ -20,6 +20,7 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 _ONE_MB = 1 << 20
+RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -79,18 +80,49 @@ class ModelContainer(JwstDataModel, Sequence):
 
     Notes
     -----
-        The optional paramters ``save_open`` and ``return_open`` can be provided
-        to control how the DataModels are used by the ModelContainer.
-        If ``save_open`` is set to `False`,
-        each input DataModel instance in ``init`` will be written out to disk and closed,
-        then only the filename for the
-        DataModel will be used to initialize the ModelContainer object.  Subsequent
-        access of each member will then open the DataModel file to work with it.  If
-        ``return_open`` is also `False`, then the DataModel will be closed when
-        access to the DataModel is completed.  The use of these parameters can
-        minimize the amount of memory used by this object during processing, with
-        these parameters being used by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
+        The optional paramters ``save_open`` and ``return_open`` can be
+        provided to control how the `DataModel` are used by the
+        :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
+        `DataModel` instance in ``init`` will be written out to disk and
+        closed, then only the filename for the `DataModel` will be used to
+        initialize the :py:class:`ModelContainer` object.
+        Subsequent access of each member will then open the `DataModel` file to
+        work with it. If ``return_open`` is also `False`, then the `DataModel`
+        will be closed when access to the `DataModel` is completed. The use of
+        these parameters can minimize the amount of memory used by this object
+        during processing, with these parameters being used
+        by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
 
+        When ASN table's members contain attributes listed in
+        :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
+        read those attribute values and update the corresponding attributes
+        in the ``meta`` of input models.
+
+        .. code-block::
+            :caption: Example of ASN table with additional model attributes \
+to supply custom catalogs.
+
+            "products": [
+                {
+                    "name": "resampled_image",
+                    "members": [
+                        {
+                            "expname": "input_image1_cal.fits",
+                            "exptype": "science",
+                            "tweakreg_catalog": "custom_catalog1.ecsv"
+                        },
+                        {
+                            "expname": "input_image2_cal.fits",
+                            "exptype": "science",
+                            "tweakreg_catalog": "custom_catalog2.ecsv"
+                        }
+                    ]
+                }
+            ]
+
+        .. warning::
+            Input files will be updated in-place with new ``meta`` attribute
+            values when ASN table's members contain additional attributes.
 
     """
     schema_url = None
@@ -244,15 +276,16 @@ class ModelContainer(JwstDataModel, Sequence):
             for member in asn_data['products'][0]['members']:
                 if any([x for x in self.asn_exptypes if re.match(member['exptype'],
                                                                  x, re.IGNORECASE)]):
-                    infiles.append([member['expname'], member['exptype']])
+                    infiles.append(member)
                     logger.debug('Files accepted for processing {}:'.format(member['expname']))
         else:
-            infiles = [[member['expname'], member['exptype']] for member
+            infiles = [member for member
                        in asn_data['products'][0]['members']]
 
         if asn_file_path:
             asn_dir = op.dirname(asn_file_path)
-            infiles = [[op.join(asn_dir, f[0]), f[1]] for f in infiles]
+        else:
+            asn_dir = ''
 
         # Only handle the specified number of members.
         if self.asn_n_members:
@@ -260,13 +293,30 @@ class ModelContainer(JwstDataModel, Sequence):
         else:
             sublist = infiles
         try:
-            for filepath, exptype in sublist:
-                if self._save_open:
+            for member in sublist:
+                filepath = op.join(asn_dir, member['expname'])
+                update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
+                if update_model or self._save_open:
                     m = datamodel_open(filepath, memmap=self._memmap)
-                    m.meta.asn.exptype = exptype
+                    m.meta.asn.exptype = member['exptype']
+                    for attr, val in member.items():
+                        if attr in RECOGNIZED_MEMBER_FIELDS:
+                            if attr == 'tweakreg_catalog':
+                                if val.strip():
+                                    val = op.join(asn_dir, val)
+                                else:
+                                    val = None
+
+                            setattr(m.meta, attr, val)
+
+                    if not self._save_open:
+                        m.save(filepath, overwrite=True)
+                        m.close()
                 else:
                     m = filepath
+
                 self._models.append(m)
+
         except IOError:
             self.close()
             raise

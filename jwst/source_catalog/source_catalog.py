@@ -178,9 +178,9 @@ class JWSTSourceCatalog:
         """
         desc = {}
         desc['label'] = 'Unique source identification label number'
-        desc['xcentroid'] = 'X pixel value of the source centroid'
-        desc['ycentroid'] = 'Y pixel value of the source centroid'
-        desc['sky_centroid'] = 'Sky coordinate of the source centroid'
+        desc['xcentroid'] = 'X pixel value of the source centroid (0 indexed)'
+        desc['ycentroid'] = 'Y pixel value of the source centroid (0 indexed)'
+        desc['sky_centroid'] = 'ICRS Sky coordinate of the source centroid'
         desc['isophotal_flux'] = 'Isophotal flux'
         desc['isophotal_flux_err'] = 'Isophotal flux error'
         desc['isophotal_abmag'] = 'Isophotal AB magnitude'

@@ -1,11 +1,11 @@
-1.8.1 (unreleased)
+1.8.3 (unreleased)
 ==================
 
-datamodels
-----------
+associations
+------------
 
-- Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
-  [#7062]
+- Moved text dump of associations to happen when using the '-D' option,
+  rather than the '-v' option. [#7068]
 
 extract_1d
 ----------
@@ -13,7 +13,51 @@ extract_1d
 - Update ATOCA algorithm to development version [#6945]
 
 
-1.8.0 (2022-10-07)
+1.8.2 (2022-10-20)
+==================
+
+set_telescope_pointing
+----------------------
+
+- Revert "JP-2940 Return non-zero status from the set_telescope_pointing" [#7301]
+
+1.8.1 (2022-10-17)
+==================
+
+associations
+------------
+
+- Expand the sequence field in a file name for association files from
+  3 characters to 5 characters. [#7061]
+
+cube_build
+----------
+
+- Changed IFUALIGN convention for MIRI so that isobeta is along cube X instead of
+  isoalpha along cube Y. [#7058]
+
+datamodels
+----------
+
+- Update the definition of the NOUTPUTS keyword to include "5" as an allowed value.
+  [#7062]
+
+- Switch to using new ``asdf.resources`` entry-point mechanism for
+  registering schemas. [#7057]
+
+- Fix handling of ASN directory path by the ``ModelContainer``. [#7071]
+
+resample
+--------
+
+- Make the GWCSDrizzle.outcon attribute a property with setter [#7295]
+
+set_telescope_pointing
+----------------------
+
+- Allow XML_DATA usage to override PRD specification [#7063]
+
+1.8.0 (2022-10-10)
 ==================
 
 align_refs
@@ -48,7 +92,8 @@ datamodels
   loaded from associations into ModelContainer. Modify container method
   ``ind_asn_type`` to query this metadata. [#7046]
 
-- Added writing S_RESFRI for residual_fringe and R_FRIFRQ for FRINGEFREQ reference file. 
+- Added S_RESFRI and R_FRIFRQ keywords for the residual fringe correction
+  step and its reference file. [#7051]
 
 jump
 ----
@@ -89,7 +134,7 @@ resample_spec
   containing negative spectral traces (due to nodded background subtraction)
   in a more robust way. [#7047]
 
- - Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
+- Move update_slit_metadata out of ResampleData and into ResampleSpecStep. [#7042]
 
 
 residual_fringe
@@ -106,13 +151,13 @@ set_telescope_pointing
 
 - Return non-zero status from the set_telescope_pointing command-line when an error occurs [#7056]
 
-
 tweakreg
 --------
 
 - Relaxed FITS WCS SIP fitting parameters for the tweakreg step to make the
   code more robust. [#7038]
 
+- Added support for user-provided catalog files. [#7022]
 
 1.7.2 (2022-09-12)
 ==================

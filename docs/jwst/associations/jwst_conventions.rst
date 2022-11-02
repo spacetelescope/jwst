@@ -12,7 +12,7 @@ Association Naming
 When produced through the ground processing, all association files are
 named according to the following scheme::
 
-  jwPPPPP-TNNNN_YYYYMMDDtHHMMSS_ATYPE_MMM_asn.json
+  jwPPPPP-TNNNN_YYYYMMDDtHHMMSS_ATYPE_MMMMM_asn.json
 
 where:
 
@@ -35,7 +35,7 @@ where:
     When used outside the workflow, this field is user-specifiable.
   * ``ATYPE``: The type of association. See
     :ref:`asn-jwst-association-types`
-  * ``MMM``: A counter for each type of association created.
+  * ``MMMMM``: A counter for each type of association created.
 
 .. _asn-jwst-association-types:
 
