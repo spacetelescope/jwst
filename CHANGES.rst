@@ -30,6 +30,11 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+lib
+---
+
+- Fix circular import in ``lib.wcs_utils``. [#7330]
+
 resample
 --------
 
