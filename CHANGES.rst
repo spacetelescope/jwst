@@ -23,9 +23,6 @@ datamodels
 
 - Add subarray keywords in filteroffset schema [#7317]
 
-- Switch to using new ``asdf.resources`` entry-point mechanism for
-  registering schemas. [#7057]
-
 extract_1d
 ----------
 
@@ -41,11 +38,6 @@ resample
 
 - Enhance spectral output WCS construction to guard against nearly identical
   points. [#7321]
-
-set_telescope_pointing
-----------------------
-
-- Allow XML_DATA usage to override PRD specification [#7063]
 
 tweakreg
 --------
@@ -71,6 +63,7 @@ associations
 - Expand the sequence field in a file name for association files from
   3 characters to 5 characters. [#7061]
 
+
 cube_build
 ----------
 
@@ -87,11 +80,6 @@ datamodels
   registering schemas. [#7057]
 
 - Fix handling of ASN directory path by the ``ModelContainer``. [#7071]
-
-resample
---------
-
-- Make the GWCSDrizzle.outcon attribute a property with setter [#7295]
 
 resample
 --------
