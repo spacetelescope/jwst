@@ -62,7 +62,8 @@ def generate(pool, rules, version_id=None):
         total_mod_existing = 0
         total_new = 0
         total_reprocess = 0
-        with Bar('Processing', max=len(process_list.items)) as bar:
+        with Bar('Processing items', log_level=logger.getEffectiveLevel(),
+                 max=len(process_list.items)) as bar:
             for item in process_list.items:
                 item = PoolRow(item)
 
