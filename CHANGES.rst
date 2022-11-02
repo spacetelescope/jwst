@@ -12,6 +12,9 @@ associations
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
 
+- Added background association candidates to list of level three candidate
+  types requiring members from more than one observation [#7329]
+
 cube_build
 ----------
 
@@ -26,6 +29,11 @@ extract_2d
 ----------
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
+
+lib
+---
+
+- Fix circular import in ``lib.wcs_utils``. [#7330]
 
 resample
 --------
