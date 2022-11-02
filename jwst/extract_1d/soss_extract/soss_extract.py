@@ -1013,11 +1013,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         DataModel containing the extracted spectra.
     """
 
-    # Use atoca to decontaminate or not
-    apply_decontamination = soss_kwargs['atoca']
-
     # Generate the atoca models or not (not necessarily for decontamination)
-    generate_model = soss_kwargs['model'] or (soss_kwargs['bad_pix'] == 'model')
+    generate_model = soss_kwargs['atoca'] or (soss_kwargs['bad_pix'] == 'model')
 
     # Map the order integer names to the string names
     order_str_2_int = {f'Order {order}': order for order in [1, 2, 3]}
