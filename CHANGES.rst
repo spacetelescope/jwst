@@ -15,6 +15,8 @@ associations
 - Added background association candidates to list of level three candidate
   types requiring members from more than one observation [#7329]
 
+- Refactor item reprocessing for efficiency, refactor how background associations are configured [#7332]
+
 cube_build
 ----------
 
