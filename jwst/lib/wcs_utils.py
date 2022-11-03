@@ -1,5 +1,4 @@
 import numpy as np
-from ..assign_wcs import niriss
 
 
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
@@ -51,19 +50,19 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
         else:
             got_wavelength = False  # force wl computation below
 
+    # Evaluate the WCS on the grid of pixel indexes, capturing only the
+    # resulting wavelength values
+    shape = model.data.shape
+    grid = np.indices(shape[-2:], dtype=np.float64)
+
     # If no existing wavelength array, compute one
     if hasattr(model.meta, "wcs") and not got_wavelength:
-
         # Set up an appropriate WCS object
         if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
-            wcs = niriss.niriss_soss_set_input(model, order)
-        else:
-            wcs = model.meta.wcs
+            wl_array = model.meta.wcs(grid[1], grid[0], order)[2]
+            return wl_array
 
-        # Evaluate the WCS on the grid of pixel indexes, capturing only the
-        # resulting wavelength values
-        shape = model.data.shape
-        grid = np.indices(shape[-2:], dtype=np.float64)
+        wcs = model.meta.wcs
 
         if exp_type in WFSS_EXPTYPES:
             # We currently have to loop over pixels for WFSS data.

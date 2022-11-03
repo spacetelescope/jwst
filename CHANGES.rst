@@ -12,6 +12,9 @@ associations
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
 
+- Added background association candidates to list of level three candidate
+  types requiring members from more than one observation [#7329]
+
 cube_build
 ----------
 
@@ -33,7 +36,12 @@ guider_cds
 - Calculate and output the ERR array based on the gain and readnoise 
   variances, and force the stack mode to use the default gain and readnoise
   pixel values. [#7309]
-  
+
+lib
+---
+
+- Fix circular import in ``lib.wcs_utils``. [#7330]
+
 resample
 --------
 
@@ -45,6 +53,10 @@ tweakreg
 
 - Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
   has only one group group. This is a continuation of PR #6938. [#7326]
+
+- Fix a bug in the logic that handles inputs with a single image group when
+  an absolute reference catalog is provided. [#7328]
+
 
 1.8.2 (2022-10-20)
 ==================
