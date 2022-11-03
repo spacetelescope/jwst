@@ -252,8 +252,24 @@ class TweakRegStep(Step):
                 del model.catalog
             return input
 
-        elif len(grp_img) > 1:
+        elif len(grp_img) == 1 and align_to_abs_refcat:
+            # create a list of WCS-Catalog-Images Info and/or their Groups:
+            g = grp_img[0]
+            if len(g) == 0:
+                raise AssertionError("Logical error in the pipeline code.")
+            group_name = _common_name(g)
+            imcats = list(map(self._imodel2wcsim, g))
+            # Remove the attached catalogs
+            for model in g:
+                del model.catalog
+            self.log.info("* Images in GROUP '{}':".format(group_name))
+            for im in imcats:
+                im.meta['group_id'] = group_name
+                self.log.info("     {}".format(im.meta['name']))
 
+            self.log.info('')
+
+        elif len(grp_img) > 1:
             # create a list of WCS-Catalog-Images Info and/or their Groups:
             imcats = []
             for g in grp_img:
@@ -414,7 +430,8 @@ class TweakRegStep(Step):
                 # earlier in this step.
                 for imcat in imcats:
                     imcat.meta['group_id'] = 987654
-                    if 'REFERENCE' in imcat.meta['fit_info']['status']:
+                    if ('fit_info' in imcat.meta and
+                            'REFERENCE' in imcat.meta['fit_info']['status']):
                         del imcat.meta['fit_info']
 
                 # Perform fit
