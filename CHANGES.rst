@@ -1,13 +1,6 @@
 1.8.3 (unreleased)
 ==================
 
-guider_cds
-----------
-
-- JP-445 Calculate and output the ERR array based on the gain and readnoise 
-  variances, and force the stack mode to use the default gain and readnoise
-  pixel values. [#7309]
-
 assign_wcs
 ----------
 
@@ -34,6 +27,13 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+guider_cds
+----------
+
+- Calculate and output the ERR array based on the gain and readnoise 
+  variances, and force the stack mode to use the default gain and readnoise
+  pixel values. [#7309]
+  
 resample
 --------
 
