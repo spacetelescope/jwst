@@ -143,3 +143,13 @@ def test_table_extensions(make_guider_image):
     assert 'pointing_table' in result
     assert 'centroid_table' in result
     assert 'track_sub_table' in result
+
+
+def test_err_nonzero(make_guider_image):
+    """Make sure that the ERR array in output are not all zero."""
+
+    model = make_guider_image
+
+    result = guider_cds(model)
+
+    assert result.err.max() > 0
