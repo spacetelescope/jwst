@@ -49,6 +49,9 @@ tweakreg
 - Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
   has only one group group. This is a continuation of PR #6938. [#7326]
 
+- Fix a bug in the logic that handles inputs with a single image group when
+  and absolute reference catalog was provided. [#7328]
+
 
 1.8.2 (2022-10-20)
 ==================

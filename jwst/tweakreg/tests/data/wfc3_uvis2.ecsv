@@ -1,4 +1,10 @@
-# x y
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: x, datatype: float64}
+# - {name: y, datatype: float64}
+# schema: astropy-2.0
+x y
  3260.41    22.34
  1945.11   142.84
  4047.45   649.92
