@@ -9,6 +9,8 @@ allOf:
 - $ref: keyword_pfilter.schema
 - $ref: keyword_channel.schema
 - $ref: keyword_module.schema
+- $ref: subarray.schema
+- $ref: keyword_psubarray.schema
 - type: object
   properties:
     meta:

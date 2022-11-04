@@ -1,16 +1,48 @@
 1.8.3 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
+
 associations
 ------------
 
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
 
+cube_build
+----------
+
+- Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
+
+datamodels
+----------
+
+- Add subarray keywords in filteroffset schema [#7317]
+
 extract_1d
 ----------
 
 - Update ATOCA algorithm to development version [#6945]
+
+extract_2d
+----------
+
+- Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
+
+resample
+--------
+
+- Enhance spectral output WCS construction to guard against nearly identical
+  points. [#7321]
+
+tweakreg
+--------
+
+- Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
+  has only one group group. This is a continuation of PR #6938. [#7326]
 
 
 1.8.2 (2022-10-20)
@@ -29,6 +61,7 @@ associations
 
 - Expand the sequence field in a file name for association files from
   3 characters to 5 characters. [#7061]
+
 
 cube_build
 ----------
