@@ -709,7 +709,6 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
             sp.meta.soss_extract1d.color_range = 'BLUE'
         spec_list += spec_ord
 
-
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
 
@@ -1251,7 +1250,6 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             output_model.spec.append(spec)
 
         output_model.meta.soss_extract1d.width = soss_kwargs['width']
-        output_model.meta.soss_extract1d.apply_decontamination = apply_decontamination
         output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
         output_model.meta.soss_extract1d.delta_x = transform[1]
         output_model.meta.soss_extract1d.delta_y = transform[2]

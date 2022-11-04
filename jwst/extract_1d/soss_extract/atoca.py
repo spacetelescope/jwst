@@ -15,7 +15,6 @@ import numpy as np
 from scipy.sparse import issparse, csr_matrix, diags
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d
-from ...datamodels import SossWaveGrid
 
 # Local imports.
 from . import atoca_utils

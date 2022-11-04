@@ -141,6 +141,7 @@ __all__ = [
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',
     'SossExtractModel',
+    'SossWaveGrid',
     'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',
