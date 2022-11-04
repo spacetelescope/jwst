@@ -12,6 +12,9 @@ associations
 - Moved text dump of associations to happen when using the '-D' option,
   rather than the '-v' option. [#7068]
 
+- Added background association candidates to list of level 3 candidate
+  types requiring members from more than one observation [#7329]
+
 cube_build
 ----------
 
@@ -20,7 +23,7 @@ cube_build
 datamodels
 ----------
 
-- Add subarray keywords in filteroffset schema [#7317]
+- Add subarray keywords in the filteroffset schema [#7317]
 
 extract_1d
 ----------
@@ -32,6 +35,23 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+guider_cds
+----------
+
+- Calculate and output the ERR array based on the gain and readnoise 
+  variances, and force the stack mode to use the default gain and readnoise
+  pixel values. [#7309]
+
+lib
+---
+
+- Fix circular import in ``lib.wcs_utils``. [#7330]
+
+photom
+------
+
+- Cutout pixel area array to match the subarray of the science data. [#7319]
+
 resample
 --------
 
@@ -42,7 +62,10 @@ tweakreg
 --------
 
 - Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
-  has only one group group. This is a continuation of PR #6938. [#7326]
+  has only one group. This is a continuation of PR6938. [#7326]
+
+- Fix a bug in the logic that handles inputs with a single image group when
+  an absolute reference catalog is provided. [#7328]
 
 
 1.8.2 (2022-10-20)
@@ -61,7 +84,6 @@ associations
 
 - Expand the sequence field in a file name for association files from
   3 characters to 5 characters. [#7061]
-
 
 cube_build
 ----------

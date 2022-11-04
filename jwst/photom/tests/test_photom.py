@@ -166,6 +166,7 @@ def create_input(instrument, detector, exptype,
         An open data model object of the appropriate type.
     """
 
+    data = None  # Not defined for niriss_soss
     if instrument == 'NIRISS':
         if exptype == 'NIS_WFSS':
             nslits = 2
@@ -356,7 +357,12 @@ def create_input(instrument, detector, exptype,
     input_model.meta.instrument.name = instrument
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = exptype
+    input_model.meta.subarray.xstart = 1
+    input_model.meta.subarray.ystart = 1
 
+    if data is not None:
+        input_model.meta.subarray.xsize = data.shape[-1]
+        input_model.meta.subarray.ysize = data.shape[-2]
     if filter is not None:
         input_model.meta.instrument.filter = filter
     if pupil is not None:
@@ -1522,6 +1528,11 @@ def test_apply_photom_1():
                          area_ster, rel_tol=1.e-7))
     assert (math.isclose(output_model.meta.photometry.pixelarea_arcsecsq,
                          area_a2, rel_tol=1.e-7))
+
+    # check the x,y size of area array in output is the same size as the sci data
+    sh_area = output_model.area.shape
+    assert shape[-1] == sh_area[-1]
+    assert shape[-2] == sh_area[-2]
 
 
 @pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])

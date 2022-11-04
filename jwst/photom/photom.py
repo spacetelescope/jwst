@@ -1032,7 +1032,12 @@ class DataSet():
                     # Note that this only copied to the first slit.
                     self.input.slits[0].area = pix_area.data
                 else:
-                    self.input.area = pix_area.data
+                    ystart = self.input.meta.subarray.ystart - 1
+                    xstart = self.input.meta.subarray.xstart - 1
+                    yend = ystart + self.input.meta.subarray.ysize
+                    xend = xstart + self.input.meta.subarray.xsize
+                    self.input.area = pix_area.data[ystart: yend,
+                                                    xstart: xend]
                 log.info('Pixel area map copied to output.')
             else:
                 self.save_area_nirspec(pix_area)
