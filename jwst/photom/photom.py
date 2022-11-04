@@ -309,8 +309,12 @@ class DataSet():
                 # Compute relative sensitivity for each pixel based
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
-                sens2d *= conv_factor  # include the scalar conversion factor
-                sens2d /= area2d  # divide by pixel area
+                sens2d *= tabdata['photmj']  # include the initial scalar conversion factor -> MJ
+                # This line used to be applied to all IFU data, but I think this was an error -
+                # masked by the fact that the initial pixel area maps for IFU data were
+                # arrays of 1-values (in arcsec**2). If srctype==POINT, do not apply.
+                if self.source_type.upper() != 'POINT':
+                    sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJ/sr
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
                 where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
