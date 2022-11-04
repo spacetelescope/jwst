@@ -132,3 +132,18 @@ the reference and actual angles.
 - `astropy <http://www.astropy.org/>`__
 
 - `asdf <http://asdf.readthedocs.io/en/latest/>`__
+
+Corrections Due to Spacecraft Motion
+------------------------------------
+
+The WCS transforms contain two corrections due to motion of the observatory.
+
+Absolute velocity aberration is calculated onboard when acquiring the guide star, but
+differential velocity aberration effects are calculated during the ``assign_wcs`` step.
+This introduces corrections in the conversion from sky coordinates to observatory
+V2/V3 coordinates, and is stored in the WCS under the ``v2v3vacorr`` frame.
+
+For spectroscopic data, a relativistic Doppler correction is applied to all wavelengths to place
+observations into the barycentric reference frame. This correction factor is applied to the WCS
+wavelength solution created during the ``assign_wcs`` step, such that extracted spectral products
+will have wavelength arrays in the barycentric frame.
