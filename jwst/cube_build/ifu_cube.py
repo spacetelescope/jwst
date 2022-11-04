@@ -2069,6 +2069,7 @@ class IFUCubeData():
         # loop over the wavelength planes to confirm each plane has some data
         # for initial or final planes that do not have any data - eliminated them
         # from the IFUcube
+
         # Rearrange values from 1d vectors into 3d cubes
 
         flux = self.spaxel_flux.reshape((self.naxis3,
@@ -2080,6 +2081,11 @@ class IFUCubeData():
                                        self.naxis2, self.naxis1))
         dq = self.spaxel_dq.reshape((self.naxis3,
                                      self.naxis2, self.naxis1))
+
+        # Set np.nan values wherever the DO_NOT_USE flag is set
+        dnu = np.where((dq & dqflags.pixel['DO_NOT_USE']) != 0)
+        flux[dnu] = np.nan
+        var[dnu] = np.nan
 
         # For MIRI MRS, apply a quality cut to help fix spectral tearing at the ends of each band.
         # This is largely taken care of by the WCS regions file, but there will still be 1-2 possibly
