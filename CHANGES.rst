@@ -20,10 +20,19 @@ cube_build
 
 - Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
 
+- Change fill value for regions of SCI and ERR extensions with no data
+  from 0 to nan. []
+
 datamodels
 ----------
 
 - Add subarray keywords in the filteroffset schema [#7317]
+
+extract_1d
+----------
+
+- Fix IFU spectral extraction code to not fail on nan fill values
+  now populating empty regions of the data cubes. []
 
 extract_2d
 ----------
