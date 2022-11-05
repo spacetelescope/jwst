@@ -2069,7 +2069,6 @@ class IFUCubeData():
         # loop over the wavelength planes to confirm each plane has some data
         # for initial or final planes that do not have any data - eliminated them
         # from the IFUcube
-
         # Rearrange values from 1d vectors into 3d cubes
 
         flux = self.spaxel_flux.reshape((self.naxis3,
