@@ -574,7 +574,7 @@ def extract_ifu(input_model, source_type, extract_params):
         annulus_area = 0
 
         # Make a boolean mask to ignore voxels with no valid data
-        bmask[:]=False
+        bmask[:] = False
         bmask[np.where(temp_weightmap == 0)] = True
 
         # aperture_photometry - using weight map
@@ -1370,7 +1370,7 @@ def sigma_clip_extended_region(data, var_poisson, var_rnoise, var_flat, mask_tar
 
         # set up the mask to flag data that should not be used
         maskclip = np.logical_or(data_plane < low, data_plane > high)  # flag outliers
-        maskclip = np.logical_or(maskclip, np.isfinite(data_plane) == False)
+        maskclip = np.logical_or(maskclip, ~np.isfinite(data_plane))
         extract_region[maskclip] = 0
 
         sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k, :, :])
