@@ -829,7 +829,17 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
             DMSAttrConstraint(
                 name='act_id',
                 sources=['act_id']
-            )
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='dms_note',
+                        sources=['dms_note'],
+                        value='wfsc_los_jitter'
+                    ),
+                ],
+                reduce=Constraint.notany,
+            ),
         ])
 
         # Only valid if two members exist and candidate is not a GROUP.
