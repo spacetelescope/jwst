@@ -155,6 +155,14 @@ class _BaseOverlap:
                 wave_grid = atoca_utils.get_soss_grid(wave_map, trace_profile, n_os=n_os)
             else:
                 wave_grid, _ = self.grid_from_map()
+        else:
+            # Check if the input wave_grid is sorted and strictly increasing.
+            is_sorted = (np.diff(wave_grid) > 0).all()
+
+            # If not, sort it and make it unique
+            if not is_sorted:
+                log.warning('`wave_grid` is not strictly increasing. It will be sorted and unique.')
+                wave_grid = np.unique(wave_grid)
 
         # Set the wavelength grid and its size.
         self.wave_grid = wave_grid.astype(self.dtype).copy()

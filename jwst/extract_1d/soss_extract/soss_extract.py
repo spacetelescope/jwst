@@ -1039,6 +1039,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     if wave_grid_in is not None:
         log.info(f'Loading wavelength grid from {wave_grid_in}.')
         wave_grid = datamodels.SossWaveGrid(wave_grid_in).wavegrid
+        # Make sure it as the correct precision
+        wave_grid = wave_grid.astype('float64')
     else:
         # wave_grid will be estimated later in the first call of `model_image`
         log.info(f'Wavelength grid was not specified. Setting `wave_grid` to None')
