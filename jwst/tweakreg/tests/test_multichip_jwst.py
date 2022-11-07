@@ -227,10 +227,10 @@ def test_multichip_jwst_alignment(monkeypatch):
 
     w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
     imcat1 = JWSTWCSCorrector(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
-    data_file = os.path.join(data_path, 'wfc3_uvis1.cat')
+    data_file = os.path.join(data_path, 'wfc3_uvis1.ecsv')
     imcat1.meta['catalog'] = table.Table.read(
         data_file,
-        format='ascii.csv',
+        format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
     )
@@ -242,8 +242,8 @@ def test_multichip_jwst_alignment(monkeypatch):
     w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
     imcat2 = JWSTWCSCorrector(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat2.meta['catalog'] = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis2.cat'),
-        format='ascii.csv',
+        os.path.join(data_path, 'wfc3_uvis2.ecsv'),
+        format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
     )
@@ -253,8 +253,8 @@ def test_multichip_jwst_alignment(monkeypatch):
     imcat2.meta['name'] = 'ext4'
 
     refcat = table.Table.read(
-        os.path.join(data_path, 'ref.cat'),
-        format='ascii.csv', delimiter=' ',
+        os.path.join(data_path, 'ref.ecsv'),
+        format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
 
@@ -314,8 +314,8 @@ def test_multichip_alignment_step(monkeypatch):
     m1.meta.wcs = w1
 
     imcat1 = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis1.cat'),
-        format='ascii.csv',
+        os.path.join(data_path, 'wfc3_uvis1.ecsv'),
+        format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
     )
@@ -343,8 +343,8 @@ def test_multichip_alignment_step(monkeypatch):
     m2.meta.wcs = w2
 
     imcat2 = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis2.cat'),
-        format='ascii.csv',
+        os.path.join(data_path, 'wfc3_uvis2.ecsv'),
+        format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
     )
@@ -371,8 +371,8 @@ def test_multichip_alignment_step(monkeypatch):
     mr.meta.wcs = wr
 
     refcat = table.Table.read(
-        os.path.join(data_path, 'ref.cat'),
-        format='ascii.csv', delimiter=' ',
+        os.path.join(data_path, 'ref.ecsv'),
+        format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
     x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
@@ -408,6 +408,68 @@ def test_multichip_alignment_step(monkeypatch):
     ra2, dec2 = wc2(imcat2['x'], imcat2['y'])
     ra = np.concatenate([ra1, ra2])
     dec = np.concatenate([dec1, dec2])
+    rra = refcat['RA']
+    rdec = refcat['DEC']
+    rmse_ra = np.sqrt(np.mean((ra - rra)**2))
+    rmse_dec = np.sqrt(np.mean((dec - rdec)**2))
+
+    assert rmse_ra < _REF_RMSE_RA
+    assert rmse_dec < _REF_RMSE_DEC
+
+
+def test_multichip_alignment_step_abs(monkeypatch):
+    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
+
+    refcat_path = os.path.join(data_path, 'ref.ecsv')
+
+    # refcat
+    wr = _make_reference_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
+
+    mr = ImageModel(np.zeros((100, 100)))
+    mr.meta.filename = 'refcat'
+    mr.meta.observation.observation_number = '0'
+    mr.meta.observation.program_number = '0'
+    mr.meta.observation.visit_number = '0'
+    mr.meta.observation.visit_group = '0'
+    mr.meta.observation.sequence_id = '0'
+    mr.meta.observation.activity_id = '0'
+    mr.meta.observation.exposure_number = '0'
+
+    mr.meta.wcsinfo.v2_ref = 0
+    mr.meta.wcsinfo.v3_ref = 0
+    mr.meta.wcsinfo.roll_ref = 0
+    mr.meta.wcs = wr
+
+    refcat = table.Table.read(
+        os.path.join(data_path, 'ref.ecsv'),
+        format='ascii.ecsv', delimiter=' ',
+        names=['RA', 'DEC']
+    )
+    x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+    refcat['x'] = x
+    refcat['y'] = y
+    mr.tweakreg_catalog = refcat
+
+    # update bounding box of the reference WCS to include all test sources:
+    mr.meta.wcs.bounding_box = ((x.min() - 0.5, x.max() + 0.5),
+                                (y.min() - 0.5, y.max() + 0.5))
+
+    mc = ModelContainer([mr])
+    mc.models_grouped
+
+    step = tweakreg_step.TweakRegStep()
+    step.fitgeometry = 'general'
+    step.nclip = 0
+    step.abs_refcat = refcat_path
+
+    step.tolerance = 0.01
+
+    step.process(mc)
+
+    wcr = mr.meta.wcs
+
+    ra, dec = wcr(refcat['x'], refcat['y'])
     rra = refcat['RA']
     rdec = refcat['DEC']
     rmse_ra = np.sqrt(np.mean((ra - rra)**2))
