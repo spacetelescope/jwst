@@ -201,6 +201,13 @@ badcandidate_asn = {
 }
 
 
+def test_duplicate_members():
+    """Test duplicate members"""
+    product = badcandidate_asn['products'][0]
+    with pytest.raises(asn_diff.DuplicateMembersError):
+        asn_diff.check_duplicate_members(product)
+
+
 @pytest.mark.parametrize(
     'mismatched',
     [

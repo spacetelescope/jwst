@@ -55,18 +55,18 @@ def test_process_queue_sorted():
     """Test the sorted process queue"""
     items_to_add = [
         [
-            ProcessList([1], work_over=ProcessList.RULES),
-            ProcessList([2], work_over=ProcessList.BOTH),
-            ProcessList([3], work_over=ProcessList.EXISTING),
+            ProcessList([1], ['r1'], work_over=ListCategory.RULES),
+            ProcessList([2], ['r2'], work_over=ListCategory.BOTH),
+            ProcessList([3], ['r3'], work_over=ListCategory.EXISTING),
         ],
         [
-            ProcessList([4], work_over=ProcessList.EXISTING),
+            ProcessList([4], ['r4'], work_over=ListCategory.EXISTING),
         ],
         [
-            ProcessList([5], work_over=ProcessList.BOTH),
+            ProcessList([5], ['r5'], work_over=ListCategory.BOTH),
         ],
         [
-            ProcessList([6], work_over=ProcessList.RULES),
+            ProcessList([6], ['r6'], work_over=ListCategory.RULES),
         ],
     ]
 
@@ -80,7 +80,48 @@ def test_process_queue_sorted():
     assert len(queue) == 3
     results = []
     for item in queue:
-        results.append(item.items[0])
+        results += item.items
+        idx += 1
+        try:
+            to_add = items_to_add[idx]
+        except:
+            pass
+        else:
+            queue.extend(to_add)
+
+    assert results == standard
+
+
+def test_process_queue_dups():
+    """Test the sorted process queue with same rulesets."""
+    items_to_add = [
+        [
+            ProcessList([1], ['r1'], work_over=ListCategory.RULES),
+            ProcessList([2], ['r1'], work_over=ListCategory.BOTH),
+            ProcessList([3], ['r1'], work_over=ListCategory.EXISTING),
+        ],
+        [
+            ProcessList([4], ['r1'], work_over=ListCategory.EXISTING),
+        ],
+        [
+            ProcessList([5], ['r1'], work_over=ListCategory.BOTH),
+        ],
+        [
+            ProcessList([6], ['r1'], work_over=ListCategory.RULES),
+        ],
+    ]
+
+    # This is the order the items should be retrieved in:
+    # RULES -> BOTH -> EXISTING
+    standard = [1, 2, 5, 6, 3, 4]
+
+    queue = ProcessQueueSorted()
+    idx = 0
+    queue.extend(items_to_add[idx])
+    assert len(queue) == 3
+    results = []
+    for item in queue:
+        results += item.items
         idx += 1
         try:
             to_add = items_to_add[idx]
