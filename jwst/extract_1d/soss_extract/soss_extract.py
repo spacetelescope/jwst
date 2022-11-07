@@ -463,7 +463,7 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
 
 
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
-                tikfac=None, threshold=1e-4, n_os=2, wave_grid_in=None, wave_grid_out=None,
+                tikfac=None, threshold=1e-4, n_os=2, wave_grid=None,
                 estimate=None, rtol=1e-3, max_grid_size=1000000):
     """Perform the spectral extraction on a single image.
 
@@ -499,13 +499,11 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     threshold : float
         The threshold value for using pixels based on the spectral profile.
         Default value is 1e-4.
-    wave_grid_in : str or SossWaveGrid or None
+    wave_grid : str or SossWaveGrid or None
         Filename of reference file or SossWaveGrid containing the wavelength grid used by ATOCA
         to model each pixel valid pixel of the detector. If not given, the grid is determined
         based on an estimate of the flux (estimate), the relative tolerance (rtol)
         required on each pixel model and the maximum grid size (max_grid_size).
-    wave_grid_out : str or None
-        Filename to save wave_grid array into SossWaveGrid datamodel.
     estimate : UnivariateSpline or None
          Estimate of the target flux as a function of wavelength in microns.
     rtol : float
@@ -553,18 +551,17 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
     #       dq mask caused issues here and this may need a try/except wrap.
     #       Dev suggested np.logspace(-19, -10, 10)
-    if (tikfac is None or wave_grid_in is None) and estimate is None:
+    if (tikfac is None or wave_grid is None) and estimate is None:
         estimate = estim_flux_first_order(scidata_bkg, scierr, scimask,
                                           ref_file_args, mask_trace_profile[0])
 
     # Generate grid based on estimate if not given
-    if wave_grid_in is None:
-        log.info(f'soss_wave_grid_in not given: generating grid based on rtol={rtol}')
+    if wave_grid is None:
+        log.info(f'wave_grid not given: generating grid based on rtol={rtol}')
         wave_grid = make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os)
-        log.debug(f'soss_wave_grid_in covering from {wave_grid.min()} to {wave_grid.max()}')
+        log.debug(f'wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
     else:
-        log.info(f'Loading wavelength grid from {wave_grid_in}.')
-        wave_grid = datamodels.SossWaveGrid(wave_grid_in).wavegrid
+        log.info(f'Using previously computed or user specified wavelength grid.')
 
 #     # Use estimate to evaluate the contribution from each orders to pixels
 #     # (Used to determine which pixel to model later)
@@ -1037,6 +1034,16 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     # Save names for logging
     param_name = np.array(['theta', 'x-offset', 'y-offset'])
 
+    # Unpack wave_grid if wave_grid_in was specified.
+    wave_grid_in = soss_kwargs['wave_grid_in']
+    if wave_grid_in is not None:
+        log.info(f'Loading wavelength grid from {wave_grid_in}.')
+        wave_grid = datamodels.SossWaveGrid(wave_grid_in).wavegrid
+    else:
+        # wave_grid will be estimated later in the first call of `model_image`
+        log.info(f'Wavelength grid was not specified. Setting `wave_grid` to None')
+        wave_grid = None
+
     # TODO: Maybe not unpack yet. Use SpecModel attributes
     #       to allow for multiple orders? Create unpacking function.
     # Convert estimate to cubic spline if given.
@@ -1167,13 +1174,11 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             kwargs['max_grid_size'] = soss_kwargs['max_grid_size']
             kwargs['rtol'] = soss_kwargs['rtol']
             kwargs['n_os'] = soss_kwargs['n_os']
-            kwargs['wave_grid_in'] = soss_kwargs['wave_grid_in']
-            kwargs['wave_grid_out'] = soss_kwargs['wave_grid_out']
+            kwargs['wave_grid'] = wave_grid
             kwargs['threshold'] = soss_kwargs['threshold']
 
-            result = model_image(scidata_bkg, scierr, scimask, refmask,
-                                 ref_files, box_weights, subarray, **kwargs)
-            tracemodels, soss_kwargs['tikfac'], logl, soss_kwargs['wave_grid'], spec_list = result
+            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, **kwargs)
+            tracemodels, soss_kwargs['tikfac'], logl, wave_grid, spec_list = result
 
             # Add atoca spectra to multispec for output
             for spec in spec_list:
@@ -1250,6 +1255,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
             output_model.spec.append(spec)
 
         output_model.meta.soss_extract1d.width = soss_kwargs['width']
+        output_model.meta.soss_extract1d.apply_decontamination = soss_kwargs['atoca']
         output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs['tikfac']
         output_model.meta.soss_extract1d.delta_x = transform[1]
         output_model.meta.soss_extract1d.delta_y = transform[2]
@@ -1279,7 +1285,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         output_model.int_times = input_model.int_times.copy()
 
     if soss_kwargs['wave_grid_out'] is not None:
-        wave_grid_model = SossWaveGrid(wavegrid=soss_kwargs['wave_grid'])
+        wave_grid_model = SossWaveGrid(wavegrid=wave_grid)
         log.info(f"Saving soss_wave_grid to {soss_kwargs['wave_grid_out']}")
         wave_grid_model.save(path=soss_kwargs['wave_grid_out'])
         wave_grid_model.close()
