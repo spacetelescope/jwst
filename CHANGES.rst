@@ -50,6 +50,10 @@ photom
 
 - Cutout pixel area array to match the subarray of the science data. [#7319]
 
+- Remove duplicated division of pixel area during photometric calibration
+  of NIRSpec IFU data with EXTENDED source type; correct units in pixel area
+  division to sr from square arcseconds [#7336]
+
 resample
 --------
 
