@@ -10,6 +10,13 @@ from jwst.associations.load_asn import load_asn
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+__all__ = [
+    'compare_asn_files',
+    'compare_asn_lists',
+    'compare_asns',
+    'compare_membership',
+    'compare_product_membership',
+]
 
 # #########################
 # Define the types of diffs
@@ -22,12 +29,16 @@ class CandidateLevelError(DiffError):
     """Candidate level mismatch"""
 
 
-class DifferentProductSetsError(DiffError):
-    """Different product sets between groups of associations"""
+class DuplicateMembersError(DiffError):
+    """Duplicate members within a product"""
 
 
 class DuplicateProductError(DiffError):
     """Duplicate products found"""
+
+
+class DifferentProductSetsError(DiffError):
+    """Different product sets between groups of associations"""
 
 
 class MemberMismatchError(DiffError):
@@ -302,6 +313,17 @@ def compare_product_membership(left, right):
         all the differences.
     """
     diffs = MultiDiffError()
+
+    # Check for duplicate members.
+    try:
+        check_duplicate_members(left)
+    except DuplicateMembersError as dup_member_error:
+        diffs.append(dup_member_error)
+    try:
+        check_duplicate_members(right)
+    except DuplicateMembersError as dup_member_error:
+        diffs.append(dup_member_error)
+
     if len(right['members']) != len(left['members']):
         diffs.append(MemberMismatchError(
             'Product Member length differs:'
@@ -347,30 +369,41 @@ def compare_product_membership(left, right):
         raise diffs
 
 
-def components(s):
-    """split string into its components"""
-    return set(re.split('[_-]', s))
+def check_duplicate_members(product):
+    """Check for duplicate members in an association product
 
-
-def separate_products(asn):
-    """Separate products into individual associations
+    The check is based solely on `expname`.
 
     Parameters
     ----------
-    asn: `Association`
-        The association to split
+    product : dict
+        Association product to check.
 
-    Returns
-    -------
-    separated: [`Association`[, ...]]
-        The list of separated associations
+    Raises
+    ------
+    MultiDiffError
+        If the product has duplicate members.
     """
-    separated = []
-    for product in asn['products']:
-        new_asn = copy(asn)
-        new_asn['products'] = [product]
-        separated.append(new_asn)
-    return separated
+    seen = set()
+    dups = []
+    for expname in [member['expname'] for member in product['members']]:
+        if expname in seen:
+            dups.append(expname)
+        else:
+            seen.add(expname)
+
+    if dups:
+        raise DuplicateMembersError(
+            f'Product {product["name"]} has duplicate members {dups}'
+        )
+
+
+# #########
+# Utilities
+# #########
+def components(s):
+    """split string into its components"""
+    return set(re.split('[_-]', s))
 
 
 def get_product_names(asns):
@@ -401,3 +434,24 @@ def get_product_names(asns):
         )
 
     return set(product_names), dups
+
+
+def separate_products(asn):
+    """Separate products into individual associations
+
+    Parameters
+    ----------
+    asn: `Association`
+        The association to split
+
+    Returns
+    -------
+    separated: [`Association`[, ...]]
+        The list of separated associations
+    """
+    separated = []
+    for product in asn['products']:
+        new_asn = copy(asn)
+        new_asn['products'] = [product]
+        separated.append(new_asn)
+    return separated

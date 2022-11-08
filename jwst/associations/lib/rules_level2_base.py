@@ -244,6 +244,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             The item to be adding.
         """
         member = self.make_member(item)
+        if self.is_member(member):
+            return
         members = self.current_product['members']
         members.append(member)
         self.update_validity(member)
