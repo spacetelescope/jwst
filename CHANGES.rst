@@ -26,6 +26,7 @@ datamodels
 ----------
 
 - Add subarray keywords in the filteroffset schema [#7317]
+- Remove duplicates and add comments to core.schema dithering types [#7331]
 
 extract_2d
 ----------

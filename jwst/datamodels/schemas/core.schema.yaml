@@ -1049,8 +1049,17 @@ properties:
             type: string
             enum:
               # FGS in parallel with NIRCam and NIRISS
-             [FULL, FULLBOX, INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX,
-              INTRASCA, SUBARRAY_DITHER, WFSC, AMI, IMAGING, MIMF, WFSS,
+              # shared with NIRCam: FULL, FULLBOX, INTRAMODULE, INTRAMODULEBOX,
+              #   INTRAMODULEX, INTRASCA, WFSC,
+              # shared with NIRISS: AMI, IMAGING, MIMF, WFSS,
+             [SUBARRAY_DITHER,
+
+              # common to NIRISS and FGS in parallel with NIRCam and NIRISS
+              AMI, IMAGING, MIMF, WFSS,
+
+              # common to NIRCam and FGS in parallel with NIRCam and NIRISS
+              FULL, FULLBOX, INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX,
+              INTRASCA, WFSC,
 
               # MIRI coron
               5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID, BACKGROUND,
@@ -1058,8 +1067,10 @@ properties:
               PFLAT_CORON1065, PFLAT_CORON1140, PFLAT_CORON1550, PFLAT_CORONLYOT,
 
               # MIRI imaging
-              CYCLING, REULEAUX, SPARSE-CYCLING,
-              2-POINT, 4-POINT-SETS,
+              # shared with NIRSpec IFU: CYCLING, SPARSE-CYCLING
+              # shared with MIRI MRS: 2-POINT
+              REULEAUX,
+              4-POINT-SETS,
               2-POINT-MIRI-F770W-WITH-NIRCAM, 3-POINT-MIRI-F770W-WITH-NIRCAM,
               4-POINT-MIRI-F770W-WITH-NIRCAM, 9-POINT-MIRI-F770W-WITH-NIRCAM,
               3-POINT-MIRI-F1000W-WITH-NIRCAM, 4-POINT-MIRI-F1000W-WITH-NIRCAM,
@@ -1103,15 +1114,19 @@ properties:
               7x3-PIXEL-MAP-SLITLESS, 9x3-8x4-SCAN-MAPS-SLITLESS,
 
               # MIRI MRS
-              2-POINT, 4-POINT, SCAN-CALIBRATION,
+              # shared with MIRI imaging: 2-POINT
+              4-POINT, SCAN-CALIBRATION,
+
+              # common to MIRI imaging and MIRI MRS
+              2-POINT,
 
               # NIRCam
-              FULL, FULLBOX, FULL-TIGHT,
-              INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
-              SUBARRAY-DITHER, WFSC, 1LOS,
+              # shared with FGS in parallel with NIRCam and NIRISS:
+              #   FULL, FULLBOX, INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA, WFSC,
+              FULL-TIGHT, SUBARRAY-DITHER, 1LOS,
 
               # NIRISS
-              AMI, IMAGING, MIMF, WFSS,
+              # shared with FGS in parallel with NIRCam and NIRISS: AMI, IMAGING, MIMF, WFSS,
 
               # NIRISS with NIRCam in parallel
               NIS-NRC-2L, NIS-NRC-2M,
@@ -1130,12 +1145,21 @@ properties:
               NIS-MIR255-2, NIS-MIR255-3, NIS-MIR255-4, NIS-MIR255-9,
 
               # NIRSpec FS and MOS
-              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              # shared with NIRSpec IFU: 2-POINT-NOD
+              3-POINT-NOD, 5-POINT-NOD,
               2-POINT-WITH-NIRCAM-SIZE1, 2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-WITH-NIRCAM-SIZE3,
               3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
 
+              # common to NIRSpec FS and MOS and NIRSpec IFU
+              2-POINT-NOD,
+
               # NIRSpec IFU
-              2-POINT-NOD, 4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              # shared with MIRI imaging: CYCLING, SPARSE-CYCLING
+              # shared with NIRSpec FS and MOS: 2-POINT-NOD
+              4-POINT-NOD, 4-POINT-DITHER,
+
+              # common to MIRI imaging and NIRSpec IFU
+              CYCLING, SPARSE-CYCLING,
 
               # Misc
               N/A, NONE, ANY]
