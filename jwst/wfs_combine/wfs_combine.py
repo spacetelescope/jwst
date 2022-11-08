@@ -1,7 +1,8 @@
 import logging
 
 import numpy as np
-import scipy.signal
+from scipy.signal import convolve, correlate2d
+from scipy.ndimage import gaussian_filter, center_of_mass
 from scipy.interpolate import griddata
 
 from .. import datamodels
@@ -177,7 +178,7 @@ class DataSet:
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
             g = gauss_kern(self.blur_size, sizey=None)
-            s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
+            s_data_1 = convolve(data_1, g, mode='valid')
 
             # 2. Find approximate center of PSF in unsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
@@ -727,8 +728,8 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     sub_1_sub = sub_1[ymin:ymax, xmin:xmax]
     sub_2_sub = sub_2[ymin:ymax, xmin:xmax]
     # Create the cross correlation image
-    cross_cor = scipy.signal.correlate2d(sub_2_sub - scipy.ndimage.gaussian_filter(sub_2_sub, 5), sub_1_sub -
-                                         scipy.ndimage.gaussian_filter(sub_1_sub, 5))
+    cross_cor = correlate2d(sub_2_sub - gaussian_filter(sub_2_sub, 5), sub_1_sub -
+                            gaussian_filter(sub_1_sub, 5))
     maximum_pixel = np.unravel_index(np.argmax(cross_cor), cross_cor.shape)
 
     ymax = maximum_pixel[0] - sub_1_sub.shape[0] + 1
@@ -737,7 +738,7 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     # accurate estimate of the x and y offsets.
     central_cutout = cross_cor[maximum_pixel[0] - centroid_size:maximum_pixel[0] + centroid_size + 1,
                                maximum_pixel[1] - centroid_size:maximum_pixel[1] + centroid_size + 1]
-    centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
+    centroid = center_of_mass(central_cutout)
     refined_x = xmax + centroid[1] - centroid_size
     refined_y = ymax + centroid[0] - centroid_size
     return refined_x, refined_y
