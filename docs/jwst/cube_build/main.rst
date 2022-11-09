@@ -174,6 +174,9 @@ uncertainty on the SCI values, the DQ image contains the data quality flags for 
 contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propagate the
 dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).  
 
+The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
+the IFU cube footprint).
+
 Output Product Name
 -------------------
 If the input data is passed in as an ImageModel, then the IFU cube will be passed back as an IFUCubeModel. The cube
