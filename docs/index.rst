@@ -4,6 +4,12 @@
 
 :ref:`genindex`  |  :ref:`modindex`
 
+.. warning::
+
+   As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
+
+   For details, refer to the :ref:`pub-deprecation`
+
 ============
 Installation
 ============
