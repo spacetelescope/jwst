@@ -186,9 +186,9 @@ class Observation:
                 self.cached_object[i]['maxy'] = []
 
             # Disperse object "i"
-            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
+            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp, [0, 0])
 
-    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
+    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp, offsets):
         """
         Method that computes dispersion for a single source.
         To be called after create_pixel_list().
@@ -207,6 +207,9 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
+        offsets : list of ints
+            Offset in x, y for a single source bounding box with respect to
+            full frame origin; in 0-indexed pixel space
         """
 
         sid = int(self.IDs[c])
@@ -249,7 +252,7 @@ class Observation:
             pars_i = (xc, yc, width, height, lams, fluxes, self.order,
                       self.wmin, self.wmax, self.sens_waves, self.sens_resp,
                       self.seg_wcs, self.grism_wcs, ID, self.dims[::-1], 2,
-                      self.extrapolate_sed, self.xstart, self.ystart)
+                      self.extrapolate_sed, offsets[0], offsets[1])
 
             pars.append(pars_i)
             # now have full pars list for all pixels for this object

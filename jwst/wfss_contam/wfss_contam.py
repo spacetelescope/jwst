@@ -136,11 +136,13 @@ def contam_corr(input_model, waverange, photom, max_cores):
         # Create simulated spectrum for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
+        offset_x = slit.meta.subarray.xstart - 1
+        offset_y = slit.meta.subarray.ystart - 1
         chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
 
         obs.simulated_image = np.zeros(obs.dims)
         obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order])
+                           sens_waves[order], sens_response[order], [offset_x, offset_y])
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image minus this source
