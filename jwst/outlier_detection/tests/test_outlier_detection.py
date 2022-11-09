@@ -1,5 +1,3 @@
-import os
-
 import pytest
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -160,21 +158,7 @@ def we_three_sci():
     return we_many_sci(numsci=3)
 
 
-@pytest.fixture
-def we_three_sci_files():
-    """Provide 3 science images with different noise but identical source
-    and same background level, but written out to disk"""
-    sci_models = we_many_sci(numsci=3)
-    we_many_sci_filenames = [f.meta.filename for f in sci_models]
-    # Write out models to disk to test this mode of ModelContainer
-    for model in sci_models:
-        model.save(model.meta.filename)
-        model.close()
-
-    return we_many_sci_filenames
-
-
-def test_outlier_step_no_outliers(we_three_sci):
+def test_outlier_step_no_outliers(we_three_sci, _jail):
     """Test whole step, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
     pristine = container.copy()
@@ -191,7 +175,7 @@ def test_outlier_step_no_outliers(we_three_sci):
         np.testing.assert_allclose(image.dq, corrected.dq)
 
 
-def test_outlier_step(_jail, we_three_sci):
+def test_outlier_step(we_three_sci, _jail):
     """Test whole step with an outlier including saving intermediate and results files"""
     container = datamodels.ModelContainer(list(we_three_sci))
 
@@ -214,17 +198,19 @@ def test_outlier_step(_jail, we_three_sci):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_outlier_step_on_disk(_jail, we_three_sci_files):
+def test_outlier_step_on_disk(we_three_sci, _jail):
     """Test whole step with an outlier including saving intermediate and results files"""
 
-    # Drop a CR on the science array without reading the model into memory for the test
-    dm0 = datamodels.ImageModel(we_three_sci_files[0])
-    dm0.data[12, 12] += 1
-    dm0.to_fits(os.path.join(os.getcwd(), dm0.meta.filename), overwrite=True)
-    del dm0
+    for model in we_three_sci:
+        model.save(model.meta.filename)
+    filenames = [model.meta.filename for model in we_three_sci]
+    # Drop a CR on the science array
+    with datamodels.open(filenames[0]) as dm0:
+        dm0.data[12, 12] += 1
+        dm0.write(dm0.meta.filename)
 
     # Initialize inputs for the test based on filenames only
-    container = datamodels.ModelContainer(we_three_sci_files)
+    container = datamodels.ModelContainer(filenames)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -242,7 +228,7 @@ def test_outlier_step_on_disk(_jail, we_three_sci_files):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_outlier_step_square_source_no_outliers(we_three_sci):
+def test_outlier_step_square_source_no_outliers(we_three_sci, _jail):
     """Test whole step with square source with sharp edges, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
 

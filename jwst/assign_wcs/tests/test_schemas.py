@@ -1,9 +1,11 @@
 import inspect
 import sys
+import warnings
 
 from astropy.modeling import models
 from astropy import units as u
 import pytest
+from stdatamodels.validate import ValidationWarning
 
 from jwst.datamodels import DistortionModel, ReferenceFileModel
 from jwst.datamodels import wcs_ref_models
@@ -52,7 +54,8 @@ def test_distortion_schema(distortion_model, tmpdir):
     dist = distortion_model
     dist.save(path)
 
-    with pytest.warns(None) as report:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         with DistortionModel(path) as dist1:
             assert dist1.meta.instrument.p_pupil == dist.meta.instrument.p_pupil
             assert dist1.meta.instrument.pupil == dist.meta.instrument.pupil
@@ -60,7 +63,6 @@ def test_distortion_schema(distortion_model, tmpdir):
             assert dist1.meta.exposure.type == dist.meta.exposure.type
             assert dist1.meta.psubarray == dist.meta.psubarray
             assert dist1.meta.subarray.name == dist.meta.subarray.name
-        assert len(report) == 0
 
 
 def test_distortion_strict_validation(distortion_model):
@@ -88,11 +90,10 @@ def test_distortion_schema_bad_assertionerror(distortion_model):
 
 @pytest.mark.parametrize("cls", find_all_wcs_ref_models_classes())
 def test_simplemodel_subclasses(cls):
-    """Test that expected validation errors are raised"""
+    """Test that expected validation warnings or errors are raised"""
     model = cls()
-    with pytest.warns(None) as report:
+    with pytest.warns(ValidationWarning):
         model.validate()
-    assert len(report) >= 1
 
     model = cls(strict_validation=True)
     with pytest.raises((ValueError, KeyError)):
