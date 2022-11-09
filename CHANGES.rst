@@ -31,6 +31,11 @@ datamodels
 - Add subarray keywords in the filteroffset schema [#7317]
 - Remove duplicates and add comments to core.schema dithering types [#7331]
 
+documentation
+-------------
+
+- CRDS PUB deprecation notice and transition documentation [#7342]
+
 extract_1d
 ----------
 
