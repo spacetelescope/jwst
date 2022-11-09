@@ -74,6 +74,7 @@ User Manual
    :maxdepth: 2
 
    jwst/introduction.rst
+   jwst/pub_deprecation.rst
 
 
 ===========================
