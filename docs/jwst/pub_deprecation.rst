@@ -42,7 +42,7 @@ Part of the decommissioning process will include establishing guidance for how b
 maintain reproducibility for new papers and for already-published papers that used the PUB server. This information
 will be included in the new JDox page:
 
-`How to Cite Your Data Reduction and Reference Files <https://jwst-docs.stsci.edu/display/JDOX/.How+to+Cite+Your+Data+Reduction+and+Reference+Files+v1.2>`_
+`How to Cite Your Data Reduction and Reference Files <https://jwst-docs.stsci.edu/display/JDOX/.How+to+Cite+JWST+Data+Reductions+and+Reference+Files+v1.2>`_
 
 
 .. _pub-deprecation-transition:
