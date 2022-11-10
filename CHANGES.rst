@@ -17,6 +17,8 @@ associations
 
 - Refactor item reprocessing for efficiency, refactor how background associations are configured [#7332]
 
+- Suppress the use of association candidates for level 3 products marked with WFSC_LOS_JITTER. [#7339]
+
 cube_build
 ----------
 
