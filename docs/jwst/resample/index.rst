@@ -12,5 +12,6 @@ Resampling
    reference_files.rst
    resample_step.rst
    resample.rst
+   resample_utils.rst
 
 .. automodapi:: jwst.resample
