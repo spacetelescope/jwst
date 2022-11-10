@@ -226,6 +226,13 @@ def decode_context(context, x, y):
     y: int, list of integers, numpy.ndarray of integers
         Y-coordinate of pixels to decode (2nd index into the ``context`` array)
 
+    Returns
+    -------
+
+    A list of `numpy.ndarray` objects each containing indices of input images
+    that have contributed to an output pixel with coordinates ``x`` and ``y``.
+    The length of returned list is equal to the number of input coordinate
+    arrays ``x`` and ``y``.
 
     Examples
     --------
@@ -263,6 +270,12 @@ def decode_context(context, x, y):
 
     x = np.atleast_1d(x)
     y = np.atleast_1d(y)
+
+    if x.size != y.size:
+        raise ValueError("Coordinate arrays must have equal length.")
+
+    if x.ndim != 1:
+        raise ValueError("Coordinates must be scalars or 1D arrays.")
 
     if not (np.issubdtype(x.dtype, np.integer) and
             np.issubdtype(y.dtype, np.integer)):
