@@ -1,4 +1,12 @@
-1.8.2 (2022-10-19)
+1.8.3 (unreleased)
+==================
+
+documentation
+-------------
+
+- CRDS PUB deprecation notice and transition documentation [#7342]
+
+1.8.2 (2022-10-20)
 ==================
 
 set_telescope_pointing
