@@ -136,8 +136,8 @@ def contam_corr(input_model, waverange, photom, max_cores):
         # Create simulated spectrum for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
-        offset_x = slit.meta.subarray.xstart - 1
-        offset_y = slit.meta.subarray.ystart - 1
+        offset_x = slit.xstart - 1
+        offset_y = slit.ystart - 1
         chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
 
         obs.simulated_image = np.zeros(obs.dims)
@@ -150,11 +150,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
         # Create a cutout of the contam image that matches the extent
         # of the source slit
-        x1 = slit.xstart - 1
-        x2 = x1 + slit.xsize
-        y1 = slit.ystart - 1
-        y2 = y1 + slit.ysize
-        cutout = contam[y1:y2, x1:x2]
+        x2 = offset_x + slit.xsize
+        y2 = offset_y + slit.ysize
+        cutout = contam[offset_y:y2, offset_x:x2]
         new_slit = datamodels.SlitModel(data=cutout)
         copy_slit_info(slit, new_slit)
         slits.append(new_slit)

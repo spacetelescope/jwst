@@ -479,8 +479,6 @@ def extract_grism_objects(input_model,
                 new_slit.meta.wcsinfo.dispersion_direction = \
                     input_model.meta.wcsinfo.dispersion_direction
                 new_slit.meta.wcsinfo.specsys = input_model.meta.wcsinfo.specsys
-                new_slit.meta.subarray.xstart = _toindex(xmin) + 1  # fits pixels
-                new_slit.meta.subarray.ystart = _toindex(ymin) + 1  # fits pixels
                 new_slit.meta.coordinates = input_model.meta.coordinates
                 new_slit.meta.wcs = subwcs
 
