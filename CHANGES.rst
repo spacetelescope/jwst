@@ -49,6 +49,12 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+flatfield
+---------
+
+- JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
+  combine the input ERR and the flat field ERR in quadrature. [#7346]
+  
 guider_cds
 ----------
 
