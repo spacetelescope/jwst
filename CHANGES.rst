@@ -1,4 +1,4 @@
-1.8.3 (unreleased)
+1.8.4 (unreleased)
 ==================
 
 assign_wcs
@@ -31,12 +31,9 @@ datamodels
 ----------
 
 - Add subarray keywords in the filteroffset schema [#7317]
+
 - Remove duplicates and add comments to core.schema dithering types [#7331]
 
-documentation
--------------
-
-- CRDS PUB deprecation notice and transition documentation [#7342]
 
 extract_1d
 ----------
@@ -52,7 +49,7 @@ extract_2d
 guider_cds
 ----------
 
-- Calculate and output the ERR array based on the gain and readnoise 
+- Calculate and output the ERR array based on the gain and readnoise
   variances, and force the stack mode to use the default gain and readnoise
   pixel values. [#7309]
 
@@ -85,6 +82,13 @@ tweakreg
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
 
+1.8.3 (2022-11-11)
+==================
+
+documentation
+-------------
+
+- CRDS PUB deprecation notice and transition documentation [#7342]
 
 1.8.2 (2022-10-20)
 ==================
