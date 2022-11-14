@@ -69,11 +69,17 @@ ERR array.
 flat_field
 ++++++++++
 The SCI array of the exposure being processed is divided by the flat-field reference
-image, and the VAR_POISSON and VAR_RNOISE arrays are divided by the square of the flat.
-A VAR_FLAT array is created, computed from the science data and the flat-field
-reference file ERR array.
-The science data ERR array is then updated to be the square root of the quadratic sum of
-the three variance arrays.
+image.  The VAR_FLAT array is created, computed from the science data and the flat-field
+reference file ERR array. 
+
+For all modes except GUIDER, the VAR_POISSON and VAR_RNOISE arrays are divided by the
+square of the flat. The science data ERR array is then updated to be the square root
+of the sum of the three variance arrays. 
+
+For the GUIDER mode, their are no VAR_POISSON and VAR_RNOISE arrays. The science data
+ERR array is updated to be the square root of the sum of the variance VAR_FLAT and the
+square of the incoming science ERR array. 
+
 For more details see :ref:`flat_field <flatfield_step>`.
 
 fringe 
