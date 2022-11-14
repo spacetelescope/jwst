@@ -1,4 +1,4 @@
-1.8.3 (unreleased)
+1.8.4 (unreleased)
 ==================
 
 assign_wcs
@@ -31,12 +31,14 @@ datamodels
 ----------
 
 - Add subarray keywords in the filteroffset schema [#7317]
+
 - Remove duplicates and add comments to core.schema dithering types [#7331]
 
 documentation
 -------------
 
-- CRDS PUB deprecation notice and transition documentation [#7342]
+-  Update deprecation notice with copyedit changes [#7348]
+
 
 extract_1d
 ----------
@@ -49,6 +51,7 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+
 flatfield
 ---------
 
@@ -58,7 +61,7 @@ flatfield
 guider_cds
 ----------
 
-- Calculate and output the ERR array based on the gain and readnoise 
+- Calculate and output the ERR array based on the gain and readnoise
   variances, and force the stack mode to use the default gain and readnoise
   pixel values. [#7309]
 
@@ -79,8 +82,12 @@ photom
 resample
 --------
 
-- Enhance spectral output WCS construction to guard against nearly identical
+- Enhanced spectral output WCS construction to guard against nearly identical
   points. [#7321]
+
+- Added a utility function ``decode_context()`` to help identify all input
+  images that have contributed with flux to an output (resampled)
+  pixel. [#7345]
 
 tweakreg
 --------
@@ -91,6 +98,13 @@ tweakreg
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
 
+1.8.3 (2022-11-11)
+==================
+
+documentation
+-------------
+
+- CRDS PUB deprecation notice and transition documentation [#7342]
 
 1.8.2 (2022-10-20)
 ==================
