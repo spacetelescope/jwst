@@ -75,8 +75,12 @@ photom
 resample
 --------
 
-- Enhance spectral output WCS construction to guard against nearly identical
+- Enhanced spectral output WCS construction to guard against nearly identical
   points. [#7321]
+
+- Added a utility function ``decode_context()`` to help identify all input
+  images that have contributed with flux to an output (resampled)
+  pixel. [#7345]
 
 tweakreg
 --------
