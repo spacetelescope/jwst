@@ -50,7 +50,7 @@ information about all input images
 with the first plane encoding which of the first 32 images contributed
 to the output data pixel, second plane representing next 32 input images
 (number 33-64), etc. For this reason, context array is a 3D array of the type
-``numpy.int32`` and shape ``(np, ny, nx)`` where ``nx`` and ``ny``
+`numpy.int32` and shape ``(np, ny, nx)`` where ``nx`` and ``ny``
 are dimensions of image's data. ``np`` is the number of "planes" equal to
 ``(number of input images - 1) // 32 + 1``. If a bit at position ``k`` in a
 pixel with coordinates ``(p, y, x)`` is 0 then input image number

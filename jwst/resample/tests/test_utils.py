@@ -113,5 +113,5 @@ def test_decode_context():
 
     idx1, idx2 = decode_context(con, [3, 2], [1, 4])
 
-    assert set(idx1) == {9, 12, 14, 19, 21, 25, 37, 40, 46, 58, 64, 65, 67, 77}
-    assert set(idx2) == {9, 20, 29, 36, 47, 49, 64, 69, 70, 79}
+    assert sorted(idx1) == [9, 12, 14, 19, 21, 25, 37, 40, 46, 58, 64, 65, 67, 77]
+    assert sorted(idx2) == [9, 20, 29, 36, 47, 49, 64, 69, 70, 79]
