@@ -34,6 +34,11 @@ datamodels
 
 - Remove duplicates and add comments to core.schema dithering types [#7331]
 
+documentation
+-------------
+
+-  Update deprecation notice with copyedit changes [#7348]
+
 
 extract_1d
 ----------
