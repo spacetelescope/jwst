@@ -58,6 +58,12 @@ Multi-integration datasets ("_rateints.fits" products), which are common
 for modes like NIRCam Time-Series Grism, NIRISS SOSS, and MIRI LRS Slitless,
 are handled by applying the above equations to each integration.
 
+For guider exposures, the flat is applied in the same manner as given
+in the equations above, except for several differences.  First, the variances
+due to Poisson noise and read noise are not calculated.  Second, the output
+ERR array is the combined input ERR plus the flatfield ERR, summed in
+quadrature.
+
 NIRSpec Spectroscopic Data
 --------------------------
 Flat-fielding of NIRSpec spectrographic data differs from other modes

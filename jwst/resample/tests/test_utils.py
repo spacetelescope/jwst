@@ -5,7 +5,11 @@ import pytest
 
 from jwst.datamodels import SlitModel, ImageModel, dqflags
 from jwst.resample.resample_spec import find_dispersion_axis
-from jwst.resample.resample_utils import build_mask, build_driz_weight
+from jwst.resample.resample_utils import (
+    build_mask,
+    build_driz_weight,
+    decode_context
+)
 
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -85,3 +89,29 @@ def test_find_dispersion_axis():
 
     dm.meta.wcsinfo.dispersion_direction = 2    # vertical
     assert find_dispersion_axis(dm) == 1        # Y axis for wcs functions
+
+
+def test_decode_context():
+    con = np.array(
+        [[[0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 36196864, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 537920000, 0, 0, 0]],
+         [[0, 0, 0, 0, 0, 0,],
+          [0, 0, 0, 67125536, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 163856, 0, 0, 0]],
+         [[0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 8203, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 32865, 0, 0, 0]]],
+        dtype=np.int32
+    )
+
+    idx1, idx2 = decode_context(con, [3, 2], [1, 4])
+
+    assert sorted(idx1) == [9, 12, 14, 19, 21, 25, 37, 40, 46, 58, 64, 65, 67, 77]
+    assert sorted(idx2) == [9, 20, 29, 36, 47, 49, 64, 69, 70, 79]

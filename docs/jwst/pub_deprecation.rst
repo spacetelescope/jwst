@@ -28,9 +28,6 @@ OPS server, `https://jwst-crds.stsci.edu <https://jwst-crds.stsci.edu>`_. See
 the :ref:`software documentation <pub-deprecation-transition>` for
 instructions about how to configure CRDS.
 
-In mid-November, the PUB server will be frozen and a notification will be sent via the
-reference file mailing lists and the JWST Observer News mailing list.
-
 On December 2nd, access to the PUB server will no longer be available externally.
 The frozen PUB database will be maintained internally for 3 months. On March 1, the PUB server will
 be fully decommissioned and the institute will
@@ -38,12 +35,11 @@ retain an internal archive of the maps and calibration reference files.
 Observers who wish to use historical files from the PUB server in the future will need to file a
 JWST Pipeline help desk ticket to access the information.
 
-Part of the decommissioning process will include establishing guidance for how best to
-maintain reproducibility for new papers and for already-published papers that used the PUB server. This information
-will be included in the new JDox page:
-
-`How to Cite Your Data Reduction and Reference Files <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline-overview/jwst-data-calibration-reference-files>`_
-
+Part of the decommissioning process will include establishing guidance for how
+best to maintain reproducibility for new papers and for already-published papers
+that used the PUB server. This information will be included in a new JDox page,
+currently in preparation. Visit the `JDox site <https://jwst-docs.stsci.edu/>`_
+for new information concerning JWST.
 
 .. _pub-deprecation-transition:
 

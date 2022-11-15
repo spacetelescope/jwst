@@ -34,6 +34,11 @@ datamodels
 
 - Remove duplicates and add comments to core.schema dithering types [#7331]
 
+documentation
+-------------
+
+-  Update deprecation notice with copyedit changes [#7348]
+
 
 extract_1d
 ----------
@@ -46,6 +51,13 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+
+flatfield
+---------
+
+- JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
+  combine the input ERR and the flat field ERR in quadrature. [#7346]
+  
 guider_cds
 ----------
 
@@ -70,8 +82,12 @@ photom
 resample
 --------
 
-- Enhance spectral output WCS construction to guard against nearly identical
+- Enhanced spectral output WCS construction to guard against nearly identical
   points. [#7321]
+
+- Added a utility function ``decode_context()`` to help identify all input
+  images that have contributed with flux to an output (resampled)
+  pixel. [#7345]
 
 tweakreg
 --------
