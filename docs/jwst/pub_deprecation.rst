@@ -71,7 +71,7 @@ Then set CRDS_CACHE to point to this new, empty folder:
 The important point is that whatever folder is to be used to hold the CRDS cache
 should initially be empty; no other content should be present in the folder.
 
-Older CRDS cache folders are no longer needed and can be dealt with as the user
+Older CRDS cache folders are no longer needed and can be removed as the user
 sees fit.
 
 It does not matter what the folder is called, nor where it is located, as long
