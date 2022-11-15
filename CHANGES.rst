@@ -91,6 +91,11 @@ resample
   images that have contributed with flux to an output (resampled)
   pixel. [#7345]
 
+transforms
+----------
+
+- Require the asdf transform version to be at least 0.3.0 [#7352]
+  
 tweakreg
 --------
 
