@@ -82,12 +82,22 @@ two environment variables:
   - CRDS_PATH: Local folder where CRDS content will be cached.
   - CRDS_SERVER_URL: The server from which to pull reference information
 
-To setup to use JWST OPS, use the following settings:
+To setup, use the following settings:
 
 ::
 
     export CRDS_PATH=$HOME/crds_cache
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+.. note::
+
+   The folder that CRDS_PATH points to should be devoid of all content, except that which CRDS will create.
+
+   The disk partition on which the cache will be stored should have sufficient
+   free space to hold at least one context's worth of references. At the moment,
+   the minimum free space should be 100GB for normal processing. If one plans on
+   downloading the full content of the CRDS database, including all contexts and
+   reference files, plan on needing a minimum of 500GB available space.
 
 .. _strun_command_line:
 
