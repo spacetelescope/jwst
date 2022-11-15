@@ -435,7 +435,7 @@ def extract_ifu(input_model, source_type, extract_params):
     dq = np.zeros(shape[0], dtype=np.uint32)
 
     # This boolean mask will be used to mask any bad voxels in a given plane
-    bmask = np.zeros([shape[1], shape[2]], dtype=np.bool)
+    bmask = np.zeros([shape[1], shape[2]], dtype=bool)
 
     # If the user supplied extraction center coords, use them and
     # ignore all other source type and source position values
