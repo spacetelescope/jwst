@@ -19,6 +19,8 @@ associations
 
 - Suppress the use of association candidates for level 3 products marked with WFSC_LOS_JITTER. [#7339]
 
+- Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
+
 cube_build
 ----------
 
