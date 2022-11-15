@@ -1,13 +1,6 @@
-1.8.5 (2022-12-12)
-==================
-
-documentation
--------------
-
--
-
 1.8.4 (2022-11-15)
 ==================
+
 
 documentation
 -------------
@@ -15,6 +8,7 @@ documentation
 - Update deprecation notice with copyedit changes [#7348]
 
 - Clarify how to manage a local CRDS cache [#7350]
+
 
 1.8.3 (2022-11-11)
 ==================
