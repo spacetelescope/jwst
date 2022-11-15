@@ -49,12 +49,35 @@ Transition Procedure
 If using the PUB server, there are two simple tasks that need to be done to
 ensure a successful transition from using the PUB server to the JWST OPS server.
 
+
 First, the folder containing the local CRDS cache, pointed to by the environment
-variable CRDS_PATH, should be cleared. Under Linux-like systems, the command is
+variable CRDS_PATH, should be cleared of all old CRDS information.
+
+If created appropriately, the folder that CRDS_CACHE points to should contain
+ONLY CRDS content. The suggested way of ensuring a new, empty cache, is to
+create a new folder. For example, to create a CRDS cache folder under a user's
+home folder, using Linux, the command is:
 
 ::
 
-   $ rm -rf $CRDS_PATH/*
+   $ mkdir $HOME/crds_cache
+
+Then set CRDS_CACHE to point to this new, empty folder:
+
+::
+
+   $ export CRDS_CACHE=$HOME/crds_cache
+
+The important point is that whatever folder is to be used to hold the CRDS cache
+should initially be empty; no other content should be present in the folder.
+
+Older CRDS cache folders are no longer needed and can be removed as the user
+sees fit.
+
+It does not matter what the folder is called, nor where it is located, as long
+as the user has access permissions to that folder. The location of the CRDS
+cache should contain sufficient space to hold the references. Current suggested
+minimum of free space is 100GB.
 
 Second, ensure that the environment variable CRDS_SERVER_URL is pointing to the
 JWST OPS server, https://jwst-crds.stsci.edu:
