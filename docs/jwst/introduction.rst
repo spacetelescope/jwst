@@ -86,7 +86,7 @@ To setup to use JWST OPS, use the following settings:
 
 ::
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_ops
+    export CRDS_PATH=$HOME/crds_cache
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
 .. _strun_command_line:
