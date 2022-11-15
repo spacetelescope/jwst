@@ -37,7 +37,9 @@ datamodels
 documentation
 -------------
 
--  Update deprecation notice with copyedit changes [#7348]
+- Update deprecation notice with copyedit changes [#7348]
+
+- Clarify how to manage a local CRDS cache [#7350]
 
 
 extract_1d
