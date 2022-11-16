@@ -2081,6 +2081,11 @@ class IFUCubeData():
         dq = self.spaxel_dq.reshape((self.naxis3,
                                      self.naxis2, self.naxis1))
 
+        # Set np.nan values wherever the DO_NOT_USE flag is set
+        dnu = np.where((dq & dqflags.pixel['DO_NOT_USE']) != 0)
+        flux[dnu] = np.nan
+        var[dnu] = np.nan
+
         # For MIRI MRS, apply a quality cut to help fix spectral tearing at the ends of each band.
         # This is largely taken care of by the WCS regions file, but there will still be 1-2 possibly
         # problematic planes at the end of each band in multi-band cubes.

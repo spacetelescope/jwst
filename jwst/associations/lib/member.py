@@ -32,3 +32,18 @@ class Member(UserDict):
 
         if item is not None:
             self.item = copy(item)
+
+    def __eq__(self, other):
+        """Compare members
+
+        If both Members have attributes `expname` and `exptype`,
+        compare only those attributes. Otherwise, use the default
+        comparison.
+        """
+        hasexpkeys = all(k in data
+                         for k in ('expname', 'exptype')
+                         for data in (self, other))
+        if hasexpkeys:
+            return all(self[k] == other[k] for k in ('expname', 'exptype'))
+        else:
+            return super().__eq__(other)

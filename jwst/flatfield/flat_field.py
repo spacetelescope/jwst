@@ -221,7 +221,9 @@ def apply_flat_field(science, flat, inverse=False):
     else:
         flat_data_squared = flat_data ** 2
         science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
-        science.err = np.sqrt(science.var_flat)
+
+        # Set the output ERR to be the combined input ERR plus flatfield ERR, summed in quadrature
+        science.err = np.sqrt(science.err**2 + science.var_flat)
 
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)
@@ -638,8 +640,10 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         The flat field, interpolated over wavelength, same shape as `wl`.
         Divide the 2-D extracted spectrum by this array to correct for
         flat-field variations.
+
     flat_dq : ndarray, 2-D, uint32
         The data quality array corresponding to flat_2d.
+
     flat_err : ndarray, 2-D, float
         The error array corresponding to flat_2d.
     """
@@ -1021,7 +1025,7 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
 
     Returns
     -------
-    ndarray, 2-D, uint32
+    flat_dq : ndarray, 2-D, uint32
         The DQ array resulting from combining the input DQ arrays via
         bitwise OR.
     """
@@ -1279,10 +1283,11 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
 
     Returns
     -------
-    ndarray, 2-D, float32
+    flat_2d * values : ndarray, 2-D, float32
         The product of `flat_2d` and the values in `tab_flat` interpolated
         to the wavelengths of the science image, i.e. `wl`.
-    ndarray, 2-D, uint32
+
+    combined_dq : ndarray, 2-D, uint32
         The updated data quality array corresponding to `flat_2d`.  If a
         pixel wavelength is less than or equal to zero, or if it's not
         within the range of `tab_wl`, NO_FLAT_FIELD will be used to flag
@@ -1345,7 +1350,7 @@ def clean_wl(wl, dispaxis):
 
     Returns
     -------
-    ndarray, 2-D
+    wl_c : 2-D array
         A copy of `wl`, but with zero and negative values replaced with
         an average wavelength.  For each column (row) in the dispersion
         direction, the average to find a replacement value is taken along

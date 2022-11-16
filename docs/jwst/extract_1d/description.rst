@@ -47,7 +47,7 @@ Input
 -----
 Calibrated and potentially resampled 2D images or 3D cubes. The format should be a
 CubeModel, SlitModel, IFUCubeModel, ImageModel, MultiSlitModel, or a ModelContainer.
-For some JWST modes this is usually a resampled product, such as the "i2d" products
+For some JWST modes this is usually a resampled product, such as the "s2d" products
 for MIRI LRS fixed-slit, NIRSpec fixed-slit, and NIRSpec MOS, or the "s3d" products
 for MIRI MRS and NIRSpec IFU. For other modes that are not resampled (e.g. MIRI
 LRS slitless, NIRISS SOSS, NIRSpec BrightObj, and NIRCam and NIRISS WFSS), this will

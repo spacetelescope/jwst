@@ -10,11 +10,11 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 @pytest.fixture(scope='module')
 def run_spec2(jail, rtdata_module):
-    """Run the Spec2Pipeline on a single exposure"""
+    """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
     rtdata = rtdata_module
 
     # Setup the inputs
-    asn_name = 'single_nrs1_ifu_spec2_asn.json'
+    asn_name = 'jw01251-o004_20221105t023552_spec2_031_asn.json'
     asn_path = INPUT_PATH + '/' + asn_name
 
     # Run the pipeline
@@ -22,21 +22,11 @@ def run_spec2(jail, rtdata_module):
         'input_path': asn_path,
         'step': 'calwebb_spec2',
         'args': [
-            '--steps.bkg_subtract.save_results=true',
             '--steps.assign_wcs.save_results=true',
-            '--steps.imprint_subtract.save_results=true',
             '--steps.msa_flagging.save_results=true',
-            '--steps.extract_2d.save_results=true',
-            '--steps.flat_field.save_results=true',
             '--steps.srctype.save_results=true',
-            '--steps.straylight.save_results=true',
-            '--steps.fringe.save_results=true',
+            '--steps.flat_field.save_results=true',
             '--steps.pathloss.save_results=true',
-            '--steps.barshadow.save_results=true',
-            '--steps.photom.save_results=true',
-            '--steps.resample_spec.save_results=true',
-            '--steps.cube_build.save_results=true',
-            '--steps.extract_1d.save_results=true',
         ]
     }
 
@@ -48,8 +38,8 @@ def run_spec2(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
-    ['assign_wcs', 'cal', 'flat_field', 'imprint_subtract', 'msa_flagging',
-     'pathloss', 'photom', 's3d', 'srctype', 'x1d']
+    ['assign_wcs', 'cal', 'flat_field', 'msa_flagging',
+     'pathloss', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
@@ -59,11 +49,11 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 @pytest.fixture(scope='module')
 def run_photom(jail, rtdata_module):
-    """Run the photom step on an NRS IFU exposure with SRCTYPE=EXTENDED"""
+    """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
     rtdata = rtdata_module
 
     # Setup the inputs
-    rate_name = 'jwdata0010010_11010_0001_NRS1_pathloss.fits'
+    rate_name = 'jw01251004001_03107_00002_nrs1_pathloss.fits'
     rate_path = INPUT_PATH + '/' + rate_name
 
     # Run the step
@@ -79,6 +69,33 @@ def run_photom(jail, rtdata_module):
 
 @pytest.mark.bigdata
 def test_photom(run_photom, fitsdiff_default_kwargs):
-    """Regression test matching output files"""
-    rt.is_like_truth(run_photom, fitsdiff_default_kwargs, 'photom',
+    """Test the photom step on an NRS IFU exposure with a point source"""
+    rt.is_like_truth(run_photom, fitsdiff_default_kwargs, 'photomstep',
+                     truth_path=TRUTH_PATH)
+
+
+@pytest.fixture(scope='module')
+def run_extract1d(jail, rtdata_module):
+    """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
+    rtdata = rtdata_module
+
+    # Setup the inputs
+    cube_name = 'jw01251004001_03107_00002_nrs1_s3d.fits'
+    cube_path = INPUT_PATH + '/' + cube_name
+
+    # Run the step
+    step_params = {
+        'input_path': cube_path,
+        'step': 'jwst.extract_1d.Extract1dStep',
+        'args': ['--save_results=True', ]
+    }
+
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    return rtdata
+
+
+@pytest.mark.bigdata
+def test_extract1d(run_extract1d, fitsdiff_default_kwargs):
+    """Test the extract_1d step on an NRS IFU cube with a point source"""
+    rt.is_like_truth(run_extract1d, fitsdiff_default_kwargs, 'extract1dstep',
                      truth_path=TRUTH_PATH)

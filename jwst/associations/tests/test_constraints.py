@@ -270,3 +270,13 @@ def test_copy():
     sc1_copy.check_and_set('value2')
     assert sc1_copy.value == 'value2'
     assert sc1.value == 'value1'
+
+
+@pytest.mark.parametrize('klass, expected',
+                         [(SimpleConstraint, 'SimpleConstraint:myname'),
+                          (Constraint, 'Constraint:myname')])
+def test_id(klass, expected):
+    """Test constraint ID"""
+    c = klass(name='myname')
+
+    assert c.id == expected

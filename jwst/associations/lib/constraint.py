@@ -8,7 +8,7 @@ import logging
 import re
 import typing
 
-from .process_list import ProcessList
+from .process_list import ListCategory, ProcessList
 from .utilities import (
     evaluate,
     getattr_from_list,
@@ -82,10 +82,6 @@ class SimpleConstraintABC(abc.ABC):
         self.matched = True
         return self.matched, []
 
-    def copy(self):
-        """Copy ourselves"""
-        return deepcopy(self)
-
     @property
     def dup_names(self): #  -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]
         """Return dictionary of constraints with duplicate names
@@ -100,6 +96,21 @@ class SimpleConstraintABC(abc.ABC):
             and all the constraints that define that name.
         """
         return {}
+
+    @property
+    def id(self):
+        """Return identifyer for the constraint
+
+        Returns
+        -------
+        id : str
+            The identifyer
+        """
+        return f'{self.__class__.__name__}:{self.name}'
+
+    def copy(self):
+        """Copy ourselves"""
+        return deepcopy(self)
 
     def get_all_attr(self, attribute: str): # -> list[tuple[SimpleConstraint, typing.Any]]:
         """Return the specified attribute
@@ -194,7 +205,7 @@ class SimpleConstraint(SimpleConstraintABC):
     reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over : ProcessList.[BOTH, EXISTING, RULES]
+    work_over : ListCategory.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
 
     reprocess_rules : [rule[,..]] or None
@@ -259,7 +270,7 @@ class SimpleConstraint(SimpleConstraintABC):
             test=None,
             reprocess_on_match=False,
             reprocess_on_fail=False,
-            work_over=ProcessList.BOTH,
+            work_over=ListCategory.BOTH,
             reprocess_rules=None,
             **kwargs
     ):
@@ -309,7 +320,8 @@ class SimpleConstraint(SimpleConstraintABC):
             reprocess.append(ProcessList(
                 items=[item],
                 work_over=self.work_over,
-                rules=self.reprocess_rules
+                rules=self.reprocess_rules,
+                trigger_constraints=[self.id]
             ))
 
         return self.matched, reprocess
@@ -337,7 +349,7 @@ class AttrConstraint(SimpleConstraintABC):
     evaluate : bool
         Evaluate the item's value before checking condition.
 
-    force_reprocess : ProcessList.state or False
+    force_reprocess : ListCategory.state or False
         Add item back onto the reprocess list using
         the specified `~jwst.associations.ProcessList` work over state.
 
@@ -439,6 +451,7 @@ class AttrConstraint(SimpleConstraintABC):
                         items=[item],
                         work_over=self.force_reprocess,
                         only_on_match=self.only_on_match,
+                        trigger_constraints=[self.id]
                     )
                 )
             self.matched = True
@@ -463,33 +476,46 @@ class AttrConstraint(SimpleConstraintABC):
                 self.matched = False
                 return self.matched, reprocess
 
-        # If the value is a list, build the reprocess list
+        evaled = value
         if self.evaluate:
             evaled = evaluate(value)
+
+        # If the constraint has no value to check against, and given
+        # value evaluates to a list, the item must be duplicated,
+        # with each value from its list, and all the new items reprocessed.
+        # Otherwise, the value is the value to set the constraint by.
+        if self.value is None:
             if is_iterable(evaled):
-                reprocess_items = []
-                for avalue in evaled:
-                    new_item = PoolRow(item)
-                    new_item[source] = str(avalue)
-                    reprocess_items.append(new_item)
-                reprocess.append(ProcessList(
-                    items=reprocess_items,
-                ))
+                reprocess.append(reprocess_multivalue(item, source, evaled, self))
                 self.matched = False
                 return self.matched, reprocess
             value = str(evaled)
 
-        # Check condition
-        if self.value is not None:
+        # Else, the constraint does have a value. Check against it.
+        else:
             if callable(self.value):
                 match_value = self.value()
             else:
                 match_value = self.value
-            if not meets_conditions(
-                    value, match_value
-            ):
+            if not is_iterable(evaled):
+                evaled = [evaled]
+            matched = []
+            for evaled_item in evaled:
+                value = str(evaled_item)
+                if meets_conditions(value, match_value):
+                    matched.append(evaled_item)
+
+            # If the condition is not matched, leave now.
+            if not matched:
                 self.matched = False
                 return self.matched, reprocess
+
+            # Matches were found. The first match becomes
+            # the value for the current constraint.
+            # The rest get reprocessed.
+            value = str(matched[0])
+            if matched[1:]:
+                reprocess.append(reprocess_multivalue(item, source, matched[1:], self))
 
         # At this point, the constraint has passed.
         # Fix the conditions.
@@ -506,7 +532,8 @@ class AttrConstraint(SimpleConstraintABC):
                 ProcessList(
                     items=[item],
                     work_over=self.force_reprocess,
-                    only_on_match=self.only_on_match
+                    only_on_match=self.only_on_match,
+                    trigger_constraints=[self.id]
                 )
             )
 
@@ -541,7 +568,7 @@ class Constraint:
     reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over : ProcessList.[BOTH, EXISTING, RULES]
+    work_over : ListCategory.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
 
     reprocess_rules : [rule[,..]] or None
@@ -590,7 +617,7 @@ class Constraint:
             name=None,
             reprocess_on_match=False,
             reprocess_on_fail=False,
-            work_over=ProcessList.BOTH,
+            work_over=ListCategory.BOTH,
             reprocess_rules=None
     ):
         self.constraints = []
@@ -630,7 +657,47 @@ class Constraint:
         if self.reduce is None:
             self.reduce = self.all
 
-    def check_and_set(self, item, work_over=ProcessList.BOTH):
+    @property
+    def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+        """Return dictionary of constraints with duplicate names
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Returns
+        -------
+        dups : {str: [constraint[,...]][,...]}
+            Returns a mapping between the duplicated name
+            and all the constraints that define that name.
+        """
+        attrs = self.get_all_attr('name')
+        constraints, names = zip(*attrs)
+        dups = [name for name, count in collections.Counter(names).items() if count > 1]
+        result = collections.defaultdict(list)
+        for name, constraint in zip(names, constraints):
+            if name in dups:
+                result[name].append(constraint)
+
+        # Turn off the defaultdict factory.
+        result.default_factory = None
+        return result
+
+    @property
+    def id(self):
+        """Return identifyer for the constraint
+
+        Returns
+        -------
+        id : str
+            The identifyer
+        """
+        return f'{self.__class__.__name__}:{self.name}'
+
+    def append(self, constraint):
+        """Append a new constraint"""
+        self.constraints.append(constraint)
+
+    def check_and_set(self, item, work_over=ListCategory.BOTH):
         """Check and set the constraint
 
         Returns
@@ -641,7 +708,7 @@ class Constraint:
                 - success : True if check is successful.
                 - List of `~jwst.associations.ProcessList`.
         """
-        if work_over not in (self.work_over, ProcessList.BOTH):
+        if work_over not in (self.work_over, ListCategory.BOTH):
             return False, []
 
         # Do we have positive?
@@ -653,18 +720,46 @@ class Constraint:
             reprocess.append([ProcessList(
                 items=[item],
                 work_over=self.work_over,
-                rules=self.reprocess_rules
+                rules=self.reprocess_rules,
+                trigger_constraints=[self.id]
             )])
 
         return self.matched, list(chain(*reprocess))
 
-    def append(self, constraint):
-        """Append a new constraint"""
-        self.constraints.append(constraint)
-
     def copy(self):
         """Copy ourselves"""
         return deepcopy(self)
+
+    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
+        """Return the specified attribute
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve
+
+        Returns
+        -------
+        result : [(SimpleConstraint or Constraint, object)[,...]]
+            The list of values of the attribute in a tuple. If there is no attribute,
+            an empty tuple is returned.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found.
+        """
+        result = []
+        value = getattr(self, attribute)
+        if value is not None:
+            result = [(self, value)]
+        for constraint in self.constraints:
+            result.extend(constraint.get_all_attr(attribute))
+
+        return result
 
     @staticmethod
     def all(item, constraints):
@@ -737,61 +832,9 @@ class Constraint:
         match, to_reprocess = Constraint.all(item, constraints)
         return not match, to_reprocess
 
-    @property
-    def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
-        """Return dictionary of constraints with duplicate names
-
-        This method is meant to be overridden by classes
-        that need to traverse a list of constraints.
-
-        Returns
-        -------
-        dups : {str: [constraint[,...]][,...]}
-            Returns a mapping between the duplicated name
-            and all the constraints that define that name.
-        """
-        attrs = self.get_all_attr('name')
-        constraints, names = zip(*attrs)
-        dups = [name for name, count in collections.Counter(names).items() if count > 1]
-        result = collections.defaultdict(list)
-        for name, constraint in zip(names, constraints):
-            if name in dups:
-                result[name].append(constraint)
-
-        # Turn off the defaultdict factory.
-        result.default_factory = None
-        return result
-
-    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
-        """Return the specified attribute
-
-        This method is meant to be overridden by classes
-        that need to traverse a list of constraints.
-
-        Parameters
-        ----------
-        attribute : str
-            The attribute to retrieve
-
-        Returns
-        -------
-        result : [(SimpleConstraint or Constraint, object)[,...]]
-            The list of values of the attribute in a tuple. If there is no attribute,
-            an empty tuple is returned.
-
-        Raises
-        ------
-        AttributeError
-            If the attribute is not found.
-        """
-        result = []
-        value = getattr(self, attribute)
-        if value is not None:
-            result = [(self, value)]
-        for constraint in self.constraints:
-            result.extend(constraint.get_all_attr(attribute))
-
-        return result
+    def __delitem__(self, key):
+        """Not implemented"""
+        raise NotImplementedError('Cannot delete a constraint by index.')
 
     # Make iterable
     def __iter__(self):
@@ -813,14 +856,6 @@ class Constraint:
                 return found
         raise KeyError('Constraint {} not found'.format(key))
 
-    def __setitem__(self, key, value):
-        """Not implemented"""
-        raise NotImplementedError('Cannot set constraints by index.')
-
-    def __delitem__(self, key):
-        """Not implemented"""
-        raise NotImplementedError('Cannot delete a constraint by index.')
-
     def __repr__(self):
         result = '{}(name={}).{}([{}])'.format(
             self.__class__.__name__,
@@ -832,6 +867,10 @@ class Constraint:
             ])
         )
         return result
+
+    def __setitem__(self, key, value):
+        """Not implemented"""
+        raise NotImplementedError('Cannot set constraints by index.')
 
     def __str__(self):
         result = '\n'.join([
@@ -873,3 +912,34 @@ def meets_conditions(value, conditions):
         if match:
             return True
     return False
+
+
+def reprocess_multivalue(item, source, values, constraint):
+    """Reprocess items that have a list of values
+
+    Parameters
+    ----------
+    item : dict
+        The item.
+
+    source : str
+        The attribute which has the multi-values.
+
+    values : list
+        The list of values
+
+    constraint : Constraint
+        The constraint which is triggering the reprocessing.
+
+    Returns
+    -------
+    process_list : ProcessList
+        The process list to put on the reprocess queue
+    """
+    reprocess_items = []
+    for value in values:
+        new_item = PoolRow(item)
+        new_item[source] = str(value)
+        reprocess_items.append(new_item)
+    process_list = (ProcessList(items=reprocess_items, trigger_constraints=[constraint.id]))
+    return process_list

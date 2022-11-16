@@ -1,11 +1,15 @@
 import logging
+from timeit import default_timer as timer
 
 from .association import make_timestamp
 from .lib.process_list import (
+    ListCategory,
     ProcessList,
-    ProcessQueueSorted
+    ProcessQueueSorted,
+    workover_filter
 )
 from .pool import PoolRow
+from ..lib.progress import Bar
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -51,42 +55,49 @@ def generate(pool, rules, version_id=None):
         )
     ])
 
+    logger.debug('Initial process queue: %s', process_queue)
     for process_list in process_queue:
-        # logger.debug(
-        #     'Working process list:'
-        #     f'\n\t#items {len(process_list.items)}'
-        #     f' working over {process_list.work_over}'
-        #     f' matching on {process_list.only_on_match}'
-        #     f'\n\trules {process_list.rules}'
-        # )
-        for item in process_list.items:
-            item = PoolRow(item)
+        logger.debug('** Working process list: %s', process_list)
+        time_start = timer()
+        total_mod_existing = 0
+        total_new = 0
+        total_reprocess = 0
+        with Bar('Processing items', log_level=logger.getEffectiveLevel(),
+                 max=len(process_list.items)) as bar:
+            for item in process_list.items:
+                item = PoolRow(item)
 
-            # logger.debug(f'Processing item {item}')
-            existing_asns, new_asns, to_process = generate_from_item(
-                item,
-                version_id,
-                associations,
-                rules,
-                process_list
-            )
-            # logger.debug(f'Associations updated: {existing_asns}')
-            # logger.debug(f'New associations: {new_asns}')
-            associations.extend(new_asns)
+                existing_asns, new_asns, to_process = generate_from_item(
+                    item,
+                    version_id,
+                    associations,
+                    rules,
+                    process_list
+                )
+                total_mod_existing += len(existing_asns)
+                total_new += len(new_asns)
+                associations.extend(new_asns)
 
-            # If working on a process list EXISTING
-            # remove any new `to_process` that is
-            # also EXISTING. Prevent infinite loops.
-            if process_list.work_over in (ProcessList.EXISTING, ProcessList.NONSCIENCE):
-                to_process = [
-                    to_process_list
-                    for to_process_list in to_process
-                    if to_process_list.work_over != process_list.work_over
-                ]
-            process_queue.extend(to_process)
+                # If working on a process list EXISTING
+                # remove any new `to_process` that is
+                # also EXISTING. Prevent infinite loops.
+                to_process_modified = []
+                for next_list in to_process:
+                    next_list = workover_filter(next_list, process_list.work_over)
+                    if next_list:
+                        to_process_modified.append(next_list)
+                process_queue.extend(to_process_modified)
+                total_reprocess += len(to_process_modified)
+                bar.next()
+
+        logger.debug('Existing associations modified: %d New associations created: %d', total_mod_existing, total_new)
+        logger.debug('New process lists: %d', total_reprocess)
+        logger.debug('Updated process queue: %s', process_queue)
+        logger.debug('# associations: %d', len(associations))
+        logger.debug('Seconds to process: %.2f\n', timer() - time_start)
 
     # Finalize found associations
-    logger.debug('# associations before finalization: %s', len(associations))
+    logger.debug('# associations before finalization: %d', len(associations))
     try:
         finalized_asns = rules.callback.reduce('finalize', associations)
     except KeyError:
@@ -146,18 +157,15 @@ def generate_from_item(
     existing_asns = []
     reprocess_list = []
     if process_list.work_over in (
-            ProcessList.BOTH,
-            ProcessList.EXISTING,
-            ProcessList.NONSCIENCE,
+            ListCategory.BOTH,
+            ListCategory.EXISTING,
+            ListCategory.NONSCIENCE,
     ):
         associations = [
             asn
             for asn in associations
             if type(asn) in allowed_rules
         ]
-        # logger.debug(
-        #     f'Checking against {len(associations)} existing associations'
-        # )
         existing_asns, reprocess_list = match_item(
             item, associations
         )
@@ -168,11 +176,10 @@ def generate_from_item(
     reprocess = []
     new_asns = []
     if process_list.work_over in (
-            ProcessList.BOTH,
-            ProcessList.RULES,
+            ListCategory.BOTH,
+            ListCategory.RULES,
     ) and rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
-        # logger.debug(f'Ignore asns {ignore_asns}')
         new_asns, reprocess = rules.match(
             item,
             version_id=version_id,

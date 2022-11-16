@@ -4,7 +4,7 @@ import logging
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector, nrsifu_valid_detector)
-from jwst.associations.lib.process_list import ProcessList
+from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources, dms_product_name_noopt,
@@ -63,7 +63,7 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
                 test=lambda x, y: False,
                 value='anything but None',
                 reprocess_on_fail=True,
-                work_over=ProcessList.NONSCIENCE,
+                work_over=ListCategory.NONSCIENCE,
                 reprocess_rules=[]
             )
         ])
@@ -105,7 +105,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
                 name='target',
                 sources=['targetid'],
                 onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                force_reprocess=ProcessList.EXISTING,
+                force_reprocess=ListCategory.EXISTING,
                 only_on_match=True,
             ),
         ])
@@ -165,7 +165,7 @@ class Asn_Lv3Coron(AsnMixin_Science):
                     name='target',
                     sources=['targetid'],
                     onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                    force_reprocess=ProcessList.EXISTING,
+                    force_reprocess=ListCategory.EXISTING,
                     only_on_match=True,
                 ),
                 Constraint(
@@ -829,7 +829,17 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
             DMSAttrConstraint(
                 name='act_id',
                 sources=['act_id']
-            )
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='dms_note',
+                        sources=['dms_note'],
+                        value='wfsc_los_jitter'
+                    ),
+                ],
+                reduce=Constraint.notany,
+            ),
         ])
 
         # Only valid if two members exist and candidate is not a GROUP.
@@ -940,7 +950,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
                 name='opt_elem',
                 sources=['filter'],
                 value='gr150r|gr150c',
-                force_unique=False,
+                force_unique=True,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',

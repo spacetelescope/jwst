@@ -17,7 +17,7 @@ from jwst.associations.lib.dms_base import (
     nrslamp_valid_detector,
 )
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.process_list import ProcessList
+from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
@@ -81,6 +81,8 @@ class Asn_Lv2Image(
                         value='background',
                         test=lambda value, item: self.get_exposure_type(item) == value,
                         force_unique=False,
+                        reprocess_on_match=True,
+                        work_over=ListCategory.EXISTING,
                     ),
                     Constraint_Single_Science(self.has_science),
                 ], reduce=Constraint.any
@@ -249,12 +251,19 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
-                    Constraint_Single_Science(self.has_science),
+                    SimpleConstraint(
+                        value='background',
+                        test=lambda value, item: self.get_exposure_type(item) == value,
+                        force_unique=False,
+                        reprocess_on_match=True,
+                        work_over=ListCategory.EXISTING,
+                    ),
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
                         force_unique=False,
-                    )
+                    ),
+                    Constraint_Single_Science(self.has_science),
                 ],
                 reduce=Constraint.any
             ),
@@ -264,7 +273,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -407,7 +416,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                             Constraint_Single_Science(
                                 self.has_science,
                                 reprocess_on_match=True,
-                                work_over=ProcessList.EXISTING
+                                work_over=ListCategory.EXISTING
                             )
                         ]
                     ),
@@ -613,7 +622,7 @@ class Asn_Lv2WFSSNIS(
                     name='image_exp_type',
                     sources=['exp_type'],
                     value='nis_image',
-                    force_reprocess=ProcessList.NONSCIENCE,
+                    force_reprocess=ListCategory.NONSCIENCE,
                     only_on_match=True,
                 ),
             ], reduce=Constraint.any),
@@ -668,7 +677,7 @@ class Asn_Lv2WFSSNRC(
                     name='image_exp_type',
                     sources=['exp_type'],
                     value='nrc_image',
-                    force_reprocess=ProcessList.NONSCIENCE,
+                    force_reprocess=ListCategory.NONSCIENCE,
                     only_on_match=True,
                 ),
             ], reduce=Constraint.any),
@@ -907,29 +916,3 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
-
-
-@RegistryMarker.rule
-class Asn_Force_Reprocess(DMSLevel2bBase):
-    """Force all backgrounds to reprocess"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup constraints
-        self.constraints = Constraint([
-            SimpleConstraint(
-                value='background',
-                sources=self.get_exposure_type,
-                force_unique=False,
-            ),
-            SimpleConstraint(
-                name='force_fail',
-                test=lambda x, y: False,
-                value='anything but None',
-                reprocess_on_fail=True,
-                work_over=ProcessList.EXISTING,
-                reprocess_rules=[]
-            )
-        ])
-
-        super(Asn_Force_Reprocess, self).__init__(*args, **kwargs)

@@ -1,4 +1,4 @@
-1.8.3 (unreleased)
+1.8.5 (unreleased)
 ==================
 
 assign_wcs
@@ -15,15 +15,33 @@ associations
 - Added background association candidates to list of level 3 candidate
   types requiring members from more than one observation [#7329]
 
+- Refactor item reprocessing for efficiency. Also refactor how background associations are configured [#7332]
+
+- Suppress the use of association candidates for level 3 products marked with WFSC_LOS_JITTER. [#7339]
+
+- Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
+
 cube_build
 ----------
 
 - Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
 
+- Change fill value for regions of SCI and ERR extensions with no data
+  from 0 to nan. [#7337]
+
 datamodels
 ----------
 
-- Add subarray keywords in the filteroffset schema [#7317]
+- Add subarray keywords in the ``filteroffset`` schema [#7317]
+
+- Remove duplicate enum entries for PATTTYPE (dither pattern type) values [#7331]
+
+
+extract_1d
+----------
+
+- Fix IFU spectral extraction code to not fail on NaN fill values
+  that now populate empty regions of the data cubes. [#7337]
 
 extract_1d
 ----------
@@ -35,10 +53,16 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+flatfield
+---------
+
+- Update the flat-field ERR computation for FGS guider mode exposures to
+  combine the input ERR and the flatfield ERR in quadrature. [#7346]
+  
 guider_cds
 ----------
 
-- Calculate and output the ERR array based on the gain and readnoise 
+- Calculate and output the ERR array based on the gain and readnoise
   variances, and force the stack mode to use the default gain and readnoise
   pixel values. [#7309]
 
@@ -52,11 +76,19 @@ photom
 
 - Cutout pixel area array to match the subarray of the science data. [#7319]
 
+- Remove duplicated division of pixel area during photometric calibration
+  of NIRSpec IFU data with EXTENDED source type; correct units in pixel area
+  division to sr from square arcseconds [#7336]
+
 resample
 --------
 
-- Enhance spectral output WCS construction to guard against nearly identical
+- Enhanced spectral output WCS construction to guard against nearly identical
   points. [#7321]
+
+- Added a utility function ``decode_context()`` to help identify all input
+  images that have contributed with flux to an output (resampled)
+  pixel. [#7345]
 
 tweakreg
 --------
@@ -67,6 +99,24 @@ tweakreg
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
 
+
+1.8.4 (2022-11-15)
+==================
+
+documentation
+-------------
+
+- Update deprecation notice with copyedit changes [#7348]
+
+- Clarify how to manage a local CRDS cache [#7350]
+
+1.8.3 (2022-11-11)
+==================
+
+documentation
+-------------
+
+- CRDS PUB deprecation notice and transition documentation [#7342]
 
 1.8.2 (2022-10-20)
 ==================

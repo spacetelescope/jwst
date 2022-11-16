@@ -47,6 +47,13 @@ described within the table at
 CRDS
 ====
 
+.. warning::
+
+   As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
+
+   For details, refer to the :ref:`pub-deprecation` page.
+
+
 CRDS reference file mappings are usually set by default to always give access
 to the most recent reference file deliveries and selection rules. On
 occasion it might be necessary or desirable to use one of the non-default
@@ -68,17 +75,6 @@ a header keyword in the output data file. The keyword names use the syntax
 "R_<ref>", where <ref> corresponds to a 6-character version of the reference
 file type, such as ``R_DARK``, ``R_LINEAR``, and ``R_PHOTOM``.
 
-There are two servers available:
-
-  - JWST OPS: https://jwst-crds.stsci.edu
-  - JWST PUB: https://jwst-crds-pub.stsci.edu
-
-JWST OPS supports the automatic processing pipeline at STScI. JWST PUB supports
-the latest public release of the `jwst` package. Most often, the reference
-contexts are one and the same. Regardless, if one wishes to calibrate using the
-same exact information as the automatic processing, use JWST OPS. Otherwise, use
-of JWST PUB is recommended.
-
 Inside the STScI network, the pipeline defaults the CRDS setup to use JWST OPS with no modifications.
 To run the pipeline outside the STScI network or to use a different server, CRDS must be configured by setting
 two environment variables:
@@ -86,19 +82,22 @@ two environment variables:
   - CRDS_PATH: Local folder where CRDS content will be cached.
   - CRDS_SERVER_URL: The server from which to pull reference information
 
-To setup to use JWST OPS, use the following settings:
+To setup, use the following settings:
 
 ::
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_ops
+    export CRDS_PATH=$HOME/crds_cache
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
-To setup to use JWST PUB, use the following settings:
+.. note::
 
-::
+   The folder that CRDS_PATH points to should be devoid of all content, except that which CRDS will create.
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_pub
-    export CRDS_SERVER_URL=https://jwst-crds-pub.stsci.edu
+   The disk partition on which the cache will be stored should have sufficient
+   free space to hold at least one context's worth of references. At the moment,
+   the minimum free space should be 100GB for normal processing. If one plans on
+   downloading the full content of the CRDS database, including all contexts and
+   reference files, plan on needing a minimum of 500GB available space.
 
 .. _strun_command_line:
 

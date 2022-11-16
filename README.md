@@ -149,37 +149,25 @@ Need other useful packages in your development environment?
 
 ## Calibration References Data System (CRDS) Setup
 
+**Note: As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
+For details, refer to the [CRDS PUB Server Freeze
+and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/pub_deprecation.html#pub-deprecation)**
+
+
 CRDS is the system that manages the reference files needed to run the pipeline.
 For details about CRDS, see the [User's
 Guide](https://jwst-crds.stsci.edu/static/users_guide/index.html)
 
-There are two servers available:
+The JWST CRDS server is available at  https://jwst-crds.stsci.edu
 
-- JWST OPS: https://jwst-crds.stsci.edu
-- JWST PUB: https://jwst-crds-pub.stsci.edu
-
-JWST OPS supports the automatic processing pipeline at STScI. JWST PUB supports
-the latest public release of the `jwst` package. Most often, the reference
-contexts are one and the same. Regardless, if one wishes to calibrate using the
-same exact information as the automatic processing, use JWST OPS. Otherwise, use
-of JWST PUB is recommended.
-
-Inside the STScI network, the pipeline defaults the CRDS setup to use JWST OPS with no modifications.
-To run the pipeline outside the STScI network or to use a different server, CRDS must be configured by setting
+It supports the automatic processing pipeline at STScI.
+Inside the STScI network, the same server is used by the pipeline by default with no modifications.
+To run the pipeline outside the STScI network, CRDS must be configured by setting
 two environment variables:
-
-- CRDS_PATH: Local folder where CRDS content will be cached.
-- CRDS_SERVER_URL: The server from which to pull reference information
-
-To setup to use JWST OPS, use the following settings:
 
     export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
-To setup to use JWST PUB, use the following settings:
-
-    export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_pub
-    export CRDS_SERVER_URL=https://jwst-crds-pub.stsci.edu
 
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.

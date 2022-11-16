@@ -434,6 +434,9 @@ def extract_ifu(input_model, source_type, extract_params):
 
     dq = np.zeros(shape[0], dtype=np.uint32)
 
+    # This boolean mask will be used to mask any bad voxels in a given plane
+    bmask = np.zeros([shape[1], shape[2]], dtype=bool)
+
     # If the user supplied extraction center coords, use them and
     # ignore all other source type and source position values
     if extract_params['x_center'] is not None:
@@ -570,8 +573,12 @@ def extract_ifu(input_model, source_type, extract_params):
         aperture_area = 0
         annulus_area = 0
 
+        # Make a boolean mask to ignore voxels with no valid data
+        bmask[:] = False
+        bmask[np.where(temp_weightmap == 0)] = True
+
         # aperture_photometry - using weight map
-        phot_table = aperture_photometry(temp_weightmap, aperture,
+        phot_table = aperture_photometry(temp_weightmap, aperture, mask=bmask,
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
@@ -587,7 +594,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         if subtract_background and annulus is not None:
             # Compute the area of the annulus.
-            phot_table = aperture_photometry(temp_weightmap, annulus,
+            phot_table = aperture_photometry(temp_weightmap, annulus, mask=bmask,
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
 
@@ -608,38 +615,38 @@ def extract_ifu(input_model, source_type, extract_params):
             npixels_bkg[k] = annulus_area
         # aperture_photometry - using data
 
-        phot_table = aperture_photometry(data[k, :, :], aperture,
+        phot_table = aperture_photometry(data[k, :, :], aperture, mask=bmask,
                                          method=method, subpixels=subpixels)
         temp_flux[k] = float(phot_table['aperture_sum'][0])
 
-        var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture,
+        var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture, mask=bmask,
                                                 method=method, subpixels=subpixels)
         f_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
 
-        var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture,
+        var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture, mask=bmask,
                                                method=method, subpixels=subpixels)
         f_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
 
-        var_flat_table = aperture_photometry(var_flat[k, :, :], aperture,
+        var_flat_table = aperture_photometry(var_flat[k, :, :], aperture, mask=bmask,
                                              method=method, subpixels=subpixels)
         f_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
         # Point source type of data with defined annulus size
         if subtract_background_plane:
-            bkg_table = aperture_photometry(data[k, :, :], annulus,
+            bkg_table = aperture_photometry(data[k, :, :], annulus, mask=bmask,
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
-            var_poisson_table = aperture_photometry(var_poisson[k, :, :], annulus,
+            var_poisson_table = aperture_photometry(var_poisson[k, :, :], annulus, mask=bmask,
                                                     method=method, subpixels=subpixels)
             b_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
 
-            var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], annulus,
+            var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], annulus, mask=bmask,
                                                    method=method, subpixels=subpixels)
             b_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
 
-            var_flat_table = aperture_photometry(var_flat[k, :, :], annulus,
+            var_flat_table = aperture_photometry(var_flat[k, :, :], annulus, mask=bmask,
                                                  method=method, subpixels=subpixels)
             b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
@@ -658,7 +665,10 @@ def extract_ifu(input_model, source_type, extract_params):
                 high = bkg_mean + bkg_sigma_clip * bkg_stddev
 
                 # set up the mask to flag data that should not be used in aperture photometry
+                # Reject data outside the sigma-clipped range
                 maskclip = np.logical_or(bkg_data < low, bkg_data > high)
+                # Reject data outside the valid data footprint
+                maskclip = np.logical_or(maskclip, bmask)
 
                 bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
                                                 method=method, subpixels=subpixels)
@@ -964,10 +974,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
     # Extract the data.
     # First add up the values along the x direction, then add up the
     # values along the y direction.
-    gross = (data * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
-    f_var_poisson = (var_poisson * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
-    f_var_rnoise = (var_rnoise * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
-    f_var_flat = (var_flat * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+    gross = np.nansum(np.nansum(data * mask_target, axis=2, dtype=np.float64), axis=1)
+    f_var_poisson = np.nansum(np.nansum(var_poisson * mask_target, axis=2, dtype=np.float64), axis=1)
+    f_var_rnoise = np.nansum(np.nansum(var_rnoise * mask_target, axis=2, dtype=np.float64), axis=1)
+    f_var_flat = np.nansum(np.nansum(var_flat * mask_target, axis=2, dtype=np.float64), axis=1)
 
     # Compute the number of pixels that were added together to get gross.
     normalization = 1.
@@ -975,19 +985,19 @@ def image_extract_ifu(input_model, source_type, extract_params):
     weightmap = input_model.weightmap
     temp_weightmap = weightmap
     temp_weightmap[temp_weightmap > 1] = 1
-    npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+    npixels[:] = np.nansum(np.nansum(temp_weightmap * mask_target, axis=2, dtype=np.float64), axis=1)
     bkg_sigma_clip = extract_params['bkg_sigma_clip']
 
     # Point Source data 1. extract background and subtract 2. do not
     if source_type == 'POINT':
         if subtract_background and mask_bkg is not None:
-            n_bkg[:] = (temp_weightmap * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
+            n_bkg[:] = np.nansum(np.nansum(temp_weightmap * mask_bkg, axis=2, dtype=np.float64), axis=1)
             n_bkg[:] = np.where(n_bkg <= 0., 1., n_bkg)
             normalization = npixels / n_bkg
-            background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
-            b_var_poisson = (var_poisson * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
-            b_var_rnoise = (var_rnoise * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
-            b_var_flat = (var_flat * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
+            background = np.nansum(np.nansum(data * mask_bkg, axis=2, dtype=np.float64), axis=1)
+            b_var_poisson = np.nansum(np.nansum(var_poisson * mask_bkg, axis=2, dtype=np.float64), axis=1)
+            b_var_rnoise = np.nansum(np.nansum(var_rnoise * mask_bkg, axis=2, dtype=np.float64), axis=1)
+            b_var_flat = np.nansum(np.nansum(var_flat * mask_bkg, axis=2, dtype=np.float64), axis=1)
             temp_flux = gross - background * normalization
         else:
             background = np.zeros_like(gross)
@@ -996,7 +1006,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
             b_var_flat = np.zeros_like(gross)
             temp_flux = gross.copy()
     else:
-        temp_flux = (data * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+        temp_flux = np.nansum(np.nansum(data * mask_target, axis=2, dtype=np.float64), axis=1)
 
     # Extended source data, sigma clip outliers of extraction region is performed
     # at each wavelength plane.
@@ -1360,6 +1370,7 @@ def sigma_clip_extended_region(data, var_poisson, var_rnoise, var_flat, mask_tar
 
         # set up the mask to flag data that should not be used
         maskclip = np.logical_or(data_plane < low, data_plane > high)  # flag outliers
+        maskclip = np.logical_or(maskclip, ~np.isfinite(data_plane))
         extract_region[maskclip] = 0
 
         sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k, :, :])
