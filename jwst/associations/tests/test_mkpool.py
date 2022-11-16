@@ -71,11 +71,12 @@ def test_opt_cols_cmdline(mkpool_cmdline, opt_cols):
 # ####################
 # Fixtures & Utilities
 # ####################
-@pytest.fixture(scope='module')
-def exposures():
-    exposure_path = helpers.t_path(
-        'data/exposures'
-    )
+@pytest.fixture(scope='module', params=[
+    'data/exposures_nopsf',
+    'data/exposures',
+])
+def exposures(request):
+    exposure_path = helpers.t_path(request.param)
     exposures = glob(os.path.join(exposure_path, '*.fits'))
     return exposures
 
