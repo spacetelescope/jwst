@@ -1,4 +1,4 @@
-1.8.4 (unreleased)
+1.8.5 (unreleased)
 ==================
 
 assign_wcs
@@ -35,11 +35,6 @@ datamodels
 - Add subarray keywords in the filteroffset schema [#7317]
 
 - Remove duplicates and add comments to core.schema dithering types [#7331]
-
-documentation
--------------
-
--  Update deprecation notice with copyedit changes [#7348]
 
 
 extract_1d
@@ -99,6 +94,16 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
+
+1.8.4 (2022-11-15)
+==================
+
+documentation
+-------------
+
+- Update deprecation notice with copyedit changes [#7348]
+
+- Clarify how to manage a local CRDS cache [#7350]
 
 1.8.3 (2022-11-11)
 ==================
