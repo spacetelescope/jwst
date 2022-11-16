@@ -36,15 +36,11 @@ datamodels
 
 - Remove duplicate enum entries for PATTTYPE (dither pattern type) values [#7331]
 
-
 extract_1d
 ----------
 
 - Fix IFU spectral extraction code to not fail on NaN fill values
   that now populate empty regions of the data cubes. [#7337]
-
-extract_1d
-----------
 
 - Update ATOCA algorithm to development version [#6945]
 
