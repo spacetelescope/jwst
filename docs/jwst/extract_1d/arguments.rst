@@ -89,38 +89,68 @@ The ``extract_1d`` step has the following step-specific arguments.
   Switch to select whether or not to apply an APERTURE correction during the
   Extract1dStep processing. Default is ``True``
 
-``soss_threshold``
+``--soss_atoca``
+  This is a NIRISS-SOSS algorithm-specific parameter; if True, use the ATOCA
+  algorithm to treat order contamination. Default is ``True``.
+
+``--soss_threshold``
   This is a NIRISS-SOSS algorithm-specific parameter; this sets the threshold
   value for a pixel to be included when modelling the spectral trace. The default
   value is 0.01.
 
-``soss_n_os``
+``--soss_n_os``
   This is a NIRISS-SOSS algorithm-specific parameter; this is an integer that sets]
   the oversampling factor of the underlying wavelength grid used when modeling the
   trace. The default value is 2.
 
-``soss_transform``
+``--soss_estimate``
+  This is a NIRISS-SOSS algorithm-specific parameter; filename or SpecModel of the
+  estimate of the target flux. The estimate must be a SpecModel with wavelength and
+  flux values.
+
+``--soss_wave_grid_in``
+  This is a NIRISS-SOSS algorithm-specific parameter; filename or SossWaveGrid containing
+  the wavelength grid used by ATOCA to model each pixel valid pixel of the detector. If
+  not given, the grid is determined based on an estimate of the flux (soss_estimate), the
+  relative tolerance (soss_rtol) required on each pixel model and the maximum grid size
+  (soss_max_grid_size).
+
+``--soss_wave_grid_out``
+  This is a NIRISS-SOSS algorithm-specific parameter; filename to hold the wavelength
+  grid calculated by ATOCA.
+
+``--soss_rtol``
+  This is a NIRISS-SOSS algorithm-specific parameter; the relative tolerance needed on a
+  pixel model. It is used to determine the sampling of the soss_wave_grid when not
+  directly given. Default value is 1.e-4.
+
+``--soss_max_grid_size``
+  This is a NIRISS-SOSS algorithm-specific parameter; the maximum grid size allowed. It is
+  used when soss_wave_grid is not provided to make sure the computation time or the memory
+  used stays reasonable. Default value is 20000.
+
+``--soss_transform``
   This is a NIRISS-SOSS algorithm-specific parameter; this defines a rotation to
   apply to the reference files to match the observation. It should be specified as
   a list of three floats, with default values of None.
 
-``soss_tikfac``
+``--soss_tikfac``
   This is a NIRISS-SOSS algorithm-specific parameter; this is the regularization
   factor used in the SOSS extraction. If not specified, ATOCA will calculate a
   best-fit value for the Tikhonov factor.
 
-``soss_width``
+``--soss_width``
   This is a NIRISS-SOSS algorithm-specific parameter; this specifies the aperture
   width used to extract the 1D spectrum from the decontaminated trace. The default
   value is 40.0 pixels.
 
-``soss_bad_pix``
+``--soss_bad_pix``
   This is a NIRISS-SOSS algorithm-specific parameter; this parameter sets the method
   used to handle bad pixels. There are currently two options: "model" will replace
   the bad pixel values with a modeled value, while "masking" will omit those pixels
   from the spectrum. The default value is "model".
 
-``soss_modelname``
+``--soss_modelname``
   This is a NIRISS-SOSS algorithm-specific parameter; if set, this will provide
   the optional ATOCA model output of traces and pixel weights, with the filename
   set by this parameter. By default this is set to None and this output is
