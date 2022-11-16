@@ -15,9 +15,11 @@ associations
 - Added background association candidates to list of level 3 candidate
   types requiring members from more than one observation [#7329]
 
-- Refactor item reprocessing for efficiency, refactor how background associations are configured [#7332]
+- Refactor item reprocessing for efficiency. Also refactor how background associations are configured [#7332]
 
 - Suppress the use of association candidates for level 3 products marked with WFSC_LOS_JITTER. [#7339]
+
+- Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
 
 cube_build
 ----------
@@ -30,29 +32,27 @@ cube_build
 datamodels
 ----------
 
-- Add subarray keywords in the filteroffset schema [#7317]
+- Add subarray keywords in the ``filteroffset`` schema [#7317]
 
-- Remove duplicates and add comments to core.schema dithering types [#7331]
+- Remove duplicate enum entries for PATTTYPE (dither pattern type) values [#7331]
 
 
 extract_1d
 ----------
 
-- Fix IFU spectral extraction code to not fail on nan fill values
-  now populating empty regions of the data cubes. [#7337]
+- Fix IFU spectral extraction code to not fail on NaN fill values
+  that now populate empty regions of the data cubes. [#7337]
 
 extract_2d
 ----------
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
-
 flatfield
 ---------
 
 - JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
-
   
 general
 -------
@@ -98,7 +98,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-
+  
 1.8.4 (2022-11-15)
 ==================
 
