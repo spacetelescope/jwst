@@ -1,4 +1,4 @@
-1.8.4 (unreleased)
+1.8.5 (unreleased)
 ==================
 
 assign_wcs
@@ -34,13 +34,6 @@ datamodels
 
 - Remove duplicates and add comments to core.schema dithering types [#7331]
 
-documentation
--------------
-
-- Update deprecation notice with copyedit changes [#7348]
-
-- Clarify how to manage a local CRDS cache [#7350]
-
 
 extract_1d
 ----------
@@ -59,7 +52,13 @@ flatfield
 
 - JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
+
   
+general
+-------
+
+- Add requirement for asdf-transform-schemas >= 0.3.0 [#7352]
+
 guider_cds
 ----------
 
@@ -91,11 +90,6 @@ resample
   images that have contributed with flux to an output (resampled)
   pixel. [#7345]
 
-transforms
-----------
-
-- Require the asdf transform version to be at least 0.3.0 [#7352]
-  
 tweakreg
 --------
 
@@ -104,6 +98,16 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
+
+1.8.4 (2022-11-15)
+==================
+
+documentation
+-------------
+
+- Update deprecation notice with copyedit changes [#7348]
+
+- Clarify how to manage a local CRDS cache [#7350]
 
 1.8.3 (2022-11-11)
 ==================
