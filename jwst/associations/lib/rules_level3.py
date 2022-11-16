@@ -950,7 +950,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
                 name='opt_elem',
                 sources=['filter'],
                 value='gr150r|gr150c',
-                force_unique=False,
+                force_unique=True,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',
