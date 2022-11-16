@@ -15,7 +15,6 @@ from jwst.associations.mkpool import from_cmdline, mkpool
 OPT_COLS = [('asn_candidate', [('a3001', 'coron')]),
             ('dms_note', 'a note from dms'),
             ('is_imprt', 't'),
-            ('is_psf', 't'),
             ('pntgtype', 'target_acquisition')]
 
 # Required column names
