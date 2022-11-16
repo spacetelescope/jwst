@@ -74,8 +74,6 @@ class _BaseOverlap:
             be used directly. N_ker is the length of the effective kernel
             and N_k_c is the length of the spectrum (f_k) convolved.
         global_mask : (N, M) array_like boolean, optional
-            Boolean mask of the detector pixels to mask for every extraction.
-        orders: list, optional
             Boolean Mask of the detector pixels to mask for every extraction.
             Should not be related to a specific order (if so, use `mask_trace_profile` instead).
         mask_trace_profile: (N_ord, N, M) list or array of 2-D arrays[bool], optional
@@ -145,7 +143,9 @@ class _BaseOverlap:
         # Set the mask based on trace profiles and save
         if mask_trace_profile is None:
             # No mask (False everywhere)
-            log.warning('`mask_trace_profile` was not given. Not optimal.')
+            log.warning('mask_trace_profile was not given. All detector pixels will be modeled. '
+                        'It is preferable to limit the number of modeled pixels by specifying the region '
+                        'of interest with mask_trace_profile.')
             mask_trace_profile = np.array([np.zeros(self.data_shape, dtype=bool) for _ in orders])
         self.mask_trace_profile = mask_trace_profile
 
