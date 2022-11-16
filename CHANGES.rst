@@ -21,6 +21,8 @@ associations
 
 - Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
 
+- Remove defaulting of the is_psf column [#7356]
+
 cube_build
 ----------
 
