@@ -51,9 +51,14 @@ extract_2d
 flatfield
 ---------
 
-- Update the flat-field ERR computation for FGS guider mode exposures to
-  combine the input ERR and the flatfield ERR in quadrature. [#7346]
+- JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
+  combine the input ERR and the flat field ERR in quadrature. [#7346]
   
+general
+-------
+
+- Add requirement for asdf-transform-schemas >= 0.3.0 [#7352]
+
 guider_cds
 ----------
 
@@ -93,8 +98,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-
-
+  
 1.8.4 (2022-11-15)
 ==================
 
