@@ -561,7 +561,7 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         wave_grid = make_decontamination_grid(ref_files, transform, rtol, max_grid_size, estimate, n_os)
         log.debug(f'wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
     else:
-        log.info(f'Using previously computed or user specified wavelength grid.')
+        log.info('Using previously computed or user specified wavelength grid.')
 
 #     # Use estimate to evaluate the contribution from each orders to pixels
 #     # (Used to determine which pixel to model later)
@@ -1043,7 +1043,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         wave_grid = wave_grid.astype('float64')
     else:
         # wave_grid will be estimated later in the first call of `model_image`
-        log.info(f'Wavelength grid was not specified. Setting `wave_grid` to None')
+        log.info('Wavelength grid was not specified. Setting `wave_grid` to None.')
         wave_grid = None
 
     # TODO: Maybe not unpack yet. Use SpecModel attributes
