@@ -151,7 +151,7 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     return xtrace, ytrace, wavetrace
 
 
-def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-2):
+def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-4):
     """
     Parameters
     ----------
