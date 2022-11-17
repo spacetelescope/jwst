@@ -13,4 +13,4 @@
 #     conda create -n sdp python -y
 #     conda activate sdp
 #     pip install -e .[test]
-#     pip freeze | grep -v jwst.git >> requirements-sdp.txt
+#     pip freeze | grep -v jwst >> requirements-sdp.txt
