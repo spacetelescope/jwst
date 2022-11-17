@@ -21,6 +21,8 @@ associations
 
 - Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
 
+- Remove defaulting of the is_psf column [#7356]
+
 cube_build
 ----------
 
@@ -36,7 +38,10 @@ datamodels
 
 - Remove duplicate enum entries for PATTTYPE (dither pattern type) values [#7331]
 
-
+- Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
+  replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
+  [#7361]
+  
 extract_1d
 ----------
 
