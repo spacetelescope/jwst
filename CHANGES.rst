@@ -58,7 +58,7 @@ flatfield
 
 - JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
-  
+
 general
 -------
 
@@ -100,6 +100,8 @@ resample
   images that have contributed with flux to an output (resampled)
   pixel. [#7345]
 
+- Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
+
 tweakreg
 --------
 
@@ -108,7 +110,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-  
+
 1.8.4 (2022-11-15)
 ==================
 
