@@ -23,7 +23,6 @@ NON_HEADER_COLS = {
     'asn_candidate': None,
     'dms_note': '',
     'is_imprt': 'f',
-    'is_psf': 'f',
     'pntgtype': 'science',
     'targetid': '1',
 }
@@ -31,8 +30,7 @@ NON_HEADER_COLS = {
 
 def mkpool(data,
            asn_candidate=NON_HEADER_COLS['asn_candidate'], dms_note=NON_HEADER_COLS['dms_note'],
-           is_imprt=NON_HEADER_COLS['is_imprt'], is_psf=NON_HEADER_COLS['is_psf'],
-           pntgtype=NON_HEADER_COLS['pntgtype'],
+           is_imprt=NON_HEADER_COLS['is_imprt'], pntgtype=NON_HEADER_COLS['pntgtype'],
            **kwargs):
     """Create an association pool from a list of FITS files.
 
@@ -66,8 +64,6 @@ def mkpool(data,
           by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
     - is_imprt
           A 't' indicates the exposure is a NIRSpec imprint exposure.
-    - is_psf
-          A 't' indicate a PSF exposure.
     - pntgtype
           The general class of exposure. The default value is "science".
           For target acquisition, the value is "target_acquisition".
@@ -89,9 +85,6 @@ def mkpool(data,
 
     is_imprt : 't' or 'f'
         Indicator whether exposures are imprint/leakcal exposures.
-
-    is_psf : 't' or 'f'
-        Indicator whether exposures are PSF's.
 
     pntgtype : 'science', 'target_acquisition'
         General exposure type.
@@ -119,7 +112,7 @@ def mkpool(data,
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     # Set default values for user-settable non-header parameters
-    non_header_params = {'dms_note': dms_note, 'is_imprt': is_imprt, 'is_psf': is_psf, 'pntgtype': pntgtype}
+    non_header_params = {'dms_note': dms_note, 'is_imprt': is_imprt, 'pntgtype': pntgtype}
 
     # Setup for target id calculation
     targetid = 0  # Start off with no target id.
@@ -198,10 +191,6 @@ def from_cmdline(args=None):
     parser.add_argument(
         '--is-imprt', default=NON_HEADER_COLS['is_imprt'],
         help='A "t" indicates the exposure is an imprint exposure.'
-    )
-    parser.add_argument(
-        '--is-psf', default=NON_HEADER_COLS['is_psf'],
-        help='A "t" indicate a PSF exposure.'
     )
     parser.add_argument(
         '--pntgtype', default=NON_HEADER_COLS['pntgtype'],
