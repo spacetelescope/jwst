@@ -38,7 +38,10 @@ datamodels
 
 - Remove duplicate enum entries for PATTTYPE (dither pattern type) values [#7331]
 
-
+- Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
+  replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
+  [#7361]
+  
 extract_1d
 ----------
 

@@ -32,10 +32,10 @@ properties:
               - enum:
                   [FULLP, MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB,
                    SUB160, SUB160P, SUB320,
-                   SUB320A335R, SUB320A430R, SUB320ALWB,
+                   SUB320A335R, SUB320A430R,
                    SUB320B335R, SUB320B430R, SUB320BLWB,
                    SUB32TATS, SUB32TATSGRISM,
-                   SUB400P, SUB640,
+                   SUB400P, SUB400X256ALWB, SUB640,
                    SUB640A210R, SUB640ASWB, SUB640B210R, SUB640BSWB,
                    SUB64FP1A, SUB64FP1B, SUB64P,
                    SUB8FP1A, SUB8FP1B,
@@ -48,7 +48,7 @@ properties:
                    SUBNDBLWBL, SUBNDBLWBS, SUBNDBSWBL, SUBNDBSWBS]
               # Obsolete NIRCam
               - enum:
-                  [MASKA210R, MASKA430R, MASKBLWB, MASKBSWB]
+                  [MASKA210R, MASKA430R, MASKBLWB, MASKBSWB, SUB320ALWB]
               # NIRISS
               - enum:
                   [SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96,
