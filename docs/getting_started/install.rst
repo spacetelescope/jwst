@@ -36,6 +36,11 @@ including tagged releases, DMS builds used in operations, and development
 versions. Remember that all conda operations must be done from within a bash/zsh
 shell.
 
+.. warning::
+
+    Users on MacOS Mojave (10.14) should limit their environment python to 3.9 -
+    there is a package dependency which currently fails to build on Mojave with
+    python>=3.10.
 
 Installing Latest Release
 -------------------------
