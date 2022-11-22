@@ -197,6 +197,12 @@ combine_1d
 - Fixed a bug to properly exclude input spectra that have only 1
   wavelength bin. [#7053]
 
+dark_current
+------------
+
+- Bug fix for computation of the total number of frames when science data use
+  on-board frame averaging and/or group gaps. [spacetelescope/stcal#121]
+
 datamodels
 ----------
 
@@ -211,7 +217,7 @@ jump
 ----
 
 - First version of snowball/shower flagging for the jump step
-  JP-#2645. This code will not be actiavated without either a set of
+  JP-2645. This code will not be actiavated without either a set of
   parameter reference files or a command line override. [#7039]
 
 master_background
