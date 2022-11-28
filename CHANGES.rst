@@ -66,6 +66,8 @@ general
 
 - Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
   pipeline in Python and with strun. [#6919]
+  
+- fixed wrong Python version expected in ``__init__.py`` [#7366]
 
 guider_cds
 ----------
