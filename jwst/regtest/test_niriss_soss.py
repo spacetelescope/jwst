@@ -4,7 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
 
-@pytest.fixture(s)
+@pytest.fixture()
 def run_tso_spec2(jail, rtdata):
     """Run stage 2 pipeline on NIRISS SOSS data."""
 
