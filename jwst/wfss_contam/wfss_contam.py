@@ -109,12 +109,18 @@ def contam_corr(input_model, waverange, photom, max_cores):
     obs = Observation(image_names, seg_model, grism_wcs, filter_name,
                       boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
 
+    # Create dict of offsets to pass to disperse_all to create simulated image
+    # with sources in correct locations
+    offset_dict = dict()
+    for slit in output_model.slits:
+        offset_dict[int(slit.source_id)] = (slit.xstart - 1, slit.ystart - 1)
+
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
 
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order],
-                         sens_response[order])
+                         sens_response[order], offset_dict)
 
         # Accumulate result for this order into the combined image
         if simul_all is None:
@@ -136,13 +142,11 @@ def contam_corr(input_model, waverange, photom, max_cores):
         # Create simulated spectrum for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
-        offset_x = slit.xstart - 1
-        offset_y = slit.ystart - 1
         chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
 
         obs.simulated_image = np.zeros(obs.dims)
         obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order], [offset_x, offset_y])
+                           sens_waves[order], sens_response[order], offset_dict[sid])
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image minus this source

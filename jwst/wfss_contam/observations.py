@@ -146,7 +146,7 @@ class Observation:
                 for i in range(len(self.IDs)):
                     self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
-    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
+    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, offset_dict, cache=False):
         """
         Compute dispersed pixel values for all sources identified in
         the segmentation map.
@@ -163,6 +163,9 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
+        offset_dict : dict
+            Keys on source IDs in list of slits, with values as list of x, y
+            offset values to place source in context of full frame
         """
         if cache:
             log.debug("Object caching ON")
@@ -185,8 +188,11 @@ class Observation:
                 self.cached_object[i]['miny'] = []
                 self.cached_object[i]['maxy'] = []
 
-            # Disperse object "i"
-            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp, [0, 0])
+            # Not all sources in segmentation map are extracted in extract_2d
+            # due to extract_2d.wfss_nbright
+            if i in offset_dict.keys():
+                # Disperse object "i"
+                self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp, offset_dict[i])
 
     def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp, offsets):
         """
