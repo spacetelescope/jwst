@@ -21,6 +21,8 @@ associations
 
 - Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
 
+- Remove defaulting of the is_psf column [#7356]
+
 cube_build
 ----------
 
@@ -36,6 +38,10 @@ datamodels
 
 - Remove duplicate enum entries for PATTTYPE (dither pattern type) values [#7331]
 
+- Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
+  replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
+  [#7361]
+  
 extract_1d
 ----------
 
@@ -52,9 +58,19 @@ extract_2d
 flatfield
 ---------
 
-- Update the flat-field ERR computation for FGS guider mode exposures to
-  combine the input ERR and the flatfield ERR in quadrature. [#7346]
+- JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
+  combine the input ERR and the flat field ERR in quadrature. [#7346]
   
+general
+-------
+
+- Add requirement for asdf-transform-schemas >= 0.3.0 [#7352]
+
+- Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
+  pipeline in Python and with strun. [#6919]
+  
+- fixed wrong Python version expected in ``__init__.py`` [#7366]
+
 guider_cds
 ----------
 
@@ -94,8 +110,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-
-
+  
 1.8.4 (2022-11-15)
 ==================
 

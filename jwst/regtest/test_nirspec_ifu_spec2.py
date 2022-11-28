@@ -47,10 +47,9 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
-@pytest.fixture(scope='module')
-def run_photom(jail, rtdata_module):
+@pytest.fixture()
+def run_photom(jail, rtdata):
     """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
-    rtdata = rtdata_module
 
     # Setup the inputs
     rate_name = 'jw01251004001_03107_00002_nrs1_pathloss.fits'
@@ -74,10 +73,9 @@ def test_photom(run_photom, fitsdiff_default_kwargs):
                      truth_path=TRUTH_PATH)
 
 
-@pytest.fixture(scope='module')
-def run_extract1d(jail, rtdata_module):
+@pytest.fixture()
+def run_extract1d(jail, rtdata):
     """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
-    rtdata = rtdata_module
 
     # Setup the inputs
     cube_name = 'jw01251004001_03107_00002_nrs1_s3d.fits'
