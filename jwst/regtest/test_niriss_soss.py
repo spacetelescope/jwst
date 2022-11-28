@@ -4,10 +4,9 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
 
-@pytest.fixture(scope="module")
-def run_tso_spec2(jail, rtdata_module):
+@pytest.fixture(s)
+def run_tso_spec2(jail, rtdata):
     """Run stage 2 pipeline on NIRISS SOSS data."""
-    rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
@@ -35,10 +34,9 @@ def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
     Step.from_cmdline(args)
 
 
-@pytest.fixture(scope="module")
-def run_atoca_extras(jail, rtdata_module):
+@pytest.fixture()
+def run_atoca_extras(jail, rtdata):
     """Run stage 2 pipeline on NIRISS SOSS data using enhanced modes via parameter settings."""
-    rtdata = rtdata_module
 
     # Run spec2 pipeline on the second _rateints file, using wavegrid generated from first segment.
     rtdata.get_data("niriss/soss/seg001_wavegrid.fits")
@@ -53,9 +51,9 @@ def run_atoca_extras(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints"])
-def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):
+def test_niriss_soss_stage2(rtdata, run_tso_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
-    rtdata = rtdata_module
+
     output = f"jw01091002001_03101_00001-seg001_nis_short_{suffix}.fits"
     rtdata.output = output
 
@@ -105,9 +103,9 @@ def test_niriss_soss_stage3_whtlt(run_tso_spec3, rtdata_module, diff_astropy_tab
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "AtocaSpectra", "SossExtractModel", "x1dints"])
-def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kwargs, suffix):
+def test_niriss_soss_extras(rtdata, run_atoca_extras, fitsdiff_default_kwargs, suffix):
     """Regression test of ATOCA enhanced algorithm performed on NIRISS SOSS data."""
-    rtdata = rtdata_module
+
     output = f"jw01091002001_03101_00001-seg002_nis_short_{suffix}.fits"
     rtdata.output = output
 
