@@ -154,9 +154,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
         # Create a cutout of the contam image that matches the extent
         # of the source slit
-        x2 = offset_x + slit.xsize
-        y2 = offset_y + slit.ysize
-        cutout = contam[offset_y:y2, offset_x:x2]
+        x2 = offset_dict[sid][0] + slit.xsize
+        y2 = offset_dict[sid][1] + slit.ysize
+        cutout = contam[offset_dict[sid][1]:y2, offset_dict[sid][0]:x2]
         new_slit = datamodels.SlitModel(data=cutout)
         copy_slit_info(slit, new_slit)
         slits.append(new_slit)
