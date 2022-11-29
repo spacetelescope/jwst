@@ -167,7 +167,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
             ref_dict['ref_model'] = extract_model
         else:
             log.error(f"Invalid Extract 1d reference file, must be json, fits or asdf.")
-            raise RuntimeError("Invalid Extract 1d reference file, must be json, fits or asd.")
+            raise RuntimeError("Invalid Extract 1d reference file, must be json, fits or asdf.")
 
     return ref_dict
 
