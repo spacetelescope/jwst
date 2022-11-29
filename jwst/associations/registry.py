@@ -1,5 +1,4 @@
 """Association Registry"""
-from importlib import import_module
 import importlib.util
 from inspect import (
     getmembers,
@@ -15,7 +14,7 @@ from os.path import (
     expanduser,
     expandvars,
 )
-import sys
+from enum import EnumMeta
 
 from . import libpath
 from .exceptions import (
@@ -83,7 +82,7 @@ class AssociationRegistry(dict):
                  global_constraints=None,
                  name=None,
                  include_bases=False):
-        super(AssociationRegistry, self).__init__()
+        super().__init__()
 
         # Generate a UUID for this instance. Used to modify rule
         # names.
@@ -320,7 +319,10 @@ class AssociationRegistry(dict):
             rule_name = '_'.join([self.name, name])
         except TypeError:
             rule_name = name
-        rule = type(rule_name, (obj,), {})
+        if type(obj) is EnumMeta:
+            rule = obj(rule_name, {})
+        else:
+            rule = type(rule_name, (obj,), {})
         rule.GLOBAL_CONSTRAINT = global_constraints
         rule.registry = self
         self.__setitem__(rule_name, rule)
