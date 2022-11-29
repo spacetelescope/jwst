@@ -71,7 +71,6 @@ def test_casting():
         assert dm.data.sum() > total
 
 
-@pytest.mark.skip(reason='fix required for asdf')
 def test_resave_duplication_bug(tmp_path):
     """
     An issue in asdf (https://github.com/asdf-format/asdf/issues/1232)
