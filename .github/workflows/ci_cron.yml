@@ -8,49 +8,47 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-  tox:
-    name: ${{ matrix.name }}
+  test:
+    name: ${{ matrix.toxenv }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Dev dependencies in requirements-dev.txt
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: devdeps
+        toxenv: [test-devdeps-xdist]
+        python-version: ['3.x']
+        os: [ubuntu-latest]
     steps:
-      - name: Install system packages
-        if: ${{ contains(matrix.toxenv,'docs') }}
-        run: |
-          sudo apt-get install graphviz texlive-latex-extra dvipng
-
-      - name: Checkout the code
+      - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install tox
+          cache: 'pip'
+          cache-dependency-path: setup.cfg
+      - name: Get CRDS context
+        id: crds-context
+        # Get default CRDS_CONTEXT without installing crds client
+        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
+        run: >
+          echo "pmap=$(
+          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["jwst"], "id": 1}' https://jwst-crds.stsci.edu/json/ |
+          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
+          )" >> $GITHUB_OUTPUT
+      - run: echo "CRDS CONTEXT ${{ steps.crds-context.outputs.pmap }}"
+      - name: Cache CRDS reference files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-reffiles-${{ steps.crds-context.outputs.pmap }}
+      - name: Run ${{ matrix.toxenv }}
         run: |
           pip install tox
-
-      - name: Run tests
-        run: tox -e ${{ matrix.toxenv }}
-
-      - name: Upload coverage to codecov
-        if: ${{ contains(matrix.toxenv,'-cov') }}
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          flags: unit
-          fail_ci_if_error: true
+          tox -e ${{ matrix.toxenv }}
