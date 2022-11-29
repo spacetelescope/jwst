@@ -15,5 +15,5 @@ if '+' in __version__:
     if commit:
         __version_commit__ = commit[0]
 
-if sys.version_info < (3, 5):
-    raise ImportError("JWST requires Python 3.5 and above.")
+if sys.version_info < (3, 8):
+    raise ImportError("JWST requires Python 3.8 and above.")
