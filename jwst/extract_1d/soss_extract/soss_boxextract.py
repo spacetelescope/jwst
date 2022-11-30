@@ -114,8 +114,8 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
 
     # Set all pixels values outside of extraction region to Nan
     # so it will be correctly handle by np.nansum.
-    data = np.where(extract_region, np.nan, data)
-    error = np.where(extract_region, np.nan, error)
+    data = np.where(extract_region, data, np.nan)
+    error = np.where(extract_region, error, np.nan)
 
     # Set the weights of masked pixels to zero.
     box_weights[mask] = 0.
