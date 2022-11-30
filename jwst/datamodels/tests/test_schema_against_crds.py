@@ -165,7 +165,7 @@ ref_to_datamodel_dict = {
 @pytest.mark.parametrize('instrument', ['fgs', 'miri', 'nircam', 'niriss', 'nirspec'])
 def test_crds_selectors_vs_datamodel(jail_environ, instrument):
 
-    os.environ["CRDS_SERVER_URL"] = 'https://jwst-crds-pub.stsci.edu'
+    os.environ["CRDS_SERVER_URL"] = 'https://jwst-crds.stsci.edu'
 
     log.info(f"CRDS_PATH: {os.environ['CRDS_PATH']}")
 
