@@ -6,7 +6,7 @@ from scipy.optimize import minimize_scalar
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import (
-    Mapping, Tabular1D, Linear1D, Pix2Sky_TAN, RotateNative2Celestial, Identity
+    Mapping, Tabular1D, Linear1D, Pix2Sky_TAN, RotateNative2Celestial, Const1D
 )
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
@@ -214,10 +214,17 @@ class ResampleSpecData(ResampleData):
                                                  fill_value=np.nan)
         self.data_size = (ny, len(ref_lam))
 
-        # Construct the final transform
+        # Construct the final transform.
+        # First coordinate is set to 0 to represent the "horizontal" center
+        # of the slit (if we imagine slit to be vertical in the usual X-Y 2D
+        # cartesian frame):
         mapping = Mapping((0, 1, 0))
-        mapping.inverse = Mapping((2, 1))
-        out_det2slit = mapping | Identity(1) & y_slit_model & wavelength_transform
+        inv_mapping = Mapping((2, 1))
+        inv_mapping.inverse = mapping
+        mapping.inverse = inv_mapping
+        zero_model = Const1D(0)
+        zero_model.inverse = zero_model
+        det2slit = mapping | zero_model & y_slit_model & wavelength_transform
 
         # Create coordinate frames
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
@@ -230,7 +237,7 @@ class ResampleSpecData(ResampleData):
                                 reference_frame=coord.ICRS())
         world = cf.CompositeFrame([sky, spec], name='world')
 
-        pipeline = [(det, out_det2slit), (slit_frame, s2w), (world, None)]
+        pipeline = [(det, det2slit), (slit_frame, s2w), (world, None)]
         output_wcs = WCS(pipeline)
 
         # Compute bounding box and output array shape.  Add one to the y (slit)
