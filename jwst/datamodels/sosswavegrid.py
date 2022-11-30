@@ -1,9 +1,9 @@
 from .model_base import JwstDataModel
 
-__all__ = ['SossWaveGrid']
+__all__ = ['SossWaveGridModel']
 
 
-class SossWaveGrid(JwstDataModel):
+class SossWaveGridModel(JwstDataModel):
     """
     A data model to hold NIRISS SOSS wavelength grids.
     This 1-D array of wavelengths can be saved from a processing run

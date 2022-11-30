@@ -6,7 +6,7 @@ from scipy.interpolate import UnivariateSpline
 from ..extract import populate_time_keywords
 from ...lib import pipe_utils
 from ... import datamodels
-from ...datamodels import dqflags, SossWaveGrid
+from ...datamodels import dqflags, SossWaveGridModel
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
@@ -499,8 +499,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
     threshold : float
         The threshold value for using pixels based on the spectral profile.
         Default value is 1e-4.
-    wave_grid : str or SossWaveGrid or None
-        Filename of reference file or SossWaveGrid containing the wavelength grid used by ATOCA
+    wave_grid : str or SossWaveGridModel or None
+        Filename of reference file or SossWaveGridModel containing the wavelength grid used by ATOCA
         to model each pixel valid pixel of the detector. If not given, the grid is determined
         based on an estimate of the flux (estimate), the relative tolerance (rtol)
         required on each pixel model and the maximum grid size (max_grid_size).
@@ -1038,7 +1038,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     wave_grid_in = soss_kwargs['wave_grid_in']
     if wave_grid_in is not None:
         log.info(f'Loading wavelength grid from {wave_grid_in}.')
-        wave_grid = datamodels.SossWaveGrid(wave_grid_in).wavegrid
+        wave_grid = datamodels.SossWaveGridModel(wave_grid_in).wavegrid
         # Make sure it as the correct precision
         wave_grid = wave_grid.astype('float64')
     else:
@@ -1287,7 +1287,7 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
         output_model.int_times = input_model.int_times.copy()
 
     if soss_kwargs['wave_grid_out'] is not None:
-        wave_grid_model = SossWaveGrid(wavegrid=wave_grid)
+        wave_grid_model = SossWaveGridModel(wavegrid=wave_grid)
         log.info(f"Saving soss_wave_grid to {soss_kwargs['wave_grid_out']}")
         wave_grid_model.save(path=soss_kwargs['wave_grid_out'])
         wave_grid_model.close()

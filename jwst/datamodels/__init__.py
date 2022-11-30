@@ -66,7 +66,7 @@ from .saturation import SaturationModel
 from .segmap import SegmentationMapModel
 from .slit import SlitModel, SlitDataModel
 from .sossextractmodel import SossExtractModel
-from .sosswavegrid import SossWaveGrid
+from .sosswavegrid import SossWaveGridModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .speckernel import SpecKernelModel
@@ -141,7 +141,7 @@ __all__ = [
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',
     'SossExtractModel',
-    'SossWaveGrid',
+    'SossWaveGridModel',
     'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',
