@@ -99,7 +99,7 @@ The ``extract_1d`` step has the following step-specific arguments.
   value is 0.01.
 
 ``--soss_n_os``
-  This is a NIRISS-SOSS algorithm-specific parameter; this is an integer that sets]
+  This is a NIRISS-SOSS algorithm-specific parameter; this is an integer that sets
   the oversampling factor of the underlying wavelength grid used when modeling the
   trace. The default value is 2.
 
@@ -109,15 +109,15 @@ The ``extract_1d`` step has the following step-specific arguments.
   flux values.
 
 ``--soss_wave_grid_in``
-  This is a NIRISS-SOSS algorithm-specific parameter; filename or SossWaveGrid containing
-  the wavelength grid used by ATOCA to model each pixel valid pixel of the detector. If
-  not given, the grid is determined based on an estimate of the flux (soss_estimate), the
-  relative tolerance (soss_rtol) required on each pixel model and the maximum grid size
-  (soss_max_grid_size).
+  This is a NIRISS-SOSS algorithm-specific parameter; filename or SossWaveGridModel
+  containing the wavelength grid used by ATOCA to model each pixel valid pixel of the
+  detector. If not given, the grid is determined based on an estimate of the flux
+  (soss_estimate), the relative tolerance (soss_rtol) required on each pixel model
+  and the maximum grid size (soss_max_grid_size).
 
 ``--soss_wave_grid_out``
   This is a NIRISS-SOSS algorithm-specific parameter; filename to hold the wavelength
-  grid calculated by ATOCA.
+  grid calculated by ATOCA, stored in a SossWaveGridModel.
 
 ``--soss_rtol``
   This is a NIRISS-SOSS algorithm-specific parameter; the relative tolerance needed on a

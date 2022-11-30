@@ -48,7 +48,9 @@ extract_1d
 - Fix IFU spectral extraction code to not fail on NaN fill values
   that now populate empty regions of the data cubes. [#7337]
 
-- Update ATOCA algorithm to development version [#6945]
+- Update ATOCA algorithm to development version with increased robustness
+  to various data issues, wavelength grid storage, and increased parameter
+  control of ATOCA behavior. [#6945]
 
 extract_2d
 ----------
