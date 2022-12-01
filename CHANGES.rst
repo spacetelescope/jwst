@@ -41,7 +41,7 @@ datamodels
 - Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
-  
+
 extract_1d
 ----------
 
@@ -58,7 +58,7 @@ flatfield
 
 - JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
-  
+
 general
 -------
 
@@ -66,8 +66,10 @@ general
 
 - Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
   pipeline in Python and with strun. [#6919]
-  
+
 - fixed wrong Python version expected in ``__init__.py`` [#7366]
+
+- replace ``flake8`` with ``ruff`` [#7054]
 
 guider_cds
 ----------
@@ -100,6 +102,8 @@ resample
   images that have contributed with flux to an output (resampled)
   pixel. [#7345]
 
+- Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
+
 tweakreg
 --------
 
@@ -108,7 +112,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-  
+
 1.8.4 (2022-11-15)
 ==================
 
@@ -199,6 +203,12 @@ combine_1d
 - Fixed a bug to properly exclude input spectra that have only 1
   wavelength bin. [#7053]
 
+dark_current
+------------
+
+- Bug fix for computation of the total number of frames when science data use
+  on-board frame averaging and/or group gaps. [spacetelescope/stcal#121]
+
 datamodels
 ----------
 
@@ -213,7 +223,7 @@ jump
 ----
 
 - First version of snowball/shower flagging for the jump step
-  JP-#2645. This code will not be actiavated without either a set of
+  JP-2645. This code will not be actiavated without either a set of
   parameter reference files or a command line override. [#7039]
 
 master_background
