@@ -63,14 +63,14 @@ jobs:
       cache-path: ${{ needs.crds.outputs.path }}
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
-        - linux: py39-oldestdeps-xdist-cov
+        - linux: py39-oldestdeps-xdist-cov-memray
           pytest-results-summary: true
-        - linux: py39-xdist
-        - linux: py39-sdpdeps-xdist
-        - linux: py310-xdist
-        - linux: py311-xdist
-        - macos: py311-xdist
+        - linux: py39-xdist-memray
+        - linux: py39-sdpdeps-xdist-memray
+        - linux: py310-xdist-memray
+        - linux: py311-xdist-memray
+        - macos: py311-xdist-memray
           pytest-results-summary: true
-        - linux: py311-xdist-cov
+        - linux: py311-xdist-cov-memray
           coverage: codecov
           pytest-results-summary: true
