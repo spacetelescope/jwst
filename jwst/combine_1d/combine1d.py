@@ -147,7 +147,7 @@ class OutputSpectrumModel:
 
         (wl, n_input_spectra) = count_input(input_spectra)
 
-        self.wavelength = compute_output_wl(wl, n_input_spectra)
+        self.wavelength = np.sort(compute_output_wl(wl, n_input_spectra))
 
         self.wcs = create_spectral_wcs(input_spectra[0].right_ascension[0],
                                        input_spectra[0].declination[0],
