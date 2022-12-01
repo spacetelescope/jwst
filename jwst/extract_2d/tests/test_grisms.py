@@ -203,6 +203,8 @@ def test_create_box_fits():
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
+    # Add fake data to pass a shape to wfss_imaging_wcs
+    im.data = np.zeros((512, 512))
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
     imwcs.meta.source_catalog = source_catalog
@@ -233,6 +235,9 @@ def test_create_box_gwcs():
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
+    # Add fake data to pass a shape to wfss_imaging_wcs
+    # The data array is not relevant
+    im.data = np.zeros((512, 512))
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
     imwcs.meta.source_catalog = source_catalog
@@ -256,6 +261,8 @@ def setup_image_cat():
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
+    # Add fake data to pass a shape to wfss_imaging_wcs
+    im.data = np.zeros((512, 512))
     im.meta.source_catalog = source_catalog
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)

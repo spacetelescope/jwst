@@ -93,5 +93,6 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
                 except Exception as exc:
                     log.info("Unable to update S_REGION for type {}: {}".format(
                         output_model.meta.exposure.type, exc))
+
     log.info("COMPLETED assign_wcs")
     return output_model

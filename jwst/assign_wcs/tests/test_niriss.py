@@ -17,6 +17,7 @@ from jwst.datamodels.image import ImageModel
 
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
 from jwst.assign_wcs import niriss
+from jwst.assign_wcs import util
 
 
 # Allowed settings for niriss
@@ -80,7 +81,6 @@ def create_imaging_wcs(filtername):
     hdul = create_hdul(filtername=filtername, pupil='CLEAR')
     im = ImageModel(hdul)
     ref = get_reference_files(im)
-    print(ref)
     pipeline = niriss.create_pipeline(im, ref)
     wcsobj = wcs.WCS(pipeline)
     return wcsobj
@@ -171,3 +171,15 @@ def test_imaging_distortion():
 
     assert_allclose(raout, ra)
     assert_allclose(decout, dec)
+
+
+def test_wfss_sip():
+    hdul = create_hdul(filtername='GR150R', pupil='F200W', exptype='NIS_WFSS')
+    wfss_model = ImageModel(hdul)
+    ref = get_reference_files(wfss_model)
+    pipeline = niriss.create_pipeline(wfss_model, ref)
+    wcsobj = wcs.WCS(pipeline)
+    wfss_model.meta.wcs = wcsobj
+    util.wfss_imaging_wcs(wfss_model, niriss.imaging, max_pix_error=0.05, bbox=((1, 1024), (1, 1024)))
+    for key in ['a_order', 'b_order', 'crpix1', 'crpix2', 'crval1', 'crval2', 'cd1_1']:
+        assert key in wfss_model.meta.wcsinfo.instance
