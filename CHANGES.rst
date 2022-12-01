@@ -41,7 +41,7 @@ datamodels
 - Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
-  
+
 extract_1d
 ----------
 
@@ -53,14 +53,14 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
-- JP-3007 Add keywords for source RA and Dec for WFSS extractions [#7372]
+- Add keywords for source RA and Dec for WFSS extractions [#7372]
   
 flatfield
 ---------
 
 - JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
-  
+
 general
 -------
 
@@ -68,8 +68,10 @@ general
 
 - Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
   pipeline in Python and with strun. [#6919]
-  
+
 - fixed wrong Python version expected in ``__init__.py`` [#7366]
+
+- replace ``flake8`` with ``ruff`` [#7054]
 
 guider_cds
 ----------
@@ -102,6 +104,8 @@ resample
   images that have contributed with flux to an output (resampled)
   pixel. [#7345]
 
+- Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
+
 tweakreg
 --------
 
@@ -110,7 +114,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-  
+
 1.8.4 (2022-11-15)
 ==================
 
