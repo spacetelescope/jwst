@@ -17,7 +17,7 @@ import tempfile
 
 import asdf
 from colorama import Fore
-from getch import getch
+import readchar
 
 
 ARTIFACTORY_REPO = "jwst-pipeline-results"
@@ -191,7 +191,7 @@ def main():
                           f"{Fore.CYAN}'s' to skip{Fore.RESET}, "
                           f"{Fore.MAGENTA}'q' to quit{Fore.RESET}: ")
                     # Get the keyboard character input without pressing return
-                    result = getch()
+                    result = readchar.readkey()
                     if result not in ['o', 's', 'q']:
                         print(f"Unrecognized command, try again")
                     else:
