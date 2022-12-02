@@ -8,3 +8,26 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
+
+[tool.ruff]
+line-length = 130
+exclude = [
+    'jwst/extern',
+    'docs',
+    'jwst/associations',
+    'jwst/fits_generator',
+    '.tox',
+    '.eggs',
+    'build',
+]
+
+ignore = [
+    'E741', # ambiguous variable name
+]
+
+[tool.ruff.per-file-ignores]
+'jwst/ramp_fitting/tests/compare_cr_navg_files.py' = ['E402']
+'jwst/ramp_fitting/tests/compare_crs.py' = ['E402']
+'jwst/ramp_fitting/tests/compare_cr_files.py' = ['E402']
+'jwst/ramp_fitting/tests/create_cube.py' = ['E402']
+'jwst/ramp_fitting/tests/mc_3d.py' = ['E402']

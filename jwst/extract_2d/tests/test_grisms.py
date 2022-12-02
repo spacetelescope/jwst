@@ -387,6 +387,10 @@ def test_extract_wfss_object():
     ids = [slit.source_id for slit in outmodel.slits]
     assert ids == [9, 19, 19]
 
+    # Compare SRCDEC and SRCRA values
+    assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
+    assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
+
     names = [slit.name for slit in outmodel.slits]
     assert names == ['9', '19', '19']
 
