@@ -8,7 +8,7 @@ from jwst.datamodels import RampModel
 from jwst.jump import JumpStep
 
 try:
-    import cv2 as cv
+    import cv2 as cv # noqa: F401
 
     OPENCV_INSTALLED = True
 except ImportError:
