@@ -148,7 +148,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
                 # Input file does not load correctly as json file.
                 # Probably an error in json file
                 fd.close()
-                log.error(f"Extract1d json reference file has an error, run a json validator off line and fix the file")
+                log.error("Extract1d json reference file has an error, run a json validator off line and fix the file")
                 raise RuntimeError("Invalid json extract 1d reference file, run json validator off line and fix file.")
         elif refname_type == 'fits':
             try:
@@ -157,7 +157,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
                 ref_dict = {'ref_file_type': FILE_TYPE_IMAGE, 'ref_model': extract_model}
                 fd.close()
             except OSError:
-                log.error(f"Extract1d fits reference file has an error")
+                log.error("Extract1d fits reference file has an error")
                 raise RuntimeError("Invalid fits extract 1d reference file- fix reference file.")
 
         elif refname_type == 'asdf':
@@ -166,7 +166,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
             ref_dict['ref_file_type'] = FILE_TYPE_ASDF
             ref_dict['ref_model'] = extract_model
         else:
-            log.error(f"Invalid Extract 1d reference file, must be json, fits or asdf.")
+            log.error("Invalid Extract 1d reference file, must be json, fits or asdf.")
             raise RuntimeError("Invalid Extract 1d reference file, must be json, fits or asdf.")
 
     return ref_dict
@@ -431,7 +431,7 @@ def get_extract_parameters(
                 extract_params['subtract_background'] = False
 
     else:
-        log.error(f"Reference file type {ref_dict['ref_file_type']} not recognized")
+        log.error("Reference file type {ref_dict['ref_file_type']} not recognized")
 
     return extract_params
 

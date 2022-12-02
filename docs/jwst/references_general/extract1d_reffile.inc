@@ -87,9 +87,10 @@ Editing JSON Reference File Format for non-IFU data
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 The default EXTRACT1D reference file is found in CRDS. The user can download this file, modify the contents,
 and use this modified file in ``extract_1d`` by specifying this modified reference file with the ``override`` option
-(:ref:`override in python <override_ref_python>` or :ref:`override in strun <override_ref_strun>`). The format for JSON files has to be exact, for example,
-the format of a floating-point value with a fractional portion must include at least one decimal digit, so "1." is invalid, while "1.0" is valid.
-The best practice after editing a JSON reference file is to run a JSON validator off-line and correct any format errors before using
+(:ref:`override in python <override_ref_python>` or :ref:`override in strun <override_ref_strun>`). The format for
+JSON files has to be exact, for example, the format of a floating-point value with a fractional portion must include
+at least one decimal digit, so "1." is invalid, while "1.0" is valid. The best practice after editing a JSON reference
+file is to run a JSON validator off-line, such as `jsonlint  <https://jsonlint.com>`,  and correct any format errors before using
 the JSON reference file in the pipeline.
 
 
