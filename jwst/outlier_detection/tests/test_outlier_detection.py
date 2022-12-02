@@ -251,7 +251,7 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, _jail):
 
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
-def test_outlier_step_image_weak_CR_dither(exptype):
+def test_outlier_step_image_weak_CR_dither(exptype, _jail):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
@@ -278,7 +278,7 @@ def test_outlier_step_image_weak_CR_dither(exptype):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso + exptypes_coron)
-def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit):
+def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, _jail):
     """Test whole step with an outlier for TSO & coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
