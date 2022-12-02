@@ -23,6 +23,11 @@ associations
 
 - Remove defaulting of the is_psf column [#7356]
 
+combine_1d
+----------
+
+- Sort combined wavelength array before building spectral wcs [#7374]
+
 cube_build
 ----------
 
