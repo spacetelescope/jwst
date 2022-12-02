@@ -437,9 +437,10 @@ class TestMethods:
 
         # expect SATURATED
         dq = slopes[1]
-        assert dq[50, 51] == SATURATED
+        assert dq[50, 51] == GOOD
+
         # expect SATURATED and DO_NOT_USE, because 1st group is Saturated
-        assert dq[50, 52] == SATURATED + DO_NOT_USE
+        assert dq[50, 52] == SATURATED | DO_NOT_USE
 
     def test_four_groups_oneCR_orphangroupatend_fit(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
@@ -882,7 +883,8 @@ def test_zero_frame_usage():
     check = np.array([[37.04942, 0.46572033, 4.6866207]])
     np.testing.assert_allclose(sdata, check, tol, tol)
 
-    check = np.array([[2, 2, 2]])
+    # Since the second integration is GOOD the final DQ is GOOD.
+    check = np.array([[GOOD, GOOD, GOOD]])
     np.testing.assert_allclose(sdq, check, tol, tol)
 
     check = np.array([[0.06958079, 0.0002169, 0.20677584]])
@@ -901,8 +903,10 @@ def test_zero_frame_usage():
                       [[0.46572027, 0.46572033, 0.46572033]]])
     np.testing.assert_allclose(cdata, check, tol, tol)
 
-    check = np.array([[[2, 3, 2]],
-                      [[0, 0, 0]]])
+    # Column 2 in the first integration is marked GOOD because there
+    # is valid ZEROFRAME data that is used.
+    check = np.array([[[GOOD, SATURATED | DO_NOT_USE, GOOD]],
+                      [[GOOD, GOOD, GOOD]]])
     np.testing.assert_allclose(cdq, check, tol, tol)
 
     check = np.array([[[3.4790397e-01, 0.0000000e+00, 4.3422928e+00]],
