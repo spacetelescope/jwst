@@ -94,6 +94,12 @@ photom
   of NIRSpec IFU data with EXTENDED source type; correct units in pixel area
   division to sr from square arcseconds [#7336]
 
+ramp_fitting
+------------
+
+- Change the propagation of the SATURATED flag to be done only for complete
+  saturation. [#7363, spacetelescope/stcal#125]
+
 resample
 --------
 
