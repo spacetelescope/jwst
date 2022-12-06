@@ -113,7 +113,10 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # with sources in correct locations
     offset_dict = dict()
     for slit in output_model.slits:
-        offset_dict[int(slit.source_id)] = (slit.xstart - 1, slit.ystart - 1)
+        source_entry = offset_dict.get(int(slit.source_id), dict())
+        # Add entry in source dict for each order
+        source_entry[slit.meta.wcsinfo.spectral_order] = (slit.xstart - 1, slit.ystart - 1)
+        offset_dict[int(slit.source_id)] = source_entry
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
@@ -146,7 +149,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
         obs.simulated_image = np.zeros(obs.dims)
         obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order], offset_dict[sid])
+                           sens_waves[order], sens_response[order], offset_dict[sid][order])
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image minus this source
@@ -154,9 +157,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
         # Create a cutout of the contam image that matches the extent
         # of the source slit
-        x2 = offset_dict[sid][0] + slit.xsize
-        y2 = offset_dict[sid][1] + slit.ysize
-        cutout = contam[offset_dict[sid][1]:y2, offset_dict[sid][0]:x2]
+        x2 = offset_dict[sid][order][0] + slit.xsize
+        y2 = offset_dict[sid][order][1] + slit.ysize
+        cutout = contam[offset_dict[sid][order][1]:y2, offset_dict[sid][order][0]:x2]
         new_slit = datamodels.SlitModel(data=cutout)
         copy_slit_info(slit, new_slit)
         slits.append(new_slit)

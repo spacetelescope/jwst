@@ -191,8 +191,9 @@ class Observation:
             # Not all sources in segmentation map are extracted in extract_2d
             # due to extract_2d.wfss_nbright
             if i in offset_dict.keys():
-                # Disperse object "i"
-                self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp, offset_dict[i])
+                for spec_order in offset_dict[i]:
+                    # Disperse object "i"
+                    self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp, offset_dict[i][spec_order])
 
     def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp, offsets):
         """
