@@ -682,25 +682,25 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
 
     Parameters
     ----------
-    all_grid: list[array]
+    all_grid : list[array]
         List of grid (arrays) to pass to adapt_grid, in order of importance.
-    all_estimate: list[callable]
+    all_estimate : list[callable]
         List of function (callable) to estimate the precision needed to oversample the grid.
         Must match the corresponding `grid` in `all_grid`.
-    max_iter: int, optional
+    max_iter : int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
         by delta_grid / 2^max_iter. Needs to be greater then zero.
         Default is 10.
-    rtol: float, optional
+    rtol : float, optional
         The desired relative tolerance. Default is 10e-6, so 10 ppm.
-    tol: float, optional
+    tol : float, optional
         The desired absolute tolerance. Default is 0 to prioritize `rtol`.
-    max_total_size: int, optional
+    max_total_size : int, optional
         maximum size of the output grid. Default is 1 000 000.
     Returns
     -------
-    os_grid  : 1D array
+    os_grid : 1D array
         Oversampled combined grid which minimizes the integration error based on
         Romberg's method
     """

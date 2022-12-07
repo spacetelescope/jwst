@@ -76,11 +76,11 @@ class _BaseOverlap:
         global_mask : (N, M) array_like boolean, optional
             Boolean Mask of the detector pixels to mask for every extraction.
             Should not be related to a specific order (if so, use `mask_trace_profile` instead).
-        mask_trace_profile: (N_ord, N, M) list or array of 2-D arrays[bool], optional
+        mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], optional
             A list or array of the pixels that need to be used for extraction,
             for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
             If not given, `threshold` will be applied on spatial profiles to define the masks.
-        orders: list, optional:
+        orders : list, optional:
             List of orders considered. Default is orders = [1, 2]
         wave_grid : (N_k) array_like, optional
             The grid on which f(lambda) will be projected.
@@ -89,7 +89,7 @@ class _BaseOverlap:
         wave_bounds : list or array-like (N_ord, 2), optional
             Boundary wavelengths covered by each order.
             Default is the wavelength covered by `wave_map`.
-        n_os  : int, optional
+        n_os : int, optional
             Oversampling rate. If `wave_grid`is None, it will be used to
             generate a grid. Default is 2.
         threshold : float, optional:
@@ -1014,9 +1014,7 @@ class _BaseOverlap:
             Tikhonov regularization object (see regularization.Tikhonov).
             If not given, an object will be initiated using the linear system
             from `build_sys` method and kwargs will be passed.
-        estimate: 1D array-like, optional
-            Estimate of the flux projected on the wavelength grid.
-        tikho_kwargs:
+        tikho_kwargs :
             passed to init Tikhonov object. Possible options
             are `t_mat` and `grid`
         data : (N, M) array_like, optional
@@ -1515,11 +1513,11 @@ class ExtractionEngine(_BaseOverlap):
         mask : (N, M) array_like boolean, optional
             Boolean Mask of the detector pixels to mask for every extraction.
             Should not be related to a specific order (if so, use `mask_trace_profile` instead).
-        mask_trace_profile: (N_ord, N, M) list or array of 2-D arrays[bool], optional
+        mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], optional
             A list or array of the pixel that need to be used for extraction,
             for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
             If not given, `threshold` will be applied on spatial profiles to define the masks.
-        orders: list, optional
+        orders : list, optional
             List of orders considered. Default is orders = [1, 2]
         wave_grid : (N_k) array_like, optional
             The grid on which f(lambda) will be projected.
@@ -1527,7 +1525,7 @@ class ExtractionEngine(_BaseOverlap):
         wave_bounds : list or array-like (N_ord, 2), optional
             Boundary wavelengths covered by each orders.
             Default is the wavelength covered by `wave_map`.
-        n_os  : int, optional
+        n_os : int, optional
             Oversampling rate. If `wave_grid`is None, it will be used to
             generate a grid. Default is 2.
         threshold : float, optional:

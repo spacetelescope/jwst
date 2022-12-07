@@ -110,7 +110,7 @@ The ``extract_1d`` step has the following step-specific arguments.
 
 ``--soss_wave_grid_in``
   This is a NIRISS-SOSS algorithm-specific parameter; filename or SossWaveGridModel
-  containing the wavelength grid used by ATOCA to model each pixel valid pixel of the
+  containing the wavelength grid used by ATOCA to model each valid pixel of the
   detector. If not given, the grid is determined based on an estimate of the flux
   (soss_estimate), the relative tolerance (soss_rtol) required on each pixel model
   and the maximum grid size (soss_max_grid_size).
