@@ -23,6 +23,11 @@ associations
 
 - Remove defaulting of the is_psf column [#7356]
 
+combine_1d
+----------
+
+- Sort combined wavelength array before building spectral wcs [#7374]
+
 cube_build
 ----------
 
@@ -41,12 +46,15 @@ datamodels
 - Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
-  
+
 extract_1d
 ----------
 
 - Fix IFU spectral extraction code to not fail on NaN fill values
   that now populate empty regions of the data cubes. [#7337]
+
+- Re-organized the way extract1d reference files are read in based
+  on type of file and added more checks when reading files. [#7369]
 
 - Update ATOCA algorithm for NIRISS SOSS extraction to development version;
   includes increased robustness to various data issues, wavelength grid storage in
@@ -57,12 +65,14 @@ extract_2d
 
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
+- Add keywords for source RA and Dec for WFSS extractions [#7372]
+  
 flatfield
 ---------
 
 - JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
-  
+
 general
 -------
 
@@ -70,8 +80,10 @@ general
 
 - Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
   pipeline in Python and with strun. [#6919]
-  
+
 - fixed wrong Python version expected in ``__init__.py`` [#7366]
+
+- replace ``flake8`` with ``ruff`` [#7054]
 
 guider_cds
 ----------
@@ -94,6 +106,12 @@ photom
   of NIRSpec IFU data with EXTENDED source type; correct units in pixel area
   division to sr from square arcseconds [#7336]
 
+ramp_fitting
+------------
+
+- Change the propagation of the SATURATED flag to be done only for complete
+  saturation. [#7363, spacetelescope/stcal#125]
+
 resample
 --------
 
@@ -104,6 +122,8 @@ resample
   images that have contributed with flux to an output (resampled)
   pixel. [#7345]
 
+- Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
+
 tweakreg
 --------
 
@@ -112,7 +132,7 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
-  
+
 1.8.4 (2022-11-15)
 ==================
 
@@ -203,6 +223,12 @@ combine_1d
 - Fixed a bug to properly exclude input spectra that have only 1
   wavelength bin. [#7053]
 
+dark_current
+------------
+
+- Bug fix for computation of the total number of frames when science data use
+  on-board frame averaging and/or group gaps. [spacetelescope/stcal#121]
+
 datamodels
 ----------
 
@@ -217,7 +243,7 @@ jump
 ----
 
 - First version of snowball/shower flagging for the jump step
-  JP-#2645. This code will not be actiavated without either a set of
+  JP-2645. This code will not be actiavated without either a set of
   parameter reference files or a command line override. [#7039]
 
 master_background
