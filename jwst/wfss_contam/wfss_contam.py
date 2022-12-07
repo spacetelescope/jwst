@@ -120,9 +120,6 @@ def contam_corr(input_model, waverange, photom, max_cores):
         source_entry[slit.meta.wcsinfo.spectral_order] = (slit.xstart - 1, slit.ystart - 1)
         offset_dict[int(slit.source_id)] = source_entry
 
-    log.critical(f"grism dict keys: {grism_wcs_dict.keys()}")
-    log.critical(f"offset dict keys: {offset_dict.keys()}")
-
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
 

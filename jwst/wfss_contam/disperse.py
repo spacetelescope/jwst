@@ -57,9 +57,11 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         Whether to allow for the SED of the object to be extrapolated when it does not fully cover the
         needed wavelength range. Default if False.
     xoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for padded direct images)
+        Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to
+        full frame)
     yoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for padded direct images)
+        Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to
+        full frame)
 
     Returns
     -------
