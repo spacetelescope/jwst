@@ -123,7 +123,7 @@ resample
 set_telescope_pointing
 ----------------------
 
-- Fix PRD versions for tests that are not testing changes in PRD. [#7380]
+- Pin PRD versions for tests that are not testing changes in PRD. [#7380]
 
 tweakreg
 --------

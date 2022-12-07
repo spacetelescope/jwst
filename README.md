@@ -182,7 +182,7 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 
 To build the docs yourself, clone this repository and build the documentation with:
 
-    pip install -e ".[docs]"
+    pip install -e ".[docs]**
     cd docs
     make html
     make latexpdf
@@ -203,9 +203,9 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 ## Software vs DMS build version map
 
-| jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT<br>(JWST OPS) | CRDS_CONTEXT<br>(JWST PUB) | Date       | Notes                                         |
+| jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT<br>(JWST OPS) | CRDS_CONTEXT<br>(JWST PUB** | Date       | Notes                                         |
 |---------------------|-----------|----------|----------------------------|----------------------------|------------|-----------------------------------------------|
-| 1.8.2               | B9.0      | 2022.4.0 | N/A                        | 1004                       | 2022-10-19 | Final release candidate for B9.0              |
+| 1.8.2               | B9.0      | 2022.4.0 | 1017                       | 1004***                    | 2022-10-19 | Final release candidate for B9.0              |
 | 1.8.1               | B9.0rc2   |          |                            | 1001                       | 2022-10-17 | Second release candidate for B9.0             |
 | 1.8.0               | B9.0rc1   |          |                            | 0995                       | 2022-10-10 | First release candidate for B9.0              |
 | 1.7.2               | B8.1.2    | 2022.3.1 | 0984                       | 0950                       | 2022-09-12 | Final release candidate for B8.1.2            |
@@ -279,6 +279,8 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 Note: CRDS_CONTEXT values of "N/A" mean that the release is not in operations and therefore has no corresponding context on the JWST OPS CRDS server.
 
 Note: **CRDS PUB did not exist at the 1.3.3 release or before. All previous contexts between PUB and OPS are identical.
+
+Note: ***CRDS PUB is deprecated at the B9.0 release. No further updates will be made to the PUB server after this point.
 
 For a specific release, the context listed is a minimum context that can be used with that release. A release should work with any contexts between
 the specified context and less than the context for the next release.

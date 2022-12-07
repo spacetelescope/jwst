@@ -122,7 +122,7 @@ def databases(rtdata_module):
         Returns the tuple of the siaf database and all exposures meta information.
     """
 
-    # Fix the PRD. Not testing changes in PRD
+    # Pin the PRD. Not testing changes in PRD
     siaf_db = siafdb.SiafDb(prd='PRDOPSSOC-055')
 
     # Get the exposures' meta information
