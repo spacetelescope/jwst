@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import argparse
 import pkgutil
+from concurrent.futures import ProcessPoolExecutor
 from importlib import import_module
-import os
 
 import jwst
 
@@ -29,9 +29,14 @@ def main():
 
     no_check = ["test", "time"]
 
-    for importer, module_name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
-        if not any(True for word in no_check if word in module_name):
-            module = import_module(module_name)
+    modules = [
+        module_name
+        for _, module_name, _ in pkgutil.walk_packages(package.__path__, prefix=prefix)
+        if not any(word in module_name for word in no_check)
+    ]
+
+    with ProcessPoolExecutor() as process_pool:
+        process_pool.map(import_module, modules)
 
 
 if __name__ == "__main__":
