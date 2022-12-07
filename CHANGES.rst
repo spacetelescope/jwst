@@ -120,6 +120,11 @@ resample
 
 - Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
 
+set_telescope_pointing
+----------------------
+
+- Fix PRD versions for tests that are not testing changes in PRD. [#7380]
+
 tweakreg
 --------
 
