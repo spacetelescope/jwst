@@ -68,8 +68,10 @@ def contam_corr(input_model, waverange, photom, max_cores):
     image_names = [direct_file]
     log.debug(f"Direct image names={image_names}")
 
-    # Get the grism WCS from the input model
-    grism_wcs = input_model.slits[0].meta.wcs
+    # Get the grism WCS objects from the input model cutouts
+    grism_wcs_dict = dict()
+    for slit in input_model.slits:
+        grism_wcs_dict[(slit.source_id, slit.meta.wcsinfo.spectral_order)] = slit.meta.wcs
 
     # Find out how many spectral orders are defined, based on the
     # array of order values in the Wavelengthrange ref file
@@ -106,7 +108,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
     # Initialize the simulated image object
     simul_all = None
-    obs = Observation(image_names, seg_model, grism_wcs, filter_name,
+    obs = Observation(image_names, seg_model, grism_wcs_dict, filter_name,
                       boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
 
     # Create dict of offsets to pass to disperse_all to create simulated image
@@ -117,6 +119,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
         # Add entry in source dict for each order
         source_entry[slit.meta.wcsinfo.spectral_order] = (slit.xstart - 1, slit.ystart - 1)
         offset_dict[int(slit.source_id)] = source_entry
+
+    log.critical(f"grism dict keys: {grism_wcs_dict.keys()}")
+    log.critical(f"offset dict keys: {offset_dict.keys()}")
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
