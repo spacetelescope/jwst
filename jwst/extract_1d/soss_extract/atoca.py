@@ -1476,9 +1476,6 @@ class ExtractionEngine(_BaseOverlap):
     This version models the pixels of the detector using an oversampled trapezoidal integration.
     """
 
-    # The desired data-type for computations, e.g., 'float32'. 'float64' is recommended.
-    dtype = 'float64'
-
     def __init__(self, wave_map, trace_profile, *args, **kwargs):
         """
         Parameters
