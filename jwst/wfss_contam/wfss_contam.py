@@ -68,8 +68,14 @@ def contam_corr(input_model, waverange, photom, max_cores):
     image_names = [direct_file]
     log.debug(f"Direct image names={image_names}")
 
-    # Get the grism WCS from the input model
+    # Get the grism WCS object and offsets from the first cutout in the input model.
+    # This WCS is used to transform from direct image to grism frame for all sources
+    # in the segmentation map - the offsets are required so that we can shift
+    # each source in the segmentation map to the proper grism image location
+    # using this particular wcs, but any cutout's wcs+offsets would work.
     grism_wcs = input_model.slits[0].meta.wcs
+    xoffset = input_model.slits[0].xstart - 1
+    yoffset = input_model.slits[0].ystart - 1
 
     # Find out how many spectral orders are defined, based on the
     # array of order values in the Wavelengthrange ref file
@@ -107,7 +113,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # Initialize the simulated image object
     simul_all = None
     obs = Observation(image_names, seg_model, grism_wcs, filter_name,
-                      boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
+                      boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus)
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
@@ -149,10 +155,8 @@ def contam_corr(input_model, waverange, photom, max_cores):
         # Create a cutout of the contam image that matches the extent
         # of the source slit
         x1 = slit.xstart - 1
-        x2 = x1 + slit.xsize
         y1 = slit.ystart - 1
-        y2 = y1 + slit.ysize
-        cutout = contam[y1:y2, x1:x2]
+        cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
         new_slit = datamodels.SlitModel(data=cutout)
         copy_slit_info(slit, new_slit)
         slits.append(new_slit)
