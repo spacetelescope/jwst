@@ -134,6 +134,12 @@ tweakreg
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
 
+wfss_contam
+-----------
+
+- Pull 2D cutout offsets from SlitModel subarray metadata rather than
+  grism WCS transform. [#7343]
+
 1.8.4 (2022-11-15)
 ==================
 

@@ -57,9 +57,11 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         Whether to allow for the SED of the object to be extrapolated when it does not fully cover the
         needed wavelength range. Default if False.
     xoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for padded direct images)
+        Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to
+        full frame)
     yoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for padded direct images)
+        Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to
+        full frame)
 
     Returns
     -------
@@ -80,16 +82,6 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # Setup the transforms we need from the input WCS objects
     sky_to_imgxy = grism_wcs.get_transform('world', 'detector')
     imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
-
-    # The WCS comes from the first 2D cutout in the grism image, which has
-    # the offset from the full-frame origin to the cutout origin in it.
-    # We'll use these values later to get back to full-frame coords.
-    try:
-        offset_x = -imgxy_to_grismxy.offset_1
-        offset_y = -imgxy_to_grismxy.offset_2
-    except AttributeError:
-        offset_x = -imgxy_to_grismxy.offset_6
-        offset_y = -imgxy_to_grismxy.offset_7
 
     # Setup function for retrieving flux values at each dispersed wavelength
     if len(lams) > 1:
@@ -113,8 +105,8 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # then finally convert to x/y in the grism image frame
     x0_sky, y0_sky = seg_wcs(x0, y0)
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
-    xwmin, ywmin = imgxy_to_grismxy(x0_xy + offset_x, y0_xy + offset_y, wmin, order)
-    xwmax, ywmax = imgxy_to_grismxy(x0_xy + offset_x, y0_xy + offset_y, wmax, order)
+    xwmin, ywmin = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmin, order)
+    xwmax, ywmax = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmax, order)
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
@@ -141,7 +133,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # then convert to x/y in grism frame.
     x0_sky, y0_sky = seg_wcs([x0] * n_lam, [y0] * n_lam)
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, [order] * n_lam)
-    x0s, y0s = imgxy_to_grismxy(x0_xy + offset_x, y0_xy + offset_y, lambdas, [order] * n_lam)
+    x0s, y0s = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, lambdas, [order] * n_lam)
 
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
