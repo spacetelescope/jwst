@@ -68,10 +68,14 @@ def contam_corr(input_model, waverange, photom, max_cores):
     image_names = [direct_file]
     log.debug(f"Direct image names={image_names}")
 
-    # Get the grism WCS objects from the input model cutouts
-    grism_wcs_dict = dict()
-    for slit in input_model.slits:
-        grism_wcs_dict[(slit.source_id, slit.meta.wcsinfo.spectral_order)] = slit.meta.wcs
+    # Get the grism WCS object and offsets from the first cutout in the input model.
+    # This WCS is used to transform from direct image to grism frame for all sources
+    # in the segmentation map - the offsets are required so that we can shift
+    # each source in the segmentation map to the proper grism image location
+    # using this particular wcs, but any cutout's wcs+offsets would work.
+    grism_wcs = input_model.slits[0].meta.wcs
+    xoffset = input_model.slits[0].xstart - 1
+    yoffset = input_model.slits[0].ystart - 1
 
     # Find out how many spectral orders are defined, based on the
     # array of order values in the Wavelengthrange ref file
@@ -108,24 +112,15 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
     # Initialize the simulated image object
     simul_all = None
-    obs = Observation(image_names, seg_model, grism_wcs_dict, filter_name,
-                      boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
-
-    # Create dict of offsets to pass to disperse_all to create simulated image
-    # with sources in correct locations
-    offset_dict = dict()
-    for slit in output_model.slits:
-        source_entry = offset_dict.get(int(slit.source_id), dict())
-        # Add entry in source dict for each order
-        source_entry[slit.meta.wcsinfo.spectral_order] = (slit.xstart - 1, slit.ystart - 1)
-        offset_dict[int(slit.source_id)] = source_entry
+    obs = Observation(image_names, seg_model, grism_wcs, filter_name,
+                      boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus)
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
 
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order],
-                         sens_response[order], offset_dict)
+                         sens_response[order])
 
         # Accumulate result for this order into the combined image
         if simul_all is None:
@@ -151,7 +146,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
         obs.simulated_image = np.zeros(obs.dims)
         obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order], offset_dict[sid][order])
+                           sens_waves[order], sens_response[order])
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image minus this source
@@ -159,9 +154,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
         # Create a cutout of the contam image that matches the extent
         # of the source slit
-        x2 = offset_dict[sid][order][0] + slit.xsize
-        y2 = offset_dict[sid][order][1] + slit.ysize
-        cutout = contam[offset_dict[sid][order][1]:y2, offset_dict[sid][order][0]:x2]
+        x1 = slit.xstart - 1
+        y1 = slit.ystart - 1
+        cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
         new_slit = datamodels.SlitModel(data=cutout)
         copy_slit_info(slit, new_slit)
         slits.append(new_slit)

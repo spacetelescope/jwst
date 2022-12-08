@@ -16,9 +16,9 @@ log.setLevel(logging.DEBUG)
 class Observation:
     """This class defines an actual observation. It is tied to a single grism image."""
 
-    def __init__(self, direct_images, segmap_model, grism_wcs_dict, filter, ID=0,
+    def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=0,
                  sed_file=None, extrapolate_sed=False,
-                 boundaries=[], renormalize=True, max_cpu=1):
+                 boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1):
 
         """
         Initialize all data and metadata for a given observation. Creates lists of
@@ -51,7 +51,7 @@ class Observation:
 
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
-        self.grism_wcs_dict = grism_wcs_dict
+        self.grism_wcs = grism_wcs
         self.ID = ID
         self.IDs = []
         self.dir_image_names = direct_images
@@ -61,6 +61,8 @@ class Observation:
         self.cache = False
         self.renormalize = renormalize
         self.max_cpu = max_cpu
+        self.xoffset = offsets[0]
+        self.yoffset = offsets[1]
 
         # Set the limits of the dispersed image to be simulated
         if len(boundaries) == 0:
@@ -146,7 +148,7 @@ class Observation:
                 for i in range(len(self.IDs)):
                     self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
-    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, offset_dict, cache=False):
+    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
         """
         Compute dispersed pixel values for all sources identified in
         the segmentation map.
@@ -188,14 +190,9 @@ class Observation:
                 self.cached_object[i]['miny'] = []
                 self.cached_object[i]['maxy'] = []
 
-            # Not all sources in segmentation map are extracted in extract_2d
-            # due to extract_2d.wfss_nbright
-            if self.IDs[i] in offset_dict.keys():
-                if order in offset_dict[self.IDs[i]].keys():
-                    # Disperse object "i"
-                    self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp, offset_dict[self.IDs[i]][order])
+            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
 
-    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp, offsets):
+    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
         """
         Method that computes dispersion for a single source.
         To be called after create_pixel_list().
@@ -258,8 +255,8 @@ class Observation:
 
             pars_i = (xc, yc, width, height, lams, fluxes, self.order,
                       self.wmin, self.wmax, self.sens_waves, self.sens_resp,
-                      self.seg_wcs, self.grism_wcs_dict[(sid, order)], ID, self.dims[::-1], 2,
-                      self.extrapolate_sed, offsets[0], offsets[1])
+                      self.seg_wcs, self.grism_wcs, ID, self.dims[::-1], 2,
+                      self.extrapolate_sed, self.xoffset, self.yoffset)
 
             pars.append(pars_i)
             # now have full pars list for all pixels for this object
