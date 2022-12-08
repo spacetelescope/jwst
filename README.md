@@ -182,7 +182,7 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 
 To build the docs yourself, clone this repository and build the documentation with:
 
-    pip install -e ".[docs]**
+    pip install -e ".[docs]"
     cd docs
     make html
     make latexpdf
@@ -203,7 +203,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 ## Software vs DMS build version map
 
-| jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT<br>(JWST OPS) | CRDS_CONTEXT<br>(JWST PUB** | Date       | Notes                                         |
+| jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT<br>(JWST OPS) | CRDS_CONTEXT<br>(JWST PUB) | Date       | Notes                                         |
 |---------------------|-----------|----------|----------------------------|----------------------------|------------|-----------------------------------------------|
 | 1.8.2               | B9.0      | 2022.4.0 | 1017                       | 1004***                    | 2022-10-19 | Final release candidate for B9.0              |
 | 1.8.1               | B9.0rc2   |          |                            | 1001                       | 2022-10-17 | Second release candidate for B9.0             |
