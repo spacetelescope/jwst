@@ -623,11 +623,13 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
         open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
+        # How many shutters in the slitlet are labeled as "main" or "primary"?
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
+
         # In the next part we need to calculate, find, determine 5 things:
         #    quadrant,  xcen, ycen,  ymin, ymax
 
-        # There are no main shutters, all are background
+        # There are no main shutters: all are background
         if n_main_shutter == 0:
             if len(open_shutters) == 1:
                 jmin = jmax = j = open_shutters[0]
@@ -645,7 +647,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             source_id = _get_bkg_source_id(bkg_counter, max_source_id)
             log.info(f'Slitlet_id {slitlet_id} is background only; assigned source_id = {source_id}')
             bkg_counter += 1
-        # There is 1 main shutter, phew, that makes it easier.
+
+        # There is 1 main shutter: phew, that makes it easier.
         elif n_main_shutter == 1:
             xcen, ycen, quadrant, source_xpos, source_ypos = [
                 (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
@@ -659,8 +662,12 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             j = ycen
             ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
-            source_id = slitlets_sid[0]['source_id']
-        # Not allowed....
+            # get the source_id from the primary shutter entry
+            for i in range(len(slitlets_sid)):
+                if slitlets_sid[i]['primary_source'] == 'Y':
+                    source_id = slitlets_sid[i]['source_id']
+
+        # More than 1 main shutter: Not allowed!
         else:
             message = ("For slitlet_id = {}, metadata_id = {}, "
                        "and dither_index = {}".format(slitlet_id, msa_metadata_id, dither_position))

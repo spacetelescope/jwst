@@ -6,6 +6,9 @@ assign_wcs
 
 - Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
 
+- Updated the loading of NIRSpec MSA configuration data to assign the source_id
+  for each slitlet from the shutter entry that contains the primary/main source. [#7379]
+
 associations
 ------------
 
