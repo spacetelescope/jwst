@@ -200,11 +200,23 @@ class Spec3Pipeline(Pipeline):
         for source in sources:
 
             # If each source is a SourceModelContainer
-            # the output name needs to be updated with the source name.
+            # the output name needs to be updated with the source ID.
             if isinstance(source, tuple):
                 source_id, result = source
+                if int(source_id) < 0:
+                    # These are virtual slits/sources (no catalog source) and
+                    # are identified by a negative source_id in the MSA
+                    # configuration data.
+                    tmp_src_id = "v{:0>9d}".format(-int(source_id))
+                elif result[0].source_name[:10] == 'background':
+                    # These are dedicated background slits/sources, previously
+                    # updated to have the prefix "background" in their names
+                    tmp_src_id = "b{:0>9d}".format(int(source_id))
+                else:
+                    # Everything else is a regular catalog source
+                    tmp_src_id = "s{:0>9d}".format(int(source_id))
                 self.output_file = format_product(
-                    output_file, source_id=source_id.lower()
+                    output_file, source_id=tmp_src_id.lower()
                 )
             else:
                 result = source
