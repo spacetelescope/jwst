@@ -79,17 +79,17 @@ def test_get_wcs(aperture, expected):
     ('junk', 'PRDOPSSOC-053', pytest.raises(ValueError)),
 
     # Out-of-range specs
-    # 999 case should produce whatever the "latest" is. Will need
-    # regular updating.
+    # 999 case should produce whatever the "latest" is.
     ('PRDOPSSOC-000', 'PRDOPSSOC-053', pytest.raises(ValueError)),
-    ('PRDOPSSOC-999', 'PRDOPSSOC-055', does_not_raise()),
+    ('PRDOPSSOC-999', 'ANYPRD', does_not_raise()),
 ])
 def test_nearest_prd(prd, expected, exception):
     """Test nearest prd finding"""
 
     with exception:
         prd_to_use, _ = siafdb.nearest_prd(pysiaf, prd)
-        assert prd_to_use == expected
+        if expected != 'ANYPRD':
+            assert prd_to_use == expected
 
 
 @pytest.mark.parametrize('source, prd, expected', [

@@ -6,6 +6,9 @@ assign_wcs
 
 - Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
 
+- Updated the loading of NIRSpec MSA configuration data to assign the source_id
+  for each slitlet from the shutter entry that contains the primary/main source. [#7379]
+
 associations
 ------------
 
@@ -122,6 +125,11 @@ resample
 
 - Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
 
+set_telescope_pointing
+----------------------
+
+- Pin PRD versions for tests that are not testing changes in PRD. [#7380]
+
 tweakreg
 --------
 
@@ -130,6 +138,12 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
+
+wfss_contam
+-----------
+
+- Pull 2D cutout offsets from SlitModel subarray metadata rather than
+  grism WCS transform. [#7343]
 
 1.8.4 (2022-11-15)
 ==================
