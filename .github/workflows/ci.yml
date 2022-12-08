@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         toxenv: [ check-style, check-security, check-dependencies, check-build ]
-        python-version: [ '3.x' ]
+        python-version: [ '3.11' ]
         os: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v3
@@ -53,10 +53,10 @@ jobs:
         include:
           - toxenv: test-cov
             os: ubuntu-latest
-            python-version: '3.x'
+            python-version: '3.11'
           - toxenv: test-pyargs-xdist
             os: ubuntu-latest
-            python-version: '3.x'
+            python-version: '3.11'
           - toxenv: test-sdpdeps-xdist
             os: ubuntu-latest
             python-version: '3.9'
