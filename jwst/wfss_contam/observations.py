@@ -165,9 +165,6 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
-        offset_dict : dict
-            Keys on source IDs in list of slits, with values as list of x, y
-            offset values to place source in context of full frame
         """
         if cache:
             log.debug("Object caching ON")
