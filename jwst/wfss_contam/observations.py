@@ -211,9 +211,6 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
-        offsets : list of ints
-            Offset in x, y for a single source bounding box with respect to
-            full frame origin; in 0-indexed pixel space
         """
 
         sid = int(self.IDs[c])
