@@ -42,7 +42,7 @@ cube_build
   from 0 to nan. [#7337]
 
 - Remove code trimming zero-valued planes from cubes, so that cubes of fixed length will always
-  be produced. Move nan-value setting to below spectral tear cleanup. []
+  be produced. Move nan-value setting to below spectral tear cleanup. [#7391]
 
 datamodels
 ----------
