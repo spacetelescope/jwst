@@ -2081,11 +2081,6 @@ class IFUCubeData():
         dq = self.spaxel_dq.reshape((self.naxis3,
                                      self.naxis2, self.naxis1))
 
-        # Set np.nan values wherever the DO_NOT_USE flag is set
-        dnu = np.where((dq & dqflags.pixel['DO_NOT_USE']) != 0)
-        flux[dnu] = np.nan
-        var[dnu] = np.nan
-
         # For MIRI MRS, apply a quality cut to help fix spectral tearing at the ends of each band.
         # This is largely taken care of by the WCS regions file, but there will still be 1-2 possibly
         # problematic planes at the end of each band in multi-band cubes.
@@ -2114,59 +2109,10 @@ class IFUCubeData():
                     var[lowcov[zz], :, :] = 0
                     dq[lowcov[zz], :, :] = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE']
 
-        # clean up empty wavelength planes except for single case
-        if self.output_type != 'single':
-            remove_start = 0
-            k = 0
-            found = 0
-            while (k < self.naxis3 and found == 0):
-                flux_at_wave = flux[k, :, :]
-                sum = np.nansum(flux_at_wave)
-                if sum == 0.0:
-                    remove_start = remove_start + 1
-                else:
-                    found = 1
-                    break
-                k = k + 1
-
-            remove_final = 0
-            found = 0
-            k = self.naxis3 - 1
-            while (k > 0 and found == 0):
-                flux_at_wave = flux[k, :, :]
-                sum = np.nansum(flux_at_wave)
-                if sum == 0.0:
-                    remove_final = remove_final + 1
-                else:
-                    found = 1
-                    break
-                k = k - 1
-
-            remove_total = remove_start + remove_final
-            if remove_total >= self.naxis3:
-                log.error('All the wavelength planes have zero data, check input data')
-                # status of 1 sets up failure of IFU cube building
-                # the input to cube_build  is returned instead of an zero filled ifucube
-                status = 1
-
-            if remove_total > 0 and remove_total < self.naxis3:
-                log.info('Number of wavelength planes removed with no data: %i',
-                         remove_total)
-
-                flux = flux[remove_start: (self.naxis3 - remove_final), :, :]
-                wmap = wmap[remove_start: (self.naxis3 - remove_final), :, :]
-                dq = dq[remove_start: (self.naxis3 - remove_final), :, :]
-                var = var[remove_start: (self.naxis3 - remove_final), :, :]
-
-                if self.linear_wavelength:
-                    self.crval3 = self.zcoord[remove_start]
-                else:
-                    self.wavelength_table = self.wavelength_table[remove_start: (self.naxis3 - remove_final)]
-                    self.crval3 = self.wavelength_table[0]
-
-                # update WCS information if removing wavelengths from the IFU Cube
-                self.naxis3 = self.naxis3 - (remove_start + remove_final)
-        # end removing empty wavelength planes
+        # Set np.nan values wherever the DO_NOT_USE flag is set
+        dnu = np.where((dq & dqflags.pixel['DO_NOT_USE']) != 0)
+        flux[dnu] = np.nan
+        var[dnu] = np.nan
 
         var = np.sqrt(var)
         if self.linear_wavelength:

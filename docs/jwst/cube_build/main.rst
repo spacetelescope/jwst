@@ -175,7 +175,7 @@ contains the number of point cloud elements contained in the region of interest 
 dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).  
 
 The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
-the IFU cube footprint).
+the IFU cube footprint or for saturated pixels for which no slope could be measured).
 
 Output Product Name
 -------------------
