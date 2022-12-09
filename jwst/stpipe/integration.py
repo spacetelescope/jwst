@@ -70,6 +70,7 @@ def get_steps():
         ("jwst.step.PathLossStep", 'pathloss', False),
         ("jwst.step.PersistenceStep", 'persistence', False),
         ("jwst.step.PhotomStep", 'photom', False),
+        ("jwst.step.PixelReplaceStep", 'pixel_replace', False),
         ("jwst.step.RampFitStep", 'ramp_fit', False),
         ("jwst.step.RefPixStep", 'refpix', False),
         ("jwst.step.ResampleStep", 'resample', False),
