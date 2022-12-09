@@ -61,6 +61,10 @@ extract_1d
 - Re-organized the way extract1d reference files are read in based
   on type of file and added more checks when reading files. [#7369]
 
+- Update ATOCA algorithm for NIRISS SOSS extraction to development version;
+  includes increased robustness to various data issues, wavelength grid storage in
+  a new datamodel, and increased parameter control of ATOCA behavior. [#6945]
+
 extract_2d
 ----------
 
