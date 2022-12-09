@@ -41,6 +41,9 @@ cube_build
 - Change fill value for regions of SCI and ERR extensions with no data
   from 0 to nan. [#7337]
 
+- Remove code trimming zero-valued planes from cubes, so that cubes of fixed length will always
+  be produced. Move nan-value setting to below spectral tear cleanup. []
+
 datamodels
 ----------
 
