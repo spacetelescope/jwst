@@ -115,6 +115,10 @@ ramp_fitting
 - Change the propagation of the SATURATED flag to be done only for complete
   saturation. [#7363, spacetelescope/stcal#125]
 
+- Update CI tests for ramp fitting due to setting pixels to NaN with no usable
+  data to compute slopes in the the rate and rateints products.  Previously,
+  this data was set to zero. [#7389, spacetelescope/stcal#131]
+
 resample
 --------
 
