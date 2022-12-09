@@ -1,0 +1,13 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/sosswavegrid.schema"
+allOf:
+- $ref: core.schema
+- type: object
+  properties:
+    wavegrid:
+      title: Wavelength grid
+      fits_hdu: WAVEGRID
+      ndim: 1
+      datatype: float32

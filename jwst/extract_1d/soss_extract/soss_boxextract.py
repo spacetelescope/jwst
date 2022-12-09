@@ -98,16 +98,24 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
     mask = scimask[:, cols].copy()
     box_weights = box_weights[:, cols].copy()
 
-    # Check that all invalid values are masked.
-    if not np.isfinite(data[~mask]).all():
+    # Check that all invalid values in the extraction region are masked.
+    extract_region = (box_weights > 0)
+    condition = extract_region & ~mask
+
+    if not np.isfinite(data[condition]).all():
         message = 'scidata contains un-masked invalid values.'
         log.critical(message)
         raise ValueError(message)
 
-    if not np.isfinite(error[~mask]).all():
+    if not np.isfinite(error[condition]).all():
         message = 'scierr contains un-masked invalid values.'
         log.critical(message)
         raise ValueError(message)
+
+    # Set all pixels values outside of extraction region to Nan
+    # so it will be correctly handle by np.nansum.
+    data = np.where(extract_region, data, np.nan)
+    error = np.where(extract_region, error, np.nan)
 
     # Set the weights of masked pixels to zero.
     box_weights[mask] = 0.

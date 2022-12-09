@@ -10,7 +10,7 @@ import numpy as np
 from scipy.sparse import find, diags, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
-from scipy.optimize import minimize_scalar, newton
+from scipy.optimize import minimize_scalar, brentq
 import logging
 
 log = logging.getLogger(__name__)
@@ -618,6 +618,157 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     return wave_grid_soss
 
 
+def _trim_grids(all_grids, grid_range=None):
+    """ Remove all parts of the grids that are not in range
+    or that are already covered by grids with higher priority,
+    i.e. preceding in the list.
+    """
+    grids_trimmed = []
+    for grid in all_grids:
+        # Remove parts of the grid that are not in the wavelength range
+        if grid_range is not None:
+            # Find where the limit values fall on the grid
+            i_min = np.searchsorted(grid, grid_range[0], side='right')
+            i_max = np.searchsorted(grid, grid_range[1], side='left')
+            # Make sure it is a valid value and take one grid point past the limit
+            # since the oversampling could squeeze some nodes near the limits
+            i_min = np.max([i_min - 1, 0])
+            i_max = np.min([i_max, len(grid) - 1])
+            # Trim the grid
+            grid = grid[i_min:i_max + 1]
+
+        # Remove parts of the grid that are already covered
+        if len(grids_trimmed) > 0:
+            # Use all grids already trimmed (so higher in priority)
+            conca_grid = np.concatenate(grids_trimmed)
+            # Find values below or above
+            is_below = grid < np.min(conca_grid)
+            is_above = grid > np.max(conca_grid)
+
+            # Do nothing yet if it surrounds the previous grid
+            if is_below.any() and is_above.any():
+                msg = 'Grid surrounds another grid, better to split in 2 parts.'
+                log.warning(msg)
+
+            # Remove values already covered, but keep one
+            # index past the limit
+            elif is_below.any():
+                idx = np.max(np.nonzero(is_below))
+                idx = np.min([idx + 1, len(grid) - 1])
+                grid = grid[:idx + 1]
+            elif is_above.any():
+                idx = np.min(np.nonzero(is_above))
+                idx = np.max([idx - 1, 0])
+                grid = grid[idx:]
+
+            # If all is covered, no need to do it again, so empty grid.
+            else:
+                grid = np.array([])
+
+        # Save trimmed grid
+        grids_trimmed.append(grid)
+
+    return grids_trimmed
+
+
+def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
+                                max_iter=10, rtol=10e-6, tol=0.0, max_total_size=1000000):
+    """Return an irregular oversampled grid needed to reach a
+    given precision when integrating over each intervals of `grid`.
+    The grid is built by subdividing iteratively each intervals that
+    did not reach the required precision.
+    The precision is computed based on the estimate of the integrals
+    using a first order Romberg integration.
+
+    Parameters
+    ----------
+    all_grid : list[array]
+        List of grid (arrays) to pass to adapt_grid, in order of importance.
+    all_estimate : list[callable]
+        List of function (callable) to estimate the precision needed to oversample the grid.
+        Must match the corresponding `grid` in `all_grid`.
+    max_iter : int, optional
+        Number of times the intervals can be subdivided. The smallest
+        subdivison of the grid if max_iter is reached will then be given
+        by delta_grid / 2^max_iter. Needs to be greater then zero.
+        Default is 10.
+    rtol : float, optional
+        The desired relative tolerance. Default is 10e-6, so 10 ppm.
+    tol : float, optional
+        The desired absolute tolerance. Default is 0 to prioritize `rtol`.
+    max_total_size : int, optional
+        maximum size of the output grid. Default is 1 000 000.
+    Returns
+    -------
+    os_grid : 1D array
+        Oversampled combined grid which minimizes the integration error based on
+        Romberg's method
+    """
+    # Save parameters for adapt_grid
+    kwargs = dict(max_iter=max_iter, rtol=rtol, tol=tol)
+
+    # Remove unneeded parts of the grids
+    all_grids = _trim_grids(all_grids, grid_range=grid_range)
+
+    # Save native size of each grids (use later to adjust max_grid_size)
+    all_sizes = [len(grid) for grid in all_grids]
+
+    # Iterate over grids to build the combined grid
+    combined_grid = np.array([])  # Init with empty array
+    for i_grid, grid in enumerate(all_grids):
+
+        estimate = all_estimate[i_grid]
+
+        # Get the max_grid_size, considering the other grids
+        # First, remove length already used
+        max_grid_size = max_total_size - combined_grid.size
+        # Save some space for next grids (at least the native grid size)
+        for i_size, size in enumerate(all_sizes):
+            if i_size > i_grid:
+                max_grid_size = max_grid_size - size
+        # Make sure it is at least the size of the native grid.
+        kwargs['max_grid_size'] = np.max([max_grid_size, all_sizes[i_grid]])
+
+        # Oversample the grid based on tolerance required
+        grid, is_converged = adapt_grid(grid, estimate, **kwargs)
+
+        # Update grid sizes
+        all_sizes[i_grid] = grid.size
+
+        # Check convergence
+        if not is_converged:
+            msg = 'Precision cannot be garanteed:'
+            if grid.size < kwargs['max_grid_size']:
+                msg += (f' smallest subdivision 1/{2 ** kwargs["max_iter"]:2.1e}'
+                        f' was reached for grid index = {i_grid}')
+            else:
+                total_size = np.sum(all_sizes)
+                msg += ' max grid size of '
+                msg += ' + '.join([f'{size}' for size in all_sizes])
+                msg += f' = {total_size} was reached for grid index = {i_grid}.'
+            log.warning(msg)
+
+        # Remove regions already covered in the output grid
+        if len(combined_grid) > 0:
+            idx_covered = (np.min(combined_grid) <= grid)
+            idx_covered &= (grid <= np.max(combined_grid))
+            grid = grid[~idx_covered]
+
+        # Combine grids
+        combined_grid = np.concatenate([combined_grid, grid])
+
+    # Sort values (and keep only unique).
+    combined_grid = np.unique(combined_grid)
+
+    # Final trim to make sure it respects the range
+    if grid_range is not None:
+        idx_in_range = (grid_range[0] <= combined_grid)
+        idx_in_range &= (combined_grid <= grid_range[-1])
+        combined_grid = combined_grid[idx_in_range]
+
+    return combined_grid
+
+
 def _romberg_diff(b, c, k):
     """Compute the differences for the Romberg quadrature corrections.
     See Forman Acton's "Real Computing Made Real," p 143.
@@ -815,6 +966,147 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
         raise ValueError(msg)
 
     return n_grid, residual
+
+
+def estim_integration_err(grid, fct):
+    """Estimate the integration error on each intervals
+    of the grid using 1rst order Romberg integration.
+
+    Parameters
+    ----------
+    grid: 1d array [float]
+        Grid for integration. Each sections of this grid are treated
+        as separate integrals. So if grid has length N; N-1 integrals are
+        tested.
+    fct: callable
+        Function to be integrated.
+
+    Returns
+    -------
+    err, rel_err: error and relative error of each integrations, with length = length(grid) - 1
+    """
+
+    # Change the 1D grid into a 2D set of intervals.
+    intervals = np.array([grid[:-1], grid[1:]])
+    intrange = np.diff(grid)
+
+    # Estimate of trapezoidal integration without subdivision.
+    numtraps = 1
+    ordsum = _difftrap(fct, intervals, numtraps)
+    trpz = intrange * ordsum / numtraps
+
+    # Estimate with intervals subdivided in 2
+    numtraps = 2
+    ordsum += _difftrap(fct, intervals, numtraps)
+    trpz_sub = intrange * ordsum / numtraps
+
+    # Compute better estimate of the integral
+    # using Romberg R(1, 0)
+    romb = _romberg_diff(trpz, trpz_sub, 1)
+
+    # Compute errors
+    err = np.abs(romb - trpz)
+    non_zero = (romb != 0)
+    rel_err = np.full_like(err, np.inf)
+    rel_err[non_zero] = np.abs(err[non_zero] / romb[non_zero])
+
+    return err, rel_err
+
+
+def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
+    """Return an irregular oversampled grid needed to reach a
+    given precision when integrating over each intervals of `grid`.
+    The grid is built by subdividing iteratively each intervals that
+    did not reach the required precision.
+    The precision is computed based on the estimate of the integrals
+    using a first order Romberg integration.
+
+    Parameters
+    ----------
+    grid: array
+        Grid for integration. Each sections of this grid are treated
+        as separate integrals. So if grid has length N; N-1 integrals are
+        optimized.
+    fct: callable
+        Function to be integrated. Must be a function of `grid`
+    max_iter: int, optional
+        Number of times the intervals can be subdivided. The smallest
+        subdivison of the grid if max_iter is reached will then be given
+        by delta_grid / 2^max_iter. Needs to be greater then zero.
+        Default is 10.
+    rtol: float, optional
+        The desired relative tolerance. Default is 10e-6, so 10 ppm.
+    tol: float, optional
+        The desired absolute tolerance. Default is 0 to prioritize `rtol`.
+    max_grid_size: int, optional
+        maximum size of the output grid. Default is None, so no constraint.
+    Returns
+    -------
+    os_grid  : 1D array
+        Oversampled grid which minimizes the integration error based on
+        Romberg's method
+    convergence_flag: bool
+        Whether the estimated tolerance was reach everywhere or not.
+    See Also
+    --------
+    scipy.integrate.quadrature.romberg
+    References
+    ----------
+    [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
+
+    """
+    # No limit of max_grid_size not given
+    if max_grid_size is None:
+        max_grid_size = np.inf
+
+    # Init some flags
+    max_size_reached = (grid.size >= max_grid_size)
+
+    # Iterate until precision is reached of max_iter
+    for _ in range(max_iter):
+
+        # Estimate error using Romberg integration
+        err, rel_err = estim_integration_err(grid, fct)
+
+        # Check where precision is reached
+        converged = (err < tol) | (rel_err < rtol)
+        is_converged = converged.all()
+
+        # Check if max grid size was reached
+        if max_size_reached or is_converged:
+            # Then stop iteration
+            break
+
+        # Intervals that didn't reach the precision will be subdivided
+        n_oversample = np.full(err.shape, 2, dtype=int)
+        # No subdivision for the converged ones
+        n_oversample[converged] = 1
+
+        # Check if the maximum size will be reached.
+        # If so, prioritize the intervals with the largest estimated errors
+        # to reach the maximum size
+        os_grid_size = n_oversample.sum()
+        if os_grid_size > max_grid_size:
+            # How many nodes can be added to reach max?
+            n_nodes_remaining = max_grid_size - grid.size
+
+            # Find the position of the nodes with the largest error
+            idx_largest_err = np.argsort(rel_err)[-n_nodes_remaining:]
+
+            # Build new oversample array and assign only largest errors
+            n_oversample = np.ones(err.shape, dtype=int)
+            n_oversample[idx_largest_err] = 2
+
+            # Flag to stop iterations
+            max_size_reached = True
+
+        # Generate oversampled grid (subdivide)
+        grid = oversample_grid(grid, n_os=n_oversample)
+
+        # Make sure sorted and unique.
+        grid = np.unique(grid)
+
+    return grid, is_converged
 
 
 # ==============================================================================
@@ -2016,8 +2308,8 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
         index = _get_interp_idx_array(idx_below, search_range, max_length)
 
         # Find the root
-        bracket = [x_val[index[0]], x_val[index[-1]]]
-        best_val = newton(d_chi2_spl, bracket=bracket).root
+        bracket = (x_val[index[0]], x_val[index[-1]])
+        best_val = brentq(d_chi2_spl, *bracket)
 
         # Back to linear scale
         best_val = 10. ** best_val
@@ -2027,6 +2319,21 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
         best_val = factors[idx_below]
 
     return best_val
+
+
+def soft_l1(z):
+    return 2 * ((1 + z)**0.5 - 1)
+
+
+def cauchy(z):
+    return np.log(1 + z)
+
+
+def linear(z):
+    return z
+
+
+LOSS_FUNCTIONS = {'soft_l1': soft_l1, 'cauchy': cauchy, 'linear': linear}
 
 
 class TikhoTests(dict):
@@ -2041,7 +2348,20 @@ class TikhoTests(dict):
         by default.
     """
 
-    def __init__(self, test_dict=None):
+    DEFAULT_TRESH_DERIVATIVE = (('chi2', 1e-5),
+                                ('chi2_soft_l1', 1e-4),
+                                ('chi2_cauchy', 1e-3))
+
+    def __init__(self, test_dict=None, default_chi2='chi2_cauchy'):
+        """
+        Parameters
+        ----------
+        test_dict : dict
+            Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
+            by default.
+        default_chi2: string
+            Type of chi2 loss used by default. Options are chi2, chi2_soft_l1, chi2_cauchy.
+        """
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
         if test_dict is None:
@@ -2052,14 +2372,28 @@ class TikhoTests(dict):
 
         # Save attributes
         self.n_points = n_points
+        self.default_chi2 = default_chi2
+        self.default_thresh = {chi2_type: thresh
+                               for (chi2_type, thresh)
+                               in self.DEFAULT_TRESH_DERIVATIVE}
 
         # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
 
-        # Save the chi2
-        self['chi2'] = self.compute_chi2()
+        chi2_loss = {'chi2': 'linear',
+                     'chi2_soft_l1': 'soft_l1',
+                     'chi2_cauchy': 'cauchy'}
+        for chi2_type, loss in chi2_loss.items():
+            try:
+                # Save the chi2
+                self[chi2_type]
+            except KeyError:
+                self[chi2_type] = self.compute_chi2(loss=loss)
+#         # Save different loss function for chi2
+#         self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
+#         self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
 
-    def compute_chi2(self, tests=None, n_points=None):
+    def compute_chi2(self, tests=None, n_points=None, loss='linear'):
         """ Calculates the reduced chi squared statistic
 
         Parameters
@@ -2075,26 +2409,35 @@ class TikhoTests(dict):
         float
             Sum of the squared error array divided by the number of data points
         """
-        # Get number of data points
-        if n_points is None:
-            n_points = self.n_points
-
         # If not given, take the tests from the object
         if tests is None:
             tests = self
 
+        # Get the loss function
+        if isinstance(loss, str):
+            try:
+                loss = LOSS_FUNCTIONS[loss]
+            except KeyError as e:
+                keys = [key for key in LOSS_FUNCTIONS.keys()]
+                msg = f'loss={loss} not a valid key. Must be one of {keys} or callable.'
+                raise e(msg)
+        elif not callable(loss):
+            raise ValueError('Invalid value for loss.')
+
         # Compute the reduced chi^2 for all tests
-        chi2 = np.nansum(tests['error'] ** 2, axis=-1)
+        chi2 = np.nanmean(loss(tests['error']**2), axis=-1)
         # Remove residual dimensions
         chi2 = chi2.squeeze()
 
-        # Normalize by the number of data points
-        chi2 /= n_points
-
         return chi2
 
-    def get_chi2_derivative(self):
+    def get_chi2_derivative(self, key=None):
         """ Compute derivative of the chi2 with respect to log10(factors)
+
+        Parameters
+        ----------
+        key: str
+            which chi2 is used for computations. Default is self.default_chi2.
 
         Returns
         -------
@@ -2103,10 +2446,12 @@ class TikhoTests(dict):
         d_chi2 : array[float]
             derivative of chi squared array with respect to log10(factors)
         """
+        if key is None:
+            key = self.default_chi2
 
         # Compute finite derivative
         fac_log = np.log10(self['factors'])
-        d_chi2 = np.diff(self['chi2']) / np.diff(fac_log)
+        d_chi2 = np.diff(self[key]) / np.diff(fac_log)
 
         # Update size of factors to fit derivatives
         # Equivalent to derivative on the left side of the nodes
@@ -2114,7 +2459,10 @@ class TikhoTests(dict):
 
         return factors_leftd, d_chi2
 
-    def compute_curvature(self, tests=None):
+    def compute_curvature(self, tests=None, key=None):
+
+        if key is None:
+            key = self.default_chi2
 
         # If not given, take the tests from the object
         if tests is None:
@@ -2125,13 +2473,13 @@ class TikhoTests(dict):
         reg2 = np.nansum(tests['reg'] ** 2, axis=-1)
 
         factors, curv = curvature_finite(tests['factors'],
-                                         np.log10(self['chi2']),
+                                         np.log10(self[key]),
                                          np.log10(reg2))
 
         return factors, curv
 
     def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
-                          mode='curvature', thresh=0.01):
+                          mode='curvature', key=None, thresh=None):
         """Compute the best scale factor for Tikhonov regularisation.
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
@@ -2159,13 +2507,21 @@ class TikhoTests(dict):
         float
             Best scale factor as determined by the selected algorithm
         """
+        if key is None:
+            key = self.default_chi2
+
+        if thresh is None:
+            thresh = self.default_thresh[key]
 
         # Use pre-run tests if not specified
         if tests is None:
             tests = self
 
+        # Number of factors
+        n_fac = len(tests['factors'])
+
         # Determine the mode (what do we minimize?)
-        if mode == 'curvature':
+        if mode == 'curvature' and n_fac > 2:
             # Compute the curvature
             factors, curv = tests.compute_curvature()
 
@@ -2175,17 +2531,42 @@ class TikhoTests(dict):
         elif mode == 'chi2':
             # Simply take the chi2 and factors
             factors = tests['factors']
-            y_val = tests['chi2']
+            y_val = tests[key]
 
             # Find min factor
             best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index)
 
-        elif mode == 'd_chi2':
+        elif mode == 'd_chi2' and n_fac > 1:
             # Compute the derivative of the chi2
             factors, y_val = tests.get_chi2_derivative()
 
+            # Remove values for the higher factors that
+            # are not already below thresh. If not _find_intersect
+            # would just return the last value of factors.
+            i_last = -1
+            while abs(i_last) <= len(y_val):
+                # Check derivative
+                if y_val[i_last] > thresh:
+                    # Save index in slice
+                    idx = slice(0, i_last)
+                    # break so `else` will be skipped
+                    break
+                # Update index
+                i_last -= 1
+
+            # If all the values were passed without breaking,
+            # do not remove any values
+            else:
+                idx = slice(None)
+
             # Find intersection with threshold
-            best_fac = _find_intersect(factors, y_val, thresh, interpolate, interp_index)
+            best_fac = _find_intersect(factors[idx], y_val[idx], thresh, interpolate, interp_index)
+
+        elif mode in ['curvature', 'd_chi2', 'chi2']:
+            best_fac = np.max(tests['factors'])
+            msg = (f'Could not compute {mode} because number of factor={n_fac}. '
+                   f'Setting best factor to max factor: {best_fac:.5e}')
+            log.warning(msg)
 
         else:
             msg = (f'`mode`={mode} is not a valid option for '

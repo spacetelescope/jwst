@@ -6,6 +6,9 @@ assign_wcs
 
 - Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
 
+- Updated the loading of NIRSpec MSA configuration data to assign the source_id
+  for each slitlet from the shutter entry that contains the primary/main source. [#7379]
+
 associations
 ------------
 
@@ -22,6 +25,8 @@ associations
 - Split NIRISS WFSS dual grism (gr150r+gr150c) associations into separate asn's for each grism. [#7351]
 
 - Remove defaulting of the is_psf column [#7356]
+
+- Fix association registry ListCategory enum bug under Python 3.11 [#7370]
 
 combine_1d
 ----------
@@ -55,6 +60,10 @@ extract_1d
 
 - Re-organized the way extract1d reference files are read in based
   on type of file and added more checks when reading files. [#7369]
+
+- Update ATOCA algorithm for NIRISS SOSS extraction to development version;
+  includes increased robustness to various data issues, wavelength grid storage in
+  a new datamodel, and increased parameter control of ATOCA behavior. [#6945]
 
 extract_2d
 ----------
@@ -120,6 +129,11 @@ resample
 
 - Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
 
+set_telescope_pointing
+----------------------
+
+- Pin PRD versions for tests that are not testing changes in PRD. [#7380]
+
 tweakreg
 --------
 
@@ -128,6 +142,12 @@ tweakreg
 
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
+
+wfss_contam
+-----------
+
+- Pull 2D cutout offsets from SlitModel subarray metadata rather than
+  grism WCS transform. [#7343]
 
 1.8.4 (2022-11-15)
 ==================

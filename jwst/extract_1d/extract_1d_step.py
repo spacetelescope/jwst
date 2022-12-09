@@ -101,6 +101,27 @@ class Extract1dStep(Step):
 
     soss_modelname : str
         Filename for optional model output of ATOCA traces and pixel weights.
+
+    soss_estimate : str or SpecModel or None
+        Filename or SpecModel of the estimate of the target flux. The estimate must
+        be a SpecModel with wavelength and flux values.
+
+    soss_wave_grid_in : str or SossWaveGrid or None
+        Filename or SossWaveGrid containing the wavelength grid used by ATOCA
+        to model each pixel valid pixel of the detector. If not given, the grid is determined
+        based on an estimate of the flux (soss_estimate), the relative tolerance (soss_rtol)
+        required on each pixel model and the maximum grid size (soss_max_grid_size).
+
+    soss_wave_grid_out : str or None
+        Filename to hold the wavelength grid calculated by ATOCA.
+
+    soss_rtol : float
+        The relative tolerance needed on a pixel model. It is used to determine the sampling
+        of the soss_wave_grid when not directly given.
+
+    soss_max_grid_size: int
+        Maximum grid size allowed. It is used when soss_wave_grid is not provided
+        to make sure the computation time or the memory used stays reasonable.
     """
 
     class_alias = "extract_1d"
@@ -115,12 +136,18 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
-    soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
-    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modeling trace.
-    soss_transform = float_list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
+    soss_atoca = boolean(default=True)  # use ATOCA algorithm
+    soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
+    soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
+    soss_wave_grid_in = input_file(default = None)  # Input wavelength grid used to model the detector
+    soss_wave_grid_out = string(default = None)  # Output wavelength grid solution filename
+    soss_estimate = input_file(default = None)  # Estimate used to generate the wavelength grid
+    soss_rtol = float(default=1.0e-4)  # Relative tolerance needed on a pixel model
+    soss_max_grid_size = integer(default=20000)  # Maximum grid size, if wave_grid not specified
+    soss_transform = list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
     soss_tikfac = float(default=None)  # regularization factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
-    soss_bad_pix = option("model", "masking", default="model")  # method used to handle bad pixels
+    soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
@@ -351,9 +378,18 @@ class Extract1dStep(Step):
                 soss_kwargs['width'] = self.soss_width
                 soss_kwargs['bad_pix'] = self.soss_bad_pix
                 soss_kwargs['transform'] = self.soss_transform
+                soss_kwargs['subtract_background'] = self.subtract_background
+                soss_kwargs['rtol'] = self.soss_rtol
+                soss_kwargs['max_grid_size'] = self.soss_max_grid_size
+                soss_kwargs['wave_grid_in'] = self.soss_wave_grid_in
+                soss_kwargs['wave_grid_out'] = self.soss_wave_grid_out
+                soss_kwargs['estimate'] = self.soss_estimate
+                soss_kwargs['atoca'] = self.soss_atoca
+                # Set flag to output the model and the tikhonov tests
+                soss_kwargs['model'] = True if self.soss_modelname else False
 
                 # Run the extraction.
-                result, ref_outputs = soss_extract.run_extract1d(
+                result, ref_outputs, atoca_outputs = soss_extract.run_extract1d(
                     input_model,
                     spectrace_ref_name,
                     wavemap_ref_name,
@@ -379,6 +415,12 @@ class Extract1dStep(Step):
                         )
                         ref_outputs.save(soss_modelname)
 
+                if self.soss_modelname:
+                    soss_modelname = self.make_output_path(
+                        basepath=self.soss_modelname,
+                        suffix='AtocaSpectra'
+                    )
+                    atoca_outputs.save(soss_modelname)
             else:
                 # Get the reference file names
                 if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
