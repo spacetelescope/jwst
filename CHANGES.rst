@@ -26,6 +26,8 @@ associations
 
 - Remove defaulting of the is_psf column [#7356]
 
+- Fix association registry ListCategory enum bug under Python 3.11 [#7370]
+
 combine_1d
 ----------
 

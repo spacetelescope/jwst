@@ -1,5 +1,4 @@
 """Association Registry"""
-from importlib import import_module
 import importlib.util
 from inspect import (
     getmembers,
@@ -11,11 +10,10 @@ from inspect import (
 import logging
 from os.path import (
     basename,
-    dirname,
     expanduser,
     expandvars,
 )
-import sys
+from enum import EnumMeta
 
 from . import libpath
 from .exceptions import (
@@ -83,7 +81,7 @@ class AssociationRegistry(dict):
                  global_constraints=None,
                  name=None,
                  include_bases=False):
-        super(AssociationRegistry, self).__init__()
+        super().__init__()
 
         # Generate a UUID for this instance. Used to modify rule
         # names.
@@ -265,7 +263,7 @@ class AssociationRegistry(dict):
                  module,
                  global_constraints=None,
                  include_bases=None
-    ):
+                 ):
         """Parse out all rules and callbacks in a module and add them to the registry
 
         Parameters
@@ -276,7 +274,7 @@ class AssociationRegistry(dict):
         for name, obj in get_marked(module, include_bases=include_bases):
 
             # Add rules.
-            if (include_bases and isclass(obj)) or obj._asnreg_role == 'rule':
+            if include_bases or obj._asnreg_role == 'rule':
                 try:
                     self.add_rule(name, obj, global_constraints=global_constraints)
                 except TypeError:
@@ -320,6 +318,8 @@ class AssociationRegistry(dict):
             rule_name = '_'.join([self.name, name])
         except TypeError:
             rule_name = name
+        if not valid_class(obj):
+            raise TypeError(f'Object cannot be used as rule: {obj}')
         rule = type(rule_name, (obj,), {})
         rule.GLOBAL_CONSTRAINT = global_constraints
         rule.registry = self
@@ -475,7 +475,6 @@ def import_from_file(filename):
     """
     path = expandvars(expanduser(filename))
     module_name = basename(path).split('.')[0]
-    folder = dirname(path)
     spec = importlib.util.spec_from_file_location(module_name, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -520,3 +519,20 @@ def get_marked(module, predicate=None, include_bases=False):
                     yield sub_name, sub_obj
             else:
                 yield name, obj
+
+
+def valid_class(obj):
+    """Verify if a given object could be used as a rule class
+
+    Parameters
+    ------------
+    obj : obj
+        Object to check
+
+    Returns
+    --------
+    is_valid : bool
+        True if the object could be considered a rule class
+    """
+    is_valid = type(obj) is not EnumMeta and isclass(obj)
+    return is_valid
