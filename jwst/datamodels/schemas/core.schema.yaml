@@ -953,7 +953,7 @@ properties:
               - enum:
                   [FULLP, MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB,
                    SUB160, SUB160P, SUB320,
-                   SUB320A335R, SUB320A430R, 
+                   SUB320A335R, SUB320A430R,
                    SUB320B335R, SUB320B430R, SUB320BLWB,
                    SUB32TATS, SUB32TATSGRISM,
                    SUB400P, SUB400X256ALWB, SUB640,

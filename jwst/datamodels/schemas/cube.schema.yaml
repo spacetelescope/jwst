@@ -44,4 +44,3 @@ allOf:
       datatype: float32
 - $ref: int_times.schema
 - $ref: variance.schema
-

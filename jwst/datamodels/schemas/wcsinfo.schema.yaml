@@ -109,7 +109,7 @@ properties:
             blend_table: True
           ctype1:
             title: Axis 1 type
-            type: string 
+            type: string
             fits_keyword: CTYPE1
             fits_hdu: SCI
             blend_table: True

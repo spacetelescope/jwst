@@ -61,13 +61,13 @@ allOf:
               fits_keyword: CRVAL2
               fits_hdu: PATHLOSS
             cdelt1:
-              title: Axis 1 coordinate increment at reference point 
+              title: Axis 1 coordinate increment at reference point
               type: number
               default: 1.0
               fits_keyword: CDELT1
               fits_hdu: PATHLOSS
             cdelt2:
-              title: Axis 2 coordinate increment at reference point 
+              title: Axis 2 coordinate increment at reference point
               type: number
               default: 1.0
               fits_keyword: CDELT2

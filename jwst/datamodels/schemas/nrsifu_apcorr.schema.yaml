@@ -26,7 +26,7 @@ allOf:
             type: string
           radius:
             datatype: float32
-          radius_units: 
+          radius_units:
             type: string
           apcorr:
             datatype: float32

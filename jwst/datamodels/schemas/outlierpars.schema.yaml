@@ -57,4 +57,3 @@ allOf:
         datatype: [ascii, 10]
       - name: backg
         datatype: float32
-

@@ -78,4 +78,3 @@ properties:
               NIS, GUIDER1, GUIDER2, MULTIPLE, N/A]
             description: Detector name.
             fits_keyword: DETECTOR
-
