@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toxenv: [ check-style, check-security, check-dependencies, check-build ]
+        toxenv: [ check-style, check-dependencies, check-build ]
         python-version: [ '3.11' ]
         os: [ ubuntu-latest ]
     steps:
