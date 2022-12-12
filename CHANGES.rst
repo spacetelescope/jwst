@@ -1,3 +1,11 @@
+1.8.5 (2022-12-12)
+==================
+
+documentation
+-------------
+
+- Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
+
 1.8.4 (2022-11-15)
 ==================
 
