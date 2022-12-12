@@ -1,0 +1,13 @@
+skips: [ B603, B404, B101 ]
+
+exclude_dirs:
+  - .eggs
+  - .git
+  - .pytest_cache
+  - .tox
+  - scripts
+  - docs
+  - __pycache__
+  - jwst/*test*
+  - jwst/**/*test*
+  - jwst/fits_generator
