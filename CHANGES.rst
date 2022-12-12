@@ -52,6 +52,11 @@ datamodels
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
 
+documentation
+-------------
+
+- Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
+
 extract_1d
 ----------
 
