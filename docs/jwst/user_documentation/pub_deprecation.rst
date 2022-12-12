@@ -62,11 +62,11 @@ home folder, using Linux, the command is:
 
    $ mkdir $HOME/crds_cache
 
-Then set CRDS_CACHE to point to this new, empty folder:
+Then set CRDS_PATH to point to this new, empty folder:
 
 ::
 
-   $ export CRDS_CACHE=$HOME/crds_cache
+   $ export CRDS_PATH=$HOME/crds_cache
 
 The important point is that whatever folder is to be used to hold the CRDS cache
 should initially be empty; no other content should be present in the folder.
