@@ -18,14 +18,21 @@ repos:
     - id: trailing-whitespace
       exclude: ".*fits|.*json|.*csv|.*inc"
 
-# - repo: https://github.com/pre-commit/pygrep-hooks
-#   rev: v1.9.0
-#   hooks:
-#     - id: python-check-blanket-noqa
-#     - id: python-check-mock-methods
-#     - id: rst-directive-colons
-#     - id: rst-inline-touching-normal
-#     - id: text-unicode-replacement-char
+- repo: https://github.com/pre-commit/pygrep-hooks
+  rev: v1.9.0
+  hooks:
+    - id: python-check-blanket-noqa
+    - id: python-check-mock-methods
+    - id: rst-directive-colons
+    - id: rst-inline-touching-normal
+    - id: text-unicode-replacement-char
+
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.170'
+  hooks:
+    - id: ruff
+      args: ["--fix"]
+      exclude: "jwst/extern|docs|scripts|jwst/associations|jwst/fits_generator"
 
 # - repo: https://github.com/codespell-project/codespell
 #   rev: v2.2.2
@@ -40,12 +47,6 @@ repos:
 #   hooks:
 #     - id: pyupgrade
 #       args: ["--py38-plus"]
-
-# - repo: https://github.com/PyCQA/flake8
-#   rev: 6.0.0
-#   hooks:
-#     - id: flake8
-#       args: ["--count"]
 
 # - repo: https://github.com/PyCQA/bandit
 #   rev: 1.7.4
