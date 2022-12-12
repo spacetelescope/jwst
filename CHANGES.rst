@@ -1,4 +1,4 @@
-1.8.5 (unreleased)
+1.8.6 (unreleased)
 ==================
 
 assign_wcs
@@ -76,7 +76,7 @@ extract_2d
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
 - Add keywords for source RA and Dec for WFSS extractions [#7372]
-  
+
 flatfield
 ---------
 
@@ -154,8 +154,17 @@ wfss_contam
 - Pull 2D cutout offsets from SlitModel subarray metadata rather than
   grism WCS transform. [#7343]
 
+1.8.5 (2022-12-12)
+==================
+
+documentation
+-------------
+
+- Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
+
 1.8.4 (2022-11-15)
 ==================
+
 
 documentation
 -------------
@@ -163,6 +172,7 @@ documentation
 - Update deprecation notice with copyedit changes [#7348]
 
 - Clarify how to manage a local CRDS cache [#7350]
+
 
 1.8.3 (2022-11-11)
 ==================
