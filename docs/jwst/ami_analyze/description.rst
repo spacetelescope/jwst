@@ -33,7 +33,7 @@ The ``ami_analyze`` step has four optional arguments:
 :--rotation_search: List of start, stop, and step values that define the list of
                     rotation search values. The default setting of '-3 3 1'
                     results in search values of [-3, -2, -1, 0, 1, 2, 3].
-                    
+
 
 Inputs
 ------

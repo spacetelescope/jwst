@@ -6,7 +6,7 @@ calwebb_spec3: Stage 3 Spectroscopic Processing
 :Class: `jwst.pipeline.Spec3Pipeline`
 :Alias: calwebb_spec3
 
-Stage 3 processing for spectroscopic observations is intended for combining the 
+Stage 3 processing for spectroscopic observations is intended for combining the
 calibrated data from multiple exposures (e.g. a dither/nod pattern) into a single
 combined 2D or 3D spectral product and a combined 1D spectrum.
 Before being combined, the exposures may receive additional corrections for the

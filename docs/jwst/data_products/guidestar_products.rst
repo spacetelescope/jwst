@@ -520,4 +520,3 @@ The FITS file structure for FineGuide calibrated products is as follows:
  - FGS Centroid Packet: A table containing guide star centroiding information.
    See :ref:`above <centroid_table>` for details of the contents.
  - ADSF: The data model meta data.
-

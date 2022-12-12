@@ -74,7 +74,7 @@ available on your filesystem for the pipeline to use.
 
 **The environment variables `crds_context` and `crds_server` must be set before running the pipeline**
 
- 
+
 .. _crds_context:
 
 Reference Files Mappings (CRDS Context)
@@ -83,7 +83,7 @@ One of the main functions of CRDS is to associate a dataset with its best
 reference files - this mapping is referred to as the 'CRDS context' and is
 defined in a `.pmap` file, which itself is version-controlled to allow access to
 the reference file mapping at any point in time, and revert to any previous set
-of reference files if desired. 
+of reference files if desired.
 
 
 The CRDS context is usually set by default to always give access

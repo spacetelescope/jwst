@@ -109,7 +109,7 @@ When accessing the items of the list, the result is a normal metadata
 object where the attributes are type-checked::
 
 .. doctest-skip::
-  
+
     >>> trans = model.meta.transformations[0]
     >>> print(trans)
     <jwst.datamodels.schema.Transformations object at 0x123a810>

@@ -107,7 +107,7 @@ Time-series observations (TSO) result in input data stored as a 3D CubeModel
 where each plane in the cube represents a separate integration without changing the
 pointing.  Normal imaging data would benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
-integration to the next.  The outlier detection algorithm, therefore, gets run with 
+integration to the next.  The outlier detection algorithm, therefore, gets run with
 a few variations to accomodate the nature of these 3D data.
 
 * Input data is converted from a CubeModel (3D data array) to a ModelContainer
@@ -117,17 +117,17 @@ a few variations to accomodate the nature of these 3D data.
 * The median image is created without resampling the input data
 
   - All integrations are aligned already, so no resampling or shifting needs to be performed
-  
-* A matched median gets created by combining the single median frame with the 
+
+* A matched median gets created by combining the single median frame with the
   noise model for each input integration.
 
-* Perform statistical comparison between the matched median with each input 
-  integration.  
+* Perform statistical comparison between the matched median with each input
+  integration.
 
 * Update input data model DQ arrays with the mask of detected outliers
 
 
-.. note:: 
+.. note::
 
   This same set of steps also gets used to perform outlier detection on
   coronographic data, because it too is processed as 3D (per-integration)
@@ -139,30 +139,30 @@ Outlier Detection for IFU data
 Integral Field Unit (IFU) data is handled as a 2D image on input (i.e. the state of
 the data before creating a 3D cube).  This 2D image
 gets converted into a properly calibrated spectral cube (3D array) and stored as
-an IFUCubeModel for use within outlier detection.  The many differences in data format 
-for the IFU data relative to normal direct imaging data requires special 
-processing in order to perform outlier detection on IFU data.  
+an IFUCubeModel for use within outlier detection.  The many differences in data format
+for the IFU data relative to normal direct imaging data requires special
+processing in order to perform outlier detection on IFU data.
 
 * Convert the input 2D IFUImageModel into a 3D IFUCubeModel by calling
   :py:class:`~jwst.cube_build.CubeBuildStep`
 
   - A separate IFUCubeModel is generated for each wavelength channel/band by
     using  the `single` option for the :py:class:`~jwst.cube_build.CubeBuildStep`.
-    
-* All IFUCubeModels get median combined to create a single median 
+
+* All IFUCubeModels get median combined to create a single median
   IFUCubeModel product.
-  
-* The IFUCubeModel median product gets resampled back to match each 
+
+* The IFUCubeModel median product gets resampled back to match each
   original input IFUImageModel dataset.
-  
-  - This resampling uses :py:class:`~jwst.cube_build.blot_cube_build.CubeBlot` 
+
+  - This resampling uses :py:class:`~jwst.cube_build.blot_cube_build.CubeBlot`
     to perform this conversion.
 
-* The blotted, median 2D images are compared statistically to the original 
+* The blotted, median 2D images are compared statistically to the original
   2D input images to detect outliers.
-  
+
 * The DQ array of each input dataset gets updated to mark the detected
   outliers.
-  
+
 
 .. automodapi:: jwst.outlier_detection.outlier_detection

@@ -116,7 +116,7 @@ also added to the product. The FITS file layout is as follows:
    exposure.
  - REFOUT: The MIRI detector reference output values. Only appears in MIRI exposures.
  - ADSF: The data model meta data.
- 
+
 .. _rate:
 .. _rateints:
 
@@ -808,4 +808,3 @@ The overall layout of the corresponding FITS files is as follows:
  - PUPIL_PHA: A table of pupil phases.
  - SOLNS: A table of fringe coefficients.
  - ADSF: The data model meta data.
-

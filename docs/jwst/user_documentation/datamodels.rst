@@ -15,8 +15,8 @@ detailed documentation on Datamodels.
 Datamodels and the JWST pipeline
 ================================
 
-When :ref:`running the pipeline in python <run_from_python>`, the inputs and 
-outputs of running a pipeline or a step are JWST ``Datamodels``. 
+When :ref:`running the pipeline in python <run_from_python>`, the inputs and
+outputs of running a pipeline or a step are JWST ``Datamodels``.
 
 The input to a pipeline/step can be a ``Datamodel``, created from an input
 file on disk. E.g:

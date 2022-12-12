@@ -24,7 +24,7 @@ data array is 3D, with dimensions of (ncols x nrows x 1).
 For this mode, the output ERR array has the same dimensions as the
 output data array. The values for the ERR array are calculated for each
 2-group segment in each of the 2 integrations from the two variances of
-the slope of the segment. 
+the slope of the segment.
 
 The segment's variance due to read noise is:
 
@@ -35,7 +35,7 @@ where :math:`R` is the noise (using the default READNOISE pixel value)
 in the difference between the 2 groups and :math:`tgroup` is the group
 time in seconds (from the keyword TGROUP).
 
-The segment's variance due to Poisson noise is: 
+The segment's variance due to Poisson noise is:
 
 .. math::
    var^P = \frac{ slope }{ tgroup \times gain }  \,,
@@ -77,11 +77,11 @@ dividing by the group time. The output data array is
 3D, with dimensions of (ncols x nrows x nints).
 
 For this mode, the values for the variancesare calculated
-using the same equations as above for the ID mode, except 
+using the same equations as above for the ID mode, except
 :math:`slope` is the slope of the pixel, averaged over all integrations.
 
 All modes
----------    
+---------
 For all of the above modes, the square-root of the sum of the Poisson
 variance and read noise variance is written to the ERR extension.
 

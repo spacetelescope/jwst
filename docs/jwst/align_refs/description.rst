@@ -17,7 +17,7 @@ of individual PSF images that have been aligned to each integration in the scien
 target exposure.
 
 Shifts between each PSF and target image are computed using the
-``scipy.optimize.leastsq`` function. A 2D mask, supplied via a PSFMASK reference file, 
+``scipy.optimize.leastsq`` function. A 2D mask, supplied via a PSFMASK reference file,
 is used to indicate pixels to ignore when performing the minimization in the
 ``leastsq`` routine. The mask acts as a weighting function in performing the fit.
 Alignment of a PSF image is performed using the ``scipy.ndimage.fourier_shift``
@@ -32,9 +32,9 @@ The ``align_refs`` step  has two optional arguments:
 
 ``--bad_bits`` (string, default="DO_NOT_USE")
   The DQ bit values from the input image DQ arrays that should be considered bad
-  and replaced with the median in a surrounding box. For example, setting to 
-  ``"OUTLIER, SATURATED"`` (or equivalently ``"16, 2"`` or ``"18"``) will treat 
-  all pixels flagged as OUTLIER or SATURATED as bad, while setting to ``""`` or  
+  and replaced with the median in a surrounding box. For example, setting to
+  ``"OUTLIER, SATURATED"`` (or equivalently ``"16, 2"`` or ``"18"``) will treat
+  all pixels flagged as OUTLIER or SATURATED as bad, while setting to ``""`` or
   ``None`` will treat all pixels as good and omit any bad pixel replacement.
 
 Inputs
@@ -43,10 +43,10 @@ Inputs
 The ``align_refs`` step takes 2 inputs: a science target exposure containing a 3D
 stack of calibrated per-integration images and a "_psfstack" product containing a 3D
 stack of reference PSF images. If the target or PSF images have any of the
-data quality flags set to those specified by the ``bad_bits`` argument, these pixels 
+data quality flags set to those specified by the ``bad_bits`` argument, these pixels
 are replaced with the median value of a region around the flagged data. The size of the
-box region to use for the replacement can also be specified. These corrected images are 
-used in the :ref:`align_refs <align_refs_step>` step and passed along for subsequent 
+box region to use for the replacement can also be specified. These corrected images are
+used in the :ref:`align_refs <align_refs_step>` step and passed along for subsequent
 processing.
 
 3D calibrated images

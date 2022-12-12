@@ -12,5 +12,3 @@ wavelength limits during the flux summation. One or both may be specified.
   If ``max_wavelength`` is specified, the ``white_light`` step will sum
   from either a specified ``min_wavelength`` or the beginning of the
   flux array to the specified wavelength.
-
-

@@ -7,12 +7,12 @@ Description
 The reset correction is a MIRI step that attempts to correct
 for the reset anomaly effect. This effect is caused by the non-ideal behavior of the FET upon resetting in the dark
 causing the initial frames in an integration to be offset from their expected values. Another MIRI effect caused by
-resetting the detectors is the RSCD effect (see :ref:`rscd <rscd_step>`). 
+resetting the detectors is the RSCD effect (see :ref:`rscd <rscd_step>`).
 
 
 Assumptions
 -----------
-The reset correction is a MIRI-specific correction. It will not be applied to data from  other instruments. 
+The reset correction is a MIRI-specific correction. It will not be applied to data from  other instruments.
 
 
 
@@ -51,7 +51,7 @@ The format of the reset reference file is NCols X NRows X NGroups X NInts.
 For full frame data, the current implementation uses a reset anomaly reference file,
 which contains a correction for the first 15 groups for
 all integrations.  The reference file contains two corrections: one for the first integration
-and a second one for all other integrations. The correction 
+and a second one for all other integrations. The correction
 was determined so that the correction is forced to be zero on group 15.  For each integration in the input science data,
 the reset corrections are subtracted, group-by-group, integration-by-
 integration. If the input science data contains more groups than the

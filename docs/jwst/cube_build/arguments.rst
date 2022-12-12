@@ -3,7 +3,7 @@
 Step Arguments
 ==============
 The default values for the step arguments are found in the ``CubeBuildStep.spec`` attribute.
-The user can override the default values for a parameter if a step argument exist for the parameter. 
+The user can override the default values for a parameter if a step argument exist for the parameter.
 
 The  step arguments can be used to control the properties of the output IFU cube or to select  subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being
 created. For example, if the input data span several bands, but ``output_type = band``  then a cube for
@@ -75,11 +75,11 @@ The following arguments control the size and sampling characteristics of the out
   The maximum wavelength, in microns, to use in constructing the IFU cube.
 
 ``coord_system [string]``
-  The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
+  The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up
   and east is left. There are two other coordinate systems an IFU cube can be built on:
 
-  - ``coord_system=ifualign`` is also on the ra-dec system but the IFU cube is aligned with the instrument IFU plane. 
-  - ``coord_system=internal_cal`` is built on the local internal IFU slicer plane. These types of cubes will be useful during commissioning. For both MIRI ad NIRSpec only a single band from a single exposure can be used to create these type of cubes. The spatial dimensions for these cubes are two orthogonal axes, one parallel and the perpendicular to the slices in the FOV. 
+  - ``coord_system=ifualign`` is also on the ra-dec system but the IFU cube is aligned with the instrument IFU plane.
+  - ``coord_system=internal_cal`` is built on the local internal IFU slicer plane. These types of cubes will be useful during commissioning. For both MIRI ad NIRSpec only a single band from a single exposure can be used to create these type of cubes. The spatial dimensions for these cubes are two orthogonal axes, one parallel and the perpendicular to the slices in the FOV.
 
 There are a number of arguments that control how the point cloud values are combined together to produce the final
 flux associated with each output spaxel flux. The first set defines the the  **region of interest**,  which defines the
@@ -94,7 +94,7 @@ The arguments related to region of interest and how the fluxes are combined toge
 
 ``weighting [string]``
   The type of weighting to use when combining detector pixel fluxes to represent the spaxel flux. Allowed values are
-  ``emsm``,  ``msm`` and ``drizzle``. 
+  ``emsm``,  ``msm`` and ``drizzle``.
 
   For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.

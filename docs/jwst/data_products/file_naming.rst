@@ -32,12 +32,12 @@ An example Stage 1 product FITS file name is::
 
 Stage 3 file names
 ^^^^^^^^^^^^^^^^^^
-In this stage, the calibration pipeline uses the association information to identify the relationship between exposures 
-that are to be combined by design to form a single product. These data products result from the combination of multiple 
+In this stage, the calibration pipeline uses the association information to identify the relationship between exposures
+that are to be combined by design to form a single product. These data products result from the combination of multiple
 exposures like dithers or mosaics.
 
-The format for the file name of a Stage 3 association product has all alphabetic characters in lower case, underscores 
-are only used to delineate between major fields, and dashes can be used as separators for optional fields. 
+The format for the file name of a Stage 3 association product has all alphabetic characters in lower case, underscores
+are only used to delineate between major fields, and dashes can be used as separators for optional fields.
 Just as for Stage 2, the suffix distinguishes the different file products of Stage 3 of the calibration pipeline.
 
 The FITS file naming scheme for Stage 3 "source-based" products is as follows, where items in parentheses are optional:
@@ -113,4 +113,3 @@ All of the Stage 1 and Stage 2 calibration pipelines will process each segment i
 creating the full set of intermediate and calibrated products for each segment. The calibrated data
 for all segments is then combined by one of the Stage 3 pipelines into a source-based Stage 3
 product.
-

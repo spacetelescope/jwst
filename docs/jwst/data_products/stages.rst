@@ -59,4 +59,3 @@ multiple exposures for a given source or target. They are referred to as "source
 and use a "source-based" file naming syntax. Observing modes that include multiple defined sources
 within a single exposure or observation, such as NIRSpec MOS and NIRCam/NIRISS WFSS, will result in
 multiple Stage 3 products, one for each defined or identifiable source.
-

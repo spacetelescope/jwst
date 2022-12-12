@@ -1,7 +1,7 @@
 :orphan:
 
 .. _msa_reffile:
-  
+
 MSA Reference File (NIRSpec only)
 ---------------------------------
 
@@ -57,4 +57,3 @@ The MSA reference file has 5 fields, named
    :data: Reference data for the fixed slits and the IFU, same as in 1, except NO is 6 rows (1-6)
           and the mapping is 1 - S200A1, 2 - S200A1, 3 - S400A1, 4 - S200B1, 5 - S1600A1, 6 - IFU
    :model: Transform from relative positions within eac aperture to absolute positions within the MSA
-

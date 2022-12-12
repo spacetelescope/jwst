@@ -24,7 +24,7 @@ to produce output products at different calibration levels:
 	:Stage 3: Combining data from multiple exposures within an observation
 
 As such, the term 'pipeline' may refer to a single pipeline stage or to the full
-three-stage series. 
+three-stage series.
 
 Because JWST has many different instruments and observing modes, there are
 several different pipeline modules available for each stage. There is one single
@@ -53,7 +53,7 @@ may depend on things like instrument, observing mode, and date. In both the
 command line and Python interface, a pipeline or step module may be configured
 before running. Reference files can be overridden from those chosen by CRDS,
 steps in a pipeline can be skipped, step parameters can be changed, and the
-output and intermediate output products can be controlled. 
+output and intermediate output products can be controlled.
 
 A pipeline (or individual step) outputs corrected data either by writing an output
 file on disk  or returning an in-memory datamodel object. The output file suffix
@@ -70,7 +70,7 @@ The following is a brief overview of how the pipeline code in `jwst` is
 organized.
 
 
-**Pipeline and Step Classes** 
+**Pipeline and Step Classes**
 
 The JWST pipeline is organized into two main classes - `pipeline` classes and
 `step` classes. Pipelines are made up of sequential `step` classes chained together,
@@ -86,11 +86,11 @@ Each pipeline or step has a unique module name, which is the identifier used to
 invoke the correct pipeline/step when using either the Python or the Command
 Line Interface.
 
-**Package Structure** 
+**Package Structure**
 
-Within the `jwst` repository, there are separate modules for each pipeline step. 
+Within the `jwst` repository, there are separate modules for each pipeline step.
 There is also a `pipeline` module, where the `pipeline` classes, consisting of
-`step` classes called in sequence, are defined. 
+`step` classes called in sequence, are defined.
 
 ::
 
@@ -106,7 +106,7 @@ There is also a `pipeline` module, where the `pipeline` classes, consisting of
 			calwebb_image2.py  # contains Image2Pipeline
 		...
 
-**Dependencies** 
+**Dependencies**
 
 The `jwst` package has several dependencies (see the `setup.cfg` file in the
 top-level directory of `jwst` for a full list). Some notable dependencies
@@ -116,7 +116,7 @@ include:
 
 `ASDF <https://asdf.readthedocs.io/en/latest/>`_, the Advanced Scientific Data
 Format is the file format the JWST uses to encode world coordinate system (WCS)
-information. 
+information.
 
 **gwcs**
 
@@ -137,7 +137,7 @@ and `Nancy Grace Roman Telescope <https://roman-pipeline.readthedocs.io/en/lates
 
 **stcal**
 
-The `stcal` package contains step code that is common to both JWST and the Roman 
+The `stcal` package contains step code that is common to both JWST and the Roman
 telescope, to avoid redundancy. All step classes for the JWST
 pipeline are still defined in `jwst`, but some of the underlying code for these
 steps lives in `stcal` if the algorithm is shared by Roman (for example, ramp

@@ -10,4 +10,3 @@ that contain only background signal.
 .. include:: ../references_general/wfssbkg_reffile.inc
 
 .. include:: ../references_general/wavelengthrange_reffile.inc
-

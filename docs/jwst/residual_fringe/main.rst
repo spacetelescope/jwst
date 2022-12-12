@@ -52,4 +52,3 @@ produced by the anti-reflection coating and  bottom contact etalon, resulting in
 The information in the fringe frequency
 reference file  is used to determine, for each MRS band, the frequencies to fit to this main fringe component.
 The residual fringes are corrected for by fitting and removing sinusoidal gain to the detector level data.
-

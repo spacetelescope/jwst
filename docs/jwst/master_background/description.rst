@@ -103,7 +103,7 @@ exposures.
                     "asn_candidate": "('c1003', 'background')"
                   },
                   {"expname": "jw00626009001_02102_00001_nrs1_cal.fits",
-                   "exptype": "science", 
+                   "exptype": "science",
                    "asn_candidate": "('c1003', 'background')"
                   },
                   {"expname": "jw00626009001_02101_00001_nrs1_x1d.fits",
@@ -126,7 +126,7 @@ of interest and a region of background. The "science" members, which are the
 pipeline, are the data files that will have the master background subtraction
 applied, while the "background" members are the :ref:`x1d <x1d>` spectral
 products from which the master background spectrum will be created.
-The combined master background spectrum will be subtracted from each of the 
+The combined master background spectrum will be subtracted from each of the
 two science exposures.
 
 Extended Source with Dedicated Background Exposures
@@ -167,7 +167,7 @@ exposures, using a 2-point dither for both the science and background targets.
                     "asn_candidate": "('c1004', 'background')"
                   },
                   {"expname": "jw00626009001_02102_00001_nrs1_cal.fits",
-                   "exptype": "science", 
+                   "exptype": "science",
                    "asn_candidate": "('c1004', 'background')"
                   },
                   {"expname": "jw00626009001_02103_00001_nrs1_x1d.fits",
@@ -343,7 +343,7 @@ slits are first partially calibrated up through the :ref:`extract_2d <extract_2d
 and :ref:`srctype <srctype_step>` steps of :ref:`calwebb_spec2 <calwebb_spec2>`,
 which results in 2D cutouts for each slit with the source type identified. At this
 point the `master_background_mos` step is applied, which is a unique version
-of the step specifically tailored to NIRSpec MOS mode. 
+of the step specifically tailored to NIRSpec MOS mode.
 
 This version of the master background step completes the remaining calibration
 for all slits, but treats them all as extended sources and saves the correction

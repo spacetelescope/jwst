@@ -50,7 +50,6 @@ Outputs
 The output is a 3D (ncols x nrows x nints) countrate product that has been flat-fielded
 and has bad pixels flagged. For ID mode data, there is only 1
 countrate image produced by the :ref:`guider_cds <guider_cds_step>` step, therefore the
-length of the 3rd array axis is 1. For all other modes, there will be a stack of 
+length of the 3rd array axis is 1. For all other modes, there will be a stack of
 multiple countrate images, one per integration. See the :ref:`guider_cds <guider_cds_step>`
 step information for details on how the countrate images are produced for each mode.
-

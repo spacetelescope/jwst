@@ -59,7 +59,7 @@ background image is produced as follows:
  * Combine the DQ arrays of all background exposures, by first using a bitwise
    OR operation over all integrations in each exposure, followed by doing by a
    bitwise OR operation over all exposures.
-        
+
 The average background exposure is then subtracted from the target exposure.
 The subtraction consists of the following operations:
 
@@ -86,7 +86,7 @@ For Wide-Field Slitless Spectroscopy expsoures (NIS_WFSS and NRC_WFSS),
 a background reference image is subtracted from the target exposure.
 Before being subtracted, the background reference image is scaled to match the
 signal level of the WFSS image within background (source-free) regions of the
-image. 
+image.
 
 The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file

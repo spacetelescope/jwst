@@ -85,7 +85,7 @@ The ``wfss_mmag_extract`` and ``wfss_nbright`` parameters both affect which obje
 from a source catalog will be retained for extraction. The rejection or retention of
 objects proceeds as follows:
 
-1. As each object is read from the source catalog, they are immediately rejected if 
+1. As each object is read from the source catalog, they are immediately rejected if
    their isophotal_abmag > ``wfss_mmag_extract``, meaning that only objects brighter than
    ``wfss_mmag_extract`` will be retained. The default ``wfss_mmag_extract`` value of
    ``None`` retains all objects.

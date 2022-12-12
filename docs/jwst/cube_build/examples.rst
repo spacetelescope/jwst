@@ -76,4 +76,3 @@ where the association file contains::
 
 The output will be two IFU cubes, one for each grating+filter combination: JW3-6-NIRSPEC_g140h-f070lp_s3d.fits and
 JW3-6-NIRSPEC_g140h-f100lp_s3d.fits.
-

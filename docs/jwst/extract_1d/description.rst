@@ -127,7 +127,7 @@ Source Extraction Region
 As described in the documentation for the
 :ref:`EXTRACT1D <extract1d_reffile>` reference file,
 the characteristics of the source extraction region can be specified in one
-of two different ways. 
+of two different ways.
 The simplest approach is to use the ``xstart``, ``xstop``, ``ystart``,
 ``ystop``, and ``extract_width`` parameters.  Note that all of these values are
 zero-indexed integers, the start and stop limits are inclusive, and the values
@@ -140,14 +140,14 @@ and ``ystop``. If ``dispaxis=2``, the rolls are reversed.
 If ``extract_width`` is also given, that takes priority over ``ystart`` and
 ``ystop`` (for ``dispaxis=1``) for the extraction width, but ``ystart`` and
 ``ystop`` will still be used to define the centering of the extraction region
-in the cross-dispersion direction. For point source data, 
+in the cross-dispersion direction. For point source data,
 then the ``xstart`` and ``xstop`` values (dispaxis = 2) are shifted to account
 for the expected location of the source. If dispaxis=1, then the ``ystart`` and ``ystop`` values
 are modified. The offset amount is internally calculated. If it is not desired to apply this
 offset, then set ``use_source_posn`` = False. If the ``use_source_posn`` parameter is None (default),
 the values of ``xstart/xstop`` or ``ystart/ystop`` in the ``extract_1d`` reference file will be used
 to determine the center position of the extraction aperture. If these values are not set in the reference file
-the ``use_source_posn``  will be 
+the ``use_source_posn``  will be
 internally set to True for point source data according to the table given in :ref:`srctype <srctype_table>`.
 Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
@@ -207,7 +207,7 @@ be subtracted (pixel by pixel) from the source count rate.
 Source and Background Coefficient Lists
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The interpretation and use of polynomial coefficients to specify source and
-background extraction regions via ``src_coeff`` and ``bkg_coeff`` is the same. 
+background extraction regions via ``src_coeff`` and ``bkg_coeff`` is the same.
 The coefficients are specified as a list of an even number of lists (an
 even number because both the lower and upper limits of each extraction region
 must be specified).  The source extraction coefficients will normally be
@@ -269,14 +269,14 @@ or step arguments will be ignored; the entire image will be extracted, and no ba
 
 For point sources a circular extraction aperture is used, along with an optional
 circular annulus for background extraction and subtraction. The size of the extraction
-region and the background annulus size varies with wavelength. 
+region and the background annulus size varies with wavelength.
 The extraction related vectors are found in the asdf extract1d reference file.
 For each element in the ``wavelength`` vector there are three size components: ``radius``, ``inner_bkg``, and
 ``outer_bkg``. The radius vector sets the extraction size; while ``inner_bkg`` and ``outer_bkg`` specify the
 limits of an annular background aperture. There are two additional vectors in the reference file, ``axis_ratio``
 and ``axis_pa``, which are placeholders for possible future functionality.
 The extraction size parameters are given in units of arcseconds and converted to units of pixels
-in the extraction process. 
+in the extraction process.
 
 The region of overlap between an aperture and a pixel can be calculated by
 one of three different methods, specified by the ``method`` parameter:  "exact"

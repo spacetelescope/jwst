@@ -83,7 +83,7 @@ two -- "global+match".
 
 - The "match" algorithm computes only a correction value for each image, such
   that, when applied to each image, the mismatch between *all* pairs of images
-  is minimized, in the least-squares sense. For each pair of images, the sky 
+  is minimized, in the least-squares sense. For each pair of images, the sky
   mismatch is computed *only* in the regions in which the two images overlap
   on the sky.
 

@@ -19,11 +19,11 @@ Specifically, this routine performs the following operations (modified from the
 
 * Convert input data, as needed, to make sure it is in a format that can be processed
 
-  - A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format 
+  - A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format
     for all processing performed by
     this step, as each entry will be treated as an element of a stack of images
     to be processed to identify bad pixels, cosmic-rays and other artifacts
-  - If the input data is a :py:class:`~jwst.datamodels.CubeModel`, convert it into a 
+  - If the input data is a :py:class:`~jwst.datamodels.CubeModel`, convert it into a
     :py:class:`~jwst.datamodels.ModelContainer`.
     This allows each plane of the cube to be treated as a separate 2D image
     for resampling (if done) and for combining into a median image.

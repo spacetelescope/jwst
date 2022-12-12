@@ -14,9 +14,9 @@ repos:
     - id: debug-statements
     - id: detect-private-key
     - id: end-of-file-fixer
-      exclude: ".*fits|.*json|.*csv|docs"
+      exclude: ".*fits|.*json|.*csv|.*inc"
     - id: trailing-whitespace
-      exclude: ".*fits|.*json|.*csv|docs"
+      exclude: ".*fits|.*json|.*csv|.*inc"
 
 # - repo: https://github.com/pre-commit/pygrep-hooks
 #   rev: v1.9.0

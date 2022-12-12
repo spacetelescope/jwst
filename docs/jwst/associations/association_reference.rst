@@ -1,5 +1,5 @@
 .. currentmodule:: jwst.associations.association
-                   
+
 .. _reference-association:
 
 Association Rules
@@ -70,7 +70,7 @@ These keys are accessed in the same way any dict key is accessed::
 
   asn = Asn_MyAssociation()
   print(asn['asn_rule'])
-  
+
   #--> MyAssociation
 
 .. _ref-asn-core-methods:
@@ -205,7 +205,7 @@ dict is the contents of the ``data`` attribute. For example::
 
   asn = Asn_MyAssociation()
   asn.data['value'] = 'a value'
-  
+
   assert asn['value'] == 'a value'
   # True
 
@@ -290,9 +290,8 @@ Then, when the rule file is used to create an ``AssociationRegistry``,
 the class ``MyRule`` will be included as one of the available rules::
 
 .. doctest-skip::
-   
+
   >>> from jwst.associations import AssociationRegistry
   >>> registry = AssociationRegistry('myrules.py', include_default=False)
   >>> print(registry)
       {'MyRule': <class 'abc.MyRule'>}
-

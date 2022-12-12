@@ -13,4 +13,3 @@ Assign WCS
    exp_types.rst
 
 .. automodapi:: jwst.assign_wcs
-

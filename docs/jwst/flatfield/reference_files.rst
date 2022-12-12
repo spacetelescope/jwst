@@ -78,4 +78,3 @@ which are now described.
 .. include:: ../references_general/sflat_reffile.inc
 
 .. include:: ../references_general/dflat_reffile.inc
-

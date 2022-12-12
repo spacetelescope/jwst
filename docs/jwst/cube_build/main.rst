@@ -51,7 +51,7 @@ dispersed by a prism or one of six diffraction gratings.  The NIRSpec IFU gratin
 provide high-resolution and  medium resolution  spectroscopy while the prism yields lower-resolution spectroscopy.
 The NIRSpec detector focal plane consists of two HgCdTe sensor chip assemblies (SCAs). Each SCA is a 2-D array of
 2048 x 2048 pixels.  For low or medium resolution IFU data the 30 slices are imaged on
-a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the two NIRSpec SCAs. 
+a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the two NIRSpec SCAs.
 
 
 Terminology
@@ -117,7 +117,7 @@ Linear wavelength IFU cubes are constructed from a single band of data, while no
 created from more than one band of data. If the IFU cube have a non-linear wavelength dimension
 there will be an added binary extension table to the output fits IFU cube. This extension has
 the label, WCS-TABLE, and contains the wavelength for each of the IFU cube wavelength planes. This table follows the
-FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006. 
+FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006.
 
 The input data to ``cube_build`` can take a variety of forms, including a single file, a data
 model passed from another pipeline step, a list of files in an association table, or a collection of exposures in a
@@ -172,7 +172,7 @@ can either be linear or non-linear. If the wavelength is non-linear, then the IF
 table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
 contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propagate the
-dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).  
+dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).
 
 The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
 the IFU cube footprint).
@@ -202,9 +202,9 @@ The string defining the type of IFU is created according to the following rules:
 Algorithm
 ---------
 The type of output IFU cube created depends on which pipeline is being run, calspec2 or calspec3, and if additional
-user provided options are being set  (see the :ref:`arguments` section.). 
-Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects 
-the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS 
+user provided options are being set  (see the :ref:`arguments` section.).
+Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects
+the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS
 information of all the included  input data.
 This default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
 the sky of all the input images. The output sampling scale in all three dimensions for the cube
@@ -214,7 +214,7 @@ for each dimension for each band. If the output IFU cube contains more than one 
 output scale corresponds to the channel with the smallest scale. In the case of NIRSpec only gratings of the
 same resolution are combined together in an IFU cube. The default output spatial coordinate system is right ascension-declination.
 There is an option to create IFU cubes in the coordinate system of the NIRSpec or MIRI MIRS local ifu slicer plane (see
-:ref:`arguments`, coord_system='internal_cal'). 
+:ref:`arguments`, coord_system='internal_cal').
 
 The pixels on each exposure that are to be  included in the output are mapped to the cube coordinate system. This
 pixel mapping is determined via a series of chained mapping transformations derived from the WCS of each input image and the
@@ -291,12 +291,11 @@ where the weighting ``weighting=emsm``  is
 
 :math:`w_i =e\frac{ -({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)} {scale factor}`
 
-The *scale factor* = *scale rad/cdelt1*, where *scale rad* is read in from the reference file and varies with wavelength. 
+The *scale factor* = *scale rad/cdelt1*, where *scale rad* is read in from the reference file and varies with wavelength.
 
 If the alternative weighting function (set by ``weighting = msm``) is selected then:
 
 :math:`w_i =\frac{1.0} {\sqrt{({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)^{p} }}`
 
-In this  weighting function the default value for *p* is read in from the cubepar reference file. It can also  be set 
+In this  weighting function the default value for *p* is read in from the cubepar reference file. It can also  be set
 by the argument ``weight_power=value``.
-
