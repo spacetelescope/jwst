@@ -160,7 +160,7 @@ wfss_contam
 documentation
 -------------
 
--
+- Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
 
 1.8.4 (2022-11-15)
 ==================
