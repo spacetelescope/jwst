@@ -203,6 +203,9 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT<br>(JWST OPS) | CRDS_CONTEXT<br>(JWST PUB) | Date       | Notes                                         |
 |---------------------|-----------|----------|----------------------------|----------------------------|------------|-----------------------------------------------|
+| 1.8.5               | B9.0      | 2022.4.0 | N/A                        | 1019                       | 2022-12-12 | Documentation patch release for B9.0          |
+| 1.8.4               | B9.0      | 2022.4.0 | N/A                        | 1004                       | 2022-11-16 | Final release candidate for B9.0              |
+| 1.8.3               | B9.0      | 2022.4.0 | N/A                        | 1004                       | 2022-11-11 | Final release candidate for B9.0              |
 | 1.8.2               | B9.0      | 2022.4.0 | N/A                        | 1004                       | 2022-10-19 | Final release candidate for B9.0              |
 | 1.8.1               | B9.0rc2   |          |                            | 1001                       | 2022-10-17 | Second release candidate for B9.0             |
 | 1.8.0               | B9.0rc1   |          |                            | 0995                       | 2022-10-10 | First release candidate for B9.0              |

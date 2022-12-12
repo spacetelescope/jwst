@@ -1,97 +1,10 @@
-1.8.5 (unreleased)
+1.8.5 (2022-12-12)
 ==================
 
-assign_wcs
-----------
+documentation
+-------------
 
-- Fix computation of bounding box corners for WFSS grism 2D cutouts. [#7312]
-
-associations
-------------
-
-- Moved text dump of associations to happen when using the '-D' option,
-  rather than the '-v' option. [#7068]
-
-- Added background association candidates to list of level 3 candidate
-  types requiring members from more than one observation [#7329]
-
-- Refactor item reprocessing for efficiency, refactor how background associations are configured [#7332]
-
-- Suppress the use of association candidates for level 3 products marked with WFSC_LOS_JITTER. [#7339]
-
-cube_build
-----------
-
-- Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
-
-- Change fill value for regions of SCI and ERR extensions with no data
-  from 0 to nan. [#7337]
-
-datamodels
-----------
-
-- Add subarray keywords in the filteroffset schema [#7317]
-
-- Remove duplicates and add comments to core.schema dithering types [#7331]
-
-
-extract_1d
-----------
-
-- Fix IFU spectral extraction code to not fail on nan fill values
-  now populating empty regions of the data cubes. [#7337]
-
-extract_2d
-----------
-
-- Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
-
-
-flatfield
----------
-
-- JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
-  combine the input ERR and the flat field ERR in quadrature. [#7346]
-  
-guider_cds
-----------
-
-- Calculate and output the ERR array based on the gain and readnoise
-  variances, and force the stack mode to use the default gain and readnoise
-  pixel values. [#7309]
-
-lib
----
-
-- Fix circular import in ``lib.wcs_utils``. [#7330]
-
-photom
-------
-
-- Cutout pixel area array to match the subarray of the science data. [#7319]
-
-- Remove duplicated division of pixel area during photometric calibration
-  of NIRSpec IFU data with EXTENDED source type; correct units in pixel area
-  division to sr from square arcseconds [#7336]
-
-resample
---------
-
-- Enhanced spectral output WCS construction to guard against nearly identical
-  points. [#7321]
-
-- Added a utility function ``decode_context()`` to help identify all input
-  images that have contributed with flux to an output (resampled)
-  pixel. [#7345]
-
-tweakreg
---------
-
-- Do not skip tweakreg step in ``Image3Pipeline`` when ``ModelContainer``
-  has only one group. This is a continuation of PR6938. [#7326]
-
-- Fix a bug in the logic that handles inputs with a single image group when
-  an absolute reference catalog is provided. [#7328]
+-
 
 1.8.4 (2022-11-15)
 ==================
