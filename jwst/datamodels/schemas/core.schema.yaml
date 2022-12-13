@@ -2463,6 +2463,11 @@ properties:
             type: string
             fits_keyword: S_TWKREG
             blend_table: True
+          undersampling_correction:
+            title: Undersampling Correction
+            type: string
+            fits_keyword: S_UNDCOR
+            blend_table: True
           wavecorr:
             title: NIRSpec wavelength correction
             type: string
