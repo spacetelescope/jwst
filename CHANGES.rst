@@ -52,6 +52,8 @@ datamodels
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
 
+- Added var_flat to the initialization in slit.py [#7397]
+
 documentation
 -------------
 
