@@ -71,6 +71,6 @@ def flag_pixels(data, gdq, signal_threshold):
     # For groups in the data that exceed the signal_threshold
     # add UNDERSAMP to the group's DQ
     wh_exc = np.where(data >= signal_threshold)
-    gdq[wh_exc] = gdq[wh_exc] + dqflags.group['UNDERSAMP']
+    gdq[wh_exc] = np.bitwise_or(gdq[wh_exc], dqflags.group['UNDERSAMP'])
 
     return gdq
