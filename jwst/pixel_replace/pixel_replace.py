@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 from .. import datamodels
+from scipy.optimize import minimize
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,12 +44,20 @@ class PixelReplacement:
         self.input = input_model
         self.pars = dict()
         self.pars.update(pars)
-
+        self.output = self.input.copy()
+        # Store algorithm options here.
         self.algorithm_dict = {
             'fit_profile': self.fit_profile,
         }
 
-        self.algorithm = self.algorithm_dict[self.pars['algorithm']]
+        # Choose algorithm from dict using input par.
+        try:
+            self.algorithm = self.algorithm_dict[self.pars['algorithm']]
+
+        except:
+            log.critical(f"Algorithm name provided does not match an"
+                         f"implemented algorithm!")
+            raise Exception
 
     def replace(self):
         """
@@ -62,16 +71,15 @@ class PixelReplacement:
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
+
             for i, slit in enumerate(self.input.slits):
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
                 slit_replaced = self.algorithm(slit_model)
-                self.input.slits[i] = slit_replaced
+                self.output.slits[i] = slit_replaced
 
-        # Unsure how to deal with IFU data - should this be run
-        # on pre- or post- cube_build products?
         else:
-            log.critical(f"For input of exposure type {self.input.exposure.type}\n"
-                         f"Algorithm has not yet been implemented.")
+            # This should never happen, as these would be caught in the step code.
+            log.critical(f"How did we get here?")
             raise Exception
 
     def fit_profile(self, model):
@@ -99,24 +107,98 @@ class PixelReplacement:
         """
         dispaxis = model.meta.wcsinfo.dispersion_direction
 
-        # Trucate array to region where good pixels exist
+        model_replaced = model.copy()
+
+        # Truncate array to region where good pixels exist
         good_pixels = np.where(~model.dq & 1)
         x_range = [np.min(good_pixels[0]), np.max(good_pixels[0]) + 1]
         y_range = [np.min(good_pixels[1]), np.max(good_pixels[1]) + 1]
 
+        valid_shape = [x_range, y_range]
+        profile_cut = valid_shape[dispaxis - 1]
+
+        # Create set of slice indices which we can later use for profile creation
+        valid_profiles = set(range(*valid_shape[2 - dispaxis]))
+        profiles_to_replace = set()
+
         # Loop over axis of data array corresponding to cross-
         # dispersion direction by indexing data shape with
-        # strange dispaxis argument.
-        log.critical(f"Number of profiles: {model.data.shape[2 - dispaxis]}")
-        for ind in range(model.data.shape[2 - dispaxis]):
-            dq_slice = model.dq[self.custom_slice(dispaxis, ind)]
+        # strange dispaxis argument. Keep indices in full-frame numbering scheme,
+        # but only iterate through slices with valid data.
+        log.info(f"Number of profiles: {len(valid_profiles)}")
+        for ind in range(*valid_shape[2 - dispaxis]):
+            # Exclude regions with no data for dq slice.
+            dq_slice = model.dq[self.custom_slice(dispaxis, ind)][profile_cut[0]: profile_cut[1]]
+            # Find bad pixels in region containing valid data.
             n_bad = np.count_nonzero(dq_slice & self.DO_NOT_USE)
             if n_bad == len(dq_slice):
                 log.debug(f"Slice {ind} contains no good pixels. Skipping replacement.")
+                valid_profiles.discard(ind)
+            elif n_bad == 0:
+                log.debug(f"Slice {ind} contains no bad pixels.")
             else:
-                log.debug(f"Slice {ind} contains {len(dq_slice) - n_bad} good pixels.")
+                log.debug(f"Slice {ind} contains {n_bad} bad pixels.")
+                profiles_to_replace.add(ind)
 
+        ## check_output = np.zeros((len(profiles_to_replace), profile_cut[1]-profile_cut[0]))
+        for i, ind in enumerate(profiles_to_replace):
+            # Use sets for convenient finding of neighboring slices to use in profile creation
+            adjacent_inds = set(range(ind - self.pars['n_adjacent_cols'], ind + self.pars['n_adjacent_cols']))
+            adjacent_inds.discard(ind)
+            valid_adjacent_inds = list(adjacent_inds.intersection(valid_profiles))
+            # Cut out valid neighboring profiles
+            profile_data = model.data[self.custom_slice(dispaxis, valid_adjacent_inds)]
+            # Mask out bad pixels
+            profile_data = np.where(
+                model.dq[self.custom_slice(dispaxis, valid_adjacent_inds)] & self.DO_NOT_USE,
+                np.nan,
+                profile_data
+            )
+            # Add additional cut to pull only from region with valid data for convenience (may not be necessary)
+            profile_data = profile_data[self.custom_slice(3 - dispaxis, list(range(profile_cut[0], profile_cut[1])))]
 
+            # Normalize profile data
+            normalized = profile_data / np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
+
+            # Pull median for each pixel across profile
+            median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
+
+            ## check_output[i] = median_profile
+
+            # Clean current profile of values flagged as bad
+            current_profile = model.data[self.custom_slice(dispaxis, ind)]
+            cleaned_current = np.where(
+                model.dq[self.custom_slice(dispaxis, ind)] & self.DO_NOT_USE,
+                np.nan,
+                current_profile
+            )[range(*profile_cut)]
+
+            # Scale median profile to current profile with bad pixel - minimize mse?
+            scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(cleaned_current)),
+                             args=(median_profile, cleaned_current)).x
+
+            replaced_current = np.where(
+                model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] & self.DO_NOT_USE,
+                median_profile * scale,
+                cleaned_current
+            )
+
+            # Change the dq bits i
+            current_dq = model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)]
+            replaced_dq = np.where(
+                current_dq & self.DO_NOT_USE,
+                current_dq ^ self.DO_NOT_USE ^ self.REPLACED,
+                current_dq
+            )
+
+            model_replaced.data[self.custom_slice(dispaxis, ind)][range(*profile_cut)] = replaced_current
+            model_replaced.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] = replaced_dq
+
+        ## import matplotlib.pyplot as plt
+        ## plt.imshow(check_output)
+        ## plt.show()
+
+        return model_replaced
 
     def custom_slice(self, dispaxis, index):
         """
@@ -144,3 +226,25 @@ class PixelReplacement:
             return np.s_[index, :]
         else:
             raise Exception
+
+    def profile_mse(self, scale, median, current):
+        """Function to feed optimization routine
+        Parameters
+        ----------
+        scale : float
+            Initial estimate of scale factor to bring
+            normalized median profile up to current profile
+        median : array
+            Median profile constructed from neighboring
+            profile slices
+        current : array
+            Current profile with bad pixels to be
+            replaced
+
+        Returns
+        -------
+        float
+            Mean squared error for minimization purposes
+        """
+        return (np.nansum((current - (median * scale)) ** 2.) /
+                (len(median) - np.count_nonzero(np.isnan(current))))

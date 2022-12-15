@@ -70,8 +70,8 @@ class PixelReplaceStep(Step):
                     self.log.debug('Input is a SlitModel')
                 '''
             else:
-                self.log.error(f'Input is a {str(type(input_model))}, ')
-                self.log.error('which was not expected for pixel_replace')
+                self.log.error(f'Input is of type {str(type(input_model))} for which')
+                self.log.error('pixel_replace does not have an algorithm.')
                 raise Exception
                 #self.log.error('pixel_replace will be skipped.')
                 #input_model.meta.cal_step.pixel_replace = 'SKIPPED'
@@ -86,4 +86,5 @@ class PixelReplaceStep(Step):
             replacement.replace()
 
             self.record_step_status(result, 'pixel_replace', success=True)
+            return replacement.output
 
