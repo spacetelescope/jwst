@@ -9,7 +9,7 @@ __all__ = ["UndersamplingCorrectionStep"]
 
 class UndersamplingCorrectionStep(Step):
     """
-    This Step sets DO_NOT_USE flag for groups exhibiting significant
+    This Step sets the UNDERSAMP flag for groups exhibiting significant
     charge migration.
     """
     class_alias = "undersampling_correction"

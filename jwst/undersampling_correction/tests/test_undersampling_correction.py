@@ -10,12 +10,13 @@ import numpy.testing as npt
 test_dq_flags = dqflags.pixel
 GOOD = test_dq_flags["GOOD"]
 DNU = test_dq_flags["DO_NOT_USE"]
+UNSA = test_dq_flags["UNDERSAMP"]
 
 
 def test_pix_0():
     """
-    Having all data in ramp below the signal threshold, the only DNU
-    in the output GROUPDQ should be those propagated from the input.
+    Having all data in ramp below the signal threshold, the only non-GOOD
+    groups in the output GROUPDQ should be those DNU propagated from the input.
     """
     ngroups, nints, nrows, ncols = set_scalars()
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
@@ -38,8 +39,9 @@ def test_pix_0():
 
 def test_pix_1():
     """
-    All input GROUPDQ = 'GOOD', Some ramp data exceed the signal threshold, so the only DNU
-    in the output GROUPDQ should be the groups exceeding the signal threshold,
+    All input GROUPDQ = 'GOOD'. Some ramp data exceed the signal threshold, so the
+    only non-GOOD groups in the output GROUPDQ should be UNSA for groups exceeding
+    the signal threshold,
     """
     ngroups, nints, nrows, ncols = set_scalars()
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
@@ -55,12 +57,42 @@ def test_pix_1():
     ramp_model.data[0, 8, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = [GOOD] * ngroups
 
-    true_out_gdq = ramp_model.groupdq.copy()
+    true_out_gdq = ramp_model.groupdq.copy()  # all GOOD
     true_out_gdq[0, :, 0, 0] = [GOOD] * ngroups
-    # True output DNU are at exceedance groups
-    true_out_gdq[0, 1, 0, 0] = DNU
-    true_out_gdq[0, 3, 0, 0] = DNU
-    true_out_gdq[0, 8, 0, 0] = DNU
+    true_out_gdq[0, 1, 0, 0] = UNSA
+    true_out_gdq[0, 3, 0, 0] = UNSA
+    true_out_gdq[0, 8, 0, 0] = UNSA
+
+    out_model = undersampling_correction(ramp_model, signal_threshold)
+    out_gdq = out_model.groupdq
+
+    npt.assert_array_equal(out_gdq, true_out_gdq)
+
+
+def test_pix_2():
+    """
+    All input GROUPDQ are 'DNU'. Some ramp data exceed the signal threshold,
+    so their output GROUPDQ should be 'DNU'+'UNSA'. Ramp data not exceeding
+    the signal threshold should have their output GROUPDQ = 'DNU', propagated
+    from the input.
+    """
+    ngroups, nints, nrows, ncols = set_scalars()
+    ramp_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols)
+
+    signal_threshold = 20000.
+
+    # Populate pixel-specific SCI and GROUPDQ arrays. Set some ramp data to be
+    # above the signal threshold, and all input GROUPDQ to be DNU
+    ramp_model.data[0, 1, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
+    ramp_model.data[0, 3, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
+    ramp_model.data[0, 8, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
+    ramp_model.groupdq[0, :, 0, 0] = [DNU] * ngroups
+
+    true_out_gdq = ramp_model.groupdq.copy()  # all DNU
+    true_out_gdq[0, 1, 0, 0] += UNSA
+    true_out_gdq[0, 3, 0, 0] += UNSA
+    true_out_gdq[0, 8, 0, 0] += UNSA
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq
@@ -84,7 +116,8 @@ def create_mod_arrays(ngroups, nints, nrows, ncols):
     """
     For an input datacube (NIRISS), create arrays having
     the specified dimensions for the pixel DQ, the group DQ, and the
-    ERR extensions, and create datamodels for the ramp
+    ERR extensions, and create datamodels for the ramp. All groups
+    in all arrays have initial values set to 0.
     """
     err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)

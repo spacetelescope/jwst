@@ -22,12 +22,12 @@ def undersampling_correction(input_model, signal_threshold):
         The input science data to be corrected
 
     signal_threshold : float
-        Science value above which a group will be flagged as DO_NOT_USE
+        Science value above which a group will be flagged as UNDERSAMP
 
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
-        Data model with undersampling_correction applied; add DO_NOT_USE flag
+        Data model with undersampling_correction applied; add UNDERSAMP flag
         to groups exceeding signal_threshold
     """
     data = input_model.data
@@ -36,7 +36,7 @@ def undersampling_correction(input_model, signal_threshold):
     # Create the output model as a copy of the input
     output_model = input_model.copy()
 
-    log.info('Using signal_threshold: %s', signal_threshold)
+    log.info('Using signal_threshold: %.2f', signal_threshold)
 
     gdq_new = flag_pixels(data, gdq, signal_threshold)
 
@@ -50,7 +50,7 @@ def flag_pixels(data, gdq, signal_threshold):
     """
     Short Summary
     -------------
-    Flag groups that exceed signal_threshold as DO_NOT_USE.
+    Flag groups that exceed signal_threshold as UNDERSAMP.
 
     Parameters
     ----------
@@ -61,7 +61,7 @@ def flag_pixels(data, gdq, signal_threshold):
         group dq array
 
     signal_threshold : float
-        Science value above which a group will be flagged as DO_NOT_USE
+        Science value above which a group will be flagged as UNDERSAMP
 
     Returns
     -------
@@ -69,8 +69,8 @@ def flag_pixels(data, gdq, signal_threshold):
         updated group dq array
     """
     # For groups in the data that exceed the signal_threshold
-    # add DO_NOT_USE to the group's DQ
+    # add UNDERSAMP to the group's DQ
     wh_exc = np.where(data >= signal_threshold)
-    gdq[wh_exc] = np.bitwise_or(gdq[wh_exc], dqflags.group['DO_NOT_USE'])
+    gdq[wh_exc] = gdq[wh_exc] + dqflags.group['UNDERSAMP']
 
     return gdq
