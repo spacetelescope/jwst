@@ -332,7 +332,7 @@ def test_one_group_not_suppressed_one_integration(setup_inputs):
     tol = 1e-5
 
     # Check slopes information
-    check = np.array([[0., 1., 1.0000002]])
+    check = np.array([[np.nan, 1., 1.0000002]])
     np.testing.assert_allclose(slopes.data, check, tol)
 
     check = np.array([[DNU | SAT, GOOD, GOOD]])
@@ -348,7 +348,7 @@ def test_one_group_not_suppressed_one_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., 1., 1.0000001]]])
+    check = np.array([[[np.nan, 1., 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
     check = np.array([[[DNU | SAT, GOOD, GOOD]]])
@@ -379,7 +379,7 @@ def test_one_group_suppressed_one_integration(setup_inputs):
     tol = 1e-5
 
     # Check slopes information
-    check = np.array([[0., 0., 1.0000002]])
+    check = np.array([[np.nan, np.nan, 1.0000002]])
     np.testing.assert_allclose(slopes.data, check, tol)
 
     check = np.array([[DNU | SAT, DNU, GOOD]])
@@ -395,7 +395,7 @@ def test_one_group_suppressed_one_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., 0., 1.0000001]]])
+    check = np.array([[[np.nan, np.nan, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
     check = np.array([[[DNU | SAT, DNU, 0]]])
@@ -411,7 +411,7 @@ def test_one_group_suppressed_one_integration(setup_inputs):
     np.testing.assert_allclose(cube.err, check, tol)
 
 
-def test_one_group_not_suppressed_two_integration(setup_inputs):
+def test_one_group_not_suppressed_two_integrations(setup_inputs):
     """
     This tests three pixel ramps with two integrations and the
     one group suppression switch turned off.  The second integration
@@ -444,7 +444,7 @@ def test_one_group_not_suppressed_two_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0.,        1.,        1.0000001]],
+    check = np.array([[[np.nan,        1.,        1.0000001]],
                       [[1.0000001, 1.0000001, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 
@@ -465,7 +465,7 @@ def test_one_group_not_suppressed_two_integration(setup_inputs):
     np.testing.assert_allclose(cube.err, check, tol)
 
 
-def test_one_group_suppressed_two_integration(setup_inputs):
+def test_one_group_suppressed_two_integrations(setup_inputs):
     """
     This tests three pixel ramps with two integrations and the
     one group suppression switch turned on.  The key differences
@@ -498,7 +498,7 @@ def test_one_group_suppressed_two_integration(setup_inputs):
     np.testing.assert_allclose(slopes.err, check, tol)
 
     # Check slopes information
-    check = np.array([[[0., 0., 1.0000001]],
+    check = np.array([[[np.nan, np.nan, 1.0000001]],
                       [[1.0000001, 1.0000001, 1.0000001]]])
     np.testing.assert_allclose(cube.data, check, tol)
 

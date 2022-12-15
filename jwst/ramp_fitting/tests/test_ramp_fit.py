@@ -13,6 +13,7 @@ GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 SATURATED = dqflags.pixel["SATURATED"]
+NO_GAIN = dqflags.pixel["NO_GAIN_VALUE"]
 
 DELIM = "-" * 70
 
@@ -293,7 +294,9 @@ class TestMethods:
         assert 0 == np.min(data)
 
     def test_bad_gain_values(self, method):
-        # all pixel values are zero. So slope should be zero
+        # All pixel values are zero, so slope should be zero, except
+        # the pixels with invalid data.  Those pixels should have
+        # NaN values.
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
         model1.meta.exposure.ngroups = 11
         gain.data[10, 10] = -10
@@ -304,10 +307,16 @@ class TestMethods:
 
         data = slopes[0]
         dq = slopes[1]
-        assert 0 == np.max(data)
-        assert 0 == np.min(data)
-        assert dq[10, 10] == 524288 + 1
-        assert dq[20, 20] == 524288 + 1
+
+        no_nan = np.zeros(data.shape, dtype=int)
+        no_nan[data != 0] = 1
+        tsum = sum(sum(no_nan))
+
+        assert tsum == 2
+        assert np.isnan(data[10, 10])
+        assert np.isnan(data[20, 20])
+        assert dq[10, 10] == NO_GAIN | DO_NOT_USE
+        assert dq[20, 20] == NO_GAIN | DO_NOT_USE
 
     def test_simple_ramp(self, method):
         # Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
@@ -819,7 +828,7 @@ def test_miri_no_good_pixel():
     assert image_info is None
 
 
-def test_zero_frame_usage():
+def test_zeroframe_usage():
     """
     Test using ZEROFRAME data for fully saturated ramps, with three different
     ramps.
@@ -899,7 +908,7 @@ def test_zero_frame_usage():
     # Check slopes information
     cdata, cdq, cvp, cvr, cerr = cube
 
-    check = np.array([[[186.28912, 0., 93.14456]],
+    check = np.array([[[186.28912, np.nan, 93.14456]],
                       [[0.46572027, 0.46572033, 0.46572033]]])
     np.testing.assert_allclose(cdata, check, tol, tol)
 

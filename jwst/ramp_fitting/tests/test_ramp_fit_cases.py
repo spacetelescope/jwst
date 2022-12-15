@@ -509,7 +509,7 @@ def test_pix_12():
     # slope, dq, err, var_p, var_r
     # slope = zero, because no good data
     # dq = 3 (saturation + do_not_use) because both groups are saturated
-    p_true = [0., 3, 0., 0., 0.]
+    p_true = [np.nan, 3, 0., 0., 0.]
 
     # Set truth values for OPTIONAL results:
     # slope, sig_slope, var_p, var_r, yint, sig_yint, pedestal, weights
