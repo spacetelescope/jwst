@@ -3,11 +3,6 @@ from collections import deque
 from enum import Enum
 from functools import reduce
 
-class ListCategory(Enum):
-    RULES      = 0
-    BOTH       = 1
-    EXISTING   = 2
-    NONSCIENCE = 3
 
 __all__ = [
     'ListCategory',
@@ -16,6 +11,13 @@ __all__ = [
     'ProcessQueue',
     'ProcessQueueSorted'
 ]
+
+
+class ListCategory(Enum):
+    RULES      = 0
+    BOTH       = 1
+    EXISTING   = 2
+    NONSCIENCE = 3
 
 
 class ProcessItem:

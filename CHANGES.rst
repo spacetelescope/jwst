@@ -1,4 +1,4 @@
-1.8.5 (unreleased)
+1.8.6 (unreleased)
 ==================
 
 assign_wcs
@@ -26,6 +26,8 @@ associations
 
 - Remove defaulting of the is_psf column [#7356]
 
+- Fix association registry ListCategory enum bug under Python 3.11 [#7370]
+
 combine_1d
 ----------
 
@@ -39,6 +41,9 @@ cube_build
 - Change fill value for regions of SCI and ERR extensions with no data
   from 0 to nan. [#7337]
 
+- Remove code trimming zero-valued planes from cubes, so that cubes of fixed length will always
+  be produced. Move nan-value setting to below spectral tear cleanup. [#7391]
+
 datamodels
 ----------
 
@@ -49,6 +54,11 @@ datamodels
 - Added ``SUB400X256ALWB`` to subarray enum list of allowed NIRCam values. This
   replaces ``SUB320ALWB``, which is retained in the ``obsolete`` enum list.
   [#7361]
+
+documentation
+-------------
+
+- Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
 
 extract_1d
 ----------
@@ -69,7 +79,7 @@ extract_2d
 - Fix slice limits used in extraction of WFSS 2D cutouts. [#7312]
 
 - Add keywords for source RA and Dec for WFSS extractions [#7372]
-  
+
 flatfield
 ---------
 
@@ -151,8 +161,17 @@ wfss_contam
 - Pull 2D cutout offsets from SlitModel subarray metadata rather than
   grism WCS transform. [#7343]
 
+1.8.5 (2022-12-12)
+==================
+
+documentation
+-------------
+
+- Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
+
 1.8.4 (2022-11-15)
 ==================
+
 
 documentation
 -------------
@@ -160,6 +179,7 @@ documentation
 - Update deprecation notice with copyedit changes [#7348]
 
 - Clarify how to manage a local CRDS cache [#7350]
+
 
 1.8.3 (2022-11-11)
 ==================
