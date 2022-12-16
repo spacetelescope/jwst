@@ -16,6 +16,7 @@ class UndersamplingCorrectionStep(Step):
 
     spec = """
         signal_threshold = float(default=30000)
+        skip = boolean(default=True)
     """
     def process(self, input):
 
