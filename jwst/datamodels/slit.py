@@ -26,6 +26,9 @@ class SlitDataModel(JwstDataModel):
     var_rnoise : numpy float32 array
          variance due to read noise
 
+    var_flat : numpy float32 array
+         variance due to flat
+
     wavelength : numpy float32 array
          Wavelength array, corrected for zero-point
 
@@ -67,6 +70,8 @@ class SlitDataModel(JwstDataModel):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('var_flat'):
+                self.var_flat = init.var_flat
             if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
             for key in kwargs:
@@ -103,6 +108,9 @@ class SlitModel(JwstDataModel):
 
     var_rnoise : numpy float32 array
          variance due to read noise
+
+    var_flat : numpy float32 array
+         variance due to flat
 
     wavelength : numpy float32 array
          Wavelength array, corrected for zero-point
@@ -148,6 +156,8 @@ class SlitModel(JwstDataModel):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('var_flat'):
+                self.var_flat = init.var_flat
             if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
             if init.hasattr('int_times'):
