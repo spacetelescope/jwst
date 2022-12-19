@@ -47,7 +47,7 @@ SUFFIXES_TO_ADD = [
     's2d', 's3d', 'snr',
     'uncal',
     'wfscmb', 'whtlt',
-    'undersamplingcorrection',
+    'undersampling_correction',
     'x1d', 'x1dints',
 ]
 
