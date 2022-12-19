@@ -125,7 +125,7 @@ class PixelReplacement:
         # dispersion direction by indexing data shape with
         # strange dispaxis argument. Keep indices in full-frame numbering scheme,
         # but only iterate through slices with valid data.
-        log.info(f"Number of profiles: {len(valid_profiles)}")
+        log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
         for ind in range(*valid_shape[2 - dispaxis]):
             # Exclude regions with no data for dq slice.
             dq_slice = model.dq[self.custom_slice(dispaxis, ind)][profile_cut[0]: profile_cut[1]]
