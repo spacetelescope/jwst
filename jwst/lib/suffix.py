@@ -47,7 +47,6 @@ SUFFIXES_TO_ADD = [
     's2d', 's3d', 'snr',
     'uncal',
     'wfscmb', 'whtlt',
-    'undersampling_correction',
     'x1d', 'x1dints',
 ]
 
@@ -190,6 +189,7 @@ _calculated_suffixes = {
     'assign_mtwcs',
     'wavecorrstep',
     'wfsscontamstep',
+    'undersampling_correction',
 }
 
 

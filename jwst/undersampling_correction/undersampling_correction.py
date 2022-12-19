@@ -12,8 +12,6 @@ log.setLevel(logging.DEBUG)
 
 def undersampling_correction(input_model, signal_threshold):
     """
-    Short Summary
-    -------------
     Correct for undersampling.
 
     Parameters
@@ -48,8 +46,6 @@ def undersampling_correction(input_model, signal_threshold):
 
 def flag_pixels(data, gdq, signal_threshold):
     """
-    Short Summary
-    -------------
     Flag groups that exceed signal_threshold as UNDERSAMP.
 
     Parameters
