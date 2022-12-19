@@ -529,6 +529,9 @@ documentation
 
 - Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
 
+- Add list of items to description of dispersion relations in NIRCam specwcs schema,
+  now that a list of polynomials is being provided [#7018]
+
 extract_1d
 ----------
 
@@ -624,6 +627,12 @@ set_telescope_pointing
 
 - Pin PRD versions for tests that are not testing changes in PRD. [#7380]
 
+transforms
+----------
+
+- Update NIRCam WFSS transforms to use version 4 of GRISMCONF fileset; interpolate
+  to create inverse dispersion relation due to third-order polynomial in use [#7018]
+
 tweakreg
 --------
 
@@ -671,15 +680,6 @@ documentation
 -------------
 
 - CRDS PUB deprecation notice and transition documentation [#7342]
-
-- Add list of items to description of dispersion relations in NIRCam specwcs schema,
-  now that a list of polynomials is being provided [#7018]
-
-transforms
-----------
-
-- Update NIRCam WFSS transforms to use version 4 of GRISMCONF fileset; interpolate
-  to create inverse dispersion relation due to third-order polynomial in use [#7018]
 
 1.8.2 (2022-10-20)
 ==================
