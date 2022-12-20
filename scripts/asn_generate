@@ -1,6 +1,0 @@
-#!/usr/bin/env python
-
-from jwst.associations.main import Main
-
-if __name__ == '__main__':
-    Main()

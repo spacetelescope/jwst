@@ -42,7 +42,7 @@ def test_velocity_aberration_script(tmpdir):
     hdulist.writeto(path)
     hdulist.close()
 
-    subprocess.check_call(["set_velocity_aberration.py", path])
+    subprocess.check_call(["set_velocity_aberration", path])
 
     with fits.open(path) as hdulist_in:
         assert isclose(hdulist_in[0].header['VA_RA'], GOOD_APPARENT_RA, rtol=0, atol=1e-7)
