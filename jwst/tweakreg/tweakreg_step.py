@@ -133,7 +133,7 @@ class TweakRegStep(Step):
                         filename = im.meta.filename
                         if filename in catdict:
                             self.log.info(
-                                f"setting {filename}' tweakreg_catalog = {repr(catdict[filename])}"
+                                f"setting meta.tweakreg_catalog of '{filename}' to {repr(catdict[filename])}"
                             )
                             im.meta.tweakreg_catalog = catdict[filename]
 
