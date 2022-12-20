@@ -43,7 +43,7 @@ SUFFIXES_TO_ADD = [
     'i2d',
     'median',
     'phot', 'psf-amiavg', 'psfalign', 'psfstack', 'psfsub',
-    'ramp', 'rate', 'rateints','residual_fringe',
+    'ramp', 'rate', 'rateints', 'residual_fringe',
     's2d', 's3d', 'snr',
     'uncal',
     'wfscmb', 'whtlt',
@@ -189,7 +189,7 @@ _calculated_suffixes = {
     'assign_mtwcs',
     'wavecorrstep',
     'wfsscontamstep',
-    'undersampling_correction',
+    'undersamplingcorrectionstep',
 }
 
 
