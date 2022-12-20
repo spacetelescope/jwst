@@ -75,6 +75,8 @@ extract_1d
   includes increased robustness to various data issues, wavelength grid storage in
   a new datamodel, and increased parameter control of ATOCA behavior. [#6945]
 
+- replace deprecated usages of ``np.int()`` to fix Numpy errors [#7403]
+
 extract_2d
 ----------
 
