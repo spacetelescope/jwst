@@ -835,6 +835,7 @@ class Asn_Lv2NRSIFUNod(
         - Spectral-based NIRSpec IFU multi-object science exposures
         - Single science exposure
         - Handle 2 and 4 point background nodding
+        - Included related imprint exposures
     """
 
     def __init__(self, *args, **kwargs):
@@ -854,15 +855,19 @@ class Asn_Lv2NRSIFUNod(
                 force_unique=False
             ),
             DMSAttrConstraint(
-                name='expspcin',
-                sources=['expspcin'],
-            ),
-            DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
                 value=['2-point-nod|4-point-nod'],
                 force_unique=True
-            )
+            ),
+            DMSAttrConstraint(
+                name='mosaic_tile',
+                sources=['mostilno'],
+            ),
+            DMSAttrConstraint(
+                name='expcount_science',
+                sources=['expcount'],
+            ),
         ])
 
         # Now check and continue initialization.
