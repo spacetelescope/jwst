@@ -31,3 +31,7 @@ ignore = [
 'jwst/ramp_fitting/tests/compare_cr_files.py' = ['E402']
 'jwst/ramp_fitting/tests/create_cube.py' = ['E402']
 'jwst/ramp_fitting/tests/mc_3d.py' = ['E402']
+
+[tool.bandit]
+targets = ['jwst', 'scripts']
+exclude_dirs = ['jwst/*test*', 'jwst/**/*test*', 'jwst/fits_generator']
