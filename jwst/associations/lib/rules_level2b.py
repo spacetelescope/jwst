@@ -864,10 +864,6 @@ class Asn_Lv2NRSIFUNod(
                 name='mosaic_tile',
                 sources=['mostilno'],
             ),
-            DMSAttrConstraint(
-                name='expcount_science',
-                sources=['expcount'],
-            ),
         ])
 
         # Now check and continue initialization.
