@@ -10,7 +10,7 @@ from gwcs import wcs
 
 from .util import (not_implemented_mode, subarray_transform,
                    velocity_correction, bounding_box_from_subarray,
-                   wcs_bbox_from_shape)
+                   transform_bbox_from_shape)
 from . import pointing
 from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
@@ -314,7 +314,7 @@ def imaging_distortion(input_model, reference_files):
         else:
             log.debug("No match in fitleroffset file.")
     if bbox is None:
-        distortion.bounding_box = wcs_bbox_from_shape(input_model.data.shape)
+        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     else:
         distortion.bounding_box = bbox
     return distortion
