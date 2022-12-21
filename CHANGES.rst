@@ -28,6 +28,8 @@ associations
 
 - Fix association registry ListCategory enum bug under Python 3.11 [#7370]
 
+- Fix NIRSpec IFU NOD background subtract and include leakcal in the Level2 associations. [#7405]
+
 combine_1d
 ----------
 
