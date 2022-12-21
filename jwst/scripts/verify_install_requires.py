@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import argparse
-import pkgutil
-from importlib import import_module
+
+import pytest
 
 import jwst
 
@@ -21,18 +21,12 @@ def main():
     """
 
     parser = argparse.ArgumentParser(
-        description='Check if install_requires is up-to-date')
+        description="Check if install_requires is up-to-date"
+    )
     parser.parse_args()
 
-    package = jwst
-    prefix = package.__name__ + '.'
-
-    no_check = ['test', 'time']
-
-    for importer, module_name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
-        if not any(word in module_name for word in no_check):
-            import_module(module_name)
+    pytest.main([f"{jwst.__path__}/tests/test_import.py"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
