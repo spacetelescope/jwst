@@ -3,7 +3,7 @@
 from copy import deepcopy
 import numpy as np
 
-from photutils import aperture_photometry, CircularAperture, CircularAnnulus
+from photutils.aperture import (aperture_photometry, CircularAperture, CircularAnnulus)
 import astropy.units as u
 
 from .. import datamodels
