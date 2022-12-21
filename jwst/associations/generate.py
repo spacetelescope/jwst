@@ -18,7 +18,7 @@ logger.addHandler(logging.NullHandler())
 __all__ = ['generate']
 
 
-def generate(pool, rules, version_id=None):
+def generate(pool, rules, version_id=None, finalize=True):
     """Generate associations in the pool according to the rules.
 
     Parameters
@@ -34,6 +34,9 @@ def generate(pool, rules, version_id=None):
         If None, no tagging occurs.
         If True, use a timestamp
         If a string, the string.
+
+    finalize : bool
+        Run all rule methods marked as 'finalized'.
 
     Returns
     -------
@@ -98,10 +101,13 @@ def generate(pool, rules, version_id=None):
 
     # Finalize found associations
     logger.debug('# associations before finalization: %d', len(associations))
-    try:
-        finalized_asns = rules.callback.reduce('finalize', associations)
-    except KeyError:
-        finalized_asns = associations
+    finalized_asns = associations
+    if finalize:
+        logger.debug('Performing association finalization.')
+        try:
+            finalized_asns = rules.callback.reduce('finalize', associations)
+        except KeyError as exception:
+            logger.debug('Finalization failed for reason: %s', exception)
 
     return finalized_asns
 

@@ -173,6 +173,11 @@ class Main():
             help='Version of the generator.'
         )
         parser.add_argument(
+            '--no-finalize',
+            action='store_true',
+            help='Do not run the finalization methods on the interim associations'
+        )
+        parser.add_argument(
             '--merge', action='store_true',
             help='Merge associations into single associations with multiple products'
         )
@@ -248,7 +253,7 @@ class Main():
 
         logger.info('Generating associations.')
         self.associations = generate(
-            self.pool, self.rules, version_id=parsed.version_id
+            self.pool, self.rules, version_id=parsed.version_id, finalize=not parsed.no_finalize
         )
 
         if parsed.discover:
