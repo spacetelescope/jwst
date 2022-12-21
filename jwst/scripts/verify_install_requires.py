@@ -25,7 +25,12 @@ def main():
     )
     parser.parse_args()
 
-    pytest.main([f"{jwst.__path__}/tests/test_import.py"])
+    pytest.main(
+        [
+            f"{jwst.__path__}/tests/test_import.py",
+            f"-c {jwst.__path__}/tests/empty_config/pytest.ini",
+        ]
+    )
 
 
 if __name__ == "__main__":
