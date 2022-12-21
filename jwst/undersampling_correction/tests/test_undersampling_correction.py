@@ -40,8 +40,8 @@ def test_pix_0():
 def test_pix_1():
     """
     All input GROUPDQ = 'GOOD'. Some ramp data exceed the signal threshold, so the
-    only non-GOOD groups in the output GROUPDQ should be UNSA for groups exceeding
-    the signal threshold,
+    only non-GOOD groups in the output GROUPDQ should be UNSA + DNU for groups
+    exceeding the signal threshold,
     """
     ngroups, nints, nrows, ncols = set_scalars()
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
@@ -59,9 +59,9 @@ def test_pix_1():
 
     true_out_gdq = ramp_model.groupdq.copy()  # all GOOD
     true_out_gdq[0, :, 0, 0] = [GOOD] * ngroups
-    true_out_gdq[0, 1, 0, 0] = UNSA
-    true_out_gdq[0, 3, 0, 0] = UNSA
-    true_out_gdq[0, 8, 0, 0] = UNSA
+    true_out_gdq[0, 1, 0, 0] = np.bitwise_or( UNSA, DNU )
+    true_out_gdq[0, 3, 0, 0] = np.bitwise_or( UNSA, DNU )
+    true_out_gdq[0, 8, 0, 0] = np.bitwise_or( UNSA, DNU ) 
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq
