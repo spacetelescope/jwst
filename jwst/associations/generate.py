@@ -97,6 +97,7 @@ def generate(pool, rules, version_id=None, finalize=True):
         logger.debug('New process lists: %d', total_reprocess)
         logger.debug('Updated process queue: %s', process_queue)
         logger.debug('# associations: %d', len(associations))
+        logger.debug('Associations: %s', [type(_association) for _association in associations])
         logger.debug('Seconds to process: %.2f\n', timer() - time_start)
 
     # Finalize found associations
