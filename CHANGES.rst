@@ -112,6 +112,11 @@ lib
 
 - Fix circular import in ``lib.wcs_utils``. [#7330]
 
+outlier_detection
+-----------------
+
+- Fix deprecated calls to photutils.CircularAnnulus. [#7407]
+
 photom
 ------
 
