@@ -105,7 +105,6 @@ class AssignWcsStep(Step):
         # fit sip approx., degree is chosen by best fit
         if result_exptype in IMAGING_TYPES:
             try:
-                log.info(f'HEEY, {result.meta.exposure.type}')
                 update_fits_wcsinfo(
                     result,
                     max_pix_error=self.sip_max_pix_error,
