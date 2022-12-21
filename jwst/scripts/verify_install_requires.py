@@ -4,8 +4,6 @@ import argparse
 
 import pytest
 
-import jwst
-
 
 def main():
     """Import all packages/modules in jwst to test they are importable
@@ -27,8 +25,8 @@ def main():
 
     pytest.main(
         [
-            f"{jwst.__path__}/tests/test_import.py",
-            f"-c {jwst.__path__}/tests/empty_config/pytest.ini",
+            "jwst/tests/test_import.py",
+            "-c jwst/tests/empty_config/pytest.ini",
         ]
     )
 
