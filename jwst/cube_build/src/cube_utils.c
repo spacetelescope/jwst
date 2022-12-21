@@ -23,46 +23,49 @@ int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv
     // flux:
     if (!(*fluxv  = (double*)calloc(nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
-        goto failed_mem_alloc;
+        goto failed_mem_alloc1;
     }
-    
+
     //weight
     if (!(*weightv  = (double*)calloc(nelem, sizeof(double)))) {
       PyErr_SetString(PyExc_MemoryError, msg);
-      goto failed_mem_alloc;
+      goto failed_mem_alloc2;
     }
 
     //variance
     if (!(*varv  = (double*)calloc(nelem, sizeof(double)))) {
       PyErr_SetString(PyExc_MemoryError, msg);
-      goto failed_mem_alloc;
+      goto failed_mem_alloc3;
     }
 
     //iflux
     if (!(*ifluxv  = (double*)calloc(nelem, sizeof(double)))) {
       PyErr_SetString(PyExc_MemoryError, msg);
-      goto failed_mem_alloc;
+      goto failed_mem_alloc4;
     }
-    
+
     return 0;
 
- failed_mem_alloc:
-    free(*fluxv);
-    free(*weightv);
-    free(*varv);
+ failed_mem_alloc4:
     free(*ifluxv);
-    
+ failed_mem_alloc3:
+    free(*varv);
+ failed_mem_alloc2:
+    free(*weightv);
+ failed_mem_alloc1:
+    free(*fluxv);
+    return 1;
 }
 
-// support function for sh_find_overlap 
+// support function for sh_find_overlap
 void addpoint (double x, double y, double xnew[], double ynew[], int *nVertices2){
   xnew[*nVertices2] = x;
   ynew[*nVertices2] = y;
   *nVertices2 = *nVertices2 + 1;
 }
 
-// support function for sh_find_overlap 
-int insideWindow(int edge, double x, double y, 
+// support function for sh_find_overlap
+int insideWindow(int edge, double x, double y,
                  double left,double right, double top, double bottom){
         switch(edge)
         {
@@ -78,8 +81,8 @@ int insideWindow(int edge, double x, double y,
         return 0;
 }
 
-// support function for sh_find_overlap 
-int calcCondition(int edge, double x1, double y1, double x2, double y2, 
+// support function for sh_find_overlap
+int calcCondition(int edge, double x1, double y1, double x2, double y2,
                   double left, double right, double top, double bottom) {
   int stat1 = insideWindow(edge,x1,y1,left,right,top,bottom);
   int stat2 = insideWindow(edge,x2,y2,left,right,top,bottom);
@@ -91,7 +94,7 @@ int calcCondition(int edge, double x1, double y1, double x2, double y2,
 
 }
 
-// support function for sh_find_overlap 
+// support function for sh_find_overlap
 void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
                        double *x,double *y,
                        double left, double right, double top, double bottom){
@@ -142,10 +145,10 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
     -------
     Area
   */
-  
+
   double PX[5];
   double PY[5];
-  double Area =0; 
+  double Area =0;
 
   PX[0] = Xcorner[0] - MinX;
   PX[1] = Xcorner[1] - MinX;
@@ -162,8 +165,8 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
   Area = 0.5 * ((PX[0] * PY[1] - PX[1] * PY[0]) +
 		(PX[1] * PY[2] - PX[2] * PY[1]) +
 		(PX[2] * PY[3] - PX[3] * PY[2]) +
-		(PX[3] * PY[4] - PX[4] * PY[3])); 
-    
+		(PX[3] * PY[4] - PX[4] * PY[3]));
+
   return fabs(Area);
 }
 
@@ -172,16 +175,16 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
 double find_area_poly(int nVertices,double xPixel[],double yPixel[]){
 
   double area = 0;
-  int i; 
+  int i;
   double areaPoly = 0.0;
   double xmin = xPixel[0];
   double ymin = yPixel[0];
 
-  for (i = 1; i < nVertices; i++){ 
+  for (i = 1; i < nVertices; i++){
     if(xPixel[i] < xmin) xmin = xPixel[i];
     if(yPixel[i] < ymin) ymin = yPixel[i];
   }
-  
+
   for (i = 0; i < nVertices-1; i++){
     area = ( xPixel[i]- xmin)*(yPixel[i+1]-ymin) - (xPixel[i+1]-xmin)*(yPixel[i]-ymin);
     areaPoly = areaPoly + area;
@@ -189,10 +192,10 @@ double find_area_poly(int nVertices,double xPixel[],double yPixel[]){
   areaPoly = 0.5* areaPoly;
   return fabs(areaPoly);
 }
-  
+
 
 //________________________________________________________________________________
-double sh_find_overlap(const double xcenter, const double ycenter, 
+double sh_find_overlap(const double xcenter, const double ycenter,
 		      const double xlength, const double ylength,
 		      double xPixelCorner[],double yPixelCorner[])
 {
@@ -214,8 +217,8 @@ double sh_find_overlap(const double xcenter, const double ycenter,
   int MaxVertices = 9;
   double xPixel[9]= {0.0};
   double yPixel[9] = {0.0};
-  double xnew[9]= {0.0}; 
-  double ynew[9]= {0.0}; 
+  double xnew[9]= {0.0};
+  double ynew[9]= {0.0};
 
   // initialize xPixel, yPixel to the detector pixel corners.
   // xPixel,yPixel is become the clipped polygon vertices inside the cube pixel
@@ -246,8 +249,8 @@ double sh_find_overlap(const double xcenter, const double ycenter,
           solveIntersection(i,x1,y1,x2,y2,
                             &x, &y,
                             left,right,top,bottom);
-          
-          
+
+
           addpoint (x, y, xnew, ynew, &nVertices2);
           addpoint (x2, y2, xnew, ynew, &nVertices2);
           break;
@@ -267,7 +270,7 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 
 
    addpoint (xnew[0], ynew[0], xnew, ynew, &nVertices2); // closed polygon
-    
+
    nVertices = nVertices2-1;
 
    for (k = 0; k< nVertices2; k++){
@@ -275,7 +278,7 @@ double sh_find_overlap(const double xcenter, const double ycenter,
      yPixel[k] = ynew[k];
    }
 
-    //update 
+    //update
 
   } // loop over top,bottom,left,right
 
@@ -283,6 +286,6 @@ double sh_find_overlap(const double xcenter, const double ycenter,
   if(nVertices > 0) {
     areaClipped = find_area_poly(nVertices,xPixel,yPixel);
   }
-  
+
   return areaClipped;
 }

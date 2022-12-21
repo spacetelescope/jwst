@@ -44,6 +44,10 @@ cube_build
 - Remove code trimming zero-valued planes from cubes, so that cubes of fixed length will always
   be produced. Move nan-value setting to below spectral tear cleanup. [#7391]
 
+- Fix several bugs in memory management in the C code for cube build which
+  would result in attempts to deallocate memory that was never allocated
+  resulting in core dump. [#7408]
+
 datamodels
 ----------
 
