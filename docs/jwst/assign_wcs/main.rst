@@ -33,7 +33,7 @@ for display purposes. This step, which occurs for imaging modes early, is perfor
 can be switched off, and parameters controlling the fit can also be adjusted.
 
 
-``jwst.assign_wcs`` is based on `gwcs<https://github.com/spacetelescope/gwcs>`__ and
+``jwst.assign_wcs`` is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
 uses `asdf <http://asdf.readthedocs.io/en/latest/>`__.
 
 
