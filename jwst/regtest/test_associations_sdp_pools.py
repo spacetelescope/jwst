@@ -52,6 +52,11 @@ SPECIAL_POOLS = {
         'xfail': 'JSOCINT-TDB: WFSC ROUTINE VISIT issue',
         'slow': False,
     },
+    'jw00663_20221218t111937_pool': {
+        'args': ['-i', 'o004', 'c1000'],
+        'xfail': None,
+        'slow': False,
+    },
     'jw00676_20210403t114320_pool': {
         'args': [],
         'xfail': None,
@@ -66,6 +71,11 @@ SPECIAL_POOLS = {
         'args': [],
         'xfail': None,
         'slow': True,
+    },
+    'jw00839_20221220t025418_pool': {
+        'args': ['-i', 'o002', 'c1000'],
+        'xfail': None,
+        'slow': False,
     },
     'jw80600_20171108T041522_pool': {
         'args': [],
