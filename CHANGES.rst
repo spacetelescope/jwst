@@ -104,6 +104,8 @@ general
 
 - replace ``flake8`` with ``ruff`` [#7054]
 
+- Fix deprecation warnings introduced by ``pytest`` ``7.2`` ahead of ``8.0`` [#7325]
+
 guider_cds
 ----------
 

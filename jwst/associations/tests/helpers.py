@@ -64,12 +64,6 @@ class BasePoolRule():
     # Each entry is the class name of the rule.
     valid_rules = []
 
-    def setup(self):
-        """You set me up...."""
-
-    def tearDown(self):
-        """You tear me down..."""
-
     def test_rules_exist(self):
         rules = registry_level3_only()
         assert len(rules) >= len(self.valid_rules)
