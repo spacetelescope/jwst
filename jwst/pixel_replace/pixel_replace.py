@@ -2,6 +2,7 @@ import logging
 import numpy as np
 from .. import datamodels
 from scipy.optimize import minimize
+import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -68,6 +69,8 @@ class PixelReplacement:
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
         if isinstance(self.input, datamodels.ImageModel):
             self.output = self.algorithm(self.input)
+            n_replaced = np.sum(self.output.dq & self.REPLACED)
+            log.info(f"Input ImageModel had {n_replaced} pixels replaced.")
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
@@ -75,6 +78,10 @@ class PixelReplacement:
             for i, slit in enumerate(self.input.slits):
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
                 slit_replaced = self.algorithm(slit_model)
+
+                n_replaced = np.sum(slit_replaced.dq & self.REPLACED)
+                log.info(f"Slit {i} had {n_replaced} pixels replaced.")
+
                 self.output.slits[i] = slit_replaced
 
         else:
@@ -105,12 +112,21 @@ class PixelReplacement:
             from spatial profile, derived from adjacent columns.
 
         """
+        # np.nanmedian() entry full of NaN values would produce a numpy
+        # warning (despite well-defined behavior - return a NaN)
+        # so we suppress that here.
+        warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
+
         dispaxis = model.meta.wcsinfo.dispersion_direction
 
         model_replaced = model.copy()
 
         # Truncate array to region where good pixels exist
         good_pixels = np.where(~model.dq & 1)
+        if np.any(0 in np.shape(good_pixels)):
+            log.warning(f"No good pixels in at least one dimension of "
+                        f"data array - skipping pixel replacement.")
+            return model
         x_range = [np.min(good_pixels[0]), np.max(good_pixels[0]) + 1]
         y_range = [np.min(good_pixels[1]), np.max(good_pixels[1]) + 1]
 
@@ -140,7 +156,7 @@ class PixelReplacement:
                 log.debug(f"Slice {ind} contains {n_bad} bad pixels.")
                 profiles_to_replace.add(ind)
 
-        ## check_output = np.zeros((len(profiles_to_replace), profile_cut[1]-profile_cut[0]))
+        ## check_output = np.zeros((profile_cut[1]-profile_cut[0], len(valid_profiles)))
         for i, ind in enumerate(profiles_to_replace):
             # Use sets for convenient finding of neighboring slices to use in profile creation
             adjacent_inds = set(range(ind - self.pars['n_adjacent_cols'], ind + self.pars['n_adjacent_cols']))
@@ -160,10 +176,13 @@ class PixelReplacement:
             # Normalize profile data
             normalized = profile_data / np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
 
-            # Pull median for each pixel across profile
+            # Pull median for each pixel across profile.
+            # Profile entry full of NaN values would produce a numpy
+            # warning (despite well-defined behavior - return a NaN)
+            # so we suppress that above.
             median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
 
-            ## check_output[i] = median_profile
+            ## check_output[:, i] = median_profile
 
             # Clean current profile of values flagged as bad
             current_profile = model.data[self.custom_slice(dispaxis, ind)]
@@ -183,10 +202,10 @@ class PixelReplacement:
                 cleaned_current
             )
 
-            # Change the dq bits i
+            # Change the dq bits where old flag was DO_NOT_USE and new value is not nan
             current_dq = model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)]
             replaced_dq = np.where(
-                current_dq & self.DO_NOT_USE,
+                (current_dq & self.DO_NOT_USE) & ~(np.isnan(replaced_current)),
                 current_dq ^ self.DO_NOT_USE ^ self.REPLACED,
                 current_dq
             )
@@ -246,5 +265,6 @@ class PixelReplacement:
         float
             Mean squared error for minimization purposes
         """
+
         return (np.nansum((current - (median * scale)) ** 2.) /
                 (len(median) - np.count_nonzero(np.isnan(current))))

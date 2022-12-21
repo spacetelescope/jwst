@@ -52,7 +52,7 @@ class PixelReplaceStep(Step):
             result = input_model.copy()
 
             # If more than one 2d spectrum exists in input, call replacement
-            # for each spectrum
+            # for each spectrum - NRS_FIXEDSLIT, WFSS
             if isinstance(input_model, datamodels.MultiSlitModel):
                 self.log.debug('Input is a MultiSlitModel.')
 
@@ -69,6 +69,7 @@ class PixelReplaceStep(Step):
                     # NRS_BRIGHTOBJ and MIRI LRS fixed-slit (resampled) modes
                     self.log.debug('Input is a SlitModel')
                 '''
+            # SOSS have CubeModel, along with IFU modes WIP
             else:
                 self.log.error(f'Input is of type {str(type(input_model))} for which')
                 self.log.error('pixel_replace does not have an algorithm.')
