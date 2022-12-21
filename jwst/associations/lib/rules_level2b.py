@@ -835,7 +835,7 @@ class Asn_Lv2NRSIFUNod(
         - Spectral-based NIRSpec IFU multi-object science exposures
         - Single science exposure
         - Handle 2 and 4 point background nodding
-        - Included related imprint exposures
+        - Include related imprint exposures
     """
 
     def __init__(self, *args, **kwargs):
