@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+from pathlib import Path
 
 import pytest
 
@@ -23,10 +24,12 @@ def main():
     )
     parser.parse_args()
 
+    package_root = Path(__file__).parent.parent.parent
+
     pytest.main(
         [
-            "jwst/tests/test_import.py",
-            "-c jwst/tests/empty_config/pytest.ini",
+            f"{package_root / 'jwst/tests/test_import.py'}",
+            f"-c {package_root / 'jwst/tests/empty_config/pytest.ini'}",
         ]
     )
 
