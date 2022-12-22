@@ -31,8 +31,8 @@ def center_of_mass(column, ypos, halfwidth):
     ypix = np.arange(dimy)
 
     # Find the indices of the window.
-    miny = np.int(np.fmax(np.around(ypos - halfwidth), 0))
-    maxy = np.int(np.fmin(np.around(ypos + halfwidth + 1), dimy))
+    miny = int(np.fmax(np.around(ypos - halfwidth), 0))
+    maxy = int(np.fmin(np.around(ypos + halfwidth + 1), dimy))
 
     # Compute the center of mass on the window.
     with np.errstate(invalid='ignore'):
@@ -111,9 +111,9 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
         # If the pixel at the centroid is below the local mean we are likely
         # mid-way between orders and we should shift the window downward to
         # get a reliable centroid for order 1.
-        irow = np.int(np.around(ycom))
-        miny = np.int(np.fmax(np.around(ycom) - halfwidth, 0))
-        maxy = np.int(np.fmin(np.around(ycom) + halfwidth + 1, dimy))
+        irow = int(np.around(ycom))
+        miny = int(np.fmax(np.around(ycom) - halfwidth, 0))
+        maxy = int(np.fmin(np.around(ycom) + halfwidth + 1, dimy))
         if scidata_norm[irow, icol] < np.nanmean(scidata_norm[miny:maxy, icol]):
             ycom = center_of_mass(scidata_norm[:, icol], ycom - halfwidth, halfwidth)
 
