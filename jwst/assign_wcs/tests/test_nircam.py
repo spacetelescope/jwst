@@ -19,6 +19,7 @@ from jwst.datamodels.image import ImageModel
 from jwst.datamodels import CubeModel
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
 from jwst.assign_wcs import nircam
+from jwst.assign_wcs import util
 
 
 # Allowed settings for nircam
@@ -243,3 +244,15 @@ def test_imaging_distortion():
     assert_allclose(y, wcs_wfss_kw['crpix2'])
     assert_allclose(raout, ra)
     assert_allclose(decout, dec)
+
+
+def test_wfss_sip():
+    hdul = create_hdul(filtername='F444W', pupil='GRISMR', exptype='NRC_WFSS')
+    wfss_model = ImageModel(hdul)
+    ref = get_reference_files(wfss_model)
+    pipeline = nircam.create_pipeline(wfss_model, ref)
+    wcsobj = wcs.WCS(pipeline)
+    wfss_model.meta.wcs = wcsobj
+    util.wfss_imaging_wcs(wfss_model, nircam.imaging, bbox=((1, 1024), (1, 1024)))
+    for key in ['a_order', 'b_order', 'crpix1', 'crpix2', 'crval1', 'crval2', 'cd1_1']:
+        assert key in wfss_model.meta.wcsinfo.instance

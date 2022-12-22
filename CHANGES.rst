@@ -9,6 +9,8 @@ assign_wcs
 - Updated the loading of NIRSpec MSA configuration data to assign the source_id
   for each slitlet from the shutter entry that contains the primary/main source. [#7379]
 
+- Added approximated imaging FITS WCS to the grism image headers. [#7373]
+
 associations
 ------------
 
