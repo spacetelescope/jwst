@@ -32,6 +32,8 @@ associations
 
 - Fix NIRSpec IFU NOD background subtract and include leakcal in the Level2 associations. [#7405]
 
+- Do not clobber reprocessing lists when Level 2 rules are operating on 'c' type candidates [#7410]
+
 combine_1d
 ----------
 
