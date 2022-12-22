@@ -310,7 +310,8 @@ def test_three_group_integration(generate_miri_reffiles, setup_inputs):
                               override_readnoise=override_readnoise, maximum_cores='none')
     assert out_model.meta.cal_step.jump == 'COMPLETE'
 
-@pytest.mark.skipif(not OPENCV_INSTALLED, reason="`opencv-python` not installed")
+
+@pytest.mark.xfail(not OPENCV_INSTALLED, reason="`opencv-python` not installed")
 def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
     """Test that snowballs are properly flagged when the `sat_required_snowball`,
     which requires there to be a saturated pixel within the cluster of
@@ -355,7 +356,7 @@ def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
         assert (np.floor(expanded_area / initial_area) == (expand_factor**2))
 
 
-@pytest.mark.skipif(not OPENCV_INSTALLED, reason="`opencv-python` not installed")
+@pytest.mark.xfail(not OPENCV_INSTALLED, reason="`opencv-python` not installed")
 def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
     """Test that snowballs are properly flagged when the `sat_required_snowball`,
     which requires there to be a saturated pixel within the cluster of
