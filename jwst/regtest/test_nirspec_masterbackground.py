@@ -17,8 +17,8 @@ def run_spec2_mbkg(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Get data
-    rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_msa.fits')
-    rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_rate.fits')
+    rtdata.get_data('nirspec/mos/jw01180025001_01_msa.fits')
+    rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
     # Run the pipeline
     step_params = {
@@ -88,7 +88,7 @@ def test_masterbkg_corrpars(rtdata):
 
 @pytest.mark.parametrize(
     'suffix',
-    ['cal', 'masterbg1d', 'masterbg2d']
+    ['masterbg1d', 'masterbg2d', 'cal', 's2d', 'x1d']
 )
 def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""

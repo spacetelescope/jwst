@@ -12,14 +12,15 @@ def run_pipeline(rtdata_module):
     rtdata = rtdata_module
 
     # Get the MSA metadata file referenced in the input exposure
-    rtdata.get_data("nirspec/mos/jw95065006001_0_short_msa.fits")
+    rtdata.get_data("nirspec/mos/jw01180025001_01_msa.fits")
 
-    # Get the input exposure
-    rtdata.get_data("nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits")
+    # Get the input ASN file and exposures
+    rtdata.get_asn("nirspec/mos/jw01180-o025_20221129t204108_spec2_00037_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
+            "--steps.bkg_subtract.save_results=true",
             "--steps.msa_flagging.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.srctype.save_results=true",
@@ -34,15 +35,15 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "msa_flagging", "extract_2d", "wavecorr", "flat_field", "srctype",
-    "pathloss", "barshadow", "cal", "s2d", "x1d"])
+    "assign_wcs", "bsub", "msa_flagging", "extract_2d", "wavecorr", "flat_field",
+    "srctype", "pathloss", "barshadow", "cal", "s2d", "x1d"])
 def test_nirspec_mos_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
        NIRSpec MOS exposure."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
-    output = f"f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_{suffix}.fits"
+    output = f"jw01180025001_05101_00001_nrs2_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
