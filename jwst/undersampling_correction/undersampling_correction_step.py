@@ -22,6 +22,9 @@ class UndersamplingCorrectionStep(Step):
 
         # Open the input data model
         with datamodels.RampModel(input) as input_model:
+            if (input_model.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
+                result = input_model
+                result.meta.cal_step.undersampling_correction = 'SKIPPED'
 
             # Retrieve the parameter value(s)
             signal_threshold = self.signal_threshold
