@@ -61,9 +61,9 @@ def test_pix_1():
 
     true_out_gdq = ramp_model.groupdq.copy()  # all GOOD
     true_out_gdq[0, :, 0, 0] = [GOOD] * ngroups
-    true_out_gdq[0, 1, 0, 0] = np.bitwise_or( UNSA, DNU )
-    true_out_gdq[0, 3, 0, 0] = np.bitwise_or( UNSA, DNU )
-    true_out_gdq[0, 8, 0, 0] = np.bitwise_or( UNSA, DNU ) 
+    true_out_gdq[0, 1, 0, 0] = np.bitwise_or(UNSA, DNU)
+    true_out_gdq[0, 3, 0, 0] = np.bitwise_or(UNSA, DNU)
+    true_out_gdq[0, 8, 0, 0] = np.bitwise_or(UNSA, DNU)
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq
@@ -89,11 +89,11 @@ def test_pix_2():
     ramp_model.data[0, 3, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
 
     ramp_model.groupdq[0, 1, 0, 0] = DNU  # should not get UNSA
-    ramp_model.groupdq[0, 2, 0, 0] = np.bitwise_or( ADFL, DNU )  # should not get UNSA
+    ramp_model.groupdq[0, 2, 0, 0] = np.bitwise_or(ADFL, DNU)  # should not get UNSA
     ramp_model.groupdq[0, 3, 0, 0] = ADFL  # should get UNSA + DNU
 
     true_out_gdq = ramp_model.groupdq.copy()
-    true_out_gdq[0, 3, 0, 0] = np.bitwise_or(np.bitwise_or(DNU,UNSA), ADFL)
+    true_out_gdq[0, 3, 0, 0] = np.bitwise_or(np.bitwise_or(DNU, UNSA), ADFL)
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq
