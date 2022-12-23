@@ -219,10 +219,10 @@ def test_sip_approx(tmpdir):
         'b_2_0': 4.9164102117792245e-06,
         'b_2_1': 1.5879789862732477e-09,
         'b_3_0': -2.421497536036239e-12,
-        'sipmxerr': 0.0965102887955478,
+        'sipmxerr': 0.09851344432339194,
         'ap_order': 3,
         'bp_order': 3,
-        'ap_0_1': 5.042337769368568e-07,
+        'ap_0_1': 5.181743672626395e-07,
         'ap_0_2': 1.549558852150534e-06,
         'ap_0_3': 3.739661088358613e-11,
         'ap_1_0': -9.304456601723688e-06,
@@ -231,16 +231,16 @@ def test_sip_approx(tmpdir):
         'ap_2_0': -1.9010858333216087e-06,
         'ap_2_1': -4.6409932505418635e-11,
         'ap_3_0': -1.6418913084782638e-09,
-        'bp_0_1': -8.991011919968866e-06,
+        'bp_0_1': -9.056637301557744e-06,
         'bp_0_2': 6.689656400910055e-06,
         'bp_0_3': -1.6008307747003896e-09,
-        'bp_1_0': 5.248803167564271e-07,
+        'bp_1_0': 5.420402883965224e-07,
         'bp_1_1': -3.598423466154654e-06,
         'bp_1_2': -4.6145027888118635e-11,
         'bp_2_0': -4.904683004876611e-06,
         'bp_2_1': -1.7268490800810893e-09,
         'bp_3_0': 3.8374648816785266e-11,
-        'sipiverr': 0.08264273544516287
+        'sipiverr': 0.08764731688548513
     }
 
     hdu1 = create_hdul()
@@ -261,7 +261,7 @@ def test_sip_approx(tmpdir):
         if 'ctype' in key:
             assert true_wcs[key] == wcs_info[key]
         else:
-            assert_allclose(true_wcs[key], wcs_info[key], rtol=2e-4, atol=5e-3)
+            assert_allclose(true_wcs[key], wcs_info[key], rtol=2e-3, atol=1e-9)
 
     # evaluate fits wcs and gwcs, make sure they agree
     grid = grid_from_bounding_box(result.meta.wcs.bounding_box)
