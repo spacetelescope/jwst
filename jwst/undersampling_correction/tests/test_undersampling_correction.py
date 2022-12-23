@@ -11,6 +11,8 @@ test_dq_flags = dqflags.pixel
 GOOD = test_dq_flags["GOOD"]
 DNU = test_dq_flags["DO_NOT_USE"]
 UNSA = test_dq_flags["UNDERSAMP"]
+ADFL = test_dq_flags["AD_FLOOR"]   #
+DROU = test_dq_flags["DROPOUT"]   #
 
 
 def test_pix_0():
@@ -71,10 +73,9 @@ def test_pix_1():
 
 def test_pix_2():
     """
-    All input GROUPDQ are 'DNU'. Some ramp data exceed the signal threshold,
-    so their output GROUPDQ should be 'DNU'+'UNSA'. Ramp data not exceeding
-    the signal threshold should have their output GROUPDQ = 'DNU', propagated
-    from the input.
+    Tests groups having data exceeding the signal threshold, Some groups are
+    already flagged as DO_NOT_USE; they will not be checked for UC,  Other
+    ramps will have 'DNU'+'UNSA' added to their GROUPDQ.
     """
     ngroups, nints, nrows, ncols = set_scalars()
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
@@ -82,17 +83,17 @@ def test_pix_2():
 
     signal_threshold = 20000.
 
-    # Populate pixel-specific SCI and GROUPDQ arrays. Set some ramp data to be
-    # above the signal threshold, and all input GROUPDQ to be DNU
+    # Populate SCI and GROUPDQ arrays.
     ramp_model.data[0, 1, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
+    ramp_model.data[0, 2, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
     ramp_model.data[0, 3, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
-    ramp_model.data[0, 8, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
-    ramp_model.groupdq[0, :, 0, 0] = [DNU] * ngroups
 
-    true_out_gdq = ramp_model.groupdq.copy()  # all DNU
-    true_out_gdq[0, 1, 0, 0] += UNSA
-    true_out_gdq[0, 3, 0, 0] += UNSA
-    true_out_gdq[0, 8, 0, 0] += UNSA
+    ramp_model.groupdq[0, 1, 0, 0] = DNU  # should not get UNSA
+    ramp_model.groupdq[0, 2, 0, 0] = np.bitwise_or( ADFL, DNU )  # should not get UNSA
+    ramp_model.groupdq[0, 3, 0, 0] = ADFL  # should get UNSA + DNU
+
+    true_out_gdq = ramp_model.groupdq.copy()
+    true_out_gdq[0, 3, 0, 0] = np.bitwise_or(np.bitwise_or(DNU,UNSA), ADFL)
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq

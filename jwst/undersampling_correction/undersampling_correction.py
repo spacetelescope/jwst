@@ -46,7 +46,8 @@ def undersampling_correction(input_model, signal_threshold):
 
 def flag_pixels(data, gdq, signal_threshold):
     """
-    Flag groups that exceed signal_threshold as UNDERSAMP and DO_NOT_USE.
+    Flag groups that exceed signal_threshold as UNDERSAMP and DO_NOT_USE,
+    skipping groups already flagged as DO_NOT_USE
 
     Parameters
     ----------
@@ -64,9 +65,11 @@ def flag_pixels(data, gdq, signal_threshold):
     gdq : int, 4D array
         updated group dq array
     """
-    # For groups in the data that exceed the signal_threshold
-    # add UNDERSAMP to the group's DQ
-    wh_exc = np.where(data >= signal_threshold)
+    # For groups in the data that exceed the signal_threshold add UNDERSAMP to the
+    # group's DQ, skipping groups already flagged as DO_NOT_USE
+    wh_not_dnu = np.logical_not(gdq & dqflags.group['DO_NOT_USE'])
+    wh_exc = np.where((data >= signal_threshold) & wh_not_dnu)
+
     gdq[wh_exc] = np.bitwise_or(gdq[wh_exc],
                                 dqflags.group['UNDERSAMP'] | dqflags.group['DO_NOT_USE'])
 
