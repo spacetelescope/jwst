@@ -261,7 +261,7 @@ def test_sip_approx(tmpdir):
         if 'ctype' in key:
             assert true_wcs[key] == wcs_info[key]
         else:
-            assert_allclose(true_wcs[key], wcs_info[key], rtol=2e-4, atol=1e-10)
+            assert_allclose(true_wcs[key], wcs_info[key], rtol=2e-4, atol=5e-3)
 
     # evaluate fits wcs and gwcs, make sure they agree
     grid = grid_from_bounding_box(result.meta.wcs.bounding_box)
