@@ -176,6 +176,10 @@ tweakreg
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
 
+- Pinned ``tweakwcs`` version to 0.8.1 that fixes a bug in how 2D histogram's
+  bin size is computed. This affects pre-alignment performed before source
+  matching. [#7417]
+
 wfss_contam
 -----------
 

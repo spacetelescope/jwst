@@ -191,7 +191,7 @@ def _make_reference_gwcs_wcs(fits_hdr):
     return gw
 
 
-def _match(x, y):
+def _match(x, y, **kwargs):
     lenx = len(x)
     leny = len(y)
     if lenx == leny:
