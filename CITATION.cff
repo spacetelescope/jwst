@@ -74,5 +74,5 @@ authors:
 title: "JWST Calibration Pipeline"
 version: 1.9.0
 doi: 10.5281/zenodo.7038885
-date-released: 2022-12-23
+date-released: 2022-12-27
 url: "https://github.com/spacetelescope/jwst"
