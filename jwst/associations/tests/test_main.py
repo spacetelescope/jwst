@@ -14,56 +14,6 @@ from jwst.associations.main import Main
 POOL_PATH = 'pool_018_all_exptypes.csv'
 
 
-@pytest.fixture(scope='module')
-def pool():
-    """Retrieve pool path"""
-    pool_path = t_path(os.path.join('data', POOL_PATH))
-    pool = combine_pools(pool_path)
-
-    return pool
-
-
-@pytest.fixture(scope='module')
-def all_candidates(pool):
-    """"Retrieve the all exposure pool"""
-    all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
-    return all_candidates
-
-
-@pytest.mark.parametrize(
-    'args',
-    [
-        [
-            '--dry-run',
-            '--discover',
-            '--all-candidates',
-            '-i', 'o001',
-        ],
-        [
-            '--dry-run',
-            '--discover',
-            '--all-candidates',
-        ],
-        [
-            '--dry-run',
-            '--discover',
-            '-i', 'o001',
-        ],
-        [
-            '--dry-run',
-            '--all-candidates',
-            '-i', 'o001',
-        ]
-    ]
-)
-def test_toomanyoptions(args):
-    """Test argument parsing for failures"""
-    pool = AssociationPool()
-
-    with pytest.raises(SystemExit):
-        Main(args, pool=pool)
-
-
 @pytest.mark.parametrize(
     'case', [
         (None, 59),  # Don't re-run, just compare to the generator fixture results
@@ -102,3 +52,56 @@ def test_generate_version_id(version_id, expected, pool):
     generated = Main(args, pool=pool)
     for asn in generated.associations:
         assert regex.search(asn.asn_name)
+
+
+@pytest.mark.parametrize(
+    'args',
+    [
+        [
+            '--dry-run',
+            '--discover',
+            '--all-candidates',
+            '-i', 'o001',
+        ],
+        [
+            '--dry-run',
+            '--discover',
+            '--all-candidates',
+        ],
+        [
+            '--dry-run',
+            '--discover',
+            '-i', 'o001',
+        ],
+        [
+            '--dry-run',
+            '--all-candidates',
+            '-i', 'o001',
+        ]
+    ]
+)
+def test_toomanyoptions(args):
+    """Test argument parsing for failures"""
+    pool = AssociationPool()
+
+    with pytest.raises(SystemExit):
+        Main(args, pool=pool)
+
+
+# ########
+# Fixtures
+# ########
+@pytest.fixture(scope='module')
+def pool():
+    """Retrieve pool path"""
+    pool_path = t_path(os.path.join('data', POOL_PATH))
+    pool = combine_pools(pool_path)
+
+    return pool
+
+
+@pytest.fixture(scope='module')
+def all_candidates(pool):
+    """"Retrieve the all exposure pool"""
+    all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
+    return all_candidates
