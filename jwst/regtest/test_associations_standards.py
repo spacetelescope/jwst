@@ -140,7 +140,7 @@ def test_against_standard(rtdata, standard_pars, slow):
         pool = combine_pools([
             t_path(Path('data') / (standard_pars.pool_root + '.csv'))
         ])
-        Main(args, pool=pool)
+        Main.cli(args, pool=pool)
 
         # Retrieve the truth files
         truth_paths = []

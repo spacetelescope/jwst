@@ -149,7 +149,8 @@ def test_against_standard(sdpdata_module, pool_path, slow):
         ]
 
         # Create the associations
-        asn_generate(args)
+        asn_generate.cli(
+            args)
 
         # Compare to the truth associations.
         truth_paths = sdpdata_module.truth_paths(pool)
