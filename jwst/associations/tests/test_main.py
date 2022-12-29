@@ -30,7 +30,7 @@ def test_asn_candidates(pool, all_candidates, case):
     args, n_expected = case
 
     if args:
-        generated = Main(['--dry-run'] + args, pool=pool)
+        generated = Main.cli(['--dry-run'] + args, pool=pool)
         n_actual = len(generated.associations)
     else:
         n_actual = len(all_candidates.associations)
@@ -63,7 +63,7 @@ def test_generate_version_id(version_id, expected, pool):
     args = ['--dry-run', '-i', 'o001', '--version-id']
     if version_id:
         args.append(version_id)
-    generated = Main(args, pool=pool)
+    generated = Main.cli(args, pool=pool)
     for asn in generated.associations:
         assert regex.search(asn.asn_name)
 
@@ -99,7 +99,7 @@ def test_toomanyoptions(args):
     pool = AssociationPool()
 
     with pytest.raises(SystemExit):
-        Main(args, pool=pool)
+        Main.cli(args, pool=pool)
 
 
 # ########
@@ -117,5 +117,5 @@ def pool():
 @pytest.fixture(scope='module')
 def all_candidates(pool):
     """"Retrieve the all exposure pool"""
-    all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
+    all_candidates = Main.cli(['--dry-run', '--all-candidates'], pool=pool)
     return all_candidates

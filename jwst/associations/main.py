@@ -370,7 +370,7 @@ class Main():
 
         if self.parsed.save_orphans:
             self.orphaned.write(
-                os.path.join(self.parsed.path, save_orphans),
+                os.path.join(self.parsed.path, self.parsed.save_orphans),
                 format='ascii',
                 delimiter='|'
             )
