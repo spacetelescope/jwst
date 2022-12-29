@@ -1,6 +1,7 @@
 """test_associations: Test of general Association functionality."""
 import os
 import re
+import subprocess
 
 import pytest
 
@@ -35,6 +36,19 @@ def test_asn_candidates(pool, all_candidates, case):
         n_actual = len(all_candidates.associations)
 
     assert n_actual == n_expected
+
+
+@pytest.mark.parametrize(
+    'args, expected', [
+        ([t_path(os.path.join('data', POOL_PATH))], 0),
+        (['nosuchpool.csv'], 1),
+    ]
+)
+def test_cmdline_status(args, expected, _jail):
+    """Ensure command line status are as expected."""
+    full_args = ['asn_generate'] + args
+    status = subprocess.run(full_args)
+    assert status.returncode == expected
 
 
 @pytest.mark.parametrize(
