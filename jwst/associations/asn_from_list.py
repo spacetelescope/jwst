@@ -76,10 +76,10 @@ class Main():
                 - `[str, ...]`: A list of strings which create the command line
                   with the similar structure as `sys.argv`
         """
-        asn_from_list = cls(args=args)
-        asn_from_list.asn_from_list()
-        asn_from_list.save()
-        return asn_from_list
+        association = cls(args=args)
+        association.asn_from_list()
+        association.save()
+        return association
 
     def configure(self, args=None):
         """Configure
@@ -164,8 +164,6 @@ class Main():
         with open(parsed.output_file, 'w') as outfile:
             name, serialized = self.asn.dump(format=parsed.format)
             outfile.write(serialized)
-
-    __call__ = cli
 
 
 def main(args=None):

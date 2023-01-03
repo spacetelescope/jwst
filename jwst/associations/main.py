@@ -375,8 +375,6 @@ class Main():
                 delimiter='|'
             )
 
-    __call__ = cli
-
     def __str__(self):
         result = []
         result.append((
