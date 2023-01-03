@@ -14,7 +14,7 @@ from jwst.associations.main import Main
 
 def test_exposerr():
     pool = combine_pools(t_path('data/pool_008_exposerr.csv'))
-    generated = Main(
+    generated = Main.cli(
         [
             '--dry-run', '-i', 'o001',
         ],

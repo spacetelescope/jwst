@@ -30,7 +30,7 @@ def pool():
 def make_asns(pool, request):
     asn_format = request.param
     with TemporaryDirectory() as path:
-        generated = Main([
+        generated = Main.cli([
             '-p', path,
             '-i', 'o001',
             '--save-orphans',

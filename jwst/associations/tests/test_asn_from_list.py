@@ -73,7 +73,7 @@ def test_level2_from_cmdline(tmpdir):
         '-r', rule,
     ]
     args = args + inlist
-    Main(args)
+    Main.cli(args)
     with open(path.strpath, 'r') as fp:
         asn = load_asn(fp, registry=AssociationRegistry(include_bases=True))
     assert asn['asn_rule'] == 'DMSLevel2bBase'
@@ -184,11 +184,11 @@ def test_cmdline_fails():
 
     # No arguments
     with pytest.raises(SystemExit):
-        Main([])
+        Main.cli([])
 
     # Only the association file argument
     with pytest.raises(SystemExit):
-        Main(['-o', 'test_asn.json'])
+        Main.cli(['-o', 'test_asn.json'])
 
 
 @pytest.mark.parametrize(
@@ -206,7 +206,7 @@ def test_cmdline_success(format, tmpdir):
         '--format', format
     ]
     args = args + inlist
-    Main(args)
+    Main.cli(args)
     with open(path.strpath, 'r') as fp:
         asn = load_asn(fp, format=format)
     assert len(asn['products']) == 1
@@ -229,7 +229,7 @@ def test_cmdline_change_rules(tmpdir):
         '-r', rule,
     ]
     args = args + inlist
-    Main(args)
+    Main.cli(args)
     with open(path.strpath, 'r') as fp:
         asn = load_asn(fp, registry=AssociationRegistry(include_bases=True))
     assert inlist == asn['members']

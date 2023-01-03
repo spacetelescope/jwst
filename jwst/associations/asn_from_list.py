@@ -52,7 +52,46 @@ class Main():
               with the similar structure as `sys.argv`
     """
     def __init__(self, args=None):
+        self.configure(args)
 
+    def asn_from_list(self):
+        """Create the associaton from the list"""
+        parsed = self.parsed
+        self.asn = asn_from_list(
+            parsed.filelist,
+            rule=self.rule,
+            product_name=parsed.product_name,
+            acid=parsed.acid
+        )
+
+    @classmethod
+    def cli(cls, args=None):
+        """Command-line interface to creating an association from a list
+
+        Parameters
+        ----------
+        args: [str, ...], or None
+            The command line arguments. Can be one of
+                - `None`: `sys.argv` is then used.
+                - `[str, ...]`: A list of strings which create the command line
+                  with the similar structure as `sys.argv`
+        """
+        association = cls(args=args)
+        association.asn_from_list()
+        association.save()
+        return association
+
+    def configure(self, args=None):
+        """Configure
+
+        Parameters
+        ----------
+        args: [str, ...], or None
+            The command line arguments. Can be one of
+                - `None`: `sys.argv` is then used.
+                - `[str, ...]`: A list of strings which create the command line
+                  with the similar structure as `sys.argv`
+        """
         if args is None:
             args = sys.argv[1:]
         if isinstance(args, str):
@@ -114,17 +153,30 @@ class Main():
             help='File list to include in the association'
         )
 
-        parsed = parser.parse_args(args=args)
+        self.parsed = parsed = parser.parse_args(args=args)
 
         # Get the rule
-        rule = AssociationRegistry(parsed.ruledefs, include_bases=True)[parsed.rule]
+        self.rule = AssociationRegistry(parsed.ruledefs, include_bases=True)[parsed.rule]
 
+    def save(self):
+        """Save association"""
+        parsed = self.parsed
         with open(parsed.output_file, 'w') as outfile:
-            asn = asn_from_list(
-                parsed.filelist,
-                rule=rule,
-                product_name=parsed.product_name,
-                acid=parsed.acid
-            )
-            name, serialized = asn.dump(format=parsed.format)
+            name, serialized = self.asn.dump(format=parsed.format)
             outfile.write(serialized)
+
+
+def main(args=None):
+    """Command-line entrypoint for asn_from_list
+
+    Wrapper around `Main.cli` so that the return is either True or an exception
+
+    Parameters
+    ----------
+    args: [str, ...], or None
+        The command line arguments. Can be one of
+            - `None`: `sys.argv` is then used.
+            - `[str, ...]`: A list of strings which create the command line
+              with the similar structure as `sys.argv`
+    """
+    Main.cli(args=args)

@@ -1,6 +1,11 @@
 1.9.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Modify entrypoint functions to not return anything unless failure [#7418]
+
 1.9.0 (2022-12-27)
 ==================
 

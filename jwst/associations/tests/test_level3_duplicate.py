@@ -62,7 +62,7 @@ def test_duplicate_main():
         '--ignore-default'
     ]
 
-    generated = Main(cmd_args)
+    generated = Main.cli(cmd_args)
     asns = generated.associations
     assert len(asns) == 2
     asn_types = set([

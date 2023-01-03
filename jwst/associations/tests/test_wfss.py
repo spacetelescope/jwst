@@ -18,7 +18,7 @@ def test_niriss_wfss():
         '--dry-run',
         '--D'
     ]
-    results = Main(
+    results = Main.cli(
         cmd_args,
         pool=pool
     )

@@ -65,5 +65,5 @@ def test_candidate_observation_caseagnostic(partial_args, n_asns):
             '--ignore-default',
         ]
         cmd_args.extend(partial_args)
-        generated = Main(cmd_args)
+        generated = Main.cli(cmd_args)
         assert len(generated.associations) == n_asns
