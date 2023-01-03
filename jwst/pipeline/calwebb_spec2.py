@@ -237,8 +237,9 @@ class Spec2Pipeline(Pipeline):
                         raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input.
-        calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
         calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
+        calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
+
         calibrated = self.msa_flagging(calibrated)
 
         # The order of the next few steps is tricky, depending on mode:
