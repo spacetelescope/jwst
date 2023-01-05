@@ -106,37 +106,27 @@ website:
 
 CRDS Servers
 ------------
-There are two servers available:
+The CRDS server can be found at
 
-  - JWST OPS: https://jwst-crds.stsci.edu
-  - JWST PUB: https://jwst-crds-pub.stsci.edu
+::
 
-JWST OPS supports the automatic processing pipeline at STScI. JWST PUB supports
-the latest public release of the `jwst` package. Most often, the reference
-contexts are one and the same. Regardless, if one wishes to calibrate using the
-same exact information as the automatic processing, use JWST OPS. Otherwise, use
-of JWST PUB is recommended.
+   https://jwst-crds.stsci.edu
 
-Inside the STScI network, the pipeline defaults the CRDS setup to use JWST OPS with no modifications.
-To run the pipeline outside the STScI network or to use a different server, CRDS must be configured by setting
+Inside the STScI network, the pipeline defaults are sufficient and no further action is necessary.
+
+To run the pipeline outside the STScI network, CRDS must be configured by setting
 two environment variables:
 
   - CRDS_PATH: Local folder where CRDS content will be cached.
   - CRDS_SERVER_URL: The server from which to pull reference information
 
-To setup to use JWST OPS, use the following settings:
+To setup to use the server, use the following settings:
 
 ::
 
-    export CRDS_PATH=$HOME/crds_cache/jwst_ops
+    export CRDS_PATH=$HOME/crds_cache/
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
-To setup to use JWST PUB, use the following settings:
-
-::
-
-    export CRDS_PATH=$HOME/crds_cache/jwst_pub
-    export CRDS_SERVER_URL=https://jwst-crds-pub.stsci.edu
 
 .. _python_crds_variables:
 
