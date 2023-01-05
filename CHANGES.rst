@@ -1,7 +1,10 @@
 1.9.2 (unreleased)
 ==================
 
--
+documentation
+-------------
+
+- Remove references to pub server [#7421]
 
 1.9.1 (2023-01-03)
 ==================
