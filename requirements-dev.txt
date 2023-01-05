@@ -13,3 +13,7 @@ git+https://github.com/spacetelescope/stpipe
 git+https://github.com/spacetelescope/stcal
 git+https://github.com/spacetelescope/tweakwcs
 git+https://github.com/spacetelescope/wiimatch
+
+
+scipy>=0.0.dev0
+numpy>=0.0.dev0
