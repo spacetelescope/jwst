@@ -66,6 +66,12 @@ jobs:
           - toxenv: test-opencv-xdist
             os: ubuntu-latest
             python-version: '3.10'
+          - toxenv: test-devdeps-xdist
+            os: ubuntu-latest
+            python-version: '3.10'
+          - toxenv: test-devdeps-xdist
+            os: macos-latest
+            python-version: '3.10'
     steps:
       - uses: actions/checkout@v3
         with:
