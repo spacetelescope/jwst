@@ -1254,7 +1254,7 @@ class IFUCubeData():
                 input_model = self.master_table.FileMap[self.instrument][this_a][this_b][k]
 
                 # Find the footprint of the image
-                spectral_found = hasattr(input_model.meta.wcsinfo 'spectral_region')
+                spectral_found = hasattr(input_model.meta.wcsinfo, 'spectral_region')
                 spatial_found = hasattr(input_model.meta.wcsinfo, 's_region')
                 world = False
                 if self.coord_system == 'skyalign':
