@@ -117,36 +117,37 @@ class Observation:
         for dir_image_name in self.dir_image_names:
 
             log.info(f"Using direct image {dir_image_name}")
-            dimage = datamodels.open(dir_image_name).data
+            with datamodels.open(dir_image_name) as model:
+                dimage = model.data
 
-            if self.sed_file is None:
-                # Default pipeline will use sed_file=None, so we need to compute
-                # photometry values that used to come from HST-style header keywords.
-                # Set pivlam, in units of microns, based on filter name.
-                pivlam = float(self.filter[1:4]) / 100.
+                if self.sed_file is None:
+                    # Default pipeline will use sed_file=None, so we need to compute
+                    # photometry values that used to come from HST-style header keywords.
+                    # Set pivlam, in units of microns, based on filter name.
+                    pivlam = float(self.filter[1:4]) / 100.
 
-                # Use pixel fluxes from the direct image.
-                self.fluxes[pivlam] = []
-                for i in range(len(self.IDs)):
-                    # This loads lists of pixel flux values for each source
-                    # from the direct image
-                    self.fluxes[pivlam].append(dimage[self.ys[i], self.xs[i]])
+                    # Use pixel fluxes from the direct image.
+                    self.fluxes[pivlam] = []
+                    for i in range(len(self.IDs)):
+                        # This loads lists of pixel flux values for each source
+                        # from the direct image
+                        self.fluxes[pivlam].append(dimage[self.ys[i], self.xs[i]])
 
-            else:
-                # Use an SED file. Need to normalize the object stamps.
-                for ID in self.IDs:
-                    vg = self.seg == ID
-                    dnew = dimage
-                    if self.renormalize:
-                        sum_seg = np.sum(dimage[vg])  # But normalize by the whole flux
-                        if sum_seg != 0:
-                            dimage[vg] /= sum_seg
-                    else:
-                        log.debug("not renormalizing sources to unity")
+                else:
+                    # Use an SED file. Need to normalize the object stamps.
+                    for ID in self.IDs:
+                        vg = self.seg == ID
+                        dnew = dimage
+                        if self.renormalize:
+                            sum_seg = np.sum(dimage[vg])  # But normalize by the whole flux
+                            if sum_seg != 0:
+                                dimage[vg] /= sum_seg
+                        else:
+                            log.debug("not renormalizing sources to unity")
 
-                self.fluxes["sed"] = []
-                for i in range(len(self.IDs)):
-                    self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
+                    self.fluxes["sed"] = []
+                    for i in range(len(self.IDs)):
+                        self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
     def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
         """
