@@ -59,6 +59,8 @@ class PixelReplaceStep(Step):
             # MIRI_LRS-FIXEDSLIT comes in ImageModel - any others?
             elif isinstance(input_model, datamodels.ImageModel):
                 self.log.debug(f'Input ImageModel is of exptype: {input_model.meta.exposure.type}')
+            elif isinstance(input_model, datamodels.IFUImageModel):
+                self.log.debug(f'Input is an IFUImageModel.')
                 '''
                 elif isinstance(input_model, datamodels.CubeModel):
                     # It's a 3-D multi-integration model

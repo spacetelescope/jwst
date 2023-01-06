@@ -55,9 +55,9 @@ class PixelReplacement:
         try:
             self.algorithm = self.algorithm_dict[self.pars['algorithm']]
 
-        except:
-            log.critical(f"Algorithm name provided does not match an"
-                         f"implemented algorithm!")
+        except KeyError:
+            log.critical(f"Algorithm name {self.pars['algorithm']} provided does "
+                         f"not match an implemented algorithm!")
             raise Exception
 
     def replace(self):
@@ -67,10 +67,10 @@ class PixelReplacement:
         to each 2D spectrum in input.
         """
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
-        if isinstance(self.input, datamodels.ImageModel):
+        if isinstance(self.input, (datamodels.ImageModel, datamodels.IFUImageModel)):
             self.output = self.algorithm(self.input)
             n_replaced = np.sum(self.output.dq & self.REPLACED)
-            log.info(f"Input ImageModel had {n_replaced} pixels replaced.")
+            log.info(f"Input model had {n_replaced} pixels replaced.")
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
@@ -86,7 +86,7 @@ class PixelReplacement:
 
         else:
             # This should never happen, as these would be caught in the step code.
-            log.critical(f"How did we get here?")
+            log.critical("How did we get here?")
             raise Exception
 
     def fit_profile(self, model):
@@ -124,8 +124,8 @@ class PixelReplacement:
         # Truncate array to region where good pixels exist
         good_pixels = np.where(~model.dq & 1)
         if np.any(0 in np.shape(good_pixels)):
-            log.warning(f"No good pixels in at least one dimension of "
-                        f"data array - skipping pixel replacement.")
+            log.warning("No good pixels in at least one dimension of "
+                        "data array - skipping pixel replacement.")
             return model
         x_range = [np.min(good_pixels[0]), np.max(good_pixels[0]) + 1]
         y_range = [np.min(good_pixels[1]), np.max(good_pixels[1]) + 1]
