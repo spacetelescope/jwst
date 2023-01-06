@@ -241,6 +241,12 @@ tweakreg
   bin size is computed. This affects pre-alignment performed before source
   matching. [#7417]
 
+undersampling_correction
+------------------------
+
+- New step between jump and ramp_fitting in the ``Detector1 Pipeline``. [#7396]
+
+
 wfss_contam
 -----------
 
