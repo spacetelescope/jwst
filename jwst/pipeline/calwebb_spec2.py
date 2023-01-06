@@ -526,6 +526,8 @@ class Spec2Pipeline(Pipeline):
 
     def _imprint_pos_no(self, members_by_type):
         """Find the position number for each imprint image"""
+
+        # members_by_type['imprint'] is a list of imprint images
         imprint_pos_no = []
         for i, imprint_file in enumerate(members_by_type['imprint']):
             imprint_model = datamodels.open(imprint_file)

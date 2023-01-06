@@ -18,6 +18,8 @@ class ImprintStep(Step):
 
     def process(self, input, imprint, imprint_pos_no):
 
+        # imprint_pos_no - a list of the position numbers corresponding to the list of imprints
+        
         # subtract leakcal (imprint) image
         # If only 1 imprint image is in the association use for for science and if there a background
         # If more than 1 imprint image exists in the association then select the imprint  image to
