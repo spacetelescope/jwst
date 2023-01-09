@@ -53,5 +53,5 @@ class ImprintStep(Step):
             input_model.close()
             imprint_model.close()
         else:
-            log.info(f'No imprint image was found for {input}')
+            self.log.info(f'No imprint image was found for {input}')
         return result
