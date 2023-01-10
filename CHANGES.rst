@@ -1,4 +1,12 @@
-1.9.2 (unreleased)
+1.9.3 (unreleased)
+==================
+
+wfss_contam
+-----------
+
+- Open image models in a "with" context to keep models open while accessing contents [#7425]
+
+1.9.2 (2023-01-04)
 ==================
 
 documentation
