@@ -1,6 +1,10 @@
 1.9.3 (unreleased)
 ==================
 
+cube_build
+----------
+Fix bug for NIRSpec data that did not allow the user to specify the wavelengths to use to build the cube [#7427]
+
 wfss_contam
 -----------
 
@@ -8,10 +12,6 @@ wfss_contam
 
 1.9.2 (2023-01-04)
 ==================
-
-cube_build
-----------
-Fix bug for NIRSpec data that did not allow the user to specify the wavelengths to use to build the cube [#7427]
 
 documentation
 -------------
