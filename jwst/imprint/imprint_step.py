@@ -16,20 +16,18 @@ class ImprintStep(Step):
     spec = """
     """
 
-    def process(self, input, imprint, imprint_pos_no):
+    def process(self, input, imprint):
 
-        # imprint_pos_no - a list of the position numbers corresponding to the list of imprints
-        
         # subtract leakcal (imprint) image
-        # If only 1 imprint image is in the association use for for science and if there a background
-        # If more than 1 imprint image exists in the association then select the imprint  image to
-        # subtract based on position number.
+        # If there is only one imprint image is in the association use for all the data.
+        # If there is more than one imprint image  in the association then select
+        # the imprint  image to subtract based on position number (DataModel.meta.dither.position_number).
 
         # Open the input data model and get position number of image
         input_model = datamodels.open(input)
         pos_no = input_model.meta.dither.position_number
 
-        # find imprint that goes with inpyt image - if there is only 1 imprint image - use it.
+        # find imprint that goes with input image - if there is only 1 imprint image - use it.
         num_imprint = len(imprint)
         match = None
         if num_imprint == 1:
@@ -37,11 +35,16 @@ class ImprintStep(Step):
         else:
             i = 0
             while match is None and i < num_imprint:
-                if pos_no == imprint_pos_no[i]:
+                # open imprint images and read in pos_no to find match
+                imprint_model = datamodels.open(imprint[i])
+                imprint_pos_no = imprint_model.meta.dither.position_number
+                imprint_model.close()
+
+                if pos_no == imprint_pos_no:
                     match = i
                 i = i + 1
 
-        # Initialize result to be input (just in case not matching imprint image was found)
+        # Initialize result to be input (just in case no matching imprint image was found)
         result = input_model.copy()
 
         if match is not None:

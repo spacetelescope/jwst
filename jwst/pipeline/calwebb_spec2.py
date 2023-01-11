@@ -242,18 +242,13 @@ class Spec2Pipeline(Pipeline):
         # Leakcal subtraction (imprint)  occurs before background subtraction on a per-exposure basis.
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
         # science and background exposures.  Otherwise, there will be as many `imprint` members as
-        # there are science plus background members. Which imprint to subtract from which science/background
-        # is determined by the matching values of the header keyword PATT_NUM, or
-        # `DataModel.meta.dither.position_number`.
+        # there are science plus background members.
 
-        # find the position number of all the leak cal observations
-        imprint_pos_no = self._imprint_pos_no(members_by_type)
-
-        calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'], imprint_pos_no)
+        calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
 
         # for each background image subtract an associated leak cal
         for i, bkg_file in enumerate(members_by_type['background']):
-            bkg_imprint_sub = self.imprint_subtract(bkg_file, members_by_type['imprint'], imprint_pos_no)
+            bkg_imprint_sub = self.imprint_subtract(bkg_file, members_by_type['imprint'])
             members_by_type['background'][i] = bkg_imprint_sub
 
         calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
@@ -523,15 +518,3 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
 
         return calibrated
-
-    def _imprint_pos_no(self, members_by_type):
-        """Find the position number for each imprint image"""
-
-        # members_by_type['imprint'] is a list of imprint images
-        imprint_pos_no = []
-        for i, imprint_file in enumerate(members_by_type['imprint']):
-            imprint_model = datamodels.open(imprint_file)
-            imprint_pos_no.append(imprint_model.meta.dither.position_number)
-            imprint_model.close()
-
-        return imprint_pos_no
