@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step
-from .. import datamodels
+from jwst.stpipe import Step
+from jwst import datamodels
 from .pixel_replace import PixelReplacement
+
 __all__ = ["PixelReplaceStep"]
 
 

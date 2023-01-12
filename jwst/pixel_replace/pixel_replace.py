@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from .. import datamodels
+from jwst import datamodels
 from scipy.optimize import minimize
 import warnings
 
