@@ -2,7 +2,7 @@
 
 from jwst.stpipe import Step
 from jwst import datamodels
-from .pixel_replace import PixelReplacement
+from jwst.pixel_replace.pixel_replace import PixelReplacement
 
 __all__ = ["PixelReplaceStep"]
 

@@ -86,7 +86,12 @@ class PixelReplacement:
 
         # CubeModel inputs are TSO (so far?)
         elif isinstance(self.input, datamodels.CubeModel):
-            for i in range(self.input.meta.exposure.nints):
+            if len(self.input.data) != len(self.input.dq):
+                log.critical("Data and DQ arrays are not of equal length - skipping pixel replacement.")
+                return
+
+            # Initial attempt looped over model.meta.exposure.nints, but test data had mismatch. Could change this.
+            for i in range(len(self.input.data)):
                 dummy_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
                 dummy_model.update(self.input)
                 dummy_replaced = self.algorithm(dummy_model)
