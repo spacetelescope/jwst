@@ -69,7 +69,7 @@ class PixelReplacement:
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
         if isinstance(self.input, (datamodels.ImageModel, datamodels.IFUImageModel)):
             self.output = self.algorithm(self.input)
-            n_replaced = np.sum(self.output.dq & self.REPLACED)
+            n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
             log.info(f"Input model had {n_replaced} pixels replaced.")
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
@@ -79,10 +79,25 @@ class PixelReplacement:
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
                 slit_replaced = self.algorithm(slit_model)
 
-                n_replaced = np.sum(slit_replaced.dq & self.REPLACED)
+                n_replaced = np.count_nonzero(slit_replaced.dq & self.REPLACED)
                 log.info(f"Slit {i} had {n_replaced} pixels replaced.")
 
                 self.output.slits[i] = slit_replaced
+
+        # CubeModel inputs are TSO (so far?)
+        elif isinstance(self.input, datamodels.CubeModel):
+            for i in range(self.input.meta.exposure.nints):
+                dummy_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
+                dummy_model.update(self.input)
+                dummy_replaced = self.algorithm(dummy_model)
+                n_replaced = np.count_nonzero(dummy_replaced.dq & self.REPLACED)
+                log.info(f"Input TSO integration {i} had {n_replaced} pixels replaced.")
+
+                self.output.data[i] = dummy_replaced.data
+                self.output.dq[i] = dummy_replaced.dq
+                dummy_replaced.close()
+                dummy_model.close()
+
 
         else:
             # This should never happen, as these would be caught in the step code.

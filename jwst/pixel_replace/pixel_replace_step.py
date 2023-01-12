@@ -61,17 +61,18 @@ class PixelReplaceStep(Step):
                 self.log.debug(f'Input ImageModel is of exptype: {input_model.meta.exposure.type}')
             elif isinstance(input_model, datamodels.IFUImageModel):
                 self.log.debug(f'Input is an IFUImageModel.')
+
+            elif isinstance(input_model, datamodels.CubeModel):
+                # It's a 3-D multi-integration model
+                self.log.debug('Input is a CubeModel for a multiple integration file')
                 '''
-                elif isinstance(input_model, datamodels.CubeModel):
-                    # It's a 3-D multi-integration model
-                    self.log.debug('Input is a CubeModel for a multiple integ. file')
                 elif isinstance(input_model, datamodels.IFUCubeModel):
                     self.log.debug('Input is an IFUCubeModel')
                 elif isinstance(input_model, datamodels.SlitModel):
                     # NRS_BRIGHTOBJ and MIRI LRS fixed-slit (resampled) modes
                     self.log.debug('Input is a SlitModel')
                 '''
-            # SOSS have CubeModel, along with IFU modes WIP
+            # SOSS & LRS-SLITLESS have CubeModel, along with IFU modes WIP
             else:
                 self.log.error(f'Input is of type {str(type(input_model))} for which')
                 self.log.error('pixel_replace does not have an algorithm.')
