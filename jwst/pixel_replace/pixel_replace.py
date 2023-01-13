@@ -161,7 +161,6 @@ class PixelReplacement:
         # dispersion direction by indexing data shape with
         # strange dispaxis argument. Keep indices in full-frame numbering scheme,
         # but only iterate through slices with valid data.
-        log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
         for ind in range(*valid_shape[2 - dispaxis]):
             # Exclude regions with no data for dq slice.
             dq_slice = model.dq[self.custom_slice(dispaxis, ind)][profile_cut[0]: profile_cut[1]]
@@ -175,6 +174,8 @@ class PixelReplacement:
             else:
                 log.debug(f"Slice {ind} contains {n_bad} bad pixels.")
                 profiles_to_replace.add(ind)
+
+        log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
 
         ## check_output = np.zeros((profile_cut[1]-profile_cut[0], len(valid_profiles)))
         for i, ind in enumerate(profiles_to_replace):
