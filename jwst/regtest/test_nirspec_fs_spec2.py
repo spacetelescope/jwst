@@ -11,14 +11,28 @@ from jwst.pathloss import PathLossStep
 from jwst.stpipe import Step
 
 file_roots = [
-    'jw00023001001_01101_00001_nrs1_',
-    'jw93045010001_02101_00001_nrs2_',
-    'jwtest1013001_01101_00001_nrs1_'
+    'jw02072-o002_20221206t143745_spec2_00001_asn.json',
+    'jw01245-o002_20230107t223023_spec2_00001_asn.json',
+    'jw01309-o022_20230113t025924_spec2_00001_asn.json'
 ]
-ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
+
+asn_memberdict = {
+    'jw01309-o022_20230113t025924_spec2_00001_asn.json':
+        ['jw01309022001_04102_00004_nrs2_rate.fits',
+         'jw01309022001_04102_00002_nrs2_rate.fits',
+         'jw01309022001_04102_00001_nrs2_rate.fits'],
+    'jw01245-o002_20230107t223023_spec2_00001_asn.json':
+        ['jw01245002001_04102_00002_nrs1_rate.fits',
+         'jw01245002001_04102_00001_nrs1_rate.fits'],
+    'jw02072-o002_20221206t143745_spec2_00001_asn.json':
+        ['jw02072002001_05101_00001_nrs1_rate.fits',
+         'jw02072002001_05101_00002_nrs1_rate.fits',
+         'jw02072002001_05101_00003_nrs1_rate.fits']
+}
+# ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
 
 
-@pytest.fixture(scope="module", params=file_roots, ids=ids)
+@pytest.fixture(scope="module", params=file_roots)# ids=ids)
 def run_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:
@@ -28,8 +42,10 @@ def run_pipeline(jail, rtdata_module, request):
 
     rtdata = rtdata_module
 
+    for fle in asn_memberdict[request.param]:
+        rtdata.get_data('nirspec/fs/' + fle)
     # Get the input exposure
-    rtdata.get_data('nirspec/fs/' + request.param + 'rate.fits')
+    rtdata.get_data('nirspec/fs/' + request.param)
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
@@ -55,7 +71,7 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(
-        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+        os.path.splitext(asn_memberdict[os.path.basename(rtdata.input)][0])[0], suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files
