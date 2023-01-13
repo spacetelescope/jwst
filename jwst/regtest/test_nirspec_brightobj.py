@@ -19,7 +19,7 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
     rtdata = rtdata_module
 
     # Get the input exposure
-    rtdata.get_data('nirspec/tso/jw02420001001_04101_00001-seg001_nrs1_truncated_rateints.fits')
+    rtdata.get_data('nirspec/tso/jw02420001001_04101_00001-seg001_nrs1_rateints.fits')
 
     # Run the calwebb_spec2 pipeline;
     args = ["calwebb_spec2", rtdata.input,
