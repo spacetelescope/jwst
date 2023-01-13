@@ -16,13 +16,7 @@ __all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model
            "dva_corr_model"]
 
 
-def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
-    v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
-    v3_ref = input_model.meta.wcsinfo.v3_ref / 3600
-    roll_ref = input_model.meta.wcsinfo.roll_ref
-    ra_ref = input_model.meta.wcsinfo.ra_ref
-    dec_ref = input_model.meta.wcsinfo.dec_ref
-
+def _v23tosky(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, wrap_v2_at=180, wrap_lon_at=360):
     angles = np.array([v2_ref, -v3_ref, roll_ref, dec_ref, -ra_ref])
     axes = "zyxyz"
     rot = RotationSequence3D(angles, axes_order=axes)
@@ -32,6 +26,19 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
     m = ((Scale(1 / 3600) & Scale(1 / 3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
          | rot | CartesianToSpherical(wrap_lon_at=wrap_lon_at))
     m.name = 'v23tosky'
+    return m
+
+
+def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
+    m = _v23tosky(
+        v2_ref=input_model.meta.wcsinfo.v2_ref / 3600,
+        v3_ref=input_model.meta.wcsinfo.v3_ref / 3600,
+        roll_ref=input_model.meta.wcsinfo.roll_ref,
+        ra_ref=input_model.meta.wcsinfo.ra_ref,
+        dec_ref=input_model.meta.wcsinfo.dec_ref,
+        wrap_v2_at=wrap_v2_at,
+        wrap_lon_at=wrap_lon_at
+    )
     return m
 
 
