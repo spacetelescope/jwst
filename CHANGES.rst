@@ -6,6 +6,11 @@ documentation
 
 - Remove references to pub server [#7421]
 
+guider_cds
+----------
+
+- Update FGS image2 regression test with flight data [#7433]
+  
 1.9.1 (2023-01-03)
 ==================
 
