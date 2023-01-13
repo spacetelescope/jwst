@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_fgs_image2(rtdata_module):
     rtdata = rtdata_module
-    rtdata.get_data("fgs/image2/jw86500007001_02101_00001_GUIDER2_rate.fits")
+    rtdata.get_data("fgs/image2/jw01029001001_04201_00001_guider2_rate.fits")
 
     args = ["calwebb_image2", rtdata.input,
             "--steps.flat_field.save_results=True",
@@ -20,7 +20,7 @@ def run_fgs_image2(rtdata_module):
 def test_fgs_image2(run_fgs_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for FGS data in the image2 pipeline"""
     rtdata = rtdata_module
-    output = f"jw86500007001_02101_00001_GUIDER2_{suffix}.fits"
+    output = f"jw01029001001_04201_00001_guider2_{suffix}.fits"
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_fgs_image2/{output}")
