@@ -44,18 +44,17 @@ From command line::
 
     % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -o 0.0023
 """
-
-import logging
-import sys
-from os import path
 import glob
+import logging
+import os
+import sys
 
-from astropy.io import fits
 import asdf
 
 import jwst
 from jwst.tweakreg.utils import adjust_wcs
 from jwst.assign_wcs.util import update_fits_wcsinfo
+from stdatamodels import filetype
 
 
 # Configure logging
@@ -66,8 +65,8 @@ logger.addHandler(logging.NullHandler())
 
 def _replace_suffix(file, new_suffix):
     sep = '_'
-    directory, base = path.split(file)
-    root, ext = path.splitext(base)
+    directory, base = os.path.split(file)
+    root, ext = os.path.splitext(base)
     if sep in root:
         name_parts = root.rpartition(sep)
         root = ''.join(name_parts[:-1] + (new_suffix, ))
@@ -75,69 +74,22 @@ def _replace_suffix(file, new_suffix):
         root = root + sep + new_suffix
     base = root + ext
 
-    new_file_name = path.join(directory, base)
+    new_file_name = os.path.join(directory, base)
 
     return new_file_name
 
 
-def _is_fits(file):
-    """
-    Perform a *quick* but *very basic* check if the input file
-    possibly might be a FITS file.
-
-    Parameters
-    ----------
-    file: file object
-        A file opened in the binary mode.
-
-    Returns
-    -------
-    bool
-        `True` if the file appears to be a FITS file, and `False` otherwise.
-    """
-    ref_cards = [
-        b'SIMPLE  =                    ',
-        b'BITPIX  =                 '
-    ]
-
-    try:
-        file.seek(0)
-        for rcard in ref_cards:
-            card = file.read(fits.Card.length)
-            if len(card) != fits.Card.length or card[:len(rcard)] != rcard:
-                return False
-    except Exception:
-        return False
-
-    return True
-
-
-def _is_asdf(file):
-    """
-    Perform a *quick* but *very basic* check if the input file
-    possibly might be an ASDF file.
-
-    Parameters
-    ----------
-    file: file object
-        A file opened in the binary mode.
-
-    Returns
-    -------
-    bool
-        `True` if the file appears to be a ASDF file, and `False` otherwise.
-    """
-    file.seek(0)
-    return file.peek(5) == b'#ASDF'
-
-
 def _file_type(file_name):
     with open(file_name, mode='rb') as file:
-        if _is_asdf(file):
-            return 2
-        elif _is_fits(file):
-            return 1
-        else:
+        try:
+            ft = filetype.check(file)
+            if ft == 'asdf':
+                return 2
+            elif ft == 'fits':
+                return 1
+            else:
+                return 0
+        except ValueError:
             return 0
 
 
