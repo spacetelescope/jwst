@@ -63,7 +63,7 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
 
     v2, v3, roll, dec, ra = s.transform.parameters[-5:]
     v3 = -v3
-    ra = -ra - delta_ra
+    ra = -ra + delta_ra
     dec += delta_dec
     roll += delta_roll
 
