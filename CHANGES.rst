@@ -1,4 +1,29 @@
-1.9.2 (unreleased)
+1.9.4 (unreleased)
+==================
+
+regtest
+-------
+
+- Updated NIRSpec fixed slit testing of spec2 and spec3 pipelines,
+  and bright object time series testing of spec2,
+  to use in-flight data [#7432]
+
+- Update FGS image2 testing of calwebb_image2 pipeline for FGS science-mode
+  to use in-flight data [#7433]
+
+1.9.3 (2023-01-12)
+==================
+
+cube_build
+----------
+Fix bug for NIRSpec data that did not allow the user to specify the wavelengths to use to build the cube [#7427]
+
+wfss_contam
+-----------
+
+- Open image models in a "with" context to keep models open while accessing contents [#7425]
+
+1.9.2 (2023-01-04)
 ==================
 
 documentation
@@ -6,11 +31,6 @@ documentation
 
 - Remove references to pub server [#7421]
 
-guider_cds
-----------
-
-- Update FGS image2 regression test with flight data [#7433]
-  
 1.9.1 (2023-01-03)
 ==================
 
