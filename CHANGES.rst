@@ -1,7 +1,12 @@
 1.9.4 (unreleased)
 ==================
 
--
+regtest
+-------
+
+- Updated NIRSpec fixed slit testing of spec2 and spec3 pipelines,
+  and bright object time series testing of spec2,
+  to use in-flight data [#7432]
 
 1.9.3 (2023-01-12)
 ==================
