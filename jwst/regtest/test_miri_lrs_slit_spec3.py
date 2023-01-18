@@ -14,7 +14,7 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Get the spec3 ASN and its members
-    rtdata.get_asn("miri/lrs/jw00623-o032_20191106t132852_spec3_001_asn.json")
+    rtdata.get_asn("miri/lrs/jw01530-o005_20221202t204827_spec3_00001_asn.json")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
     args = ["calwebb_spec3", rtdata.input]
@@ -30,7 +30,7 @@ def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwarg
 
     # Run the pipeline and retrieve outputs
     rtdata = rtdata_module
-    output = f"jw00623-o032_t007_miri_p750l_{suffix}.fits"
+    output = f"jw01530-o005_t004_miri_p750l_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
