@@ -1,6 +1,11 @@
 1.9.4 (unreleased)
 ==================
 
+general
+-------
+
+- Pin ``BayesicFitting`` to < 3.1.0 to avoid an import error in that release. [#7435]
+
 regtest
 -------
 
