@@ -9,8 +9,8 @@ MOS and IFU exposures by the MSA structure. This is accomplished by
 subtracting a dedicated exposure taken with all MSA shutters closed and the
 IFU entrance aperture blocked.
 
-The step has two input parameters: the target exposure and the imprint
-exposure. These arguments can be provided as either a file name
+The step has two input parameters: the target exposure and a list of imprint
+exposures.  These arguments can be provided as either a file name
 or a JWST data model.
 
 The SCI data array of the imprint exposure is subtracted from the SCI array

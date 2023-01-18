@@ -40,6 +40,17 @@ documentation
 
 - Remove references to pub server [#7421]
 
+calwebb_spec2
+-------------
+
+- Subtract leakcal image from science and backgrounds and then background subtract [#7426]
+
+imprint
+-------
+
+- Add matching leakcal image and science/background image by using dither.position_number [#7426]
+
+
 1.9.1 (2023-01-03)
 ==================
 
