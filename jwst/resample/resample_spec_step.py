@@ -63,6 +63,16 @@ class ResampleSpecStep(ResampleStep):
             kwargs = self._set_spec_defaults()
             kwargs['blendheaders'] = self.blendheaders
 
+        kwargs['output_shape'] = self._check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = self._load_custom_wcs(
+            self.output_wcs,
+            kwargs['output_shape']
+        )
+
         kwargs['allowed_memory'] = self.allowed_memory
         kwargs['output'] = output
 
