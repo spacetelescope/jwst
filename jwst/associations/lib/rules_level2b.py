@@ -259,6 +259,13 @@ class Asn_Lv2Spec(
                         work_over=ListCategory.EXISTING,
                     ),
                     SimpleConstraint(
+                        value='imprint',
+                        test=lambda value, item: self.get_exposure_type(item) == value,
+                        force_unique=False,
+                        reprocess_on_match=True,
+                        work_over=ListCategory.EXISTING,
+                    ),
+                    SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
                         force_unique=False,
