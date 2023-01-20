@@ -2,6 +2,7 @@
 """
 from collections import deque
 import logging
+import re
 
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS
@@ -252,15 +253,8 @@ class Asn_Lv2Spec(
             Constraint(
                 [
                     SimpleConstraint(
-                        value='background',
-                        test=lambda value, item: self.get_exposure_type(item) == value,
-                        force_unique=False,
-                        reprocess_on_match=True,
-                        work_over=ListCategory.EXISTING,
-                    ),
-                    SimpleConstraint(
-                        value='imprint',
-                        test=lambda value, item: self.get_exposure_type(item) == value,
+                        value='background|imprint',
+                        test=lambda value, item: re.match(value, self.get_exposure_type(item)),
                         force_unique=False,
                         reprocess_on_match=True,
                         work_over=ListCategory.EXISTING,
