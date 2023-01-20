@@ -46,8 +46,8 @@ def undersampling_correction(input_model, signal_threshold):
 
 def flag_pixels(data, gdq, signal_threshold):
     """
-    Flag groups that exceed signal_threshold as UNDERSAMP and DO_NOT_USE,
-    skipping groups already flagged as DO_NOT_USE
+    Flag first group in each ramp that exceeds signal_threshold as UNDERSAMP and DO_NOT_USE,
+    skipping groups already flagged as DO_NOT_USE; then flag all subsequent groups in the ramp.
 
     Parameters
     ----------
@@ -65,12 +65,44 @@ def flag_pixels(data, gdq, signal_threshold):
     gdq : int, 4D array
         updated group dq array
     """
-    # For groups in the data that exceed the signal_threshold add UNDERSAMP to the
-    # group's DQ, skipping groups already flagged as DO_NOT_USE
-    wh_not_dnu = np.logical_not(gdq & dqflags.group['DO_NOT_USE'])
-    wh_exc = np.where((data >= signal_threshold) & wh_not_dnu)
+    n_ints = gdq.shape[0]
+    n_grps = gdq.shape[1]
+    n_rows = gdq.shape[2]
+    n_cols = gdq.shape[3]
+    num_pix = n_cols * n_rows
 
-    gdq[wh_exc] = np.bitwise_or(gdq[wh_exc],
-                                dqflags.group['UNDERSAMP'] | dqflags.group['DO_NOT_USE'])
+    lowest_exc_1d = np.zeros(n_cols*n_rows) + n_grps
+
+    for ii_int in range(n_ints):
+        for ii_grp in range(n_grps):
+            data_1d = data[ii_int, ii_grp, :, :].reshape(num_pix)  # vectorize slice
+            gdq_1d = gdq[ii_int, ii_grp, :, :].reshape(num_pix)
+
+            wh_not_dnu = np.logical_not(gdq_1d & dqflags.group['DO_NOT_USE'])
+
+            # In the current group for all ramps, locate pixels that :
+            #  a) exceed the signal_threshold, and
+            #  b) have not been previously flagged as an exceedance, and
+            #  c) were not flagged in an earlier step as DO_NOT_USE
+            wh_exc_1d = np.where((data_1d > signal_threshold) &
+                                 (lowest_exc_1d == n_grps) & wh_not_dnu)
+
+            # ... and mark those pixels, as current group is their first exceedance
+            if len(wh_exc_1d[0] > 0):  # For ramps previously unflagged ...
+                lowest_exc_1d[wh_exc_1d] = ii_grp
+
+    # Flag current and subsequent groups
+    lowest_exc_2d = lowest_exc_1d.reshape((n_rows, n_cols))
+    for ii_int in range(n_ints):
+        for ii_grp in range(n_grps):
+            wh_set_flag = np.where(lowest_exc_2d == ii_grp)
+
+            # set arrays of components
+            yy = wh_set_flag[0]
+            xx = wh_set_flag[1]
+
+            gdq[ii_int, ii_grp:, yy, xx] = \
+                np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx], dqflags.group['UNDERSAMP']
+                              | dqflags.group['DO_NOT_USE'])
 
     return gdq

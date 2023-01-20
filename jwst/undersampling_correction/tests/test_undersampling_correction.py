@@ -11,8 +11,8 @@ test_dq_flags = dqflags.pixel
 GOOD = test_dq_flags["GOOD"]
 DNU = test_dq_flags["DO_NOT_USE"]
 UNSA = test_dq_flags["UNDERSAMP"]
-ADFL = test_dq_flags["AD_FLOOR"]   #
-DROU = test_dq_flags["DROPOUT"]   #
+ADFL = test_dq_flags["AD_FLOOR"]
+DROU = test_dq_flags["DROPOUT"]
 
 
 def test_pix_0():
@@ -42,8 +42,8 @@ def test_pix_0():
 def test_pix_1():
     """
     All input GROUPDQ = 'GOOD'. Some ramp data exceed the signal threshold, so the
-    only non-GOOD groups in the output GROUPDQ should be UNSA + DNU for groups
-    exceeding the signal threshold,
+    only non-GOOD groups in the output GROUPDQ should be UNSA + DNU for the first
+    group exceeding the signal threshold and all subsequent groups.
     """
     ngroups, nints, nrows, ncols = set_scalars()
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
@@ -54,16 +54,14 @@ def test_pix_1():
     # Populate pixel-specific SCI and GROUPDQ arrays
     # Set seom groups' SCI to be above the signal threshold, and all input
     # GROUPDQ to be GOOD
-    ramp_model.data[0, 1, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
     ramp_model.data[0, 3, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
+    ramp_model.data[0, 5, 0, 0] = np.array((signal_threshold - 200.), dtype=np.float32)
     ramp_model.data[0, 8, 0, 0] = np.array((signal_threshold + 100.), dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = [GOOD] * ngroups
 
     true_out_gdq = ramp_model.groupdq.copy()  # all GOOD
     true_out_gdq[0, :, 0, 0] = [GOOD] * ngroups
-    true_out_gdq[0, 1, 0, 0] = np.bitwise_or(UNSA, DNU)
-    true_out_gdq[0, 3, 0, 0] = np.bitwise_or(UNSA, DNU)
-    true_out_gdq[0, 8, 0, 0] = np.bitwise_or(UNSA, DNU)
+    true_out_gdq[0, 3:, 0, 0] = np.bitwise_or(UNSA, DNU)
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq
@@ -75,7 +73,8 @@ def test_pix_2():
     """
     Tests groups having data exceeding the signal threshold, Some groups are
     already flagged as DO_NOT_USE; they will not be checked for UC,  Other
-    ramps will have 'DNU'+'UNSA' added to their GROUPDQ.
+    groups will have 'DNU'+'UNSA' added to their GROUPDQ, as will all later
+    groups.
     """
     ngroups, nints, nrows, ncols = set_scalars()
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
@@ -94,6 +93,7 @@ def test_pix_2():
 
     true_out_gdq = ramp_model.groupdq.copy()
     true_out_gdq[0, 3, 0, 0] = np.bitwise_or(np.bitwise_or(DNU, UNSA), ADFL)
+    true_out_gdq[0, 4:, 0, 0] = np.bitwise_or(DNU, UNSA)
 
     out_model = undersampling_correction(ramp_model, signal_threshold)
     out_gdq = out_model.groupdq
