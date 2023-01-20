@@ -29,7 +29,10 @@
 # DAMAGE.
 #
 """
-Apply adjustments to an imaging JWST GWCS object
+Apply adjustments to an imaging JWST GWCS object. Input files can be
+``DataModel``s serialized to ASDF or ASDF-in-FITS files, or they could be
+"simple" ASDF files storing just the GWCS model in the root of the ASDF file
+under the key ``'wcs'``, i.e., ``asdf_file.tree['wcs']``.
 
 Examples
 --------
@@ -44,6 +47,7 @@ From command line::
 
     % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -o 0.0023
 """
+import argparse
 import glob
 import logging
 import os
@@ -94,8 +98,6 @@ def _file_type(file_name):
 
 
 def main():
-    import argparse
-
     if len(sys.argv) <= 1:
         raise ValueError("Missing required arguments.")
 
@@ -212,11 +214,12 @@ def main():
     ]
 
     if wcs_pars == [0.0, 0.0, 0.0, 1.0]:
-        logger.warning(
-            "All WCS adjustment parameters (delta RA, DEC, roll, and scale "
-            "factor) have default values (identical transformation)."
+        logger.info(
+            "All WCS adjustment parameters ('ra_delta', 'dec_delta',"
+            "roll_delta, and scale_factor) have default values"
+            "(identical transformation)."
         )
-        logger.warning("Nothing to do. Quitting.")
+        logger.info("Nothing to do. Quitting.")
         return
 
     if options.expand:

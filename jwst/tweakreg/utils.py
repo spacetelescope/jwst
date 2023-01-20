@@ -20,7 +20,7 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
 
     Parameters
     ----------
-    wcs : gwcs.WCS
+    wcs : `gwcs.WCS`
         WCS object to be adjusted. Must be an imaging JWST WCS of a calibrated
         data model.
 
@@ -45,7 +45,7 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
     Returns
     -------
 
-    wcs : gwcs.WCS
+    wcs : `gwcs.WCS`
         Adjusted WCS object.
     """
     # find the last frame in the pipeline that starts with 'v2v3':
