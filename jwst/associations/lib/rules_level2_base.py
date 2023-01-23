@@ -32,11 +32,12 @@ from jwst.associations.lib.dms_base import (
     SPEC2_SCIENCE_EXP_TYPES,
 )
 from jwst.associations.lib.member import Member
+from jwst.associations.lib.process_list import ListCategory
+from jwst.associations.lib.product_utils import prune_duplicate_products
 from jwst.associations.lib.rules_level3_base import _EMPTY, DMS_Level3_Base
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
-from jwst.lib.suffix import remove_suffix
-from jwst.associations.lib.product_utils import prune_duplicate_products
 from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
+from jwst.lib.suffix import remove_suffix
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ __all__ = [
     'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
+    'Constraint_Imprint',
     'Constraint_Mode',
     'Constraint_Single_Science',
     'Constraint_Special',
@@ -733,6 +735,26 @@ class Constraint_ExtCal(Constraint):
                 )
             ],
             reduce=Constraint.notany
+        )
+
+
+class Constraint_Imprint(Constraint):
+    """Select on imprint exposures"""
+
+    def __init__(self):
+        super(Constraint_Imprint, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='imprint',
+                    sources=['is_imprt']
+                ),
+                DMSAttrConstraint(
+                    name='mosaic_tile',
+                    sources=['mostilno'],
+                ),
+            ],
+            reprocess_on_match=True,
+            work_over=ListCategory.EXISTING,
         )
 
 
