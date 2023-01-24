@@ -78,13 +78,7 @@ class Asn_Lv2Image(
             ),
             Constraint(
                 [
-                    SimpleConstraint(
-                        value='background',
-                        test=lambda value, item: self.get_exposure_type(item) == value,
-                        force_unique=False,
-                        reprocess_on_match=True,
-                        work_over=ListCategory.EXISTING,
-                    ),
+                    Constraint_Background(self),
                     Constraint_Single_Science(self.has_science),
                 ], reduce=Constraint.any
             ),
