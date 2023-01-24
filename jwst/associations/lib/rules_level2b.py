@@ -252,13 +252,7 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
-                    SimpleConstraint(
-                        value='background',
-                        test=lambda value, item: re.match(value, self.get_exposure_type(item)),
-                        force_unique=False,
-                        reprocess_on_match=True,
-                        work_over=ListCategory.EXISTING,
-                    ),
+                    Constraint_Background(self),
                     Constraint_Imprint(),
                     SimpleConstraint(
                         value='science',

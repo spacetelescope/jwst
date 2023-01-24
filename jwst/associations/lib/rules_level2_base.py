@@ -51,6 +51,7 @@ __all__ = [
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'AsnMixin_Lv2WFSS',
+    'Constraint_Background',
     'Constraint_Base',
     'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
@@ -719,6 +720,19 @@ class Constraint_Base(Constraint):
                 force_unique=True,
             )
         ])
+
+
+class Constraint_Background(SimpleConstraint):
+    """Select backgrounds"""
+
+    def __init__(self, association):
+        super(Constraint_Background, self).__init__(
+            value='background',
+            test=lambda value, item: re.match(value, association.get_exposure_type(item)),
+            force_unique=False,
+            reprocess_on_match=True,
+            work_over=ListCategory.EXISTING,
+        )
 
 
 class Constraint_ExtCal(Constraint):
