@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         toxenv: [ check-style, check-security, check-dependencies, build-dist ]
-        python-version: [ '3.11' ]
+        python-version: [ '3.x' ]
         os: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v3
@@ -101,6 +101,7 @@ jobs:
       - if: ${{ contains(matrix.toxenv, '-cov') }}
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
           flags: unit
           fail_ci_if_error: true
