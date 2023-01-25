@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: setup.cfg
+          cache-dependency-path: 'setup.cfg'
       - run: pip install "tox>=4.0"
       - run: tox -e ${{ matrix.toxenv }}
   test:
@@ -74,7 +74,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: setup.cfg
+          cache-dependency-path: 'setup.cfg'
       - run: pip install "tox>=4.0"
       - run: >
           echo "pmap=$(
