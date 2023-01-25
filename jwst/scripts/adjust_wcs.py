@@ -53,12 +53,9 @@ import logging
 import os
 import sys
 
-import asdf
-
 import jwst
 from jwst.tweakreg.utils import adjust_wcs
 from jwst.assign_wcs.util import update_fits_wcsinfo
-from stdatamodels import filetype
 
 
 # Configure logging
@@ -81,20 +78,6 @@ def _replace_suffix(file, new_suffix):
     new_file_name = os.path.join(directory, base)
 
     return new_file_name
-
-
-def _file_type(file_name):
-    with open(file_name, mode='rb') as file:
-        try:
-            ft = filetype.check(file)
-            if ft == 'asdf':
-                return 2
-            elif ft == 'fits':
-                return 1
-            else:
-                return 0
-        except ValueError:
-            return 0
 
 
 def main():
@@ -146,13 +129,6 @@ def main():
         action="store_true",
         help="Expand wild cards in input file names (cannot be combined with "
              "-f/--file)."
-    )
-
-    parser.add_argument(
-        "-w",
-        "--wcs",
-        action="store_true",
-        help="Save output WCS only to an ASDF file (ignored with -u/--update)."
     )
 
     group_wcs = parser.add_argument_group(
@@ -229,35 +205,12 @@ def main():
     else:
         files = options.arg0
 
-    # check that all input files are of supported types:
-    try:
-        ftypes = [_file_type(f) for f in files]
-    except Exception as e:
-        logger.error(f"{e}")
-        logger.error("Script execution aborted.")
-        return
-
-    if 0 in ftypes:
-        logger.error(f"Input file '{files[ftypes.index(0)]}' is neither "
-                     "an ASDF nor a FITS data file.")
-        logger.error("Script execution aborted.")
-        return
-
-    for fname, ftype in zip(files, ftypes):
+    for fname in files:
         data_model = jwst.datamodels.open(fname)
-
-        if jwst.datamodels.JwstDataModel == type(data_model):
-            is_data_model = False
-            asdf_file = asdf.open(fname, mode='rw' if options.update else 'r')
-            in_wcs = asdf_file['wcs']
-        else:
-            # NOTE: ASN tables are excluded by ftype == 0
-            is_data_model = True
-            in_wcs = data_model.meta.wcs
 
         # Compute adjusted WCS:
         out_wcs = adjust_wcs(
-            wcs=in_wcs,
+            wcs=data_model.meta.wcs,
             delta_ra=options.ra_delta,
             delta_dec=options.dec_delta,
             delta_roll=options.roll_delta,
@@ -265,58 +218,32 @@ def main():
         )
 
         # Save results:
-        if is_data_model:
-            data_model.meta.wcs = out_wcs
-            # Also update FITS representation in input exposures for
-            # subsequent reprocessing by the end-user.
-            try:
-                update_fits_wcsinfo(
-                    data_model,
-                    max_pix_error=0.001,
-                    npoints=64
-                )
-            except (ValueError, RuntimeError) as e:
-                logger.warning(
-                    "Failed to update 'meta.wcsinfo' with FITS SIP "
-                    f'approximation. Reported error is:\n"{e.args[0]}"'
-                )
+        data_model.meta.wcs = out_wcs
+        # Also update FITS representation in input exposures for
+        # subsequent reprocessing by the end-user.
+        try:
+            update_fits_wcsinfo(
+                data_model,
+                max_pix_error=0.001,
+                npoints=64
+            )
+        except (ValueError, RuntimeError) as e:
+            logger.warning(
+                "Failed to update 'meta.wcsinfo' with FITS SIP "
+                f'approximation. Reported error is:\n"{e.args[0]}"'
+            )
 
-            if options.update:
-                data_model.save(fname, overwrite=True)
-                logger.info(f"Updated data model '{fname}'")
-            else:
-                if options.file is None:
-                    output_file = _replace_suffix(fname, options.suffix)
-                else:
-                    output_file = options.file
-
-                if options.wcs:
-                    with open(output_file,
-                              mode='wb' if options.overwrite else 'xb') as fd:
-                        asdf_file = asdf.AsdfFile({'wcs': out_wcs})
-                        asdf_file.write_to(fd)
-                        logger.info(f"Saved WCS model to '{output_file}'")
-                else:
-                    data_model.save(output_file, overwrite=options.overwrite)
-                    logger.info(f"Saved data model to '{output_file}'")
-
+        if options.update:
+            data_model.save(fname, overwrite=True)
+            logger.info(f"Updated data model '{fname}'")
         else:
-            asdf_file['wcs'] = out_wcs
-
-            if options.update:
-                asdf_file.update()
-                logger.info(f"Updated WCS model in '{fname}'")
-
+            if options.file is None:
+                output_file = _replace_suffix(fname, options.suffix)
             else:
-                if options.file is None:
-                    output_file = _replace_suffix(fname, options.suffix)
-                else:
-                    output_file = options.file
+                output_file = options.file
 
-                with open(output_file,
-                          mode='wb' if options.overwrite else 'xb') as fd:
-                    asdf_file.write_to(fd)
-                    logger.info(f"Saved WCS model to '{output_file}'")
+            data_model.save(output_file, overwrite=options.overwrite)
+            logger.info(f"Saved data model to '{output_file}'")
 
 
 if __name__ == '__main__':
