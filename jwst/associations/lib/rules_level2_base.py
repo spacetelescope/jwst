@@ -1032,6 +1032,11 @@ class AsnMixin_Lv2Special:
 
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science
+
+        The only case where this should not happen is if the association
+        already has its science, and the current item is an imprint. Leave
+        that item as an imprint.
+
         Parameters
         ----------
         item : dict
@@ -1044,6 +1049,9 @@ class AsnMixin_Lv2Special:
         exposure_type 
             Always what is defined as `default`
         """
+        if self.has_science() and super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default) == 'imprint':
+            return 'imprint'
+
         return default
 
 

@@ -296,8 +296,14 @@ class Asn_Lv2SpecSpecial(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(),
-            Constraint_Single_Science(self.has_science),
             Constraint_Special(),
+            Constraint(
+                [
+                    Constraint_Imprint(),
+                    Constraint_Single_Science(self.has_science),
+                ],
+                reduce=Constraint.any
+            ),
         ])
 
         # Now check and continue initialization.
