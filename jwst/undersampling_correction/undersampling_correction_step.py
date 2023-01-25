@@ -27,7 +27,7 @@ class UndersamplingCorrectionStep(Step):
         # Open the input data model
         with datamodels.RampModel(input) as input_model:
             if (input_model.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
-                log.warning('Too few groups per integration; skipping undersampling_correction')
+                log.info('Too few groups per integration; skipping undersampling_correction')
 
                 result = input_model
                 result.meta.cal_step.undersampling_correction = 'SKIPPED'

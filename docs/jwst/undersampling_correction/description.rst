@@ -19,7 +19,7 @@ images.
 Once a group in a ramp has been flagged as affected by charge migration, all subsequent groups
 in the ramp are also flagged. By flagging these groups, they will not get used in the
 computation of slopes in the ``ramp_fitting`` step, and as described in the algorithm section below,
-they will be used in the calculation of the variance of the slope due to readnoise,
+they will be used in the calculation of the variance of the slope due to readnoise.
 
 
 Input details

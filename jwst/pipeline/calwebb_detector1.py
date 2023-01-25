@@ -120,7 +120,7 @@ class Detector1Pipeline(Pipeline):
         # apply the jump step
         input = self.jump(input)
 
-        # apply the undersampling step (NIRISS only)
+        # apply the undersampling step
         input = self.undersampling_correction(input)
 
         # save the corrected ramp data, if requested

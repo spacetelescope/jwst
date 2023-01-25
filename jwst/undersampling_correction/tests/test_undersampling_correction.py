@@ -128,7 +128,7 @@ def create_mod_arrays(ngroups, nints, nrows, ncols):
     # Create and populate ramp model
     ramp_model = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
     ramp_model.meta.instrument.name = 'NIRISS'
-    ramp_model.meta.instrument.detector = 'NRS1'
+    ramp_model.meta.instrument.detector = 'NIS'
 
     ramp_model.meta.subarray.name = 'FULL'
     ramp_model.meta.subarray.xstart = 1

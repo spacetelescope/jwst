@@ -244,7 +244,7 @@ tweakreg
 undersampling_correction
 ------------------------
 
-- New step between jump and ramp_fitting in the ``Detector1 Pipeline``. [#7396]
+- New step between jump and ramp_fitting in the ``Detector1Pipeline``. [#7396]
 
 
 wfss_contam

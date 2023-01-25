@@ -2466,7 +2466,7 @@ properties:
           undersampling_correction:
             title: Undersampling Correction
             type: string
-            fits_keyword: S_UNDCOR
+            fits_keyword: S_UNDSMP
             blend_table: True
           wavecorr:
             title: NIRSpec wavelength correction
