@@ -1041,10 +1041,10 @@ class AsnMixin_Lv2Special:
             If None, routine will raise LookupError
         Returns
         -------
-        exposure_type : 'science'
-            Always returns as science
+        exposure_type 
+            Always what is defined as `default`
         """
-        return 'science'
+        return default
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
