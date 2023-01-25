@@ -39,10 +39,27 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: 'setup.cfg'
-      - run: pip install "tox>=4.0"
+      - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
+  cache_crds:
+    name: cache CRDS files
+    runs-on: ubuntu-latest
+    outputs:
+      crds-context: ${{ steps.crds-context.outputs.pmap }}
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install crds
+      - run: echo "pmap=$(crds list --operational-context)" >> $GITHUB_OUTPUT
+        id: crds-context
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.CRDS_PATH }}
+          key: crds-${{ steps.crds-context.outputs.pmap }}
   test:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    needs: [ cache_crds ]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -75,21 +92,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: 'setup.cfg'
-      - run: pip install "tox>=4.0"
-      - run: >
-          echo "pmap=$(
-          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["jwst"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ |
-          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
-          )" >> $GITHUB_OUTPUT
-        # Get default CRDS_CONTEXT without installing crds client
-        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
-        id: crds-context
+      - run: pip install tox
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-${{ steps.crds-context.outputs.pmap }}
+          key: crds-${{ needs.cache_crds.outputs.crds-context }}
       - run: tox -e ${{ matrix.toxenv }}
-      - if: ${{ contains(matrix.toxenv,'-cov') }}
+      - if: ${{ contains(matrix.toxenv, '-cov') }}
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
