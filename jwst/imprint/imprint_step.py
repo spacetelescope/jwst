@@ -55,9 +55,10 @@ class ImprintStep(Step):
 
             # Update the step status and close the imprint model
             result.meta.cal_step.imprint = 'COMPLETE'
-            input_model.close()
             imprint_model.close()
         else:
             self.log.info(f'No imprint image was found for {input}')
             result.meta.cal_step.imprint = 'SKIP'
+
+        input_model.close()
         return result
