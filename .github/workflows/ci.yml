@@ -57,6 +57,8 @@ jobs:
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ steps.crds-context.outputs.pmap }}
+      - run: crds sync --contexts ${{ steps.crds-context.outputs.pmap }}
+        if: ${{ steps.crds-context.outputs.pmap != '' }}
   test:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: [ cache_crds ]
