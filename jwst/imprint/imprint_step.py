@@ -58,7 +58,7 @@ class ImprintStep(Step):
             imprint_model.close()
         else:
             self.log.info(f'No imprint image was found for {input}')
-            result.meta.cal_step.imprint = 'SKIP'
+            result.meta.cal_step.imprint = 'SKIPPED'
 
         input_model.close()
         return result
