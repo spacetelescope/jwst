@@ -57,6 +57,7 @@ __all__ = [
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Imprint',
+    'Constraint_Imprint_Special',
     'Constraint_Mode',
     'Constraint_Single_Science',
     'Constraint_Special',
@@ -772,6 +773,39 @@ class Constraint_Imprint(Constraint):
         )
 
 
+class Constraint_Imprint_Special(Constraint):
+    """Select on imprint exposures"""
+
+    def __init__(self, association=None):
+        # If an association is not provided, the check for original
+        # exposure type is ignored.
+        if association is None:
+            sources = lambda item: 'not imprint'
+        else:
+            sources = lambda item: association.original_exposure_type
+
+        super(Constraint_Imprint_Special, self).__init__(
+            [
+                 DMSAttrConstraint(
+                    name='imprint',
+                    sources=['is_imprt'],
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+                DMSAttrConstraint(
+                    name='mosaic_tile',
+                    sources=['mostilno'],
+                ),
+                SimpleConstraint(
+                    value='imprint',
+                    sources=sources,
+                    test=lambda v1, v2: v1 != v2,
+                    force_unique=False,
+                ),
+            ],
+        )
+
+
 class Constraint_Mode(Constraint):
     """Select on instrument and optical path"""
 
@@ -1028,7 +1062,14 @@ class AsnMixin_Lv2Nod:
 
 class AsnMixin_Lv2Special:
     """Process special and non-science exposures as science.
+
+    Attributes
+    ----------
+    original_exposure_type : str
+        The original exposure type of what is referred to as the "science" member
     """
+
+    original_exposure_type = None
 
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science
@@ -1046,11 +1087,14 @@ class AsnMixin_Lv2Special:
             If None, routine will raise LookupError
         Returns
         -------
-        exposure_type 
+        exposure_type
             Always what is defined as `default`
         """
-        if self.has_science() and super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default) == 'imprint':
-            return 'imprint'
+        if self.has_science():
+            if super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default) == 'imprint':
+                return 'imprint'
+        else:
+            self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
 
         return default
 

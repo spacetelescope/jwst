@@ -5,7 +5,7 @@ import logging
 import re
 
 from jwst.associations.exceptions import AssociationNotValidError
-from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS
+from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint_Imprint_Special
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
@@ -299,7 +299,7 @@ class Asn_Lv2SpecSpecial(
             Constraint_Special(),
             Constraint(
                 [
-                    Constraint_Imprint(),
+                    Constraint_Imprint_Special(self),
                     Constraint_Single_Science(self.has_science),
                 ],
                 reduce=Constraint.any
