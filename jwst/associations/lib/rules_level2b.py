@@ -275,6 +275,39 @@ class Asn_Lv2Spec(
 
 
 @RegistryMarker.rule
+class Asn_Lv2SpecImprint(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b Treat Imprint/Leakcal as science
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Only handles Imprint/Leakcal exposures
+        - Single science exposure
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science(),
+            Constraint_Single_Science(self.has_science),
+            DMSAttrConstraint(
+                name='imprint',
+                sources=['is_imprt']
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2SpecImprint, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Spectral,
