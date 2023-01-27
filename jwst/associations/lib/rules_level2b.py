@@ -263,7 +263,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                        value='2-point-nod|4-point-nod|along-slit-nod',
                     )
                 ],
                 reduce=Constraint.notany
@@ -375,12 +375,12 @@ class Asn_Lv2SpecTSO(
                         DMSAttrConstraint(
                             name='exp_type',
                             sources=['exp_type'],
-                            value=['nrc_tsgrism'],
+                            value='nrc_tsgrism',
                         ),
                         DMSAttrConstraint(
                             name='pupil',
                             sources=['pupil'],
-                            value=['clear'],
+                            value='clear',
                         )],
                     )
                 ],
@@ -427,7 +427,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['along-slit-nod'],
+                value='along-slit-nod',
             ),
             SimpleConstraint(
                 value=True,
@@ -886,7 +886,7 @@ class Asn_Lv2NRSIFUNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['2-point-nod|4-point-nod'],
+                value='2-point-nod|4-point-nod',
                 force_unique=True
             ),
             DMSAttrConstraint(
@@ -925,7 +925,7 @@ class Asn_Lv2WFSC(
                     DMSAttrConstraint(
                         name='dms_note',
                         sources=['dms_note'],
-                        value=['wfsc_los_jitter'],
+                        value='wfsc_los_jitter',
                     ),
                     DMSAttrConstraint(
                         name='exp_type',
