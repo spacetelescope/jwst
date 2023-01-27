@@ -224,7 +224,7 @@ def _is_point_source(slit, exp_type):
 
     Parameters
     ----------
-    slit : `~jwst.transforms.models.Slit`
+    slit : `~stdatamodels.jwst.transforms.models.Slit`
         A slit object.
     exp_type : str
         The exposure type
