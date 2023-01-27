@@ -19,13 +19,15 @@ class ImprintStep(Step):
     def process(self, input, imprint):
 
         # subtract leakcal (imprint) image
-        # If there is only one imprint image is in the association use for all the data.
-        # If there is more than one imprint image  in the association then select
-        # the imprint  image to subtract based on position number (DataModel.meta.dither.position_number).
+        # If there is only one imprint image is in the association use it  for all the data.
+        # If there is more than one imprint image in the association then select
+        # the imprint  image to subtract based on position number (DataModel.meta.dither.position_number) &
+        # observation number (Datamodel.meta.observation.observation_number)
 
         # Open the input data model and get position number of image
         input_model = datamodels.open(input)
         pos_no = input_model.meta.dither.position_number
+        obs_no = input_model.meta.observation.observation_number
 
         # find imprint that goes with input image - if there is only 1 imprint image - use it.
         num_imprint = len(imprint)
@@ -38,9 +40,9 @@ class ImprintStep(Step):
                 # open imprint images and read in pos_no to find match
                 imprint_model = datamodels.open(imprint[i])
                 imprint_pos_no = imprint_model.meta.dither.position_number
+                imprint_obs_no = imprint_model.meta.observation.observation_number
                 imprint_model.close()
-
-                if pos_no == imprint_pos_no:
+                if pos_no == imprint_pos_no and obs_no == imprint_obs_no:
                     match = i
                 i = i + 1
 
@@ -53,8 +55,10 @@ class ImprintStep(Step):
 
             # Update the step status and close the imprint model
             result.meta.cal_step.imprint = 'COMPLETE'
-            input_model.close()
             imprint_model.close()
         else:
             self.log.info(f'No imprint image was found for {input}')
+            result.meta.cal_step.imprint = 'SKIPPED'
+
+        input_model.close()
         return result

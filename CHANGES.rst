@@ -6,6 +6,10 @@ general
 
 - Pin ``BayesicFitting`` to < 3.1.0 to avoid an import error in that release. [#7435]
 
+imprint
+-------
+Ensure that the observation number of the imprint matches the image observation number the imprint is to be subtracted from. [#7440] 
+
 regtest
 -------
 
