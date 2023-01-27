@@ -135,7 +135,7 @@ class Main():
         config.DEBUG = (parsed.loglevel != 0) and (parsed.loglevel <= logging.DEBUG)
 
         # Preamble
-        logger.info('Command-line arguments: {}'.format(args))
+        logger.info('Command-line arguments: %s', parsed)
         logger.context.set('asn_candidate_ids', parsed.asn_candidate_ids)
 
         if pool is None:

@@ -2,9 +2,10 @@
 """
 from collections import deque
 import logging
+import re
 
 from jwst.associations.exceptions import AssociationNotValidError
-from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS
+from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint_Imprint_Special
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
@@ -77,13 +78,7 @@ class Asn_Lv2Image(
             ),
             Constraint(
                 [
-                    SimpleConstraint(
-                        value='background',
-                        test=lambda value, item: self.get_exposure_type(item) == value,
-                        force_unique=False,
-                        reprocess_on_match=True,
-                        work_over=ListCategory.EXISTING,
-                    ),
+                    Constraint_Background(self),
                     Constraint_Single_Science(self.has_science),
                 ], reduce=Constraint.any
             ),
@@ -251,13 +246,8 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
-                    SimpleConstraint(
-                        value='background',
-                        test=lambda value, item: self.get_exposure_type(item) == value,
-                        force_unique=False,
-                        reprocess_on_match=True,
-                        work_over=ListCategory.EXISTING,
-                    ),
+                    Constraint_Background(self),
+                    Constraint_Imprint(),
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
@@ -273,7 +263,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                        value='2-point-nod|4-point-nod|along-slit-nod',
                     )
                 ],
                 reduce=Constraint.notany
@@ -282,6 +272,39 @@ class Asn_Lv2Spec(
 
         # Now check and continue initialization.
         super(Asn_Lv2Spec, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_Lv2SpecImprint(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b Treat Imprint/Leakcal as science
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Only handles Imprint/Leakcal exposures
+        - Single science exposure
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science(),
+            Constraint_Single_Science(self.has_science),
+            DMSAttrConstraint(
+                name='imprint',
+                sources=['is_imprt']
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2SpecImprint, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
@@ -306,8 +329,14 @@ class Asn_Lv2SpecSpecial(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(),
-            Constraint_Single_Science(self.has_science),
             Constraint_Special(),
+            Constraint(
+                [
+                    Constraint_Imprint_Special(self),
+                    Constraint_Single_Science(self.has_science),
+                ],
+                reduce=Constraint.any
+            ),
         ])
 
         # Now check and continue initialization.
@@ -346,12 +375,12 @@ class Asn_Lv2SpecTSO(
                         DMSAttrConstraint(
                             name='exp_type',
                             sources=['exp_type'],
-                            value=['nrc_tsgrism'],
+                            value='nrc_tsgrism',
                         ),
                         DMSAttrConstraint(
                             name='pupil',
                             sources=['pupil'],
-                            value=['clear'],
+                            value='clear',
                         )],
                     )
                 ],
@@ -398,7 +427,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['along-slit-nod'],
+                value='along-slit-nod',
             ),
             SimpleConstraint(
                 value=True,
@@ -857,7 +886,7 @@ class Asn_Lv2NRSIFUNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['2-point-nod|4-point-nod'],
+                value='2-point-nod|4-point-nod',
                 force_unique=True
             ),
             DMSAttrConstraint(
@@ -896,7 +925,7 @@ class Asn_Lv2WFSC(
                     DMSAttrConstraint(
                         name='dms_note',
                         sources=['dms_note'],
-                        value=['wfsc_los_jitter'],
+                        value='wfsc_los_jitter',
                     ),
                     DMSAttrConstraint(
                         name='exp_type',

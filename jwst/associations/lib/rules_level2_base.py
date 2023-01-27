@@ -32,11 +32,12 @@ from jwst.associations.lib.dms_base import (
     SPEC2_SCIENCE_EXP_TYPES,
 )
 from jwst.associations.lib.member import Member
+from jwst.associations.lib.process_list import ListCategory
+from jwst.associations.lib.product_utils import prune_duplicate_products
 from jwst.associations.lib.rules_level3_base import _EMPTY, DMS_Level3_Base
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
-from jwst.lib.suffix import remove_suffix
-from jwst.associations.lib.product_utils import prune_duplicate_products
 from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
+from jwst.lib.suffix import remove_suffix
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -50,10 +51,13 @@ __all__ = [
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'AsnMixin_Lv2WFSS',
+    'Constraint_Background',
     'Constraint_Base',
     'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
+    'Constraint_Imprint',
+    'Constraint_Imprint_Special',
     'Constraint_Mode',
     'Constraint_Single_Science',
     'Constraint_Special',
@@ -719,6 +723,19 @@ class Constraint_Base(Constraint):
         ])
 
 
+class Constraint_Background(SimpleConstraint):
+    """Select backgrounds"""
+
+    def __init__(self, association):
+        super(Constraint_Background, self).__init__(
+            value='background',
+            test=lambda value, item: re.match(value, association.get_exposure_type(item)),
+            force_unique=False,
+            reprocess_on_match=True,
+            work_over=ListCategory.EXISTING,
+        )
+
+
 class Constraint_ExtCal(Constraint):
     """Remove any nis_extcals from the associations, they
        are NOT to receive level-2b or level-3 processing!"""
@@ -733,6 +750,59 @@ class Constraint_ExtCal(Constraint):
                 )
             ],
             reduce=Constraint.notany
+        )
+
+
+class Constraint_Imprint(Constraint):
+    """Select on imprint exposures"""
+
+    def __init__(self):
+        super(Constraint_Imprint, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='imprint',
+                    sources=['is_imprt']
+                ),
+                DMSAttrConstraint(
+                    name='mosaic_tile',
+                    sources=['mostilno'],
+                ),
+            ],
+            reprocess_on_match=True,
+            work_over=ListCategory.EXISTING,
+        )
+
+
+class Constraint_Imprint_Special(Constraint):
+    """Select on imprint exposures"""
+
+    def __init__(self, association=None):
+        # If an association is not provided, the check for original
+        # exposure type is ignored.
+        if association is None:
+            sources = lambda item: 'not imprint'
+        else:
+            sources = lambda item: association.original_exposure_type
+
+        super(Constraint_Imprint_Special, self).__init__(
+            [
+                 DMSAttrConstraint(
+                    name='imprint',
+                    sources=['is_imprt'],
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+                DMSAttrConstraint(
+                    name='mosaic_tile',
+                    sources=['mostilno'],
+                ),
+                SimpleConstraint(
+                    value='imprint',
+                    sources=sources,
+                    test=lambda v1, v2: v1 != v2,
+                    force_unique=False,
+                ),
+            ],
         )
 
 
@@ -992,10 +1062,22 @@ class AsnMixin_Lv2Nod:
 
 class AsnMixin_Lv2Special:
     """Process special and non-science exposures as science.
+
+    Attributes
+    ----------
+    original_exposure_type : str
+        The original exposure type of what is referred to as the "science" member
     """
+
+    original_exposure_type = None
 
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science
+
+        The only case where this should not happen is if the association
+        already has its science, and the current item is an imprint. Leave
+        that item as an imprint.
+
         Parameters
         ----------
         item : dict
@@ -1005,10 +1087,16 @@ class AsnMixin_Lv2Special:
             If None, routine will raise LookupError
         Returns
         -------
-        exposure_type : 'science'
-            Always returns as science
+        exposure_type
+            Always what is defined as `default`
         """
-        return 'science'
+        if self.has_science():
+            if super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default) == 'imprint':
+                return 'imprint'
+        else:
+            self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
+
+        return default
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):

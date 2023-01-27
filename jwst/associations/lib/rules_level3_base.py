@@ -730,7 +730,7 @@ class Constraint_MSA(Constraint):
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
-                    value=('nrs_msaspec'),
+                    value='nrs_msaspec',
                     force_unique=False
                 ),
                 DMSAttrConstraint(

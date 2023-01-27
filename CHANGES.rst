@@ -1,6 +1,11 @@
 1.9.4 (unreleased)
 ==================
 
+associations
+------------
+
+- Ensure all imprint exposures are include in associations [#7438]
+
 general
 -------
 
