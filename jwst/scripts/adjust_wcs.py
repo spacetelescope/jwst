@@ -168,7 +168,7 @@ def main():
     for f in options.arg0:
         files.extend(glob.glob(f))
 
-    if len(files) > 1:
+    if options.file and len(files) > 1 :
         parser.error(
             "argument -f/--file: not allowed with multiple input files"
         )
