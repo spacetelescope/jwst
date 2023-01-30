@@ -56,7 +56,9 @@ class PixelReplaceStep(Step):
             # for each spectrum - NRS_FIXEDSLIT, WFSS
             if isinstance(input_model, datamodels.MultiSlitModel):
                 self.log.debug('Input is a MultiSlitModel.')
-
+            # NRS_BRIGHTOBJ provides a SlitModel
+            elif isinstance(input_model, datamodels.SlitModel):
+                self.log.debug('Input is a SlitModel.')
             # MIRI_LRS-FIXEDSLIT comes in ImageModel - any others?
             elif isinstance(input_model, datamodels.ImageModel):
                 self.log.debug(f'Input ImageModel is of exptype: {input_model.meta.exposure.type}')

@@ -84,8 +84,9 @@ class PixelReplacement:
 
                 self.output.slits[i] = slit_replaced
 
-        # CubeModel inputs are TSO (so far?)
-        elif isinstance(self.input, datamodels.CubeModel):
+        # CubeModel inputs are TSO (so far?); only SlitModel seen so far is NRS_BRIGHTOBJ, also requiring
+        # a re-packaging of the data into 2D inputs for the algorithm.
+        elif isinstance(self.input, (datamodels.CubeModel, datamodels.SlitModel)):
             if len(self.input.data) != len(self.input.dq):
                 log.critical("Data and DQ arrays are not of equal length - skipping pixel replacement.")
                 return
