@@ -12,6 +12,8 @@ from ..lib import reffile_utils
 
 import logging
 
+import copy
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -119,6 +121,7 @@ def create_integration_model(input_model, integ_info, int_times):
         The output CubeModel to be returned from the ramp fit step.
     """
     data, dq, var_poisson, var_rnoise, err = integ_info
+
     int_model = datamodels.CubeModel(
         data=np.zeros(data.shape, dtype=np.float32),
         dq=np.zeros(data.shape, dtype=np.uint32),
@@ -155,6 +158,7 @@ def create_optional_results_model(input_model, opt_info):
     """
     (slope, sigslope, var_poisson, var_rnoise,
         yint, sigyint, pedestal, weights, crmag) = opt_info
+
     opt_model = datamodels.RampFitOutputModel(
         slope=slope,
         sigslope=sigslope,
@@ -213,8 +217,8 @@ class RampFitStep(Step):
             log.info('Using READNOISE reference file: %s', readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
 
-            with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model, \
-                 datamodels.GainModel(gain_filename) as gain_model:
+            with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model,
+            datamodels.GainModel(gain_filename) as gain_model:
 
                 # Try to retrieve the gain factor from the gain reference file.
                 # If found, store it in the science model meta data, so that it's
@@ -242,11 +246,43 @@ class RampFitStep(Step):
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
                 self.weighting, max_cores, dqflags.pixel, suppress_one_group=self.suppress_one_group)
 
-        # Save the OLS optional fit product, if it exists
-        if opt_info is not None:
-            opt_model = create_optional_results_model(input_model, opt_info)
-            self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
+            # To calculate the readnoise variance for weighting, ramp_fitting
+            # will be run a second time - this time with the DO_NOT_USE flags
+            # removed from the UNDERSAMP-flagged pixels. To reduce execution time,
+            # fitting will effectively be performed only on the UNDERSAMP-flagged
+            # pixels, by flagging all other pixels as DO_NOT_USE.
 
+            # First create an intermediate model ('_W' for weighting) to
+            # input to a 2nd ramp_fitting call.
+            input_model_W = copy.copy(input_model)
+
+            # Flag all pixels as DO_NOT_USE, then remove the DO_NOT_USE flag
+            # from the UNDERSAMP-flagged pixels.
+            gdq = input_model_W.groupdq.copy()
+            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))
+            gdq = np.bitwise_or(gdq, dqflags.group['DO_NOT_USE'])
+            gdq[wh_undersamp] -= dqflags.group['DO_NOT_USE']
+            input_model_W.groupdq = gdq
+
+            # Rerun fitting to get the weighted RN variances
+            image_info_W, integ_info_W, opt_info_W, gls_opt_model_W = ramp_fit.ramp_fit(
+                input_model_W, buffsize,
+                self.save_opt, readnoise_2d, gain_2d, self.algorithm,
+                self.weighting, max_cores, dqflags.pixel, suppress_one_group=self.suppress_one_group)
+
+            # The VAR_RNOISE arrays are written out to the out_model via the image_info tuple,
+            # and similarly for the integration and optional models. Create new info tuples
+            # to be composed of the original values plus the weighted RN variance value. The
+            # 3rd component of each contains the RN variance.
+            image_info_new = (image_info[0], image_info[1], image_info[2], image_info_W[3], image_info[4])
+            integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_info_W[3], integ_info[4])
+            opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_info_W[3],
+                            opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
+
+        # Save the OLS optional fit product, if it exists.
+        if opt_info_new is not None:
+            opt_model_new = create_optional_results_model(input_model, opt_info_new)
+            self.save_model(opt_model_new, 'fitopt', output_file=self.opt_name)
         '''
         # GLS removed from code, since it's not implemented right now.
         # Save the GLS optional fit product, if it exists
@@ -255,10 +291,11 @@ class RampFitStep(Step):
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
         '''
-
         out_model, int_model = None, None
-        if image_info is not None and integ_info is not None:
-            out_model = create_image_model(input_model, image_info)
+
+        # Create models from updated info
+        if image_info_new is not None and integ_info_new is not None:
+            out_model = create_image_model(input_model, image_info_new)
             out_model.meta.bunit_data = 'DN/s'
             out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
@@ -268,7 +305,7 @@ class RampFitStep(Step):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-            int_model = create_integration_model(input_model, integ_info, int_times)
+            int_model = create_integration_model(input_model, integ_info_new, int_times)
             int_model.meta.bunit_data = 'DN/s'
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
