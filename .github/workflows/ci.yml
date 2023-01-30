@@ -21,47 +21,8 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-  check:
-    name: ${{ matrix.toxenv }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        toxenv: [ check-style, check-security, check-dependencies, build-dist ]
-        python-version: [ '3.x' ]
-        os: [ ubuntu-latest ]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
-      - run: pip install tox
-      - run: tox -e ${{ matrix.toxenv }}
-  cache_crds:
-    name: cache CRDS files
-    runs-on: ubuntu-latest
-    outputs:
-      crds-context: ${{ steps.crds-context.outputs.pmap }}
-    steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      - run: pip install crds
-      - run: echo "pmap=$(crds list --operational-context)" >> $GITHUB_OUTPUT
-        id: crds-context
-      - uses: actions/cache@v3
-        with:
-          path: ${{ env.CRDS_PATH }}
-          key: crds-${{ steps.crds-context.outputs.pmap }}
-      - run: crds sync --contexts ${{ steps.crds-context.outputs.pmap }}
-        if: ${{ steps.crds-context.outputs.pmap != '' }}
   test:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
-    needs: [ cache_crds ]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -70,6 +31,18 @@ jobs:
         python-version: [ '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest, macos-latest ]
         include:
+          - toxenv: check-style
+            os: ubuntu-latest
+            python-version: '3.x'
+          - toxenv: check-security
+            os: ubuntu-latest
+            python-version: '3.x'
+          - toxenv: check-dependencies
+            os: ubuntu-latest
+            python-version: '3.x'
+          - toxenv: build-dist
+            os: ubuntu-latest
+            python-version: '3.x'
           - toxenv: test-cov-xdist
             os: ubuntu-latest
             python-version: '3.11'
@@ -94,11 +67,23 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: 'setup.cfg'
-      - run: pip install tox
+      - run: >
+          echo "pmap=$(
+          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["jwst"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ |
+          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
+          )" >> $GITHUB_OUTPUT
+        # Get default CRDS_CONTEXT without installing crds client
+        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
+        id: crds-context
+        if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
+      - run: echo "CRDS CONTEXT ${{ steps.crds-context.outputs.pmap }}"
+        if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
       - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-${{ needs.cache_crds.outputs.crds-context }}
+          key: crds-${{ steps.crds-context.outputs.pmap }}
+        if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
+      - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv, '-cov') }}
         uses: codecov/codecov-action@v3

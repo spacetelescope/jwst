@@ -19,36 +19,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toxenv: [test-devdeps-xdist]
-        python-version: ['3.x']
-        os: [ubuntu-latest]
+        toxenv: [ test-devdeps-xdist ]
+        python-version: [ '3.x' ]
+        os: [ ubuntu-latest ]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: setup.cfg
-      - name: Get CRDS context
-        id: crds-context
-        # Get default CRDS_CONTEXT without installing crds client
-        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
-        run: >
+          cache-dependency-path: 'setup.cfg'
+      - run: >
           echo "pmap=$(
           curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["jwst"], "id": 1}' https://jwst-crds.stsci.edu/json/ |
           python -c "import sys, json; print(json.load(sys.stdin)['result'])"
           )" >> $GITHUB_OUTPUT
+        # Get default CRDS_CONTEXT without installing crds client
+        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
+        id: crds-context
       - run: echo "CRDS CONTEXT ${{ steps.crds-context.outputs.pmap }}"
-      - name: Cache CRDS reference files
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-reffiles-${{ steps.crds-context.outputs.pmap }}
-      - name: Run ${{ matrix.toxenv }}
-        run: |
-          pip install tox
-          tox -e ${{ matrix.toxenv }}
+      - run: pip install tox
+      - run: tox -e ${{ matrix.toxenv }}
