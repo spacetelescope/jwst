@@ -67,7 +67,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: 'setup.cfg'
-      - run: >
+      - if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
+        run: >
           echo "pmap=$(
           curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["jwst"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ |
           python -c "import sys, json; print(json.load(sys.stdin)['result'])"
@@ -75,14 +76,13 @@ jobs:
         # Get default CRDS_CONTEXT without installing crds client
         # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
         id: crds-context
-        if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
-      - run: echo "CRDS CONTEXT ${{ steps.crds-context.outputs.pmap }}"
-        if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
-      - uses: actions/cache@v3
+      - if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
+        run: echo "CRDS CONTEXT ${{ steps.crds-context.outputs.pmap }}"
+      - if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
+        uses: actions/cache@v3
         with:
           path: ${{ env.CRDS_PATH }}
           key: crds-${{ steps.crds-context.outputs.pmap }}
-        if: ${{ contains(matrix.toxenv, 'test') && !contains(matrix.toxenv, 'opencv') }}
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv, '-cov') }}
