@@ -39,7 +39,7 @@ Examples
 
 From command line::
 
-    % adjust_wcs [-h] (-u | --suffix SUFFIX | -f FILE) [--overwrite] [-x] [-w]
+    % adjust_wcs [-h] (-u | --suffix SUFFIX | -f FILE) [--overwrite] [-w]
                  [-r RA_DELTA] [-d DEC_DELTA] [-o ROLL_DELTA] [-s SCALE_FACTOR]
                  [-v] [input ...]
 
@@ -123,14 +123,6 @@ def main():
         help="Overwrite existing output files (ignored with -u/--update)."
     )
 
-    parser.add_argument(
-        "-x",
-        "--expand",
-        action="store_true",
-        help="Expand wild cards in input file names (cannot be combined with "
-             "-f/--file)."
-    )
-
     group_wcs = parser.add_argument_group(
         title='WCS adjustment parameters'
     )
@@ -172,15 +164,14 @@ def main():
 
     options = parser.parse_args()
 
-    if options.file:
-        if options.expand:
-            parser.error(
-                "argument -x/--expand: not allowed with argument -f/--file"
-            )
-        if len(options.arg0) > 1:
-            parser.error(
-                "only one input file allowed with argument -f/--file"
-            )
+    files = []
+    for f in options.arg0:
+        files.extend(glob.glob(f))
+
+    if len(files) > 1:
+        parser.error(
+            "argument -f/--file: not allowed with multiple input files"
+        )
 
     wcs_pars = [
         options.ra_delta,
@@ -197,13 +188,6 @@ def main():
         )
         logger.info("Nothing to do. Quitting.")
         return
-
-    if options.expand:
-        files = []
-        for f in options.arg0:
-            files.extend(glob.glob(f))
-    else:
-        files = options.arg0
 
     for fname in files:
         data_model = jwst.datamodels.open(fname)
