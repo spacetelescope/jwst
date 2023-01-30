@@ -980,8 +980,19 @@ def _corrections_for_lrs(data, pathloss):
 
         # Save the corrections. The `data` portion is the correction used.
         # The individual ones will be saved in the respective attributes.
-        correction = type(data)(data=pathloss_2d)
-        correction.pathloss_point = pathloss_2d
+        if isinstance(data, datamodels.ImageModel):
+            correction = type(data)(data=pathloss_2d)
+            correction.pathloss_point = pathloss_2d
+        elif isinstance(data, datamodels.CubeModel):
+            pathloss_3d = np.repeat(pathloss_2d[np.newaxis, :, :], len(data.data), axis=0)
+            correction = type(data)(data=pathloss_3d)
+            correction.pathloss_point = pathloss_3d
+        else:
+            errmsg = (f"Pathloss step received unexpected datamodel type {type(data)}, "
+                      f"which it cannot process. Exiting.")
+            log.critical(errmsg)
+            raise RuntimeError(errmsg)
+
         correction.wavelength = wavelength_array
 
     else:
