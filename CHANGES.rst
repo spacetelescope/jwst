@@ -9,7 +9,13 @@
 associations
 ------------
 
-- Ensure all imprint exposures are include in associations [#7438]
+- Ensure all NIRSpec imprint exposures are included in associations [#7438]
+
+calwebb_spec2
+-------------
+
+- Subtract leakcal/imprint image from science and backgrounds before background subtraction
+  is applied. [#7426]
 
 general
 -------
@@ -18,7 +24,18 @@ general
 
 imprint
 -------
-Ensure that the observation number of the imprint matches the image observation number the imprint is to be subtracted from. [#7440] 
+
+- Match leakcal/imprint image and science/background image by using dither position number [#7426]
+
+- Ensure that the observation number of the imprint image matches the observation number of the image
+  from which the imprint is to be subtracted. This is necessary to properly pair up imprint images
+  with their respective target and background images that are in different observations. [#7440] 
+
+ramp_fitting
+------------
+
+- Bug fix for corner case of 1 good group and 1 jump-flagged group, so that slope is set to
+  NaN (instead of zero) and flagged as DO_NOT_USE. [spacetelescope/stcal#141]
 
 regtest
 -------
@@ -39,12 +56,14 @@ regtest
 cube_build
 ----------
 
-- Fix bug for NIRSpec data that did not allow the user to specify the wavelengths to use to build the cube [#7427]
+- Fix bug for NIRSpec data that did not allow the user to specify the min/max wavelengths for
+  the cube [#7427]
 
 wfss_contam
 -----------
 
 - Open image models in a "with" context to keep models open while accessing contents [#7425]
+
 
 1.9.2 (2023-01-04)
 ==================
@@ -52,17 +71,7 @@ wfss_contam
 documentation
 -------------
 
-- Remove references to pub server [#7421]
-
-calwebb_spec2
--------------
-
-- Subtract leakcal image from science and backgrounds and then background subtract [#7426]
-
-imprint
--------
-
-- Add matching leakcal image and science/background image by using dither.position_number [#7426]
+- Remove references to CRDS PUB server [#7421]
 
 
 1.9.1 (2023-01-03)
@@ -71,7 +80,8 @@ imprint
 associations
 ------------
 
-- Modify entrypoint functions to not return anything unless failure [#7418]
+- Modify entrypoint functions to not return anything unless a failure occurs [#7418]
+
 
 1.9.0 (2022-12-27)
 ==================
@@ -84,7 +94,7 @@ assign_wcs
 - Updated the loading of NIRSpec MSA configuration data to assign the source_id
   for each slitlet from the shutter entry that contains the primary/main source. [#7379]
 
-- Added approximated imaging FITS WCS to the grism image headers. [#7373, #7412]
+- Added approximated imaging FITS WCS to WFSS grism image headers. [#7373, #7412]
 
 associations
 ------------
@@ -120,14 +130,14 @@ cube_build
 - Fix a bug in 3d drizzle code for NIRSpec IFU.  [#7306]
 
 - Change fill value for regions of SCI and ERR extensions with no data
-  from 0 to nan. [#7337]
+  from 0 to NaN. [#7337]
 
 - Remove code trimming zero-valued planes from cubes, so that cubes of fixed length will always
-  be produced. Move nan-value setting to below spectral tear cleanup. [#7391]
+  be produced. Move NaN-value setting to below spectral tear cleanup. [#7391]
 
-- Fix several bugs in memory management in the C code for cube build which
-  would result in attempts to deallocate memory that was never allocated
-  resulting in core dump. [#7408]
+- Fix several bugs in memory management in the C code for cube build, which
+  would result in attempts to deallocate memory that was never allocated, thus
+  resulting in a core dump. [#7408]
 
 datamodels
 ----------
@@ -172,7 +182,7 @@ extract_2d
 flatfield
 ---------
 
-- JP-2993 Update the flat-field ERR computation for FGS guider mode exposures to
+- Update the flat-field ERR computation for FGS guider mode exposures to
   combine the input ERR and the flat field ERR in quadrature. [#7346]
 
 general
@@ -180,12 +190,13 @@ general
 
 - Add requirement for asdf-transform-schemas >= 0.3.0 [#7352]
 
-- Reorganize and expand user documentation, update docs landing page. Add install instructions, quickstart guide, and elaborate on running
+- Reorganize and expand user documentation, update docs landing page.
+  Add install instructions, quickstart guide, and elaborate on running
   pipeline in Python and with strun. [#6919]
 
-- fixed wrong Python version expected in ``__init__.py`` [#7366]
+- Fixed wrong Python version expected in ``__init__.py`` [#7366]
 
-- replace ``flake8`` with ``ruff`` [#7054]
+- Replace ``flake8`` with ``ruff`` [#7054]
 
 - Fix deprecation warnings introduced by ``pytest`` ``7.2`` ahead of ``8.0`` [#7325]
 
@@ -221,9 +232,9 @@ ramp_fitting
 - Change the propagation of the SATURATED flag to be done only for complete
   saturation. [#7363, spacetelescope/stcal#125]
 
-- Update CI tests for ramp fitting due to setting pixels to NaN with no usable
-  data to compute slopes in the the rate and rateints products.  Previously,
-  this data was set to zero. [#7389, spacetelescope/stcal#131]
+- Set values to NaN, instead of zero, for pixels in rate and rateints products
+  that have no useable data for a slope calculation. Update unit tests for this change.
+  [#7389, spacetelescope/stcal#131]
 
 resample
 --------
@@ -232,8 +243,7 @@ resample
   points. [#7321]
 
 - Added a utility function ``decode_context()`` to help identify all input
-  images that have contributed with flux to an output (resampled)
-  pixel. [#7345]
+  images that have contributed flux to an output (resampled) pixel. [#7345]
 
 - Fixed a bug in the definition of the output WCS for NIRSpec. [#7359]
 
@@ -251,7 +261,7 @@ tweakreg
 - Fix a bug in the logic that handles inputs with a single image group when
   an absolute reference catalog is provided. [#7328]
 
-- Pinned ``tweakwcs`` version to 0.8.1 that fixes a bug in how 2D histogram's
+- Pinned ``tweakwcs`` version to 0.8.1, which fixes a bug in how 2D histogram's
   bin size is computed. This affects pre-alignment performed before source
   matching. [#7417]
 
@@ -260,6 +270,7 @@ wfss_contam
 
 - Pull 2D cutout offsets from SlitModel subarray metadata rather than
   grism WCS transform. [#7343]
+
 
 1.8.5 (2022-12-12)
 ==================
