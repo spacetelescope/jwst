@@ -11,6 +11,12 @@ associations
 
 - Ensure all NIRSpec imprint exposures are included in associations [#7438]
 
+calwebb_spec2
+-------------
+
+- Subtract leakcal/imprint image from science and backgrounds before background subtraction
+  is applied. [#7426]
+
 general
 -------
 
@@ -18,6 +24,8 @@ general
 
 imprint
 -------
+
+- Match leakcal/imprint image and science/background image by using dither position number [#7426]
 
 - Ensure that the observation number of the imprint image matches the observation number of the image
   from which the imprint is to be subtracted. This is necessary to properly pair up imprint images
@@ -56,6 +64,7 @@ wfss_contam
 
 - Open image models in a "with" context to keep models open while accessing contents [#7425]
 
+
 1.9.2 (2023-01-04)
 ==================
 
@@ -63,17 +72,6 @@ documentation
 -------------
 
 - Remove references to CRDS PUB server [#7421]
-
-calwebb_spec2
--------------
-
-- Subtract leakcal/imprint image from science and backgrounds before background subtraction
-  is applied. [#7426]
-
-imprint
--------
-
-- Match leakcal/imprint image and science/background image by using dither position number [#7426]
 
 
 1.9.1 (2023-01-03)
@@ -83,6 +81,7 @@ associations
 ------------
 
 - Modify entrypoint functions to not return anything unless a failure occurs [#7418]
+
 
 1.9.0 (2022-12-27)
 ==================
