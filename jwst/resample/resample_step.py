@@ -178,24 +178,21 @@ class ResampleStep(Step):
             wcs = deepcopy(af.tree["wcs"])
 
         if output_shape is not None or wcs is None:
-            array_shape = output_shape[::-1]
-        elif wcs.array_shape is not None:
-            array_shape = wcs.array_shape
+            wcs.array_shape = output_shape[::-1]
         elif wcs.pixel_shape is not None:
-            array_shape = wcs.pixel_shape[::-1]
+            wcs.array_shape = wcs.pixel_shape[::-1]
         elif wcs.bounding_box is not None:
-            array_shape = tuple(
+            wcs.array_shape = tuple(
                 int(axs[1] - axs[0] + 0.5)
                 for axs in wcs.bounding_box.bounding_box(order="C")
             )
-        else:
+        elif wcs.array_shape is None:
             raise ValueError(
                 "Step argument 'output_shape' is required when custom WCS "
                 "does not have neither of 'array_shape', 'pixel_shape', or "
                 "'bounding_box' attributes set."
             )
 
-        wcs.array_shape = array_shape
         return wcs
 
     def update_phot_keywords(self, model):

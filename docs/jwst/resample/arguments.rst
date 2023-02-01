@@ -54,10 +54,6 @@ image.
     list of integers ``nx, ny``.
 
     .. note::
-        Argument ``output_shape``, when provided, overrides output image size
-        computed from the bounding box.
-
-    .. note::
         Specifying ``output_shape`` *is required* when the WCS in
         ``output_wcs`` does not have ``bounding_box`` property set.
 
