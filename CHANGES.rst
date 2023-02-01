@@ -12,6 +12,11 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+datamodels
+----------
+
+- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
+
 1.9.4 (2023-01-27)
 ==================
 
