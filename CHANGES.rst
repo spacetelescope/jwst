@@ -1,7 +1,11 @@
 1.9.5 (unreleased)
 ==================
 
--
+pathloss
+--------
+
+- Repeat pathloss correction array into cube, to apply step to
+  rateints input for MIRI LRS fixed slit data [#7446]
 
 1.9.4 (2023-01-27)
 ==================
