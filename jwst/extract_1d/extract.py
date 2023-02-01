@@ -12,6 +12,8 @@ from gwcs import WCS
 from stdatamodels import DataModel
 from stdatamodels.properties import ObjectNode
 
+from jwst.datamodels import SourceModelContainer
+
 from .. import datamodels
 from ..datamodels import dqflags, SlitModel, SpecModel
 from ..datamodels.apcorr import (
@@ -2747,7 +2749,7 @@ def do_extract1d(
 
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
-    if isinstance(input_model, datamodels.SourceModelContainer):
+    if isinstance(input_model, SourceModelContainer):
         # log.debug('Input is a SourceModelContainer')
         was_source_model = True
 

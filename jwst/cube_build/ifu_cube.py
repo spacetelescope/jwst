@@ -9,6 +9,7 @@ import math
 from ..model_blender import blendmeta
 from .. import datamodels
 from ..assign_wcs import pointing
+from jwst.datamodels import ModelContainer
 from jwst.transforms.models import _toindex
 from astropy.stats import circmean
 from astropy import units as u
@@ -746,7 +747,7 @@ class IFUCubeData():
 
         """
         # loop over input models
-        single_ifucube_container = datamodels.ModelContainer()
+        single_ifucube_container = ModelContainer()
 
         weight_type = 0  # default to emsm instead of msm
         if self.weighting == 'msm':

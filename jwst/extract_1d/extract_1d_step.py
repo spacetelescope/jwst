@@ -1,3 +1,5 @@
+from jwst.datamodels import ModelContainer, SourceModelContainer
+
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
@@ -177,10 +179,10 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image. This could be a resampled 2-D image
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, datamodels.SourceModelContainer):
+        elif isinstance(input_model, SourceModelContainer):
             self.log.debug('Input is a SourceModelContainer')
             was_source_model = True
-        elif isinstance(input_model, datamodels.ModelContainer):
+        elif isinstance(input_model, ModelContainer):
             self.log.debug('Input is a ModelContainer')
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
@@ -201,7 +203,7 @@ class Extract1dStep(Step):
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
-        if isinstance(input_model, datamodels.ModelContainer):
+        if isinstance(input_model, ModelContainer):
 
             # This is the branch  WFSS data take
             if len(input_model) > 1:
@@ -248,7 +250,7 @@ class Extract1dStep(Step):
                 # --------------------------------------------------------------
                 # Data is a ModelContainer but is not WFSS
                 else:
-                    result = datamodels.ModelContainer()
+                    result = ModelContainer()
                     for model in input_model:
                         # Get the reference file names
                         extract_ref = self.get_reference_file(model, 'extract1d')

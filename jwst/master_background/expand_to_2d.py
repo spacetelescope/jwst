@@ -3,6 +3,9 @@ import logging
 import numpy as np
 
 from gwcs.wcstools import grid_from_bounding_box
+
+from jwst.datamodels import ModelContainer
+
 from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
 from .. datamodels import dqflags
@@ -51,7 +54,7 @@ def expand_to_2d(input, m_bkg_spec):
         tab_background = tab_background[index].copy()
 
     # Handle associations, or input ModelContainers
-    if isinstance(input, datamodels.ModelContainer):
+    if isinstance(input, ModelContainer):
         background = bkg_for_container(input, tab_wavelength, tab_background)
 
     else:
@@ -81,7 +84,7 @@ def bkg_for_container(input, tab_wavelength, tab_background):
         "expanded" from 1-D to 2-D.
     """
 
-    background = datamodels.ModelContainer()
+    background = ModelContainer()
     for input_model in input:
         temp = create_bkg(input_model, tab_wavelength, tab_background)
         background.append(temp)

@@ -7,6 +7,8 @@ from collections import OrderedDict
 
 from astropy.io import fits
 
+from jwst.datamodels import ModelContainer
+
 from .. import datamodels
 from .. import associations
 from stdatamodels import fits_support
@@ -175,7 +177,7 @@ def get_blended_metadata(input_models, verbose=False):
 
     """
     if not isinstance(input_models, list) and \
-       not isinstance(input_models, datamodels.ModelContainer):
+       not isinstance(input_models, ModelContainer):
         input_models = [input_models]
 
     # Turn input filenames into a set of metadata objects

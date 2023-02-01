@@ -2,7 +2,11 @@
 import os.path as op
 from collections import defaultdict
 from ..stpipe import Pipeline
-from .. import datamodels
+
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from ..model_blender import blendmeta
 
 # step imports
@@ -13,6 +17,29 @@ from ..outlier_detection import outlier_detection_step
 from ..resample import resample_step
 
 __all__ = ['Coron3Pipeline']
+
+
+def to_container(model):
+    """Convert to a ModelContainer of ImageModels for each plane"""
+
+    container = ModelContainer()
+    for plane in range(model.shape[0]):
+        image = datamodels.ImageModel()
+        for attribute in [
+                'data', 'dq', 'err', 'zeroframe', 'area',
+                'var_poisson', 'var_rnoise', 'var_flat'
+        ]:
+            try:
+                setattr(image, attribute, model.getarray_noinit(attribute)[plane])
+            except AttributeError:
+                pass
+        image.update(model)
+        try:
+            image.meta.wcs = model.meta.wcs
+        except AttributeError:
+            pass
+        container.append(image)
+    return container
 
 
 class Coron3Pipeline(Pipeline):
@@ -103,7 +130,7 @@ class Coron3Pipeline(Pipeline):
             self.prefetch(member)
 
         # Assemble all the input psf files into a single ModelContainer
-        psf_models = datamodels.ModelContainer()
+        psf_models = ModelContainer()
         for i in range(len(psf_files)):
             psf_input = datamodels.CubeModel(psf_files[i])
             psf_models.append(psf_input)
@@ -129,7 +156,7 @@ class Coron3Pipeline(Pipeline):
 
         # Call the sequence of steps: outlier_detection, align_refs, and klip
         # once for each input target exposure
-        resample_input = datamodels.ModelContainer()
+        resample_input = ModelContainer()
         for target_file in targ_files:
             with datamodels.open(target_file) as target:
 
@@ -161,7 +188,7 @@ class Coron3Pipeline(Pipeline):
 
                 # Split out the integrations into separate models
                 # in a ModelContainer to pass to `resample`
-                for model in psf_sub.to_container():
+                for model in to_container(psf_sub):
                     resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images

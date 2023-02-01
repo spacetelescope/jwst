@@ -4,7 +4,8 @@ from os import path
 import pytest
 
 from jwst.stpipe import Step
-from jwst.datamodels import JwstDataModel, ModelContainer
+from jwst.datamodels import ModelContainer
+from jwst.datamodels import JwstDataModel
 from jwst import datamodels
 
 from jwst.stpipe.tests.steps import StepWithModel

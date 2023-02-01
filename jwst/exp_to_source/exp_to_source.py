@@ -5,10 +5,10 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 
-from ..datamodels import (
-    MultiExposureModel,
-    SourceModelContainer)
+from ..datamodels import MultiExposureModel
 from stdatamodels.properties import merge_tree
+
+from jwst.datamodels import SourceModelContainer
 
 __all__ = ['exp_to_source', 'multislit_to_container']
 

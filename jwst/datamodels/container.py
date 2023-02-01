@@ -11,9 +11,9 @@ from asdf import AsdfFile
 from astropy.io import fits
 from stdatamodels import DataModel, properties
 
-from .model_base import JwstDataModel
-from .util import open as datamodel_open
-from .util import is_association
+from stdatamodels.jwst.datamodels.model_base import JwstDataModel
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
+from stdatamodels.jwst.datamodels.util import is_association
 
 __doctest_skip__ = ['ModelContainer']
 

@@ -118,8 +118,6 @@ def test_split_container(tmp_path):
     im1.save(path1)
     im2 = datamodels.ImageModel()
     im2.save(path2)
-    # container = datamodels.ModelContainer([im1, im2])
-    # container.meta.asn_table = {
     asn_table = {
         "asn_pool": "singleton",
         "products": [

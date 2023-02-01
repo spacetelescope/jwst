@@ -2,7 +2,9 @@
 """
 import numpy as np
 import logging
-from .. import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from ..assign_wcs import nirspec
 from gwcs import wcstools
 from jwst.assign_wcs.util import in_ifu_slice
@@ -149,7 +151,7 @@ class CubeBlot():
            The blotted flux  = the weighted flux, where the weight is based on
            distance between the center of the blotted pixel and the detector pixel.
         """
-        blot_models = datamodels.ModelContainer()
+        blot_models = ModelContainer()
         instrument_info = instrument_defaults.InstrumentInfo()
 
         for model in self.input_models:
@@ -242,7 +244,7 @@ class CubeBlot():
            in the detector plane which is the blotted image.
 
         """
-        blot_models = datamodels.ModelContainer()
+        blot_models = ModelContainer()
 
         for model in self.input_models:
             blot_ysize, blot_xsize = model.shape

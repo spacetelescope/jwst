@@ -3,6 +3,8 @@ from collections import defaultdict
 import os.path as op
 import numpy as np
 
+from jwst.datamodels import SourceModelContainer
+
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
@@ -210,7 +212,7 @@ class Spec3Pipeline(Pipeline):
                 result = source
 
             # The MultiExposureModel is a required output.
-            if isinstance(result, datamodels.SourceModelContainer):
+            if isinstance(result, SourceModelContainer):
                 self.save_model(result, 'cal')
 
             # Call the skymatch step for MIRI MRS data

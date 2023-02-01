@@ -1,6 +1,8 @@
 """Class definition for performing outlier detection on spectra."""
 from functools import partial
 
+from jwst.datamodels import ModelContainer
+
 from .. import datamodels
 from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
@@ -116,7 +118,7 @@ class OutlierDetectionSpec(OutlierDetection):
                 )
         else:
             # Median image will serve as blot image
-            blot_models = datamodels.ModelContainer()
+            blot_models = ModelContainer()
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
 

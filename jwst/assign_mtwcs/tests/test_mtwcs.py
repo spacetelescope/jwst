@@ -1,5 +1,7 @@
 import os
 
+from jwst.datamodels import ModelContainer
+
 from jwst import datamodels
 from jwst.assign_mtwcs import AssignMTWcsStep
 from jwst.assign_mtwcs.tests import data
@@ -13,7 +15,7 @@ def test_mt_multislit():
         assert model[0].slits[0].meta.wcs.output_frame.name == 'world'
         step = AssignMTWcsStep()
         result = step.run(model)
-    assert isinstance(result, datamodels.ModelContainer)
+    assert isinstance(result, ModelContainer)
     assert len(result[0].slits) == 1
     assert result[0].slits[0].meta.wcs.output_frame.name == 'moving_target'
     assert len(result[1].slits) == 1

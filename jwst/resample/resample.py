@@ -4,6 +4,8 @@ import numpy as np
 from drizzle import util
 from drizzle import cdrizzle
 
+from jwst.datamodels import ModelContainer
+
 from . import gwcs_drizzle
 from . import resample_utils
 from .. import datamodels
@@ -119,7 +121,7 @@ class ResampleData:
         self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
 
-        self.output_models = datamodels.ModelContainer(open_models=False)
+        self.output_models = ModelContainer(open_models=False)
 
     def do_drizzle(self):
         """Pick the correct drizzling mode based on self.single

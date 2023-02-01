@@ -1,7 +1,9 @@
 """ This is the main ifu spectral cube building routine.
 """
+
+from jwst.datamodels import ModelContainer
+
 from ..stpipe import Step
-from .. import datamodels
 from . import cube_build
 from . import ifu_cube
 from . import data_types
@@ -274,7 +276,7 @@ class CubeBuildStep (Step):
             self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
 
         # ModelContainer of ifucubes
-        cube_container = datamodels.ModelContainer()
+        cube_container = ModelContainer()
 
         status_cube = 0
         t0 = time.time()

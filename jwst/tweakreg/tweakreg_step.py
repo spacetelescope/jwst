@@ -13,9 +13,10 @@ from tweakwcs.imalign import align_wcs
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.matchutils import XYXYMatch
 
+from jwst.datamodels import ModelContainer
+
 # LOCAL
 from ..stpipe import Step
-from .. import datamodels
 from ..assign_wcs.util import update_fits_wcsinfo
 from . import astrometric_utils as amutils
 from . tweakreg_catalog import make_tweakreg_catalog
@@ -110,7 +111,7 @@ class TweakRegStep(Step):
 
         try:
             if use_custom_catalogs and catdict:
-                images = datamodels.ModelContainer()
+                images = ModelContainer()
                 if isinstance(input, str):
                     asn_dir = path.dirname(input)
                     asn_data = images.read_asn(input)
@@ -128,7 +129,7 @@ class TweakRegStep(Step):
                     images.from_asn(input)
 
                 else:
-                    images = datamodels.ModelContainer(input)
+                    images = ModelContainer(input)
                     for im in images:
                         filename = im.meta.filename
                         if filename in catdict:
@@ -138,7 +139,7 @@ class TweakRegStep(Step):
                             im.meta.tweakreg_catalog = catdict[filename]
 
             else:
-                images = datamodels.ModelContainer(input)
+                images = ModelContainer(input)
 
         except TypeError as e:
             e.args = ("Input to tweakreg must be a list of DataModels, an "

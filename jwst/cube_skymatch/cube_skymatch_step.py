@@ -9,12 +9,13 @@ JWST pipeline step for sky matching.
 import numpy as np
 
 from ..stpipe import Step
-from .. import datamodels
 
 from astropy.nddata.bitmask import (
     bitfield_to_boolean_mask,
     interpret_bit_flags,
 )
+
+from jwst.datamodels import ModelContainer
 
 # LOCAL:
 from .skymatch import match
@@ -53,8 +54,8 @@ class CubeSkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input1, input2):
-        cube_models = datamodels.ModelContainer(input1)
-        models2d = datamodels.ModelContainer(input2)
+        cube_models = ModelContainer(input1)
+        models2d = ModelContainer(input2)
         dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
         # set sky statistics:

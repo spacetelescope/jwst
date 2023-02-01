@@ -6,6 +6,8 @@ import numpy as np
 from photutils.aperture import (aperture_photometry, CircularAperture, CircularAnnulus)
 import astropy.units as u
 
+from jwst.datamodels import ModelContainer
+
 from .. import datamodels
 from ..resample import resample_utils
 from ..tso_photometry.tso_photometry import tso_aperture_photometry
@@ -136,7 +138,7 @@ class OutlierDetectionScaled(OutlierDetection):
         # Scale the median image by the initial photometry (only in aperture)
         # to create equivalent of 'blot' images
         # Area outside of aperture in median will remain unchanged
-        blot_models = datamodels.ModelContainer()
+        blot_models = ModelContainer()
         for i in range(nints):
             scale_factor = float(phot_values[i] / median_phot_value)
             scaled_image = datamodels.ImageModel(init=median_model.data.shape)
