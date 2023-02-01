@@ -7,6 +7,11 @@ pathloss
 - Repeat pathloss correction array into cube, to apply step to
   rateints input for MIRI LRS fixed slit data [#7446]
 
+set_telescope_pointing
+----------------------
+
+- Correct WCS determination for aperture MIRIM_TAMRS [#7449]
+
 1.9.4 (2023-01-27)
 ==================
 

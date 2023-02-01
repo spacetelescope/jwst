@@ -107,7 +107,7 @@ class SiafDb:
         aperture = siaf[aperture.upper()]
         return aperture
 
-    def get_wcs(self, aperture, useafter=None):
+    def get_wcs(self, aperture, to_detector=False, useafter=None):
         """
         Query the SIAF database file and get WCS values.
 
@@ -122,6 +122,8 @@ class SiafDb:
         ----------
         aperture : str
             The name of the aperture to retrieve.
+        to_detector : bool
+            Convert all the pixel parameters to be relative to the detector.
         useafter : str
             The date of observation (``model.meta.date``)
 
@@ -148,6 +150,9 @@ class SiafDb:
             value = value if value else getattr(default_siaf, SIAF_MAP[key])
             vertices.append(value)
         vertices = tuple(vertices)
+
+        if to_detector:
+            values['crpix1'], values['crpix2'] = aperture.sci_to_det(aperture.XSciRef, aperture.YSciRef)
 
         # Fill out the Siaf
         siaf = SIAF(**values, vertices_idl=vertices)
