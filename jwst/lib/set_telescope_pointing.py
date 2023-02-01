@@ -2522,7 +2522,14 @@ def t_pars_from_model(model, **t_pars_kwargs):
             useafter = model.meta.observation.date
             if aperture_name != "UNKNOWN":
                 logger.info("Updating WCS for aperture %s", aperture_name)
-                siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter=useafter)
+
+                # Special case. With aperture MIRIM_TAMRS, the siaf definition is
+                # for the subarray of interest. However, the whole detector is
+                # read out. Hence, need to convert pixel coordinates to be detector-based.
+                to_detector = False
+                if aperture_name == 'MIRIM_TAMRS':
+                    to_detector = True
+                siaf = t_pars.siaf_db.get_wcs(aperture_name, to_detector=to_detector, useafter=useafter)
         t_pars.siaf = siaf
         t_pars.useafter = useafter
     logger.debug('SIAF: %s', t_pars.siaf)
