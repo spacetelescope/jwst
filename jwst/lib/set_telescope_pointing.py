@@ -2522,7 +2522,7 @@ def t_pars_from_model(model, **t_pars_kwargs):
             useafter = model.meta.observation.date
             if aperture_name != "UNKNOWN":
                 logger.info("Updating WCS for aperture %s", aperture_name)
-                siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter)
+                siaf = t_pars.siaf_db.get_wcs(aperture_name, useafter=useafter)
         t_pars.siaf = siaf
         t_pars.useafter = useafter
     logger.debug('SIAF: %s', t_pars.siaf)
