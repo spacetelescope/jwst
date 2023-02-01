@@ -63,6 +63,10 @@ def test_create(source, prd, xml_path, exception, jail_environ):
          siafdb.SIAF(v2_ref=-481.987342, v3_ref=-318.206242, v3yangle=4.83544897, vparity=-1,
                      crpix1=24.5, crpix2=24.5, cdelt1=0.10986808, cdelt2=0.10996394,
                      vertices_idl=(-2.6187, 2.6558, 2.6186, -2.6535, -2.6097, -2.6715, 2.6068, 2.6683))),
+        ('MIRIM_TAMRS', True,
+         siafdb.SIAF(v2_ref=-481.987342, v3_ref=-318.206242, v3yangle=4.83544897, vparity=-1,
+                     crpix1=997.5, crpix2=993.5, cdelt1=0.10986808, cdelt2=0.10996394,
+                     vertices_idl=(-2.6187, 2.6558, 2.6186, -2.6535, -2.6097, -2.6715, 2.6068, 2.6683))),
     ]
 )
 def test_get_wcs(aperture, to_detector, expected):
