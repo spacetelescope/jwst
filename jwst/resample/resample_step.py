@@ -6,11 +6,12 @@ import numpy as np
 from stpipe.extern.configobj.validate import Validator
 from stpipe.extern.configobj.configobj import ConfigObj
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from . import resample
 from ..stpipe import Step
-from .. import datamodels
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)

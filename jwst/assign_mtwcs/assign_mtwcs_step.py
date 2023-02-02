@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 import logging
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from ..stpipe import Step
-from .. import datamodels
 from .moving_target_wcs import assign_moving_target_wcs
 
 log = logging.getLogger(__name__)

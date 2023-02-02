@@ -1,6 +1,7 @@
 """ Dictionary holding defaults for cube_build
 """
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

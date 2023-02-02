@@ -13,6 +13,8 @@ from tweakwcs.imalign import align_wcs
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.matchutils import XYXYMatch
 
+from stdatamodels.jwst.datamodels.util import is_association
+
 from jwst.datamodels import ModelContainer
 
 # LOCAL
@@ -20,7 +22,6 @@ from ..stpipe import Step
 from ..assign_wcs.util import update_fits_wcsinfo
 from . import astrometric_utils as amutils
 from . tweakreg_catalog import make_tweakreg_catalog
-from ..datamodels.util import is_association
 
 
 def _oxford_or_str_join(str_list):

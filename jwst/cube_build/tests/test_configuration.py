@@ -4,7 +4,8 @@ Unit test for Cube Build testing setting up configuration
 
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.cube_build import cube_build
 from jwst.cube_build import file_table
 

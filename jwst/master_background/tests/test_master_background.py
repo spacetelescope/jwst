@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 import json
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.master_background import MasterBackgroundStep
 from jwst.master_background.create_master_bkg import create_background

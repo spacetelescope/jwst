@@ -4,10 +4,7 @@ import numpy as np
 from stcal.ramp_fitting.ramp_fit import ramp_fit
 from stcal.ramp_fitting.ols_fit import calc_num_seg
 
-from jwst.datamodels import dqflags
-from jwst.datamodels import RampModel
-from jwst.datamodels import GainModel
-from jwst.datamodels import ReadnoiseModel
+from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]

@@ -3,9 +3,10 @@ import pytest
 
 from astropy.table import Table
 import numpy as np
-from stdatamodels.schema import walk_schema
 
-from jwst.datamodels import ImageModel
+from stdatamodels.schema import walk_schema
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst.model_blender import blendmeta
 
 

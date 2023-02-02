@@ -3,9 +3,10 @@ from collections import defaultdict
 import os.path as op
 import numpy as np
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import SourceModelContainer
 
-from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
 from ..master_background.master_background_step import split_container

@@ -2,7 +2,8 @@
 Unit tests for gain_scale correction
 """
 
-from jwst.datamodels import CubeModel
+from stdatamodels.jwst.datamodels import CubeModel
+
 from jwst.gain_scale.gain_scale import do_correction
 from jwst.gain_scale import GainScaleStep
 import numpy as np

@@ -4,11 +4,12 @@ import numpy as np
 from drizzle import util
 from drizzle import cdrizzle
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
 from . import resample_utils
-from .. import datamodels
 from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 

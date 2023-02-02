@@ -29,7 +29,7 @@ file on disk. E.g:
 
 	# running a single pipeline step, input is datamodel object
 	from jwst.linearity import LinearityStep
-	import jwst.datamodels as dm
+	import stdatamodels.jwst.datamodels as dm
 	input_model = dm.open('jw00001001001_01101_00001_mirimage_uncal.fits')
 	result = LinearityStep.call(input_model)
 

@@ -6,17 +6,20 @@ final spaxel fluxes)
 import numpy as np
 import logging
 import math
-from ..model_blender import blendmeta
-from .. import datamodels
-from ..assign_wcs import pointing
-from jwst.datamodels import ModelContainer
-from jwst.transforms.models import _toindex
+
 from astropy.stats import circmean
 from astropy import units as u
 from gwcs import wcstools
+
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+
+from ..model_blender import blendmeta
+from ..assign_wcs import pointing
+from jwst.datamodels import ModelContainer
+from jwst.transforms.models import _toindex
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
-from ..datamodels import dqflags
 from . import cube_build_wcs_util
 from . import cube_internal_cal
 from . import coord

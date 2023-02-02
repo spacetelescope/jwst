@@ -2,7 +2,8 @@
 Unit tests for straylight step configuration
 """
 
-from jwst.datamodels import CubeModel
+from stdatamodels.jwst.datamodels import CubeModel
+
 from jwst.straylight import StraylightStep
 import numpy as np
 import pytest

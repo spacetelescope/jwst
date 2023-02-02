@@ -3,10 +3,11 @@
 from os import path
 import pytest
 
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import JwstDataModel
+
 from jwst.stpipe import Step
 from jwst.datamodels import ModelContainer
-from jwst.datamodels import JwstDataModel
-from jwst import datamodels
 
 from jwst.stpipe.tests.steps import StepWithModel
 from jwst.stpipe.tests.util import t_path

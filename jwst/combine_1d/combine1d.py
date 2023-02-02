@@ -6,9 +6,10 @@ import logging
 
 import numpy as np
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
-from .. import datamodels
 from ..extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)

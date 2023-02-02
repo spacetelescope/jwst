@@ -9,12 +9,13 @@ from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
 
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
-from jwst import datamodels
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.stpipe import Step
-from jwst.datamodels.util import open as datamodel_open
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

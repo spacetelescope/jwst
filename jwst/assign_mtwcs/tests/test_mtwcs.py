@@ -1,8 +1,8 @@
 import os
 
-from jwst.datamodels import ModelContainer
+from stdatamodels.jwst import datamodels
 
-from jwst import datamodels
+from jwst.datamodels import ModelContainer
 from jwst.assign_mtwcs import AssignMTWcsStep
 from jwst.assign_mtwcs.tests import data
 

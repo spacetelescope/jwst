@@ -4,7 +4,8 @@ Unit test for mrs_imatch apply background
 
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d

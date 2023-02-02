@@ -3,11 +3,12 @@ import numpy as np
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 RectangularAperture, aperture_photometry)
 
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+
 from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale
 from astropy import stats
-from .. import datamodels
-from ..datamodels import dqflags
 
 from . import spec_wcs
 from scipy.interpolate import interp1d

@@ -6,9 +6,10 @@ import numpy as np
 from photutils.aperture import (aperture_photometry, CircularAperture, CircularAnnulus)
 import astropy.units as u
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
-from .. import datamodels
 from ..resample import resample_utils
 from ..tso_photometry.tso_photometry import tso_aperture_photometry
 from .outlier_detection import OutlierDetection

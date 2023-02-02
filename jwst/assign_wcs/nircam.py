@@ -7,10 +7,11 @@ import gwcs.coordinate_frames as cf
 
 import asdf
 
+from stdatamodels.jwst.datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
+
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform, velocity_correction,
                    transform_bbox_from_shape, bounding_box_from_subarray)
-from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)

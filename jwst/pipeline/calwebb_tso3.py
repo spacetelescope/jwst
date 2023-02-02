@@ -3,10 +3,11 @@ import os.path as op
 import numpy as np
 from astropy.table import vstack
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from ..stpipe import Pipeline
-from .. import datamodels
 
 from ..outlier_detection import outlier_detection_step
 from ..tso_photometry import tso_photometry_step

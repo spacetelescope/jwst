@@ -1,8 +1,7 @@
 from jwst.stpipe import (Pipeline, Step)
-from jwst import datamodels
-from jwst.datamodels import (
-    ImageModel,
-)
+
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import ImageModel
 
 
 class StepWithReference(Step):

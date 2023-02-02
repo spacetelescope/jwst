@@ -8,7 +8,8 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.background.tests import data as data_directory

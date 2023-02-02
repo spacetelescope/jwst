@@ -5,10 +5,11 @@ Unit tests for reset anomaly correction
 import pytest
 import numpy as np
 
+from stdatamodels.jwst.datamodels import RampModel, ResetModel, dqflags
+
 from jwst.reset.reset_sub import (
     do_correction as resetcorr
 )
-from jwst.datamodels import RampModel, ResetModel, dqflags
 
 
 def test_correction(make_rampmodel, make_resetmodel):

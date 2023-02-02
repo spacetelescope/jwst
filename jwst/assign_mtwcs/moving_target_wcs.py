@@ -13,7 +13,9 @@ import numpy as np
 from astropy.modeling.models import Shift, Identity
 from gwcs import WCS
 from gwcs import coordinate_frames as cf
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)

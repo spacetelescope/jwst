@@ -13,10 +13,11 @@ from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
 from gwcs.geometry import SphericalToCartesian
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from ..assign_wcs.util import wrap_ra
-from .. import datamodels
 from . import resample_utils
 from .resample import ResampleData
 

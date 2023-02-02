@@ -7,7 +7,8 @@ from astropy.modeling.models import Shift
 from gwcs.utils import _toindex
 from gwcs import wcstools
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 from ..lib import pipe_utils

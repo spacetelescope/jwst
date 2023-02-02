@@ -1,7 +1,8 @@
 """
 Test the srctype step on exposures with various settings
 """
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.srctype import srctype
 import pytest
 

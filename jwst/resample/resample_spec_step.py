@@ -1,7 +1,7 @@
 __all__ = ["ResampleSpecStep"]
 
-from .. import datamodels
-from ..datamodels import MultiSlitModel, ImageModel
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
 from jwst.datamodels import ModelContainer
 from . import resample_spec, ResampleStep

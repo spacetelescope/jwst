@@ -1,11 +1,11 @@
 from os.path import basename
 import numpy as np
 from stdatamodels.properties import merge_tree
+from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
 from ..stpipe import Step
-from .. import datamodels
 from ..combine_1d.combine1d import combine_1d_spectra
 from .expand_to_2d import expand_to_2d
 

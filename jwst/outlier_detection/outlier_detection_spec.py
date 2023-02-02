@@ -1,9 +1,10 @@
 """Class definition for performing outlier detection on spectra."""
 from functools import partial
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
-from .. import datamodels
 from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
 

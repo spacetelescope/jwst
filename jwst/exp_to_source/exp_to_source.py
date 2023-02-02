@@ -5,8 +5,8 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 
-from ..datamodels import MultiExposureModel
 from stdatamodels.properties import merge_tree
+from stdatamodels.jwst.datamodels import MultiExposureModel
 
 from jwst.datamodels import SourceModelContainer
 

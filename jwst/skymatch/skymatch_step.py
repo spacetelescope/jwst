@@ -12,17 +12,17 @@ import logging
 
 import numpy as np
 
-from jwst.datamodels import ModelContainer
-
-from ..stpipe import Step
-from ..datamodels.dqflags import pixel
-from ..datamodels.util import open as datamodel_open
-
-
 from astropy.nddata.bitmask import (
     bitfield_to_boolean_mask,
     interpret_bit_flags,
 )
+
+from stdatamodels.jwst.datamodels.dqflags import pixel
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
+
+from jwst.datamodels import ModelContainer
+
+from ..stpipe import Step
 
 # LOCAL:
 from .skymatch import match

@@ -32,12 +32,12 @@
 import argparse
 import sys
 
-from jwst.datamodels.schema import build_docstring
+from stdatamodels.jwst.datamodels.schema import build_docstring
 
 
 def get_docstrings(template, model_names, all=False):
     # Get the docstring for every model class
-    from jwst.datamodels import _defined_models as defined_models
+    from stdatamodels.jwst.datamodels import _defined_models as defined_models
 
     if all:
         klasses = defined_models

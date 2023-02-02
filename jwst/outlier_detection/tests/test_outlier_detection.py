@@ -2,6 +2,8 @@ import pytest
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.outlier_detection import flag_cr
@@ -11,7 +13,6 @@ from jwst.outlier_detection.outlier_detection_step import (
     TSO_IMAGE_MODES,
     CORON_IMAGE_MODES,
 )
-from jwst import datamodels
 from jwst.assign_wcs.pointing import create_fitswcs
 
 

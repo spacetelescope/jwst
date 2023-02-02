@@ -70,7 +70,7 @@ corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 .. doctest-skip::
 
-  >>> from jwst.datamodels import ImageModel
+  >>> from stdatamodels.jwst.datamodels import ImageModel
   >>> exp = ImageModel('miri_fixedslit_assign_wcs.fits')
   >>> ra, dec, lam = exp.meta.wcs(x, y)
   >>> print(ra, dec, lam)
@@ -85,7 +85,7 @@ source pixel location, as entered, along with the order that was specified:
 
 .. doctest-skip::
 
-  >>> from jwst.datamodels import ImageModel
+  >>> from stdatamodels.jwst.datamodels import ImageModel
   >>> exp = ImageModel('nircam_wfss_assign_wcs.fits')
   >>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
   >>> print(x0, y0, wavelength, order)

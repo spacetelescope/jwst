@@ -3,7 +3,8 @@ from numpy.testing import assert_array_equal
 import numpy as np
 import pytest
 
-from jwst.datamodels import SlitModel, ImageModel, dqflags
+from stdatamodels.jwst.datamodels import SlitModel, ImageModel, dqflags
+
 from jwst.resample.resample_spec import find_dispersion_axis
 from jwst.resample.resample_utils import (
     build_mask,

@@ -1,7 +1,8 @@
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer, SourceModelContainer
 
 from ..stpipe import Step
-from .. import datamodels
 from . import extract
 from .soss_extract import soss_extract
 

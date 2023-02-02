@@ -5,13 +5,12 @@ import pytest
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel, MultiExposureModel
-
-from jwst.associations.asn_from_list import asn_from_list
+from stdatamodels.jwst.datamodels import _defined_models as defined_models
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.associations.asn_from_list import asn_from_list
 
 from jwst.lib.file_utils import pushdir
-from jwst.datamodels import _defined_models as defined_models
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')

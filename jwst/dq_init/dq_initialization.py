@@ -2,7 +2,8 @@ import logging
 
 import numpy as np
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)

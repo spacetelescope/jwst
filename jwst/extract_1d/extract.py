@@ -11,15 +11,15 @@ from astropy.io import fits
 from gwcs import WCS
 from stdatamodels import DataModel
 from stdatamodels.properties import ObjectNode
-
-from jwst.datamodels import SourceModelContainer
-
-from .. import datamodels
-from ..datamodels import dqflags, SlitModel, SpecModel
-from ..datamodels.apcorr import (
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags, SlitModel, SpecModel
+from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
+
+from jwst.datamodels import SourceModelContainer
+
 
 from ..assign_wcs import niriss  # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape

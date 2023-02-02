@@ -1,9 +1,10 @@
 """Step defined for outlier detection for stacked observations."""
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from ..stpipe import Step
-from .. import datamodels
 from . import outlier_detection
 
 

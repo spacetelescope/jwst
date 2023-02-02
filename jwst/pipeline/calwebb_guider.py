@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-from ..stpipe import Pipeline
 import logging
-from .. import datamodels
+
+from stdatamodels.jwst import datamodels
+
+from ..stpipe import Pipeline
 
 # step imports
 from ..dq_init import dq_init_step

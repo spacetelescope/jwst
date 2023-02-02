@@ -8,7 +8,7 @@ from astropy.time import Time, TimeDelta
 import astropy.units as u
 from photutils.aperture import CircularAperture, CircularAnnulus
 
-from ..datamodels import CubeModel
+from stdatamodels.jwst.datamodels import CubeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

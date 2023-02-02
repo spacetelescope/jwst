@@ -7,8 +7,9 @@ import os
 from astropy.modeling.models import Shift, Identity
 from astropy.table import QTable
 
+from stdatamodels.jwst import datamodels
+
 from jwst.lib.catalog_utils import SkyObject
-from jwst import datamodels
 
 from jwst.assign_wcs.util import (
     get_object_info, wcs_bbox_from_shape, subarray_transform,

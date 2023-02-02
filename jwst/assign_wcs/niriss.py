@@ -8,6 +8,8 @@ from astropy.modeling.bounding_box import CompoundBoundingBox
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
+from stdatamodels.jwst.datamodels import ImageModel, NIRISSGrismModel, DistortionModel
+
 from .util import (not_implemented_mode, subarray_transform,
                    velocity_correction, bounding_box_from_subarray,
                    transform_bbox_from_shape)
@@ -16,7 +18,6 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 from stdatamodels import s3_utils
 from ..lib.reffile_utils import find_row
 

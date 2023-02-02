@@ -2,7 +2,8 @@ from astropy.table import Table
 import numpy as np
 from photutils.detection import DAOStarFinder
 
-from ..datamodels import dqflags, ImageModel
+from stdatamodels.jwst.datamodels import dqflags, ImageModel
+
 from ..source_catalog.detection import JWSTBackground
 
 

@@ -4,9 +4,10 @@ single datamodel or several data models stored in a ModelContainer.
 """
 import os
 
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
-from .. import datamodels
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

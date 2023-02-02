@@ -3,7 +3,7 @@ import numpy as np
 from scipy import optimize
 from scipy.ndimage import fourier_shift
 
-from ..datamodels import QuadModel
+from stdatamodels.jwst.datamodels import QuadModel
 
 import logging
 log = logging.getLogger(__name__)

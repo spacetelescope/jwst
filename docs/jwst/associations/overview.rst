@@ -132,7 +132,7 @@ as their respective DataModels.
 
 .. code-block:: python
 
-  from jwst.datamodels import open as dm_open
+  from stdatamodels.jwst.datamodels import open as dm_open
   container_model = dm_open('jw12345-o001_20210311t170002_image3_001_asn.json')
 
 Utilities

@@ -5,7 +5,8 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
-from jwst.datamodels import DataModel
+from stdatamodels.jwst.datamodels import DataModel
+
 from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrPhase, select_apcorr
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))

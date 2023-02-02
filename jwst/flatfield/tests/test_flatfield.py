@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
 

@@ -1,7 +1,8 @@
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 
 from ..stpipe import Pipeline
-from .. import datamodels
 from ..lib.exposure_types import is_moving_target
 
 from ..assign_mtwcs import assign_mtwcs_step

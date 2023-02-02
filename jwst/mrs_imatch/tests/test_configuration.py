@@ -3,7 +3,9 @@ Unit test for mrs_imatch testing setting up configuration
 """
 
 import pytest
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from jwst.mrs_imatch.mrs_imatch_step import _get_2d_pixgrid
