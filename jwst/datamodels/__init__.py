@@ -163,3 +163,6 @@ __all__ = [
 _all_models = __all__[1:]
 _local_dict = locals()
 _defined_models = {k: _local_dict[k] for k in _all_models}
+
+# Modules that are not part of stdatamodels
+_jwst_modules = ["container", "source_container"]
