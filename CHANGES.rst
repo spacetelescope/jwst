@@ -12,6 +12,11 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+transforms
+----------
+
+- Fix typo in NIRISS SOSS transform schema [#7450]
+
 1.9.4 (2023-01-27)
 ==================
 
