@@ -1,6 +1,7 @@
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.wfs_combine import WfsCombineStep

@@ -3,9 +3,9 @@ JWST-specific Step and Pipeline base classes.
 """
 from collections.abc import Sequence
 from stdatamodels import DataModel
+from stdatamodels.jwst import datamodels
 
 from .. import __version_commit__, __version__
-from .. import datamodels
 
 from stpipe import crds_client
 from stpipe import Step

@@ -20,9 +20,10 @@ from photutils.segmentation import SourceCatalog
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 aperture_photometry)
 
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst import __version__ as jwst_version
 
-from ..datamodels import ImageModel
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)

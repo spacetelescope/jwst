@@ -4,8 +4,10 @@ from numpy.testing import assert_allclose
 import pytest
 
 from gwcs import wcstools
+
+from stdatamodels.jwst import datamodels
+
 import jwst
-from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.srctype import SourceTypeStep

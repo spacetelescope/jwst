@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.guider_cds.guider_cds import get_dataset_info, guider_cds
 
 

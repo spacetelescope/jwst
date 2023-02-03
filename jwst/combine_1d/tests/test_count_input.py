@@ -3,7 +3,6 @@ Test for combine1d.count_input
 """
 import numpy as np
 
-# from jwst import datamodels
 from jwst.combine_1d import combine1d
 
 

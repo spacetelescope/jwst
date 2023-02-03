@@ -1,6 +1,7 @@
 """ Read in reference files for the cube_build setp
 """
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

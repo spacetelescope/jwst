@@ -9,7 +9,11 @@ files consist of a mix of FITS and ASDF - datamodels were designed to
 abstract away these intricacies and provide a simple interface to the data. They
 represent the data in FITS extensions and meta data in FITS headers in a Python object
 with a tree-like structure. The following section gives a brief overview of
-``Datamodels`` as they pertain to the pipeline - see :ref:`data-models` for more
+``Datamodels`` as they pertain to the pipeline - see 
+.. comment out until stdatamodels is released
+.. ref  data-models
+data-models
+for more
 detailed documentation on Datamodels.
 
 Datamodels and the JWST pipeline
@@ -25,7 +29,7 @@ file on disk. E.g:
 
 	# running a single pipeline step, input is datamodel object
 	from jwst.linearity import LinearityStep
-	import jwst.datamodels as dm
+	import stdatamodels.jwst.datamodels as dm
 	input_model = dm.open('jw00001001001_01101_00001_mirimage_uncal.fits')
 	result = LinearityStep.call(input_model)
 

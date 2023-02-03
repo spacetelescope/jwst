@@ -1,8 +1,10 @@
 import logging
 
-from ..datamodels import dqflags
-from ..lib import reffile_utils
 from stcal.jump.jump import detect_jumps
+
+from stdatamodels.jwst.datamodels import dqflags
+
+from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

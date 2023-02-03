@@ -15,6 +15,10 @@ from astropy.io import fits
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import grid_from_bounding_box
 
+from stdatamodels.jwst.datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
+                                          IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
+                                          WavelengthrangeModel, FPAModel)
+
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
@@ -27,9 +31,6 @@ from .util import (
     velocity_correction
 )
 from . import pointing
-from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
-                          IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
-                          WavelengthrangeModel, FPAModel)
 from ..lib.exposure_types import is_nrs_ifu_lamp
 
 log = logging.getLogger(__name__)

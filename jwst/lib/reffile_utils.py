@@ -1,6 +1,7 @@
 import numpy as np
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 import logging
 
 log = logging.getLogger(__name__)

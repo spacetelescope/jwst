@@ -5,8 +5,8 @@ from scipy.signal import convolve, correlate2d
 from scipy.ndimage import gaussian_filter, center_of_mass
 from scipy.interpolate import griddata
 
-from .. import datamodels
-from ..datamodels import dqflags
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
 
 
 log = logging.getLogger(__name__)

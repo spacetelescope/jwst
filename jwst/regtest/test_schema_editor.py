@@ -11,8 +11,9 @@ import yaml
 
 import pytest
 
+import stdatamodels.jwst.datamodels.schema_editor as se
+
 from jwst.regtest.regtestdata import text_diff
-import jwst.datamodels.schema_editor as se
 from jwst.lib.file_utils import pushdir
 
 # Define data locations in artifactory

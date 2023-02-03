@@ -7,10 +7,13 @@ from collections import OrderedDict
 
 from astropy.io import fits
 
-from .. import datamodels
-from .. import associations
 from stdatamodels import fits_support
 from stdatamodels import schema as dm_schema
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
+from .. import associations
 
 from .blendrules import KeywordRules
 
@@ -81,7 +84,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     `resample` step to specify all the inputs for blending using the
     following syntax::
 
-    >>> from jwst import datamodels
+    >>> from stdatamodels.jwst import datamodels
     >>> asnfile = "jw99999-a3001_20170327t121212_coron3_001_asn.json"
     >>> data = datamodels.open(asnfile)
     >>> input_models = [data[3], data[4]]  # we know the last datasets are SCIENCE
@@ -175,7 +178,7 @@ def get_blended_metadata(input_models, verbose=False):
 
     """
     if not isinstance(input_models, list) and \
-       not isinstance(input_models, datamodels.ModelContainer):
+       not isinstance(input_models, ModelContainer):
         input_models = [input_models]
 
     # Turn input filenames into a set of metadata objects

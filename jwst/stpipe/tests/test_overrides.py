@@ -5,8 +5,7 @@ import pytest
 
 from stpipe.config_parser import ValidationError
 
-from jwst.datamodels import RampModel
-from jwst.datamodels.mask import MaskModel
+from stdatamodels.jwst.datamodels import RampModel, MaskModel
 
 from jwst.dq_init import DQInitStep
 

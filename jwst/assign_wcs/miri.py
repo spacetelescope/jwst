@@ -9,14 +9,16 @@ from astropy.io import fits
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
+
+from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
+                                          DistortionMRSModel, WavelengthrangeModel,
+                                          RegionsModel, SpecwcsModel)
+from stdatamodels import s3_utils
+
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
                    velocity_correction, transform_bbox_from_shape, bounding_box_from_subarray)
-from ..datamodels import (DistortionModel, FilteroffsetModel,
-                          DistortionMRSModel, WavelengthrangeModel,
-                          RegionsModel, SpecwcsModel)
-from stdatamodels import s3_utils
 
 
 log = logging.getLogger(__name__)

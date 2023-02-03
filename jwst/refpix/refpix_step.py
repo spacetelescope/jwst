@@ -1,6 +1,7 @@
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
 from ..lib import pipe_utils
-from .. import datamodels
 from . import reference_pixels
 from . import irs2_subtract_reference
 

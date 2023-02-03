@@ -1,7 +1,9 @@
 __all__ = ["ResampleSpecStep"]
 
-from .. import datamodels
-from ..datamodels import MultiSlitModel, ModelContainer, ImageModel
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
+
+from jwst.datamodels import ModelContainer
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
@@ -44,7 +46,7 @@ class ResampleSpecStep(ResampleStep):
                 # TODO: the container-like object should retain asn_table
                 output = None
         else:
-            input_models = datamodels.ModelContainer([input_new])
+            input_models = ModelContainer([input_new])
             output = input_new.meta.filename
             self.blendheaders = False
 

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
 from . import combine1d
 

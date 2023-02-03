@@ -1,5 +1,8 @@
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from ..stpipe import Pipeline
-from .. import datamodels
 from ..lib.exposure_types import is_moving_target
 
 from ..assign_mtwcs import assign_mtwcs_step
@@ -79,7 +82,7 @@ class Image3Pipeline(Pipeline):
             except (AttributeError, TypeError, KeyError):
                 has_groups = False
 
-            if isinstance(input_models, datamodels.ModelContainer) and has_groups:
+            if isinstance(input_models, ModelContainer) and has_groups:
                 if is_moving_target(input_models):
                     input_models = self.assign_mtwcs(input_models)
                 else:

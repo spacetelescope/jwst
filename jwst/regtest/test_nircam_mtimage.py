@@ -1,8 +1,9 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from stdatamodels.jwst import datamodels
+
 from jwst.lib.set_telescope_pointing import update_mt_kwds
-from jwst import datamodels
 from jwst.stpipe import Step
 
 

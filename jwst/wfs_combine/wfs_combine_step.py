@@ -1,7 +1,8 @@
 import os
 
+from jwst.datamodels import ModelContainer
+
 from ..stpipe import Step
-from .. import datamodels
 from . import wfs_combine
 
 __all__ = ["WfsCombineStep"]
@@ -36,7 +37,7 @@ class WfsCombineStep(Step):
         self.log.info('Using input table: %s', input_table)
         self.log.info('The number of pairs of input files: %g', len(asn_table['products']))
 
-        output_container = datamodels.ModelContainer()
+        output_container = ModelContainer()
 
         # Process each pair of input images listed in the association table
         for which_set in asn_table['products']:

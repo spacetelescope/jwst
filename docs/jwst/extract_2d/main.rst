@@ -112,7 +112,7 @@ from the ``wavelength_range`` parameter, which is a dictionary ``{spectral_order
 
 .. doctest-skip::
 
-  >>> from jwst.datamodels import ImageModel
+  >>> from stdatamodels.jwst.datamodels import ImageModel
   >>> input_model = ImageModel("nircam_wfss_assign_wcs.fits")
 
 Retrieve the wavelengthrange file specific for this mode:

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
+from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from .. import datamodels
 from . import wavecorr
 
 __all__ = ["WavecorrStep"]

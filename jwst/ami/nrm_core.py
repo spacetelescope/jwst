@@ -10,7 +10,8 @@ import numpy as np
 from scipy.special import comb
 from scipy.stats import mstats
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from . import lg_model
 from . import utils
 

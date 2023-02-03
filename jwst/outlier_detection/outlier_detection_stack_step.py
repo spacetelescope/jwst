@@ -1,7 +1,10 @@
 """Step defined for outlier detection for stacked observations."""
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from ..stpipe import Step
-from .. import datamodels
 from . import outlier_detection
 
 
@@ -50,7 +53,7 @@ class OutlierDetectionStackStep(Step):
         """Step interface for performing outlier_detection processing."""
         with datamodels.open(input) as input_models:
 
-            if not isinstance(input_models, datamodels.ModelContainer):
+            if not isinstance(input_models, ModelContainer):
                 self.log.warning("Input is not a ModelContainer.")
                 self.log.warning("Outlier detection stack step will \
                                   be skipped.")

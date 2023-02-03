@@ -1,11 +1,9 @@
 import pytest
 import numpy as np
 
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
+from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
-from jwst.datamodels import dqflags
-from jwst.datamodels import RampModel
-from jwst.datamodels import GainModel, ReadnoiseModel
+from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 
 DELIM = "-" * 80
 

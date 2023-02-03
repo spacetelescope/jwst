@@ -4,7 +4,9 @@ Unit test for mrs_imatch apply background
 
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 import numpy as np
@@ -89,7 +91,7 @@ def miri_dither_ch12():
 def test_apply_background_2d(_jail, miri_dither_ch12):
     """ Test if  background polynomial is set it is subtracted correctly"""
 
-    all_models = datamodels.ModelContainer(miri_dither_ch12)
+    all_models = ModelContainer(miri_dither_ch12)
 
     # test if given a background polynomial - apply_background_2d gives the correct answer
     # Polynomial information was created by running a faked full array data set to determine

@@ -14,7 +14,8 @@ pytest.importorskip('pysiaf')
 from astropy.io import fits  # noqa: E402
 from astropy.time import Time  # noqa: E402
 
-from jwst import datamodels  # noqa: E402
+from stdatamodels.jwst import datamodels  # noqa: E402
+
 from jwst.lib import engdb_mast  # noqa: E402
 from jwst.lib import engdb_tools  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402

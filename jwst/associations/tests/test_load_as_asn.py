@@ -2,8 +2,9 @@
 
 import pytest
 
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst.associations.tests import helpers
-from jwst.datamodels import ImageModel
 from jwst.associations.load_as_asn import (
     LoadAsLevel2Asn
 )

@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
 from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
 
 shape = (7, 100, 150)

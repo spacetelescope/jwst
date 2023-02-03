@@ -3,7 +3,9 @@ from numpy.testing import assert_allclose
 import numpy as np
 import pytest
 
-from jwst.datamodels import ImageModel, ModelContainer
+from stdatamodels.jwst.datamodels import ImageModel
+
+from jwst.datamodels import ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep

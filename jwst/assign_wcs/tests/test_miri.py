@@ -11,7 +11,8 @@ from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
 
-from jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst.assign_wcs import miri
 from jwst.assign_wcs import AssignWcsStep
 

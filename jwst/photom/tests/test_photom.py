@@ -5,8 +5,9 @@ import numpy as np
 
 from astropy import units as u
 
-from jwst import datamodels
-from jwst.datamodels import SpecModel, MultiSpecModel
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
+
 from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))

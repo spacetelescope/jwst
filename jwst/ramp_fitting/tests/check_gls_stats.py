@@ -3,9 +3,7 @@
 import time
 import numpy as np
 
-from jwst.datamodels import dqflags
-from jwst.datamodels import RampModel
-from jwst.datamodels import GainModel, ReadnoiseModel
+from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
 from stcal.ramp_fitting import ramp_fit
 

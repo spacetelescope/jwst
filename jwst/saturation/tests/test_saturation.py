@@ -7,9 +7,10 @@ Unit tests for saturation flagging
 import pytest
 import numpy as np
 
+from stdatamodels.jwst.datamodels import RampModel, SaturationModel, dqflags
+
 from jwst.saturation import SaturationStep
 from jwst.saturation.saturation import flag_saturation, irs2_flag_saturation
-from jwst.datamodels import RampModel, SaturationModel, dqflags
 
 
 def test_basic_saturation_flagging(setup_nrc_cube):

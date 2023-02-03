@@ -6,9 +6,12 @@ import numpy as np
 from stpipe.extern.configobj.validate import Validator
 from stpipe.extern.configobj.configobj import ConfigObj
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from . import resample
 from ..stpipe import Step
-from .. import datamodels
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
@@ -56,7 +59,7 @@ class ResampleStep(Step):
 
         input = datamodels.open(input)
 
-        if isinstance(input, datamodels.ModelContainer):
+        if isinstance(input, ModelContainer):
             input_models = input
             try:
                 output = input_models.meta.asn_table.products[0].name
@@ -66,7 +69,7 @@ class ResampleStep(Step):
                 # TODO: figure out why and make sure asn_table is carried along
                 output = None
         else:
-            input_models = datamodels.ModelContainer([input])
+            input_models = ModelContainer([input])
             input_models.asn_pool_name = input.meta.asn.pool_name
             input_models.asn_table_name = input.meta.asn.table_name
             output = input.meta.filename
