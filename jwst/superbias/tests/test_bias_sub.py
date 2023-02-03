@@ -6,10 +6,10 @@ Unit tests for superbias subtraction
 
 import pytest
 import numpy as np
+from stdatamodels.jwst.datamodels import RampModel, SuperBiasModel, dqflags
+
 from jwst.superbias import SuperBiasStep
 from jwst.superbias.bias_sub import do_correction
-from jwst.datamodels import RampModel, SuperBiasModel
-from jwst.datamodels import dqflags
 
 
 def test_basic_superbias_subtraction(setup_full_cube):

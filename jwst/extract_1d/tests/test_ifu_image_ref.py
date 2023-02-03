@@ -3,7 +3,8 @@ Test using a reference image in extract_1d for IFU data
 """
 import numpy as np
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.extract_1d import extract
 
 

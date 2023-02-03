@@ -2,8 +2,9 @@
 
 from crds.core.exceptions import CrdsLookupError
 
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
-from .. import datamodels
 from . import guider_cds
 
 import logging

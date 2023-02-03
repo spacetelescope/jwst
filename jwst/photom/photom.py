@@ -5,8 +5,9 @@ import warnings
 import numpy as np
 from astropy import units as u
 
-from .. import datamodels
-from .. datamodels import dqflags
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+
 from .. lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)

@@ -29,9 +29,9 @@
 
 import numpy as np
 from numpy import ma
-from stdatamodels import DataModel
 
-from .. import datamodels
+from stdatamodels import DataModel
+from stdatamodels.jwst import datamodels
 
 
 class _KeywordMapping:

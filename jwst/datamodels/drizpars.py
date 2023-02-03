@@ -1,11 +1,3 @@
-from .reference import ReferenceFileModel
-
+from stdatamodels.jwst.datamodels.drizpars import DrizParsModel
 
 __all__ = ['DrizParsModel']
-
-
-class DrizParsModel(ReferenceFileModel):
-    """
-    A data model for drizzle parameters reference tables.
-    """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/drizpars.schema"

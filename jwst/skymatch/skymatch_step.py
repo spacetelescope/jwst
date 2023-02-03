@@ -12,16 +12,17 @@ import logging
 
 import numpy as np
 
-from ..stpipe import Step
-from .. import datamodels
-from ..datamodels.dqflags import pixel
-from ..datamodels.util import open as datamodel_open
-
-
 from astropy.nddata.bitmask import (
     bitfield_to_boolean_mask,
     interpret_bit_flags,
 )
+
+from stdatamodels.jwst.datamodels.dqflags import pixel
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
+
+from jwst.datamodels import ModelContainer
+
+from ..stpipe import Step
 
 # LOCAL:
 from .skymatch import match
@@ -68,7 +69,7 @@ class SkyMatchStep(Step):
         self._is_asn = False
         # self._is_asn = datamodels.util.is_association(input) or isinstance(input, str)
 
-        img = datamodels.ModelContainer(
+        img = ModelContainer(
             input,
             save_open=not self._is_asn,
             return_open=not self._is_asn

@@ -13,8 +13,11 @@ from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
 from gwcs.geometry import SphericalToCartesian
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from ..assign_wcs.util import wrap_ra
-from .. import datamodels
 from . import resample_utils
 from .resample import ResampleData
 
@@ -82,7 +85,7 @@ class ResampleSpecData(ResampleData):
         self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
         self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
-        self.output_models = datamodels.ModelContainer()
+        self.output_models = ModelContainer()
 
         log.info(f"Driz parameter kernal: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")

@@ -1,7 +1,7 @@
 import numpy as np
 
-from jwst.datamodels import RampModel
-from jwst.datamodels import dqflags
+from stdatamodels.jwst.datamodels import RampModel, dqflags
+
 from jwst.firstframe.firstframe_sub import do_correction
 from jwst.firstframe import FirstFrameStep
 

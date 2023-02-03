@@ -4,7 +4,8 @@ import os.path as op
 import traceback
 import numpy as np
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..assign_wcs.util import NoDataOnDetectorError
 from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from ..stpipe import Pipeline

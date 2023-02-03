@@ -29,7 +29,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-from jwst.datamodels import schema_editor
+from stdatamodels.jwst.datamodels import schema_editor
 
 
 def main():

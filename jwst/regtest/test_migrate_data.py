@@ -11,7 +11,7 @@ import subprocess
 from astropy.io import fits
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
 
 
 @pytest.fixture(autouse=True)

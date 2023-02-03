@@ -13,7 +13,10 @@ import numpy as np
 from astropy.modeling.models import Shift, Identity
 from gwcs import WCS
 from gwcs import coordinate_frames as cf
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -23,7 +26,7 @@ __all__ = ["assign_moving_target_wcs"]
 
 def assign_moving_target_wcs(input_model):
 
-    if not isinstance(input_model, datamodels.ModelContainer):
+    if not isinstance(input_model, ModelContainer):
         raise ValueError("Expected a ModelContainer object")
 
     # get the indices of the science exposures in the ModelContainer

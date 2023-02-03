@@ -1,6 +1,11 @@
 1.9.5 (unreleased)
 ==================
 
+datamodels
+----------
+
+- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
+
 pathloss
 --------
 
@@ -16,6 +21,7 @@ transforms
 ----------
 
 - Fix typo in NIRISS SOSS transform schema [#7450]
+
 
 1.9.4 (2023-01-27)
 ==================

@@ -1,5 +1,7 @@
 import pytest
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 from jwst.associations import asn_from_list

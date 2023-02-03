@@ -17,7 +17,6 @@ Package Index
    combine_1d/index.rst
    cube_build/index.rst
    dark_current/index.rst
-   datamodels/index.rst
    dq_init/index.rst
    exp_to_source/index.rst
    extract_1d/index.rst

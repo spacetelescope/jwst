@@ -8,8 +8,9 @@ import math
 import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 
-from .. import datamodels
-from ..datamodels import dqflags
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+
 from ..lib import reffile_utils
 from ..assign_wcs import nirspec
 

@@ -2,6 +2,9 @@ import pytest
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.outlier_detection import flag_cr
 from jwst.outlier_detection.outlier_detection_step import (
@@ -10,7 +13,6 @@ from jwst.outlier_detection.outlier_detection_step import (
     TSO_IMAGE_MODES,
     CORON_IMAGE_MODES,
 )
-from jwst import datamodels
 from jwst.assign_wcs.pointing import create_fitswcs
 
 
@@ -160,7 +162,7 @@ def we_three_sci():
 
 def test_outlier_step_no_outliers(we_three_sci, _jail):
     """Test whole step, no outliers"""
-    container = datamodels.ModelContainer(list(we_three_sci))
+    container = ModelContainer(list(we_three_sci))
     pristine = container.copy()
     result = OutlierDetectionStep.call(container)
 
@@ -177,7 +179,7 @@ def test_outlier_step_no_outliers(we_three_sci, _jail):
 
 def test_outlier_step(we_three_sci, _jail):
     """Test whole step with an outlier including saving intermediate and results files"""
-    container = datamodels.ModelContainer(list(we_three_sci))
+    container = ModelContainer(list(we_three_sci))
 
     # Drop a CR on the science array
     container[0].data[12, 12] += 1
@@ -210,7 +212,7 @@ def test_outlier_step_on_disk(we_three_sci, _jail):
         dm0.write(dm0.meta.filename)
 
     # Initialize inputs for the test based on filenames only
-    container = datamodels.ModelContainer(filenames)
+    container = ModelContainer(filenames)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -230,7 +232,7 @@ def test_outlier_step_on_disk(we_three_sci, _jail):
 
 def test_outlier_step_square_source_no_outliers(we_three_sci, _jail):
     """Test whole step with square source with sharp edges, no outliers"""
-    container = datamodels.ModelContainer(list(we_three_sci))
+    container = ModelContainer(list(we_three_sci))
 
     # put a square source in all three exposures
     for ccont in container:
@@ -255,7 +257,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, _jail):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
-    container = datamodels.ModelContainer(
+    container = ModelContainer(
         we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype)
     )
 
@@ -282,7 +284,7 @@ def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, _jail):
     """Test whole step with an outlier for TSO & coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
-    container = datamodels.ModelContainer(
+    container = ModelContainer(
         we_many_sci(
             background=bkg, sigma=sig, signal=7.0, exptype=exptype, tsovisit=tsovisit
         )

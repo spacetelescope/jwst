@@ -1,6 +1,7 @@
 #! /usr/bin/env python
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
-from .. import datamodels
 from . import residual_fringe
 from functools import partial
 

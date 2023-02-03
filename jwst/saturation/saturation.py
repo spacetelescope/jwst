@@ -5,7 +5,8 @@ import logging
 import numpy as np
 from scipy.ndimage import binary_dilation
 
-from ..datamodels import dqflags
+from stdatamodels.jwst.datamodels import dqflags
+
 from ..lib import reffile_utils
 from . import x_irs2
 

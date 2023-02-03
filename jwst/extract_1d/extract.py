@@ -11,13 +11,15 @@ from astropy.io import fits
 from gwcs import WCS
 from stdatamodels import DataModel
 from stdatamodels.properties import ObjectNode
-
-from .. import datamodels
-from ..datamodels import dqflags, SlitModel, SpecModel
-from ..datamodels.apcorr import (
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags, SlitModel, SpecModel
+from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
+
+from jwst.datamodels import SourceModelContainer
+
 
 from ..assign_wcs import niriss  # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
@@ -2747,7 +2749,7 @@ def do_extract1d(
 
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
-    if isinstance(input_model, datamodels.SourceModelContainer):
+    if isinstance(input_model, SourceModelContainer):
         # log.debug('Input is a SourceModelContainer')
         was_source_model = True
 

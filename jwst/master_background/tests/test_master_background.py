@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 import json
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.master_background import MasterBackgroundStep
 from jwst.master_background.create_master_bkg import create_background
@@ -118,8 +119,6 @@ def test_split_container(tmp_path):
     im1.save(path1)
     im2 = datamodels.ImageModel()
     im2.save(path2)
-    # container = datamodels.ModelContainer([im1, im2])
-    # container.meta.asn_table = {
     asn_table = {
         "asn_pool": "singleton",
         "products": [

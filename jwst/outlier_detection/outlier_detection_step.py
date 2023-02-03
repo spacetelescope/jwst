@@ -1,8 +1,10 @@
 """Public common step definition for OutlierDetection processing."""
 from functools import partial
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
-from jwst import datamodels
 from jwst.lib.pipe_utils import is_tso
 
 from jwst.outlier_detection import outlier_detection
@@ -73,7 +75,7 @@ class OutlierDetectionStep(Step):
         # interpret how memory should be used
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
             self.input_models = input_models
-            if not isinstance(self.input_models, datamodels.ModelContainer):
+            if not isinstance(self.input_models, ModelContainer):
                 self.input_container = False
             else:
                 self.input_container = True
@@ -181,7 +183,7 @@ class OutlierDetectionStep(Step):
     def _check_input_container(self):
         """Check to see whether input is the expected ModelContainer object."""
         ninputs = len(self.input_models)
-        if not isinstance(self.input_models, datamodels.ModelContainer):
+        if not isinstance(self.input_models, ModelContainer):
             self.log.warning("Input is not a ModelContainer")
             self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False

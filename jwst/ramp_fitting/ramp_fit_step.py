@@ -2,11 +2,12 @@
 
 import numpy as np
 
-from ..stpipe import Step
-from .. import datamodels
-
 from stcal.ramp_fitting import ramp_fit
-from jwst.datamodels import dqflags
+
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+
+from ..stpipe import Step
 
 from ..lib import reffile_utils
 

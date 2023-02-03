@@ -31,7 +31,8 @@ import logging
 import numpy as np
 from gwcs import wcstools
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..transforms import models as trmodels
 
 log = logging.getLogger(__name__)

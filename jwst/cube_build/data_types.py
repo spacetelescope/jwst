@@ -3,7 +3,11 @@ if the input data is a single science exposure, an association table, a
 single datamodel or several data models stored in a ModelContainer.
 """
 import os
-from .. import datamodels
+
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -81,7 +85,7 @@ class DataTypes():
             self.input_models.append(input_try)
             self.output_name = self.build_product_name(self.filenames[0])
 
-        elif isinstance(input_try, datamodels.ModelContainer):
+        elif isinstance(input_try, ModelContainer):
             self.output_name = 'Temp'
             if not single:  # find the name of the output file from the association
                 self.output_name = input_try.meta.asn_table.products[0].name

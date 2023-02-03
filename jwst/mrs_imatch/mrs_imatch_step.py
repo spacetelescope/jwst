@@ -8,8 +8,9 @@ JWST pipeline step for image intensity matching for MIRI images.
 
 import numpy as np
 
+from jwst.datamodels import ModelContainer
+
 from .. stpipe import Step
-from .. import datamodels
 from wiimatch.match import match_lsq
 from astropy.stats import sigma_clipped_stats as sigclip
 
@@ -34,14 +35,14 @@ class MRSIMatchStep(Step):
     reference_file_types = []
 
     def process(self, images):
-        all_models2d = datamodels.ModelContainer(images)
+        all_models2d = ModelContainer(images)
 
         chm = {}
 
         for m in all_models2d:
             ch = m.meta.instrument.channel
             if ch not in chm:
-                chm[ch] = datamodels.ModelContainer(iscopy=True)
+                chm[ch] = ModelContainer(iscopy=True)
             chm[ch].append(m)
 
         # check that channel combinations are reasonable, in particular that

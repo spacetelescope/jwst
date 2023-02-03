@@ -6,7 +6,10 @@ import logging
 
 import numpy as np
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from ..extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)
@@ -575,7 +578,7 @@ def combine_1d_spectra(input_model, exptime_key):
 
     input_spectra = {}
     output_spectra = {}
-    if isinstance(input_model, datamodels.ModelContainer):
+    if isinstance(input_model, ModelContainer):
         for ms in input_model:
             for in_spec in ms.spec:
                 spectral_order = in_spec.spectral_order
@@ -607,7 +610,7 @@ def combine_1d_spectra(input_model, exptime_key):
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
-    if isinstance(input_model, datamodels.ModelContainer):
+    if isinstance(input_model, ModelContainer):
         output_model.update(input_model[0], only="PRIMARY")
     else:
         output_model.update(input_model, only="PRIMARY")

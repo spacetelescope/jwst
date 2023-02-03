@@ -3,9 +3,7 @@ import numpy.testing as npt
 
 from stcal.ramp_fitting.ramp_fit import ramp_fit
 
-from jwst.datamodels import RampModel
-from jwst.datamodels import GainModel, ReadnoiseModel
-from jwst.datamodels import dqflags
+from stdatamodels.jwst.datamodels import RampModel, GainModel, ReadnoiseModel, dqflags
 
 #
 # The first 12 tests are for a single ramp in a single integration. The ramps

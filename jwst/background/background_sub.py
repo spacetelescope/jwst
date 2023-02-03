@@ -1,7 +1,8 @@
 import math
 import numpy as np
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from . import subtract_images
 from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip

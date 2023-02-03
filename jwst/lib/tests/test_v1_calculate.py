@@ -7,7 +7,8 @@ from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 
-from jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst.lib import engdb_mast
 from jwst.lib import engdb_tools
 import jwst.lib.set_telescope_pointing as stp

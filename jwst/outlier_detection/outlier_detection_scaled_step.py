@@ -1,7 +1,7 @@
 """Step interface for performing scaled outlier_detection."""
+from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from .. import datamodels
 from . import outlier_detection_scaled
 
 

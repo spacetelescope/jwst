@@ -1,9 +1,11 @@
 from os.path import basename
 import numpy as np
 from stdatamodels.properties import merge_tree
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 
 from ..stpipe import Step
-from .. import datamodels
 from ..combine_1d.combine1d import combine_1d_spectra
 from .expand_to_2d import expand_to_2d
 
@@ -66,7 +68,7 @@ class MasterBackgroundStep(Step):
 
             # Check that data is a supported datamodel. If not, bail.
             if not isinstance(input_data, (
-                datamodels.ModelContainer,
+                ModelContainer,
                 datamodels.MultiSlitModel,
                 datamodels.ImageModel,
                 datamodels.IFUImageModel,
@@ -81,12 +83,12 @@ class MasterBackgroundStep(Step):
 
             # If user-supplied master background, subtract it
             if self.user_background:
-                if isinstance(input_data, datamodels.ModelContainer):
+                if isinstance(input_data, ModelContainer):
                     input_data, _ = split_container(input_data)
                     del _
-                    result = datamodels.ModelContainer()
+                    result = ModelContainer()
                     result.update(input_data)
-                    background_2d_collection = datamodels.ModelContainer()
+                    background_2d_collection = ModelContainer()
                     background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, self.user_background)
@@ -104,7 +106,7 @@ class MasterBackgroundStep(Step):
                     result.meta.background.master_background_file = basename(self.user_background)
             # Compute master background and subtract it
             else:
-                if isinstance(input_data, datamodels.ModelContainer):
+                if isinstance(input_data, ModelContainer):
                     input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
 
@@ -132,9 +134,9 @@ class MasterBackgroundStep(Step):
 
                     background_data.close()
 
-                    result = datamodels.ModelContainer()
+                    result = ModelContainer()
                     result.update(input_data)
-                    background_2d_collection = datamodels.ModelContainer()
+                    background_2d_collection = ModelContainer()
                     background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
@@ -183,7 +185,7 @@ class MasterBackgroundStep(Step):
             # If all data was background subtracted, skip master bgk subtraction.
             # If there is a mixture of some being background subtracted, don't
             # subtract and print warning message
-            if isinstance(input_data, datamodels.ModelContainer):
+            if isinstance(input_data, ModelContainer):
                 isub = 0
                 for indata in input_data:
                     if indata.meta.cal_step.back_sub == 'COMPLETE' or \
@@ -232,8 +234,8 @@ def split_container(container):
     """
     asn = container.meta.asn_table.instance
 
-    background = datamodels.ModelContainer()
-    science = datamodels.ModelContainer()
+    background = ModelContainer()
+    science = ModelContainer()
 
     for ind_science in container.ind_asn_type('science'):
         science.append(container._models[ind_science])
@@ -290,8 +292,8 @@ def subtract_2d_background(source, background):
         return result
 
     # Handle containers of many datamodels
-    if isinstance(source, datamodels.ModelContainer):
-        result = datamodels.ModelContainer()
+    if isinstance(source, ModelContainer):
+        result = ModelContainer()
         result.update(source)
         for model, bg in zip(source, background):
             result.append(_subtract_2d_background(model, bg))

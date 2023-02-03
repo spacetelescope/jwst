@@ -6,9 +6,10 @@ import numpy as np
 
 from gwcs import wcstools
 
+import stdatamodels.jwst.datamodels as datamodels
+
 from jwst.assign_wcs import nirspec, util
 from jwst.lib.wcs_utils import get_wavelengths
-import jwst.datamodels as datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

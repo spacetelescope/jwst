@@ -2,7 +2,8 @@
 from collections import defaultdict
 import os.path as op
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..stpipe import Pipeline
 

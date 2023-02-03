@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from jwst.datamodels import RampModel, dqflags
+from stdatamodels.jwst.datamodels import RampModel, dqflags
+
 from jwst.refpix import RefPixStep
 from jwst.refpix.reference_pixels import Dataset, NIRDataset, correct_model, create_dataset
 

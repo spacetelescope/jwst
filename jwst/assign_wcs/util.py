@@ -20,10 +20,11 @@ from gwcs import utils as gwutils
 from stdatamodels import DataModel
 from stpipe.exceptions import StpipeExitException
 
+from stdatamodels.jwst.datamodels import WavelengthrangeModel
+
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel
 
 
 log = logging.getLogger(__name__)

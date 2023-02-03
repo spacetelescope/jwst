@@ -21,8 +21,8 @@ import numpy as np
 from astropy.io import fits
 from gwcs import wcs
 
-from jwst.datamodels.image import ImageModel
-from jwst.datamodels import CubeModel, SlitModel, MultiSlitModel
+from stdatamodels.jwst.datamodels import ImageModel, CubeModel, SlitModel, MultiSlitModel
+
 from jwst.assign_wcs.util import create_grism_bbox
 from jwst.assign_wcs import AssignWcsStep, nircam
 

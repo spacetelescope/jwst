@@ -8,7 +8,9 @@
 
 import numpy as np
 import logging
-from ..datamodels import dqflags
+
+from stdatamodels.jwst.datamodels import dqflags
+
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)

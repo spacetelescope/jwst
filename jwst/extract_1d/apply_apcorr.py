@@ -4,9 +4,9 @@ from typing import Tuple, Union, Type
 from scipy.interpolate import interp2d, interp1d
 from astropy.io import fits
 from stdatamodels import DataModel
+from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from ..assign_wcs.util import compute_scale
-from ..datamodels import MultiSlitModel
 import numpy as np
 
 

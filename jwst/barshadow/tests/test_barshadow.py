@@ -1,7 +1,8 @@
 import numpy as np
 import numpy.random as rn
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.barshadow import bar_shadow as bar
 
 
