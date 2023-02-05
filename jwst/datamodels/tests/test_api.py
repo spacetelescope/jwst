@@ -8,10 +8,14 @@ from stdatamodels.jwst import datamodels as stdm
 from jwst import datamodels as jwstdm
 
 
-STDM_MODULES = [mdl.name for mdl in pkgutil.iter_modules(stdm.__path__)
-                if not mdl.ispkg and mdl.name not in stdm._private_modules]
-JWST_MODULES = [mdl.name for mdl in pkgutil.iter_modules(jwstdm.__path__) 
-                if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules]
+STDM_ALL = sorted(stdm.__all__)
+JWST_ALL = sorted(list(set(jwstdm.__all__) - set(jwstdm._jwst_models)))
+
+
+STDM_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(stdm.__path__)
+                       if not mdl.ispkg and mdl.name not in stdm._private_modules])
+JWST_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(jwstdm.__path__) 
+                       if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules])
 
 
 def assert_has_same_import(module_a, module_b, import_):
@@ -19,7 +23,7 @@ def assert_has_same_import(module_a, module_b, import_):
     assert getattr(module_a, import_) is getattr(module_b, import_)
 
 
-@pytest.mark.parametrize("model", stdm.__all__)
+@pytest.mark.parametrize("model", STDM_ALL)
 def test_stdatamodels_api(model):
     assert_has_same_import(stdm, jwstdm, model)
 
@@ -36,6 +40,11 @@ def test_stdatamodels_modules(module):
         assert_has_same_import(jwst_module, stdm_module, import_)
 
 
+@pytest.mark.parametrize("model", JWST_ALL)
+def test_jwst_datamodels_api(model):
+    assert_has_same_import(jwstdm, stdm, model)
+
+
 @pytest.mark.parametrize("module", JWST_MODULES)
 def test_jwst_datamodels_modules(module):
     stdm_module = importlib.import_module(f"stdatamodels.jwst.datamodels.{module}")
@@ -48,11 +57,6 @@ def test_jwst_datamodels_modules(module):
         assert_has_same_import(jwst_module, stdm_module, import_)
 
 
-@pytest.mark.parametrize("model", set(jwstdm.__all__) - set(jwstdm._jwst_models))
-def test_jwst_datamodels_api(model):
-    assert_has_same_import(jwstdm, stdm, model)
-
-
-@pytest.mark.parametrize("model", jwstdm._jwst_models)
+@pytest.mark.parametrize("model", sorted(jwstdm._jwst_models))
 def test_jwst_datamodels(model):
     assert not hasattr(stdm, model)
