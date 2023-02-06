@@ -43,8 +43,8 @@ tags:
   title: A model performing logical operations on arrays.
   description: |-
     Implements the Numpy logical operators
-- tag_uri: "tag:stsci.edu:jwst_pipeline/niriss_soss-0.7.0"
-  schema_uri: http://stsci.edu/schemas/jwst_pipeline/niriss_soss-0.7.0
+- tag_uri: "tag:stsci.edu:jwst_pipeline/niriss-soss-0.7.0"
+  schema_uri: http://stsci.edu/schemas/jwst_pipeline/niriss-soss-0.7.0
   title: NIRISS SOSS transforms.
   description: |-
     This model is used by the NIRISS SOSS WCS pipeline.
