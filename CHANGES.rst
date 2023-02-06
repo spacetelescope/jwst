@@ -21,7 +21,7 @@ straylight
 ----------
 
 - Fix bug with straylight zeroing out NaNs in input rate images, as these
-  are now deliberately set as such []
+  are now deliberately set as such [#7455]
 
 transforms
 ----------
