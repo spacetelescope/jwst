@@ -17,6 +17,12 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+straylight
+----------
+
+- Fix bug with straylight zeroing out NaNs in input rate images, as these
+  are now deliberately set as such []
+
 transforms
 ----------
 
