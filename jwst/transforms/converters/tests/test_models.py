@@ -10,6 +10,7 @@ from jwst.transforms.models import (
     NirissSOSSModel, Rotation3DToGWA, Gwa2Slit, Logical, Slit,
     DirCos2Unitless, Unitless2DirCos, Snell, AngleFromGratingEquation,
     WavelengthFromGratingEquation)
+import asdf
 import pytest
 
 
@@ -60,3 +61,11 @@ def test_niriss_soss(tmpdir):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         assert_model_roundtrip(soss_model, tmpdir)
+
+    # Check tag is the latest version
+    path = str(tmpdir / "test.asdf")
+    with asdf.AsdfFile({"model": soss_model}) as af:
+        af.write_to(path)
+
+    with asdf.open(path, _force_raw_types=True) as af:
+        assert af.tree["model"]._tag == "tag:stsci.edu:jwst_pipeline/niriss_soss-1.0.0"
