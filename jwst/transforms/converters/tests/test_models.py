@@ -1,12 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
 import numpy as np
-from astropy.modeling.models import Shift, Rotation2D
+import warnings
+from astropy.modeling.models import Shift, Rotation2D, Const1D
 from asdf_astropy.converters.transform.tests.test_transform import (
     assert_model_roundtrip)
 
 from jwst.transforms.models import (
-    Rotation3DToGWA, Gwa2Slit, Logical, Slit,
+    NirissSOSSModel, Rotation3DToGWA, Gwa2Slit, Logical, Slit,
     DirCos2Unitless, Unitless2DirCos, Snell, AngleFromGratingEquation,
     WavelengthFromGratingEquation)
 import pytest
@@ -42,3 +43,20 @@ def test_gwa_to_slit(tmpdir):
     slits = [1, 2]
     m = Gwa2Slit(slits, transforms)
     assert_model_roundtrip(m, tmpdir)
+
+
+def test_niriss_soss(tmpdir):
+    """Regression test for bugs discussed in issue #7401"""
+    spectral_orders = [1, 2, 3]
+    models = [
+        Const1D(1.0) & Const1D(2.0) & Const1D(3.0),
+        Const1D(4.0) & Const1D(5.0) & Const1D(6.0),
+        Const1D(7.0) & Const1D(8.0) & Const1D(9.0),
+    ]
+
+    soss_model = NirissSOSSModel(spectral_orders, models)
+
+    # Check that no warning is issued when serializing
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert_model_roundtrip(soss_model, tmpdir)
