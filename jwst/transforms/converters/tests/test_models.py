@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
 import numpy as np
+import os
 import warnings
 from astropy.modeling.models import Shift, Rotation2D, Const1D
 from asdf_astropy.converters.transform.tests.test_transform import (
@@ -69,3 +70,20 @@ def test_niriss_soss(tmpdir):
 
     with asdf.open(path, _force_raw_types=True) as af:
         assert af.tree["model"]._tag == "tag:stsci.edu:jwst_pipeline/niriss_soss-1.0.0"
+
+
+def test_niriss_soss_legacy():
+    data_path = os.path.join(os.path.dirname(__file__), 'data')
+    data = os.path.join(data_path, 'niriss_soss.asdf')
+
+    # confirm that the file contains the legacy tag
+    with asdf.open(data, _force_raw_types=True) as af:
+        assert af.tree["model"]._tag == "tag:stsci.edu:jwst_pipeline/niriss-soss-0.7.0"
+
+    # test that it opens with the legacy tag
+    with asdf.open(data) as af:
+        model = af['model']
+        assert model.spectral_orders == [1, 2, 3]
+        assert (model.models[1].parameters == (1.0, 2.0, 3.0)).all()
+        assert (model.models[2].parameters == (4.0, 5.0, 6.0)).all()
+        assert (model.models[3].parameters == (7.0, 8.0, 9.0)).all()

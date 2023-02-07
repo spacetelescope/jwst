@@ -1,0 +1,95 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.5.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: The ASDF Developers, homepage: 'http://github.com/asdf-format/asdf',
+  name: asdf, version: 2.14.3}
+history:
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: !core/software-1.0.0 {name: asdf, version: 2.14.3}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/transform/extensions/transform-1.5.0
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.3.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://stsci.edu/jwst_pipeline/extensions/jwst_transforms-1.0.0
+    software: !core/software-1.0.0 {name: jwst, version: 1.4.3.dev49+ga4ad6249}
+model: !<tag:stsci.edu:jwst_pipeline/niriss-soss-0.7.0>
+  inputs: [x, y, spectral_order]
+  models:
+  - !transform/concatenate-1.2.0
+    forward:
+    - !transform/concatenate-1.2.0
+      forward:
+      - !transform/constant-1.4.0
+        dimensions: 1
+        inputs: [x]
+        outputs: [y]
+        value: 1.0
+      - !transform/constant-1.4.0
+        dimensions: 1
+        inputs: [x]
+        outputs: [y]
+        value: 2.0
+      inputs: [x0, x1]
+      outputs: [y0, y1]
+    - !transform/constant-1.4.0
+      dimensions: 1
+      inputs: [x]
+      outputs: [y]
+      value: 3.0
+    inputs: [x0, x1, x]
+    outputs: [y0, y1, y]
+  - !transform/concatenate-1.2.0
+    forward:
+    - !transform/concatenate-1.2.0
+      forward:
+      - !transform/constant-1.4.0
+        dimensions: 1
+        inputs: [x]
+        outputs: [y]
+        value: 4.0
+      - !transform/constant-1.4.0
+        dimensions: 1
+        inputs: [x]
+        outputs: [y]
+        value: 5.0
+      inputs: [x0, x1]
+      outputs: [y0, y1]
+    - !transform/constant-1.4.0
+      dimensions: 1
+      inputs: [x]
+      outputs: [y]
+      value: 6.0
+    inputs: [x0, x1, x]
+    outputs: [y0, y1, y]
+  - !transform/concatenate-1.2.0
+    forward:
+    - !transform/concatenate-1.2.0
+      forward:
+      - !transform/constant-1.4.0
+        dimensions: 1
+        inputs: [x]
+        outputs: [y]
+        value: 7.0
+      - !transform/constant-1.4.0
+        dimensions: 1
+        inputs: [x]
+        outputs: [y]
+        value: 8.0
+      inputs: [x0, x1]
+      outputs: [y0, y1]
+    - !transform/constant-1.4.0
+      dimensions: 1
+      inputs: [x]
+      outputs: [y]
+      value: 9.0
+    inputs: [x0, x1, x]
+    outputs: [y0, y1, y]
+  outputs: [ra, dec, lam]
+  spectral_orders: [1, 2, 3]
+...
