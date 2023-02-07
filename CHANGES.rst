@@ -23,6 +23,12 @@ transforms
 - Fix the NIRISS SOSS transform in the manifest and converter so the correct tag
   is used and no warnings are issued by ASDF. [#7456]
 
+other
+-----
+
+- Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
+  instead of ``pkg_resources``. [#7457]
+
 1.9.4 (2023-01-27)
 ==================
 
