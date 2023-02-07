@@ -124,7 +124,8 @@ class LogicalConverter(TransformConverterBase):
 
 
 class NirissSOSSConverter(TransformConverterBase):
-    tags = ["tag:stsci.edu:jwst_pipeline/niriss-soss-*"]
+    tags = ["tag:stsci.edu:jwst_pipeline/niriss-soss-*",
+            "tag:stsci.edu:jwst_pipeline/niriss_soss-*"]
     types = ["jwst.transforms.models.NirissSOSSModel"]
 
     def from_yaml_tree_transform(self, node, tag, ctx):
