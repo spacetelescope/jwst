@@ -853,13 +853,9 @@ class DataSet():
                                                      dqflags.pixel['DO_NOT_USE'])
             if not self.inverse:
                 if unit_is_surface_brightness:
-                    log.debug(' unit_is_surf_bright is True')
-                    log.debug(' in photom_io MultiSlit; set to MJy/sr')
                     slit.meta.bunit_data = 'MJy/sr'
                     slit.meta.bunit_err = 'MJy/sr'
                 else:
-                    log.debug(' unit_is_surf_bright is False')
-                    log.debug(' in photom_io MultiSlit; set to MJy')
                     slit.meta.bunit_data = 'MJy'
                     slit.meta.bunit_err = 'MJy'
             else:
