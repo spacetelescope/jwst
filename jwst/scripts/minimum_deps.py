@@ -7,6 +7,7 @@ import warnings
 
 import pkg_resources
 import requests
+from packaging.version import InvalidVersion
 
 
 def get_minimum_version(requirement):
@@ -20,9 +21,13 @@ def get_minimum_version(requirement):
     content = requests.get(
         f'https://pypi.python.org/pypi/{requirement.name}/json'
     ).json()
-    versions = sorted(
-        [pkg_resources.parse_version(v) for v in content['releases'].keys()]
-    )
+    versions = []
+    for v in content['releases']:
+        try:
+            versions.append(pkg_resources.parse_version(v))
+        except InvalidVersion:
+            continue
+    versions = sorted(versions)
     for version in versions:
         if version in requirement:
             # If the requirement does not list any version, the lowest will be
