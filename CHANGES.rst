@@ -17,6 +17,12 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
+transforms
+----------
+
+- Fix the NIRISS SOSS transform in the manifest and converter so the correct tag
+  is used and no warnings are issued by ASDF. [#7456]
+
 1.9.4 (2023-01-27)
 ==================
 
