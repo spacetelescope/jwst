@@ -101,8 +101,8 @@ class PixelReplacement:
                     self.output.dq = np.where(
                         # Where trace is located, set replaced values
                         trace_mask,
-                        trace_output.data,
-                        self.output.data
+                        trace_output.dq,
+                        self.output.dq
                     )
 
                     n_replaced = np.count_nonzero(trace_output.dq & self.REPLACED)
