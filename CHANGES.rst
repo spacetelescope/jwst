@@ -17,17 +17,31 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
+other
+-----
+
+- Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
+  instead of ``pkg_resources``. [#7457]
+
+scripts
+-------
+
+- Added a script ``adjust_wcs.py`` to apply additional user-provided rotations
+  and scale corrections to an imaging WCS of a calibrated image. [#7430]
+
 transforms
 ----------
 
 - Fix the NIRISS SOSS transform in the manifest and converter so the correct tag
   is used and no warnings are issued by ASDF. [#7456]
 
-other
------
+tweakreg
+--------
 
-- Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
-  instead of ``pkg_resources``. [#7457]
+- Added a ``utils.py`` module and a function (``adjust_wcs()``) to apply
+  additional user-provided rotations and scale corrections to an imaging
+  WCS of a calibrated image. [#7430]
+
 
 1.9.4 (2023-01-27)
 ==================
@@ -55,7 +69,7 @@ imprint
 
 - Ensure that the observation number of the imprint image matches the observation number of the image
   from which the imprint is to be subtracted. This is necessary to properly pair up imprint images
-  with their respective target and background images that are in different observations. [#7440] 
+  with their respective target and background images that are in different observations. [#7440]
 
 ramp_fitting
 ------------
@@ -68,12 +82,12 @@ regtest
 
 - Update MIRI calwebb_coron3 test to use in-flight data [#7431]
 
-- Update NIRSpec fixed slit testing of spec2 and spec3 pipelines, and 
+- Update NIRSpec fixed slit testing of spec2 and spec3 pipelines, and
   bright object time series testing of spec2, to use in-flight data [#7432]
 
 - Update FGS testing of calwebb_image2 pipeline for FGS science-mode
   to use in-flight data [#7433]
-  
+
 - Update NIRISS calwebb_ami3 test to use in-flight data [#7434]
 
 1.9.3 (2023-01-12)
