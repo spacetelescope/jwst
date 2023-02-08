@@ -102,10 +102,6 @@ def correct_xartifact(input_model, modelpars):
     # for use in the straylight calculations
     input = input_model.copy()
 
-    # Create output as a copy of the input science data model
-    output = input_model.copy()  # this is used in algorithm to
-    # find the straylight correction.
-
     # mask is same size as image - set = 1 everywhere to start
     mask = np.ones_like(input.data)
 
@@ -187,7 +183,13 @@ def correct_xartifact(input_model, modelpars):
     # remove the straylight correction for the reference pixels
     model[:, 1028:1032] = 0.0
     model[:, 0:4] = 0.0
-    # Subtract the model from the real data prior to replacement of NaNs with zeros
+
+    # Delete our temporary working copy of the data
+    del input
+
+    # Create output as a copy of the real data prior to replacement of NaNs with zeros
+    output = input_model.copy()
+    # Subtract the model from the data
     output.data = output.data - model
 
     # Remove any remaining pedestal stray light values based on inter-channel region
