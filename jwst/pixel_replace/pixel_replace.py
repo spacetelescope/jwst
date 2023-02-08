@@ -154,6 +154,11 @@ class PixelReplacement:
         valid_shape = [x_range, y_range]
         profile_cut = valid_shape[dispaxis - 1]
 
+        # COMMENTS NOTE:
+        # In comments and parameter naming, I will try to be consistent in using
+        # "profile" to describe vectors in the spatial, i.e. cross-dispersion direction,
+        # and "slice" to describe vectors in the spectral, i.e. dispersion direction.
+
         # Create set of slice indices which we can later use for profile creation
         valid_profiles = set(range(*valid_shape[2 - dispaxis]))
         profiles_to_replace = set()
@@ -178,10 +183,12 @@ class PixelReplacement:
 
         log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
 
-        ## check_output = np.zeros((profile_cut[1]-profile_cut[0], len(valid_profiles)))
+        # check_output = np.zeros((profile_cut[1]-profile_cut[0], len(valid_profiles)))
         for i, ind in enumerate(profiles_to_replace):
+            # for i, ind in enumerate(valid_profiles):
+
             # Use sets for convenient finding of neighboring slices to use in profile creation
-            adjacent_inds = set(range(ind - self.pars['n_adjacent_cols'], ind + self.pars['n_adjacent_cols']))
+            adjacent_inds = set(range(ind - self.pars['n_adjacent_cols'], ind + self.pars['n_adjacent_cols'] + 1))
             adjacent_inds.discard(ind)
             valid_adjacent_inds = list(adjacent_inds.intersection(valid_profiles))
             # Cut out valid neighboring profiles
@@ -195,6 +202,37 @@ class PixelReplacement:
             # Add additional cut to pull only from region with valid data for convenience (may not be necessary)
             profile_data = profile_data[self.custom_slice(3 - dispaxis, list(range(profile_cut[0], profile_cut[1])))]
 
+
+            # Attempt some clunky IFU-trace-dependent normalization
+            if model.meta.exposure.type == 'MIR_MRS':
+                xx, yy = np.indices(model.data.shape)
+                _, beta, _ = model.meta.wcs.transform('detector', 'alpha_beta', yy, xx)
+                # Make similar cuts and slices to beta as we've done to the profile data
+                profile_beta = beta[self.custom_slice(dispaxis, valid_adjacent_inds)]
+                profile_beta = np.where(
+                    model.dq[self.custom_slice(dispaxis, valid_adjacent_inds)] & self.DO_NOT_USE,
+                    np.nan,
+                    profile_beta
+                )
+                profile_beta = profile_beta[
+                    self.custom_slice(3 - dispaxis, list(range(profile_cut[0], profile_cut[1])))]
+                # Find IFU traces this profile intersects by pulling unique beta values from WCS frame
+                trace_betas = np.unique(profile_beta)
+                # Remove nan
+                trace_betas = trace_betas[~np.isnan(trace_betas)]
+                # Create dict of norm constants for each trace, calculated from profile data from each
+                # trace individually
+                norm_dict = dict()
+                for beta in trace_betas:
+                    trace_profile_data = np.where(
+                        profile_beta == beta,
+                        profile_data,
+                        np.nan
+                    )
+                    norm_dict[beta] = np.nanmax(np.abs(trace_profile_data), axis=(dispaxis - 1), keepdims=True)
+
+
+
             # Normalize profile data
             normalized = profile_data / np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
 
@@ -204,7 +242,7 @@ class PixelReplacement:
             # so we suppress that above.
             median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
 
-            ## check_output[:, i] = median_profile
+            # check_output[:, i] = median_profile
 
             # Clean current profile of values flagged as bad
             current_profile = model.data[self.custom_slice(dispaxis, ind)]
@@ -235,9 +273,9 @@ class PixelReplacement:
             model_replaced.data[self.custom_slice(dispaxis, ind)][range(*profile_cut)] = replaced_current
             model_replaced.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] = replaced_dq
 
-        ## import matplotlib.pyplot as plt
-        ## plt.imshow(check_output)
-        ## plt.show()
+        # import matplotlib.pyplot as plt
+        # plt.imshow(check_output.T)
+        # plt.show()
 
         return model_replaced
 
