@@ -68,9 +68,51 @@ class PixelReplacement:
         """
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
         if isinstance(self.input, (datamodels.ImageModel, datamodels.IFUImageModel)):
-            self.output = self.algorithm(self.input)
-            n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
-            log.info(f"Input model had {n_replaced} pixels replaced.")
+            if self.input.meta.exposure.type != 'MIR_MRS':
+                self.output = self.algorithm(self.input)
+                n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+                log.info(f"Input model had {n_replaced} pixels replaced.")
+            else:
+                # Attempt to run pixel replacement on each throw of the IFU slicer
+                # individually.
+                xx, yy = np.indices(self.input.data.shape)
+                _, beta_array, _ = self.input.meta.wcs.transform('detector', 'alpha_beta', yy, xx)
+                unique_beta = np.unique(beta_array)
+                unique_beta = unique_beta[~np.isnan(unique_beta)]
+                for i, beta in enumerate(unique_beta):
+                    # Define a mask that is True where this trace is located
+                    trace_mask = (beta_array == beta)
+                    trace_model = self.input.copy()
+                    trace_model.dq = np.where(
+                        # When not in this trace, set DO_NOT_USE
+                        ~trace_mask,
+                        trace_model.dq | self.DO_NOT_USE,
+                        trace_model.dq
+                    )
+
+                    trace_output = self.algorithm(trace_model)
+                    self.output.data = np.where(
+                        # Where trace is located, set replaced values
+                        trace_mask,
+                        trace_output.data,
+                        self.output.data
+                    )
+
+                    self.output.dq = np.where(
+                        # Where trace is located, set replaced values
+                        trace_mask,
+                        trace_output.data,
+                        self.output.data
+                    )
+
+                    n_replaced = np.count_nonzero(trace_output.dq & self.REPLACED)
+                    log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
+
+                    trace_model.close()
+                    trace_output.close()
+                n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+                log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
+
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
@@ -201,37 +243,6 @@ class PixelReplacement:
             )
             # Add additional cut to pull only from region with valid data for convenience (may not be necessary)
             profile_data = profile_data[self.custom_slice(3 - dispaxis, list(range(profile_cut[0], profile_cut[1])))]
-
-
-            # Attempt some clunky IFU-trace-dependent normalization
-            if model.meta.exposure.type == 'MIR_MRS':
-                xx, yy = np.indices(model.data.shape)
-                _, beta, _ = model.meta.wcs.transform('detector', 'alpha_beta', yy, xx)
-                # Make similar cuts and slices to beta as we've done to the profile data
-                profile_beta = beta[self.custom_slice(dispaxis, valid_adjacent_inds)]
-                profile_beta = np.where(
-                    model.dq[self.custom_slice(dispaxis, valid_adjacent_inds)] & self.DO_NOT_USE,
-                    np.nan,
-                    profile_beta
-                )
-                profile_beta = profile_beta[
-                    self.custom_slice(3 - dispaxis, list(range(profile_cut[0], profile_cut[1])))]
-                # Find IFU traces this profile intersects by pulling unique beta values from WCS frame
-                trace_betas = np.unique(profile_beta)
-                # Remove nan
-                trace_betas = trace_betas[~np.isnan(trace_betas)]
-                # Create dict of norm constants for each trace, calculated from profile data from each
-                # trace individually
-                norm_dict = dict()
-                for beta in trace_betas:
-                    trace_profile_data = np.where(
-                        profile_beta == beta,
-                        profile_data,
-                        np.nan
-                    )
-                    norm_dict[beta] = np.nanmax(np.abs(trace_profile_data), axis=(dispaxis - 1), keepdims=True)
-
-
 
             # Normalize profile data
             normalized = profile_data / np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
