@@ -3,6 +3,7 @@ import numpy as np
 from .. import datamodels
 from scipy.optimize import minimize
 import warnings
+from ..assign_wcs.nirspec import nrs_wcs_set_input
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -68,52 +69,89 @@ class PixelReplacement:
         to each 2D spectrum in input.
         """
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
-        if isinstance(self.input, (datamodels.ImageModel, datamodels.IFUImageModel)):
-            if self.input.meta.exposure.type != 'MIR_MRS':
-                self.output = self.algorithm(self.input)
-                n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
-                log.info(f"Input model had {n_replaced} pixels replaced.")
-            else:
+        if isinstance(self.input, datamodels.ImageModel):
+            self.output = self.algorithm(self.input)
+            n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+            log.info(f"Input model had {n_replaced} pixels replaced.")
+        elif isinstance(self.input, datamodels.IFUImageModel):
                 # Attempt to run pixel replacement on each throw of the IFU slicer
                 # individually.
                 xx, yy = np.indices(self.input.data.shape)
-                _, beta_array, _ = self.input.meta.wcs.transform('detector', 'alpha_beta', yy, xx)
-                unique_beta = np.unique(beta_array)
-                unique_beta = unique_beta[~np.isnan(unique_beta)]
-                for i, beta in enumerate(unique_beta):
-                    # Define a mask that is True where this trace is located
-                    trace_mask = (beta_array == beta)
-                    trace_model = self.input.copy()
-                    trace_model.dq = np.where(
-                        # When not in this trace, set NON_SCIENCE and DO_NOT_USE
-                        ~trace_mask,
-                        trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
-                        trace_model.dq
-                    )
+                if self.input.meta.exposure.type == 'MIR_MRS':
+                    _, beta_array, _ = self.input.meta.wcs.transform('detector', 'alpha_beta', yy, xx)
+                    unique_beta = np.unique(beta_array)
+                    unique_beta = unique_beta[~np.isnan(unique_beta)]
+                    for i, beta in enumerate(unique_beta):
+                        # Define a mask that is True where this trace is located
+                        trace_mask = (beta_array == beta)
+                        trace_model = self.input.copy()
+                        trace_model.dq = np.where(
+                            # When not in this trace, set NON_SCIENCE and DO_NOT_USE
+                            ~trace_mask,
+                            trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
+                            trace_model.dq
+                        )
 
-                    trace_model = self.algorithm(trace_model)
-                    self.output.data = np.where(
-                        # Where trace is located, set replaced values
-                        trace_mask,
-                        trace_model.data,
-                        self.output.data
-                    )
+                        trace_model = self.algorithm(trace_model)
+                        self.output.data = np.where(
+                            # Where trace is located, set replaced values
+                            trace_mask,
+                            trace_model.data,
+                            self.output.data
+                        )
 
-                    self.output.dq = np.where(
-                        # Where trace is located, set replaced values
-                        trace_mask,
-                        trace_model.dq,
-                        self.output.dq
-                    )
+                        self.output.dq = np.where(
+                            # Where trace is located, set replaced values
+                            trace_mask,
+                            trace_model.dq,
+                            self.output.dq
+                        )
 
-                    n_replaced = np.count_nonzero(trace_model.dq & self.REPLACED)
-                    log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
+                        n_replaced = np.count_nonzero(trace_model.dq & self.REPLACED)
+                        log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
 
-                    trace_model.close()
+                        trace_model.close()
 
-                n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
-                log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
+                    n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+                    log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
+                else:
+                    # NRS_IFU method - Fixed number of IFU slices to iterate over
+                    for i in range(30):
+                        slice_wcs = nrs_wcs_set_input(self.input, i)
+                        _, _, wave = slice_wcs.transform('detector', 'slicer', yy, xx)
 
+                        # Define a mask that is True where this trace is located
+                        trace_mask = (wave > 0)
+                        trace_model = self.input.copy()
+                        trace_model.dq = np.where(
+                            # When not in this trace, set NON_SCIENCE and DO_NOT_USE
+                            ~trace_mask,
+                            trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
+                            trace_model.dq
+                        )
+
+                        trace_model = self.algorithm(trace_model)
+                        self.output.data = np.where(
+                            # Where trace is located, set replaced values
+                            trace_mask,
+                            trace_model.data,
+                            self.output.data
+                        )
+
+                        self.output.dq = np.where(
+                            # Where trace is located, set replaced values
+                            trace_mask,
+                            trace_model.dq,
+                            self.output.dq
+                        )
+
+                        n_replaced = np.count_nonzero(trace_model.dq & self.REPLACED)
+                        log.info(f"Input NRS_IFU frame had {n_replaced} pixels replaced in IFU slice {i + 1}.")
+
+                        trace_model.close()
+
+                    n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+                    log.info(f"Input NRS_IFU frame had {n_replaced} total pixels replaced.")
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
