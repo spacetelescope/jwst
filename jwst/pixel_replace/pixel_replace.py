@@ -21,6 +21,7 @@ class PixelReplacement:
     # Shortcuts for DQ Flags
     DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
     REPLACED = datamodels.dqflags.pixel['RESERVED_4']
+    NON_SCIENCE = datamodels.dqflags.pixel['NON_SCIENCE']
 
     # Shortcuts for dispersion direction for ease of reading
     HORIZONTAL = 1
@@ -84,32 +85,32 @@ class PixelReplacement:
                     trace_mask = (beta_array == beta)
                     trace_model = self.input.copy()
                     trace_model.dq = np.where(
-                        # When not in this trace, set DO_NOT_USE
+                        # When not in this trace, set NON_SCIENCE and DO_NOT_USE
                         ~trace_mask,
-                        trace_model.dq | self.DO_NOT_USE,
+                        trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
                         trace_model.dq
                     )
 
-                    trace_output = self.algorithm(trace_model)
+                    trace_model = self.algorithm(trace_model)
                     self.output.data = np.where(
                         # Where trace is located, set replaced values
                         trace_mask,
-                        trace_output.data,
+                        trace_model.data,
                         self.output.data
                     )
 
                     self.output.dq = np.where(
                         # Where trace is located, set replaced values
                         trace_mask,
-                        trace_output.dq,
+                        trace_model.dq,
                         self.output.dq
                     )
 
-                    n_replaced = np.count_nonzero(trace_output.dq & self.REPLACED)
+                    n_replaced = np.count_nonzero(trace_model.dq & self.REPLACED)
                     log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
 
                     trace_model.close()
-                    trace_output.close()
+
                 n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
                 log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
 
@@ -212,6 +213,12 @@ class PixelReplacement:
         for ind in range(*valid_shape[2 - dispaxis]):
             # Exclude regions with no data for dq slice.
             dq_slice = model.dq[self.custom_slice(dispaxis, ind)][profile_cut[0]: profile_cut[1]]
+            # Exclude regions with NON_SCIENCE flag
+            dq_slice = np.where(
+                dq_slice & self.NON_SCIENCE,
+                512,
+                dq_slice
+            )
             # Find bad pixels in region containing valid data.
             n_bad = np.count_nonzero(dq_slice & self.DO_NOT_USE)
             if n_bad == len(dq_slice):
@@ -268,7 +275,8 @@ class PixelReplacement:
                              args=(median_profile, cleaned_current)).x
 
             replaced_current = np.where(
-                model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] & self.DO_NOT_USE,
+                (model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] & self.DO_NOT_USE ^
+                 model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] & self.NON_SCIENCE) == 1,
                 median_profile * scale,
                 cleaned_current
             )
@@ -276,7 +284,8 @@ class PixelReplacement:
             # Change the dq bits where old flag was DO_NOT_USE and new value is not nan
             current_dq = model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)]
             replaced_dq = np.where(
-                (current_dq & self.DO_NOT_USE) & ~(np.isnan(replaced_current)),
+                (current_dq & self.DO_NOT_USE ^ current_dq & self.NON_SCIENCE == 1) &
+                ~(np.isnan(replaced_current)),
                 current_dq ^ self.DO_NOT_USE ^ self.REPLACED,
                 current_dq
             )
