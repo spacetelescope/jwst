@@ -4,9 +4,11 @@ import numpy as np
 
 from ..stpipe import Step
 from .. import datamodels
+# from stdatamodels.jwst import datamodels (in final)
 
 from stcal.ramp_fitting import ramp_fit
 from jwst.datamodels import dqflags
+# from stdatamodels.jwst.datamodels import dqflags (in final)
 
 from ..lib import reffile_utils
 
@@ -216,20 +218,22 @@ class RampFitStep(Step):
             log.info('Using READNOISE reference file: %s', readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
 
-            with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model,
-            datamodels.GainModel(gain_filename) as gain_model:
+            with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model, \
+                    datamodels.GainModel(gain_filename) as gain_model:
 
                 # Try to retrieve the gain factor from the gain reference file.
                 # If found, store it in the science model meta data, so that it's
                 # available later in the gain_scale step, which avoids having to
                 # load the gain ref file again in that step.
                 if gain_model.meta.exposure.gain_factor is not None:
-                    input_model.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
+                    input_model.meta.exposure.gain_ifactor = gain_model.meta.exposure.gain_factor
 
                 # Get gain arrays, subarrays if desired.
                 frames_per_group = input_model.meta.exposure.nframes
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
                     input_model, readnoise_model, gain_model, frames_per_group)
+
+                readnoise_2d_orig = readnoise_2d.copy()  # save for correct units
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
@@ -246,39 +250,44 @@ class RampFitStep(Step):
 
             # Run ramp_fit() the first time, ignoring all DO_NOT_USE groups
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
-                input_model, buffsize,
-                self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                self.weighting, max_cores, dqflags.pixel, suppress_one_group=self.suppress_one_group)
+                input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
+                self.algorithm, self.weighting, max_cores, dqflags.pixel,
+                suppress_one_group=self.suppress_one_group)
 
             # To calculate the readnoise variance for weighting, ramp_fitting
-            # will be run a second time - this time with the DO_NOT_USE flags
-            # removed from the UNDERSAMP-flagged pixels. To reduce execution time,
-            # fitting will effectively be performed only on the UNDERSAMP-flagged
-            # pixels, by flagging all other pixels as DO_NOT_USE.
-            # Flag all pixels as DO_NOT_USE, then remove the DO_NOT_USE flag
-            # from the UNDERSAMP-flagged pixels.
+            # will be run a second time. First the DO_NOT_USE flags and UNDERSAMP
+            # flags are removed from the GROUPDQ values of the UNDERSAMP-flagged
+            # pixels.
             gdq = input_model_W.groupdq.copy()
-            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))
 
+            # Locate groups where that are flagged with UNDERSAMP
+            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))
             if len(wh_undersamp[0]) > 0:
-                gdq = np.bitwise_or(gdq, dqflags.group['DO_NOT_USE'])
-                gdq[wh_undersamp] -= dqflags.group['DO_NOT_USE']
+                log.info('Processing groups flagged with UNDERSAMP.')
+
+                gdq[wh_undersamp] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['UNDERSAMP'])
+
                 input_model_W.groupdq = gdq
+                readnoise_2d = readnoise_2d_orig
 
                 # Rerun fitting to get the weighted RN variances
                 image_info_W, integ_info_W, opt_info_W, gls_opt_model_W = ramp_fit.ramp_fit(
-                    input_model_W, buffsize, self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                    self.weighting, max_cores, dqflags.pixel, suppress_one_group=self.suppress_one_group)
+                    input_model_W, buffsize, self.save_opt, readnoise_2d, gain_2d,
+                    self.algorithm, self.weighting, max_cores, dqflags.pixel,
+                    suppress_one_group=self.suppress_one_group)
 
-                # The VAR_RNOISE arrays are written out to the out_model via the image_info tuple,
-                # and similarly for the integration and optional models. Create new info tuples
-                # to be composed of the original values plus the weighted RN variance value. The
-                # 3rd component of each contains the RN variance.
+                # The VAR_RNOISE arrays are written out to the output modeld via
+                # the image_info tuple, and similarly for the integration and
+                # optional models. Create new info tuples to be composed of the
+                # original values plus the weighted RN variance value. The 3rd
+                # component of each contains the RN variance.
                 image_info_new, integ_info_new = None, None
                 if image_info is not None and image_info_W is not None:
                     image_info_new = (image_info[0], image_info[1], image_info[2], image_info_W[3], image_info[4])
+
                 if integ_info is not None and integ_info_W is not None:
                     integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_info_W[3], integ_info[4])
+
                 image_info = image_info_new
                 integ_info = integ_info_new
 
@@ -286,6 +295,7 @@ class RampFitStep(Step):
                 if opt_info is not None and opt_info_W is not None:
                     opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_info_W[3],
                                     opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
+
                 opt_info = opt_info_new
 
         # Save the OLS optional fit product, if it exists.
