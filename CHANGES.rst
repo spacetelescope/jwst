@@ -7,6 +7,20 @@ pathloss
 - Repeat pathloss correction array into cube, to apply step to
   rateints input for MIRI LRS fixed slit data [#7446]
 
+photom
+------
+
+- Fix bug so that each slit of a NIRSpec fixed-slit dataset gets the proper flux
+  calibration applied, based on the slit-dependent source type (POINT or EXTENDED).
+  [#7451]
+
+pipeline
+--------
+
+- Update the calwebb_spec2 pipeline to make a deep copy of the current results before
+  calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
+  input data accidentally getting modified by those steps. [#7451]
+
 set_telescope_pointing
 ----------------------
 

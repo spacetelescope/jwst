@@ -134,9 +134,26 @@ class DataSet():
         self.slitnum = -1
         self.specnum = -1
         self.inverse = inverse
-        self.source_type = source_type
-        if self.source_type is None and model.meta.target.source_type is not None:
-            self.source_type = model.meta.target.source_type.upper()
+        self.source_type = None
+
+        # For MultiSlitModels, only set a generic source_type value for the
+        # entire datamodel if the user has set the source_type parameter.
+        # Otherwise leave the generic source_type set to None, which will
+        # force the use of per-slit source_types later in processing.
+        if isinstance(model, datamodels.MultiSlitModel):
+            if source_type is not None:
+                self.source_type = source_type
+
+        # For non-MultiSlitModel inputs, where there's only 1 target and
+        # one source_type, use the user-provided source_type value, if it
+        # exists. Otherwise, use the generic source_type value provided in
+        # the input model (if it exists).
+        else:
+            if source_type is not None:
+                self.source_type = source_type
+            else:
+                if model.meta.target.source_type is not None:
+                    self.source_type = model.meta.target.source_type.upper()
 
         # Create a copy of the input model
         self.input = model.copy()
@@ -691,7 +708,7 @@ class DataSet():
             conversion = tabdata['photmj']              # unit is MJy
             if isinstance(self.input, datamodels.MultiSlitModel):
                 slit = self.input.slits[self.slitnum]
-                if self.exptype == 'NRS_MSASPEC':
+                if self.exptype in ['NRS_MSASPEC', 'NRS_FIXEDSLIT']:
                     srctype = self.source_type if self.source_type else slit.source_type
                 else:
                     srctype = self.source_type
@@ -844,6 +861,7 @@ class DataSet():
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
+
         elif isinstance(self.input, datamodels.MultiSpecModel):
             # Does this block need to address SB columns as well, or will
             # they (presumably) never be populated for SOSS?
@@ -869,6 +887,7 @@ class DataSet():
             spec.spec_table.columns['BKGD_VAR_POISSON'].unit = 'Jy^2'
             spec.spec_table.columns['BKGD_VAR_RNOISE'].unit = 'Jy^2'
             spec.spec_table.columns['BKGD_VAR_FLAT'].unit = 'Jy^2'
+
         else:
             if not self.inverse:
                 self.input.data *= conversion
@@ -885,16 +904,16 @@ class DataSet():
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
 
-        if not self.inverse:
-            if unit_is_surface_brightness:
-                self.input.meta.bunit_data = 'MJy/sr'
-                self.input.meta.bunit_err = 'MJy/sr'
+            if not self.inverse:
+                if unit_is_surface_brightness:
+                    self.input.meta.bunit_data = 'MJy/sr'
+                    self.input.meta.bunit_err = 'MJy/sr'
+                else:
+                    self.input.meta.bunit_data = 'MJy'
+                    self.input.meta.bunit_err = 'MJy'
             else:
-                self.input.meta.bunit_data = 'MJy'
-                self.input.meta.bunit_err = 'MJy'
-        else:
-            self.input.meta.bunit_data = 'DN/s'
-            self.input.meta.bunit_err = 'DN/s'
+                self.input.meta.bunit_data = 'DN/s'
+                self.input.meta.bunit_err = 'DN/s'
 
         return
 
