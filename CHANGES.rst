@@ -37,6 +37,13 @@ other
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
 
+ramp_fitting
+------------
+
+- Changed computations for ramps that have only one good group in the 0th
+  group.  Ramps that have a non-zero groupgap should not use group_time, but
+  (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
+
 scripts
 -------
 
