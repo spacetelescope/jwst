@@ -6,12 +6,12 @@ import pytest
 from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.transforms import models
 
 import jwst
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.srctype import SourceTypeStep
-from jwst.transforms import models
 from jwst.wavecorr import WavecorrStep
 from jwst.wavecorr import wavecorr
 

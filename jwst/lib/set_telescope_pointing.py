@@ -900,7 +900,7 @@ def update_s_region(model, siaf):
     logger.info("Vertices for aperture %s: %s", model.meta.aperture.name, vertices)
 
     # Execute IdealToV2V3, followed by V23ToSky
-    from ..transforms.models import IdealToV2V3
+    from stdatamodels.jwst.transforms.models import IdealToV2V3
     vparity = model.meta.wcsinfo.vparity
     v3yangle = model.meta.wcsinfo.v3yangle
 

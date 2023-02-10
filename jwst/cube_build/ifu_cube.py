@@ -13,11 +13,11 @@ from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
+from stdatamodels.jwst.transforms.models import _toindex
 
 from ..model_blender import blendmeta
 from ..assign_wcs import pointing
 from jwst.datamodels import ModelContainer
-from jwst.transforms.models import _toindex
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
 from . import cube_build_wcs_util

@@ -18,11 +18,10 @@ from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
                                           WavelengthrangeModel, FPAModel)
-
-from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
-                                 AngleFromGratingEquation, WavelengthFromGratingEquation,
-                                 Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
-                                 RefractionIndexFromPrism)
+from stdatamodels.jwst.transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
+                                                 AngleFromGratingEquation, WavelengthFromGratingEquation,
+                                                 Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
+                                                 RefractionIndexFromPrism)
 
 from .util import (
     MSAFileError,

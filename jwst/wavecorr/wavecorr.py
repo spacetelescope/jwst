@@ -32,8 +32,7 @@ import numpy as np
 from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
-
-from ..transforms import models as trmodels
+from stdatamodels.jwst.transforms import models as trmodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
