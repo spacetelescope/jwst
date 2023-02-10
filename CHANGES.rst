@@ -63,6 +63,13 @@ tweakreg
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
 
+resample
+--------
+
+- Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
+  a bug due to which parts of input images may not be present in the output
+  resample image under certain circumstances. [#7460]
+
 
 1.9.4 (2023-01-27)
 ==================
