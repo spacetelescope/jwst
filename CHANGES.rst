@@ -21,6 +21,11 @@ pipeline
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
 
+resample
+--------
+
+- Added support for custom reference WCS for the resample steps. [#7442]
+
 set_telescope_pointing
 ----------------------
 
