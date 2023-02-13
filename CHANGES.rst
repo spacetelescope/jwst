@@ -18,6 +18,29 @@ pathloss
 - Repeat pathloss correction array into cube, to apply step to
   rateints input for MIRI LRS fixed slit data [#7446]
 
+photom
+------
+
+- Fix bug so that each slit of a NIRSpec fixed-slit dataset gets the proper flux
+  calibration applied, based on the slit-dependent source type (POINT or EXTENDED).
+  [#7451]
+
+pipeline
+--------
+
+- Update the calwebb_spec2 pipeline to make a deep copy of the current results before
+  calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
+  input data accidentally getting modified by those steps. [#7451]
+
+resample
+--------
+
+- Added support for custom reference WCS for the resample steps. [#7442]
+
+- Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
+  a bug due to which parts of input images may not be present in the output
+  resampled image under certain circumstances. [#7460]
+
 scripts
 -------
 

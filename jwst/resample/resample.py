@@ -82,8 +82,8 @@ class ResampleData:
         log.info(f"Driz parameter fillval: {self.fillval}")
         log.info(f"Driz parameter weight_type: {self.weight_type}")
 
-        ref_wcs = kwargs.get('ref_wcs', None)
-        out_shape = kwargs.get('out_shape', None)
+        output_wcs = kwargs.get('output_wcs', None)
+        output_shape = kwargs.get('output_shape', None)
         crpix = kwargs.get('crpix', None)
         crval = kwargs.get('crval', None)
         rotation = kwargs.get('rotation', None)
@@ -94,17 +94,24 @@ class ResampleData:
         else:
             log.info(f'Output pixel scale ratio: {pscale_ratio}')
 
-        # Define output WCS based on all inputs, including a reference WCS
-        self.output_wcs = resample_utils.make_output_wcs(
-            self.input_models,
-            ref_wcs=ref_wcs,
-            pscale_ratio=self.pscale_ratio,
-            pscale=pscale,
-            rotation=rotation,
-            shape=out_shape if out_shape is None else out_shape[::-1],
-            crpix=crpix,
-            crval=crval
-        )
+        if output_wcs:
+            # Use user-supplied reference WCS for the resampled image:
+            self.output_wcs = output_wcs
+            if output_shape is not None:
+                self.output_wcs.array_shape = output_shape[::-1]
+
+        else:
+            # Define output WCS based on all inputs, including a reference WCS:
+            self.output_wcs = resample_utils.make_output_wcs(
+                self.input_models,
+                ref_wcs=output_wcs,
+                pscale_ratio=self.pscale_ratio,
+                pscale=pscale,
+                rotation=rotation,
+                shape=None if output_shape is None else output_shape[::-1],
+                crpix=crpix,
+                crval=crval
+            )
 
         log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
