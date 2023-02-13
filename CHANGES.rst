@@ -1,6 +1,17 @@
 1.9.5 (unreleased)
 ==================
 
+datamodels
+----------
+
+- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
+
+other
+-----
+
+- Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
+  instead of ``pkg_resources``. [#7457]
+
 pathloss
 --------
 
@@ -26,21 +37,9 @@ resample
 
 - Added support for custom reference WCS for the resample steps. [#7442]
 
-set_telescope_pointing
-----------------------
-
-- Correct WCS determination for aperture MIRIM_TAMRS [#7449]
-
-datamodels
-----------
-
-- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
-
-other
------
-
-- Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
-  instead of ``pkg_resources``. [#7457]
+- Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
+  a bug due to which parts of input images may not be present in the output
+  resampled image under certain circumstances. [#7460]
 
 ramp_fitting
 ------------
@@ -55,6 +54,17 @@ scripts
 - Added a script ``adjust_wcs.py`` to apply additional user-provided rotations
   and scale corrections to an imaging WCS of a calibrated image. [#7430]
 
+set_telescope_pointing
+----------------------
+
+- Correct WCS determination for aperture MIRIM_TAMRS [#7449]
+
+straylight
+----------
+
+- Fix bug with straylight zeroing out NaNs in input rate images, as these
+  are now deliberately set as such [#7455]
+
 transforms
 ----------
 
@@ -67,13 +77,6 @@ tweakreg
 - Added a ``utils.py`` module and a function (``adjust_wcs()``) to apply
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
-
-resample
---------
-
-- Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
-  a bug due to which parts of input images may not be present in the output
-  resample image under certain circumstances. [#7460]
 
 
 1.9.4 (2023-01-27)
