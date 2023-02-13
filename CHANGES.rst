@@ -25,6 +25,9 @@ photom
   calibration applied, based on the slit-dependent source type (POINT or EXTENDED).
   [#7451]
 
+- Correct units of ``photom_uniform`` array to MJy/sr for NIRSpec fixed
+  slit data, to allow for expected behavior in ``master_background`` processing. [#7464]
+
 pipeline
 --------
 
