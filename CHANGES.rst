@@ -6,6 +6,13 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
+=======
+dq_init
+-------
+
+- Propagate ``DO_NOT_USE`` flags from mask to GROUPDQ array during
+  dq initialization [#7447]
+
 other
 -----
 
@@ -32,6 +39,13 @@ pipeline
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
 
+ramp_fitting
+------------
+
+- Changed computations for ramps that have only one good group in the 0th
+  group.  Ramps that have a non-zero groupgap should not use group_time, but
+  (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
+
 resample
 --------
 
@@ -40,13 +54,6 @@ resample
 - Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
-
-ramp_fitting
-------------
-
-- Changed computations for ramps that have only one good group in the 0th
-  group.  Ramps that have a non-zero groupgap should not use group_time, but
-  (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
 
 scripts
 -------
