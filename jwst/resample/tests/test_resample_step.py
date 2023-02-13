@@ -1,7 +1,9 @@
+import pytest
+
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 import numpy as np
-import pytest
+import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -477,6 +479,53 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
 
     # test output image shape
     assert result.data.shape == shape[::-1]
+
+
+@pytest.mark.parametrize(
+    'output_shape2, match',
+    [((1205, 1100), True), ((1222, 1111), False), (None, True)]
+)
+def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
+                                        tmp_path):
+    crpix = (600, 550)
+    crval = (50, 77)
+    rotation = 15
+    ratio = 0.7
+
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+
+    # first pass - create a reference output WCS:
+    im.data[:, :] = np.random.random(im.data.shape)
+    result = ResampleStep.call(
+        im,
+        output_shape=(1205, 1100),
+        crpix=crpix,
+        crval=crval,
+        rotation=rotation,
+        pixel_scale_ratio=ratio
+    )
+
+    data1 = result.data
+
+    refwcs = str(tmp_path / "resample_refwcs.asdf")
+    result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
+    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(tmp_path / refwcs)
+
+    result = ResampleStep.call(
+        im,
+        output_shape=output_shape2,
+        output_wcs=refwcs
+    )
+
+    data2 = result.data
+
+    if output_shape2 is not None:
+        assert data2.shape == output_shape2[::-1]
+
+    if match:
+        # test output image shape
+        assert data1.shape == data2.shape
+        assert np.allclose(data1, data2)
 
 
 @pytest.mark.parametrize('ratio', [1.3, 1])

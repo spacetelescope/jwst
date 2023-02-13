@@ -74,14 +74,25 @@ class ResampleSpecData(ResampleData):
         self.good_bits = good_bits
         self.in_memory = kwargs.get('in_memory', True)
 
+        output_wcs = kwargs.get('output_wcs', None)
+        output_shape = kwargs.get('output_shape', None)
+
         # Define output WCS based on all inputs, including a reference WCS
-        if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
-            if self.input_models[0].meta.instrument.name != "NIRSPEC":
-                self.output_wcs = self.build_interpolated_output_wcs()
+        if output_wcs is None:
+            if resample_utils.is_sky_like(
+                self.input_models[0].meta.wcs.output_frame
+            ):
+                if self.input_models[0].meta.instrument.name != "NIRSPEC":
+                    self.output_wcs = self.build_interpolated_output_wcs()
+                else:
+                    self.output_wcs = self.build_nirspec_output_wcs()
             else:
-                self.output_wcs = self.build_nirspec_output_wcs()
+                self.output_wcs = self.build_nirspec_lamp_output_wcs()
         else:
-            self.output_wcs = self.build_nirspec_lamp_output_wcs()
+            self.output_wcs = output_wcs
+            if output_shape is not None:
+                self.output_wcs.array_shape = output_shape[::-1]
+
         self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
         self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
