@@ -1,6 +1,12 @@
 1.10.3 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Pass the dispersion relation to NIRCam row/column transforms, to interpolate
+  against if analytic inverse does not exist [#7018]
+
 associations
 ------------
 
@@ -336,6 +342,9 @@ transforms
 
 - Move ``jwst.transforms`` out of ``jwst`` into ``stdatamodels.jwst.transforms``. [#7441]
 
+- Update NIRCam WFSS transforms to use version 6 of GRISMCONF fileset; interpolate
+  to create inverse dispersion relation due to third-order polynomial in use [#7018]
+
 tweakreg
 --------
 
@@ -465,8 +474,7 @@ assign_wcs
 - Updated the loading of NIRSpec MSA configuration data to assign the source_id
   for each slitlet from the shutter entry that contains the primary/main source. [#7379]
 
-- Pass the dispersion relation to NIRCam row/column transforms, to interpolate
-  against if analytic inverse does not exist [#7018]
+- Added approximated imaging FITS WCS to WFSS grism image headers. [#7373, #7412]
 
 associations
 ------------
@@ -528,9 +536,6 @@ documentation
 -------------
 
 - Update deprecation notice to name the CRDS_PATH variable appropriately. [#7392]
-
-- Add list of items to description of dispersion relations in NIRCam specwcs schema,
-  now that a list of polynomials is being provided [#7018]
 
 extract_1d
 ----------
@@ -626,12 +631,6 @@ set_telescope_pointing
 ----------------------
 
 - Pin PRD versions for tests that are not testing changes in PRD. [#7380]
-
-transforms
-----------
-
-- Update NIRCam WFSS transforms to use version 4 of GRISMCONF fileset; interpolate
-  to create inverse dispersion relation due to third-order polynomial in use [#7018]
 
 tweakreg
 --------
