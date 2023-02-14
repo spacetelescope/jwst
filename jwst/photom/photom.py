@@ -815,18 +815,18 @@ class DataSet():
                     # Now repeat the process using corrected wavelength values,
                     # which is appropriate for a point source. This is the version of
                     # the correction that will actually get applied to the data below.
-                    conversion_2d_point, no_cal = self.create_2d_conversion(slit,
+                    conversion, no_cal = self.create_2d_conversion(slit,
                                                                    self.exptype, conversion,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=True)
-                    slit.photom_point = conversion_2d_point  # store the result
+                    slit.photom_point = conversion  # store the result
 
                 else:
-                    conversion_2d, no_cal = self.create_2d_conversion(slit,
+                    conversion, no_cal = self.create_2d_conversion(slit,
                                                                    self.exptype, conversion,
                                                                    waves, relresps, order)
 
-                    slit.photom_uniform = conversion_2d
+                    slit.photom_uniform = conversion
 
             elif isinstance(self.input, datamodels.MultiSpecModel):
 
