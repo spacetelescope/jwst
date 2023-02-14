@@ -18,8 +18,8 @@ from gwcs import wcs
 from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.transforms import models as trmodels
 from jwst.assign_wcs import nirspec
 from jwst.assign_wcs import assign_wcs_step
 from jwst.assign_wcs.tests import data

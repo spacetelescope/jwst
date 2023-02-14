@@ -10,13 +10,13 @@ from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
 
+from stdatamodels import s3_utils
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
                                           RegionsModel, SpecwcsModel)
-from stdatamodels import s3_utils
+from stdatamodels.jwst.transforms import models as jwmodels
 
 from . import pointing
-from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
                    velocity_correction, transform_bbox_from_shape, bounding_box_from_subarray)
 

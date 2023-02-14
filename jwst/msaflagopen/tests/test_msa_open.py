@@ -3,6 +3,7 @@ from numpy.testing import assert_array_equal
 import os
 
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
+from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.msaflagopen.msaflag_open import (
@@ -15,7 +16,6 @@ from jwst.msaflagopen.msaflag_open import (
 )
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.assign_wcs.tests import data
-from jwst.transforms.models import Slit
 from jwst.stpipe import Step
 
 

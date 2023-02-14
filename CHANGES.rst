@@ -70,6 +70,7 @@ transforms
 
 - Fix the NIRISS SOSS transform in the manifest and converter so the correct tag
   is used and no warnings are issued by ASDF. [#7456]
+- Move ``jwst.transforms`` out of ``jwst`` into ``stdatamodels.jwst.transforms``. [#7441]
 
 tweakreg
 --------
