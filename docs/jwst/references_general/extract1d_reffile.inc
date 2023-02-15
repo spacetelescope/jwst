@@ -25,12 +25,12 @@ EXP_TYPE   model.meta.exposure.type
 
 Reference File Format for non-IFU data
 ++++++++++++++++++++++++++++++++++++++
-EXTRACT1D reference files for non-ifu data are text files, with the information stored in
+EXTRACT1D reference files for non-IFU data are text files, with the information stored in
 JSON format.
 All the information is specified in a list with key ``apertures``.  Each
 element of this list is a dictionary, one for each aperture (e.g. a slit)
 that is supported by the given reference file.  The particular dictionary
-to use is found by matching the slit name in the science data with the
+used by the step is found by matching the slit name in the science data with the
 value of key ``id``.  Key ``spectral_order`` is optional, but if it is
 present, it must match the expected spectral order number.
 
@@ -58,10 +58,10 @@ and background extraction regions.
 * spectral_order: the spectral order number (optional); this can be either
   positive or negative, but it should not be zero (int)
 * dispaxis: dispersion direction, 1 for X, 2 for Y (int)
-* xstart: first pixel in the horizontal direction, X (int)
-* xstop: last pixel in the horizontal direction, X (int)
-* ystart: first pixel in the vertical direction, Y (int)
-* ystop: last pixel in the vertical direction, Y (int)
+* xstart: first pixel in the horizontal direction, X (int) (0-indexed)
+* xstop: last pixel in the horizontal direction, X (int) (0-indexed)
+* ystart: first pixel in the vertical direction, Y (int) (0-indexed)
+* ystop: last pixel in the vertical direction, Y (int) (0-indexed)
 * src_coeff: this takes priority for specifying the source extraction region
   (list of lists of float)
 * bkg_coeff: for specifying background subtraction regions
@@ -72,13 +72,15 @@ and background extraction regions.
 * bkg_fit: the type of background fit or computation (string)
 * bkg_order: order of polynomial fit to background regions (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
+* use_source_posn: adjust the extraction limits based on source RA/Dec (bool)
 
 .. note::
 
    All parameter values that represent pixel indexes, such as ``xstart``,
    ``xstop``, and the ``src_coeff`` and ``bkg_coeff`` coefficients, are always
    in the frame of the image being operated on, which could be a small cutout
-   from a larger original image.
+   from a larger original image. They are also ZERO-indexed and the limits are
+   inclusive (e.g. 11-15 includes 5 pixels).
 
 See :ref:`extract-1d-for-slits` for more details on how these parameters
 are used in the extraction process.

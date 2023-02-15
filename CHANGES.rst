@@ -6,6 +6,13 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
+extract_1d
+----------
+
+- Fix the logic for handling the ``use_source_posn`` parameter, so that proper
+  precedence is given for command line override, reference file settings, and
+  internal decisions of the appropriate setting (in that order). [#7466]
+
 other
 -----
 
@@ -35,6 +42,13 @@ pipeline
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
 
+ramp_fitting
+------------
+
+- Changed computations for ramps that have only one good group in the 0th
+  group.  Ramps that have a non-zero groupgap should not use group_time, but
+  (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
+
 resample
 --------
 
@@ -43,13 +57,6 @@ resample
 - Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
-
-ramp_fitting
-------------
-
-- Changed computations for ramps that have only one good group in the 0th
-  group.  Ramps that have a non-zero groupgap should not use group_time, but
-  (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
 
 scripts
 -------
@@ -73,6 +80,7 @@ transforms
 
 - Fix the NIRISS SOSS transform in the manifest and converter so the correct tag
   is used and no warnings are issued by ASDF. [#7456]
+
 - Move ``jwst.transforms`` out of ``jwst`` into ``stdatamodels.jwst.transforms``. [#7441]
 
 tweakreg
