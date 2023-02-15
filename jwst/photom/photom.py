@@ -721,6 +721,7 @@ class DataSet():
                                   "to surface brightness")
                         conversion /= slit.meta.photometry.pixelarea_steradians
                 else:
+                    conversion_uniform = conversion / slit.meta.photometry.pixelarea_steradians
                     unit_is_surface_brightness = False
             elif isinstance(self.input, datamodels.MultiSpecModel):
                 # MultiSpecModel output from extract1d should not require this area conversion?
@@ -735,6 +736,7 @@ class DataSet():
                                   "to surface brightness")
                         conversion /= self.input.meta.photometry.pixelarea_steradians
                 else:
+                    conversion_uniform = conversion / self.input.meta.photometry.pixelarea_steradians
                     unit_is_surface_brightness = False
 
         # Store the conversion factor in the meta data
@@ -795,35 +797,35 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-
+                slit = self.input.slits[self.slitnum]
                 # The NIRSpec fixed-slit primary slit needs special handling if
                 # it contains a point source
                 if self.exptype.upper() == 'NRS_FIXEDSLIT' and \
-                   self.input.slits[self.slitnum].name == self.input.meta.instrument.fixed_slit and \
-                   self.input.slits[self.slitnum].source_type.upper() == 'POINT':
+                   slit.name == self.input.meta.instrument.fixed_slit and \
+                   slit.source_type.upper() == 'POINT':
 
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
-                    scalar_conv = conversion
-                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
-                                                                   self.exptype, scalar_conv,
+                    conversion_2d_uniform, no_cal = self.create_2d_conversion(slit,
+                                                                   self.exptype, conversion_uniform,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=False)
-                    slit.photom_uniform = conversion  # store the result
+                    slit.photom_uniform = conversion_2d_uniform  # store the result
 
                     # Now repeat the process using corrected wavelength values,
                     # which is appropriate for a point source. This is the version of
                     # the correction that will actually get applied to the data below.
-                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
-                                                                   self.exptype, scalar_conv,
+                    conversion, no_cal = self.create_2d_conversion(slit,
+                                                                   self.exptype, conversion,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=True)
                     slit.photom_point = conversion  # store the result
 
                 else:
-                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                    conversion, no_cal = self.create_2d_conversion(slit,
                                                                    self.exptype, conversion,
                                                                    waves, relresps, order)
+
             elif isinstance(self.input, datamodels.MultiSpecModel):
 
                 # This input does not require a 2d conversion, but a 1d interpolation on the
