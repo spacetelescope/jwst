@@ -826,8 +826,6 @@ class DataSet():
                                                                    self.exptype, conversion,
                                                                    waves, relresps, order)
 
-                    slit.photom_uniform = conversion
-
             elif isinstance(self.input, datamodels.MultiSpecModel):
 
                 # This input does not require a 2d conversion, but a 1d interpolation on the
