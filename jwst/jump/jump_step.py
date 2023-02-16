@@ -38,7 +38,7 @@ class JumpStep(Step):
         extend_min_area = integer(default=90) Minimum area of extended emission after convolution required for the detection of showers in MIRI
         extend_inner_radius = float(default=1) Inner radius of the Ring2DKernal used for convolution
         extend_outer_radius = float(default=2.6) Outer radius of the Ring2DKernal used for convolution
-        extend_ellipse_expand_ration = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected extended emission
+        extend_ellipse_expand_ratio = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected extended emission
         grps_masked_after_shower = integer(default=5) Number of groups to flag as jump after a detected extended emission
     """
 
