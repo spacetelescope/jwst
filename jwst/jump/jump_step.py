@@ -105,12 +105,12 @@ class JumpStep(Step):
                                       min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                       expand_factor=expand_factor, use_ellipses=use_ellipses,
                                       sat_required_snowball=sat_required_snowball,
-                                      expand_large_events=expand_large_events, find_showers=find_showers,
-                                      edge_size=edge_size, extend_snr_threshold=extend_snr_threshold,
-                                      extend_min_area=extend_min_area, extend_inner_radius=extend_inner_radis,
-                                      extend_outer_radius=extend_outer_radius,
-                                      extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
-                                      grps_masked_after_shower=grps_masked_after_shower)
+                                      expand_large_events=expand_large_events, find_showers=self.find_showers,
+                                      edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
+                                      extend_min_area=self.extend_min_area, extend_inner_radius=self.extend_inner_radis,
+                                      extend_outer_radius=self.extend_outer_radius,
+                                      extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
+                                      grps_masked_after_shower=self.grps_masked_after_shower)
 
             gain_model.close()
             readnoise_model.close()
