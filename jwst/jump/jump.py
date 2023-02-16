@@ -21,7 +21,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      min_sat_area=1.0, min_jump_area=5.0,
                      expand_factor=2.0, use_ellipses=False,
                      sat_required_snowball=True,
-                     expand_large_events=False, find_showers=False, edges_size=25, extend_snr_threshold=1.1,
+                     expand_large_events=False, find_showers=False, edge_size=25, extend_snr_threshold=1.1,
                      extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
                      grps_masked_after_shower=5
                      ):
