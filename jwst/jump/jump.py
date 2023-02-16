@@ -72,7 +72,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     sat_required_snowball=sat_required_snowball,
                                     expand_large_events=expand_large_events, find_showers=find_showers,
                                     edge_size=edge_size, extend_snr_threshold=extend_snr_threshold,
-                                    extend_min_area=extend_min_area, extend_inner_radius=extend_inner_radis,
+                                    extend_min_area=extend_min_area, extend_inner_radius=extend_inner_radius,
                                     extend_outer_radius=extend_outer_radius,
                                     extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
                                     grps_masked_after_shower=grps_masked_after_shower)
