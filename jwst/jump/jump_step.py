@@ -29,9 +29,17 @@ class JumpStep(Step):
         min_sat_area = float(default=1.0) # minimum required area for the central saturation of snowballs
         min_jump_area = float(default=5.0) # minimum area to trigger large events processing
         expand_factor = float(default=2.0) # The expansion factor for the enclosing circles or ellipses
-        use_ellipses = boolean(default=False) # Use an enclosing ellipse rather than a circle for MIRI showers
+        use_ellipses = boolean(default=False) # deprecated
         sat_required_snowball = boolean(default=True) # Require the center of snowballs to be saturated
-        expand_large_events = boolean(default=False) # must be True to trigger snowball and shower flagging
+        expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
+        find_showers = boolean(default=False) Turn on shower flagging for MIRI
+        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a saturated core is not required
+        extend_snr_threshold = float(default=1.2) The SNR minimum for detection of extended showers in MIRI
+        extend_min_area = integer(default=90) Minimum area of extended emission (after convolution) required for the detection of showers in MIRI
+        extend_inner_radius = float(default=1) Inner radius of the Ring2DKernal used for convolution
+        extend_outer_radius = float(default=2.6) Outer radius of the Ring2DKernal used for convolution
+        extend_ellipse_expand_ration = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected extended emission
+        grps_masked_after_shower = integer(default=5) Number of groups to flag as jump after a detected extended emission
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -97,7 +105,13 @@ class JumpStep(Step):
                                       min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                       expand_factor=expand_factor, use_ellipses=use_ellipses,
                                       sat_required_snowball=sat_required_snowball,
-                                      expand_large_events=expand_large_events)
+                                      expand_large_events=expand_large_events, find_showers=find_showers,
+                                      edge_size=edge_size, extend_snr_threshold=extend_snr_threshold,
+                                      extend_min_area=extend_min_area, extend_inner_radius=extend_inner_radis,
+                                      extend_outer_radius=extend_outer_radius,
+                                      extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
+                                      grps_masked_after_shower=grps_masked_after_shower)
+
             gain_model.close()
             readnoise_model.close()
             tstop = time.time()

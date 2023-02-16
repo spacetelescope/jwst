@@ -21,7 +21,9 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      min_sat_area=1.0, min_jump_area=5.0,
                      expand_factor=2.0, use_ellipses=False,
                      sat_required_snowball=True,
-                     expand_large_events=False
+                     expand_large_events=False, find_showers=False, edges_size=25, extend_snr_threshold=1.1,
+                     extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
+                     grps_masked_after_shower=5
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -68,7 +70,12 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                     expand_factor=expand_factor, use_ellipses=use_ellipses,
                                     sat_required_snowball=sat_required_snowball,
-                                    expand_large_events=expand_large_events)
+                                    expand_large_events=expand_large_events, find_showers=find_showers,
+                                    edge_size=edge_size, extend_snr_threshold=extend_snr_threshold,
+                                    extend_min_area=extend_min_area, extend_inner_radius=extend_inner_radis,
+                                    extend_outer_radius=extend_outer_radius,
+                                    extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
+                                    grps_masked_after_shower=grps_masked_after_shower)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
