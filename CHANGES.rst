@@ -6,12 +6,18 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
-=======
 dq_init
 -------
 
-- Propagate ``DO_NOT_USE`` flags from mask to GROUPDQ array during
+- Propagate ``DO_NOT_USE`` flags from MASK ref file to GROUPDQ array during
   dq initialization [#7447]
+
+extract_1d
+----------
+
+- Fix the logic for handling the ``use_source_posn`` parameter, so that proper
+  precedence is given for command line override, reference file settings, and
+  internal decisions of the appropriate setting (in that order). [#7466]
 
 other
 -----
@@ -31,6 +37,9 @@ photom
 - Fix bug so that each slit of a NIRSpec fixed-slit dataset gets the proper flux
   calibration applied, based on the slit-dependent source type (POINT or EXTENDED).
   [#7451]
+
+- Correct units of ``photom_uniform`` array to MJy/sr for NIRSpec fixed
+  slit data, to allow for expected behavior in ``master_background`` processing. [#7464]
 
 pipeline
 --------
@@ -71,12 +80,24 @@ straylight
 
 - Fix bug with straylight zeroing out NaNs in input rate images, as these
   are now deliberately set as such [#7455]
+- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
+
+scripts
+-------
+
+- Added a script ``adjust_wcs.py`` to apply additional user-provided rotations
+  and scale corrections to an imaging WCS of a calibrated image. [#7430]
+- Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
+  instead of ``pkg_resources``. [#7457]
+- Offload ``minimum_deps`` script to ``minimum_dependencies`` package [#7463]
 
 transforms
 ----------
 
 - Fix the NIRISS SOSS transform in the manifest and converter so the correct tag
   is used and no warnings are issued by ASDF. [#7456]
+
+- Move ``jwst.transforms`` out of ``jwst`` into ``stdatamodels.jwst.transforms``. [#7441]
 
 tweakreg
 --------

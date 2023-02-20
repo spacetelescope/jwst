@@ -6,11 +6,12 @@ import json
 import numpy as np
 import logging
 
+from gwcs.wcs import WCS
+
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.transforms.models import Slit
 
 from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
-from ..transforms.models import Slit
-from gwcs.wcs import WCS
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
