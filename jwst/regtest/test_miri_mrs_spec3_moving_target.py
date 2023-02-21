@@ -1,7 +1,6 @@
 """Regression tests for Moving Target MIRI MRS mode"""
 import os
 import pytest
-from jwst.regtest import regtestdata as rt
 from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
