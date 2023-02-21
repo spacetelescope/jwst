@@ -64,6 +64,13 @@ resample
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
 
+regtest
+-------
+
+- Updated miri mrs regression tests with flight data. Included
+  test_miri_mrs_extract1d.py, test_miri_mrs_spec3.py and new test
+  test_miri_mrs_spec3_moving_target.py [#7468]
+
 scripts
 -------
 
