@@ -6,6 +6,12 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
+dq_init
+-------
+
+- Propagate ``DO_NOT_USE`` flags from MASK ref file to GROUPDQ array during
+  dq initialization [#7447]
+
 extract_1d
 ----------
 
