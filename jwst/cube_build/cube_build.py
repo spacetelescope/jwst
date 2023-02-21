@@ -16,7 +16,7 @@ class CubeData():
 
     def __init__(self,
                  input_models,
-                 input_filenames,
+#                 input_filenames,
                  par_filename,
                  **pars):
         """ Initialize the high level of information for the ifu cube
@@ -39,7 +39,10 @@ class CubeData():
         """
 
         self.input_models = input_models
-        self.input_filenames = input_filenames
+        print(type(self.input_models))
+        print(self.input_models._save_open))
+        
+#        self.input_filenames = input_filenames
         self.par_filename = par_filename
         self.single = pars.get('single')
         self.channel = pars.get('channel')
@@ -49,6 +52,7 @@ class CubeData():
         self.weighting = pars.get('weighting')
         self.output_type = pars.get('output_type')
         self.instrument = None
+        self.in_memory = pars.get('in_memory')
 
         self.all_channel = []
         self.all_subchannel = []
@@ -81,9 +85,9 @@ class CubeData():
 # Read in the input data (association table or single file)
 # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
 # ______________________________________________________________________________
-        master_table = file_table.FileTable()
-        instrument = master_table.set_file_table(self.input_models,
-                                                 self.input_filenames)
+        master_table = file_table.FileTable(self.in_memory)
+        instrument = master_table.set_file_table(self.input_models)
+#                                                 self.input_filenames)
 # _______________________________________________________________________________
 # find out how many files are in the association table or if it is an single
 # file store the input_filenames and input_models
@@ -294,7 +298,7 @@ class CubeData():
             band_channel = self.all_channel
             band_subchannel = self.all_subchannel
 
-# user, single, or multi
+            # user, single, or multi
             if (self.output_type == 'user' or self.output_type == 'single' or
                     self.output_type == 'multi'):
 
@@ -313,7 +317,7 @@ class CubeData():
                 cube_pars['1']['par1'] = self.all_channel
                 cube_pars['1']['par2'] = self.all_subchannel
 
-# default band cubes
+            # default band cubes
             if self.output_type == 'band':
                 log.info('Output Cubes are single channel, single sub-channel IFU Cubes')
 
@@ -330,7 +334,7 @@ class CubeData():
                     cube_pars[cube_no]['par1'] = this_channel
                     cube_pars[cube_no]['par2'] = this_subchannel
 
-# default channel cubes
+            # default channel cubes
             if self.output_type == 'channel':
                 log.info('Output cubes are single channel and all subchannels in data')
                 num_cubes = 0
@@ -376,7 +380,7 @@ class CubeData():
                 cube_pars['1']['par1'] = self.all_grating
                 cube_pars['1']['par2'] = self.all_filter
 
-# default band cubes
+            # default band cubes
             if self.output_type == 'band':
                 log.info('Output Cubes are single grating, single filter IFU Cubes')
                 for i in range(len(band_grating)):
@@ -391,7 +395,7 @@ class CubeData():
                     this_filter.append(band_filter[i])
                     cube_pars[cube_no]['par1'] = this_grating
                     cube_pars[cube_no]['par2'] = this_filter
-# default grating cubes
+            # default grating cubes
             if self.output_type == 'grating':
                 log.info('Output cubes are single grating & all filters in data')
                 num_cubes = 0

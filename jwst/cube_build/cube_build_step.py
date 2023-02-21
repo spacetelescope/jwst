@@ -57,6 +57,8 @@ class CubeBuildStep (Step):
          skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
+         in_memory = boolean(default=False) # if False then do not hold data in memory, save to disk.
+
        """
 
     reference_file_types = ['cubepar']
@@ -159,6 +161,7 @@ class CubeBuildStep (Step):
         # including values in pars_input that could get updated in cube_build_step.py
         self.pars_input['output_type'] = self.output_type
         self.pars_input['coord_system'] = self.coord_system
+        self.pars_input['in_memory'] = self.in_memory
 
         if self.single:
             self.pars_input['output_type'] = 'single'
@@ -196,14 +199,19 @@ class CubeBuildStep (Step):
 # base name. The cube_build software will attached the needed information:
 #  channel, sub-channel  grating or filter to filename
 # ________________________________________________________________________________
+
         input_table = data_types.DataTypes(input, self.single,
                                            self.output_file,
-                                           self.output_dir)
+                                           self.output_dir,
+                                           self.in_memory)
 
+        print('Read in DataTypes done')
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
 
+        print('in cube_build_step', type(self.input_models))
+        print(self.input_models._save_open)
         self.pipeline = 3
         if self.output_type == 'multi' and len(self.input_filenames) == 1:
             self.pipeline = 2
@@ -226,7 +234,8 @@ class CubeBuildStep (Step):
             'filter': self.pars_input['filter'],
             'weighting': self.weighting,
             'single': self.single,
-            'output_type': self.pars_input['output_type']}
+            'output_type': self.pars_input['output_type'],
+            'in_memory': self.pars_input['in_memory']}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
 # these parameters are related to the building a single ifucube_model
@@ -250,7 +259,7 @@ class CubeBuildStep (Step):
 
         cubeinfo = cube_build.CubeData(
             self.input_models,
-            self.input_filenames,
+#            self.input_filenames,
             par_filename,
             **pars)
 # ________________________________________________________________________________
@@ -264,6 +273,8 @@ class CubeBuildStep (Step):
         instrument = result['instrument']
         instrument_info = result['instrument_info']
         master_table = result['master_table']
+
+        print('Done reading in all data')
 # ________________________________________________________________________________
 # How many and what type of cubes will be made.
 # send self.pars_input['output_type'], all_channel, all_subchannel, all_grating, all_filter
@@ -276,7 +287,9 @@ class CubeBuildStep (Step):
             self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
 
         # ModelContainer of ifucubes
-        cube_container = ModelContainer()
+        print('in memory', self.in_memory)
+        
+        cube_container = ModelContainer(save_open=self.in_memory)
 
         status_cube = 0
         t0 = time.time()
@@ -331,31 +344,41 @@ class CubeBuildStep (Step):
             else:
                 cube_result = thiscube.build_ifucube()
                 result, status = cube_result
-                cube_container.append(result)
 
-            # check if cube_build failed
-            # **************************
-            if status == 1:
-                status_cube = 1
+                # check if cube_build failed
+                if status == 1:
+                    status_cube = 1
+                    
+                # irrelevant WCS keywords we will remove from final product
+                rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                           'v3yangle', 'vparity']
+
+                footprint = result.meta.wcs.footprint(axis_type="spatial")
+                update_s_region_keyword(result, footprint)
+
+                # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
+                for key in rm_keys:
+                    if key in result.meta.wcsinfo.instance:
+                        del result.meta.wcsinfo.instance[key]
+                    
+                if self.in_memory:
+                    cube_container.append(result)
+                else: 
+                    cube_container.append(result.meta.filename)
+                    print('printing result to file')
+                    print('output file name', result.meta.filename)         
+                    result.save(result.meta.filename)
+                    result.close()
+                    del result
+                    del cube_result
+                    del thiscube
 
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
 
-        # irrelevant WCS keywords we will remove from final product
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
-
-        for cube in cube_container:
-            footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            update_s_region_keyword(cube, footprint)
-
-            # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
-            for key in rm_keys:
-                if key in cube.meta.wcsinfo.instance:
-                    del cube.meta.wcsinfo.instance[key]
         if status_cube == 1:
             self.skip = True
-
+        
         return cube_container
 # ******************************************************************************
 

@@ -568,6 +568,8 @@ class IFUCubeData():
             # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                print('in ifu_cube.py what is input',type(input_model))
+                
                 self.input_models_this_cube.append(input_model)
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
