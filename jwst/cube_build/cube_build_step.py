@@ -309,7 +309,6 @@ class CubeBuildStep (Step):
                 instrument_info,
                 master_table,
                 **pars_cube)
-
 # ________________________________________________________________________________
             thiscube.check_ifucube()  # basic checks
 

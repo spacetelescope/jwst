@@ -40,7 +40,7 @@ class CubeData():
 
         self.input_models = input_models
         print(type(self.input_models))
-        print(self.input_models._save_open))
+        print(self.input_models._save_open)
         
 #        self.input_filenames = input_filenames
         self.par_filename = par_filename

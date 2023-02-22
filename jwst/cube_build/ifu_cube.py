@@ -48,7 +48,7 @@ class IFUCubeData():
         """ Class IFUCube holds the high level data for each IFU Cube
         """
         self.new_code = 0
-        self.input_models_this_cube = []  # list of files use to make cube working on
+        self.input_models_this_cube = ModelContainer()  # list of files use to make cube working on
 
         self.input_filenames = input_filenames
         self.pipeline = pipeline
@@ -564,176 +564,195 @@ class IFUCubeData():
             this_par1 = self.list_par1[ib]
             this_par2 = self.list_par2[ib]
             nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
-            # ________________________________________________________________________________
-            # loop over the files that cover the spectral range the cube is for
-            for k in range(nfiles):
-                input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-                print('in ifu_cube.py what is input',type(input_model))
+            k = 0
+            print('Filemap save_open', self.master_table.FileMap[self.instrument][this_par1][this_par2]._save_open)
+            
+            for input_model in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
+                #with datamodels.open(model, save_open=False) as input_model:  
+                    # ________________________________________________________________________________
+                    # loop over the files that cover the spectral range the cube is for
+                    #for k in range(nfiles):
+                    #    input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                    #    print('in ifu_cube.py what is input',type(input_model))
                 
-                self.input_models_this_cube.append(input_model)
-                # set up input_model to be first file used to copy in basic header info
-                # to ifucube meta data
-                if ib == 0 and k == 0:
-                    input_model_ref = input_model
+                    self.input_models_this_cube.append(input_model)
+                    # set up input_model to be first file used to copy in basic header info
+                    # to ifucube meta data
+                    if ib == 0 and k == 0:
+                        input_model_ref = input_model
 
-                log.debug(f"Working on Band defined by: {this_par1} {this_par2}")
-                # --------------------------------------------------------------------------------
-                # POINTCLOUD used for skyalign and IFUalign
-                # --------------------------------------------------------------------------------
-                if self.interpolation in ['pointcloud', 'drizzle']:
-                    pixelresult = self.map_detector_to_outputframe(this_par1,
-                                                                   subtract_background,
-                                                                   input_model)
-
-                    coord1, coord2, corner_coord, wave, dwave, flux, err, slice_no, rois_pixel, \
-                        roiw_pixel, weight_pixel, softrad_pixel, scalerad_pixel = pixelresult
-
-                    # by default flag the dq plane based on the FOV of the detector projected to sky
-                    flag_dq_plane = 1
-                    if self.skip_dqflagging:
-                        flag_dq_plane = 0
-
-                    # check that there is valid data returned
-                    # If all the data is flagged as DO_NOT_USE - not common- then log warning
-                    build_cube = True
-                    if wave is None:
-                        log.warning(f'No valid data found on file {input_model.meta.filename}')
-                        flag_dq_plane = 0
-                        build_cube = False
-                    # ______________________________________________________________________
-                    # C extension setup
-                    # ______________________________________________________________________
-                    start_region = 0
-                    end_region = 0
-
-                    if self.instrument == 'MIRI':
-                        instrument = 0
-                        start_region = self.instrument_info.GetStartSlice(this_par1)
-                        end_region = self.instrument_info.GetEndSlice(this_par1)
-
-                    else:  # NIRSPEC
-                        instrument = 1
-
-                    result = None
-                    weight_type = 0  # default to emsm instead of msm
-                    if self.weighting == 'msm':
-                        weight_type = 1
-
-                    if self.interpolation == 'pointcloud' and build_cube:
-                        roiw_ave = np.mean(roiw_pixel)
-                        result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
-                                              self.overlap_partial, self.overlap_full,
-                                              self.xcoord, self.ycoord, self.zcoord,
-                                              coord1, coord2, wave, flux, err, slice_no,
-                                              rois_pixel, roiw_pixel, scalerad_pixel,
-                                              weight_pixel, softrad_pixel,
-                                              self.cdelt3_normal,
-                                              roiw_ave, self.cdelt1, self.cdelt2)
-
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-                        self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
-                        self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
-                        self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
-                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3], np.float64)
-                        spaxel_dq.astype(np.uint)
-                        self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
-                        result = None
-                    if self.weighting == 'drizzle' and build_cube:
-                        cdelt3_mean = np.nanmean(self.cdelt3_normal)
-                        xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
-                        linear = 0
-                        if self.linear_wavelength:
-                            linear = 1
-                        result = cube_wrapper_driz(instrument, flag_dq_plane,
-                                                   start_region, end_region,
-                                                   self.overlap_partial, self.overlap_full,
-                                                   self.xcoord, self.ycoord, self.zcoord,
-                                                   coord1, coord2, wave, flux, err, slice_no,
-                                                   xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
-                                                   dwave,
-                                                   self.cdelt3_normal,
-                                                   self.cdelt1, self.cdelt2, cdelt3_mean, linear)
-
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-                        self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
-                        self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
-                        self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
-                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
-                        spaxel_dq.astype(np.uint)
-                        self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
-                        result = None
-
-                # --------------------------------------------------------------------------------
-                #                     # AREA - 2d method only works for single files local slicer plane (internal_cal)
-                # --------------------------------------------------------------------------------
-                elif self.interpolation == 'area':
+                    log.debug(f"Working on Band defined by: {this_par1} {this_par2}")
                     # --------------------------------------------------------------------------------
-                    # MIRI
+                    # POINTCLOUD used for skyalign and IFUalign
                     # --------------------------------------------------------------------------------
-                    if self.instrument == 'MIRI':
-                        det2ab_transform = input_model.meta.wcs.get_transform('detector',
-                                                                              'alpha_beta')
-                        start_region = self.instrument_info.GetStartSlice(this_par1)
-                        end_region = self.instrument_info.GetEndSlice(this_par1)
-                        regions = list(range(start_region, end_region + 1))
+                    if self.interpolation in ['pointcloud', 'drizzle']:
+                        pixelresult = self.map_detector_to_outputframe(this_par1,
+                                                                       subtract_background,
+                                                                       input_model)
 
-                        for i in regions:
-                            log.info('Working on Slice # %d', i)
-                            y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
+                        coord1, coord2, corner_coord, wave, dwave, flux, err, slice_no, rois_pixel, \
+                            roiw_pixel, weight_pixel, softrad_pixel, scalerad_pixel = pixelresult
 
-                            # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
-                            index = np.where(y < 1023)
-                            y = y[index]
-                            x = x[index]
-                            slice = i - start_region
-                            result = cube_internal_cal.match_det2cube(self.instrument,
-                                                                      x, y, slice,
-                                                                      input_model,
-                                                                      det2ab_transform,
-                                                                      self.xcoord, self.zcoord,
-                                                                      self.crval1, self.crval3,
-                                                                      self.cdelt1, self.cdelt3,
-                                                                      self.naxis1, self.naxis2)
-                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                        # by default flag the dq plane based on the FOV of the detector projected to sky
+                        flag_dq_plane = 1
+                        if self.skip_dqflagging:
+                            flag_dq_plane = 0
+
+                        # check that there is valid data returned
+                        # If all the data is flagged as DO_NOT_USE - not common- then log warning
+                        build_cube = True
+                        if wave is None:
+                            log.warning(f'No valid data found on file {input_model.meta.filename}')
+                            flag_dq_plane = 0
+                            build_cube = False
+                        # ______________________________________________________________________
+                        # C extension setup
+                        # ______________________________________________________________________
+                        start_region = 0
+                        end_region = 0
+
+                        if self.instrument == 'MIRI':
+                            instrument = 0
+                            start_region = self.instrument_info.GetStartSlice(this_par1)
+                            end_region = self.instrument_info.GetEndSlice(this_par1)
+
+                        else:  # NIRSPEC
+                            instrument = 1
+
+                        result = None
+                        weight_type = 0  # default to emsm instead of msm
+                        if self.weighting == 'msm':
+                            weight_type = 1
+
+                        if self.interpolation == 'pointcloud' and build_cube:
+                            roiw_ave = np.mean(roiw_pixel)
+                            result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
+                                                  self.overlap_partial, self.overlap_full,
+                                                  self.xcoord, self.ycoord, self.zcoord,
+                                                  coord1, coord2, wave, flux, err, slice_no,
+                                                  rois_pixel, roiw_pixel, scalerad_pixel,
+                                                  weight_pixel, softrad_pixel,
+                                                  self.cdelt3_normal,
+                                                  roiw_ave, self.cdelt1, self.cdelt2)
+
+                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                            
+                            self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
+                            self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
+                            self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
+                            self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3], np.float64)
+                            spaxel_dq.astype(np.uint)
+                            self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
+                            result = None
+                        if self.weighting == 'drizzle' and build_cube:
+                            cdelt3_mean = np.nanmean(self.cdelt3_normal)
+                            xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
+                            linear = 0
+                            if self.linear_wavelength:
+                                linear = 1
+                            #result = cube_wrapper_driz(instrument, flag_dq_plane,
+                            #                           start_region, end_region,
+                            #                           self.overlap_partial, self.overlap_full,
+                            #                           self.xcoord, self.ycoord, self.zcoord,
+                            #                           coord1, coord2, wave, flux, err, slice_no,
+                            #                           xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
+                            #                           dwave,
+                            #                           self.cdelt3_normal,
+                            #                           self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+
+                            #spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                            spaxel_flux = 1
+                            spaxel_weight = 1
+                            spaxel_var = 1
+                            spaxel_iflux = 1
+                            spaxel_dq = 1
+                            
                             self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                             self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
                             self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
                             self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
-                            result = None
+                            #spaxel_dq.astype(np.uint)
+                            self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
+                            del result
+                            del spaxel_flux
+                            del spaxel_weight
+                            del spaxel_var
+                            del spaxel_iflux
 
+                    # ---------------------------__--------------------------------------------------
+                    #                     # AREA - 2d method only works for single files local slicer plane (internal_cal)
                     # --------------------------------------------------------------------------------
-                    # NIRSPEC
-                    # --------------------------------------------------------------------------------
-                    if self.instrument == 'NIRSPEC':
-                        nslices = 30
+                    elif self.interpolation == 'area':
+                        # --------------------------------------------------------------------------------
+                        # MIRI
+                        # --------------------------------------------------------------------------------
+                        if self.instrument == 'MIRI':
+                            det2ab_transform = input_model.meta.wcs.get_transform('detector',
+                                                                                  'alpha_beta')
+                            start_region = self.instrument_info.GetStartSlice(this_par1)
+                            end_region = self.instrument_info.GetEndSlice(this_par1)
+                            regions = list(range(start_region, end_region + 1))
 
-                        slicemap = [15, 14, 16, 13, 17, 12, 18, 11, 19, 10,
-                                    20, 9, 21, 8, 22, 7, 23, 6, 24, 5, 25,
-                                    4, 26, 3, 27, 2, 28, 1, 29, 0]
+                            for i in regions:
+                                log.info('Working on Slice # %d', i)
+                                y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
 
-                        for i in range(nslices):
+                                # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
+                                index = np.where(y < 1023)
+                                y = y[index]
+                                x = x[index]
+                                slice = i - start_region
+                                result = cube_internal_cal.match_det2cube(self.instrument,
+                                                                          x, y, slice,
+                                                                          input_model,
+                                                                          det2ab_transform,
+                                                                          self.xcoord, self.zcoord,
+                                                                          self.crval1, self.crval3,
+                                                                          self.cdelt1, self.cdelt3,
+                                                                          self.naxis1, self.naxis2)
+                                spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                                self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                                self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                                self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                                self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
+                                result = None
 
-                            slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
-                            x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
-                            detector2slicer = slice_wcs.get_transform('detector', 'slicer')
+                        # --------------------------------------------------------------------------------
+                        # NIRSPEC
+                        # --------------------------------------------------------------------------------
+                        if self.instrument == 'NIRSPEC':
+                            nslices = 30
 
-                            result = cube_internal_cal.match_det2cube(self.instrument,
-                                                                      x, y, slicemap[i],
-                                                                      input_model,
-                                                                      detector2slicer,
-                                                                      self.ycoord, self.zcoord,
-                                                                      self.crval2, self.crval3,
-                                                                      self.cdelt2, self.cdelt3,
-                                                                      self.naxis1, self.naxis2)
-                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
-                            self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
-                            self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
-                            self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
-                            self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
-                            result = None
+                            slicemap = [15, 14, 16, 13, 17, 12, 18, 11, 19, 10,
+                                        20, 9, 21, 8, 22, 7, 23, 6, 24, 5, 25,
+                                        4, 26, 3, 27, 2, 28, 1, 29, 0]
+
+                            for i in range(nslices):
+
+                                slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
+                                x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
+                                detector2slicer = slice_wcs.get_transform('detector', 'slicer')
+
+                                result = cube_internal_cal.match_det2cube(self.instrument,
+                                                                          x, y, slicemap[i],
+                                                                          input_model,
+                                                                          detector2slicer,
+                                                                          self.ycoord, self.zcoord,
+                                                                          self.crval2, self.crval3,
+                                                                          self.cdelt2, self.cdelt3,
+                                                                          self.naxis1, self.naxis2)
+                                spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                                self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                                self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                                self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                                self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
+                                result = None
+                    k = k + 1
+                    input_model.close()
             # _______________________________________________________________________
             # done looping over files
 
+            
         self.find_spaxel_flux()
         self.set_final_dq_flags()
 

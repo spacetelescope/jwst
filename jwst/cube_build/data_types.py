@@ -75,7 +75,8 @@ class DataTypes():
         # open the input with datamodels
         # if input is filename or model when it is opened it is a model
         # if input if an association name or ModelContainer then it is opened as a container
-        
+
+        print('at the start of data_types')
         with datamodels.open(input, save_open=self.in_memory) as input_models:
             print('input',type(input_models))
             print(input_models._save_open)

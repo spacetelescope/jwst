@@ -419,7 +419,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
     spaxel_dq_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
     if (!spaxel_dq_arr) goto fail;
-
+    
     result = Py_BuildValue("(OOOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
 			   spaxel_iflux_arr, spaxel_dq_arr);
 
@@ -515,7 +515,13 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
     spaxel_dq_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
     if (!spaxel_dq_arr) goto fail;
     spaxel_dq = NULL;
-
+    
+    free(spaxel_flux);
+    free(spaxel_weight);
+    free(spaxel_var);
+    free(spaxel_iflux);
+    free(spaxel_dq);
+    
     PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
     PyArray_ENABLEFLAGS(spaxel_weight_arr, NPY_ARRAY_OWNDATA);
     PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
@@ -566,6 +572,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   if (free_eta3) Py_XDECREF(eta3);
   if (free_eta4) Py_XDECREF(eta4);
   if (free_dwave) Py_XDECREF(dwave);
+  
   return result;
 }
 
