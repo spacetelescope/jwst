@@ -4,19 +4,24 @@ import numpy as np
 
 from ..stpipe import Step
 from .. import datamodels
-# from stdatamodels.jwst import datamodels (in final)
+# from stdatamodels.jwst import datamodels  # (final)
 
 from stcal.ramp_fitting import ramp_fit
+from stcal.ramp_fitting import utils
 from jwst.datamodels import dqflags
-# from stdatamodels.jwst.datamodels import dqflags (in final)
+# from stdatamodels.jwst.datamodels import dqflags # (final)
 
 from ..lib import reffile_utils
 
 import logging
 import copy
+import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+LARGE_VARIANCE = 1.e8
+LARGE_VARIANCE_THRESHOLD = 0.001 * LARGE_VARIANCE
 
 
 __all__ = ["RampFitStep"]
@@ -177,14 +182,16 @@ def create_optional_results_model(input_model, opt_info):
     return opt_model
 
 
-def compute_RN_variances( groupdq, readnoise_2d, gain_2d, group_time):
+def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     """
-    Compute the variances due to the readnoise for all integrations
+    Compute the variances due to the readnoise for all integrations.
 
     Parameters
     ----------
     groupdq : ndarray
-        The group data quality array for the exposure, 4-D flag
+        The group data quality array for the exposure, 4-D flag.
+        For groups that have been flagged as both UNDERSAMP and
+        DO_NOT_USE, both flags have been reset.
 
     readnoise_2d : ndarray
         readnoise values for all pixels in the image, 2-D float
@@ -218,11 +225,11 @@ def compute_RN_variances( groupdq, readnoise_2d, gain_2d, group_time):
     cubeshape = (ngroups,) + imshape
 
     segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint8)
-    var_r4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.float32)
-    var_r3 = np.zeros((nint,) + imshape, dtype=np.float32)
+    var_r4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.float32) + LARGE_VARIANCE
+    var_r3 = np.zeros((nint,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     s_inv_var_r3 = np.zeros((nint,) + imshape, dtype=np.float32)
 
-    max_seg = 0
+    max_seg = 0  # initialize maximum number of segments in a ramp
 
     # Loop over data integrations
     for num_int in range(nint):
@@ -237,46 +244,46 @@ def compute_RN_variances( groupdq, readnoise_2d, gain_2d, group_time):
             rn_sect = readnoise_2d[rlo:rhi, :]
             gain_sect = gain_2d[rlo:rhi, :]
 
-            den_r3, num_r3, segs_beg_3, max_seg_t = calc_segs(rn_sect, gdq_sect, group_time, ngroups)
-            max_seg = max(max_seg, max_seg_t)
-
-            segs_4[num_int, :segs_beg_3.shape[0], rlo:rhi, :] = segs_beg_3
+            den_r3, num_r3, segs_beg_3, max_seg_i = calc_segs(rn_sect, gdq_sect, group_time)
+            max_seg = max(max_seg, max_seg_i)
+            segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
 
             # Find the segment variance due to read noise and convert back to DN
-            var_r4[num_int, :segs_beg_3.shape[0], rlo:rhi, :] = num_r3 * den_r3 / gain_sect**2
+            var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3 / gain_sect**2
 
             del den_r3, num_r3, segs_beg_3
-            del gain_sect
             del gdq_sect
+            del rn_sect
+            del gain_sect
 
-        # The next statements zero out entries for non-existing segments, and
-        #   set the variances for segments having negative slopes (the segment
-        #   variance is proportional to the median estimated slope) to
-        #   outrageously large values so that they will have negligible
-        #   contributions.
+        # Zero out entries for non-existing segments in this integration
         var_r4[num_int, :, :, :] *= (segs_4[num_int, :, :, :] > 0)
+
+        # Correct for non-positive values to ensure negligible conntribution
         var_r4[var_r4 <= 0.] = LARGE_VARIANCE
 
-       # The sums of inverses of the variances are needed for later
-       #   variance calculations.
+        # The sums of inverses of the variances are needed for later
+        #   variance calculations.
         s_inv_var_r3[num_int, :, :] = (1. / var_r4[num_int, :, :, :]).sum(axis=0)
         var_r3[num_int, :, :] = 1. / s_inv_var_r3[num_int, :, :]
 
-    var_r4 *= (segs_4[:, :, :, :] > 0)   # Zero out non-existing segments
+    var_r4 *= (segs_4[:, :, :, :] > 0)
+
+    # Truncate var_r4 to include only existing segments
     var_r4 = var_r4[:, :max_seg, :, :]
 
+    var_r3[var_r3 > LARGE_VARIANCE_THRESHOLD] = 0.  # Zero out large variances due to reset
     var_r2 = 1 / (s_inv_var_r3.sum(axis=0))
-
-    # Some contributions to these vars may be NaN as they are from ramps
-    # having PIXELDQ=DO_NOT_USE
+    var_r2[var_r2 > LARGE_VARIANCE_THRESHOLD] = 0.
     var_r2[np.isnan(var_r2)] = 0.
 
     return var_r2, var_r3, var_r4
 
 
-def calc_segs( rn_sect, gdq_sect, group_time, ngroups ):
+def calc_segs(rn_sect, gdq_sect, group_time):
     """
-    Calculate the lengths of all semi-ramps in all pixels in the data section
+    Calculate several quantities needed for the readnoise variance, in the
+    data section.
 
     Parameters
     ----------
@@ -288,9 +295,6 @@ def calc_segs( rn_sect, gdq_sect, group_time, ngroups ):
 
     group_time : float
         Time increment between groups, in seconds.
-
-    ngroups : int
-        Total number of groups in a ramp
 
     Returns
     -------
@@ -308,28 +312,29 @@ def calc_segs( rn_sect, gdq_sect, group_time, ngroups ):
 
     max_seg : int
         maximum number of segments in a ramp
-    """ 
-    (nreads, asize2, asize1) = gdq_sect.shape
+    """
+    (ngroups, asize2, asize1) = gdq_sect.shape
     npix = asize1 * asize2
     imshape = (asize2, asize1)
-    gdq_2d = gdq_sect[:, :, :].reshape((nreads, npix))
-    segs = np.zeros((nreads, npix), dtype = np.int32)
+    gdq_2d = gdq_sect[:, :, :].reshape((ngroups, npix))
+    segs = np.zeros((ngroups, npix), dtype=np.int32)
     sr_index = np.zeros(npix, dtype=np.uint8)
 
     i_read = 0
-    while i_read < ngroups :
-        gdq_1d = gdq_2d[i_read, : ]
-        wh_good = np.where( gdq_1d == 0)
+    while i_read < ngroups:
+        gdq_1d = gdq_2d[i_read, :]
+        wh_good = np.where(gdq_1d == dqflags.group['GOOD'])
 
-        # For godd groups, increment those pixels' segment's lengths
+        # For good groups, increment those pixels' segments' lengths
         if len(wh_good[0]) > 0:
-            segs[ sr_index[ wh_good ], wh_good ] += 1
+            segs[sr_index[wh_good], wh_good] += 1
         del wh_good
 
         # Locate any CRs ...
-        wh_cr = np.where( gdq_1d.astype(np.int32) & JUMP > 0)
- 
-        # ... but not on final read:
+        wh_cr = np.where(gdq_1d.astype(np.int32) & dqflags.group['JUMP_DET'] > 0)
+        del gdq_1d
+
+        # ... (but not on final read): increment the segment number
         if len(wh_cr[0]) > 0 and (i_read < ngroups - 1):
             sr_index[wh_cr[0]] += 1
             segs[sr_index[wh_cr], wh_cr] += 1
@@ -338,19 +343,15 @@ def calc_segs( rn_sect, gdq_sect, group_time, ngroups ):
         i_read += 1
 
     segs = segs.astype(np.uint8)
-
-    max_seg = (np.argwhere(segs).max(0))[0] +1
-    segs_beg = segs[:max_seg, :]  # the leading nonzero lengths
-
-    # Create reshaped version [ segs, y, x ] to simplify computation
-    segs_beg_3 = segs_beg.reshape(max_seg, imshape[0], imshape[1])
+    segs_beg_3 = segs.reshape(ngroups, imshape[0], imshape[1])
+    segs_beg_3 = utils.remove_bad_singles(segs_beg_3)
 
     # For a segment, the variance due to readnoise noise
-    # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
+    # = 12 * readnoise**2 /(nreads_seg**3. - nreads_seg)/(tgroup **2.)
     num_r3 = 12. * (rn_sect / group_time)**2.  # always >0
 
     # Reshape for every group, every pixel in section
-    num_r3 = np.dstack([num_r3] * max_seg)
+    num_r3 = np.dstack([num_r3] * ngroups)
     num_r3 = np.transpose(num_r3, (2, 0, 1))
 
     # Denominator den_r3 = 1./(segs_beg_3 **3.-segs_beg_3). The minimum number
@@ -370,6 +371,9 @@ def calc_segs( rn_sect, gdq_sect, group_time, ngroups ):
     # overwrite where segs>1
     den_r3[wh_seg_pos] = 1. / (segs_beg_3[wh_seg_pos] ** 3. - segs_beg_3[wh_seg_pos])
     warnings.resetwarnings()
+
+    # calculate max_seg for this integ and data section
+    max_seg = (np.count_nonzero(segs_beg_3, axis=0)).max()
 
     return den_r3, num_r3, segs_beg_3, max_seg
 
@@ -404,11 +408,9 @@ class RampFitStep(Step):
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
     reference_file_types = ['readnoise', 'gain']
-
     def process(self, input):
 
         with datamodels.RampModel(input) as input_model:
-
             max_cores = self.maximum_cores
             readnoise_filename = self.get_reference_file(input_model, 'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
@@ -430,8 +432,6 @@ class RampFitStep(Step):
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
                     input_model, readnoise_model, gain_model, frames_per_group)
 
-                readnoise_2d_orig = readnoise_2d.copy()  # save for correct units
-
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
 
@@ -441,36 +441,50 @@ class RampFitStep(Step):
 
             int_times = input_model.int_times
 
-            # Before the first ramp_fit() call, copy the input model
-            # ("_W" for weighting) for input to the 2nd ramp_fitting call.
+            # Before the ramp_fit() call, copy the input model ("_W" for weighting)
+            # for later reconstruction of the fitting array tuples.
             input_model_W = copy.copy(input_model)
 
-            # Run ramp_fit() the first time, ignoring all DO_NOT_USE groups
+            # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
+            # ramp fitting arrays for the ImageModel, the CubeModel, and the
+            # RampFitOutputModel.
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
                 suppress_one_group=self.suppress_one_group)
 
-            # To calculate the readnoise variance for weighting, ramp_fitting
-            # will be run a second time. First the DO_NOT_USE flags and UNDERSAMP
-            # flags are removed from the GROUPDQ values of the UNDERSAMP-flagged
-            # pixels.
+            # Create a gdq to modify if there are undersampling-corrected groups
             gdq = input_model_W.groupdq.copy()
 
             # Locate groups where that are flagged with UNDERSAMP
-            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))
+            #  wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))  # (final)
+            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), 128))
 
-            if len(wh_undersamp[0]) > 0: # call the standalone routine
+            if len(wh_undersamp[0]) > 0:
+                # Unflag groups flagged as both UNDERSAMP and DO_NOT_USE
+                #  gdq[wh_undersamp] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['UNDERSAMP'])  # (final)
+                gdq[wh_undersamp] -= 129  # hack
+
+                # Flag SATURATED groups as DO_NOT_USE for later segment determination
+                where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
+                gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
+
+                # Get group_time for readnoise variance calculation
                 group_time = input_model.meta.exposure.group_time
-                image_var_RN, integ_var_RN, opt_var_RN = \
-                     compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time)
 
+                # Using the modified GROUPDQ array, create new readnoise variance arrays
+                image_var_RN, integ_var_RN, opt_var_RN = \
+                    compute_RN_variances(gdq, readnoise_2d, gain_2d, group_time)
+
+                # Create new ramp fitting array tuples, by inserting the new
+                # readnoise variances into copies of the original ramp fitting
+                # tuples.
                 image_info_new, integ_info_new = None, None
                 if image_info is not None and image_var_RN is not None:
                     image_info_new = (image_info[0], image_info[1], image_info[2], image_var_RN, image_info[4])
 
                 if integ_info is not None and integ_var_RN is not None:
-                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_var_RN], integ_info[4])
+                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_var_RN, integ_info[4])
 
                 image_info = image_info_new
                 integ_info = integ_info_new
@@ -481,44 +495,6 @@ class RampFitStep(Step):
                                     opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
 
                 opt_info = opt_info_new
-
-            """
-            if len(wh_undersamp[0]) > 0:
-                log.info('Processing groups flagged with UNDERSAMP.')
-
-                gdq[wh_undersamp] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['UNDERSAMP'])
-
-                input_model_W.groupdq = gdq
-                readnoise_2d = readnoise_2d_orig
-
-                # Rerun fitting to get the weighted RN variances
-                image_info_W, integ_info_W, opt_info_W, gls_opt_model_W = ramp_fit.ramp_fit(
-                    input_model_W, buffsize, self.save_opt, readnoise_2d, gain_2d,
-                    self.algorithm, self.weighting, max_cores, dqflags.pixel,
-                    suppress_one_group=self.suppress_one_group)
-
-                # The VAR_RNOISE arrays are written out to the output modeld via
-                # the image_info tuple, and similarly for the integration and
-                # optional models. Create new info tuples to be composed of the
-                # original values plus the weighted RN variance value. The 3rd
-                # component of each contains the RN variance.
-                image_info_new, integ_info_new = None, None
-                if image_info is not None and image_info_W is not None:
-                    image_info_new = (image_info[0], image_info[1], image_info[2], image_info_W[3], image_info[4])
-
-                if integ_info is not None and integ_info_W is not None:
-                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_info_W[3], integ_info[4])
-
-                image_info = image_info_new
-                integ_info = integ_info_new
-
-                opt_info_new = None
-                if opt_info is not None and opt_info_W is not None:
-                    opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_info_W[3],
-                                    opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
-
-                opt_info = opt_info_new
-            """
 
         # Save the OLS optional fit product, if it exists.
         if opt_info is not None:
