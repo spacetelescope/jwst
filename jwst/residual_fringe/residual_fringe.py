@@ -83,8 +83,14 @@ class ResidualFringeCorrection():
             raise ErrorNoFringeFlat("The fringe flat step has not been run on file %s",
                                     self.input_model.meta.filename)
 
-        # normalise the output_data to remove units
+        # Remove any NaN values from the data prior to processing
+        # Set them to 0 for the residual fringe routine
+        # They will be re-added at the end
         output_data = self.model.data.copy()
+        nanval_indx = np.where(np.isfinite(output_data) == False)
+        output_data[nanval_indx] = 0
+
+        # normalise the output_data to remove units
         pos_data = self.input_model.data[self.input_model.data > 0]
         normalization_factor = np.median(pos_data)
         output_data /= normalization_factor
@@ -457,6 +463,8 @@ class ResidualFringeCorrection():
         # add units back to output data
         log.info(" adding units back to output array")
         output_data *= normalization_factor
+        # Add NaNs back to output data
+        output_data[nanval_indx] = np.nan
         self.model.data = output_data
         del output_data
 

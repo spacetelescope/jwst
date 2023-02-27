@@ -64,6 +64,11 @@ resample
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
 
+residual_fringe
+---------------
+
+- Fix bug in Residual Fringe step handling of NaNs in input []
+
 scripts
 -------
 
