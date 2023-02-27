@@ -56,8 +56,26 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``-min_sat_area``:  The minimum number of saturated pixels required to meet "sat_required_snowball".
 
-* ``--expand_factor``: A multiplicative factor applied to the enclosing circle or ellipse. This larger area will have all pixels flagged as having a jump.
+* ``--expand_factor``: A multiplicative factor applied to the enclosing ellipse for snowballs. This larger area will have all pixels flagged as having a jump.
 
-* ``--use_ellipses``:  A boolean value that if True will cause minimum enclosing ellipses to be fit to the jump contour rather than the default circles. This should be set to True for MIRI observations.
+* ``--use_ellipses``:  deprecated
 
 * ``--sat_required_snowball``: A boolean value that if True requires that there are saturated pixels within the enclosed jump circle.
+
+* ``--sat-expand``: Number of pixels to add to the radius of the saturated core of snowballs
+
+* ``--find_showers``: Turn on the detection of showers for the MIRI detectors
+
+* ``--edge_size``: Since of the region on the edges fo the NIR detectors where saturated cores are not required for snowball detection
+
+* ``--extend_snr_threshold``: The SNR minimum for the detection of faint extended showers in MIRI
+
+* ``--extend_min_area``: The required minimum area of extended emission after convolution for the detection of showers in MIRI
+
+* ``--extend_inner_radius``: The inner radius of the Ring2DKernal that is used for the detection of extended emission in showers
+
+* ``--extend_outer_radius``: The outer radius of the Ring2DKernal that is used for the detection of extended emission in showers
+
+* ``--extend_ellipse_expand_ratio``: Multiplicative factor to expand the radius of the ellipse fit to the detected extended emission in MIRI showers
+
+* ``--grps_masked_after_showers``: Number of groups after detected extended emission to flag as a jump for MIRI showers
