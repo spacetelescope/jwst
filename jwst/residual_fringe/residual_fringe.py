@@ -526,7 +526,7 @@ class ResidualFringeCorrection():
         weights = np.zeros(self.input_model.data.shape)
         for c in np.arange(weights.shape[1]):
             flux_1d = self.input_model.data[:, c]
-            w = flux_1d / np.mean(flux_1d)
+            w = flux_1d / np.nanmean(flux_1d)
             weights[:, c] = w
 
         # replace infs and nans in weights with 0
