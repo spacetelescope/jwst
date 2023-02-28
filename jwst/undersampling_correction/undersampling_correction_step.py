@@ -2,7 +2,7 @@
 import logging
 
 from ..stpipe import Step
-from .. import datamodels
+from stdatamodels.jwst import datamodels
 from . import undersampling_correction
 
 log = logging.getLogger(__name__)

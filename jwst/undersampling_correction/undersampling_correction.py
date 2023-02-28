@@ -4,7 +4,7 @@
 import logging
 import numpy as np
 
-from ..datamodels import dqflags
+from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
