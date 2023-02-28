@@ -62,7 +62,9 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--sat_required_snowball``: A boolean value that if True requires that there are saturated pixels within the enclosed jump circle.
 
-* ``--sat-expand``: Number of pixels to add to the radius of the saturated core of snowballs
+* ``--min_sat_radius_extend``: The minimum radius of the saturated core of a snowball required to for the radius of the saturated core to be extended.
+
+*``--sat-expand``: Number of pixels to add to the radius of the saturated core of snowballs
 
 * ``--edge_size``: Since of the region on the edges fo the NIR detectors where saturated cores are not required for snowball detection
 

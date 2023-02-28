@@ -31,7 +31,8 @@ class JumpStep(Step):
         expand_factor = float(default=2.0) # The expansion factor for the enclosing circles or ellipses
         use_ellipses = boolean(default=False) # deprecated
         sat_required_snowball = boolean(default=True) # Require the center of snowballs to be saturated
-        sat_expand = integar(default=2) Number of pixels to add to the radius of the saturated core of snowballs
+        min_sat_radius_extend = float(default=2.5) # The minimum radius of the saturated core to trigger the extension of the core.
+        sat_expand = integer(default=2) Number of pixels to add to the radius of the saturated core of snowballs
         expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
         find_showers = boolean(default=False) Turn on shower flagging for MIRI
         edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a saturated core is not required
@@ -105,6 +106,7 @@ class JumpStep(Step):
                                       after_jump_flag_time2,
                                       min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                       expand_factor=expand_factor, use_ellipses=use_ellipses,
+                                      min_sat_radius_extend=self.min_sat_radius_extend,
                                       sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
