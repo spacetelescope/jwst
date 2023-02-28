@@ -64,9 +64,9 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--sat-expand``: Number of pixels to add to the radius of the saturated core of snowballs
 
-* ``--find_showers``: Turn on the detection of showers for the MIRI detectors
-
 * ``--edge_size``: Since of the region on the edges fo the NIR detectors where saturated cores are not required for snowball detection
+
+* ``--find_showers``: Turn on the detection of showers for the MIRI detectors
 
 * ``--extend_snr_threshold``: The SNR minimum for the detection of faint extended showers in MIRI
 
