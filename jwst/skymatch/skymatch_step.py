@@ -45,6 +45,7 @@ class SkyMatchStep(Step):
         skymethod = option('local', 'global', 'match', 'global+match', default='match') # sky computation method
         match_down = boolean(default=True) # adjust sky to lowest measured value?
         subtract = boolean(default=False) # subtract computed sky from image data?
+        apply_sky = boolean(default=None) # use relative or absolute sky values in overlaps? Defaults to not subtract
 
         # Image's bounding polygon parameters:
         stepsize = integer(default=None) # Max vertex separation
@@ -109,9 +110,12 @@ class SkyMatchStep(Step):
             else:
                 raise AssertionError("Logical error in the pipeline code.")
 
+        if self.apply_sky is None:
+            self.apply_sky = not self.subtract
+
         # match/compute sky values:
         match(images, skymethod=self.skymethod, match_down=self.match_down,
-              subtract=self.subtract)
+              subtract=self.subtract, apply_sky=self.apply_sky)
 
         # set sky background value in each image's meta:
         for im in images:

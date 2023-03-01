@@ -179,6 +179,12 @@ scripts
 
 - Offload ``minimum_deps`` script to ``minimum_dependencies`` package [#7463]
 
+skymatch
+--------
+
+- Added an ``apply_sky`` parameter, to switch between using relative or absolute
+  sky values in match overlaps.
+
 transforms
 ----------
 

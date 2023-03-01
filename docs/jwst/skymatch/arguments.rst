@@ -23,6 +23,12 @@ The ``skymatch`` step uses the following optional arguments:
   the images. The BKGSUB keyword (boolean) will be set in each output image to
   record whether or not the background was subtracted.
 
+``apply_sky`` (boolean, default=None)
+  Only used for `match` skymethods. If `True`, will use the relative
+  difference between the calculated overlap value and the calculated
+  'sky' value. Otherwise, will use the absolute values of the overlaps.
+  Defaults to the opposite of ``subtract``
+
 **Image bounding polygon parameters:**
 
 ``stepsize`` (int, default=None)

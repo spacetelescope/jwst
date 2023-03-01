@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def match(images, skymethod='global+match', match_down=True, subtract=False):
+def match(images, skymethod='global+match', match_down=True, subtract=False, apply_sky=True,):
     """
     A function to compute and/or "equalize" sky background in input images.
 
@@ -91,6 +91,11 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
     subtract : bool (Default = False)
         Subtract computed sky value from image data.
+
+    apply_sky : bool (Default = True)
+        Only used for 'match' skymethods. If True, will use the relative
+        difference between the calculated overlap value and the calculated
+        'sky' value. Otherwise, will use the absolute values of the overlaps.
 
 
     Raises
@@ -302,7 +307,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
                  "overlapping regions.")
 
         # find "optimum" sky changes:
-        sky_deltas = _find_optimum_sky_deltas(images, apply_sky=not subtract)
+        sky_deltas = _find_optimum_sky_deltas(images, apply_sky=apply_sky)
         sky_good = np.isfinite(sky_deltas)
 
         if np.any(sky_good):
@@ -318,7 +323,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
             float(skd) if np.isfinite(skd) else None for skd in sky_deltas
         ]
 
-        _apply_sky(images, sky_deltas, False, subtract, show_old)
+        _apply_sky(images, sky_deltas, False, not apply_sky, show_old)
         show_old = True
 
     # 2. Method: "local". Compute the minimum sky background
