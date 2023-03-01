@@ -1,7 +1,7 @@
 import numpy as np
 
-from jwst.datamodels import RampModel
-from jwst.datamodels import dqflags
+from stdatamodels.jwst.datamodels import RampModel
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.undersampling_correction.undersampling_correction import undersampling_correction
 
