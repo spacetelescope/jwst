@@ -1,4 +1,4 @@
-1.9.5 (unreleased)
+1.9.6 (unreleased)
 ==================
 
 datamodels
@@ -106,6 +106,10 @@ tweakreg
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
 
+1.9.5 (2023-03-02)
+==================
+
+- add ``opencv-python`` to ``requirements-sdp.txt``
 
 1.9.4 (2023-01-27)
 ==================
