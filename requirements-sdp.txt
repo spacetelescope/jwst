@@ -50,6 +50,7 @@ lxml==4.9.2
 matplotlib==3.6.3
 networkx==3.0
 numpy==1.24.1
+opencv-python==4.7.0.72
 packaging==23.0
 Parsley==1.3
 photutils==1.6.0
