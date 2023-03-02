@@ -3,9 +3,10 @@
 Authors:
     M. Cracraft
 """
+from stdatamodels.jwst.datamodels import dqflags, LinearityModel, RampModel
+
 from jwst.linearity import LinearityStep
 from jwst.linearity.linearity import do_correction as lincorr
-from jwst.datamodels import dqflags, LinearityModel, RampModel
 import numpy as np
 
 

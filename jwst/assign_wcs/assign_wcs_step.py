@@ -1,6 +1,7 @@
 #! /usr/bin/env python
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
-from .. import datamodels
 from ..lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs

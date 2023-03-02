@@ -2,7 +2,8 @@
 Unit tests for imprint correction
 """
 
-from jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst.imprint import ImprintStep
 import numpy as np
 import pytest

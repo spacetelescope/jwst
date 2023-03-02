@@ -1,7 +1,7 @@
 #! /usr/bin/env python
+from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from .. import datamodels
 from .srctype import set_source_type
 
 __all__ = ["SourceTypeStep"]

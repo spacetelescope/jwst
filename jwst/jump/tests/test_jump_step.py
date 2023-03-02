@@ -3,8 +3,8 @@ from itertools import cycle
 import numpy as np
 import pytest
 
-from jwst.datamodels import GainModel, ReadnoiseModel
-from jwst.datamodels import RampModel
+from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel
+
 from jwst.jump import JumpStep
 
 try:

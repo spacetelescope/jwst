@@ -3,10 +3,11 @@ import logging
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags, SossWaveGridModel
+
 from ..extract import populate_time_keywords
 from ...lib import pipe_utils
-from ... import datamodels
-from ...datamodels import dqflags, SossWaveGridModel
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background

@@ -2,10 +2,10 @@
 
 from stcal.dqflags import interpret_bit_flags
 
-from jwst.datamodels.dqflags import pixel
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from ..stpipe import Step
-from .. import datamodels
 from . import imageregistration
 from . median_replace_img import median_replace_img
 

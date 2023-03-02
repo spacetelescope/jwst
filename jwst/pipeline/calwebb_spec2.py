@@ -4,7 +4,8 @@ import os.path as op
 import traceback
 import numpy as np
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..assign_wcs.util import NoDataOnDetectorError
 from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from ..stpipe import Pipeline
@@ -280,12 +281,14 @@ class Spec2Pipeline(Pipeline):
            and not isinstance(calibrated, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
-            resampled = self.resample_spec(calibrated)
+            resampled = calibrated.copy()
+            resampled = self.resample_spec(resampled)
 
         elif is_nrs_slit_linelamp(calibrated):
 
             # Call resample_spec for NRS 2D line lamp slit data
-            resampled = self.resample_spec(calibrated)
+            resampled = calibrated.copy()
+            resampled = self.resample_spec(resampled)
 
         elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
 
@@ -293,7 +296,8 @@ class Spec2Pipeline(Pipeline):
             # always create a single cube containing multiple
             # wavelength bands
 
-            resampled = self.cube_build(calibrated)
+            resampled = calibrated.copy()
+            resampled = self.cube_build(resampled)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], 's3d')
         else:
@@ -312,7 +316,8 @@ class Spec2Pipeline(Pipeline):
             else:
                 self.photom.suffix = 'x1d'
             self.extract_1d.save_results = False
-            x1d = self.extract_1d(resampled)
+            x1d = resampled.copy()
+            x1d = self.extract_1d(x1d)
 
             # Possible that no fit was possible - if so, skip photom
             if x1d is not None:
@@ -321,16 +326,15 @@ class Spec2Pipeline(Pipeline):
             else:
                 self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
         else:
-            x1d = self.extract_1d(resampled)
+            x1d = resampled.copy()
+            x1d = self.extract_1d(x1d)
 
         resampled.close()
         if x1d is not None:
             x1d.close()
 
         # That's all folks
-        self.log.info(
-            'Finished processing product {}'.format(exp_product['name'])
-        )
+        self.log.info('Finished processing product {}'.format(exp_product['name']))
 
         return calibrated
 

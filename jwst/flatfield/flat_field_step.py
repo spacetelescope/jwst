@@ -1,5 +1,6 @@
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
-from .. import datamodels
 from . import flat_field
 
 # For the following types of data, it is OK -- and in some cases

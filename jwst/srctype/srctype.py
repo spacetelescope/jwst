@@ -1,7 +1,7 @@
+from stdatamodels.jwst import datamodels
+
 import logging
 from ..lib import pipe_utils
-
-from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

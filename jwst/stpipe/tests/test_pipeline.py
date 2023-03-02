@@ -6,7 +6,8 @@ import pytest
 
 from stpipe import crds_client
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step, Pipeline
 
 from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference

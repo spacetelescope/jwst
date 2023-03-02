@@ -2,10 +2,9 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
 
-from jwst.datamodels import GainModel, ReadnoiseModel
-from jwst.datamodels import RampModel
+from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, dqflags
+
 from jwst.jump.jump import run_detect_jumps
-from jwst.datamodels import dqflags
 import multiprocessing
 
 import time

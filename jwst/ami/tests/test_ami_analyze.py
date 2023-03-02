@@ -8,7 +8,8 @@ import math
 
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.ami import utils, leastsqnrm, hexee, webb_psf
 from jwst.ami.leastsqnrm import hexpb, ffc, ffs, closure_amplitudes
 from jwst.ami.leastsqnrm import closurephase, redundant_cps

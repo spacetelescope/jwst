@@ -18,6 +18,7 @@ TweakReg
 
    tweakreg_catalog
    tweakreg_step
+   utils
    astrometric_utils
-   
+
 .. automodapi:: jwst.tweakreg

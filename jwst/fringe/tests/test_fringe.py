@@ -8,8 +8,8 @@ import pytest
 import numpy as np
 import numpy.random as rn
 
-from jwst.datamodels import IFUImageModel
-from jwst.datamodels import FringeModel
+from stdatamodels.jwst.datamodels import IFUImageModel, FringeModel
+
 from jwst.fringe import fringe
 
 FRINGE_CONSTANT = 2.  # correction will be input data divided by this factor

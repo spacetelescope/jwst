@@ -8,7 +8,7 @@ will report validation errors:
 
 .. doctest-skip::
 
-  >>> from jwst import datamodels
+  >>> from stdatamodels.jwst import datamodels
   >>> datamodels.open("jw95115001001_02102_00001_nrs1_x1d.fits")
   ...
   ValueError: Column names don't match schema...

@@ -12,7 +12,10 @@ the `jwst` package into a `conda` environment, and then to set correct
 environment variables for accessing reference files through CRDS. From there,
 the JWST pipeline can be :ref:`run in a Python session<run_from_python>` or with
 the :ref:`command line interface<run_from_strun>`, and
-:ref:`JWST datamodels<data-models>` and other pipeline utilities can be imported
+.. comment out until stdatamodels is released
+.. ref JWST datamodels<data-models>
+JWST datamodels
+and other pipeline utilities can be imported
 and used in a Python session.
 
 **1. Create a conda environment.**
@@ -81,4 +84,6 @@ For information on how to run the pipeline using the command line interface, see
 :ref:`Running the JWST pipeline: Command Line Interface<run_from_strun>`.
 
 For information on how to read and write data files with JWST `datamodels`, see
-:ref:`JWST datamodels<data-models>`.
+.. comment out until stdatamodels is released
+.. ref JWST datamodels<data-models>
+JWST datamodels.

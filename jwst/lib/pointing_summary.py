@@ -6,7 +6,7 @@ TARGET pointing.
 
 Examples
 --------
->>> from jwst.datamodels import ImageModel
+>>> from stdatamodels.jwst.datamodels import ImageModel
 >>> im = ImageModel()
 >>> im.meta.target.ra       =  90.75541666666666
 >>> im.meta.target.dec      = -66.56055555555554
@@ -37,7 +37,7 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table
 import astropy.units as u
 
-import jwst.datamodels as dm
+import stdatamodels.jwst.datamodels as dm
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

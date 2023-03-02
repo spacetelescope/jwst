@@ -1,4 +1,5 @@
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.white_light.white_light import white_light
 
 from astropy.time import Time, TimeDelta

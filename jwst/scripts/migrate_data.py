@@ -16,8 +16,9 @@ from astropy.time import Time
 import numpy as np
 from packaging.specifiers import SpecifierSet
 
+from stdatamodels.jwst import datamodels
+
 import jwst
-from jwst import datamodels
 
 
 def parse_args():

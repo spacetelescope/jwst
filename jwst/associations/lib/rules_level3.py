@@ -226,7 +226,7 @@ class Asn_Lv3Image(AsnMixin_Science):
                 [DMSAttrConstraint(
                 name='bkgdtarg',
                 sources=['bkgdtarg'],
-                value=['T'],
+                value='T',
                 )], reduce=Constraint.notany
             ),
             Constraint(
@@ -273,7 +273,7 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
                 [DMSAttrConstraint(
                 name='bkgdtarg',
                 sources=['bkgdtarg'],
-                value=['T'],
+                value='T',
                 )],
             ),
             Constraint(
@@ -315,12 +315,12 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='bkgdtarg',
                 sources=['bkgdtarg'],
-                value=['T'],
+                value='T',
             ),
             DMSAttrConstraint(
                 name='allowed_bkgdtarg',
                 sources=['exp_type'],
-                value=['mir_lrs-fixedslit', 'nrs_fixedslit'],
+                value='mir_lrs-fixedslit|nrs_fixedslit',
             ),
             Constraint_Optical_Path(),
         ])
@@ -349,7 +349,7 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value=('mir_mrs'),
+                value='mir_mrs',
             ),
             Constraint(
                 [
@@ -387,7 +387,7 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value=('mir_mrs'),
+                value='mir_mrs',
             ),
             Constraint(
                 [
@@ -398,7 +398,7 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='bkgdtarg',
                 sources=['bkgdtarg'],
-                value=['T'],
+                value='T',
             ),
         ])
 
@@ -528,12 +528,12 @@ class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='bkgdtarg',
                 sources=['bkgdtarg'],
-                value=['T'],
+                value='T',
             ),
             DMSAttrConstraint(
                 name='allowed_bkgdtarg',
                 sources=['exp_type'],
-                value=['nrs_ifu'],
+                value='nrs_ifu',
             ),
             SimpleConstraint(
                 value=True,
@@ -693,7 +693,7 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
                     DMSAttrConstraint(
                         name='patttype_spectarg',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                        value='2-point-nod|4-point-nod|along-slit-nod',
                     ),
                 ],
                 reduce=Constraint.any

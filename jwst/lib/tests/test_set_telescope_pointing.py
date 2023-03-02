@@ -14,7 +14,8 @@ pytest.importorskip('pysiaf')
 from astropy.io import fits  # noqa: E402
 from astropy.time import Time  # noqa: E402
 
-from jwst import datamodels  # noqa: E402
+from stdatamodels.jwst import datamodels  # noqa: E402
+
 from jwst.lib import engdb_mast  # noqa: E402
 from jwst.lib import engdb_tools  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
@@ -547,6 +548,21 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
         assert model.meta.wcsinfo.siaf_xref_sci == 858.0
         assert model.meta.wcsinfo.siaf_yref_sci == 35
+
+
+def test_mirim_tamrs_siaf_values(eng_db_ngas, data_file_nosiaf):
+    """
+    Test that FITS WCS default values were set.
+    """
+    with datamodels.Level1bModel(data_file_nosiaf) as model:
+        model.meta.exposure.start_time = STARTTIME.mjd
+        model.meta.exposure.end_time = ENDTIME.mjd
+        model.meta.aperture.name = 'MIRIM_TAMRS'
+        model.meta.observation.date = '2017-01-01'
+        model.meta.exposure.type = "MIR_TACQ"
+        stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
+        assert model.meta.wcsinfo.crpix1 == 997.5
+        assert model.meta.wcsinfo.crpix2 == 993.5
 
 
 # ######################

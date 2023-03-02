@@ -116,10 +116,16 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nrs_brightobj',
 ]
 
+# Modifiers from the pool that define the primary use of
+# an exposure.
+#
+# Note: Order is important with the first items taking
+# higher precedence. This depends on Python dicts ordering
+# by order of key addition.
 SPECIAL_EXPOSURE_MODIFIERS = {
-    'background': ['bkgdtarg'],
-    'imprint': ['is_imprt'],
     'psf': ['is_psf'],
+    'imprint': ['is_imprt'],
+    'background': ['bkgdtarg'],
 }
 
 # Exposures that are always TSO

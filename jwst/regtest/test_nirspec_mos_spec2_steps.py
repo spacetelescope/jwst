@@ -2,8 +2,9 @@ import numpy as np
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+import stdatamodels.jwst.datamodels as dm
+
 from jwst.barshadow import BarShadowStep
-import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
 from jwst.pathloss import PathLossStep
 from jwst.photom import PhotomStep

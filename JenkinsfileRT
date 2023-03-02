@@ -96,13 +96,13 @@ bc0.failedFailureThresh = 0
 // macos-specific buildconfig to cause the creation of counterparts to the linux
 // environment dumps. Packages in a minimal conda environment differ by OS
 // which is why this is needed.
-// bc1 = utils.copy(bc0)
-// bc1.nodetype = 'macos'
-// bc1.name = 'macos-stable-deps'
-// bc1.build_cmds = ["pip install -e ."]
-// bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
-// bc1.test_cmds = []
-// bc1.test_configs = []
+bc1 = utils.copy(bc0)
+bc1.nodetype = 'macos'
+bc1.name = 'macos-stable-deps'
+bc1.build_cmds = ["pip install -e ."]
+bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
+bc1.test_cmds = []
+bc1.test_configs = []
 
-utils.run([jobconfig, bc0])
+utils.run([jobconfig, bc0, bc1])
 }  // withCredentials

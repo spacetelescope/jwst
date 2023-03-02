@@ -107,7 +107,7 @@ The DistortionModel in jwst.datamodels is used as an example of how to create a 
 Similarly data models should be used to create other types of reference files as this process provides
 validation of the file structure.
 
->>> from jwst.datamodels import DistortionModel
+>>> from stdatamodels.jwst.datamodels import DistortionModel
 >>> dist = DistortionModel(model=model, strict_validation=True)
 >>> dist.meta.description = "New distortion model"
 >>> dist.meta.author = "INS team"

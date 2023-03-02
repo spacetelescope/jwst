@@ -31,8 +31,8 @@ import logging
 import numpy as np
 from gwcs import wcstools
 
-from .. import datamodels
-from ..transforms import models as trmodels
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.transforms import models as trmodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -224,7 +224,7 @@ def _is_point_source(slit, exp_type):
 
     Parameters
     ----------
-    slit : `~jwst.transforms.models.Slit`
+    slit : `~stdatamodels.jwst.transforms.models.Slit`
         A slit object.
     exp_type : str
         The exposure type

@@ -6,9 +6,10 @@ import numpy as np
 
 from gwcs import wcstools
 
+import stdatamodels.jwst.datamodels as datamodels
+
 from jwst.assign_wcs import nirspec, util
 from jwst.lib.wcs_utils import get_wavelengths
-import jwst.datamodels as datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -980,7 +981,7 @@ def _corrections_for_lrs(data, pathloss):
 
         # Save the corrections. The `data` portion is the correction used.
         # The individual ones will be saved in the respective attributes.
-        correction = type(data)(data=pathloss_2d)
+        correction = datamodels.ImageModel(data=pathloss_2d)
         correction.pathloss_point = pathloss_2d
         correction.wavelength = wavelength_array
 

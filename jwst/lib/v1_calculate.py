@@ -5,9 +5,10 @@ import logging
 
 from astropy.table import Table
 
+from stdatamodels.jwst import datamodels as dm
+
 from . import set_telescope_pointing as stp
 from . import siafdb
-from .. import datamodels as dm
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

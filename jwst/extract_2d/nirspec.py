@@ -7,7 +7,8 @@ from astropy.modeling.models import Shift
 from gwcs.utils import _toindex
 from gwcs import wcstools
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 from ..lib import pipe_utils
@@ -133,7 +134,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model : `~jwst.datamodels.SlitModel`
         The output model representing a slit.
     slit : namedtuple
-        A `~jwst.transforms.models.Slit` object representing a slit.
+        A `~stdatamodels.jwst.transforms.models.Slit` object representing a slit.
     xlo, xhi, ylo, yhi : float
         Indices into the data array where extraction should be done.
         These are converted to "pixel indices" - the center of a pixel.
@@ -198,7 +199,7 @@ def extract_slit(input_model, slit, exp_type):
     ----------
     input_model : `~jwst.datamodels.image.ImageModel` or `~jwst.datamodels.cube.CubeModel`
         The input model.
-    slit : `~jwst.transforms.models.Slit`
+    slit : `~stdatamodels.jwst.transforms.models.Slit`
         A slit object.
     exp_type : str
         The exposure type.

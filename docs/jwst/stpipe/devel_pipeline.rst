@@ -29,7 +29,7 @@ into a single image::
 
     from jwst.stpipe import Pipeline
 
-    from jwst.datamodels import ImageModel
+    from stdatamodels.jwst.datamodels import ImageModel
 
     # Some locally-defined steps
     from . import FlatField, Combine

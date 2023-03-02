@@ -8,12 +8,12 @@ from numpy.testing import assert_allclose
 
 from stcal.dark_current.dark_sub import average_dark_frames_3d as average_dark_frames
 from stcal.dark_current.dark_sub import do_correction as darkcorr
-
 from stcal.dark_current.dark_class import DarkData
+
+from stdatamodels.jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
 
 from jwst.dark_current.dark_current_step import DarkCurrentStep
 
-from jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
 
 
 # Define frame_time and number of groups in the generated dark reffile

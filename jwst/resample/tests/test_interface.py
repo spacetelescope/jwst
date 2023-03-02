@@ -1,6 +1,7 @@
 import pytest
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.resample import ResampleSpecStep, ResampleStep
 
 

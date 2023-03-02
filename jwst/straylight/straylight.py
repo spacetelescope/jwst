@@ -8,7 +8,9 @@
 
 import numpy as np
 import logging
-from ..datamodels import dqflags
+
+from stdatamodels.jwst.datamodels import dqflags
+
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
@@ -96,18 +98,19 @@ def correct_xartifact(input_model, modelpars):
     # Save some data parameters for easy use later
     nrows, ncols = input_model.data.shape
 
-    # Create output as a copy of the input science data model
-    output = input_model.copy()  # this is used in algorithm to
-    # find the straylight correction.
+    # Create a copy of the input data array that will be modified
+    # for use in the straylight calculations
+    input = input_model.copy()
 
     # mask is same size as image - set = 1 everywhere to start
-    mask = np.ones_like(output.data)
+    mask = np.ones_like(input.data)
 
     # if there are nans remove them because they mess up the correction
-    index_inf = np.isinf(output.data).nonzero()
-    output.data[index_inf] = 0.0
-    index_inf = np.isnan(output.data).nonzero()
-    output.data[index_inf] = 0.0
+    # Set them to zero in the copy of input data used for calculation
+    index_inf = np.isinf(input.data).nonzero()
+    input.data[index_inf] = 0.0
+    index_inf = np.isnan(input.data).nonzero()
+    input.data[index_inf] = 0.0
     # flag associated mask so we do not  use any
     # slice gaps that are nans, now data=0.
     mask[index_inf] = 0
@@ -147,15 +150,15 @@ def correct_xartifact(input_model, modelpars):
         log.info("Warning: no parameters found for channel = " + str(channel) + " band = " + str(band))
 
     xvec = (np.arange(ncols)).astype(float)
-    left_model = np.zeros_like(output.data)
-    right_model = np.zeros_like(output.data)
+    left_model = np.zeros_like(input.data)
+    right_model = np.zeros_like(input.data)
 
     # Left-half of detector
     try:
         param = modelpars[left]
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 0, 516
-        fimg = output.data * mask
+        fimg = input.data * mask
         left_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                      param['LOR_SCALE'], param['GAU_FWHM'],
                                      param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
@@ -168,7 +171,7 @@ def correct_xartifact(input_model, modelpars):
         param = modelpars[right]
         log.info("Found parameters for right detector half, applying Cross-Artifact correction.")
         istart, istop = 516, 1024
-        fimg = output.data * mask
+        fimg = input.data * mask
         right_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                       param['LOR_SCALE'], param['GAU_FWHM'],
                                       param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
@@ -180,6 +183,13 @@ def correct_xartifact(input_model, modelpars):
     # remove the straylight correction for the reference pixels
     model[:, 1028:1032] = 0.0
     model[:, 0:4] = 0.0
+
+    # Delete our temporary working copy of the data
+    del input
+
+    # Create output as a copy of the real data prior to replacement of NaNs with zeros
+    output = input_model.copy()
+    # Subtract the model from the data
     output.data = output.data - model
 
     # Remove any remaining pedestal stray light values based on inter-channel region

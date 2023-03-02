@@ -2,7 +2,8 @@ import os
 import sys
 import argparse
 
-from jwst.datamodels import MultiSlitModel
+from stdatamodels.jwst.datamodels import MultiSlitModel
+
 from jwst.exp_to_source import exp_to_source
 
 

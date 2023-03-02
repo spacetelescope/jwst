@@ -4,7 +4,8 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 import numpy as np
 
-import jwst.datamodels as dm
+import stdatamodels.jwst.datamodels as dm
+
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field import nirspec_ifu
 from jwst.pathloss import PathLossStep

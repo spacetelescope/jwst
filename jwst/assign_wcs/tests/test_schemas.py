@@ -5,11 +5,10 @@ import warnings
 from astropy.modeling import models
 from astropy import units as u
 import pytest
-from stdatamodels.validate import ValidationWarning
 
-from jwst.datamodels import DistortionModel, ReferenceFileModel
-from jwst.datamodels import wcs_ref_models
-from jwst.datamodels.wcs_ref_models import _SimpleModel
+from stdatamodels.validate import ValidationWarning
+from stdatamodels.jwst.datamodels import DistortionModel, ReferenceFileModel, wcs_ref_models
+from stdatamodels.jwst.datamodels.wcs_ref_models import _SimpleModel
 
 
 def find_all_wcs_ref_models_classes():

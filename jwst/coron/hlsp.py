@@ -9,7 +9,7 @@
 import numpy as np
 import math
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
 
 import logging
 log = logging.getLogger(__name__)

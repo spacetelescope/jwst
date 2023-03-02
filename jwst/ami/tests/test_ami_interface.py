@@ -2,7 +2,8 @@ import pytest
 
 import stpipe
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.ami import AmiAnalyzeStep
 
 
