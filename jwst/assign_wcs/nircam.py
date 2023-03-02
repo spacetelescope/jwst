@@ -370,23 +370,29 @@ def wfss(input_model, reference_files):
     # now create the appropriate model for the grism[R/C]
     if "GRISMR" in input_model.meta.instrument.pupil:
         det2det = NIRCAMForwardRowGrismDispersion(orders,
-                                                  lmodels=displ,
+                                                  lmodels=invdispl,
                                                   xmodels=invdispx,
-                                                  ymodels=dispy,
-                                                  inv_xmodels=dispx)
+                                                  ymodels=invdispy,
+                                                  inv_lmodels=displ,
+                                                  inv_xmodels=dispx,
+                                                  inv_ymodels=dispy)
 
     elif "GRISMC" in input_model.meta.instrument.pupil:
         det2det = NIRCAMForwardColumnGrismDispersion(orders,
-                                                     lmodels=displ,
-                                                     xmodels=dispx,
+                                                     lmodels=invdispl,
+                                                     xmodels=invdispx,
                                                      ymodels=invdispy,
+                                                     inv_lmodels=displ,
+                                                     inv_xmodels=dispx,
                                                      inv_ymodels=dispy)
 
     det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
                                                     lmodels=invdispl,
-                                                    xmodels=dispx,
-                                                    ymodels=dispy,
-                                                    inv_lmodels=displ)
+                                                    xmodels=invdispx,
+                                                    ymodels=invdispy,
+                                                    inv_lmodels=displ,
+                                                    inv_xmodels=dispx,
+                                                    inv_ymodels=dispy)
 
     # Add in the wavelength shift from the velocity dispersion
     try:
