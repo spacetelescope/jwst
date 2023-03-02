@@ -6,7 +6,7 @@
 """
 
 import numpy as np
-from .. import datamodels
+from stdatamodels.jwst import datamodels
 
 import logging
 log = logging.getLogger(__name__)

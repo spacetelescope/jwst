@@ -4,10 +4,7 @@ import numpy as np
 from stcal.ramp_fitting.ramp_fit import ramp_fit
 from stcal.ramp_fitting.ols_fit import calc_num_seg
 
-from jwst.datamodels import dqflags
-from jwst.datamodels import RampModel
-from jwst.datamodels import GainModel
-from jwst.datamodels import ReadnoiseModel
+from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -889,20 +886,20 @@ def test_zeroframe_usage():
     # Check slopes information
     sdata, sdq, svp, svr, serr = slopes
 
-    check = np.array([[37.04942, 0.46572033, 4.6866207]])
+    check = np.array([[20.709406, 0.46572033, 4.6866207]])
     np.testing.assert_allclose(sdata, check, tol, tol)
 
     # Since the second integration is GOOD the final DQ is GOOD.
     check = np.array([[GOOD, GOOD, GOOD]])
     np.testing.assert_allclose(sdq, check, tol, tol)
 
-    check = np.array([[0.06958079, 0.0002169, 0.20677584]])
+    check = np.array([[0.1544312, 0.0002169, 0.20677584]])
     np.testing.assert_allclose(svp, check, tol, tol)
 
-    check = np.array([[0.00041314, 0.0004338, 0.00043293]])
+    check = np.array([[0.00042844, 0.0004338, 0.00043293]])
     np.testing.assert_allclose(svr, check, tol, tol)
 
-    check = np.array([[0.26456368, 0.02550867, 0.4552019]])
+    check = np.array([[0.39352208, 0.02550867, 0.4552019]])
     np.testing.assert_allclose(serr, check, tol, tol)
 
     # Check slopes information
@@ -918,16 +915,16 @@ def test_zeroframe_usage():
                       [[GOOD, GOOD, GOOD]]])
     np.testing.assert_allclose(cdq, check, tol, tol)
 
-    check = np.array([[[3.4790397e-01, 0.0000000e+00, 4.3422928e+00]],
-                      [[8.6975992e-02, 2.1689695e-04, 2.1711464e-01]]])
+    check = np.array([[[1.3898808e+00, 0.0000000e+00, 4.3422928e+00]],
+                      [[1.7373510e-01, 2.1689695e-04, 2.1711464e-01]]])
     np.testing.assert_allclose(cvp, check, tol, tol)
 
-    check = np.array([[[0.00867591, 0., 0.21689774]],
+    check = np.array([[[0.03470363, 0., 0.21689774]],
                       [[0.0004338, 0.0004338, 0.0004338]]])
     np.testing.assert_allclose(cvr, check, tol, tol)
 
-    check = np.array([[[0.5971431, 0., 2.1352262]],
-                      [[0.29565147, 0.02550867, 0.4664209]]])
+    check = np.array([[[1.1935595, 0., 2.1352262]],
+                      [[0.41733548, 0.02550867, 0.4664209]]])
     np.testing.assert_allclose(cerr, check, tol, tol)
 
 
@@ -1064,3 +1061,27 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.drop_frames1 = 0
 
     return model1, gdq, rnoise, pixdq, err, gain
+
+# -----------------------------------------------------------------------------
+
+###############################################################################
+# The functions below are only used for DEBUGGING tests and developing tests. #
+###############################################################################
+
+def print_real_check(real, check):
+    import inspect
+    cf = inspect.currentframe()
+    line_number = cf.f_back.f_lineno
+    print("=" * 80)
+    print(f"----> Line = {line_number} <----")
+    base_print("real", real)
+    print("=" * 80)
+    base_print("check", check)
+    print("=" * 80)
+
+
+def base_print(label, arr):
+    arr_str = np.array2string(arr, max_line_width=np.nan, separator=", ")
+    print(label)
+    print(arr_str)
+

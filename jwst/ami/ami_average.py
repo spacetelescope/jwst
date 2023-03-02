@@ -2,7 +2,8 @@
 #  Module for averaging LG results for a set of AMI exposures
 #
 import logging
-from .. import datamodels
+
+from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

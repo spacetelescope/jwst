@@ -1,4 +1,5 @@
-from jwst.datamodels import dqflags
+from stdatamodels.jwst.datamodels import dqflags
+
 from . import matrix_dft
 
 import logging

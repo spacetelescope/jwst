@@ -19,7 +19,8 @@ from pathlib import Path
 import asdf
 import numpy as np
 
-import jwst.datamodels as dm
+import stdatamodels.jwst.datamodels as dm
+
 from jwst.lib import siafdb
 from jwst.lib.file_utils import pushdir
 import jwst.lib.set_telescope_pointing as stp

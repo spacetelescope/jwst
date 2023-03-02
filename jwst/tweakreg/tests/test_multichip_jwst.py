@@ -15,7 +15,9 @@ from astropy import coordinates as coord
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.imalign import align_wcs
 
-from jwst.datamodels import ImageModel, ModelContainer
+from stdatamodels.jwst.datamodels import ImageModel
+
+from jwst.datamodels import ModelContainer
 from jwst.tweakreg import tweakreg_step
 
 import gwcs

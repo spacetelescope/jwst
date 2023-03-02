@@ -1,14 +1,18 @@
 import logging
 import re
+from copy import deepcopy
 
 import numpy as np
-
+import asdf
 from stpipe.extern.configobj.validate import Validator
 from stpipe.extern.configobj.configobj import ConfigObj
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 from . import resample
 from ..stpipe import Step
-from .. import datamodels
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
@@ -24,6 +28,11 @@ GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 class ResampleStep(Step):
     """
     Resample input data onto a regular grid using the drizzle algorithm.
+
+    .. note::
+        When supplied via ``output_wcs``, a custom WCS overrides other custom
+        WCS parameters such as ``output_shape`` (now computed from by
+        ``output_wcs.bounding_box``), ``crpix``
 
     Parameters
     -----------
@@ -44,6 +53,7 @@ class ResampleStep(Step):
         rotation = float(default=None)
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         pixel_scale = float(default=None) # Absolute pixel scale in arcsec
+        output_wcs = string(default='')  # Custom output WCS.
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -56,7 +66,7 @@ class ResampleStep(Step):
 
         input = datamodels.open(input)
 
-        if isinstance(input, datamodels.ModelContainer):
+        if isinstance(input, ModelContainer):
             input_models = input
             try:
                 output = input_models.meta.asn_table.products[0].name
@@ -66,7 +76,7 @@ class ResampleStep(Step):
                 # TODO: figure out why and make sure asn_table is carried along
                 output = None
         else:
-            input_models = datamodels.ModelContainer([input])
+            input_models = ModelContainer([input])
             input_models.asn_pool_name = input.meta.asn.pool_name
             input_models.asn_table_name = input.meta.asn.table_name
             output = input.meta.filename
@@ -100,11 +110,17 @@ class ResampleStep(Step):
 
         # Custom output WCS parameters.
         # Modify get_drizpars if any of these get into reference files:
-        kwargs['ref_wcs'] = None  # TODO: add mechanism of specifying a ref WCS
-        kwargs['out_shape'] = _check_list_pars(self.output_shape, 'output_shape',
-                                               min_vals=[1, 1])
-        kwargs['crpix'] = _check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = _check_list_pars(self.crval, 'crval')
+        kwargs['output_shape'] = self._check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = self._load_custom_wcs(
+            self.output_wcs,
+            kwargs['output_shape']
+        )
+        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
         kwargs['pscale'] = self.pixel_scale
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
@@ -136,6 +152,48 @@ class ResampleStep(Step):
 
         input_models.close()
         return result
+
+    @staticmethod
+    def _check_list_pars(vals, name, min_vals=None):
+        if vals is None:
+            return None
+        if len(vals) != 2:
+            raise ValueError(f"List '{name}' must have exactly two elements.")
+        n = sum(x is None for x in vals)
+        if n == 2:
+            return None
+        elif n == 0:
+            if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
+                raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
+            return list(vals)
+        else:
+            raise ValueError(f"Both '{name}' values must be either None or not None.")
+
+    @staticmethod
+    def _load_custom_wcs(asdf_wcs_file, output_shape):
+        if not asdf_wcs_file:
+            return None
+
+        with asdf.open(asdf_wcs_file) as af:
+            wcs = deepcopy(af.tree["wcs"])
+
+        if output_shape is not None or wcs is None:
+            wcs.array_shape = output_shape[::-1]
+        elif wcs.pixel_shape is not None:
+            wcs.array_shape = wcs.pixel_shape[::-1]
+        elif wcs.bounding_box is not None:
+            wcs.array_shape = tuple(
+                int(axs[1] - axs[0] + 0.5)
+                for axs in wcs.bounding_box.bounding_box(order="C")
+            )
+        elif wcs.array_shape is None:
+            raise ValueError(
+                "Step argument 'output_shape' is required when custom WCS "
+                "does not have neither of 'array_shape', 'pixel_shape', or "
+                "'bounding_box' attributes set."
+            )
+
+        return wcs
 
     def update_phot_keywords(self, model):
         """Update pixel scale keywords"""
@@ -305,19 +363,3 @@ class ResampleStep(Step):
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
-
-
-def _check_list_pars(vals, name, min_vals=None):
-    if vals is None:
-        return None
-    if len(vals) != 2:
-        raise ValueError(f"List '{name}' must have exactly two elements.")
-    n = sum(x is None for x in vals)
-    if n == 2:
-        return None
-    elif n == 0:
-        if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
-            raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
-        return list(vals)
-    else:
-        raise ValueError(f"Both '{name}' values must be either None or not None.")

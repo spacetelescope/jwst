@@ -3,8 +3,9 @@ from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 import pytest
 
+from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
-from jwst import datamodels
 from jwst.extract_1d import Extract1dStep
 
 

@@ -5,7 +5,8 @@ import logging
 import multiprocessing
 import numpy as np
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from .observations import Observation
 from .sens1d import get_photom_data
 

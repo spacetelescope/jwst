@@ -119,7 +119,7 @@ to describe its parameters.
 
     from jwst.stpipe import Step
 
-    from jwst.datamodels import ImageModel
+    from stdatamodels.jwst.datamodels import ImageModel
     from my_awesome_astronomy_library import combine
 
     class ExampleStep(Step):

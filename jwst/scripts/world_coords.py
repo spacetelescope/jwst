@@ -52,8 +52,9 @@ from astropy.io import fits
 from gwcs import wcstools
 from gwcs.utils import _toindex
 
+from stdatamodels.jwst.datamodels.util import open as dmopen
+
 from jwst.assign_wcs import nirspec
-from jwst.datamodels.util import open as dmopen
 
 
 def main(filenames, mode):

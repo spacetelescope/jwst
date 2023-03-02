@@ -11,13 +11,15 @@ from astropy.io import fits
 from gwcs import WCS
 from stdatamodels import DataModel
 from stdatamodels.properties import ObjectNode
-
-from .. import datamodels
-from ..datamodels import dqflags, SlitModel, SpecModel
-from ..datamodels.apcorr import (
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags, SlitModel, SpecModel
+from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
+
+from jwst.datamodels import SourceModelContainer
+
 
 from ..assign_wcs import niriss  # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
@@ -376,11 +378,22 @@ def get_extract_parameters(
                         # If the user supplied a value, use that value.
                         extract_params['bkg_order'] = bkg_order
 
-                    if use_source_posn is None:
-                        extract_params['use_source_posn'] = aper.get('use_source_posn', False)
-                    else:
-                        # If the user supplied a value, use that value.
-                        extract_params['use_source_posn'] = use_source_posn
+                    # Set use_source_posn based on hierarchy of priorities:
+                    # parameter value on the command line is highest precedence,
+                    # then parameter value from the extract1d reference file,
+                    # and finally a default setting based on exposure type.
+                    use_source_posn_aper = aper.get('use_source_posn', None)  # value from the extract1d ref file
+                    if use_source_posn is None:  # no value set on command line
+                        if use_source_posn_aper is None:  # no value set in ref file
+                            # Use a suitable default
+                            if meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
+                                use_source_posn = True
+                                log.info(f"Turning on source position correction for exp_type = {meta.exposure.type}")
+                            else:
+                                use_source_posn = False
+                        else:  # use the value from the ref file
+                            use_source_posn = use_source_posn_aper
+                    extract_params['use_source_posn'] = use_source_posn
 
                     extract_params['extract_width'] = aper.get('extract_width')
                     extract_params['position_correction'] = 0  # default value
@@ -2747,7 +2760,7 @@ def do_extract1d(
 
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
-    if isinstance(input_model, datamodels.SourceModelContainer):
+    if isinstance(input_model, SourceModelContainer):
         # log.debug('Input is a SourceModelContainer')
         was_source_model = True
 
@@ -2781,14 +2794,6 @@ def do_extract1d(
             log.warning(
                 f"Correcting for source position is not supported for exp_type = "
                 f"{meta_source.meta.exposure.type}, so use_source_posn will be set to False",
-            )
-
-    # Turn use_source_posn on for types that should use it by default
-    if use_source_posn is None:
-        if exp_type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
-            use_source_posn = True
-            log.info(
-                f"Turning on source position correction for exp_type = {exp_type}"
             )
 
     # Handle inputs that contain one or more slit models

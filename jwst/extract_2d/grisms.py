@@ -11,9 +11,10 @@ from astropy.modeling.models import Shift, Const1D, Mapping
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs.utils import _toindex
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import WavelengthrangeModel
+
 from ..assign_wcs import util
-from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

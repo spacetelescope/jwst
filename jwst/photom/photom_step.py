@@ -1,8 +1,8 @@
 #! /usr/bin/env python
+from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import photom
-from .. import datamodels
 
 __all__ = ["PhotomStep"]
 

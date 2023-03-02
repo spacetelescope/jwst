@@ -4,7 +4,8 @@ from multiprocessing import Pool
 
 from scipy import sparse
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from .disperse import dispersed_pixel
 
 import logging

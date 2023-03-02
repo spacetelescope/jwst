@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import logging
 
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Pipeline
-from .. import datamodels
 
 # step imports
 from ..group_scale import group_scale_step

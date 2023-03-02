@@ -9,11 +9,13 @@ from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
 
-from jwst import datamodels
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.stpipe import Step
-from jwst.datamodels.util import open as datamodel_open
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -97,11 +99,11 @@ class OutlierDetection:
 
         """
         bits = self.outlierpars['good_bits']
-        if isinstance(self.inputs, datamodels.ModelContainer):
+        if isinstance(self.inputs, ModelContainer):
             self.input_models = self.inputs
             self.converted = False
         else:
-            self.input_models = datamodels.ModelContainer()
+            self.input_models = ModelContainer()
             num_inputs = self.inputs.data.shape[0]
             log.debug("Converting CubeModel to ModelContainer with {} images".
                       format(num_inputs))
@@ -222,7 +224,7 @@ class OutlierDetection:
 
         else:
             # Median image will serve as blot image
-            blot_models = datamodels.ModelContainer(open_models=False)
+            blot_models = ModelContainer(open_models=False)
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
 
@@ -317,7 +319,7 @@ class OutlierDetection:
         sinscl = self.outlierpars.get('sinscl', 1.0)
 
         # Initialize container for output blot images
-        blot_models = datamodels.ModelContainer(open_models=False)
+        blot_models = ModelContainer(open_models=False)
 
         log.info("Blotting median...")
         for model in self.input_models:

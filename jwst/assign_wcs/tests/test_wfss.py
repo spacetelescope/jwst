@@ -7,8 +7,9 @@ from astropy.modeling.models import (Polynomial1D, Polynomial2D, Shift,
 from gwcs import wcs
 from gwcs.wcstools import grid_from_bounding_box
 
-from jwst.datamodels import SlitModel
-from jwst.transforms import models as transforms
+from stdatamodels.jwst.datamodels import SlitModel
+from stdatamodels.jwst.transforms import models as transforms
+
 from jwst.extract_2d.grisms import compute_wavelength_array
 
 import pytest

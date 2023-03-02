@@ -5,7 +5,8 @@ Unit test for Cube Build testing for various wcs functions
 import numpy as np
 import math
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.cube_build import ifu_cube
 from jwst.cube_build import coord
 from jwst.cube_build import cube_build_wcs_util

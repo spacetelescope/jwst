@@ -1,9 +1,10 @@
 """Master Background Pipeline for applying Master Background to NIRSpec MOS data"""
 from stpipe.step import preserve_step_pars
 
+from stdatamodels.jwst import datamodels
+
 from . import nirspec_utils
 from ..barshadow import barshadow_step
-from .. import datamodels
 from ..flatfield import flat_field_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step

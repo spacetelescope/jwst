@@ -1,7 +1,7 @@
 #! /usr/bin/env python
+from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from .. import datamodels
 from . import background_sub
 import numpy as np
 __all__ = ["BackgroundStep"]

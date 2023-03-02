@@ -1,7 +1,9 @@
 import os
 import numpy as np
 from astropy.io import fits
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
 from . import input_file_types
 from . import main
 

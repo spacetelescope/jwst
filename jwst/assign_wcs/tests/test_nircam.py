@@ -15,8 +15,8 @@ import pytest
 from astropy.io import fits
 from gwcs import wcs
 
-from jwst.datamodels.image import ImageModel
-from jwst.datamodels import CubeModel
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel
+
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
 from jwst.assign_wcs import nircam
 from jwst.assign_wcs import util

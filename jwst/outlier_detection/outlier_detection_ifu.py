@@ -4,10 +4,11 @@ import numpy as np
 from stsci.image import median
 from astropy.stats import sigma_clipped_stats
 
+from stdatamodels.jwst import datamodels
+
 from .outlier_detection import OutlierDetection
 from ..cube_build.cube_build_step import CubeBuildStep
 from ..cube_build import blot_cube_build
-from .. import datamodels
 
 
 import logging

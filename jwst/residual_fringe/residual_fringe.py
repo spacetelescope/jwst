@@ -4,8 +4,10 @@
 
 import numpy as np
 from functools import partial
+
+from stdatamodels.jwst import datamodels
+
 from ..stpipe import Step
-from .. import datamodels
 from astropy.table import Table
 from astropy.io import ascii
 from astropy.io import fits

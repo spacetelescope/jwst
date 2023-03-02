@@ -2,8 +2,10 @@ import logging
 
 import numpy as np
 
-from .. import datamodels
+from stdatamodels.jwst import datamodels
+
 from ..lib import reffile_utils
+from jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -76,6 +78,9 @@ def do_dqinit(input_model, mask_model):
     else:
         dq = np.bitwise_or(input_model.pixeldq, mask_array)
         output_model.pixeldq = dq
+        # Additionally, propagate mask DO_NOT_USE flags to groupdq to
+        # ensure no ramps are fit to bad pixels.
+        output_model.groupdq = np.bitwise_or(output_model.groupdq, mask_array & dqflags.group['DO_NOT_USE'])
 
     output_model.meta.cal_step.dq_init = 'COMPLETE'
 

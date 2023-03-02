@@ -13,7 +13,8 @@ from stpipe import cmdline
 from stpipe.config import StepConfig
 from stpipe.config_parser import ValidationError
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.white_light import WhiteLightStep
 from jwst.stpipe import Step
 

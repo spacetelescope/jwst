@@ -7,8 +7,8 @@ import logging
 from astropy.utils import lazyproperty
 import numpy as np
 
-from .. import datamodels
-from ..datamodels import ImageModel, ABVegaOffsetModel
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import ImageModel, ABVegaOffsetModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

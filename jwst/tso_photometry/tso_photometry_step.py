@@ -1,8 +1,7 @@
 #!/usr/bin/env python
+from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel
 
 from ..stpipe import Step
-from ..datamodels import CubeModel
-from ..datamodels import TsoPhotModel
 from ..lib.catalog_utils import replace_suffix_ext
 from .tso_photometry import tso_aperture_photometry
 

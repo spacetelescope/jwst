@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from jwst.datamodels import Level1bModel
+from stdatamodels.jwst.datamodels import Level1bModel
+
 from jwst.lib import set_telescope_pointing as stp
 
 

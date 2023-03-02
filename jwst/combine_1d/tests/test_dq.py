@@ -3,7 +3,8 @@ Test DQ operations in Combine1dStep
 """
 import numpy as np
 
-from jwst import datamodels
+from stdatamodels.jwst import datamodels
+
 from jwst.combine_1d import Combine1dStep
 
 

@@ -7,10 +7,11 @@ from astropy import units as u
 from astropy import coordinates as coord
 from gwcs import coordinate_frames as cf
 
+from stdatamodels.jwst.datamodels import DistortionModel
+
 from .util import (not_implemented_mode, subarray_transform,
                    transform_bbox_from_shape, bounding_box_from_subarray)
 from . import pointing
-from ..datamodels import DistortionModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

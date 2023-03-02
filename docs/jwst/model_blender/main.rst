@@ -42,7 +42,11 @@ more efficient (read that: faster) processing.
 
   The generated output model will be considered to contain a default
   (or perhaps even empty) set of :ref:`metadata` based on some
-  model defined in :ref:`DataModels<datamodels>`.  This metadata will be replaced
+  model defined in 
+  .. comment out until stdatamodels is released
+  .. ref DataModels<datamodels>.
+  DataModels.
+  This metadata will be replaced
   **in-place** when running :ref:`blender_api`.
 
 The simplest way to run model blender only requires calling a single interface:

@@ -1,16 +1,3 @@
-from .reference import ReferenceFileModel
-
+from stdatamodels.jwst.datamodels.psfmask import PsfMaskModel
 
 __all__ = ['PsfMaskModel']
-
-
-class PsfMaskModel(ReferenceFileModel):
-    """
-    A data model for coronagraphic 2D PSF mask reference files
-
-    Parameters
-    __________
-    data : numpy float32 array
-         The PSF mask
-    """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/psfmask.schema"

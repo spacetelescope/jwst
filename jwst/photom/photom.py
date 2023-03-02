@@ -5,8 +5,9 @@ import warnings
 import numpy as np
 from astropy import units as u
 
-from .. import datamodels
-from .. datamodels import dqflags
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+
 from .. lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
@@ -133,9 +134,26 @@ class DataSet():
         self.slitnum = -1
         self.specnum = -1
         self.inverse = inverse
-        self.source_type = source_type
-        if self.source_type is None and model.meta.target.source_type is not None:
-            self.source_type = model.meta.target.source_type.upper()
+        self.source_type = None
+
+        # For MultiSlitModels, only set a generic source_type value for the
+        # entire datamodel if the user has set the source_type parameter.
+        # Otherwise leave the generic source_type set to None, which will
+        # force the use of per-slit source_types later in processing.
+        if isinstance(model, datamodels.MultiSlitModel):
+            if source_type is not None:
+                self.source_type = source_type
+
+        # For non-MultiSlitModel inputs, where there's only 1 target and
+        # one source_type, use the user-provided source_type value, if it
+        # exists. Otherwise, use the generic source_type value provided in
+        # the input model (if it exists).
+        else:
+            if source_type is not None:
+                self.source_type = source_type
+            else:
+                if model.meta.target.source_type is not None:
+                    self.source_type = model.meta.target.source_type.upper()
 
         # Create a copy of the input model
         self.input = model.copy()
@@ -690,7 +708,7 @@ class DataSet():
             conversion = tabdata['photmj']              # unit is MJy
             if isinstance(self.input, datamodels.MultiSlitModel):
                 slit = self.input.slits[self.slitnum]
-                if self.exptype == 'NRS_MSASPEC':
+                if self.exptype in ['NRS_MSASPEC', 'NRS_FIXEDSLIT']:
                     srctype = self.source_type if self.source_type else slit.source_type
                 else:
                     srctype = self.source_type
@@ -703,6 +721,7 @@ class DataSet():
                                   "to surface brightness")
                         conversion /= slit.meta.photometry.pixelarea_steradians
                 else:
+                    conversion_uniform = conversion / slit.meta.photometry.pixelarea_steradians
                     unit_is_surface_brightness = False
             elif isinstance(self.input, datamodels.MultiSpecModel):
                 # MultiSpecModel output from extract1d should not require this area conversion?
@@ -717,6 +736,7 @@ class DataSet():
                                   "to surface brightness")
                         conversion /= self.input.meta.photometry.pixelarea_steradians
                 else:
+                    conversion_uniform = conversion / self.input.meta.photometry.pixelarea_steradians
                     unit_is_surface_brightness = False
 
         # Store the conversion factor in the meta data
@@ -777,35 +797,35 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-
+                slit = self.input.slits[self.slitnum]
                 # The NIRSpec fixed-slit primary slit needs special handling if
                 # it contains a point source
                 if self.exptype.upper() == 'NRS_FIXEDSLIT' and \
-                   self.input.slits[self.slitnum].name == self.input.meta.instrument.fixed_slit and \
-                   self.input.slits[self.slitnum].source_type.upper() == 'POINT':
+                   slit.name == self.input.meta.instrument.fixed_slit and \
+                   slit.source_type.upper() == 'POINT':
 
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
-                    scalar_conv = conversion
-                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
-                                                                   self.exptype, scalar_conv,
+                    conversion_2d_uniform, no_cal = self.create_2d_conversion(slit,
+                                                                   self.exptype, conversion_uniform,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=False)
-                    slit.photom_uniform = conversion  # store the result
+                    slit.photom_uniform = conversion_2d_uniform  # store the result
 
                     # Now repeat the process using corrected wavelength values,
                     # which is appropriate for a point source. This is the version of
                     # the correction that will actually get applied to the data below.
-                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
-                                                                   self.exptype, scalar_conv,
+                    conversion, no_cal = self.create_2d_conversion(slit,
+                                                                   self.exptype, conversion,
                                                                    waves, relresps, order,
                                                                    use_wavecorr=True)
                     slit.photom_point = conversion  # store the result
 
                 else:
-                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                    conversion, no_cal = self.create_2d_conversion(slit,
                                                                    self.exptype, conversion,
                                                                    waves, relresps, order)
+
             elif isinstance(self.input, datamodels.MultiSpecModel):
 
                 # This input does not require a 2d conversion, but a 1d interpolation on the
@@ -843,6 +863,7 @@ class DataSet():
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
+
         elif isinstance(self.input, datamodels.MultiSpecModel):
             # Does this block need to address SB columns as well, or will
             # they (presumably) never be populated for SOSS?
@@ -868,6 +889,7 @@ class DataSet():
             spec.spec_table.columns['BKGD_VAR_POISSON'].unit = 'Jy^2'
             spec.spec_table.columns['BKGD_VAR_RNOISE'].unit = 'Jy^2'
             spec.spec_table.columns['BKGD_VAR_FLAT'].unit = 'Jy^2'
+
         else:
             if not self.inverse:
                 self.input.data *= conversion
@@ -884,16 +906,16 @@ class DataSet():
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
 
-        if not self.inverse:
-            if unit_is_surface_brightness:
-                self.input.meta.bunit_data = 'MJy/sr'
-                self.input.meta.bunit_err = 'MJy/sr'
+            if not self.inverse:
+                if unit_is_surface_brightness:
+                    self.input.meta.bunit_data = 'MJy/sr'
+                    self.input.meta.bunit_err = 'MJy/sr'
+                else:
+                    self.input.meta.bunit_data = 'MJy'
+                    self.input.meta.bunit_err = 'MJy'
             else:
-                self.input.meta.bunit_data = 'MJy'
-                self.input.meta.bunit_err = 'MJy'
-        else:
-            self.input.meta.bunit_data = 'DN/s'
-            self.input.meta.bunit_err = 'DN/s'
+                self.input.meta.bunit_data = 'DN/s'
+                self.input.meta.bunit_err = 'DN/s'
 
         return
 

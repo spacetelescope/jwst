@@ -3,7 +3,10 @@ Unit test for mrs_imatch testing setting up configuration
 """
 
 import pytest
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
 from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from jwst.mrs_imatch.mrs_imatch_step import _get_2d_pixgrid
 from jwst.mrs_imatch.mrs_imatch_step import _find_channel_bkg_index
@@ -57,7 +60,7 @@ def miri_dither_ch12():
 def test_imatch_background_subtracted(_jail, miri_dither_ch12):
     """ Test if data is already background subtracted - raise error"""
 
-    all_models = datamodels.ModelContainer(miri_dither_ch12)
+    all_models = ModelContainer(miri_dither_ch12)
     # modify the data set background subtracted
     new_container = []
     for m in all_models:
@@ -73,7 +76,7 @@ def test_imatch_background_subtracted(_jail, miri_dither_ch12):
 def test_imatch_background_reset(_jail, miri_dither_ch12):
     """ Test if background polynomial is already determined - reset it"""
 
-    all_models = datamodels.ModelContainer(miri_dither_ch12)
+    all_models = ModelContainer(miri_dither_ch12)
 
     # added a background and test is reset background
     # removes the background

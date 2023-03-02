@@ -3,6 +3,7 @@ import shutil
 import pytest
 
 SCRIPTS = [
+    'adjust_wcs',
     'asn_edit',
     'asn_gather',
     'asn_make_pool',

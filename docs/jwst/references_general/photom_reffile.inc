@@ -305,7 +305,7 @@ A NIRCam WFSS photom reference file, for example, could be constructed as follow
 from within the python environment::
 
  >>> import numpy as np
- >>> from jwst import datamodels
+ >>> from stdatamodels.jwst import datamodels
  >>> filter = np.array(['GR150C', 'GR150R'])
  >>> pupil = np.array(['F140M', 'F200W'])
  >>> order = np.array([1, 1], dtype=np.int16)

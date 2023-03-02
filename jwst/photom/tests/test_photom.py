@@ -5,8 +5,9 @@ import numpy as np
 
 from astropy import units as u
 
-from jwst import datamodels
-from jwst.datamodels import SpecModel, MultiSpecModel
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
+
 from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
@@ -217,10 +218,12 @@ def create_input(instrument, detector, exptype,
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis=1)
             input_model.meta.target.source_type = 'POINT'  # output will be MJy
             slitnames = ['S200A1', 'S200A2', 'S400A1', 'S1600A1', 'S200B1']
+            srctypes = ['EXTENDED', 'POINT', 'EXTENDED', 'POINT', 'EXTENDED']
             for k in range(nslits):
                 slit = datamodels.SlitModel(data=data, dq=dq, err=err,
                                             wavelength=wl)
                 slit.name = slitnames[k]
+                slit.source_type = srctypes[k]
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
@@ -1077,6 +1080,7 @@ def test_nirspec_fs():
     result = []
     for (k, slit) in enumerate(save_input.slits):
         slitname = slit.name
+        srctype = slit.source_type
         input = slit.data                       # this is from save_input
         output = ds.input.slits[k].data         # ds.input is the output
         rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
@@ -1092,6 +1096,9 @@ def test_nirspec_fs():
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
         compare = photmj * rel_resp
+        if srctype != 'POINT':
+            compare /= slit.meta.photometry.pixelarea_steradians
+
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1114,10 +1121,14 @@ def test_nirspec_fs():
         ratio_var_f = np.sqrt(ds.input.slits[k].var_flat[iy, ix] /
                               slit.var_flat[iy, ix])
         result.append(np.allclose(ratio_var_f, compare, rtol=1.e-7))
-        # The output units are flux density rather than surface brightness
-        # because this is NIRSpec data for a point source.
-        result.append(ds.input.slits[k].meta.bunit_data == 'MJy')
-        result.append(ds.input.slits[k].meta.bunit_err == 'MJy')
+        # The output units are flux density for point sources and
+        # surface brightness for extended.
+        if srctype == 'POINT':
+            result.append(ds.input.slits[k].meta.bunit_data == 'MJy')
+            result.append(ds.input.slits[k].meta.bunit_err == 'MJy')
+        else:
+            result.append(ds.input.slits[k].meta.bunit_data == 'MJy/sr')
+            result.append(ds.input.slits[k].meta.bunit_err == 'MJy/sr')
 
     assert np.alltrue(result)
 

@@ -7,7 +7,8 @@ import pytest
 from astropy.table import Table
 from astropy.utils.diff import report_diff_values
 
-from jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel
+
 from jwst.lib import engdb_tools
 import jwst.lib.pointing_summary as ps
 

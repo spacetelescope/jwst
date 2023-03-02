@@ -3,8 +3,9 @@ import pytest
 
 import numpy as np
 
+from stdatamodels.jwst import datamodels
+
 from jwst.lib import pipe_utils
-from jwst import datamodels
 from jwst.associations.lib import dms_base
 from jwst.lib.pipe_utils import is_tso
 

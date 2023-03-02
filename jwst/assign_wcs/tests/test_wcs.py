@@ -10,8 +10,9 @@ from astropy.modeling.models import RotationSequence3D
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 
+from stdatamodels.jwst.datamodels import ImageModel, CubeModel, open
+
 from jwst.assign_wcs import AssignWcsStep, pointing
-from jwst.datamodels import ImageModel, CubeModel, open
 
 
 def create_hdul(wcskeys={

@@ -4,7 +4,9 @@ Unit test for Residual Fringe Correction for testing interface
 
 import pytest
 import numpy as np
-from jwst import datamodels
+
+from stdatamodels.jwst import datamodels
+
 from jwst.residual_fringe import ResidualFringeStep
 from jwst.residual_fringe import residual_fringe
 

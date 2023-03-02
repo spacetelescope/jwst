@@ -2,8 +2,10 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+
+from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
-from jwst import datamodels
 
 
 @pytest.fixture(scope="module")
