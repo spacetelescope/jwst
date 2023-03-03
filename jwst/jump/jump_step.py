@@ -41,7 +41,7 @@ class JumpStep(Step):
         extend_inner_radius = float(default=1) Inner radius of the Ring2DKernal used for convolution
         extend_outer_radius = float(default=2.6) Outer radius of the Ring2DKernal used for convolution
         extend_ellipse_expand_ratio = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected extended emission
-        time_masked_after_shower = float (default=15) Number of seconds to flag groups as jump after a detected extended emission
+        time_masked_after_shower = float(default=15) Number of seconds to flag groups as jump after a detected extended emission
     """
 
     reference_file_types = ['gain', 'readnoise']
