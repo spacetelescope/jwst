@@ -80,4 +80,4 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--extend_ellipse_expand_ratio``: Multiplicative factor to expand the radius of the ellipse fit to the detected extended emission in MIRI showers
 
-* ``--grps_masked_after_showers``: Number of groups after detected extended emission to flag as a jump for MIRI showers
+* ``--time_masked_after_showers``: Number of seconds to flag groups as jump after a detected extended emission in MIRI showers
