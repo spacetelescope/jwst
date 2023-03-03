@@ -13,6 +13,19 @@ extract_1d
   precedence is given for command line override, reference file settings, and
   internal decisions of the appropriate setting (in that order). [#7466]
 
+jump
+-----------
+The changes in the JWST repo just allow the new parameters to be passed to the STCAL code
+that made the following changes
+
+Updated the code for both NIR Snowballs and MIRI Showers. The snowball
+flagging will now extend the saturated core of snowballs. Also,
+circles are no longer used for snowballs preventing the huge circles
+of flagged pixels from a glancing CR.
+Shower code is completely new and is now able to find extended
+emission far below the single pixel SNR. It also allows detected
+showers to flag groups after the detection.
+
 other
 -----
 
