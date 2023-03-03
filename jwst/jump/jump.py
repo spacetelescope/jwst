@@ -23,7 +23,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      sat_required_snowball=True, sat_expand=2,
                      expand_large_events=False, find_showers=False, edge_size=25, extend_snr_threshold=1.1,
                      extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
-                     grps_masked_after_shower=5
+                     time_masked_after_shower=30
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -41,6 +41,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     gtime = input_model.meta.exposure.group_time
     after_jump_flag_n1 = int(after_jump_flag_time1 // gtime)
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
+    grps_masked_after_shower = int(time_masked_after_shower // gtime)
 
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
