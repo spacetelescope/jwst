@@ -4,6 +4,7 @@ from stdatamodels.jwst.datamodels import RampModel
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.undersampling_correction.undersampling_correction import undersampling_correction
+from jwst.undersampling_correction.undersampling_correction_step import UndersamplingCorrectionStep
 
 import numpy.testing as npt
 
@@ -99,6 +100,27 @@ def test_pix_2():
     out_gdq = out_model.groupdq
 
     npt.assert_array_equal(out_gdq, true_out_gdq)
+
+
+def test_pix_3():
+    """
+    Test that processing for datasets having too few (<3) groups per integration
+    are skipped.
+    """
+    ngroups, nints, nrows, ncols = set_scalars()
+    ngroups = 2
+
+    ramp_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols)
+
+    ramp_model.data[0, :, 0, 0] = 20000.
+    sig_thresh = 100.
+
+    result = UndersamplingCorrectionStep.call(ramp_model, skip=False,
+                                              signal_threshold=sig_thresh)
+    status = result.meta.cal_step.undersampling_correction
+
+    npt.assert_array_equal(status, "SKIPPED")
 
 
 def set_scalars():
