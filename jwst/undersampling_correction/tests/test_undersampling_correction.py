@@ -120,7 +120,7 @@ def test_too_few_groups():
                                               signal_threshold=sig_thresh)
     status = result.meta.cal_step.undersampling_correction
 
-    npt.assert_array_equal(status, "SKIPPED")
+    npt.assert_string_equal(status, "SKIPPED")
 
 
 def set_scalars():
