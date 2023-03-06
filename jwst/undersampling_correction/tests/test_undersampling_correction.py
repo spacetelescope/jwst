@@ -102,7 +102,7 @@ def test_pix_2():
     npt.assert_array_equal(out_gdq, true_out_gdq)
 
 
-def test_pix_3():
+def test_too_few_groups():
     """
     Test that processing for datasets having too few (<3) groups per integration
     are skipped.
