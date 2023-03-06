@@ -109,7 +109,7 @@ tweakreg
 undersampling_correction
 ------------------------
 
-- New step between jump and ramp_fitting in the ``Detector1Pipeline``. [#AAAA]
+- New step between jump and ramp_fitting in the ``Detector1Pipeline``. [#7479]
 
 
 1.9.5 (2023-03-02)
