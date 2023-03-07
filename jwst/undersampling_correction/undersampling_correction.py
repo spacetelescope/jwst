@@ -64,13 +64,10 @@ def flag_pixels(data, gdq, signal_threshold):
     gdq : int, 4D array
         updated group dq array
     """
-    n_ints = gdq.shape[0]
-    n_grps = gdq.shape[1]
-    n_rows = gdq.shape[2]
-    n_cols = gdq.shape[3]
+    n_ints, n_grps, n_rows, n_cols = gdq.shape
     num_pix = n_cols * n_rows
 
-    lowest_exc_1d = np.zeros(n_cols*n_rows) + n_grps
+    lowest_exc_1d = np.zeros(num_pix) + n_grps
 
     for ii_int in range(n_ints):
         for ii_grp in range(n_grps):
