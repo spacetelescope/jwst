@@ -106,6 +106,12 @@ tweakreg
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
 
+undersampling_correction
+------------------------
+
+- New step between jump and ramp_fitting in the ``Detector1Pipeline``. [#7479]
+
+
 1.9.5 (2023-03-02)
 ==================
 
