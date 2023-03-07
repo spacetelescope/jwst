@@ -25,6 +25,13 @@ other
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
 
+
+outlier_detection
+-----------------
+
+- Update the documentation describing the algorithm and the parameters
+  used for controlling the step.  [#7481]
+
 pathloss
 --------
 
