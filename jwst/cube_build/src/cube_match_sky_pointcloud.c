@@ -463,7 +463,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   PyArrayObject *zcdelt3, *sliceno, *softrad_pixel, *weight_pixel;
   PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux, *spaxel_dq;
   
-  const int max_size_error = 256;
+  const int max_size_error = 80;
   char error[max_size_error] = "None";
   int flag_error  = 0;
 

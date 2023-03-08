@@ -222,7 +222,7 @@ PyArrayObject * ensure_array_int(PyObject *obj, int *is_copy) {
 
 static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
-  PyObject *result = NULL, *a1o, *a2o, *a3o, *a4o, *lam1o, *lam2o, *lam3o, *lam4o,
+  PyObject  *a1o, *a2o, *a3o, *a4o, *lam1o, *lam2o, *lam3o, *lam4o,
     *fluxo, *erro, *acoordo, *zcoordo;
 
   PyObject *spaxel_fluxo, *spaxel_weighto, *spaxel_varo, *spaxel_ifluxo;  
@@ -241,7 +241,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   PyArrayObject *lam3, *lam4, *flux, *err, *acoord, *zcoord;
   PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux;
   
-  const int max_size_error = 256;
+  const int max_size_error = 80;
   char error[max_size_error] = "None";
   int flag_error  = 0;
 

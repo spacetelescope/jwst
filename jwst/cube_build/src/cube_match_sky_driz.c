@@ -304,7 +304,6 @@ PyArrayObject * ensure_array_int(PyObject *obj, int *is_copy) {
 
 
 static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
-  PyObject *result = NULL;
   
   /* Input  values */
   PyObject  *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo;
@@ -333,7 +332,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyArrayObject *cdelt3, *sliceno;
   PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux, *spaxel_dq;
 	     
-  const int max_size_error = 256;
+  const int max_size_error = 80;
   char error[max_size_error] = "None";
   int flag_error  = 0;
   
