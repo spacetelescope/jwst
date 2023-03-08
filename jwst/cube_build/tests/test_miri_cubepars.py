@@ -149,7 +149,6 @@ def test_miri_use_cubepars(_jail, miri_cube_pars):
         'spaxel_debug': None}
 
     pipeline = 3
-    filename = None
     input_model = None
     output_name_base = None
     output_type = 'band'
@@ -160,7 +159,6 @@ def test_miri_use_cubepars(_jail, miri_cube_pars):
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,
@@ -253,7 +251,6 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
         'spaxel_debug': None}
 
     pipeline = 3
-    filename = None
     input_model = None
     output_name_base = None
     output_type = 'band'
@@ -264,7 +261,6 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,
@@ -320,7 +316,6 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
 
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,
@@ -440,7 +435,6 @@ def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,

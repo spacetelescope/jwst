@@ -213,13 +213,12 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     weighting = 'msm'
     output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 channels
     single = False
+    in_memory = True
     par_filename = 'None'
 
     input_file = 'test.fits'
     input_models = []
-    input_filenames = []
     input_models.append(miri_ifushort_short)
-    input_filenames.append(input_file)
 
     pars = {
         'channel': pars_input['channel'],
@@ -228,17 +227,17 @@ def test_calspec2_config(_jail, miri_ifushort_short):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type': output_type}
+        'output_type': output_type,
+        'in_memory': in_memory}
 
     cubeinfo = cube_build.CubeData(
         input_models,
-        input_filenames,
         par_filename,
         **pars)
 
-    master_table = file_table.FileTable()
+    master_table = file_table.FileTable(in_memory)
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models, cubeinfo.input_filenames)
+        cubeinfo.input_models)
 
     assert this_instrument == 'MIRI'
 
@@ -264,13 +263,10 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     weighting = 'msm'
     output_type = 'band'
     single = False
+    in_memory = True
     par_filename = 'None'
 
     input_file = 'test.fits'
-    num_files = len(miri_full_coverage)
-    input_filenames = []
-    for i in range(num_files):
-        input_filenames.append(input_file)
 
     pars = {
         'channel': pars_input['channel'],
@@ -279,17 +275,17 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type': output_type}
+        'output_type': output_type,
+        'in_memory': in_memory}
 
     cubeinfo = cube_build.CubeData(
         miri_full_coverage,
-        input_filenames,
         par_filename,
         **pars)
 
-    master_table = file_table.FileTable()
+    master_table = file_table.FileTable(in_memory)
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models, cubeinfo.input_filenames)
+        cubeinfo.input_models)
 
     assert this_instrument == 'MIRI'
 
@@ -344,13 +340,10 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     weighting = 'msm'
     output_type = 'multi'
     single = False
+    in_memory = True
     par_filename = 'None'
 
     input_file = 'test.fits'
-    num_files = len(miri_full_coverage)
-    input_filenames = []
-    for i in range(num_files):
-        input_filenames.append(input_file)
 
     pars = {
         'channel': pars_input['channel'],
@@ -359,17 +352,17 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type': output_type}
+        'output_type': output_type,
+        'in_memory': in_memory}
 
     cubeinfo = cube_build.CubeData(
         miri_full_coverage,
-        input_filenames,
         par_filename,
         **pars)
 
-    master_table = file_table.FileTable()
+    master_table = file_table.FileTable(in_memory)
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models, cubeinfo.input_filenames)
+        cubeinfo.input_models)
 
     assert this_instrument == 'MIRI'
 
@@ -405,13 +398,10 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     weighting = 'msm'
     output_type = 'band'
     single = False
+    in_memory = True
     par_filename = 'None'
 
     input_file = 'test.fits'
-    num_files = len(nirspec_medium_coverage)
-    input_filenames = []
-    for i in range(num_files):
-        input_filenames.append(input_file)
 
     pars = {
         'channel': pars_input['channel'],
@@ -420,17 +410,17 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type': output_type}
+        'output_type': output_type,
+        'in_memory': in_memory}
 
     cubeinfo = cube_build.CubeData(
         nirspec_medium_coverage,
-        input_filenames,
         par_filename,
         **pars)
 
-    master_table = file_table.FileTable()
+    master_table = file_table.FileTable(in_memory)
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models, cubeinfo.input_filenames)
+        cubeinfo.input_models)
 
     assert this_instrument == 'NIRSPEC'
 
@@ -460,13 +450,10 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
     weighting = 'msm'
     output_type = 'multi'
     single = False
+    in_memory = True
     par_filename = 'None'
 
     input_file = 'test.fits'
-    num_files = len(nirspec_medium_coverage)
-    input_filenames = []
-    for i in range(num_files):
-        input_filenames.append(input_file)
 
     pars = {
         'channel': pars_input['channel'],
@@ -475,17 +462,17 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type': output_type}
+        'output_type': output_type,
+        'in_memory': in_memory}
 
     cubeinfo = cube_build.CubeData(
         nirspec_medium_coverage,
-        input_filenames,
         par_filename,
         **pars)
 
-    master_table = file_table.FileTable()
+    master_table = file_table.FileTable(in_memory)
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models, cubeinfo.input_filenames)
+        cubeinfo.input_models)
 
     assert this_instrument == 'NIRSPEC'
 
