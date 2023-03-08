@@ -424,7 +424,6 @@ def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
         'spaxel_debug': None}
 
     pipeline = 3
-    filename = None
     input_model = None
     output_name_base = None
     output_type = 'multi'
