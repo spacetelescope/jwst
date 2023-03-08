@@ -486,7 +486,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   // check that input parameters are valid:
 
   if ((cdelt1 < 0) || (cdelt2 < 0)) {
-    char new_error[max_size_error] = "cdelt1' and 'cdelt2' must be a strictly positive number.";
+    char new_error[max_size_error] = "cdelt1 and cdelt2 must be a strictly positive number.";
     strcpy(error, new_error);
     flag_error = 1;
     goto cleanup; 

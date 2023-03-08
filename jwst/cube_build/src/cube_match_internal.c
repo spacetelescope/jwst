@@ -261,7 +261,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
   // check that input parameters are valid:
   if ((cdelt3 < 0) || (cdelt_along < 0)) {
-    char new_error[max_size_error] = "cdelt3' and 'cdelt_along' must be a strictly positive number.";
+    char new_error[max_size_error] = "cdelt3 and cdelt_along' must be a strictly positive number.";
     strcpy(error, new_error);
     flag_error = 1;
     goto cleanup; 
