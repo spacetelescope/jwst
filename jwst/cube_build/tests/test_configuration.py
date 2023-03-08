@@ -216,7 +216,6 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     in_memory = True
     par_filename = 'None'
 
-    input_file = 'test.fits'
     input_models = []
     input_models.append(miri_ifushort_short)
 
@@ -265,8 +264,6 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     single = False
     in_memory = True
     par_filename = 'None'
-
-    input_file = 'test.fits'
 
     pars = {
         'channel': pars_input['channel'],
@@ -343,8 +340,6 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     in_memory = True
     par_filename = 'None'
 
-    input_file = 'test.fits'
-
     pars = {
         'channel': pars_input['channel'],
         'subchannel': pars_input['subchannel'],
@@ -401,8 +396,6 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     in_memory = True
     par_filename = 'None'
 
-    input_file = 'test.fits'
-
     pars = {
         'channel': pars_input['channel'],
         'subchannel': pars_input['subchannel'],
@@ -452,8 +445,6 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
     single = False
     in_memory = True
     par_filename = 'None'
-
-    input_file = 'test.fits'
 
     pars = {
         'channel': pars_input['channel'],
