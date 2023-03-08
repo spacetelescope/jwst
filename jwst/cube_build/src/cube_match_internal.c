@@ -242,7 +242,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux;
   
   const int max_size_error = 80;
-  char error[max_size_error] = "None";
+  char error[80] = "None";
   int flag_error  = 0;
 
   if (!PyArg_ParseTuple(args, "iiiddddOOOOOOOOOOiOOOOOO:cube_wrapper_internal",
@@ -252,7 +252,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 			&acoordo, &zcoordo, &ss,  &fluxo, &erro,
 			&spaxel_fluxo, &spaxel_weighto, &spaxel_varo, &spaxel_ifluxo )) {
     
-    char  new_error[max_size_error] = "cube_match_sky_internal: Invalid Parameters";
+    char  new_error[80] = "cube_match_sky_internal: Invalid Parameters";
     strcpy(error, new_error);
     flag_error = 1; 
     goto cleanup;
@@ -261,7 +261,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
   // check that input parameters are valid:
   if ((cdelt3 < 0) || (cdelt_along < 0)) {
-    char new_error[max_size_error] = "cdelt3 and cdelt_along  must be a strictly positive number.";
+    char new_error[80] = "cdelt3 and cdelt_along  must be a strictly positive number.";
     strcpy(error, new_error);
     flag_error = 1;
     goto cleanup; 
@@ -297,7 +297,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   n2 = (int) PyArray_Size((PyObject *) lam1);
 
   if (n1 != npt || n2 != npt ) {
-    char  new_error[max_size_error] = "Input coordinate arrays of unequal size.";
+    char new_error[80] = "Input coordinate arrays of unequal size.";
     strcpy(error, new_error);
     flag_error = 1;     
     goto cleanup;
@@ -307,7 +307,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
   if (ncube ==0) {
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
-    char  new_error[max_size_error] = "Input Arrays have zero length.";
+    char  new_error[80] = "Input Arrays have zero length.";
     strcpy(error, new_error);
     flag_error = 1; 
     goto cleanup;
@@ -338,7 +338,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
 
   if (status ) {
-    char  new_error[max_size_error] = "Error encountered in cube_match_internal";
+    char  new_error[80] = "Error encountered in cube_match_internal";
     strcpy(error, new_error);
     flag_error = 1; 
     goto cleanup;
