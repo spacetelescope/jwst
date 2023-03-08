@@ -55,6 +55,14 @@ ramp_fitting
   group.  Ramps that have a non-zero groupgap should not use group_time, but
   (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
 
+ regtest
+-------
+
+- Updated miri mrs regression tests with flight data. Included
+  test_miri_mrs_extract1d.py, test_miri_mrs_spec3.py and new test
+  test_miri_mrs_spec3_moving_target.py [#7468]
+
+
 resample
 --------
 
@@ -63,13 +71,6 @@ resample
 - Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
-
-regtest
--------
-
-- Updated miri mrs regression tests with flight data. Included
-  test_miri_mrs_extract1d.py, test_miri_mrs_spec3.py and new test
-  test_miri_mrs_spec3_moving_target.py [#7468]
 
 scripts
 -------
