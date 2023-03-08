@@ -133,4 +133,5 @@ def match_det2cube(instrument,
                                    spaxel_flux, spaxel_weight,
                                    spaxel_var, spaxel_iflux)
 
+    del result
     return (spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux)
