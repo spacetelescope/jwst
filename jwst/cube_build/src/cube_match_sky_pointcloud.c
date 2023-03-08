@@ -8,17 +8,19 @@ to determine how to  weight each point cloud member in the spaxel.
 
 Main function for Python: cube_wrapper
 
-Python signature: result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
-                                        overlap_partial, overlap_full,
-                                        xcoord, ycoord, zcoord,
-                                        coord1, coord2, wave, flux, err, slice_no,
-                                        rois_pixel, roiw_pixel, scalerad_pixel
-					weight_pixel, softrad_pixel,cdelt3_normal,
-                                        roiw_ave, cdelt1, cdelt2)
-provide more details
+Python signature:result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
+                                       self.overlap_partial, self.overlap_full,
+                                       self.xcoord, self.ycoord, self.zcoord,
+                                       coord1, coord2, wave, flux, err, slice_no,
+                                       rois_pixel, roiw_pixel, scalerad_pixel,
+                                       weight_pixel, softrad_pixel,
+                                       self.cdelt3_normal,
+                                       spaxel_flux, spaxel_weight, spaxel_var,
+                                       spaxel_iflux, spaxel_dq,
+                                       roiw_ave, self.cdelt1, self.cdelt2)
 
-The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq)
-example output
+The arrays, spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq, are passed in a zero filled arrays
+and filled in by this routine. 
 
 Parameters
 ----------
@@ -70,10 +72,6 @@ cdelt1 : double
    Naxis 1 scale for cube
 cdelt2 : double
    Naxis 2 scale for cube
-
-
-Returns
--------
 spaxel_flux : numpy.ndarray
   IFU spaxel cflux
 spaxel_weight : numpy.ndarray
@@ -97,10 +95,6 @@ spaxel_dq : numpy.ndarray
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_pointcloud_numpy_api
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
-// routines used from cube_utils.c
-
-extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
-
 
 extern int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_full,
 		   int nx, int ny, int nz,
@@ -109,7 +103,7 @@ extern int dq_miri(int start_region, int end_region, int overlap_partial, int ov
 		   double *coord1, double *coord2, double *wave,
 		   double *sliceno,
 		   long ncube, int npt,
-		   int **spaxel_dq);
+		   int *spaxel_dq);
 
 extern int dq_nirspec(int overlap_partial,
 		      int nx, int ny, int nz,
@@ -118,14 +112,11 @@ extern int dq_nirspec(int overlap_partial,
 		      double *coord1, double *coord2, double *wave,
 		      double *sliceno,
 		      long ncube, int npt,
-		      int **spaxel_dq);
+		      int *spaxel_dq);
 
-extern int set_dqplane_to_zero(int ncube, int **spaxel_dq);
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
 // to matched spaxel based on ROI - weighting type - emsm
-
-// return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
 
 int match_point_emsm(double *xc, double *yc, double *zc,
 		     double *coord1, double *coord2, double *wave,
@@ -134,21 +125,15 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		     double *zcdelt3,
 		     int nx, int ny, int nwave, int ncube, int npt,
 		     double cdelt1, double cdelt2,
-		     double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
-		     double **spaxel_iflux) {
+		     double *spaxel_flux, double *spaxel_weight, double *spaxel_var,
+		     double *spaxel_iflux) {
 
-
-  double *fluxv=NULL, *weightv=NULL, *varv=NULL, *ifluxv=NULL;  // vector for spaxel
 
   int k, iwstart, iwend, ixstart,  ixend, iystart, iyend;
   int ii, nxy, ix, iy, iw, index_xy, index_cube;
   int done_search_w, done_search_y, done_search_x;
   double wdiff, ydiff, xdiff, ydist, xdist, radius;
   double d1, d2, dxy, d3, d32, w, wn, ww, weighted_flux, weighted_var;
-
-  // allocate memory to hold output
-  if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-
 
     // loop over each point cloud member and find which roi spaxels it is found
 
@@ -230,7 +215,6 @@ int match_point_emsm(double *xc, double *yc, double *zc,
       done_search_y = 1;
     }
 
-    // set up the values for fluxv, weightv, ifluxv, varv
     nxy = nx * ny;
     if(done_search_x == 1 && done_search_y ==1 && done_search_w ==1){
       // The search above for x,y  was a crude search - now narrow the search using the distance between
@@ -260,10 +244,10 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 
 	      weighted_flux =  flux[k]* ww;
 	      weighted_var = (err[k]* ww) * (err[k]*ww);
-	      fluxv[index_cube] = fluxv[index_cube] + weighted_flux;
-	      weightv[index_cube] = weightv[index_cube] + ww;
-	      varv[index_cube] = varv[index_cube] + weighted_var;
-	      ifluxv[index_cube] = ifluxv[index_cube] +1.0;
+	      spaxel_flux[index_cube] = spaxel_flux[index_cube] + weighted_flux;
+	      spaxel_weight[index_cube] = spaxel_weight[index_cube] + ww;
+	      spaxel_var[index_cube] = spaxel_var[index_cube] + weighted_var;
+	      spaxel_iflux[index_cube] = spaxel_iflux[index_cube] +1.0;
 	    }
 	  }
 	} // end loop over iy
@@ -272,14 +256,9 @@ int match_point_emsm(double *xc, double *yc, double *zc,
   } // end loop over point cloud
 
   // assign output values:
-  *spaxel_flux = fluxv;
-  *spaxel_weight = weightv;
-  *spaxel_var = varv;
-  *spaxel_iflux = ifluxv;
 
   return 0;
 }
-
 
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
@@ -294,11 +273,9 @@ int match_point_msm(double *xc, double *yc, double *zc,
 		    double *zcdelt3,
 		    int nx, int ny, int nwave, int ncube, int npt,
 		    double cdelt1, double cdelt2,
-		    double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
-		    double **spaxel_iflux) {
+		    double *spaxel_flux, double *spaxel_weight, double *spaxel_var,
+		    double *spaxel_iflux) {
 
-
-  double *fluxv=NULL, *weightv=NULL, *varv=NULL, *ifluxv=NULL;  // vector for spaxel
 
   int k;
   int iwstart, iwend, ixstart, ixend, iystart, iyend;
@@ -308,8 +285,6 @@ int match_point_msm(double *xc, double *yc, double *zc,
   double d1, d2, dxy, d3, d32, w, wn, ww;
   double weighted_flux, weighted_var;
 
-  // allocate memory to hold output
-  if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
 
   // loop over each point cloud member and find which roi spaxels it is found
 
@@ -422,11 +397,10 @@ int match_point_msm(double *xc, double *yc, double *zc,
 		ww = 1.0/wn;
 		weighted_flux =  flux[k]* ww;
 		weighted_var = (err[k]* ww) * (err[k]*ww);
-		fluxv[index_cube] = fluxv[index_cube] + weighted_flux;
-		weightv[index_cube] = weightv[index_cube] + ww;
-		varv[index_cube] = varv[index_cube] + weighted_var;
-		ifluxv[index_cube] = ifluxv[index_cube] +1.0;
-
+		spaxel_flux[index_cube] = spaxel_flux[index_cube] + weighted_flux;
+		spaxel_weight[index_cube] = spaxel_weight[index_cube] + ww;
+		spaxel_var[index_cube] = spaxel_var[index_cube] + weighted_var;
+		spaxel_iflux[index_cube] = spaxel_iflux[index_cube] +1.0;
 	      }
 	    }
 	  } // end loop over iy
@@ -434,14 +408,6 @@ int match_point_msm(double *xc, double *yc, double *zc,
 
       } // end done_search_x, done_search_y, done_search_w
     } // end loop over point cloud
-
-
-    // assign output values:
-
-    *spaxel_flux = fluxv;
-    *spaxel_weight = weightv;
-    *spaxel_var = varv;
-    *spaxel_iflux = ifluxv;
 
     return 0;
 }
@@ -462,46 +428,68 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     }
 }
 
+PyArrayObject * ensure_array_int(PyObject *obj, int *is_copy) {
+  if (PyArray_CheckExact(obj) &&
+      PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
+      PyArray_TYPE((PyArrayObject *) obj) == NPY_UINT32) {
+    *is_copy = 0;
+    return (PyArrayObject *) obj;
+  } else {
+    *is_copy = 1;
+    return (PyArrayObject *) PyArray_FromAny(obj, PyArray_DescrFromType(NPY_UINT32), 0, 0,
+					     NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL
+					     );
+  }
+}
 
 static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
-  PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo;
+  
+  PyObject *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo;
   PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o, *softrad_pixelo, *weight_pixelo;
-
+  PyObject *spaxel_fluxo, *spaxel_weighto, *spaxel_varo, *spaxel_ifluxo;
+  PyObject *spaxel_dqo;
+  
   double cdelt1, cdelt2, roiw_ave;
   int  nwave, npt, nxx, nyy, ncube;
 
   int instrument, flag_dq_plane,start_region, end_region, overlap_partial, overlap_full, weight_type;
-  double *spaxel_flux=NULL, *spaxel_weight=NULL, *spaxel_var=NULL;
-  double *spaxel_iflux=NULL;
-  int *spaxel_dq=NULL;
 
   int free_xc=0, free_yc=0, free_zc=0, free_coord1=0, free_coord2 =0 , free_wave=0, status=0;
   int free_rois_pixel=0, free_roiw_pixel=0, free_scalerad_pixel=0, free_flux=0, free_err=0, free_zcdelt3=0;
   int free_sliceno=0, free_softrad_pixel, free_weight_pixel=0;
+  int free_spaxel_flux=0, free_spaxel_weight=0, free_spaxel_var=0, free_spaxel_iflux=0, free_spaxel_dq=0;
 
   PyArrayObject *xc, *yc, *zc, *flux, *err, *coord1, *coord2, *wave, *rois_pixel, *roiw_pixel, *scalerad_pixel;
   PyArrayObject *zcdelt3, *sliceno, *softrad_pixel, *weight_pixel;
-  PyArrayObject *spaxel_flux_arr=NULL, *spaxel_weight_arr=NULL, *spaxel_var_arr=NULL;
-  PyArrayObject *spaxel_iflux_arr=NULL, *spaxel_dq_arr=NULL;
-  npy_intp npy_ncube = 0;
+  PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux, *spaxel_dq;
+  
+  const int max_size_error = 256;
+  char error[max_size_error] = "None";
+  int flag_error  = 0;
 
   int  ny,nz;
 
-  if (!PyArg_ParseTuple(args, "iiiiiiiOOOOOOOOOOOOOOOddd:cube_wrapper",
+  if (!PyArg_ParseTuple(args, "iiiiiiiOOOOOOOOOOOOOOOOOOOOddd:cube_wrapper",
 			&instrument, &flag_dq_plane, &weight_type,  &start_region, &end_region, &overlap_partial, &overlap_full,
 			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro, &slicenoo,
-			&rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo, &zcdelt3o, &roiw_ave,
+			&rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo, &zcdelt3o,
+			&spaxel_fluxo, &spaxel_weighto, &spaxel_varo, &spaxel_ifluxo, &spaxel_dqo,
+			&roiw_ave,
 			&cdelt1, &cdelt2)) {
-    return NULL;
+    char  new_error[max_size_error] = "cube_match_sky_pointcloud: Invalid Parameters";
+    strcpy(error, new_error);
+    flag_error = 1; 
+    goto cleanup;
   }
 
 
   // check that input parameters are valid:
 
   if ((cdelt1 < 0) || (cdelt2 < 0)) {
-    PyErr_SetString(PyExc_ValueError,
-		    "'cdelt1' and 'cdelt2' must be a strictly positive number.");
-    return NULL;
+    char new_error[max_size_error] = "cdelt1' and 'cdelt2' must be a strictly positive number.";
+    strcpy(error, new_error);
+    flag_error = 1;
+    goto cleanup; 
   }
 
     // ensure we are working with numpy arrays and avoid creating new ones
@@ -520,18 +508,26 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
       (!(zcdelt3 = ensure_array(zcdelt3o, &free_zcdelt3))) ||
       (!(scalerad_pixel = ensure_array(scalerad_pixelo, &free_scalerad_pixel))) ||
       (!(softrad_pixel = ensure_array(softrad_pixelo, &free_softrad_pixel))) ||
-      (!(weight_pixel = ensure_array(weight_pixelo, &free_weight_pixel))) )
-    {
-      goto cleanup;
-
-    }
+      (!(weight_pixel = ensure_array(weight_pixelo, &free_weight_pixel))) ||
+      (!(spaxel_flux = ensure_array(spaxel_fluxo, &free_spaxel_flux))) ||
+      (!(spaxel_weight = ensure_array(spaxel_weighto, &free_spaxel_weight))) ||
+      (!(spaxel_var = ensure_array(spaxel_varo, &free_spaxel_var))) ||
+      (!(spaxel_iflux = ensure_array(spaxel_ifluxo, &free_spaxel_flux))) ||
+      (!(spaxel_dq = ensure_array_int(spaxel_dqo, &free_spaxel_dq)))){
+    
+    char  new_error[max_size_error] = "Failure in setting up input arrays."; 
+    strcpy(error, new_error);
+    flag_error = 1; 
+    goto cleanup;
+  }      
 
   npt = (int) PyArray_Size((PyObject *) coord1);
   ny = (int) PyArray_Size((PyObject *) coord2);
   nz = (int) PyArray_Size((PyObject *) wave);
   if (ny != npt || nz != npt ) {
-    PyErr_SetString(PyExc_ValueError,
-		    "Input coordinate arrays of unequal size.");
+    char  new_error[max_size_error] = "Input coordinate arrays of unequal size.";
+    strcpy(error, new_error);
+    flag_error = 1; 
     goto cleanup;
 
   }
@@ -541,29 +537,13 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   nwave = (int) PyArray_Size((PyObject *) zc);
 
   ncube = nxx * nyy * nwave;
-
   if (ncube ==0) {
+
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
-    spaxel_flux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_flux_arr) goto fail;
-
-    spaxel_weight_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_weight_arr) goto fail;
-
-    spaxel_var_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_var_arr) goto fail;
-
-    spaxel_iflux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_iflux_arr) goto fail;
-
-    spaxel_dq_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
-    if (!spaxel_dq_arr) goto fail;
-
-    result = Py_BuildValue("(OOOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
-			   spaxel_iflux_arr, spaxel_dq_arr);
-
+    char  new_error[max_size_error] = "Input Arrays have zero length.";
+    strcpy(error, new_error);
+    flag_error = 1; 
     goto cleanup;
-
   }
 
   //______________________________________________________________________
@@ -583,7 +563,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 			(double *) PyArray_DATA(wave),
 			(double *) PyArray_DATA(sliceno),
 			ncube, npt,
-			&spaxel_dq);
+			(int *) PyArray_DATA(spaxel_dq));
 
     } else{
       status1 = dq_nirspec(overlap_partial,
@@ -597,11 +577,9 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 			   (double *) PyArray_DATA(wave),
 			   (double *) PyArray_DATA(sliceno),
 			   ncube, npt,
-			   &spaxel_dq);
+			   (int *) PyArray_DATA(spaxel_dq));
     }
-  } else{ // set dq plane to 0
-    status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
-
+  
   }
 
   //______________________________________________________________________
@@ -621,7 +599,11 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 			      (double *) PyArray_DATA(scalerad_pixel),
 			      (double *) PyArray_DATA(zcdelt3),
 			      nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2,
-			      &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
+			      (double *) PyArray_DATA(spaxel_flux),
+			      (double *) PyArray_DATA(spaxel_weight),
+			      (double *) PyArray_DATA(spaxel_var),
+			      (double *) PyArray_DATA(spaxel_iflux));
+
   } else{
     status = match_point_msm((double *) PyArray_DATA(xc),
 			     (double *) PyArray_DATA(yc),
@@ -637,66 +619,22 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 			     (double *) PyArray_DATA(softrad_pixel),
 			     (double *) PyArray_DATA(zcdelt3),
 			     nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2,
-			     &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
+			     (double *) PyArray_DATA(spaxel_flux),
+			     (double *) PyArray_DATA(spaxel_weight),
+			     (double *) PyArray_DATA(spaxel_var),
+			     (double *) PyArray_DATA(spaxel_iflux));
   }
 
 
   if (status || status1) {
-    goto fail;
-
-  } else {
-    // create return tuple:
-    npy_ncube = (npy_intp) ncube;
-
-    spaxel_flux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
-    if (!spaxel_flux_arr) goto fail;
-    spaxel_flux = NULL;
-
-    spaxel_weight_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
-    if (!spaxel_weight_arr) goto fail;
-    spaxel_weight = NULL;
-
-    spaxel_var_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
-    if (!spaxel_var_arr) goto fail;
-    spaxel_var = NULL;
-
-    spaxel_iflux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
-    if (!spaxel_iflux_arr) goto fail;
-    spaxel_iflux = NULL;
-
-    spaxel_dq_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
-    if (!spaxel_dq_arr) goto fail;
-    spaxel_dq = NULL;
-
-    PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_weight_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_dq_arr, NPY_ARRAY_OWNDATA);
-    result = Py_BuildValue("(OOOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
-			   spaxel_iflux_arr, spaxel_dq_arr);
-
+    char  new_error[max_size_error] = "Error encountered in drizzling";
+    strcpy(error, new_error);
+    flag_error = 1; 
     goto cleanup;
-
+  } else {
+    goto cleanup;
   }
-
- fail:
-  Py_XDECREF(spaxel_flux_arr);
-  Py_XDECREF(spaxel_weight_arr);
-  Py_XDECREF(spaxel_var_arr);
-  Py_XDECREF(spaxel_iflux_arr);
-  Py_XDECREF(spaxel_dq_arr);
-
-  free(spaxel_flux);
-  free(spaxel_weight);
-  free(spaxel_var);
-  free(spaxel_iflux);
-  free(spaxel_dq);
-
-  if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_MemoryError,
-		    "Unable to allocate memory for output arrays.");
-  }
+  
 
  cleanup:
   if (free_xc)Py_XDECREF(xc);
@@ -714,9 +652,20 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   if (free_weight_pixel) Py_XDECREF(weight_pixel);
   if (free_zcdelt3) Py_XDECREF(zcdelt3);
   if (free_sliceno) Py_XDECREF(sliceno);
+  if (free_spaxel_flux) Py_XDECREF(spaxel_flux);
+  if (free_spaxel_var) Py_XDECREF(spaxel_var);
+  if (free_spaxel_weight) Py_XDECREF(spaxel_weight);
+  if (free_spaxel_iflux) Py_XDECREF(spaxel_iflux);
+  if (free_spaxel_dq) Py_XDECREF(spaxel_dq);
 
-  return result;
+  if (flag_error){
+    PyErr_SetString(PyExc_Exception, error);
+    return NULL;    
+  } else{
+    return Py_BuildValue("s", "Callable C-based Cube Pointcloud");
+  }
 }
+
 
 
 static PyMethodDef cube_methods[] =

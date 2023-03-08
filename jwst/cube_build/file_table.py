@@ -15,88 +15,88 @@ class FileTable():
 
         self.in_memory = in_memory
         self.FileMap = {}
+        self.FileMap['filename'] = []
         self.FileMap['MIRI'] = {}
-
+        
         self.FileMap['MIRI']['1'] = {}
-        self.FileMap['MIRI']['1']['short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['short-medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['short-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['medium-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['medium-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['long-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['1']['long-medium'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['MIRI']['1']['short'] = []
+        self.FileMap['MIRI']['1']['medium'] =[]
+        self.FileMap['MIRI']['1']['long'] = []
+        self.FileMap['MIRI']['1']['short-medium'] = []
+        self.FileMap['MIRI']['1']['short-long'] = []
+        self.FileMap['MIRI']['1']['medium-short'] = []
+        self.FileMap['MIRI']['1']['medium-long'] = []
+        self.FileMap['MIRI']['1']['long-short'] = []
+        self.FileMap['MIRI']['1']['long-medium'] = []
 
         self.FileMap['MIRI']['2'] = {}
-        self.FileMap['MIRI']['2']['short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['short-medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['short-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['medium-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['medium-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['long-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['2']['long-medium'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['MIRI']['2']['short'] = []
+        self.FileMap['MIRI']['2']['medium'] = []
+        self.FileMap['MIRI']['2']['long'] = []
+        self.FileMap['MIRI']['2']['short-medium'] = []
+        self.FileMap['MIRI']['2']['short-long'] = [] 
+        self.FileMap['MIRI']['2']['medium-short'] = []
+        self.FileMap['MIRI']['2']['medium-long'] = []
+        self.FileMap['MIRI']['2']['long-short'] = []
+        self.FileMap['MIRI']['2']['long-medium'] = []
 
         self.FileMap['MIRI']['3'] = {}
-        self.FileMap['MIRI']['3']['short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['short-medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['short-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['medium-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['medium-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['long-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['3']['long-medium'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['MIRI']['3']['short'] = []
+        self.FileMap['MIRI']['3']['medium'] = []
+        self.FileMap['MIRI']['3']['long'] = []
+        self.FileMap['MIRI']['3']['short-medium'] = []
+        self.FileMap['MIRI']['3']['short-long'] = []
+        self.FileMap['MIRI']['3']['medium-short'] = []
+        self.FileMap['MIRI']['3']['medium-long'] = []
+        self.FileMap['MIRI']['3']['long-short'] = []
+        self.FileMap['MIRI']['3']['long-medium'] = []
 
         self.FileMap['MIRI']['4'] = {}
-        self.FileMap['MIRI']['4']['short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['short-medium'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['short-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['medium-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['medium-long'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['long-short'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['MIRI']['4']['long-medium'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['MIRI']['4']['short'] = []
+        self.FileMap['MIRI']['4']['medium'] = []
+        self.FileMap['MIRI']['4']['long'] = []
+        self.FileMap['MIRI']['4']['short-medium'] = []
+        self.FileMap['MIRI']['4']['short-long'] = []
+        self.FileMap['MIRI']['4']['medium-short'] = []
+        self.FileMap['MIRI']['4']['medium-long'] = []
+        self.FileMap['MIRI']['4']['long-short'] = []
+        self.FileMap['MIRI']['4']['long-medium'] = []
 
         self.FileMap['NIRSPEC'] = {}
         self.FileMap['NIRSPEC']['prism'] = {}
-        self.FileMap['NIRSPEC']['prism']['clear'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['prism']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['prism']['clear'] = [] 
+        self.FileMap['NIRSPEC']['prism']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g140m'] = {}
-        self.FileMap['NIRSPEC']['g140m']['f070lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g140m']['f100lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g140m']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['g140m']['f070lp'] = []
+        self.FileMap['NIRSPEC']['g140m']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140m']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g140h'] = {}
-        self.FileMap['NIRSPEC']['g140h']['f070lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g140h']['f100lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g140h']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['g140h']['f070lp'] = []
+        self.FileMap['NIRSPEC']['g140h']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140h']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g235m'] = {}
-        self.FileMap['NIRSPEC']['g235m']['f170lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g235m']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['g235m']['f170lp'] = []
+        self.FileMap['NIRSPEC']['g235m']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g235h'] = {}
-        self.FileMap['NIRSPEC']['g235h']['f170lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g235h']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['g235h']['f170lp'] = []
+        self.FileMap['NIRSPEC']['g235h']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g395m'] = {}
-        self.FileMap['NIRSPEC']['g395m']['f290lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g395m']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['g395m']['f290lp'] = []
+        self.FileMap['NIRSPEC']['g395m']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g395h'] = {}
-        self.FileMap['NIRSPEC']['g395h']['f290lp'] = ModelContainer(save_open=self.in_memory)
-        self.FileMap['NIRSPEC']['g395h']['opaque'] = ModelContainer(save_open=self.in_memory)
+        self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
+        self.FileMap['NIRSPEC']['g395h']['opaque'] = []
 
 # ********************************************************************************
 
     def set_file_table(self,
                        input_models):
-                       #input_filenames):
         """
         Short Summary
         -------------
@@ -117,40 +117,57 @@ class FileTable():
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
 
+        for model in input_models:
+            instrument = model.meta.instrument.name.upper()
+            assign_wcs = model.meta.cal_step.assign_wcs
+            filename  = model.meta.filename
+            self.FileMap['filename'].append(filename)
+
+            if not isinstance(model, datamodels.IFUImageModel):
+                        raise NotIFUImageModel(
+                           f"Input data is not a IFUImageModel, instead it is {model}")    
+            if assign_wcs != 'COMPLETE':
+                raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
+                                       model.meta.filename)
+            # _____________________________________________________________________
+            # MIRI instrument
             
-        for input_model in input_models:
-            with datamodels.open(input_model, save_open=self.in_memory) as model:
-
-                instrument = model.meta.instrument.name.upper()
-                assign_wcs = model.meta.cal_step.assign_wcs
-
-                if assign_wcs != 'COMPLETE':
-                    raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
-                                           model.meta.filename)
-                # _____________________________________________________________________
-                # MIRI instrument
-                if instrument == 'MIRI':
-                    channel = model.meta.instrument.channel
-                    subchannel = model.meta.instrument.band.lower()
-                    clenf = len(channel)
-                    for k in range(clenf):
-                        self.FileMap['MIRI'][channel[k]][subchannel].append(model)
-                # _____________________________________________________________________
-                # NIRSPEC instrument
-                elif instrument == 'NIRSPEC':
-                    fwa = model.meta.instrument.filter.lower()
-                    gwa = model.meta.instrument.grating.lower()
-                    self.FileMap['NIRSPEC'][gwa][fwa].append(model)
+            if instrument == 'MIRI':
+                channel = model.meta.instrument.channel
+                subchannel = model.meta.instrument.band.lower()
+                clenf = len(channel)
+                for k in range(clenf):
+                    if self.in_memory:
+                        self.FileMap['MIRI'][channel[k]][subchannel].append(model.copy())
+                    else:
+                        self.FileMap['MIRI'][channel[k]][subchannel].append(filename)
+                        log.info(f"Exposure {filename} save to file")
+                        model.save(filename)
+                        
+            # _____________________________________________________________________
+            # NIRSPEC instrument
+            elif instrument == 'NIRSPEC':
+                fwa = model.meta.instrument.filter.lower()
+                gwa = model.meta.instrument.grating.lower()
+                if self.in_memory:
+                    self.FileMap['NIRSPEC'][gwa][fwa].append(model.copy())
                 else:
-                    pass
-                #                  log.info('Instrument not valid for cube')
+                    self.FileMap['NIRSPEC'][gwa][fwa].append(filename)
+            else:
+                log.info('Instrument not valid for cube')
+                pass
+
+
             model.close()
-        print("CHECK THIS", type(self.FileMap['MIRI']['1']['short']))
-        print(self.FileMap['MIRI']['1']['short']._save_open)
-              
+            del model
               
         return instrument
 
 
 class ErrorNoAssignWCS(Exception):
+    pass
+
+class NotIFUImageModel(Exception):
+    """ Raise Exception if data is not of type IFUImageModel
+    """
     pass

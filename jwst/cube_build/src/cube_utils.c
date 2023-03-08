@@ -214,7 +214,7 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 
   int nVertices = 4; // input detector pixel vertices
 
-  int MaxVertices = 9;
+  //int MaxVertices = 9;
   double xPixel[9]= {0.0};
   double yPixel[9] = {0.0};
   double xnew[9]= {0.0};

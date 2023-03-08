@@ -14,22 +14,6 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 
 
 //________________________________________________________________________________
-// allocate the memory for the spaxel DQ array
-
-int mem_alloc_dq(int nelem, int **idqv) {
-    
-    const char *msg = "Couldn't allocate memory for output arrays.";
-
-    if (!(*idqv = (int*)calloc(nelem, sizeof(int)))) {
-      PyErr_SetString(PyExc_MemoryError, msg);
-      return 1;
-    }
-
-    return 0;
-}
-
-
-//________________________________________________________________________________
 // Routine for MIRI DQ plane assignment
 
 int corner_wave_plane_miri(int w, int start_region, int end_region,
@@ -512,13 +496,13 @@ int overlap_slice_with_spaxels(int overlap_partial,
 // setting the DQ plane. This is case for internalCal type cubes
 
 
-int set_dqplane_to_zero(int ncube, int **spaxel_dq){
-
-    int *idqv;  // int vector for spaxel
-    if (mem_alloc_dq(ncube, &idqv)) return 1;
-     *spaxel_dq = idqv;
-    return 0;
-}
+//int set_dqplane_to_zero(int ncube, int **spaxel_dq){
+//
+//    int *idqv;  // int vector for spaxel
+//    if (mem_alloc_dq(ncube, &idqv)) return 1;
+//     *spaxel_dq = idqv;
+//    return 0;
+//}
 
 //________________________________________________________________________________
 // Main MIRI routine to set DQ plane
@@ -530,14 +514,11 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 	    double *coord1, double *coord2, double *wave,
 	    double *sliceno,
 	    long ncube, long npt, 
-	    int **spaxel_dq) {
+	    int *spaxel_dq) {
 
   int status, status_wave, w, nxy, i, istart, iend, in, ii;
   double xi_corner[4], eta_corner[4];
   
-  int *idqv ;  // int vector for spaxel
-  if (mem_alloc_dq(ncube, &idqv)) return 1;
-
   double corner1[2];
   double corner2[2];
   double corner3[2];
@@ -547,7 +528,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   // corner of the FOV for each wavelength
 
   nxy = nx * ny;
-  int wave_slice_dq[nxy];
+  int *wave_slice_dq;
+  wave_slice_dq = (int *)malloc (nxy * sizeof(int));
+  
   // Loop over the wavelength planes and set DQ plane 
   for (w = 0; w  < nz; w++) {
     
@@ -582,16 +565,15 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
     for( in = istart; in < iend; in ++){
       ii = in - istart;
       if(status_wave == 0){
-	idqv[in] = wave_slice_dq[ii];
+	spaxel_dq[in] = wave_slice_dq[ii];
       }else{
-	idqv[in] = 0;
+	spaxel_dq[in] = 0;
       }
     }
 
   } // end loop over wavelength
 
-  *spaxel_dq = idqv;
-
+  free(wave_slice_dq);
   return 0;
 }
 
@@ -605,7 +587,7 @@ int dq_nirspec(int overlap_partial,
 	       double *coord1, double *coord2, double *wave,
 	       double *sliceno,
 	       long ncube, long npt,
-	       int **spaxel_dq) {
+	       int *spaxel_dq) {
 
   /*
     Set an initial DQ flag for the NIRSPEC IFU cube based on FOV of input data.
@@ -631,16 +613,17 @@ int dq_nirspec(int overlap_partial,
   
   int w, islice, status, status_wave, nxy, j;
   long istart, in, iend, ii, i;
-  double c1_min, c2_min, c1_max, c2_max;
-  int *idqv ;  // int vector for spaxel
-  idqv = (int*)calloc(ncube, sizeof(int));
+  //double c1_min, c2_min, c1_max, c2_max;
 
+ 
   for (i = 0; i< ncube; i++){
-    idqv[i] = 0;
+    spaxel_dq[i] = 0;
   }
   
   nxy = nx * ny;
-
+  int *wave_slice_dq;  
+  wave_slice_dq = (int *)malloc (nxy * sizeof(int));
+  
   for (w = 0; w  < nz; w++) {
     long imatch = 0;
     double c1_min[30];
@@ -657,8 +640,7 @@ int dq_nirspec(int overlap_partial,
 				       c1_min, c2_min,
 				       c1_max, c2_max,
 				       match_slice);
-
-    int wave_slice_dq[nxy];
+    
     for (j =0; j< nxy; j++){
       wave_slice_dq[j] = 0;
     }
@@ -698,12 +680,13 @@ int dq_nirspec(int overlap_partial,
 
       for (in = istart; in < iend; in ++){
 	ii = in - istart;
-	idqv[in] = wave_slice_dq[ii];
+	spaxel_dq[in] = wave_slice_dq[ii];
       }
     }
-  } // end of wavelength
-  *spaxel_dq = idqv;
 
+  } // end of wavelength
+
+  free(wave_slice_dq);
   return 0;
 }
 

@@ -16,16 +16,18 @@ Python signature:
                                    crval_along, cdelt_along, crval3, cdelt3,
                                    a1, a2, a3, a4, lam1, lam2, lam3, lam4,
                                    acoord, zcoord, ss,
-                                   pixel_flux, pixel_err)
-provide more details
+                                   pixel_flux, pixel_err,
+                                   spaxel_flux, spaxel_weight,
+                                   spaxel_var, spaxel_iflux)
 
-The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq)
-example output
+The arrays, spaxel_flux, spaxel_weight, spaxel_var, and spaxel_iflux are passed in a zero filled arrays
+and filled in by this routine. 
+
 
 Parameters
 ----------
 instrument: int
-    0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
+    0 = MIRI, 1 = NIRSPEC. Used for setting output index
 naxis1 : int
    axis 1 of IFU cube
 nasix2 : int
@@ -61,14 +63,11 @@ pixel_flux : double array
 pixel_error : double array
   Array that holds detector pixel flux error
 
-Returns
--------
+spaxel_flux : return flux array 
+spaxel_weight : return weight array
+spaxel_iflux : return iflux array
+spaxel_var : return variance array
 
-spaxel_flux : array
-spaxel_weight : array
-spaxel_iflux : array
-spaxel_var : array
-spaxel_dq : array
 
 */
 
@@ -92,10 +91,6 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 
 extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
 
-
-extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
-
-
 //_______________________________________________________________________
 //  based on a 2-D drizzling type of algorithm find the contribution of
 // each detector flux to the IFU cube
@@ -107,16 +102,12 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 			double *lam1, double *lam2, double*lam3, double *lam4,
 			double *acoord, double *zcoord, int ss,
 			double *pixel_flux, double *pixel_err,
-			double **spaxel_flux, double **spaxel_weight, double **spaxel_var,double **spaxel_iflux){
+			double *spaxel_flux, double *spaxel_weight, double *spaxel_var, double *spaxel_iflux){
 
-  double *fluxv=NULL, *weightv=NULL, *varv=NULL, *ifluxv=NULL;  // vectors for spaxel
+
   double along_corner[4], wave_corner[4], along_min, wave_min, along_max, wave_max, Area, MinW, MaxW, zcenter, acenter, area_overlap,
     AreaRatio, err;
   int ipixel, ia1, ia2, iz1, iz2, nplane, zz, istart, aa, j, cube_index;
-
-  // allocate memory to hold output
-  if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-
 
   // loop over each valid point on detector and find match to IFU cube based
   // on along slice coordinate and wavelength
@@ -179,24 +170,18 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 					      cdelt_along, cdelt3,
 					      along_corner, wave_corner);
 
-
 	if (area_overlap > 0.0) {
 	  AreaRatio = area_overlap / Area;
-	  fluxv[cube_index] = fluxv[cube_index] + (AreaRatio * pixel_flux[ipixel]);
-	  weightv[cube_index] = weightv[cube_index] +	AreaRatio;
-	  ifluxv[cube_index] = ifluxv[cube_index] + 1;
+	  spaxel_flux[cube_index] = spaxel_flux[cube_index] + (AreaRatio * pixel_flux[ipixel]);
+	  spaxel_weight[cube_index] = spaxel_weight[cube_index] + AreaRatio;
+	  spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1;
 	  err = (AreaRatio * pixel_err[ipixel]) * (AreaRatio * pixel_err[ipixel]);
-	  varv[cube_index] = varv[cube_index] + err;
+	  spaxel_var[cube_index] = spaxel_var[cube_index] + err;
 	}
       }
     }
 
   }
-
-  *spaxel_flux = fluxv;
-  *spaxel_weight = weightv;
-  *spaxel_var = varv;
-  *spaxel_iflux = ifluxv;
 
   return 0;
 }
@@ -220,45 +205,66 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     }
 }
 
+PyArrayObject * ensure_array_int(PyObject *obj, int *is_copy) {
+  if (PyArray_CheckExact(obj) &&
+      PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
+      PyArray_TYPE((PyArrayObject *) obj) == NPY_UINT32) {
+    *is_copy = 0;
+    return (PyArrayObject *) obj;
+  } else {
+    *is_copy = 1;
+    return (PyArrayObject *) PyArray_FromAny(obj, PyArray_DescrFromType(NPY_UINT32), 0, 0,
+					     NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL
+					     );
+  }
+}
+
 
 static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
   PyObject *result = NULL, *a1o, *a2o, *a3o, *a4o, *lam1o, *lam2o, *lam3o, *lam4o,
     *fluxo, *erro, *acoordo, *zcoordo;
 
+  PyObject *spaxel_fluxo, *spaxel_weighto, *spaxel_varo, *spaxel_ifluxo;  
   double crval_along, cdelt_along, crval3, cdelt3;
   int  nz, na, npt, naxis1, naxis2, ncube;
   int ss;
   int instrument;
 
-  double *spaxel_flux=NULL, *spaxel_weight=NULL, *spaxel_var=NULL;
-  double *spaxel_iflux=NULL;
-
   int free_a1=0, free_a2=0, free_a3=0, free_a4 =0, free_lam1=0, free_lam2 =0, free_lam3=0, free_lam4=0;
   int free_acoord=0, free_zcoord=0, status=0;
   int free_flux=0, free_err=0;
-
+  int free_spaxel_flux=0, free_spaxel_weight=0, free_spaxel_var=0, free_spaxel_iflux=0;
+  
   int n1, n2;
-  PyArrayObject *a1=NULL, *a2=NULL, *a3=NULL, *a4=NULL, *lam1=NULL, *lam2=NULL;
-  PyArrayObject *lam3=NULL, *lam4=NULL, *flux=NULL, *err=NULL, *acoord=NULL, *zcoord=NULL;
+  PyArrayObject *a1, *a2, *a3, *a4, *lam1, *lam2;
+  PyArrayObject *lam3, *lam4, *flux, *err, *acoord, *zcoord;
+  PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux;
+  
+  const int max_size_error = 256;
+  char error[max_size_error] = "None";
+  int flag_error  = 0;
 
-  PyArrayObject *spaxel_flux_arr=NULL, *spaxel_weight_arr=NULL, *spaxel_var_arr=NULL;
-  PyArrayObject *spaxel_iflux_arr=NULL;
-  npy_intp npy_ncube = 0;
-
-  if (!PyArg_ParseTuple(args, "iiiddddOOOOOOOOOOiOO:cube_wrapper_internal",
+  if (!PyArg_ParseTuple(args, "iiiddddOOOOOOOOOOiOOOOOO:cube_wrapper_internal",
 			&instrument, &naxis1, &naxis2, &crval_along, &cdelt_along,
 			&crval3, &cdelt3,
-			&a1o, &a2o, &a3o, &a4o,&lam1o, &lam2o, &lam3o, &lam4o,
-			&acoordo, &zcoordo, &ss,  &fluxo, &erro)) {
+			&a1o, &a2o, &a3o, &a4o, &lam1o, &lam2o, &lam3o, &lam4o,
+			&acoordo, &zcoordo, &ss,  &fluxo, &erro,
+			&spaxel_fluxo, &spaxel_weighto, &spaxel_varo, &spaxel_ifluxo )) {
+    
+    char  new_error[max_size_error] = "cube_match_sky_internal: Invalid Parameters";
+    strcpy(error, new_error);
+    flag_error = 1; 
+    goto cleanup;
     return NULL;
   }
 
   // check that input parameters are valid:
   if ((cdelt3 < 0) || (cdelt_along < 0)) {
-    PyErr_SetString(PyExc_ValueError,
-		    "'cdelt3' and 'cdelt_along' must be a strictly positive number.");
-    return NULL;
+    char new_error[max_size_error] = "cdelt3' and 'cdelt_along' must be a strictly positive number.";
+    strcpy(error, new_error);
+    flag_error = 1;
+    goto cleanup; 
   }
 
     // ensure we are working with numpy arrays and avoid creating new ones
@@ -274,10 +280,16 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
       (!(acoord = ensure_array(acoordo, &free_acoord))) ||
       (!(zcoord = ensure_array(zcoordo, &free_zcoord))) ||
       (!(flux = ensure_array(fluxo, &free_flux))) ||
-      (!(err = ensure_array(erro, &free_err))) ) {
+      (!(err = ensure_array(erro, &free_err)))  ||
+      (!(spaxel_flux = ensure_array(spaxel_fluxo, &free_spaxel_flux))) ||
+      (!(spaxel_weight = ensure_array(spaxel_weighto, &free_spaxel_weight))) ||
+      (!(spaxel_var = ensure_array(spaxel_varo, &free_spaxel_var))) ||
+      (!(spaxel_iflux = ensure_array(spaxel_ifluxo, &free_spaxel_flux))))
+
+    {
       goto cleanup;
     }
-
+  
   npt = (int) PyArray_Size((PyObject *) flux);
   nz = (int) PyArray_Size((PyObject *) zcoord);
   na = (int) PyArray_Size((PyObject *) acoord);
@@ -285,8 +297,9 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   n2 = (int) PyArray_Size((PyObject *) lam1);
 
   if (n1 != npt || n2 != npt ) {
-    PyErr_SetString(PyExc_ValueError,
-		    "Input coordinate arrays of unequal size.");
+    char  new_error[max_size_error] = "Input coordinate arrays of unequal size.";
+    strcpy(error, new_error);
+    flag_error = 1;     
     goto cleanup;
   }
 
@@ -294,21 +307,9 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 
   if (ncube ==0) {
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
-    spaxel_flux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_flux_arr) goto fail;
-
-    spaxel_weight_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_weight_arr) goto fail;
-
-    spaxel_var_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_var_arr) goto fail;
-
-    spaxel_iflux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-    if (!spaxel_iflux_arr) goto fail;
-
-    result = Py_BuildValue("(OOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
-			   spaxel_iflux_arr);
-
+    char  new_error[max_size_error] = "Input Arrays have zero length.";
+    strcpy(error, new_error);
+    flag_error = 1; 
     goto cleanup;
   }
 
@@ -330,56 +331,20 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 				 ss,
 				 (double *) PyArray_DATA(flux),
 				 (double *) PyArray_DATA(err),
-				 &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
+				 (double *) PyArray_DATA(spaxel_flux),
+				 (double *) PyArray_DATA(spaxel_weight),
+				 (double *) PyArray_DATA(spaxel_var),
+				 (double *) PyArray_DATA(spaxel_iflux));
+
 
   if (status ) {
-    goto fail;
+    char  new_error[max_size_error] = "Error encountered in cube_match_internal";
+    strcpy(error, new_error);
+    flag_error = 1; 
+    goto cleanup;
 
   } else {
-    // create return tuple:
-    npy_ncube = (npy_intp) ncube;
-
-    spaxel_flux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
-    if (!spaxel_flux_arr) goto fail;
-    spaxel_flux = NULL;
-
-    spaxel_weight_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
-    if (!spaxel_weight_arr) goto fail;
-    spaxel_weight = NULL;
-
-    spaxel_var_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
-    if (!spaxel_var_arr) goto fail;
-    spaxel_var = NULL;
-
-    spaxel_iflux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
-    if (!spaxel_iflux_arr) goto fail;
-    spaxel_iflux = NULL;
-
-    PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_weight_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
-    PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
-
-    result = Py_BuildValue("(OOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
-			   spaxel_iflux_arr);
-
     goto cleanup;
-  }
-
-fail:
-  Py_XDECREF(spaxel_flux_arr);
-  Py_XDECREF(spaxel_weight_arr);
-  Py_XDECREF(spaxel_var_arr);
-  Py_XDECREF(spaxel_iflux_arr);
-
-  free(spaxel_flux);
-  free(spaxel_weight);
-  free(spaxel_var);
-  free(spaxel_iflux);
-
-  if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_MemoryError,
-		    "Unable to allocate memory for output arrays.");
   }
 
  cleanup:
@@ -395,8 +360,18 @@ fail:
   if (free_zcoord) Py_XDECREF(zcoord);
   if (free_flux) Py_XDECREF(flux);
   if (free_err) Py_XDECREF(err);
+  if (free_spaxel_flux) Py_XDECREF(spaxel_flux);
+  if (free_spaxel_var) Py_XDECREF(spaxel_var);
+  if (free_spaxel_weight) Py_XDECREF(spaxel_weight);
+  if (free_spaxel_iflux) Py_XDECREF(spaxel_iflux);
+  
+  if (flag_error){
+    PyErr_SetString(PyExc_Exception, error);
+    return NULL;    
+  } else{
+    return Py_BuildValue("s", "Callable C-based Cube match internal");
+  }
 
-  return result;
 }
 
 static PyMethodDef cube_methods[] =

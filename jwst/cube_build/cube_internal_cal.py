@@ -13,6 +13,8 @@ def match_det2cube(instrument,
                    input_model,
                    transform,
                    acoord, zcoord,
+                   spaxel_flux, spaxel_weight,
+                   spaxel_var, spaxel_iflux,
                    crval_along, crval3,
                    cdelt_along, cdelt3,
                    naxis1, naxis2):
@@ -122,10 +124,13 @@ def match_det2cube(instrument,
     if instrument == 'MIRI':
         ss = sliceno
         instrument_no = 0
+
     result = cube_wrapper_internal(instrument_no, naxis1, naxis2,
                                    crval_along, cdelt_along, crval3, cdelt3,
                                    a1, a2, a3, a4, lam1, lam2, lam3, lam4,
                                    acoord, zcoord, ss,
-                                   pixel_flux, pixel_err)
+                                   pixel_flux, pixel_err,
+                                   spaxel_flux, spaxel_weight,
+                                   spaxel_var, spaxel_iflux)
 
-    return result
+    return (spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux)
