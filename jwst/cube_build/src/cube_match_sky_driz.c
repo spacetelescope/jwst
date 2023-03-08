@@ -332,8 +332,8 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyArrayObject *cdelt3, *sliceno;
   PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux, *spaxel_dq;
 	     
-  const int max_size_error = 80;
-  char error[max_size_error] = "None";
+
+  char error[80] = "None";
   int flag_error  = 0;
   
   int  ny,nz;
@@ -346,7 +346,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 			&spaxel_fluxo, &spaxel_weighto, &spaxel_varo, &spaxel_ifluxo, &spaxel_dqo,
 			&cdelt1, &cdelt2, &cdelt3_mean, &linear)){
 
-   char  new_error[max_size_error] = "cube_match_sky_driz: Invalid Parameters";
+   char  new_error[80] = "cube_match_sky_driz: Invalid Parameters";
    strcpy(error, new_error);
    flag_error = 1; 
    goto cleanup;
@@ -355,7 +355,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   
   // check that input parameters are valid:
   if ((cdelt1 <= 0) || (cdelt2 <= 0)) {
-    char new_error[max_size_error] = "cdelt1 and cdelt2 must be a strictly positive number.";
+    char new_error[80] = "cdelt1 and cdelt2 must be a strictly positive number.";
     strcpy(error, new_error);
     flag_error = 1;
     goto cleanup; 
@@ -392,7 +392,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
       !cdelt3 || !dwave || !spaxel_flux || !spaxel_weight || !spaxel_var || !spaxel_iflux ||
       ! spaxel_dq){
 
-    char  new_error[max_size_error] = "Failure in setting up input arrays."; 
+    char  new_error[80] = "Failure in setting up input arrays."; 
     strcpy(error, new_error);
     flag_error = 1; 
     goto cleanup;
@@ -403,7 +403,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   nz = (int) PyArray_Size((PyObject *) wave);
 
   if (ny != npt || nz != npt ) {
-    char  new_error[max_size_error] = "Input coordinate arrays of unequal size.";
+    char  new_error[80] = "Input coordinate arrays of unequal size.";
     strcpy(error, new_error);
     flag_error = 1;
     goto cleanup;
@@ -417,7 +417,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   ncube = nxx * nyy * nwave;
   if (ncube ==0) {
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
-    char  new_error[max_size_error] = "Input Arrays have zero length.";
+    char  new_error[80] = "Input Arrays have zero length.";
     strcpy(error, new_error);
     flag_error = 1; 
     goto cleanup;
@@ -485,7 +485,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 			(double *) PyArray_DATA(spaxel_iflux));
   
   if (status || status1) {
-    char  new_error[max_size_error] = "Error encountered in drizzling";
+    char  new_error[80] = "Error encountered in drizzling";
     strcpy(error, new_error);
     flag_error = 1; 
     goto cleanup;

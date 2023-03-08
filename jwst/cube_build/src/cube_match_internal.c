@@ -241,7 +241,6 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   PyArrayObject *lam3, *lam4, *flux, *err, *acoord, *zcoord;
   PyArrayObject *spaxel_flux, *spaxel_weight, *spaxel_var, *spaxel_iflux;
   
-  const int max_size_error = 80;
   char error[80] = "None";
   int flag_error  = 0;
 
