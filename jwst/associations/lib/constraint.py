@@ -499,23 +499,22 @@ class AttrConstraint(SimpleConstraintABC):
                 match_value = self.value
             if not is_iterable(evaled):
                 evaled = [evaled]
-            matched = []
             for evaled_item in evaled:
                 value = str(evaled_item)
                 if meets_conditions(value, match_value):
-                    matched.append(evaled_item)
-
-            # If the condition is not matched, leave now.
-            if not matched:
+                    break
+            else:
+                # The condition is not matched, leave now.
                 self.matched = False
                 return self.matched, reprocess
 
-            # Matches were found. The first match becomes
-            # the value for the current constraint.
-            # The rest get reprocessed.
-            value = str(matched[0])
-            if matched[1:]:
-                reprocess.append(reprocess_multivalue(item, source, matched[1:], self))
+            # A match was found. If there is a list of potential values,
+            # set them up for reprocessing.
+            next_evaleds = [next_evaled
+                            for next_evaled in evaled
+                            if next_evaled != evaled_item]
+            if next_evaleds:
+                reprocess.append(reprocess_multivalue(item, source, next_evaleds, self))
 
         # At this point, the constraint has passed.
         # Fix the conditions.
