@@ -764,7 +764,7 @@ class IFUCubeData():
                                                                       self.crval2, self.crval3,
                                                                       self.cdelt2, self.cdelt3,
                                                                       self.naxis1, self.naxis2)
-
+                            (spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux) = result
                             self.spaxel_flux += np.asarray(spaxel_flux, np.float64)
                             self.spaxel_weight += np.asarray(spaxel_weight, np.float64)
                             self.spaxel_var += np.asarray(spaxel_var, np.float64)
