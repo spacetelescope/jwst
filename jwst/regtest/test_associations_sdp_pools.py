@@ -77,10 +77,40 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': False,
     },
+    'jw01257_20221201t192226_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw01290_20230304t140931_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw01290_20230304t140931_withids_pool': {
+        'args': ['-i', 'o012', 'c1018'],
+        'xfail': None,
+        'slow': False,
+    },
     'jw01355_20230109t002554_pool': {
         'args': [],
         'xfail': None,
         'slow': True,
+    },
+    'jw01493_20230307t040130_withids_pool': {
+        'args': ['-i', 'o003', 'c1000'],
+        'xfail': None,
+        'slow': False,
+    },
+    'jw02064_20230302t112350_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw02064_20230302t112350_withids_pool': {
+        'args': ['-i', 'o061', 'c1008', 'c1017'],
+        'xfail': None,
+        'slow': False,
     },
     'jw80600_20171108T041522_pool': {
         'args': [],
