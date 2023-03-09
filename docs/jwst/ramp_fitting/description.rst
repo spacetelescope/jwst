@@ -322,7 +322,7 @@ extension.
 
 Weighted Readnoise Variance
 +++++++++++++++++++++++++++
-If the :ref:`undersampline correction <undersampling_correction_step>`
+If the :ref:`undersampling correction <undersampling_correction_step>`
 step has been performed prior to ramp fitting, any group whose value exceeds the
 `signal_threshold` parameter will have been flagged with the UNDERSAMP and DO_NOT_USE
 data quality flags. Due to the DO_NOT_USE flags, such groups will be excluded
