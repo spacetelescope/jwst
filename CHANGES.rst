@@ -55,6 +55,10 @@ ramp_fitting
   group.  Ramps that have a non-zero groupgap should not use group_time, but
   (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
 
+- Update ramp fitting to calculate separate readnoise variance for processing
+  ``undersampling_correction`` output [#7484]
+
+
 resample
 --------
 
