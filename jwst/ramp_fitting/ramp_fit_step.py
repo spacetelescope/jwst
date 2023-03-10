@@ -456,13 +456,11 @@ class RampFitStep(Step):
             gdq = input_model_W.groupdq.copy()
 
             # Locate groups where that are flagged with UNDERSAMP
-            #  wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))  # (final)
-            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), 128))
+            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))
 
             if len(wh_undersamp[0]) > 0:
                 # Unflag groups flagged as both UNDERSAMP and DO_NOT_USE
-                #  gdq[wh_undersamp] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['UNDERSAMP'])  # (final)
-                gdq[wh_undersamp] -= 129  # hack
+                gdq[wh_undersamp] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['UNDERSAMP'])
 
                 # Flag SATURATED groups as DO_NOT_USE for later segment determination
                 where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
