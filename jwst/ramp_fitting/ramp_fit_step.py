@@ -5,6 +5,9 @@ import numpy as np
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting import utils
 
+from stcal.ramp_fitting.utils import LARGE_VARIANCE
+from stcal.ramp_fitting.utils import LARGE_VARIANCE_THRESHOLD
+
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -18,9 +21,6 @@ import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-LARGE_VARIANCE = 1.e8
-LARGE_VARIANCE_THRESHOLD = 0.001 * LARGE_VARIANCE
 
 
 __all__ = ["RampFitStep"]
