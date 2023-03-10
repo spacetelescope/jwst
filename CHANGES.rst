@@ -67,7 +67,7 @@ resample
 residual_fringe
 ---------------
 
-- Fix bug in Residual Fringe step handling of NaNs in input []
+- Fix bug in Residual Fringe step handling of NaNs in input [#7471]
 
 scripts
 -------

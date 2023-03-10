@@ -87,7 +87,7 @@ class ResidualFringeCorrection():
         # Set them to 0 for the residual fringe routine
         # They will be re-added at the end
         output_data = self.model.data.copy()
-        nanval_indx = np.where(np.isfinite(output_data) == False)
+        nanval_indx = np.where(~np.isfinite(output_data))
         output_data[nanval_indx] = 0
 
         # normalise the output_data to remove units
