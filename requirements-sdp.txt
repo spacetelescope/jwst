@@ -12,5 +12,5 @@
 #
 #     conda create -n sdp python -y
 #     conda activate sdp
-#     pip install -e .[test] "opencv-python>=4.6.0.66"
+#     pip install -e .[test,sdp] "opencv-python>=4.6.0.66"
 #     pip freeze | grep -v jwst >> requirements-sdp.txt
