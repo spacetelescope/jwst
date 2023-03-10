@@ -10,7 +10,7 @@ associations
 calwebb_spec2
 -------------
 
-Move straylight step before flat fielding step [#7486]
+Move straylight step before flat fielding step. [#7486]
 
 
 datamodels
