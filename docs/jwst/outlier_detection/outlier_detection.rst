@@ -24,7 +24,8 @@ Specifically, this routine performs the following operations:
     for resampling (if done) and for combining into a median image.
 
 * By default, resample all input images.
-  - The resampling step starts by computing an output WCS that is large enough
+
+  - The resampling step starts by computing an output WCS that is large enoug
     to encompass all the input images.
   - All images from the *same exposure* will get resampled onto this output
     WCS to create a mosaic of all the chips for that exposure.  This product
@@ -60,7 +61,7 @@ Specifically, this routine performs the following operations:
   - Resampled images will be written out to disk if the
     ``save_intermediate_results`` parameter is set to `True`
   - **If resampling is turned off** with the use of the ``resample_data`` parameter,
-    a copy of the input (as a ModelContainer)
+    a copy of the unrectified input images (as a ModelContainer)
     will be used for subsequent processing.
 
 * Create a median image from all grouped observation mosaics.
@@ -87,6 +88,7 @@ Specifically, this routine performs the following operations:
     each input image.
 
 * Perform statistical comparison between blotted image and original image to identify outliers.
+
   - This comparison uses the original input images, the blotted
     median image, and the derivative of the blotted image to
     create a cosmic ray mask for each input image.
