@@ -547,7 +547,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   // corner of the FOV for each wavelength
 
   nxy = nx * ny;
-  int wave_slice_dq[nxy];
+  int *wave_slice_dq;
+  if (mem_alloc_dq(nxy, &wave_slice_dq)) return 1;
+
   // Loop over the wavelength planes and set DQ plane 
   for (w = 0; w  < nz; w++) {
     
@@ -591,6 +593,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   } // end loop over wavelength
 
   *spaxel_dq = idqv;
+  free(wave_slice_dq);
 
   return 0;
 }
@@ -658,7 +661,9 @@ int dq_nirspec(int overlap_partial,
 				       c1_max, c2_max,
 				       match_slice);
 
-    int wave_slice_dq[nxy];
+    int *wave_slice_dq;
+    if (mem_alloc_dq(nxy, &wave_slice_dq)) return 1;
+
     for (j =0; j< nxy; j++){
       wave_slice_dq[j] = 0;
     }
@@ -701,6 +706,7 @@ int dq_nirspec(int overlap_partial,
 	idqv[in] = wave_slice_dq[ii];
       }
     }
+    free(wave_slice_dq);
   } // end of wavelength
   *spaxel_dq = idqv;
 
