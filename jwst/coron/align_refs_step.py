@@ -1,7 +1,6 @@
 """ Replace bad pixels and align psf image with target image."""
 
-from stcal.dqflags import interpret_bit_flags
-
+from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
