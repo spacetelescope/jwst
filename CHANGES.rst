@@ -126,6 +126,9 @@ tweakreg
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
 
+- Fixed a bug due to which alignment may be aborted due to corrections
+  being "too large" yet compatible with step parameters. [#7494]
+
 undersampling_correction
 ------------------------
 
