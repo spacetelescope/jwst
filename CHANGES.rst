@@ -24,8 +24,11 @@ other
 
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
+
 - Switch ``stcal.dqflags`` imports to ``stdatamodels.dqflags``. [#7475]
 
+- Fix memory leaks in packages that use C code: ``cube_build``,
+  ``wfss_contam``, and ``straylight``. [#7493]
 
 outlier_detection
 -----------------
@@ -54,7 +57,7 @@ pipeline
 
 - Update the calwebb_spec2 pipeline to move the MIRI MRS straylight step to before
   the flat-fielding step. [#7486]
-  
+
 - Update the calwebb_spec2 pipeline to make a deep copy of the current results before
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
