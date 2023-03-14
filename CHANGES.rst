@@ -25,6 +25,7 @@ other
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
 - Switch ``stcal.dqflags`` imports to ``stdatamodels.dqflags``. [#7475]
+- Fix failing ``check-security`` job in CI. [#7496]
 
 
 outlier_detection
