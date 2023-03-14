@@ -213,10 +213,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
         Hypercube of segment- and integration-specific values for the slope
         variance due to read noise only, 4-D float
     """
-    nint = groupdq.shape[0]
-    ngroups = groupdq.shape[1]
-    nrows = groupdq.shape[2]
-    ncols = groupdq.shape[3]
+    nint, ngroups, nrows, ncols = groupdq.shape
 
     imshape = (nrows, ncols)
     cubeshape = (ngroups,) + imshape
@@ -241,6 +238,8 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
             rn_sect = readnoise_2d[rlo:rhi, :]
             gain_sect = gain_2d[rlo:rhi, :]
 
+            # For each data section, calculate values of segment lengths and
+            #   quantities to calculate variances.
             den_r3, num_r3, segs_beg_3, max_seg_i = calc_segs(rn_sect, gdq_sect, group_time)
             max_seg = max(max_seg, max_seg_i)
             segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
@@ -456,7 +455,7 @@ class RampFitStep(Step):
             gdq = input_model_W.groupdq.copy()
 
             # Locate groups where that are flagged with UNDERSAMP
-            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.int32), dqflags.group['UNDERSAMP']))
+            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['UNDERSAMP']))
 
             if len(wh_undersamp[0]) > 0:
                 # Unflag groups flagged as both UNDERSAMP and DO_NOT_USE
