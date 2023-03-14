@@ -1,6 +1,11 @@
 1.9.7 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Fix ``WCS.bounding_box`` computation for MIRI MRS TSO observations. [#7492]
+
 datamodels
 ----------
 
