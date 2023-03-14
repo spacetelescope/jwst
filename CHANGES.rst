@@ -26,6 +26,13 @@ other
   instead of ``pkg_resources``. [#7457]
 - Switch ``stcal.dqflags`` imports to ``stdatamodels.dqflags``. [#7475]
 
+
+outlier_detection
+-----------------
+
+- Update the documentation describing the algorithm and the parameters
+  used for controlling the step.  [#7481]
+
 pathloss
 --------
 
