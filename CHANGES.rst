@@ -17,6 +17,11 @@ calwebb_detector1
 - Added the call to the undersampling_correction step to the ``calwebb_detector1``
   pipeline. [#7501]
 
+cube_build
+----------
+
+-  Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
+
 datamodels
 ----------
 
