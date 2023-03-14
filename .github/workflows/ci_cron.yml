@@ -3,7 +3,7 @@ name: Weekly cron
 on:
   schedule:
     # Weekly Monday 6AM build
-    - cron: "0 6 * * 1"
+    - cron: "0 0 * * 1"
   workflow_dispatch:
 
 jobs:
