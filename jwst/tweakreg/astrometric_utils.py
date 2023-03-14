@@ -17,6 +17,8 @@ if ASTROMETRIC_CAT_ENVVAR in os.environ:
 else:
     SERVICELOCATION = DEF_CAT_URL
 
+TIMEOUT = 30.0  # in seconds
+
 """
 
 Primary function for creating an astrometric reference catalog.
@@ -175,7 +177,7 @@ def get_catalog(ra, dec, sr=0.1, catalog='GSC241'):
 
     spec = spec_str.format(ra, dec, sr, fmt, catalog)
     service_url = '{}/{}?{}'.format(SERVICELOCATION, service_type, spec)
-    rawcat = requests.get(service_url, headers=headers)
+    rawcat = requests.get(service_url, headers=headers, timeout=TIMEOUT)
     r_contents = rawcat.content.decode()  # convert from bytes to a String
     rstr = r_contents.split('\r\n')
     # remove initial line describing the number of sources returned
