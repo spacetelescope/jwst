@@ -26,6 +26,7 @@ other
   instead of ``pkg_resources``. [#7457]
 
 - Switch ``stcal.dqflags`` imports to ``stdatamodels.dqflags``. [#7475]
+- Fix failing ``check-security`` job in CI. [#7496]
 
 - Fix memory leaks in packages that use C code: ``cube_build``,
   ``wfss_contam``, and ``straylight``. [#7493]
