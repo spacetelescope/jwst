@@ -254,7 +254,7 @@ class PixelReplacement:
             # Exclude regions with NON_SCIENCE flag
             dq_slice = np.where(
                 dq_slice & self.NON_SCIENCE,
-                512,
+                self.NON_SCIENCE,
                 dq_slice
             )
             # Find bad pixels in region containing valid data.
@@ -270,9 +270,7 @@ class PixelReplacement:
 
         log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
 
-        # check_output = np.zeros((profile_cut[1]-profile_cut[0], len(valid_profiles)))
         for i, ind in enumerate(profiles_to_replace):
-            # for i, ind in enumerate(valid_profiles):
 
             # Use sets for convenient finding of neighboring slices to use in profile creation
             adjacent_inds = set(range(ind - self.pars['n_adjacent_cols'], ind + self.pars['n_adjacent_cols'] + 1))
@@ -330,10 +328,6 @@ class PixelReplacement:
 
             model_replaced.data[self.custom_slice(dispaxis, ind)][range(*profile_cut)] = replaced_current
             model_replaced.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] = replaced_dq
-
-        # import matplotlib.pyplot as plt
-        # plt.imshow(check_output.T)
-        # plt.show()
 
         return model_replaced
 
