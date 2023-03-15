@@ -31,6 +31,8 @@ other
 - Fix memory leaks in packages that use C code: ``cube_build``,
   ``wfss_contam``, and ``straylight``. [#7493]
 
+- add `opencv-python` to hard dependencies for usage of snowball detection in the jump step in `stcal` [#7499]
+
 outlier_detection
 -----------------
 
