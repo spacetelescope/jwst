@@ -7,8 +7,6 @@ from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel
 
 from jwst.jump import JumpStep
 
-import cv2 as cv
-
 MAXIMUM_CORES = ['none', 'quarter', 'half', 'all']
 
 
