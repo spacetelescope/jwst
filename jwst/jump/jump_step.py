@@ -31,17 +31,22 @@ class JumpStep(Step):
         expand_factor = float(default=2.0) # The expansion factor for the enclosing circles or ellipses
         use_ellipses = boolean(default=False) # deprecated
         sat_required_snowball = boolean(default=True) # Require the center of snowballs to be saturated
-        min_sat_radius_extend = float(default=2.5) # The minimum radius of the saturated core to trigger the extension of the core.
+        min_sat_radius_extend = float(default=2.5) # The minimum radius of the saturated core to trigger the extension 
+          of the core.
         sat_expand = integer(default=2) Number of pixels to add to the radius of the saturated core of snowballs
         expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
         find_showers = boolean(default=False) Turn on shower flagging for MIRI
-        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a saturated core is not required
+        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a saturated core is not 
+           required
         extend_snr_threshold = float(default=1.2) The SNR minimum for detection of extended showers in MIRI
-        extend_min_area = integer(default=90) Minimum area of extended emission after convolution required for the detection of showers in MIRI
+        extend_min_area = integer(default=90) Minimum area of extended emission after convolution required for the 
+           detection of showers in MIRI
         extend_inner_radius = float(default=1) Inner radius of the Ring2DKernal used for convolution
         extend_outer_radius = float(default=2.6) Outer radius of the Ring2DKernal used for convolution
-        extend_ellipse_expand_ratio = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected extended emission
-        time_masked_after_shower = float(default=15) Number of seconds to flag groups as jump after a detected extended emission
+        extend_ellipse_expand_ratio = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected 
+           extended emission
+        time_masked_after_shower = float(default=15) Number of seconds to flag groups as jump after a detected extended
+            emission
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -110,7 +115,8 @@ class JumpStep(Step):
                                       sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
-                                      extend_min_area=self.extend_min_area, extend_inner_radius=self.extend_inner_radius,
+                                      extend_min_area=self.extend_min_area,
+                                      extend_inner_radius=self.extend_inner_radius,
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
                                       time_masked_after_shower=self.time_masked_after_shower)
