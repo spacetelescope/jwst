@@ -76,21 +76,3 @@ jobs:
           python-version: 3.11
         - linux: test-xdist-cov
           coverage: codecov
-  test_opencv:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
-    needs: [ crds ]
-    with:
-      setenv: |
-        CRDS_PATH: ${{ needs.crds.outputs.path }}
-        CRDS_SERVER_URL: ${{ needs.crds.outputs.server }}
-        CRDS_CLIENT_RETRY_COUNT: 3
-        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-      envs: |
-        - linux: test-opencv-xdist
-          python-version: 3.8
-        - linux: test-opencv-xdist
-          python-version: 3.9
-        - linux: test-opencv-xdist
-          python-version: 3.10
-        - linux: test-opencv-xdist
-          python-version: 3.11
