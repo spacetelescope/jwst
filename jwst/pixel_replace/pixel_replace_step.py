@@ -30,6 +30,7 @@ class PixelReplaceStep(Step):
     spec = """
         algorithm = option("fit_profile", "N/A", default="fit_profile") 
         n_adjacent_cols = integer(default=3)    # Number of adjacent columns to use in creation of profile
+        skip = boolean(default=True) # Step must be turned on by parameter reference or user
     """
 
     def process(self, input):
@@ -61,28 +62,19 @@ class PixelReplaceStep(Step):
                 self.log.debug('Input is a SlitModel.')
             # MIRI_LRS-FIXEDSLIT comes in ImageModel - any others?
             elif isinstance(input_model, datamodels.ImageModel):
-                self.log.debug(f'Input ImageModel is of exptype: {input_model.meta.exposure.type}')
+                self.log.debug('Input is an ImageModel.')
             elif isinstance(input_model, datamodels.IFUImageModel):
-                self.log.debug(f'Input is an IFUImageModel.')
-
+                self.log.debug('Input is an IFUImageModel.')
+            # SOSS & LRS-SLITLESS have CubeModel, along with IFU modes WIP
             elif isinstance(input_model, datamodels.CubeModel):
                 # It's a 3-D multi-integration model
-                self.log.debug('Input is a CubeModel for a multiple integration file')
-                '''
-                elif isinstance(input_model, datamodels.IFUCubeModel):
-                    self.log.debug('Input is an IFUCubeModel')
-                elif isinstance(input_model, datamodels.SlitModel):
-                    # NRS_BRIGHTOBJ and MIRI LRS fixed-slit (resampled) modes
-                    self.log.debug('Input is a SlitModel')
-                '''
-            # SOSS & LRS-SLITLESS have CubeModel, along with IFU modes WIP
+                self.log.debug('Input is a CubeModel for a multiple integration file.')
             else:
                 self.log.error(f'Input is of type {str(type(input_model))} for which')
-                self.log.error('pixel_replace does not have an algorithm.')
-                raise Exception
-                #self.log.error('pixel_replace will be skipped.')
-                #input_model.meta.cal_step.pixel_replace = 'SKIPPED'
-                #return input_model
+                self.log.error('pixel_replace does not have an algorithm.\n')
+                self.log.error('Pixel replacement will be skipped.')
+                input_model.meta.cal_step.pixel_replace = 'SKIPPED'
+                return input_model
 
             pars = {
                 'algorithm': self.algorithm,
