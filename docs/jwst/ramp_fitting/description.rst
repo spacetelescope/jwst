@@ -332,7 +332,7 @@ However, it is desired to have a readnoise variance that is similar to pixels
 unaffected by charge migration, so an additional type of variance will
 be calculated, in which the excluded groups mentioned above will be included.
 This additional, 'weighted', readnoise variance is used for weighting in the
-:ref:`resample_step <resample_step>` step later in the pipeline. The 'weighted'
+:ref:`resample <resample_step>` step later in the pipeline. The 'weighted'
 readnoise variance is written to the VAR_RNOISE extension of each of the 3
 output products.
 

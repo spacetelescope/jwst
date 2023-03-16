@@ -60,7 +60,7 @@ Specifically, this routine performs the following operations:
     resampling.
   - Resampled images will be written out to disk if the
     ``save_intermediate_results`` parameter is set to `True`
-  - **If resampling is turned off** with the use of the ``resample_data`` parameter,
+  - **If resampling is turned off** through the use of the ``resample_data`` parameter,
     a copy of the unrectified input images (as a ModelContainer)
     will be used for subsequent processing.
 
@@ -108,7 +108,7 @@ Specifically, this routine performs the following operations:
     mosaic.
   - Cosmic rays are flagged using the following rule:
 
-    .. math:: |image_input - image_blotted| > scale*image_deriv + SNR*noise
+    .. math:: | image\_input - image\_blotted | > scale*image\_deriv + SNR*noise
 
   - The ``scale`` is defined as the multiplicative factor applied to the
     derivative which is used to determine if the difference between the data

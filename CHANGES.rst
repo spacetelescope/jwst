@@ -11,6 +11,11 @@ datamodels
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
+documentation
+-------------
+
+- Fixed minor errors in the docs for EngDB, outlier_detection, and ramp fitting. [#7500]
+
 dq_init
 -------
 
