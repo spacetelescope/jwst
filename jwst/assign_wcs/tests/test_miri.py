@@ -11,7 +11,7 @@ from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
 
-from stdatamodels.jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel, CubeModel
 
 from jwst.assign_wcs import miri
 from jwst.assign_wcs import AssignWcsStep
@@ -58,6 +58,17 @@ def create_datamodel(hdul):
     wcsobj = wcs.WCS(pipeline)
     im.meta.wcs = wcsobj
     return im
+
+
+def create_datamodel_cube(hdul, data_shape):
+    data = np.zeros(data_shape)
+    hdul[1].data = data
+    cube = CubeModel(hdul)
+    ref = create_reference_files(cube)
+    pipeline = miri.create_pipeline(cube, ref)
+    wcsobj = wcs.WCS(pipeline)
+    cube.meta.wcs = wcsobj
+    return cube
 
 
 def create_reference_files(datamodel):
@@ -144,6 +155,13 @@ def test_miri_mrs_34C():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="LONG")
     im = create_datamodel(hdul)
     run_test(im)
+
+
+def test_mrs_tso_bounding_box():
+    # JP-3127
+    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
+    cube = create_datamodel_cube(hdul, data_shape=(3, 40, 50))
+    assert_allclose(cube.meta.wcs.bounding_box, ((-.5, 49.5), (-.5, 39.5)))
 
 
 # MRS test reference data
