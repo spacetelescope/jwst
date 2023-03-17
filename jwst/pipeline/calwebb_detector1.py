@@ -122,6 +122,9 @@ class Detector1Pipeline(Pipeline):
         # apply the jump step
         input = self.jump(input)
 
+        # apply the undersampling_correction step
+        input = self.undersampling_correction(input)
+
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
             self.save_model(input, 'ramp')
