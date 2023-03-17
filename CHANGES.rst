@@ -10,7 +10,7 @@ calwebb_detector1
 -----------------
 
 - Added the call to the undersampling_correction step to the ``calwebb_detector1``
-  pipeline. [#???]
+  pipeline. [#7501]
 
 datamodels
 ----------
