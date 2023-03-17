@@ -6,6 +6,12 @@ assign_wcs
 
 - Fix ``WCS.bounding_box`` computation for MIRI MRS TSO observations. [#7492]
 
+calwebb_detector1
+-----------------
+
+- Added the call to the undersampling_correction step to the ``calwebb_detector1``
+  pipeline. [#???]
+
 datamodels
 ----------
 
