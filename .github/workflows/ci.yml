@@ -82,9 +82,6 @@ jobs:
           - toxenv: test-oldestdeps-xdist-cov
             os: ubuntu-latest
             python-version: '3.8'
-          - toxenv: test-opencv-xdist
-            os: ubuntu-latest
-            python-version: '3.10'
     steps:
       - uses: actions/checkout@v3
         with:

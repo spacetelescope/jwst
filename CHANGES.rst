@@ -1,10 +1,20 @@
 1.9.7 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Fix ``WCS.bounding_box`` computation for MIRI MRS TSO observations. [#7492]
+
 datamodels
 ----------
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
+
+documentation
+-------------
+
+- Fixed minor errors in the docs for EngDB, outlier_detection, and ramp fitting. [#7500]
 
 dq_init
 -------
@@ -30,6 +40,8 @@ other
 
 - Fix memory leaks in packages that use C code: ``cube_build``,
   ``wfss_contam``, and ``straylight``. [#7493]
+
+- add `opencv-python` to hard dependencies for usage of snowball detection in the jump step in `stcal` [#7499]
 
 outlier_detection
 -----------------
@@ -69,6 +81,10 @@ ramp_fitting
 - Changed computations for ramps that have only one good group in the 0th
   group.  Ramps that have a non-zero groupgap should not use group_time, but
   (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
+
+- Update ramp fitting to calculate separate readnoise variance for processing
+  ``undersampling_correction`` output [#7484]
+
 
 resample
 --------
@@ -125,6 +141,9 @@ tweakreg
 - Added a ``utils.py`` module and a function (``adjust_wcs()``) to apply
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
+
+- Fixed a bug due to which alignment may be aborted due to corrections
+  being "too large" yet compatible with step parameters. [#7494]
 
 undersampling_correction
 ------------------------
