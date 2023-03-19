@@ -144,6 +144,8 @@ transforms
 tweakreg
 --------
 
+- Include option to use IRAFStarFinder instead of default DAOStarFinder in ``tweakreg_catalog`` [#7024]
+
 - Added a ``utils.py`` module and a function (``adjust_wcs()``) to apply
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
@@ -459,7 +461,6 @@ documentation
 
 - Clarify how to manage a local CRDS cache [#7350]
 
-
 1.8.3 (2022-11-11)
 ==================
 
@@ -467,12 +468,6 @@ documentation
 -------------
 
 - CRDS PUB deprecation notice and transition documentation [#7342]
-
-tweakreg
---------
-
-- Include option to use IRAFStarFinder instead of default DAOStarFinder in ``tweakreg_catalog`` [#7024]
-
 
 1.8.2 (2022-10-20)
 ==================
@@ -626,7 +621,6 @@ tweakreg
 
 - Added support for user-provided catalog files. [#7022]
 
-
 1.7.2 (2022-09-12)
 ==================
 
@@ -679,8 +673,6 @@ tweakreg
 
 - Bug fix: removed ``min_gaia`` which should have been removed in the
   PR 6987. [#7023]
-
-- Include option to use IRAFStarFinder instead of default DAOStarFinder in ``tweakreg_catalog`` [#7024]
 
 wfss_contam
 -----------

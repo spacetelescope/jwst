@@ -22,9 +22,8 @@ When ``meta.tweakreg_catalog`` attribute of input data models is `None` or
 an empty string, then ``tweakreg`` step will attempt to detect sources in the
 input images. By default, stars are detected in the image using the Photutils
 "daofind" function (although this can be changed to Photutils
-`IRAFStarFinder`_) Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
+`IRAFStarFinder`_). Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
-. Photutils.daofind is an implementation of the
 <http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
