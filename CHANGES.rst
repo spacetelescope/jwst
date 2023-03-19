@@ -162,6 +162,12 @@ set_telescope_pointing
 - Fill values of ``TARG_RA`` and ``TARG_DEC`` with ``RA_REF`` and ``DEC_REF``
   if target location is not provided, e.g. for pure parallel observations [#7512]
 
+skymatch
+--------
+
+- Added an ``apply_sky`` parameter, to switch between using relative or absolute
+  sky values in match overlaps. [#7473]
+
 straylight
 ----------
 
@@ -178,12 +184,6 @@ scripts
   instead of ``pkg_resources``. [#7457]
 
 - Offload ``minimum_deps`` script to ``minimum_dependencies`` package [#7463]
-
-skymatch
---------
-
-- Added an ``apply_sky`` parameter, to switch between using relative or absolute
-  sky values in match overlaps.
 
 transforms
 ----------
