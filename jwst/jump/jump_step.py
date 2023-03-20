@@ -35,13 +35,13 @@ class JumpStep(Step):
         sat_expand = integer(default=2) Number of pixels to add to the radius of the saturated core of snowballs
         expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
         find_showers = boolean(default=False) Turn on shower flagging for MIRI
-        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a saturated core is not required
+        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a sat core is not required
         extend_snr_threshold = float(default=1.2) The SNR minimum for detection of extended showers in MIRI
-        extend_min_area = integer(default=90) Minimum area of extended emission after convolution required for the detection of showers in MIRI
+        extend_min_area = integer(default=90) Min area of emission after convolution for the detection of showers
         extend_inner_radius = float(default=1) Inner radius of the Ring2DKernal used for convolution
         extend_outer_radius = float(default=2.6) Outer radius of the Ring2DKernal used for convolution
-        extend_ellipse_expand_ratio = float(default=1.1) Amount to expand the radius of the ellipe fit to the detected extended emission
-        time_masked_after_shower = float(default=15) Number of seconds to flag groups as jump after a detected extended emission
+        extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
+        time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
     """
 
     reference_file_types = ['gain', 'readnoise']
