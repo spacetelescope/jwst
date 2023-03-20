@@ -78,7 +78,6 @@ bc0.pip_reqs_files = ['requirements-dev.txt']
 bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
-    "pip install git+https://github.com/spacetelescope/stdatamodels.git@master git+https://github.com/spacetelescope/stpipe.git@master git+https://github.com/spacetelescope/stcal.git@main",
     "pip install pytest-xdist",
     "pip freeze",
 ]
@@ -96,10 +95,10 @@ bc0.test_configs = [data_config]
 bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-unstable-deps'
+bc0.pip_reqs_files = ['requirements-dev.txt']
 bc1.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
-    "pip install git+https://github.com/spacetelescope/stdatamodels.git@master git+https://github.com/spacetelescope/stpipe.git@master git+https://github.com/spacetelescope/stcal.git@main",
     "pip install pytest-xdist",
     "pip freeze",
 ]
