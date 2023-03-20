@@ -21,7 +21,7 @@ class PixelReplacement:
 
     # Shortcuts for DQ Flags
     DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
-    REPLACED = datamodels.dqflags.pixel['RESERVED_4']
+    REPLACED = datamodels.dqflags.pixel['LOW_QE']
     NON_SCIENCE = datamodels.dqflags.pixel['NON_SCIENCE']
 
     # Shortcuts for dispersion direction for ease of reading
