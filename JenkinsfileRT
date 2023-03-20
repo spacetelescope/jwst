@@ -100,9 +100,19 @@ bc0.failedFailureThresh = 0
 bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-stable-deps'
-bc1.build_cmds = ["pip install -e ."]
+bc1.build_cmds = [
+    "pip install certifi -U --force-reinstall",
+    "pip install -e .[test,sdp] --no-cache-dir",
+    "pip install git+https://github.com/spacetelescope/stdatamodels.git@master git+https://github.com/spacetelescope/stpipe.git@master git+https://github.com/spacetelescope/stcal.git@main",
+    "pip install pytest-xdist",
+    "pip freeze",
+]
 bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
-bc1.test_cmds = []
+bc1.test_cmds = [
+    "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
+    --env=${artifactoryenv} ${pytest_args}",
+]
 bc1.test_configs = []
 
 utils.run([jobconfig, bc0, bc1])
