@@ -281,7 +281,6 @@ def workover_filter(process_list, work_over):
             result.work_over = ListCategory.BOTH
         else:
             result = None
-    else:
-        if work_over not in [ListCategory.RULES, ListCategory.BOTH]:
-            result = None
+    elif work_over not in [ListCategory.RULES, ListCategory.BOTH]:
+        result = None
     return result
