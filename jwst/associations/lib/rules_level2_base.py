@@ -723,14 +723,18 @@ class Constraint_Base(Constraint):
         ])
 
 
-class Constraint_Background(SimpleConstraint):
+class Constraint_Background(Constraint):
     """Select backgrounds"""
 
-    def __init__(self, association):
+    def __init__(self):
         super(Constraint_Background, self).__init__(
-            value='background',
-            test=lambda value, item: re.match(value, association.get_exposure_type(item)),
-            force_unique=False,
+            [
+                DMSAttrConstraint(
+                    sources=['bkgdtarg'],
+                    force_unique=False
+                ),
+            ],
+            name='background',
             reprocess_on_match=True,
             work_over=ListCategory.EXISTING,
         )

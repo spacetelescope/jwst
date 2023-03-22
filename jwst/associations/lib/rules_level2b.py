@@ -78,7 +78,7 @@ class Asn_Lv2Image(
             ),
             Constraint(
                 [
-                    Constraint_Background(self),
+                    Constraint_Background(),
                     Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 ], reduce=Constraint.any
             ),
@@ -246,7 +246,7 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
-                    Constraint_Background(self),
+                    Constraint_Background(),
                     Constraint_Imprint(),
                     Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 ],
