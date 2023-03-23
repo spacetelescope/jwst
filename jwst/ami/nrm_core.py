@@ -65,11 +65,38 @@ class FringeFitter:
             self.npix = 'default'
 
     def fit_fringes_all(self, input_model):
-        """
+                """
         Short Summary
         ------------
         Extract the input data from input_model, and generate the best model to
         match the data (centering, scaling, rotation)
+        May allow parallelization by integration (later)
+
+        Parameters
+        ----------
+        input_model: instance Data Model
+            DM object for input
+
+        Returns
+        -------
+        output_model: Fringe model object
+            Fringe analysis data
+        """
+        self.scidata = self.instrument_data.read_data_model(input_model)
+        # ist for nrm objects for each slc
+        model_list = []
+
+        for slc in range(self.instrument_data.nwav):
+            model_list.append(fit_fringes_single_integration(slc))
+
+        # Now save final output model(s) of all slices, averaged slices
+
+    def fit_fringes_single_integration(self, slc):
+        """
+        Short Summary
+        ------------
+        Generate the best model to
+        match a single slice
 
         Parameters
         ----------
@@ -82,7 +109,6 @@ class FringeFitter:
             Fringe analysis data
         """
 
-        self.scidata = self.instrument_data.read_data_model(input_model)
 
         nrm = lg_model.NrmModel(mask=self.instrument_data.mask,
                                 pixscale=self.instrument_data.pscale_rad,
@@ -93,21 +119,17 @@ class FringeFitter:
         nrm.bandpass = self.instrument_data.wls[0]
 
         if self.npix == 'default':
-            self.npix = self.scidata[:, :].shape[0]
+            self.npix = self.scidata[slc,:, :].shape[0]
 
         # New or modified in LG++
         # center the image on its peak pixel:
-        # AS subtract 1 from "r" below  for testing >1/2 pixel offsets
-        # AG 03-2019 -- is above comment still relevant?
-
-        if self.instrument_data.arrname == "NIRC2_9NRM":
-            self.ctrd = utils.center_imagepeak(self.scidata[0, :, :],
-                                               r=(self.npix - 1) // 2 - 2, cntrimg=False)
-        elif self.instrument_data.arrname == "gpi_g10s40":
-            self.ctrd = utils.center_imagepeak(self.scidata[0, :, :],
-                                               r=(self.npix - 1) // 2 - 2, cntrimg=True)
-        else:
-            self.ctrd = utils.center_imagepeak(self.scidata[:, :])
+        # self.ctrd = utils.center_imagepeak(self.scidata[:, :])
+        peak0, peak1 = self.instrument_data.peak0, self.instrument_data.peak1
+        imsz = self.scidata.shape
+        sh = min((imsz[1]-peak0),(imsz[2]-peak1))
+        r = sh - 1 # half-size for cropping
+        self.ctrd = self.scidata[slc,int(peak0-r):int(peak0+r+1), int(peak1-r):int(peak1+r+1)]
+        self.dqslice = self.dqmask[slc,int(peak0-r):int(peak0+r+1), int(peak1-r):int(peak1+r+1)]
 
         nrm.reference = self.ctrd  # self. is the cropped image centered on the brightest pixel
         if self.psf_offset_ff is None:
@@ -123,12 +145,17 @@ class FringeFitter:
         else:
             nrm.psf_offset = self.psf_offset_ff  # user-provided psf_offsetoffsets from array center are here.
 
-        nrm.make_model(fov=self.ctrd.shape[0], bandpass=nrm.bandpass,
+        nrm.make_model(fov=self.ctrd.shape[0], 
+                       bandpass=nrm.bandpass,
                        over=self.oversample,
                        psf_offset=nrm.psf_offset,
                        pixscale=nrm.pixel)
 
-        nrm.fit_image(self.ctrd, modelin=nrm.model, psf_offset=nrm.psf_offset)
+        nrm.fit_image(self.ctrd, 
+                      modelin=nrm.model,
+                      psf_offset=nrm.psf_offset,
+                      dqm=self.dqslice,
+                      weighted=self.weighted)
 
         """
         Attributes now stored in nrm object:
@@ -144,19 +171,21 @@ class FringeFitter:
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
         """
-        nrm.create_modelpsf()
+        nrm.create_modelpsf() #?
 
-        output_model = datamodels.AmiLgModel(
-            fit_image=nrm.modelpsf,
-            resid_image=nrm.residual,
-            closure_amp_table=np.asarray(nrm.redundant_cas),
-            closure_phase_table=np.asarray(nrm.redundant_cps),
-            fringe_amp_table=np.asarray(nrm.fringeamp),
-            fringe_phase_table=np.asarray(nrm.fringephase),
-            pupil_phase_table=np.asarray(nrm.fringepistons),
-            solns_table=np.asarray(nrm.soln))
+        return nrm # to fit_fringes_all, where the output model will be created from list of nrm objects
 
-        return output_model
+        # output_model = datamodels.AmiLgModel(
+        #     fit_image=nrm.modelpsf,
+        #     resid_image=nrm.residual,
+        #     closure_amp_table=np.asarray(nrm.redundant_cas),
+        #     closure_phase_table=np.asarray(nrm.redundant_cps),
+        #     fringe_amp_table=np.asarray(nrm.fringeamp),
+        #     fringe_phase_table=np.asarray(nrm.fringephase),
+        #     pupil_phase_table=np.asarray(nrm.fringepistons),
+        #     solns_table=np.asarray(nrm.soln))
+
+        # return output_model
 
 
 class Calibrate:
