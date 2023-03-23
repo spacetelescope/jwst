@@ -22,6 +22,11 @@ class NIRISS:
                  chooseholes=None,
                  affine2d=None,
                  bandpass=None,
+                 usebp=True,
+                 firstfew=None,
+                 rotsearch_parameters=None,
+                 oversample=None,
+                 psf_offset=None,
                  **kwargs):
         """
         Short Summary
@@ -55,60 +60,31 @@ class NIRISS:
         self.chooseholes = chooseholes
         self.objname = objname
         self.filt = filt
+        self.throughput = bandpass
+        self.firstfew = firstfew
+        if firstfew is not None:
+            log.info(f'Analyzing only the first {firstfew:d} integrations')
 
-        # 12 waves in f430 - data analysis:
-        self.lam_bin = {"F277W": 50, "F380M": 20, "F430M": 40, "F480M": 30}
 
-        # use 150 for 3 waves ax f430m; nominal values
-        self.lam_c = {"F277W": 2.77e-6,  # central wavelength (SI)
-                      "F380M": 3.8e-6,
-                      "F430M": 4.28521033106325E-06,
-                      "F480M": 4.8e-6}
-        self.lam_w = {"F277W": 0.2, "F380M": 0.1, "F430M": 0.0436, "F480M": 0.08}  # fractional filter width
+        self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
+        ####### 
 
-        self.throughput = utils.tophatfilter(self.lam_c[self.filt], self.lam_w[self.filt], npoints=11)
-
-        # update nominal filter parameters with those of the filter read in and used in the analysis...
-        # Weighted mean wavelength in meters, etc, etc "central wavelength" for the filter:
-        from scipy.integrate import simps
-
-        thru_st = np.stack(self.throughput, axis=1)
-        thru_st_0 = thru_st[0, :]
-        thru_st_1 = thru_st[1, :]
-
-        num = (thru_st_0 * thru_st_1).sum()
-        den = thru_st[0, :].sum()
-        self.lam_c[self.filt] = num / den
-
-        area = simps(thru_st_0, thru_st_1)
-        ew = area / thru_st_0.max()  # equivalent width
-
-        beta = ew / self.lam_c[self.filt]  # fractional bandpass
-        self.lam_w[self.filt] = beta
-
-        if bandpass is not None:
-            bandpass = np.array(bandpass)  # type simplification
-            wt = bandpass[:, 0]
-            wl = bandpass[:, 1]
-            cw = (wl * wt).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
-            area = simps(wt, wl)
-            ew = area / wt.max()  # equivalent width
-            beta = ew / cw  # fractional bandpass
-            self.lam_c = {"F277W": cw, "F380M": cw, "F430M": cw, "F480M": cw, }
-            self.lam_w = {"F277W": beta, "F380M": beta, "F430M": beta, "F480M": beta}
-            self.throughput = bandpass
 
         self.wls = [self.throughput, ]
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
-        self.wavextension = ([self.lam_c[self.filt], ], [self.lam_w[self.filt], ])
+        self.wavextension = ([self.lam_c,], [self.lam_w,])
         self.nwav = 1
 
         # only one NRM on JWST:
-        self.telname = "NIRISS"
+        self.telname = "JWST"
         self.instrument = "NIRISS"
         self.arrname = "jwst_g7s6c"
         self.holeshape = "hex"
         self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=chooseholes, holeshape=self.holeshape)
+        pscale_deg = utils.degrees_per_pixel(input_model)
+        self.pscale_rad = np.deg2rad(pscale_deg)
+        dim = input_model.data.shape[-1] # 80 pixels
+
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
         # This will set a default Ideal or a measured rotation, for example,
@@ -117,8 +93,8 @@ class NIRISS:
         # yet to be determined... see comments in Affine class definition.
         if affine2d is None:
             self.affine2d = utils.Affine2d(mx=1.0, my=1.0,
-                                           sx=0.0, sy=0.0,
-                                           xo=0.0, yo=0.0, name="Ideal")
+                               sx=0.0, sy=0.0,
+                               xo=0.0, yo=0.0, name="Ideal")
         else:
             self.affine2d = affine2d
 
@@ -130,6 +106,7 @@ class NIRISS:
         # Gurus: tweak cvsupport with use...
         self.cvsupport_threshold = {"F277W": 0.02, "F380M": 0.02, "F430M": 0.02, "F480M": 0.02}
         self.threshold = self.cvsupport_threshold[filt]
+
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
         """
@@ -161,7 +138,7 @@ class NIRISS:
         """
         Short Summary
         -------------
-        Retrieve info from input data model
+        Retrieve info from input data model and store in NIRISS class
 
         Parameters
         ----------
@@ -175,19 +152,85 @@ class NIRISS:
         # The info4oif_dict will get pickled to disk when we write txt files of results.
         # That way we don't drag in objects like instrument_data into code that reads text results
         # and writes oifits files - a simple built-in dictionary is the only object used in this transfer.
-        self.telname = "JWST"
+ 
 
-        # To use ami_sim's eg 65.6 mas/pixel scale we hardcode it here.,,
-        pscalex_deg = 65.6 / (1000 * 60 * 60)
-        pscaley_deg = 65.6 / (1000 * 60 * 60)
+        # # Whatever we did set is averaged for isotropic pixel scale here
+        # self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
+        # self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
-        # Whatever we did set is averaged for isotropic pixel scale here
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
-        self.pscale_rad = utils.mas2rad(self.pscale_mas)
-        self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=self.chooseholes,
-                                         holeshape=self.holeshape)
+        # the following is done by updatewithheaderinfo in implaneia, 
+        # don't need to pickle a dict here though.
+        # all instrumentdata attributes will be available when oifits files written out?
+        scidata = input_model.data.copy()
+        bpdata = input_model.dq.copy()
+        # make dq mask again? for now
+        DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+        JUMP_DET = dqflags.pixel["JUMP_DET"]
+        dq_dnu = bpdata & DO_NOT_USE == DO_NOT_USE
+        dq_jump = bpdata & JUMP_DET == JUMP_DET
+        dqmask = dq_dnu | dq_jump
 
-        return input_model.data
+        pscale_deg = utils.degrees_per_pixel(input_model)
+        self.pscale_rad = np.deg2rad(pscale_deg)
+
+        self.pav3 = input_model.meta.pointing.pa_v3
+        self.vparity = input_model.meta.wcsinfo.vparity
+        self.v3iyang = input_model.meta.wcsinfo.v3yangle
+        self.parangh = input_model.meta.wcsinfo.roll_ref
+        self.ra = input_model.meta.target.ra
+        self.dec = input_model.meta.target.dec
+        self.crpix1 = input_model.meta.wcsinfo.crpix1
+        self.crpix2 = input_model.meta.wcsinfo.crpix2
+        self.pupil = input_model.meta.instrument.pupil
+
+        datestr = input_model.meta.visit.start_time.replace(' ','T')
+        self.date = datestr # is this the right start time?
+        self.year = datestr[:4]
+        self.month = datestr[5:7]
+        self.day = datestr[8:10]
+        effinttm = input_model.meta.exposure.effective_exposure_time
+        nints = input_model.meta.exposure.nints
+        # if 2d input, model has already been expanded to 3d, so check 0th dimension
+        if input_model.data.shape[0] == 1: 
+            self.itime = effinttm*nints # CHECK THIS
+        else:
+            self.itime = effinttm
+            if self.firstfew is not None:
+                if scidata.shape[0] > self.firstfew:
+                    scidata = scidata[:self.firstfew, :, :]
+                    dqmask = dqmask[:self.firstfew, :, :]
+            self.nwav = nints # update from 1 (number of slices)
+            [self.wls.append(self.wls[0]) for f in range(self.nwav-1)]
+
+        # Get integer-pixel position of target from siaf & header info
+        siaf = pysiaf.Siaf('NIRISS')
+        # select AMI aperture by name
+        xoffset, yoffset = input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
+        apername = input_model.meta.aperture.name
+        nis_ami = siaf[apername]
+        xtarg_detpx, ytarg_detpx = nis_ami.idl_to_sci(xoffset, yoffset) # decimal pixel position in subarray, 1 indexed?
+        self.peak0, self.peak1 = int(np.floor(xtarg_detpx)), int(np.floor(ytarg_detpx))
+
+        # do all the stuff with rotating centers, save as attributes instead of info4oif_dict
+        ctrs_sky = self.mast2sky()
+        oifctrs = np.zeros(self.mask.ctrs.shape)
+        oifctrs[:,0] = ctrs_sky[:,1].copy() * -1
+        oifctrs[:,1] = ctrs_sky[:,0].copy() * -1
+        self.ctrs_eqt = oifctrs
+        self.ctrs_inst = self.mask.ctrs
+        self.hdia = self.mask.hdia
+        self.nslices = self.nwav
+
+        # Trim refpix from all slices
+        scidata = scidata[:,4:, :]
+        dqmask = dqmask[:,4:, :]
+
+        self.rootfn = input_model.meta.filename.replace('.fits','')
+
+        
+
+        # all info needed to write out oifits should be stored in NIRISS object attributes
+        return scidata, dqmask
 
     def reset_nwav(self, nwav):
         """
@@ -202,3 +245,41 @@ class NIRISS:
         -------
         """
         self.nwav = nwav
+
+#####
+    def mast2sky(self):
+        """
+        Rotate hole center coordinates:
+            Clockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = -1
+            Counterclockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = 1
+        Hole center coords are in the V2, V3 plane in meters.
+        Return rotated coordinates to be put in info4oif_dict.
+        implane2oifits.ObservablesFromText uses these to calculate baselines.
+        """
+        pa = self.pav3
+        mask_ctrs = copy.deepcopy(self.mask.ctrs)
+        # rotate by an extra 90 degrees (RAC 9/21)
+        # these coords are just used to orient output in OIFITS files
+        # NOT used for the fringe fitting itself
+        mask_ctrs = utils.rotate2dccw(mask_ctrs,np.pi/2.)
+        vpar = self.vparity # Relative sense of rotation between Ideal xy and V2V3
+        v3iyang = self.v3i_yang
+        rot_ang = pa - v3iyang # subject to change!
+
+        if pa != 0.0:
+            # Using rotate2sccw, which rotates **vectors** CCW in a fixed coordinate system,
+            # so to rotate coord system CW instead of the vector, reverse sign of rotation angle.  Double-check comment
+            if vpar == -1:
+                # rotate clockwise  <rotate coords clockwise?>
+                ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
+                log.debug(f'Rotating mask hole centers clockwise by {rot_ang:.3f} degrees')
+            else:
+                # counterclockwise  <rotate coords counterclockwise?>
+                ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
+                log.debug(f'Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees')
+        else:
+            ctrs_rot = mask_ctrs
+        return ctrs_rot
+
+
+#####
