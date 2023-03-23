@@ -5,10 +5,7 @@ from . import matrix_dft
 import logging
 import numpy as np
 import numpy.fft as fft
-from scipy.integrate import simpson
-from astropy import units as u
-
-import synphot
+from scipy.integrate import simps
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -1232,84 +1229,137 @@ def img_median_replace(img_model, box_size):
 
     return img_model
 
-
-def get_filt_spec(throughput_model):
+def get_filt_spec(filt, verbose=False):
     """
-    Short Summary
-    ------------
-    Load filter throughput data into synphot spectrum object
-
-    Parameters
-    ----------
-    throughput_model: ThroughputModel
-        Datamodel containing normalized fractional throughput
-        data for one of the four AMI filters
-
-    Returns
-    -------
-    band: synphot Spectrum object
+    Load WebbPSF filter throughput into synphot spectrum object
+    filt: string, known NIRISS AMI filter name
+    Returns:
+        synphot Spectrum object
     """
-    thruput = throughput_model.filter_table
+    goodfilts = ["F277W", "F380M", "F430M", "F480M"]
+    # make uppercase
+    filt = filt.upper()
+    if filt not in goodfilts:
+        raise Exception("Filter name %s is not a known NIRISS AMI filter. Choose one of: %s" % (filt, tuple(goodfilts)))
+
+    webbpsf_path = os.getenv('WEBBPSF_PATH')
+    filterdir = os.path.join(webbpsf_path, 'NIRISS/filters/')
+    filtfile = os.path.join(filterdir, filt + '_throughput.fits')
+    if verbose: print("\n Using filter file:", filtfile)
+    thruput = fits.getdata(filtfile)
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
     tr_list = np.asarray([tup[1] for tup in thruput])
-    band = synphot.spectrum.SpectralElement(
-        synphot.models.Empirical1D, points=wl_list, lookup_table=tr_list, keep_neg=False
-    )
+    band = synphot.spectrum.SpectralElement(synphot.models.Empirical1D, points=wl_list,
+                                            lookup_table=tr_list, keep_neg=False)
     return band
 
-def get_flat_spec():
+def get_src_spec(sptype):
     """
-    Short Summary
-    ------------
-    Produce a synphot spectrum object with constant (unity) flux
-
-    Returns
-    -------
-    flatspec: synphot Spectrum object
+    Modified from poppy's spectrum_from_spectral_type
+    src: either valid source string (e.g. "A0V") or existing synphot Spectrum object
+    Defaults to A0V spectral type if input string not recognized.
+    Returns:
+        synphot Spectrum object
     """
-    flatspec = synphot.SourceSpectrum(synphot.models.ConstFlux1D, amplitude=1)
-    
-    return flatspec
+    # check if it's already a synphot spectrum
+    if isinstance(sptype, synphot.spectrum.SourceSpectrum):
+        print('Input is a synphot spectrum')
+        return sptype
+    else:
+        # phoenix model lookup table used in JWST ETCs
+        lookuptable = {
+            "O3V": (45000, 0.0, 4.0),
+            "O5V": (41000, 0.0, 4.5),
+            "O7V": (37000, 0.0, 4.0),
+            "O9V": (33000, 0.0, 4.0),
+            "B0V": (30000, 0.0, 4.0),
+            "B1V": (25000, 0.0, 4.0),
+            "B3V": (19000, 0.0, 4.0),
+            "B5V": (15000, 0.0, 4.0),
+            "B8V": (12000, 0.0, 4.0),
+            "A0V": (9500, 0.0, 4.0),
+            "A1V": (9250, 0.0, 4.0),
+            "A3V": (8250, 0.0, 4.0),
+            "A5V": (8250, 0.0, 4.0),
+            "F0V": (7250, 0.0, 4.0),
+            "F2V": (7000, 0.0, 4.0),
+            "F5V": (6500, 0.0, 4.0),
+            "F8V": (6250, 0.0, 4.5),
+            "G0V": (6000, 0.0, 4.5),
+            "G2V": (5750, 0.0, 4.5),
+            "G5V": (5750, 0.0, 4.5),
+            "G8V": (5500, 0.0, 4.5),
+            "K0V": (5250, 0.0, 4.5),
+            "K2V": (4750, 0.0, 4.5),
+            "K5V": (4250, 0.0, 4.5),
+            "K7V": (4000, 0.0, 4.5),
+            "M0V": (3750, 0.0, 4.5),
+            "M2V": (3500, 0.0, 4.5),
+            "M5V": (3500, 0.0, 5.0),
+            "B0III": (29000, 0.0, 3.5),
+            "B5III": (15000, 0.0, 3.5),
+            "G0III": (5750, 0.0, 3.0),
+            "G5III": (5250, 0.0, 2.5),
+            "K0III": (4750, 0.0, 2.0),
+            "K5III": (4000, 0.0, 1.5),
+            "M0III": (3750, 0.0, 1.5),
+            "O6I": (39000, 0.0, 4.5),
+            "O8I": (34000, 0.0, 4.0),
+            "B0I": (26000, 0.0, 3.0),
+            "B5I": (14000, 0.0, 2.5),
+            "A0I": (9750, 0.0, 2.0),
+            "A5I": (8500, 0.0, 2.0),
+            "F0I": (7750, 0.0, 2.0),
+            "F5I": (7000, 0.0, 1.5),
+            "G0I": (5500, 0.0, 1.5),
+            "G5I": (4750, 0.0, 1.0),
+            "K0I": (4500, 0.0, 1.0),
+            "K5I": (3750, 0.0, 0.5),
+            "M0I": (3750, 0.0, 0.0),
+            "M2I": (3500, 0.0, 0.0)}
+        try:
+            keys = lookuptable[sptype]
+        except KeyError:
+            print(
+                "\n WARNING!!! \n Input spectral type %s did not match any in the catalog. Defaulting to A0V." % sptype)
+            keys = lookuptable["A0V"]
+        try:
+            return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
+        except IOError:
+            errmsg = ("Could not find a match in catalog {0} for key {1}. Check that is a valid name in the " +
+                      "lookup table, and/or that synphot is installed properly.".format(catname, sptype))
+            raise LookupError(errmsg)
 
-
-def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
+def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, plot=False):
     """
-    Short Summary
-    ------------
     Get the observed spectrum through a filter.
     Largely copied from Poppy instrument.py
     Define nlambda bins of wavelengths, calculate effstim for each, normalize by effstim total.
     nlambda should be calculated so there are ~10 wavelengths per resolution element (19 should work)
-
-    Parameters
-    ----------
-    bandpass: synphot Spectrum
-        filter bandpass (from get_filt_spec)
-    srcspec: synphot Spectrum
-         source spectrum (from get_src_spec)
-    trim: float, None
-        if not None, trim bandpass to where throughput greater than trim
-    nlambda: integer
-        number of wavelengths across filter to return
-
-    Returns
-    -------
-    finalsrc: numpy array
-        Array of shape (nlambda,2) containing wavelengths, final throughputs
+    Inputs:
+        bandpass: synphot Spectrum (from get_filt_spec)
+        srcspec: synphot Spectrum (from get_src_spec)
+        trim: if not None, trim bandpass to where throughput greater than trim
+        nlambda: number of wavelengths across filter to return
+    Returns:
+        finalsrc: numpy array of shape (nlambda,2) containing wavelengths, final throughputs
 
     """
 
     wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset)
+    # print(len(wl_filt),len(th_filt))
 
     if trim:
-        log.debug("Trimming bandpass to above %.1e throughput" % trim)
+        if verbose: print("Trimming bandpass to above %.1e throughput" % trim)
         goodthru = np.where(np.asarray(th_filt) > trim)
         low_idx, high_idx = goodthru[0][0], goodthru[0][-1]
         wl_filt, th_filt = wl_filt[low_idx:high_idx], th_filt[low_idx:high_idx]
+        # print(len(wl_filt),len(th_filt))
     ptsin = len(wl_filt)
-    if nlambda is None:
-        nlambda = ptsin  # Don't bin throughput
+    if nlambda == None:
+        nlambda = ptsin # Don't bin throughput
     # get effstim for bins of wavelengths
+    # plt.plot(wl_filt,th_filt)
     minwave, maxwave = wl_filt.min(), wl_filt.max()  # trimmed or not
     wave_bin_edges = np.linspace(minwave, maxwave, nlambda + 1)
     wavesteps = (wave_bin_edges[:-1] + wave_bin_edges[1:]) / 2
@@ -1318,18 +1368,18 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     effstims = []
 
     binfac = ptsin // nlambda
-    log.debug(("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda)))
+    if verbose: print("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
     for wave in wavesteps:
-        log.debug(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
+        if verbose:
+            print(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
                   f"with width {deltawave.to(u.micron):.2f}")
         box = synphot.spectrum.SpectralElement(synphot.models.Box1D, amplitude=1, x_0=wave,
                                                width=deltawave) * bandpass
 
-        binset = np.linspace(wave - deltawave, wave + deltawave, 30)
+        binset = np.linspace(wave - deltawave, wave + deltawave,
+                             30)  
         binset = binset[binset >= 0]  # remove any negative values
-        result = synphot.observation.Observation(srcspec, box, binset=binset).effstim(
-            "count", area=area
-        )
+        result = synphot.observation.Observation(srcspec, box, binset=binset).effstim('count', area=area)
         effstims.append(result)
 
     effstims = u.Quantity(effstims)
@@ -1337,117 +1387,67 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     wave_m = wavesteps.to_value(u.m)  # convert to meters
     effstims = effstims.to_value()  # strip units
 
-    finalsrc = np.array(
-        (effstims, wave_m)
-    ).T  # this is the order expected by InstrumentData
+    if plot:
+        fig, ax = plt.subplots(figsize=(7, 5))
+        ax.plot(wave_m, effstims)
+        ax.set_xlabel(r"$\lambda$ [m]")
+        ax.set_ylabel("Throughput")
+        ax.set_title("Combined Binned Spectrum (filter and source)")
+        plt.show()
+
+    finalsrc = np.array((effstims,wave_m)).T # this is the order expected by InstrumentData
 
     return finalsrc
 
 
 def get_cw_beta(bandpass):
-    """
+    """ 
     Bandpass: array where the columns are weights, wavelengths
     Return weighted mean wavelength in meters, fractional bandpass
     """
-    wt = bandpass[:, 0]
-    wl = bandpass[:, 1]
-    cw = (
-        wl * wt
-    ).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
-    area = simpson(wt, x=wl)
-    ew = area / wt.max()  # equivalent width
-    beta = ew / cw  # fractional bandpass
+    wt = bandpass[:,0]
+    wl = bandpass[:,1]
+    cw = (wl*wt).sum()/wt.sum() # Weighted mean wavelength in meters "central wavelength"
+    area = simps(wt, wl)
+    ew = area / wt.max() # equivalent width
+    beta = ew/cw # fractional bandpass
     return cw, beta
 
-def handle_bandpass(bandpass, throughput_model):
+
+def cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
+    """ use the global header values explicitly, for clarity 
+        vec is 2d, units of pixels
+        cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
     """
-    Logic for determining what to do with the input bandpass.
-    If user-provided, return in format expected by code. If none,
-    fetch filter throughput and combine with flat spectrum to
-    produce appropriate array.
-
-    Parameters:
-    -----------
-    bandpass: Synphot spectrum or array, or None
-        User-defined bandpass to override filter/source
-    throughput_model: ThroughputModel
-        Datamodel containing filter throughput info.
-        Will not be used if bandpass is not None.
-
-    Returns:
-    --------
-    bandpass: array
-        Array of weights, wavelengths used to generate model
-    """
-    if bandpass is not None:
-        log.info(
-            "User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES"
-        )
-        # bandpass can be user-defined synphot object or appropriate array
-        if isinstance(bandpass, synphot.spectrum.SpectralElement):
-            log.info("User-defined synphot spectrum provided")
-            wl, wt = bandpass._get_arrays(bandpass.waveset)
-            bandpass = np.array((wt, wl)).T
-        else:
-            log.info("User-defined bandpass array provided")
-            bandpass = np.array(bandpass)
-
-    else:
-        # Default behavior: get the filter and source spectrum
-        log.info(f'Reading throughput model data for {throughput_model.meta.instrument.filter}.')
-        filt_spec = get_filt_spec(throughput_model)
-        log.info('Using flat spectrum model.')
-        flat_spec = get_flat_spec() 
-        nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
-        bandpass = combine_src_filt(
-            filt_spec,
-            flat_spec,
-            trim=0.01,
-            nlambda=nspecbin,
-        )
-
-    return bandpass
-
-
-def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
-    """use the global header values explicitly, for clarity
-    vec is 2d, units of pixels
-    cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
-    """
-    return np.array((cd11 * vec[0] + cd12 * vec[1], cd21 * vec[0] + cd22 * vec[1]))
+    return np.array((cd11*vec[0] + cd12*vec[1], cd21*vec[0] + cd22*vec[1]))
 
 
 def degrees_per_pixel(datamodel):
     """
-    Get pixel scale info from data model
+    Get pixel scale info from data model 
+    (instead of header as in ImPlaneia InstrumentData.NIRISS.degrees_per_pixel).
     If it fails to find the right keywords, use 0.0656 as/pixel
     Input: datamodel object
     Returns: pixel scale in degrees/pixel
     """
     wcsinfo = datamodel.meta.wcsinfo._instance
-    if (
-        "cd1_1" in wcsinfo
-        and "cd1_2" in wcsinfo
-        and "cd2_1" in wcsinfo
-        and "cd2_2" in wcsinfo
-    ):
+    if 'cd1_1' in wcsinfo and 'cd1_2' in wcsinfo and \
+        'cd2_1' in wcsinfo and 'cd2_2' in wcsinfo:
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2
         cd21 = datamodel.meta.wcsinfo.cd2_1
         cd22 = datamodel.meta.wcsinfo.cd2_2
         # Create unit vectors in detector pixel X and Y directions, units: detector pixels
-        dxpix = np.array((1.0, 0.0))  # axis 1 step
-        dypix = np.array((0.0, 1.0))  # axis 2 step
+        dxpix  =  np.array((1.0, 0.0)) # axis 1 step
+        dypix  =  np.array((0.0, 1.0)) # axis 2 step
         # transform pixel x and y steps to RA-tan, Dec-tan degrees
-        dxsky = _cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
-        dysky = _cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
-        log.debug("Used CD matrix for pixel scales")
+        dxsky = cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
+        dysky = cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
+        print("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
-    elif "cdelt1" in wcsinfo and "cdelt2" in wcsinfo:
+    elif 'cdelt1' in wcsinfo and 'cdelt2' in wcsinfo:
         return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
-        log.debug("Used CDELT[12] for pixel scales")
+        print("Used CDELT[12] for pixel scales")
     else:
-        log.warning(
-            "WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix"
-        )
-        return 65.6 / (60.0 * 60.0 * 1000), 65.6 / (60.0 * 60.0 * 1000)
+        print('InstrumentData.NIRISS: Warning: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix')
+        return 65.6/(60.0*60.0*1000), 65.6/(60.0*60.0*1000)
