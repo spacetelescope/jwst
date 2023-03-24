@@ -87,6 +87,11 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': True,
     },
+    'jw01288_c1005_mostilno12_pool': {
+        'args': ['-i', 'o003', 'c1001', 'c1005'],
+        'xfail': None,
+        'slow': True,
+    },
     'jw01290_20230304t140931_withids_pool': {
         'args': ['-i', 'o012', 'c1018'],
         'xfail': None,

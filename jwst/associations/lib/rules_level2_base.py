@@ -723,16 +723,16 @@ class Constraint_Base(Constraint):
         ])
 
 
-class Constraint_Background(SimpleConstraint):
+class Constraint_Background(DMSAttrConstraint):
     """Select backgrounds"""
 
-    def __init__(self, association):
+    def __init__(self):
         super(Constraint_Background, self).__init__(
-            value='background',
-            test=lambda value, item: re.match(value, association.get_exposure_type(item)),
+            sources=['bkgdtarg'],
             force_unique=False,
-            reprocess_on_match=True,
-            work_over=ListCategory.EXISTING,
+            name='background',
+            force_reprocess=ListCategory.EXISTING,
+            only_on_match=True,
         )
 
 
@@ -931,17 +931,21 @@ class Constraint_Image_Nonscience(Constraint):
         )
 
 
-class Constraint_Single_Science(SimpleConstraint):
+class Constraint_Single_Science(Constraint):
     """Allow only single science exposure
 
     Parameters
     ----------
     has_science_fn : func
-        Function to determine whether the association
-        has a science member already. No arguments are provided.
+        Function to determine whether the association has a science member already.
+        No arguments are provided
+
+    exposure_type_fn : func
+        Function to determine the association exposure type of the item.
+        Should take a single argument of item.
 
     sc_kwargs : dict
-        Keyword arguments to pass to the parent class `SimpleConstraint`
+        Keyword arguments to pass to the parent class `Constraint`
 
     Notes
     -----
@@ -951,11 +955,18 @@ class Constraint_Single_Science(SimpleConstraint):
     this constraint.
     """
 
-    def __init__(self, has_science_fn, **sc_kwargs):
+    def __init__(self, has_science_fn, exposure_type_fn, **sc_kwargs):
         super(Constraint_Single_Science, self).__init__(
-            name='single_science',
-            value=False,
-            sources=lambda item: has_science_fn(),
+            [
+                SimpleConstraint(
+                    value=True,
+                    sources=lambda item: exposure_type_fn(item) == 'science',
+                ),
+                SimpleConstraint(
+                    value=False,
+                    sources=lambda item: has_science_fn(),
+                    ),
+            ],
             **sc_kwargs
         )
 

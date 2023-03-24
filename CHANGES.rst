@@ -6,6 +6,11 @@ assign_wcs
 
 - Fix ``WCS.bounding_box`` computation for MIRI MRS TSO observations. [#7492]
 
+associations
+------------
+
+- Remove extra reprocessing of existing associations. [#7506]
+
 calwebb_detector1
 -----------------
 
