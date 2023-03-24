@@ -47,9 +47,6 @@ class SkyMatchStep(Step):
         subtract = boolean(default=False) # subtract computed sky from image data?
         apply_sky = boolean(default=None) # use relative or absolute sky values in overlaps? Defaults to not subtract
 
-        # Image's bounding polygon parameters:
-        stepsize = integer(default=None) # Max vertex separation
-
         # Sky statistics parameters:
         skystat = option('median', 'midpt', 'mean', 'mode', default='mode') # sky statistics
         dqbits = string(default='~DO_NOT_USE+NON_SCIENCE') # "good" DQ bits
@@ -197,7 +194,6 @@ class SkyMatchStep(Step):
             mask=dqmask,
             id=image_model.meta.filename,  # file name?
             skystat=self._skystat,
-            stepsize=self.stepsize,
             reduce_memory_usage=self._is_asn,
             meta={'image_model': input_image_model}
         )

@@ -11,10 +11,12 @@ computing intersections and statistics in the overlap regions.
 
 # STDLIB
 import abc
+import copy
 import tempfile
 
 # THIRD-PARTY
 import numpy as np
+from scipy.spatial import ConvexHull
 from spherical_geometry.polygon import SphericalPolygon
 
 # LOCAL
@@ -123,7 +125,7 @@ class SkyImage:
     """
 
     def __init__(self, image, wcs_fwd, wcs_inv, pix_area=1.0, convf=1.0,
-                 mask=None, id=None, skystat=None, stepsize=None, meta=None,
+                 mask=None, id=None, skystat=None, meta=None,
                  reduce_memory_usage=True):
         """ Initializes the SkyImage object.
 
@@ -173,11 +175,6 @@ class SkyImage:
             :py:class:`~jwst_pipeline.skymatch.skystatistics.SkyStats` object
             to perform sky statistics on image data.
 
-        stepsize : int, None, optional
-            Spacing between vertices of the image's bounding polygon. Default
-            value of `None` creates bounding polygons with four vertices
-            corresponding to the corners of the image.
-
         meta : dict, None, optional
             A dictionary of various items to be stored within the `SkyImage`
             object.
@@ -220,7 +217,7 @@ class SkyImage:
             self._poly_area = 0.0
 
         else:
-            self.calc_bounding_polygon(stepsize)
+            self.calc_bounding_polygon()
 
         # set sky statistics function (NOTE: it must return statistics and
         # the number of pixels used after clipping)
@@ -408,63 +405,55 @@ class SkyImage:
 
         pts1 = np.sort(list(self._polygon.points)[0], axis=0)
         pts2 = np.sort(list(other.points)[0], axis=0)
-        if np.allclose(pts1, pts2, rtol=0, atol=5e-9):
-            intersect_poly = self._polygon.copy()
+
+        # Because we use a convex hull, pts1 and pts2 don't
+        # necessarily have the same shape
+        if pts1.shape == pts2.shape:
+            if np.allclose(pts1, pts2, rtol=0, atol=5e-9):
+                intersect_poly = self._polygon.copy()
+            else:
+                intersect_poly = self._polygon.intersection(other)
         else:
             intersect_poly = self._polygon.intersection(other)
         return intersect_poly
 
-    def calc_bounding_polygon(self, stepsize=None):
-        """ Compute image's bounding polygon.
-
-        Parameters
-        ----------
-        stepsize : int, None, optional
-            Indicates the maximum separation between two adjacent vertices
-            of the bounding polygon along each side of the image. Corners
-            of the image are included automatically. If `stepsize` is `None`,
-            bounding polygon will contain only vertices of the image.
+    def calc_bounding_polygon(self):
+        """ Compute image's bounding polygon. Uses convex hull
 
         """
-        ny, nx = self.image_shape
 
-        if stepsize is None:
-            nintx = 2
-            ninty = 2
-        else:
-            nintx = max(2, int(np.ceil((nx + 1.0) / stepsize)))
-            ninty = max(2, int(np.ceil((ny + 1.0) / stepsize)))
+        # Find all science data within an image
 
-        xs = np.linspace(-0.5, nx - 0.5, nintx, dtype=float)
-        ys = np.linspace(-0.5, ny - 0.5, ninty, dtype=float)[1:-1]
-        nptx = xs.size
-        npty = ys.size
+        points_in_data = np.zeros_like(self.image)
+        points_in_data[np.isfinite(self.image)] = 1
 
-        npts = 2 * (nptx + npty)
+        if self._mask is not None:
+            points_in_data[self._mask.get_data() == 0] = 0
 
-        borderx = np.empty((npts + 1,), dtype=float)
-        bordery = np.empty((npts + 1,), dtype=float)
+        # Turn these into (x, y) coords
+        xx, yy = np.meshgrid(np.arange(points_in_data.shape[1] + 1) - 0.5,
+                             np.arange(points_in_data.shape[0] + 1) - 0.5)
 
-        # "bottom" points:
-        borderx[:nptx] = xs
-        bordery[:nptx] = -0.5
-        # "right"
-        sl = np.s_[nptx:nptx + npty]
-        borderx[sl] = nx - 0.5
-        bordery[sl] = ys
-        # "top"
-        sl = np.s_[nptx + npty:2 * nptx + npty]
-        borderx[sl] = xs[::-1]
-        bordery[sl] = ny - 0.5
-        # "left"
-        sl = np.s_[2 * nptx + npty:-1]
-        borderx[sl] = -0.5
-        bordery[sl] = ys[::-1]
+        # We need to hack this a bit since the box needs to go from 0.5
+        # to data.shape + 0.5. Just shift everything to the right and mark
+        # the data we care about
+        points_in_data_pad = np.zeros_like(xx)
+        points_in_data_pad[:-1, :-1] = copy.deepcopy(points_in_data)
+        points_in_data_pad[1:, :-1][points_in_data == 1] = 1
+        points_in_data_pad[:-1, 1:][points_in_data == 1] = 1
+        points_in_data_pad[1:, 1:][points_in_data == 1] = 1
 
-        # close polygon:
-        borderx[-1] = borderx[0]
-        bordery[-1] = bordery[0]
+        y = yy[points_in_data_pad == 1]
+        x = xx[points_in_data_pad == 1]
+        xy = np.c_[x, y]
 
+        hull = ConvexHull(xy)
+
+        borderx, bordery = xy[hull.vertices, 0], xy[hull.vertices, 1]
+
+        # Finally, close off the polygon
+        borderx = np.append(borderx, borderx[0])
+        bordery = np.append(bordery, bordery[0])
         ra, dec = self.wcs_fwd(borderx, bordery, with_bounding_box=False)
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
@@ -761,7 +750,6 @@ None, optional
             convf=self.convf,
             mask=None,
             id=self.id,
-            stepsize=None,
             meta=self.meta
         )
 
@@ -879,8 +867,14 @@ class SkyGroup:
 
         pts1 = np.sort(list(self._polygon.points)[0], axis=0)
         pts2 = np.sort(list(other.points)[0], axis=0)
-        if np.allclose(pts1, pts2, rtol=0, atol=1e-8):
-            intersect_poly = self._polygon.copy()
+
+        # Because we use a convex hull, pts1 and pts2 don't
+        # necessarily have the same shape
+        if pts1.shape == pts2.shape:
+            if np.allclose(pts1, pts2, rtol=0, atol=1e-8):
+                intersect_poly = self._polygon.copy()
+            else:
+                intersect_poly = self._polygon.intersection(other)
         else:
             intersect_poly = self._polygon.intersection(other)
         return intersect_poly

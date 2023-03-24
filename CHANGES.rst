@@ -166,7 +166,8 @@ skymatch
 --------
 
 - Added an ``apply_sky`` parameter, to switch between using relative or absolute
-  sky values in match overlaps. [#7473]
+  sky values in match overlaps. Also changes how bounding box is calculated for
+  SkyImage, to avoid large empty areas in MIRI observations [#7473]
 
 straylight
 ----------

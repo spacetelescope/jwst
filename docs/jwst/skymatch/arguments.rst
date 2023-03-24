@@ -29,13 +29,6 @@ The ``skymatch`` step uses the following optional arguments:
   'sky' value. Otherwise, will use the absolute values of the overlaps.
   Defaults to the opposite of ``subtract``
 
-**Image bounding polygon parameters:**
-
-``stepsize`` (int, default=None)
-  Spacing between vertices of the images bounding polygon. The default value of
-  `None` creates bounding polygons with four vertices corresponding to the corners
-  of the image.
-
 **Sky statistics parameters:**
 
 ``skystat`` (str, default='mode')
