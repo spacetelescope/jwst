@@ -1101,12 +1101,10 @@ class AsnMixin_Lv2Special:
         exposure_type
             Always what is defined as `default`
         """
+        self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
         if self.has_science():
-            if super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default) == 'imprint':
+            if self.original_exposure_type == 'imprint':
                 return 'imprint'
-        else:
-            self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
-
         return default
 
 
