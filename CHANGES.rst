@@ -96,7 +96,6 @@ ramp_fitting
 - Update ramp fitting to calculate separate readnoise variance for processing
   ``undersampling_correction`` output [#7484]
 
-
 resample
 --------
 
@@ -127,15 +126,16 @@ straylight
 
 - Fix bug with straylight zeroing out NaNs in input rate images, as these
   are now deliberately set as such [#7455]
-- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
 scripts
 -------
 
 - Added a script ``adjust_wcs.py`` to apply additional user-provided rotations
   and scale corrections to an imaging WCS of a calibrated image. [#7430]
+
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
+
 - Offload ``minimum_deps`` script to ``minimum_dependencies`` package [#7463]
 
 transforms
@@ -155,6 +155,9 @@ tweakreg
 
 - Fixed a bug due to which alignment may be aborted due to corrections
   being "too large" yet compatible with step parameters. [#7494]
+
+- Added a trap for failures in source detection, which now just skips the
+  step. [#7507]
 
 undersampling_correction
 ------------------------
