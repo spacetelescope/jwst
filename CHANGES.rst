@@ -18,7 +18,7 @@ calwebb_detector1
   pipeline. [#7501]
 
 - Added regression test for ``calwebb_detector1`` pipeline which now
-  includes ``undersampling_correction``. [#XXXX]
+  includes ``undersampling_correction``. [#7509]
   
 
 datamodels
