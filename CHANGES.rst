@@ -17,6 +17,10 @@ calwebb_detector1
 - Added the call to the undersampling_correction step to the ``calwebb_detector1``
   pipeline. [#7501]
 
+- Added regression test for ``calwebb_detector1`` pipeline which now
+  includes ``undersampling_correction``. [#XXXX]
+  
+
 datamodels
 ----------
 
