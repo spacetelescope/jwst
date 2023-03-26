@@ -28,7 +28,7 @@ documentation
 - Fixed minor errors in the docs for EngDB, outlier_detection, and ramp fitting. [#7500]
 
 - Update documentation for ``calwebb_detector1`` to include the undersampling_correction
-  step. [#????]
+  step. [#7510]
   
 dq_init
 -------
