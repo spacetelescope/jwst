@@ -35,7 +35,6 @@ class IFUCubeData():
 
     def __init__(self,
                  pipeline,
-                 input_filenames,
                  input_models,
                  output_name_base,
                  output_type,
@@ -47,10 +46,8 @@ class IFUCubeData():
                  **pars_cube):
         """ Class IFUCube holds the high level data for each IFU Cube
         """
-        self.new_code = 0
         self.input_models_this_cube = []  # list of files use to make cube working on
 
-        self.input_filenames = input_filenames
         self.pipeline = pipeline
 
         self.input_models = input_models  # needed when building single mode IFU cubes
@@ -80,7 +77,9 @@ class IFUCubeData():
         self.weighting = pars_cube.get('weighting')
         self.weight_power = pars_cube.get('weight_power')
         self.skip_dqflagging = pars_cube.get('skip_dqflagging')
+        self.suffix = pars_cube.get('suffix')
 
+        print('suffix in ifu_cube', self.suffix) 
         self.num_bands = 0
         self.output_name = ''
 
@@ -163,7 +162,7 @@ class IFUCubeData():
         """ Define the base output name
         """
         if self.pipeline == 2:
-            newname = self.output_name_base + '_s3d.fits'
+            newname = self.output_name_base + self.suffix + '.fits'
         else:
             if self.instrument == 'MIRI':
 
@@ -198,13 +197,13 @@ class IFUCubeData():
                     b_name = b_name + subchannels[i]
                 b_name = b_name.lower()
                 newname = self.output_name_base + ch_name + '-' + b_name + \
-                    '_s3d.fits'
+                     '_' + self.suffix + '.fits'
                 if self.coord_system == 'internal_cal':
                     newname = self.output_name_base + ch_name + '-' + b_name + \
-                        '_internal_s3d.fits'
+                        '_internal_'+ self.suffix +'.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name + '-' + b_name + \
-                        '_single_s3d.fits'
+                        '_single_'+self.suffix +'.fits'
             # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
 
@@ -221,11 +220,11 @@ class IFUCubeData():
                     if i < self.num_bands - 1:
                         fg_name = fg_name + '-'
                 fg_name = fg_name.lower()
-                newname = self.output_name_base + fg_name + '_s3d.fits'
+                newname = self.output_name_base + fg_name + '_' + self.suffix + '.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name + '_single_s3d.fits'
+                    newname = self.output_name_base + fg_name + '_single_' + self.suffix +'.fits'
                 if self.coord_system == 'internal_cal':
-                    newname = self.output_name_base + fg_name + '_internal_s3d.fits'
+                    newname = self.output_name_base + fg_name + '_internal_'+ self.suffix + '.fits'
         # ______________________________________________________________________________
         if self.output_type != 'single':
             log.info(f'Output Name: {newname}')
@@ -559,16 +558,20 @@ class IFUCubeData():
         # and map the detector pixels to the cube spaxel
 
         number_bands = len(self.list_par1)
-
+        k = 0 
         for ib in range(number_bands):
             this_par1 = self.list_par1[ib]
             this_par2 = self.list_par2[ib]
-            nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
+            #print(self.master_table.FileMap[self.instrument][this_par1][this_par2]._save_open)
+            #print(self.master_table.FileMap[self.instrument][this_par1][this_par2]._models)
+            
+            for input in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
             # ________________________________________________________________________________
             # loop over the files that cover the spectral range the cube is for
-            for k in range(nfiles):
-                input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-                self.input_models_this_cube.append(input_model)
+
+                print('input model at start of build_ifu',input)
+                input_model = datamodels.open(input)
+                self.input_models_this_cube.append(input_model.copy())
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
                 if ib == 0 and k == 0:
@@ -729,9 +732,13 @@ class IFUCubeData():
                             self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
                             self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
                             result = None
+                k = k + 1
+                input_model.close()
+                del input_model
             # _______________________________________________________________________
             # done looping over files
 
+            
         self.find_spaxel_flux()
         self.set_final_dq_flags()
 
@@ -1255,7 +1262,9 @@ class IFUCubeData():
                 lmin = 0.0
                 lmax = 0.0
 
-                input_model = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+                input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+                print('input_file',input_file)
+                input_model = datamodels.open(input_file)
 
                 # Find the footprint of the image
                 spectral_found = hasattr(input_model.meta.wcsinfo, 'spectral_region')
