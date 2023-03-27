@@ -87,7 +87,6 @@ class DataTypes():
             elif isinstance(input_models, ModelContainer):
                 print('in data_types',input_models._save_open)
                 print('in data types',input_models._models)
-                print(input_models)
                 self.output_name = 'Temp'
                 self.input_models = input_models
                 if not single:  # find the name of the output file from the association
