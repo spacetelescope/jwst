@@ -170,25 +170,14 @@ class TweakRegStep(Step):
 
             else:
                 # source finding
-                try:
-                    catalog = make_tweakreg_catalog(
-                        image_model, self.kernel_fwhm, self.snr_threshold,
-                        sharplo=self.sharplo, sharphi=self.sharphi,
-                        roundlo=self.roundlo, roundhi=self.roundhi,
-                        brightest=self.brightest, peakmax=self.peakmax,
-                        bkg_boxsize=self.bkg_boxsize
-                    )
-                    new_cat = True
-
-                except ValueError as e:
-                    # something went wrong; skip the step
-                    msg = e.args[0]
-                    self.log.warning(msg)
-                    self.log.warning("Nothing to do. Skipping tweakreg step.")
-                    for model in images:
-                        model.meta.cal_step.tweakreg = "SKIPPED"
-                        self.skip = True
-                    return images
+                catalog = make_tweakreg_catalog(
+                    image_model, self.kernel_fwhm, self.snr_threshold,
+                    sharplo=self.sharplo, sharphi=self.sharphi,
+                    roundlo=self.roundlo, roundhi=self.roundhi,
+                    brightest=self.brightest, peakmax=self.peakmax,
+                    bkg_boxsize=self.bkg_boxsize
+                )
+                new_cat = True
 
             for axis in ['x', 'y']:
                 if axis not in catalog.colnames:
