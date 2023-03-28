@@ -11,11 +11,17 @@ associations
 
 - Remove extra reprocessing of existing associations. [#7506]
 
+- Treat PSF exposures as science for Level 2 association processing. [#7508]
+
 calwebb_detector1
 -----------------
 
 - Added the call to the undersampling_correction step to the ``calwebb_detector1``
   pipeline. [#7501]
+
+- Added regression test for ``calwebb_detector1`` pipeline which now
+  includes ``undersampling_correction``. [#7509]
+  
 
 datamodels
 ----------
@@ -27,6 +33,9 @@ documentation
 
 - Fixed minor errors in the docs for EngDB, outlier_detection, and ramp fitting. [#7500]
 
+- Update documentation for ``calwebb_detector1`` to include the undersampling_correction
+  step. [#7510]
+  
 dq_init
 -------
 

@@ -119,6 +119,31 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
 
+    def get_exposure_type(self, item, default='science'):
+        """General Level 2 override of exposure type definition
+
+        The exposure type definition is overridden from the default
+        for the following cases:
+
+        - 'psf' -> 'science'
+
+        Parameters
+        ----------
+        item : dict
+            The pool entry to determine the exposure type of
+        default : str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+        Returns
+        -------
+        exposure_type
+            Always what is defined as `default`
+        """
+        self.original_exposure_type = super(DMSLevel2bBase, self).get_exposure_type(item, default=default)
+        if self.original_exposure_type == 'psf':
+            return default
+        return self.original_exposure_type
+
     def members_by_type(self, member_type):
         """Get list of members by their exposure type"""
         member_type = member_type.lower()
@@ -1101,12 +1126,10 @@ class AsnMixin_Lv2Special:
         exposure_type
             Always what is defined as `default`
         """
+        self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
         if self.has_science():
-            if super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default) == 'imprint':
+            if self.original_exposure_type == 'imprint':
                 return 'imprint'
-        else:
-            self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
-
         return default
 
 
