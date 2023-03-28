@@ -165,8 +165,8 @@ tweakreg
 - Fixed a bug due to which alignment may be aborted due to corrections
   being "too large" yet compatible with step parameters. [#7494]
 
-- Added a trap for failures in source detection, which now just skips the
-  step. [#7507]
+- Added a trap for failures in source catalog construction, which now returns
+  an empty catalog for the image on which the error occurred. [#7507]
 
 undersampling_correction
 ------------------------
