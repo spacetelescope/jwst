@@ -11,6 +11,8 @@ associations
 
 - Remove extra reprocessing of existing associations. [#7506]
 
+- Treat PSF exposures as science for Level 2 association processing. [#7508]
+
 calwebb_detector1
 -----------------
 
