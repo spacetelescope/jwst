@@ -406,7 +406,6 @@ class TweakRegStep(Step):
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
             if num_ref < self.abs_minobj:
-                # Raise Exception here to avoid rest of code in this try block
                 self.log.warning(
                     f"Not enough sources ({num_ref}) in the reference catalog "
                     "for the single-group alignment step to perform a fit. "
@@ -456,7 +455,8 @@ class TweakRegStep(Step):
             image_model.meta.cal_step.tweakreg = 'COMPLETE'
 
             # retrieve fit status and update wcs if fit is successful:
-            if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
+            if ('fit_info' in imcat.meta and
+                    'SUCCESS' in imcat.meta['fit_info']['status']):
 
                 # Update/create the WCS .name attribute with information
                 # on this astrometric fit as the only record that it was
