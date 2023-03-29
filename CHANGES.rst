@@ -49,6 +49,8 @@ extract_1d
   precedence is given for command line override, reference file settings, and
   internal decisions of the appropriate setting (in that order). [#7466]
 
+- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
+
 other
 -----
 
