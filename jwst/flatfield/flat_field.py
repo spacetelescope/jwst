@@ -1910,7 +1910,7 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     flat_err_2d = np.zeros_like(slit.err)
 
     # pixels with respect to the original image
-    ysize, xsize = slit.data.shape
+    ysize, xsize = slit.data.shape[-2:]
     xstart = slit.xstart - 1 + subarray.xstart - 1
     ystart = slit.ystart - 1 + subarray.ystart - 1
     xstop = xstart + xsize

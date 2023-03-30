@@ -64,6 +64,7 @@ extract_1d
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
+
 jump
 ----
 

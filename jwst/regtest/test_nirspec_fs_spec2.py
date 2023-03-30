@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import warnings
 
 from astropy.io.fits.diff import FITSDiff
 import numpy as np
@@ -33,7 +34,7 @@ asn_memberdict = {
 # ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
 
 
-@pytest.fixture(scope="module", params=file_roots)# ids=ids)
+@pytest.fixture(scope="module", params=file_roots)  # ids=ids)
 def run_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:
@@ -135,3 +136,27 @@ def test_pathloss_source_type(rtdata):
             if not np.allclose(slit.data, slit.pathloss_uniform, equal_nan=True):
                 bad_slits.append(idx)
     assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'
+
+
+def test_short_calwebb_spec2_rateints(rtdata_module):
+    """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure
+       only up to and including the flat-field step. A _rateints input currently
+       can not be processed by the resample-spec step,  This is a test that the
+       flat-field step does not fail processing this multi-integration input.
+    """
+    rtdata = rtdata_module
+
+    rtdata.get_data("nirspec/fs/jw01128004001_03102_00001_nrs1_new_rateints.fits")
+
+    # Run the begining of the spec2 pipeline on a (3D) _rateints file
+    args = ["calwebb_spec2", rtdata.input,
+            "--steps.pathloss.skip=True",
+            "--steps.photom.skip=True",
+            "--steps.resample_spec.skip=True",
+            "--steps.extract_1d.skip=True"
+            ]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "overflow encountered in divide")
+        warnings.filterwarnings("ignore", "invalid value encountered in multiply")
+        Step.from_cmdline(args)

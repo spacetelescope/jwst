@@ -243,8 +243,13 @@ The input to the ``Spec2Pipeline`` pipeline is a countrate exposure, in the form
 of either "_rate" or "_rateints" data. A single input file can be processed or an
 ASN file listing multiple inputs can be used, in which case the processing steps
 will be applied to each input exposure, one at a time.
-If "_rateints" products are used as input, each step applies its algorithm to each
-integration in the exposure, where appropriate.
+If "_rateints" products are used as input, for modes other than NIRSpec Fixed Slit,
+each step applies its algorithm to each integration in the exposure, where appropriate.
+For the NIRSpec Fixed Slit mode, although the :ref:`flat_field <flat_field_step>`
+will accept "_rateints" products as input, the ``calwebb_spec2`` pipeline will currently
+fail at the :ref:`resample_spec <resample_step>` step which does not support
+multiple integration input products.  In the future, the :ref:`resample_spec <resample_step>`
+step will be modified to be skipped if its input is a "_rateints" product. 
 
 Note that the steps :ref:`background <background_step>` and :ref:`imprint <imprint_step>`
 can only be executed when the pipeline is given an ASN file as input, because they rely on
