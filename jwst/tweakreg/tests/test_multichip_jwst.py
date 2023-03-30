@@ -392,14 +392,16 @@ def test_multichip_alignment_step(monkeypatch):
     step = tweakreg_step.TweakRegStep()
     step.fitgeometry = 'general'
     step.nclip = 0
-    # Increase matching tolerance to pass 'fit_quality_is_good' test.
+    # Increase matching tolerance to pass '_is_wcs_correction_small' test.
     # This test would detect large corrections and therefore
     # would flag the quality of the fit as "bad" and therefore, it will not
-    # apply computed corrections ('fit_quality_is_good' test was designed by
+    # apply computed corrections ('_is_wcs_correction_small' test was designed by
     # Warren for evaluating "quality of fit" for HAP).
-    step.tolerance = 2
-    # Alternatively, disable this 'fit_quality_is_good' test:
-    # step.fit_quality_is_good = lambda x, y: True
+    step.tolerance = 0.1
+    step.use2dhist = True
+    step.searchrad = 20
+    # Alternatively, disable this '_is_wcs_correction_small' test:
+    # step._is_wcs_correction_small = lambda x, y: True
 
     mr, m1, m2 = step.process(mc)
 

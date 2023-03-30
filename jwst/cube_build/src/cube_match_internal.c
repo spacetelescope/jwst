@@ -306,7 +306,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
     spaxel_iflux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
     if (!spaxel_iflux_arr) goto fail;
 
-    result = Py_BuildValue("(OOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
+    result = Py_BuildValue("(NNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
 			   spaxel_iflux_arr);
 
     goto cleanup;
@@ -360,7 +360,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
     PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
     PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
 
-    result = Py_BuildValue("(OOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
+    result = Py_BuildValue("(NNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr,
 			   spaxel_iflux_arr);
 
     goto cleanup;

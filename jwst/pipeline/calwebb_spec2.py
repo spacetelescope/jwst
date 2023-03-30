@@ -513,8 +513,8 @@ class Spec2Pipeline(Pipeline):
     def _process_common(self, data):
         """Common spectral processing"""
         calibrated = self.srctype(data)
-        calibrated = self.flat_field(calibrated)
         calibrated = self.straylight(calibrated)
+        calibrated = self.flat_field(calibrated)
         calibrated = self.fringe(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)

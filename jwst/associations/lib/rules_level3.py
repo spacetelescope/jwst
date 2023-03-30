@@ -223,14 +223,13 @@ class Asn_Lv3Image(AsnMixin_Science):
                 required=False
             ),
             Constraint(
-                [DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value='T',
-                )], reduce=Constraint.notany
-            ),
-            Constraint(
-                [Constraint_TSO()],
+                [
+                    DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                    ),
+                    Constraint_TSO()
+                ],
                 reduce=Constraint.notany
             )
         ])
@@ -269,12 +268,9 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
                 value='((?!wfsc).)*',
                 required=False
             ),
-            Constraint(
-                [DMSAttrConstraint(
+            DMSAttrConstraint(
                 name='bkgdtarg',
                 sources=['bkgdtarg'],
-                value='T',
-                )],
             ),
             Constraint(
                 [Constraint_TSO()],

@@ -13,6 +13,7 @@ from jwst.associations import (
     generate,
 )
 from jwst.associations import config
+from jwst.associations.exceptions import AssociationError
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.constraint import (
     ConstraintTrue,
@@ -364,7 +365,12 @@ class Main():
             return
 
         for asn in self.associations:
-            (fname, serialized) = asn.dump(format=self.parsed.format)
+            try:
+                (fname, serialized) = asn.dump(format=self.parsed.format)
+            except AssociationError as exception:
+                logger.warning('Cannot serialize association %s', asn)
+                logger.warning('Reason:', exc_info=exception)
+                continue
             with open(os.path.join(self.parsed.path, fname), 'w') as f:
                 f.write(serialized)
 

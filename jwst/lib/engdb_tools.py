@@ -4,7 +4,7 @@ The engineering mnemonics are provided by multiple services, all of which requir
 
 For non-operational use, the providing service is through the MAST AUI website
 
-    https://mast.stsci.edu
+    https://mast.stsci.edu/portal/Mashup/Clients/jwstedb/jwstedb.html
 
 Authorization can be requested through
 

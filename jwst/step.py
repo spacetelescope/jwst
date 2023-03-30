@@ -52,6 +52,7 @@ from .straylight.straylight_step import StraylightStep
 from .superbias.superbias_step import SuperBiasStep
 from .tso_photometry.tso_photometry_step import TSOPhotometryStep
 from .tweakreg.tweakreg_step import TweakRegStep
+from .undersampling_correction.undersampling_correction_step import UndersamplingCorrectionStep
 from .wavecorr.wavecorr_step import WavecorrStep
 from .wfs_combine.wfs_combine_step import WfsCombineStep
 from .wfss_contam.wfss_contam_step import WfssContamStep
@@ -112,6 +113,7 @@ __all__ = [
     "StraylightStep",
     "SuperBiasStep",
     "TSOPhotometryStep",
+    "UndersamplingCorrectionStep",
     "TweakRegStep",
     "WavecorrStep",
     "WfsCombineStep",
