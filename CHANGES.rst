@@ -79,6 +79,7 @@ jump
   emission far below the single pixel SNR. It also allows detected
   showers to flag groups after the detection. [#7478]
 
+
 other
 -----
 
