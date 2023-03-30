@@ -38,8 +38,8 @@ class JumpStep(Step):
         edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a sat core is not required
         extend_snr_threshold = float(default=1.2) The SNR minimum for detection of extended showers in MIRI
         extend_min_area = integer(default=90) Min area of emission after convolution for the detection of showers
-        extend_inner_radius = float(default=1) Inner radius of the Ring2DKernal used for convolution
-        extend_outer_radius = float(default=2.6) Outer radius of the Ring2DKernal used for convolution
+        extend_inner_radius = float(default=1) Inner radius of the ring_2D_kernel used for convolution
+        extend_outer_radius = float(default=2.6) Outer radius of the ring_2D_Kernel used for convolution
         extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
         time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
     """
