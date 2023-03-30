@@ -64,7 +64,7 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--min_sat_radius_extend``: The minimum radius of the saturated core of a snowball required to for the radius of the saturated core to be extended.
 
-*``--sat_expand``: Number of pixels to add to the radius of the saturated core of snowballs
+* ``--sat_expand``: Number of pixels to add to the radius of the saturated core of snowballs
 
 * ``--edge_size``: The distance from the edge of the detector where saturated cores are not required for snowball detection
 
