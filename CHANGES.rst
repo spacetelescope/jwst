@@ -51,16 +51,17 @@ extract_1d
 
 jump
 -----------
-The changes in the JWST repo just allow the new parameters to be passed to the STCAL code
-that made the following changes
 
-Updated the code for both NIR Snowballs and MIRI Showers. The snowball
-flagging will now extend the saturated core of snowballs. Also,
-circles are no longer used for snowballs preventing the huge circles
-of flagged pixels from a glancing CR.
-Shower code is completely new and is now able to find extended
-emission far below the single pixel SNR. It also allows detected
-showers to flag groups after the detection.
+- This has the changes in the JWST repo that allow the new parameters to be passed to the STCAL code
+  that made the following changes:
+  Updated the code for both NIR Snowballs and MIRI Showers. The snowball
+  flagging will now extend the saturated core of snowballs. Also,
+  circles are no longer used for snowballs preventing the huge circles
+  of flagged pixels from a glancing CR. Finally snowball flagging now has more stringent tests
+  to prevent incorrect indentification of snowballs.
+  Shower code is completely new and is now able to find extended
+  emission far below the single pixel SNR. It also allows detected
+  showers to flag groups after the detection.
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
