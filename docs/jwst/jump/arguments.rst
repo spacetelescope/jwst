@@ -74,7 +74,7 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--extend_min_area``: The required minimum area of extended emission after convolution for the detection of showers in MIRI
 
-* ``--extend_inner_radius``: The inner radius of the Ring2DKernal that is used for the detection of extended emission in showers
+* ``--extend_inner_radius``: The inner radius of the ring_2D_kernel that is used for the detection of extended emission in showers
 
 * ``--extend_outer_radius``: The outer radius of the Ring2DKernal that is used for the detection of extended emission in showers
 
