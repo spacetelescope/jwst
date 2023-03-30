@@ -17,6 +17,12 @@ class AmiAnalyzeStep(Step):
         rotation = float(default=0.0)           # Rotation initial guess [deg]
         psf_offset = string(default='0.0 0.0') # Psf offset values to use to create the model array
         rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
+        affine2d = None # user-defined Affine2d object
+        src = 'A0V' # Source spectral type for model
+        bandpass = None # synphot spectrum or numpy array to override filter/source
+        usebp = True # 
+        firstfew = None # analyze only first few integrations
+        chooseholes = None # fit only certain fringes e.g. ['B4','B5','B6','C2']
     """
 
     #reference_file_types = ['throughput']
@@ -38,6 +44,12 @@ class AmiAnalyzeStep(Step):
         # Retrieve the parameter values
         oversample = self.oversample
         rotate = self.rotation
+        src = self.src
+        bandpass = self.bandpass
+        usebp = self.usebp
+        firstfew = self.firstfew
+        chooseholes = self.chooseholes
+        affine2d = self,affine2d
 
         # pull out parameters that are strings and change to floats
         psf_offset = [float(a) for a in self.psf_offset.split()]
@@ -81,7 +93,9 @@ class AmiAnalyzeStep(Step):
         result = ami_analyze.apply_LG_plus(input_model,#, throughput_model,
                                            oversample, rotate,
                                            psf_offset,
-                                           rotsearch_parameters)
+                                           rotsearch_parameters,
+                                           src, bandpass, usebp, firstfew, chooseholes, affine2d
+                                           )
 
         # Close the reference file and update the step status
         # throughput_model.close()
