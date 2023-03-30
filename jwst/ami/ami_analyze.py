@@ -17,7 +17,10 @@ log.setLevel(logging.DEBUG)
 
 def apply_LG_plus(input_model, 
                 oversample, rotation,
-                psf_offset, rotsearch_parameters, bandpass):
+                psf_offset, rotsearch_parameters, 
+                src, bandpass, usebp, firstfew, chooseholes, affine2d
+                # **kwargs?
+                ):
     """
     Short Summary
     -------------
@@ -191,10 +194,11 @@ def apply_LG_plus(input_model,
                             rotsearch_parameters[1])
 
     log.info(f'Initial values to use for rotation search {rotsearch_d}')
-    if affine2d
-    affine2d = find_rotation(data[:, :, :], psf_offset, rotsearch_d,
-                             mx, my, sx, sy, xo, yo,
-                             PIXELSCALE_r, dim, bandpass, oversample, holeshape)
+    if affine2d is None:
+        # affine2d object, can be overridden by user input affine?
+        affine2d = find_rotation(data[:, :, :], psf_offset, rotsearch_d,
+                                 mx, my, sx, sy, xo, yo,
+                                 PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
     # if None, get bandpass and affinne2d object inside instrumentdata
     niriss = instrument_data.NIRISS(filt, 
@@ -212,9 +216,7 @@ def apply_LG_plus(input_model,
 
     oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
 
-    # Copy header keywords from input to outputs
-    oifitsmodel.update(input_model, only="PRIMARY")
-    oifitsmodel_multi.update(input_model, only="PRIMARY")
-    amilgmodel.update(input_model, only="PRIMARY")
+    # Copy header keywords from input to output
+    # output_model.update(input_model, only="PRIMARY")
 
-    return oifitsmodel, oifitsmodel_multi, amilgmodel
+    # return output_model
