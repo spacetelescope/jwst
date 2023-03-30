@@ -61,7 +61,7 @@ jump
   to prevent incorrect indentification of snowballs.
   Shower code is completely new and is now able to find extended
   emission far below the single pixel SNR. It also allows detected
-  showers to flag groups after the detection.
+  showers to flag groups after the detection. [#7478]
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
