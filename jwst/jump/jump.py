@@ -18,10 +18,12 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      after_jump_flag_time1=0.0,
                      after_jump_flag_dn2=0.0,
                      after_jump_flag_time2=0.0,
-                     min_sat_area=1.0, min_jump_area=5.0,
+                     min_sat_area=1.0, min_jump_area=5.0, min_sat_radius_extend=2.5,
                      expand_factor=2.0, use_ellipses=False,
-                     sat_required_snowball=True,
-                     expand_large_events=False
+                     sat_required_snowball=True, sat_expand=2,
+                     expand_large_events=False, find_showers=False, edge_size=25, extend_snr_threshold=1.1,
+                     extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
+                     time_masked_after_shower=30
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -39,6 +41,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     gtime = input_model.meta.exposure.group_time
     after_jump_flag_n1 = int(after_jump_flag_time1 // gtime)
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
+    grps_masked_after_shower = int(time_masked_after_shower // gtime)
 
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
@@ -67,8 +70,14 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     after_jump_flag_n2,
                                     min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                     expand_factor=expand_factor, use_ellipses=use_ellipses,
-                                    sat_required_snowball=sat_required_snowball,
-                                    expand_large_events=expand_large_events)
+                                    min_sat_radius_extend=min_sat_radius_extend,
+                                    sat_required_snowball=sat_required_snowball, sat_expand=sat_expand,
+                                    expand_large_events=expand_large_events, find_showers=find_showers,
+                                    edge_size=edge_size, extend_snr_threshold=extend_snr_threshold,
+                                    extend_min_area=extend_min_area, extend_inner_radius=extend_inner_radius,
+                                    extend_outer_radius=extend_outer_radius,
+                                    extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
+                                    grps_masked_after_shower=grps_masked_after_shower)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
