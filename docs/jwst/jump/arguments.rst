@@ -38,23 +38,22 @@ The ``jump`` step has five optional arguments that can be set by the user:
   not have its neighbors flagged. The goal is to prevent flagging jumps that would be too
   small to significantly affect the slope determination.  The default value is 10.
 
-*  ``--after_jump_flag_dn1``: A floating point value in units of DN that gives the
-   minimum ramp jump for after jump flagging for the 1st after ramp flagging.
+  After a jump of at least 'after_jump_flag_dn1' DN, frames up to 'after_jump_flag_time1'
+  seconds will be also flagged as jumps. That pair of arguments are defined as:
+* ``--after_jump_flag_dn1``: A floating point value in units of DN
+* ``--after_jump_flag_time1``: A floating point value in units of seconds
 
-* ``--after_jump_flag_time1``: A floating point value in units of seconds that gives the
-  time since the ramp jump to flag groups as ramp jumps for the 1st after jump flagging.
-
-*  ``--after_jump_flag_dn1``: A floating point value in units of DN that gives the
-   minimum ramp jump for after jump flagging for the 2nd after ramp flagging.
-
-* ``--after_jump_flag_time1``: A floating point value in units of seconds that gives the
-  time since the ramp jump to flag groups as ramp jumps for the 2nd after jump flagging.
+  A second threshold and time can also be set: after a jump of at least 'after_jump_flag_dn2' DN,
+  frames up to 'after_jump_flag_time2' seconds will be also flagged as jumps. That pair of arguments
+  are defined as:
+* ``--after_jump_flag_dn2``: A floating point value in units of DN
+* ``--after_jump_flag_time2``: A floating point value in units of seconds
 
 * ``--expand_large_events``:  A boolean parameter that controls whether the jump step will expand the number of pixels that are flagged around large cosmic ray events. These are know as "snowballs" in the near-infrared detectors and "showers" for the MIRI detectors. In general, this should be set to True.
 
 * ``--min_jump_area``: The minimum number of contiguous pixels needed to trigger the expanded flagging of large cosmic rays events.
 
-* ``-min_sat_area``:  The minimum number of saturated pixels required to meet "sat_required_snowball".
+* ``--min_sat_area``:  The minimum number of saturated pixels required to meet "sat_required_snowball".
 
 * ``--expand_factor``: A multiplicative factor applied to the enclosing ellipse for snowballs. This larger area will have all pixels flagged as having a jump.
 
