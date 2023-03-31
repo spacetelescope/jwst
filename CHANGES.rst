@@ -146,6 +146,9 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+- Fill values of ``TARG_RA`` and ``TARG_DEC`` with ``RA_REF`` and ``DEC_REF``
+  if target location is not provided, e.g. for pure parallel observations [#7512]
+
 straylight
 ----------
 
