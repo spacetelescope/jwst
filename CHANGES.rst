@@ -36,7 +36,7 @@ documentation
 - Update documentation for ``calwebb_detector1`` to include the undersampling_correction
   step. [#7510]
 
-- Clarify ``jump`` arguments documentation, and correct typos. [#????]
+- Clarify ``jump`` arguments documentation, and correct typos. [#7518]
   
 dq_init
 -------
