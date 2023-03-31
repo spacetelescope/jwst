@@ -1,7 +1,6 @@
 """ Dictionary holding defaults for cube_build
 """
 from stdatamodels.jwst import datamodels
-from jwst.datamodels import ModelContainer
 import logging
 from os import path
 log = logging.getLogger(__name__)
