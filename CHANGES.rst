@@ -32,6 +32,8 @@ cube_build
 
 -  Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
 
+- Memory improvements, do not allow MIRI and 'internal_cal', allow user to set suffix. [#7521]
+  
 datamodels
 ----------
 
