@@ -21,7 +21,7 @@ calwebb_detector1
 
 - Added regression test for ``calwebb_detector1`` pipeline which now
   includes ``undersampling_correction``. [#7509]
-  
+
 
 datamodels
 ----------
@@ -37,7 +37,7 @@ documentation
   step. [#7510]
 
 - Clarify ``jump`` arguments documentation, and correct typos. [#7518]
-  
+
 dq_init
 -------
 
@@ -51,8 +51,10 @@ extract_1d
   precedence is given for command line override, reference file settings, and
   internal decisions of the appropriate setting (in that order). [#7466]
 
+- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
+
 jump
------------
+----
 
 - This has the changes in the JWST repo that allow the new parameters to be passed to the STCAL code
   that made the following changes:
@@ -64,8 +66,6 @@ jump
   Shower code is completely new and is now able to find extended
   emission far below the single pixel SNR. It also allows detected
   showers to flag groups after the detection. [#7478]
-
-- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
 other
 -----
@@ -148,6 +148,9 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+- Fill values of ``TARG_RA`` and ``TARG_DEC`` with ``RA_REF`` and ``DEC_REF``
+  if target location is not provided, e.g. for pure parallel observations [#7512]
+
 straylight
 ----------
 
@@ -185,6 +188,10 @@ tweakreg
 
 - Added a trap for failures in source catalog construction, which now returns
   an empty catalog for the image on which the error occurred. [#7507]
+
+- Fixed a crash occuring when alignment of a single image to an absolute
+  astrometric catalog (i.e., Gaia) fails due to not enough sources in the
+  catalog. [#7513]
 
 undersampling_correction
 ------------------------
