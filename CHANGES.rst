@@ -36,6 +36,8 @@ documentation
 - Update documentation for ``calwebb_detector1`` to include the undersampling_correction
   step. [#7510]
 
+- Clarify ``jump`` arguments documentation, and correct typos. [#7518]
+
 dq_init
 -------
 
@@ -49,8 +51,10 @@ extract_1d
   precedence is given for command line override, reference file settings, and
   internal decisions of the appropriate setting (in that order). [#7466]
 
+- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
+
 jump
------------
+----
 
 - This has the changes in the JWST repo that allow the new parameters to be passed to the STCAL code
   that made the following changes:
@@ -62,8 +66,6 @@ jump
   Shower code is completely new and is now able to find extended
   emission far below the single pixel SNR. It also allows detected
   showers to flag groups after the detection. [#7478]
-
-- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
 other
 -----
