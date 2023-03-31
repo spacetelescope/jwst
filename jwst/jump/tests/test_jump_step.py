@@ -102,7 +102,8 @@ def setup_inputs():
         rampmodel.meta.instrument.name = 'MIRI'
         rampmodel.meta.instrument.detector = 'MIRIMAGE'
         rampmodel.meta.instrument.filter = 'F480M'
-        rampmodel.meta.observation.date = '2015-10-13'
+        rampmodel.meta.observation.date = '2023-01-13'
+        rampmodel.meta.observation.time = '00:00:00'
         rampmodel.meta.exposure.type = 'MIR_IMAGE'
         rampmodel.meta.exposure.group_time = deltatime
         rampmodel.meta.subarray.name = 'FULL'

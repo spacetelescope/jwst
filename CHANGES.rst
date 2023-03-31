@@ -11,11 +11,16 @@ associations
 
 - Remove extra reprocessing of existing associations. [#7506]
 
+- Treat PSF exposures as science for Level 2 association processing. [#7508]
+
 calwebb_detector1
 -----------------
 
 - Added the call to the undersampling_correction step to the ``calwebb_detector1``
   pipeline. [#7501]
+
+- Added regression test for ``calwebb_detector1`` pipeline which now
+  includes ``undersampling_correction``. [#7509]
 
 cube_build
 ----------
@@ -32,6 +37,11 @@ documentation
 
 - Fixed minor errors in the docs for EngDB, outlier_detection, and ramp fitting. [#7500]
 
+- Update documentation for ``calwebb_detector1`` to include the undersampling_correction
+  step. [#7510]
+
+- Clarify ``jump`` arguments documentation, and correct typos. [#7518]
+
 dq_init
 -------
 
@@ -44,6 +54,22 @@ extract_1d
 - Fix the logic for handling the ``use_source_posn`` parameter, so that proper
   precedence is given for command line override, reference file settings, and
   internal decisions of the appropriate setting (in that order). [#7466]
+
+- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
+
+jump
+----
+
+- This has the changes in the JWST repo that allow the new parameters to be passed to the STCAL code
+  that made the following changes:
+  Updated the code for both NIR Snowballs and MIRI Showers. The snowball
+  flagging will now extend the saturated core of snowballs. Also,
+  circles are no longer used for snowballs preventing the huge circles
+  of flagged pixels from a glancing CR. Finally snowball flagging now has more stringent tests
+  to prevent incorrect indentification of snowballs.
+  Shower code is completely new and is now able to find extended
+  emission far below the single pixel SNR. It also allows detected
+  showers to flag groups after the detection. [#7478]
 
 other
 -----
@@ -101,7 +127,6 @@ ramp_fitting
 - Update ramp fitting to calculate separate readnoise variance for processing
   ``undersampling_correction`` output [#7484]
 
-
 resample
 --------
 
@@ -127,20 +152,24 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+- Fill values of ``TARG_RA`` and ``TARG_DEC`` with ``RA_REF`` and ``DEC_REF``
+  if target location is not provided, e.g. for pure parallel observations [#7512]
+
 straylight
 ----------
 
 - Fix bug with straylight zeroing out NaNs in input rate images, as these
   are now deliberately set as such [#7455]
-- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
 scripts
 -------
 
 - Added a script ``adjust_wcs.py`` to apply additional user-provided rotations
   and scale corrections to an imaging WCS of a calibrated image. [#7430]
+
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
+
 - Offload ``minimum_deps`` script to ``minimum_dependencies`` package [#7463]
 
 transforms
@@ -160,6 +189,13 @@ tweakreg
 
 - Fixed a bug due to which alignment may be aborted due to corrections
   being "too large" yet compatible with step parameters. [#7494]
+
+- Added a trap for failures in source catalog construction, which now returns
+  an empty catalog for the image on which the error occurred. [#7507]
+
+- Fixed a crash occuring when alignment of a single image to an absolute
+  astrometric catalog (i.e., Gaia) fails due to not enough sources in the
+  catalog. [#7513]
 
 undersampling_correction
 ------------------------
