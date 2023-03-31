@@ -38,14 +38,14 @@ The ``jump`` step has five optional arguments that can be set by the user:
   not have its neighbors flagged. The goal is to prevent flagging jumps that would be too
   small to significantly affect the slope determination.  The default value is 10.
 
-  After a jump of at least 'after_jump_flag_dn1' DN, frames up to 'after_jump_flag_time1'
-  seconds will be also flagged as jumps. That pair of arguments are defined as:
+  After a jump of at least 'after_jump_flag_dn1' DN, groups up to 'after_jump_flag_time1'
+  seconds will be also flagged as jumps. That pair of arguments is defined as:
 * ``--after_jump_flag_dn1``: A floating point value in units of DN
 * ``--after_jump_flag_time1``: A floating point value in units of seconds
 
   A second threshold and time can also be set: after a jump of at least 'after_jump_flag_dn2' DN,
-  frames up to 'after_jump_flag_time2' seconds will be also flagged as jumps. That pair of arguments
-  are defined as:
+  groups up to 'after_jump_flag_time2' seconds will be also flagged as jumps. That pair of arguments
+  is defined as:
 * ``--after_jump_flag_dn2``: A floating point value in units of DN
 * ``--after_jump_flag_time2``: A floating point value in units of seconds
 
