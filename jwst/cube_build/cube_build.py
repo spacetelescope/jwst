@@ -16,7 +16,6 @@ class CubeData():
 
     def __init__(self,
                  input_models,
-                 #input_filenames,
                  par_filename,
                  **pars):
         """ Initialize the high level of information for the ifu cube
@@ -31,15 +30,12 @@ class CubeData():
         Parameters
         ----------
         input_models : list of data models
-        input_files : str
-          list of fits filenames
         par_filename: str
           cube parameter reference filename
         pars : dictionary holding top level cube parameters
         """
 
         self.input_models = input_models
-        #self.input_filenames = input_filenames
         self.par_filename = par_filename
         self.single = pars.get('single')
         self.channel = pars.get('channel')
@@ -49,7 +45,6 @@ class CubeData():
         self.weighting = pars.get('weighting')
         self.output_type = pars.get('output_type')
         self.instrument = None
-        self.in_memory = pars.get('in_memory')
 
         self.all_channel = []
         self.all_subchannel = []
@@ -82,9 +77,8 @@ class CubeData():
 # Read in the input data (association table or single file)
 # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
 # ______________________________________________________________________________
-        master_table = file_table.FileTable(self.in_memory)
+        master_table = file_table.FileTable()
         instrument = master_table.set_file_table(self.input_models)
-                                                 #self.input_filenames)
 # _______________________________________________________________________________
 # find out how many files are in the association table or if it is an single
 # file store the input_filenames and input_models
