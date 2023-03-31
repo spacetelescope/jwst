@@ -21,7 +21,7 @@ class PixelReplacement:
 
     # Shortcuts for DQ Flags
     DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
-    REPLACED = datamodels.dqflags.pixel['LOW_QE']
+    FLUX_ESTIMATED = datamodels.dqflags.pixel['FLUX_ESTIMATED']
     NON_SCIENCE = datamodels.dqflags.pixel['NON_SCIENCE']
 
     # Shortcuts for dispersion direction for ease of reading
@@ -71,7 +71,7 @@ class PixelReplacement:
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
         if isinstance(self.input, datamodels.ImageModel):
             self.output = self.algorithm(self.input)
-            n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+            n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
             log.info(f"Input model had {n_replaced} pixels replaced.")
         elif isinstance(self.input, datamodels.IFUImageModel):
                 # Attempt to run pixel replacement on each throw of the IFU slicer
@@ -107,12 +107,12 @@ class PixelReplacement:
                             self.output.dq
                         )
 
-                        n_replaced = np.count_nonzero(trace_model.dq & self.REPLACED)
+                        n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                         log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
 
                         trace_model.close()
 
-                    n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+                    n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
                     log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
                 else:
                     # NRS_IFU method - Fixed number of IFU slices to iterate over
@@ -145,12 +145,12 @@ class PixelReplacement:
                             self.output.dq
                         )
 
-                        n_replaced = np.count_nonzero(trace_model.dq & self.REPLACED)
+                        n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                         log.info(f"Input NRS_IFU frame had {n_replaced} pixels replaced in IFU slice {i + 1}.")
 
                         trace_model.close()
 
-                    n_replaced = np.count_nonzero(self.output.dq & self.REPLACED)
+                    n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
                     log.info(f"Input NRS_IFU frame had {n_replaced} total pixels replaced.")
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
@@ -160,7 +160,7 @@ class PixelReplacement:
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
                 slit_replaced = self.algorithm(slit_model)
 
-                n_replaced = np.count_nonzero(slit_replaced.dq & self.REPLACED)
+                n_replaced = np.count_nonzero(slit_replaced.dq & self.FLUX_ESTIMATED)
                 log.info(f"Slit {i} had {n_replaced} pixels replaced.")
 
                 self.output.slits[i] = slit_replaced
@@ -177,7 +177,7 @@ class PixelReplacement:
                 dummy_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
                 dummy_model.update(self.input)
                 dummy_replaced = self.algorithm(dummy_model)
-                n_replaced = np.count_nonzero(dummy_replaced.dq & self.REPLACED)
+                n_replaced = np.count_nonzero(dummy_replaced.dq & self.FLUX_ESTIMATED)
                 log.info(f"Input TSO integration {i} had {n_replaced} pixels replaced.")
 
                 self.output.data[i] = dummy_replaced.data
@@ -322,7 +322,7 @@ class PixelReplacement:
             replaced_dq = np.where(
                 (current_dq & self.DO_NOT_USE ^ current_dq & self.NON_SCIENCE == 1) &
                 ~(np.isnan(replaced_current)),
-                current_dq ^ self.DO_NOT_USE ^ self.REPLACED,
+                current_dq ^ self.DO_NOT_USE ^ self.FLUX_ESTIMATED,
                 current_dq
             )
 
