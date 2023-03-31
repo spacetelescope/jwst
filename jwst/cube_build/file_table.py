@@ -2,7 +2,6 @@
 """
 from stdatamodels.jwst import datamodels
 import logging
-from os import path
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
