@@ -22,6 +22,10 @@ calwebb_detector1
 - Added regression test for ``calwebb_detector1`` pipeline which now
   includes ``undersampling_correction``. [#7509]
 
+cube_build
+----------
+
+-  Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
 
 datamodels
 ----------
