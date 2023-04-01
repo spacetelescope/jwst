@@ -136,6 +136,8 @@ resample
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
 
+- Carry through good bits correctly for the variance array [#7515]
+
 residual_fringe
 ---------------
 
