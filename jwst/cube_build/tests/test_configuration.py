@@ -215,9 +215,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     single = False
     par_filename = 'None'
 
-    input_file = 'test.fits'
     input_models = []
-    input_filenames = []
     input_models.append(miri_ifushort_short)
 
     pars = {
@@ -264,7 +262,6 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     single = False
     par_filename = 'None'
 
-    input_file = 'test.fits'
     num_files = len(miri_full_coverage)
 
     pars = {
@@ -340,7 +337,6 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     single = False
     par_filename = 'None'
 
-    input_file = 'test.fits'
     num_files = len(miri_full_coverage)
 
     pars = {
@@ -397,7 +393,6 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     single = False
     par_filename = 'None'
 
-    input_file = 'test.fits'
     num_files = len(nirspec_medium_coverage)
 
     pars = {
@@ -448,7 +443,6 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
     single = False
     par_filename = 'None'
 
-    input_file = 'test.fits'
     num_files = len(nirspec_medium_coverage)
 
     pars = {
