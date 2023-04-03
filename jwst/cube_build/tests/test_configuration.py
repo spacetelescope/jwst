@@ -262,8 +262,6 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     single = False
     par_filename = 'None'
 
-    num_files = len(miri_full_coverage)
-
     pars = {
         'channel': pars_input['channel'],
         'subchannel': pars_input['subchannel'],
@@ -337,8 +335,6 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     single = False
     par_filename = 'None'
 
-    num_files = len(miri_full_coverage)
-
     pars = {
         'channel': pars_input['channel'],
         'subchannel': pars_input['subchannel'],
@@ -393,8 +389,6 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     single = False
     par_filename = 'None'
 
-    num_files = len(nirspec_medium_coverage)
-
     pars = {
         'channel': pars_input['channel'],
         'subchannel': pars_input['subchannel'],
@@ -442,8 +436,6 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
     output_type = 'multi'
     single = False
     par_filename = 'None'
-
-    num_files = len(nirspec_medium_coverage)
 
     pars = {
         'channel': pars_input['channel'],
