@@ -334,8 +334,6 @@ class CubeBuildStep (Step):
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(cube_container))
 
-
-
 # Else standard IFU cube building - the result returned from build_ifucube will be 1 IFU CUBR
             else:
                 result, status = thiscube.build_ifucube()
@@ -349,7 +347,6 @@ class CubeBuildStep (Step):
                 del result
                 
             del thiscube
-
 
         # irrelevant WCS keywords we will remove from final product
         rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
