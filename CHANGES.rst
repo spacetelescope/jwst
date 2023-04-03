@@ -27,6 +27,15 @@ calwebb_detector1
 - Added regression test for ``calwebb_detector1`` pipeline which now
   includes ``undersampling_correction``. [#7509]
 
+
+calwebb_spec2
+-------------
+
+ -Update ``resample_spec`` and ``extract_1d`` step code to be skipped for NIRSpec
+  fixed slit modes with rateints input to allow calwebb_spec2 to run to completion for
+  this mode. [#7516] 
+
+
 cube_build
 ----------
 

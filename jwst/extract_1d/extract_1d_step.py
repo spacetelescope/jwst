@@ -172,6 +172,7 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
+        input_model_copy = input_model.copy()  # used if step is skipped
 
         was_source_model = False  # default value
         if isinstance(input_model, datamodels.CubeModel):
@@ -186,6 +187,15 @@ class Extract1dStep(Step):
         elif isinstance(input_model, ModelContainer):
             self.log.debug('Input is a ModelContainer')
         elif isinstance(input_model, datamodels.MultiSlitModel):
+            #  If input is a 3D rateints (which is unsupported) skip the step
+            try:
+                if len((input_model[0]).shape) == 3:
+                    self.log.warning('ext_1d_step step will be skipped as 3D input is unsupported')
+                    input_model_copy.meta.cal_step.extract_1d = 'SKIPPED'
+                    return input_model_copy
+            except AssertionError:
+                pass
+
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.MultiExposureModel):
             self.log.warning('Input is a MultiExposureModel, '

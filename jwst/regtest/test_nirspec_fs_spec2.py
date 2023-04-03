@@ -140,8 +140,7 @@ def test_pathloss_source_type(rtdata):
 
 def test_short_calwebb_spec2_rateints(rtdata_module):
     """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure
-       only up to and including the flat-field step. A _rateints input currently
-       can not be processed by the resample-spec step,  This is a test that the
+       only up to and including the flat-field step. This is a test that the
        flat-field step does not fail processing this multi-integration input.
     """
     rtdata = rtdata_module
