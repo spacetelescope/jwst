@@ -324,32 +324,17 @@ class CubeBuildStep (Step):
 # build the IFU Cube
 
             status = 0
-            # irrelevant WCS keywords we will remove from final product
-            rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                       'v3yangle', 'vparity']
 
 # If single = True: map each file to output grid and return single mapped file
 # to output grid. # This option is used for background matching and outlier rejection
 
             if self.single:
                 self.output_file = None
-                cube_container_single = thiscube.build_ifucube_single()
+                cube_container = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(cube_container))
 
-                for cube in cube_container_single:
-                    footprint = cube.meta.wcs.footprint(axis_type="spatial")
-                    update_s_region_keyword(cube, footprint)
 
-                    # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
-                    for key in rm_keys:
-                        if key in cube.meta.wcsinfo.instance:
-                            del cube.meta.wcsinfo.instance[key]
-
-                    cube_container.append(cube)
-
-                del thiscube
-                del cube_container_single
 
 # Else standard IFU cube building - the result returned from build_ifucube will be 1 IFU CUBR
             else:
@@ -360,18 +345,26 @@ class CubeBuildStep (Step):
                 if status == 1:
                     status_cube = 1
 
-                # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
-                for key in rm_keys:
-                    if key in result.meta.wcsinfo.instance:
-                        del result.meta.wcsinfo.instance[key]
-
-                footprint = result.meta.wcs.footprint(axis_type="spatial")
-                update_s_region_keyword(result, footprint)
-
                 cube_container.append(result)
-
                 del result
-                del thiscube
+                
+            del thiscube
+
+
+        # irrelevant WCS keywords we will remove from final product
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+
+        for cube in cube_container:
+            footprint = cube.meta.wcs.footprint(axis_type="spatial")
+            update_s_region_keyword(cube, footprint)
+
+            # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
+            for key in rm_keys:
+                if key in cube.meta.wcsinfo.instance:
+                    del cube.meta.wcsinfo.instance[key]
+        if status_cube == 1:
+            self.skip = True
 
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
