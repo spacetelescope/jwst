@@ -410,13 +410,27 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
         return None
 
 
-def weighted_operations(img, model, weights):
+def weighted_operations(img, model, dqm=None):
     """
     Short Summary
     -------------
     Performs least squares matrix operations to solve A x = b, where A is the
     model, b is the data (image), and x is the coefficient vector we are solving
-    for.  In 2-D, data x = inv(At.A).(At.b)
+    for.  
+
+    Solution 1:  equal weighting of data (matrix_operations()).
+      x = inv(At.A).(At.b) 
+
+    Solution 2:  weighting data by Poisson variance (weighted_operations())
+      x = inv(At.W.A).(At.W.b) 
+      where W is a diagonal matrix of weights w_i, 
+      weighting each data point i by the inverse of its variance:
+         w_i = 1 / sigma_i^2
+      For photon noise, the data, i.e. the image values b_i  have variance 
+      proportional to b_i with an e.g. ADU to electrons coonversion factor.
+      If this factor is the same for all pixels, we do not need to include
+      it here (is that really true? Yes I think so because we're not
+      normalizing wts here, just ascribing rel wts.).
 
     Parameters
     ----------
@@ -426,8 +440,8 @@ def weighted_operations(img, model, weights):
     model: 2D float array
         analytic model
 
-    weights: 2D float array
-        values of weights
+    dqm: 2D bool array
+        bad pixel mask
 
     Returns
     -------
@@ -437,44 +451,64 @@ def weighted_operations(img, model, weights):
     res: 2D float array
         residual; difference between model and fit
     """
-    clist = weights.reshape(weights.shape[0] * weights.shape[1])**2
+    # Remove not-to-be-fit data from the flattened "img" data vector
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
-    nanlist = np.where(np.isnan(flatimg))
-    flatimg = np.delete(flatimg, nanlist)
-    clist = np.delete(clist, nanlist)
-    # A
-    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
+    flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
+
+    if dqm is not None: nanlist = np.where(flatdqm==True)  # where DO_NOT_USE up.
+    else: nanlist = (np.array(()), ) # shouldn't occur w/MAST JWST data
+
+    # see original linearfit https://github.com/agreenbaum/ImPlaneIA: 
+    # agreenbaum committed on May 21, 2017 1 parent 3e0fb8b
+    # commit bf02eb52c5813cb5d77036174a7caba703f9d366
+    # 
+    flatimg = np.delete(flatimg, nanlist)  # DATA values
+
+    # photon noise variance - proportional to ADU 
+    # (for roughly uniform adu2electron factor)
+    variance = np.abs(flatimg)  
+    # this resets the weights of pixels with negative or unity values to zero
+    # we ignore data with unity or lower values - weight it not-at-all..
+    weights = np.where(flatimg <= 1.0, 0.0, 1.0/np.sqrt(variance))  # anand 2022 Jan
+
+    log.debug(f'{len(nanlist[0]):d} bad pixels skipped in weighted fringefitter')
+
+    # A - but delete all pixels flagged by dq array
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], 
                                   np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
-
     for fringe in range(np.shape(model)[2]):
-        flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
+        flatmodel[:,fringe] = np.delete(flatmodel_nan[:,fringe], nanlist)
+    #print(flatmodel.shape)
 
-    # At (A transpose)
-    flatmodeltransp = flatmodel.transpose()
-    # At.C.A (makes square matrix)
-    CdotA = flatmodel.copy()
+    # A.w 
+    # Aw = A * np.sqrt(w[:,np.newaxis]) # w as a column vector
+    Aw = flatmodel * weights[:,np.newaxis]
+    # bw = b * np.sqrt(w)
+    bw = flatimg * weights
+    # x = np.linalg.lstsq(Aw, bw)[0]
+    # resids are pixel value residuals, flattened to 1d vector
+    x, rss, rank, singvals = np.linalg.lstsq(Aw, bw)
 
-    for i in range(flatmodel.shape[1]):
-        CdotA[:, i] = clist * flatmodel[:, i]
+    #inverse = linalg.inv(Atww)
+    #cond = np.linalg.cond(inverse)
 
-    modelproduct = np.dot(flatmodeltransp, CdotA)
-    # At.C.b
-    Cdotb = clist * flatimg
-    data_vector = np.dot(flatmodeltransp, Cdotb)
-    # inv(At.C.A)
-    inverse = linalg.inv(modelproduct)
+    # actual residuals in image:  is this sign convention odd?
+    # res = np.dot(flatmodel, x) - flatimg
+    # changed here to data - model
+    res = flatimg - np.dot(flatmodel, x) 
 
-    x = np.dot(inverse, data_vector)
-    res = np.dot(flatmodel, x) - flatimg
+    # put bad pixels back
     naninsert = nanlist[0] - np.arange(len(nanlist[0]))
+    # calculate residuals with fixed but unused bad pixels as nans
     res = np.insert(res, naninsert, np.nan)
     res = res.reshape(img.shape[0], img.shape[1])
 
-    return x, res
+    cond = None
+    return x, res, cond, singvals # no condition number yet...
 
 
-def matrix_operations(img, model, flux=None, linfit=False):
+def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     """
     Short Summary
     -------------
@@ -494,6 +528,9 @@ def matrix_operations(img, model, flux=None, linfit=False):
     flux: float
         normalization factor
 
+    dqm: 2D bool array
+        bad pixel mask slice
+
     Returns
     -------
     x: 1D float array
@@ -509,6 +546,10 @@ def matrix_operations(img, model, flux=None, linfit=False):
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
     nanlist = np.where(np.isnan(flatimg))
     flatimg = np.delete(flatimg, nanlist)
+    flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
+    if dqm is not None: 
+        nanlist = np.where(flatdqm==True)
+    log.debug(f'\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice')
 
     if flux is not None:
         flatimg = flux * flatimg / flatimg.sum()
@@ -582,6 +623,7 @@ def matrix_operations(img, model, flux=None, linfit=False):
 
         except ImportError:
             linfit_result = None
+            log.debug('linearfit module not imported, no covariances saved.')
     else:
         linfit_result = None
 
