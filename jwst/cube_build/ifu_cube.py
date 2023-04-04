@@ -856,7 +856,6 @@ class IFUCubeData():
                 ifucube_model, status = result
 
                 single_ifucube_container.append(ifucube_model)
-                print('Cube build length', len(single_ifucube_container))
                 if status != 0:
                     log.debug("Possible problem with single ifu cube, no valid data in cube")
                 j = j + 1
