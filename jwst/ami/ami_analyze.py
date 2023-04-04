@@ -116,7 +116,7 @@ def apply_LG_plus(input_model,
     dim = data.shape[-1] # 80 px 
 
     # Create mask of DO_NOT_USE and JUMP_DET pixels
-    bpdata = input_copy.bp.copy
+    bpdata = np.array(input_copy.dq)
     DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
     JUMP_DET = dqflags.pixel["JUMP_DET"]
     dq_dnu = bpdata & DO_NOT_USE == DO_NOT_USE
@@ -175,9 +175,9 @@ def apply_LG_plus(input_model,
 
     else:
         # get the filter and source spectrum
-        self.log.info(f'Getting WebbPSF throughput data for {filt}.'
+        self.log.info(f'Getting WebbPSF throughput data for {filt}.')
         filt_spec = utils.get_filt_spec(filt)
-        self.log.info(f'Getting source spectrum for spectral type {src}.'
+        self.log.info(f'Getting source spectrum for spectral type {src}.')
         src_spec = utils.get_src_spec(src) # always going to be A0V currently
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
         # **NOTE**: As of WebbPSF version 1.0.0 filter is trimmed to where throughput is 10% of peak
@@ -200,7 +200,6 @@ def apply_LG_plus(input_model,
                                  mx, my, sx, sy, xo, yo,
                                  PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
-    # if None, get bandpass and affinne2d object inside instrumentdata
     niriss = instrument_data.NIRISS(filt, 
                                     bandpass=bandpass,
                                     affine2d=affine2d,
@@ -214,7 +213,10 @@ def apply_LG_plus(input_model,
                                 psf_offset_ff=psf_offset_ff,
                                 oversample=oversample)
 
-    oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
+    #output_model = ff_t.fit_fringes_all(input_copy)
+    # FOR NOW: DEBUGGING
+    n_resid_arr, cp_arr, va_arr = ff_t.fit_fringes_all(input_copy)
+
 
     # Copy header keywords from input to output
     # output_model.update(input_model, only="PRIMARY")
