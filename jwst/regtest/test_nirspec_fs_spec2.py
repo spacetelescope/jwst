@@ -150,9 +150,7 @@ def test_short_calwebb_spec2_rateints(rtdata_module):
     # Run the begining of the spec2 pipeline on a (3D) _rateints file
     args = ["calwebb_spec2", rtdata.input,
             "--steps.pathloss.skip=True",
-            "--steps.photom.skip=True",
-            "--steps.resample_spec.skip=True",
-            "--steps.extract_1d.skip=True"
+            "--steps.photom.skip=True"
             ]
 
     with warnings.catch_warnings():

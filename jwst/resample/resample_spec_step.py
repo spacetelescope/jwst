@@ -28,7 +28,6 @@ class ResampleSpecStep(ResampleStep):
     def process(self, input):
         self.wht_type = self.weight_type
         input_new = datamodels.open(input)
-        input_new_copy = input_new.copy()  # used if step is skipped
 
         # Convert ImageModel to SlitModel (needed for MIRI LRS)
         if isinstance(input_new, ImageModel):
@@ -87,10 +86,10 @@ class ResampleSpecStep(ResampleStep):
         #  If input is a 3D rateints (which is unsupported) skip the step
         try:
             if len((input_models[0][0]).shape) == 3:
-                self.log.warning('Resample spec step will be skipped')
-                input_new_copy.meta.cal_step.resample_spec = 'SKIPPED'
+                self.log.warning('3D input data not supported; step will be skipped')
+                input_new.meta.cal_step.resample_spec = 'SKIPPED'
 
-                return input_new_copy
+                return input_new
         except AssertionError:
             pass
 
