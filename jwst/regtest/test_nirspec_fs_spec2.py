@@ -139,20 +139,17 @@ def test_pathloss_source_type(rtdata):
 
 
 @pytest.mark.bigdata
-def test_short_calwebb_spec2_rateints(rtdata_module):
-    """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure
-       only up to and including the flat-field step. This is a test that the
-       flat-field step does not fail processing this multi-integration input.
+def test_nirspec_fs_rateints_spec2(rtdata_module):
+    """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure.
+       This is a test that the pipeline completes when processing this 
+       multi-integration input.
     """
     rtdata = rtdata_module
 
     rtdata.get_data("nirspec/fs/jw01128004001_03102_00001_nrs1_new_rateints.fits")
 
-    # Run the begining of the spec2 pipeline on a (3D) _rateints file
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.pathloss.skip=True",
-            "--steps.photom.skip=True"
-            ]
+    # Run the spec2 pipeline on a (3D) _rateints file
+    args = ["calwebb_spec2", rtdata.input]
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "overflow encountered in divide")
