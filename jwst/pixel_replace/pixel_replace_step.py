@@ -84,6 +84,6 @@ class PixelReplaceStep(Step):
             replacement = PixelReplacement(result, **pars)
             replacement.replace()
 
-            self.record_step_status(result, 'pixel_replacement', success=True)
+            self.record_step_status(result, 'pixel_replace', success=True)
             return replacement.output
 
