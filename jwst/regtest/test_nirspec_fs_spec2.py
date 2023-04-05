@@ -138,6 +138,7 @@ def test_pathloss_source_type(rtdata):
     assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'
 
 
+@pytest.mark.bigdata
 def test_short_calwebb_spec2_rateints(rtdata_module):
     """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure
        only up to and including the flat-field step. This is a test that the

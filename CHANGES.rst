@@ -27,15 +27,6 @@ calwebb_detector1
 - Added regression test for ``calwebb_detector1`` pipeline which now
   includes ``undersampling_correction``. [#7509]
 
-
-calwebb_spec2
--------------
-
- -Update ``resample_spec`` and ``extract_1d`` step code to be skipped for NIRSpec
-  fixed slit modes with rateints input to allow calwebb_spec2 to run to completion for
-  this mode. [#7516] 
-
-
 cube_build
 ----------
 
@@ -73,6 +64,8 @@ extract_1d
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
+- Update to be skipped for NIRSpec fixed slit modes with rateints input as that
+  mode is not allowed. [#7516]
 
 jump
 ----
@@ -87,7 +80,6 @@ jump
   Shower code is completely new and is now able to find extended
   emission far below the single pixel SNR. It also allows detected
   showers to flag groups after the detection. [#7478]
-
 
 other
 -----
@@ -155,6 +147,9 @@ resample
   resampled image under certain circumstances. [#7460]
 
 - Carry through good bits correctly for the variance array [#7515]
+
+ -Update ``resample_spec`` to be skipped for NIRSpec fixed slit modes with
+  rateints input as that mode is not allowed. [#7516]  
 
 residual_fringe
 ---------------
