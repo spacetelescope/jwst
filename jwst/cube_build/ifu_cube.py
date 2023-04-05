@@ -845,7 +845,7 @@ class IFUCubeData():
                     self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
                     self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
                     result = None
-                    del result, spaxel_flux, spaxel_var, spaxek_iflux
+                    del result, spaxel_flux, spaxel_var, spaxel_iflux
                 # ______________________________________________________________________
                 # shove Flux and iflux in the  final ifucube
                 self.find_spaxel_flux()
