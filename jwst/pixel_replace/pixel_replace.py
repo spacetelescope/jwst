@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from .. import datamodels
+from stdatamodels.jwst import datamodels
 from scipy.optimize import minimize
 import warnings
 from ..assign_wcs.nirspec import nrs_wcs_set_input
@@ -59,7 +59,7 @@ class PixelReplacement:
 
         except KeyError:
             log.critical(f"Algorithm name {self.pars['algorithm']} provided does "
-                         f"not match an implemented algorithm!")
+                         "not match an implemented algorithm!")
             raise Exception
 
     def replace(self):
@@ -168,10 +168,6 @@ class PixelReplacement:
         # CubeModel inputs are TSO (so far?); only SlitModel seen so far is NRS_BRIGHTOBJ, also requiring
         # a re-packaging of the data into 2D inputs for the algorithm.
         elif isinstance(self.input, (datamodels.CubeModel, datamodels.SlitModel)):
-            if len(self.input.data) != len(self.input.dq):
-                log.critical("Data and DQ arrays are not of equal length - skipping pixel replacement.")
-                return
-
             # Initial attempt looped over model.meta.exposure.nints, but test data had mismatch. Could change this.
             for i in range(len(self.input.data)):
                 dummy_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
@@ -185,11 +181,10 @@ class PixelReplacement:
                 dummy_replaced.close()
                 dummy_model.close()
 
-
         else:
-            # This should never happen, as these would be caught in the step code.
-            log.critical("How did we get here?")
-            raise Exception
+            # This should never happen, as these should be caught in the step code.
+            log.critical("Pixel replacement code did not filter this input correctly - skipping step.")
+            return
 
     def fit_profile(self, model):
         """

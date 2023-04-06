@@ -189,7 +189,7 @@ pipeline
 pixel_replace
 -------------
 
-- Add ``pixel_replace`` step to pipeline, which uses a weighted interpolation
+- Add ``pixel_replace`` step to ``Spec2Pipeline``, which uses a weighted interpolation
   to estimate flux values for pixels flagged as ``DO_NOT_USE``. [#7398]
 
 ramp_fitting
