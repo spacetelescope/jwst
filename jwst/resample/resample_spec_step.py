@@ -32,6 +32,13 @@ class ResampleSpecStep(ResampleStep):
         # Check if input_new is a MultiSlitModel
         model_is_msm = isinstance(input_new, MultiSlitModel)
 
+        #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
+        if model_is_msm and len((input_new[0]).shape) == 3:
+            self.log.warning('Resample spec step will be skipped')
+            input_new.meta.cal_step.resample_spec = 'SKIPPED'
+
+            return input_new
+
         # Convert ImageModel to SlitModel (needed for MIRI LRS)
         if isinstance(input_new, ImageModel):
             input_new = datamodels.SlitModel(input_new)
@@ -52,16 +59,6 @@ class ResampleSpecStep(ResampleStep):
             input_models = ModelContainer([input_new])
             output = input_new.meta.filename
             self.blendheaders = False
-
-        #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
-        try:
-            if (len((input_models[0][0]).shape) == 3) and model_is_msm:
-                self.log.warning('Resample spec step will be skipped')
-                input_new.meta.cal_step.resample_spec = 'SKIPPED'
-
-                return input_new
-        except AssertionError:
-            pass
 
         # Get the drizpars reference file
         for reftype in self.reference_file_types:

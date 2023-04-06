@@ -187,14 +187,10 @@ class Extract1dStep(Step):
             self.log.debug('Input is a ModelContainer')
         elif isinstance(input_model, datamodels.MultiSlitModel):
             #  If input is a 3D rateints (which is unsupported) skip the step
-            try:
-                if len((input_model[0]).shape) == 3:
-                    self.log.warning('3D input is unsupported; step will be skipped')
-                    input_model.meta.cal_step.extract_1d = 'SKIPPED'
-                    return input_model
-            except AssertionError:
-                pass
-
+            if len((input_model[0]).shape) == 3:
+                self.log.warning('3D input is unsupported; step will be skipped')
+                input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                return input_model
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.MultiExposureModel):
             self.log.warning('Input is a MultiExposureModel, '
