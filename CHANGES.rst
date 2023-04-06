@@ -148,7 +148,7 @@ resample
 
 - Carry through good bits correctly for the variance array [#7515]
 
- -Update ``resample_spec`` to be skipped for NIRSpec fixed slit modes with
+- Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
   rateints input as that mode is not allowed. [#7516]  
 
 residual_fringe

@@ -29,12 +29,16 @@ class ResampleSpecStep(ResampleStep):
         self.wht_type = self.weight_type
         input_new = datamodels.open(input)
 
+        # Check if input_new is a MultiSlitModel
+        model_is_msm = isinstance(input_new, MultiSlitModel)
+
         # Convert ImageModel to SlitModel (needed for MIRI LRS)
         if isinstance(input_new, ImageModel):
             input_new = datamodels.SlitModel(input_new)
 
         if isinstance(input_new, ModelContainer):
             input_models = input_new
+
             try:
                 output = input_models.meta.asn_table.products[0].name
             except AttributeError:
@@ -48,6 +52,16 @@ class ResampleSpecStep(ResampleStep):
             input_models = ModelContainer([input_new])
             output = input_new.meta.filename
             self.blendheaders = False
+
+        #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
+        try:
+            if (len((input_models[0][0]).shape) == 3) and model_is_msm:
+                self.log.warning('Resample spec step will be skipped')
+                input_new.meta.cal_step.resample_spec = 'SKIPPED'
+
+                return input_new
+        except AssertionError:
+            pass
 
         # Get the drizpars reference file
         for reftype in self.reference_file_types:
@@ -82,16 +96,6 @@ class ResampleSpecStep(ResampleStep):
 
         # Call resampling
         self.drizpars = kwargs
-
-        #  If input is a 3D rateints (which is unsupported) skip the step
-        try:
-            if len((input_models[0][0]).shape) == 3:
-                self.log.warning('3D input data not supported; step will be skipped')
-                input_new.meta.cal_step.resample_spec = 'SKIPPED'
-
-                return input_new
-        except AssertionError:
-            pass
 
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
