@@ -202,7 +202,6 @@ def test_setup_wcs():
         'spaxel_debug': None}
 
     pipeline = 3
-    filename = None
     input_model = None
     output_name_base = None
     output_type = None
@@ -213,7 +212,6 @@ def test_setup_wcs():
     instrument_info = None
     thiscube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,

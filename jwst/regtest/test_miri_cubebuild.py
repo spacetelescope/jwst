@@ -40,19 +40,19 @@ def test_cube_build_single_output(run_cube_build_single_output, output, fitsdiff
 
 
 @pytest.mark.bigdata
-def test_cube_build_miri_internal_cal(rtdata, fitsdiff_default_kwargs):
-    """Run cube_build on single file using coord system = internal_cal"""
+def test_cube_build_miri_ifualign(rtdata, fitsdiff_default_kwargs):
+    """Run cube_build on single file using coord system = ifu_align"""
     input_file = 'jw01024001001_04101_00001_mirifushort_cal.fits'
     rtdata.get_data(f"miri/mrs/{input_file}")
 
     args = [
         'jwst.cube_build.CubeBuildStep',
         input_file,
-        '--coord_system=internal_cal'
+        '--coord_system=ifualign'
     ]
     Step.from_cmdline(args)
 
-    output = input_file.replace('cal', 'ch1-short_internal_s3d')
+    output = input_file.replace('cal', 'ch1-short_s3d')
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_miri_cubebuild/{output}")

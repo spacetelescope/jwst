@@ -548,6 +548,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 
   nxy = nx * ny;
   int *wave_slice_dq;
+
   if (mem_alloc_dq(nxy, &wave_slice_dq)) return 1;
 
   // Loop over the wavelength planes and set DQ plane 
@@ -593,8 +594,8 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   } // end loop over wavelength
 
   *spaxel_dq = idqv;
-  free(wave_slice_dq);
 
+  free (wave_slice_dq);
   return 0;
 }
 
@@ -662,6 +663,7 @@ int dq_nirspec(int overlap_partial,
 				       match_slice);
 
     int *wave_slice_dq;
+
     if (mem_alloc_dq(nxy, &wave_slice_dq)) return 1;
 
     for (j =0; j< nxy; j++){
@@ -709,7 +711,7 @@ int dq_nirspec(int overlap_partial,
     free(wave_slice_dq);
   } // end of wavelength
   *spaxel_dq = idqv;
-
+  
   return 0;
 }
 
