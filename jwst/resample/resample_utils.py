@@ -8,8 +8,7 @@ from astropy.modeling import Model
 from astropy import units as u
 import gwcs
 
-from stcal.dqflags import interpret_bit_flags
-
+from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape

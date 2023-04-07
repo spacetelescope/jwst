@@ -317,3 +317,25 @@ Poisson noise, :math:`var^P_{o}`, is stored in the VAR_POISSON extension, the va
 due to read noise, :math:`var^R_{o}`, is stored in the VAR_RNOISE extension, and the
 square-root of the combined variance, :math:`var^C_{o}`, is stored in the ERR
 extension.
+
+
+
+Weighted Readnoise Variance
++++++++++++++++++++++++++++
+If the :ref:`undersampling correction <undersampling_correction_step>`
+step has been performed prior to ramp fitting, any group whose value exceeds the
+`signal_threshold` parameter will have been flagged with the UNDERSAMP and DO_NOT_USE
+data quality flags. Due to the DO_NOT_USE flags, such groups will be excluded
+from the slope calculations.
+
+However, it is desired to have a readnoise variance that is similar to pixels
+unaffected by charge migration, so an additional type of variance will
+be calculated, in which the excluded groups mentioned above will be included.
+This additional, 'weighted', readnoise variance is used for weighting in the
+:ref:`resample <resample_step>` step later in the pipeline. The 'weighted'
+readnoise variance is written to the VAR_RNOISE extension of each of the 3
+output products.
+
+The original ('conventional') type of readnoise variance described earlier is still used
+internally in other variance calculations but, as mentioned above, is no longer written
+to the separate variance extension.

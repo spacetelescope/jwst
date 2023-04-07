@@ -78,8 +78,8 @@ of each input calibrated product is created, which contains a DQ array
 that has been updated to flag pixels detected as outliers. This updated
 product is known as a CR-flagged product and is saved as a "_crfints" product type.
 
-Imaging photometry catalog
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Imaging photometry
+^^^^^^^^^^^^^^^^^^
 :Data model: N/A
 :File suffix: _phot
 
@@ -101,8 +101,8 @@ spectral data for all integrations contained in the input exposures. The file na
 source-based, using the output product name specified in the ASN file, e.g.
 "jw87600-a3001_t001_niriss_clear-gr700xd_x1dints.fits."
 
-Spectroscopic white-light catalog
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Spectroscopic white-light photometry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: N/A
 :File suffix: _whtlt
 

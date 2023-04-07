@@ -45,44 +45,50 @@ on either the first group or frame zero pixel values.
 
 .. |check| unicode:: U+2713 .. checkmark
 
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| Near-IR                                                        | MIRI                                                        |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| Step                                       | Non-TSO | TSO     | Step                                    | Non-TSO | TSO     |
-+============================================+=========+=========+=========================================+=========+=========+
-| :ref:`group_scale <group_scale_step>`      | |check| | |check| | :ref:`group_scale <group_scale_step>`   | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`dq_init <dq_init_step>`              | |check| | |check| | :ref:`dq_init <dq_init_step>`           | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`saturation <saturation_step>`        | |check| | |check| | :ref:`saturation <saturation_step>`     | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`ipc <ipc_step>` [1]_                 |         |         | :ref:`ipc <ipc_step>`                   |         |         |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`superbias <superbias_step>`          | |check| | |check| | :ref:`firstframe <firstframe_step>`     | |check| |         |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`refpix <refpix_step>`                | |check| | |check| | :ref:`lastframe <lastframe_step>`       | |check| |         |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-|                                            |         |         | :ref:`reset <reset_step>`               | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`linearity <linearity_step>`          | |check| | |check| | :ref:`linearity <linearity_step>`       | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`persistence <persistence_step>` [2]_ | |check| |         | :ref:`rscd <rscd_step>`                 | |check| |         |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`dark_current <dark_current_step>`    | |check| | |check| | :ref:`dark_current <dark_current_step>` | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-|                                            |         |         | :ref:`refpix <refpix_step>`             | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`jump <jump_step>`                    | |check| | |check| | :ref:`jump <jump_step>`                 | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`ramp_fitting <ramp_fitting_step>`    | |check| | |check| | :ref:`ramp_fitting <ramp_fitting_step>` | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`gain_scale <gain_scale_step>`        | |check| | |check| | :ref:`gain_scale <gain_scale_step>`     | |check| | |check| |
-+--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| Near-IR                                                                                  | MIRI                                                        |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| Step                                                                 | Non-TSO | TSO     | Step                                    | Non-TSO | TSO     |
++======================================================================+=========+=========+=========================================+=========+=========+
+| :ref:`group_scale <group_scale_step>`                                | |check| | |check| | :ref:`group_scale <group_scale_step>`   | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`dq_init <dq_init_step>`                                        | |check| | |check| | :ref:`dq_init <dq_init_step>`           | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`saturation <saturation_step>`                                  | |check| | |check| | :ref:`saturation <saturation_step>`     | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`ipc <ipc_step>` [1]_                                           |         |         | :ref:`ipc <ipc_step>`                   |         |         |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`superbias <superbias_step>`                                    | |check| | |check| | :ref:`firstframe <firstframe_step>`     | |check| |         |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`refpix <refpix_step>`                                          | |check| | |check| | :ref:`lastframe <lastframe_step>`       | |check| |         |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+|                                                                      |         |         | :ref:`reset <reset_step>`               | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`linearity <linearity_step>`                                    | |check| | |check| | :ref:`linearity <linearity_step>`       | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`persistence <persistence_step>` [2]_                           | |check| |         | :ref:`rscd <rscd_step>`                 | |check| |         |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`dark_current <dark_current_step>`                              | |check| | |check| | :ref:`dark_current <dark_current_step>` | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+|                                                                      |         |         | :ref:`refpix <refpix_step>`             | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+----------------------+------------------+---------+---------+
+| :ref:`jump <jump_step>`                                              | |check| | |check| | :ref:`jump <jump_step>`                 | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`undersampling_correction <undersampling_correction_step>` [3]_ | |check| |         |                                         |         |         |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`ramp_fitting <ramp_fitting_step>`                              | |check| | |check| | :ref:`ramp_fitting <ramp_fitting_step>` | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`gain_scale <gain_scale_step>`                                  | |check| | |check| | :ref:`gain_scale <gain_scale_step>`     | |check| | |check| |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+
 
 .. [1] By default, the parameter reference `pars-detector1pipeline`
    retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step for all instruments.
 .. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
    the `Detector1Pipeline` module for all NIRSpec exposures.
+.. [3] By default, the :ref:`undersampling_correction <undersampling_correction_step>` step is skipped in
+   the `Detector1Pipeline` module for all instruments.
+   
 
 Arguments
 ---------
@@ -91,7 +97,7 @@ The ``calwebb_detector1`` pipeline has one optional argument::
   --save_calibrated_ramp  boolean  default=False
 
 If set to ``True``, the pipeline will save intermediate data to a file as it
-exists at the end of the :ref:`jump <jump_step>` step (just before ramp fitting). The data
+exists at the end of the :ref:`jump <jump_step>` step. The data
 at this stage of the pipeline are still in the form of the original 4D ramps
 (ncols x nrows x ngroups x nints) and have had all of the detector-level
 correction steps applied to it, including the detection and flagging of

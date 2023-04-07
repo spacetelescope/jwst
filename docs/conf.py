@@ -82,6 +82,7 @@ if sys.version_info[0] == 2:
 # ones.
 extensions = [
     'numfig',
+    'sphinxcontrib.jquery',
     'pytest_doctestplus.sphinx.doctestplus',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',

@@ -417,7 +417,6 @@ def test_open_slits():
     assert len(slits) == 1
 
 
-@pytest.mark.xfail(reason="Fails due to updated ref files delivered to CRDS")
 def test_shutter_size_on_sky():
     """
     Test the size of a MOS shutter on sky is ~ .2 x .4 arcsec.
@@ -454,7 +453,6 @@ def test_shutter_size_on_sky():
     assert sep_y.value < 0.46
 
 
-@pytest.mark.xfail(reason="Fails due to updated ref files delivered to CRDS")
 @pytest.mark.parametrize(('mode'), ['fs', 'msa'])
 def test_functional_fs_msa(mode):
     #     """
@@ -594,7 +592,6 @@ def wcs_ifu_grating():
     return _create_image_model
 
 
-@pytest.mark.xfail(reason="Fails due to updated ref files delivered to CRDS")
 def test_functional_ifu_grating(wcs_ifu_grating):
     """Compare Nirspec instrument model with IDT model for IFU grating."""
 
@@ -751,7 +748,6 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     assert_allclose(v3, ins_tab['yV2V3'])
 
 
-@pytest.mark.xfail(reason="Fails due to updated ref files delivered to CRDS")
 def test_functional_ifu_prism():
     """Compare Nirspec instrument model with IDT model for IFU prism."""
     # setup test
@@ -975,7 +971,6 @@ def ifu_world_coord(wcs_ifu_grating):
     return ra_all, dec_all, lam_all
 
 
-@pytest.mark.xfail(reason="Fails due to updated ref files delivered to CRDS")
 @pytest.mark.parametrize("slice", [1, 17])
 def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
     """ Test that the number of valid outputs from a slice forward transform

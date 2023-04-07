@@ -1,0 +1,3 @@
+# automatically requests pull request reviews for files matching the given pattern; the last match takes precendence
+
+*       @spacetelescope/jwst-pipeline-maintainers 

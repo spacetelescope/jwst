@@ -3,41 +3,20 @@ name: Weekly cron
 on:
   schedule:
     # Weekly Monday 6AM build
-    - cron: "0 6 * * 1"
+    - cron: "0 0 * * 1"
   workflow_dispatch:
 
-env:
-  CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: $HOME/crds_cache
-  CRDS_CLIENT_RETRY_COUNT: 3
-  CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-
 jobs:
-  test:
-    name: ${{ matrix.toxenv }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        toxenv: [ test-devdeps-xdist ]
-        python-version: [ '3.x' ]
-        os: [ ubuntu-latest ]
+  crds:
+    name: retrieve current CRDS context
+    runs-on: ubuntu-latest
+    env:
+      OBSERVATORY: jwst
+      CRDS_PATH: /tmp/crds_cache
+      CRDS_SERVER_URL: https://jwst-crds.stsci.edu
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
-      - run: >
-          echo "pmap=$(
-          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["jwst"], "id": 1}' https://jwst-crds.stsci.edu/json/ |
-          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
-          )" >> $GITHUB_OUTPUT
-        # Get default CRDS_CONTEXT without installing crds client
-        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
+      - id: context
+        run: >
         id: crds-context
       - run: echo "CRDS CONTEXT ${{ steps.crds-context.outputs.pmap }}"
       - uses: actions/cache@v3
@@ -46,3 +25,33 @@ jobs:
           key: crds-reffiles-${{ steps.crds-context.outputs.pmap }}
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
+      - id: path
+        run: echo "path=${{ env.CRDS_PATH }}" >> $GITHUB_OUTPUT
+      - id: server
+        run: echo "url=${{ env.CRDS_SERVER_URL }}" >> $GITHUB_OUTPUT
+    outputs:
+      context: ${{ steps.context.outputs.pmap }}
+      path: ${{ steps.path.outputs.path }}
+      server: ${{ steps.server.outputs.url }}
+  test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
+    needs: [ crds ]
+    with:
+      setenv: |
+        CRDS_PATH: ${{ needs.crds.outputs.path }}
+        CRDS_SERVER_URL: ${{ needs.crds.outputs.server }}
+        CRDS_CLIENT_RETRY_COUNT: 3
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+      cache-path: ${{ needs.crds.outputs.path }}
+      cache-key: crds-${{ needs.crds.outputs.context }}
+      envs: |
+        - macos: test-xdist
+          python-version: 3.8
+        - macos: test-xdist
+          python-version: 3.9
+        - macos: test-sdpdeps-xdist
+          python-version: 3.9
+        - macos: test-xdist
+          python-version: 3.10
+        - linux: test-pyargs-xdist
+        - linux: test-devdeps-xdist

@@ -68,41 +68,32 @@ class DataTypes():
         """
 
         self.input_models = []
-        self.filenames = []
         self.output_name = None
-
+        
         # open the input with datamodels
         # if input is filename or model when it is opened it is a model
         # if input if an association name or ModelContainer then it is opened as a container
-        # print('***input type***',type(input))
-        input_try = datamodels.open(input)
 
-        if isinstance(input_try, datamodels.IFUImageModel):
-            # print('this is a single file or Model ')
-            # It's a single image that's been passed in as a model
-            # input is a model
-            self.filenames.append(input_try.meta.filename)
-            self.input_models.append(input_try)
-            self.output_name = self.build_product_name(self.filenames[0])
+        with datamodels.open(input) as input_models:
 
-        elif isinstance(input_try, ModelContainer):
-            self.output_name = 'Temp'
-            if not single:  # find the name of the output file from the association
-                self.output_name = input_try.meta.asn_table.products[0].name
-            for model in input_try:
-                # check if input data is an IFUImageModel
-                if not isinstance(model, datamodels.IFUImageModel):
-                    raise NotIFUImageModel(
-                        f"Input data is not a IFUImageModel, instead it is {model}")
-                self.filenames.append(model.meta.filename)
-            self.input_models = input_try
+            if isinstance(input_models, datamodels.IFUImageModel):
+                # It's a single image that's been passed in as a model
+                # input is a model
+                filename = input_models.meta.filename
+                self.input_models.append(input_models)
+                self.output_name = self.build_product_name(filename)
 
-        else:
-            raise TypeError("Failed to process file type {}".format(type(input_try)))
+            elif isinstance(input_models, ModelContainer):
+                self.output_name = 'Temp'
+                self.input_models = input_models
+                if not single:  # find the name of the output file from the association
+                    self.output_name = input_models.meta.asn_table.products[0].name
+            else:
+                raise TypeError("Failed to process file type {}".format(type(input_models)))
+            # if the user has set the output name - strip out *.fits
+            # later suffixes will be added to this name to designate the
+            # channel, subchannel or grating,filter the data is covers.
 
-# if the user has set the output name - strip out *.fits
-# later suffixes will be added to this name to designate the
-# channel, subchannel or grating,filter the data is covers.
 
         if output_file is not None:
             basename, ext = os.path.splitext(os.path.basename(output_file))

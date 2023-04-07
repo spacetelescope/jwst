@@ -57,6 +57,7 @@ class CubeBuildStep (Step):
          skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
+         suffix = string(default='s3d')
        """
 
     reference_file_types = ['cubepar']
@@ -72,12 +73,13 @@ class CubeBuildStep (Step):
         """
 
         self.log.info('Starting IFU Cube Building Step')
+
+        t0 = time.time()
 # ________________________________________________________________________________
 # For all parameters convert to a standard format
 # Report read in values to screen
 # ________________________________________________________________________________
         self.subchannel = self.band
-        self.suffix = 's3d'  # override suffix = cube_build
 
         if not self.subchannel.islower():
             self.subchannel = self.subchannel.lower()
@@ -118,7 +120,7 @@ class CubeBuildStep (Step):
 
         self.interpolation = 'pointcloud'  # initialize
 
-        # coord system = internal_cal only option for weighting = area
+        # coord system = internal_cal only option for weighting = area ONLY USED FOR NIRSPEC
         if self.coord_system == 'internal_cal':
             self.interpolation = 'area'
             self.weighting = 'emsm'
@@ -178,9 +180,9 @@ class CubeBuildStep (Step):
             if self.weighting == 'emsm':
                 self.interpolation = 'pointcloud'
 
-# read_user_input:
-# see if options channel, band,grating filter are set on the command lines
-# if they are then self.pars_input['output_type'] = 'user' and fill in  par_input with values
+        # read_user_input:
+        # see if options channel, band,grating filter are set on the command lines
+        # if they are then self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
 # ________________________________________________________________________________
 # DataTypes: Read in the input data - 4 formats are allowed:
@@ -201,18 +203,13 @@ class CubeBuildStep (Step):
                                            self.output_dir)
 
         self.input_models = input_table.input_models
-        self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
-
-        self.pipeline = 3
-        if self.output_type == 'multi' and len(self.input_filenames) == 1:
-            self.pipeline = 2
-
 # ________________________________________________________________________________
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
+
         par_filename = self.get_reference_file(self.input_models[0], 'cubepar')
-# Check for a valid reference file
+        # Check for a valid reference file
         if par_filename == 'N/A':
             self.log.warning('No default cube parameters reference file found')
             return
@@ -228,8 +225,8 @@ class CubeBuildStep (Step):
             'single': self.single,
             'output_type': self.pars_input['output_type']}
 
-# shove the input parameters in to pars_cube to pull out ifu_cube.py
-# these parameters are related to the building a single ifucube_model
+        # shove the input parameters in to pars_cube to pull out ifu_cube.py
+        # these parameters are related to the building a single ifucube_model
 
         pars_cube = {
             'scale1': self.scale1,
@@ -243,14 +240,14 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
-            'skip_dqflagging': self.skip_dqflagging}
+            'skip_dqflagging': self.skip_dqflagging,
+            'suffix': self.suffix}
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
 
         cubeinfo = cube_build.CubeData(
             self.input_models,
-            self.input_filenames,
             par_filename,
             **pars)
 # ________________________________________________________________________________
@@ -264,6 +261,16 @@ class CubeBuildStep (Step):
         instrument = result['instrument']
         instrument_info = result['instrument_info']
         master_table = result['master_table']
+
+        if instrument == 'MIRI' and self.coord_system == 'internal_cal':
+            self.log.warning('The output coordinate system of internal_cal is not valid for MIRI')
+            self.log.warning('use output_coord = ifualign instead')
+            return
+        filenames = master_table.FileMap['filename']
+
+        self.pipeline = 3
+        if self.output_type == 'multi' and len(filenames) == 1:
+            self.pipeline = 2
 # ________________________________________________________________________________
 # How many and what type of cubes will be made.
 # send self.pars_input['output_type'], all_channel, all_subchannel, all_grating, all_filter
@@ -277,16 +284,16 @@ class CubeBuildStep (Step):
 
         # ModelContainer of ifucubes
         cube_container = ModelContainer()
-
         status_cube = 0
-        t0 = time.time()
+
+        # for single type cubes num_cubes always = 1, Looping over
+        # bands is done in outlier detection.
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
             list_par2 = cube_pars[icube]['par2']
             thiscube = ifu_cube.IFUCubeData(
                 self.pipeline,
-                self.input_filenames,
                 self.input_models,
                 self.output_name_base,
                 self.pars_input['output_type'],
@@ -296,7 +303,6 @@ class CubeBuildStep (Step):
                 instrument_info,
                 master_table,
                 **pars_cube)
-
 # ________________________________________________________________________________
             thiscube.check_ifucube()  # basic checks
 
@@ -317,29 +323,30 @@ class CubeBuildStep (Step):
 # _______________________________________________________________________________
 # build the IFU Cube
 
-# If single = True: map each file to output grid and return single mapped file
-# to output grid
-# This option is used for background matching and outlier rejection
             status = 0
+
+# If single = True: map each file to output grid and return single mapped file
+# to output grid. # This option is used for background matching and outlier rejection
+
             if self.single:
                 self.output_file = None
                 cube_container = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(cube_container))
 
-# Else standard IFU cube building
+# Else standard IFU cube building - the result returned from build_ifucube will be 1 IFU CUBR
             else:
-                cube_result = thiscube.build_ifucube()
-                result, status = cube_result
+                result, status = thiscube.build_ifucube()
+
+                # check if cube_build failed
+                # **************************
+                if status == 1:
+                    status_cube = 1
+
                 cube_container.append(result)
-
-            # check if cube_build failed
-            # **************************
-            if status == 1:
-                status_cube = 1
-
-        t1 = time.time()
-        self.log.debug(f'Time to build all cubes {t1-t0}')
+                del result
+                
+            del thiscube
 
         # irrelevant WCS keywords we will remove from final product
         rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
@@ -353,6 +360,12 @@ class CubeBuildStep (Step):
             for key in rm_keys:
                 if key in cube.meta.wcsinfo.instance:
                     del cube.meta.wcsinfo.instance[key]
+        if status_cube == 1:
+            self.skip = True
+
+        t1 = time.time()
+        self.log.debug(f'Time to build all cubes {t1-t0}')
+
         if status_cube == 1:
             self.skip = True
 

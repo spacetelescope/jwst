@@ -647,12 +647,12 @@ integration.
 
 .. _whtlt:
 
-White-light photometry catalog: ``whtlt``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+White-light photometric timeseries: ``whtlt``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The :ref:`white_light <white_light_step>` step in the :ref:`calwebb_tso3 <calwebb_tso3>`
 pipeline produces a light curve from TSO spectroscopic observations by computing the
 wavelength-integrated spectral flux as a function of integration time stamp within one or more
-exposures. The resulting data
+exposures. The resulting photometric timeseries data
 are stored in a ``whtlt`` product, which is in the form of an ASCII table in
 `ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
 (Enhanced Character Separated Values) format. It is a flat text file, containing meta data
