@@ -29,10 +29,12 @@ optionally including background subtraction using a circular annulus.
 For an extended source, rectangular aperture photometry is used, with
 the entire image being extracted, and no background subtraction, regardless
 of what was specified in the reference file or step arguments.
-For either point or extended sources, the photometry makes use of the Astropy
-affiliated package
+For both point or extended sources, photometric measurements make use of
+the Astropy affiliated package
 `photutils <https://photutils.readthedocs.io/en/latest/>`_ to define an aperture
-object and perform extraction.
+object and perform extraction.  For 3D NIRSpec fixed slit rateints data, the
+``extract_1d`` step will be skipped as 3D input for the mode is not supported.
+
 
 For most spectral modes an aperture correction will be applied to the extracted
 1D spectral data (unless otherwise selected by the user), in order to put the
@@ -53,11 +55,11 @@ for MIRI MRS and NIRSpec IFU. For other modes that are not resampled (e.g. MIRI
 LRS slitless, NIRISS SOSS, NIRSpec BrightObj, and NIRCam and NIRISS WFSS), this will
 be a "cal" product.
 For modes that have multiple slit instances (NIRSpec fixed-slit and MOS, WFSS),
-The SCI extensions should have keyword SLTNAME to specify which slit was extracted,
+the SCI extensions should have the keyword SLTNAME to specify which slit was extracted,
 though if there is only one slit (e.g. MIRI LRS and NIRISS SOSS), the slit name can
 be taken from the EXTRACT1D reference file instead.
 
-Normally the :ref:`photom <photom_step>` step should have been run before running
+Normally the :ref:`photom <photom_step>` step should be applied before running
 ``extract_1d``.  If ``photom`` has not been run, a warning will be logged and the
 output of ``extract_1d`` will be in units of count rate.  The ``photom`` step
 converts data to units of either surface brightness (MegaJanskys per steradian) or,
@@ -72,7 +74,7 @@ have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
 FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
 BKGD_VAR_FLAT and NPIXELS.
-Some metadata will be written to the table header, mostly copied from the
+Some meta data will be written to the table header, mostly copied from the
 input header.
 
 The output WAVELENGTH data is copied from the wavelength array of the input 2D data,
@@ -143,12 +145,12 @@ If ``extract_width`` is also given, that takes priority over ``ystart`` and
 in the cross-dispersion direction. For point source data, 
 then the ``xstart`` and ``xstop`` values (dispaxis = 2) are shifted to account
 for the expected location of the source. If dispaxis=1, then the ``ystart`` and ``ystop`` values
-are modified. The offset amount is internally calculated. If it is not desired to apply this
+are modified. The offset amount is calculated internally. If it is not desired to apply this
 offset, then set ``use_source_posn`` = False. If the ``use_source_posn`` parameter is None (default),
 the values of ``xstart/xstop`` or ``ystart/ystop`` in the ``extract_1d`` reference file will be used
-to determine the center position of the extraction aperture. If these values are not set in the reference file
-the ``use_source_posn``  will be 
-internally set to True for point source data according to the table given in :ref:`srctype <srctype_table>`.
+to determine the center position of the extraction aperture. If these values are not set in the
+reference file, the ``use_source_posn``  will be set internally to True for point source data
+according to the table given in :ref:`srctype <srctype_table>`.
 Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.

@@ -404,7 +404,7 @@ static PyObject * get_clipped_pixels(PyObject *module, PyObject *args) {
         idx_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
         if (!idx_arr) goto fail;
 
-        result = Py_BuildValue("(OOOO)", x_arr, y_arr, areas_arr, idx_arr);
+        result = Py_BuildValue("(NNNN)", x_arr, y_arr, areas_arr, idx_arr);
         goto cleanup;
     }
 
@@ -447,7 +447,7 @@ static PyObject * get_clipped_pixels(PyObject *module, PyObject *args) {
         PyArray_ENABLEFLAGS(areas_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(idx_arr, NPY_ARRAY_OWNDATA);
 
-        result = Py_BuildValue("(OOOO)", x_arr, y_arr, areas_arr, idx_arr);
+        result = Py_BuildValue("(NNNN)", x_arr, y_arr, areas_arr, idx_arr);
         goto cleanup;
     }
 

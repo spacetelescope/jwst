@@ -81,7 +81,7 @@ class EngdbMast(EngdbABC):
 
         # Check for basic aliveness.
         try:
-            resp = requests.get(self.base_url + 'api/')
+            resp = requests.get(self.base_url + 'api/', timeout=self.timeout)
         except requests.exceptions.ConnectionError as exception:
             raise RuntimeError(f'MAST url: {self.base_url} is unreachable.') from exception
         if resp.status_code != 200:

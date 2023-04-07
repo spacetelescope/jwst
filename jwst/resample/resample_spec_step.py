@@ -8,7 +8,6 @@ from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
 
-
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
@@ -30,12 +29,23 @@ class ResampleSpecStep(ResampleStep):
         self.wht_type = self.weight_type
         input_new = datamodels.open(input)
 
+        # Check if input_new is a MultiSlitModel
+        model_is_msm = isinstance(input_new, MultiSlitModel)
+
+        #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
+        if model_is_msm and len((input_new[0]).shape) == 3:
+            self.log.warning('Resample spec step will be skipped')
+            input_new.meta.cal_step.resample_spec = 'SKIPPED'
+
+            return input_new
+
         # Convert ImageModel to SlitModel (needed for MIRI LRS)
         if isinstance(input_new, ImageModel):
             input_new = datamodels.SlitModel(input_new)
 
         if isinstance(input_new, ModelContainer):
             input_models = input_new
+
             try:
                 output = input_models.meta.asn_table.products[0].name
             except AttributeError:
@@ -63,6 +73,16 @@ class ResampleSpecStep(ResampleStep):
             kwargs = self._set_spec_defaults()
             kwargs['blendheaders'] = self.blendheaders
 
+        kwargs['output_shape'] = self._check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = self._load_custom_wcs(
+            self.output_wcs,
+            kwargs['output_shape']
+        )
+
         kwargs['allowed_memory'] = self.allowed_memory
         kwargs['output'] = output
 
@@ -73,6 +93,7 @@ class ResampleSpecStep(ResampleStep):
 
         # Call resampling
         self.drizpars = kwargs
+
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
 

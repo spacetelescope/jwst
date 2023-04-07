@@ -98,7 +98,10 @@ Spectroscopic Data
 
 Use the ``resample_spec`` step for spectroscopic data.  The dispersion
 direction is needed for this case, and this is obtained from the
-DISPAXIS keyword.
+DISPAXIS keyword.  For the NIRSpec Fixed Slit mode, the ``resample_spec``
+step will be skipped if the input is a rateints product, as 3D input for
+the mode is not supported.
+
 
 References
 ----------

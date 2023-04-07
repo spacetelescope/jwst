@@ -1,3 +1,5 @@
+import logging
+
 from astropy.table import Table
 import numpy as np
 from photutils.detection import DAOStarFinder
@@ -5,6 +7,9 @@ from photutils.detection import DAOStarFinder
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
 
 from ..source_catalog.detection import JWSTBackground
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
@@ -73,10 +78,17 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
                       dqflags.pixel['DO_NOT_USE']) &
                      model.dq).astype(bool)
 
-    bkg = JWSTBackground(model.data, box_size=bkg_boxsize,
-                         coverage_mask=coverage_mask)
+    columns = ['id', 'xcentroid', 'ycentroid', 'flux']
+    try:
+        bkg = JWSTBackground(model.data, box_size=bkg_boxsize,
+                             coverage_mask=coverage_mask)
+        threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
+    except ValueError as e:
+        log.warning(f"Error determining sky background: {e.args[0]}")
+        # return an empty catalog
+        catalog = Table(names=columns, dtype=(int, float, float, float))
+        return catalog
 
-    threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     threshold = np.median(threshold_img)  # DAOStarFinder requires float
 
     daofind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
@@ -85,7 +97,6 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
                             peakmax=peakmax)
     sources = daofind(model.data, mask=coverage_mask)
 
-    columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     if sources:
         catalog = sources[columns]
     else:

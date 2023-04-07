@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging
 import warnings
 
@@ -7,8 +8,7 @@ from astropy.modeling import Model
 from astropy import units as u
 import gwcs
 
-from stcal.dqflags import interpret_bit_flags
-
+from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
@@ -66,25 +66,35 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object, with defined domain, covering entire set of input frames
 
     """
-    wcslist = [i.meta.wcs for i in input_models]
-    for w, i in zip(wcslist, input_models):
-        if w.bounding_box is None:
-            w.bounding_box = wcs_bbox_from_shape(i.data.shape)
-    naxes = wcslist[0].output_frame.naxes
+    if ref_wcs is None:
+        wcslist = [i.meta.wcs for i in input_models]
+        for w, i in zip(wcslist, input_models):
+            if w.bounding_box is None:
+                w.bounding_box = wcs_bbox_from_shape(i.data.shape)
+        naxes = wcslist[0].output_frame.naxes
 
-    if naxes != 2:
-        raise RuntimeError("Output WCS needs 2 spatial axes. "
-                           f"{wcslist[0]} has {naxes}.")
+        if naxes != 2:
+            raise RuntimeError("Output WCS needs 2 spatial axes. "
+                               f"{wcslist[0]} has {naxes}.")
 
-    output_wcs = wcs_from_footprints(
-        input_models,
-        pscale_ratio=pscale_ratio,
-        pscale=pscale,
-        rotation=rotation,
-        shape=shape,
-        crpix=crpix,
-        crval=crval
-    )
+        output_wcs = wcs_from_footprints(
+            input_models,
+            pscale_ratio=pscale_ratio,
+            pscale=pscale,
+            rotation=rotation,
+            shape=shape,
+            crpix=crpix,
+            crval=crval
+        )
+
+    else:
+        naxes = ref_wcs.output_frame.naxes
+        if naxes != 2:
+            raise RuntimeError("Output WCS needs 2 spatial axes but the "
+                               f"supplied WCS has {naxes} axes.")
+        output_wcs = deepcopy(ref_wcs)
+        if shape is not None:
+            output_wcs.array_shape = shape
 
     # Check that the output data shape has no zero length dimensions
     if not np.product(output_wcs.array_shape):

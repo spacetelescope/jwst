@@ -878,6 +878,16 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         logger.warning('Calculation of S_REGION failed and will be skipped.')
         logger.warning('Exception is %s', e)
 
+    # If TARG_RA/TARG_DEC still 0/0 (e.g. pure parallels with no defined target),
+    # populate with RA_REF/DEC_REF values
+    if (model.meta.target.ra == 0.0 and model.meta.target.dec == 0.0) and (
+            'PARALLEL' in model.meta.visit.type):
+
+        logger.warning('No target location specified for parallel observation:'
+                       'copying reference point RA/Dec to TARG_RA/TARG_DEC.')
+        model.meta.target.ra = model.meta.wcsinfo.ra_ref
+        model.meta.target.dec = model.meta.wcsinfo.dec_ref
+
     return transforms
 
 
@@ -900,7 +910,7 @@ def update_s_region(model, siaf):
     logger.info("Vertices for aperture %s: %s", model.meta.aperture.name, vertices)
 
     # Execute IdealToV2V3, followed by V23ToSky
-    from ..transforms.models import IdealToV2V3
+    from stdatamodels.jwst.transforms.models import IdealToV2V3
     vparity = model.meta.wcsinfo.vparity
     v3yangle = model.meta.wcsinfo.v3yangle
 

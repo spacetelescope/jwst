@@ -1,8 +1,8 @@
 /*
- 
+
 Main function for Python: blot_wrapper
 
-Python signature: 
+Python signature:
             result = blot_wrapper(roi_det, blot_xsize, blot_ysize, xstart, xsize2,
                                   xcenter, ycenter,
                                   x_cube, y_cube, flux_cube)
@@ -46,7 +46,7 @@ Returns
 blot_flux : numpy.ndarray
   IFU spaxel cflux
 blot_weight : numpy.ndarray
-  IFU spaxel weight 
+  IFU spaxel weight
 */
 
 #include <stdlib.h>
@@ -73,30 +73,30 @@ int alloc_blot_arrays(int nelem, double **fluxv, double **weightv) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
-    
+
     //weight
     if (!(*weightv  = (double*)calloc(nelem, sizeof(double)))) {
       PyErr_SetString(PyExc_MemoryError, msg);
       goto failed_mem_alloc;
-    }  
+    }
     return 0;
 
  failed_mem_alloc:
     free(*fluxv);
     free(*weightv);
-   
+
 }
 
 
 // Match the median cube mapped to detector space with detector pixels
 // Match occurs when x distance or y distance < roi size (set to 1 pixel)
 // The combined flux for the blotted image is determined using a modified
-// Shepard weighting methods. 
+// Shepard weighting methods.
 
 // return values: blot_flux, blot_weight
 
 int blot_overlap(double roi, int xsize_det, int ysize_det,
-		 int xstart, int xsize2, int ncube,  
+		 int xstart, int xsize2, int ncube,
 		 double *xcenter, double *ycenter,
 		 double *x_cube, double *y_cube, double *flux_cube,
 		 double **blot_flux, double **blot_weight) {
@@ -107,28 +107,28 @@ int blot_overlap(double roi, int xsize_det, int ysize_det,
   double dx, dy, dxy, weight_distance, weighted_flux;
   int npt = xsize_det * ysize_det;
 
-  // allocate memory to hold output 
+  // allocate memory to hold output
   if (alloc_blot_arrays(npt, &fluxv, &weightv)) return 1;
 
   for (k = 0; k < ncube; k++) {
     for (ix = 0; ix< xsize2; ix ++){
       dx = fabs(x_cube[k] - xcenter[ix]);
-      if( dx <= roi){ 
+      if( dx <= roi){
 	for ( iy = 0; iy < ysize_det; iy ++){
 	  dy = fabs(y_cube[k] - ycenter[iy]);
 	  if (dy <= roi){
-	    dxy = sqrt(dx*dx + dy*dy);		 
+	    dxy = sqrt(dx*dx + dy*dy);
 	    weight_distance = exp(-dxy);
 	    weighted_flux = weight_distance * flux_cube[k];
 	    index2d =  iy * xsize_det + (ix + xstart);
 	    fluxv[index2d] = fluxv[index2d] + weighted_flux;
 	    weightv[index2d] = weightv[index2d] + weight_distance;
-	  } // 
+	  } //
 	} //end loop over iy
       } //
     } // end loop over ix
   } // end loop over ncube
-    
+
   // assign output values:
 
   *blot_flux = fluxv;
@@ -158,7 +158,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
 
 static PyObject *blot_wrapper(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xcentero, *ycentero, *x_cubeo, *y_cubeo, *flux_cubeo;
-  
+
   double roi;
   int  xstart, xsize_det, ysize_det, xsize2;
   int nx, ny,nz, ncube;
@@ -201,15 +201,15 @@ static PyObject *blot_wrapper(PyObject *module, PyObject *args) {
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
     blot_flux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
     if (!blot_flux_arr) goto fail;
-    
+
     blot_weight_arr = (PyArrayObject*) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
     if (!blot_weight_arr) goto fail;
 
-    result = Py_BuildValue("(OO)", blot_flux_arr, blot_weight_arr);
+    result = Py_BuildValue("(NN)", blot_flux_arr, blot_weight_arr);
 
     goto cleanup;
   }
-      
+
   ncube = nx;
   status = blot_overlap(roi, xsize_det, ysize_det, xstart,xsize2, ncube,
 			(double *) PyArray_DATA(xcenter),
@@ -225,7 +225,7 @@ static PyObject *blot_wrapper(PyObject *module, PyObject *args) {
 
   } else {
     // create return tuple:
-    
+
     blot_flux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_flux);
     if (!blot_flux_arr) goto fail;
     blot_flux = NULL;
@@ -233,11 +233,11 @@ static PyObject *blot_wrapper(PyObject *module, PyObject *args) {
     blot_weight_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_weight);
     if (!blot_weight_arr) goto fail;
     blot_weight = NULL;
-    
+
     PyArray_ENABLEFLAGS(blot_flux_arr, NPY_ARRAY_OWNDATA);
     PyArray_ENABLEFLAGS(blot_weight_arr, NPY_ARRAY_OWNDATA);
 
-    result = Py_BuildValue("(OO)", blot_flux_arr, blot_weight_arr);	
+    result = Py_BuildValue("(NN)", blot_flux_arr, blot_weight_arr);
     goto cleanup;
   }
 
@@ -259,7 +259,7 @@ static PyObject *blot_wrapper(PyObject *module, PyObject *args) {
   if (free_xcube) Py_XDECREF(x_cube);
   if (free_ycube) Py_XDECREF(y_cube);
   if (free_flux) Py_XDECREF(flux_cube);
-      
+
   return result;
 }
 

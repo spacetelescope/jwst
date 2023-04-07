@@ -6,11 +6,14 @@ from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
+from jwst.ramp_fitting.ramp_fit_step import compute_RN_variances
+
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 SATURATED = dqflags.pixel["SATURATED"]
 NO_GAIN = dqflags.pixel["NO_GAIN_VALUE"]
+UNDERSAMP = dqflags.pixel["UNDERSAMP"]
 
 DELIM = "-" * 70
 
@@ -41,6 +44,60 @@ def test_drop_frames1_not_set():
 
     data = slopes[0]
     np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
+
+
+def test_readnoise_variance():
+    # test RN variance calculations for handling undersample_correction
+    group_time = 10.6
+
+    model1, gdq_4d, rnoise, pixdq, err, gain = \
+        setup_inputs(ngroups=10, nints=3, nrows=3, ncols=4, nframes=1, gain=1,
+                     readnoise=0.7071, grouptime=group_time)
+
+    imshape = (pixdq.shape[0], pixdq.shape[1])
+    readnoise_2d = np.zeros(imshape, dtype=np.float32) + rnoise
+    gain_2d = np.zeros(imshape, dtype=np.float32) + gain
+
+    # Populate ramps with a variety of flags
+    gdq_4d[:, 7, 1, 3] = JUMP_DET
+    gdq_4d[:, 6:, 1, 2] = SATURATED
+    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 3, 2, 2] = JUMP_DET
+    gdq_4d[:, 6, 2, 2] = JUMP_DET
+    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 8, 2, 2] += JUMP_DET
+    gdq_4d[:, 0, 0, 0] = DO_NOT_USE + SATURATED
+    gdq_4d[:, 1:, 0, 0] = SATURATED
+    gdq_4d[:, 0, 0, 2] = SATURATED + DO_NOT_USE
+    gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 0:, 1, 0] = JUMP_DET
+
+    var_r2, var_r3, var_r4 = compute_RN_variances(gdq_4d, readnoise_2d, gain_2d, group_time)
+
+    # Compare the exposure level RN variances
+    true_var_r2 = np.array(
+        [[0.0000000e+00, 1.7979382e-05, 0.0000000e+00, 7.4164942e-04],
+         [2.9665977e-03, 1.7979382e-05, 8.4759937e-05, 4.9443293e-05],
+         [1.7979382e-05, 1.7979382e-05, 3.2962195e-04, 5.2974960e-05]])
+
+    np.testing.assert_allclose(true_var_r2, var_r2, rtol=1e-4)
+
+    # Compare an integration of the integration-specific level RN variances
+    true_var_r3_0 = np.array(
+        [[0.0000000e+00, 5.3938144e-05, 0.0000000e+00, 2.2249483e-03],
+         [8.8997930e-03, 5.3938144e-05, 2.5427982e-04, 1.4832988e-04],
+         [5.3938144e-05, 5.3938144e-05, 9.8886585e-04, 1.5892487e-04]])
+
+    np.testing.assert_allclose(true_var_r3_0, var_r3[0, :, :], rtol=1e-4)
+
+    # Compare a segment of an integration of the segment level RN variances
+    true_var_r4_0_0 = np.array(
+        [[0.0000000e+00, 5.3938144e-05, 0.0000000e+00, 2.2249483e-03],
+         [0.0000000e+00, 5.3938144e-05, 2.5427982e-04, 1.5892487e-04],
+         [5.3938144e-05, 5.3938144e-05, 2.2249483e-03, 1.5892487e-04]])
+
+    np.testing.assert_allclose(true_var_r4_0_0, var_r4[0, 0, :, :], rtol=1e-4)
 
 
 def test_mixed_crs_and_donotuse():
@@ -886,20 +943,20 @@ def test_zeroframe_usage():
     # Check slopes information
     sdata, sdq, svp, svr, serr = slopes
 
-    check = np.array([[37.04942, 0.46572033, 4.6866207]])
+    check = np.array([[20.709406, 0.46572033, 4.6866207]])
     np.testing.assert_allclose(sdata, check, tol, tol)
 
     # Since the second integration is GOOD the final DQ is GOOD.
     check = np.array([[GOOD, GOOD, GOOD]])
     np.testing.assert_allclose(sdq, check, tol, tol)
 
-    check = np.array([[0.06958079, 0.0002169, 0.20677584]])
+    check = np.array([[0.1544312, 0.0002169, 0.20677584]])
     np.testing.assert_allclose(svp, check, tol, tol)
 
-    check = np.array([[0.00041314, 0.0004338, 0.00043293]])
+    check = np.array([[0.00042844, 0.0004338, 0.00043293]])
     np.testing.assert_allclose(svr, check, tol, tol)
 
-    check = np.array([[0.26456368, 0.02550867, 0.4552019]])
+    check = np.array([[0.39352208, 0.02550867, 0.4552019]])
     np.testing.assert_allclose(serr, check, tol, tol)
 
     # Check slopes information
@@ -915,16 +972,16 @@ def test_zeroframe_usage():
                       [[GOOD, GOOD, GOOD]]])
     np.testing.assert_allclose(cdq, check, tol, tol)
 
-    check = np.array([[[3.4790397e-01, 0.0000000e+00, 4.3422928e+00]],
-                      [[8.6975992e-02, 2.1689695e-04, 2.1711464e-01]]])
+    check = np.array([[[1.3898808e+00, 0.0000000e+00, 4.3422928e+00]],
+                      [[1.7373510e-01, 2.1689695e-04, 2.1711464e-01]]])
     np.testing.assert_allclose(cvp, check, tol, tol)
 
-    check = np.array([[[0.00867591, 0., 0.21689774]],
+    check = np.array([[[0.03470363, 0., 0.21689774]],
                       [[0.0004338, 0.0004338, 0.0004338]]])
     np.testing.assert_allclose(cvr, check, tol, tol)
 
-    check = np.array([[[0.5971431, 0., 2.1352262]],
-                      [[0.29565147, 0.02550867, 0.4664209]]])
+    check = np.array([[[1.1935595, 0., 2.1352262]],
+                      [[0.41733548, 0.02550867, 0.4664209]]])
     np.testing.assert_allclose(cerr, check, tol, tol)
 
 
@@ -1061,3 +1118,27 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.drop_frames1 = 0
 
     return model1, gdq, rnoise, pixdq, err, gain
+
+# -----------------------------------------------------------------------------
+
+###############################################################################
+# The functions below are only used for DEBUGGING tests and developing tests. #
+###############################################################################
+
+def print_real_check(real, check):
+    import inspect
+    cf = inspect.currentframe()
+    line_number = cf.f_back.f_lineno
+    print("=" * 80)
+    print(f"----> Line = {line_number} <----")
+    base_print("real", real)
+    print("=" * 80)
+    base_print("check", check)
+    print("=" * 80)
+
+
+def base_print(label, arr):
+    arr_str = np.array2string(arr, max_line_width=np.nan, separator=", ")
+    print(label)
+    print(arr_str)
+

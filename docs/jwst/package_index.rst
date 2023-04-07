@@ -60,9 +60,9 @@ Package Index
    stpipe/index.rst
    straylight/index.rst
    superbias/index.rst
-   transforms/index.rst
    tso_photometry/index.rst
    tweakreg/index.rst
+   undersampling_correction/index.rst
    wavecorr/index.rst
    wfs_combine/index.rst
    wfss_contam/index.rst

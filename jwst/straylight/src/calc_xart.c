@@ -1,8 +1,8 @@
 /*
- 
+
 Main function for Python: xart_wrapper
 
-Python signature: 
+Python signature:
             result = xart_wrapper(imin, imax, xsize, ysize,
                  xvec, fimg, gamma, lor_amp, g_std, g_dx, g1_amp, g2_amp)
 
@@ -84,7 +84,7 @@ int alloc_xart_arrays(int nelem, double **fluxv) {
 
  failed_mem_alloc:
     free(*fluxv);
-   
+
 }
 
 // Do the computation of the cross-artifact values.
@@ -101,7 +101,7 @@ int xart_model(int imin, int imax, int xsize_det, int ysize_det,
   // This is how big the output vector needs to be
   int npt = xsize_det * ysize_det;
 
-  // allocate memory to hold output 
+  // allocate memory to hold output
   if (alloc_xart_arrays(npt, &fluxv)) return 1;
 
   for (j = 0; j < ysize_det; j++) {
@@ -120,7 +120,7 @@ int xart_model(int imin, int imax, int xsize_det, int ysize_det,
       }
     }
   }
-    
+
   // assign output values:
   *xart_flux = fluxv;
 
@@ -185,7 +185,7 @@ static PyObject *xart_wrapper(PyObject *module, PyObject *args) {
     xart_flux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
     if (!xart_flux_arr) goto fail;
 
-    result = Py_BuildValue("(O)", xart_flux_arr);
+    result = Py_BuildValue("(N)", xart_flux_arr);
 
     goto cleanup;
   }
@@ -212,7 +212,7 @@ static PyObject *xart_wrapper(PyObject *module, PyObject *args) {
 
     PyArray_ENABLEFLAGS(xart_flux_arr, NPY_ARRAY_OWNDATA);
 
-    result = Py_BuildValue("(O)", xart_flux_arr);
+    result = Py_BuildValue("(N)", xart_flux_arr);
     goto cleanup;
   }
 

@@ -33,7 +33,7 @@ Specifically, this routine performs the following operations (modified from the
 
   - Resampled images are written out to disk if the ``save_intermediate_results``
     parameter is set to `True`
-  - **If resampling is turned off**, the original inputs are used to create
+  - **If resampling is turned off**, the original unrectified inputs are used to create
     the median image for cosmic-ray detection
 
 * Create a median image from (possibly) resampled :py:class:`~jwst.datamodels.ModelContainer`

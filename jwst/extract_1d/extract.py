@@ -378,11 +378,22 @@ def get_extract_parameters(
                         # If the user supplied a value, use that value.
                         extract_params['bkg_order'] = bkg_order
 
-                    if use_source_posn is None:
-                        extract_params['use_source_posn'] = aper.get('use_source_posn', False)
-                    else:
-                        # If the user supplied a value, use that value.
-                        extract_params['use_source_posn'] = use_source_posn
+                    # Set use_source_posn based on hierarchy of priorities:
+                    # parameter value on the command line is highest precedence,
+                    # then parameter value from the extract1d reference file,
+                    # and finally a default setting based on exposure type.
+                    use_source_posn_aper = aper.get('use_source_posn', None)  # value from the extract1d ref file
+                    if use_source_posn is None:  # no value set on command line
+                        if use_source_posn_aper is None:  # no value set in ref file
+                            # Use a suitable default
+                            if meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
+                                use_source_posn = True
+                                log.info(f"Turning on source position correction for exp_type = {meta.exposure.type}")
+                            else:
+                                use_source_posn = False
+                        else:  # use the value from the ref file
+                            use_source_posn = use_source_posn_aper
+                    extract_params['use_source_posn'] = use_source_posn
 
                     extract_params['extract_width'] = aper.get('extract_width')
                     extract_params['position_correction'] = 0  # default value
@@ -2785,14 +2796,6 @@ def do_extract1d(
                 f"{meta_source.meta.exposure.type}, so use_source_posn will be set to False",
             )
 
-    # Turn use_source_posn on for types that should use it by default
-    if use_source_posn is None:
-        if exp_type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
-            use_source_posn = True
-            log.info(
-                f"Turning on source position correction for exp_type = {exp_type}"
-            )
-
     # Handle inputs that contain one or more slit models
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
 
@@ -3599,13 +3602,13 @@ def create_extraction(extract_ref_dict,
         flux_units = 'Jy'
         f_var_units = 'Jy^2'
         sb_units = 'MJy/sr'
-        sb_var_units = '(MJy/sr)^2'
+        sb_var_units = 'MJy^2 / sr^2'
     else:
         photom_has_been_run = False
         flux_units = 'DN/s'
-        f_var_units = '(DN/s)^2'
+        f_var_units = 'DN^2 / s^2'
         sb_units = 'DN/s'
-        sb_var_units = '(DN/s)^2'
+        sb_var_units = 'DN^2 / s^2'
         log.warning("The photom step has not been run.")
 
     # Turn off use_source_posn if the source is not POINT

@@ -25,7 +25,6 @@ def miri_image():
     return image
 
 
-@pytest.mark.xfail(resason='bug in parsing in parameters')
 def test_call_residual_fringe(_jail,  miri_image):
     """ test defaults of step are set up and user input are defined correctly """
 
@@ -36,6 +35,7 @@ def test_call_residual_fringe(_jail,  miri_image):
     step = ResidualFringeStep()
     step.ignore_region_min = [4.9, 5.7]
     step.ignore_region_max = [5.6, 6.5, 9.0]
+    step.skip = False
 
     # If the number ignore min and max regions is not the same a value error is returned
     with pytest.raises(ValueError):

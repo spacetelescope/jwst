@@ -158,7 +158,7 @@ def make_wfss_datamodel():
         'vparity': -1}
 
     observation = {
-        'date': '2016-09-05',
+        'date': '2023-01-05',
         'time': '8:59:37'}
 
     exposure = {
@@ -245,7 +245,6 @@ def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
         assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
 
 
-@pytest.mark.xfail(reason="Needs new reference specawcs reference files in CRDS")
 @pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
 @pytest.mark.parametrize("pupils", ['F090W', 'F115W', 'F140M', 'F150W', 'F158M', 'F200W'])
 def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):

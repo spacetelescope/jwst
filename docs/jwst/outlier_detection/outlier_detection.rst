@@ -23,20 +23,59 @@ Specifically, this routine performs the following operations:
     This allows each plane of the cube to be treated as a separate 2D image
     for resampling (if done) and for combining into a median image.
 
-* By default, resample all input images into grouped observation mosaics; for example,
-  combining all NIRCam multiple detector images from `a single exposure or
-  from a dithered set of exposures.
-  <https://jwst-docs.stsci.edu/near-infrared-camera/nircam-operations/nircam-dithers-and-mosaics>`_
+* By default, resample all input images.
 
+  - The resampling step starts by computing an output WCS that is large enoug
+    to encompass all the input images.
+  - All images from the *same exposure* will get resampled onto this output
+    WCS to create a mosaic of all the chips for that exposure.  This product
+    is referred to as a "grouped mosaic" since it groups all the chips from
+    the same exposure into a single image.
+  - Each dither position will result in a separate grouped mosaic, so only
+    a single exposure ever contributes to each pixel in these mosaics.
+  - An explanation of how all NIRCam multiple detector group mosaics are
+    defined from `a single exposure or from a dithered set of exposures
+    <https://jwst-docs.stsci.edu/near-infrared-camera/nircam-operations/nircam-dithers-and-mosaics>`_
+    can be found here.
+  - The ``fillval`` parameter specifies what value to use in the ouptut
+    resampled image for any pixel which has no valid contribution from any
+    input exposure.  The default value of ``INDEF`` indicates that the value
+    from the last exposure will be used, while a value of 0 would result in
+    holes.
+  - The resampling can be controlled with the ``pixfrac``, ``kernel`` and
+    ``weight_type`` parameters.
+  - The ``pixfrac`` indicates the fraction by
+    which input pixels are "shrunk" before being drizzled onto the
+    output image grid, given as a real number between 0 and 1. This specifies
+    the size of the footprint, or "dropsize", of a pixel in units of the input
+    pixel size.
+  - The ``kernel`` specifies the form of the kernel function used to distribute flux onto
+    the separate output images.
+  - The ``weight_type`` indicates the type of weighting image to apply with the bad pixel mask.
+    Available options are ``ivm`` (default) for computing and using an inverse-variance map
+    and ``exptime`` for weighting by the exposure time.
+  - The ``good_bits`` parameter specifies what DQ values from the input exposure
+    should be used when resampling to create the output mosaic.  Any pixel with a
+    DQ value not included in this value (or list of values) will be ignored when
+    resampling.
   - Resampled images will be written out to disk if the
     ``save_intermediate_results`` parameter is set to `True`
-  - **If resampling is turned off**, a copy of the input (as a ModelContainer)
+  - **If resampling is turned off** through the use of the ``resample_data`` parameter,
+    a copy of the unrectified input images (as a ModelContainer)
     will be used for subsequent processing.
 
 * Create a median image from all grouped observation mosaics.
 
   - The median image is created by combining all grouped mosaic images or
     non-resampled input data (as planes in a ModelContainer) pixel-by-pixel.
+  - The ``nlow`` and ``nhigh`` parameters specify how many low and high values
+    to ignore when computing the median for any given pixel.
+  - The ``maskpt`` parameter sets the percentage of the weight image values to
+    use, and any pixel with a weight below this value gets flagged as "bad" and
+    ignored when resampled.
+  - The ``grow`` parameter sets the width, in pixels, beyond the limit set by
+    the rejection algorithm being used, for additional pixels to be rejected in
+    an image.
   - The median image is written out to disk if the ``save_intermediate_results``
     parameter is set to `True`.
 
@@ -47,7 +86,42 @@ Specifically, this routine performs the following operations:
     the ``save_intermediate_results`` parameter is set to `True`
   - **If resampling is turned off**, the median image is compared directly to
     each input image.
+
 * Perform statistical comparison between blotted image and original image to identify outliers.
+
+  - This comparison uses the original input images, the blotted
+    median image, and the derivative of the blotted image to
+    create a cosmic ray mask for each input image.
+  - The derivative of the blotted image gets created using the blotted
+    median image to compute the absolute value of the difference between each pixel and
+    its four surrounding neighbors with the largest value being the recorded derivative.
+  - These derivative images are used to flag cosmic rays
+    and other blemishes, such as satellite trails. Where the difference is larger
+    than can be explained by noise statistics, the flattening effect of taking the
+    median, or an error in the shift (the latter two effects are estimated using
+    the image derivative), the suspect pixel is masked.
+  - The ``backg`` parameter specifies a user-provided value to be used as the
+    background estimate.  This gets added to the background-subtracted
+    blotted image to attempt to match the original background levels of the
+    original input mosaic so that cosmic-rays (bad pixels) from the input
+    mosaic can be identified more easily as outliers compared to the blotted
+    mosaic.
+  - Cosmic rays are flagged using the following rule:
+
+    .. math:: | image\_input - image\_blotted | > scale*image\_deriv + SNR*noise
+
+  - The ``scale`` is defined as the multiplicative factor applied to the
+    derivative which is used to determine if the difference between the data
+    image and the blotted image is large enough to require masking.
+  - The ``noise`` is calculated using a combination of the detector read
+    noise and the poisson noise of the blotted median image plus the sky background.
+  - The user must specify two cut-off signal-to-noise values using the
+    ``snr`` parameter for determining whether a pixel should be masked:
+    the first for detecting the primary cosmic ray, and the second for masking
+    lower-level bad pixels adjacent to those found in the first pass. Since
+    cosmic rays often extend across several pixels, the adjacent pixels make
+    use of a slightly lower SNR threshold.
+
 * Update input data model DQ arrays with mask of detected outliers.
 
 Memory Model for Outlier Detection Algorithm

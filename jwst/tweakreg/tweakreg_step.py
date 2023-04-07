@@ -406,7 +406,6 @@ class TweakRegStep(Step):
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
             if num_ref < self.abs_minobj:
-                # Raise Exception here to avoid rest of code in this try block
                 self.log.warning(
                     f"Not enough sources ({num_ref}) in the reference catalog "
                     "for the single-group alignment step to perform a fit. "
@@ -456,7 +455,8 @@ class TweakRegStep(Step):
             image_model.meta.cal_step.tweakreg = 'COMPLETE'
 
             # retrieve fit status and update wcs if fit is successful:
-            if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
+            if ('fit_info' in imcat.meta and
+                    'SUCCESS' in imcat.meta['fit_info']['status']):
 
                 # Update/create the WCS .name attribute with information
                 # on this astrometric fit as the only record that it was
@@ -491,7 +491,11 @@ class TweakRegStep(Step):
 
     def _is_wcs_correction_small(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
-        tolerance = 10.0 * self.tolerance * u.arcsec
+        if self.use2dhist:
+            max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
+        else:
+            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
+                            self.tolerance) * u.arcsec
 
         ra, dec = wcs.footprint(axis_type="spatial").T
         tra, tdec = twcs.footprint(axis_type="spatial").T
@@ -500,7 +504,7 @@ class TweakRegStep(Step):
 
         separation = skycoord.separation(tskycoord)
 
-        return (separation < tolerance).all()
+        return (separation < max_corr).all()
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:
