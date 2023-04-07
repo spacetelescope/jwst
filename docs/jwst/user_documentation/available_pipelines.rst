@@ -42,8 +42,8 @@ Resampled 3D IFU cube                          s3d
 1D combined spectrum                           c1d
 Source catalog                                 cat
 Segmentation map                               segm
-Time Series photometric catalog                phot
-Time Series white-light catalog                whtlt
+Time Series imaging photometry                 phot
+Time Series spectroscopic photometry           whtlt
 Coronagraphic PSF image stack                  psfstack
 Coronagraphic PSF-aligned images               psfalign
 Coronagraphic PSF-subtracted images            psfsub
