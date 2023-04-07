@@ -64,6 +64,9 @@ extract_1d
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
 
+- Update to be skipped for NIRSpec fixed slit modes with rateints input as that
+  mode is not allowed. [#7516]
+
 jump
 ----
 
@@ -144,6 +147,9 @@ resample
   resampled image under certain circumstances. [#7460]
 
 - Carry through good bits correctly for the variance array [#7515]
+
+- Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
+  rateints input as that mode is not allowed. [#7516]  
 
 residual_fringe
 ---------------
