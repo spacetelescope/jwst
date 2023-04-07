@@ -1,10 +1,53 @@
-1.9.6 (unreleased)
-==================
+1.10.1 (unreleased)
+===================
 
+
+
+1.10.0 (2023-04-03)
+===================
+
+assign_wcs
+----------
+
+- Fix ``WCS.bounding_box`` computation for MIRI MRS TSO observations. [#7492]
+
+associations
+------------
+
+- Remove extra reprocessing of existing associations. [#7506]
+
+- Treat PSF exposures as science for Level 2 association processing. [#7508]
+
+calwebb_detector1
+-----------------
+
+- Added the call to the undersampling_correction step to the ``calwebb_detector1``
+  pipeline. [#7501]
+
+- Added regression test for ``calwebb_detector1`` pipeline which now
+  includes ``undersampling_correction``. [#7509]
+
+cube_build
+----------
+
+-  Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
+
+- Memory improvements, do not allow MIRI and 'internal_cal', allow user to set suffix. [#7521]
+  
 datamodels
 ----------
 
 - Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
+
+documentation
+-------------
+
+- Fixed minor errors in the docs for EngDB, outlier_detection, and ramp fitting. [#7500]
+
+- Update documentation for ``calwebb_detector1`` to include the undersampling_correction
+  step. [#7510]
+
+- Clarify ``jump`` arguments documentation, and correct typos. [#7518]
 
 dq_init
 -------
@@ -19,11 +62,41 @@ extract_1d
   precedence is given for command line override, reference file settings, and
   internal decisions of the appropriate setting (in that order). [#7466]
 
+- Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
+
+jump
+----
+
+- This has the changes in the JWST repo that allow the new parameters to be passed to the STCAL code
+  that made the following changes:
+  Updated the code for both NIR Snowballs and MIRI Showers. The snowball
+  flagging will now extend the saturated core of snowballs. Also,
+  circles are no longer used for snowballs preventing the huge circles
+  of flagged pixels from a glancing CR. Finally snowball flagging now has more stringent tests
+  to prevent incorrect indentification of snowballs.
+  Shower code is completely new and is now able to find extended
+  emission far below the single pixel SNR. It also allows detected
+  showers to flag groups after the detection. [#7478]
+
 other
 -----
 
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
+
+- Switch ``stcal.dqflags`` imports to ``stdatamodels.dqflags``. [#7475]
+- Fix failing ``check-security`` job in CI. [#7496]
+
+- Fix memory leaks in packages that use C code: ``cube_build``,
+  ``wfss_contam``, and ``straylight``. [#7493]
+
+- add `opencv-python` to hard dependencies for usage of snowball detection in the jump step in `stcal` [#7499]
+
+outlier_detection
+-----------------
+
+- Update the documentation describing the algorithm and the parameters
+  used for controlling the step.  [#7481]
 
 pathloss
 --------
@@ -44,6 +117,9 @@ photom
 pipeline
 --------
 
+- Update the calwebb_spec2 pipeline to move the MIRI MRS straylight step to before
+  the flat-fielding step. [#7486]
+
 - Update the calwebb_spec2 pipeline to make a deep copy of the current results before
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
@@ -55,13 +131,8 @@ ramp_fitting
   group.  Ramps that have a non-zero groupgap should not use group_time, but
   (NFrames+1)*TFrame/2, instead.  [#7461, spacetelescope/stcal#142]
 
- regtest
--------
-
-- Updated miri mrs regression tests with flight data. Included
-  test_miri_mrs_extract1d.py, test_miri_mrs_spec3.py and new test
-  test_miri_mrs_spec3_moving_target.py [#7468]
-
+- Update ramp fitting to calculate separate readnoise variance for processing
+  ``undersampling_correction`` output [#7484]
 
 resample
 --------
@@ -71,6 +142,13 @@ resample
 - Require minimum version of ``drizzle`` to be at least 1.13.7, which fixes
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
+
+- Carry through good bits correctly for the variance array [#7515]
+
+residual_fringe
+---------------
+
+- Fix bug in Residual Fringe step handling of NaNs in input [#7471]
 
 scripts
 -------
@@ -83,20 +161,24 @@ set_telescope_pointing
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
 
+- Fill values of ``TARG_RA`` and ``TARG_DEC`` with ``RA_REF`` and ``DEC_REF``
+  if target location is not provided, e.g. for pure parallel observations [#7512]
+
 straylight
 ----------
 
 - Fix bug with straylight zeroing out NaNs in input rate images, as these
   are now deliberately set as such [#7455]
-- Move ``jwst.datamodels`` out of ``jwst`` into ``stdatamodels.jwst.datamodels``. [#7439]
 
 scripts
 -------
 
 - Added a script ``adjust_wcs.py`` to apply additional user-provided rotations
   and scale corrections to an imaging WCS of a calibrated image. [#7430]
+
 - Update ``minimum_deps`` script to use ``importlib_metadata`` and ``packaging``
   instead of ``pkg_resources``. [#7457]
+
 - Offload ``minimum_deps`` script to ``minimum_dependencies`` package [#7463]
 
 transforms
@@ -114,16 +196,35 @@ tweakreg
   additional user-provided rotations and scale corrections to an imaging
   WCS of a calibrated image. [#7430]
 
+- Fixed a bug due to which alignment may be aborted due to corrections
+  being "too large" yet compatible with step parameters. [#7494]
+
+- Added a trap for failures in source catalog construction, which now returns
+  an empty catalog for the image on which the error occurred. [#7507]
+
+- Fixed a crash occuring when alignment of a single image to an absolute
+  astrometric catalog (i.e., Gaia) fails due to not enough sources in the
+  catalog. [#7513]
+
 undersampling_correction
 ------------------------
 
 - New step between jump and ramp_fitting in the ``Detector1Pipeline``. [#7479]
 
+1.9.6 (2023-03-09)
+==================
+
+associations
+------------
+
+- Ensure matched exposures generated by list of candidates continue processing,
+  in order to avoid linked exposures - like backgrounds - from getting dropped
+  from associations. [#7485]
 
 1.9.5 (2023-03-02)
 ==================
 
-- add ``opencv-python`` to ``requirements-sdp.txt``
+- add ``opencv-python`` to ``requirements-sdp.txt`` to support snowball correction
 
 1.9.4 (2023-01-27)
 ==================
