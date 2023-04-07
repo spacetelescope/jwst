@@ -150,6 +150,11 @@ residual_fringe
 
 - Fix bug in Residual Fringe step handling of NaNs in input [#7471]
 
+regtest
+-------
+
+- Added flight data for MIRI IFU tests [#7468]
+
 scripts
 -------
 
