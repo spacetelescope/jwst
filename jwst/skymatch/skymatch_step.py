@@ -35,7 +35,8 @@ __all__ = ['SkyMatchStep']
 
 class SkyMatchStep(Step):
     """
-    SkyMatchStep: Subtraction or equalization of sky background in science images.
+    SkyMatchStep: Subtraction or equalization of sky background in science
+    images.
     """
 
     class_alias = "skymatch"
@@ -58,7 +59,7 @@ class SkyMatchStep(Step):
         lsigma = float(min=0.0, default=4.0) # Lower clipping limit, in sigma
         usigma = float(min=0.0, default=4.0) # Upper clipping limit, in sigma
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
-    """
+    """  # noqa: E501
 
     reference_file_types = []
 
@@ -67,7 +68,9 @@ class SkyMatchStep(Step):
         # for now turn off memory optimization until we have better machinery
         # to handle outputs in a consistent way.
         self._is_asn = False
-        # self._is_asn = datamodels.util.is_association(input) or isinstance(input, str)
+        # self._is_asn = (
+        #     datamodels.util.is_association(input) or isinstance(input, str)
+        # )
 
         img = ModelContainer(
             input,
