@@ -55,7 +55,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`extract_2d <extract_2d_step>`\ :sup:`1`            | |c| | |c| |     |     |     |     |      | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`srctype <srctype_step>`\ :sup:`1`                  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| |      |        | |c| |
+| :ref:`srctype <srctype_step>`\ :sup:`1`                  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`master_background <master_background_step>`        |     | |c| |     |     |     |     |      |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
@@ -87,7 +87,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 :sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
 and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
 For NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
-flat_field followed by extract_2d (no wavecorr or srctype).
+flat_field, extract_2d, and srctype (no wavecorr).
 For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 
 :sup:`2`\ By default the :ref:`residual_fringe <residual_fringe_step>` is skipped in the ``calwebb_spec2`` pipeline. 
