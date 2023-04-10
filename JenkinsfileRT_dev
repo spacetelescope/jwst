@@ -110,5 +110,10 @@ bc1.test_cmds = [
 ]
 bc1.test_configs = []
 
-utils.run([jobconfig, bc0, bc1])
+bc2 = utils.copy(bc0)
+bc2.conda_packages = [
+    "python=3.9",
+]
+
+utils.run([jobconfig, bc0, bc1, bc2])
 }  // withCredentials

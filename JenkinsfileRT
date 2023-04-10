@@ -43,7 +43,7 @@ jobconfig.publish_env_on_success_only = true
 jobconfig.publish_env_filter = "spacetelescope/master"
 
 // Define python version for conda
-python_version = "3.9"
+python_version = "3.11"
 
 // Define environment variables needed for the regression tests
 env_vars = [
@@ -115,5 +115,10 @@ bc1.test_cmds = [
 ]
 bc1.test_configs = []
 
-utils.run([jobconfig, bc0, bc1])
+bc2 = utils.copy(bc0)
+bc2.conda_packages = [
+    "python=3.9",
+]
+
+utils.run([jobconfig, bc0, bc1, bc2])
 }  // withCredentials
