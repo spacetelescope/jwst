@@ -137,18 +137,6 @@ def test_mixed_crs_and_donotuse():
     assert max_seg == 3
 
 
-@pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
-def test_one_group_small_buffer_fit_gls():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
-    model1.data[0, 0, 50, 50] = 10.0
-
-    slopes, cube, optional, gls_dummy = ramp_fit(
-        model1, 512, True, rnoise, gain, 'GLS', 'optimal', 'none', dqflags.pixel)
-
-    data = slopes[0]
-    np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
-
-
 def test_one_group_two_ints_fit_ols():
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10, nints=2)
     model1.data[0, 0, 50, 50] = 10.0
@@ -161,27 +149,6 @@ def test_one_group_two_ints_fit_ols():
     np.testing.assert_allclose(data[50, 50], 11.0, 1e-6)
 
 
-@pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
-def test_gls_vs_ols_two_ints_ols():
-    """
-    A test to see if GLS is correctly combining integrations. The combination should only use the read noise variance.
-    The current version of GLS does not work correctly.
-    """
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=11, gain=5, readnoise=1, nints=2)
-    ramp = np.asarray([x * 100 for x in range(11)])
-    model1.data[0, :, 50, 50] = ramp
-    model1.data[1, :, 50, 50] = ramp * 2
-
-    slopes = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
-    np.testing.assert_allclose(slopes[0].data[50, 50], 150.0, 1e-6)
-
-    slopes_gls = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'GLS', 'optimal', 'none', dqflags.pixel)
-    np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
-
-
-# @pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing():
     nints, ngroups, nrows = 3, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
@@ -219,7 +186,6 @@ def test_multiprocessing():
     np.testing.assert_allclose(slopes[0], slopes_multi[0], rtol=1e-5)
 
 
-# @pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing2():
     nints, ngroups, nrows = 1, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
@@ -253,17 +219,6 @@ def test_multiprocessing2():
 
     np.testing.assert_allclose(slopes[0], slopes_multi[0], rtol=1e-5)
 
-
-@pytest.mark.xfail(reason="GLS code does not [yet] handle single group integrations.")
-def test_one_group_two_ints_fit_gls():
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10, nints=2)
-    model1.data[0, 0, 50, 50] = 10.0
-    model1.data[1, 0, 50, 50] = 12.0
-
-    slopes = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, 'GLS', 'optimal', 'none', dqflags.pixel)
-
-    np.testing.assert_allclose(slopes[0].data[50, 50], 11.0, 1e-6)
 
 # tests that apply to both 'ols' and 'gls' are in the TestMethods class so
 # that both can use the parameterized 'method'
@@ -520,7 +475,6 @@ class TestMethods:
         data = slopes[0]
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-6)
 
-    # @pytest.mark.skip(reason="not using now")
     def test_four_groups_two_CRs_at_end(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
         model1.data[0, 0, 50, 50] = 10.0
