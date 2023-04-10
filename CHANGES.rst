@@ -1,6 +1,7 @@
 1.10.1 (unreleased)
 ===================
 
+
 documentation
 -------------
 
@@ -29,6 +30,11 @@ resample_spec
 
 - Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
   rateints input as that mode is not allowed. [#7516]
+
+regtest
+-------
+
+- Update MIRI MRS IFU  tests to use in-flight data [#7539]
 
 
 1.10.0 (2023-04-03)
