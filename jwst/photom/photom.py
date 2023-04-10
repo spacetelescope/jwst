@@ -879,16 +879,16 @@ class DataSet():
             spec.spec_table.BKGD_VAR_POISSON *= conversion ** 2.
             spec.spec_table.BKGD_VAR_RNOISE *= conversion ** 2.
             spec.spec_table.BKGD_VAR_FLAT *= conversion ** 2.
-            spec.spec_table.columns['FLUX'].unit = 'Jy'
-            spec.spec_table.columns['FLUX_ERROR'].unit = 'Jy'
-            spec.spec_table.columns['FLUX_VAR_POISSON'].unit = 'Jy^2'
-            spec.spec_table.columns['FLUX_VAR_RNOISE'].unit = 'Jy^2'
-            spec.spec_table.columns['FLUX_VAR_FLAT'].unit = 'Jy^2'
-            spec.spec_table.columns['BACKGROUND'].unit = 'Jy'
-            spec.spec_table.columns['BKGD_ERROR'].unit = 'Jy'
-            spec.spec_table.columns['BKGD_VAR_POISSON'].unit = 'Jy^2'
-            spec.spec_table.columns['BKGD_VAR_RNOISE'].unit = 'Jy^2'
-            spec.spec_table.columns['BKGD_VAR_FLAT'].unit = 'Jy^2'
+            spec.spec_table.columns['FLUX'].unit = 'MJy'
+            spec.spec_table.columns['FLUX_ERROR'].unit = 'MJy'
+            spec.spec_table.columns['FLUX_VAR_POISSON'].unit = 'MJy^2'
+            spec.spec_table.columns['FLUX_VAR_RNOISE'].unit = 'MJy^2'
+            spec.spec_table.columns['FLUX_VAR_FLAT'].unit = 'MJy^2'
+            spec.spec_table.columns['BACKGROUND'].unit = 'MJy'
+            spec.spec_table.columns['BKGD_ERROR'].unit = 'MJy'
+            spec.spec_table.columns['BKGD_VAR_POISSON'].unit = 'MJy^2'
+            spec.spec_table.columns['BKGD_VAR_RNOISE'].unit = 'MJy^2'
+            spec.spec_table.columns['BKGD_VAR_FLAT'].unit = 'MJy^2'
 
         else:
             if not self.inverse:
