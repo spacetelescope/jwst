@@ -66,7 +66,6 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     rtdata.get_data("nircam/image/jw01538-o046_20230331t102920_image3_00009_asn.json")
     args = ["calwebb_image3", rtdata.input,
             "--steps.tweakreg.save_results=True",
-            "--steps.skymatch.save_results=True",
             "--steps.source_catalog.snr_threshold=20",
             ]
     Step.from_cmdline(args)
@@ -125,9 +124,7 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
 
             # Check that all but the first exposure in the association
             # has a WCS correction applied
-            print(f"model: {model.meta.filename}")
-            if "jw01538046001_03105_00001" not in model.meta.filename:
-                print(f"if model: {model.meta.filename}")
+            if "jw01538046001_0310f_00001" not in model.meta.filename:
                 assert "v2v3corr" in model.meta.wcs.available_frames
 
 
