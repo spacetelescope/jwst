@@ -14,8 +14,8 @@ Polygon filling algorithm.
 # as well as top-most row of the polygon.
 #
 # NOTE: Algorithm description can be found, e.g., here:
-#    http://www.cs.rit.edu/~icss571/filling/how_to.html
-#    http://www.cs.uic.edu/~jbell/CourseNotes/ComputerGraphics/PolygonFilling.html
+# http://www.cs.rit.edu/~icss571/filling/how_to.html
+# http://www.cs.uic.edu/~jbell/CourseNotes/ComputerGraphics/PolygonFilling.html
 #
 from collections import OrderedDict
 import numpy as np
@@ -178,7 +178,13 @@ class Polygon(Region):
         edges = []
         for i in range(1, len(self._vertices)):
             name = 'E' + str(i - 1)
-            edges.append(Edge(name=name, start=self._vertices[i - 1], stop=self._vertices[i]))
+            edges.append(
+                Edge(
+                    name=name,
+                    start=self._vertices[i - 1],
+                    stop=self._vertices[i]
+                )
+            )
         return edges
 
     def scan(self, data):
@@ -199,16 +205,20 @@ class Polygon(Region):
         - For each scan line:
           1. Add edges from GET to AET for which ymin==y
           2. Remove edges from AET fro which ymax==y
-          3. Compute the intersection of the current scan line with all edges in the AET
+          3. Compute the intersection of the current scan line with all edges
+             in the AET
           4. Sort on X of intersection point
           5. Set elements between pairs of X in the AET to the Edge's ID
 
         """
-        # TODO: 1.This algorithm does not mark pixels in the top row and left most column.
-        # Pad the initial pixel description on top and left with 1 px to prevent this.
-        # 2. Currently it uses intersection of the scan line with edges. If this is
-        # too slow it should use the 1/m increment (replace 3 above) (or the increment
-        # should be removed from the GET entry).
+        # TODO:
+        # 1. This algorithm does not mark pixels in the top row and left
+        #    most column. Pad the initial pixel description on top and left
+        #    with 1 px to prevent this.
+        # 2. Currently it uses intersection of the scan line with edges.
+        #    If this is too slow it should use the 1/m increment
+        #    (replace 3 above) (or the increment should be removed from
+        #    the GET entry).
 
         # see comments in the __init__ function for the reason of introducing
         # polygon shifts (self._shiftx & self._shifty). Here we need to shift
@@ -232,7 +242,10 @@ class Polygon(Region):
 
             scan_line = Edge('scan_line', start=[self._bbox[0], y],
                              stop=[self._bbox[0] + self._bbox[2], y])
-            x = [int(np.ceil(e.compute_AET_entry(scan_line)[1])) for e in AET if e is not None]
+            x = [
+                int(np.ceil(e.compute_AET_entry(scan_line)[1]))
+                for e in AET if e is not None
+            ]
             xnew = np.sort(x)
             ysh = y + self._shifty
 
@@ -276,8 +289,12 @@ class Polygon(Region):
         # maxx = self._vertices[:,0].max()
         # miny = self._vertices[:,1].min()
         # maxy = self._vertices[:,1].max()
-        return px[0] >= self._bbox[0] and px[0] <= self._bbox[0] + self._bbox[2] and \
-            px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
+        return (
+            px[0] >= self._bbox[0] and
+            px[0] <= self._bbox[0] + self._bbox[2] and
+            px[1] >= self._bbox[1] and
+            px[1] <= self._bbox[1] + self._bbox[3]
+        )
 
 
 class Edge():
@@ -349,7 +366,12 @@ class Edge():
             if np.diff(earr[:, 1]).item() == 0:
                 return None
             else:
-                entry = [self._ymax, self._yminx, (np.diff(earr[:, 0]) / np.diff(earr[:, 1])).item(), None]
+                entry = [
+                    self._ymax,
+                    self._yminx,
+                    (np.diff(earr[:, 0]) / np.diff(earr[:, 1])).item(),
+                    None
+                ]
         return entry
 
     def compute_AET_entry(self, edge):

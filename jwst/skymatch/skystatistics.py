@@ -109,15 +109,16 @@ cgi-bin/gethelp.cgi?gstatistics>`_
         Parameters
         -----------
         data : numpy.ndarray
-            A numpy array of values for which the statistics needs to be computed.
+            A numpy array of values for which the statistics needs to be
+            computed.
 
         Returns
         --------
         statistics : tuple
-            A tuple of two values: (`skyvalue`, `npix`), where `skyvalue` is the statistics
-            specified by the `skystat` parameter during the initialization
-            of the `SkyStats` object and `npix` is the number of pixels used
-            in computing the statistics reported in `skyvalue`.
+            A tuple of two values: (`skyvalue`, `npix`), where `skyvalue` is
+            the statistics specified by the `skystat` parameter during the
+            initialization of the `SkyStats` object and `npix` is the number
+            of pixels used in computing the statistics reported in `skyvalue`.
 
         """
         imstat = ImageStats(image=data, fields=self._fields,
