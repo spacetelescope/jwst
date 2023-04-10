@@ -135,6 +135,6 @@ NIRCam and NIRISS WFSS
 ++++++++++++++++++++++
 It is not possible to specify ahead of time the source types for spectra that
 may show up in a Wide-Field Slitless Spectroscopy exposure. So for these modes
-the ``srctype`` step simply sets the SRCTYPE keyword value to "UNKNOWN" and the
-actual source sizes are derived from the catalog information generated
-from direct images that are obtained as part of a WFSS observation.
+the ``srctype`` step uses the value from the ``is_extended`` column of the
+source catalog generated from the direct imaging taken with WFSS observations
+and uses that to set "POINT" or "EXTENDED" for each extracted source.
