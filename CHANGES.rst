@@ -28,7 +28,7 @@ resample_spec
 -------------
 
 - Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
-  rateints input as that mode is not allowed. [#7516]  
+  rateints input as that mode is not allowed. [#7516]
 
 
 1.10.0 (2023-04-03)
