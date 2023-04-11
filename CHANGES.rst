@@ -18,8 +18,14 @@ flat_field
 
 - Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
 
-resample
---------
+other
+-----
+
+- Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
+  catching ``ResourceWarning``s. [#7526]
+
+resample_spec
+-------------
 
 - Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
   rateints input as that mode is not allowed. [#7516]  
