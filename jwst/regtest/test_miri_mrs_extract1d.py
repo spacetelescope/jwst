@@ -1,6 +1,5 @@
-"""Test Extract1dStep on MIRI point source with user supplied center and extended source """
-# test_miri_mrs_spec3 already tests point source extract1d source
-# In this test we will test providing the extraction center  and extended source extraction.
+"""Test Extract1dStep on MIRI data running the step various ways
+"""
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
