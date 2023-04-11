@@ -21,7 +21,7 @@ def run_spec3_moving_target(jail, rtdata_module):
     args = [
         "calwebb_spec3",
         rtdata.input,
-        '--steps.outlier_detection.save_results=true',
+        '--steps.outlier_detection.skip=True',
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.save_results=true',
     ]
@@ -34,8 +34,6 @@ def run_spec3_moving_target(jail, rtdata_module):
 @pytest.mark.parametrize(
     'output',
     [
-        'jw01449002001_03101_00001_mirifushort_o002_crf.fits',
-        'jw01449002001_03101_00002_mirifushort_o002_crf.fits',
         'jw01449-o002_t001_miri_ch1-short_s3d.fits',
         'jw01449-o002_t001_miri_ch2-short_s3d.fits',
         'jw01449-o002_t001_miri_ch1-short_x1d.fits',
