@@ -33,7 +33,6 @@ def test_miri_mrs_extract1d_center(rtdata, fitsdiff_default_kwargs):
     # input s3d are created using the same data that was used in run_spec3_ifushort from test_miri_mrs_spec3.py 
     # This test only uses the ch 2 s3d file.
 
-
     rtdata.get_data("miri/mrs/jw01024-c1000_t002_miri_ch2-mediumlong_s3d.fits")
 
     args = ['jwst.extract_1d.Extract1dStep', rtdata.input,
