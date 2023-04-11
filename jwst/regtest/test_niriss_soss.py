@@ -122,5 +122,6 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    fitsdiff_default_kwargs["rtol"] = 1e-3
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

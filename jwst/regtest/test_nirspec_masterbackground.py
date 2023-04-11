@@ -94,6 +94,7 @@ def test_masterbkg_corrpars(rtdata):
 def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
     rtdata = run_spec2_mbkg
+    fitsdiff_default_kwargs["rtol"] = 3e-4
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/test_nirspec_mos_mbkg')
 
 

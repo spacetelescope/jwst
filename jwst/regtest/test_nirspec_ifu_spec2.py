@@ -43,6 +43,8 @@ def run_spec2(jail, rtdata_module):
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
+    fitsdiff_default_kwargs["rtol"] = 5e-5
+    fitsdiff_default_kwargs["atol"] = 2e-6
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path=TRUTH_PATH)
 

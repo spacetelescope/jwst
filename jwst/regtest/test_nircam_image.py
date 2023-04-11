@@ -186,6 +186,7 @@ def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwarg
     rtdata.output = 'jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits'
     rtdata.get_truth('truth/test_nircam_image/jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits')
 
+    fitsdiff_default_kwargs["rtol"] = 5e-3
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

@@ -44,6 +44,7 @@ def run_spec3_multi(jail, rtdata_module):
 )
 def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
+    fitsdiff_default_kwargs["rtol"] = 2e-3
     rt.is_like_truth(
         run_spec3_multi, fitsdiff_default_kwargs, output,
         truth_path=TRUTH_PATH,

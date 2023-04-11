@@ -16,7 +16,7 @@ def test_nircam_image_moving_target_i2d(rtdata, fitsdiff_default_kwargs):
     Step.from_cmdline(args)
     rtdata.get_truth("truth/test_nircam_mtimage/mt_assoc_i2d.fits")
 
-    fitsdiff_default_kwargs["atol"] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 4e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

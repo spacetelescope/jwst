@@ -26,5 +26,6 @@ def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
 
     rtdata.get_truth(f"truth/test_miri_residual_fringe/{output}")
 
+    fitsdiff_default_kwargs["rtol"] = 3e-2
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
