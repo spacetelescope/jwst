@@ -23,6 +23,7 @@ def run_pipeline(jail, rtdata_module, request):
 
     # Get the spec3 ASN and its members
     rtdata.get_asn("miri/lrs/jw01530-o005_20221202t204827_spec3_00001_asn.json")
+    root_file = "jw01530-o005_t004_miri_p750l_"
     rtdata.get_truth("truth/test_miri_lrs_slit_spec3/jw01530-o005_t004_miri_p750l_s2d.fits")
 
     args = [
@@ -46,6 +47,8 @@ def run_pipeline(jail, rtdata_module, request):
     elif request.param == "user_wcs+shape1":
         output_shape = ','.join(map(str, (d + 1 for d in dm.data.shape[::-1])))
         args.append(f"--steps.resample_spec.output_shape={output_shape}")
+        output_file = root_file + 'shape1.fits'
+        args.append(f"--steps.resample_spec.output_file={output_file}")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
     Step.from_cmdline(args)
@@ -60,7 +63,11 @@ def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwarg
 
     # Run the pipeline and retrieve outputs
     rtdata = rtdata_module
-    output = f"jw01530-o005_t004_miri_p750l_{suffix}.fits"
+
+    if rtdata.custom_wcs_mode == 'user_wcs+shape1' and suffix == "s2d":
+        output = f"jw01530-o005_t004_miri_p750l_shape1_{suffix}.fits"
+    else:
+        output = f"jw01530-o005_t004_miri_p750l_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
@@ -68,8 +75,4 @@ def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwarg
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-
-    if rtdata.custom_wcs_mode == 'user_wcs+shape1' and suffix == "s2d":
-        assert not diff.identical
-    else:
-        assert diff.identical, diff.report()
+    assert diff.identical, diff.report()

@@ -491,7 +491,11 @@ class TweakRegStep(Step):
 
     def _is_wcs_correction_small(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
-        tolerance = 10.0 * self.tolerance * u.arcsec
+        if self.use2dhist:
+            max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
+        else:
+            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
+                            self.tolerance) * u.arcsec
 
         ra, dec = wcs.footprint(axis_type="spatial").T
         tra, tdec = twcs.footprint(axis_type="spatial").T
@@ -500,7 +504,7 @@ class TweakRegStep(Step):
 
         separation = skycoord.separation(tskycoord)
 
-        return (separation < tolerance).all()
+        return (separation < max_corr).all()
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:

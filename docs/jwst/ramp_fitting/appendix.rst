@@ -1,7 +1,7 @@
 Appendix
 ========
 
-The derivation of the segment-specific readnoise variance (:math:`{ var^R_{s}  }`) is shown here.  This derivation follows the standard procedure to fitting data to a straight line, such as in chapter 15 of Numerical Recipes.  The segment-specific variance from read noise corresponds to :math:`{\sigma_b^2}` in section 15.2. 
+The derivation of the segment-specific readnoise variance (:math:`{ var^R_{s}  }`) is shown here. This pertains to both the 'conventional' and 'weighted` readnoise variances - the only difference being the number of groups in the segment.  This derivation follows the standard procedure to fitting data to a straight line, such as in chapter 15 of Numerical Recipes.  The segment-specific variance from read noise corresponds to :math:`{\sigma_b^2}` in section 15.2. 
 
 For read noise R, weight w = :math:`{1 / R^2}`, which is a constant. 
   

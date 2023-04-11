@@ -12,5 +12,5 @@
 #
 #     conda create -n sdp python -y
 #     conda activate sdp
-#     pip install -e .[test]
+#     pip install -e .[test,sdp]
 #     pip freeze | grep -v jwst >> requirements-sdp.txt
