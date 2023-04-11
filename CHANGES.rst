@@ -1,6 +1,34 @@
 1.10.1 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Corrected information about the application of the ``srctype`` step to WFSS exposures.
+  [#7536]
+
+extract_1d
+----------
+
+- Update to be skipped for NIRSpec fixed slit modes with rateints input as that
+  mode is not allowed. [#7516]
+
+flat_field
+----------
+
+- Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
+
+other
+-----
+
+- Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
+  catching ``ResourceWarning``s. [#7526]
+
+resample_spec
+-------------
+
+- Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
+  rateints input as that mode is not allowed. [#7516]
 
 
 1.10.0 (2023-04-03)
@@ -30,7 +58,7 @@ calwebb_detector1
 cube_build
 ----------
 
--  Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
+- Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
 
 - Memory improvements, do not allow MIRI and 'internal_cal', allow user to set suffix. [#7521]
   
@@ -63,9 +91,6 @@ extract_1d
   internal decisions of the appropriate setting (in that order). [#7466]
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
-
-- Update to be skipped for NIRSpec fixed slit modes with rateints input as that
-  mode is not allowed. [#7516]
 
 jump
 ----
@@ -147,9 +172,6 @@ resample
   resampled image under certain circumstances. [#7460]
 
 - Carry through good bits correctly for the variance array [#7515]
-
-- Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
-  rateints input as that mode is not allowed. [#7516]  
 
 residual_fringe
 ---------------
