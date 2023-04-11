@@ -24,6 +24,12 @@ other
 - Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
   catching ``ResourceWarning``s. [#7526]
 
+photom
+------
+
+- Label spectral data units for NIRISS SOSS as MJy, to be consistent with
+  ``PHOTMJ`` scalar conversion factor and other point-source spectral data [#7538]
+
 resample_spec
 -------------
 
