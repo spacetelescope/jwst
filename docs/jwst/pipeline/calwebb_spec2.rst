@@ -55,7 +55,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`extract_2d <extract_2d_step>`\ :sup:`1`            | |c| | |c| |     |     |     |     |      | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`srctype <srctype_step>`\ :sup:`1`                  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| |      |        | |c| |
+| :ref:`srctype <srctype_step>`\ :sup:`1`                  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`master_background <master_background_step>`        |     | |c| |     |     |     |     |      |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
@@ -87,7 +87,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 :sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
 and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
 For NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
-flat_field followed by extract_2d (no wavecorr or srctype).
+flat_field, extract_2d, and srctype (no wavecorr).
 For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 
 :sup:`2`\ By default the :ref:`residual_fringe <residual_fringe_step>` is skipped in the ``calwebb_spec2`` pipeline. 
@@ -243,8 +243,13 @@ The input to the ``Spec2Pipeline`` pipeline is a countrate exposure, in the form
 of either "_rate" or "_rateints" data. A single input file can be processed or an
 ASN file listing multiple inputs can be used, in which case the processing steps
 will be applied to each input exposure, one at a time.
-If "_rateints" products are used as input, each step applies its algorithm to each
-integration in the exposure, where appropriate.
+
+If "_rateints" products are used as input, for modes other than NIRSpec Fixed Slit,
+each step applies its algorithm to each integration in the exposure, where appropriate.
+For the NIRSpec Fixed Slit mode the ``calwebb_spec2`` pipeline will currently
+skip both the :ref:`resample_spec <resample_step>` step and the
+:ref:`extract_1d <extract_1d_step>` step, because neither step supports
+multiple integration input products for this mode.
 
 Note that the steps :ref:`background <background_step>` and :ref:`imprint <imprint_step>`
 can only be executed when the pipeline is given an ASN file as input, because they rely on

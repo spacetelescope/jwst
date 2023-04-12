@@ -81,6 +81,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     grps_masked_after_shower=grps_masked_after_shower,
                                     max_extended_radius=max_extended_radius)
 
+
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
     output_model.pixeldq = new_pdq

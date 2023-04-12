@@ -32,7 +32,9 @@ of what was specified in the reference file or step arguments.
 For both point or extended sources, photometric measurements make use of
 the Astropy affiliated package
 `photutils <https://photutils.readthedocs.io/en/latest/>`_ to define an aperture
-object and perform extraction.
+object and perform extraction.  For 3D NIRSpec fixed slit rateints data, the
+``extract_1d`` step will be skipped as 3D input for the mode is not supported.
+
 
 For most spectral modes an aperture correction will be applied to the extracted
 1D spectral data (unless otherwise selected by the user), in order to put the

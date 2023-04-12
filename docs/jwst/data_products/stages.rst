@@ -27,7 +27,7 @@ need to know, the table below gives high-level translations between those naming
 +----------------------------------+-------------------------------------+------------------------------------+
 | Level 0.5 = POD files            | Not available to users              | Not available to users             |
 +----------------------------------+-------------------------------------+------------------------------------+
-| Level 1a = Original FITS file    | Stage 0 = Original FITS file        | 0 = raw                            |
+| Level 1a = Original FITS file    | Stage 0 = Original FITS file        | 0 = raw (not available to users)   |
 +----------------------------------+-------------------------------------+------------------------------------+
 | Level 1b = Uncal FITS file       | Stage 0 = Fully-populated FITS file | 1 = uncalibrated                   |
 +----------------------------------+-------------------------------------+------------------------------------+
@@ -38,8 +38,6 @@ need to know, the table below gives high-level translations between those naming
 | \*Level 2c = CR-flagged exposure |                                     |                                    |
 +----------------------------------+-------------------------------------+------------------------------------+
 | Level 3 = Combined data          | Stage 3 = Combined data             | 3 = Science product                |
-+----------------------------------+-------------------------------------+------------------------------------+
-| Level 4 = Analysis results       | Stage 4 = High-level product        | 4 = Contributed product            |
 +----------------------------------+-------------------------------------+------------------------------------+
 
 \*Note that Level 2c files are intermediate files produced during pipeline Stage 3 processing,
@@ -52,9 +50,9 @@ flags have been updated after running outlier detection in pipeline Stage 3 proc
 Throughout this document, we will use the "Stage" terminology to refer to data products.
 Stage 0, 1, and 2 products are always files containing the data from a single exposure and a
 single detector. A NIRCam exposure that uses all 10 detectors will therefore result in 10 separate
-FITS files for the Stage 0, 1, and 2 products. Because these stages contain the data for a single
+FITS files for each of the Stage 0, 1, and 2 products. Because these stages contain the data for a single
 exposure, they are refered to as "exposure-based" products and use an "exposure-based" file naming
-syntax. Stage 3 and 4 products, on the other hand, are constructed from the combined data of
+syntax. Stage 3 products, on the other hand, are constructed from the combined data of
 multiple exposures for a given source or target. They are referred to as "source-based" products
 and use a "source-based" file naming syntax. Observing modes that include multiple defined sources
 within a single exposure or observation, such as NIRSpec MOS and NIRCam/NIRISS WFSS, will result in

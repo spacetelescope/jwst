@@ -1,5 +1,44 @@
-1.9.7 (unreleased)
-==================
+1.10.1 (unreleased)
+===================
+
+documentation
+-------------
+
+- Corrected information about the application of the ``srctype`` step to WFSS exposures.
+  [#7536]
+
+extract_1d
+----------
+
+- Update to be skipped for NIRSpec fixed slit modes with rateints input as that
+  mode is not allowed. [#7516]
+
+flat_field
+----------
+
+- Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
+
+other
+-----
+
+- Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
+  catching ``ResourceWarning``s. [#7526]
+
+photom
+------
+
+- Label spectral data units for NIRISS SOSS as MJy, to be consistent with
+  ``PHOTMJ`` scalar conversion factor and other point-source spectral data [#7538]
+
+resample_spec
+-------------
+
+- Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
+  rateints input as that mode is not allowed. [#7516]
+
+
+1.10.0 (2023-04-03)
+===================
 
 assign_wcs
 ----------
@@ -21,8 +60,14 @@ calwebb_detector1
 
 - Added regression test for ``calwebb_detector1`` pipeline which now
   includes ``undersampling_correction``. [#7509]
-  
 
+cube_build
+----------
+
+- Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
+
+- Memory improvements, do not allow MIRI and 'internal_cal', allow user to set suffix. [#7521]
+  
 datamodels
 ----------
 
@@ -35,7 +80,9 @@ documentation
 
 - Update documentation for ``calwebb_detector1`` to include the undersampling_correction
   step. [#7510]
-  
+
+- Clarify ``jump`` arguments documentation, and correct typos. [#7518]
+
 dq_init
 -------
 
@@ -64,6 +111,20 @@ jump
   showers to flag groups after the detection. [#7478]
 
 - Edit surface brightness unit strings for parsing by ``astropy.units`` [#7511]
+
+jump
+----
+
+- This has the changes in the JWST repo that allow the new parameters to be passed to the STCAL code
+  that made the following changes:
+  Updated the code for both NIR Snowballs and MIRI Showers. The snowball
+  flagging will now extend the saturated core of snowballs. Also,
+  circles are no longer used for snowballs preventing the huge circles
+  of flagged pixels from a glancing CR. Finally snowball flagging now has more stringent tests
+  to prevent incorrect indentification of snowballs.
+  Shower code is completely new and is now able to find extended
+  emission far below the single pixel SNR. It also allows detected
+  showers to flag groups after the detection. [#7478]
 
 other
 -----
@@ -130,6 +191,8 @@ resample
   a bug due to which parts of input images may not be present in the output
   resampled image under certain circumstances. [#7460]
 
+- Carry through good bits correctly for the variance array [#7515]
+
 residual_fringe
 ---------------
 
@@ -145,6 +208,9 @@ set_telescope_pointing
 ----------------------
 
 - Correct WCS determination for aperture MIRIM_TAMRS [#7449]
+
+- Fill values of ``TARG_RA`` and ``TARG_DEC`` with ``RA_REF`` and ``DEC_REF``
+  if target location is not provided, e.g. for pure parallel observations [#7512]
 
 straylight
 ----------
@@ -183,6 +249,10 @@ tweakreg
 
 - Added a trap for failures in source catalog construction, which now returns
   an empty catalog for the image on which the error occurred. [#7507]
+
+- Fixed a crash occuring when alignment of a single image to an absolute
+  astrometric catalog (i.e., Gaia) fails due to not enough sources in the
+  catalog. [#7513]
 
 undersampling_correction
 ------------------------

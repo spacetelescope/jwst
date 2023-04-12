@@ -69,7 +69,7 @@ def create_hdul(detector='NRCALONG', channel='LONG', module='A',
     phdu.header['PUPIL'] = pupil
     phdu.header['MODULE'] = module
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2017-09-05'
+    phdu.header['date-obs'] = '2023-01-01'
     phdu.header['exp_type'] = exptype
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
@@ -224,26 +224,6 @@ def test_imaging_frames():
     wcsobj = create_imaging_wcs()
     available_frames = wcsobj.available_frames
     assert all([a == b for a, b in zip(nircam_imaging_frames, available_frames)])
-
-
-@pytest.mark.xfail
-def test_imaging_distortion():
-    """Verify that the distortion correction round trips."""
-    wcsobj = create_imaging_wcs()
-    sky_to_detector = wcsobj.get_transform('world', 'detector')
-    detector_to_sky = wcsobj.get_transform('detector', 'world')
-
-    # we'll use the crpix as the simplest reference point
-    ra = wcs_wfss_kw['crval1']
-    dec = wcs_wfss_kw['crval2']
-
-    x, y = sky_to_detector(ra, dec)
-    raout, decout = detector_to_sky(x, y)
-
-    assert_allclose(x, wcs_wfss_kw['crpix1'])
-    assert_allclose(y, wcs_wfss_kw['crpix2'])
-    assert_allclose(raout, ra)
-    assert_allclose(decout, dec)
 
 
 def test_wfss_sip():

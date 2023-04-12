@@ -18,7 +18,7 @@ from astropy.nddata.bitmask import (
 )
 
 from stdatamodels.jwst.datamodels.dqflags import pixel
-from stdatamodels.jwst.datamodels.util import open as datamodel_open
+from stdatamodels.jwst.datamodels.util import open as datamodel_open, is_association
 
 from jwst.datamodels import ModelContainer
 
@@ -35,7 +35,8 @@ __all__ = ['SkyMatchStep']
 
 class SkyMatchStep(Step):
     """
-    SkyMatchStep: Subtraction or equalization of sky background in science images.
+    SkyMatchStep: Subtraction or equalization of sky background in science
+    images.
     """
 
     class_alias = "skymatch"
@@ -58,16 +59,27 @@ class SkyMatchStep(Step):
         lsigma = float(min=0.0, default=4.0) # Lower clipping limit, in sigma
         usigma = float(min=0.0, default=4.0) # Upper clipping limit, in sigma
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
-    """
+    """  # noqa: E501
 
     reference_file_types = []
+
+    def __init__(self, *args, **kwargs):
+        minimize_memory = kwargs.pop('minimize_memory', False)
+        super().__init__(*args, **kwargs)
+        self.minimize_memory = minimize_memory
 
     def process(self, input):
         self.log.setLevel(logging.DEBUG)
         # for now turn off memory optimization until we have better machinery
         # to handle outputs in a consistent way.
-        self._is_asn = False
-        # self._is_asn = datamodels.util.is_association(input) or isinstance(input, str)
+
+        if hasattr(self, 'minimize_memory') and self.minimize_memory:
+            self._is_asn = (
+                is_association(input) or isinstance(input, str)
+            )
+
+        else:
+            self._is_asn = False
 
         img = ModelContainer(
             input,

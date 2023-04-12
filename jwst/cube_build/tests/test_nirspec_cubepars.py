@@ -176,7 +176,6 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
         'spaxel_debug': None}
 
     pipeline = 3
-    filename = None
     input_model = None
     output_name_base = None
     output_type = 'band'
@@ -187,7 +186,6 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,
@@ -244,7 +242,6 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
 
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
-        filename,
         input_model,
         output_name_base,
         output_type,

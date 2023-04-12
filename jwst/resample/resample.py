@@ -285,7 +285,7 @@ class ResampleData:
             inwht = resample_utils.build_driz_weight(
                 model,
                 weight_type=None,
-                good_bits="~NON_SCIENCE+REFERENCE_PIXEL"
+                good_bits=self.good_bits
             )
 
             resampled_variance = np.zeros_like(output_model.data)

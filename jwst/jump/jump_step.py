@@ -118,6 +118,7 @@ class JumpStep(Step):
                                       time_masked_after_shower=self.time_masked_after_shower,
                                       max_extended_radius=self.max_extended_radius * 2)
 
+
             gain_model.close()
             readnoise_model.close()
             tstop = time.time()

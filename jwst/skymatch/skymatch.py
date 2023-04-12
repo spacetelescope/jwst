@@ -35,6 +35,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
     Parameters
     ----------
+
     images : list of SkyImage or SkyGroup
         A list of of :py:class:`~jwst.skymatch.skyimage.SkyImage` or
         :py:class:`~jwst.skymatch.skyimage.SkyGroup` objects.
@@ -54,8 +55,8 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         * **'global'** : compute a common sky value for all input images and
           groups of images. With this setting `local` will compute
           sky values for each input image/group, find the minimum sky value,
-          and then it will set (and/or subtract) the sky value of each input image
-          to this minimum value. This method *may* be
+          and then it will set (and/or subtract) the sky value of each input
+          image to this minimum value. This method *may* be
           useful when the input images have been already matched.
 
         * **'match'** : compute differences in sky values between images
@@ -65,7 +66,8 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
           (reported to be) 0. This setting will "equalize" sky values between
           the images in large mosaics. However, this method is not recommended
           when used in conjunction with
-          `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_
+          `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/\
+drizzlepac/astrodrizzle.html>`_
           because it computes relative sky values while `astrodrizzle` needs
           "absolute" sky values for median image generation and CR rejection.
 
@@ -107,7 +109,8 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
     :py:func:`match` provides new algorithms for sky value computations
     and enhances previously available algorithms used by, e.g.,
-    `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_.
+    `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/\
+drizzlepac/astrodrizzle.html>`_.
 
     Two new methods of sky subtraction have been introduced (compared to the
     standard ``'local'``): ``'global'`` and ``'match'``, as well as a
@@ -142,12 +145,12 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
       .. warning::
 
-        The current algorithm is not capable of detecting cases where some subsets
-        of intersecting images (from the input list of images) do not intersect
-        at all with other subsets of intersecting images (except for the simple
-        case when *single* images do not intersect any other images). In these
-        cases the algorithm will find equalizing sky values for each
-        intersecting subset of images and/or groups of images.
+        The current algorithm is not capable of detecting cases where some
+        subsets of intersecting images (from the input list of images) do not
+        intersect at all with other subsets of intersecting images (except for
+        the simple case when *single* images do not intersect any other
+        images). In these cases the algorithm will find equalizing sky values
+        for each intersecting subset of images and/or groups of images.
         However since these subsets of images do not intersect each other,
         sky will be matched only within each subset and the "inter-subset"
         sky mismatch could be significant.
@@ -456,8 +459,14 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
 #     for i in range(ns):
 #         for j in range(i+1, ns):
 #             overlap = images[i].intersection(images[j])
-#             s1, w1, area1 = images[i].calc_sky(overlap=overlap, delta=apply_sky)
-#             s2, w2, area2 = images[j].calc_sky(overlap=overlap, delta=apply_sky)
+#             s1, w1, area1 = images[i].calc_sky(
+#                 overlap=overlap,
+#                 delta=apply_sky
+#             )
+#             s2, w2, area2 = images[j].calc_sky(
+#                 overlap=overlap,
+#                 delta=apply_sky
+#             )
 #             if area1 == 0.0 or area2 == 0.0 or s1 is None or s2 is None:
 #                 continue
 #             A[j,i] = s1
