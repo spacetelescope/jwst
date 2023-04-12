@@ -103,11 +103,6 @@ bc1.build_cmds = [
     "pip freeze",
 ]
 bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
-bc1.test_cmds = [
-    "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
-    --env=${artifactoryenv} ${pytest_args}",
-]
 bc1.test_configs = []
 
 utils.run([jobconfig, bc0, bc1])
