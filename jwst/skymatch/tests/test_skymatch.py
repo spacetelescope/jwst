@@ -164,7 +164,7 @@ def _add_bad_pixels(im, sat_val, dont_use_val):
         product(
             ['local', 'match', 'global', 'global+match'],
             [False, True],
-            ['median', 'mean'],
+            ['median', 'mean', 'midpt', 'mode'],
             [False, True],
             [False, True]
         )
@@ -196,7 +196,11 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
     levels = [9.12, 8.28, 2.56]
 
     for im, lev in zip(container, levels):
-        im.data += np.random.normal(loc=lev, scale=0.1, size=im.data.shape)
+        im.data += np.random.normal(
+            loc=lev,
+            scale=0.1,
+            size=im.data.shape
+        )
 
     # exclude central DO_NOT_USE and corner SATURATED pixels
     result = SkyMatchStep.call(
@@ -205,6 +209,7 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
         match_down=match_down,
         subtract=subtract,
         skystat=skystat,
+        binwidth=0.2,
         nclip=0,
         dqbits='~DO_NOT_USE+SATURATED'
     )
@@ -222,7 +227,7 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
 
     if skymethod in ['local', 'global+match']:
         if grouped:
-            ref_levels = 3 * [min(levels)]
+            ref_levels = len(levels) * [min(levels)]
         else:
             ref_levels = levels
 
@@ -234,7 +239,7 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
         ref_levels = np.subtract(levels, lev0)
 
     elif skymethod == 'global':
-        ref_levels = 3 * [min(levels)]
+        ref_levels = len(levels) * [min(levels)]
 
     sub_levels = np.subtract(levels, ref_levels)
 
@@ -268,27 +273,39 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
     # between images (bad pixels in the corners of rotated images are ignored).
     # Set 'nclip' to 0 in order to not clip bad pixels in computing mean.
     np.random.seed(1)
-    im1 = nircam_rate.copy()
-    im2 = im1.copy()
-    im3 = im1.copy()
+    im1a = nircam_rate.copy()
+    im1b = im1a.copy()
+    im2a = im1a.copy()
+    im2b = im1a.copy()
+    im3 = im1a.copy()
 
     # add "bad" data
-    im1, dq_mask = _add_bad_pixels(im1, 1e6, 1e9)
-    im2, _ = _add_bad_pixels(im2, 5e6, 3e9)
+    im1a, dq_mask = _add_bad_pixels(im1a, 1e6, 1e9)
+    im1b, _ = _add_bad_pixels(im1b, 1e6, 1e9)
+    im2a, _ = _add_bad_pixels(im2a, 5e6, 3e9)
+    im2b, _ = _add_bad_pixels(im2b, 5e6, 3e9)
     im3, _ = _add_bad_pixels(im3, 7e6, 1e8)
 
     # rotate images so that corner SATURATED pixels are not in the overlap
     # region:
-    im2.meta.wcs = adjust_wcs(im2.meta.wcs, delta_roll=30)
+    im1a.meta.wcs = adjust_wcs(im2a.meta.wcs, delta_ra=0.1, delta_dec=0.1)
+    im2a.meta.wcs = adjust_wcs(im2a.meta.wcs, delta_roll=30)
+    im2b.meta.wcs = adjust_wcs(
+        im2a.meta.wcs,
+        delta_ra=0.1,
+        delta_dec=0.1,
+        delta_roll=30
+    )
     im3.meta.wcs = adjust_wcs(im3.meta.wcs, delta_roll=60)
 
-    im2.meta.observation.sequence_id = "2"
+    im2a.meta.observation.sequence_id = "2"
+    im2b.meta.observation.sequence_id = "2"
     im3.meta.observation.sequence_id = "3"
 
-    container = ModelContainer([im1, im2, im3])
+    container = ModelContainer([im1a, im1b, im2a, im2b, im3])
 
     # define some background:
-    levels = [9.12, 8.28, 2.56]
+    levels = [9.12, 9.12, 8.28, 8.28, 2.56]
 
     for im, lev in zip(container, levels):
         im.data += np.random.normal(loc=lev, scale=0.1, size=im.data.shape)
@@ -313,7 +330,7 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
         ref_levels = np.subtract(levels, min(levels))
 
     elif skymethod == 'global':
-        ref_levels = 3 * [min(levels)]
+        ref_levels = len(levels) * [min(levels)]
 
     sub_levels = np.subtract(levels, ref_levels)
 
@@ -509,7 +526,7 @@ def test_skymatch_2x(nircam_rate, tmpdir, skymethod, subtract):
         ref_levels = np.subtract(levels, min(levels))
 
     elif skymethod == 'global':
-        ref_levels = 3 * [min(levels)]
+        ref_levels = len(levels) * [min(levels)]
 
     sub_levels = np.subtract(levels, ref_levels)
 
