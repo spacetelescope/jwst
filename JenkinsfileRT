@@ -79,6 +79,7 @@ bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
+    "pip install -r requirements-sdp.txt",
     "pip freeze",
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
