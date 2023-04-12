@@ -108,7 +108,7 @@ class JumpStep(Step):
                                       min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                       expand_factor=expand_factor, use_ellipses=use_ellipses,
                                       min_sat_radius_extend=self.min_sat_radius_extend,
-                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand,
+                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
                                       extend_min_area=self.extend_min_area,
