@@ -4,7 +4,8 @@
 other
 -----
 
-- Remove the use of ``stdatamodels.s3_utils`` from ``jwst``. [#7542]
+- Remove the use of ``stdatamodels.s3_utils`` from ``jwst``, and the ``aws`` install
+  option. [#7542]
 
 
 1.10.2 (2023-04-14)
