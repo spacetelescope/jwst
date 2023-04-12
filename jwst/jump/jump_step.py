@@ -116,7 +116,7 @@ class JumpStep(Step):
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
                                       time_masked_after_shower=self.time_masked_after_shower,
-                                      max_extended_radius=self.max_extended_radius)
+                                      max_extended_radius=self.max_extended_radius * 2)
 
             gain_model.close()
             readnoise_model.close()
