@@ -1,16 +1,15 @@
 """
-Test for flat_field.g_average
+Test for flat_field.combine_fast_slow
 """
-import math
-
 import numpy as np
 from scipy.integrate import quad
 from astropy.modeling import polynomial
+from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.flatfield.flat_field import g_average
+from jwst.flatfield.flat_field import combine_fast_slow
 
 
-def test_g_average():
+def test_combine_fast_slow():
     """Assign an array of values to tab_wl; these are strictly increasing,
     but they're not uniformly spaced.
     The abscissas and weights in combine_fast_slow are for three-point
@@ -46,10 +45,26 @@ def test_g_average():
     # We want the average over the interval, not the integral itself.
     correct_value = integral / (upper - lower)
 
-    # These three lines were copied from combine_fast_slow in flat_field.py
-    d = math.sqrt(0.6) / 2.
-    dx = np.array([-d, 0., d])
-    wgt = np.array([5., 8., 5.]) / 18.
+    # Make a simple flat with the expected bin width in wavelength
+    wl_1d = np.arange(-5, 5) * dwl0 + wl0
+    wl = np.tile(wl_1d, (10, 1))
+    flat_2d = np.ones((10, 10), dtype=float)
+    flat_dq = np.zeros((10, 10), dtype=np.uint32)
+    dispaxis = 1
 
-    value = g_average(wl0, dwl0, tab_wl, tab_flat, dx, wgt)
-    assert math.isclose(value, correct_value, rel_tol=1.e-8, abs_tol=1.e-8)
+    value, new_dq = combine_fast_slow(wl, flat_2d, flat_dq, tab_wl,
+                                      tab_flat, dispaxis)
+
+    # Column 5 is the expected value
+    assert np.allclose(value[:, 5], correct_value, rtol=1.e-8, atol=1.e-8)
+    assert np.all(new_dq[:, 5] == 0)
+
+    # Columns 0-2 are bad (negative wavelengths, not marked in DQ)
+    assert np.all(value[:, :3] == 1)
+    assert np.all(new_dq[:, :3] == 0)
+
+    # Columns 3, 4, 6-9 are not covered by the tabular data
+    # (missing values, marked in DQ)
+    bad_value = dqflags.pixel['NO_FLAT_FIELD'] | dqflags.pixel['DO_NOT_USE']
+    assert np.all(value[:, (3, 4, 6, 7, 8, 9)] == 1)
+    assert np.all(new_dq[:, (3, 4, 6, 7, 8, 9)] == bad_value)

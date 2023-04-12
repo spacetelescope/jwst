@@ -1242,7 +1242,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
     del filter1, filter2, filter
 
     # Check that the wavelengths are increasing.  This is a requirement
-    # for using np.searchsorted (see wl_interpolate).
+    # for using np.interp (see combine_fast_slow).
     if len(tab_wl) > 1:
         diff = tab_wl[1:] - tab_wl[0:-1]
         if np.any(diff <= 0.):
@@ -1313,27 +1313,30 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
 
     # Values averaged within tab_flat.
     values = np.zeros_like(wl_c)
-    (ny, nx) = wl_c.shape
+
     # Abscissas and weights for 3-point Gaussian integration, but taking
     # the width of the interval to be 1, so the result will be the average
     # over the interval.
     d = math.sqrt(0.6) / 2.
     dx = np.array([-d, 0., d])
     wgt = np.array([5., 8., 5.]) / 18.
-    for j in range(ny):
-        for i in range(nx):
-            if wl[j, i] <= 0.:  # note:  wl, not wl_c
-                values[j, i] = 1.
-            else:
-                # average the tabular data over the range of wavelengths
-                temp = g_average(wl_c[j, i], dwl[j, i],
-                                 tab_wl, tab_flat, dx, wgt)
-                if temp is None:
-                    values[j, i] = 1.
-                    combined_dq[j, i] |= dqflags.pixel['NO_FLAT_FIELD']
-                    combined_dq[j, i] |= dqflags.pixel['DO_NOT_USE']
-                else:
-                    values[j, i] = temp
+
+    # Interpolate tabular data over the range of wavelengths,
+    # weight, and sum at each of 3 specified points
+    for offset, weight in zip(dx, wgt):
+        wavelengths = wl_c + dwl * offset
+        values += weight * np.interp(wavelengths, tab_wl, tab_flat,
+                                     left=np.nan, right=np.nan)
+
+    # Handle bad wavelength values in un-cleaned wavelength array
+    bad = (wl <= 0)
+    values[bad] = 1.0
+
+    # Handle missing values
+    missing = np.isnan(values)
+    values[missing] = 1.0
+    combined_dq[missing] |= dqflags.pixel['NO_FLAT_FIELD']
+    combined_dq[missing] |= dqflags.pixel['DO_NOT_USE']
 
     return flat_2d * values, combined_dq
 
@@ -1400,86 +1403,6 @@ def clean_wl(wl, dispaxis):
         wl_c = wl.copy()
 
     return wl_c
-
-
-def g_average(wl0, dwl0, tab_wl, tab_flat, dx, wgt):
-    """Gaussian integration.
-
-    Parameters
-    ----------
-    wl0 : float
-        Wavelength at the center of the current pixel.
-
-    dwl0 : float
-        Width (in wavelength units) of the current pixel.
-
-    tab_wl : ndarray, 1-D
-        Array of wavelengths corresponding to `tab_flat` flat-field values.
-
-    tab_flat : ndarray, 1-D
-        Array of flat-field values.
-
-    dx : ndarray, 1-D
-        Array of offsets within a pixel, e.g. -0.3873, 0.0, +0.3873
-
-    wgt : ndarray, 1-D
-        Array of weights, e.g. 5/18, 8/18, 5/18
-
-    Returns
-    -------
-    float or None
-        The average value of `tab_flat` over the current pixel.  None
-        will be returned if any of the wavelengths used for computing
-        the average is outside the range of wavelengths in `tab_wl`.
-    """
-
-    npts = len(dx)
-    wavelengths = wl0 + dwl0 * dx
-    sum = 0.
-    for k in range(npts):
-        value = wl_interpolate(wavelengths[k], tab_wl, tab_flat)
-        if value is None:  # wavelengths[k] was out of bounds
-            return None
-        sum += (value * wgt[k])
-
-    return sum
-
-
-def wl_interpolate(wavelength, tab_wl, tab_flat):
-    """Interpolate the flat field at the specified wavelength.
-
-    Extended summary
-    ----------------
-    Linear interpolation is used.
-
-    Parameters
-    ----------
-    wavelength : float
-        The wavelength (microns) at which to find the flat-field value.
-
-    tab_wl : ndarray, 1-D
-        Array of wavelengths corresponding to `tab_flat` flat-field values.
-        These are assumed to be strictly increasing.
-
-    tab_flat : ndarray, 1-D
-        Array of flat-field values.
-
-    Returns
-    -------
-    float or None
-        The flat-field value (from `tab_flat`) at `wavelength`.
-        None will be returned if `wavelength` is not positive or is
-        outside the range of `tab_wl`.
-    """
-
-    if wavelength <= 0. or wavelength < tab_wl[0] or wavelength > tab_wl[-1]:
-        return None
-
-    n0 = np.searchsorted(tab_wl, wavelength) - 1
-    p = (wavelength - tab_wl[n0]) / (tab_wl[n0 + 1] - tab_wl[n0])
-    q = 1. - p
-
-    return q * tab_flat[n0] + p * tab_flat[n0 + 1]
 
 
 def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
