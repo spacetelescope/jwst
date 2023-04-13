@@ -79,6 +79,8 @@ bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
+    // these latest-commit installs are overridden by `requirements-sdp.txt` if it is populated
+    "pip install git+https://github.com/spacetelescope/stdatamodels.git@master git+https://github.com/spacetelescope/stcal.git@main",
     "pip install -r requirements-sdp.txt",
     "pip freeze",
 ]
