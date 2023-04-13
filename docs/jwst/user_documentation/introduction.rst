@@ -108,9 +108,9 @@ There is also a `pipeline` module, where the `pipeline` classes, consisting of
 
 **Dependencies** 
 
-The `jwst` package has several dependencies (see the `setup.cfg` file in the
-top-level directory of `jwst` for a full list). Some notable dependencies
-include:
+The `jwst` package has several dependencies (see the `pyproject.toml` file
+in the top-level directory of `jwst` for a full list). Some notable
+dependencies include:
 
 **asdf**
 

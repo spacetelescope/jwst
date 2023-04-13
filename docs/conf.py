@@ -15,6 +15,12 @@ import datetime
 import importlib
 import sys
 import os
+from pathlib import Path
+
+if sys.version_info < (3, 11):
+     import tomli as tomllib
+else:
+     import tomllib
 from packaging.version import Version
 from configparser import ConfigParser
 
@@ -67,9 +73,6 @@ sys.path.insert(0, os.path.abspath('jwst/'))
 sys.path.insert(0, os.path.abspath('exts/'))
 
 # -- General configuration ------------------------------------------------
-conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
-setup_cfg = dict(conf.items('metadata'))
-
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.3'
 
@@ -160,16 +163,18 @@ suppress_warnings = ['app.add_directive', ]
 
 
 # General information about the project
-project = setup_cfg['name']
-author = setup_cfg['author']
-copyright = '{0}, {1}'.format(datetime.datetime.now().year, author)
+with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
+    metadata = tomllib.load(metadata_file)['project']
+project = metadata['name']
+author = metadata["authors"][0]["name"]
+copyright = f'{datetime.datetime.today().year}, {author}'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-package = importlib.import_module(setup_cfg['name'])
+package = importlib.import_module(metadata['name'])
 try:
     version = package.__version__.split('-', 1)[0]
     # The full version, including alpha/beta/rc tags.

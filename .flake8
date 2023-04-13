@@ -1,0 +1,25 @@
+# flake8 does not support pyproject.toml (https://github.com/PyCQA/flake8/issues/234)
+
+[flake8]
+select = F, W, E, C
+# We should set max line length lower eventually
+max-line-length = 130
+exclude =
+    jwst/extern,
+    docs,
+    jwst/associations,
+    jwst/fits_generator,
+    .tox,
+    .eggs,
+    build
+per-file-ignores =
+    jwst/ramp_fitting/tests/compare_cr_navg_files.py:E
+    jwst/ramp_fitting/tests/compare_crs.py:E
+    jwst/ramp_fitting/tests/compare_cr_files.py:E
+    jwst/ramp_fitting/tests/create_cube.py:E
+    jwst/ramp_fitting/tests/mc_3d.py:E
+ignore = E231,E241,W503,W504
+;    E231, # Missing whitespace after ',', ';', or ':'
+;    E241, # Multiple spaces after ','
+;    W503, # Line break occurred before a binary operator
+;    W504, # Line break occurred after a binary operator
