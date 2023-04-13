@@ -18,7 +18,7 @@ flat_field
 
 - Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
 
-- Refactored NIRSpec 1D flat interpolation for improved performance.
+- Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
 
 
 other
