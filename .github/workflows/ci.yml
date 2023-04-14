@@ -64,9 +64,7 @@ jobs:
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
         - linux: test-oldestdeps-xdist-cov
-          python-version: 3.8
-        - linux: test-xdist
-          python-version: 3.8
+          python-version: 3.9
         - linux: test-xdist
           python-version: 3.9
         - linux: test-sdpdeps-xdist
