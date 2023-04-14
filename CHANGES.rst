@@ -13,9 +13,9 @@ other
 
 - pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes [#7555]
 
+
 1.10.1 (2023-04-13)
 ===================
-
 
 documentation
 -------------
@@ -35,7 +35,7 @@ flat_field
 - Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
 
 jump
-----------
+----
 - Added a new parameter that limits maximum size of extension of jump. It exists
   in the STCAL jump code but not in JWST. This allows the parameter to be changed.
   Also, scaled two input parameters that are listed as radius to be a factor of two
@@ -60,11 +60,6 @@ resample_spec
 
 - Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
   rateints input as that mode is not allowed. [#7516]
-
-regtest
--------
-
-- Update MIRI MRS IFU  tests to use in-flight data [#7539]
 
 
 1.10.0 (2023-04-03)
