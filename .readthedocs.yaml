@@ -18,6 +18,8 @@ formats:
 
 build:
   os: ubuntu-22.04
+  apt_packages:
+  - "graphviz"
   tools:
     python: "3.11"
 
