@@ -8,7 +8,6 @@ from astropy.modeling.bounding_box import CompoundBoundingBox
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
-from stdatamodels import s3_utils
 from stdatamodels.jwst.datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 from stdatamodels.jwst.transforms.models import (NirissSOSSModel,
                                                  NIRISSForwardRowGrismDispersion,
@@ -157,13 +156,8 @@ def niriss_soss(input_model, reference_files):
     world = cf.CompositeFrame([sky, spec], name='world')
 
     try:
-        # We'd like to open this file as a DataModel, so we can consolidate
-        # the S3 URI handling to one place.  The S3-related code here can
-        # be removed once we have a specwcs DataModel subclass.
-        if s3_utils.is_s3_uri(reference_files['specwcs']):
-            bytesio_or_path = s3_utils.get_object(reference_files['specwcs'])
-        else:
-            bytesio_or_path = reference_files['specwcs']
+        bytesio_or_path = reference_files['specwcs']
+
         with asdf.open(bytesio_or_path) as af:
             wl1 = af.tree[1].copy()
             wl2 = af.tree[2].copy()
