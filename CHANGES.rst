@@ -6,7 +6,7 @@
 1.10.2 (2023-04-14)
 ===================
 
-- pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes
+- pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes [#7555]
 
 1.10.1 (2023-04-13)
 ===================
