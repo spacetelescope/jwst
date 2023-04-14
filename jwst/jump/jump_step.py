@@ -42,6 +42,7 @@ class JumpStep(Step):
         extend_outer_radius = float(default=2.6) Outer radius of the ring_2D_Kernel used for convolution
         extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
         time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
+        max_extended_radius = integer(default=200) The maximum radius of an extended snowball or shower
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -107,14 +108,16 @@ class JumpStep(Step):
                                       min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                       expand_factor=expand_factor, use_ellipses=use_ellipses,
                                       min_sat_radius_extend=self.min_sat_radius_extend,
-                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand,
+                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
                                       extend_min_area=self.extend_min_area,
                                       extend_inner_radius=self.extend_inner_radius,
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
-                                      time_masked_after_shower=self.time_masked_after_shower)
+                                      time_masked_after_shower=self.time_masked_after_shower,
+                                      max_extended_radius=self.max_extended_radius * 2)
+
 
             gain_model.close()
             readnoise_model.close()

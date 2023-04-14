@@ -1,4 +1,14 @@
-1.10.1 (unreleased)
+1.10.3 (unreleased)
+===================
+
+-
+
+1.10.2 (2023-04-14)
+===================
+
+- pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes [#7555]
+
+1.10.1 (2023-04-13)
 ===================
 
 
@@ -19,11 +29,26 @@ flat_field
 
 - Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
 
+jump
+----------
+- Added a new parameter that limits maximum size of extension of jump. It exists
+  in the STCAL jump code but not in JWST. This allows the parameter to be changed.
+  Also, scaled two input parameters that are listed as radius to be a factor of two
+  higher to match the opencv code that uses diameter. [#7545]
+  
 other
 -----
 
 - Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
   catching ``ResourceWarning``s. [#7526]
+
+- Remove use of ``codecov`` package. [#7543]
+
+photom
+------
+
+- Label spectral data units for NIRISS SOSS as MJy, to be consistent with
+  ``PHOTMJ`` scalar conversion factor and other point-source spectral data [#7538]
 
 resample_spec
 -------------

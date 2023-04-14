@@ -14,7 +14,7 @@ from jwst.stpipe import Step
 def run_detector1pipeline(jail, rtdata_module):
     """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
-    rtdata.get_data("nircam/image/jw42424001001_01101_00001_nrca5_uncal.fits")
+    rtdata.get_data("nircam/image/jw01538046001_03105_00001_nrcalong_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["calwebb_detector1", rtdata.input,
@@ -34,7 +34,7 @@ def run_detector1pipeline(jail, rtdata_module):
 def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
-    rtdata.input = "jw42424001001_01101_00001_nrca5_rate.fits"
+    rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
     args = ["calwebb_image2", rtdata.input,
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True",
@@ -50,11 +50,11 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     # produce fresh _cal files for the image3 pipeline.  We won't check these
     # or look at intermediate products, including the resampled i2d
     rate_files = [
-        "nircam/image/jw42424001001_01101_00001_nrcb5_rate.fits",
-        "nircam/image/jw42424001001_01101_00002_nrca5_rate.fits",
-        "nircam/image/jw42424001001_01101_00002_nrcb5_rate.fits",
-        "nircam/image/jw42424001001_01101_00003_nrca5_rate.fits",
-        "nircam/image/jw42424001001_01101_00003_nrcb5_rate.fits",
+        "nircam/image/jw01538046001_03105_00001_nrcalong_rate.fits",
+        "nircam/image/jw01538046001_03105_00001_nrcblong_rate.fits",
+        "nircam/image/jw01538046001_03105_00002_nrcalong_rate.fits",
+        "nircam/image/jw01538046001_03105_00002_nrcblong_rate.fits",
+        "nircam/image/jw01538046001_0310f_00001_nrcalong_rate.fits",
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
@@ -63,10 +63,9 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
 
     # Get the level3 association json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
-    rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
+    rtdata.get_data("nircam/image/jw01538-o046_20230331t102920_image3_00009_asn.json")
     args = ["calwebb_image3", rtdata.input,
             "--steps.tweakreg.save_results=True",
-            # "--steps.skymatch.save_results=True",
             "--steps.source_catalog.snr_threshold=20",
             ]
     Step.from_cmdline(args)
@@ -80,8 +79,8 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
 def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
-    rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
-    output = "jw42424001001_01101_00001_nrca5_" + suffix + ".fits"
+    rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
+    output = "jw01538046001_03105_00001_nrcalong_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
@@ -98,8 +97,8 @@ def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_defau
 def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     """Test that WCS object works as expected"""
     rtdata = rtdata_module
-    rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
-    output = "jw42424001001_01101_00001_nrca5_assign_wcs.fits"
+    rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
+    output = "jw01538046001_03105_00001_nrcalong_assign_wcs.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
@@ -125,7 +124,7 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
 
             # Check that all but the first exposure in the association
             # has a WCS correction applied
-            if "jw42424001001_01101_00001" not in model.meta.filename:
+            if "jw01538046001_0310f_00001" not in model.meta.filename:
                 assert "v2v3corr" in model.meta.wcs.available_frames
 
 
@@ -134,8 +133,8 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
 def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test that resampled i2d looks good for NIRCam imaging"""
     rtdata = rtdata_module
-    rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    output = f"jw42424-o002_t001_nircam_clear-f444w_{suffix}.fits"
+    rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
+    output = f"jw01538-o046_t024_nircam_clear-f444w_{suffix}.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
@@ -150,8 +149,8 @@ def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default
 @pytest.mark.bigdata
 def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
-    rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    output = "jw42424-o002_t001_nircam_clear-f444w_cat.ecsv"
+    rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
+    output = "jw01538-o046_t024_nircam_clear-f444w_cat.ecsv"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
@@ -162,8 +161,8 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
 def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
     """Test that segmentation map looks good for NIRCam imaging"""
     rtdata = rtdata_module
-    rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    output = "jw42424-o002_t001_nircam_clear-f444w_segm.fits"
+    rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
+    output = "jw01538-o046_t024_nircam_clear-f444w_segm.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
@@ -205,3 +204,25 @@ def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
+    """Verify that the distortion correction round trips."""
+    rtdata.get_data("nircam/image/jw01538046002_02103_00002_nrca1_cal.fits")
+    model = datamodels.open('jw01538046002_02103_00002_nrca1_cal.fits')
+    wcsobj = model.meta.wcs
+    sky_to_detector = wcsobj.get_transform('world', 'detector')
+    detector_to_sky = wcsobj.get_transform('detector', 'world')
+
+    # we'll use the crpix as the simplest reference point
+    ra = model.meta.wcsinfo.crval1
+    dec = model.meta.wcsinfo.crval2
+
+    x, y = sky_to_detector(ra, dec)
+    raout, decout = detector_to_sky(x, y)
+
+    assert_allclose(x, model.meta.wcsinfo.crpix1 - 1)
+    assert_allclose(y, model.meta.wcsinfo.crpix2 - 1)
+    assert_allclose(raout, ra)
+    assert_allclose(decout, dec)
