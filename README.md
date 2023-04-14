@@ -9,12 +9,12 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.8 or above and a C compiler for dependencies.**
+**JWST requires Python 3.9 or above and a C compiler for dependencies.**
 
 **Linux and MacOS platforms are tested and supported.  Windows is not currently supported.**
 
 **If installing on MacOS Mojave 10.14, you must install 
-  into an environment with python 3.8 or 3.9. Installation will fail on python 3.10 due
+  into an environment with python 3.9. Installation will fail on python 3.10 due
   to lack of a stable build for dependency ``opencv-python``.**
 
 ## Installation
