@@ -1,7 +1,15 @@
 1.10.3 (unreleased)
 ===================
 
-- drop support for Python 3.8 [#7552]
+other
+-----
+
+- Remove the use of ``stdatamodels.s3_utils`` from ``jwst``, and the ``aws`` install
+  option. [#7542]
+  
+- Drop support for Python 3.8 [#7552]
+
+
 
 1.10.2 (2023-04-14)
 ===================
