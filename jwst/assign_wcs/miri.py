@@ -10,7 +10,6 @@ from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
 
-from stdatamodels import s3_utils
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
                                           RegionsModel, SpecwcsModel)
@@ -236,15 +235,8 @@ def lrs_distortion(input_model, reference_files):
     else:
         subarray_dist = distortion
 
-    # Read in the reference table data and get the zero point (SIAF reference point)
-    # of the LRS in the subarray ref frame
-    # We'd like to open this file as a DataModel, so we can consolidate
-    # the S3 URI handling to one place.  The S3-related code here can
-    # be removed once that has been changed.
-    if s3_utils.is_s3_uri(reference_files['specwcs']):
-        ref = fits.open(s3_utils.get_object(reference_files['specwcs']))
-    else:
-        ref = fits.open(reference_files['specwcs'])
+    ref = fits.open(reference_files['specwcs'])
+
     with ref:
         lrsdata = np.array([d for d in ref[1].data])
         # Get the zero point from the reference data.

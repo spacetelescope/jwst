@@ -1,7 +1,21 @@
-1.10.2 (unreleased)
+1.10.3 (unreleased)
 ===================
 
-- 
+other
+-----
+
+- Remove the use of ``stdatamodels.s3_utils`` from ``jwst``, and the ``aws`` install
+  option. [#7542]
+  
+- Drop support for Python 3.8 [#7552]
+
+
+
+1.10.2 (2023-04-14)
+===================
+
+- pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes [#7555]
+
 
 1.10.1 (2023-04-13)
 ===================
@@ -24,7 +38,7 @@ flat_field
 - Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
 
 jump
-----------
+----
 - Added a new parameter that limits maximum size of extension of jump. It exists
   in the STCAL jump code but not in JWST. This allows the parameter to be changed.
   Also, scaled two input parameters that are listed as radius to be a factor of two

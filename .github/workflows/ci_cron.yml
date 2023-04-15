@@ -44,8 +44,6 @@ jobs:
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
         - macos: test-xdist
-          python-version: 3.8
-        - macos: test-xdist
           python-version: 3.9
         - macos: test-sdpdeps-xdist
           python-version: 3.9
