@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector, nrsifu_valid_detector)
+from jwst.associations.lib.dms_base import (nrccoron_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
@@ -175,6 +176,11 @@ class Asn_Lv3Coron(AsnMixin_Science):
                         force_unique=False,
                     )],
                     reduce=Constraint.notany
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrccoron_valid_detector(item),
+                    force_unique=False
                 ),
             ],
             name='asn_coron'

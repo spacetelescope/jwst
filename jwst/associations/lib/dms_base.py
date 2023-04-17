@@ -425,6 +425,51 @@ class DMSBaseMixin(ACIDMixin):
         """
         return item in self.from_items
 
+    def is_item_coron(self, item):
+        """Is the given item Coronagraphic
+
+        Determine whether the specific item represents
+        true Coronagraphic data or not. This will include all items
+        in CORON_EXP_TYPES (both NIRCam and MIRI), **except** for
+        NIRCam short-wave detectors included in a coronagraphic exposure
+        but do not have an occulter in their field-of-view.
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_coron : bool
+            Item represents a true Coron exposure.
+        """
+        # If not a science exposure, such as target acquisitions,
+        # then other indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Target acquisitions are never Coron
+        if item['exp_type'] in ACQ_EXP_TYPES:
+            return False
+
+        # Check for coronagraphic exposure type
+        try:
+            is_coron = self.item_getattr(item, ['exp_type'])[1] in CORON_EXP_TYPES
+        except KeyError:
+            is_coron = False
+            return is_coron
+
+        # Now do a special check for NRC_CORON exposures using full-frame readout,
+        # which include extra detectors that do *not* have an occulter in them
+        if item['exp_type'] == 'nrc_coron' and item['subarray'] == 'full':
+            if item['pupil'] == 'maskbar' and item['detector'] in ['nrca1', 'nrca2', 'nrca3']:
+                is_coron = False
+            if item['pupil'] == 'maskrnd' and item['detector'] in ['nrca1', 'nrca3', 'nrca4']:
+                is_coron = False
+
+        return is_coron
+
     def is_item_tso(self, item, other_exp_types=None):
         """Is the given item TSO
 
@@ -753,6 +798,28 @@ class Constraint_TSO(Constraint):
         )
 
 
+class Constraint_Coron(Constraint):
+    """Match on Coronagraphic Observations"""
+    def __init__(self, *args, **kwargs):
+        super(Constraint_Coron, self).__init__(
+            [
+                DMSAttrConstraint(
+                    sources=['pntgtype'],
+                    value='science'
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            sources=['exp_type'],
+                            value='|'.join(CORON_EXP_TYPES),
+                        ),
+                    ],
+                    reduce=Constraint.any
+                )
+            ],
+        )
+
+
 class Constraint_WFSC(Constraint):
     """Match on Wave Front Sensing and Control Observations"""
     def __init__(self, *args, **kwargs):
@@ -988,3 +1055,26 @@ def nrslamp_valid_detector(item):
 
     # Nothing has matched. Not valid.
     return False
+
+
+def nrccoron_valid_detector(item):
+    """Check that a coronagraphic mask+detector combo is valid"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, subarray = item_getattr(item, ['subarray'])
+        _, pupil = item_getattr(item, ['pupil'])
+    except KeyError:
+        return False
+
+    # Just a checklist of paths:
+    if subarray == 'full':
+        # maskbar has occulted target only in detector nrca4
+        if pupil == 'maskbar' and detector in ['nrca1', 'nrca2', 'nrca3']:
+            return False
+        # maskrnd has occulted target only in detector nrca2
+        elif pupil == 'maskrnd' and detector in ['nrca1', 'nrca3', 'nrca4']:
+            return False
+        else:
+            return True
+    else:
+        return True

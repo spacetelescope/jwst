@@ -9,6 +9,7 @@ from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
+    Constraint_Coron,
     Constraint_TSO,
     Constraint_WFSC,
     format_list,
@@ -24,6 +25,7 @@ from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
+    'Asn_Lv2Coron',
     'Asn_Lv2FGS',
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
@@ -52,6 +54,84 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
+class Asn_Lv2Coron(
+        AsnMixin_Lv2Coron,
+        DMSLevel2bBase
+):
+    """Level2b Coronagraphic Science Image Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Coron-based science exposures
+        - Single science exposure
+        - non-TSO
+        - Use rateints product as input
+        - Exclude NIRCam SW detectors that don't have occulter
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Science(),
+            Constraint_Coron(),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint(
+                [
+                    Constraint_Background(),
+                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                ], reduce=Constraint.any
+            ),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2Coron, self).__init__(*args, **kwargs)
+
+    def make_member(self, item):
+        """Create a member from the item
+    
+        Parameters
+        ----------
+        item : dict
+            The item to create member from.
+    
+        Returns
+        -------
+        member : Member
+            The member
+        """
+
+        # Set exposure error status.
+        try:
+            exposerr = item['exposerr']
+        except KeyError:
+            exposerr = None
+
+        # Create the member.
+        # `is_item_coron` is used to determine whether the name should
+        # represent the form of the data product containing all integrations.
+        member = Member(
+            {
+                'expname': Utility.rename_to_level2a(
+                    item['filename'],
+                    use_integrations=self.is_item_coron(item),
+                ),
+                'exptype': self.get_exposure_type(item),
+                'exposerr': exposerr,
+            },
+            item=item
+        )
+
+        return member
+
+
 @RegistryMarker.rule
 class Asn_Lv2Image(
         AsnMixin_Lv2Image,

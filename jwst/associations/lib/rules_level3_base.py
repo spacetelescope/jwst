@@ -281,7 +281,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Determine expected member name
         expname = Utility.rename_to_level2(
             item['filename'], exp_type=item['exp_type'],
-            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            #is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            is_tso=self.is_item_tso(item),
             member_exptype=exptype
         )
 

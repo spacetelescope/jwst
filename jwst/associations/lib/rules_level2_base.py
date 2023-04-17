@@ -47,6 +47,7 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2Coron',
     'AsnMixin_Lv2Nod',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
@@ -223,14 +224,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         # Create the member.
         # `is_item_tso` is used to determine whether the name should
-        # represent the integrations form of the data.
-        # Though coronagraphic data is not TSO,
-        # it does remain in the separate integrations.
+        # represent the form of the data product containing all integrations.
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(
                     item['filename'],
-                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+                    use_integrations=self.is_item_tso(item),
                 ),
                 'exptype': self.get_exposure_type(item),
                 'exposerr': exposerr,
@@ -1058,6 +1057,16 @@ class AsnMixin_Lv2Image:
         """Post-check and pre-add initialization"""
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
+        self.data['asn_type'] = 'image2'
+
+
+class AsnMixin_Lv2Coron:
+    """Level 2 Coronagraphic association base"""
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Coron, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
 
 
