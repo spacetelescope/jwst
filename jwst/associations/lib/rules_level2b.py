@@ -131,6 +131,16 @@ class Asn_Lv2Image(
         # Now check and continue initialization.
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
 
+    def is_item_coron(self, item):
+        """Override to ignore coronographic designation
+
+        Coronagraphic data is to be processed both as coronagraphic
+        (by default), but also as just plain imaging. Coronagraphic
+        data is processed using the Ans_Lv2Coron rul. This rule
+        will handle the creation of the image version.
+        """
+        return False
+
 
 @RegistryMarker.rule
 class Asn_Lv2ImageNonScience(
