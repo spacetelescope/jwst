@@ -93,43 +93,6 @@ class Asn_Lv2Coron(
         # Now check and continue initialization.
         super(Asn_Lv2Coron, self).__init__(*args, **kwargs)
 
-    def make_member(self, item):
-        """Create a member from the item
-    
-        Parameters
-        ----------
-        item : dict
-            The item to create member from.
-    
-        Returns
-        -------
-        member : Member
-            The member
-        """
-
-        # Set exposure error status.
-        try:
-            exposerr = item['exposerr']
-        except KeyError:
-            exposerr = None
-
-        # Create the member.
-        # `is_item_coron` is used to determine whether the name should
-        # represent the form of the data product containing all integrations.
-        member = Member(
-            {
-                'expname': Utility.rename_to_level2a(
-                    item['filename'],
-                    use_integrations=self.is_item_coron(item),
-                ),
-                'exptype': self.get_exposure_type(item),
-                'exposerr': exposerr,
-            },
-            item=item
-        )
-
-        return member
-
 
 @RegistryMarker.rule
 class Asn_Lv2Image(

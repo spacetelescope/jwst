@@ -425,6 +425,39 @@ class DMSBaseMixin(ACIDMixin):
         """
         return item in self.from_items
 
+    def is_item_ami(self, item):
+        """Is the given item AMI (NIRISS Aperture Masking Interferometry)
+
+        Determine whether the specific item represents AMI data or not.
+        This simply includes items with EXP_TYPE='NIS_AMI'.
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_ami : bool
+            Item represents an AMI exposure.
+        """
+        # If not a science exposure, such as target acquisitions,
+        # then other indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Target acquisitions are never AMI
+        if item['exp_type'] in ACQ_EXP_TYPES:
+            return False
+
+        # Check for AMI exposure type
+        try:
+            is_ami = self.item_getattr(item, ['exp_type'])[1] in ['nis_ami']
+        except KeyError:
+            is_ami = False
+
+        return is_ami
+
     def is_item_coron(self, item):
         """Is the given item Coronagraphic
 
@@ -474,9 +507,9 @@ class DMSBaseMixin(ACIDMixin):
         """Is the given item TSO
 
         Determine whether the specific item represents
-        TSO data or not. When used to determine naming
-        of files, coronagraphic data will be included through
-        the `other_exp_types` parameter.
+        TSO data or not. This is used to determine the
+        naming of files, i.e. "rate" vs "rateints" and
+        "cal" vs "calints".
 
         Parameters
         ----------
@@ -484,7 +517,7 @@ class DMSBaseMixin(ACIDMixin):
             The item to check for.
 
         other_exp_types: [str[,...]] or None
-            List of other exposure types to consider TSO.
+            List of other exposure types to consider TSO-like.
 
         Returns
         -------

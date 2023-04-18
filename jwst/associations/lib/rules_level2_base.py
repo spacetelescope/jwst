@@ -222,13 +222,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             exposerr = None
 
         # Create the member.
-        # `is_item_tso` is used to determine whether the name should
-        # represent the form of the data product containing all integrations.
+        # The various `is_item_xxx` methods are used to determine whether the name
+        # should represent the form of the data product containing all integrations.
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(
                     item['filename'],
-                    use_integrations=self.is_item_tso(item),
+                    use_integrations=(self.is_item_ami(item) |
+                                      self.is_item_coron(item) |
+                                      self.is_item_tso(item)),
                 ),
                 'exptype': self.get_exposure_type(item),
                 'exposerr': exposerr,
@@ -612,9 +614,8 @@ class Utility():
         level1b_name : str
             The Level 1b exposure name.
 
-        is_integrations : boolean
-            Use 'rateints' instead of 'rate' as
-            the suffix.
+        use_integrations : boolean
+            Use 'rateints' instead of 'rate' as the suffix.
 
         Returns
         -------

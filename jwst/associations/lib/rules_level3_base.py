@@ -280,9 +280,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Determine expected member name
         expname = Utility.rename_to_level2(
-            item['filename'], exp_type=item['exp_type'],
-            #is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
-            is_tso=self.is_item_tso(item),
+            item['filename'],
+            exp_type=item['exp_type'],
+            use_integrations=(self.is_item_ami(item) |
+                              self.is_item_coron(item) |
+                              self.is_item_tso(item)),
             member_exptype=exptype
         )
 
@@ -474,7 +476,7 @@ class Utility():
             )
 
     @staticmethod
-    def rename_to_level2(level1b_name, exp_type=None, is_tso=False, member_exptype='science'):
+    def rename_to_level2(level1b_name, exp_type=None, use_integrations=False, member_exptype='science'):
         """Rename a Level 1b Exposure to a Level2 name.
 
         The basic transform is changing the suffix `uncal` to
@@ -490,9 +492,8 @@ class Utility():
             it will be presumed that the name
             should get a Level2b name
 
-        is_tso : boolean
-            Use 'calints' instead of 'cal' as
-            the suffix.
+        use_integrations : boolean
+            Use 'calints' instead of 'cal' as the suffix.
 
         member_exptype: str
             The association member exposure type, such as "science".
@@ -520,7 +521,7 @@ class Utility():
             else:
                 suffix = 'rate'
 
-        if is_tso:
+        if use_integrations:
             suffix += 'ints'
 
         level2_name = ''.join([
