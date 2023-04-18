@@ -56,7 +56,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 @RegistryMarker.rule
 class Asn_Lv2Coron(
-        AsnMixin_Lv2Coron,
+        AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
     """Level2b Coronagraphic Science Image Association
@@ -77,7 +77,6 @@ class Asn_Lv2Coron(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Image_Science(),
             Constraint_Coron(),
             Constraint(
                 [Constraint_TSO()],

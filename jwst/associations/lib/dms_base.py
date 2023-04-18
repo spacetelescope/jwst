@@ -807,15 +807,10 @@ class Constraint_Coron(Constraint):
                     sources=['pntgtype'],
                     value='science'
                 ),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            sources=['exp_type'],
-                            value='|'.join(CORON_EXP_TYPES),
-                        ),
-                    ],
-                    reduce=Constraint.any
-                )
+                DMSAttrConstraint(
+                    sources=['exp_type'],
+                    value='|'.join(CORON_EXP_TYPES),
+                ),
             ],
         )
 

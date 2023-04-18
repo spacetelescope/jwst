@@ -47,7 +47,6 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2Coron',
     'AsnMixin_Lv2Nod',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
@@ -1057,16 +1056,6 @@ class AsnMixin_Lv2Image:
         """Post-check and pre-add initialization"""
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
-        self.data['asn_type'] = 'image2'
-
-
-class AsnMixin_Lv2Coron:
-    """Level 2 Coronagraphic association base"""
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(AsnMixin_Lv2Coron, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
 
 
