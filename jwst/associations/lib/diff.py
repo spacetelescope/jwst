@@ -41,8 +41,16 @@ class DifferentProductSetsError(DiffError):
     """Different product sets between groups of associations"""
 
 
+class MemberLengthDifference(DiffError):
+    """Difference in number of members between associations"""
+
+
 class MemberMismatchError(DiffError):
     """Membership does not match"""
+
+
+class SubsetError(DiffError):
+    """One product is a subset of another"""
 
 
 class TypeMismatchError(DiffError):
@@ -57,6 +65,12 @@ class MultiDiffError(UserList, DiffError):
     """List of diff errors"""
     def __init__(self, *args, **kwargs):
         super(MultiDiffError, self).__init__(*args, **kwargs)
+
+    @property
+    def err_types(self):
+        """Return list of error types"""
+        err_types = [type(err) for err in self]
+        return err_types
 
     def __str__(self):
         message = ['Following diffs found:\n']
@@ -329,7 +343,7 @@ def compare_product_membership(left, right):
         diffs.append(dup_member_error)
 
     if len(right['members']) != len(left['members']):
-        diffs.append(MemberMismatchError(
+        diffs.append(MemberLengthDifference(
             'Product Member length differs:'
             ' Left Product {left_product_name} len {left_len} !=  '
             ' Right Product {right_product_name} len {right_len}'
@@ -366,6 +380,12 @@ def compare_product_membership(left, right):
         diffs.append(UnaccountedMembersError(
             f'Right has {len(members_right)} unaccounted members. Members are {members_right}'
         ))
+
+    # Check if one is a subset of the other.
+    err_types = diffs.err_types
+    is_subset = (len(diffs) == 2) and (MemberLengthDifference in err_types) and (UnaccountedMembersError in err_types)
+    if is_subset:
+        diffs = MultiDiffError([SubsetError('Products are subsets')])
 
     if diffs:
         raise diffs
