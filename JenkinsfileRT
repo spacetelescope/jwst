@@ -86,6 +86,7 @@ bc0.build_cmds = [
 ]
 bc0.build_cmds = bc0.build_cmds + PipInject(env.OVERRIDE_REQUIREMENTS)
 bc0.test_cmds = [
+    "pip list",
     "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
