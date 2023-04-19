@@ -131,7 +131,6 @@ def read_cubepars(par_filename,
     elif instrument == 'NIRSPEC':
         with datamodels.NirspecIFUCubeParsModel(par_filename) as ptab:
             number_gratings = len(all_grating)
-
             for i in range(number_gratings):
                 this_gwa = all_grating[i]
                 this_filter = all_filter[i]
@@ -142,13 +141,11 @@ def read_cubepars(par_filename,
                     table_spectralstep = tabdata['SPECTRALSTEP']
                     table_wavemin = tabdata['WAVEMIN']
                     table_wavemax = tabdata['WAVEMAX']
-
                     if this_gwa == table_grating and this_filter == table_filter:
                         instrument_info.SetSpatialSize(table_spaxelsize, this_gwa, this_filter)
                         instrument_info.SetSpectralStep(table_spectralstep, this_gwa, this_filter)
                         instrument_info.SetWaveMin(table_wavemin, this_gwa, this_filter)
                         instrument_info.SetWaveMax(table_wavemax, this_gwa, this_filter)
-
                 #  modified Shepard method 1/r weighting
                 if weighting == 'msm':
                     for tabdata in ptab.ifucubepars_msm_table:
@@ -234,6 +231,19 @@ def read_cubepars(par_filename,
                     instrument_info.SetHighEMSMTable(table_wave, table_sroi,
                                                      table_wroi, table_scalerad)
 
+            elif weighting == 'drizzle':
+                # TODO when we get a new cubepars reference file with wavelength
+                # arrays for Drizzle replace the table used with the one for drizzling
+                # For now just reuse the emsm wavetable
+                for tabdata in ptab.ifucubepars_prism_emsm_wavetable:
+                    table_wave = tabdata['WAVELENGTH']
+                    instrument_info.SetPrismDrizTable(table_wave)
+                for tabdata in ptab.ifucubepars_med_emsm_wavetable:
+                    table_wave = tabdata['WAVELENGTH']
+                    instrument_info.SetMedDrizTable(table_wave)
+                for tabdata in ptab.ifucubepars_high_emsm_wavetable:
+                    table_wave = tabdata['WAVELENGTH']
+                    instrument_info.SetHighDrizTable(table_wave)
 
             ptab.close()
             del ptab
