@@ -833,7 +833,13 @@ class Constraint_TSO(Constraint):
 
 class Constraint_Coron(Constraint):
     """Match on Coronagraphic Observations"""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, association=None, **kwargs):
+
+        if association is None:
+            sources = lambda item: True
+        else:
+            sources = association.is_item_coron
+
         super(Constraint_Coron, self).__init__(
             [
                 DMSAttrConstraint(
@@ -843,6 +849,10 @@ class Constraint_Coron(Constraint):
                 DMSAttrConstraint(
                     sources=['exp_type'],
                     value='|'.join(CORON_EXP_TYPES),
+                ),
+                SimpleConstraint(
+                    value=True,
+                    sources=sources
                 ),
             ],
         )

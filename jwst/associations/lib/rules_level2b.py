@@ -77,11 +77,7 @@ class Asn_Lv2Coron(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Coron(),
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
+            Constraint_Coron(association=self),
             Constraint(
                 [
                     Constraint_Background(),
