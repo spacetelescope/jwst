@@ -9,7 +9,7 @@ other
   
 - Drop support for Python 3.8 [#7552]
 
-
+- override package dependencies with requirements file when requested [#7557]
 
 1.10.2 (2023-04-14)
 ===================
