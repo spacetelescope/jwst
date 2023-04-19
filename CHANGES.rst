@@ -1,6 +1,13 @@
 1.10.3 (unreleased)
 ===================
 
+
+ramp_fitting
+------------
+
+- Updated CI tests due to a change in STCAL, which changed the way the number
+  of groups in a segment are computed. [#560, spacetelescope/stcal#163]
+
 other
 -----
 
