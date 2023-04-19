@@ -16,6 +16,7 @@ __all__ = [
     'Asn_Lv3ACQ_Reprocess',
     'Asn_Lv3AMI',
     'Asn_Lv3Coron',
+    'Asn_Lv3NRCCoronImage',
     'Asn_Lv3Image',
     'Asn_Lv3ImageBackground',
     'Asn_Lv3SpecAux',
@@ -137,6 +138,7 @@ class Asn_Lv3Coron(AsnMixin_Science):
         - Association type: ``coron3``
         - Pipeline: ``calwebb_coron3``
         - Gather science and related PSF exposures
+        - Exclude "extra" NIRCam detectors that don't have target on them
 
     Notes
     -----
@@ -202,6 +204,78 @@ class Asn_Lv3Coron(AsnMixin_Science):
 
         self.data['asn_type'] = 'coron3'
         super(Asn_Lv3Coron, self)._init_hook(item)
+
+
+@RegistryMarker.rule
+class Asn_Lv3NRCCoronImage(AsnMixin_Science):
+    """Level 3 Coronagraphy Association handled as regular imaging
+
+    Characteristics:
+        - Association type: ``image3``
+        - Pipeline: ``calwebb_image3``
+        - Gather science exposures
+        - Only include NRC SW images taken in full-frame
+
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=('nrc_coron'),
+                ),
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+                Constraint(
+                    [DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        force_unique=False,
+                    )],
+                    reduce=Constraint.notany
+                ),
+                DMSAttrConstraint(
+                    name='channel',
+                    sources=['channel'],
+                    value=('short'),
+                ),
+                DMSAttrConstraint(
+                    name='subarray',
+                    sources=['subarray'],
+                    value=('full'),
+                ),
+            ],
+        )
+
+        # Check and continue initialization.
+        super(Asn_Lv3NRCCoronImage, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Lv3NRCCoronImage, self)._init_hook(item)
+
+    def is_item_coron(self, item):
+        """Override to ignore coronographic designation
+
+        Coronagraphic data is to be processed both as coronagraphic
+        (by default), but also as just plain imaging. Coronagraphic
+        data is processed using the Asn_Lv3Coron rule. This rule
+        will handle the creation of the image version. It causes
+        the input members to be of type "cal", instead of "calints".
+        """
+        return False
 
 
 @RegistryMarker.rule

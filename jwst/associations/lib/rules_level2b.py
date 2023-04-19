@@ -132,8 +132,9 @@ class Asn_Lv2Image(
 
         Coronagraphic data is to be processed both as coronagraphic
         (by default), but also as just plain imaging. Coronagraphic
-        data is processed using the Ans_Lv2Coron rul. This rule
-        will handle the creation of the image version.
+        data is processed using the Asn_Lv2Coron rule. This rule
+        will handle the creation of the image version. It has the
+        effect of using "rate" files as input, instead of "rateints".
         """
         return False
 
