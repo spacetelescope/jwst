@@ -359,17 +359,12 @@ def compare_product_membership(left, right):
 
     if len(left_unaccounted_members):
         diffs.append(UnaccountedMembersError(
-            f'Left has {len(left_unaccounted_members)}. Members are {left_unaccounted_members}'
+            f'Left has {len(left_unaccounted_members)} unaccounted members. Members are {left_unaccounted_members}'
         ))
 
     if len(members_right) != 0:
         diffs.append(UnaccountedMembersError(
-            'Right has {len_over} unaccounted for members starting with'
-            ' {right_expname}:{right_exptype}'
-            ''.format(len_over=len(members_right),
-                      right_expname=members_right[0]['expname'],
-                      right_exptype=members_right[0]['exptype']
-            )
+            f'Right has {len(members_right)} unaccounted members. Members are {members_right}'
         ))
 
     if diffs:
