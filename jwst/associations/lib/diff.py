@@ -49,6 +49,10 @@ class TypeMismatchError(DiffError):
     """Association type mismatch"""
 
 
+class UnaccountedMembersError(DiffError):
+    """Members not present in other"""
+
+
 class MultiDiffError(UserList, DiffError):
     """List of diff errors"""
     def __init__(self, *args, **kwargs):
@@ -334,6 +338,7 @@ def compare_product_membership(left, right):
         ))
 
     members_right = copy(right['members'])
+    left_unaccounted_members = []
     for left_member in left['members']:
         for right_member in members_right:
             if left_member['expname'] != right_member['expname']:
@@ -350,13 +355,15 @@ def compare_product_membership(left, right):
             members_right.remove(right_member)
             break
         else:
-            diffs.append(MemberMismatchError(
-                'Left {left_expname}:{left_exptype} has no counterpart in right'
-                ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
-            ))
+            left_unaccounted_members.append(left_member)
+
+    if len(left_unaccounted_members):
+        diffs.append(UnaccountedMembersError(
+            f'Left has {len(left_unaccounted_members)}. Members are {left_unaccounted_members}'
+        ))
 
     if len(members_right) != 0:
-        diffs.append(MemberMismatchError(
+        diffs.append(UnaccountedMembersError(
             'Right has {len_over} unaccounted for members starting with'
             ' {right_expname}:{right_exptype}'
             ''.format(len_over=len(members_right),
