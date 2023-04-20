@@ -66,6 +66,36 @@ def get_product_names(asns):
     return set(product_names), dups
 
 
+def prune(asns):
+    """Remove duplicates and subset associations
+
+    Situations where extraneous associations can occur are:
+
+    - duplicate memberships
+    - duplicate product names
+
+    Associations with different product names but same memberships arise when
+    different levels of candidates gather the same membership, such as
+    OBSERVATION vs. GROUP. Associations of the lower level candidate are preferred.
+
+    Associations with the same product name can occur in Level 2 when both an OBSERVATION
+    candidate and a BACKGROUND candidate associations are created. The association that is
+    a superset of members is the one chosen.
+
+    Parameters
+    ----------
+    asns : [Association[,...]]
+        Associations to prune
+
+    Returns
+    -------
+    pruned : [Association[,...]]
+        Pruned list of associations
+    """
+    pruned = prune_duplicate_associations(asns)
+    pruned = prune_duplicate_products(pruned)
+    return pruned
+
 def prune_duplicate_associations(asns):
     """Remove duplicate associations in favor of lower level versions
 
