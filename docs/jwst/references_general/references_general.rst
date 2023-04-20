@@ -602,7 +602,7 @@ Bit  Value         Name              Description
 4    16            OUTLIER           Flagged by outlier detection
 5    32            PERSISTENCE       High persistence
 6    64            AD_FLOOR          Below A/D floor
-7    128           RESERVED
+7    128           UNDERSAMP         Undersampling correction
 8    256           UNRELIABLE_ERROR  Uncertainty exceeds quoted error
 9    512           NON_SCIENCE       Pixel not on science portion of detector
 10   1024          DEAD              Dead pixel
@@ -623,7 +623,7 @@ Bit  Value         Name              Description
 25   33554432      UNRELIABLE_FLAT   Flat variance large
 26   67108864      OPEN              Open pixel (counts move to adjacent pixels)
 27   134217728     ADJ_OPEN          Adjacent to open pixel
-28   268435456     UNRELIABLE_RESET  Sensitive to reset anomaly
+28   268435456     FLUX_ESTIMATED    Pixel flux estimated due to missing/bad data
 29   536870912     MSA_FAILED_OPEN   Pixel sees light from failed-open shutter
 30   1073741824    OTHER_BAD_PIXEL   A catch-all flag
 31   2147483648    REFERENCE_PIXEL   Pixel is a reference pixel
