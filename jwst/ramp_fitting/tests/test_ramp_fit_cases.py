@@ -349,7 +349,6 @@ def test_pix_8():
     o_true = [0.98561335, 9.920554, 0.00363636, 0.03054732, 16.508228,
               39.383667, 5.1438665, 855.78046]
 
-    # XXX
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
 
