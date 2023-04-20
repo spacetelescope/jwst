@@ -130,6 +130,7 @@ def read_cubepars(par_filename,
     # Read in NIRSPEC Values
     elif instrument == 'NIRSPEC':
         with datamodels.NirspecIFUCubeParsModel(par_filename) as ptab:
+            print(par_filename)
             number_gratings = len(all_grating)
             for i in range(number_gratings):
                 this_gwa = all_grating[i]
@@ -232,16 +233,13 @@ def read_cubepars(par_filename,
                                                      table_wroi, table_scalerad)
 
             elif weighting == 'drizzle':
-                # TODO when we get a new cubepars reference file with wavelength
-                # arrays for Drizzle replace the table used with the one for drizzling
-                # For now just reuse the emsm wavetable
-                for tabdata in ptab.ifucubepars_prism_emsm_wavetable:
+                for tabdata in ptab.ifucubepars_prism_driz_wavetable:
                     table_wave = tabdata['WAVELENGTH']
                     instrument_info.SetPrismDrizTable(table_wave)
-                for tabdata in ptab.ifucubepars_med_emsm_wavetable:
+                for tabdata in ptab.ifucubepars_med_driz_wavetable:
                     table_wave = tabdata['WAVELENGTH']
                     instrument_info.SetMedDrizTable(table_wave)
-                for tabdata in ptab.ifucubepars_high_emsm_wavetable:
+                for tabdata in ptab.ifucubepars_high_driz_wavetable:
                     table_wave = tabdata['WAVELENGTH']
                     instrument_info.SetHighDrizTable(table_wave)
 
