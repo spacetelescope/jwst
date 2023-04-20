@@ -6,7 +6,7 @@ import logging
 import warnings
 
 from .. import config
-from .diff import compare_product_membership
+from . import diff
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -133,7 +133,7 @@ def prune_duplicate_associations(asns):
         to_prune = list()
         for asn in ordered_asns:
             try:
-                compare_product_membership(original['products'][0], asn['products'][0])
+                diff.compare_product_membership(original['products'][0], asn['products'][0])
             except AssertionError:
                 continue
             to_prune.append(asn)
@@ -162,18 +162,38 @@ def prune_duplicate_products(asns):
     if not dups:
         return asns
 
-    pruned = copy.copy(asns)
-    to_prune = defaultdict(list)
-    for asn in asns:
-        product_name = asn['products'][0]['name']
-        if product_name in dups:
-            to_prune[product_name].append(asn)
+    ordered_asns = sort_by_candidate(asns)
+    asn_by_product = defaultdict(list)
+    for asn in ordered_asns:
+        asn_by_product[asn['products'][0]['name']].append(asn)
 
-    for product_name, asns_to_prune in to_prune.items():
-        asns_to_prune = sort_by_candidate(asns_to_prune)
-        prune_remove(pruned, asns_to_prune[1:])
+    to_prune = list()
+    for product in dups:
+        dup_asns = asn_by_product[product]
+        asn_keeper = dup_asns.pop()
+        for asn in dup_asns:
+            try:
+                diff.compare_product_membership(asn_keeper['products'][0], asn['products'][0])
+            except diff.MultiDiffError as diffs:
+                # If one is a pure subset, remove the smaller association.
+                if len(diffs) == 1 and isinstance(diffs[0], diff.SubsetError):
+                    if len(asn['products'][0]['members']) > len(asn_keeper['products'][0]['members']):
+                        asn_keeper, asn = asn, asn_keeper
+                    to_prune.append(asn)
+                else:
+                    # There are significant other differences. Discard the lower one but warn.
+                    logger.warning('Following associations have the same product name but significant differences.')
+                    logger.warning('Association 1: %s', asn_keeper)
+                    logger.warning('Association 2: %s', asn)
+                    logger.warning('Diffs: %s', diffs)
+                    to_prune.append(asn)
+            else:
+                # Associations are exactly the same. Discard the logically lesser one.
+                # Due to the sorting, this should be the current `asn`
+                to_prune.append(asn)
 
-    return pruned
+    prune_remove(ordered_asns, to_prune)
+    return ordered_asns
 
 
 def prune_remove(remove_from, to_remove):
