@@ -9,5 +9,6 @@ Pixel Replacement
 
    main.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.pixel_replace.pixel_replace_step
