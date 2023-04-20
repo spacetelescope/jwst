@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
+# Duplicate association counter
+# Used in function `prune_remove`
+DupCount = 0
+
+
 def sort_by_candidate(asns):
     """Sort associations by candidate
 
@@ -132,8 +137,7 @@ def prune_duplicate_associations(asns):
             except AssertionError:
                 continue
             to_prune.append(asn)
-        for prune in to_prune:
-            ordered_asns.remove(prune)
+        prune_remove(ordered_asns, to_prune)
 
     return pruned
 
@@ -158,12 +162,6 @@ def prune_duplicate_products(asns):
     if not dups:
         return asns
 
-    warnings.warn(f'Duplicate associations exist: {dups}', RuntimeWarning)
-    if config.DEBUG:
-        warnings.warn('Duplicate associations will have "dupXXX" prepended to their names, where "XXX" is a 3-digit sequence.')
-    else:
-        warnings.warn('Duplicates will be removed, leaving only one of each.', RuntimeWarning)
-
     pruned = copy.copy(asns)
     to_prune = defaultdict(list)
     for asn in asns:
@@ -171,14 +169,39 @@ def prune_duplicate_products(asns):
         if product_name in dups:
             to_prune[product_name].append(asn)
 
-    dup_count = 0
     for product_name, asns_to_prune in to_prune.items():
         asns_to_prune = sort_by_candidate(asns_to_prune)
-        for asn in asns_to_prune[1:]:
-            if config.DEBUG:
-                dup_count += 1
-                asn.asn_name = f'dup{dup_count:03d}_{asn.asn_name}'
-            else:
-                pruned.remove(asn)
+        prune_remove(pruned, asns_to_prune[1:])
 
     return pruned
+
+
+def prune_remove(remove_from, to_remove):
+    """Remove or rename associations to be pruned
+
+    Default behavior is to remove associations listed in the `to_remove`
+    list from the `remove_from` list.
+
+    However, if `config.DEBUG` is `True`, that association is simply
+    renamed, adding the string "dupXXXXX" as a prefix to the association's
+    name.
+
+    Parameters
+    ----------
+    remove_from : [Association[,...]]
+        The list of associations from which associations will be removed.
+        List is modified in-place.
+
+    to_remove : [Association[,...]]
+        The list of associations to remove from the `remove_from` list.
+    """
+    global DupCount
+
+    if to_remove:
+        logger.debug('Duplicate associations found: %s', to_remove)
+    for asn in to_remove:
+        if config.DEBUG:
+            DupCount += 1
+            asn.asn_name = f'dup{DupCount:05d}_{asn.asn_name}'
+        else:
+            remove_from.remove(asn)
