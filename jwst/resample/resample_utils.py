@@ -3,6 +3,12 @@ import logging
 import warnings
 
 import numpy as np
+<<<<<<< HEAD
+=======
+from scipy.signal import medfilt2d
+from astropy import wcs as fitswcs
+from astropy.modeling import Model
+>>>>>>> bb7888e38 (Apply median filter to IVM weight)
 from astropy import units as u
 import gwcs
 
@@ -175,7 +181,14 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
                 model.var_rnoise.shape == model.data.shape):
             with np.errstate(divide="ignore", invalid="ignore"):
                 inv_variance = model.var_rnoise**-1
+
             inv_variance[~np.isfinite(inv_variance)] = 1
+
+            # apply a median filter to smooth the weight at saturated
+            # (or high read-out noise) single pixels. keep kernel size
+            # small to still give lower weight to extended CRs, etc.
+            inv_variance = medfilt2d(inv_variance, kernel_size=3)
+
         else:
             warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
                           RuntimeWarning)
