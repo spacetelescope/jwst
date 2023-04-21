@@ -185,12 +185,11 @@ def prune_duplicate_products(asns):
                         asn_keeper, asn = asn, asn_keeper
                     to_prune.append(asn)
                 else:
-                    # There are significant other differences. Discard the lower one but warn.
+                    # There are significant other differences.
                     logger.warning('Following associations have the same product name but significant differences.')
                     logger.warning('Association 1: %s', asn_keeper)
                     logger.warning('Association 2: %s', asn)
                     logger.warning('Diffs: %s', diffs)
-                    to_prune.append(asn)
             else:
                 # Associations are exactly the same. Discard the logically lesser one.
                 # Due to the sorting, this should be the current `asn`
