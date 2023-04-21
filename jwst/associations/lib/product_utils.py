@@ -122,7 +122,9 @@ def prune_duplicate_associations(asns):
         Pruned list of associations
 
     """
-    ordered_asns = sort_by_candidate(asns)
+    known_dups, valid_asns = identify_dups(asns)
+
+    ordered_asns = sort_by_candidate(valid_asns)
     pruned = list()
     while True:
         try:
@@ -139,7 +141,7 @@ def prune_duplicate_associations(asns):
             to_prune.append(asn)
         prune_remove(ordered_asns, to_prune)
 
-    return pruned
+    return pruned + known_dups
 
 
 def prune_duplicate_products(asns):
@@ -158,7 +160,9 @@ def prune_duplicate_products(asns):
         Pruned list of associations
 
     """
-    product_names, dups = get_product_names(asns)
+    known_dups, valid_asns = identify_dups(asns)
+
+    product_names, dups = get_product_names(valid_asns)
     if not dups:
         return asns
 
@@ -193,7 +197,7 @@ def prune_duplicate_products(asns):
                 to_prune.append(asn)
 
     prune_remove(ordered_asns, to_prune)
-    return ordered_asns
+    return ordered_asns + known_dups
 
 
 def prune_remove(remove_from, to_remove):
@@ -225,3 +229,25 @@ def prune_remove(remove_from, to_remove):
             asn.asn_name = f'dup{DupCount:05d}_{asn.asn_name}'
         else:
             remove_from.remove(asn)
+
+
+def identify_dups(asns):
+    """Separate associations based on whether they have already been identified as dups
+
+    Parameters
+    ----------
+    asns: [Association[,...]]
+        Associations to prune
+
+    Returns
+    identified, valid : [Association[,...]], [Association[,...]]
+        Dup-identified and valid associations
+    """
+    identified = list()
+    valid = list()
+    for asn in asns:
+        if asn.asn_name.startswith('dup'):
+            identified.append(asn)
+        else:
+            valid.append(asn)
+    return identified, valid
