@@ -58,7 +58,7 @@ class ResampleStep(Step):
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
         in_memory = boolean(default=True)
-    """
+    """  # noqa: E501
 
     reference_file_types = ['drizpars']
 
