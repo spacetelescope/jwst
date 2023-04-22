@@ -20,6 +20,7 @@ from jwst.resample.resample_utils import (
 
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+SATURATED = dqflags.pixel["SATURATED"]
 GOOD = dqflags.pixel["GOOD"]
 
 
@@ -122,6 +123,46 @@ def test_build_driz_weight(weight_type):
     model.var_rnoise += 0.1
 
     weight_map = build_driz_weight(model, weight_type=weight_type, good_bits="GOOD")
+    assert_array_equal(weight_map[0], 0)
+    assert_array_equal(weight_map[1:], 10.0)
+    assert weight_map.dtype == np.float32
+
+
+def test_build_driz_weight_median():
+    """Check that correct weight map is returned of different weight types"""
+    model = ImageModel((10, 10))
+    model.dq[0] = DO_NOT_USE
+    model.meta.exposure.exposure_time = 10.0
+    model.var_rnoise += 0.1
+    model.var_rnoise[5, 5] = 1000
+
+    weight_map = build_driz_weight(
+        model,
+        weight_type="ivm-med3",
+        good_bits="SATURATED"
+    )
+    assert_array_equal(weight_map[0], 0)
+    assert_array_equal(weight_map[1:], 10.0)
+    assert weight_map.dtype == np.float32
+
+
+def test_build_driz_weight_selective_median():
+    """Check that correct weight map is returned of different weight types"""
+    model = ImageModel((10, 10))
+    model.dq[0] = DO_NOT_USE
+    model.meta.exposure.exposure_time = 10.0
+    model.var_rnoise += 0.1
+    model.var_rnoise[0, 5] = 1000
+    model.var_rnoise[5, 5] = 1000
+    model.dq[5, 5] = SATURATED
+    model.dq[0, 5] |= SATURATED
+
+    weight_map = build_driz_weight(
+        model,
+        weight_type="ivm-smed",
+        good_bits="SATURATED"
+    )
+
     assert_array_equal(weight_map[0], 0)
     assert_array_equal(weight_map[1:], 10.0)
     assert weight_map.dtype == np.float32

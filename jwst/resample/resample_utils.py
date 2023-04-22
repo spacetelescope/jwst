@@ -4,8 +4,12 @@ import warnings
 
 import numpy as np
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 from scipy.signal import medfilt2d
+=======
+from scipy.ndimage import median_filter
+>>>>>>> 375ca0dd5 (Add selective median filtering of only saturated data)
 from astropy import wcs as fitswcs
 from astropy.modeling import Model
 >>>>>>> bb7888e38 (Apply median filter to IVM weight)
@@ -176,7 +180,19 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
     """
     dqmask = build_mask(model.dq, good_bits)
 
-    if weight_type == 'ivm':
+    if weight_type and weight_type.startswith('ivm'):
+        weight_type = weight_type.strip()
+        selective_median = weight_type.startswith('ivm-smed')
+
+        bitvalue = interpret_bit_flags(good_bits, mnemonic_map=pixel)
+        if bitvalue is None:
+            bitvalue = 0
+        saturation = pixel['SATURATED']
+
+        if selective_median and not (bitvalue & saturation):
+            selective_median = False
+            weight_type = 'ivm'
+
         if (model.hasattr("var_rnoise") and model.var_rnoise is not None and
                 model.var_rnoise.shape == model.data.shape):
             with np.errstate(divide="ignore", invalid="ignore"):
@@ -184,22 +200,66 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
 
             inv_variance[~np.isfinite(inv_variance)] = 1
 
-            # apply a median filter to smooth the weight at saturated
-            # (or high read-out noise) single pixels. keep kernel size
-            # small to still give lower weight to extended CRs, etc.
-            inv_variance = medfilt2d(inv_variance, kernel_size=3)
+            if weight_type != 'ivm':
+                ny, nx = inv_variance.shape
+
+                # apply a median filter to smooth the weight at saturated
+                # (or high read-out noise) single pixels. keep kernel size
+                # small to still give lower weight to extended CRs, etc.
+                ksz = weight_type[8 if selective_median else 7 :]
+                if ksz:
+                    kernel_size = int(ksz)
+                    if not (kernel_size % 2):
+                        raise ValueError(
+                            'Kernel size of the median filter in IVM weighting'
+                            ' must be an odd integer.'
+                        )
+                else:
+                    kernel_size = 3
+
+                ivm_copy = inv_variance.copy()
+
+                if selective_median:
+                    # apply median filter selectively only at
+                    # points of partially saturated sources:
+                    jumps = np.where(model.dq & saturation)
+                    w2 = kernel_size // 2
+                    for r, c in zip(*jumps):
+                        x1 = max(0, c - w2)
+                        x2 = min(nx, c + w2 + 1)
+                        y1 = max(0, r - w2)
+                        y2 = min(ny, r + w2 + 1)
+                        data = ivm_copy[y1:y2, x1:x2][dqmask[y1:y2, x1:x2]]
+                        if data.size:
+                            inv_variance[r, c] = np.median(data)
+                        # else: leave it as is
+
+                else:
+                    # apply median to the entire inv-var array:
+                    inv_variance = median_filter(
+                        inv_variance,
+                        size=kernel_size
+                    )
+                bad_dqmask = np.logical_not(dqmask)
+                inv_variance[bad_dqmask] = ivm_copy[bad_dqmask]
 
         else:
-            warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
-                          RuntimeWarning)
+            warnings.warn(
+                "var_rnoise array not available. "
+                "Setting drizzle weight map to 1",
+                RuntimeWarning
+            )
             inv_variance = 1.0
+
         result = inv_variance * dqmask
+
     elif weight_type == 'exptime':
         if _check_for_tmeasure(model):
             exptime = model.meta.exposure.measurement_time
         else:
             exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
+
     else:
         result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
 
