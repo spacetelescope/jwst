@@ -1,10 +1,9 @@
 """ Utilities for product manipulation."""
 
 from collections import defaultdict, Counter
-import copy
 import logging
-import warnings
 
+from ...lib.suffix import remove_suffix
 from .. import config
 from . import diff
 
@@ -132,14 +131,18 @@ def prune_duplicate_associations(asns):
         except IndexError:
             break
         pruned.append(original)
+        if original.asn_name.startswith('dup'):
+            continue
         to_prune = list()
         for asn in ordered_asns:
+            if asn.asn_name.startswith('dup'):
+                continue
             try:
                 diff.compare_product_membership(original['products'][0], asn['products'][0])
             except AssertionError:
                 continue
             to_prune.append(asn)
-        prune_remove(ordered_asns, to_prune)
+        prune_remove(ordered_asns, to_prune, known_dups)
 
     return pruned + known_dups
 
@@ -176,6 +179,8 @@ def prune_duplicate_products(asns):
         dup_asns = asn_by_product[product]
         asn_keeper = dup_asns.pop()
         for asn in dup_asns:
+            if asn.asn_name.startswith('dup'):
+                continue
             try:
                 diff.compare_product_membership(asn_keeper['products'][0], asn['products'][0])
             except diff.MultiDiffError as diffs:
@@ -186,6 +191,11 @@ def prune_duplicate_products(asns):
                     to_prune.append(asn)
                 else:
                     # There are significant other differences.
+                    # An acceptable case is "rate" vs. "rateints" as inputs.
+                    if compare_nosuffix(asn_keeper, asn):
+                        continue
+
+                    # Something is different. Report but do not remove.
                     logger.warning('Following associations have the same product name but significant differences.')
                     logger.warning('Association 1: %s', asn_keeper)
                     logger.warning('Association 2: %s', asn)
@@ -195,11 +205,51 @@ def prune_duplicate_products(asns):
                 # Due to the sorting, this should be the current `asn`
                 to_prune.append(asn)
 
-    prune_remove(ordered_asns, to_prune)
+    prune_remove(ordered_asns, to_prune, known_dups)
     return ordered_asns + known_dups
 
 
-def prune_remove(remove_from, to_remove):
+def compare_nosuffix(left, right):
+    """Check if the only difference is in rate vs rateints suffixes
+
+    A valid situation is to have two associations be exactly the same except
+    for the suffix used on all the science inputs. If one association uses
+    "rate" and the other uses "rateints", this is OK.
+
+    Parameters
+    ----------
+    left, right : Association, Association
+        The associations to compare.
+
+    Returns
+    -------
+    valid : bool
+        True if the only difference is in the suffixes of the inputs.
+    """
+    if len(left['products']) != len(right['products']):
+        return False
+
+    for left_product in left['products']:
+        left_sciences = set(remove_suffix(member['expname'])[0]
+                         for member in left_product['members']
+                         if member['exptype'] == 'science')
+        for right_product in right['products']:
+            right_sciences = set(remove_suffix(member['expname'])[0]
+                              for member in right_product['members']
+                              if member['exptype'] == 'science')
+            if left_sciences == right_sciences:
+                break
+        else:
+            # No right product matches the left product.
+            # This is a fail.
+            return False
+
+    # Every left product has a matching right product.
+    # Except for suffix, the associations are considered a match.
+    return True
+
+
+def prune_remove(remove_from, to_remove, known_dups):
     """Remove or rename associations to be pruned
 
     Default behavior is to remove associations listed in the `to_remove`
@@ -217,17 +267,21 @@ def prune_remove(remove_from, to_remove):
 
     to_remove : [Association[,...]]
         The list of associations to remove from the `remove_from` list.
+
+    known_dups : [Association[,...]]
+        Known duplicates. New ones are added by this function
+        if debugging is in effect.
     """
     global DupCount
 
     if to_remove:
         logger.debug('Duplicate associations found: %s', to_remove)
     for asn in to_remove:
+        remove_from.remove(asn)
         if config.DEBUG:
             DupCount += 1
             asn.asn_name = f'dup{DupCount:05d}_{asn.asn_name}'
-        else:
-            remove_from.remove(asn)
+            known_dups.append(asn)
 
 
 def identify_dups(asns):

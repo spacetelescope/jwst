@@ -1,4 +1,5 @@
 """Test for duplication/missing associations"""
+import logging
 import pytest
 
 from jwst.associations.tests.helpers import (
@@ -11,7 +12,7 @@ from jwst.associations import (AssociationPool, generate)
 from jwst.associations.main import (Main, constrain_on_candidates)
 
 
-def test_duplicate_names():
+def test_duplicate_names(caplog):
     """
     For Level 3 association, there should be no association
     with the same product name.
@@ -20,10 +21,18 @@ def test_duplicate_names():
     constrain_all_candidates = constrain_on_candidates(None)
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
 
-    asns = generate(pool, rules)
+    caplog.clear()
+    logger = logging.getLogger('jwst.associations')
+    propagate = logger.propagate
+    logger.propagate = True
+    try:
+        with caplog.at_level(logging.WARNING):
+            asns = generate(pool, rules)
+    finally:
+        logger.propagate = propagate
 
     # There should only be one association left.
-    assert len(asns) == 1
+    assert "Following associations have the same product name but significant differences" in caplog.text
 
 
 def test_duplicate_generate():
