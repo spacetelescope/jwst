@@ -2,6 +2,7 @@
 
 from collections import defaultdict, Counter
 import logging
+from pathlib import Path
 
 from ...lib.suffix import remove_suffix
 from .. import config
@@ -230,11 +231,11 @@ def compare_nosuffix(left, right):
         return False
 
     for left_product in left['products']:
-        left_sciences = set(remove_suffix(member['expname'])[0]
+        left_sciences = set(exposure_name(member['expname'])[0]
                          for member in left_product['members']
                          if member['exptype'] == 'science')
         for right_product in right['products']:
-            right_sciences = set(remove_suffix(member['expname'])[0]
+            right_sciences = set(exposure_name(member['expname'])[0]
                               for member in right_product['members']
                               if member['exptype'] == 'science')
             if left_sciences == right_sciences:
@@ -247,6 +248,24 @@ def compare_nosuffix(left, right):
     # Every left product has a matching right product.
     # Except for suffix, the associations are considered a match.
     return True
+
+
+def exposure_name(path):
+    """Extract the exposure name from a Stage 2 file name
+
+    Parameters
+    ----------
+    path : Path or str
+        The file name or path.
+
+    Returns
+    -------
+    exposure : str
+        The exposure name
+    """
+    path = Path(path)
+    exposure = remove_suffix(path.stem)
+    return exposure
 
 
 def prune_remove(remove_from, to_remove, known_dups):
