@@ -45,6 +45,7 @@ Package Index
    persistence/index.rst
    photom/index.rst
    pipeline/index.rst
+   pixel_replace/index.rst
    ramp_fitting/index.rst
    references_general/index.rst
    refpix/index.rst

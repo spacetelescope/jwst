@@ -9,6 +9,11 @@ associations
   contains the target as coron, while treating the others as regular imaging. Also
   create an image3 ASN that contains data from all 4 detectors. [#7556]
 
+documentation
+-------------
+
+- Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
+
 other
 -----
 
@@ -16,7 +21,6 @@ other
   option. [#7542]
   
 - Drop support for Python 3.8 [#7552]
-
 
 
 1.10.2 (2023-04-14)
