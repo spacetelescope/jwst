@@ -25,6 +25,7 @@ from ..master_background import master_background_mos_step
 from ..msaflagopen import msaflagopen_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
+from ..pixel_replace import pixel_replace_step
 from ..resample import resample_spec_step
 from ..srctype import srctype_step
 from ..straylight import straylight_step
@@ -78,6 +79,7 @@ class Spec2Pipeline(Pipeline):
         'barshadow': barshadow_step.BarShadowStep,
         'wfss_contam': wfss_contam_step.WfssContamStep,
         'photom': photom_step.PhotomStep,
+        'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep
@@ -273,6 +275,9 @@ class Spec2Pipeline(Pipeline):
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
         calibrated.meta.filename = self.make_output_path(suffix=suffix)
+
+        # Replace bad pixels before rectification
+        calibrated = self.pixel_replace(calibrated)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
