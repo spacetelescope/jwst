@@ -1,6 +1,11 @@
 1.10.3 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
+
 flat_field
 ----------
 
