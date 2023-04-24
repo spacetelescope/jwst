@@ -40,7 +40,7 @@ from jwst.associations.lib.dms_base import (
 )
 from stpipe.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.product_utils import prune_duplicate_associations, prune_duplicate_products
+from jwst.associations.lib.product_utils import prune
 
 __all__ = [
     'ASN_SCHEMA',
@@ -581,8 +581,7 @@ class Utility():
             else:
                 finalized_asns.append(asn)
 
-        lv3_asns = prune_duplicate_associations(lv3_asns)
-        lv3_asns = prune_duplicate_products(lv3_asns)
+        lv3_asns = prune(lv3_asns)
 
         # Ensure sequencing is correct.
         Utility.resequence(lv3_asns)
