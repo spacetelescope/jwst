@@ -82,8 +82,9 @@ bc0.build_cmds = [
     "pip install -r requirements-dev.txt",
     "pip freeze",
 ]
-bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
+bc0.build_cmds = bc0.build_cmds + PipInject(env.OVERRIDE_REQUIREMENTS) 
 bc0.test_cmds = [
+    "pip list",
     "pytest -r sxf -n auto --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",

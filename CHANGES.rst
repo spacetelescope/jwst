@@ -1,3 +1,26 @@
+1.10.3 (unreleased)
+===================
+
+flat_field
+----------
+
+- Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
+
+other
+-----
+
+- Remove the use of ``stdatamodels.s3_utils`` from ``jwst``, and the ``aws`` install
+  option. [#7542]
+  
+- Drop support for Python 3.8 [#7552]
+
+
+1.10.2 (2023-04-14)
+===================
+
+- pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes [#7555]
+
+
 1.10.1 (2023-04-13)
 ===================
 
@@ -18,9 +41,13 @@ flat_field
 
 - Updated to allow processing of NIRSpec fixed-slit 3D (rateints) files. [#7516]
 
-- Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
-
-
+jump
+----
+- Added a new parameter that limits maximum size of extension of jump. It exists
+  in the STCAL jump code but not in JWST. This allows the parameter to be changed.
+  Also, scaled two input parameters that are listed as radius to be a factor of two
+  higher to match the opencv code that uses diameter. [#7545]
+  
 other
 -----
 
@@ -162,6 +189,12 @@ pipeline
 - Update the calwebb_spec2 pipeline to make a deep copy of the current results before
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
+
+pixel_replace
+-------------
+
+- Add ``pixel_replace`` step to ``Spec2Pipeline``, which uses a weighted interpolation
+  to estimate flux values for pixels flagged as ``DO_NOT_USE``. [#7398]
 
 ramp_fitting
 ------------
