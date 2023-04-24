@@ -1,6 +1,11 @@
 1.10.3 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
+
 other
 -----
 
@@ -8,7 +13,6 @@ other
   option. [#7542]
   
 - Drop support for Python 3.8 [#7552]
-
 
 
 1.10.2 (2023-04-14)

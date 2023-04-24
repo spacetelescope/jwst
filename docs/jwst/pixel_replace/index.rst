@@ -1,8 +1,8 @@
 .. _pixel_replace_step:
 
-===============
+=================
 Pixel Replacement
-===============
+=================
 
 .. toctree::
    :maxdepth: 2
@@ -11,4 +11,4 @@ Pixel Replacement
    arguments.rst
    reference_files.rst
 
-.. automodapi:: jwst.pixel_replace.pixel_replace_step
+.. automodapi:: jwst.pixel_replace
