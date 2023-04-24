@@ -41,18 +41,36 @@ class DifferentProductSetsError(DiffError):
     """Different product sets between groups of associations"""
 
 
+class MemberLengthDifference(DiffError):
+    """Difference in number of members between associations"""
+
+
 class MemberMismatchError(DiffError):
     """Membership does not match"""
+
+
+class SubsetError(DiffError):
+    """One product is a subset of another"""
 
 
 class TypeMismatchError(DiffError):
     """Association type mismatch"""
 
 
+class UnaccountedMembersError(DiffError):
+    """Members not present in other"""
+
+
 class MultiDiffError(UserList, DiffError):
     """List of diff errors"""
     def __init__(self, *args, **kwargs):
         super(MultiDiffError, self).__init__(*args, **kwargs)
+
+    @property
+    def err_types(self):
+        """Return list of error types"""
+        err_types = [type(err) for err in self]
+        return err_types
 
     def __str__(self):
         message = ['Following diffs found:\n']
@@ -325,7 +343,7 @@ def compare_product_membership(left, right):
         diffs.append(dup_member_error)
 
     if len(right['members']) != len(left['members']):
-        diffs.append(MemberMismatchError(
+        diffs.append(MemberLengthDifference(
             'Product Member length differs:'
             ' Left Product {left_product_name} len {left_len} !=  '
             ' Right Product {right_product_name} len {right_len}'
@@ -334,6 +352,7 @@ def compare_product_membership(left, right):
         ))
 
     members_right = copy(right['members'])
+    left_unaccounted_members = []
     for left_member in left['members']:
         for right_member in members_right:
             if left_member['expname'] != right_member['expname']:
@@ -350,20 +369,23 @@ def compare_product_membership(left, right):
             members_right.remove(right_member)
             break
         else:
-            diffs.append(MemberMismatchError(
-                'Left {left_expname}:{left_exptype} has no counterpart in right'
-                ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
-            ))
+            left_unaccounted_members.append(left_member)
+
+    if len(left_unaccounted_members):
+        diffs.append(UnaccountedMembersError(
+            f'Left has {len(left_unaccounted_members)} unaccounted members. Members are {left_unaccounted_members}'
+        ))
 
     if len(members_right) != 0:
-        diffs.append(MemberMismatchError(
-            'Right has {len_over} unaccounted for members starting with'
-            ' {right_expname}:{right_exptype}'
-            ''.format(len_over=len(members_right),
-                      right_expname=members_right[0]['expname'],
-                      right_exptype=members_right[0]['exptype']
-            )
+        diffs.append(UnaccountedMembersError(
+            f'Right has {len(members_right)} unaccounted members. Members are {members_right}'
         ))
+
+    # Check if one is a subset of the other.
+    err_types = diffs.err_types
+    is_subset = (len(diffs) == 2) and (MemberLengthDifference in err_types) and (UnaccountedMembersError in err_types)
+    if is_subset:
+        diffs = MultiDiffError([SubsetError('Products are subsets')])
 
     if diffs:
         raise diffs

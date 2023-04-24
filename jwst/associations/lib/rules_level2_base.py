@@ -33,7 +33,7 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
-from jwst.associations.lib.product_utils import prune_duplicate_products
+from jwst.associations.lib.product_utils import prune
 from jwst.associations.lib.rules_level3_base import _EMPTY, DMS_Level3_Base
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
@@ -572,7 +572,7 @@ class Utility():
         # Suppress warnings.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            lv2_asns = prune_duplicate_products(lv2_asns)
+            lv2_asns = prune(lv2_asns)
 
         # Ensure sequencing is correct.
         Utility_Level3.resequence(lv2_asns)
