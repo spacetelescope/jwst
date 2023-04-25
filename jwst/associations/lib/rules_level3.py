@@ -213,7 +213,7 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
     Characteristics:
         - Association type: ``image3``
         - Pipeline: ``calwebb_image3``
-        - Gather science exposures
+        - Gather science exposures only, no psf exposures
         - Only include NRC SW images taken in full-frame
 
     """
@@ -241,9 +241,14 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
                         name='bkgdtarg',
                         sources=['bkgdtarg'],
                         force_unique=False,
+                    ),
+                    DMSAttrConstraint(
+                        name='is_psf',
+                        sources=['is_psf'],
+                        value = ('T')
                     )],
                     reduce=Constraint.notany
-                ),
+                ),  
                 DMSAttrConstraint(
                     name='channel',
                     sources=['channel'],
