@@ -110,20 +110,20 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
     jump_det = dqflags.pixel['JUMP_DET']
     saturated = dqflags.pixel['SATURATED']
     do_not_use = dqflags.pixel['DO_NOT_USE']
-    unreliable_reset = dqflags.pixel['UNRELIABLE_RESET']
+    nonlinear = dqflags.pixel['NONLINEAR']
 
     # populate dq flags of sci pixeldq and reference dq
     dm_ramp.pixeldq[50, 50] = jump_det
     dm_ramp.pixeldq[50, 51] = saturated
 
-    reset.dq[50, 50] = np.bitwise_or(do_not_use, unreliable_reset)
-    reset.dq[50, 51] = unreliable_reset
+    reset.dq[50, 50] = np.bitwise_or(do_not_use, nonlinear)
+    reset.dq[50, 51] = nonlinear
 
     # run correction step
     outfile = resetcorr(dm_ramp, reset)
 
-    t50_50 = jump_det | do_not_use | unreliable_reset
-    t50_51 = saturated | unreliable_reset
+    t50_50 = jump_det | do_not_use | nonlinear
+    t50_51 = saturated | nonlinear
     # check that dq flags were correctly added
     assert outfile.pixeldq[50, 50] == t50_50
     assert outfile.pixeldq[50, 51] == t50_51

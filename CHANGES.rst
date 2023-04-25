@@ -1,6 +1,16 @@
 1.10.3 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
+
+flat_field
+----------
+
+- Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
+
 other
 -----
 
@@ -15,7 +25,6 @@ ramp_fitting
 - Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
-
 
 1.10.2 (2023-04-14)
 ===================
@@ -191,6 +200,12 @@ pipeline
 - Update the calwebb_spec2 pipeline to make a deep copy of the current results before
   calling the ``resample_spec`` and ``extract_1d`` steps, to avoid issues with the
   input data accidentally getting modified by those steps. [#7451]
+
+pixel_replace
+-------------
+
+- Add ``pixel_replace`` step to ``Spec2Pipeline``, which uses a weighted interpolation
+  to estimate flux values for pixels flagged as ``DO_NOT_USE``. [#7398]
 
 ramp_fitting
 ------------

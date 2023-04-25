@@ -190,6 +190,7 @@ _calculated_suffixes = {
     'wavecorrstep',
     'wfsscontamstep',
     'undersamplingcorrectionstep',
+    'pixelreplacestep',
 }
 
 

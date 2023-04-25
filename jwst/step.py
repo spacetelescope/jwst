@@ -37,6 +37,7 @@ from .outlier_detection.outlier_detection_stack_step import OutlierDetectionStac
 from .pathloss.pathloss_step import PathLossStep
 from .persistence.persistence_step import PersistenceStep
 from .photom.photom_step import PhotomStep
+from .pixel_replace.pixel_replace_step import PixelReplaceStep
 from .ramp_fitting.ramp_fit_step import RampFitStep
 from .refpix.refpix_step import RefPixStep
 from .resample.resample_step import ResampleStep
@@ -99,6 +100,7 @@ __all__ = [
     "PathLossStep",
     "PersistenceStep",
     "PhotomStep",
+    "PixelReplaceStep",
     "RampFitStep",
     "RefPixStep",
     "ResampleStep",
