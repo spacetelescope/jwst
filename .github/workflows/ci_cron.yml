@@ -1,4 +1,4 @@
-name: Weekly cron
+name: weekly tests
 
 on:
   schedule:
@@ -49,5 +49,8 @@ jobs:
           python-version: 3.9
         - macos: test-xdist
           python-version: 3.10
+        - windows: test-xdist
         - linux: test-pyargs-xdist
         - linux: test-devdeps-xdist
+        - macos: test-devdeps-xdist
+        - windows: test-devdeps-xdist
