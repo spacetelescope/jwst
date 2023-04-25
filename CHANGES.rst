@@ -19,6 +19,12 @@ other
   
 - Drop support for Python 3.8 [#7552]
 
+pathloss
+--------
+
+- Bug fix for NIRSpec fixed-slit data to remove double application of correction
+  factors. [#7566]
+
 ramp_fitting
 ------------
 
