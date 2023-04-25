@@ -19,6 +19,12 @@ other
   
 - Drop support for Python 3.8 [#7552]
 
+ramp_fitting
+------------
+
+- Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
+  of groups in a segment are computed when applying optimal weighting to line
+  fit segments. [#7560, spacetelescope/stcal#163]
 
 1.10.2 (2023-04-14)
 ===================

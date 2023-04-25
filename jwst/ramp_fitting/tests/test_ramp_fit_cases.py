@@ -343,11 +343,11 @@ def test_pix_8():
         'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
-    p_true = [1.0101178, JUMP, 0.1848883, 0.00363636, 0.03054732]
+    p_true = [0.98561335, JUMP, 0.1848883, 0.00363636, 0.03054732]
 
     # Set truth values for OPTIONAL results:
-    o_true = [1.0101178, 12.385354, 0.00363636, 0.03054732, 16.508228,
-              40.81897, 4.898822, 855.78046]
+    o_true = [0.98561335, 9.920554, 0.00363636, 0.03054732, 16.508228,
+              39.383667, 5.1438665, 855.78046]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
