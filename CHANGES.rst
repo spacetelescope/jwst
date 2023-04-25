@@ -32,7 +32,7 @@ flat_field
 cube_build
 ----------
 - Wavelength range of NIRSpec IFU cubes are set by cubepars reference file and
-  a new cubepars reference file with wavelength arrays for drizzle implemented. [#7559]
+  a new cubepars reference file with wavelength arrays for drizzle is implemented. [#7559]
   
 
 other
