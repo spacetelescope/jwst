@@ -282,6 +282,7 @@ class DataSet():
                 # Figure out if the calibration needs to be converted to surface
                 # brightness units, which is done if the source is extended.
                 if self.source_type is None or self.source_type.upper() != 'POINT':
+                #if self.source_type is None:
                     if self.input.meta.photometry.pixelarea_steradians is None:
                         log.warning("Pixel area is None, so can't convert "
                                     "flux to surface brightness!")
