@@ -21,6 +21,12 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+pathloss
+--------
+
+- Bug fix for NIRSpec fixed-slit data to remove double application of correction
+  factors. [#7566]
+
 ramp_fitting
 ------------
 
