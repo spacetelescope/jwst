@@ -481,15 +481,6 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
 
-        slit.data /= correction.data
-        slit.err /= correction.data
-        slit.var_poisson /= correction.data**2
-        slit.var_rnoise /= correction.data**2
-        if slit.var_flat is not None and np.size(slit.var_flat) > 0:
-            slit.var_flat /= correction.data**2
-        slit.pathloss_point = correction.pathloss_point
-        slit.pathloss_uniform = correction.pathloss_uniform
-
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
 
