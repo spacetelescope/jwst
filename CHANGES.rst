@@ -12,7 +12,14 @@ documentation
 
 - Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
 
+
 - Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
+
+extract_1d:
+-----------
+For NIRSpec IFU point source data remove options assuming data is in flux units. Treat these data
+the same as all other data and convert extracted values from surface brightness to flux. [#7569]
+
 
 flat_field
 ----------
@@ -34,6 +41,10 @@ pathloss
 
 - Bug fix for NIRSpec fixed-slit data to remove double application of correction
   factors. [#7566]
+
+photom
+------
+- For NIRSpec IFU point source data save data in units of surface brightness [#7569]
 
 ramp_fitting
 ------------
