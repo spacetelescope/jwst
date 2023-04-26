@@ -50,7 +50,7 @@ class OutlierDetectionSpec(OutlierDetection):
             list of data models as ModelContainer or ASN file,
             one data model for each input image
 
-        reffiles : dict of `jwst.datamodels.DataModel`
+        reffiles : dict of `stdatamodels.jwst.datamodels.JwstDataModel`
             Dictionary of datamodels.  Keys are reffile_types.
 
         pars : dict, optional
