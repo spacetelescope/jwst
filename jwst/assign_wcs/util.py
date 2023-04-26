@@ -270,7 +270,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     if refmodel is None:
         refmodel = dmodels[0]
     else:
-        if not isinstance(refmodel, DataModel):
+        if not isinstance(refmodel, JwstDataModel):
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
     fiducial = compute_fiducial(wcslist, bb)

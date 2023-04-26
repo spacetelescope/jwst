@@ -1,6 +1,12 @@
 1.10.3 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class and
+  replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
+
 documentation
 -------------
 
