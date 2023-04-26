@@ -282,8 +282,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         expname = Utility.rename_to_level2(
             item['filename'],
             exp_type=item['exp_type'],
-            use_integrations=(self.is_item_ami(item) |
-                              self.is_item_coron(item) |
+            use_integrations=(self.is_item_coron(item) |
+                              # NIS_AMI currently uses cal files;
+                              # uncomment the next line to switch to calints
+                              # self.is_item_ami(item) |
                               self.is_item_tso(item)),
             member_exptype=exptype
         )
