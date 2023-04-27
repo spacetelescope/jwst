@@ -19,7 +19,7 @@ from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
 
-from stdatamodels import DataModel
+from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels import WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
@@ -270,7 +270,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     if refmodel is None:
         refmodel = dmodels[0]
     else:
-        if not isinstance(refmodel, DataModel):
+        if not isinstance(refmodel, JwstDataModel):
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
     fiducial = compute_fiducial(wcslist, bb)
@@ -455,7 +455,7 @@ def subarray_transform(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Data model.
 
     Returns
@@ -927,7 +927,7 @@ def bounding_box_from_subarray(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The data model.
 
     Returns

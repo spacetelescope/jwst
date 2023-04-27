@@ -506,7 +506,7 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
 
     Parameters
     ----------
-    median_model : ~jwst.datamodels.DataModel
+    median_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
 
     blot_img : datamodel
         Datamodel containing header and WCS to define the 'blotted' image
