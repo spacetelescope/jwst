@@ -12,6 +12,8 @@ documentation
 
 - Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
 
+- Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
+
 flat_field
 ----------
 
