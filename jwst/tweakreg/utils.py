@@ -244,8 +244,8 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
         # WCS from the "from_image":
         if 'v2v3corr' not in refwcs.available_frames:
             raise ValueError(
-                "The WCS of the 'from_image' data model does not has not been "
-                "previously corrected. A corrected WCS is need in order to "
+                "The WCS of the 'from_image' data model has not been "
+                "previously corrected. A corrected WCS is needed in order to "
                 "\"transfer\" it to the 'to_file' when both 'matrix' and "
                 "'shift' are None."
             )
