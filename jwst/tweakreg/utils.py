@@ -134,7 +134,7 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
 
 def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
     """
-    Applies the same WCS correction that was applied to the WCS in the
+    Applies the same *total* WCS correction that was applied to the WCS in the
     ``from_image`` data model to the WCS of the ``to_image`` data model.
     In some ways this function is analogous function to the ``tweakback``
     function for HST available in the
@@ -147,7 +147,7 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
     there were multiple corrections previously applied to a WCS. The
     tangent-plane correction in JWST WCS is cumulative/total correction.
     If you would like to apply a specific/custom correction, you can do that
-    via ``matrix`` and ``shift`` arguments which defined in the
+    via ``matrix`` and ``shift`` arguments which is defined in the
     reference tangent plane provided by the ``from_image``'s WCS.
 
     When providing your own corrections via ``matrix`` and ``shift`` arguments,
