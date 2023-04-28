@@ -324,8 +324,8 @@ class DataSet():
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
                 sens2d *= tabdata['photmj']  # include the initial scalar conversion factor -> MJ
-                # Apply to all data (both point source and extended)
-                sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJ/sr
+                # convert all data (both point source and extended) to surface brightness
+                sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJy/sr
 
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
