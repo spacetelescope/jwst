@@ -30,7 +30,7 @@
 import numpy as np
 from numpy import ma
 
-from stdatamodels import DataModel
+from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
 
 
@@ -86,7 +86,7 @@ def metablender(input_models, spec):
 
     - *input_models* is a sequence where each element is either:
 
-      - a `datamodels.DataModel` instance or sub-class
+      - a `datamodels.JwstDataModel` instance or sub-class
 
       - a string giving the *filename* for the input_model
 
@@ -176,11 +176,11 @@ def metablender(input_models, spec):
 
     # Read in data
     for model in input_models:
-        if not isinstance(model, DataModel):
+        if not isinstance(model, JwstDataModel):
             if not isinstance(model, str):
                 raise TypeError(
                     "Each entry in the headers list must be either a " +
-                    "datamodels.DataModel instance or a filename (str)")
+                    "datamodels.JwstDataModel instance or a filename (str)")
             model = datamodels.open(model)
         header = model.to_flat_dict()
         filename = header['meta.filename']
