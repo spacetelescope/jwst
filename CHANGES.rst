@@ -42,6 +42,12 @@ ramp_fitting
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
 
+tweakreg
+--------
+
+- Fixed a bug in the ``tweakreg`` step that resulted in an exception when
+  using custom catalogs with ASN file name input. [#7578]
+
 
 1.10.2 (2023-04-14)
 ===================
@@ -75,7 +81,7 @@ jump
   in the STCAL jump code but not in JWST. This allows the parameter to be changed.
   Also, scaled two input parameters that are listed as radius to be a factor of two
   higher to match the opencv code that uses diameter. [#7545]
-  
+
 other
 -----
 
@@ -127,7 +133,7 @@ cube_build
 - Windows: MSVC: Allocate ``wave_slice_dq`` array using ``mem_alloc_dq()`` [#7491]
 
 - Memory improvements, do not allow MIRI and 'internal_cal', allow user to set suffix. [#7521]
-  
+
 datamodels
 ----------
 
