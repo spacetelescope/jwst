@@ -74,13 +74,14 @@ bc0.conda_ver = '22.11.1'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
-bc0.pip_reqs_files = ['requirements-sdp.txt']
+bc0.pip_reqs_files = ['requirements-sdp.txt', 'requirements-max.txt']
 bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
     // these latest-commit installs are overridden by `requirements-sdp.txt` if it is populated
     "pip install git+https://github.com/spacetelescope/stdatamodels.git@master git+https://github.com/spacetelescope/stcal.git@main",
+    "pip install -r requirements-max.txt",
     "pip install -r requirements-sdp.txt",
     "pip freeze",
 ]
