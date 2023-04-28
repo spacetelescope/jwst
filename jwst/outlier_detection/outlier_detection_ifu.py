@@ -56,7 +56,7 @@ class OutlierDetectionIFU(OutlierDetection):
         drizzled_models : list of objects
             ModelContainer containing drizzled grouped input images
 
-        reffiles : dict of ~jwst.datamodels.DataModel
+        reffiles : dict of `~stdatamodels.jwst.datamodels.JwstDataModel`
             Dictionary of datamodels.  Keys are reffile_types.
 
 

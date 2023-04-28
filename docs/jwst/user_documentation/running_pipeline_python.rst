@@ -122,13 +122,13 @@ will get used if set in multiple locations.
 	# configuring a pipeline and the steps within the pipeline with keyword arguments
 	result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits',
 	                                save_results=False,
-	                                steps={'jump': {'threshold': 12.0, 'save_results':True}})
+	                                steps={'jump': {'rejection_threshold': 12.0, 'save_results':True}})
 	# configuring a pipeline step with keyword arguments
 	result = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-	                       save_results=True, 'threshold'=12.0)
+	                       save_results=True, 'rejection_threshold'=12.0)
 
 Both examples above show how to configure the jump detection step with the same
-settings - the ``threshold`` set to 12.0, and ``save_results`` set to True to indicate
+settings - the ``rejection_threshold`` set to 12.0, and ``save_results`` set to True to indicate
 the result from the step should be written to an output file.
 
 The first example shows when the jump step is run inside a pipeline - because a
@@ -175,23 +175,23 @@ but they can be overridden if desired.
 
 As discussed in :ref:`above<configuring_pipeline_python>`, when setting a
 step-level parameter when that step is a substep of a pipeline, it must be passed
-to the `steps` argument dictionary. For exaple, to change the ``threshold``
+to the `steps` argument dictionary. For exaple, to change the ``rejection_threshold``
 parameter of the jump detection step when running the full Detector1Pipeline:
 
 ::
 
 	from jwst.pipeline import Detector1Pipeline
 	result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-	                                 steps={'jump': {'threshold':12.0)}})
+	                                 steps={'jump': {'rejection_threshold':12.0)}})
 
 When running a single step, step-level parameters can be passed in directly as
 keyword arguments. For example, to change the parameter
-``threshold`` for the jump detection step when running the step individually:
+``rejection_threshold`` for the jump detection step when running the step individually:
 
 ::
 
 	from jwst.jump import JumpStep
-	result = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', threshold=12.0)
+	result = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', rejection_threshold=12.0)
 
 
 **Using a Parameter File**
@@ -205,7 +205,7 @@ file to add the following snippet (in this example, to a file named
   steps:
   - class: jwst.jump.jump_step.JumpStep
     parameters:
-      threshold : 12
+      rejection_threshold : 12
 
 And pass in the modified file to the ``config_file`` argument:
 
@@ -519,7 +519,7 @@ being run directly on the data, attributes can be set directly:
 
 	from jwst.pipeline import Detector1Pipeline
 	pipe = Detector1Pipeline()
-	pipe.jump.threshold = 12
+	pipe.jump.rejection_threshold = 12
 	pipe.ramp_fit.skip = True
 	result = pipe.run('jw00017001001_01101_00001_nrca1_uncal.fits')
 

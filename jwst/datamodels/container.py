@@ -9,7 +9,7 @@ import numpy as np
 
 from asdf import AsdfFile
 from astropy.io import fits
-from stdatamodels import DataModel, properties
+from stdatamodels import properties
 
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
@@ -81,14 +81,14 @@ class ModelContainer(JwstDataModel, Sequence):
     Notes
     -----
         The optional paramters ``save_open`` and ``return_open`` can be
-        provided to control how the `DataModel` are used by the
+        provided to control how the `JwstDataModel` are used by the
         :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
-        `DataModel` instance in ``init`` will be written out to disk and
-        closed, then only the filename for the `DataModel` will be used to
+        `JwstDataModel` instance in ``init`` will be written out to disk and
+        closed, then only the filename for the `JwstDataModel` will be used to
         initialize the :py:class:`ModelContainer` object.
-        Subsequent access of each member will then open the `DataModel` file to
-        work with it. If ``return_open`` is also `False`, then the `DataModel`
-        will be closed when access to the `DataModel` is completed. The use of
+        Subsequent access of each member will then open the `JwstDataModel` file to
+        work with it. If ``return_open`` is also `False`, then the `JwstDataModel`
+        will be closed when access to the `JwstDataModel` is completed. The use of
         these parameters can minimize the amount of memory used by this object
         during processing, with these parameters being used
         by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
@@ -155,7 +155,7 @@ to supply custom catalogs.
                 init.close()
             self._models.append(model)
         elif isinstance(init, list):
-            if all(isinstance(x, (str, fits.HDUList, DataModel)) for x in init):
+            if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 if self._save_open:
                     init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
@@ -177,7 +177,7 @@ to supply custom catalogs.
             init_from_asn = self.read_asn(init)
             self.from_asn(init_from_asn, asn_file_path=init)
         else:
-            raise TypeError('Input {0!r} is not a list of DataModels or '
+            raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
 
     def __len__(self):
@@ -185,7 +185,7 @@ to supply custom catalogs.
 
     def __getitem__(self, index):
         m = self._models[index]
-        if not isinstance(m, DataModel) and self._return_open:
+        if not isinstance(m, JwstDataModel) and self._return_open:
             m = datamodel_open(m, memmap=self._memmap)
         return m
 
@@ -197,7 +197,7 @@ to supply custom catalogs.
 
     def __iter__(self):
         for model in self._models:
-            if not isinstance(model, DataModel) and self._return_open:
+            if not isinstance(model, JwstDataModel) and self._return_open:
                 model = datamodel_open(model, memmap=self._memmap)
             yield model
 
@@ -227,7 +227,7 @@ to supply custom catalogs.
         result._schema = self._schema
         result._ctx = result
         for m in self._models:
-            if isinstance(m, DataModel):
+            if isinstance(m, JwstDataModel):
                 result.append(m.copy())
             else:
                 result.append(m)
@@ -456,7 +456,7 @@ to supply custom catalogs.
     @property
     def group_names(self):
         """
-        Return list of names for the DataModel groups by exposure.
+        Return list of names for the JwstDataModel groups by exposure.
         """
         result = []
         for group in self.models_grouped:
@@ -467,7 +467,7 @@ to supply custom catalogs.
         """Close all datamodels."""
         if not self._iscopy:
             for model in self._models:
-                if isinstance(model, DataModel):
+                if isinstance(model, JwstDataModel):
                     model.close()
 
     @property
@@ -503,7 +503,7 @@ to supply custom catalogs.
 
         Returns
         -------
-        stdatamodels.DataModel
+        stdatamodels.JwstDataModel
         """
         for exposure in self.meta.asn_table.products[0].members:
             if exposure.exptype.upper() == "SCIENCE":

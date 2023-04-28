@@ -323,7 +323,7 @@ class ResampleSpecData(ResampleData):
 
         Parameters
         ----------
-        refmodel : `~jwst.datamodels.DataModel`
+        refmodel : `~jwst.datamodels.JwstDataModel`
             The reference input image from which the fiducial WCS is created.
             If not specified, the first image in self.input_models is used.
 

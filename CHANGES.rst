@@ -9,10 +9,18 @@ associations
   contains the target as coron, while treating the others as regular imaging. Also
   create an image3 ASN that contains data from all 4 detectors. [#7556]
 
+datamodels
+----------
+
+- Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class and
+  replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
+
 documentation
 -------------
 
 - Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
+
+- Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
 
 flat_field
 ----------
