@@ -19,7 +19,7 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.log_config import (log_config, DMS_config)
-from jwst.associations.lib.product_utils import identify_dups
+from jwst.associations.lib.prune import identify_dups
 
 __all__ = ['Main', 'main']
 
