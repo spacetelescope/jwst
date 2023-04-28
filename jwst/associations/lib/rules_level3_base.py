@@ -40,7 +40,7 @@ from jwst.associations.lib.dms_base import (
 )
 from stpipe.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.product_utils import prune
+from jwst.associations.lib.prune import prune
 
 __all__ = [
     'ASN_SCHEMA',
