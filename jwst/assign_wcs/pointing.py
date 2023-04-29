@@ -106,7 +106,7 @@ def wcsinfo_from_model(input_model):
     """
     defaults = {'CRPIX': 0, 'CRVAL': 0, 'CDELT': 1., 'CTYPE': "", 'CUNIT': u.Unit("")}
     wcsinfo = {}
-    wcsaxes = input_model.meta.wcsinfo.wcsaxes
+    wcsaxes = input_model.meta.wcsinfo.wcsaxes or input_model.meta.wcs.output_frame.naxes
     wcsinfo['WCSAXES'] = wcsaxes
     for key in ['CRPIX', 'CRVAL', 'CDELT', 'CTYPE', 'CUNIT']:
         val = []

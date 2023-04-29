@@ -82,7 +82,7 @@ class ResampleSpecData(ResampleData):
             if resample_utils.is_sky_like(
                 self.input_models[0].meta.wcs.output_frame
             ):
-                if self.input_models[0].metaexposure.type == "MIR_LRS-FIXEDSLIT":
+                if self.input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
                     self.output_wcs = self.build_miri_lrs_output()
                 elif self.input_models[0].meta.instrument.name != "NIRSPEC":
                     self.output_wcs = self.build_interpolated_output_wcs()
@@ -315,7 +315,7 @@ class ResampleSpecData(ResampleData):
 
         return y_slit_min, y_slit_max
 
-    def build_miri_lrs_output():
+    def build_miri_lrs_output(self):
         """ Build MIRI LRS FIXEDSLIT output WCS. """
         all_wavelength = []
         all_ra_slit = []

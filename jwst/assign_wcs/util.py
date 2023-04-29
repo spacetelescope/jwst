@@ -17,6 +17,7 @@ from typing import Union, List
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
+from gwcs import coordinate_frames as cf
 from stpipe.exceptions import StpipeExitException
 
 from stdatamodels.jwst.datamodels import JwstDataModel
@@ -136,7 +137,6 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
         crpix = np.array(wcs.invert(fiducial[0], fiducial[1], wavelength))
     else:
         crpix = np.array(wcs.invert(*fiducial))
-    crpix = np.array(wcs.invert(*fiducial))
 
     delta = np.zeros_like(crpix)
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
@@ -325,7 +325,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         rotation = astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix')
         transform.append(rotation)
 
-        if sky_axes:
+        if sky_axes.any():
             if spec.any():
                 dispaxis = refmodel.meta.wcsinfo.dispersion_direction
             if not pscale:
@@ -338,7 +338,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     if isinstance(refmodel.meta.wcs.output_frame, cf.CompositeFrame):
-        out_frame.frames[0]
+        out_frame = refmodel.meta.wcs.output_frame.frames[0]
     else:
         out_frame = refmodel.meta.wcs.output_frame
     input_frame = refmodel.meta.wcs.input_frame
