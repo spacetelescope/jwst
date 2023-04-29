@@ -328,6 +328,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         if sky_axes.any():
             if spec.any():
                 dispaxis = refmodel.meta.wcsinfo.dispersion_direction
+            else:
+                dispaxis = None
             if not pscale:
                 pscale = compute_scale(refmodel.meta.wcs, ref_fiducial,
                                        pscale_ratio=pscale_ratio, disp_axis=dispaxis,
