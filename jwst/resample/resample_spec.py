@@ -17,7 +17,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
-from ..assign_wcs.util import wrap_ra
+from ..assign_wcs.util import wrap_ra, wcs_from_footprints
 from . import resample_utils
 from .resample import ResampleData
 
@@ -82,7 +82,9 @@ class ResampleSpecData(ResampleData):
             if resample_utils.is_sky_like(
                 self.input_models[0].meta.wcs.output_frame
             ):
-                if self.input_models[0].meta.instrument.name != "NIRSPEC":
+                if self.input_models[0].metaexposure.type == "MIR_LRS-FIXEDSLIT":
+                    self.output_wcs = self.build_miri_lrs_output()
+                elif self.input_models[0].meta.instrument.name != "NIRSPEC":
                     self.output_wcs = self.build_interpolated_output_wcs()
                 else:
                     self.output_wcs = self.build_nirspec_output_wcs()
@@ -312,6 +314,91 @@ class ResampleSpecData(ResampleData):
                 y_slit_max = y_slit_max_i
 
         return y_slit_min, y_slit_max
+
+    def build_miri_lrs_output():
+        """ Build MIRI LRS FIXEDSLIT output WCS. """
+        all_wavelength = []
+        all_ra_slit = []
+        all_dec_slit = []
+
+        for im, model in enumerate(self.input_models):
+            wcs = model.meta.wcs
+            bbox = wcs.bounding_box
+            grid = wcstools.grid_from_bounding_box(bbox)
+            ra, dec, lam = np.array(wcs(*grid))
+            # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
+            # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
+            spectral_axis = find_dispersion_axis(model)
+            spatial_axis = spectral_axis ^ 1
+
+            # Compute the wavelength array, trimming NaNs from the ends
+            # In many cases, a whole slice is NaNs, so ignore those warnings
+            warnings.simplefilter("ignore")
+            wavelength_array = np.nanmedian(lam, axis=spectral_axis)
+            warnings.resetwarnings()
+            wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
+
+            all_wavelength = np.append(all_wavelength, wavelength_array)
+            this_minw = np.min(wavelength_array)
+            this_maxw = np.max(wavelength_array)
+            all_minw = np.min(all_wavelength)
+            all_maxw = np.max(all_wavelength)
+            if this_minw < all_minw:
+                addpts = wavelength_array[wavelength_array < all_minw]
+                all_wavelength = np.append(all_wavelength, addpts)
+            if this_maxw > all_maxw:
+                addpts = wavelength_array[wavelength_array > all_maxw]
+                all_wavelength = np.append(all_wavelength, addpts)
+
+        # done looping over set of models
+        all_wave = np.hstack(all_wavelength)
+        all_wave = all_wave[~np.isnan(all_wave)]
+        all_wave = np.sort(all_wave, axis=None)
+        # Tabular interpolation model, pixels -> lambda
+        wavelength_array = np.unique(all_wave)
+        # Check if the data is MIRI LRS FIXED Slit. If it is then
+        # the wavelength array needs to be flipped so that the resampled
+        # dispersion direction matches the dispersion direction on the detector.
+        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+            wavelength_array = np.flip(wavelength_array, axis=None)
+
+        step = 1 / self.pscale_ratio
+        stop = wavelength_array.shape[0] / self.pscale_ratio
+        points = np.arange(0, stop, step)
+        pix_to_wavelength = Tabular1D(points=points,
+                                      lookup_table=wavelength_array,
+                                      bounds_error=False, fill_value=None,
+                                      name='pix2wavelength')
+
+        mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
+        wave_cen = np.nanmean(wavelength_array)
+        wnew = wcs_from_footprints(self.input_models, wavelength=wave_cen)
+
+        # define the output wcs
+        transform = mapping | (wnew.forward_transform & pix_to_wavelength)
+        det = cf.Frame2D(name='detector', axes_order=(0, 1))
+        sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
+                                reference_frame=coord.ICRS())
+        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
+                                unit=(u.micron,), axes_names=('wavelength',))
+        world = cf.CompositeFrame([sky, spec], name='world')
+
+        pipeline = [(det, transform),
+                    (world, None)]
+        output_wcs = WCS(pipeline)
+
+        # compute the output array size in WCS axes order, i.e. (x, y)
+        output_array_size = [0, 0]
+        output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
+        output_array_size[spatial_axis] = int((wnew.bounding_box[spatial_axis][1] -
+                                               wnew.bounding_box[spatial_axis][0]) / self.pscale_ratio)
+        # turn the size into a numpy shape in (y, x) order
+        output_wcs.array_shape = output_array_size[::-1]
+        output_wcs.pixel_shape = output_array_size
+        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
+        output_wcs.bounding_box = bounding_box
+        return output_wcs
+
 
     def build_interpolated_output_wcs(self, refmodel=None):
         """
