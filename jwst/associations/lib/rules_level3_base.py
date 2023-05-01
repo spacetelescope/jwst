@@ -45,6 +45,7 @@ from jwst.associations.lib.prune import prune
 __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_AuxData',
+    'AsnMixin_Coronagraphy',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
     'Constraint',
@@ -853,6 +854,26 @@ class AsnMixin_AuxData:
         if exp_type in NEVER_CHANGE:
             return exp_type
         return 'science'
+
+
+class AsnMixin_Coronagraphy:
+    """Basic overrides for Coronagraphy associations"""
+    def __init__(self, *args, **kwargs):
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        super().__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+        self.data['asn_type'] = 'coron3'
+        super()._init_hook(item)
 
 
 class AsnMixin_Science(DMS_Level3_Base):
