@@ -124,7 +124,7 @@ class TweakRegStep(Step):
                         elif 'tweakreg_catalog' in member:
                             del member['tweakreg_catalog']
 
-                    images.from_asn(input)
+                    images.from_asn(asn_data)
 
                 elif is_association(input):
                     images.from_asn(input)
