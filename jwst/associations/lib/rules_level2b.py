@@ -103,6 +103,7 @@ class Asn_Lv2Image(
         - Image-based science exposures
         - Single science exposure
         - Non-TSO
+        - Non-coronagraphic
     """
 
     def __init__(self, *args, **kwargs):
@@ -113,7 +114,10 @@ class Asn_Lv2Image(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint(
-                [Constraint_TSO()],
+                [
+                    Constraint_Coron(association=self),
+                    Constraint_TSO(),
+                ],
                 reduce=Constraint.notany
             ),
             Constraint(
@@ -126,17 +130,6 @@ class Asn_Lv2Image(
 
         # Now check and continue initialization.
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
-
-    def is_item_coron(self, item):
-        """Override to ignore coronographic designation
-
-        Coronagraphic data is to be processed both as coronagraphic
-        (by default), but also as just plain imaging. Coronagraphic
-        data is processed using the Asn_Lv2Coron rule. This rule
-        will handle the creation of the image version. It has the
-        effect of using "rate" files as input, instead of "rateints".
-        """
-        return False
 
 
 @RegistryMarker.rule
