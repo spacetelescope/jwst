@@ -2,19 +2,10 @@ from copy import deepcopy
 import logging
 import warnings
 
-import numpy as np
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-from scipy.signal import medfilt2d
-=======
-from scipy.ndimage import median_filter
->>>>>>> 375ca0dd5 (Add selective median filtering of only saturated data)
-from astropy import wcs as fitswcs
-from astropy.modeling import Model
->>>>>>> bb7888e38 (Apply median filter to IVM weight)
-from astropy import units as u
 import gwcs
+import numpy as np
+from scipy.ndimage import median_filter
+from astropy import units as u
 
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
