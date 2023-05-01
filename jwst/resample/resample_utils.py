@@ -228,7 +228,9 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
                 if selective_median:
                     # apply median filter selectively only at
                     # points of partially saturated sources:
-                    jumps = np.where(model.dq & saturation)
+                    jumps = np.where(
+                        np.logical_and(model.dq & saturation, dqmask)
+                    )
                     w2 = kernel_size // 2
                     for r, c in zip(*jumps):
                         x1 = max(0, c - w2)
