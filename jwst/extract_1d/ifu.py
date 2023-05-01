@@ -501,7 +501,8 @@ def extract_ifu(input_model, source_type, extract_params):
         scale_degrees = compute_scale(
             input_model.meta.wcs,
             locn_use,
-            disp_axis=input_model.meta.wcsinfo.dispersion_direction)
+            disp_axis=input_model.meta.wcsinfo.dispersion_direction,
+            wavelength=np.nanmean(wavelength))
 
         scale_arcsec = scale_degrees * 3600.00
         radius_match /= scale_arcsec
