@@ -26,7 +26,7 @@ from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
-    'Asn_Lv2Coron',
+    'Asn_Lv2CoronAsRate',
     'Asn_Lv2FGS',
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
