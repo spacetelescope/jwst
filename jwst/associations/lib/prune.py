@@ -76,12 +76,8 @@ def prune_duplicate_associations(asns):
         except IndexError:
             break
         pruned.append(original)
-        if original.asn_name.startswith('dup'):
-            continue
         to_prune = list()
         for asn in ordered_asns:
-            if asn.asn_name.startswith('dup'):
-                continue
             try:
                 diff.compare_product_membership(original['products'][0], asn['products'][0])
             except AssertionError:
