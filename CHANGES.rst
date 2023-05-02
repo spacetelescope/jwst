@@ -15,10 +15,10 @@ documentation
 - Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
 
 
-extract_1d:
------------
-For NIRSpec IFU point source data remove options assuming data is in flux units. Treat these data
-the same as all other data and convert extracted values from surface brightness to flux. [#7569]
+extract_1d
+----------
+-For NIRSpec IFU point source data remove options assuming data is in flux units. Treat these data
+ the same as all other data and convert extracted values from surface brightness to flux. [#7569]
 
 
 flat_field
