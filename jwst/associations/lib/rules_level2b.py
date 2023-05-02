@@ -14,6 +14,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_WFSC,
     format_list,
     item_getattr,
+    nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
     nrslamp_valid_detector,
@@ -55,29 +56,30 @@ logger.addHandler(logging.NullHandler())
 # Start of the User-level rules
 # --------------------------------
 @RegistryMarker.rule
-class Asn_Lv2Coron(
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
-    """Level2b Coronagraphic Science Image Association
+class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
+    """Create normal rate products for some coronographic data
 
-    Characteristics:
+    Characteristics;
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
-        - Coron-based science exposures
-        - Single science exposure
-        - non-TSO
-        - Use rateints product as input
-        - Exclude NIRCam SW detectors that don't have occulter
+        - NIRCam Coronagraphic
+        - Treat as non-timeseries, producint "rate" products
     """
-
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Coron(association=self),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrc_coron',
+            ),
+            SimpleConstraint(
+                value=True,
+                sources=nrccoron_valid_detector,
+            ),
             Constraint(
                 [
                     Constraint_Background(),
@@ -87,7 +89,15 @@ class Asn_Lv2Coron(
         ])
 
         # Now check and continue initialization.
-        super(Asn_Lv2Coron, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+    def is_item_coron(self, item):
+        """Override to always return false
+
+        The override will force `make_member` to create a "rate"
+        product instead of a "rateints" product.
+        """
+        return False
 
 
 @RegistryMarker.rule
@@ -115,7 +125,6 @@ class Asn_Lv2Image(
             Constraint_Image_Science(),
             Constraint(
                 [
-                    Constraint_Coron(association=self),
                     Constraint_TSO(),
                 ],
                 reduce=Constraint.notany
