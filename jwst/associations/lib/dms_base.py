@@ -7,6 +7,7 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACIDMixin
 from jwst.associations.lib.constraint import (Constraint, AttrConstraint, SimpleConstraint)
+from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list
 
 
@@ -764,6 +765,26 @@ class DMSBaseMixin(ACIDMixin):
         grating_id = format_list(self.constraints['grating'].found_values)
         grating = '{0:0>3s}'.format(str(grating_id))
         return grating
+
+    def __eq__(self, other):
+        """Compare equality of two associations"""
+        result = NotImplemented
+        if isinstance(other, DMSBaseMixin):
+            try:
+                compare_asns(self, other)
+            except MultiDiffError:
+                result = False
+            else:
+                result = True
+
+        return result
+
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        if isinstance(other, DMSBaseMixin):
+            return not self.__eq__(other)
+
+        return NotImplemented
 
 
 # -----------------

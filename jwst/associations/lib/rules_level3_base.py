@@ -129,22 +129,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     def current_product(self):
         return self.data['products'][-1]
 
-    def __eq__(self, other):
-        """Compare equality of two associations"""
-        if isinstance(other, DMS_Level3_Base):
-            result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.member_ids == other.member_ids)
-            return result
-
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        result = self.__eq__(other)
-        if result is not NotImplemented:
-            result = not result
-        return result
-
     @property
     def dms_product_name(self):
         """Define product name.
