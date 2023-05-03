@@ -14,6 +14,13 @@ documentation
 
 - Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
 
+extract_1d
+----------
+
+- Changed the logic for handling NIRSpec IFU data, so that both point and extended sources
+  are treated the same, i.e. assume the inputs are in units of surface brightness for all
+  sources and convert extracted values to flux density. [#7569]
+
 flat_field
 ----------
 
@@ -34,6 +41,12 @@ pathloss
 
 - Bug fix for NIRSpec fixed-slit data to remove double application of correction
   factors. [#7566]
+
+photom
+------
+
+- Updated to convert NIRSpec IFU point source data to units of surface brightness,
+  for compatibility with the ``cube_build`` step. [#7569]
 
 pixel_replace
 -------------

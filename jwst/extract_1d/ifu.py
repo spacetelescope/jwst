@@ -80,10 +80,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     else:
         log.info(f"Source type = {source_type}")
 
-    # The input units will normally be MJy / sr, but for NIRSpec point-source
-    # spectra the units will be MJy.
-    input_units_are_megajanskys = (source_type == 'POINT' and instrument == 'NIRSPEC')
-
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model, only="PRIMARY")
 
@@ -150,28 +146,12 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
                     "the flux will not be correct.")
         pixel_solid_angle = 1.
 
-    if input_units_are_megajanskys:
-        # Convert flux from MJy to Jy, and convert background to MJy / sr.
-        flux = temp_flux * 1.e6
-        f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
-        f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
-        f_var_flat *= 1.e12  # MJy**2 --> Jy**2
-        surf_bright[:] = 0.
-        sb_var_poisson[:] = 0.
-        sb_var_rnoise[:] = 0.
-        sb_var_flat[:] = 0.
-        background[:] /= pixel_solid_angle  # MJy / sr
-        b_var_poisson /= pixel_solid_angle
-        b_var_rnoise /= pixel_solid_angle
-        b_var_flat /= pixel_solid_angle
-
-    else:
-        # Convert flux from MJy / steradian to Jy.
-        flux = temp_flux * pixel_solid_angle * 1.e6
-        f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-        f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-        f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-        # surf_bright and background were computed above
+    # Convert flux from MJy / steradian to Jy.
+    flux = temp_flux * pixel_solid_angle * 1.e6
+    f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+    f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+    f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+    # surf_bright and background were computed above
     del temp_flux
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
     sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
