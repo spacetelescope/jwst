@@ -373,27 +373,25 @@ def compare_nosuffix(left, right):
             asns=[left, right]
         )])
 
+    diffs = MultiDiffError()
     for left_product in left['products']:
-        left_sciences = set(exposure_name(member['expname'])[0]
-                         for member in left_product['members']
-                         if member['exptype'] == 'science')
+        left_members = set(exposure_name(member['expname'])[0]
+                         for member in left_product['members'])
         for right_product in right['products']:
-            right_sciences = set(exposure_name(member['expname'])[0]
-                              for member in right_product['members']
-                              if member['exptype'] == 'science')
-            if left_sciences == right_sciences:
+            right_members = set(exposure_name(member['expname'])[0]
+                              for member in right_product['members'])
+            if left_members == right_members:
                 break
         else:
             # No right product matches the left product.
             # This is a fail.
-            raise MultiDiffError([DifferentProductSetsError(
-                f'Products have different memberships between {left.asn_name} and {right.asn_name}',
+            diffs.append(DifferentProductSetsError(
+                f'Left product {left_product["name"]} has not counterpart in right products',
                 asns=[left, right]
-            )])
+            ))
 
-    # Every left product has a matching right product.
-    # Except for suffix, the associations are considered a match.
-    return
+    if diffs:
+        raise diffs
 
 
 def compare_product_membership(left, right):
