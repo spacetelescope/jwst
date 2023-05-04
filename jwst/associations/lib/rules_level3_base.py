@@ -45,6 +45,7 @@ from jwst.associations.lib.prune import prune
 __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_AuxData',
+    'AsnMixin_Coronagraphy',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
     'Constraint',
@@ -127,22 +128,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     @property
     def current_product(self):
         return self.data['products'][-1]
-
-    def __eq__(self, other):
-        """Compare equality of two associations"""
-        if isinstance(other, DMS_Level3_Base):
-            result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.member_ids == other.member_ids)
-            return result
-
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        result = self.__eq__(other)
-        if result is not NotImplemented:
-            result = not result
-        return result
 
     @property
     def dms_product_name(self):
@@ -853,6 +838,26 @@ class AsnMixin_AuxData:
         if exp_type in NEVER_CHANGE:
             return exp_type
         return 'science'
+
+
+class AsnMixin_Coronagraphy:
+    """Basic overrides for Coronagraphy associations"""
+    def __init__(self, *args, **kwargs):
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        super().__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+        self.data['asn_type'] = 'coron3'
+        super()._init_hook(item)
 
 
 class AsnMixin_Science(DMS_Level3_Base):

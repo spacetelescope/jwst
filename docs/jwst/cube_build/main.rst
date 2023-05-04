@@ -28,6 +28,12 @@ Assumptions
 It is assumed that the ``assign_wcs`` step has been applied to the data, attaching the distortion and pointing
 information to the image(s). It is also assumed that the ``photom`` step has been applied to convert the pixel
 values from units of count rate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
+The cube_build algorithm is a flux conserving method and requires the input data to be in units of surface brightness.
+The NIRSpec calibration plan for point source data is designed to produce units of flux density from the calwebb_spec2 pipeline.
+For NIRSpec IFU point source data the calwebb_spec2 pipeline divides the flux values by a pixel area map to produce pseudo
+surface brightness units (MJy/steradian). This allows the cube_build program to conserve flux when it combines and resamples
+the data. True fluxes are produced only at the :ref:`extract_1d_step <extract_1d_step>`, in which a 1D spectrum is extracted from the cube using an
+appropriate extraction aperture, with resulting units of Jy.
 
 Instrument Information
 ----------------------

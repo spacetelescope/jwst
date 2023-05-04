@@ -14,6 +14,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_WFSC,
     format_list,
     item_getattr,
+    nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
     nrslamp_valid_detector,
@@ -25,7 +26,7 @@ from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
-    'Asn_Lv2Coron',
+    'Asn_Lv2CoronAsRate',
     'Asn_Lv2FGS',
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
@@ -55,29 +56,30 @@ logger.addHandler(logging.NullHandler())
 # Start of the User-level rules
 # --------------------------------
 @RegistryMarker.rule
-class Asn_Lv2Coron(
-        AsnMixin_Lv2Image,
-        DMSLevel2bBase
-):
-    """Level2b Coronagraphic Science Image Association
+class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
+    """Create normal rate products for some coronographic data
 
-    Characteristics:
+    Characteristics;
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
-        - Coron-based science exposures
-        - Single science exposure
-        - non-TSO
-        - Use rateints product as input
-        - Exclude NIRCam SW detectors that don't have occulter
+        - NIRCam Coronagraphic
+        - Treat as non-timeseries, producint "rate" products
     """
-
     def __init__(self, *args, **kwargs):
 
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Coron(association=self),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrc_coron',
+            ),
+            SimpleConstraint(
+                value=True,
+                sources=nrccoron_valid_detector,
+            ),
             Constraint(
                 [
                     Constraint_Background(),
@@ -87,7 +89,15 @@ class Asn_Lv2Coron(
         ])
 
         # Now check and continue initialization.
-        super(Asn_Lv2Coron, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+    def is_item_coron(self, item):
+        """Override to always return false
+
+        The override will force `make_member` to create a "rate"
+        product instead of a "rateints" product.
+        """
+        return False
 
 
 @RegistryMarker.rule
@@ -103,6 +113,7 @@ class Asn_Lv2Image(
         - Image-based science exposures
         - Single science exposure
         - Non-TSO
+        - Non-coronagraphic
     """
 
     def __init__(self, *args, **kwargs):
@@ -113,7 +124,9 @@ class Asn_Lv2Image(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint(
-                [Constraint_TSO()],
+                [
+                    Constraint_TSO(),
+                ],
                 reduce=Constraint.notany
             ),
             Constraint(
@@ -126,17 +139,6 @@ class Asn_Lv2Image(
 
         # Now check and continue initialization.
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
-
-    def is_item_coron(self, item):
-        """Override to ignore coronographic designation
-
-        Coronagraphic data is to be processed both as coronagraphic
-        (by default), but also as just plain imaging. Coronagraphic
-        data is processed using the Asn_Lv2Coron rule. This rule
-        will handle the creation of the image version. It has the
-        effect of using "rate" files as input, instead of "rateints".
-        """
-        return False
 
 
 @RegistryMarker.rule
