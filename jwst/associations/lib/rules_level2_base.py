@@ -15,7 +15,6 @@ from jwst.associations import (
     libpath
 )
 from jwst.associations.exceptions import AssociationNotValidError
-from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
     Constraint,
@@ -37,6 +36,7 @@ from jwst.associations.lib.prune import prune
 from jwst.associations.lib.rules_level3_base import _EMPTY, DMS_Level3_Base
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
+from jwst.associations.registry import RegistryMarker
 from jwst.lib.suffix import remove_suffix
 
 # Configure logging
@@ -169,22 +169,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """
         limit_reached = len(self.members_by_type('science')) >= 1
         return limit_reached
-
-    def __eq__(self, other):
-        """Compare equality of two associations"""
-        if isinstance(other, DMSLevel2bBase):
-            result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.member_ids == other.member_ids)
-            return result
-
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        if isinstance(other, DMSLevel2bBase):
-            return not self.__eq__(other)
-
-        return NotImplemented
 
     def dms_product_name(self):
         """Define product name."""

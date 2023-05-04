@@ -76,12 +76,8 @@ def prune_duplicate_associations(asns):
         except IndexError:
             break
         pruned.append(original)
-        if original.asn_name.startswith('dup'):
-            continue
         to_prune = list()
         for asn in ordered_asns:
-            if asn.asn_name.startswith('dup'):
-                continue
             try:
                 diff.compare_product_membership(original['products'][0], asn['products'][0])
             except AssertionError:
@@ -114,47 +110,59 @@ def prune_duplicate_products(asns):
     if not dups:
         return asns
 
-    ordered_asns = sort_by_candidate(asns)
+    ordered_asns = sort_by_candidate(valid_asns)
     asn_by_product = defaultdict(list)
     for asn in ordered_asns:
         asn_by_product[asn['products'][0]['name']].append(asn)
 
-    to_prune = list()
+    full_prune = list()
     for product in dups:
         dup_asns = asn_by_product[product]
-        asn_keeper = dup_asns.pop()
+        to_keep = dup_asns.copy()
         for asn in dup_asns:
-            if asn.asn_name.startswith('dup'):
+            # Association has been removed, ignore
+            if asn in full_prune:
                 continue
 
-            # Check for differences. If none, then the associations are exact duplicates.
-            try:
-                diff.compare_product_membership(asn_keeper['products'][0], asn['products'][0])
-            except diff.MultiDiffError as diffs:
-                # If one is a pure subset, remove the smaller association.
-                if len(diffs) == 1 and isinstance(diffs[0], diff.SubsetError):
-                    if len(asn['products'][0]['members']) > len(asn_keeper['products'][0]['members']):
-                        asn_keeper, asn = asn, asn_keeper
-                    to_prune.append(asn)
+            # Check against the set of associations to be kept.
+            to_prune = list()
+            for entrant in to_keep:
+                if entrant == asn:
                     continue
 
-                # If the difference is only in suffix, this is an acceptable duplication of product names.
-                # Trap and do not report.
+                # Check for differences. If none, then the associations are exact duplicates.
                 try:
-                    diff.compare_nosuffix(asn_keeper, asn)
-                except diff.MultiDiffError:
-                    # Something is different. Report but do not remove.
-                    logger.warning('Following associations have the same product name but significant differences.')
-                    logger.warning('Association 1: %s', asn_keeper)
-                    logger.warning('Association 2: %s', asn)
-                    logger.warning('Diffs: %s', diffs)
+                    diff.compare_product_membership(asn['products'][0], entrant['products'][0])
+                except diff.MultiDiffError as diffs:
+                    # If one is a pure subset, remove the smaller association.
+                    if len(diffs) == 1 and isinstance(diffs[0], diff.SubsetError):
+                        if len(entrant['products'][0]['members']) > len(asn['products'][0]['members']):
+                            asn, entrant = entrant, asn
+                        to_prune.append(entrant)
+                        continue
 
-            else:
-                # Associations are exactly the same. Discard the logically lesser one.
-                # Due to the sorting, this should be the current `asn`
-                to_prune.append(asn)
+                    # If the difference is only in suffix, this is an acceptable duplication of product names.
+                    # Trap and do not report.
+                    try:
+                        diff.compare_nosuffix(asn, entrant)
+                    except diff.MultiDiffError:
+                        # Something is different. Report but do not remove.
+                        logger.warning('Following associations have the same product name but significant differences.')
+                        logger.warning('Association 1: %s', asn)
+                        logger.warning('Association 2: %s', entrant)
+                        logger.warning('Diffs: %s', diffs)
 
-    prune_remove(ordered_asns, to_prune, known_dups)
+                else:
+                    # Associations are exactly the same. Discard the logically lesser one.
+                    # Due to the sorting, this should be the current `asn`
+                    to_prune.append(entrant)
+
+            # Update lists.
+            full_prune.extend(to_prune)
+            for asn in to_prune:
+                to_keep.remove(asn)
+
+    prune_remove(ordered_asns, full_prune, known_dups)
     return ordered_asns + known_dups
 
 
