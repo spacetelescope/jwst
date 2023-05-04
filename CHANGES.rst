@@ -1,11 +1,13 @@
 1.10.3 (unreleased)
 ===================
 
+
 datamodels
 ----------
 
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
+
 
 documentation
 -------------
@@ -25,6 +27,13 @@ flat_field
 ----------
 
 - Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
+
+
+cube_build
+----------
+- Wavelength range of NIRSpec IFU cubes are set by cubepars reference file and
+  a new cubepars reference file with wavelength arrays for drizzle implemented. [#7559]
+  
 
 other
 -----
