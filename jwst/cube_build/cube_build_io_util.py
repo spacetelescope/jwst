@@ -242,6 +242,5 @@ def read_cubepars(par_filename,
                 for tabdata in ptab.ifucubepars_high_driz_wavetable:
                     table_wave = tabdata['WAVELENGTH']
                     instrument_info.SetHighDrizTable(table_wave)
-
             ptab.close()
             del ptab
