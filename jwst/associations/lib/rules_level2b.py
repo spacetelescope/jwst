@@ -63,7 +63,8 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - NIRCam Coronagraphic
-        - Treat as non-timeseries, producint "rate" products
+        - Only subarray=Full exposures
+        - Treat as non-timeseries, producing "rate" products
     """
     def __init__(self, *args, **kwargs):
 
@@ -75,6 +76,11 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
                 name='exp_type',
                 sources=['exp_type'],
                 value='nrc_coron',
+            ),
+            DMSAttrConstraint(
+                name='subarray',
+                sources=['subarray'],
+                value='full',
             ),
             SimpleConstraint(
                 value=True,
