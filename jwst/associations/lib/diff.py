@@ -181,7 +181,7 @@ def compare_asn_lists(left_asns, right_asns):
             diffs.extend(dup_errors)
     if right_duplicates:
         try:
-            check_duplicate_members(right_asns)
+            check_duplicate_products(right_asns)
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
 
