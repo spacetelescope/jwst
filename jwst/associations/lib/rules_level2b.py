@@ -9,7 +9,6 @@ from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
-    Constraint_Coron,
     Constraint_TSO,
     Constraint_WFSC,
     format_list,
