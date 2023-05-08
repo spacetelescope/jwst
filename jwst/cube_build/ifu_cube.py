@@ -1347,7 +1347,7 @@ class IFUCubeData():
         final_lambda_min = self.wavemin
         final_lambda_max = self.wavemax
 
-        log.debug(f' final min and max used in IFUcube:   {final_lambda_min), final_lambda_max)}')
+        log.debug(f' final min and max used in IFUcube:   {final_lambda_min, final_lambda_max}')
 
         if self.instrument == 'MIRI' and self.coord_system == 'internal_cal':
             #  we have a 1 to 1 mapping in y across slice  dimension
