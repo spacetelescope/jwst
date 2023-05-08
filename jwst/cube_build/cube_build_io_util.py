@@ -130,7 +130,6 @@ def read_cubepars(par_filename,
     # Read in NIRSPEC Values
     elif instrument == 'NIRSPEC':
         with datamodels.NirspecIFUCubeParsModel(par_filename) as ptab:
-            print(par_filename)
             number_gratings = len(all_grating)
             for i in range(number_gratings):
                 this_gwa = all_grating[i]
