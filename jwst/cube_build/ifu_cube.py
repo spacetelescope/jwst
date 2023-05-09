@@ -941,6 +941,7 @@ class IFUCubeData():
 
             a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                       par2)
+
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
@@ -1339,23 +1340,15 @@ class IFUCubeData():
         final_b_max = max(corner_b)
 
         log.debug(f'final a and b:{final_a_min, final_b_min, final_a_max, final_b_max}')
-        log.debug(f'final wave:   {min(lambda_min), max(lambda_max)}')
-
-        # for MIRI wavelength range read in from cube pars reference file
-        if self.instrument == 'MIRI':
-            final_lambda_min = self.wavemin
-            final_lambda_max = self.wavemax
-
-        # for NIRSPec wavelength range determined from the data
-        if self.instrument == 'NIRSPEC':
-            final_lambda_min = min(lambda_min)
-            final_lambda_max = max(lambda_max)
-            if self.wavemin_user:
-                final_lambda_min = self.wavemin
-
-            if self.wavemax_user:
-                final_lambda_max = self.wavemax
+        log.debug(f' min and max wavelengths:   {min(lambda_min), max(lambda_max)}')
         # ______________________________________________________________________
+        # the wavelength limits of cube are determined from 1. User or 2. cubepars
+        # reference file (in the priority)
+        final_lambda_min = self.wavemin
+        final_lambda_max = self.wavemax
+
+        log.debug(f' final min and max used in IFUcube:   {final_lambda_min, final_lambda_max}')
+
         if self.instrument == 'MIRI' and self.coord_system == 'internal_cal':
             #  we have a 1 to 1 mapping in y across slice  dimension
             nslice = self.instrument_info.GetNSlice(parameter1[0])
