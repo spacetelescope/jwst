@@ -766,6 +766,30 @@ class InstrumentInfo():
         self.high_softrad.append(None)
         self.high_power.append(None)
 
+    def SetPrismDrizTable(self, wave):
+        self.prism_wavelength.append(wave)
+        self.prism_sroi.append(None)
+        self.prism_wroi.append(None)
+        self.prism_scalerad.append(None)
+        self.prism_power.append(None)
+        self.prism_softrad.append(None)
+
+    def SetMedDrizTable(self, wave):
+        self.med_wavelength.append(wave)
+        self.med_sroi.append(None)
+        self.med_wroi.append(None)
+        self.med_scalerad.append(None)
+        self.med_power.append(None)
+        self.med_softrad.append(None)
+
+    def SetHighDrizTable(self, wave):
+        self.high_wavelength.append(wave)
+        self.high_sroi.append(None)
+        self.high_wroi.append(None)
+        self.high_scalerad.append(None)
+        self.high_power.append(None)
+        self.high_softrad.append(None)
+
     def SetXSliceLimits(self, x1, x2, parameter1):
         self.Info[parameter1]['xstart'] = x1
         self.Info[parameter1]['xend'] = x2
