@@ -14,13 +14,14 @@ from jwst.associations import (
 )
 from jwst.associations import config
 from jwst.associations.exceptions import AssociationError
-from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.constraint import (
     ConstraintTrue,
 )
+from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.log_config import (log_config, DMS_config)
+from jwst.associations.lib.prune import identify_dups
 
-__all__ = ['Main']
+__all__ = ['Main', 'main']
 
 # Configure logging
 logger = log_config(name=__package__)
@@ -493,11 +494,12 @@ def filter_discovered_only(
     and then Association.load will not return proper results.
     """
     # Split the associations along discovered/not discovered lines
+    dups, valid = identify_dups(associations)
     asn_by_ruleset = {
         candidate_ruleset: [],
         discover_ruleset: []
     }
-    for asn in associations:
+    for asn in valid:
         asn_by_ruleset[asn.registry.name].append(asn)
     candidate_list = asn_by_ruleset[candidate_ruleset]
     discover_list = asn_by_ruleset[discover_ruleset]
@@ -517,6 +519,9 @@ def filter_discovered_only(
 
     if keep_candidates:
         discover_list.extend(candidate_list)
+
+    if config.DEBUG:
+        discover_list += dups
     return discover_list
 
 

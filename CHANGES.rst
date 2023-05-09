@@ -1,6 +1,14 @@
 1.10.3 (unreleased)
 ===================
 
+associations
+------------
+
+- Updated level-2b and level-3 rules to properly handle NIRCam Coronagraphy
+  observations that use all 4 short-wave detectors. Only treat the one detector that
+  contains the target as coron, while treating the others as regular imaging. Also
+  create an image3 ASN that contains data from all 4 detectors. [#7556]
+
 datamodels
 ----------
 
