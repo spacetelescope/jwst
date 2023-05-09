@@ -72,7 +72,7 @@ ramp_fitting
 srctype
 -------
 
-- The SRCTYPE takes precedence over PATTTYPE when setting the source type for
+- The SRCTYAPT takes precedence over PATTTYPE when setting the source type for
   MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, 'MIR_MRS', NRC_TSGRISM, NRS_FIXEDSLIT, NRS_BRIGHTOBJ, NRS_IFU. [#7583]
   
 tweakreg
