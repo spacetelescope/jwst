@@ -69,6 +69,12 @@ ramp_fitting
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
 
+srctype
+-------
+
+- The SRCTYPE takes precedence over PATTTYPE when setting the source type for
+  MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, 'MIR_MRS', NRC_TSGRISM, NRS_FIXEDSLIT, NRS_BRIGHTOBJ, NRS_IFU. [#7583]
+  
 tweakreg
 --------
 
