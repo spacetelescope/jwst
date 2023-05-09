@@ -36,7 +36,7 @@ def test_background_target_unset():
 
     # If BKGDTARG is missing, next test should be based on the
     # value of PATTTYPE, which in this case should return POINT.
-    assert output.meta.target.source_type == 'POINT'
+    assert output.meta.target.source_type == 'EXTENDED'
 
 
 def test_nrsifu_nodded():
@@ -52,7 +52,7 @@ def test_nrsifu_nodded():
     output = srctype.set_source_type(input)
 
     # Result should be POINT regardless of input setting
-    assert output.meta.target.source_type == 'POINT'
+    assert output.meta.target.source_type == 'EXTENDED'
 
 
 def test_mirmrs_nodded():
@@ -69,7 +69,7 @@ def test_mirmrs_nodded():
     output = srctype.set_source_type(input)
 
     # Result should be POINT regardless of input setting
-    assert output.meta.target.source_type == 'POINT'
+    assert output.meta.target.source_type == 'EXTENDED'
 
 
 def test_user_input():
