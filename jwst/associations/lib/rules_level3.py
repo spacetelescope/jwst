@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector, nrsifu_valid_detector)
+from jwst.associations.lib.dms_base import (nrccoron_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
@@ -14,16 +15,18 @@ from jwst.associations.lib.rules_level3_base import (
 __all__ = [
     'Asn_Lv3ACQ_Reprocess',
     'Asn_Lv3AMI',
-    'Asn_Lv3Coron',
     'Asn_Lv3Image',
     'Asn_Lv3ImageBackground',
-    'Asn_Lv3SpecAux',
+    'Asn_Lv3MIRCoron',
     'Asn_Lv3MIRMRS',
     'Asn_Lv3MIRMRSBackground',
+    'Asn_Lv3NRCCoron',
+    'Asn_Lv3NRCCoronImage',
     'Asn_Lv3NRSFSS',
     'Asn_Lv3NRSIFU',
     'Asn_Lv3NRSIFUBackground',
     'Asn_Lv3SlitlessSpectral',
+    'Asn_Lv3SpecAux',
     'Asn_Lv3SpectralSource',
     'Asn_Lv3SpectralTarget',
     'Asn_Lv3TSO',
@@ -129,76 +132,6 @@ class Asn_Lv3AMI(AsnMixin_Science):
 
 
 @RegistryMarker.rule
-class Asn_Lv3Coron(AsnMixin_Science):
-    """Level 3 Coronagraphy Association
-
-    Characteristics:
-        - Association type: ``coron3``
-        - Pipeline: ``calwebb_coron3``
-        - Gather science and related PSF exposures
-
-    Notes
-    -----
-    Coronagraphy is nearly completely defined by the association candidates
-    produced by APT.
-    Tracking Issues:
-
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint(
-            [
-                Constraint_Optical_Path(),
-                DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value=(
-                        'nrc_coron'
-                        '|mir_lyot'
-                        '|mir_4qpm'
-                    ),
-                ),
-                DMSAttrConstraint(
-                    name='target',
-                    sources=['targetid'],
-                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                    force_reprocess=ListCategory.EXISTING,
-                    only_on_match=True,
-                ),
-                Constraint(
-                    [DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        force_unique=False,
-                    )],
-                    reduce=Constraint.notany
-                ),
-            ],
-            name='asn_coron'
-        )
-
-        # PSF is required
-        self.validity.update({
-            'has_psf': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'psf'
-            }
-        })
-
-        # Check and continue initialization.
-        super(Asn_Lv3Coron, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'coron3'
-        super(Asn_Lv3Coron, self)._init_hook(item)
-
-
-@RegistryMarker.rule
 class Asn_Lv3Image(AsnMixin_Science):
     """Level 3 Science Image Association
 
@@ -289,40 +222,57 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
 
 
 @RegistryMarker.rule
-class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
-
-    """Level 3 Spectral Association
+class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
+    """Level 3 Coronagraphy Association
 
     Characteristics:
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
+        - Association type: ``coron3``
+        - Pipeline: ``calwebb_coron3``
+        - MIRI Coronagraphy
+        - Gather science and related PSF exposures
+
+    Notes
+    -----
+    Coronagraphy is nearly completely defined by the association candidates
+    produced by APT.
+    Tracking Issues:
+
+        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
+
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value='T',
-            ),
-            DMSAttrConstraint(
-                name='allowed_bkgdtarg',
-                sources=['exp_type'],
-                value='mir_lrs-fixedslit|nrs_fixedslit',
-            ),
-            Constraint_Optical_Path(),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='mir_lyot|mir_4qpm',
+                ),
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+                Constraint(
+                    [DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        force_unique=False,
+                    )],
+                    reduce=Constraint.notany
+                ),
+            ],
+            name='asn_coron'
+        )
 
         # Check and continue initialization.
-        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
+        super(Asn_Lv3MIRCoron, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
@@ -404,6 +354,142 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
     @property
     def dms_product_name(self):
         return dms_product_name_noopt(self)
+
+
+@RegistryMarker.rule
+class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
+    """Level 3 Coronagraphy Association
+
+    Characteristics:
+        - Association type: ``coron3``
+        - Pipeline: ``calwebb_coron3``
+        - Gather science and related PSF exposures
+        - Exclude "extra" NIRCam detectors that don't have target on them
+
+    Notes
+    -----
+    Coronagraphy is nearly completely defined by the association candidates
+    produced by APT.
+    Tracking Issues:
+
+        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=('nrc_coron'),
+                ),
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+                Constraint(
+                    [DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        force_unique=False,
+                    )],
+                    reduce=Constraint.notany
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrccoron_valid_detector(item),
+                    force_unique=False
+                ),
+            ],
+            name='asn_coron'
+        )
+
+        # Check and continue initialization.
+        super(Asn_Lv3NRCCoron, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_Lv3NRCCoronImage(AsnMixin_Science):
+    """Level 3 Coronagraphy Association handled as regular imaging
+
+    Characteristics:
+        - Association type: ``image3``
+        - Pipeline: ``calwebb_image3``
+        - Gather science exposures only, no psf exposures
+        - Only include NRC SW images taken in full-frame
+
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=('nrc_coron'),
+                ),
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+                Constraint(
+                    [DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        force_unique=False,
+                    ),
+                    DMSAttrConstraint(
+                        name='is_psf',
+                        sources=['is_psf'],
+                        value = ('T')
+                    )],
+                    reduce=Constraint.notany
+                ),  
+                DMSAttrConstraint(
+                    name='channel',
+                    sources=['channel'],
+                    value=('short'),
+                ),
+                DMSAttrConstraint(
+                    name='subarray',
+                    sources=['subarray'],
+                    value=('full'),
+                ),
+            ],
+        )
+
+        # Check and continue initialization.
+        super(Asn_Lv3NRCCoronImage, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Lv3NRCCoronImage, self)._init_hook(item)
+
+    def is_item_coron(self, item):
+        """Override to ignore coronographic designation
+
+        Coronagraphic data is to be processed both as coronagraphic
+        (by default), but also as just plain imaging. Coronagraphic
+        data is processed using the Asn_Lv3Coron rule. This rule
+        will handle the creation of the image version. It causes
+        the input members to be of type "cal", instead of "calints".
+        """
+        return False
 
 
 @RegistryMarker.rule
@@ -605,6 +691,43 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_Lv3SlitlessSpectral, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
+
+    """Level 3 Spectral Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value='T',
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value='mir_lrs-fixedslit|nrs_fixedslit',
+            ),
+            Constraint_Optical_Path(),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule

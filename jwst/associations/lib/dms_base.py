@@ -7,6 +7,7 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACIDMixin
 from jwst.associations.lib.constraint import (Constraint, AttrConstraint, SimpleConstraint)
+from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list
 
 
@@ -425,13 +426,91 @@ class DMSBaseMixin(ACIDMixin):
         """
         return item in self.from_items
 
+    def is_item_ami(self, item):
+        """Is the given item AMI (NIRISS Aperture Masking Interferometry)
+
+        Determine whether the specific item represents AMI data or not.
+        This simply includes items with EXP_TYPE='NIS_AMI'.
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_ami : bool
+            Item represents an AMI exposure.
+        """
+        # If not a science exposure, such as target acquisitions,
+        # then other indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Target acquisitions are never AMI
+        if item['exp_type'] in ACQ_EXP_TYPES:
+            return False
+
+        # Check for AMI exposure type
+        try:
+            is_ami = self.item_getattr(item, ['exp_type'])[1] in ['nis_ami']
+        except KeyError:
+            is_ami = False
+
+        return is_ami
+
+    def is_item_coron(self, item):
+        """Is the given item Coronagraphic
+
+        Determine whether the specific item represents
+        true Coronagraphic data or not. This will include all items
+        in CORON_EXP_TYPES (both NIRCam and MIRI), **except** for
+        NIRCam short-wave detectors included in a coronagraphic exposure
+        but do not have an occulter in their field-of-view.
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_coron : bool
+            Item represents a true Coron exposure.
+        """
+        # If not a science exposure, such as target acquisitions,
+        # then other indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Target acquisitions are never Coron
+        if item['exp_type'] in ACQ_EXP_TYPES:
+            return False
+
+        # Check for coronagraphic exposure type
+        try:
+            is_coron = self.item_getattr(item, ['exp_type'])[1] in CORON_EXP_TYPES
+        except KeyError:
+            is_coron = False
+            return is_coron
+
+        # Now do a special check for NRC_CORON exposures using full-frame readout,
+        # which include extra detectors that do *not* have an occulter in them
+        if item['exp_type'] == 'nrc_coron' and item['subarray'] == 'full':
+            if item['pupil'] == 'maskbar' and item['detector'] in ['nrca1', 'nrca2', 'nrca3']:
+                is_coron = False
+            if item['pupil'] == 'maskrnd' and item['detector'] in ['nrca1', 'nrca3', 'nrca4']:
+                is_coron = False
+
+        return is_coron
+
     def is_item_tso(self, item, other_exp_types=None):
         """Is the given item TSO
 
         Determine whether the specific item represents
-        TSO data or not. When used to determine naming
-        of files, coronagraphic data will be included through
-        the `other_exp_types` parameter.
+        TSO data or not. This is used to determine the
+        naming of files, i.e. "rate" vs "rateints" and
+        "cal" vs "calints".
 
         Parameters
         ----------
@@ -439,7 +518,7 @@ class DMSBaseMixin(ACIDMixin):
             The item to check for.
 
         other_exp_types: [str[,...]] or None
-            List of other exposure types to consider TSO.
+            List of other exposure types to consider TSO-like.
 
         Returns
         -------
@@ -686,6 +765,26 @@ class DMSBaseMixin(ACIDMixin):
         grating_id = format_list(self.constraints['grating'].found_values)
         grating = '{0:0>3s}'.format(str(grating_id))
         return grating
+
+    def __eq__(self, other):
+        """Compare equality of two associations"""
+        result = NotImplemented
+        if isinstance(other, DMSBaseMixin):
+            try:
+                compare_asns(self, other)
+            except MultiDiffError:
+                result = False
+            else:
+                result = True
+
+        return result
+
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        if isinstance(other, DMSBaseMixin):
+            return not self.__eq__(other)
+
+        return NotImplemented
 
 
 # -----------------
@@ -988,3 +1087,26 @@ def nrslamp_valid_detector(item):
 
     # Nothing has matched. Not valid.
     return False
+
+
+def nrccoron_valid_detector(item):
+    """Check that a coronagraphic mask+detector combo is valid"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, subarray = item_getattr(item, ['subarray'])
+        _, pupil = item_getattr(item, ['pupil'])
+    except KeyError:
+        return False
+
+    # Just a checklist of paths:
+    if subarray == 'full':
+        # maskbar has occulted target only in detector nrca4
+        if pupil == 'maskbar' and detector in ['nrca1', 'nrca2', 'nrca3']:
+            return False
+        # maskrnd has occulted target only in detector nrca2
+        elif pupil == 'maskrnd' and detector in ['nrca1', 'nrca3', 'nrca4']:
+            return False
+        else:
+            return True
+    else:
+        return True
