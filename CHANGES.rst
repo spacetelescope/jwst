@@ -1,6 +1,13 @@
 1.10.3 (unreleased)
 ===================
 
+associations
+------------
+
+- Updated level-2b and level-3 rules to properly handle NIRCam Coronagraphy
+  observations that use all 4 short-wave detectors. Only treat the one detector that
+  contains the target as coron, while treating the others as regular imaging. Also
+  create an image3 ASN that contains data from all 4 detectors. [#7556]
 
 datamodels
 ----------
@@ -28,12 +35,12 @@ flat_field
 
 - Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
 
-
 cube_build
 ----------
-- Wavelength range of NIRSpec IFU cubes are set by cubepars reference file and
-  a new cubepars reference file with wavelength arrays for drizzle is implemented. [#7559]
-  
+
+- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
+  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
+  files with wavelength arrays for the drizzle method. [#7559]
 
 other
 -----
