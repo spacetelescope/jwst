@@ -631,7 +631,7 @@ class IFUCubeData():
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
                         del result
-                        del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq, spaxel_dq
+                        del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
                     if self.weighting == 'drizzle' and build_cube:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
