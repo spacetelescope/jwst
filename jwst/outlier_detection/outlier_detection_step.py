@@ -60,6 +60,8 @@ class OutlierDetectionStep(Step):
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
         backg = float(default=0.0)
+        kernel_size = string(default='3 3')
+        threshold_percent = float(default=99.8)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
@@ -110,6 +112,8 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
+                'kernel_size': self.kernel_size,
+                'threshold_percent': self.threshold_percent,
                 'allowed_memory': self.allowed_memory,
                 'in_memory': self.in_memory,
                 'save_intermediate_results': self.save_intermediate_results,
