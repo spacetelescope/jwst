@@ -9,6 +9,10 @@ associations
   contains the target as coron, while treating the others as regular imaging. Also
   create an image3 ASN that contains data from all 4 detectors. [#7556]
 
+cube_build
+----------
+- Remove deleting the spaxel_dq array twice when using a weighting method of either msm or emsm. #7586
+
 datamodels
 ----------
 
