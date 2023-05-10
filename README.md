@@ -13,11 +13,13 @@
 
 **Linux and MacOS platforms are tested and supported.  Windows is not currently supported.**
 
-**If installing on MacOS Mojave 10.14, you must install 
+**If installing on MacOS Mojave 10.14, you must install
   into an environment with python 3.9. Installation will fail on python 3.10 due
   to lack of a stable build for dependency ``opencv-python``.**
 
 ## Installation
+
+Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) for installation issues.
 
 The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
 
@@ -52,18 +54,11 @@ You can install the latest released version via `pip`.  From a bash/zsh shell:
     conda activate <env_name>
     pip install jwst
 
-You can also install a specific version (from `jwst 0.17.0` onward):
+You can also install a specific version:
 
     conda create -n <env_name> python
     conda activate <env_name>
     pip install jwst==1.9.4
-
-Installing specific versions before `jwst 0.17.0` need to be installed from Github:
-
-    conda create -n <env_name> python
-    conda activate <env_name>
-    pip install git+https://github.com/spacetelescope/jwst@0.16.2
-
 
 ### Installing the development version from Github
 
@@ -129,7 +124,7 @@ To install your own copy of the code into that environment, you first need to
 fork and clone the `jwst` repo:
 
     cd <where you want to put the repo>
-    git clone https://github.com/spacetelescope/jwst
+    git clone https://github.com/<your_github_username>/jwst.git
     cd jwst
 
 *Note: `python setup.py install` and `python setup.py develop` commands do not work.*
@@ -216,7 +211,7 @@ the specified context and less than the context for the next release.
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
 | 1.10.2              |           |          | 1077         | 2023-04-14 |             | Pinning dependencies for external users       |
-| 1.10.1              | B9.2rc2   | TBD      | 1077         | 2023-04-13 | TBD         | Second release candidate for B9.2             |
+| 1.10.1              | B9.2      | TBD      | 1077         | 2023-04-13 | 2023-05-23  | Second release candidate for B9.2             |
 | 1.10.0              | B9.2rc1   | TBD      | 1075         | 2023-03-31 | TBD         | First release candidate for B9.2              |
 | 1.9.6               | B9.1.2    | 2022.5.2 | 1068         | 2023-03-09 | 2023-03-15  | Final release candidate for B9.1.2            |
 | 1.9.5               |           |          | 1061         | 2023-03-02 |             | First release candidate for B9.1.2            |
