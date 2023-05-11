@@ -1,6 +1,6 @@
 import numpy as np
 
-from astropy.modeling.fitting import _model_to_fit_params
+from astropy.modeling.fitting import model_to_fit_params
 
 
 class ChiSqOutlierRejectionFitter:
@@ -38,7 +38,7 @@ class ChiSqOutlierRejectionFitter:
 
     @staticmethod
     def _params(model):
-        return _model_to_fit_params(model)[0]
+        return model_to_fit_params(model)[0]
 
     @staticmethod
     def _sum_weights(x, weights=None):
