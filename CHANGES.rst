@@ -9,6 +9,12 @@ associations
   contains the target as coron, while treating the others as regular imaging. Also
   create an image3 ASN that contains data from all 4 detectors. [#7556]
 
+background
+----------
+
+- Mask out NaN pixels before removing outlier values and calculating mean in
+  ``robust_mean`` function. [#7587]
+
 datamodels
 ----------
 
