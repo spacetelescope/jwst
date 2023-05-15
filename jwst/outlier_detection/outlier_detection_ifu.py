@@ -20,9 +20,9 @@ class OutlierDetectionIFU(OutlierDetection):
     """Sub-class defined for performing outlier detection on IFU data.
 
     This is the controlling routine for the outlier detection process.
-    It loads and sets the various input data and parameters needed by
-    the various functions and then controls the operation of this process
-    through all the steps used for the detection.
+    It loads and sets the various input data and parameters needed to flag
+    outliers.  Pixel are flagged as outliers based on the MINIMUM difference 
+    a pixel has with its neighbor across all the input cal files. 
 
     Notes
     -----
@@ -32,13 +32,17 @@ class OutlierDetectionIFU(OutlierDetection):
          them with any user-provided values
       2. Loop over cal files
          a. read in science data 
-         b. Store computed group differences for all the pixels
+         b. Store computed neighbor differences for all the pixels.
+            The neighbor pixel  differences are defined by the dispersion axis.
+            For MIRI (disp axis = 1) the neighbors to find differences  are to the left and right of pixel
+            For NIRSpec (disp axis = 0) the neighbors to find the differences are above and below the pixel 
 
-      3. Using array of group differences of all the pixels for all the cal files, 
-         find the minimum value for each pixel
-         normalize the minimum to local median image
-      4. select outliers by flagging those  minimum values > thershold_percent
-      5. Updates input ImageModel DQ arrays with mask of detected outliers.
+      3. For each input file store the  minimum of the two diferences
+      4. Comparing all the differences from all the input data find the minimum difference
+      5. Normalize minimum difference to local median of difference array
+      6. select outliers by flagging those normailzed minimum values > thershold_percent
+
+      7. Updates input ImageModel DQ arrays with mask of detected outliers.
 
     """
 
@@ -60,7 +64,6 @@ class OutlierDetectionIFU(OutlierDetection):
                                   reffiles=reffiles, **pars)
 
     def _find_detector_parameters(self):
-        #model = datamodels.open(self.input_models[0])
         print('Instrument', self.inputs[0].meta.instrument.name.upper())
         
         if self.inputs[0].meta.instrument.name.upper() == 'MIRI':
@@ -69,10 +72,8 @@ class OutlierDetectionIFU(OutlierDetection):
             diffaxis = 0
             
         ny,nx = self.inputs[0].data.shape
-        #model.close()
         print(' Shape of array', ny, nx)
         return (diffaxis, ny, nx)
-
         
     def do_detection(self):
 
@@ -102,34 +103,43 @@ class OutlierDetectionIFU(OutlierDetection):
         diffarr = np.zeros([n,ny,nx])
 
         for i, model in enumerate(self.inputs):
-            sci = model.data    
-            # Compute left and right differences
+            sci = model.data
+            dq = model.dq
+            bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
+            sci[bad] = np.nan
+
+            # Compute left and right differences (MIRI dispersion axis = 1)
+            # For NIRSpec dispersion axis = 0, these differences are top, bottom
+            # prepend = 0 has the effect of keeping the same shape as sci and
+            # for MIRI data (disp axis = 1) the first column = sci data
+            # OR
+            # for NIRSpec data (disp axis = 0) the first row = sci data
             leftdiff=np.diff(sci,axis=diffaxis,prepend=0)
+
             flip=np.flip(sci,axis=diffaxis)
             rightdiff=np.diff(flip,axis=diffaxis,prepend=0)
             rightdiff=np.flip(rightdiff,axis=diffaxis)
-        
+
             # Combine left and right differences with minimum of the abs value
             # to avoid artifacts from bright edges
             comb=np.zeros([2,ny,nx])
             comb[0,:,:]=np.abs(leftdiff)
             comb[1,:,:]=np.abs(rightdiff)
             combdiff=np.nanmin(comb,axis=0)
-        
+
             diffarr[i,:,:]=combdiff
 
-
+        # minarr final minimum combined differences, size: ny X nx
         minarr=np.nanmin(diffarr,axis=0)
-        
+
         # Normalise the differences to a local median image to deal with ultra-bright sources
         norm=medfilt(minarr,kernel_size=kern_size)
         nfloor=np.nanmedian(minarr)/3
         norm[norm < nfloor] = nfloor # Ensure we never divide by a tiny number
         minarr_norm=minarr/norm
-                
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin=np.nanpercentile(minarr_norm[4:ny-4,4:nx-4],threshold_percent)
-        print('Percentile min: ',threshold_percent)
+        print('Percentile min: ',threshold_percent,pctmin)
 
         if save_intermediate_results:
               #model.meta.filename = self.make_output_path(
@@ -166,7 +176,7 @@ class OutlierDetectionIFU(OutlierDetection):
         # Flag everything above this percentile value
         indx=np.where(minarr_norm > pctmin)
         print('number of flagged pixels', len(indx[0]))
-
+        print(indx)
         # Update in place dq flag
         for i, model in enumerate(self.inputs):
               count_existing = np.count_nonzero(model.dq & dqflags.pixel['DO_NOT_USE'])
