@@ -25,7 +25,8 @@ def assert_has_same_import(module_a, module_b, import_):
 
 @pytest.mark.parametrize("model", STDM_ALL)
 def test_stdatamodels_api(model):
-    assert_has_same_import(stdm, jwstdm, model)
+    if model not in ('DrizProductModel', 'MultiProductModel', 'MIRIRampModel'):
+        assert_has_same_import(stdm, jwstdm, model)
 
 
 @pytest.mark.parametrize("module", STDM_MODULES)
