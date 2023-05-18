@@ -3,9 +3,16 @@ from stdatamodels.jwst.datamodels import dqflags
 from . import matrix_dft
 
 import logging
+import os
 import numpy as np
 import numpy.fft as fft
 from scipy.integrate import simps
+from astropy.io import fits
+from astropy import units as u
+
+import synphot
+import stsynphot
+from stsynphot import grid_to_spec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -462,7 +469,7 @@ def centerpoint(s):
     return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
 
 
-def min_distance_to_edge(img, cntrimg=True):
+def min_distance_to_edge(img, cntrimg=False):
     """
     Short Summary
     -------------

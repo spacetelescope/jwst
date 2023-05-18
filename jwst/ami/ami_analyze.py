@@ -1,6 +1,8 @@
 #  Module for applying the LG-PLUS algorithm to an AMI exposure
 import logging
 import numpy as np
+import copy
+
 
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
@@ -46,7 +48,7 @@ def apply_LG_plus(input_model,
 
     """
     # Create copy of input_model to avoid overwriting input
-    input_copy = input_model.copy()
+    input_copy = copy.deepcopy(input_model)
 
     # If the input image is 2D, expand all relevant extensions to be 3D
     # Incl. those not currently used?
@@ -74,27 +76,8 @@ def apply_LG_plus(input_model,
         input_copy.dq = input_copy.dq[:, ystart - 1:ystop, xstart - 1:xstop]
         input_copy.err = input_copy.err[:, ystart - 1:ystop, xstart - 1:xstop]
 
-    # Replace NaN's and DO_NOT_USE pixels in the input image
-    # with median of surrounding pixel values in a 3x3 box
-    # box_size = 3
-    # input_copy = img_median_replace(input_copy, box_size)
-
-    # Instead, run bp_fix code here??
-    # TODO: run_bp_fix
-
     data = input_copy.data
     dim = data.shape[-1] # 80 px 
-
-    # Create mask of DO_NOT_USE and JUMP_DET pixels
-    bpdata = np.array(input_copy.dq)
-    DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
-    JUMP_DET = dqflags.pixel["JUMP_DET"]
-    dq_dnu = bpdata & DO_NOT_USE == DO_NOT_USE
-    dq_jump = bpdata & JUMP_DET == JUMP_DET
-    dqmask = dq_dnu | dq_jump
-
-    # now run bpfix, updating the data and dq array in input_copy
-
 
     # Initialize transformation parameters:
     #   mx, my: dimensionless magnifications
@@ -111,34 +94,33 @@ def apply_LG_plus(input_model,
 
     # there should be an offset search?
 
-
     # get filter, pixel scale from input_model,
     # make bandpass array for find_rotation, instrument_data calls
     filt = input_copy.meta.instrument.filter
-    pscale_deg = utils.degrees_per_pixel(input_copy)
+    pscaledegx, pscaledegy = utils.degrees_per_pixel(input_copy)
+    # model requires single pixel scale, so average X and Y scales
+    # (this is done again in instrument_data?)
+    pscale_deg = np.mean([pscaledegx, pscaledegy])
     PIXELSCALE_r = np.deg2rad(pscale_deg)
-
-    # # spec type needs to be a user input?
-
     holeshape = 'hex'
     # # throughput ref file is too coarsely sampled, use webbpsf data instead
     # # get throughput here instead of in instrument_data
     if bandpass is not None:
-        self.log.info('User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES')
+        log.info('User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES')
         # bandpass can be user-defined synphot object or appropriate array
         if isinstance(bandpass, synphot.spectrum.SpectralElement):
-            self.log.info('User-defined synphot spectrum provided')
+            log.info('User-defined synphot spectrum provided')
             wl, wt = bandpass._get_arrays(bandpass.waveset)
             bandpass = np.array((wt,wl)).T
         else:
-            self.log.info('User-defined bandpass array provided')
+            log.info('User-defined bandpass array provided')
             bandpass = np.array(bandpass)
 
     else:
         # get the filter and source spectrum
-        self.log.info(f'Getting WebbPSF throughput data for {filt}.')
+        log.info(f'Getting WebbPSF throughput data for {filt}.')
         filt_spec = utils.get_filt_spec(filt)
-        self.log.info(f'Getting source spectrum for spectral type {src}.')
+        log.info(f'Getting source spectrum for spectral type {src}.')
         src_spec = utils.get_src_spec(src) # always going to be A0V currently
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
         # **NOTE**: As of WebbPSF version 1.0.0 filter is trimmed to where throughput is 10% of peak
@@ -157,7 +139,9 @@ def apply_LG_plus(input_model,
     log.info(f'Initial values to use for rotation search {rotsearch_d}')
     if affine2d is None:
         # affine2d object, can be overridden by user input affine?
-        affine2d = find_rotation(data[:, :, :], psf_offset, rotsearch_d,
+        # do rotation search on median image (assuming rotation constant over exposure)
+        meddata = np.median(data,axis=0)
+        affine2d = find_rotation(meddata, psf_offset, rotsearch_d,
                                  mx, my, sx, sy, xo, yo,
                                  PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
@@ -168,7 +152,10 @@ def apply_LG_plus(input_model,
                                     firstfew=firstfew,
                                     usebp=usebp,
                                     chooseholes=chooseholes)
-    # more args to pass to instrument_data: src, usebp, firstfew, chooseholes
+    # more args to pass to instrument_data: src, usebp, firstfew, chooseholes. should these be kwargs?
+
+    # data will be trimmed, bp fix run, etc in nrm_core.FringeFitter.fit_fringes_all()
+    # call to instrument_data.NIRISS.read_data_model(). So affine finding, etc done on full 80x80
 
     ff_t = nrm_core.FringeFitter(niriss, 
                                 psf_offset_ff=psf_offset_ff,
@@ -176,7 +163,7 @@ def apply_LG_plus(input_model,
 
     #output_model = ff_t.fit_fringes_all(input_copy)
     # FOR NOW: DEBUGGING
-    n_resid_arr, cp_arr, va_arr = ff_t.fit_fringes_all(input_copy)
+    model_arr, resid_arr, n_resid_arr, cp_arr, va_arr = ff_t.fit_fringes_all(input_copy)
 
 
     # Copy header keywords from input to output

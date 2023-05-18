@@ -8,11 +8,14 @@ import numpy as np
 
 from .mask_definitions import NRM_mask_definitions
 from . import utils
+from . import bp_fix
+from stdatamodels.jwst.datamodels import dqflags
+import pysiaf
+import copy
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-um = 1.0e-6
 
 
 class NIRISS:
@@ -57,14 +60,16 @@ class NIRISS:
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you can simulate 21cm psfs through something called "F430M"!
         """
+        if 'run_bpfix' in kwargs: # is this allowed?
+            self.run_bpfix = kwargs['run_bpfix']
+        else:
+            self.run_bpfix = True
+        self.usebp = usebp
         self.chooseholes = chooseholes
         self.objname = objname
         self.filt = filt
         self.throughput = bandpass
         self.firstfew = firstfew
-        if firstfew is not None:
-            log.info(f'Analyzing only the first {firstfew:d} integrations')
-
 
         self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
         ####### 
@@ -81,9 +86,9 @@ class NIRISS:
         self.arrname = "jwst_g7s6c"
         self.holeshape = "hex"
         self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=chooseholes, holeshape=self.holeshape)
-        pscale_deg = utils.degrees_per_pixel(input_model)
-        self.pscale_rad = np.deg2rad(pscale_deg)
-        dim = input_model.data.shape[-1] # 80 pixels
+        # pscale_deg = utils.degrees_per_pixel(input_model)
+        # self.pscale_rad = np.deg2rad(pscale_deg)
+        # dim = input_model.data.shape[-1] # 80 pixels
 
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
@@ -138,7 +143,9 @@ class NIRISS:
         """
         Short Summary
         -------------
-        Retrieve info from input data model and store in NIRISS class
+        Retrieve info from input data model and store in NIRISS class.
+        Trim refpix and roughly center science data and dq array.
+        Run Fourier bad pixel correction before returning science data.
 
         Parameters
         ----------
@@ -149,28 +156,16 @@ class NIRISS:
         -------
         Data and parameters from input data model
         """
-        # The info4oif_dict will get pickled to disk when we write txt files of results.
-        # That way we don't drag in objects like instrument_data into code that reads text results
-        # and writes oifits files - a simple built-in dictionary is the only object used in this transfer.
- 
-
-        # # Whatever we did set is averaged for isotropic pixel scale here
-        # self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
-        # self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
         # the following is done by updatewithheaderinfo in implaneia, 
         # don't need to pickle a dict here though.
         # all instrumentdata attributes will be available when oifits files written out?
-        scidata = input_model.data.copy()
-        bpdata = input_model.dq.copy()
-        # make dq mask again? for now
-        DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
-        JUMP_DET = dqflags.pixel["JUMP_DET"]
-        dq_dnu = bpdata & DO_NOT_USE == DO_NOT_USE
-        dq_jump = bpdata & JUMP_DET == JUMP_DET
-        dqmask = dq_dnu | dq_jump
+        scidata = copy.deepcopy(np.array(input_model.data))
+        bpdata = copy.deepcopy(np.array(input_model.dq))
 
-        pscale_deg = utils.degrees_per_pixel(input_model)
+        # pixel scale recalculated and averaged
+        pscaledegx, pscaledegy = utils.degrees_per_pixel(input_model)
+        pscale_deg = np.mean([pscaledegx, pscaledegy])
         self.pscale_rad = np.deg2rad(pscale_deg)
 
         self.pav3 = input_model.meta.pointing.pa_v3
@@ -192,24 +187,18 @@ class NIRISS:
         nints = input_model.meta.exposure.nints
         # if 2d input, model has already been expanded to 3d, so check 0th dimension
         if input_model.data.shape[0] == 1: 
-            self.itime = effinttm*nints # CHECK THIS
+            self.itime = effinttm * nints 
         else:
             self.itime = effinttm
             if self.firstfew is not None:
                 if scidata.shape[0] > self.firstfew:
+                    log.info(f'Analyzing only the first {self.firstfew:d} integrations')
                     scidata = scidata[:self.firstfew, :, :]
-                    dqmask = dqmask[:self.firstfew, :, :]
-            self.nwav = nints # update from 1 (number of slices)
+                    bpdata = bpdata[:self.firstfew, :, :]
+            self.nwav = scidata.shape[0]
             [self.wls.append(self.wls[0]) for f in range(self.nwav-1)]
 
-        # Get integer-pixel position of target from siaf & header info
-        siaf = pysiaf.Siaf('NIRISS')
-        # select AMI aperture by name
-        xoffset, yoffset = input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
-        apername = input_model.meta.aperture.name
-        nis_ami = siaf[apername]
-        xtarg_detpx, ytarg_detpx = nis_ami.idl_to_sci(xoffset, yoffset) # decimal pixel position in subarray, 1 indexed?
-        self.peak0, self.peak1 = int(np.floor(xtarg_detpx)), int(np.floor(ytarg_detpx))
+
 
         # do all the stuff with rotating centers, save as attributes instead of info4oif_dict
         ctrs_sky = self.mast2sky()
@@ -223,14 +212,41 @@ class NIRISS:
 
         # Trim refpix from all slices
         scidata = scidata[:,4:, :]
-        dqmask = dqmask[:,4:, :]
+        bpdata = bpdata[:,4:, :]
+
+        # find peak in median of refpix-trimmed scidata
+        med_im = np.median(scidata, axis=0)
+        
+        # Roughly center scidata, bpdata around peak pixel position
+        peakx, peaky, r = utils.min_distance_to_edge(med_im)
+        scidata_ctrd = scidata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
+        bpdata_ctrd = bpdata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
+
+        log.info("Cropping all integrations to %ix%i pixels around peak (%i,%i) " % (2*r+1,2*r+1,peakx+4,peaky))# +4 because of trimmed refpx
+        # apply bp fix here
+        if self.run_bpfix:
+            log.info(f'Applying Fourier bad pixel correction to cropped data, updating DQ array')
+            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,bpdata_ctrd,input_model.meta.instrument.filter)
+        else:
+            log.info(f'Not running Fourier bad pixel fix')
 
         self.rootfn = input_model.meta.filename.replace('.fits','')
 
-        
-
         # all info needed to write out oifits should be stored in NIRISS object attributes
-        return scidata, dqmask
+  
+        # Make a bad pixel mask, either from real DQ data or zeros if usebp=False
+        if self.usebp:
+            log.info('usebp flag set to TRUE: bad pixels will be excluded from model fit')
+            DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+            JUMP_DET = dqflags.pixel["JUMP_DET"]
+            dq_dnu = bpdata_ctrd & DO_NOT_USE == DO_NOT_USE
+            dq_jump = bpdata_ctrd & JUMP_DET == JUMP_DET
+            dqmask_ctrd = dq_dnu | dq_jump
+        else:
+            log.info('usebp flag set to FALSE: all pixels will be used in model fit')
+            dqmask_ctrd = np.zeros_like(scidata_ctrd)
+
+        return scidata_ctrd, dqmask_ctrd
 
     def reset_nwav(self, nwav):
         """
@@ -246,7 +262,6 @@ class NIRISS:
         """
         self.nwav = nwav
 
-#####
     def mast2sky(self):
         """
         Rotate hole center coordinates:
@@ -263,7 +278,7 @@ class NIRISS:
         # NOT used for the fringe fitting itself
         mask_ctrs = utils.rotate2dccw(mask_ctrs,np.pi/2.)
         vpar = self.vparity # Relative sense of rotation between Ideal xy and V2V3
-        v3iyang = self.v3i_yang
+        v3iyang = self.v3iyang
         rot_ang = pa - v3iyang # subject to change!
 
         if pa != 0.0:
@@ -280,6 +295,3 @@ class NIRISS:
         else:
             ctrs_rot = mask_ctrs
         return ctrs_rot
-
-
-#####
