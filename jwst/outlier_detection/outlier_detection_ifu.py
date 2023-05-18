@@ -63,7 +63,6 @@ class OutlierDetectionIFU(OutlierDetection):
         """
         OutlierDetection.__init__(self, input_models,reffiles=reffiles, **pars)
 
-        
     def create_optional_results_model(self, opt_info):
         """
         Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
@@ -112,7 +111,6 @@ class OutlierDetectionIFU(OutlierDetection):
 
         self.build_suffix(**self.outlierpars)
         print('Suffix ', self.resample_suffix)
-              
         save_intermediate_results = \
             self.outlierpars['save_intermediate_results']
 
@@ -132,6 +130,8 @@ class OutlierDetectionIFU(OutlierDetection):
         n = len(self.inputs)
         diffarr = np.zeros([n,ny,nx])
 
+        # I thought setting self.input_models here would set it up so it could be updated
+        # in the module and output files would contain flagged pixels - NOT WORKING
         self.input_models = self.inputs
         print('type of input',type(self.input_models))  # Check it is ModelContainer 
         for i, model in enumerate(self.input_models):
@@ -191,9 +191,10 @@ class OutlierDetectionIFU(OutlierDetection):
         print('number of flagged pixels', len(indx[0]))
         print(indx)
         del diffarr
+
         
         # Update in place dq flag
-        for i, model in enumerate(self.input_models):
+        for i, model in enumerate(self.inputs):
             sci = model.data
             dq = model.dq
             count_existing = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
@@ -206,15 +207,19 @@ class OutlierDetectionIFU(OutlierDetection):
             count_outlier = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
             count_added = count_outlier - count_existing
             percent_cr = count_added / (model.data.shape[0] * model.data.shape[1]) * 100
-            log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")              
-            #self.input_models[i].dq = dq
-            #self.input_models[i].data = sci
+            log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
+            # update model
             model.dq = dq
             model.data = sci
+
             count_check = np.count_nonzero(model.dq & dqflags.pixel['DO_NOT_USE'])
             print('before outlier', count_existing)
             print('number outlier', count_outlier)
             print('number check', count_check)
+            self.inputs[i].data = sci
+            self.inputs[i].dq = dq
+            
+        self.detect_outliers_ifu(self.inputs)
 
 class ErrorWrongInstrument(Exception):
     """ Raises an exception if the instrument is not MIRI or NIRSPEC

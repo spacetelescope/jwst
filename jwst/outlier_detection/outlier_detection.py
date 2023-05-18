@@ -69,7 +69,6 @@ class OutlierDetection:
 
         """
         self.inputs = input_models
-        
         self.reffiles = reffiles
 
         self.outlierpars = {}
@@ -386,6 +385,17 @@ class OutlierDetection:
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
 
 
+    def detect_outliers_ifu(self, inputs):
+        # Update in place dq flag
+        self.input_models = inputs
+        for i, model in enumerate(inputs):
+            sci = model.data
+            dq = model.dq
+            count_existing = np.count_nonzero(dq & datamodels.dqflags.pixel['DO_NOT_USE'])
+            print('outlier numbers', count_existing)    # this number is not the one with extra outliers flagged
+            self.input_models[i].data = sci
+            self.input_models[i].dq = dq
+            
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
             resample_data=True, **kwargs):
     """Masks outliers in science image by updating DQ in-place
