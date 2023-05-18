@@ -69,6 +69,7 @@ class OutlierDetection:
 
         """
         self.inputs = input_models
+        
         self.reffiles = reffiles
 
         self.outlierpars = {}
@@ -118,6 +119,7 @@ class OutlierDetection:
                 self.input_models.append(image)
             self.converted = True
 
+        
     def _get_outlier_pars(self):
         """Extract outlier detection parameters from reference file."""
         # start by interpreting input data models to define selection criteria

@@ -146,7 +146,7 @@ class OutlierDetectionStep(Step):
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
-                pars['resample_suffix'] = 's3d'
+                pars['resample_suffix'] = 'crf'
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
@@ -166,6 +166,7 @@ class OutlierDetectionStep(Step):
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
+            print('in outlier detection_step')
             step.do_detection()
 
             state = 'COMPLETE'

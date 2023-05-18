@@ -8,6 +8,7 @@ from stdatamodels.jwst import datamodels
 from scipy.signal import medfilt
 
 from .outlier_detection import OutlierDetection
+from jwst.datamodels import ModelContainer
 from stdatamodels.jwst.datamodels import dqflags
 import logging
 log = logging.getLogger(__name__)
@@ -60,8 +61,36 @@ class OutlierDetectionIFU(OutlierDetection):
 
 
         """
-        OutlierDetection.__init__(self, input_models,
-                                  reffiles=reffiles, **pars)
+        OutlierDetection.__init__(self, input_models,reffiles=reffiles, **pars)
+
+        
+    def create_optional_results_model(self, opt_info):
+        """
+        Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
+
+        Parameter
+        ---------
+        input_model: ~jwst.datamodels.RampModel
+
+        opt_info: tuple
+        The output arrays needed for the OultierOutputModel.
+
+        Return
+        ---------
+        opt_model: OultierOutputModel
+        The optional OutlierOutputModel to be returned from the outlier_detection_ifu step.
+        """
+        (diffarr, minarr, normarr, minnorm) = opt_info
+    
+        opt_model = datamodels.OutlierIFUOutputModel(
+            diffarr=diffarr,
+            minarr=minarr,
+            normarr=normarr,
+            minnorm=minnorm)
+
+
+        return opt_model
+
 
     def _find_detector_parameters(self):
         print('Instrument', self.inputs[0].meta.instrument.name.upper())
@@ -72,9 +101,11 @@ class OutlierDetectionIFU(OutlierDetection):
             diffaxis = 0
             
         ny,nx = self.inputs[0].data.shape
-        print(' Shape of array', ny, nx)
+        print('Shape of array', ny, nx)
         return (diffaxis, ny, nx)
-        
+
+
+    
     def do_detection(self):
 
         log.info("Flagging outliers")
@@ -91,7 +122,6 @@ class OutlierDetectionIFU(OutlierDetection):
         kern_size[0]=  sizex
         kern_size[1] = sizey
         print(kern_size)
-        
         print(type(kern_size))
         
         threshold_percent = self.outlierpars['threshold_percent']
@@ -102,7 +132,9 @@ class OutlierDetectionIFU(OutlierDetection):
         n = len(self.inputs)
         diffarr = np.zeros([n,ny,nx])
 
-        for i, model in enumerate(self.inputs):
+        self.input_models = self.inputs
+        print('type of input',type(self.input_models))  # Check it is ModelContainer 
+        for i, model in enumerate(self.input_models):
             sci = model.data
             dq = model.dq
             bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
@@ -133,74 +165,56 @@ class OutlierDetectionIFU(OutlierDetection):
         minarr=np.nanmin(diffarr,axis=0)
 
         # Normalise the differences to a local median image to deal with ultra-bright sources
-        norm=medfilt(minarr,kernel_size=kern_size)
+        normarr=medfilt(minarr,kernel_size=kern_size)
         nfloor=np.nanmedian(minarr)/3
-        norm[norm < nfloor] = nfloor # Ensure we never divide by a tiny number
-        minarr_norm=minarr/norm
+        normarr[normarr < nfloor] = nfloor # Ensure we never divide by a tiny number
+        minarr_norm=minarr/normarr
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin=np.nanpercentile(minarr_norm[4:ny-4,4:nx-4],threshold_percent)
         print('Percentile min: ',threshold_percent,pctmin)
 
-        if save_intermediate_results:
-              #model.meta.filename = self.make_output_path(
-              #    basepath=model.meta.filename,
-              #    suffix='diffarr')
-              #log.info("Writing out (single) IFU cube {}".format(model.meta.filename))
-              #model.save(model.meta.filename)
-              
-              diffarr_filename = self.make_output_path(
-                  basepath=model.meta.filename,
-                  suffix='diffarr')
-              hdu=fits.PrimaryHDU(diffarr)
-              hdu.writeto(diffarr_filename,overwrite=True)
-
-              minarr_filename = self.make_output_path(
-                  basepath=model.meta.filename,
-                  suffix='minarr')
-              hdu=fits.PrimaryHDU(minarr)
-              hdu.writeto(minarr_filename,overwrite=True)
-
-              norm_filename = self.make_output_path(
-                  basepath=model.meta.filename,
-                  suffix='norm')
-              hdu=fits.PrimaryHDU(norm)
-              hdu.writeto(norm_filename,overwrite=True)
-              
-              minarr_norm_filename = self.make_output_path(
-                  basepath=model.meta.filename,
-                  suffix='minarr_norm')
-              hdu=fits.PrimaryHDU(minarr_norm)
-              hdu.writeto(minarr_norm_filename,overwrite=True)
-              
         
+        if save_intermediate_results:
+            opt_info = (diffarr, minarr, normarr, minarr_norm)
+            
+            opt_model = self.create_optional_results_model(opt_info)
+
+            opt_model.meta.filename = self.make_output_path(
+                    basepath=self.inputs.meta.asn_table.products[0].name,
+                    suffix='outlier_output')
+            print('output filename', opt_model.meta.filename)
+            opt_model.save(opt_model.meta.filename)
+              
+
         # Flag everything above this percentile value
         indx=np.where(minarr_norm > pctmin)
         print('number of flagged pixels', len(indx[0]))
         print(indx)
-        # Update in place dq flag
-        for i, model in enumerate(self.inputs):
-              count_existing = np.count_nonzero(model.dq & dqflags.pixel['DO_NOT_USE'])
-              sci = model.data
-              dq = model.dq
-              sci[indx]=np.nan
-              dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
-              dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
-              model.data = sci
-              model.dq = dq
-
-              #hdu.writeto(files[ii].replace(calstr,outstr),overwrite=True)
-              # Update the DQ array in the input image.
-              #sci_image.dq = np.bitwise_or(sci_image.dq, cr_mask * (DO_NOT_USE | OUTLIER))
-
-              # Report number (and percent) of new DO_NOT_USE pixels found
-              count_outlier = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
-              count_added = count_outlier - count_existing
-              percent_cr = count_added / (model.data.shape[0] * model.data.shape[1]) * 100
-              log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
-              
-
         del diffarr
         
+        # Update in place dq flag
+        for i, model in enumerate(self.input_models):
+            sci = model.data
+            dq = model.dq
+            count_existing = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
+
+            sci[indx]=np.nan
+            dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
+            dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
+           
+            # Report number (and percent) of new DO_NOT_USE pixels found
+            count_outlier = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
+            count_added = count_outlier - count_existing
+            percent_cr = count_added / (model.data.shape[0] * model.data.shape[1]) * 100
+            log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")              
+            #self.input_models[i].dq = dq
+            #self.input_models[i].data = sci
+            model.dq = dq
+            model.data = sci
+            count_check = np.count_nonzero(model.dq & dqflags.pixel['DO_NOT_USE'])
+            print('before outlier', count_existing)
+            print('number outlier', count_outlier)
+            print('number check', count_check)
 
 class ErrorWrongInstrument(Exception):
     """ Raises an exception if the instrument is not MIRI or NIRSPEC
