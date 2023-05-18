@@ -206,13 +206,17 @@ def tsgrism(input_model, reference_files):
     # now create the appropriate model for the grismr
     det2det = NIRCAMForwardRowGrismDispersion(orders,
                                               lmodels=displ,
-                                              xmodels=invdispx,
-                                              ymodels=dispy)
+                                              xmodels=dispx,
+                                              ymodels=dispy,
+                                              inv_lmodels=invdispl,
+                                              inv_xmodels=invdispx)
 
     det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
-                                                    lmodels=invdispl,
+                                                    lmodels=displ,
                                                     xmodels=dispx,
-                                                    ymodels=dispy)
+                                                    ymodels=dispy,
+                                                    inv_lmodels=invdispl,
+                                                    inv_xmodels=invdispx)
 
     # Add in the wavelength shift from the velocity dispersion
     try:
@@ -371,19 +375,28 @@ def wfss(input_model, reference_files):
     if "GRISMR" in input_model.meta.instrument.pupil:
         det2det = NIRCAMForwardRowGrismDispersion(orders,
                                                   lmodels=displ,
-                                                  xmodels=invdispx,
-                                                  ymodels=dispy)
+                                                  xmodels=dispx,
+                                                  ymodels=dispy,
+                                                  inv_lmodels=invdispl,
+                                                  inv_xmodels=invdispx,
+                                                  inv_ymodels=invdispy)
 
     elif "GRISMC" in input_model.meta.instrument.pupil:
         det2det = NIRCAMForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
-                                                     ymodels=invdispy)
+                                                     ymodels=dispy,
+                                                     inv_lmodels=invdispl,
+                                                     inv_xmodels=invdispx,
+                                                     inv_ymodels=invdispy)
 
     det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
-                                                    lmodels=invdispl,
+                                                    lmodels=displ,
                                                     xmodels=dispx,
-                                                    ymodels=dispy)
+                                                    ymodels=dispy,
+                                                    inv_lmodels=invdispl,
+                                                    inv_xmodels=invdispx,
+                                                    inv_ymodels=invdispy)
 
     # Add in the wavelength shift from the velocity dispersion
     try:

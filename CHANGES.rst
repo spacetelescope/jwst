@@ -1,6 +1,12 @@
 1.10.3 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Pass the dispersion relation to NIRCam row/column transforms, to interpolate
+  against if analytic inverse does not exist [#7018]
+
 associations
 ------------
 
@@ -9,17 +15,22 @@ associations
   contains the target as coron, while treating the others as regular imaging. Also
   create an image3 ASN that contains data from all 4 detectors. [#7556]
 
+background
+----------
+
+- Mask out NaN pixels in WFSS images before removing outlier values and calculating mean in
+  ``robust_mean`` function. [#7587]
+
 cube_build
 ----------
 
-- Remove deleting the spaxel_dq array twice when using a weighting method of either msm or emsm. #7586
+- Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. #7586
 
 datamodels
 ----------
 
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
-
 
 documentation
 -------------
@@ -334,6 +345,9 @@ transforms
   is used and no warnings are issued by ASDF. [#7456]
 
 - Move ``jwst.transforms`` out of ``jwst`` into ``stdatamodels.jwst.transforms``. [#7441]
+
+- Update NIRCam WFSS transforms to use version 6 of GRISMCONF fileset; interpolate
+  to create inverse dispersion relation due to third-order polynomial in use [#7018]
 
 tweakreg
 --------
