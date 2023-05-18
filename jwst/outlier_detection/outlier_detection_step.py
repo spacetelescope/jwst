@@ -11,6 +11,7 @@ from jwst.outlier_detection import outlier_detection
 from jwst.outlier_detection import outlier_detection_ifu
 from jwst.outlier_detection import outlier_detection_spec
 
+import numpy as np # added for testing
 # Categorize all supported versions of outlier_detection
 outlier_registry = {'imaging': outlier_detection.OutlierDetection,
                     'ifu': outlier_detection_ifu.OutlierDetectionIFU,
@@ -175,7 +176,16 @@ class OutlierDetectionStep(Step):
                     model.meta.cal_step.outlier_detection = state
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
-
+            ### added for checking
+            print('in outlier_detection_step')
+            for i in range(len(self.input_models)):
+                model = datamodels.open(self.input_models[i])
+                sci = model.data
+                dq = model.dq
+                count = np.count_nonzero(model.dq & datamodels.dqflags.pixel['DO_NOT_USE'])
+                print('outlier numbers', count)    # this number is not the one with extra outliers flagged
+                model.close()
+            ### added for checking
             return self.input_models
 
     def check_input(self):

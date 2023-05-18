@@ -92,21 +92,23 @@ class OutlierDetectionIFU(OutlierDetection):
 
 
     def _find_detector_parameters(self):
-        print('Instrument', self.inputs[0].meta.instrument.name.upper())
+        print('Instrument', self.input_models[0].meta.instrument.name.upper())
         
-        if self.inputs[0].meta.instrument.name.upper() == 'MIRI':
+        if self.input_models[0].meta.instrument.name.upper() == 'MIRI':
             diffaxis = 1
-        elif self.inputs[0].meta.instrument.name.upper() == 'NIRSPEC':
+        elif self.input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
             diffaxis = 0
             
         ny,nx = self.inputs[0].data.shape
         print('Shape of array', ny, nx)
         return (diffaxis, ny, nx)
 
-
+    def convert_inputs(self):
+        self.input_models = self.inputs.copy()
+        self.converted = False
     
     def do_detection(self):
-
+        self.convert_inputs()
         log.info("Flagging outliers")
 
         self.build_suffix(**self.outlierpars)
@@ -127,13 +129,10 @@ class OutlierDetectionIFU(OutlierDetection):
         (diffaxis, ny, nx) = self._find_detector_parameters()
         
         # set up array to hold group differences 
-        n = len(self.inputs)
+        n = len(self.input_models)
         diffarr = np.zeros([n,ny,nx])
 
-        # I thought setting self.input_models here would set it up so it could be updated
-        # in the module and output files would contain flagged pixels - NOT WORKING
-        self.input_models = self.inputs
-        print('type of input',type(self.input_models))  # Check it is ModelContainer 
+
         for i, model in enumerate(self.input_models):
             sci = model.data
             dq = model.dq
@@ -173,14 +172,13 @@ class OutlierDetectionIFU(OutlierDetection):
         pctmin=np.nanpercentile(minarr_norm[4:ny-4,4:nx-4],threshold_percent)
         print('Percentile min: ',threshold_percent,pctmin)
 
-        
         if save_intermediate_results:
             opt_info = (diffarr, minarr, normarr, minarr_norm)
             
             opt_model = self.create_optional_results_model(opt_info)
 
             opt_model.meta.filename = self.make_output_path(
-                    basepath=self.inputs.meta.asn_table.products[0].name,
+                    basepath=self.input_models.meta.asn_table.products[0].name,
                     suffix='outlier_output')
             print('output filename', opt_model.meta.filename)
             opt_model.save(opt_model.meta.filename)
@@ -192,9 +190,9 @@ class OutlierDetectionIFU(OutlierDetection):
         print(indx)
         del diffarr
 
-        
-        # Update in place dq flag
-        for i, model in enumerate(self.inputs):
+        # Update DQ flag
+        for i in range(len(self.input_models)):
+            model = datamodels.open(self.input_models[i])
             sci = model.data
             dq = model.dq
             count_existing = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
@@ -211,15 +209,17 @@ class OutlierDetectionIFU(OutlierDetection):
             # update model
             model.dq = dq
             model.data = sci
-
-            count_check = np.count_nonzero(model.dq & dqflags.pixel['DO_NOT_USE'])
+            self.input_models[i] = model
+            
+            count_check = np.count_nonzero(self.input_models[i].dq & dqflags.pixel['DO_NOT_USE'])
             print('before outlier', count_existing)
             print('number outlier', count_outlier)
             print('number check', count_check)
-            self.inputs[i].data = sci
-            self.inputs[i].dq = dq
+            model.close()
             
-        self.detect_outliers_ifu(self.inputs)
+        # send input_models back - that is what is returned from outlier_detection.py
+        
+        self.detect_outliers_ifu(self.input_models)
 
 class ErrorWrongInstrument(Exception):
     """ Raises an exception if the instrument is not MIRI or NIRSPEC
