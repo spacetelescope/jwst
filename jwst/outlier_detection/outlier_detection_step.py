@@ -178,8 +178,7 @@ class OutlierDetectionStep(Step):
                 self.input_models.meta.cal_step.outlier_detection = state
             ### added for checking
             print('in outlier_detection_step')
-            for i in range(len(self.input_models)):
-                model = datamodels.open(self.input_models[i])
+            for model in self.input_models:
                 sci = model.data
                 dq = model.dq
                 count = np.count_nonzero(model.dq & datamodels.dqflags.pixel['DO_NOT_USE'])
