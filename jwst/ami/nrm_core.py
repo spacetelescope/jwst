@@ -63,9 +63,13 @@ class FringeFitter:
             self.npix = kwargs["npix"]
         else:
             self.npix = 'default'
+        # Default: unweighted fit
+        self.weighted = False    
+        if "weighted" in kwargs:
+            self.weighted = kwargs["weighted"]
 
     def fit_fringes_all(self, input_model):
-                """
+        """
         Short Summary
         ------------
         Extract the input data from input_model, and generate the best model to
@@ -82,14 +86,46 @@ class FringeFitter:
         output_model: Fringe model object
             Fringe analysis data
         """
-        self.scidata = self.instrument_data.read_data_model(input_model)
-        # ist for nrm objects for each slc
-        model_list = []
+        # scidata, dqmask are already centered around peak
+        self.scidata, self.dqmask = self.instrument_data.read_data_model(input_model)
+
+        # list for nrm objects for each slc
+        self.nrm_list = []
 
         for slc in range(self.instrument_data.nwav):
-            model_list.append(fit_fringes_single_integration(slc))
+            self.nrm_list.append(self.fit_fringes_single_integration(slc))
 
         # Now save final output model(s) of all slices, averaged slices
+        # populate arrays of the correct shape to pass to output models?
+        # e.g.
+        model_arr = np.zeros((self.scidata.shape[0],self.scidata.shape[1],self.scidata.shape[2]))
+        resid_arr = np.zeros((self.scidata.shape[0],self.scidata.shape[1],self.scidata.shape[2]))
+        n_resid_arr = np.zeros((self.scidata.shape[0],self.scidata.shape[1],self.scidata.shape[2]))
+        cp_arr = np.zeros((self.scidata.shape[0],35))
+        va_arr = np.zeros((self.scidata.shape[0],21))
+
+        """
+        #     fit_image=nrm.modelpsf,
+        #     resid_image=nrm.residual,
+        #     closure_amp_table=np.asarray(nrm.redundant_cas),
+        #     closure_phase_table=np.asarray(nrm.redundant_cps),
+        #     fringe_amp_table=np.asarray(nrm.fringeamp),
+        #     fringe_phase_table=np.asarray(nrm.fringephase),
+        #     pupil_phase_table=np.asarray(nrm.fringepistons),
+        #     solns_table=np.asarray(nrm.soln)
+        """
+
+        for i,nrmslc in enumerate(self.nrm_list):
+          model_arr[i,:,:] = nrmslc.modelpsf
+          resid_arr[i,:,:] = nrmslc.residual
+          n_resid_arr[i,:,:] = nrmslc.residual/nrmslc.reference.max() # normalized by peak of data
+          cp_arr[i,:] = nrmslc.redundant_cps
+          va_arr[i,:] = nrmslc.fringeamp
+
+        # for now (DEBUGGING)
+        # return arrays of observables
+        return model_arr, resid_arr, n_resid_arr, cp_arr, va_arr
+
 
     def fit_fringes_single_integration(self, slc):
         """
@@ -121,30 +157,23 @@ class FringeFitter:
         if self.npix == 'default':
             self.npix = self.scidata[slc,:, :].shape[0]
 
-        # New or modified in LG++
-        # center the image on its peak pixel:
-        # self.ctrd = utils.center_imagepeak(self.scidata[:, :])
-        peak0, peak1 = self.instrument_data.peak0, self.instrument_data.peak1
-        imsz = self.scidata.shape
-        sh = min((imsz[1]-peak0),(imsz[2]-peak1))
-        r = sh - 1 # half-size for cropping
-        self.ctrd = self.scidata[slc,int(peak0-r):int(peak0+r+1), int(peak1-r):int(peak1+r+1)]
-        self.dqslice = self.dqmask[slc,int(peak0-r):int(peak0+r+1), int(peak1-r):int(peak1+r+1)]
+        self.ctrd = self.scidata[slc]
+        self.dqslice = self.dqmask[slc]
 
-        nrm.reference = self.ctrd  # self. is the cropped image centered on the brightest pixel
+        nrm.reference = self.ctrd  # self.ctrd is the cropped image centered on the brightest pixel
+
         if self.psf_offset_ff is None:
             # returned values have offsets x-y flipped:
             # Finding centroids the Fourier way assumes no bad pixels case - Fourier domain mean slope
             centroid = utils.find_centroid(self.ctrd, self.instrument_data.threshold)  # offsets from brightest pixel ctr
             # use flipped centroids to update centroid of image for JWST - check parity for GPI, Vizier,...
             # pixel coordinates: - note the flip of [0] and [1] to match DS9 view
-
             nrm.xpos = centroid[1]  # flip 0 and 1 to convert
             nrm.ypos = centroid[0]  # flip 0 and 1
             nrm.psf_offset = nrm.xpos, nrm.ypos  # renamed .bestcenter to .psf_offset
         else:
             nrm.psf_offset = self.psf_offset_ff  # user-provided psf_offsetoffsets from array center are here.
-
+        print('DEBUG: nrm.pixel',nrm.pixel)
         nrm.make_model(fov=self.ctrd.shape[0], 
                        bandpass=nrm.bandpass,
                        over=self.oversample,
@@ -171,8 +200,9 @@ class FringeFitter:
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
         """
-        nrm.create_modelpsf() #?
-
+        nrm.create_modelpsf() # instead of setting self.nrm = nrm and self.save_output as in implane??
+        # model now stored as nrm.modelpsf, also nrm.residual
+        self.nrm = nrm # this gets updated with each slice
         return nrm # to fit_fringes_all, where the output model will be created from list of nrm objects
 
         # output_model = datamodels.AmiLgModel(

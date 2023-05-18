@@ -7,6 +7,7 @@ from astropy.io import fits
 from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
+from . import mask_definitions
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -14,11 +15,11 @@ log.setLevel(logging.DEBUG)
 
 
 # define phi at the center of F430M band:
-phi_nb = np.array([0.028838669455909766, -0.061516214504502634,
-                   0.12390958557781348, -0.020389361461019516,
-                   0.016557347248600723, -0.03960017912525625,
-                   -0.04779984719154552])  # phi in waves
-phi_nb = phi_nb * 4.3e-6  # phi_nb in m
+# phi_nb = np.array([0.028838669455909766, -0.061516214504502634,
+#                    0.12390958557781348, -0.020389361461019516,
+#                    0.016557347248600723, -0.03960017912525625,
+#                    -0.04779984719154552])  # phi in waves
+# phi_nb = phi_nb * 4.3e-6  # phi_nb in m
 
 m = 1.0
 mm = 1.0e-3 * m
@@ -89,79 +90,55 @@ class NrmModel:
         self.over = over
         self.pixweight = pixweight
 
-        mask = "jwst"
-        self.maskname = mask
+        # mask = "jwst"
+        # self.maskname = mask
 
-        holedict = {}
-        # Assemble holes by actual open segment names. Either the full mask or
-        # the subset-of-holes mask will be V2-reversed after the as_designed
-        # centers are installed in the object.
-        allholes = ('b4', 'c2', 'b5', 'b2', 'c1', 'b6', 'c6')
-        holedict['b4'] = [0.00000000, -2.640000]       # B4 -> B4
-        holedict['c2'] = [-2.2863100, 0.0000000]       # C5 -> C2
-        holedict['b5'] = [2.2863100, -1.3200001]       # B3 -> B5
-        holedict['b2'] = [-2.2863100, 1.3200001]       # B6 -> B2
-        holedict['c1'] = [-1.1431500, 1.9800000]       # C6 -> C1
-        holedict['b6'] = [2.2863100, 1.3200001]       # B2 -> B6
-        holedict['c6'] = [1.1431500, 1.9800000]       # C1 -> C6
+        # get these from mask_definitions instead
+        if mask is None:
+            log.info("No mask name specified for model, using jwst_g7s6c")
+            mask = mask_definitions.NRM_mask_definitions(maskname="jwst_g7s6c", 
+                                    chooseholes=chooseholes, 
+                                    holeshape="hex")
+        elif isinstance(mask, str):
+            mask = mask_definitions.NRM_mask_definitions(maskname=mask, 
+                                    chooseholes=chooseholes, 
+                                    holeshape="hex")
+        self.ctrs = mask.ctrs
+        self.d = mask.hdia
+        self.D = mask.activeD
 
-        if mask.lower() == 'jwst':
-            if chooseholes is not False:
-                # holes B4 B5 C6 asbuilt for orientation testing
-                holelist = []
-                for h in allholes:
-                    if h in chooseholes:
-                        holelist.append(holedict[h])
-                self.ctrs_asdesigned = np.array(holelist)
-            else:
-                # the REAL THING - as_designed 7 hole, m in PM space,
-                #     no distortion, shape (7,2)
-                # below: as-designed -> as-built mapping
-                self.ctrs_asdesigned = np.array([
-                    [0.00000000, -2.640000],    # B4 -> B4
-                    [-2.2863100, 0.0000000],    # C5 -> C2
-                    [2.2863100, -1.3200001],    # B3 -> B5
-                    [-2.2863100, 1.3200001],    # B6 -> B2
-                    [-1.1431500, 1.9800000],    # C6 -> C1
-                    [2.2863100, 1.3200001],     # B2 -> B6
-                    [1.1431500, 1.9800000]])    # C1 -> C6
+        # if mask.lower() == 'jwst':
+        #     """
+        #     Preserve ctrs.as_designed (treat as immutable)
+        #     Reverse V2 axis coordinates to close C5 open C2, and others
+        #         follow suit...
+        #     Preserve ctrs.as_built  (treat as immutable)
+        #     """
+        #     self.ctrs_asbuilt = self.ctrs_asdesigned.copy()
 
-            self.d = 0.82 * m
-            self.D = 6.5 * m
-        else:
-            self.ctrs, self.d, self.D = np.array(mask.ctrs), mask.hdia, \
-                mask.activeD
+        #     # create 'live' hole centers in an ideal, orthogonal undistorted
+        #     #    xy pupil space,
+        #     # eg maps open hole C5 in as_designed to C2 as_built, eg C4
+        #     #    unaffected....
+        #     self.ctrs_asbuilt[:, 0] *= -1
 
-        if mask.lower() == 'jwst':
-            """
-            Preserve ctrs.as_designed (treat as immutable)
-            Reverse V2 axis coordinates to close C5 open C2, and others
-                follow suit...
-            Preserve ctrs.as_built  (treat as immutable)
-            """
-            self.ctrs_asbuilt = self.ctrs_asdesigned.copy()
+        #     # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
+        #     # no affine2d transformations 8/2018 AS
+        #     # LG++ The above aligns the hole pattern with the hex analytic FT,
+        #     # flat top & bottom as seen in DMS data. 8/2018 AS
+        #     # overwrites attributes:
+        #     self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi / 2.0)
 
-            # create 'live' hole centers in an ideal, orthogonal undistorted
-            #    xy pupil space,
-            # eg maps open hole C5 in as_designed to C2 as_built, eg C4
-            #    unaffected....
-            self.ctrs_asbuilt[:, 0] *= -1
-
-            # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
-            # no affine2d transformations 8/2018 AS
-            # LG++ The above aligns the hole pattern with the hex analytic FT,
-            # flat top & bottom as seen in DMS data. 8/2018 AS
-            # overwrites attributes:
-            self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi / 2.0)
-
-            # create 'live' hole centers in an ideal, orthogonal undistorted xy
-            #    pupil space,
-            self.ctrs = self.ctrs_asbuilt.copy()
+        #     # create 'live' hole centers in an ideal, orthogonal undistorted xy
+        #     #    pupil space,
+        #     self.ctrs = self.ctrs_asbuilt.copy()
 
         self.N = len(self.ctrs)
         self.datapath = datapath
         self.refdir = refdir
         self.fmt = "%10.4e"
+
+        # get latest OPD from WebbPSF?
 
         if phi:  # meters of OPD at central wavelength
             if phi == "perfect":
@@ -214,6 +191,7 @@ class NrmModel:
         Object's 'psf': float 2D array
             simulated psf
         '''
+        # why are we making this FITS object?
         self.simhdr = fits.PrimaryHDU().header
         # First set up conditions for choosing various parameters
         self.bandpass = bandpass
@@ -340,7 +318,7 @@ class NrmModel:
         return self.model
 
     def fit_image(self, image, reference=None, pixguess=None, rotguess=0,
-                  psf_offset=(0, 0), modelin=None, savepsfs=False):
+                  psf_offset=(0, 0), modelin=None, savepsfs=False, dqm=None, weighted=False):
         """
         Short Summary
         -------------
@@ -379,11 +357,18 @@ class NrmModel:
         savepsfs: boolean
             save the psfs for writing to file (currently unused)
 
+        dqm: 2D array
+            bad pixel mask of same dimensions as image
+
+        weighted: boolean
+            weight 
+
         Returns
         -------
         None
         """
         self.model_in = modelin
+        self.weighted = weighted
         self.saveval = savepsfs
 
         if modelin is None:  # No model provided
@@ -410,10 +395,13 @@ class NrmModel:
                                                 pixscale=self.pixel)
         else:
             self.fittingmodel = modelin
-
-        self.soln, self.residual, self.cond, \
-            self.linfit_result = \
-            leastsqnrm.matrix_operations(image, self.fittingmodel)
+        if self.weighted is False:
+            self.soln, self.residual, self.cond, \
+                self.linfit_result = \
+                leastsqnrm.matrix_operations(image, self.fittingmodel, dqm=dqm)
+        else:
+            self.soln, self.residual, self.cond, self.singvals = leastsqnrm.weighted_operations(image, \
+                            self.fittingmodel, dqm=dqm)
 
         self.rawDC = self.soln[-1]
         self.flux = self.soln[0]
