@@ -90,7 +90,7 @@ def create_hdul(detector='NRCALONG', channel='LONG', module='A',
     phdu.header['PUPIL'] = pupil
     phdu.header['MODULE'] = module
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2017-09-05'
+    phdu.header['date-obs'] = '2023-01-05'
     phdu.header['exp_type'] = exptype
     phdu.header['SUBARRAY'] = subarray
     phdu.header['SUBSIZE1'] = 2048

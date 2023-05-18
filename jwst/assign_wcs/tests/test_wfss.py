@@ -10,7 +10,7 @@ from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import SlitModel
 from stdatamodels.jwst.transforms import models as transforms
 
-from jwst.extract_2d.grisms import compute_wavelength_array
+from jwst.extract_2d.grisms import compute_wfss_wavelength
 
 import pytest
 
@@ -93,11 +93,15 @@ def niriss_models():
 
 
 def test_NIRCAMForwardRowGrismDispersion():
-    xmodels = [Polynomial1D(1, c0=0.59115385, c1=0.00038615),
+
+    xmodels = [Polynomial1D(1, c0=-1530.8917519, c1=2589.6672278),
+               Polynomial1D(1, c0=859.548063, c1=5179.2003315)]
+    inv_xmodels = [Polynomial1D(1, c0=0.59115385, c1=0.00038615),
                Polynomial1D(1, c0=-0.16596154, c1=0.00019308)]
     ymodels = [Polynomial1D(1, c0=0., c1=0.), Polynomial1D(1, c0=0., c1=0.)]
     lmodels = [Polynomial1D(1, c0=2.4, c1=2.6), Polynomial1D(1, c0=2.4, c1=2.6)]
-    model = transforms.NIRCAMForwardRowGrismDispersion([1, 2], lmodels, xmodels, ymodels)
+    model = transforms.NIRCAMForwardRowGrismDispersion(orders=[1, 2], lmodels=lmodels, xmodels=xmodels,
+                                                       inv_xmodels=inv_xmodels, ymodels=ymodels)
 
     x0 = 913.7
     y0 = 15.5
@@ -114,21 +118,24 @@ def test_NIRCAMForwardRowGrismDispersion():
 
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    wavelength = compute_wavelength_array(slit)  # x, y, np.zeros(x.shape)  +x0, np.zeros(y.shape)+y0, np.zeros(x.shape)+order)
+    wavelength = compute_wfss_wavelength(slit)  # x, y, np.zeros(x.shape)  +x0, np.zeros(y.shape)+y0, np.zeros(x.shape)+order)
     assert_allclose(wavelength, expected)
 
     with pytest.raises(ValueError):
         slit = create_nircam_slit(model, x0, y0, 3)
-        compute_wavelength_array(slit)
+        compute_wfss_wavelength(slit)
 
 
 def test_NIRCAMForwardColumnGrismDispersion():
-    ymodels = [Polynomial1D(1, c0=0.5911538461431823, c1=0.000386153846153726),
+    inv_ymodels = [Polynomial1D(1, c0=0.5911538461431823, c1=0.000386153846153726),
                Polynomial1D(1, c0=-0.1659615384582264, c1=0.0001930769230768787)]
+    ymodels = [Polynomial1D(1, c0=-1530.876494, c1=2589.6414343),
+               Polynomial1D(1, c0=859.561752971091267, c1=5179.282868527086824)]
 
     xmodels = [Polynomial1D(1, c0=0., c1=0.), Polynomial1D(1, c0=0., c1=0.)]
     lmodels = [Polynomial1D(1, c0=2.4, c1=2.6), Polynomial1D(1, c0=2.4, c1=2.6)]
-    model = transforms.NIRCAMForwardColumnGrismDispersion([1, 2], lmodels, xmodels, ymodels)
+    model = transforms.NIRCAMForwardColumnGrismDispersion(orders=[1, 2], lmodels=lmodels, xmodels=xmodels,
+                                                          ymodels=ymodels, inv_ymodels=inv_ymodels)
 
     x0 = 913.7
     y0 = 15.5
@@ -144,12 +151,12 @@ def test_NIRCAMForwardColumnGrismDispersion():
 
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    wavelength = compute_wavelength_array(slit)  # x, y, np.zeros(x.shape)  +x0, np.zeros(y.shape)+y0, np.zeros(x.shape)+order)
+    wavelength = compute_wfss_wavelength(slit)  # x, y, np.zeros(x.shape)  +x0, np.zeros(y.shape)+y0, np.zeros(x.shape)+order)
     assert_allclose(wavelength, expected)
 
     with pytest.raises(ValueError):
         slit = create_nircam_slit(model, x0, y0, 3)
-        compute_wavelength_array(slit)
+        compute_wfss_wavelength(slit)
 
 
 def test_NIRCAMBackwardDispersion():
@@ -167,9 +174,12 @@ def test_NIRCAMBackwardDispersion():
 
     xmodels = [Polynomial1D(1, c0=0., c1=0.),
                Polynomial1D(1, c0=0., c1=0.)]
-    lmodels = [Polynomial1D(1, c0=-0.923076923076923, c1=0.3846153846153846),
+    inv_lmodels = [Polynomial1D(1, c0=-0.923076923076923, c1=0.3846153846153846),
                Polynomial1D(1, c0=-0.923076923076923, c1=0.3846153846153846)]
-    model = transforms.NIRCAMBackwardGrismDispersion([1, 2], lmodels, xmodels, ymodels)
+    lmodels = [Polynomial1D(1, c0=2.4, c1=2.6),
+               Polynomial1D(1, c0=2.4, c1=2.6)]
+    model = transforms.NIRCAMBackwardGrismDispersion(orders=[1, 2], lmodels=lmodels, xmodels=xmodels,
+                                                     ymodels=ymodels, inv_lmodels=inv_lmodels)
     wavelength = np.array([[4.724638, 4.724638, 4.724638, 4.724638, 4.724638, 4.724638],
                            [4.725642, 4.725642, 4.725642, 4.725642, 4.725642, 4.725642],
                            [4.726646, 4.726646, 4.726646, 4.726646, 4.726646, 4.726646],
@@ -289,7 +299,7 @@ def test_NIRISSForwardRowGrismDispersion(niriss_models):
     slit = create_niriss_slit(model, x0, y0, order)
     slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
 
-    wavelength = compute_wavelength_array(slit)
+    wavelength = compute_wfss_wavelength(slit)
     expected = np.array(
         [[-41.26984722, -41.31631533, -41.36278344, -41.40925155,
           -41.45571966, -41.50218777, -41.54865588],
@@ -307,7 +317,7 @@ def test_NIRISSForwardRowGrismDispersion(niriss_models):
           -41.45571966, -41.50218777, -41.54865588]])
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    wavelength = compute_wavelength_array(slit)
+    wavelength = compute_wfss_wavelength(slit)
     assert_allclose(wavelength, expected)
 
 #
@@ -343,5 +353,5 @@ def test_NIRISSForwardRowGrismDispersion(niriss_models):
 #
 #     # refactored call
 #     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-#     wavelength = compute_wavelength_array(slit)
+#     wavelength = compute_wfss_wavelength(slit)
 #     assert_allclose(wavelength, expected)
