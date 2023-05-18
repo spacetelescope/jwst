@@ -24,7 +24,7 @@ background
 cube_build
 ----------
 
-- Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. #7586
+- Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
 
 datamodels
 ----------
