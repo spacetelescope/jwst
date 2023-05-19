@@ -18,15 +18,19 @@ associations
 background
 ----------
 
-- Mask out NaN pixels before removing outlier values and calculating mean in
+- Mask out NaN pixels in WFSS images before removing outlier values and calculating mean in
   ``robust_mean`` function. [#7587]
+
+cube_build
+----------
+
+- Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
 
 datamodels
 ----------
 
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
-
 
 documentation
 -------------
