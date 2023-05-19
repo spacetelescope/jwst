@@ -3,11 +3,12 @@ from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
 from astropy.modeling.models import Shift, Scale, RotationSequence3D, Identity
-from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
+from astropy.coordinates.matrix_utilities import rotation_matrix
 from gwcs import utils as gwutils
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
+from functools import reduce
 
 from stdatamodels.jwst.datamodels import JwstDataModel
 
@@ -79,7 +80,7 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
         axes = "zyxyz"
 
     matrices = [rotation_matrix(a, ax) for a, ax in zip(angles, axes)]
-    m = matrix_product(*matrices[::-1])
+    m = reduce(np.matmul, matrices[::-1])
     return _roll_angle_from_matrix(m, v2, v3)
 
 
