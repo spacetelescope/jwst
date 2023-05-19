@@ -98,12 +98,17 @@ srctype
 
 - The SRCTYAPT takes precedence over PATTTYPE when setting the source type for
   MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, 'MIR_MRS', NRC_TSGRISM, NRS_FIXEDSLIT, NRS_BRIGHTOBJ, NRS_IFU. [#7583]
-  
+
 tweakreg
 --------
 
 - Fixed a bug in the ``tweakreg`` step that resulted in an exception when
   using custom catalogs with ASN file name input. [#7578]
+
+- Added a tool ``transfer_wcs_correction`` to ``jwst.tweakreg.utils`` that
+  allows transferring alignment corrections from one file/data model to
+  another. It is an analog of the ``tweakback`` task in the
+  ``drizzlepac``. [#7573]
 
 
 1.10.2 (2023-04-14)
