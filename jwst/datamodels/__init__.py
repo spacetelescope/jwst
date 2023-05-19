@@ -14,7 +14,6 @@ from stdatamodels.jwst.datamodels.cube import CubeModel
 from stdatamodels.jwst.datamodels.dark import DarkModel
 from stdatamodels.jwst.datamodels.darkMIRI import DarkMIRIModel
 from stdatamodels.jwst.datamodels.drizpars import DrizParsModel
-from stdatamodels.jwst.datamodels.drizproduct import DrizProductModel
 from stdatamodels.jwst.datamodels.extract1dimage import Extract1dImageModel
 from stdatamodels.jwst.datamodels.extract1d_spec import Extract1dIFUModel
 from stdatamodels.jwst.datamodels.flat import FlatModel
@@ -34,12 +33,10 @@ from stdatamodels.jwst.datamodels.lastframe import LastFrameModel
 from stdatamodels.jwst.datamodels.level1b import Level1bModel
 from stdatamodels.jwst.datamodels.linearity import LinearityModel
 from stdatamodels.jwst.datamodels.mask import MaskModel
-from stdatamodels.jwst.datamodels.ramp import MIRIRampModel
 from stdatamodels.jwst.datamodels.mrsxartcorr import MirMrsXArtCorrModel
 from stdatamodels.jwst.datamodels.multicombinedspec import MultiCombinedSpecModel
 from stdatamodels.jwst.datamodels.multiexposure import MultiExposureModel
 from stdatamodels.jwst.datamodels.multiextract1d import MultiExtract1dImageModel
-from stdatamodels.jwst.datamodels.multiprod import MultiProductModel
 from stdatamodels.jwst.datamodels.multislit import MultiSlitModel
 from stdatamodels.jwst.datamodels.multispec import MultiSpecModel
 from stdatamodels.jwst.datamodels.nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
@@ -107,7 +104,6 @@ __all__ = [
     'DarkModel', 'DarkMIRIModel',
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
     'DrizParsModel',
-    'DrizProductModel',
     'Extract1dImageModel',
     'Extract1dIFUModel',
     'FilteroffsetModel',
@@ -123,7 +119,6 @@ __all__ = [
     'LinearityModel', 'MaskModel', 'MSAModel',
     'MultiCombinedSpecModel', 'MultiExposureModel',
     'MultiExtract1dImageModel', 'MultiSlitModel',
-    'MultiProductModel',
     'MultiSpecModel',
     'NIRCAMGrismModel', 'NIRISSGrismModel',
     'OTEModel',
@@ -137,7 +132,7 @@ __all__ = [
     'NisImgPhotomModel', 'NisSossPhotomModel', 'NisWfssPhotomModel',
     'NrsFsPhotomModel', 'NrsMosPhotomModel',
     'PsfMaskModel',
-    'QuadModel', 'RampModel', 'MIRIRampModel',
+    'QuadModel', 'RampModel', 
     'RampFitOutputModel', 'ReadnoiseModel',
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'RegionsModel', 'ResetModel',

@@ -13,6 +13,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_WFSC,
     format_list,
     item_getattr,
+    nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
     nrslamp_valid_detector,
@@ -24,6 +25,7 @@ from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
+    'Asn_Lv2CoronAsRate',
     'Asn_Lv2FGS',
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
@@ -53,6 +55,57 @@ logger.addHandler(logging.NullHandler())
 # Start of the User-level rules
 # --------------------------------
 @RegistryMarker.rule
+class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
+    """Create normal rate products for some coronographic data
+
+    Characteristics;
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - NIRCam Coronagraphic
+        - Only subarray=Full exposures
+        - Treat as non-timeseries, producing "rate" products
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrc_coron',
+            ),
+            DMSAttrConstraint(
+                name='subarray',
+                sources=['subarray'],
+                value='full',
+            ),
+            SimpleConstraint(
+                value=True,
+                sources=nrccoron_valid_detector,
+            ),
+            Constraint(
+                [
+                    Constraint_Background(),
+                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                ], reduce=Constraint.any
+            ),
+        ])
+
+        # Now check and continue initialization.
+        super().__init__(*args, **kwargs)
+
+    def is_item_coron(self, item):
+        """Override to always return false
+
+        The override will force `make_member` to create a "rate"
+        product instead of a "rateints" product.
+        """
+        return False
+
+
+@RegistryMarker.rule
 class Asn_Lv2Image(
         AsnMixin_Lv2Image,
         DMSLevel2bBase
@@ -65,6 +118,7 @@ class Asn_Lv2Image(
         - Image-based science exposures
         - Single science exposure
         - Non-TSO
+        - Non-coronagraphic
     """
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +129,9 @@ class Asn_Lv2Image(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint(
-                [Constraint_TSO()],
+                [
+                    Constraint_TSO(),
+                ],
                 reduce=Constraint.notany
             ),
             Constraint(

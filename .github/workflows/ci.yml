@@ -65,15 +65,22 @@ jobs:
       envs: |
         - linux: test-oldestdeps-xdist-cov
           python-version: 3.9
+          pytest-results-summary: true
         - linux: test-xdist
           python-version: 3.9
+          pytest-results-summary: true
         - linux: test-sdpdeps-xdist
           python-version: 3.9
+          pytest-results-summary: true
         - linux: test-xdist
           python-version: 3.10
+          pytest-results-summary: true
         - linux: test-xdist
           python-version: 3.11
+          pytest-results-summary: true
         - macos: test-xdist
           python-version: 3.11
+          pytest-results-summary: true
         - linux: test-xdist-cov
           coverage: codecov
+          pytest-results-summary: true

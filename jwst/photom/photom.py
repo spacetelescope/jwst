@@ -274,22 +274,18 @@ class DataSet():
                 tabdata = ftab.phot_table[row]
 
                 # Get the scalar conversion factor from the PHOTMJ column;
-                # Note that this is the conversion to flux units, which is
-                # appropriate for a POINT source
                 conv_factor = tabdata['photmj']
                 unit_is_surface_brightness = False
 
-                # Figure out if the calibration needs to be converted to surface
-                # brightness units, which is done if the source is extended.
-                if self.source_type is None or self.source_type.upper() != 'POINT':
-                    if self.input.meta.photometry.pixelarea_steradians is None:
-                        log.warning("Pixel area is None, so can't convert "
-                                    "flux to surface brightness!")
-                    else:
-                        log.debug("Converting conversion factor from flux "
-                                  "to surface brightness")
-                        conv_factor /= self.input.meta.photometry.pixelarea_steradians
-                        unit_is_surface_brightness = True
+                # Convert to surface brightness units for all types of data
+                if self.input.meta.photometry.pixelarea_steradians is None:
+                    log.warning("Pixel area is None, so can't convert "
+                                "flux to surface brightness!")
+                else:
+                    log.debug("Converting conversion factor from flux "
+                              "to surface brightness")
+                    conv_factor /= self.input.meta.photometry.pixelarea_steradians
+                    unit_is_surface_brightness = True
 
                 # Populate the photometry keywords
                 log.info(f'PHOTMJSR value: {conv_factor:.6g}')
@@ -328,11 +324,9 @@ class DataSet():
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
                 sens2d *= tabdata['photmj']  # include the initial scalar conversion factor -> MJ
-                # This line used to be applied to all IFU data, but I think this was an error -
-                # masked by the fact that the initial pixel area maps for IFU data were
-                # arrays of 1-values (in arcsec**2). If srctype==POINT, do not apply.
-                if self.source_type.upper() != 'POINT':
-                    sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJ/sr
+                # convert all data (both point source and extended) to surface brightness
+                sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJy/sr
+
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
                 where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])

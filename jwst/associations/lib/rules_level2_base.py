@@ -15,7 +15,6 @@ from jwst.associations import (
     libpath
 )
 from jwst.associations.exceptions import AssociationNotValidError
-from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
     Constraint,
@@ -33,10 +32,11 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
-from jwst.associations.lib.product_utils import prune_duplicate_products
+from jwst.associations.lib.prune import prune
 from jwst.associations.lib.rules_level3_base import _EMPTY, DMS_Level3_Base
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
+from jwst.associations.registry import RegistryMarker
 from jwst.lib.suffix import remove_suffix
 
 # Configure logging
@@ -170,22 +170,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         limit_reached = len(self.members_by_type('science')) >= 1
         return limit_reached
 
-    def __eq__(self, other):
-        """Compare equality of two associations"""
-        if isinstance(other, DMSLevel2bBase):
-            result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.member_ids == other.member_ids)
-            return result
-
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        if isinstance(other, DMSLevel2bBase):
-            return not self.__eq__(other)
-
-        return NotImplemented
-
     def dms_product_name(self):
         """Define product name."""
         try:
@@ -222,15 +206,17 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             exposerr = None
 
         # Create the member.
-        # `is_item_tso` is used to determine whether the name should
-        # represent the integrations form of the data.
-        # Though coronagraphic data is not TSO,
-        # it does remain in the separate integrations.
+        # The various `is_item_xxx` methods are used to determine whether the name
+        # should represent the form of the data product containing all integrations.
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(
                     item['filename'],
-                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+                    use_integrations=(self.is_item_coron(item) |
+                                      # NIS_AMI currently uses rate files;
+                                      # uncomment the next line to switch to rateints
+                                      # self.is_item_ami(item) |
+                                      self.is_item_tso(item)),
                 ),
                 'exptype': self.get_exposure_type(item),
                 'exposerr': exposerr,
@@ -572,7 +558,7 @@ class Utility():
         # Suppress warnings.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            lv2_asns = prune_duplicate_products(lv2_asns)
+            lv2_asns = prune(lv2_asns)
 
         # Ensure sequencing is correct.
         Utility_Level3.resequence(lv2_asns)
@@ -614,9 +600,8 @@ class Utility():
         level1b_name : str
             The Level 1b exposure name.
 
-        is_integrations : boolean
-            Use 'rateints' instead of 'rate' as
-            the suffix.
+        use_integrations : boolean
+            Use 'rateints' instead of 'rate' as the suffix.
 
         Returns
         -------

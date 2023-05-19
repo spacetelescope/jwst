@@ -307,8 +307,11 @@ def robust_mean(x, lowlim=25., highlim=75.):
         percentile limits.
     """
 
-    limits = np.percentile(x, (lowlim, highlim))
-    mask = np.logical_and(x >= limits[0], x <= limits[1])
-    mean_value = x[mask].mean(dtype=float)
+    nan_mask = np.isnan(x)
+    cleaned_x = x[~nan_mask]
+    limits = np.percentile(cleaned_x, (lowlim, highlim))
+    mask = np.logical_and(cleaned_x >= limits[0], cleaned_x <= limits[1])
+
+    mean_value = np.mean(cleaned_x[mask], dtype=float)
 
     return mean_value

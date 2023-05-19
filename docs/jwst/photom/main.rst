@@ -134,7 +134,7 @@ It then uses the scalar conversion constant, the 1-D wavelength and relative
 response, and pixel area data to compute a 2-D sensitivity map (pixel-by-pixel)
 for the entire science image. The 2-D SCI and ERR arrays in the science
 exposure are multiplied by the 2D sensitivity map, which converts the science
-pixels from countrate to either flux density or surface brightness.
+pixels from countrate to surface brightness.
 Variance arrays are multiplied by the square of the conversion factors.
 
 MIRI MRS
