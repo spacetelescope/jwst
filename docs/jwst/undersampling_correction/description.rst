@@ -19,7 +19,7 @@ ultimately leads to a lower than normal flux for the star in resampled images.
 
 Once a group in a ramp has been flagged as affected by charge migration, all subsequent 
 groups in the ramp are also flagged. By flagging these groups, they are not used in the 
-computation of slopes in the :ref:`ramp_fitting <ramp_fitting>` step. However, as described 
+computation of slopes in the :ref:`ramp_fitting <ramp_fit>` step. However, as described 
 in the algorithm section below, they _are_ used in the calculation of the variance of the slope 
 due to readnoise.
 
@@ -39,7 +39,7 @@ as DO_NOT_USE, these UNDERSAMP groups are still included in the calculation of t
 variance due to readnoise. 
 This results in a readnoise variance for undersampled pixels that is similar to that of 
 pixels unaffected by charge migration. For the Poisson noise variance calculation in 
-:ref:`ramp_fitting <ramp_fitting>`, the UNDERSAMP/DO_NOT_USE groups are not included.
+:ref:`ramp_fitting <ramp_fit>`, the UNDERSAMP/DO_NOT_USE groups are not included.
 
 For integrations having only 1 or 2 groups, no flagging will be performed.
 
