@@ -216,6 +216,8 @@ documentation
 
 - Clarify ``jump`` arguments documentation, and correct typos. [#7518]
 
+- Update description of ``undersampling`` step to improve readability. [#7589]
+
 dq_init
 -------
 
