@@ -6,7 +6,7 @@ import numpy as np
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.linearfit import build_fit_matrix
 
-from ..datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel
 from ..assign_wcs.util import update_fits_wcsinfo
 from ..assign_wcs.pointing import _v23tosky
 
@@ -15,15 +15,15 @@ _RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
 
 
 def _wcsinfo_from_wcs_transform(wcs):
-    frms = wcs.available_frames
-    if 'v2v3' not in frms or 'world' not in frms or frms[-1] != 'world':
+    frames = wcs.available_frames
+    if 'v2v3' not in frames or 'world' not in frames or frames[-1] != 'world':
         raise ValueError(
             "Unsupported WCS structure."
         )
 
     # Initially get v2_ref, v3_ref, and roll_ref from
     # the v2v3 to world transform. Also get ra_ref, dec_ref
-    t = wcs.get_transform(frms[-2], 'world')
+    t = wcs.get_transform(frames[-2], 'world')
     for m in t:
         if isinstance(m, RotationSequence3D) and m.parameters.size == 5:
             v2_ref, nv3_ref, roll_ref, dec_ref, nra_ref = m.angles.value
@@ -35,10 +35,10 @@ def _wcsinfo_from_wcs_transform(wcs):
 
     # overwrite v2_ref, v3_ref, and roll_ref with
     # values from the tangent plane when available:
-    if 'v2v3corr' in frms:
+    if 'v2v3corr' in frames:
         # get v2_ref, v3_ref, and roll_ref from
         # the v2v3 to v2v3corr transform:
-        frm1 = 'v2v3vacorr' if 'v2v3vacorr' in frms else 'v2v3'
+        frm1 = 'v2v3vacorr' if 'v2v3vacorr' in frames else 'v2v3'
         tpcorr = wcs.get_transform(frm1, 'v2v3corr')
         v2_ref, nv3_ref, roll_ref = tpcorr['det_to_optic_axis'].angles.value
 

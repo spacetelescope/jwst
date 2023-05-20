@@ -108,7 +108,7 @@ tweakreg
 - Added a tool ``transfer_wcs_correction`` to ``jwst.tweakreg.utils`` that
   allows transferring alignment corrections from one file/data model to
   another. It is an analog of the ``tweakback`` task in the
-  ``drizzlepac``. [#7573]
+  ``drizzlepac``. [#7573, #7591]
 
 
 1.10.2 (2023-04-14)

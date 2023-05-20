@@ -10,7 +10,7 @@ from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.linearfit import build_fit_matrix
 
 from jwst.tweakreg.tests import data
-from jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel
 from jwst.tweakreg.utils import (
     adjust_wcs,
     transfer_wcs_correction,
