@@ -388,7 +388,8 @@ class OutlierDetection:
     def detect_outliers_ifu(self, inputs):
         # Update in dq and science flags
         self.input_models = inputs  
-        
+
+        # this is to check the numbers 
         for i in range(len(self.input_models)):
             model = datamodels.open(self.input_models[i])
             sci = model.data

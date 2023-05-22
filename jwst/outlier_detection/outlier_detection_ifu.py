@@ -80,39 +80,33 @@ class OutlierDetectionIFU(OutlierDetection):
         The optional OutlierOutputModel to be returned from the outlier_detection_ifu step.
         """
         (diffarr, minarr, normarr, minnorm) = opt_info
-    
+        
         opt_model = datamodels.OutlierIFUOutputModel(
             diffarr=diffarr,
             minarr=minarr,
             normarr=normarr,
             minnorm=minnorm)
-
-
         return opt_model
 
 
     def _find_detector_parameters(self):
-        print('Instrument', self.input_models[0].meta.instrument.name.upper())
-        
         if self.input_models[0].meta.instrument.name.upper() == 'MIRI':
             diffaxis = 1
         elif self.input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
             diffaxis = 0
             
         ny,nx = self.inputs[0].data.shape
-        print('Shape of array', ny, nx)
         return (diffaxis, ny, nx)
 
     def convert_inputs(self):
-        self.input_models = self.inputs.copy()
+        self.input_models = self.inputs
         self.converted = False
-    
+                        
     def do_detection(self):
+        """Split data by detector to find outliers."""
         self.convert_inputs()
-        log.info("Flagging outliers")
 
         self.build_suffix(**self.outlierpars)
-        print('Suffix ', self.resample_suffix)
         save_intermediate_results = \
             self.outlierpars['save_intermediate_results']
 
@@ -121,44 +115,73 @@ class OutlierDetectionIFU(OutlierDetection):
         kern_size = np.zeros(2, dtype = int)
         kern_size[0]=  sizex
         kern_size[1] = sizey
-        print(kern_size)
-        print(type(kern_size))
-        
+
         threshold_percent = self.outlierpars['threshold_percent']
-
         (diffaxis, ny, nx) = self._find_detector_parameters()
+
+        nfiles = len(self.input_models)
+        detector=np.empty(nfiles,dtype='<U15')
+        for i, model in enumerate(self.input_models):
+            detector[i] = model.meta.instrument.detector.lower()
+
+        exptype = self.input_models[0].meta.exposure.type
+        log.info("Performing IFU outlier_detection for exptype {}".format(
+                 exptype))
+        # How many unique values of detector?
+        uq_det=np.unique(detector)
+        ndet=len(uq_det)
+        for idet in range(ndet):
+            indx=(np.where(detector == uq_det[idet]))[0]
+            ndet_files = int(len(indx))
+            self.flag_outliers(idet, uq_det, ndet_files,
+                               diffaxis, nx, ny,
+                               kern_size, threshold_percent,
+                               save_intermediate_results)
+
+        # send input_models back - that is what is returned from outlier_detection.py
+        self.detect_outliers_ifu(self.input_models)            
         
-        # set up array to hold group differences 
-        n = len(self.input_models)
-        diffarr = np.zeros([n,ny,nx])
+    def flag_outliers(self, idet, uq_det, ndet_files,
+                      diffaxis, nx, ny,
+                      kern_size, threshold_percent,
+                      save_intermediate_results):
+        """Flag outlier pixels in DQ of input images."""
+        
+        # set up array to hold group differences
+        diffarr = np.zeros([ndet_files, ny, nx])
+        print('working on detector', uq_det[idet])
 
-
+        j = 0 
         for i, model in enumerate(self.input_models):
             sci = model.data
             dq = model.dq
-            bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
-            sci[bad] = np.nan
+            detector = model.meta.instrument.detector.lower()
+            # only use data from the same detector
+            if detector == uq_det[idet]:
+                bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
+                sci[bad] = np.nan
 
-            # Compute left and right differences (MIRI dispersion axis = 1)
-            # For NIRSpec dispersion axis = 0, these differences are top, bottom
-            # prepend = 0 has the effect of keeping the same shape as sci and
-            # for MIRI data (disp axis = 1) the first column = sci data
-            # OR
-            # for NIRSpec data (disp axis = 0) the first row = sci data
-            leftdiff=np.diff(sci,axis=diffaxis,prepend=0)
+                # Compute left and right differences (MIRI dispersion axis = 1)
+                # For NIRSpec dispersion axis = 0, these differences are top, bottom
+                # prepend = 0 has the effect of keeping the same shape as sci and
+                # for MIRI data (disp axis = 1) the first column = sci data
+                # OR
+                # for NIRSpec data (disp axis = 0) the first row = sci data
+                leftdiff=np.diff(sci,axis=diffaxis,prepend=0)
 
-            flip=np.flip(sci,axis=diffaxis)
-            rightdiff=np.diff(flip,axis=diffaxis,prepend=0)
-            rightdiff=np.flip(rightdiff,axis=diffaxis)
+                flip=np.flip(sci,axis=diffaxis)
+                rightdiff=np.diff(flip,axis=diffaxis,prepend=0)
+                rightdiff=np.flip(rightdiff,axis=diffaxis)
 
-            # Combine left and right differences with minimum of the abs value
-            # to avoid artifacts from bright edges
-            comb=np.zeros([2,ny,nx])
-            comb[0,:,:]=np.abs(leftdiff)
-            comb[1,:,:]=np.abs(rightdiff)
-            combdiff=np.nanmin(comb,axis=0)
+                # Combine left and right differences with minimum of the abs value
+                # to avoid artifacts from bright edges
+                comb=np.zeros([2,ny,nx])
+                comb[0,:,:]=np.abs(leftdiff)
+                comb[1,:,:]=np.abs(rightdiff)
+                combdiff=np.nanmin(comb,axis=0)
 
-            diffarr[i,:,:]=combdiff
+                diffarr[j,:,:]=combdiff
+                j = j + 1
 
         # minarr final minimum combined differences, size: ny X nx
         minarr=np.nanmin(diffarr,axis=0)
@@ -170,24 +193,21 @@ class OutlierDetectionIFU(OutlierDetection):
         minarr_norm=minarr/normarr
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin=np.nanpercentile(minarr_norm[4:ny-4,4:nx-4],threshold_percent)
-        print('Percentile min: ',threshold_percent,pctmin)
-
-        if save_intermediate_results:
-            opt_info = (diffarr, minarr, normarr, minarr_norm)
-            
-            opt_model = self.create_optional_results_model(opt_info)
-
-            opt_model.meta.filename = self.make_output_path(
-                    basepath=self.input_models.meta.asn_table.products[0].name,
-                    suffix='outlier_output')
-            print('output filename', opt_model.meta.filename)
-            opt_model.save(opt_model.meta.filename)
-              
-
+        log.info("Flag pixels with values above {}: ".format(threshold_percent,pctmin))
         # Flag everything above this percentile value
         indx=np.where(minarr_norm > pctmin)
-        print('number of flagged pixels', len(indx[0]))
-        print(indx)
+        log.info("Number of outlier pixels flagged: {}".format(
+                len(indx[0])))
+            
+        if save_intermediate_results:
+            opt_info = (diffarr, minarr, normarr, minarr_norm)        
+            opt_model = self.create_optional_results_model(opt_info)
+            opt_model.meta.filename = self.make_output_path(
+                basepath=self.input_models.meta.asn_table.products[0].name,
+                suffix=detector + '_outlier_output')
+            log.info("Writing out intermediate outlier file {}".format(opt_model.meta.filename))
+            opt_model.save(opt_model.meta.filename)
+              
         del diffarr
 
         # Update DQ flag
@@ -195,33 +215,22 @@ class OutlierDetectionIFU(OutlierDetection):
             model = datamodels.open(self.input_models[i])
             sci = model.data
             dq = model.dq
-            count_existing = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
+            detector = model.meta.instrument.detector.lower()
+            # only use data from the same detector
+            if detector == uq_det[idet]:
+                count_existing = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
 
-            sci[indx]=np.nan
-            dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
-            dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
+                sci[indx]=np.nan
+                dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
+                dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
            
-            # Report number (and percent) of new DO_NOT_USE pixels found
-            count_outlier = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
-            count_added = count_outlier - count_existing
-            percent_cr = count_added / (model.data.shape[0] * model.data.shape[1]) * 100
-            log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
-            # update model
-            model.dq = dq
-            model.data = sci
-            self.input_models[i] = model
-            
-            count_check = np.count_nonzero(self.input_models[i].dq & dqflags.pixel['DO_NOT_USE'])
-            print('before outlier', count_existing)
-            print('number outlier', count_outlier)
-            print('number check', count_check)
+                # Report number (and percent) of new DO_NOT_USE pixels found
+                count_outlier = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
+                count_added = count_outlier - count_existing
+                percent_cr = count_added / (model.data.shape[0] * model.data.shape[1]) * 100
+                log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
+                # update model
+                model.dq = dq
+                model.data = sci
+                self.input_models[i] = model
             model.close()
-            
-        # send input_models back - that is what is returned from outlier_detection.py
-        
-        self.detect_outliers_ifu(self.input_models)
-
-class ErrorWrongInstrument(Exception):
-    """ Raises an exception if the instrument is not MIRI or NIRSPEC
-    """
-    pass

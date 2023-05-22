@@ -167,7 +167,6 @@ class OutlierDetectionStep(Step):
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
-            print('in outlier detection_step')
             step.do_detection()
 
             state = 'COMPLETE'
@@ -176,15 +175,6 @@ class OutlierDetectionStep(Step):
                     model.meta.cal_step.outlier_detection = state
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
-            ### added for checking
-            print('in outlier_detection_step')
-            for model in self.input_models:
-                sci = model.data
-                dq = model.dq
-                count = np.count_nonzero(model.dq & datamodels.dqflags.pixel['DO_NOT_USE'])
-                print('outlier numbers', count)    # this number is not the one with extra outliers flagged
-                model.close()
-            ### added for checking
             return self.input_models
 
     def check_input(self):
