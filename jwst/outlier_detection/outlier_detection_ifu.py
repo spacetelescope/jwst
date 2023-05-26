@@ -5,7 +5,7 @@ from stsci.image import median
 from astropy.stats import sigma_clipped_stats
 
 from stdatamodels.jwst import datamodels
-from scipy.signal import medfilt
+from scipy.signal import medfilt, medfilt2d
 
 from .outlier_detection import OutlierDetection
 from jwst.datamodels import ModelContainer
@@ -185,26 +185,36 @@ class OutlierDetectionIFU(OutlierDetection):
 
         # minarr final minimum combined differences, size: ny X nx
         minarr=np.nanmin(diffarr,axis=0)
-
+        print(minarr[502,478])
+        print(minarr[500:504, 477:481])
         # Normalise the differences to a local median image to deal with ultra-bright sources
+        print(type(minarr))
         normarr=medfilt(minarr,kernel_size=kern_size)
+        print('normarr', normarr[502,478])
+        print(normarr[500:504, 477:481])
         nfloor=np.nanmedian(minarr)/3
+        print(nfloor)
         normarr[normarr < nfloor] = nfloor # Ensure we never divide by a tiny number
+        print('normarr', normarr[502,478])
         minarr_norm=minarr/normarr
+        
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin=np.nanpercentile(minarr_norm[4:ny-4,4:nx-4],threshold_percent)
-        log.info("Flag pixels with values above {}: ".format(threshold_percent,pctmin))
+        print('pctmin', pctmin)
+        log.info("Flag pixels with values above {} {}: ".format(threshold_percent,pctmin))
         # Flag everything above this percentile value
         indx=np.where(minarr_norm > pctmin)
+        print(minarr_norm[500:504, 477:481])
         log.info("Number of outlier pixels flagged: {}".format(
                 len(indx[0])))
             
         if save_intermediate_results:
+            detector_name = uq_det[idet]
             opt_info = (diffarr, minarr, normarr, minarr_norm)        
             opt_model = self.create_optional_results_model(opt_info)
             opt_model.meta.filename = self.make_output_path(
                 basepath=self.input_models.meta.asn_table.products[0].name,
-                suffix=detector + '_outlier_output')
+                suffix=detector_name + '_outlier_output')
             log.info("Writing out intermediate outlier file {}".format(opt_model.meta.filename))
             opt_model.save(opt_model.meta.filename)
               
