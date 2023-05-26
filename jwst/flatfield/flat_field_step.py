@@ -104,9 +104,9 @@ class FlatFieldStep(Step):
 
             # Record the user-supplied flat as the FLAT reference type for recording
             # in the result header.
-            self._reference_files_used.append(
-                ('flat', reference_file_models['user_supplied_flat'].meta.filename)
-            )
+            flat_ref_file = reference_file_models['user_supplied_flat'].meta.filename
+            self._reference_files_used.append(('flat', flat_ref_file))
+            self.log.info(f'Using flat field reference file: ', flat_ref_file)
         elif self.use_correction_pars:
             self.log.info(f'Using flat field from correction pars {self.correction_pars["flat"]}')
             reference_file_models = {
