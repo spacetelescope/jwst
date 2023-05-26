@@ -34,6 +34,8 @@ The "NO_SAT_CHECK" flag is propagated to the
 PIXELDQ array in the output science data to indicate which pixels fall into
 this category.
 
+.. _charge_migration:
+
 Charge Migration
 ----------------
 There is an effect in IR detectors that results in charge migrating (spilling)
