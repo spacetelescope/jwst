@@ -37,12 +37,10 @@ class OutlierDetectionIFU(OutlierDetection):
             The neighbor pixel  differences are defined by the dispersion axis.
             For MIRI (disp axis = 1) the neighbors to find differences  are to the left and right of pixel
             For NIRSpec (disp axis = 0) the neighbors to find the differences are above and below the pixel
-
-      3. For each input file store the  minimum of the two diferences
-      4. Comparing all the differences from all the input data find the minimum difference
+      3. For each input file store the  minimum of the pixel neighbor differences
+      4. Comparing all the differences from all the input data find the minimum neighbor difference
       5. Normalize minimum difference to local median of difference array
       6. select outliers by flagging those normailzed minimum values > thershold_percent
-
       7. Updates input ImageModel DQ arrays with mask of detected outliers.
 
     """
@@ -79,12 +77,16 @@ class OutlierDetectionIFU(OutlierDetection):
         opt_model: OultierOutputModel
         The optional OutlierOutputModel to be returned from the outlier_detection_ifu step.
         """
-        (diffarr, minarr, normarr, minnorm) = opt_info
+        (kernsize_x, kernsize_y, threshold_percent,
+         diffarr, minarr, normarr, minnorm) = opt_info
         opt_model = datamodels.OutlierIFUOutputModel(
             diffarr=diffarr,
             minarr=minarr,
             normarr=normarr,
             minnorm=minnorm)
+        opt_model.meta.kernel_xsize = kernsize_x
+        opt_model.meta.kernel_ysize = kernsize_y
+        opt_model.meta.threshold_percent = threshold_percent
         return opt_model
 
     def _find_detector_parameters(self):
@@ -113,6 +115,16 @@ class OutlierDetectionIFU(OutlierDetection):
         kern_size[0] = sizex
         kern_size[1] = sizey
 
+        # check if kernel size is an odd value
+        if kern_size[0] % 2 == 0:
+            log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
+            kern_size[0] = kern_size[0] + 1
+            log.info("New x kernel size is {}: ".format(kern_size[0]))
+        if kern_size[1] % 2 == 0:
+            log.info("Y kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
+            kern_size[1] = kern_size[1] + 1
+            log.info("New y kernel size is {}: ".format(kern_size[1]))
+
         threshold_percent = self.outlierpars['threshold_percent']
         (diffaxis, ny, nx) = self._find_detector_parameters()
 
@@ -135,7 +147,8 @@ class OutlierDetectionIFU(OutlierDetection):
                                kern_size, threshold_percent,
                                save_intermediate_results)
 
-        # send input_models back - that is what is returned from outlier_detection.py
+        # send input_models back to outlier_detection.py.
+        # self.input_moels is  that is what is returned from outlier_detection.py
         self.detect_outliers_ifu(self.input_models)
 
     def flag_outliers(self, idet, uq_det, ndet_files,
@@ -196,7 +209,8 @@ class OutlierDetectionIFU(OutlierDetection):
 
         if save_intermediate_results:
             detector_name = uq_det[idet]
-            opt_info = (diffarr, minarr, normarr, minarr_norm)
+            opt_info = (kern_size[0], kern_size[1], threshold_percent,
+                        diffarr, minarr, normarr, minarr_norm)
             opt_model = self.create_optional_results_model(opt_info)
             opt_model.meta.filename = self.make_output_path(
                 basepath=self.input_models.meta.asn_table.products[0].name,

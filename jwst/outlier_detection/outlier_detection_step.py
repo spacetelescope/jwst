@@ -61,7 +61,7 @@ class OutlierDetectionStep(Step):
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
         backg = float(default=0.0)
-        kernel_size = string(default='3 3')
+        kernel_size = string(default='7 7')
         threshold_percent = float(default=99.8)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
