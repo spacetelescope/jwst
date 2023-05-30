@@ -118,7 +118,6 @@ class OutlierDetection:
                 self.input_models.append(image)
             self.converted = True
 
-        
     def _get_outlier_pars(self):
         """Extract outlier detection parameters from reference file."""
         # start by interpreting input data models to define selection criteria
@@ -286,7 +285,7 @@ class OutlierDetection:
                                 resampled_models.imtype)
         median_image[:] = np.nan  # initialize with NaNs
 
-        for (resampled_sci, resampled_weight, (row1,row2)) in resampled_sections:
+        for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
             # Create a mask for each input image, masking out areas where there is
             # no data or the data has very low weight
             badmasks = []
@@ -384,12 +383,11 @@ class OutlierDetection:
             for i in range(len(self.input_models)):
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
 
-
     def detect_outliers_ifu(self, inputs):
         # Update in dq and science flags
-        self.input_models = inputs  
+        self.input_models = inputs
 
-            
+
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
             resample_data=True, **kwargs):
     """Masks outliers in science image by updating DQ in-place
