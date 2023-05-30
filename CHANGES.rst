@@ -39,6 +39,9 @@ documentation
 
 - Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
 
+- Update ``calwebb_spec2`` docs to reflect the fact that the MIRI MRS ``straylight``
+  step now comes before the ``flatfield`` step. [#7593]
+
 extract_1d
 ----------
 
