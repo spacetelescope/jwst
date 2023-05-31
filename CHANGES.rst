@@ -32,8 +32,13 @@ datamodels
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
 
+
 - Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
   ``jwst.datamodels`` [#7605]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include two new parameters
+  needed for outlier_detection_ifu. [#7590]
+
 
 documentation
 -------------
@@ -74,7 +79,16 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+
 - Close files left open in test suite [#7599]
+
+
+outlier_detection
+-----------------
+
+- Updated the outlier_detection_ifu algorithm which also required an update to
+  stdatamodels.jwst.datamodels.outlierpars [#7590]
+  
 
 pathloss
 --------
