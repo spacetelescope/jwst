@@ -175,8 +175,8 @@ class OutlierDetectionIFU(OutlierDetection):
                 # for MIRI data (disp axis = 1) the first column = sci data
                 # OR
                 # for NIRSpec data (disp axis = 0) the first row = sci data
-                leftdiff = np.diff(sci, axis=diffaxis, prepend=0)
 
+                leftdiff = np.diff(sci, axis=diffaxis, prepend=0)
                 flip = np.flip(sci, axis=diffaxis)
                 rightdiff = np.diff(flip, axis=diffaxis, prepend=0)
                 rightdiff = np.flip(rightdiff, axis=diffaxis)
@@ -192,13 +192,11 @@ class OutlierDetectionIFU(OutlierDetection):
 
         # minarr final minimum combined differences, size: ny X nx
         minarr = np.nanmin(diffarr, axis=0)
-
         # Normalise the differences to a local median image to deal with ultra-bright sources
         normarr = medfilt(minarr, kernel_size=kern_size)
         nfloor = np.nanmedian(minarr)/3
         normarr[normarr < nfloor] = nfloor  # Ensure we never divide by a tiny number
         minarr_norm = minarr / normarr
-
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin = np.nanpercentile(minarr_norm[4:ny-4, 4:nx-4], threshold_percent)
         log.info("Flag pixels with values above {} {}: ".format(threshold_percent, pctmin))
