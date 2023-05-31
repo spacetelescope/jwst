@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import numpy.polynomial.polynomial as poly
+import matplotlib.pyplot as plt
 
 from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
