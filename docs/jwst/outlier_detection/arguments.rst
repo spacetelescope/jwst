@@ -1,7 +1,7 @@
 .. _outlier_detection_step_args:
 
 Step Arguments for Non-IFU data
-==============
+===============================
 The `outlier_detection` step not non-IFU data has the following optional arguments
 that control the behavior of the processing:
 
@@ -79,7 +79,7 @@ that control the behavior of the processing:
 
 
  Step Arguments for IFU data
-==============
+============================
 The `outlier_detection` step for IFU data has the following optional arguments
 that control the behavior of the processing:
 
