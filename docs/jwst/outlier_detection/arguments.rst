@@ -78,8 +78,8 @@ that control the behavior of the processing:
   the available memory can be created.
 
 
- Step Arguments for IFU data
-============================
+Step Arguments for IFU data
+===========================
 The `outlier_detection` step for IFU data has the following optional arguments
 that control the behavior of the processing:
 
