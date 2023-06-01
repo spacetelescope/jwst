@@ -11,7 +11,6 @@ from jwst.outlier_detection import outlier_detection
 from jwst.outlier_detection import outlier_detection_ifu
 from jwst.outlier_detection import outlier_detection_spec
 
-import numpy as np # added for testing
 # Categorize all supported versions of outlier_detection
 outlier_registry = {'imaging': outlier_detection.OutlierDetection,
                     'ifu': outlier_detection_ifu.OutlierDetectionIFU,

@@ -1,14 +1,9 @@
 """Class definition for performing outlier detection on IFU data."""
 
 import numpy as np
-from stsci.image import median
-from astropy.stats import sigma_clipped_stats
-
 from stdatamodels.jwst import datamodels
-from scipy.signal import medfilt, medfilt2d
-
+from scipy.signal import medfilt
 from .outlier_detection import OutlierDetection
-from jwst.datamodels import ModelContainer
 from stdatamodels.jwst.datamodels import dqflags
 import logging
 log = logging.getLogger(__name__)
