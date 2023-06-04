@@ -162,6 +162,7 @@ class OutlierDetectionIFU(OutlierDetection):
             # only use data from the same detector
             if detector == uq_det[idet]:
                 bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
+                # set all science data that have DO_NOT_USE to NAN
                 sci[bad] = np.nan
 
                 # Compute left and right differences (MIRI dispersion axis = 1)
@@ -187,6 +188,10 @@ class OutlierDetectionIFU(OutlierDetection):
 
         # minarr final minimum combined differences, size: ny X nx
         minarr = np.nanmin(diffarr, axis=0)
+        # store where the minarr is nan (neighbor pixels have nan so differences produces a nan)
+        nanminarr = np.isnan(minarr)
+        nanindx = np.where(nanminarr)
+
         # Normalise the differences to a local median image to deal with ultra-bright sources
         normarr = medfilt(minarr, kernel_size=kern_size)
         nfloor = np.nanmedian(minarr)/3
@@ -197,8 +202,6 @@ class OutlierDetectionIFU(OutlierDetection):
         log.info("Flag pixels with values above {} {}: ".format(threshold_percent, pctmin))
         # Flag everything above this percentile value
         indx = np.where(minarr_norm > pctmin)
-        log.info("Number of outlier pixels flagged: {}".format(
-                len(indx[0])))
 
         if save_intermediate_results:
             detector_name = uq_det[idet]
@@ -218,19 +221,49 @@ class OutlierDetectionIFU(OutlierDetection):
             model = datamodels.open(self.input_models[i])
             sci = model.data
             dq = model.dq
+
             detector = model.meta.instrument.detector.lower()
             # only use data from the same detector
             if detector == uq_det[idet]:
-                count_existing = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
 
+                # There could be a large number of pixels with a sci value of NaN
+                # but the dq flag of DO_NOT_USE has not been set.
+                # This can occur in Non-science regions of the detector.
+                check = np.where(
+                    np.logical_and(~np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool),
+                                   np.isnan(sci)))
+                log.debug("Number of pixels DQ was not set to DO_NOT_USE and Sci array was Nan{} ".
+                          format(len(check[0])))
+                # set all pixels with dq = DO_NOT_USE to have sci values of Nan
+                bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
+                sci[bad] = np.nan
+
+                # First stage of setting outliers: flagging those at are found in from Percentage cut
                 sci[indx] = np.nan
                 dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
                 dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
-                # Report number (and percent) of new DO_NOT_USE pixels found
-                count_outlier = np.count_nonzero(dq & dqflags.pixel['DO_NOT_USE'])
-                count_added = count_outlier - count_existing
-                percent_cr = count_added / (model.data.shape[0] * model.data.shape[1]) * 100
-                log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
+
+                # Second stage of setting outliers: flagging pixels were minarr was a Nan
+                # This will also catch pixels that have a sci of Nan but the DQ flags did not have DO_NOT_USE
+                nanindx = np.where(nanminarr)
+
+                # For counting purposes, count the number of science values that are not Nan
+                # after the stage 1 in the nanminarr region that will now  be flagged as a Nan.
+                additional = np.where(~np.isnan(sci[nanindx]))
+                nadditional = len(additional[0])
+
+                total_bad = len(indx[0]) + nadditional
+
+                sci[nanindx] = np.nan
+                dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['DO_NOT_USE'])
+                dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['OUTLIER'])
+
+                percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
+                log.info("Number of outlier pixels flagged in stage 1: {} on detector {} ".format(
+                    len(indx[0]), uq_det[idet]))
+                log.info("Number of outlier pixels flagged in stage 2: {} on detector {} ".format(
+                                nadditional, uq_det[idet]))
+                log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
                 # update model
                 model.dq = dq
                 model.data = sci
