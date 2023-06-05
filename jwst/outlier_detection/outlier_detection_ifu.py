@@ -110,6 +110,7 @@ class OutlierDetectionIFU(OutlierDetection):
         kern_size[0] = sizex
         kern_size[1] = sizey
 
+        ifu_second_check = self.outlierpars['ifu_second_check']
         # check if kernel size is an odd value
         if kern_size[0] % 2 == 0:
             log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
@@ -140,7 +141,8 @@ class OutlierDetectionIFU(OutlierDetection):
             self.flag_outliers(idet, uq_det, ndet_files,
                                diffaxis, nx, ny,
                                kern_size, threshold_percent,
-                               save_intermediate_results)
+                               save_intermediate_results,
+                               ifu_second_check)
 
         # send input_models back to outlier_detection.py.
         # self.input_moels is  that is what is returned from outlier_detection.py
@@ -149,7 +151,8 @@ class OutlierDetectionIFU(OutlierDetection):
     def flag_outliers(self, idet, uq_det, ndet_files,
                       diffaxis, nx, ny,
                       kern_size, threshold_percent,
-                      save_intermediate_results):
+                      save_intermediate_results,
+                      ifu_second_check):
         """Flag outlier pixels in DQ of input images."""
 
         # set up array to hold group differences
@@ -199,7 +202,7 @@ class OutlierDetectionIFU(OutlierDetection):
         minarr_norm = minarr / normarr
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin = np.nanpercentile(minarr_norm[4:ny-4, 4:nx-4], threshold_percent)
-        log.info("Flag pixels with values above {} {}: ".format(threshold_percent, pctmin))
+        log.debug("Flag pixels with values above {} {}: ".format(threshold_percent, pctmin))
         # Flag everything above this percentile value
         indx = np.where(minarr_norm > pctmin)
 
@@ -238,31 +241,33 @@ class OutlierDetectionIFU(OutlierDetection):
                 bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
                 sci[bad] = np.nan
 
-                # First stage of setting outliers: flagging those at are found in from Percentage cut
+                # Basic setting outliers: flagging those at are found in from Percentage cut
                 sci[indx] = np.nan
                 dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
                 dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
 
-                # Second stage of setting outliers: flagging pixels were minarr was a Nan
-                # This will also catch pixels that have a sci of Nan but the DQ flags did not have DO_NOT_USE
-                nanindx = np.where(nanminarr)
+                nadditional = 0
+                # Second level of setting outliers: flagging pixels were minarr was a Nan
+                # This will also catch pixels that have a sci of Nan but the DQ flags did
+                # not have DO_NOT_USE set
+                if ifu_second_check:
+                    nanindx = np.where(nanminarr)
 
-                # For counting purposes, count the number of science values that are not Nan
-                # after the stage 1 in the nanminarr region that will now  be flagged as a Nan.
-                additional = np.where(~np.isnan(sci[nanindx]))
-                nadditional = len(additional[0])
+                    # For counting purposes, count the number of science values that were valid (not Nan)
+                    # after basic flagging in the nanminarr region that will now  be flagged as a Nan.
+                    additional = np.where(~np.isnan(sci[nanindx]))
+                    nadditional = len(additional[0])
+
+                    sci[nanindx] = np.nan
+                    dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['DO_NOT_USE'])
+                    dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['OUTLIER'])
+                    log.info("Number of outlier pixels flagged main ifu outlier flagging: {} on detector {} ".format(
+                        len(indx[0]), uq_det[idet]))
+                    log.info("Number of outlier pixels flagged in second check: {} on detector {} ".format(
+                        nadditional, uq_det[idet]))
 
                 total_bad = len(indx[0]) + nadditional
-
-                sci[nanindx] = np.nan
-                dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['DO_NOT_USE'])
-                dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['OUTLIER'])
-
                 percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
-                log.info("Number of outlier pixels flagged in stage 1: {} on detector {} ".format(
-                    len(indx[0]), uq_det[idet]))
-                log.info("Number of outlier pixels flagged in stage 2: {} on detector {} ".format(
-                                nadditional, uq_det[idet]))
                 log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
                 # update model
                 model.dq = dq
