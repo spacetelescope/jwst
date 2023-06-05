@@ -197,9 +197,9 @@ class FlatFieldStep(Step):
         for reftype, reffile in reference_file_names.items():
             if reffile is not None:
                 reference_file_models[reftype] = model_type[reftype](reffile)
-                self.log.debug('Using %s reference file: %s', reftype.upper(), reffile)
+                self.log.info('Using %s reference file: %s', reftype.upper(), reffile)
             else:
-                self.log.debug('No reference found for type %s', reftype.upper())
+                self.log.info('No reference found for type %s', reftype.upper())
                 reference_file_models[reftype] = None
 
         return reference_file_models
