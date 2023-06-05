@@ -126,6 +126,21 @@ def correct_model(input_model, irs2_model,
     # reference pixels. True flags normal pixels, False is reference pixels.
     irs2_mask = make_irs2_mask(nx, ny, scipix_n, refpix_r)
 
+    '''
+    from matplotlib import pyplot as plt
+    import copy
+    fig, axs = plt.subplots(1, 1, figsize=(12, 10))
+    fig.suptitle('Original data')
+    middle_of_img = nx // 2
+    orig_data = copy.deepcopy(data)
+    vminmax = [min(data[0][0][middle_of_img]), max(data[0][-1][middle_of_img])]
+    im = axs.imshow(data[0][-1], aspect="auto", origin='lower', vmin=vminmax[0], vmax=vminmax[1])
+    plt.colorbar(im, ax=axs)
+    axs.tick_params(axis='both', which='both', bottom=True, top=True, right=True, direction='in', labelbottom=True)
+    axs.minorticks_on()
+    plt.show(block=False)
+    '''
+
     # If the IRS2 reference file includes data quality info, use that to
     # set bad reference pixel values to zero.
     if hasattr(irs2_model, 'dq_table') and len(irs2_model.dq_table) > 0:
@@ -135,30 +150,57 @@ def correct_model(input_model, irs2_model,
         # Set interleaved reference pixel values to zero if they are flagged
         # as bad in the DQ extension of the CRDS reference file.
         clobber_ref(data, output, odd_even, mask)
+        '''
+        from matplotlib import pyplot as plt
+        fig, axs = plt.subplots(1, 1, figsize=(12, 10))
+        fig.suptitle('masked data')
+        middle_of_img = nx // 2
+        vminmax = [min(data[0][0][middle_of_img]), max(data[0][-1][middle_of_img])]
+        im = axs.imshow(data[0][-1], aspect="auto", origin='lower', vmin=vminmax[0], vmax=vminmax[1])
+        plt.colorbar(im, ax=axs)
+        axs.tick_params(axis='both', which='both', bottom=True, top=True, right=True, direction='in', labelbottom=True)
+        axs.minorticks_on()
+        plt.show(block=False)
+        fig, axs = plt.subplots(1, 1, figsize=(12, 10))
+        fig.suptitle('difference')
+        diff = orig_data[0][-1] - data[0][-1]
+        vminmax = [min(diff[middle_of_img]), max(diff[middle_of_img])]
+        im = axs.imshow(diff, aspect="auto", origin='lower', vmin=vminmax[0], vmax=vminmax[1])
+        plt.colorbar(im, ax=axs)
+        axs.tick_params(axis='both', which='both', bottom=True, top=True, right=True, direction='in', labelbottom=True)
+        axs.minorticks_on()
+        plt.show(block=True)
+        '''
+
     else:
         log.warning("DQ extension not found in reference file")
+
+    # Create new array to save result of IRS2 processing: slice out the reference
+    # pixels from the original data array using the mask of the science pixels
+    corr_data = data[..., irs2_mask==True]
 
     # Compute and apply the correction to one integration at a time
     for integ in range(n_int):
         log.info(f'Working on integration {integ+1}')
 
+        data0 = data[integ, :, :, :]
+        data0 = subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad)
+        corr_data[integ, :, :, :] = data0
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
         # Y axis.  This is the reason for the slice `nx-ny:` that is used
         # below.  The last axis of output_model.data should be 2048.
-        data0 = data[integ, :, :, :]
-        data0 = subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad)
-        data[integ, :, :, nx - ny:] = data0
+        #data[integ, :, :, nx - ny:] = data0
 
     # Convert corrected data back to sky orientation
     output_model = input_model.copy()
-    temp_data = data[:, :, :, nx - ny:]
+    #temp_data = data[:, :, :, nx - ny:]
     if detector == "NRS1":
-        output_model.data = np.swapaxes(temp_data, 2, 3)
+        output_model.data = np.swapaxes(corr_data, 2, 3)
     elif detector == "NRS2":
-        output_model.data = np.swapaxes(temp_data[:, :, ::-1, ::-1], 2, 3)
+        output_model.data = np.swapaxes(corr_data[:, :, ::-1, ::-1], 2, 3)
     else:                       # don't change orientation
-        output_model.data = temp_data
+        output_model.data = corr_data
 
     # Strip interleaved ref pixels from the PIXELDQ, GROUPDQ, and ERR extensions.
     strip_ref_pixels(output_model, irs2_mask)
@@ -319,8 +361,10 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
     """
 
     nx = data.shape[-1]                 # 3200
+    amplifier = nx // 5                 # 640
     nrows = len(output)
-
+    total_bad_pixels = []
+    '''
     for row in range(nrows):
         # `offset` is the offset in pixels from the beginning of the row
         # to the start of the current amp output.  `offset` starts with
@@ -332,6 +376,7 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
         else:
             odd_even_row = odd_even[row]
         bits = decode_mask(output[row], mask[row])
+        total_bad_pixels.append(len(bits))
         log.debug("output {}  odd_even {}  mask {}  DQ bits {}"
                   .format(output[row], odd_even[row], mask[row], bits))
         for k in bits:
@@ -340,6 +385,30 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
             log.debug("bad interleaved reference at pixels {} {}"
                       .format(ref, ref + 1))
             data[..., ref:ref + 2] = 0.
+    '''
+    # loop through the reference table rows
+    for row in range(nrows):
+        bits = decode_mask(output[row], mask[row])
+        total_bad_pixels.append(len(bits))
+        counter_even, counter_odd = 0, 0
+        offset = int(output[row] * amplifier)
+        # only loop through the x-axis ref pixel groups when there are bad pixels
+        if bits:
+            for ri in range(scipix_n//2, amplifier, scipix_n+refpix_r):
+                ri = ri + offset
+                # set the corresponding columns of reference pixels to 0.0
+                if ri % 2 != 0:
+                    counter_odd += 1
+                    counter = counter_odd
+                else:
+                    counter_even += 1
+                    counter = counter_even
+                for k in bits:
+                    if counter == k+1:
+                        data[:, :, :, ri: ri+2] = 0.
+                        log.debug("bad interleaved reference at pixels {} {}"
+                                  .format(ri, ri+2))
+    log.debug("total bad reference pixels = {}".format(sum(total_bad_pixels)))
 
 
 def decode_mask(output, mask):
@@ -370,18 +439,17 @@ def decode_mask(output, mask):
     """
 
     # The bit number corresponds to a count of groups of reads of the
-    # interleaved reference pixels.  It wasn't clear to us whether bit
-    # number increases from left to right or right to left within a
-    # 32-bit unsigned integer.  It also wasn't clear whether the direction
-    # should follow the direction of reading within an amplifier output.
-    # The following is our interpretation of the description.
+    # interleaved reference pixels. The 32-bit unsigned integer encoding
+    # has increasing index, following the amplifier readout direction.
 
     flags = np.array([2**n for n in range(32)], dtype=np.uint32)
     temp = np.bitwise_and(flags, mask)
     bits = np.where(temp > 0)[0]
     bits = list(bits)
     if output // 2 * 2 == output:
+        # account for the readout orientation of even amplifiers
         bits = [31 - bit for bit in bits]
+    # order indeces increasing from left to right always
     bits.sort()
 
     return bits
@@ -442,12 +510,14 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     ny = shape[1]
     nx = shape[2]
 
+    # This is the effective number of pixels sampled during the
+    # pause at the end of each row.
     # See expression in equation 1 in IRS2_Handoff.pdf.
     # row = 712, if scipix_n = 16, refpix_r = 4, pad = 8.
     row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
 
     # s = size(data0)
-    # If data0 is the data for one integration, then:
+    # If data0 is the data for one integration, then in IDL:
     # s[0] would be 3
     # s[1] = shape[2] = nx, the length of the X axis
     # s[2] = shape[1] = ny, the length of the Y axis
@@ -467,10 +537,21 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     hnorm1 = ind_n + (refpix_r + 2) * ((ind_n + scipix_n // 2) // scipix_n)
     href1 = ind_ref + (scipix_n + 2) * (ind_ref // refpix_r) + scipix_n // 2 + 1
 
-    # Subtract the average over the ramp for each pixel.
+    # Subtract the average over the ramp for each pixel to minimize
+    # correlation of slope and offset.
     # b_offset is saved so that it can be added back in at the end.
     b_offset = data0.sum(axis=0, dtype=np.float64) / float(ngroups)
     data0 -= b_offset
+
+    # The IDL code at this point removes the gain (lines 59 - 75
+    # in part_A.pro). This is skipped here since the pipeline has a specific
+    # step for this later in the process.
+
+    # A mask is applied to ignore outliers with especially high or low stddev
+    # (lines 77 - 111 in part_A.pro)
+    #mask = np.zeros((shape))
+    #for i in range(1, 5):
+    #    hhn = np.where(
 
     # IDL:  data0 = reform(data0, s[1]/5, 5, s[2], s[3], /over)
     #                             nx/5,   5, ny,   ngroups    (IDL)
@@ -497,8 +578,9 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     data0[4, :, :, :] = data0[4, :, :, ::-1]
 
     # convert to time sequences of normal pixels and reference pixels.
-    # IDL:  d0 = fltarr(s[1] / 5 + pad + 2 * (512 / scipix_n), s[2], s[3], 5)
-    # Note:  nx // 5 + pad + 2 * (512 // scipix_n) = 640 + 64 + 8 = 712.
+    # IDL (lines 122 - 126 in part_A.pro):
+    # d0 = fltarr(s[1] / 5 + pad + 2 * (512 / scipix_n), s[2], s[3], 5)
+    # Note:  nx // 5 + pad + 2 * (512 // scipix_n) = 640 + 8 +64 = 712.
     # hnorm1[-1] = 703, and hnorm[-1] = 639, so 703 - 639 = 64.
     # 8 is the pad value.
 
