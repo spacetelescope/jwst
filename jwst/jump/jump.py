@@ -58,7 +58,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
 
-    new_gdq, new_pdq = detect_jumps(frames_per_group, data, gdq, pdq, err,
+    new_gdq, new_pdq, number_crs, number_extended_events = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
                                     four_grp_thresh, max_cores,
@@ -85,5 +85,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
     output_model.pixeldq = new_pdq
+    output_model.meta.exposure.primary_cosmic_rays = number_crs
+    output_model.meta.exposure.extended_emission_events = number_extended_events
 
     return output_model
