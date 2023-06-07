@@ -258,6 +258,8 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.center_xy,
+                        self.ifu_autocen,
+                        self.ifu_rfcorr,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -292,6 +294,8 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             self.center_xy,
+                            self.ifu_autocen,
+                            self.ifu_rfcorr,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -329,6 +333,8 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
                     was_source_model=was_source_model,
                 )
 
