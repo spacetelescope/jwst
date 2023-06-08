@@ -1047,7 +1047,6 @@ class NIRDataset(Dataset):
         # Determined refpix indices to use on each group
         refpixindices = np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))
         nrefpixels = len(refpixindices[0])
-        log.info(f"Number of Reference Pixels: {nrefpixels}")
         if nrefpixels == 0:
             self.bad_reference_pixels = True
             return
