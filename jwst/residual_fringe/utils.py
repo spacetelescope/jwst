@@ -1083,7 +1083,6 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
 
     return res_fringe_fit, weighted_pix_num, nfringes, peak_freq, freq_min, freq_max
 
-# function to run the fitting on an x1d file and save the output
 def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, max_amp=None):
     """This is the wrapper function for 1d residual fringe correction.
 
