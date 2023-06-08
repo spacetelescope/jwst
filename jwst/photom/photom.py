@@ -479,6 +479,40 @@ class DataSet():
             ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
                                                dqflags.pixel['NON_SCIENCE'])
 
+            table_ch = {}
+            table_ch['ch1'] = ftab.timecoeff_ch1
+            table_ch['ch2'] = ftab.timecoeff_ch2
+            table_ch['ch3'] = ftab.timecoeff_ch3
+            table_ch['ch4'] = ftab.timecoeff_ch4
+            timecoeff = {}
+            timecoeff['left'] = {}
+            timecoeff['right'] = {}
+            left = 'ch1'
+            right = 'ch2'
+            if self.detector == 'MIRIFULONG':
+                left = 'ch4'
+                right = 'ch3'
+
+            # Check the reference file has the time dependent coefficients
+            # check that table 1 wavelength bin is an array with values
+            check_for_time_coeffs =  np.any(table_ch['ch1']['binwave'])
+            time_correction = False
+            if check_for_time_coeffs == False:
+                print('not applying time dependent correction')
+            else:
+                time_correction = True
+                timecoeff['left']['binwave'] = table_ch[left]['binwave']
+                timecoeff['left']['acoeff'] = table_ch[left]['acoeff']
+                timecoeff['left']['bcoeff'] = table_ch[left]['bcoeff']
+                timecoeff['left']['ccoeff'] = table_ch[left]['ccoeff']
+                timecoeff['left']['x0'] = table_ch[left]['x0']
+
+                timecoeff['right']['binwave'] = table_ch[right]['binwave']
+                timecoeff['right']['acoeff'] = table_ch[right]['acoeff']
+                timecoeff['right']['bcoeff'] = table_ch[right]['bcoeff']
+                timecoeff['right']['ccoeff'] = table_ch[right]['ccoeff']
+                timecoeff['right']['x0'] = table_ch[right]['x0']                
+            
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
 
