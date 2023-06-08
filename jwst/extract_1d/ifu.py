@@ -736,7 +736,7 @@ def extract_ifu(input_model, source_type, extract_params):
     b_var_flat = b_var_flat[nan_slc]
 
     # If selected, apply 1d residual fringe correction to the extracted spectrum
-    if extract_params['ifu_rfcorr'] is True:
+    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
         log.info("Applying 1d residual fringe correction.")
         # Determine which MRS channel the spectrum is from
         thischannel = input_model.meta.instrument.channel
