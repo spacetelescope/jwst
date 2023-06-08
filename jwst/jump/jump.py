@@ -1,5 +1,5 @@
 import logging
-
+import numpy as np
 from stcal.jump.jump import detect_jumps
 
 from stdatamodels.jwst.datamodels import dqflags
@@ -58,7 +58,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
 
-    new_gdq, new_pdq, number_crs, number_extended_events, num_flagged_groups\
+    new_gdq, new_pdq, number_crs, number_extended_events\
         = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
@@ -86,9 +86,19 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
     output_model.pixeldq = new_pdq
+    num_flagged_grps = 0
+    # determine the number of groups with all pixels set to DO_NOT_USE
+    dnu_flag = 1
+    num_flagged_grps =0
+    for integ in range(data.shape[0]):
+        for grp in range(data.shape[1]):
+            if np.all(np.bitwise_and(gdq[integ, grp, :, :], dnu_flag)):
+                num_flagged_grps += 1
+#    total_groups = data.shape[0] * data.shape[1] - num_flagged_grps
     total_time = output_model.meta.exposure.group_time * (output_model.meta.exposure.ngroups -
-                 (1 + num_flagged_groups)) * output_model.meta.exposure.nints
+                 (1 + num_flagged_grps)) * output_model.meta.exposure.nints
     total_pixels = data.shape[2] * data.shape[3]
+    print("ncols", data.shape[3], "nrows", data.shape[2])
     output_model.meta.exposure.primary_cosmic_rays = number_crs / (total_time * total_pixels)
     output_model.meta.exposure.extended_emission_events = number_extended_events / \
                                                           (total_time * total_pixels)
