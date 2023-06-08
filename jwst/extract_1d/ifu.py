@@ -63,7 +63,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     apcorr_ref_model : apcorr datamodel or None
         Aperture correction table.
 
-    center_xy : int or None
+    center_xy : float or None
         A list of 2 pixel coordinate values at which to place the center
         of the extraction aperture for IFU data, overriding any centering
         done by the step.  Two values, in x,y order, are used for extraction
@@ -745,11 +745,11 @@ def extract_ifu(input_model, source_type, extract_params):
         # If a valid single channel, specify it in call to residual fringe code
         if (thischannel in validch):
             temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
-                                              save_results=False,dichroic_only=False, max_amp=None)
+                                              dichroic_only=False, max_amp=None)
         # Otherwise leave channel blank
         else:
             temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,
-                                                        save_results=False, dichroic_only=False, max_amp=None)
+                                                        dichroic_only=False, max_amp=None)
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat,

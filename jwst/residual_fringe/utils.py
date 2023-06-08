@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import numpy.polynomial.polynomial as poly
-import matplotlib.pyplot as plt
 
 from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
@@ -855,8 +854,8 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
     """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
-    :Parameters:
-
+    Parameters
+    ----------
     flux:  numpy array, required
         the 1D array of fluxes
 
@@ -877,7 +876,8 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
         the channel processed. used to determine if other arrays need to be reversed given the direction of increasing
         wavelength down the detector in MIRIFULONG
 
-    :Returns:
+    Returns
+    -------
 
     bg_fit: numpy array
         the fitted background
@@ -959,10 +959,12 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
 
 
 def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
-                                      pgram_res, plots=False):
-    """Fit the residual fringe signal.- Improved method
-    Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
-    :Parameters:
+                                      pgram_res):
+    """Fit the residual fringe signal.- 1d version
+    Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package.
+
+    Parameters
+    ----------
     res_fringes:  numpy array, required
         the 1D array with residual fringes
     weights: numpy array, required
@@ -979,7 +981,9 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
         resolution of the periodogram scan in cm-1
     wavenum: numpy array, required
         the 1D array of wavenum
-    :Returns:
+
+    Returns
+    -------
     res_fringe_fit: numpy array
         the residual fringe fit data
     """
@@ -992,11 +996,9 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
 
     # get the number of weighted pixels
     weighted_pix_num = (weights > 1e-05).sum()
-    # set the maximum array size, always 1024
 
     # get scan res
     res = np.around((2 * dffreq) / pgram_res).astype(int)
-    # log.debug("fit_1d_fringes_bayes: scan res = {}".format(res))
 
     factor = np.amin(wavenum)
     wavenum = wavenum.copy() / factor
@@ -1021,43 +1023,22 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
     sftr = Fitter(wavenum, sdml)
     _ = sftr.fit(res_fringes, weights=weights)
     evidence1 = sftr.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
-    # log.debug(
-    #    "fit_1d_fringes_bayes_evidence: Initial Evidence: {}".format(evidence1))
-
-    # set up plot to show identified frequencies
-    if plots:
-        fig, axs = plt.subplots(2, 1, figsize=(12, 8))
 
     for n in np.arange(max_nfringes):
-        #    log.debug(
-        #        "Starting fringe {}".format(f + 1))
-
         # get the scan arrays
         res_fringe_scan = res_fringes_proc[np.where(weights > 1e-05)]
         wavenum_scan = wavenum[np.where(weights > 1e-05)]
 
         # use a Lomb-Scargle periodogram to get PSD and identify the strongest frequency
-        # log.debug("fit_1d_fringes_bayes_evidence: get the periodogram")
         pgram = LombScargle(wavenum_scan[::-1], res_fringe_scan[::-1]).power(1 / freq)
 
-        # log.debug("fit_1d_fringes_bayes_evidence: get the most significant frequency in the periodogram")
         peak = np.argmax(pgram)
         freqs = 1. / freq[peak]
-
-        if plots:
-            # plot the residual fringes before removing strongest fringe
-            color = next(axs[0]._get_lines.prop_cycler)['color']
-            axs[0].plot(wavenum*factor, res_fringes_proc+0.1*n, markersize=0, linestyle='-', linewidth=1,
-                        color=color, label='Freq. {}'.format(n+1))
-
-            # plot the periodogram
-            axs[1].plot(freq*factor, pgram, color=color, linewidth=1, label='Freq. {}'.format(n+1))
 
         # fix the most significant frequency in the fixed dict that is passed to fitter
         keep_ind = nfringes * 3
         keep_dict[keep_ind] = freqs
 
-        # log.debug("fit_1d_fringes_bayes_evidence: creating multisine model of {} freqs".format(nfringes + 1))
         mdl = multi_sine(nfringes + 1)
 
         # fit the multi-sine model and get evidence
@@ -1081,46 +1062,18 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
         except RuntimeError:
             evidence2 = -1e9
 
-        # log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
-
         bayes_factor = evidence2 - evidence1
-        # log.debug(
-        #    "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
         if bayes_factor > 1:  # strong evidence thresh (log(bayes factor)>1, Kass and Raftery 1995)
             evidence1 = evidence2
             best_mdl = mdl.copy()
             fitted_frequencies.append(freqs)
-            # log.debug(
-            #    "fit_1d_fringes_bayes_evidence: strong evidence for nfringes={} ".format(nfringes + 1))
         else:
-            # log.debug(
-            #    "fit_1d_fringes_bayes_evidence: no evidence for nfringes={}".format(nfringes + 1))
             break
 
         # subtract the fringes for this frequency
         res_fringe_fit = best_mdl(wavenum)
         res_fringes_proc = res_fringes.copy() - res_fringe_fit
         nfringes += 1
-
-    if plots:
-        if ffreq < 1:
-            axs[0].set_title(r'Fringe #2: freq-by-freq removal and periodograms')
-        else:
-            axs[0].set_title(r'Fringe #1: freq-by-freq removal and periodograms')
-        axs[0].set_xlabel(r'Wavenumber (cm$^{-1})$')
-        axs[0].set_ylabel(r'Residual fringes')
-        axs[0].set_ylim(-0.2, (n+1)*0.12)
-        axs[0].grid()
-        axs[1].set_xlabel(r'Fringe frequency (cm$^{-1}$)')
-        axs[1].set_ylabel(r'Power')
-        axs[1].grid()
-        axs[0].legend()
-        axs[1].legend()
-        plt.tight_layout(h_pad=0)
-        plt.show()
-
-        # log.debug("fit_1d_fringes_bayes_evidence: optimal={} fringes".format(nfringes))
-        print(" optimal={} fringes".format(nfringes))
 
     # create outputs to return
     fitted_frequencies = (1 / np.asarray(fitted_frequencies)) * factor
@@ -1131,15 +1084,26 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
     return res_fringe_fit, weighted_pix_num, nfringes, peak_freq, freq_min, freq_max
 
 # function to run the fitting on an x1d file and save the output
-def fit_residual_fringes_1d(flux, wavelength, channel=1, save_results=True, dichroic_only=False, max_amp=None):
-    """
+def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, max_amp=None):
+    """This is the wrapper function for 1d residual fringe correction.
 
-    :param flux:
-    :param weights_feat:
-    :param wavenum:
-    :param max_amp:
-    :param channel:
-    :return:
+    Parameters
+    ----------
+    flux: numpy array, required
+        The 1D array of fluxes
+    wavelength: numpy array, required
+        The 1D array of wavelengths
+    channel: integer, optional
+        The MRS spectral channel
+    dichroic_only: boolean, optional
+        Fit only dichroic fringes
+    max_amp: numpy array, optional
+        The maximum amplitude array
+
+    Returns
+    -------
+    output: numpy array
+        Modified version of input flux array
     """
 
     # Restrict to just the non-zero fluxes
