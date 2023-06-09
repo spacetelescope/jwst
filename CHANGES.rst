@@ -108,6 +108,11 @@ residual_fringe
 - Updated utilities code to add functions for MIRI MRS residual fringe correction to be applied
   to one-dimensional spectra. [#7594]
 
+regtest
+-------
+
+- Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
+
 srctype
 -------
 
