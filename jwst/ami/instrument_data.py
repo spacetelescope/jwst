@@ -216,7 +216,32 @@ class NIRISS:
 
         # find peak in median of refpix-trimmed scidata
         med_im = np.median(scidata, axis=0)
-        
+
+        # Use median image to find big CR hits not already caught
+        std_im = np.std(scidata,axis=0)
+        mediandiff = np.empty_like(scidata)
+        mediandiff[:,:,:] = scidata - med_im
+        nsigma = 10 
+        outliers = np.where(mediandiff > nsigma*std_im)
+        outliers2 = np.argwhere(mediandiff > nsigma*std_im)
+
+        dqvalues = bpdata[outliers]
+        log.info(f'{len(dqvalues)} additional pixels >10-sig from median of stack found')
+        # decompose DQ values to check if they are already flagged DNU
+        count = 0
+        for loc, dq_value in zip(outliers2,dqvalues):
+            bitarr = np.binary_repr(dq_value)
+            bad_types = []
+            for i, elem in enumerate(bitarr[::-1]):
+                if elem == str(1):
+                    badval = 2** i
+                    key = next(key for key, value in dqflags.pixel.items() if value == badval)
+                    bad_types.append(key)
+            if 'DO_NOT_USE' not in bad_types:
+                bpdata[loc[0],loc[1],loc[2]] += 1
+                count+=1
+        log.info(f'{count} DO_NOT_USE flags added to DQ array for found outlier pixels')
+
         # Roughly center scidata, bpdata around peak pixel position
         peakx, peaky, r = utils.min_distance_to_edge(med_im)
         scidata_ctrd = scidata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
