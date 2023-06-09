@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
+from . import ifu_mrs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -489,17 +490,21 @@ class DataSet():
             timecoeff['right'] = {}
             left = 'ch1'
             right = 'ch2'
+            timecoeff['left']['xstart'] = 0
+            timecoeff['left']['xend'] = 512
+            timecoeff['right']['xstart'] = 513
+            timecoeff['right']['xend'] = 1031
             if self.detector == 'MIRIFULONG':
                 left = 'ch4'
                 right = 'ch3'
-
             # Check the reference file has the time dependent coefficients
             # check that table 1 wavelength bin is an array with values
-            check_for_time_coeffs =  np.any(table_ch['ch1']['binwave'])
-            time_correction = False
-            if check_for_time_coeffs == False:
-                print('not applying time dependent correction')
+            if np.any(ftab.timecoeff_ch1['binwave']):
+                time_correction = True
             else:
+                time_correction = False
+                print('not applying time dependent correction')
+            if time_correction:
                 time_correction = True
                 timecoeff['left']['binwave'] = table_ch[left]['binwave']
                 timecoeff['left']['acoeff'] = table_ch[left]['acoeff']
@@ -511,8 +516,8 @@ class DataSet():
                 timecoeff['right']['acoeff'] = table_ch[right]['acoeff']
                 timecoeff['right']['bcoeff'] = table_ch[right]['bcoeff']
                 timecoeff['right']['ccoeff'] = table_ch[right]['ccoeff']
-                timecoeff['right']['x0'] = table_ch[right]['x0']                
-            
+                timecoeff['right']['x0'] = table_ch[right]['x0']
+
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
 
@@ -531,6 +536,13 @@ class DataSet():
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
 
+            # If applying time dependent correction
+            # we need the EXPMID - mid_time of exposure
+            if time_correction:
+                mid_time = self.input.meta.exposure.mid_time
+                correction = ifu_mrs.time_correction(self.input,
+                                                     timecoeff, mid_time)
+                self.input.data /= correction
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
 
