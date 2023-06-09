@@ -843,7 +843,9 @@ def new_make_knots(flux, nknots=20, weights=None):
 
 # RFC1D additions ======================================
 
-# constants
+# Define some constants describing the two central fringe frequencies
+# (primary fringe, and dichroic fringe) and a range around them to search for residual fringes,
+# along with the maximum number of fringes to fit and the max amplitude allowed for those fringes.
 FFREQ_1d = [2.9, 0.4]
 DFFREQ_1d = [1.5, 0.15]
 MAX_NFRINGES_1d = [10, 15]
@@ -1106,8 +1108,8 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
     """
 
     # Restrict to just the non-zero fluxes
-    indx=np.where(flux != 0)
-    useflux=flux[indx]
+    indx = np.where(flux != 0)
+    useflux = flux[indx]
 
     wavenum = 10000.0 / wavelength[indx]
 
