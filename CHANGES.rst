@@ -71,6 +71,8 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+- Close files left open in test suite [#7599]
+
 pathloss
 --------
 

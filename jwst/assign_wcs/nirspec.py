@@ -674,6 +674,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             log.warning(message)
             message = ("MSA configuration file has more than 1 shutter with primary source")
             log.warning(message)
+            msa_file.close()
             raise MSAFileError(message)
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
