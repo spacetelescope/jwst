@@ -22,10 +22,10 @@ REQUIRED_PARAMS = set(('program', 'filename'))
 
 
 def test_hdu(exposures):
-    hdus = [
-        fits.open(exposure)[0]
-        for exposure in exposures
-    ]
+    hdus = []
+    for exposure in exposures:
+        with fits.open(exposure) as hdulist:
+            hdus.append(hdulist[0])
     pool = mkpool(hdus)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
@@ -41,6 +41,7 @@ def test_hdulist(exposures):
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
+    [h.close() for h in hduls]
 
 
 def test_mkpool(exposures):
