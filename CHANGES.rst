@@ -36,12 +36,14 @@ datamodels
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
 
-
 - Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
   ``jwst.datamodels`` [#7605]
 
 - Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include two new parameters
   needed for outlier_detection_ifu. [#7590]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
+  needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
 
 
 documentation
