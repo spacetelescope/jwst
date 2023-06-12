@@ -548,10 +548,71 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     # step for this later in the process.
 
     # A mask is applied to ignore outliers with especially high or low stddev
-    # (lines 77 - 111 in part_A.pro)
-    #mask = np.zeros((shape))
-    #for i in range(1, 5):
-    #    hhn = np.where(
+    # (lines 77 - 111 in part_A.pro), i.e. use a 4*sigma (roughly gaussian) cutoff
+    #data0 = data0.reshape(ngroups, ny * nx)
+    from scipy.stats import norm
+    sig_data = np.sqrt((data0**2) / (ngroups - 1))
+    print('np.shape(sig_data) = ', np.shape(sig_data))
+    outlimask = np.ones((ny, nx), dtype='B')  # outlimask = mask in the IDL code
+    nx5 = nx // 5
+    print('nx5 = ', nx5)
+    # set reference output to no masking
+    outlimask[:, : nx5] = 1
+    outlimask[:, nx5: nx5+3] = 0
+    outlimask[:, nx-4:] = 0
+    for amp in range(1, 5):   # skip the first since it requires no mask
+        irs2slice = irs2_mask[amp * nx5: (amp+1) * nx5]
+        print('np.shape(irs2slice) = ', np.shape(irs2slice))
+        # there is no equivalent to IDL HISTOGAUSS in python so do separately
+        # python equivalent for normal pixels
+        dat1 = sig_data[..., amp * nx5: (amp+1) * nx5]
+        dat2 = sig_data[..., : nx5]
+        dat = dat1 - dat2
+        print('np.shape(dat1), np.shape(dat2), np.shape(dat) = ', np.shape(dat1), np.shape(dat2), np.shape(dat))
+        # work on normal pixels first (normpix = hhnorm in the IDL code)
+        normpix = np.where(irs2slice == True)[0]
+        print('np.shape(normpix) = ', np.shape(normpix))
+        datnorm = dat[..., normpix]
+        print('np.shape(datnorm) = ', np.shape(datnorm))
+        (mu, stdev) = norm.fit(datnorm)   # best fit of data
+        print('got gaussian fit, stdev=', stdev)
+        #counts, bins = np.histogram(datnorm, density=True)
+        # with density=True, the result is the value of the probability density
+        # function at the bin is normalized such that the integral over the range is 1
+        #print('got histogram, bins=', len(bins))
+        outlimask[..., normpix] = np.where(np.abs(datnorm[1] - mu) < 4 * stdev, 1, 0)
+        print('normpix np.shape(outlimask) = ', np.shape(outlimask))
+        # now work on reference pixels (refpix = hhref in the IDL code)
+        refpix = np.where(irs2slice == False)[0]
+        print('np.shape(refpix) = ', np.shape(refpix))
+        datref = dat[..., refpix]
+        print('np.shape(datref) = ', np.shape(datref))
+        (mu, stdev) = norm.fit(datref)   # best fit of data
+        print('got gaussian fit, stdev=', stdev)
+        #counts, bins = np.histogram(datref, density=True)
+        # with density=True, the result is the value of the probability density
+        # function at the bin is normalized such that the integral over the range is 1
+        #print('got histogram, bins=', len(bins))
+        outlimask[..., refpix] = np.where(np.abs(datref[1] - mu) < 4 * stdev, 1, 0)
+        print('refpix np.shape(outlimask) = ', np.shape(outlimask))
+
+    # expand the outlier mask to cover neighbor pixels in x and y
+    print('outlimask = ', outlimask)
+    outlimask[1] *= shift(outlimask[1], -1) * shift(outlimask[1], 1)
+    outlimask[0] *= shift(outlimask[0], -1) * shift(outlimask[0], 1)
+    print('np.shape(outlimask) = ', np.shape(outlimask))
+    print('outlimask = ', outlimask)
+    # reset the reference output to no masking
+    outlimask[:, : nx5] = 1
+    print('np.shape(outlimask) = ', np.shape(outlimask))
+
+    # apply outlier mask
+    print('np.shape(data0) = ', np.shape(data0))
+    orig_data0 = data0.copy()
+    print('applying mask')
+    for ng in range(ngroups):
+        data0[ng] *= outlimask
+    print('mask applied! np.shape(data0) = ', np.shape(data0))
 
     # IDL:  data0 = reform(data0, s[1]/5, 5, s[2], s[3], /over)
     #                             nx/5,   5, ny,   ngroups    (IDL)
@@ -758,6 +819,38 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     return data0
 
 
+def shift(arr, num):
+    """ Function to reproduce the IDL shift function. It preallocates an empty
+    array and assigns the slice.
+
+    Parameters
+    ----------
+    arr: numpy array
+        The 1-D array that we wish to shift
+
+    num: integer
+        The number of places we want to shift the array, positive shifts to the right
+        and negative shifts to the left. Both shifts are circular, e.g.
+        a = np.arange(5)
+        shift(a, 3) returns array([2., 3., 4., 0., 1.])
+        shift(a, -3) returns array([3., 4., 0., 1., 2.])
+
+    Returns
+    -------
+    result: np.array
+        Shifted 1-D array of same length
+
+    """
+    result = arr.copy()
+    if num > 0:
+        result[num:] = arr[:-num]
+        result[:num] = arr[-num:]
+    else:
+        result[num:] = arr[:-num]
+        result[:num] = arr[-num:]
+    return result
+
+
 def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm):
 
     mm = np.zeros((ny, row), dtype=np.int8)
@@ -783,14 +876,17 @@ def ols_line(x, y):
         return 0., 0.
 
     groups = float(len(xf))
-    mean_x = xf.mean()
-    mean_y = yf.mean()
+    #mean_x = xf.mean()
+    #mean_y = yf.mean()
     sum_x2 = (xf**2).sum()
     sum_xy = (xf * yf).sum()
+    sum_xf = xf.sum()
+    sum_yf = yf.sum()
 
-    slope = (sum_xy - groups * mean_x * mean_y) / \
-            (sum_x2 - groups * mean_x**2)
-    intercept = mean_y - slope * mean_x
+    #slope = (sum_xy - groups * mean_x * mean_y) / (sum_x2 - groups * mean_x**2)
+    #intercept = mean_y - slope * mean_x
+    slope = (groups * sum_xy - sum_xf * sum_yf) / (groups * sum_x2 - sum_xf**2)
+    intercept = (sum_yf - slope * sum_xf) / groups
 
     return intercept, slope
 
@@ -809,7 +905,7 @@ def remove_slopes(data0, ngroups, ny, row):
     for i in range(5):
         for k in range(ngroups):
             # mask is 2-D, since both row4plus4 and : have more than one element.
-            mask = (data0[i, k, row4plus4, :] != 0.)
+            mask = data0[i, k, row4plus4, :] != 0.
             (intercept, slope) = ols_line(time_arr[row4plus4, :][mask],
                                           data0[i, k, row4plus4, :][mask])
             ab_3[0, k, i] = intercept
@@ -831,20 +927,21 @@ def replace_bad_pixels(data0, ngroups, ny, row):
     # s[1] = nx  s[2] = ny  s[3] = ngroups
     w_ind = np.arange(1, 32, dtype=np.float32) / 32.
     w = np.sin(w_ind * np.pi)
-    kk = 0
-    for jj in range(ngroups):
-        dat = data0[kk, jj, :, :].reshape(row * ny)
-        mask = (dat != 0.).astype(np.float32)
-        numerator = convolve1d(dat, w, mode='wrap')
-        denominator = convolve1d(mask, w, mode='wrap')
-        div_zero = (denominator == 0.)          # check for divide by zero
-        numerator = np.where(div_zero, 0., numerator)
-        denominator = np.where(div_zero, 1., denominator)
-        dat = numerator / denominator
-        dat = dat.reshape(ny, row)
-        mask = mask.reshape(ny, row)
-        # xxx why '+=' instead of just '=' ?
-        data0[kk, jj, :, :] += dat * (1. - mask)
+    #kk = 0
+    for kk in range(5):
+        for jj in range(ngroups):
+            dat = data0[kk, jj, :, :].reshape(row * ny)
+            mask = (dat != 0.).astype(np.float32)
+            numerator = convolve1d(dat, w, mode='wrap')
+            denominator = convolve1d(mask, w, mode='wrap')
+            div_zero = denominator == 0.          # check for divide by zero
+            numerator = np.where(div_zero, 0., numerator)
+            denominator = np.where(div_zero, 1., denominator)
+            dat = numerator / denominator
+            dat = dat.reshape(ny, row)
+            mask = mask.reshape(ny, row)
+            # xxx why '+=' instead of just '=' ?
+            data0[kk, jj, :, :] += dat * (1. - mask)
 
 
 def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1):
