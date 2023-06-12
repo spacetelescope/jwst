@@ -25,6 +25,9 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
                      time_masked_after_shower=30,
                      max_extended_radius=200,
+                     minimum_groups=3,
+                     minimum_sigclip_groups=100,
+                     only_use_ints=True
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -80,7 +83,11 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     extend_outer_radius=extend_outer_radius,
                                     extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
                                     grps_masked_after_shower=grps_masked_after_shower,
-                                    max_extended_radius=max_extended_radius)
+                                    max_extended_radius=max_extended_radius,
+                                    minimum_groups=minimum_groups,
+                                    minimum_sigclip_groups=minimum_sigclip_groups,
+                                    only_use_ints=only_use_ints
+                                    )
 
 
     # Update the DQ arrays of the output model with the jump detection results
