@@ -98,7 +98,7 @@ class JumpStep(Step):
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
-
+            print("only use ints jump step",self.only_use_ints)
             # Call the jump detection routine
             result = run_detect_jumps(input_model, gain_model, readnoise_model,
                                       rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
