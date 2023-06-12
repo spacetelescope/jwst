@@ -106,7 +106,7 @@ class FlatFieldStep(Step):
             # in the result header.
             flat_ref_file = reference_file_models['user_supplied_flat'].meta.filename
             self._reference_files_used.append(('flat', flat_ref_file))
-            self.log.info(f'Using flat field reference file: ', flat_ref_file)
+            self.log.info('Using flat field reference file: ', flat_ref_file)
         elif self.use_correction_pars:
             self.log.info(f'Using flat field from correction pars {self.correction_pars["flat"]}')
             reference_file_models = {
