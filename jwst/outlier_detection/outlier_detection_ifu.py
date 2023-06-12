@@ -94,13 +94,9 @@ class OutlierDetectionIFU(OutlierDetection):
         ny, nx = self.inputs[0].data.shape
         return (diffaxis, ny, nx)
 
-   # def convert_inputs(self):
-   #     self.input_models = self.inputs
-   #     self.converted = False
 
     def do_detection(self):
         """Split data by detector to find outliers."""
-   #     self.convert_inputs()
 
         self.input_models = self.inputs
         self.build_suffix(**self.outlierpars)
@@ -223,6 +219,7 @@ class OutlierDetectionIFU(OutlierDetection):
                 j = j + 1
 
         # minarr final minimum combined differences, size: ny X nx
+        
         minarr = np.nanmin(diffarr, axis=0)
 
         # Normalise the differences to a local median image to deal with ultra-bright sources
@@ -257,7 +254,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
         # Update DQ flag
         for i in range(len(self.input_models)):
-            model = datamodels.open(self.input_models[i])
+            model = self.input_models[i]
             sci = model.data
             dq = model.dq
 
@@ -307,4 +304,3 @@ class OutlierDetectionIFU(OutlierDetection):
                 model.dq = dq
                 model.data = sci
                 self.input_models[i] = model
-            model.close()
