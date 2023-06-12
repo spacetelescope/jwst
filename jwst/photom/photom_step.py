@@ -19,6 +19,7 @@ class PhotomStep(Step):
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.
+        mrs_time_correction = boolean(default=True) # Apply the MIRI MRS time dependent correction
     """
 
     reference_file_types = ['photom', 'area']
@@ -64,7 +65,8 @@ class PhotomStep(Step):
             return result
 
         # Do the correction
-        phot = photom.DataSet(input_model, self.inverse, self.source_type, correction_pars)
+        phot = photom.DataSet(input_model, self.inverse, self.source_type,
+                              self.mrs_time_correction, correction_pars)
         result = phot.apply_photom(phot_filename, area_filename)
         result.meta.cal_step.photom = 'COMPLETE'
 

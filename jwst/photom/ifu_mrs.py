@@ -33,7 +33,40 @@ def get_correction_function(side, timecoeff, mid_time):
     return func
 
 
-def time_correction(input, timecoeff, mid_time):
+def time_correction(input, detector, ftab, mid_time):
+
+    table_ch = {}
+    table_ch['ch1'] = ftab.timecoeff_ch1
+    table_ch['ch2'] = ftab.timecoeff_ch2
+    table_ch['ch3'] = ftab.timecoeff_ch3
+    table_ch['ch4'] = ftab.timecoeff_ch4
+
+    timecoeff = {}
+    timecoeff['left'] = {}
+    timecoeff['right'] = {}
+    left = 'ch1'
+    right = 'ch2'
+    timecoeff['left']['xstart'] = 0
+    timecoeff['left']['xend'] = 512
+    timecoeff['right']['xstart'] = 513
+    timecoeff['right']['xend'] = 1031
+    if detector == 'MIRIFULONG':
+        left = 'ch4'
+        right = 'ch3'
+        # Check the reference file has the time dependent coefficients
+        # check that table 1 wavelength bin is an array with values
+
+    timecoeff['left']['binwave'] = table_ch[left]['binwave']
+    timecoeff['left']['acoeff'] = table_ch[left]['acoeff']
+    timecoeff['left']['bcoeff'] = table_ch[left]['bcoeff']
+    timecoeff['left']['ccoeff'] = table_ch[left]['ccoeff']
+    timecoeff['left']['x0'] = table_ch[left]['x0']
+
+    timecoeff['right']['binwave'] = table_ch[right]['binwave']
+    timecoeff['right']['acoeff'] = table_ch[right]['acoeff']
+    timecoeff['right']['bcoeff'] = table_ch[right]['bcoeff']
+    timecoeff['right']['ccoeff'] = table_ch[right]['ccoeff']
+    timecoeff['right']['x0'] = table_ch[right]['x0']
 
     ysize, xsize = input.data.shape
     y, x = np.mgrid[:ysize, :xsize]

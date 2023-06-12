@@ -79,7 +79,8 @@ class DataSet():
 
     """
 
-    def __init__(self, model, inverse=False, source_type=None, correction_pars=None):
+    def __init__(self, model, inverse=False, source_type=None, mrs_time_correction=False,
+                 correction_pars=None):
         """
         Short Summary
         -------------
@@ -96,6 +97,9 @@ class DataSet():
 
         source_type : str or None
             Force processing using the specified source type.
+
+        mrs_time_correction: boolean
+            Apply the mrs time correction
 
         correction_pars : dict
             Correction meta-data from a previous run.
@@ -136,6 +140,7 @@ class DataSet():
         self.specnum = -1
         self.inverse = inverse
         self.source_type = None
+        self.mrs_time_correction = mrs_time_correction
 
         # For MultiSlitModels, only set a generic source_type value for the
         # entire datamodel if the user has set the source_type parameter.
@@ -480,44 +485,6 @@ class DataSet():
             ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
                                                dqflags.pixel['NON_SCIENCE'])
 
-            table_ch = {}
-            table_ch['ch1'] = ftab.timecoeff_ch1
-            table_ch['ch2'] = ftab.timecoeff_ch2
-            table_ch['ch3'] = ftab.timecoeff_ch3
-            table_ch['ch4'] = ftab.timecoeff_ch4
-            timecoeff = {}
-            timecoeff['left'] = {}
-            timecoeff['right'] = {}
-            left = 'ch1'
-            right = 'ch2'
-            timecoeff['left']['xstart'] = 0
-            timecoeff['left']['xend'] = 512
-            timecoeff['right']['xstart'] = 513
-            timecoeff['right']['xend'] = 1031
-            if self.detector == 'MIRIFULONG':
-                left = 'ch4'
-                right = 'ch3'
-            # Check the reference file has the time dependent coefficients
-            # check that table 1 wavelength bin is an array with values
-            if np.any(ftab.timecoeff_ch1['binwave']):
-                time_correction = True
-            else:
-                time_correction = False
-                print('not applying time dependent correction')
-            if time_correction:
-                time_correction = True
-                timecoeff['left']['binwave'] = table_ch[left]['binwave']
-                timecoeff['left']['acoeff'] = table_ch[left]['acoeff']
-                timecoeff['left']['bcoeff'] = table_ch[left]['bcoeff']
-                timecoeff['left']['ccoeff'] = table_ch[left]['ccoeff']
-                timecoeff['left']['x0'] = table_ch[left]['x0']
-
-                timecoeff['right']['binwave'] = table_ch[right]['binwave']
-                timecoeff['right']['acoeff'] = table_ch[right]['acoeff']
-                timecoeff['right']['bcoeff'] = table_ch[right]['bcoeff']
-                timecoeff['right']['ccoeff'] = table_ch[right]['ccoeff']
-                timecoeff['right']['x0'] = table_ch[right]['x0']
-
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
 
@@ -536,13 +503,17 @@ class DataSet():
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
 
-            # If applying time dependent correction
-            # we need the EXPMID - mid_time of exposure
-            if time_correction:
+            # Check if reference file contains time dependent correction
+            if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+                log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
-                correction = ifu_mrs.time_correction(self.input,
-                                                     timecoeff, mid_time)
+                correction = ifu_mrs.time_correction(self.input, self.detector,
+                                                     ftab, mid_time)
                 self.input.data /= correction
+                self.input.err /= correction
+            else:
+                log.info("Not applying MRS IFU time dependent correction.")
+
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
 
