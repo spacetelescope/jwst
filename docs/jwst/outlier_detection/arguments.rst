@@ -2,7 +2,7 @@
 
 Step Arguments for Non-IFU data
 ===============================
-The `outlier_detection` step not non-IFU data has the following optional arguments
+The `outlier_detection` step for non-IFU data has the following optional arguments
 that control the behavior of the processing:
 
 ``--weight_type`` (string, default='exptime')
@@ -87,9 +87,9 @@ that control the behavior of the processing:
   The size of the kernel to use to normalize the pixel differences. The kernel size
   must only contain odd values. 
 
-``--threshold_percent`` (float, default='99.8')
-  The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels. Pixels with
-  a normalized minimum pixel difference above this percentage are flagged as a outlier. 
+``--threshold_percent`` (float, default=99.8)
+The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels.
+Pixels with   a normalized minimum pixel difference above this percentage are flagged as a outlier. 
 
 ``--save_intermediate_results`` (boolean, default=False)
   Specifies whether or not to save any intermediate products created

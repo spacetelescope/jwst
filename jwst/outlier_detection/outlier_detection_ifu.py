@@ -69,7 +69,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
         Return
         ---------
-        opt_model: OultierOutputModel
+        opt_model : OutlierOutputModel
         The optional OutlierOutputModel to be returned from the outlier_detection_ifu step.
         """
         (kernsize_x, kernsize_y, threshold_percent,
@@ -85,6 +85,8 @@ class OutlierDetectionIFU(OutlierDetection):
         return opt_model
 
     def _find_detector_parameters(self):
+        """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
+
         if self.input_models[0].meta.instrument.name.upper() == 'MIRI':
             diffaxis = 1
         elif self.input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
@@ -92,14 +94,15 @@ class OutlierDetectionIFU(OutlierDetection):
         ny, nx = self.inputs[0].data.shape
         return (diffaxis, ny, nx)
 
-    def convert_inputs(self):
-        self.input_models = self.inputs
-        self.converted = False
+   # def convert_inputs(self):
+   #     self.input_models = self.inputs
+   #     self.converted = False
 
     def do_detection(self):
         """Split data by detector to find outliers."""
-        self.convert_inputs()
+   #     self.convert_inputs()
 
+        self.input_models = self.inputs
         self.build_suffix(**self.outlierpars)
         save_intermediate_results = \
             self.outlierpars['save_intermediate_results']
@@ -153,7 +156,37 @@ class OutlierDetectionIFU(OutlierDetection):
                       kern_size, threshold_percent,
                       save_intermediate_results,
                       ifu_second_check):
-        """Flag outlier pixels in DQ of input images."""
+        """
+        Flag outlier pixels on IFU. In general we are searching for pixels that
+        are a form of a bad pixel but not in bad pixel mask, because the bad pixels vary with
+        time. This program will flag the DQ of input images as DO_NOT_USE and OUTLIER and set
+        the associated science pixel to a Nan. This routine only works on data from one detector. 
+
+        Parameters
+        ----------
+        idet : int
+            Integer indicating which detector we are working with
+        uq_det : string array
+            Array of (unique) detector names found input data 
+        n_det_files : int
+            Number of files for the detector we are working on 
+        diffaxis : int
+            The axis to form the adjacent pixel differences
+        nx : int
+            Size of input data on x axis
+        ny : int
+            Since of inut data on y axis
+        threshold_percent : float
+            Percent for flagging outliers. Flags pixels where the minimum difference between
+            adjacent pixels for all the input data for a detector is above this percentage. The
+            percentage is based on using all the pixels except a 4 X 4 row and column region around
+            the detector that is often noisy.
+        save_intermediate_results : boolean
+            If True then save intermediate output data
+        ifu_second_check : boolean
+            If True then perform a secondary check searching for outliers. This will set outliers
+            whereever the difference array of adjacent pixels is a Nan. 
+        """
 
         # set up array to hold group differences
         diffarr = np.zeros([ndet_files, ny, nx])
@@ -191,9 +224,6 @@ class OutlierDetectionIFU(OutlierDetection):
 
         # minarr final minimum combined differences, size: ny X nx
         minarr = np.nanmin(diffarr, axis=0)
-        # store where the minarr is nan (neighbor pixels have nan so differences produces a nan)
-        nanminarr = np.isnan(minarr)
-        nanindx = np.where(nanminarr)
 
         # Normalise the differences to a local median image to deal with ultra-bright sources
         normarr = medfilt(minarr, kernel_size=kern_size)
@@ -218,6 +248,12 @@ class OutlierDetectionIFU(OutlierDetection):
             opt_model.save(opt_model.meta.filename)
 
         del diffarr
+
+        # store some information if the second flagging step is to be done. 
+        if ifu_second_check:
+            # store where the minarr is nan (neighbor pixels have nan so differences produces a nan)
+            nanminarr = np.isnan(minarr)
+            nanindx = np.where(nanminarr)
 
         # Update DQ flag
         for i in range(len(self.input_models)):
@@ -251,8 +287,6 @@ class OutlierDetectionIFU(OutlierDetection):
                 # This will also catch pixels that have a sci of Nan but the DQ flags did
                 # not have DO_NOT_USE set
                 if ifu_second_check:
-                    nanindx = np.where(nanminarr)
-
                     # For counting purposes, count the number of science values that were valid (not Nan)
                     # after basic flagging in the nanminarr region that will now  be flagged as a Nan.
                     additional = np.where(~np.isnan(sci[nanindx]))
