@@ -60,7 +60,6 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
-    print("only use ints jump.py", only_use_ints)
     new_gdq, new_pdq, number_crs, number_extended_events\
         = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
