@@ -28,11 +28,17 @@ _jwst_modules = ["container", "source_container"]
 # Models that are not part of stdatamodels
 _jwst_models = ["ModelContainer", "SourceModelContainer"]
 
+# Deprecated modules in stdatamodels
+_deprecated_modules = ['drizproduct', 'multiprod']
+
+# Deprecated models in stdatamodels
+_deprecated_models = ['DrizProductModel', 'MultiProductModel', 'MIRIRampModel']
+
 # Import all submodules from stdatamodels.jwst.datamodels
 for attr in dir(stdatamodels.jwst.datamodels):
     if attr[0] == '_':
         continue
-    if attr in _jwst_models:
+    if attr in _jwst_models or attr in _deprecated_modules or attr in _deprecated_models:
         continue
     obj = getattr(stdatamodels.jwst.datamodels, attr)
     if ismodule(obj):
