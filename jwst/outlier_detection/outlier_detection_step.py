@@ -148,7 +148,6 @@ class OutlierDetectionStep(Step):
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
-                pars['resample_suffix'] = 'crf'
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")

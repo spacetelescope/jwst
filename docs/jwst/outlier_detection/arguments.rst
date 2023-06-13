@@ -88,8 +88,8 @@ that control the behavior of the processing:
   must only contain odd values. 
 
 ``--threshold_percent`` (float, default=99.8)
-The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels.
-Pixels with   a normalized minimum pixel difference above this percentage are flagged as a outlier. 
+  The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels.
+  Pixels with   a normalized minimum pixel difference above this percentage are flagged as a outlier. 
 
 ``--save_intermediate_results`` (boolean, default=False)
   Specifies whether or not to save any intermediate products created

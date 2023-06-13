@@ -35,7 +35,7 @@ class OutlierDetectionIFU(OutlierDetection):
       3. For each input file store the  minimum of the pixel neighbor differences
       4. Comparing all the differences from all the input data find the minimum neighbor difference
       5. Normalize minimum difference to local median of difference array
-      6. select outliers by flagging those normailzed minimum values > thershold_percent
+      6. select outliers by flagging those normailzed minimum values > threshold_percent
       7. Updates input ImageModel DQ arrays with mask of detected outliers.
 
     """
@@ -62,7 +62,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
         Parameter
         ---------
-        input_model: ~jwst.datamodels.RampModel
+        input_model: ~stdatamodels.jwst.datamodels.RampModel
 
         opt_info: tuple
         The output arrays needed for the OultierOutputModel.
