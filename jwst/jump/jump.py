@@ -105,9 +105,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     total_time = output_model.meta.exposure.group_time * (output_model.meta.exposure.ngroups -
                  (1 + num_flagged_grps)) * output_model.meta.exposure.nints
     total_pixels = data.shape[2] * data.shape[3]
-    print("ncols", data.shape[3], "nrows", data.shape[2])
-    output_model.meta.exposure.primary_cosmic_rays = number_crs / (total_time * total_pixels)
-    output_model.meta.exposure.extended_emission_events = number_extended_events / \
-                                                          (total_time * total_pixels)
+    output_model.meta.exposure.primary_cosmic_rays = 1000 * number_crs / (total_time * total_pixels)
+    output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
+                                                         (total_time * total_pixels)
 
     return output_model
