@@ -54,6 +54,8 @@ flat_field
 
 - Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
 
+- Added log messages for reporting flat reference file(s) used. [#7592]
+
 cube_build
 ----------
 
@@ -70,6 +72,8 @@ other
 - Drop support for Python 3.8 [#7552]
 
 - Override package dependencies with requirements file when requested [#7557]
+
+- Close files left open in test suite [#7599]
 
 pathloss
 --------

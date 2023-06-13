@@ -166,17 +166,17 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
-    ref = fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits'))
+    with fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits')) as ref:
+        # Test NRS1
+        pyw = astwcs.WCS(ref['SLITY1'].header)
+        # Test evaluating the WCS (slice 0)
+        im, refs = wcs_ifu_grating("G140M", "OPAQUE")
+        w0 = nirspec.nrs_wcs_set_input(im, 0)
 
-    # Test NRS1
-    pyw = astwcs.WCS(ref['SLITY1'].header)
-    # Test evaluating the WCS (slice 0)
-    im, refs = wcs_ifu_grating("G140M", "OPAQUE")
-    w0 = nirspec.nrs_wcs_set_input(im, 0)
+        # get positions within the slit and the corresponding lambda
+        slit1 = ref['SLITY1'].data  # y offset on the slit
+        lam = ref['LAMBDA1'].data
 
-    # get positions within the slit and the corresponding lambda
-    slit1 = ref['SLITY1'].data  # y offset on the slit
-    lam = ref['LAMBDA1'].data
     # filter out locations outside the slit
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()  # 0-based
