@@ -99,7 +99,7 @@ class DataSet():
             Force processing using the specified source type.
 
         mrs_time_correction: boolean
-            Apply the mrs time correction
+            Switch to apply/not apply the mrs time correction
 
         correction_pars : dict
             Correction meta-data from a previous run.
