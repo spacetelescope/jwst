@@ -54,8 +54,6 @@ flat_field
 
 - Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
 
-- Added log messages for reporting flat reference file(s) used. [#7592]
-
 cube_build
 ----------
 
