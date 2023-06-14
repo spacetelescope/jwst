@@ -662,6 +662,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     # pixels and gaps. (initial guess)
     replace_bad_pixels(data0, ngroups, ny, row)
 
+    '''
     # Fill in bad pixels, gaps, and reference data locations in the normal
     # data, using Fourier filtering/interpolation
     fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1)
@@ -815,6 +816,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
     # Shape of b_offset is (2048, 3200), but data0 is (ngroups, 2048, 2048),
     # so a mask is applied to b_offset to remove the reference pix locations.
     data0 += b_offset[..., irs2_mask]
+    '''
 
     return data0
 
@@ -992,3 +994,237 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
 
     data0[0, :, :, :] = dd0.copy()
     del aa, dd0
+
+
+def fourier_filter_replace(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad,
+        hnorm, hnorm1, outlimask):
+
+    # Use Fourier filter/interpolation to replace
+    # (a) bad pixel, gaps, and reference data in the time-ordered normal data
+    # (b) gaps and normal data in the time-ordered reference data
+    # This "improves" upon the cosine interpolation performed above.
+
+    # Parameters for the filter to be used.
+    # length of apodization cosine filter
+    elen = 110000 // (scipix_n + refpix_r + 2)
+
+    # max unfiltered frequency
+    blen = (512 + 512 // scipix_n * (refpix_r + 2) + pad) // \
+           (scipix_n + refpix_r + 2) * ny // 2 - elen // 2
+
+    # Construct the filter [1, cos, 0, cos, 1].
+    temp_a1 = (np.cos(np.arange(elen, dtype=np.float32) *
+                      np.pi / float(elen)) + 1.) / 2.
+
+    # elen = 5000
+    # blen = 30268
+    # row * ny // 2 - 2 * blen - 2 * elen = 658552
+    # len(temp_a2) = 729088
+    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float32),
+                              temp_a1.copy(),
+                              np.zeros(row * ny // 2 - 2 * blen - 2 * elen,
+                                       dtype=np.float32),
+                              temp_a1[::-1].copy(),
+                              np.ones(blen, dtype=np.float32)))
+    afilter = temp_a2.copy()
+
+    roll_a2 = np.roll(temp_a2, -1)
+    aa = np.concatenate((temp_a2, roll_a2[::-1]))
+    del temp_a1, temp_a2, roll_a2
+
+    # IDL:  aa = a # replicate(1, s[3]) ; for application to the data
+    # In IDL, aa is a 2-D array with one column of `a` for each group.  In
+    # Python, numpy broadcasting should take care of this.
+
+    # Indices for keeping/shuffling reference pixels in various arrays
+    # (The comments are for scipix_n = 16, refpix_r = 4)
+    n0 = 512 // scipix_n
+    n1 = scipix_n + refpix_r + 2
+    ht = np.arange(n0 * n1, dtype=np.int32).reshape((n0, n1))   # (32, 22)
+    ht[:, 0:(scipix_n - refpix_r) // 2 + 1] = -1
+    ht[:, scipix_n // 2 + 1 + 3 * refpix_r // 2:] = -1
+    hs = ht.copy()
+    # t = like href1, but extended over gaps and first and last norm pix
+    hs_temp1 = np.arange(refpix_r, dtype=np.int32).reshape((2, refpix_r//2))
+    hs_temp2 = np.transpose(hs_temp1)
+    hs_temp2 = np.append(hs_temp2, hs_temp2).reshape((refpix_r*2))
+    hs_temp3 = hs[:, hs_temp2 + scipix_n//2 + 1]
+    # WIRED for R=2^(int)
+    hs[:, scipix_n//2 + 1 - refpix_r//2: scipix_n//2 + refpix_r + refpix_r//2] = hs_temp3
+    # s = like href1 shuffled and replicated
+    hs = hs[np.where(hs >= 0)].reshape(2*refpix_r*512//scipix_n)
+
+    if refpix_r % 4 == 2:
+        len_hs = len(hs)
+        temp_hs = hs.reshape(len_hs // 2, 2)
+        temp_hs = temp_hs[:, ::-1]
+        hs = temp_hs.flatten()
+
+    n_iter_ref = 0
+    n_iter_norm = 3
+
+    # construct the reference data
+    shape_d = data0.shape
+    r0 = np.zeros((shape_d))
+    r0[:, :, :, ht] = data0[:, :, :, hs]
+
+    # construct the normal data
+    for k in range(5):
+        log.debug(f'processing sector {k}')
+        # do fourier transform
+        dd0 = data0[k, :, :, :]
+        fft_interp_norm(dd0, outlimask, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm)
+        dd0 = dd0.reshape(ngroups, ny * nx)
+        dd0 = np.fft.fft(dd0, axis=1)
+        print('np.shape(dd0), np.shape(data) = ', np.shape(dd0), np.shape(data))
+
+    shape_d = data0.shape
+    # IDL     Python
+    # sd[1] = shape_d[3]   row (712)
+    # sd[2] = shape_d[2]   ny (2048)
+    # sd[3] = shape_d[1]   ngroups
+    # sd[4] = shape_d[0]   amplifiers (5)
+
+    #                   amplifiers,     ngroups,          ny * row
+    data0 = np.zeros((shape_d[0], shape_d[1], shape_d[2] * shape_d[3]), dtype=complex)
+    r0 = r0.reshape(shape_d[0], shape_d[1], shape_d[2] * shape_d[3])
+    r0 = np.fft.fft(r0, axis=1)
+
+    # Writting out IDL arays
+    # data0 = complexarr(x*y, ngroups, amps)
+    # data0[ *, *, 1] = data0[all_x*y, all_groups, for amp 1]
+    # tota(blah, 2) = sum over columns  (1 is rows)
+    print('np.shape(data0) = ', np.shape(data0))
+    print('np.shape(data0[1, :, :]), np.shape(data0[1, :, :][1]) = ',
+        np.shape(data0[1, :, :]), np.shape(data0[1, :, :][1]))
+    sum_nn_0 = sum(np.abs(data0[1, :, :][1]**2)) / (ngroups-1)
+    sum_nn_1 = sum(np.abs(data0[2, :, :][1]**2)) / (ngroups-1)
+    sum_nn_2 = sum(np.abs(data0[3, :, :][1]**2)) / (ngroups-1)
+    sum_nn_3 = sum(np.abs(data0[4, :, :][1]**2)) / (ngroups-1)
+
+    sum_rr_0 = sum(np.abs(r0[1, :, :][1]**2)) / (ngroups-1)
+    sum_rr_1 = sum(np.abs(r0[2, :, :][1]**2)) / (ngroups-1)
+    sum_rr_2 = sum(np.abs(r0[3, :, :][1]**2)) / (ngroups-1)
+    sum_rr_3 = sum(np.abs(r0[4, :, :][1]**2)) / (ngroups-1)
+
+    sum_oo = sum(np.abs(data0[0, :, :][1]**2)) / (ngroups-1)
+
+    sum_nr_0 = sum((data0[1, :, :]*np.conj(r0[1, :, :])[1]**2)) / (ngroups-1)
+    sum_nr_1 = sum((data0[2, :, :]*np.conj(r0[2, :, :])[1]**2)) / (ngroups-1)
+    sum_nr_2 = sum((data0[3, :, :]*np.conj(r0[3, :, :])[1]**2)) / (ngroups-1)
+    sum_nr_3 = sum((data0[4, :, :]*np.conj(r0[4, :, :])[1]**2)) / (ngroups-1)
+
+    sum_ro_0 = sum((r0[1, :, :]*np.conj(data0[1, :, :])[1]**2)) / (ngroups-1)
+    sum_ro_1 = sum((r0[2, :, :]*np.conj(data0[2, :, :])[1]**2)) / (ngroups-1)
+    sum_ro_2 = sum((r0[3, :, :]*np.conj(data0[3, :, :])[1]**2)) / (ngroups-1)
+    sum_ro_3 = sum((r0[4, :, :]*np.conj(data0[4, :, :])[1]**2)) / (ngroups-1)
+
+
+
+    # Construct the reference data: this is done in a big loop over the
+    # four "sectors" of data in the image, corresponding to the amp regions.
+    # Data from each sector is operated on independently and ultimately
+    # the corrections are subtracted from each sector independently.
+    shape_d = data0.shape
+    for k in range(1, 5):
+        log.debug(f'processing sector {k}')
+
+        # At this point in the processing data0 has shape (5, ngroups, 2048, 712),
+        # assuming normal IRS2 readout settings. r0k contains a subset of the
+        # data from 1 sector of data0, with shape (ngroups, 2048, 256)
+        r0k = np.zeros((shape_d[1], shape_d[2], shape_d[3]), dtype=np.float32)
+        temp = data0[k, :, :, hs].copy()
+        temp = np.transpose(temp, (1, 2, 0))
+        r0k[:, :, ht] = temp
+        del temp
+
+        # data0 has shape (5, ngroups, ny, row).  See the section above where
+        # d0 was created, then copied (moved) to data0.
+        # sd[1] = shape_d[3]   row (712)
+        # sd[2] = shape_d[2]   ny (2048)
+        # sd[3] = shape_d[1]   ngroups
+        # sd[4] = shape_d[0]   5
+        # s is used below, so for convenience, here are the values again:
+        # s[1] = shape[2] = nx
+        # s[2] = shape[1] = ny
+        # s[3] = shape[0] = ngroups
+
+        # IDL and numpy differ in where they apply the normalization for the
+        # FFT.  This really shouldn't matter.
+        normalization = float(shape_d[2] * shape_d[3])
+
+        if beta is not None:
+            # IDL:  refout0 = reform(data0[*,*,*,0], sd[1] * sd[2], sd[3])
+            refout0 = data0[0, :, :, :].reshape((shape_d[1], shape_d[2] * shape_d[3]))
+
+            # IDL:  refout0 = fft(refout0, dim=1, /over)
+            # Divide by the length of the axis to be consistent with IDL.
+            refout0 = np.fft.fft(refout0, axis=1) / normalization
+
+        # IDL:  r0 = reform(r0, sd[1] * sd[2], sd[3], 5, /over)
+        r0k = r0k.reshape((shape_d[1], shape_d[2] * shape_d[3]))
+        r0k = r0k.astype(np.complex64)
+        r0k_fft = np.fft.fft(r0k, axis=1) / normalization
+
+        # Note that where the IDL code uses alpha, we use beta, and vice versa.
+        # IDL:  for k=0,3 do oBridge[k]->Execute,
+        #           "for i=0, s3-1 do r0[*,i] *= alpha"
+        r0k_fft *= beta[k - 1]
+
+        # IDL:  for k=0,3 do oBridge[k]->Execute,
+        #           "for i=0, s3-1 do r0[*,i] += beta * refout0[*,i]"
+        if beta is not None:
+            r0k_fft += (alpha[k - 1] * refout0)
+        del refout0
+
+        # IDL:  for k=0,3 do oBridge[k]->Execute,
+        #           "r0 = fft(r0, 1, dim=1, /overwrite)", /nowait
+        r0k = np.fft.ifft(r0k_fft, axis=1) * normalization
+        del r0k_fft
+
+        # sd[1] = shape_d[3]   row (712)
+        # sd[2] = shape_d[2]   ny (2048)
+        # sd[3] = shape_d[1]   ngroups
+        # sd[4] = shape_d[0]   5
+        # IDL:  r0 = reform(r0, sd[1], sd[2], sd[3], 5, /over)
+        r0k = r0k.reshape(shape_d[1], shape_d[2], shape_d[3])
+        r0k = r0k.real
+        r0k = r0k[:, :, hnorm1]
+
+        # Subtract the correction from the data in this sector
+        data0[k, :, :, hnorm1] -= np.transpose(r0k, (2, 0, 1))
+        del r0k
+
+    # End of loop over 4 sectors
+
+    # Original data0 array has shape (5, ngroups, 2048, 712). Now that
+    # correction has been applied, remove the interleaved reference pixels.
+    # This leaves data0 with shape (5, ngroups, 2048, 512).
+    data0 = data0[:, :, :, hnorm1]
+
+    # Unflip the data in the sectors that have opposite readout direction
+    data0[2, :, :, :] = data0[2, :, :, ::-1]
+    data0[4, :, :, :] = data0[4, :, :, ::-1]
+
+    # IDL:  data0 = transpose(data0, [0,3,1,2])  0, 1, 2, 3 --> 0, 3, 1, 2
+    # current order:  512, ny, ngroups, 5     (IDL)
+    # current order:  5, ngroups, ny, 512     (numpy)
+    #                 0  1        2   3       current numpy indices
+    # transpose to:   512, 5, ny, ngroups     (IDL)
+    # transpose to:   ngroups, ny, 5, 512     (numpy)
+    #                 1        2   0  3       transpose order for numpy
+    # Therefore:      0 1 2 3  -->  1 2 0 3   transpose order for numpy
+    # After transposing, data0 will have shape (ngroups, 2048, 5, 512).
+    data0 = np.transpose(data0, (1, 2, 0, 3))
+
+    # Reshape data0 back to its normal (ngroups, 2048, 2048), which has
+    # the interleaved reference pixels stripped out.
+    # IDL:  data0 = reform(data0[*, 1:*, *, *], s[2], s[2], s[3], /over)
+    # Note:  ny x ny, not ny x nx.
+    data0 = data0[:, :, 1:, :].reshape((ngroups, ny, ny))
+
+    # b_offset is the average over the ramp that we subtracted near the
+    # beginning; add it back in.
+    # Shape of b_offset is (2048, 3200), but data0 is (ngroups, 2048, 2048),
+    # so a mask is applied to b_offset to remove the reference pix locations.
+    data0 += b_offset[..., irs2_mask]
