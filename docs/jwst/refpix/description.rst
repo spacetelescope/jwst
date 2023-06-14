@@ -136,6 +136,12 @@ the reference pixels in each group and subtracted from each pixel.
   are populated when the ``dq_init`` step is run, so it is important to run that
   step before running the ``refpix`` step on subarray data.
 
+  Additionally, certain NIRSpec subarrays (SUB32, SUB512 and SUB512S) do not read out
+  any detector edges, leading to a lack of default reference pixels in the subarray.
+  For these subarrays, we assign the first and last four columns the "REFERENCE_PIXEL"
+  DQ flag, as they should not receive any incoming light with the filter/grating combinations
+  for which they are approved for use.
+
 If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
