@@ -96,9 +96,10 @@ class OutlierDetectionIFU(OutlierDetection):
     def do_detection(self):
         """Split data by detector to find outliers."""
 
-        # outlier_detection.py has the basic class that is used by all favors of outlier
-        # detection. This class sets up self.inputs. We need to fill in self.input_models
-        # with flagged outliers (this is what outlier_detection_step.py returns).
+        # outlier_detection.py has the basic class that is used by all favors
+        # of outlier detection. This class sets up self.inputs. We need to fill
+        # in self.input_models with flagged outliers (this is what outlier_detection_step.py
+        # returns).
         self.input_models = self.inputs
         self.build_suffix(**self.outlierpars)
         save_intermediate_results = \
