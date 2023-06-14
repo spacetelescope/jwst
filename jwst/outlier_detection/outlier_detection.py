@@ -383,10 +383,6 @@ class OutlierDetection:
             for i in range(len(self.input_models)):
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
 
-    def detect_outliers_ifu(self, inputs):
-        # Update in dq and science flags
-        self.input_models = inputs
-
 
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
             resample_data=True, **kwargs):

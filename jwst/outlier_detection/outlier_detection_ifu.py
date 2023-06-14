@@ -52,7 +52,6 @@ class OutlierDetectionIFU(OutlierDetection):
         reffiles : dict of `~stdatamodels.jwst.datamodels.JwstDataModel`
             Dictionary of datamodels.  Keys are reffile_types.
 
-
         """
         OutlierDetection.__init__(self, input_models, reffiles=reffiles, **pars)
 
@@ -69,8 +68,8 @@ class OutlierDetectionIFU(OutlierDetection):
 
         Return
         ---------
-        opt_model : OutlierOutputModel
-        The optional OutlierOutputModel to be returned from the outlier_detection_ifu step.
+        opt_model : OutlierIFUOutputModel
+            The optional OutlierIFUOutputModel to be returned from the outlier_detection_ifu step.
         """
         (kernsize_x, kernsize_y, threshold_percent,
          diffarr, minarr, normarr, minnorm) = opt_info
@@ -94,10 +93,12 @@ class OutlierDetectionIFU(OutlierDetection):
         ny, nx = self.inputs[0].data.shape
         return (diffaxis, ny, nx)
 
-
     def do_detection(self):
         """Split data by detector to find outliers."""
 
+        # outlier_detection.py has the basic class that is used by all favors of outlier
+        # detection. This class sets up self.inputs. We need to fill in self.input_models
+        # with flagged outliers (this is what outlier_detection_step.py returns)
         self.input_models = self.inputs
         self.build_suffix(**self.outlierpars)
         save_intermediate_results = \
@@ -143,10 +144,6 @@ class OutlierDetectionIFU(OutlierDetection):
                                save_intermediate_results,
                                ifu_second_check)
 
-        # send input_models back to outlier_detection.py.
-        # self.input_moels is  that is what is returned from outlier_detection.py
-        self.detect_outliers_ifu(self.input_models)
-
     def flag_outliers(self, idet, uq_det, ndet_files,
                       diffaxis, nx, ny,
                       kern_size, threshold_percent,
@@ -156,16 +153,16 @@ class OutlierDetectionIFU(OutlierDetection):
         Flag outlier pixels on IFU. In general we are searching for pixels that
         are a form of a bad pixel but not in bad pixel mask, because the bad pixels vary with
         time. This program will flag the DQ of input images as DO_NOT_USE and OUTLIER and set
-        the associated science pixel to a Nan. This routine only works on data from one detector. 
+        the associated science pixel to a Nan. This routine only works on data from one detector.
 
         Parameters
         ----------
         idet : int
             Integer indicating which detector we are working with
         uq_det : string array
-            Array of (unique) detector names found input data 
+            Array of (unique) detector names found input data
         n_det_files : int
-            Number of files for the detector we are working on 
+            Number of files for the detector we are working on
         diffaxis : int
             The axis to form the adjacent pixel differences
         nx : int
@@ -181,19 +178,19 @@ class OutlierDetectionIFU(OutlierDetection):
             If True then save intermediate output data
         ifu_second_check : boolean
             If True then perform a secondary check searching for outliers. This will set outliers
-            whereever the difference array of adjacent pixels is a Nan. 
+            where ever the difference array of adjacent pixels is a Nan.
         """
 
         # set up array to hold group differences
         diffarr = np.zeros([ndet_files, ny, nx])
         j = 0
         for i, model in enumerate(self.input_models):
-            sci = model.data
-            dq = model.dq
             detector = model.meta.instrument.detector.lower()
             # only use data from the same detector
             if detector == uq_det[idet]:
-                bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
+                sci = model.data
+                dq = model.dq
+                bad = np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool)
                 # set all science data that have DO_NOT_USE to NAN
                 sci[bad] = np.nan
 
@@ -219,7 +216,6 @@ class OutlierDetectionIFU(OutlierDetection):
                 j = j + 1
 
         # minarr final minimum combined differences, size: ny X nx
-        
         minarr = np.nanmin(diffarr, axis=0)
 
         # Normalise the differences to a local median image to deal with ultra-bright sources
@@ -230,8 +226,10 @@ class OutlierDetectionIFU(OutlierDetection):
         # Percentile cut of the central region (cutting out weird detector edge effects)
         pctmin = np.nanpercentile(minarr_norm[4:ny-4, 4:nx-4], threshold_percent)
         log.debug("Flag pixels with values above {} {}: ".format(threshold_percent, pctmin))
-        # Flag everything above this percentile value
-        indx = np.where(minarr_norm > pctmin)
+        # Flag everything above this percentile value. Using np.where here because we count
+        # the number of pixels flagged using len(indx[0])
+        indx = minarr_norm > pctmin
+        num_above = indx.sum()
 
         if save_intermediate_results:
             detector_name = uq_det[idet]
@@ -246,7 +244,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
         del diffarr
 
-        # store some information if the second flagging step is to be done. 
+        # store some information if the second flagging step is to be done.
         if ifu_second_check:
             # store where the minarr is nan (neighbor pixels have nan so differences produces a nan)
             nanminarr = np.isnan(minarr)
@@ -254,13 +252,13 @@ class OutlierDetectionIFU(OutlierDetection):
 
         # Update DQ flag
         for i in range(len(self.input_models)):
-            model = self.input_models[i]
-            sci = model.data
-            dq = model.dq
 
-            detector = model.meta.instrument.detector.lower()
+            detector = self.input_models[i].meta.instrument.detector.lower()
             # only use data from the same detector
             if detector == uq_det[idet]:
+                model = self.input_models[i]
+                sci = model.data
+                dq = model.dq
 
                 # There could be a large number of pixels with a sci value of NaN
                 # but the dq flag of DO_NOT_USE has not been set.
@@ -271,7 +269,7 @@ class OutlierDetectionIFU(OutlierDetection):
                 log.debug("Number of pixels DQ was not set to DO_NOT_USE and Sci array was Nan{} ".
                           format(len(check[0])))
                 # set all pixels with dq = DO_NOT_USE to have sci values of Nan
-                bad = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool))
+                bad = np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool)
                 sci[bad] = np.nan
 
                 # Basic setting outliers: flagging those at are found in from Percentage cut
@@ -286,9 +284,7 @@ class OutlierDetectionIFU(OutlierDetection):
                 if ifu_second_check:
                     # For counting purposes, count the number of science values that were valid (not Nan)
                     # after basic flagging in the nanminarr region that will now  be flagged as a Nan.
-                    additional = np.where(~np.isnan(sci[nanindx]))
-                    nadditional = len(additional[0])
-
+                    nadditional = (~np.isnan(sci[nanindx])).sum()
                     sci[nanindx] = np.nan
                     dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['DO_NOT_USE'])
                     dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['OUTLIER'])
@@ -297,10 +293,8 @@ class OutlierDetectionIFU(OutlierDetection):
                     log.info("Number of outlier pixels flagged in second check: {} on detector {} ".format(
                         nadditional, uq_det[idet]))
 
-                total_bad = len(indx[0]) + nadditional
+                total_bad = num_above + nadditional
                 percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
                 log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
                 # update model
-                model.dq = dq
-                model.data = sci
                 self.input_models[i] = model
