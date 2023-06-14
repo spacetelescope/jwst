@@ -281,8 +281,10 @@ class Dataset():
                 # Log assignment as rows (in DMS plane) despite assigning columns (in detector plane)
                 log.info(f"Subarray {self.subarray} has no reference pixels: "
                          f"assigning top and bottom four rows as reference pixels.")
-                pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] = dqflags.pixel['REFERENCE_PIXEL']
-                pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] = dqflags.pixel['REFERENCE_PIXEL']
+                pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] = \
+                    pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] | dqflags.pixel['REFERENCE_PIXEL']
+                pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] = \
+                    pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] | dqflags.pixel['REFERENCE_PIXEL']
         else:
             pixeldq = self.input_model.pixeldq.copy()
         return pixeldq

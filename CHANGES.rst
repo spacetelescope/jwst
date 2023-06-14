@@ -102,7 +102,8 @@ refpix
 ------
 
 - Assign reference pixel flag to first and last four columns for
-  NIRSpec subarrays that do not share an edge with full frame. [#7598]
+  NIRSpec subarrays that do not share an edge with full frame,
+  so that corrections can be computed from those unilluminated pixels. [#7598]
 
 regtest
 -------
