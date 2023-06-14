@@ -91,7 +91,7 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        input: str, Level2 Association, or ~jwst.datamodels.DataModel
+        input: str, Level2 Association, or ~jwst.datamodels.JwstDataModel
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_spec2 ...')

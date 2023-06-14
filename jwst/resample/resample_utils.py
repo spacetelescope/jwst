@@ -27,7 +27,7 @@ def make_output_wcs(input_models, ref_wcs=None,
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
-    input_models : list of `~jwst.datamodel.DataModel`
+    input_models : list of `~jwst.datamodel.JwstDataModel`
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
