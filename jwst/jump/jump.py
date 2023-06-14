@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from stcal.jump.jump import detect_jumps
-
+from astropy.io import fits
 from stdatamodels.jwst.datamodels import dqflags
 
 from ..lib import reffile_utils
@@ -60,7 +60,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
-    new_gdq, new_pdq, number_crs, number_extended_events\
+    new_gdq, new_pdq, number_crs, number_extended_events, stddev\
         = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
@@ -92,7 +92,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
     output_model.pixeldq = new_pdq
-    num_flagged_grps = 0
+    fits.writeto("stddev.fits", stddev, overwrite=True)
     # determine the number of groups with all pixels set to DO_NOT_USE
     dnu_flag = 1
     num_flagged_grps =0
@@ -102,7 +102,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                 num_flagged_grps += 1
     print("total crs", number_crs)
     print("total extended events", number_extended_events)
-    total_groups = data.shape[0] * data.shape[1] - num_flagged_grps
+    total_groups = data.shape[0] * data.shape[1] - num_flagged_grps - data.shape[0]
     total_time = output_model.meta.exposure.group_time * total_groups
     total_pixels = data.shape[2] * data.shape[3]
     print("total groups", total_groups)
