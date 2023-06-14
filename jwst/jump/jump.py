@@ -92,7 +92,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
     output_model.pixeldq = new_pdq
-    fits.writeto("stddev.fits", stddev, overwrite=True)
+    fits.writeto(output_model.meta.observation.obs_id_+"stddev.fits", stddev, overwrite=True)
     # determine the number of groups with all pixels set to DO_NOT_USE
     dnu_flag = 1
     num_flagged_grps =0
