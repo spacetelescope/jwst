@@ -8,8 +8,8 @@ from stdatamodels.jwst import datamodels as stdm
 from jwst import datamodels as jwstdm
 
 
-DEPRECATED_MODELS = ['DrizProductModel', 'MultiProductModel', 'MIRIRampModel']
-DEPRECATED_MODULES = ['drizproduct', 'multiprod']
+DEPRECATED_MODELS = jwstdm._deprecated_models
+DEPRECATED_MODULES = jwstdm._deprecated_modules
 
 STDM_ALL = sorted(model for model in stdm.__all__ if model not in DEPRECATED_MODELS)
 JWST_ALL = sorted(list(set(jwstdm.__all__) - set(jwstdm._jwst_models)))
@@ -17,7 +17,7 @@ JWST_ALL = sorted(list(set(jwstdm.__all__) - set(jwstdm._jwst_models)))
 
 STDM_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(stdm.__path__)
                        if not mdl.ispkg and mdl.name not in stdm._private_modules and mdl.name not in DEPRECATED_MODULES])
-JWST_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(jwstdm.__path__) 
+JWST_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(jwstdm.__path__)
                        if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules])
 
 
