@@ -25,7 +25,6 @@ __all__ = [
 # Modules that are not part of stdatamodels
 _jwst_modules = ["container", "source_container"]
 
-
 # Models that are not part of stdatamodels
 _jwst_models = ["ModelContainer", "SourceModelContainer"]
 
