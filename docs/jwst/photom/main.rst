@@ -146,3 +146,24 @@ sensitivity and pixel size data are used to compute a 2-D sensitivity map
 the SCI and ERR arrays of the science exposure, which converts the pixel values
 from countrate to surface brightness.
 Variance arrays are multiplied by the square of the conversion factors.
+
+The MIRI MRS data has a time-variable photometric response that is significant at
+long wavelengths. Using observations of calibration standard stars a correction
+has been constructed using an exponential function that asymptotically approaches a
+constant value in each band. A plot of the count rate loss as a function of MRS
+band is given in Figure 1.
+
+.. figure:: Model_summary.png
+   :scale: 50%
+   :align: center
+	   
+Figure 1:
+Time-dependent decrease in the observed MRS count rate from internal flat calibration observations.
+Solid points illustrate measurements at the central wavelength of each of the 12 MRS bands;
+curves represent the best fit models used for correction by the pipeline.
+
+	   
+
+If the time-dependent throughput correction has been
+determined for a MRS band the photom reference file will contain
+additional extension of binary tables containing the correction parameters.  

@@ -268,15 +268,22 @@ IMAGE extensions.
 The FITS primary HDU does not contain a data array.
 The format and content of the MIRI MRS PHOTOM reference file is as follows:
 
-=======  ========  =====  ===========  =========
-EXTNAME  XTENSION  NAXIS  Dimensions   Data type
-=======  ========  =====  ===========  =========
-SCI      IMAGE       2    1032 x 1024  float
-ERR      IMAGE       2    1032 x 1024  float
-DQ       IMAGE       2    1032 x 1024  integer
-PIXSIZ   IMAGE       2    1032 x 1024  float
-DQ_DEF   BINTABLE    2    TFIELDS = 4  N/A
-=======  ========  =====  ===========  =========
+=================  ========  =====  ===========  =========
+EXTNAME            XTENSION  NAXIS  Dimensions   Data type
+=================  ========  =====  ===========  =========
+SCI                 IMAGE       2    1032 x 1024  float
+ERR                 IMAGE       2    1032 x 1024  float
+DQ                  IMAGE       2    1032 x 1024  integer
+PIXSIZ              IMAGE       2    1032 x 1024  float
+DQ_DEF              BINTABLE    2    TFIELDS = 4  N/A
+TIMECOEFF_CH1 [#]_  BINTABLE    2    TFIELDS = 5  N/A
+TIMECOEFF_CH2 [#]_  BINTABLE    2    TFIELDS = 5  N/A
+TIMECOEFF_CH3 [#]_  BINTABLE    2    TFIELDS = 5  N/A
+TIMECOEFF_CH4 [#]_  BINTABLE    2    TFIELDS = 5  N/A
+==================  ========  =====  ===========  =========
+
+.. [#] Optional extension. If present the MRS time dependent
+throughput correction can be mae.
 
 The SCI extension contains a 2D array of inverse sensitivity factors
 corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
