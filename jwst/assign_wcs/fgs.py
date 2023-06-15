@@ -26,7 +26,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The data model.
     reference_files : dict
         {reftype: file_name} mapping.
@@ -48,7 +48,7 @@ def imaging(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The data model.
     reference_files : dict
         {reftype: file_name} mapping.

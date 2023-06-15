@@ -219,7 +219,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
 
     Returns
     -------
-    output_model, corrections : jwst.datamodel.DataModel, jwst.datamodel.datamodel
+    output_model, corrections : jwst.datamodel.JwstDataModel, jwst.datamodel.datamodel
         2-tuple of the corrected science data with pathloss extensions added, and a
         model of the correction arrays.
 
@@ -368,7 +368,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
 
     Parameters
     ----------
-    data : jwst.datamodel.DataModel
+    data : jwst.datamodel.JwstDataModel
         The NIRSpec MOS data to be corrected.
 
     pathloss : jwst.datamodel.PathlossModel or None
@@ -431,10 +431,10 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
 
     Parameters
     ----------
-    data : jwst.datamodel.DataModel
+    data : jwst.datamodel.JwstDataModel
         The NIRSpec fixed-slit data to be corrected.
 
-    pathloss : jwst.datamodel.DataModel
+    pathloss : jwst.datamodel.JwstDataModel
         The pathloss reference data.
 
     inverse : boolean
@@ -494,10 +494,10 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
 
     Parameters
     ----------
-    data : jwst.datamodel.DataModel
+    data : jwst.datamodel.JwstDataModel
         The NIRSpec IFU data to be corrected.
 
-    pathloss : jwst.datamodel.DataModel
+    pathloss : jwst.datamodel.JwstDataModel
         The pathloss reference data.
 
     inverse : boolean
@@ -506,12 +506,12 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     source_type : str or None
         Force processing using the specified source type.
 
-    correction_pars : jwst.datamodels.DataModel or None
+    correction_pars : jwst.datamodels.JwstDataModel or None
         The precomputed pathloss to apply instead of recalculation.
 
     Returns
     -------
-    corrections : jwst.datamodel.DataModel
+    corrections : jwst.datamodel.JwstDataModel
         The pathloss corrections applied.
     """
     if correction_pars:
@@ -547,10 +547,10 @@ def do_correction_lrs(data, pathloss):
 
     Parameters
     ----------
-    data : jwst.datamodel.DataModel
+    data : jwst.datamodel.JwstDataModel
         The MIRI LRS fixed-slit data to be corrected.
 
-    pathloss : jwst.datamodel.DataModel
+    pathloss : jwst.datamodel.JwstDataModel
         The pathloss reference data.
     """
     correction = _corrections_for_lrs(data, pathloss)
@@ -591,10 +591,10 @@ def do_correction_soss(data, pathloss):
 
     Parameters
     ----------
-    data : jwst.datamodel.DataModel
+    data : jwst.datamodel.JwstDataModel
         The NIRISS SOSS data to be corrected.
 
-    pathloss : jwst.datamodel.DataModel
+    pathloss : jwst.datamodel.JwstDataModel
         The pathloss reference data.
     """
     # Omit correction if this is a TSO observation
@@ -675,7 +675,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
     slit : jwst.datamodels.SlitModel
         The slit being operated on.
 
-    pathloss : jwst.datamodels.DataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data
 
     exp_type : str
@@ -764,7 +764,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
     slit : jwst.datamodels.SlitModel
         The slit being operated on.
 
-    pathloss : jwst.datamodels.DataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data
 
     exp_type : str
@@ -850,7 +850,7 @@ def _corrections_for_ifu(data, pathloss, source_type):
     data : jwst.datamodels.SlitModel
         The data being operated on.
 
-    pathloss : jwst.datamodels.DataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data
 
     source_type : str or None
@@ -928,7 +928,7 @@ def _corrections_for_lrs(data, pathloss):
 
     Parameters
     ----------
-    data : jwst.datamodels.DataModel
+    data : jwst.datamodels.JwstDataModel
         The LRS data being operated on.
 
     pathloss : jwst.datamodels.MirLrsPathlossModel
@@ -936,7 +936,7 @@ def _corrections_for_lrs(data, pathloss):
 
     Returns
     -------
-    correction : jwst.datamodels.DataModel
+    correction : jwst.datamodels.JwstDataModel
         The correction arrays
     """
     correction = None

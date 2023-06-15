@@ -21,6 +21,11 @@ background
 - Mask out NaN pixels in WFSS images before removing outlier values and calculating mean in
   ``robust_mean`` function. [#7587]
 
+blendmeta
+---------
+
+- Use ``JwstDataModel`` instead of deprecated ``DataModel`` [#7607]
+
 cube_build
 ----------
 
@@ -44,6 +49,8 @@ documentation
 
 - Update ``calwebb_spec2`` docs to reflect the fact that the MIRI MRS ``straylight``
   step now comes before the ``flatfield`` step. [#7593]
+
+- Remove references to deprecated ``jwst.datamodels.DataModels`` [#7607]
 
 extract_1d
 ----------

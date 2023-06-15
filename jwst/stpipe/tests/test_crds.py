@@ -31,7 +31,7 @@ class CrdsStep(Step):
 
         with datamodels.open(input_file) as dm:
             self.ref_filename = self.get_reference_file(dm, 'flat')
-        return datamodels.DataModel()
+        return datamodels.JwstDataModel()
 
 
 def test_crds_step():
