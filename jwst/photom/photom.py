@@ -9,7 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
-from . import ifu_mrs
+from . import miri_mrs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -98,7 +98,7 @@ class DataSet():
         source_type : str or None
             Force processing using the specified source type.
 
-        mrs_time_correction: boolean
+        mrs_time_correction: bool
             Switch to apply/not apply the mrs time correction
 
         correction_pars : dict
@@ -504,10 +504,19 @@ class DataSet():
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
 
             # Check if reference file contains time dependent correction
-            if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+
+            try:
+                ftab.getarray_noinit("timecoeff_ch1")
+            except AttributeError:
+                # Old style ref file; skip the correction
+                log.info("Skipping MRS MIRI time correction. Extensions not found in the reference file.")
+                self.mrs_time_correction = False
+            
+            #if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+            if self.mrs_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
-                correction = ifu_mrs.time_correction(self.input, self.detector,
+                correction = miri_mrs.time_correction(self.input, self.detector,
                                                      ftab, mid_time)
                 self.input.data /= correction
                 self.input.err /= correction

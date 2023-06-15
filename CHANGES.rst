@@ -95,7 +95,7 @@ photom
 - Updated to convert NIRSpec IFU point source data to units of surface brightness,
   for compatibility with the ``cube_build`` step. [#7569]
 
-- Added time-dependent correction for MIRI MRS data [#7600, spacetelescope/stdatamodels#164]
+- Added time-dependent correction for MIRI MRS data [#7600, spacetelescope/stdatamodels#166]
 
 pixel_replace
 -------------

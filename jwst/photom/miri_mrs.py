@@ -15,7 +15,7 @@ def expfunc_bounded(x, a, b, c, x0):
 
 
 def get_correction_function(side, timecoeff, mid_time):
-    """ Find the time and wavelength dependent function """
+    """ Constructing the time and wavelength dependent function """
 
     binwave = timecoeff[side]['binwave']
     a = timecoeff[side]['acoeff']
@@ -37,14 +37,14 @@ def time_correction(input, detector, ftab, mid_time):
 
     Parameters
     ----------
-    input : JWST data model
+    input : JWST IFUImageModel
         Input science data model to be corrected.
 
-    detector : string
+    detector : str
         MRS detector working on
 
     ftab : stdatamodels.jwst.datamodels.MirMrsPhotomModel
-        MRS PHotom reference file
+        MRS Photom reference file
 
     mid_time: float
         Exposure mid time in MJD
