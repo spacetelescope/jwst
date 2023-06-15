@@ -31,7 +31,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.DataModel`
+    input_model : `~jwst.datamodel.JwstDataModel`
         Input datamodel for processing
     reference_files : dict {reftype: reference file name}
         The dictionary of reference file names and their associated files.
@@ -56,7 +56,7 @@ def imaging(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.DataModel`
+    input_model : `~jwst.datamodel.JwstDataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files
@@ -107,7 +107,7 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.DataModel`
+    input_model : `~jwst.datamodel.JwstDataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files.

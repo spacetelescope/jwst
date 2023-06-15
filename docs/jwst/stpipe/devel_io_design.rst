@@ -132,7 +132,7 @@ is expected to accept other object types as well.
 
 A `Step`'s primary argument is expected to be either a string containing
 the file path to a data file, or a JWST
-:class:`~jwst.datamodels.DataModel` object. The method
+:class:`~jwst.datamodels.JwstDataModel` object. The method
 :meth:`~jwst.stpipe.step.Step.open_model` handles either type of
 input, returning a `DataModel` from the specified file or a shallow
 copy of the `DataModel` that was originally passed to it. A typical
@@ -324,7 +324,7 @@ Save That Model: Step.save_model
 
 If a `Step` needs to save a `DataModel` before the step completes, use
 of :meth:`Step.save_model <jwst.stpipe.step.Step.save_model>` is the recommended over
-directly calling :meth:`DataModel.save <jwst.datamodels.DataModel.save>`.
+directly calling :meth:`DataModel.save <jwst.datamodels.JwstDataModel.save>`.
 `Step.save_model` uses the `Step` framework and hence will honor the
 following:
 
