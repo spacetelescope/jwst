@@ -742,14 +742,19 @@ def extract_ifu(input_model, source_type, extract_params):
         thischannel = input_model.meta.instrument.channel
         # Valid single-channel values
         validch=['1','2','3','4']
-        # If a valid single channel, specify it in call to residual fringe code
-        if (thischannel in validch):
-            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
+        # Embed all calls to residual fringe code in a try/except loop as the default behavior
+        # if problems are encountered should be to not apply this optional step
+        try:
+            # If a valid single channel, specify it in call to residual fringe code
+            if (thischannel in validch):
+                temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
                                               dichroic_only=False, max_amp=None)
-        # Otherwise leave channel blank
-        else:
-            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,
-                                                        dichroic_only=False, max_amp=None)
+            # Otherwise leave channel blank
+            else:
+                temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,
+                                                            dichroic_only=False, max_amp=None)
+        except:
+            log.info("Residual fringe correction failed- skipping.")
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat,
