@@ -32,6 +32,8 @@ datamodels
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
 
+- Added two new header keywords to track the rate of cosmic rays and snowball/showers [#3263]
+
 documentation
 -------------
 
@@ -50,6 +52,15 @@ flat_field
 ----------
 
 - Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
+
+jump
+----
+
+- Updated the code to handle the switch to sigma clipping for exposures with
+  at least 101 integrations. Three new parameters were added to the jump step to
+  control this process.
+  Also, updated the code to enter the values for the cosmic ray rate and the
+  snowball/shower rate into the FITS header.
 
 cube_build
 ----------
