@@ -38,7 +38,7 @@ def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.
 
     catalog : str, optional
         Name of catalog to extract astrometric positions for sources in the
-        input images' field-of-view. Default: GAIADR3. Options available are
+        input images' field-of-view. Default: GAIADR2. Options available are
         documented on the catalog web page.
 
     output : str, optional
