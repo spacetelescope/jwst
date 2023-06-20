@@ -26,7 +26,7 @@ Primary function for creating an astrometric reference catalog.
 """
 
 
-def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.ecsv",
+def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.ecsv",
                                gaia_only=False, table_format="ascii.ecsv",
                                existing_wcs=None, num_sources=None):
     """Create an astrometric catalog that covers the inputs' field-of-view.
