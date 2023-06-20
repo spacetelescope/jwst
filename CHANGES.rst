@@ -21,6 +21,11 @@ background
 - Mask out NaN pixels in WFSS images before removing outlier values and calculating mean in
   ``robust_mean`` function. [#7587]
 
+blendmeta
+---------
+
+- Use ``JwstDataModel`` instead of deprecated ``DataModel`` [#7607]
+
 cube_build
 ----------
 
@@ -34,12 +39,20 @@ datamodels
 
 - Added two new header keywords to track the rate of cosmic rays and snowball/showers [#3263]
 
+- Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
+  ``jwst.datamodels`` [#7605]
+
 documentation
 -------------
 
 - Fix bugs in implementation of ``pixel_replace`` documentation. [#7565]
 
 - Update tutorial usage of ``jump.threshold`` to ``jump.rejection_threshold``. [#7572]
+
+- Update ``calwebb_spec2`` docs to reflect the fact that the MIRI MRS ``straylight``
+  step now comes before the ``flatfield`` step. [#7593]
+
+- Remove references to deprecated ``jwst.datamodels.DataModels`` [#7607]
 
 extract_1d
 ----------
@@ -51,7 +64,7 @@ extract_1d
 flat_field
 ----------
 
-- Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
+- Added log messages for reporting flat reference file(s) used. [#7606]
 
 jump
 ----
@@ -79,6 +92,8 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+- Close files left open in test suite [#7599]
+
 pathloss
 --------
 
@@ -103,6 +118,18 @@ ramp_fitting
 - Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
+
+refpix
+------
+
+- Assign reference pixel flag to first and last four columns for
+  NIRSpec subarrays that do not share an edge with full frame,
+  so that corrections can be computed from those unilluminated pixels. [#7598]
+
+regtest
+-------
+
+- Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
 
 srctype
 -------

@@ -87,7 +87,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             input Data Model object
 
         inverse : boolean
@@ -921,7 +921,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information
         exptype : str
             Exposure type of the input
@@ -968,7 +968,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information
         conversion : float
             Initial scalar photometric conversion value
@@ -1034,7 +1034,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.DataModel`
+        ftab : `~jwst.datamodels.JwstDataModel`
             A photom reference file data model
 
         area_fname : str
@@ -1106,7 +1106,7 @@ class DataSet():
 
         Parameters
         ----------
-        pix_area : `~jwst.datamodels.DataModel`
+        pix_area : `~jwst.datamodels.JwstDataModel`
             Pixel area reference file data model
         """
 
@@ -1208,7 +1208,7 @@ class DataSet():
 
         Returns
         -------
-        output_model : ~jwst.datamodels.DataModel
+        output_model : ~jwst.datamodels.JwstDataModel
             output data model with the flux calibrations applied
 
         """

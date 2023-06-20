@@ -75,6 +75,12 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
                                 'data': (0, 2048, 1536, 2048)}
                           }
 
+# Special behavior is requested for NIRSpec subarrays that do not reach
+# detector edges; for these input models, we will assign the top and bottom
+# four rows as reference pixels to better treat pedestal noise issues.
+
+NRS_edgeless_subarrays = ['SUB512', 'SUB512S', 'SUB32']
+
 #
 # MIR Reference section dictionaries are zero indexed and specify the values
 # to be used in the following slice:
@@ -155,8 +161,10 @@ class Dataset():
         self.input_model = input_model
 
         is_subarray = False
+        self.subarray = None
         if reffile_utils.is_subarray(input_model):
             is_subarray = True
+            self.subarray = input_model.meta.subarray.name
         self.is_subarray = is_subarray
 
         self.zeroframe_proc = False
@@ -269,6 +277,14 @@ class Dataset():
             pixeldq[4:fullrows - 4, 0:4] = refpixdq_dontuse
             pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = refpixdq_dontuse
             pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.pixeldq.copy()
+            if self.subarray in NRS_edgeless_subarrays:
+                # Log assignment as rows (in DMS plane) despite assigning columns (in detector plane)
+                log.info(f"Subarray {self.subarray} has no reference pixels: "
+                         f"assigning top and bottom four rows as reference pixels.")
+                pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] = \
+                    pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] | dqflags.pixel['REFERENCE_PIXEL']
+                pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] = \
+                    pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] | dqflags.pixel['REFERENCE_PIXEL']
         else:
             pixeldq = self.input_model.pixeldq.copy()
         return pixeldq
@@ -406,12 +422,19 @@ class Dataset():
 
     def count_good_top_bottom_refpixels(self):
         donotuse = dqflags.pixel['DO_NOT_USE']
+        refdq = dqflags.pixel['REFERENCE_PIXEL']
         ngood = 0
-        for edge in ['top', 'bottom']:
-            for amplifier in 'ABCD':
-                rowstart, rowstop, colstart, colstop = NIR_reference_sections[amplifier][edge]
-                good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
-                ngood += len(good[0])
+        if self.subarray in NRS_edgeless_subarrays:
+            ngood = len(np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))[0])
+            log.debug(f"Edgeless subarray {self.subarray} has {ngood} reference pixels.")
+        else:
+            for edge in ['top', 'bottom']:
+                for amplifier in 'ABCD':
+                    rowstart, rowstop, colstart, colstop = NIR_reference_sections[amplifier][edge]
+                    log.debug(f"Ref sections for {edge} & {amplifier}: {rowstart, rowstop, colstart, colstop}")
+                    good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
+                    ngood += len(good[0])
+                    log.debug(f"For {edge} & {amplifier}: {len(good[0])}")
         return ngood
 
 

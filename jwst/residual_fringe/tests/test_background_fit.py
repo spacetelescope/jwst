@@ -19,14 +19,14 @@ def read_fit_column(file):
     file_dir = Path(__file__).parent.resolve()
     file_path = str(file_dir / file)
 
-    hdu = fits.open(file_path)
-    col_data = hdu[1].data
-    col_weight = hdu[2].data
-    col_wnum = hdu[3].data
-    bg_fit = hdu[4].data
-    store_freq = hdu[0].header['FFREQ']
+    with fits.open(file_path) as hdu:
+        col_data = hdu[1].data
+        col_weight = hdu[2].data
+        col_wnum = hdu[3].data
+        bg_fit = hdu[4].data
+        store_freq = hdu[0].header['FFREQ']
 
-    return col_data, col_weight, col_wnum, bg_fit, store_freq
+        return col_data, col_weight, col_wnum, bg_fit, store_freq
 
 
 @pytest.mark.parametrize("file", ['good_col.fits', 'edge_col.fits'])
