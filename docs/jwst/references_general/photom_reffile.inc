@@ -302,9 +302,9 @@ Scalar PHOTMJSR and PHOTUJA2 values are stored in primary header keywords
 in the MIRI MRS PHOTOM reference files and are copied into the science
 product header by the photom step.
 
-The TIMECOEFF_CH tables contain the parameters to correct the MRS a time-dependent
+The TIMECOEFF_CH tables contain the parameters to correct the MRS time-dependent
 throughput loss. If these tables do not exist in the reference file, then the MIRI
-MRS time dependent correction is skipped. 
+MRS time-dependent correction is skipped. 
 
 Constructing a PHOTOM Reference File
 ------------------------------------
