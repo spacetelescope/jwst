@@ -19,7 +19,7 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The exposure.
     reference_files : dict
         A dict {reftype: reference_file_name} containing all

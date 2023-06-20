@@ -5,7 +5,7 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
-from stdatamodels.jwst.datamodels import DataModel
+from stdatamodels.jwst.datamodels import JwstDataModel
 
 from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrPhase, select_apcorr
 
@@ -34,7 +34,7 @@ def inputs(request):
 
     instrument, exptype = request.param
 
-    dm = DataModel()
+    dm = JwstDataModel()
     dm.meta.instrument.name = instrument
     dm.meta.exposure.type = exptype
 

@@ -163,7 +163,7 @@ def create_input(instrument, detector, exptype,
 
     Returns
     -------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         An open data model object of the appropriate type.
     """
 
@@ -397,7 +397,7 @@ def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec fixed-slit photom reference file.
     """
 
@@ -469,7 +469,7 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec MSA photom reference file.
     """
 
@@ -527,7 +527,7 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS WFSS photom reference file.
     """
 
@@ -583,7 +583,7 @@ def create_photom_niriss_soss(min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS SOSS photom reference file.
     """
 
@@ -637,7 +637,7 @@ def create_photom_niriss_image(min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS image photom reference file.
     """
 
@@ -681,7 +681,7 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI MRS photom reference file.
     """
 
@@ -716,7 +716,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI LRS photom reference file.
     """
 
@@ -775,7 +775,7 @@ def create_photom_miri_image(min_wl=16.5, max_wl=19.5,
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI image photom reference file.
     """
 
@@ -812,7 +812,7 @@ def create_photom_nircam_image(min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRCam image photom reference file.
     """
 
@@ -856,7 +856,7 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRCam WFSS photom reference file.
     """
 
@@ -907,7 +907,7 @@ def create_photom_fgs_image(value):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec fixed-slit photom reference file.
     """
 
@@ -939,7 +939,7 @@ def create_pixel_area_ref(shape, area_ster, area_a2):
 
     Returns
     -------
-    area_ref : `~jwst.datamodels.DataModel`
+    area_ref : `~jwst.datamodels.JwstDataModel`
         An open data model for a pixel area reference file.
     """
 
@@ -970,7 +970,7 @@ def create_msa_pixel_area_ref(quadrant, shutter_x, shutter_y, pixarea):
 
     Returns
     -------
-    area_ref : `~jwst.datamodels.DataModel`
+    area_ref : `~jwst.datamodels.JwstDataModel`
         An open data model for a pixel area reference file.
     """
 
@@ -990,10 +990,10 @@ def find_row_in_ftab(input_model, ftab, select, slitname=None, order=None):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         input Data Model object
 
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         This has a `phot_table` attribute, which is a table containing
         photometric information.  This can be any of several data models
         functionally equivalent to _photom_xxxx.fits files in CRDS.
