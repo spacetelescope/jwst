@@ -65,6 +65,12 @@ writing JWST data files in Python.
 
    jwst/error_propagation/index.rst
 
+.. toctree::
+   :maxdepth: 2
+   :caption: JWST Help Desk
+
+   jwst/user_documentation/jwst_helpdesk.rst
+
 --------------------------------
 
 =====================
