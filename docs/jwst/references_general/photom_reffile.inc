@@ -284,7 +284,7 @@ TIMECOEFF_CH4 [1]_  BINTABLE    2    TFIELDS = 5  N/A
 
 .. rubric:: Footnotes
 
-.. [1] Optional extension. If present the MRS time dependent throughput correction can be applied.
+.. [1] Optional extension. If present, the MRS time-dependent throughput correction can be applied.
 
 The SCI extension contains a 2D array of inverse sensitivity factors
 corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
