@@ -8,16 +8,6 @@ from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, Readnois
 
 from jwst.ramp_fitting.ramp_fit_step import compute_RN_variances
 
-################## DEBUG ################## 
-#                  HELP!!
-import sys
-sys.path.insert(1, "/Users/kmacdonald/code/common")
-from general_funcs import DELIM, \
-                          dbg_print, \
-                          dbg_print_data, \
-                          dbg_print_dq
-################## DEBUG ################## 
-
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
