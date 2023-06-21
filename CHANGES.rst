@@ -155,7 +155,7 @@ tweakreg
   ``drizzlepac``. [#7573, #7591]
 
 - Added the 'GAIADR3' catalog to the available options for alignment; 
-  this has been enabled as the default option [#7217].
+  this has been enabled as the default option [#7611].
 
 
 1.10.2 (2023-04-14)
