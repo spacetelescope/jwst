@@ -63,6 +63,8 @@ documentation
 
 - Remove references to deprecated ``jwst.datamodels.DataModels`` [#7607]
 
+- Added link to JWST help desk on the top documentation page. [#7610]
+
 extract_1d
 ----------
 

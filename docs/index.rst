@@ -25,6 +25,9 @@ contains the interface to JWST datamodels, the recommended method of reading and
 writing JWST data files in Python.
 
 
+If you have questions or concerns regarding the software, please contact the JWST Help
+desk at `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
+
 --------------------------------
 
 .. toctree::
@@ -64,6 +67,7 @@ writing JWST data files in Python.
    :caption: Error Propagation Documentation
 
    jwst/error_propagation/index.rst
+
 
 --------------------------------
 
