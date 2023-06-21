@@ -961,7 +961,7 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
 
 
 def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
-                                      pgram_res):
+                                         pgram_res):
     """Fit the residual fringe signal.- 1d version
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package.
 
