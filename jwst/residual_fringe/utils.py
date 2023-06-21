@@ -881,13 +881,13 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
     Returns
     -------
 
-    bg_fit: numpy array
+    bg_fit : numpy array
         the fitted background
 
-    bgindx: numpy array
+    bgindx : numpy array
         the location of the knots
 
-    fitter: BayesicFitting object
+    fitter : BayesicFitting object
         fitter object, mainly used for testing
 
     """
