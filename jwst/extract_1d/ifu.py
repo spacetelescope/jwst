@@ -753,7 +753,7 @@ def extract_ifu(input_model, source_type, extract_params):
             else:
                 temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,
                                                             dichroic_only=False, max_amp=None)
-        except:
+        except Exception:
             log.info("Residual fringe correction failed- skipping.")
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
