@@ -1,8 +1,8 @@
 .. _outlier_detection_step_args:
 
-Step Arguments
-==============
-The `outlier_detection` step has the following optional arguments
+Step Arguments for Non-IFU data
+===============================
+The `outlier_detection` step for non-IFU data has the following optional arguments
 that control the behavior of the processing:
 
 ``--weight_type`` (string, default='exptime')
@@ -76,3 +76,21 @@ that control the behavior of the processing:
 
   For example, if set to ``0.5``, only resampled images that use less than half
   the available memory can be created.
+
+
+Step Arguments for IFU data
+===========================
+The `outlier_detection` step for IFU data has the following optional arguments
+that control the behavior of the processing:
+
+``--kernel_size`` (string, default='7 7')
+  The size of the kernel to use to normalize the pixel differences. The kernel size
+  must only contain odd values. 
+
+``--threshold_percent`` (float, default=99.8)
+  The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels.
+  Pixels with   a normalized minimum pixel difference above this percentage are flagged as a outlier. 
+
+``--save_intermediate_results`` (boolean, default=False)
+  Specifies whether or not to save any intermediate products created
+  during step processing.

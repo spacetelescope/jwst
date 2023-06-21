@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
+from . import miri_mrs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -78,7 +79,8 @@ class DataSet():
 
     """
 
-    def __init__(self, model, inverse=False, source_type=None, correction_pars=None):
+    def __init__(self, model, inverse=False, source_type=None, mrs_time_correction=False,
+                 correction_pars=None):
         """
         Short Summary
         -------------
@@ -87,7 +89,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             input Data Model object
 
         inverse : boolean
@@ -95,6 +97,9 @@ class DataSet():
 
         source_type : str or None
             Force processing using the specified source type.
+
+        mrs_time_correction: bool
+            Switch to apply/not apply the mrs time correction
 
         correction_pars : dict
             Correction meta-data from a previous run.
@@ -135,6 +140,7 @@ class DataSet():
         self.specnum = -1
         self.inverse = inverse
         self.source_type = None
+        self.mrs_time_correction = mrs_time_correction
 
         # For MultiSlitModels, only set a generic source_type value for the
         # entire datamodel if the user has set the source_type parameter.
@@ -496,6 +502,26 @@ class DataSet():
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
+
+            # Check if reference file contains time dependent correction
+
+            try:
+                ftab.getarray_noinit("timecoeff_ch1")
+            except AttributeError:
+                # Old style ref file; skip the correction
+                log.info("Skipping MRS MIRI time correction. Extensions not found in the reference file.")
+                self.mrs_time_correction = False
+            
+            #if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+            if self.mrs_time_correction:
+                log.info("Applying MRS IFU time dependent correction.")
+                mid_time = self.input.meta.exposure.mid_time
+                correction = miri_mrs.time_correction(self.input, self.detector,
+                                                     ftab, mid_time)
+                self.input.data /= correction
+                self.input.err /= correction
+            else:
+                log.info("Not applying MRS IFU time dependent correction.")
 
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
@@ -921,7 +947,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information
         exptype : str
             Exposure type of the input
@@ -968,7 +994,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information
         conversion : float
             Initial scalar photometric conversion value
@@ -1034,7 +1060,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.DataModel`
+        ftab : `~jwst.datamodels.JwstDataModel`
             A photom reference file data model
 
         area_fname : str
@@ -1106,7 +1132,7 @@ class DataSet():
 
         Parameters
         ----------
-        pix_area : `~jwst.datamodels.DataModel`
+        pix_area : `~jwst.datamodels.JwstDataModel`
             Pixel area reference file data model
         """
 
@@ -1208,7 +1234,7 @@ class DataSet():
 
         Returns
         -------
-        output_model : ~jwst.datamodels.DataModel
+        output_model : ~jwst.datamodels.JwstDataModel
             output data model with the flux calibrations applied
 
         """

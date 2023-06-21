@@ -94,7 +94,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         input_filenames = extract_filenames_from_product(product)
         inputs = [datamodels.open(i) for i in inputs]  # return datamodels
     else:
-        if isinstance(inputs, datamodels.DataModel):
+        if isinstance(inputs, datamodels.JwstDataModel):
             input_filenames = [i.meta.filename for i in inputs]
         else:
             input_filenames = inputs  # assume list of filenames as input
@@ -162,7 +162,7 @@ def get_blended_metadata(input_models, verbose=False):
     ----------
     input_models : list
         Either a single list of filenames from which to extract the metadata to
-        be blended, or a list of `datamodels.DataModel` objects to be blended.
+        be blended, or a list of `datamodels.JwstDataModel` objects to be blended.
         The input models are assumed to have the blending rules defined as
         an integral part of the schema definition for the model.
 

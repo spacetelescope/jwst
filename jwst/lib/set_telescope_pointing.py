@@ -401,9 +401,9 @@ class TransformParameters:
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
-    #: The date of observation (`jwst.datamodel.DataModel.meta.date`)
+    #: The date of observation (`jwst.datamodels.JwstDataModel.meta.date`)
     useafter: str = None
-    #: V3 position angle at Guide Star (`jwst.datamodel.DataModel.meta.guide_star.gs_v3_pa_science`)
+    #: V3 position angle at Guide Star (`jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science`)
     v3pa_at_gs: float = None
 
     def as_reprdict(self):
@@ -620,7 +620,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
-    Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
+    Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
@@ -628,7 +628,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update.
 
     default_roll_ref : float
@@ -723,7 +723,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update.
 
     default_pa_v3 : float
@@ -776,7 +776,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 def update_wcs_from_telem(model, t_pars: TransformParameters):
     """Update WCS pointing information
 
-    Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
+    Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
@@ -784,7 +784,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update. The update is done in-place.
 
     t_pars : `TransformParameters`
@@ -899,7 +899,7 @@ def update_s_region(model, siaf):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update in-place.
     siaf : namedtuple
         The ``SIAF`` tuple with values populated from the PRD database.

@@ -259,17 +259,17 @@ def subtract_2d_background(source, background):
 
     Parameters
     ----------
-    source : `~jwst.datamodels.DataModel` or `~jwst.datamodels.ModelContainer`
+    source : `~jwst.datamodels.JwstDataModel` or `~jwst.datamodels.ModelContainer`
         The input science data.
 
-    background : `~jwst.datamodels.DataModel`
+    background : `~jwst.datamodels.JwstDataModel`
         The input background data.  Must be the same datamodel type as `source`.
         For a `~jwst.datamodels.ModelContainer`, the source and background
         models in the input containers must match one-to-one.
 
     Returns
     -------
-    `~jwst.datamodels.DataModel`
+    `~jwst.datamodels.JwstDataModel`
         Background subtracted from source.
     """
 

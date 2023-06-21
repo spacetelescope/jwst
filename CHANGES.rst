@@ -21,16 +21,35 @@ background
 - Mask out NaN pixels in WFSS images before removing outlier values and calculating mean in
   ``robust_mean`` function. [#7587]
 
+blendmeta
+---------
+
+- Use ``JwstDataModel`` instead of deprecated ``DataModel`` [#7607]
+
 cube_build
 ----------
 
 - Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
+  
+- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
+  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
+  files with wavelength arrays for the drizzle method. [#7559]
 
 datamodels
 ----------
 
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
+
+- Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
+  ``jwst.datamodels`` [#7605]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include two new parameters
+  needed for outlier_detection_ifu. [#7590]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
+  needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
+
 
 documentation
 -------------
@@ -41,6 +60,8 @@ documentation
 
 - Update ``calwebb_spec2`` docs to reflect the fact that the MIRI MRS ``straylight``
   step now comes before the ``flatfield`` step. [#7593]
+
+- Remove references to deprecated ``jwst.datamodels.DataModels`` [#7607]
 
 extract_1d
 ----------
@@ -58,14 +79,8 @@ extract_1d
 flat_field
 ----------
 
-- Refactored NIRSpec 1D flat interpolation for improved performance. [#7550]
+- Added log messages for reporting flat reference file(s) used. [#7606]
 
-cube_build
-----------
-
-- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
-  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
-  files with wavelength arrays for the drizzle method. [#7559]
 
 other
 -----
@@ -77,7 +92,17 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+
 - Close files left open in test suite [#7599]
+
+
+outlier_detection
+-----------------
+
+- Updated the outlier_detection_ifu algorithm which also required an update to
+  stdatamodels.jwst.datamodels.outlierpars [#7590, spacetelescope/stdatamodels#164,
+  spacetelescope/stdatamodels#167]
+  
 
 pathloss
 --------
@@ -90,6 +115,8 @@ photom
 
 - Updated to convert NIRSpec IFU point source data to units of surface brightness,
   for compatibility with the ``cube_build`` step. [#7569]
+
+- Added time-dependent correction for MIRI MRS data [#7600, spacetelescope/stdatamodels#166]
 
 pixel_replace
 -------------
@@ -109,6 +136,13 @@ residual_fringe
 
 - Updated utilities code to add functions for MIRI MRS residual fringe correction to be applied
   to one-dimensional spectra. [#7594]
+
+refpix
+------
+
+- Assign reference pixel flag to first and last four columns for
+  NIRSpec subarrays that do not share an edge with full frame,
+  so that corrections can be computed from those unilluminated pixels. [#7598]
 
 regtest
 -------

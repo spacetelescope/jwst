@@ -38,10 +38,10 @@ class InputSpectrumModel:
 
         Parameters
         ----------
-        ms : `~jwst.datamodels.DataModel`, MultiSpecModel or SpecModel
+        ms : `~jwst.datamodels.JwstDataModel`, MultiSpecModel or SpecModel
             This is used to get the integration time.
 
-        spec : `~jwst.datamodels.DataModel`, SpecModel table
+        spec : `~jwst.datamodels.JwstDataModel`, SpecModel table
             The table containing columns "wavelength" and "flux".
             The `ms` object may contain more than one spectrum, but `spec`
             should be just one of those.
@@ -272,7 +272,7 @@ class OutputSpectrumModel:
 
         Returns
         -------
-        output_model : `~jwst.datamodels.DataModel`, CombinedSpecModel object
+        output_model : `~jwst.datamodels.JwstDataModel`, CombinedSpecModel object
             A table of combined spectral data.
         """
 
@@ -557,7 +557,7 @@ def combine_1d_spectra(input_model, exptime_key):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input spectra.  This will likely be a ModelContainer object.
 
     exptime_key : str
@@ -568,7 +568,7 @@ def combine_1d_spectra(input_model, exptime_key):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.DataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         A datamodels.CombinedSpecModel object.
     """
 

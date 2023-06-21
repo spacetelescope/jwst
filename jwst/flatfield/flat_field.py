@@ -52,7 +52,7 @@ def do_correction(input_model,
     dflat : ~jwst.datamodels.NirspecFlatModel or None
         Flat field for the detector.  Used only for NIRSpec data.
 
-    user_supplied_flat : ~jwst.datamodels.DataModel
+    user_supplied_flat : ~jwst.datamodels.JwstDataModel
         If supplied, all other reference flats and flat creation are
         ignored in favor of the specified flat.
 
@@ -262,7 +262,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
         Flat field for the detector.
 
-    user_supplied_flat : ~jwst.datamodels.DataModel or None
+    user_supplied_flat : ~jwst.datamodels.JwstDataModel or None
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
 
@@ -341,7 +341,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
-    user_supplied_flat : ~jwst.datamodels.DataModel or None
+    user_supplied_flat : ~jwst.datamodels.JwstDataModel or None
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
 

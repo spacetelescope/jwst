@@ -217,9 +217,9 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     Parameters
     ----------
-    dmodels : list of `~jwst.datamodels.DataModel`
+    dmodels : list of `~jwst.datamodels.JwstDataModel`
         A list of data models.
-    refmodel : `~jwst.datamodels.DataModel`, optional
+    refmodel : `~jwst.datamodels.JwstDataModel`, optional
         This model's WCS is used as a reference.
         WCS. The output coordinate frame, the projection and a
         scaling and rotation transform is created from it. If not supplied

@@ -268,15 +268,23 @@ IMAGE extensions.
 The FITS primary HDU does not contain a data array.
 The format and content of the MIRI MRS PHOTOM reference file is as follows:
 
-=======  ========  =====  ===========  =========
-EXTNAME  XTENSION  NAXIS  Dimensions   Data type
-=======  ========  =====  ===========  =========
-SCI      IMAGE       2    1032 x 1024  float
-ERR      IMAGE       2    1032 x 1024  float
-DQ       IMAGE       2    1032 x 1024  integer
-PIXSIZ   IMAGE       2    1032 x 1024  float
-DQ_DEF   BINTABLE    2    TFIELDS = 4  N/A
-=======  ========  =====  ===========  =========
+==================  ========  =====  ===========  =========  
+EXTNAME             XTENSION  NAXIS  Dimensions   Data type
+==================  ========  =====  ===========  =========
+SCI                 IMAGE       2    1032 x 1024  float
+ERR                 IMAGE       2    1032 x 1024  float
+DQ                  IMAGE       2    1032 x 1024  integer
+PIXSIZ              IMAGE       2    1032 x 1024  float
+DQ_DEF              BINTABLE    2    TFIELDS = 4  N/A
+TIMECOEFF_CH1 [1]_  BINTABLE    2    TFIELDS = 5  N/A
+TIMECOEFF_CH2 [1]_  BINTABLE    2    TFIELDS = 5  N/A
+TIMECOEFF_CH3 [1]_  BINTABLE    2    TFIELDS = 5  N/A
+TIMECOEFF_CH4 [1]_  BINTABLE    2    TFIELDS = 5  N/A
+==================  ========  =====  ===========  =========
+
+.. rubric:: Footnotes
+
+.. [1] Optional extension. If present, the MRS time-dependent throughput correction can be applied.
 
 The SCI extension contains a 2D array of inverse sensitivity factors
 corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
@@ -293,6 +301,10 @@ SCI and ERR arrays, yielding surface brightness in units of mJy/sq-arcsec.
 Scalar PHOTMJSR and PHOTUJA2 values are stored in primary header keywords
 in the MIRI MRS PHOTOM reference files and are copied into the science
 product header by the photom step.
+
+The TIMECOEFF_CH tables contain the parameters to correct the MRS time-dependent
+throughput loss. If these tables do not exist in the reference file, then the MIRI
+MRS time-dependent correction is skipped. 
 
 Constructing a PHOTOM Reference File
 ------------------------------------
