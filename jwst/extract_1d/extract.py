@@ -2523,7 +2523,9 @@ def run_extract1d(
         log_increment: int,
         subtract_background: Union[bool, None],
         use_source_posn: Union[bool, None],
-        center_xy: Union[int, None],
+        center_xy: Union[float, None],
+        ifu_autocen: Union[bool, None],
+        ifu_rfcorr: Union[bool, None],
         was_source_model: bool = False,
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2576,6 +2578,14 @@ def run_extract1d(
         done by the step.  Two values, in x,y order, are used for extraction
         from IFU cubes. Default is None.
 
+    ifu_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in IFU mode.  Default is False.
+
+    ifu_rfcorr : bool
+        Switch to select whether or not to apply a 1d residual fringe correction
+        for MIRI MRS IFU spectra.  Default is False.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2622,6 +2632,8 @@ def run_extract1d(
         subtract_background,
         use_source_posn,
         center_xy,
+        ifu_autocen,
+        ifu_rfcorr,
         was_source_model,
     )
 
@@ -2682,6 +2694,8 @@ def do_extract1d(
         subtract_background: Union[int, None] = None,
         use_source_posn: Union[bool, None] = None,
         center_xy: Union[int, None] = None,
+        ifu_autocen: Union[bool, None] = None,
+        ifu_rfcorr: Union[bool, None] = None,
         was_source_model: bool = False
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2743,6 +2757,14 @@ def do_extract1d(
         of the IFU extraction aperture, overriding any centering done by the step.
         Two values, in x,y order, are used for extraction from IFU cubes.
         Default is None.
+
+    ifu_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in IFU mode.  Default is False.
+
+    ifu_rfcorr : bool
+        Switch to select whether or not to apply a 1d residual fringe correction
+        for MIRI MRS IFU spectra.  Default is False.
 
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
@@ -2953,7 +2975,7 @@ def do_extract1d(
 
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model, center_xy
+                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr
             )
 
         else:

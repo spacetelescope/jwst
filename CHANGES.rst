@@ -63,12 +63,20 @@ documentation
 
 - Remove references to deprecated ``jwst.datamodels.DataModels`` [#7607]
 
+- Added link to JWST help desk on the top documentation page. [#7610]
+
 extract_1d
 ----------
 
 - Changed the logic for handling NIRSpec IFU data, so that both point and extended sources
   are treated the same, i.e. assume the inputs are in units of surface brightness for all
   sources and convert extracted values to flux density. [#7569]
+
+- Changed IFU source location to floating point from integer, added ifu_autocen option to
+  automatically find point source centroids using DAOStarFinder. [#7594]
+
+- Added ifu_rfcorr option to apply 1d residual fringe correction to extracted
+  MIRI MRS spectra. [#7594]
 
 flat_field
 ----------
@@ -124,6 +132,12 @@ ramp_fitting
 - Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
+
+residual_fringe
+---------------
+
+- Updated utilities code to add functions for MIRI MRS residual fringe correction to be applied
+  to one-dimensional spectra. [#7594]
 
 refpix
 ------

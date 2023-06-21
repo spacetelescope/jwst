@@ -73,6 +73,14 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply an APERTURE correction during
         the Extract1dStep. Default is True
 
+    ifu_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in IFU mode.  Default is False.
+
+    ifu_rfcorr : bool
+        Switch to select whether or not to apply a 1d residual fringe correction
+        for MIRI MRS IFU spectra.  Default is False.
+
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
         WARNING: ATOCA results not fully validated, and require the photom step
@@ -137,8 +145,10 @@ class Extract1dStep(Step):
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
-    center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
+    center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
+    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -248,6 +258,8 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.center_xy,
+                        self.ifu_autocen,
+                        self.ifu_rfcorr,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -282,6 +294,8 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             self.center_xy,
+                            self.ifu_autocen,
+                            self.ifu_rfcorr,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -319,6 +333,8 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
                     was_source_model=was_source_model,
                 )
 
@@ -458,6 +474,8 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
                     was_source_model=False,
                 )
 
