@@ -285,7 +285,7 @@ class OutlierDetection:
                                 resampled_models.imtype)
         median_image[:] = np.nan  # initialize with NaNs
 
-        for (resampled_sci, resampled_weight, (row1,row2)) in resampled_sections:
+        for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
             # Create a mask for each input image, masking out areas where there is
             # no data or the data has very low weight
             badmasks = []

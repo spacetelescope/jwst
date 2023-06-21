@@ -30,6 +30,10 @@ cube_build
 ----------
 
 - Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
+  
+- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
+  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
+  files with wavelength arrays for the drizzle method. [#7559]
 
 datamodels
 ----------
@@ -39,6 +43,13 @@ datamodels
 
 - Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
   ``jwst.datamodels`` [#7605]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include two new parameters
+  needed for outlier_detection_ifu. [#7590]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
+  needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
+
 
 documentation
 -------------
@@ -64,12 +75,6 @@ flat_field
 
 - Added log messages for reporting flat reference file(s) used. [#7606]
 
-cube_build
-----------
-
-- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
-  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
-  files with wavelength arrays for the drizzle method. [#7559]
 
 other
 -----
@@ -81,7 +86,17 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+
 - Close files left open in test suite [#7599]
+
+
+outlier_detection
+-----------------
+
+- Updated the outlier_detection_ifu algorithm which also required an update to
+  stdatamodels.jwst.datamodels.outlierpars [#7590, spacetelescope/stdatamodels#164,
+  spacetelescope/stdatamodels#167]
+  
 
 pathloss
 --------
