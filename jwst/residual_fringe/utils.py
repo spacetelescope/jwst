@@ -858,23 +858,23 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
 
     Parameters
     ----------
-    flux:  numpy array, required
+    flux :  numpy array, required
         the 1D array of fluxes
 
-    weights: numpy array, required
+    weights : numpy array, required
         the 1D array of weights
 
-    wavenum: numpy array, required
+    wavenum : numpy array, required
         the 1D array of wavenum
 
-    order: int, optional, default=2
+    order : int, optional, default=2
         the order of the Splines model
 
-    ffreq: float, optional, default=None
+    ffreq : float, optional, default=None
         the expected fringe frequency, used to determine number of knots. If None,
         defaults to NUM_KNOTS constant
 
-    channel: int, optional, default=1
+    channel : int, optional, default=1
         the channel processed. used to determine if other arrays need to be reversed given the direction of increasing
         wavelength down the detector in MIRIFULONG
 
