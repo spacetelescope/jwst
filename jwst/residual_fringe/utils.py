@@ -967,26 +967,26 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
 
     Parameters
     ----------
-    res_fringes:  numpy array, required
+    res_fringes :  numpy array, required
         the 1D array with residual fringes
-    weights: numpy array, required
+    weights : numpy array, required
         the 1D array of weights
-    ffreq: float, required
+    ffreq : float, required
         the central scan frequency
-    dffreq:  float, required
+    dffreq :  float, required
         the one-sided interval of scan frequencies
-    min_nfringes: int, required
+    min_nfringes : int, required
         the minimum number of fringes to check
-    max_nfringes: int, required
+    max_nfringes : int, required
         the maximum number of fringes to check
-    pgram_res: float, optional
+    pgram_res : float, optional
         resolution of the periodogram scan in cm-1
-    wavenum: numpy array, required
+    wavenum : numpy array, required
         the 1D array of wavenum
 
     Returns
     -------
-    res_fringe_fit: numpy array
+    res_fringe_fit : numpy array
         the residual fringe fit data
     """
     # initialize output to none
