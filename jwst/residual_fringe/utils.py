@@ -1090,20 +1090,20 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
 
     Parameters
     ----------
-    flux: numpy array, required
+    flux : numpy array, required
         The 1D array of fluxes
-    wavelength: numpy array, required
+    wavelength : numpy array, required
         The 1D array of wavelengths
-    channel: integer, optional
+    channel : integer, optional
         The MRS spectral channel
-    dichroic_only: boolean, optional
+    dichroic_only : boolean, optional
         Fit only dichroic fringes
-    max_amp: numpy array, optional
+    max_amp : numpy array, optional
         The maximum amplitude array
 
     Returns
     -------
-    output: numpy array
+    output : numpy array
         Modified version of input flux array
     """
 
