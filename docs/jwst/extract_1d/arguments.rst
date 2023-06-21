@@ -101,7 +101,7 @@ The ``extract_1d`` step has the following step-specific arguments.
 
 ``--ifu_autocen``
   Switch to select whether or not to enable auto-centroiding of the extraction
-  aperture for point sources.  Auto-centroiding works by median collapsing the
+  aperture for IFU point sources.  Auto-centroiding works by median collapsing the
   IFU cube across all wavelengths and using DAOStarFinder to locate the brightest
   source in the field. Default is ``False``.
 
