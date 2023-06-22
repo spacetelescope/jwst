@@ -1,7 +1,11 @@
 1.11.1 (unreleased)
 ===================
 
-- 
+tweakreg
+--------
+
+- GAIADR3 catalog positions are corrrected for proper motions given an epoch [#7614]. 
+
 
 1.11.0 (2023-06-21)
 ===================
@@ -175,8 +179,6 @@ tweakreg
 
 - Added the 'GAIADR3' catalog to the available options for alignment; 
   this has been enabled as the default option [#7611].
-
-- GAIADR3 catalog positions are corrrected for proper motions given an epoch [#7614]. 
 
 
 1.10.2 (2023-04-14)
