@@ -102,7 +102,7 @@ a GAIA-based astrometric catalog web service for all astrometrically
 measured sources in the combined field-of-view of the set of input
 images. This catalog is generated from the catalogs available
 through the GSSS STScI web services at `GSSSCATALOGS`_ and accounts for proper 
-motion given an epoch; defaults to 2016.0, or no proper motion correction.
+motion to a given epoch. The default epoch is 2016.0, which results in no proper motion correction.
 
 .. _GSSSCATALOGS: http://gsss.stsci.edu/Catalogs/Catalogs.htm
 
