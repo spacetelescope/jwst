@@ -57,7 +57,7 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
         If `num_sources` is negative, return that number of the faintest
         sources.  By default, all sources are returned.
     
-    epoch: float or str, optional
+    epoch : float or str, optional
         Reference epoch used to update the coordinates for proper motion
         (in decimal year). If `None` then the epoch is obtained from
         the metadata.
