@@ -33,8 +33,8 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
 
     Parameters
     ----------
-    input : str, list
-        Filenames of images to be aligned to astrometric catalog
+    input_models : list of `~jwst.datamodel.JwstDataModel`
+        Each datamodel must have a ~gwcs.WCS object.
 
     catalog : str, optional
         Name of catalog to extract astrometric positions for sources in the
@@ -86,10 +86,11 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
     radius, fiducial = compute_radius(outwcs)
 
     # perform query for this field-of-view
+    import ipdb;ipdb.set_trace()
     epoch = (
         epoch
         if epoch is not None
-        else input_models[0].meta.target["proper_motion_epoch"]
+        else input_models[0].meta.observation.date+input_models[0].meta.observation.time
     )
     # keep only decimal point and digit characters
     epoch = float("".join(c for c in str(epoch) if c == "." or c.isdigit()))
