@@ -60,6 +60,9 @@ class OutlierDetectionStep(Step):
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
         backg = float(default=0.0)
+        kernel_size = string(default='7 7')
+        threshold_percent = float(default=99.8)
+        ifu_second_check = boolean(default=False)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
@@ -110,6 +113,9 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
+                'kernel_size': self.kernel_size,
+                'threshold_percent': self.threshold_percent,
+                'ifu_second_check': self.ifu_second_check,
                 'allowed_memory': self.allowed_memory,
                 'in_memory': self.in_memory,
                 'save_intermediate_results': self.save_intermediate_results,
@@ -142,7 +148,6 @@ class OutlierDetectionStep(Step):
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
-                pars['resample_suffix'] = 's3d'
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
@@ -170,7 +175,6 @@ class OutlierDetectionStep(Step):
                     model.meta.cal_step.outlier_detection = state
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
-
             return self.input_models
 
     def check_input(self):

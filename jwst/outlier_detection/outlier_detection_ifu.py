@@ -1,16 +1,10 @@
 """Class definition for performing outlier detection on IFU data."""
 
 import numpy as np
-from stsci.image import median
-from astropy.stats import sigma_clipped_stats
-
 from stdatamodels.jwst import datamodels
-
+from scipy.signal import medfilt
 from .outlier_detection import OutlierDetection
-from ..cube_build.cube_build_step import CubeBuildStep
-from ..cube_build import blot_cube_build
-
-
+from stdatamodels.jwst.datamodels import dqflags
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -22,9 +16,9 @@ class OutlierDetectionIFU(OutlierDetection):
     """Sub-class defined for performing outlier detection on IFU data.
 
     This is the controlling routine for the outlier detection process.
-    It loads and sets the various input data and parameters needed by
-    the various functions and then controls the operation of this process
-    through all the steps used for the detection.
+    It loads and sets the various input data and parameters needed to flag
+    outliers.  Pixel are flagged as outliers based on the MINIMUM difference
+    a pixel has with its neighbor across all the input cal files.
 
     Notes
     -----
@@ -32,17 +26,19 @@ class OutlierDetectionIFU(OutlierDetection):
 
       1. Extracts parameter settings from input ModelContainer and merges
          them with any user-provided values
-      2. Resamples all input images into IFUCubeModel observations.
-      3. Creates a median image from all IFUCubeModels.
-      4. Blot median image using CubeBlot to match
-          each original input ImageModel.
-      5. Perform statistical comparison between blotted image and original
-         image to identify outliers.
-      6. Updates input ImageModel DQ arrays with mask of detected outliers.
+      2. Loop over cal files
+         a. read in science data
+         b. Store computed neighbor differences for all the pixels.
+            The neighbor pixel  differences are defined by the dispersion axis.
+            For MIRI (disp axis = 1) the neighbors to find differences  are to the left and right of pixel
+            For NIRSpec (disp axis = 0) the neighbors to find the differences are above and below the pixel
+      3. For each input file store the  minimum of the pixel neighbor differences
+      4. Comparing all the differences from all the input data find the minimum neighbor difference
+      5. Normalize minimum difference to local median of difference array
+      6. select outliers by flagging those normailzed minimum values > threshold_percent
+      7. Updates input ImageModel DQ arrays with mask of detected outliers.
 
     """
-
-    default_suffix = 's3d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """Initialize class for IFU data processing.
@@ -53,203 +49,253 @@ class OutlierDetectionIFU(OutlierDetection):
             list of data models as ModelContainer or ASN file,
             one data model for each input 2-D ImageModel
 
-        drizzled_models : list of objects
-            ModelContainer containing drizzled grouped input images
-
         reffiles : dict of `~stdatamodels.jwst.datamodels.JwstDataModel`
             Dictionary of datamodels.  Keys are reffile_types.
 
-
         """
-        OutlierDetection.__init__(self, input_models,
-                                  reffiles=reffiles, **pars)
+        OutlierDetection.__init__(self, input_models, reffiles=reffiles, **pars)
 
-    def _find_ifu_coverage(self):
-        self.channels = []
-        self.subchannels = []
-        self.band_name = []
-        self.gratings = []
-        self.ifu_band1 = []
-        self.ifu_band2 = []
-        self.instrument = self.input_models[0].meta.instrument.name.upper()
-        n = len(self.input_models)
-        for i in range(n):
-            if self.instrument == 'MIRI':
-                this_channel = self.input_models[i].meta.instrument.channel
-                this_subchannel = self.input_models[i].meta.instrument.band.lower()
-                nc = len(this_channel)
-                for k in range(nc):
-                    self.band_name.append('ch' + this_channel[k] + '_' + this_subchannel)
-            elif self.instrument == 'NIRSPEC':
-                self.gratings.append(self.input_models[i].meta.instrument.grating.lower())
-            else:
-                # add error
-                raise ErrorWrongInstrument('Instrument must be MIRI or NIRSPEC')
-        if self.instrument == 'MIRI':
-            band_no_repeat = list(set(self.band_name))
-            bands = ['short','medium','long','short-medium','short-long','medium-short','medium-long','long-short','long-medium']
-            channels = ['1','2','3','4']
-            for this_band in band_no_repeat:
-                for j in channels:
-                    check_channel = 'ch' + j
-                    if check_channel in this_band:
-                        self.channels.append(j)
-                for k in bands:
-                    compare_band = this_band[4:]  # remove the channel part of the name to see which band we have
-                    if k == compare_band:
-                        self.subchannels.append(k)
-            self.ifu_band1 = self.channels
-            self.ifu_band2 = self.subchannels
-        elif self.instrument == 'NIRSPEC':
-            self.gratings = list(set(self.gratings))
-            self.ifu_band1 = self.gratings
-            self.ifu_band2 = self.gratings  # not used in NIRSpec
+    def create_optional_results_model(self, opt_info):
+        """
+        Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
 
-    def _convert_inputs(self):
-        self.input_models = self.inputs
-        self.converted = False
+        Parameter
+        ---------
+        input_model: ~stdatamodels.jwst.datamodels.RampModel
+
+        opt_info: tuple
+        The output arrays needed for the OultierOutputModel.
+
+        Return
+        ---------
+        opt_model : OutlierIFUOutputModel
+            The optional OutlierIFUOutputModel to be returned from the outlier_detection_ifu step.
+        """
+        (kernsize_x, kernsize_y, threshold_percent,
+         diffarr, minarr, normarr, minnorm) = opt_info
+        opt_model = datamodels.OutlierIFUOutputModel(
+            diffarr=diffarr,
+            minarr=minarr,
+            normarr=normarr,
+            minnorm=minnorm)
+        opt_model.meta.kernel_xsize = kernsize_x
+        opt_model.meta.kernel_ysize = kernsize_y
+        opt_model.meta.threshold_percent = threshold_percent
+        return opt_model
+
+    def _find_detector_parameters(self):
+        """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
+
+        if self.input_models[0].meta.instrument.name.upper() == 'MIRI':
+            diffaxis = 1
+        elif self.input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
+            diffaxis = 0
+        ny, nx = self.inputs[0].data.shape
+        return (diffaxis, ny, nx)
 
     def do_detection(self):
-        """Flag outlier pixels in DQ of input images."""
-        self._convert_inputs()
-        self._find_ifu_coverage()
+        """Split data by detector to find outliers."""
 
+        # outlier_detection.py has the basic class that is used by all favors
+        # of outlier detection. This class sets up self.inputs. We need to fill
+        # in self.input_models with flagged outliers (this is what outlier_detection_step.py
+        # returns).
+        self.input_models = self.inputs
         self.build_suffix(**self.outlierpars)
-
         save_intermediate_results = \
             self.outlierpars['save_intermediate_results']
 
-        # start by creating copies of the input data to place the separate
-        # data in after blotting the median-combined cubes for each channel
-        self.blot_models = self.inputs.copy()
-        for model in self.blot_models:
-            # replace arrays with all zeros to accommodate blotted data
-            model.data = np.zeros(model.data.shape, dtype=model.data.dtype)
+        kernel_size = self.outlierpars['kernel_size']
+        sizex, sizey = [int(val) for val in kernel_size.split()]
+        kern_size = np.zeros(2, dtype=int)
+        kern_size[0] = sizex
+        kern_size[1] = sizey
 
-        # Create the resampled/mosaic images for each group of exposures
-        #
+        ifu_second_check = self.outlierpars['ifu_second_check']
+        # check if kernel size is an odd value
+        if kern_size[0] % 2 == 0:
+            log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
+            kern_size[0] = kern_size[0] + 1
+            log.info("New x kernel size is {}: ".format(kern_size[0]))
+        if kern_size[1] % 2 == 0:
+            log.info("Y kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
+            kern_size[1] = kern_size[1] + 1
+            log.info("New y kernel size is {}: ".format(kern_size[1]))
+
+        threshold_percent = self.outlierpars['threshold_percent']
+        (diffaxis, ny, nx) = self._find_detector_parameters()
+
+        nfiles = len(self.input_models)
+        detector = np.empty(nfiles, dtype='<U15')
+        for i, model in enumerate(self.input_models):
+            detector[i] = model.meta.instrument.detector.lower()
+
         exptype = self.input_models[0].meta.exposure.type
         log.info("Performing IFU outlier_detection for exptype {}".format(
                  exptype))
-        num_bands = len(self.ifu_band1)
-        for i in range(num_bands):
-            select1 = self.ifu_band1[i]
-            select2 = self.ifu_band2[i]
+        # How many unique values of detector?
+        uq_det = np.unique(detector)
+        ndet = len(uq_det)
+        for idet in range(ndet):
+            indx = (np.where(detector == uq_det[idet]))[0]
+            ndet_files = int(len(indx))
+            self.flag_outliers(idet, uq_det, ndet_files,
+                               diffaxis, nx, ny,
+                               kern_size, threshold_percent,
+                               save_intermediate_results,
+                               ifu_second_check)
 
-            if self.instrument == 'MIRI':
-                cubestep = CubeBuildStep(channel=select1, band=select2, weighting='emsm',
-                                         single=True)
+    def flag_outliers(self, idet, uq_det, ndet_files,
+                      diffaxis, nx, ny,
+                      kern_size, threshold_percent,
+                      save_intermediate_results,
+                      ifu_second_check):
+        """
+        Flag outlier pixels on IFU. In general we are searching for pixels that
+        are a form of a bad pixel but not in bad pixel mask, because the bad pixels vary with
+        time. This program will flag the DQ of input images as DO_NOT_USE and OUTLIER and set
+        the associated science pixel to a Nan. This routine only works on data from one detector.
 
-            if self.instrument == 'NIRSPEC':
-                cubestep = CubeBuildStep(grating=select1, weighting='emsm',
-                                         single=True)
+        Parameters
+        ----------
+        idet : int
+            Integer indicating which detector we are working with
+        uq_det : string array
+            Array of (unique) detector names found input data
+        n_det_files : int
+            Number of files for the detector we are working on
+        diffaxis : int
+            The axis to form the adjacent pixel differences
+        nx : int
+            Size of input data on x axis
+        ny : int
+            Since of inut data on y axis
+        threshold_percent : float
+            Percent for flagging outliers. Flags pixels where the minimum difference between
+            adjacent pixels for all the input data for a detector is above this percentage. The
+            percentage is based on using all the pixels except a 4 X 4 row and column region around
+            the detector that is often noisy.
+        save_intermediate_results : boolean
+            If True then save intermediate output data
+        ifu_second_check : boolean
+            If True then perform a secondary check searching for outliers. This will set outliers
+            where ever the difference array of adjacent pixels is a Nan.
+        """
 
-            single_IFUCube_result = cubestep.process(self.input_models)
+        # set up array to hold group differences
+        diffarr = np.zeros([ndet_files, ny, nx])
+        j = 0
+        for i, model in enumerate(self.input_models):
+            detector = model.meta.instrument.detector.lower()
+            # only use data from the same detector
+            if detector == uq_det[idet]:
+                sci = model.data
+                dq = model.dq
+                bad = np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool)
+                # set all science data that have DO_NOT_USE to NAN
+                sci[bad] = np.nan
 
-            for model in single_IFUCube_result:
-                model.meta.filename = self.make_output_path(
-                    basepath=model.meta.filename,
-                    suffix='outlier_s3d'
-                )
-                if save_intermediate_results:
-                    log.info("Writing out (single) IFU cube {}".format(model.meta.filename))
-                    model.save(model.meta.filename)
+                # Compute left and right differences (MIRI dispersion axis = 1)
+                # For NIRSpec dispersion axis = 0, these differences are top, bottom
+                # prepend = 0 has the effect of keeping the same shape as sci and
+                # for MIRI data (disp axis = 1) the first column = sci data
+                # OR
+                # for NIRSpec data (disp axis = 0) the first row = sci data
 
-            # Initialize intermediate products used in the outlier detection
-            median_model = datamodels.IFUCubeModel(
-                init=single_IFUCube_result[0].data.shape)
-            median_model.meta = single_IFUCube_result[0].meta
+                leftdiff = np.diff(sci, axis=diffaxis, prepend=0)
+                flip = np.flip(sci, axis=diffaxis)
+                rightdiff = np.diff(flip, axis=diffaxis, prepend=0)
+                rightdiff = np.flip(rightdiff, axis=diffaxis)
 
-            if self.instrument == 'MIRI':
-                median_model.meta.filename = self.make_output_path(
-                    basepath=self.input_models.meta.asn_table.products[0].name,
-                    suffix='ch{}_{}_median_s3d'.format(select1,select2))
-            else:
-                median_model.meta.filename = self.make_output_path(
-                    basepath=self.input_models.meta.asn_table.products[0].name,
-                    suffix='{}_median_s3d'.format(select1))
-            # Perform median combination on set of drizzled mosaics
-            median_model.data = self.create_median(single_IFUCube_result)
+                # Combine left and right differences with minimum of the abs value
+                # to avoid artifacts from bright edges
+                comb = np.zeros([2, ny, nx])
+                comb[0, :, :] = np.abs(leftdiff)
+                comb[1, :, :] = np.abs(rightdiff)
+                combdiff = np.nanmin(comb, axis=0)
+                diffarr[j, :, :] = combdiff
+                j = j + 1
 
-            if save_intermediate_results:
-                log.info("Writing out MEDIAN image to: {}".format(
-                    median_model.meta.filename))
-                median_model.save(median_model.meta.filename)
+        # minarr final minimum combined differences, size: ny X nx
+        minarr = np.nanmin(diffarr, axis=0)
 
-            # Blot the median image back to recreate each input image specified
-            # in the original input list/ASN/ModelContainer
-            #
-            # need to override with IFU-specific version of blot for
-            # each channel/grating this will need to combine the multiple
-            # channels (MIRI) of data into a single frame to match the
-            # original input...
-            self.blot_median(median_model)
+        # Normalise the differences to a local median image to deal with ultra-bright sources
+        normarr = medfilt(minarr, kernel_size=kern_size)
+        nfloor = np.nanmedian(minarr)/3
+        normarr[normarr < nfloor] = nfloor  # Ensure we never divide by a tiny number
+        minarr_norm = minarr / normarr
+        # Percentile cut of the central region (cutting out weird detector edge effects)
+        pctmin = np.nanpercentile(minarr_norm[4:ny-4, 4:nx-4], threshold_percent)
+        log.debug("Flag pixels with values above {} {}: ".format(threshold_percent, pctmin))
+        # Flag everything above this percentile value. Using np.where here because we count
+        # the number of pixels flagged using len(indx[0])
+        indx = minarr_norm > pctmin
+        num_above = indx.sum()
 
         if save_intermediate_results:
-            log.info("Writing out BLOT images...")
+            detector_name = uq_det[idet]
+            opt_info = (kern_size[0], kern_size[1], threshold_percent,
+                        diffarr, minarr, normarr, minarr_norm)
+            opt_model = self.create_optional_results_model(opt_info)
+            opt_model.meta.filename = self.make_output_path(
+                basepath=self.input_models.meta.asn_table.products[0].name,
+                suffix=detector_name + '_outlier_output')
+            log.info("Writing out intermediate outlier file {}".format(opt_model.meta.filename))
+            opt_model.save(opt_model.meta.filename)
 
-            for model in self.blot_models:
-                model.meta.filename = self.make_output_path(
-                    basepath=model.meta.filename, suffix='blot')
+        del diffarr
 
-                log.info("Blotted files {}".format(model.meta.filename))
-                model.save(model.meta.filename)
-        # Perform outlier detection using statistical comparisons between
-        # each original input image and the blotted version of the
-        # median image of all channels
-        self.detect_outliers(self.blot_models)
+        # store some information if the second flagging step is to be done.
+        if ifu_second_check:
+            # store where the minarr is nan (neighbor pixels have nan so differences produces a nan)
+            nanminarr = np.isnan(minarr)
+            nanindx = np.where(nanminarr)
 
-        # clean-up (just to be explicit about being finished
-        # with these results)
-        self.blot_models = None
-        del median_model
+        # Update DQ flag
+        for i in range(len(self.input_models)):
 
-    def create_median(self, resampled_models):
-        """IFU-specific version of create_median."""
-        resampled_sci = [i.data for i in resampled_models]
-        resampled_wht = [i.weightmap for i in resampled_models]
-        nlow = self.outlierpars.get('nlow', 0)
-        nhigh = self.outlierpars.get('nhigh', 0)
-        maskpt = self.outlierpars.get('maskpt', 0.7)
-        badmasks = []
-        for w in resampled_wht:
-            # Due to a bug in numpy.nanmean, need to check
-            # for a completely zero array
-            if not np.any(w):
-                mean_weight = 0.
-            else:
-                mean_weight, _, _ = sigma_clipped_stats(
-                    w, sigma=3.0, mask_value=0.
-                )
-            weight_threshold = mean_weight * maskpt
-            # Mask pixels were weight falls below MASKPT percent of
-            #    the mean weight
-            mask = np.less(w, weight_threshold)
-            log.debug("Number of pixels with low weight: {}".format(
-                np.sum(mask)))
-            badmasks.append(mask)
+            detector = self.input_models[i].meta.instrument.detector.lower()
+            # only use data from the same detector
+            if detector == uq_det[idet]:
+                model = self.input_models[i]
+                sci = model.data
+                dq = model.dq
 
-        # Compute median of stack os images using BADMASKS to remove low weight
-        # values
-        median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
-                              badmasks=badmasks)
-        # for i in range(len(resampled_sci)):
-        #    data = resampled_sci[i]
-        #    mask = badmasks[i]
-        return median_image
+                # There could be a large number of pixels with a sci value of NaN
+                # but the dq flag of DO_NOT_USE has not been set.
+                # This can occur in Non-science regions of the detector.
+                check = np.where(
+                    np.logical_and(~np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool),
+                                   np.isnan(sci)))
+                log.debug("Number of pixels DQ was not set to DO_NOT_USE and Sci array was Nan{} ".
+                          format(len(check[0])))
+                # set all pixels with dq = DO_NOT_USE to have sci values of Nan
+                bad = np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']).astype(bool)
+                sci[bad] = np.nan
 
-    def blot_median(self, median_image):
-        """IFU-specific version of blot_median."""
-        cubeblot = blot_cube_build.CubeBlot(median_image, self.input_models)
-        cubeblot.blot_info()
-        blot_models, input_list_number = cubeblot.blot_images()
-        for j in range(len(blot_models)):
-            k = input_list_number[j]
-            self.blot_models[k].data += blot_models[j].data
-            self.blot_models[k].meta = blot_models[j].meta
+                # Basic setting outliers: flagging those at are found in from Percentage cut
+                sci[indx] = np.nan
+                dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['DO_NOT_USE'])
+                dq[indx] = np.bitwise_or(dq[indx], dqflags.pixel['OUTLIER'])
 
+                nadditional = 0
+                # Second level of setting outliers: flagging pixels were minarr was a Nan
+                # This will also catch pixels that have a sci of Nan but the DQ flags did
+                # not have DO_NOT_USE set
+                if ifu_second_check:
+                    # For counting purposes, count the number of science values that were valid (not Nan)
+                    # after basic flagging in the nanminarr region that will now  be flagged as a Nan.
+                    nadditional = (~np.isnan(sci[nanindx])).sum()
+                    sci[nanindx] = np.nan
+                    dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['DO_NOT_USE'])
+                    dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel['OUTLIER'])
+                    log.info("Number of outlier pixels flagged main ifu outlier flagging: {} on detector {} ".format(
+                        len(indx[0]), uq_det[idet]))
+                    log.info("Number of outlier pixels flagged in second check: {} on detector {} ".format(
+                        nadditional, uq_det[idet]))
 
-class ErrorWrongInstrument(Exception):
-    """ Raises an exception if the instrument is not MIRI or NIRSPEC
-    """
-    pass
+                total_bad = num_above + nadditional
+                percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
+                log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
+                # update model
+                self.input_models[i] = model
