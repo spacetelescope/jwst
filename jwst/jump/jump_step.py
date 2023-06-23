@@ -45,7 +45,7 @@ class JumpStep(Step):
         max_extended_radius = integer(default=200) The maximum radius of an extended snowball or shower
         minimum_groups = integer(default=3) The minimum number of groups to perform jump detection
         minimum_sigclip_groups = integer(default=100) The minimum number of groups to switch to sigma clipping
-        only_use_ints = boolean(default=True) For sigma clipping only compare the same group across ints, if False compare all groups
+        only_use_ints = boolean(default=True) In sigclip only compare the same group across ints, if False compare all groups
     """
 
     reference_file_types = ['gain', 'readnoise']
