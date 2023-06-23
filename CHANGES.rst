@@ -75,6 +75,7 @@ jump
   control this process.
   Also, updated the code to enter the values for the cosmic ray rate and the
   snowball/shower rate into the FITS header.
+  [#7609, spacetelescope/stcal#174]
 
 cube_build
 ----------
