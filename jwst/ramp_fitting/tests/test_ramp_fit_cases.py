@@ -6,17 +6,6 @@ from stcal.ramp_fitting.ramp_fit import ramp_fit
 from stdatamodels.jwst.datamodels import RampModel, GainModel, ReadnoiseModel, dqflags
 
 
-################## DEBUG ################## 
-#                  HELP!!
-import sys
-sys.path.insert(1, "/Users/kmacdonald/code/common")
-from general_funcs import DELIM, \
-                          dbg_print, \
-                          dbg_print_data, \
-                          dbg_print_dq
-################## DEBUG ################## 
-
-
 #
 # The first 12 tests are for a single ramp in a single integration. The ramps
 #  have a variety of GROUPDQ vectors, with 1 or more segments in each ramp.  The
