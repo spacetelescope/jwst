@@ -12,7 +12,7 @@ from jwst.tweakreg import astrometric_utils as amutils
 WCS_NAME = 'mosaic_long_i2d_gwcs.asdf'  # Derived using B7.5 Level 3 product
 EXPECTED_NUM_SOURCES = 2347
 EXPECTED_RADIUS = 0.02564497890604383
-TEST_CATALOG = 'GAIADR2'
+TEST_CATALOG = 'GAIADR3'
 
 
 @pytest.fixture(scope="module")
@@ -45,8 +45,12 @@ def test_get_catalog(wcsobj):
 
 def test_create_catalog(wcsobj):
     # Create catalog
-    gcat = amutils.create_astrometric_catalog(None, existing_wcs=wcsobj,
-                                              catalog=TEST_CATALOG, output=None)
-
+    gcat = amutils.create_astrometric_catalog(
+        None,
+        existing_wcs=wcsobj,
+        catalog=TEST_CATALOG,
+        output=None,
+        epoch="2022-07-01 00:22:24.12",
+    )
     # check that we got expected number of sources
     assert len(gcat) == EXPECTED_NUM_SOURCES
