@@ -744,7 +744,6 @@ def test_twenty_groups_two_segments():
     np.testing.assert_allclose(oslope[wh_data], 10. / deltatime, rtol=1E-4)
     np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
 
-    opedal = opedestal[0, 0, :]
     check = model1.data[0, 0, 0, :] - oslope
     tol = 1E-5
     # Pixel 1 has zero slope, so ignore it.
