@@ -1,6 +1,12 @@
 1.11.1 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Added two new header keywords to track the rate of cosmic rays and snowball/showers
+  [#7609, spacetelescope/stdatamodels#173]
+
 jump
 ----
 
@@ -55,9 +61,6 @@ datamodels
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
 
-- Added two new header keywords to track the rate of cosmic rays and snowball/showers
-  [#7609, spacetelescope/stdatamodels#173]
-
 - Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
   ``jwst.datamodels`` [#7605]
 
@@ -66,7 +69,6 @@ datamodels
 
 - Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
   needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
-
 
 documentation
 -------------
