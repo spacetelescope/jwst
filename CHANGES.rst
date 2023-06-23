@@ -37,7 +37,8 @@ datamodels
 - Removed use of deprecated ``stdatamodels.jwst.datamodels.DataModel`` class from
   all steps and replaced it with ``stdatamodels.jwst.datamodels.JwstDataModel``. [#7571]
 
-- Added two new header keywords to track the rate of cosmic rays and snowball/showers [#3263]
+- Added two new header keywords to track the rate of cosmic rays and snowball/showers
+  [#7609, spacetelescope/stdatamodels#173]
 
 - Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
   ``jwst.datamodels`` [#7605]
