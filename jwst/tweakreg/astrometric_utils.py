@@ -86,7 +86,6 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
     radius, fiducial = compute_radius(outwcs)
 
     # perform query for this field-of-view
-    import ipdb;ipdb.set_trace()
     epoch = (
         epoch
         if epoch is not None
