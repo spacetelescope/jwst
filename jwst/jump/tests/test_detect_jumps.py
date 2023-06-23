@@ -479,7 +479,6 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     assert out_model.groupdq[1, 7, 14, 5] == JUMP_DET
 
 
-@pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     """"
     A multiprocessing test that has a jump in every pixel. This is used
