@@ -13,6 +13,10 @@ from astropy import stats
 from . import spec_wcs
 from scipy.interpolate import interp1d
 
+from astropy.stats import sigma_clipped_stats as sigclip
+from photutils.detection import DAOStarFinder
+from ..residual_fringe import utils as rfutils
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -32,7 +36,8 @@ HUGE_DIST = 1.e10
 
 
 def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
-                  bkg_sigma_clip, apcorr_ref_model=None, center_xy=None):
+                  bkg_sigma_clip, apcorr_ref_model=None, center_xy=None,
+                  ifu_autocen=False, ifu_rfcorr=False):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -57,6 +62,20 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     apcorr_ref_model : apcorr datamodel or None
         Aperture correction table.
+
+    center_xy : float or None
+        A list of 2 pixel coordinate values at which to place the center
+        of the extraction aperture for IFU data, overriding any centering
+        done by the step.  Two values, in x,y order, are used for extraction
+        from IFU cubes. Default is None.
+
+    ifu_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in IFU mode.  Default is False.
+
+    ifu_rfcorr : bool
+        Switch to select whether or not to apply a 1d residual fringe correction
+        for MIRI MRS IFU spectra.  Default is False.
 
     Returns
     -------
@@ -89,14 +108,18 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     extract_params = get_extract_parameters(ref_dict, bkg_sigma_clip, slitname)
 
+    # Add info about IFU auto-centroiding and residual fringe correction to extract_params for use later
+    extract_params['ifu_autocen'] = ifu_autocen
+    extract_params['ifu_rfcorr'] = ifu_rfcorr
+
     # If the user supplied extraction center coords,
     # load them into extract_params for use later.
     extract_params['x_center'] = None
     extract_params['y_center'] = None
     if center_xy is not None:
         if len(center_xy) == 2:
-            extract_params['x_center'] = int(center_xy[0])
-            extract_params['y_center'] = int(center_xy[1])
+            extract_params['x_center'] = float(center_xy[0])
+            extract_params['y_center'] = float(center_xy[1])
             log.info(f'Using user-supplied x_center={center_xy[0]}, y_center={center_xy[1]}')
         else:
             log.warning('Incorrect number of values in center_xy; should be two.')
@@ -418,6 +441,8 @@ def extract_ifu(input_model, source_type, extract_params):
     # This boolean mask will be used to mask any bad voxels in a given plane
     bmask = np.zeros([shape[1], shape[2]], dtype=bool)
 
+    x_center, y_center = None, None
+
     # If the user supplied extraction center coords, use them and
     # ignore all other source type and source position values
     if extract_params['x_center'] is not None:
@@ -428,19 +453,41 @@ def extract_ifu(input_model, source_type, extract_params):
     # For a point source, try to compute the extraction center
     # from the source location
     elif source_type != "EXTENDED":
-        ra_targ = input_model.meta.target.ra
-        dec_targ = input_model.meta.target.dec
-        locn = locn_from_wcs(input_model, ra_targ, dec_targ)
+        # If ifu_autocen is set, try to find the source in the field using DAOphot
+        if extract_params['ifu_autocen'] is True:
+            log.info('Using auto source detection.')
+            collapse = np.nanmedian(data, axis=0)
+            # Sigma-clipped stats on collapsed image
+            _, clipmed, cliprms = sigclip(collapse)
+            # Find source in the collapsed image above 3 sigma
+            daofind = DAOStarFinder(fwhm=3.0, threshold=3 * cliprms)
+            sources = daofind(collapse - clipmed)
+            if (sources is None):
+                log.warning("Auto source detection failed.")
+            else:
+                vals = sources['flux'].value
+                # Identify brightest source as the target
+                indx = np.argmax(vals)
+                x_center, y_center = sources[indx]['xcentroid'], sources[indx]['ycentroid']
+                locn = None
+                log.info("Auto source detection success.")
+                log.info("Using x_center = %g, y_center = %g", x_center, y_center)
 
-        if locn is None or np.isnan(locn[0]):
-            log.warning("Couldn't determine source location from WCS, so "
-                        "extraction region will be centered.")
-            x_center = float(shape[-1]) / 2.
-            y_center = float(shape[-2]) / 2.
-        else:
-            (x_center, y_center) = locn
-            log.info("Using x_center = %g, y_center = %g, based on "
-                     "TARG_RA and TARG_DEC", x_center, y_center)
+        if (x_center is None):
+            log.info('Using target coordinates.')
+            ra_targ = input_model.meta.target.ra
+            dec_targ = input_model.meta.target.dec
+            locn = locn_from_wcs(input_model, ra_targ, dec_targ)
+
+            if locn is None or np.isnan(locn[0]):
+                log.warning("Couldn't determine source location from WCS, so "
+                            "extraction region will be centered.")
+                x_center = float(shape[-1]) / 2.
+                y_center = float(shape[-2]) / 2.
+            else:
+                (x_center, y_center) = locn
+                log.info("Using x_center = %g, y_center = %g, based on "
+                         "TARG_RA and TARG_DEC", x_center, y_center)
 
     method = extract_params['method']
     subpixels = extract_params['subpixels']
@@ -687,6 +734,27 @@ def extract_ifu(input_model, source_type, extract_params):
     b_var_poisson = b_var_poisson[nan_slc]
     b_var_rnoise = b_var_rnoise[nan_slc]
     b_var_flat = b_var_flat[nan_slc]
+
+    # If selected, apply 1d residual fringe correction to the extracted spectrum
+    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
+        log.info("Applying 1d residual fringe correction.")
+        # Determine which MRS channel the spectrum is from
+        thischannel = input_model.meta.instrument.channel
+        # Valid single-channel values
+        validch=['1','2','3','4']
+        # Embed all calls to residual fringe code in a try/except loop as the default behavior
+        # if problems are encountered should be to not apply this optional step
+        try:
+            # If a valid single channel, specify it in call to residual fringe code
+            if (thischannel in validch):
+                temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
+                                              dichroic_only=False, max_amp=None)
+            # Otherwise leave channel blank
+            else:
+                temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,
+                                                            dichroic_only=False, max_amp=None)
+        except Exception:
+            log.info("Residual fringe correction failed- skipping.")
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat,
