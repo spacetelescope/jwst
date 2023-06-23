@@ -155,6 +155,10 @@ class MultilineLogger(logging.getLoggerClass()):
 
     def log(self, level, msg, *args, **kwargs):
         if self.isEnabledFor(level):
+            # handle `pyplot.rc('test', usetex=True)``
+            if type(msg) == bytes:
+                msg = msg.decode()
+
             for line in msg.split('\n'):
                 self._log(level, line, args, **kwargs)
 
