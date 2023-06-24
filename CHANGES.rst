@@ -1,7 +1,15 @@
 1.11.1 (unreleased)
 ===================
 
-- 
+ramp_fitting
+------------
+
+- Updated the CI tests due to change in STCAL, which fixed bug for using the
+  correct timing for slope computation.  Since there are now special cases that
+  use ZEROFRAME data, as well as ramps that have only good data in the 0th
+  group, the timing for these ramps is not group time.  These adjusted times
+  are now used. [#7612, spacetelescope/stcal#173]
+
 
 1.11.0 (2023-06-21)
 ===================
@@ -137,12 +145,6 @@ ramp_fitting
 - Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
-
-- Updated the CI tests due to change in STCAL, which fixed bug for using the
-  correct timing for slope computation.  Since there are now special cases that
-  use ZEROFRAME data, as well as ramps that have only good data in the 0th
-  group, the timing for these ramps is not group time.  These adjusted times
-  are now used. [#7612, spacetelescope/stcal#173]
 
 residual_fringe
 ---------------
