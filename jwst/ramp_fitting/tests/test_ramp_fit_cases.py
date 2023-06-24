@@ -5,6 +5,7 @@ from stcal.ramp_fitting.ramp_fit import ramp_fit
 
 from stdatamodels.jwst.datamodels import RampModel, GainModel, ReadnoiseModel, dqflags
 
+
 #
 # The first 12 tests are for a single ramp in a single integration. The ramps
 #  have a variety of GROUPDQ vectors, with 1 or more segments in each ramp.  The
@@ -54,7 +55,7 @@ def test_pix_0():
     # Set truth values for OPTIONAL results:
     # [slope, sigslope, var_poisson, var_rnoise, yint, sigyint, ped, weights]
     o_true = [1.0117551, 4.874572, 0.0020202, 0.00647973,
-              15.911023, 27.789335, 4.882449, 13841.038]
+              15.911023, 27.789335, 13.988245, 13841.038]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -92,7 +93,7 @@ def test_pix_1():
 
     # Set truth values for OPTIONAL results:
     o_true = [1.9, 56.870003, 0.03454545, 1.0691562, -3., 56.870003,
-              -3.999998, 0.82091206]
+              13.1, 0.82091206]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -129,7 +130,7 @@ def test_pix_2():
               [0.26728904, 1.0691562, 1.0691562],   # var_rnoise
               [14.999998, 51., 15.],                # yint
               [36.709427, 56.870003, 56.870003],     # sigyint
-              [6.5166273],                          # pedestal
+              [14.151663],                          # pedestal
               [13.091425, 0.84580624, 0.84580624],   # weights
               ]
 
@@ -169,7 +170,7 @@ def test_pix_3():
               [0.01272805, 1.0691562],
               [14.504965, 15.],
               [27.842508, 56.870003],
-              [4.253134],
+              [13.925313],
               [4.2576841e+03, 8.458062e-01],
               ]
 
@@ -202,7 +203,7 @@ def test_pix_4():
     p_true = [1.5, GOOD, 1.047105, 0.02727273, 1.0691562]
 
     # Set truth values for OPTIONAL results:
-    o_true = [1.5, 0., 0.02727273, 1.0691562, 0., 0., 0., 0.8318386]
+    o_true = [1.5, 0., 0.02727273, 1.0691562, 0., 0., 13.5, 0.8318386]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -241,7 +242,7 @@ def test_pix_5():
               [0.10691562, 0.03054732],
               [13.537246, 2015.0737],
               [35.301933, 67.10882],
-              [4.2391253],
+              [13.923912],
               [78.34764, 855.78046]
               ]
 
@@ -282,7 +283,7 @@ def test_pix_6():
               [1.0691562, 0.01909207],
               [15., -143.2391],
               [56.870003, 58.76999],
-              [-45.92052],
+              [8.907948],
               [8.4580624e-01, 2.0433204e+03]
               ]
 
@@ -315,7 +316,7 @@ def test_pix_7():
 
     # Set truth values for OPTIONAL results:
     o_true = [1.0757396, 6.450687, 0.0025974, 0.01272805, 14.504951,
-              27.842508, 4.2426033, 4257.684]
+              27.842508, 13.92426, 4257.684]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -347,7 +348,7 @@ def test_pix_8():
 
     # Set truth values for OPTIONAL results:
     o_true = [0.98561335, 9.920554, 0.00363636, 0.03054732, 16.508228,
-              39.383667, 5.1438665, 855.78046]
+              39.383667, 14.014386, 855.78046]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -385,7 +386,7 @@ def test_pix_9():
               [1.0691562, 0.05345781, 1.0691562],
               [15., 20.119896, 15.],
               [56.870003, 68.618195, 56.870003],
-              [5.000005],
+              [14.],
               [0.84580624, 297.23172, 0.84580624]
               ]
 
@@ -425,7 +426,7 @@ def test_pix_10():
               [1.0691562, 0.26728904, 0.05345781],
               [15., 17.999956, 15.000029],
               [56.870003, 88.40799, 93.73906],
-              [5.],
+              [14.],
               [0.84580624, 13.091425, 297.23172]
               ]
 
@@ -457,7 +458,7 @@ def test_pix_11():
     p_true = [1., GOOD, 1.042755, 0.01818182, 1.0691562]
 
     # Set truth values for OPTIONAL results:
-    o_true = [1., 56.870003, 0.01818182, 1.0691562, 15., 56.870003, 5.,
+    o_true = [1., 56.870003, 0.01818182, 1.0691562, 15., 56.870003, 14.,
               0.84580624]
 
     assert_pri(p_true, new_mod, 0)
@@ -498,7 +499,7 @@ def test_pix_12():
     # slope, sig_slope, var_p, var_r, yint, sig_yint, pedestal, weights
     # slope = group1 / deltatime = 15 / 10 = 1.5
     # sig_slope, yint, sig_yint, and pedestal are all zero, because only 1 good group
-    o_true = [1.5, 0., 0.027273, 1.069156, 0., 0., 0., 0.831839]
+    o_true = [1.5, 0., 0.027273, 1.069156, 0., 0., 13.5, 0.831839]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -544,7 +545,7 @@ def test_miri_0():
 
     # Set truth values for OPTIONAL results:
     o_true = [1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508,
-              14.74146, 4257.684]
+              23.974146, 4257.684]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -576,7 +577,7 @@ def test_miri_1():
 
     # Set truth values for OPTIONAL results:
     o_true = [1.1996487, 6.450687, 0.0025974, 0.01272805, 126.110214,
-              27.842508, 113.00351, 4257.684]
+              27.842508, 123.800354, 4257.684]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -608,7 +609,7 @@ def test_miri_2():
 
     # Set truth values for OPTIONAL results:
     o_true = [1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508,
-              14.74146, 4257.684]
+              23.974146, 4257.684]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -640,7 +641,7 @@ def test_miri_3():
 
     # Set truth values for OPTIONAL results:
     o_true = [1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266,
-              27.842508, 14.74146, 4257.684]
+              27.842508, 23.974146, 4257.684]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
