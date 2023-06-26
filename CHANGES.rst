@@ -1,4 +1,17 @@
-1.10.3 (unreleased)
+1.11.1 (unreleased)
+===================
+
+ramp_fitting
+------------
+
+- Updated the CI tests due to change in STCAL, which fixed bug for using the
+  correct timing for slope computation.  Since there are now special cases that
+  use ZEROFRAME data, as well as ramps that have only good data in the 0th
+  group, the timing for these ramps is not group time.  These adjusted times
+  are now used. [#7612, spacetelescope/stcal#173]
+
+
+1.11.0 (2023-06-21)
 ===================
 
 assign_wcs
@@ -30,6 +43,10 @@ cube_build
 ----------
 
 - Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
+  
+- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
+  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
+  files with wavelength arrays for the drizzle method. [#7559]
 
 datamodels
 ----------
@@ -39,6 +56,13 @@ datamodels
 
 - Dynamically inspect ``stdatamodels.jwst.datamodels`` and expose it as
   ``jwst.datamodels`` [#7605]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include two new parameters
+  needed for outlier_detection_ifu. [#7590]
+
+- Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
+  needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
+
 
 documentation
 -------------
@@ -52,6 +76,8 @@ documentation
 
 - Remove references to deprecated ``jwst.datamodels.DataModels`` [#7607]
 
+- Added link to JWST help desk on the top documentation page. [#7610]
+
 extract_1d
 ----------
 
@@ -59,17 +85,17 @@ extract_1d
   are treated the same, i.e. assume the inputs are in units of surface brightness for all
   sources and convert extracted values to flux density. [#7569]
 
+- Changed IFU source location to floating point from integer, added ifu_autocen option to
+  automatically find point source centroids using DAOStarFinder. [#7594]
+
+- Added ifu_rfcorr option to apply 1d residual fringe correction to extracted
+  MIRI MRS spectra. [#7594]
+
 flat_field
 ----------
 
 - Added log messages for reporting flat reference file(s) used. [#7606]
 
-cube_build
-----------
-
-- Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
-  instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
-  files with wavelength arrays for the drizzle method. [#7559]
 
 other
 -----
@@ -81,7 +107,17 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
+
 - Close files left open in test suite [#7599]
+
+
+outlier_detection
+-----------------
+
+- Updated the outlier_detection_ifu algorithm which also required an update to
+  stdatamodels.jwst.datamodels.outlierpars [#7590, spacetelescope/stdatamodels#164,
+  spacetelescope/stdatamodels#167]
+  
 
 pathloss
 --------
@@ -95,6 +131,8 @@ photom
 - Updated to convert NIRSpec IFU point source data to units of surface brightness,
   for compatibility with the ``cube_build`` step. [#7569]
 
+- Added time-dependent correction for MIRI MRS data [#7600, spacetelescope/stdatamodels#166]
+
 pixel_replace
 -------------
 
@@ -107,6 +145,12 @@ ramp_fitting
 - Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
+
+residual_fringe
+---------------
+
+- Updated utilities code to add functions for MIRI MRS residual fringe correction to be applied
+  to one-dimensional spectra. [#7594]
 
 refpix
 ------
@@ -136,6 +180,9 @@ tweakreg
   allows transferring alignment corrections from one file/data model to
   another. It is an analog of the ``tweakback`` task in the
   ``drizzlepac``. [#7573, #7591]
+
+- Added the 'GAIADR3' catalog to the available options for alignment; 
+  this has been enabled as the default option [#7611].
 
 
 1.10.2 (2023-04-14)
