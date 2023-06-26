@@ -12,6 +12,8 @@ def run_pipelines(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the _rateints file, saving intermediate products
+
+    # rtdata.get_data("nircam/tsgrism/jw01366002001_04103_00001-seg001_nrcalong_rateints.fits")
     rtdata.get_data("nircam/tsgrism/jw00721012001_03103_00001-seg001_nrcalong_rateints.fits")
     args = ["calwebb_spec2", rtdata.input,
             "--steps.flat_field.save_results=True",
@@ -22,6 +24,8 @@ def run_pipelines(jail, rtdata_module):
 
     # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
+
+    # rtdata.get_data("nircam/tsgrism/jw01366-o002_20230107t004627_tso3_00001_asn.json")
     rtdata.get_data("nircam/tsgrism/jw00721-o012_20191119t043909_tso3_001_asn.json")
     args = ["calwebb_tso3", rtdata.input]
     Step.from_cmdline(args)
@@ -35,8 +39,13 @@ def run_pipelines(jail, rtdata_module):
 def test_nircam_tsgrism_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRCam TSO grism data."""
     rtdata = run_pipelines
+
+    # rtdata.input = "jw01366002001_04103_00001-seg001_nrcalong_rateints.fits"
+    # output = "jw01366002001_04103_00001-seg001_nrcalong_" + suffix + ".fits"
+
     rtdata.input = "jw00721012001_03103_00001-seg001_nrcalong_rateints.fits"
     output = "jw00721012001_03103_00001-seg001_nrcalong_" + suffix + ".fits"
+
     rtdata.output = output
 
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/" + output)
@@ -48,6 +57,11 @@ def test_nircam_tsgrism_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
 @pytest.mark.bigdata
 def test_nircam_tsgrism_stage3_x1dints(run_pipelines, fitsdiff_default_kwargs):
     rtdata = run_pipelines
+
+    # rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
+    # rtdata.output = "jw01366002001_04103_00001-seg001_nrcalong_x1dints.fits"
+    # rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366002001_04103_00001-seg001_nrcalong_x1dints.fits")
+            
     rtdata.input = "jw00721-o012_20191119t043909_tso3_001_asn.json"
     rtdata.output = "jw00721-o012_t004_nircam_f444w-grismr-subgrism256_x1dints.fits"
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw00721-o012_t004_nircam_f444w-grismr-subgrism256_x1dints.fits")
@@ -59,6 +73,11 @@ def test_nircam_tsgrism_stage3_x1dints(run_pipelines, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_nircam_tsgrism_stage3_whtlt(run_pipelines):
     rtdata = run_pipelines
+
+    # rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
+    # rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv"
+    # rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv")
+
     rtdata.input = "jw00721-o012_20191119t043909_tso3_001_asn.json"
     rtdata.output = "jw00721-o012_t004_nircam_f444w-grismr-subgrism256_whtlt.ecsv"
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw00721-o012_t004_nircam_f444w-grismr-subgrism256_whtlt.ecsv")
