@@ -1,6 +1,11 @@
 1.11.1 (unreleased)
 ===================
 
+pixel_replace
+-------------
+
+- Fixed bug in setting the step completion status at the end of processing. [#7619]
+`
 ramp_fitting
 ------------
 
