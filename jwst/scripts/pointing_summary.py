@@ -5,11 +5,10 @@
 Review contents of a set of given models for pointing information.
 Compare the calculated V1 and REFPOINT pointing with the proposed TARGET pointing.
 
-Examples
---------
->>> pointing_summary exp1.fits
+% pointing_summary exp1.fits
 
->>> pointing_summary *.fits
+% pointing_summary *.fits
+
 """
 import argparse
 import logging
