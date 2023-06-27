@@ -155,6 +155,7 @@ regtest
 -------
 
 - Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
+- Updated NIRSpec IFU tests to use flight data [#7620]
 
 srctype
 -------
