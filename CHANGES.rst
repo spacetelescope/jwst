@@ -1,6 +1,12 @@
 1.11.1 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Added two new header keywords to track the rate of cosmic rays and snowball/showers
+  [#7609, spacetelescope/stdatamodels [spacetelescope/stdatamodels#173]
+
 jump
 ----
 
@@ -77,9 +83,6 @@ datamodels
 
 - Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
   needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
-
-- Added two new header keywords to track the rate of cosmic rays and snowball/showers
-  [#7609, spacetelescope/stdatamodels [#173]
 
 documentation
 -------------
@@ -158,12 +161,6 @@ ramp_fitting
 - Updated CI tests due to a change in STCAL, which fixed a bug in the way the number
   of groups in a segment are computed when applying optimal weighting to line
   fit segments. [#7560, spacetelescope/stcal#163]
-
-- Updated the CI tests due to change in STCAL, which fixed bug for using the
-  correct timing for slope computation.  Since there are now special cases that
-  use ZEROFRAME data, as well as ramps that have only good data in the 0th
-  group, the timing for these ramps is not group time.  These adjusted times
-  are now used. [#7612, spacetelescope/stcal#173]
 
 residual_fringe
 ---------------
