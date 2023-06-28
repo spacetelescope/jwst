@@ -50,6 +50,6 @@ for attr in dir(stdatamodels.jwst.datamodels):
         sys.modules[f"jwst.datamodels.{attr}"] = obj
 
 # Add a few submodules to sys.modules without exposing them locally
-for _submodule_name in ['schema', 'schema_editor', 'validate']:
+for _submodule_name in ['schema_editor', 'validate']:
     _submodule = importlib.import_module(f"stdatamodels.jwst.datamodels.{_submodule_name}")
     sys.modules[f"jwst.datamodels.{_submodule_name}"] = _submodule
