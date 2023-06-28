@@ -61,6 +61,8 @@ datamodels
 - Added two new header keywords to track the rate of cosmic rays and snowball/showers
   [#7609, spacetelescope/stdatamodels [spacetelescope/stdatamodels#173]
 
+- Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
+
 jump
 ----
 
