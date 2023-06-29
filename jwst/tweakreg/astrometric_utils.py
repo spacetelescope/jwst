@@ -2,6 +2,7 @@ import os
 import requests
 
 from astropy import table
+from astropy.time import Time
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 from astropy import units as u
@@ -89,7 +90,7 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
     epoch = (
         epoch
         if epoch is not None
-        else input_models[0].meta.observation.date+input_models[0].meta.observation.time
+        else Time(input_models[0].meta.observation.date).decimalyear
     )
     # keep only decimal point and digit characters
     epoch = float("".join(c for c in str(epoch) if c == "." or c.isdigit()))
