@@ -4,7 +4,8 @@
 tweakreg
 --------
 
-- GAIADR3 catalog positions are corrrected for proper motions given an epoch [#7614]. 
+- Updated to enable proper motion corrections for GAIADR3 catalog positions, based on
+  the epoch of the observation. [#7614]. 
 
 
 1.11.0 (2023-06-21)
