@@ -1,13 +1,42 @@
 1.11.1 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Added two new header keywords to track the rate of cosmic rays and snowball/showers
+  [#7609, spacetelescope/stdatamodels [spacetelescope/stdatamodels#173]
+
+jump
+----
+
+- Updated the code to handle the switch to sigma clipping for exposures with
+  at least 101 integrations. Three new parameters were added to the jump step to
+  control this process.
+  Also, updated the code to enter the values for the cosmic ray rate and the
+  snowball/shower rate into the FITS header.
+  [#7609, spacetelescope/stcal#174]
+
+pixel_replace
+-------------
+
+- Fixed bug in setting the step completion status at the end of processing. [#7619]
+
+ramp_fitting
+------------
+
+- Updated the CI tests due to change in STCAL, which fixed bug for using the
+  correct timing for slope computation.  Since there are now special cases that
+  use ZEROFRAME data, as well as ramps that have only good data in the 0th
+  group, the timing for these ramps is not group time.  These adjusted times
+  are now used. [#7612, spacetelescope/stcal#173]
+
 tweakreg
 --------
 
 - Updated to enable proper motion corrections for GAIADR3 catalog positions, based on
-  the epoch of the observation. [#7614]. 
-
-
+  the epoch of the observation. [#7614]
+  
 1.11.0 (2023-06-21)
 ===================
 
@@ -60,7 +89,6 @@ datamodels
 - Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
   needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
 
-
 documentation
 -------------
 
@@ -92,8 +120,7 @@ flat_field
 ----------
 
 - Added log messages for reporting flat reference file(s) used. [#7606]
-
-
+  
 other
 -----
 
@@ -104,9 +131,7 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
-
 - Close files left open in test suite [#7599]
-
 
 outlier_detection
 -----------------
@@ -114,7 +139,6 @@ outlier_detection
 - Updated the outlier_detection_ifu algorithm which also required an update to
   stdatamodels.jwst.datamodels.outlierpars [#7590, spacetelescope/stdatamodels#164,
   spacetelescope/stdatamodels#167]
-  
 
 pathloss
 --------
