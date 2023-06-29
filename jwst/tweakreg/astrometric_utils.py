@@ -58,7 +58,7 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
         If `num_sources` is negative, return that number of the faintest
         sources.  By default, all sources are returned.
     
-    epoch : float or str, optional
+    epoch : float, optional
         Reference epoch used to update the coordinates for proper motion
         (in decimal year). If `None` then the epoch is obtained from
         the metadata.
@@ -92,8 +92,6 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
         if epoch is not None
         else Time(input_models[0].meta.observation.date).decimalyear
     )
-    # keep only decimal point and digit characters
-    epoch = float("".join(c for c in str(epoch) if c == "." or c.isdigit()))
     ref_dict = get_catalog(fiducial[0], fiducial[1], epoch=epoch, sr=radius, catalog=catalog)
     colnames = ('ra', 'dec', 'mag', 'objID', 'epoch')
 
