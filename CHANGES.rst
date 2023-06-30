@@ -47,6 +47,16 @@ ramp_fitting
   group, the timing for these ramps is not group time.  These adjusted times
   are now used. [#7612, spacetelescope/stcal#173]
 
+tweakreg
+--------
+
+- Fixed a bug in the ``adjust_wcs`` *script* that was preventing passing
+  negative angular arguments in the engineering format. Exposed ``adjust_wcs``
+  function's docstring to be used in building ``jwst`` documentation. [#7683]
+
+- Added support for units for angular arguments to both ``adjust_wcs`` script
+  and function. [#7683]
+
 
 1.11.0 (2023-06-21)
 ===================
@@ -80,7 +90,7 @@ cube_build
 ----------
 
 - Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
-  
+
 - Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
   instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
   files with wavelength arrays for the drizzle method. [#7559]
@@ -131,7 +141,7 @@ flat_field
 ----------
 
 - Added log messages for reporting flat reference file(s) used. [#7606]
-  
+
 other
 -----
 
@@ -213,7 +223,7 @@ tweakreg
   another. It is an analog of the ``tweakback`` task in the
   ``drizzlepac``. [#7573, #7591]
 
-- Added the 'GAIADR3' catalog to the available options for alignment; 
+- Added the 'GAIADR3' catalog to the available options for alignment;
   this has been enabled as the default option [#7611].
 
 
