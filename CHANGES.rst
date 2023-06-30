@@ -1,6 +1,12 @@
 1.11.2 (unreleased)
 ===================
 
+tweakreg
+--------
+
+- Updated to enable proper motion corrections for GAIADR3 catalog positions, based on
+  the epoch of the observation. [#7614]
+
 
 1.11.1 (2023-06-30)
 ===================
@@ -35,12 +41,7 @@ ramp_fitting
   group, the timing for these ramps is not group time.  These adjusted times
   are now used. [#7612, spacetelescope/stcal#173]
 
-tweakreg
---------
 
-- Updated to enable proper motion corrections for GAIADR3 catalog positions, based on
-  the epoch of the observation. [#7614]
-  
 1.11.0 (2023-06-21)
 ===================
 
