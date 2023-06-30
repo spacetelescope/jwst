@@ -1,3 +1,5 @@
+.. _jwst-data-models:
+
 ===============
 JWST Datamodels
 ===============

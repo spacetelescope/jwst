@@ -1,6 +1,12 @@
 1.11.2 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Update references to datamodels in docs to point to stdatamodels which
+  now provides datamodels for jwst. [#7672]
+
 tweakreg
 --------
 
