@@ -1,6 +1,12 @@
 1.11.2 (unreleased)
 ===================
 
+tweakreg
+--------
+
+- Updated to enable proper motion corrections for GAIADR3 catalog positions, based on
+  the epoch of the observation. [#7614]
+
 
 1.11.1 (2023-06-30)
 ===================
@@ -25,7 +31,7 @@ pixel_replace
 -------------
 
 - Fixed bug in setting the step completion status at the end of processing. [#7619]
-`
+
 ramp_fitting
 ------------
 
