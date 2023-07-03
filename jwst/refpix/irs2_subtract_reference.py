@@ -446,7 +446,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                         rp2check.append(even_pix)
                         rp2check.append(odd_pix)
                     pair = 0
-        diff_median = np.median(np.abs(diffs))
+        diff_mean = np.mean(np.abs(diffs))
 
         # order indeces increasing from left to right
         rp2check.sort()
