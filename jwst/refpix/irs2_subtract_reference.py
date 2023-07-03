@@ -447,8 +447,6 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                         rp2check.append(odd_pix)
                     pair = 0
         diff_median = np.median(np.abs(diffs))
-        diff_mean = np.mean(np.abs(diffs))
-        diff_std = np.std(np.abs(diffs))
 
         # order indeces increasing from left to right
         rp2check.sort()
@@ -467,7 +465,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
             data[..., bad_idx+1] = data[..., good_idx]
             total_rp2replace.append(bad_idx)
             log.debug('   Pixel {}'.format(bad_idx))
-    log.info('Total suspicious bad reference pixels replaced with nearest good reference pixels: {}'.format(len(total_rp2replace)))
+    log.info('Intermittenly bad ref pix replaced with nearest good ref pix: {}'.format(len(total_rp2replace)))
 
 
 def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
