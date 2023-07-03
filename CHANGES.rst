@@ -7,6 +7,9 @@ documentation
 - Update references to datamodels in docs to point to stdatamodels which
   now provides datamodels for jwst. [#7672]
 
+- Update the ``extract_2d`` step docs to give better descriptions of how to create
+  and use object lists for WFSS grism image extractions. [#7684]
+
 tweakreg
 --------
 
