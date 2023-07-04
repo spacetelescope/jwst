@@ -388,9 +388,7 @@ def decode_mask(output, mask):
 
 def rm_intermittent_badpix(data, scipix_n, refpix_r):
     """Find pixels that are intermittently bad and replace with nearest
-    good value. Calculate the difference between the non-zero reference
-    pixels and replace the ones with a difference greater than
-    2*mean difference.
+    good value.
 
     Parameters
     ----------
@@ -432,6 +430,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                 ri = rpstart + ri
                 ref_pix.append(ri)
                 rp_val = np.mean(data[nits-1, ngroups-1, :, ri])
+                rp_std = np.std(data[nits-1, ngroups-1, :, ri])
                 if ri % 2 != 0:
                     odd_pix = ri
                     rp_odd = rp_val
@@ -446,26 +445,25 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                         rp2check.append(even_pix)
                         rp2check.append(odd_pix)
                     pair = 0
-        diff_mean = np.mean(np.abs(diffs))
+        diff_m = np.mean(np.abs(diffs))
 
         # order indeces increasing from left to right
         rp2check.sort()
 
-        # replace 'bad' pixels with nearest good value
-        rp2replace = np.where(np.abs(diffs) > 2*diff_mean)[0]
-        log.debug('Additional {} bad reference pixels to be replaced in amplifier {}:'.format(len(rp2replace), k))
-        for j in rp2replace:
-            bad_idx = rp2check[int(diffs.index(diffs[j]) * 2)]
-            good_idx = ref_pix[ref_pix.index(bad_idx)+1]
-            if good_idx in rp2check:
-                good_idx = ref_pix[ref_pix.index(bad_idx)-1]
-            if good_idx in rp2check:
-                good_idx = ref_pix[ref_pix.index(bad_idx)-2]
-            data[..., bad_idx] = data[..., good_idx]
-            data[..., bad_idx+1] = data[..., good_idx]
-            total_rp2replace.append(bad_idx)
-            log.debug('   Pixel {}'.format(bad_idx))
-    log.info('Intermittenly bad ref pix replaced with nearest good ref pix: {}'.format(len(total_rp2replace)))
+        # find the additional intermittent bad pixels
+        high_diffs = np.where(np.abs(diffs) > diff_m)
+        rp2replace = [rp2check[int(diffs.index(diffs[j]) * 2)] for j in high_diffs[0]]
+        total_rp2replace.extend(rp2replace)
+        log.info('{} Intermittent bad reference pixels in amplifier {}'.format(len(rp2replace), k))
+        remaining_rp = np.array([rp for rp in ref_pix if rp not in rp2replace])
+        for bad_pix in rp2replace:
+            # find nearest good reference pixel
+            good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
+            good_pix = remaining_rp[good_idx]
+            data[..., bad_pix] = data[..., good_pix]
+            data[..., bad_pix+1] = data[..., good_pix]
+            log.debug('   Pixel {}'.format(bad_pix))
+    log.info('Total intermittent bad reference pixels: {}'.format(len(total_rp2replace)))
 
 
 def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
