@@ -450,8 +450,12 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
         rp2check.sort()
 
         # find the additional intermittent bad pixels
-        high_diffs = np.where(np.abs(diffs) > diff_m)
-        rp2replace = [rp2check[int(diffs.index(diffs[j]) * 2)] for j in high_diffs[0]]
+        # NOTE: As of July 2023, the intermittent bad reference pixels seem to
+        # always be on the even columns. If the pair is replaced by the nearest
+        # good value or set to 0, the resulting image after the ramp step will
+        # look as if the correction was poor.
+        high_diffs = np.where(np.abs(diffs) > diff_m)[0]
+        rp2replace = [rp2check[int(diffs.index(diffs[j]) * 2)] for j in high_diffs]
         total_rp2replace.extend(rp2replace)
         log.info('{} Intermittent bad reference pixels in amplifier {}'.format(len(rp2replace), k))
         remaining_rp = np.array([rp for rp in ref_pix if rp not in rp2replace])
@@ -460,7 +464,6 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
             good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
             good_pix = remaining_rp[good_idx]
             data[..., bad_pix] = data[..., good_pix]
-            data[..., bad_pix+1] = data[..., good_pix]
             log.debug('   Pixel {}'.format(bad_pix))
     log.info('Total intermittent bad reference pixels: {}'.format(len(total_rp2replace)))
 
