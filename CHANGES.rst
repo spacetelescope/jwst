@@ -13,6 +13,8 @@ documentation
 - Remove direct mistune dependency (and approximate pin) and increase minimum
   required sphinx-asdf version [#7696]
 
+- Fix minor formatting typos in associations docs. [#7694]
+
 tweakreg
 --------
 
