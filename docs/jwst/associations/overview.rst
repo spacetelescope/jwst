@@ -111,7 +111,7 @@ What exactly is returned depends on what the association is. However,
 for all Stage 2 and Stage 3 associations, a Python ``dict`` is returned,
 whose structure matches that of the JSON or YAML file. Continuing
 from the above example, the following shows how to access the first
-exposure file name of a Stage 3 associations::
+exposure file name of a Stage 3 associations:
 
 .. code-block:: python
 
