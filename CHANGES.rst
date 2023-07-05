@@ -10,6 +10,8 @@ documentation
 - Update the ``extract_2d`` step docs to give better descriptions of how to create
   and use object lists for WFSS grism image extractions. [#7684]
 
+- Fix minor formatting typos in associations docs. [#7694]
+
 tweakreg
 --------
 
