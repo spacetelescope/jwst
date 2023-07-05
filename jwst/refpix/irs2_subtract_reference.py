@@ -430,7 +430,6 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                 ri = rpstart + ri
                 ref_pix.append(ri)
                 rp_val = np.mean(data[nints-1, ngroups-1, :, ri])
-                rp_std = np.std(data[nints-1, ngroups-1, :, ri])
                 if ri % 2 != 0:
                     odd_pix = ri
                     rp_odd = rp_val

@@ -1,10 +1,4 @@
-1.11.1 (unreleased)
-
-refpix
-------
-
-- Replace intermittently bad pixels with nearest good reference pixel
-  for NIRSpec IRS2 mode. [#7685]
+1.11.2 (unreleased)
 
 ===================
 
@@ -17,6 +11,11 @@ ramp_fitting
   group, the timing for these ramps is not group time.  These adjusted times
   are now used. [#7612, spacetelescope/stcal#173]
 
+refpix
+------
+
+- Replace intermittently bad pixels with nearest good reference pixel
+  for NIRSpec IRS2 mode. [#7685]
 
 1.11.0 (2023-06-21)
 ===================
