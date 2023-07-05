@@ -414,7 +414,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
     """
     # The intermittently bad pixels will be replaced for all integrations
     # and all groups. The last group will be used to identify them
-    nits, ngroups, ny, nx = np.shape(data)
+    nints, ngroups, ny, nx = np.shape(data)
     total_rp2replace = []
     # calculate differences of even and odd pairs per amplifier
     amplifier = nx // 5                 # 640
@@ -429,8 +429,8 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
             for ri in range(4):
                 ri = rpstart + ri
                 ref_pix.append(ri)
-                rp_val = np.mean(data[nits-1, ngroups-1, :, ri])
-                rp_std = np.std(data[nits-1, ngroups-1, :, ri])
+                rp_val = np.mean(data[nints-1, ngroups-1, :, ri])
+                rp_std = np.std(data[nints-1, ngroups-1, :, ri])
                 if ri % 2 != 0:
                     odd_pix = ri
                     rp_odd = rp_val
@@ -447,7 +447,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                     pair = 0
         diff_m = np.mean(np.abs(diffs))
 
-        # order indeces increasing from left to right
+        # order indexes increasing from left to right
         rp2check.sort()
 
         # find the additional intermittent bad pixels

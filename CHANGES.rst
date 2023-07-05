@@ -1,4 +1,11 @@
 1.11.1 (unreleased)
+
+refpix
+------
+
+- Replace intermittently bad pixels with nearest good reference pixel
+  for NIRSpec IRS2 mode. [#7685]
+
 ===================
 
 ramp_fitting
@@ -158,9 +165,6 @@ refpix
 - Assign reference pixel flag to first and last four columns for
   NIRSpec subarrays that do not share an edge with full frame,
   so that corrections can be computed from those unilluminated pixels. [#7598]
-  
-- Replace intermittently bad pixels with nearest good reference pixel
-  for NIRSpec IRS2 mode. [#7685]
 
 regtest
 -------
