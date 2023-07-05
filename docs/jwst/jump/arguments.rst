@@ -82,3 +82,11 @@ The ``jump`` step has five optional arguments that can be set by the user:
 * ``--time_masked_after_showers``: Number of seconds to flag groups as jump after a detected extended emission in MIRI showers
 
 * ``--max_extended_radius``: The maxiumum extension of the jump and saturation that will be flagged for showers or snowballs
+
+* ``--minimum_groups``: The minimum number of groups to run the jump step
+
+* ``--minimum_sigclip_groups``: The minimum number of groups to switch the jump detection to use sigma clipping
+
+* ``--only_use_ints``: If true the sigma clipping is applied only for a given group across all ints. If not, all groups from all ints are used for the sigma clipping.
+
+

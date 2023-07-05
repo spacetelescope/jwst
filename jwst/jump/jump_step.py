@@ -43,6 +43,9 @@ class JumpStep(Step):
         extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
         time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
         max_extended_radius = integer(default=200) The maximum radius of an extended snowball or shower
+        minimum_groups = integer(default=3) The minimum number of groups to perform jump detection
+        minimum_sigclip_groups = integer(default=100) The minimum number of groups to switch to sigma clipping
+        only_use_ints = boolean(default=True) In sigclip only compare the same group across ints, if False compare all groups
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -95,7 +98,6 @@ class JumpStep(Step):
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
-
             # Call the jump detection routine
             result = run_detect_jumps(input_model, gain_model, readnoise_model,
                                       rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
@@ -116,7 +118,11 @@ class JumpStep(Step):
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
                                       time_masked_after_shower=self.time_masked_after_shower,
-                                      max_extended_radius=self.max_extended_radius * 2)
+                                      max_extended_radius=self.max_extended_radius * 2,
+                                      minimum_groups=self.minimum_groups,
+                                      minimum_sigclip_groups=self.minimum_sigclip_groups,
+                                      only_use_ints=self.only_use_ints
+                                      )
 
 
             gain_model.close()

@@ -118,13 +118,9 @@ exposure file name of a Stage 3 associations::
    exposure = asn['products'][0]['members'][0]['expname']
 
 Since most JWST data are some form of a 
-.. comment out until stdatamodels is released
-.. ref  JWST Data Model<data-models>
-JWST Data Model
+:ref:`JWST Data Model<jwst-data-models>`
 an association can be opened with
-.. comment out until stdatamodels is released
-.. ref  datamodels.open<datamodels-open>
-``datamodels.open``
+:ref:`datamodels.open<stdatamodels:datamodels-open>`
 which returns a
 :py:class:`~jwst.datamodels.ModelContainer`. All members of the association that can
 be represented as a ``DataModel``, will be available in the ``ModelContainer``

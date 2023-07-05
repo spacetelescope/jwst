@@ -43,22 +43,15 @@ jobs:
       cache-path: ${{ needs.crds.outputs.path }}
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
-        - macos: test-xdist
-          python-version: 3.9
+        - macos: py39-xdist
+        - macos: py39-sdpdeps-xdist
+        - macos: py310-xdist
+        - windows: py311-xdist
           pytest-results-summary: true
-        - macos: test-sdpdeps-xdist
-          python-version: 3.9
+        - linux: py311-pyargs-xdist
+        - linux: py311-devdeps-xdist
           pytest-results-summary: true
-        - macos: test-xdist
-          python-version: 3.10
+        - macos: py311-devdeps-xdist
           pytest-results-summary: true
-        - windows: test-xdist
-          pytest-results-summary: true
-        - linux: test-pyargs-xdist
-          pytest-results-summary: true
-        - linux: test-devdeps-xdist
-          pytest-results-summary: true
-        - macos: test-devdeps-xdist
-          pytest-results-summary: true
-        - windows: test-devdeps-xdist
+        - windows: py311-devdeps-xdist
           pytest-results-summary: true

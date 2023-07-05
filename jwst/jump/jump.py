@@ -1,7 +1,6 @@
 import logging
-
+import numpy as np
 from stcal.jump.jump import detect_jumps
-
 from stdatamodels.jwst.datamodels import dqflags
 
 from ..lib import reffile_utils
@@ -25,6 +24,9 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
                      time_masked_after_shower=30,
                      max_extended_radius=200,
+                     minimum_groups=3,
+                     minimum_sigclip_groups=100,
+                     only_use_ints=True
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -57,8 +59,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(input_model,
                                                        readnoise_model)
-
-    new_gdq, new_pdq = detect_jumps(frames_per_group, data, gdq, pdq, err,
+    new_gdq, new_pdq, number_crs, number_extended_events, stddev\
+        = detect_jumps(frames_per_group, data, gdq, pdq, err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
                                     four_grp_thresh, max_cores,
@@ -79,11 +81,28 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     extend_outer_radius=extend_outer_radius,
                                     extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
                                     grps_masked_after_shower=grps_masked_after_shower,
-                                    max_extended_radius=max_extended_radius)
+                                    max_extended_radius=max_extended_radius,
+                                    minimum_groups=minimum_groups,
+                                    minimum_sigclip_groups=minimum_sigclip_groups,
+                                    only_use_ints=only_use_ints
+                                    )
 
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq
     output_model.pixeldq = new_pdq
+    # determine the number of groups with all pixels set to DO_NOT_USE
+    dnu_flag = 1
+    num_flagged_grps = 0
+    for integ in range(data.shape[0]):
+        for grp in range(data.shape[1]):
+            if np.all(np.bitwise_and(gdq[integ, grp, :, :], dnu_flag)):
+                num_flagged_grps += 1
+    total_groups = data.shape[0] * data.shape[1] - num_flagged_grps - data.shape[0]
+    total_time = output_model.meta.exposure.group_time * total_groups
+    total_pixels = data.shape[2] * data.shape[3]
+    output_model.meta.exposure.primary_cosmic_rays = 1000 * number_crs / (total_time * total_pixels)
+    output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
+                                                         (total_time * total_pixels)
 
     return output_model

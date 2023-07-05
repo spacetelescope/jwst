@@ -39,13 +39,14 @@ Examples
 
 From command line::
 
-    % adjust_wcs [-h] (-u | --suffix SUFFIX | -f FILE) [--overwrite] [-w]
-                 [-r RA_DELTA] [-d DEC_DELTA] [-o ROLL_DELTA] [-s SCALE_FACTOR]
+    % adjust_wcs [-h] (-u | --suffix SUFFIX | -f FILE) [--overwrite]
+                 [-r RA_DELTA [units]] [-d DEC_DELTA [units]]
+                 [-o ROLL_DELTA [units]] [-s SCALE_FACTOR]
                  [-v] [input ...]
 
     % adjust_wcs data_model_*_cal.fits -u -s 1.002
 
-    % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -o 0.0023
+    % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -r 0.2 arcsec -o 0.0023 deg
 """
 import argparse
 import glob
@@ -56,6 +57,10 @@ import sys
 import jwst
 from jwst.tweakreg.utils import adjust_wcs
 from jwst.assign_wcs.util import update_fits_wcsinfo
+from astropy import units
+
+
+_ANGLE_PARS = ["-r", "--ra_delta", "-d", "--dec_delta", "-o", "--roll_delta"]
 
 
 # Configure logging
@@ -78,6 +83,36 @@ def _replace_suffix(file, new_suffix):
     new_file_name = os.path.join(directory, base)
 
     return new_file_name
+
+
+def _is_float(arg):
+    try:
+        float(arg)
+        return True
+    except ValueError:
+        pass
+    return False
+
+
+def _is_unit(arg):
+    if arg.startswith("-"):
+        return False
+    try:
+        units.Unit(arg)
+        return True
+    except ValueError:
+        pass
+    return False
+
+
+def angle(arg):
+    args = arg.strip().split(' ')
+    if len(args) == 1:
+        return float(args[0])
+    elif len(args) == 2:
+        return units.Quantity(float(args[0]), units.Unit(args[1]), dtype=float)
+    else:
+        raise argparse.ArgumentTypeError()
 
 
 def main():
@@ -129,21 +164,21 @@ def main():
     group_wcs.add_argument(
         "-r",
         "--ra_delta",
-        type=float,
+        type=angle,
         default=0.0,
         help="Delta RA (longitude), degrees."
     )
     group_wcs.add_argument(
         "-d",
         "--dec_delta",
-        type=float,
+        type=angle,
         default=0.0,
         help="Delta DEC (latitude), degrees."
     )
     group_wcs.add_argument(
         "-o",
         "--roll_delta",
-        type=float,
+        type=angle,
         default=0.0,
         help="Delta roll angle, degrees."
     )
@@ -162,7 +197,25 @@ def main():
         version="v{0}".format(jwst.__version__)
     )
 
-    options = parser.parse_args()
+    # pre-process argv for units and negative floats:
+    argv = sys.argv[1:]
+    argv_new = [os.path.basename(sys.argv[0])]
+    while argv:
+        argv_new.append(argv.pop(0))
+
+        # check whether next argument is a float:
+        if (argv_new[-1] in _ANGLE_PARS and len(argv) >= 1 and
+                _is_float(argv[0])):
+            angle_value = argv.pop(0)
+            # check whether next argument is a unit:
+            if len(argv) >= 1 and _is_unit(argv[0]):
+                angle_unit = argv.pop(0)
+                argv_new.append(f" {angle_value} {angle_unit}")
+            else:
+                # assume angle units are degrees
+                argv_new.append(f" {angle_value}")
+
+    options = parser.parse_args(argv_new)
 
     files = []
     for f in options.arg0:

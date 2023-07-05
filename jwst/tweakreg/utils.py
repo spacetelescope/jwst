@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from astropy.modeling.rotations import RotationSequence3D
+from astropy import units
 from gwcs.wcs import WCS
 import numpy as np
 from tweakwcs.correctors import JWSTWCSCorrector
@@ -12,6 +13,9 @@ from ..assign_wcs.pointing import _v23tosky
 
 
 _RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
+
+
+__all__ = ["adjust_wcs", "transfer_wcs_correction"]
 
 
 def _wcsinfo_from_wcs_transform(wcs):
@@ -70,17 +74,17 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
         WCS object to be adjusted. Must be an imaging JWST WCS of a calibrated
         data model.
 
-    delta_ra : float, optional
-        Additional rotation (in degrees) to be applied along the longitude
-        direction.
+    delta_ra : float, astropy.units.Quantity, optional
+        Additional rotation (in degrees if units not provided) to be applied
+        along the longitude direction.
 
-    delta_dec : float, optional
-        Additional rotation (in degrees) to be applied along the latitude
-        direction.
+    delta_dec : float, astropy.units.Quantity, optional
+        Additional rotation (in degrees if units not provided) to be applied
+        along the latitude direction.
 
-    delta_roll : float, optional
-        Additional rotation (in degrees) to be applied to the telescope roll
-        angle (rotation about V1 axis).
+    delta_roll : float, astropy.units.Quantity, optional
+        Additional rotation (in degrees if units not provided) to be applied
+        to the telescope roll angle (rotation about V1 axis).
 
     scale_factor : float, optional
         A multiplicative scale factor to be applied to the current scale
@@ -94,6 +98,16 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
     wcs : `gwcs.WCS`
         Adjusted WCS object.
     """
+    # convert input angles to degrees:
+    u_deg = units.Unit('deg')
+
+    if isinstance(delta_ra, units.Quantity):
+        delta_ra = delta_ra.to(u_deg).value
+    if isinstance(delta_dec, units.Quantity):
+        delta_dec = delta_dec.to(u_deg).value
+    if isinstance(delta_roll, units.Quantity):
+        delta_roll = delta_roll.to(u_deg).value
+
     # find the last frame in the pipeline that starts with 'v2v3':
     pipeline = deepcopy(wcs.pipeline)
     for step in pipeline[::-1]:

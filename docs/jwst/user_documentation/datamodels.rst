@@ -1,18 +1,17 @@
+.. _jwst-data-models:
+
 ===============
 JWST Datamodels
 ===============
 
 The `jwst` package also contains the interface for JWST Datamodels. ``Datamodels``
-are the reccomended way of reading and writing JWST data files (.fits) and
+are the recommended way of reading and writing JWST data files (.fits) and
 reference files (.fits and .asdf). JWST data are encoded in FITS files, and reference
 files consist of a mix of FITS and ASDF - datamodels were designed to
 abstract away these intricacies and provide a simple interface to the data. They
 represent the data in FITS extensions and meta data in FITS headers in a Python object
 with a tree-like structure. The following section gives a brief overview of
-``Datamodels`` as they pertain to the pipeline - see 
-.. comment out until stdatamodels is released
-.. ref  data-models
-data-models
+``Datamodels`` as they pertain to the pipeline - see :ref:`stdatamodels:data-models`
 for more
 detailed documentation on Datamodels.
 
