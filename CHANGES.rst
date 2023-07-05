@@ -10,6 +10,9 @@ documentation
 - Update the ``extract_2d`` step docs to give better descriptions of how to create
   and use object lists for WFSS grism image extractions. [#7684]
 
+- Remove direct mistune dependency (and approximate pin) and increase minimum
+  required sphinx-asdf version [#7696]
+
 tweakreg
 --------
 
