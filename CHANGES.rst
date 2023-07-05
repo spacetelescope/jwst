@@ -17,6 +17,17 @@ refpix
 - Replace intermittently bad pixels with nearest good reference pixel
   for NIRSpec IRS2 mode. [#7685]
 
+- tweakreg
+----------
+
+- Fixed a bug in the ``adjust_wcs`` *script* that was preventing passing
+  negative angular arguments in the engineering format. Exposed ``adjust_wcs``
+  function's docstring to be used in building ``jwst`` documentation. [#7683]
+
+- Added support for units for angular arguments to both ``adjust_wcs`` script
+  and function. [#7683]
+
+
 1.11.0 (2023-06-21)
 ===================
 
