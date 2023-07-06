@@ -11,7 +11,7 @@ def test_rm_intermittent_badpix():
     # set the intermittent bad pixels
     data[..., 648] = 10.
     data[..., 988] = 11.
-    data[..., 1368] = 7.
+    data[..., 1369] = 7.
     data[..., 2150] = 13.
     data[..., 3128] = 15.
 
@@ -21,7 +21,5 @@ def test_rm_intermittent_badpix():
     compare = np.ones((2, 3, 5, 3200), dtype=np.float32)
     compare[..., 688] = 0.
     compare[..., 2110] = 0.
-    
-    print(np.where(data != compare))
 
     assert np.allclose(data, compare)
