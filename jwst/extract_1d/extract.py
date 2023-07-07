@@ -3766,9 +3766,22 @@ def create_extraction(extract_ref_dict,
 
         del temp_flux
 
-        error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
-        sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
-        berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
+        # Run through each variance array and check for NaNs - if present, exclude from quadrature sum.
+        f_var_list = []
+        sb_var_list = []
+        b_var_list = []
+        for var_list in [[f_var_poisson, f_var_rnoise, f_var_flat, f_var_list],
+                         [sb_var_poisson, sb_var_rnoise, sb_var_flat, sb_var_list],
+                         [b_var_poisson, b_var_rnoise, b_var_flat, b_var_list]]:
+            for error_contrib in var_list[:-1]:
+                if np.any(np.isnan(error_contrib)):
+                    log.warning(f"A variance array contains NaN values and will be excluded from quadrature error sum.")
+                else:
+                    var_list[-1].append(error_contrib)
+
+        error = np.sqrt(np.sum(f_var_list, axis=0))
+        sb_error = np.sqrt(np.sum(sb_var_list, axis=0))
+        berror = np.sqrt(np.sum(b_var_list, axis=0))
 
         otab = np.array(
             list(
