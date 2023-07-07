@@ -97,8 +97,8 @@ For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 :sup:`3`\ NIRISS SOSS can have multiple spectral orders contribute flux to one pixel; because
 photometric correction values depend on the spectral order assigned to a pixel, the order of
 :ref:`photom <photom_step>` and :ref:`extract_1d <extract_1d_step>`  is swapped for NIRISS SOSS
-exposures. This allows the ATOCA algorithm to disentangle the spectrum for each order, such that
-photometric corrections can be applied to each spectral order separately.
+exposures. This allows the ATOCA algorithm to disentangle the spectral orders, such that
+photometric corrections can be applied to each spectrum separately.
 
 Notice that NIRSpec MOS is the only mode to receive master background subtraction
 in the ``calwebb_spec2`` pipeline. All other spectral modes have master background
