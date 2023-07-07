@@ -15,6 +15,12 @@ documentation
 
 - Fix minor formatting typos in associations docs. [#7694]
 
+extract_1d
+----------
+
+- Prevent propagation of NaNs in variance arrays to error array by excluding entire
+  variance array if at least one NaN is present. [#7711]
+
 tweakreg
 --------
 
