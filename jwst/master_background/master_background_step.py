@@ -104,7 +104,6 @@ class MasterBackgroundStep(Step):
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
-                print('type of background', type(background_2d))
 
                 # Save the computed 2d background if requested by user. The user has supplied
                 # the master background so just save the expanded 2d background

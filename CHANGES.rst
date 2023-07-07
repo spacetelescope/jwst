@@ -1,7 +1,13 @@
 1.11.4 (unreleased)
 ===================
 
--
+master_background
+-----------------
+
+- Allow the user to write the 2D expanded user provided x1d master background for each file
+  in the assocation. [#7714]
+
+
 
 1.11.3 (2023-07-17)
 ===================
@@ -30,8 +36,10 @@ documentation
 
 - Fix minor formatting typos in associations docs. [#7694]
 
+
 - Add note to ``calwebb_spec2`` step table to clarify the swapped order of ``photom``
   and ``extract_1d`` for NIRISS SOSS data. [#7709]
+
 
 jump
 ----
@@ -44,6 +52,7 @@ refpix
 
 - Replace intermittently bad pixels with nearest good reference pixel
   for NIRSpec IRS2 mode. [#7685]
+
 
 tweakreg
 --------
