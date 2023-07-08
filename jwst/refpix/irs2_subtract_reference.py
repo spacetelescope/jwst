@@ -423,21 +423,25 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
         offset = int(k * amplifier)
         # jump from the start of the reference pixel sequence to the next
         ref_pix, rp2check, pair = [], [], 0
+        rp_means, rp_stds = [], []
         for rpstart in range(scipix_n//2, amplifier, scipix_n+refpix_r):
             rpstart += offset
             # go through the 4 reference pixels
             for ri in range(4):
                 ri = rpstart + ri
-                rp_val = np.mean(data[nints-1, ngroups-1, :, ri])
+                rp_m = np.mean(data[nints-1, ngroups-1, :, ri])
+                rp_s = np.std(data[nints-1, ngroups-1, :, ri])
                 # exclude ref pix flagged in the ref file and negative values
-                if rp_val > 0.:
+                if rp_m > 0.:
                     ref_pix.append(ri)
+                    rp_means.append(rp_m)
+                    rp_stds.append(rp_s)
                 if ri % 2 != 0:
                     odd_pix = ri
-                    rp_odd = rp_val
+                    rp_odd = rp_m
                 else:
                     even_pix = ri
-                    rp_even = rp_val
+                    rp_even = rp_m
                 pair += 1
                 if pair == 2:
                     # only do difference if the pixel has not already been flagged as bad
@@ -447,20 +451,32 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                         rp2check.append(odd_pix)
                     pair = 0
         diff_m = np.mean(np.abs(diffs))
+        mean_mean = np.mean(rp_means)
+        mean_std = np.mean(rp_stds)
 
         # order indexes increasing from left to right
         rp2check.sort()
 
-        # find the additional intermittent bad pixels, the factor of 1.7 is to avoid overcorrection
-        high_diffs = np.where(np.abs(diffs) > 1.7*diff_m)[0]
+        # find the additional intermittent bad pixels, the factor is to avoid overcorrection
+        high_diffs = np.where(np.abs(diffs) > 2*diff_m)[0]
         rp2replace = []
         for j in high_diffs:
             rp2r = rp2check[int(diffs.index(diffs[j]) * 2)]
             # include both even and odd
             rp2replace.append(rp2r)
             rp2replace.append(rp2r+1)
+        high_means_idx = np.where(np.array(rp_means) > mean_mean)[0]
+        high_std_idx = np.where(np.array(rp_stds) > mean_std)[0]
+        # get the pixels that show up in these three arrays
+        ref_pix = np.array(ref_pix)
+        for rp in rp2replace:
+            if rp not in ref_pix[high_means_idx] and rp not in ref_pix[high_std_idx]:
+                rp2replace.pop(rp2replace.index(rp))
+        rp2replace.sort()
+        print('rp2replace = ', rp2replace)
         total_rp2replace.extend(rp2replace)
         log.info('{} Intermittent bad reference pixels in amplifier {}'.format(len(rp2replace), k))
+
         remaining_rp_even, remaining_rp_odd = [], []
         for rp in ref_pix:
             if rp not in rp2replace:
