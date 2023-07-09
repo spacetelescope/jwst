@@ -431,7 +431,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                 ri = rpstart + ri
                 rp_m = np.mean(data[nints-1, ngroups-1, :, ri])
                 rp_s = np.std(data[nints-1, ngroups-1, :, ri])
-                # exclude ref pix flagged in the ref file and negative values
+                # exclude ref pix flagged in the reference file
                 if rp_m != 0.:
                     ref_pix.append(ri)
                     rp_means.append(rp_m)
@@ -474,7 +474,6 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                 rp2replace.append(rp)
         rp2replace.sort()
         rp2replace = np.unique(rp2replace)
-        #print('rp2replace = ', rp2replace)
         total_rp2replace.extend(rp2replace)
         log.info('{} supicious bad reference pixels in amplifier {}'.format(len(rp2replace), k))
 
