@@ -1,6 +1,56 @@
 1.11.2 (unreleased)
-
 ===================
+
+documentation
+-------------
+
+- Update references to datamodels in docs to point to stdatamodels which
+  now provides datamodels for jwst. [#7672]
+
+- Update the ``extract_2d`` step docs to give better descriptions of how to create
+  and use object lists for WFSS grism image extractions. [#7684]
+
+- Remove direct mistune dependency (and approximate pin) and increase minimum
+  required sphinx-asdf version [#7696]
+
+- Fix minor formatting typos in associations docs. [#7694]
+
+refpix
+------
+
+- Replace intermittently bad pixels with nearest good reference pixel
+  for NIRSpec IRS2 mode. [#7685]
+
+tweakreg
+--------
+
+- Updated to enable proper motion corrections for GAIADR3 catalog positions, based on
+  the epoch of the observation. [#7614]
+
+
+1.11.1 (2023-06-30)
+===================
+
+datamodels
+----------
+
+- Added two new header keywords to track the rate of cosmic rays and snowball/showers
+  [#7609, spacetelescope/stdatamodels [spacetelescope/stdatamodels#173]
+
+jump
+----
+
+- Updated the code to handle the switch to sigma clipping for exposures with
+  at least 101 integrations. Three new parameters were added to the jump step to
+  control this process.
+  Also, updated the code to enter the values for the cosmic ray rate and the
+  snowball/shower rate into the FITS header.
+  [#7609, spacetelescope/stcal#174]
+
+pixel_replace
+-------------
+
+- Fixed bug in setting the step completion status at the end of processing. [#7619]
 
 ramp_fitting
 ------------
@@ -11,14 +61,8 @@ ramp_fitting
   group, the timing for these ramps is not group time.  These adjusted times
   are now used. [#7612, spacetelescope/stcal#173]
 
-refpix
-------
-
-- Replace intermittently bad pixels with nearest good reference pixel
-  for NIRSpec IRS2 mode. [#7685]
-
-- tweakreg
-----------
+tweakreg
+--------
 
 - Fixed a bug in the ``adjust_wcs`` *script* that was preventing passing
   negative angular arguments in the engineering format. Exposed ``adjust_wcs``
@@ -60,7 +104,7 @@ cube_build
 ----------
 
 - Remove deleting the ``spaxel_dq`` array twice when using a weighting method of either msm or emsm. [#7586]
-  
+
 - Updated to read wavelength range for NIRSpec IFU cubes from the cubepars reference file,
   instead of setting it based on the data. This makes use of new NIRSpec IFU cubepars reference
   files with wavelength arrays for the drizzle method. [#7559]
@@ -79,7 +123,6 @@ datamodels
 
 - Updated ``stdatamodels.jwst.datamodels.outlierpars`` schema to include three new parameters
   needed for outlier_detection_ifu. [spacetelescope/stdatamodels#164, spacetelescope/stdatamodels#167]
-
 
 documentation
 -------------
@@ -113,7 +156,6 @@ flat_field
 
 - Added log messages for reporting flat reference file(s) used. [#7606]
 
-
 other
 -----
 
@@ -124,9 +166,7 @@ other
 
 - Override package dependencies with requirements file when requested [#7557]
 
-
 - Close files left open in test suite [#7599]
-
 
 outlier_detection
 -----------------
@@ -134,7 +174,6 @@ outlier_detection
 - Updated the outlier_detection_ifu algorithm which also required an update to
   stdatamodels.jwst.datamodels.outlierpars [#7590, spacetelescope/stdatamodels#164,
   spacetelescope/stdatamodels#167]
-  
 
 pathloss
 --------
@@ -198,7 +237,7 @@ tweakreg
   another. It is an analog of the ``tweakback`` task in the
   ``drizzlepac``. [#7573, #7591]
 
-- Added the 'GAIADR3' catalog to the available options for alignment; 
+- Added the 'GAIADR3' catalog to the available options for alignment;
   this has been enabled as the default option [#7611].
 
 

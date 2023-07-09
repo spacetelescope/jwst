@@ -287,7 +287,7 @@ with the ``RegistryMarker.rule`` decorator as follows::
       ...
 
 Then, when the rule file is used to create an ``AssociationRegistry``,
-the class ``MyRule`` will be included as one of the available rules::
+the class ``MyRule`` will be included as one of the available rules:
 
 .. doctest-skip::
    

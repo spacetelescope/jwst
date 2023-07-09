@@ -430,7 +430,7 @@ def test_leastsqnrm_model_array():
     )
     test_res.append(np.allclose(ff_5, true_ff_5, rtol=1.0e-7))
 
-    assert np.alltrue(test_res)
+    assert np.all(test_res)
 
 
 def test_leastsqnrm_ffc():
@@ -707,7 +707,7 @@ def test_leastsqnrm_tan2visibilities():
     true_delta = np.array([-0.98279372, 1.81577499, -1.19028995, 2.03444394])
     test_res.append(np.allclose(delta, true_delta, rtol=1.0e-7))
 
-    assert np.alltrue(test_res)
+    assert np.all(test_res)
 
 
 def test_leastsqnrm_multiplyenv():
