@@ -194,6 +194,15 @@ read at the same time.  Each of these five readouts is the same size,
 640 by 2048 pixels (for IRS2).  If the CRDS reference file includes a
 DQ (data quality) BINTABLE extension, interleaved reference pixel values
 will be set to zero if they are flagged as bad in the DQ extension.
+
+At this point the algorithm looks for intermittently bad (or suspicious)
+reference pixels. This is done by calculating the means and standard
+deviations per reference pixel column, as well as the difference between
+even and odd pairs; then calculates the mean of each of these arrays (the
+mean of the absolute values for the differences array), and flag all
+values greater than the corresponding mean. All suspicious pixels will
+be replaced by their nearest good reference pixel.
+
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary
 1-D arrays (both of length 712 * 2048); this is done separately for each
