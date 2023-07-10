@@ -15,8 +15,12 @@ documentation
 
 - Fix minor formatting typos in associations docs. [#7694]
 
+- Add note to ``calwebb_spec2`` step table to clarify the swapped order of ``photom``
+  and ``extract_1d`` for NIRISS SOSS data. [#7709]
+
 jump
 ----
+
 - Added a test to prevent a divide by zero when the numger of usable
   groups is less than one. [#7723]
 
