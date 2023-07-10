@@ -15,6 +15,9 @@ documentation
 
 - Fix minor formatting typos in associations docs. [#7694]
 
+- Add note to ``calwebb_spec2`` step table to clarify the swapped order of ``photom``
+  and ``extract_1d`` for NIRISS SOSS data. [#7709]
+
 tweakreg
 --------
 
