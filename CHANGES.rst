@@ -18,6 +18,11 @@ documentation
 - Add note to ``calwebb_spec2`` step table to clarify the swapped order of ``photom``
   and ``extract_1d`` for NIRISS SOSS data. [#7709]
 
+regtest
+-------
+
+- Updated NIRSpec IFU tests to use flight data [#7620]
+
 tweakreg
 --------
 
@@ -216,8 +221,6 @@ regtest
 -------
 
 - Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
-- Updated NIRSpec IFU tests to use flight data [#7620]
-
 srctype
 -------
 
