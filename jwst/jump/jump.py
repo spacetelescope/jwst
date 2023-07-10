@@ -99,10 +99,11 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
             if np.all(np.bitwise_and(gdq[integ, grp, :, :], dnu_flag)):
                 num_flagged_grps += 1
     total_groups = data.shape[0] * data.shape[1] - num_flagged_grps - data.shape[0]
-    total_time = output_model.meta.exposure.group_time * total_groups
-    total_pixels = data.shape[2] * data.shape[3]
-    output_model.meta.exposure.primary_cosmic_rays = 1000 * number_crs / (total_time * total_pixels)
-    output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
-                                                         (total_time * total_pixels)
+    if total_groups >= 1:
+        total_time = output_model.meta.exposure.group_time * total_groups
+        total_pixels = data.shape[2] * data.shape[3]
+        output_model.meta.exposure.primary_cosmic_rays = 1000 * number_crs / (total_time * total_pixels)
+        output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
+                                                              (total_time * total_pixels)
 
     return output_model
