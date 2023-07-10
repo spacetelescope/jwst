@@ -222,7 +222,6 @@ regtest
 -------
 
 - Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
-
 srctype
 -------
 
