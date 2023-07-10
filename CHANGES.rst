@@ -15,6 +15,11 @@ documentation
 
 - Fix minor formatting typos in associations docs. [#7694]
 
+jump
+----
+- Added a test to prevent a divide by zero when the numger of usable
+  groups is less than one. 
+
 tweakreg
 --------
 
