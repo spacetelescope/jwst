@@ -18,7 +18,7 @@ documentation
 jump
 ----
 - Added a test to prevent a divide by zero when the numger of usable
-  groups is less than one. 
+  groups is less than one. [#7723]
 
 tweakreg
 --------
