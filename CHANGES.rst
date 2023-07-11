@@ -24,6 +24,12 @@ jump
 - Added a test to prevent a divide by zero when the numger of usable
   groups is less than one. [#7723]
 
+refpix
+------
+
+- Replace intermittently bad pixels with nearest good reference pixel
+  for NIRSpec IRS2 mode. [#7685]
+
 tweakreg
 --------
 
