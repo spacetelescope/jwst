@@ -275,6 +275,11 @@ int match_driz(double *xc, double *yc, double *zc,
 		  weightv[index_cube] = weightv[index_cube] + area_weight;
 		  varv[index_cube] = varv[index_cube] + weighted_var;
 		  ifluxv[index_cube] = ifluxv[index_cube] +1.0;
+
+		  // Keep print statement in code - used for debugging
+		  if (iw == 43 && ix == 21 && iy == 37){
+		    printf("found pixel 1 %i %i %f %.10f \n ", index_cube, k, flux[k] , area_weight);
+		  }
 		}
 
 	      } // xleft, xright, ybot, ytop
