@@ -491,6 +491,8 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r):
                 remaining_rp = remaining_rp_even
             else:
                 remaining_rp = remaining_rp_odd
+            if len(remaining_rp) == 0:   # claims all ref pix are bad, avoid overcorrection and skip
+                continue
             good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
             good_pix = remaining_rp[good_idx]
             data[..., bad_pix] = data[..., good_pix]
