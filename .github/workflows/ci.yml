@@ -71,6 +71,7 @@ jobs:
         - linux: py311-xdist
         - macos: py311-xdist
           pytest-results-summary: true
+        - linux: py311-devdeps-xdist
         - linux: py311-xdist-cov
           coverage: codecov
           pytest-results-summary: true
