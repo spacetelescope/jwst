@@ -16,7 +16,8 @@ def test_rm_intermittent_badpix():
     data[..., 3128] = 15.
 
     scipix_n, refpix_r = 16, 4
-    rm_intermittent_badpix(data, scipix_n, refpix_r)
+    ovr_corr_mitigation_ftr = 1.8
+    rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr)
 
     compare = np.ones((2, 3, 5, 3200), dtype=np.float32)
     compare[..., 688] = 0.

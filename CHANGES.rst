@@ -1,7 +1,12 @@
 1.11.3 (unreleased)
 ===================
 
-- 
+refpix
+------
+
+- Fixed potential crash due to empty list for NIRSpec IRS2 mode, and
+  incorporated a factor to mitigate overcorrection. [#7731]
+
 
 1.11.2 (2023-07-12)
 ===================
