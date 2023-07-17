@@ -200,8 +200,9 @@ reference pixels. This is done by calculating the means and standard
 deviations per reference pixel column, as well as the difference between
 even and odd pairs; then calculates the mean of each of these arrays (the
 mean of the absolute values for the differences array), and flag all
-values greater than the corresponding mean. All suspicious pixels will
-be replaced by their nearest good reference pixel.
+values greater than the corresponding mean times a factor to avoid
+overcorrection. All suspicious pixels will be replaced by their
+nearest good reference pixel.
 
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary
