@@ -20,6 +20,7 @@ import numpy as np
 
 from astropy.io import fits
 from gwcs import wcs
+from datetime import datetime
 
 from stdatamodels.jwst.datamodels import ImageModel, CubeModel, SlitModel, MultiSlitModel
 
@@ -90,7 +91,7 @@ def create_hdul(detector='NRCALONG', channel='LONG', module='A',
     phdu.header['PUPIL'] = pupil
     phdu.header['MODULE'] = module
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2023-01-05'
+    phdu.header['date-obs'] = datetime.now().date().strftime('%Y-%m-%d')
     phdu.header['exp_type'] = exptype
     phdu.header['SUBARRAY'] = subarray
     phdu.header['SUBSIZE1'] = 2048

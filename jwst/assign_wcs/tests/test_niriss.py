@@ -12,6 +12,7 @@ file.
 from numpy.testing import assert_allclose
 from astropy.io import fits
 from gwcs import wcs
+from datetime import datetime
 
 from stdatamodels.jwst.datamodels.image import ImageModel
 
@@ -49,7 +50,7 @@ def create_hdul(detector='NIS', filtername='CLEAR',
     phdu.header['FILTER'] = filtername
     phdu.header['PUPIL'] = pupil
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2022-09-05'
+    phdu.header['date-obs'] = datetime.now().date().strftime('%Y-%m-%d')
     phdu.header['exp_type'] = exptype
     phdu.header['FWCPOS'] = 354.2111
     scihdu = fits.ImageHDU()

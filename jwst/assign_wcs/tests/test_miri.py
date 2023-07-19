@@ -10,6 +10,7 @@ import numpy as np
 from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
+from datetime import datetime
 
 from stdatamodels.jwst.datamodels import ImageModel, CubeModel
 
@@ -41,7 +42,7 @@ def create_hdul(detector, channel, band):
     phdu.header['CHANNEL'] = channel
     phdu.header['BAND'] = band
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2017-09-05'
+    phdu.header['date-obs'] = datetime.now().date().strftime('%Y-%m-%d')
     phdu.header['exp_type'] = 'MIR_MRS'
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"

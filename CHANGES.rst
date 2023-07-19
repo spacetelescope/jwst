@@ -1,7 +1,11 @@
 1.11.4 (unreleased)
 ===================
 
--
+general
+-------
+
+- Use current date instead of a fixed date while creating headers for
+  unit testing to ensure testing against current reference files [#7744]
 
 1.11.3 (2023-07-17)
 ===================
