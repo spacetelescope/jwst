@@ -499,11 +499,12 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
                 remaining_rp = remaining_rp_even
             else:
                 remaining_rp = remaining_rp_odd
-            if len(remaining_rp) == 0:   # claims all ref pix are bad, avoid overcorrection and skip
-                continue
-            good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
-            good_pix = remaining_rp[good_idx]
-            data[..., bad_pix] = data[..., good_pix]
+            if len(remaining_rp) == 0:   # claims no good ref pix left, let interpolation do it's magic
+                data[..., bad_pix] = 0.
+            else:
+                good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
+                good_pix = remaining_rp[good_idx]
+                data[..., bad_pix] = data[..., good_pix]
             log.debug('   Pixel {}'.format(bad_pix))
     log.info('Total intermittent bad reference pixels: {}'.format(len(total_rp2replace)))
 

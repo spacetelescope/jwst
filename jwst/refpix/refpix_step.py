@@ -53,7 +53,7 @@ class RefPixStep(Step):
 
                 # Apply the IRS2 correction scheme
                 result = irs2_subtract_reference.correct_model(input_model, irs2_model,
-                                                               self.ovr_corr_mitigation_ftr)
+                                  ovr_corr_mitigation_ftr=self.ovr_corr_mitigation_ftr)
 
                 if result.meta.cal_step.refpix != 'SKIPPED':
                     result.meta.cal_step.refpix = 'COMPLETE'
