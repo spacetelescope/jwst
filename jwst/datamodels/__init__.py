@@ -29,7 +29,7 @@ _jwst_modules = ["container", "source_container"]
 _jwst_models = ["ModelContainer", "SourceModelContainer"]
 
 # Deprecated modules in stdatamodels
-_deprecated_modules = ['drizproduct', 'multiprod']
+_deprecated_modules = ['drizproduct', 'multiprod', 'schema']
 
 # Deprecated models in stdatamodels
 _deprecated_models = ['DrizProductModel', 'MultiProductModel', 'MIRIRampModel']
