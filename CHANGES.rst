@@ -4,8 +4,8 @@
 master_background
 -----------------
 
-- Allow the user to write the 2D expanded user provided x1d master background for each file
-  in the assocation. [#7714]
+- Allow the user to write the 2D expanded user provided x1d master background for each
+  file in the assocation. [#7714]
 
 
 
