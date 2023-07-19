@@ -10,7 +10,7 @@ file.
 """
 from numpy.testing import assert_allclose
 import pytest
-
+from datetime import datetime
 
 from astropy.io import fits
 from gwcs import wcs
@@ -69,7 +69,7 @@ def create_hdul(detector='NRCALONG', channel='LONG', module='A',
     phdu.header['PUPIL'] = pupil
     phdu.header['MODULE'] = module
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2023-01-01'
+    phdu.header['date-obs'] = datetime.now().date().strftime('%Y-%m-%d')
     phdu.header['exp_type'] = exptype
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"

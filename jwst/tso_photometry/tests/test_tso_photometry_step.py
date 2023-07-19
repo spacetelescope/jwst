@@ -1,7 +1,7 @@
 import pytest
 
 from astropy.io import fits
-
+from datetime import datetime
 from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 
 
@@ -11,7 +11,7 @@ def test_hdu():
     phdu = fits.PrimaryHDU()
     phdu.header['telescop'] = "JWST"
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2017-09-05'
+    phdu.header['date-obs'] = datetime.now().date().strftime('%Y-%m-%d')
 
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"

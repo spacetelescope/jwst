@@ -16,6 +16,7 @@ import astropy.units as u
 import astropy.coordinates as coords
 from gwcs import wcs
 from gwcs import wcstools
+from datetime import datetime
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
@@ -69,7 +70,7 @@ def create_hdul(detector='NRS1'):
     phdu.header['instrume'] = 'NIRSPEC'
     phdu.header['detector'] = detector
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2016-09-05'
+    phdu.header['date-obs'] = datetime.now().date().strftime('%Y-%m-%d')
 
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
