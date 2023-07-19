@@ -69,6 +69,10 @@ def flag_pixels(data, gdq, signal_threshold):
 
     lowest_exc_1d = np.zeros(num_pix) + n_grps
 
+    ncols = data.shape[3]
+    nrows = data.shape[2]
+
+    # Loop over all groups to locate exceedances
     for ii_int in range(n_ints):
         for ii_grp in range(n_grps):
             data_1d = data[ii_int, ii_grp, :, :].reshape(num_pix)  # vectorize slice
@@ -87,18 +91,50 @@ def flag_pixels(data, gdq, signal_threshold):
             if len(wh_exc_1d[0] > 0):  # For ramps previously unflagged ...
                 lowest_exc_1d[wh_exc_1d] = ii_grp
 
-    # Flag current and subsequent groups
+    # Loop over exceedances and flag as UNDERSAMP and DO_NOT_USE, then flag
+    #   that pixel's 4 neighbors.
     lowest_exc_2d = lowest_exc_1d.reshape((n_rows, n_cols))
     for ii_int in range(n_ints):
         for ii_grp in range(n_grps):
             wh_set_flag = np.where(lowest_exc_2d == ii_grp)
 
-            # set arrays of components
+            # set arrays of coordinates of each exceedance
             yy = wh_set_flag[0]
             xx = wh_set_flag[1]
 
-            gdq[ii_int, ii_grp:, yy, xx] = \
-                np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx], dqflags.group['UNDERSAMP']
-                              | dqflags.group['DO_NOT_USE'])
+            if len(wh_set_flag) > 0 and len(xx) > 0:
+
+                gdq[ii_int, ii_grp:, yy, xx] = \
+                    np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx],
+                                  dqflags.group['UNDERSAMP']
+                                  | dqflags.group['DO_NOT_USE'])
+
+                for ii in range(0, len(xx)):
+                    x_i = xx[ii]
+                    y_i = yy[ii]
+
+                    if x_i > 0:  # 'WEST' PIXEL
+                        gdq[ii_int, ii_grp:, y_i, x_i-1] = \
+                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i, x_i-1],
+                                          dqflags.group['UNDERSAMP'] |
+                                          dqflags.group['DO_NOT_USE'])
+
+                    if x_i < ncols-1:  # 'EAST' PIXEL
+                        gdq[ii_int, ii_grp:, y_i, x_i+1] = \
+                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i, x_i+1],
+                                          dqflags.group['UNDERSAMP'] |
+                                          dqflags.group['DO_NOT_USE'])
+
+                    if y_i > 0:  # 'NORTH' PIXEL
+                        gdq[ii_int, ii_grp:, y_i-1, x_i] = \
+                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i-1, x_i],
+                                          dqflags.group['UNDERSAMP'] |
+                                          dqflags.group['DO_NOT_USE'])
+
+                    if y_i < nrows-1:  # 'SOUTH' PIXEL
+                        gdq[ii_int, ii_grp:, y_i+1, x_i] = \
+                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i+1, x_i],
+                                          dqflags.group['UNDERSAMP'] |
+                                          dqflags.group['DO_NOT_USE'])
 
     return gdq
