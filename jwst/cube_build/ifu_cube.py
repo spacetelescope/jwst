@@ -1544,8 +1544,6 @@ class IFUCubeData():
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
 
-        nc = 13309
-        print('Checking value', nc, flux[nc], x_all[nc], y_all[nc])
         log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
         # based on the wavelength define the sroi, wroi, weight_power and
