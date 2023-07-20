@@ -1475,6 +1475,8 @@ class IFUCubeData():
         dq_all = input_model.dq[y, x]
         valid2 = np.isfinite(flux_all)
 
+        x_all = x
+        y_all = y
         # Pre-select only data within a given wavelength range
         # This range is defined to include all pixels for which the chosen wavelength region
         # of interest would have them fall within one of the cube spectral planes
@@ -1543,7 +1545,12 @@ class IFUCubeData():
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
-
+        x_all = x_all[good_data]
+        y_all = y_all[good_data]
+        
+        nc = 229049
+        print('Checking value: point cloud#, flux, x, y', nc, flux[nc], x_all[nc], y_all[nc])
+        
         log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
         # based on the wavelength define the sroi, wroi, weight_power and

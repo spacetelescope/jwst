@@ -276,7 +276,12 @@ int match_driz(double *xc, double *yc, double *zc,
 		  varv[index_cube] = varv[index_cube] + weighted_var;
 		  ifluxv[index_cube] = ifluxv[index_cube] +1.0;
 		}
-
+		
+		// Keep print statement in code - used for debugging
+		if (iw == 985 && ix == 36 && iy == 39){
+		  printf("found spaxel, pt cloud, flux, weight %i %i %f %.10f \n ", index_cube, k, flux[k] , area_weight);
+		}
+		// end of print statements
 	      } // xleft, xright, ybot, ytop
 
 	    }// end loop over iy
