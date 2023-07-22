@@ -198,11 +198,12 @@ will be set to zero if they are flagged as bad in the DQ extension.
 At this point the algorithm looks for intermittently bad (or suspicious)
 reference pixels. This is done by calculating the means and standard
 deviations per reference pixel column, as well as the difference between
-even and odd pairs; then calculates the mean of each of these arrays (the
-mean of the absolute values for the differences array), and flag all
-values greater than the corresponding mean times a factor to avoid
-overcorrection. All suspicious pixels will be replaced by their
-nearest good reference pixel.
+even and odd pairs; then calculates the mean and standard deviation of
+each of these arrays (the mean of the absolute values for the
+differences array), and flag all values greater than the corresponding
+mean plus the standard deviation times a factor to avoid overcorrection.
+All suspicious pixels will be replaced by their nearest good reference
+pixel, or set to zero if there were no good reference pixels left.
 
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary

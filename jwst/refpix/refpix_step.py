@@ -22,7 +22,7 @@ class RefPixStep(Step):
         side_smoothing_length = integer(default=11)
         side_gain = float(default=1.0)
         odd_even_rows = boolean(default=True)
-        ovr_corr_mitigation_ftr = float(default=1.8)
+        ovr_corr_mitigation_ftr = float(default=3.0)
     """
 
     reference_file_types = ['refpix']

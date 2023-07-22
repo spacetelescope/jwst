@@ -9,7 +9,7 @@ log.setLevel(logging.DEBUG)
 
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8,
-                  ovr_corr_mitigation_ftr=1.8):
+                  ovr_corr_mitigation_ftr=3.0):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
@@ -34,7 +34,8 @@ def correct_model(input_model, irs2_model,
         the phase of temporally periodic signals.
 
     ovr_corr_mitigation_ftr: float
-        Factor to avoid overcorrection of intermittently bad reference pixels
+        Factor to avoid overcorrection of intermittently bad reference
+        pixels. This factor is the N sigmas away from the mean.
 
     Returns
     -------
@@ -146,7 +147,7 @@ def correct_model(input_model, irs2_model,
 
     # Compute and apply the correction to one integration at a time
     for integ in range(n_int):
-        log.info(f'Working on integration {integ+1}')
+        log.info(f'Working on integration {integ+1} out of {n_int}')
 
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
@@ -410,7 +411,8 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
         regular samples.
 
     ovr_corr_mitigation_ftr: float
-        Factor to avoid overcorrection of bad intermittent reference pixels
+        Factor to avoid overcorrection of intermittently bad reference
+        pixels. This factor is the N sigmas away from the mean.
 
     Returns
     -------
@@ -419,6 +421,9 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
         science and interleaved reference pixel values.  The intermittently
         bad pixels are now set to the nearest good reference pixel value.
     """
+
+    log.info('Using overcorrection mitigation factor = {}'.format(ovr_corr_mitigation_ftr))
+
     # The intermittently bad pixels will be replaced for all integrations
     # and all groups. The last group will be used to identify them
     nints, ngroups, ny, nx = np.shape(data)
@@ -458,23 +463,26 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
                         rp2check.append(odd_pix)
                     pair = 0
         diff_m = np.mean(np.abs(diffs))
+        std_of_diffs = np.std(diffs)
         mean_mean = np.mean(rp_means)
+        std_of_means = np.std(rp_means)
         mean_std = np.mean(rp_stds)
+        std_of_std = np.std(rp_stds)
 
         # order indexes increasing from left to right
         rp2check.sort()
 
         # find the additional intermittent bad pixels - the factor is to avoid overcorrection
-        log.info('Using overcorrection mitigation factor = {}'.format(ovr_corr_mitigation_ftr))
-        high_diffs = np.where(np.abs(diffs) > ovr_corr_mitigation_ftr * diff_m)[0]
+        high_diffs = np.where(np.abs(diffs) > ovr_corr_mitigation_ftr*std_of_diffs + diff_m)[0]
         hd_rp2replace = []
         for j in high_diffs:
             rp2r = rp2check[int(diffs.index(diffs[j]) * 2)]
             # include both even and odd
             hd_rp2replace.append(rp2r)
             hd_rp2replace.append(rp2r+1)
-        high_means_idx = np.where(np.array(rp_means) > ovr_corr_mitigation_ftr * mean_mean)[0]
-        high_std_idx = np.where(np.array(rp_stds) > ovr_corr_mitigation_ftr * mean_std)[0]
+        high_means_idx = np.where(np.array(rp_means) > ovr_corr_mitigation_ftr*std_of_means + mean_mean)[0]
+        high_std_idx = np.where(np.array(rp_stds) > ovr_corr_mitigation_ftr*std_of_std + mean_std)[0]
+        log.info('high_diffs={}  high_means={}  high_stds={}'.format(len(high_diffs), len(high_means_idx), len(high_std_idx)))
         ref_pix = np.array(ref_pix)
         rp2replace = []
         for rp in ref_pix:

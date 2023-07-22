@@ -41,5 +41,6 @@ default value is True, and this argument applies to MIR data only.
 *  ``--ovr_corr_mitigation_ftr``
 
 This is a factor to avoid overcorrection of intermittently bad reference
-pixels in the IRS2 algorithm. The default value is 1.8, and this argument
-applies only to NIRSpec data taken with IRS2 mode.
+pixels in the IRS2 algorithm. This factor is the number of sigmas away
+from the mean. The default value is 3.0, and this argument applies
+only to NIRSpec data taken with IRS2 mode.
