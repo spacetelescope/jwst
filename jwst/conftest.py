@@ -1,8 +1,10 @@
 """Project default for pytest"""
+import inspect
 import os
 import tempfile
+import warnings
+
 import pytest
-import inspect
 
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
@@ -104,3 +106,42 @@ class TestDescriptionPlugin:
             yield
             if self.desc:
                 self.terminal_reporter.write(f'\n{self.desc} ')
+
+
+def pytest_collection_modifyitems(session, config, items):
+    # don't order tests if not in xdist
+    if not config.pluginmanager.hasplugin('xdist'):
+        return
+    with open('foo.txt', 'a+') as f:
+        f.write(str(config.option.numprocesses) + '\n')
+        f.write(str(config.option.tx) + '\n')
+    # a few tests take a very long time (>1 hr)
+    # schedule these first
+    ordered_tests = [
+        'test_spec3_multi[jw01249005001_03101_00001_nrs1_o005_crf.fits]',
+        'test_residual_fringe_cal'
+    ]
+    # find indices of ordered tests
+    ordered_test_indices = {k: None for k in ordered_tests}
+    for (index, item) in enumerate(items):
+        if item.name in ordered_test_indices:
+            ordered_test_indices[item.name] = index
+
+    for new_index, name in enumerate(ordered_tests):
+        index = ordered_test_indices[name]
+        if index is None:
+            msg = f"Failed to find test {name} while ordering tests"
+            warnings.warn(msg)
+            continue
+        if new_index == index:  # no need to move
+            continue
+        # swap this test (at index) with test at new_index
+        items[new_index], items[index] = items[index], items[new_index]
+
+        # update indices of ordered_tests for
+        # the new index for the test we put in a specific order
+        ordered_test_indices[name] = new_index
+        # and the index for the test we moved (in case it's in the dict)
+        if items[index].name in ordered_test_indices:
+            ordered_test_indices[items[index].name] = index
+    return items
