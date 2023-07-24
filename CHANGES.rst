@@ -1,11 +1,17 @@
 1.11.4 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
+
 flat_field
 ----------
 
 - Modify test_flatfield_step_interface test to prevent it from causing
   other tests to fail [#7752]
+
 
 1.11.3 (2023-07-17)
 ===================
@@ -64,8 +70,6 @@ datamodels
 
 - Added two new header keywords to track the rate of cosmic rays and snowball/showers
   [#7609, spacetelescope/stdatamodels [spacetelescope/stdatamodels#173]
-
-- Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
 
 jump
 ----
