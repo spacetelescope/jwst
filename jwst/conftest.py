@@ -118,8 +118,24 @@ def pytest_collection_modifyitems(session, config, items):
     # a few tests take a very long time (>1 hr)
     # schedule these first
     ordered_tests = [
-        'test_spec3_multi[jw01249005001_03101_00001_nrs1_o005_crf.fits]',
-        'test_residual_fringe_cal'
+        'test_spec3_multi[jw01249005001_03101_00001_nrs1_o005_crf.fits]',  # 1h 6m 51s
+        'test_residual_fringe_cal',  # 1h 1m 1s
+        'test_niriss_soss_extras[calints]',  # 32m 51s
+        'test_miri_coron3_sci_exp[4-crfints]',  # 26m 5s
+        'test_against_standard[jw02064_20230302t112350_pool]',  # 23m 58s
+        'test_spec2[assign_wcs]',  # 25m 56s
+        'test_niriss_soss_stage3_crfints',  # 23m 35s
+        'test_nirspec_lamp_ifu_spec2[assign_wcs]'  # 16m 28s
+        'test_ff_inv',  # 14m 10s
+        'test_nircam_image_stage3_tweakreg',  # 13m 37s
+        'test_nirspec_mos_spec3[s00000-cal]',  # 11m 53s
+        'test_niriss_image_detector1[undersampling_correction]',  # 11m 41s
+        'test_miri_lrs_slitless_tso1[dq_init]',  # 11m 40s
+        'test_spec3_ifushort[jw01024-c1000_t002_miri_ch1-mediumlong_x1d.fits]',  # 10m 15s
+        'test_pathloss_inverse',  # 10m 3s
+        'test_against_standard[jw00676_20210403t114320_pool]',  # 9m 11s
+        'test_nis_wfss_spec2[assign_wcs]',  # 9m 8s
+        'test_against_standard[jw82600_20180921T023255_pool]',   # 9m 3s
     ]
     # find indices of ordered tests
     ordered_test_indices = {k: None for k in ordered_tests}
