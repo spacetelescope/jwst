@@ -3481,9 +3481,9 @@ def extract_one_slit(
         Y = collapsed / np.max(collapsed)
         Y = np.where(Y > 0, Y, 0)
         X = np.arange(len(Y))
-        fit_params, _ = curve_fit(gaussian, X, Y, bounds=(np.array([0, np.argmax(Y) - 2, 0.5]),
-                                                   np.array([2, np.argmax(Y) + 2, 3]))
-                              )
+        fit_params, _ = curve_fit(gaussian, X, Y, bounds=(np.array([0, np.argmax(Y) - 3, 0.5]),
+                                                          np.array([8, np.argmax(Y) + 3, 10]))
+                                  )
         fit_width, fit_center, _ = fit_params
         n_sig = 3.
         if extract_model.dispaxis == HORIZONTAL:
