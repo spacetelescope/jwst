@@ -309,7 +309,7 @@ def _xy_range_from_bbox(xmin, xmax, ymin, ymax, shape, bbox=None):
 
     if (xmin is xmax is ymin is ymax) and xmin in (0, None):
         xmin = ymin = 0
-        ymax, xmax = shape
+        ymax, xmax = np.subtract(shape, 1, dtype=int)
 
         if bbox:
             ((x1, x2), (y1, y2)) = bbox
@@ -323,4 +323,4 @@ def _xy_range_from_bbox(xmin, xmax, ymin, ymax, shape, bbox=None):
             xmax = min(xmax, int(x2 + 0.4999999))
             ymax = min(ymax, int(y2 + 0.4999999))
 
-    return xmin, xmax, ymin, ymax
+    return xmin, xmax + 1, ymin, ymax + 1
