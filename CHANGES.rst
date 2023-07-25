@@ -1,12 +1,22 @@
 1.11.4 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
+
+flat_field
+----------
+
+- Modify the test_flatfield_step_interface unit test to prevent it from causing
+  other tests to fail [#7752]
+
 master_background
 -----------------
 
-- Allow the user to write the 2D expanded user provided x1d master background for each
+- Allow the user to write the 2D expanded version of the user-provided 1D background for each
   file in the assocation. [#7714]
-
 
 
 1.11.3 (2023-07-17)
@@ -36,10 +46,8 @@ documentation
 
 - Fix minor formatting typos in associations docs. [#7694]
 
-
 - Add note to ``calwebb_spec2`` step table to clarify the swapped order of ``photom``
   and ``extract_1d`` for NIRISS SOSS data. [#7709]
-
 
 jump
 ----
@@ -52,7 +60,6 @@ refpix
 
 - Replace intermittently bad pixels with nearest good reference pixel
   for NIRSpec IRS2 mode. [#7685]
-
 
 tweakreg
 --------

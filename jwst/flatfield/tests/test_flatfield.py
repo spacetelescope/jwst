@@ -23,7 +23,6 @@ from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
         ("FGS", "FGS_IMAGE"),
     ] + [("NIRSPEC", exptype) for exptype in NRS_IMAGING_MODES]
 )
-#@pytest.mark.skip(reason="modifying reference_file_types caused other tests to fail")
 def test_flatfield_step_interface(instrument, exptype):
     """Test that the basic interface works for data requiring a FLAT reffile"""
 
@@ -50,8 +49,12 @@ def test_flatfield_step_interface(instrument, exptype):
     # override class attribute so only the `flat` type needs to be overridden
     # in the step call.  Otherwise CRDS calls will be made for the other 3
     # types of flat reference file not used in this test.
-    FlatFieldStep.reference_file_types = ["flat"]
-    result = FlatFieldStep.call(data, override_flat=flat)
+    previous_reference_file_types = FlatFieldStep.reference_file_types
+    try:
+        FlatFieldStep.reference_file_types = ["flat"]
+        result = FlatFieldStep.call(data, override_flat=flat)
+    finally:
+        FlatFieldStep.reference_file_types = previous_reference_file_types
 
     assert (result.data == data.data).all()
     assert result.var_flat.shape == shape
