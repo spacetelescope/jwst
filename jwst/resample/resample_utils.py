@@ -318,9 +318,13 @@ def _xy_range_from_bbox(xmin, xmax, ymin, ymax, shape, bbox=None):
             if y1 > y2:
                 y1, y2 = y2, y1
 
-            xmin = max(0, int(x1 + 0.5))
-            ymin = max(0, int(y1 + 0.5))
-            xmax = min(xmax, int(x2 + 0.4999999))
-            ymax = min(ymax, int(y2 + 0.4999999))
+            # use 0.5+/-eps to avoid having edge pixels with flux coming from
+            # a tiny part of input pixels (with low weight). eps can be set
+            # safely to 0.
+            eps = 0.000001
+            xmin = max(0, int(x1 + (0.5 + eps)))
+            ymin = max(0, int(y1 + (0.5 + eps)))
+            xmax = min(xmax, int(x2 + (0.5 - eps)))
+            ymax = min(ymax, int(y2 + (0.5 - eps)))
 
     return xmin, xmax + 1, ymin, ymax + 1
