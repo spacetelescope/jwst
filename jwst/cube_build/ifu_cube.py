@@ -62,12 +62,15 @@ class IFUCubeData():
         self.master_table = master_table
         self.output_type = output_type
 
-        self.scale1 = pars_cube.get('scale1')
-        self.scale2 = pars_cube.get('scale2')
+        self.scale12 = pars_cube.get('scale12')
+        print('Spatial scale', self.scale12)
+        
         self.scalew = pars_cube.get('scalew')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
+        self.debug_spaxel = pars_cube.get('debug_spaxel')
 
+        self.spaxel_x, self.spaxel_y, self.spaxel_z =  [int(val) for val in self.debug_spaxel.split()]
         self.spatial_size = None
         self.spectral_size = None
         self.interpolation = pars_cube.get('interpolation')
@@ -544,7 +547,23 @@ class IFUCubeData():
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
         self.spaxel_iflux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
+        # ______________________________________________________________________________
 
+        nxyplane = self.naxis1 * self.naxis2
+        if(self.spaxel_z < 0 or self.spaxel_x < 0 or self.spaxel_y < 0):
+            print('Incorrect input for Debug Spaxel values. Counting starts at 1')
+            debug_cube_index = -1
+            print(self.spaxel_z, self.spaxel_x, self.spaxel_y)
+        elif self.spaxel_z ==0 and self.spaxel_x ==0 and self.spaxel_y ==0:
+            debug_cube_index = -1
+        else:
+            spaxel_z = self.spaxel_z -1
+            spaxel_x = self.spaxel_x -1
+            spaxel_y = self.spaxel_y -1 
+            debug_cube_index = spaxel_z * (nxyplane) + spaxel_y * self.naxis1 + spaxel_x
+            print('Printing debug information for cube spaxel index = ', debug_cube_index)
+            print(spaxel_x, spaxel_y, spaxel_z, nxyplane)
+        print(type(debug_cube_index), debug_cube_index)
         # ______________________________________________________________________________
         subtract_background = True
 
@@ -578,7 +597,8 @@ class IFUCubeData():
                                                                    input_model)
 
                     coord1, coord2, corner_coord, wave, dwave, flux, err, slice_no, rois_pixel, \
-                        roiw_pixel, weight_pixel, softrad_pixel, scalerad_pixel = pixelresult
+                        roiw_pixel, weight_pixel, softrad_pixel, scalerad_pixel, \
+                        x_det, y_det = pixelresult
 
                     # by default flag the dq plane based on the FOV of the detector projected to sky
                     flag_dq_plane = 1
@@ -618,7 +638,7 @@ class IFUCubeData():
                                               self.xcoord, self.ycoord, self.zcoord,
                                               coord1, coord2, wave, flux, err, slice_no,
                                               rois_pixel, roiw_pixel, scalerad_pixel,
-                                              weight_pixel, softrad_pixel,
+                                              weight_pixel, softrad_pixel, 
                                               self.cdelt3_normal,
                                               roiw_ave, self.cdelt1, self.cdelt2)
 
@@ -646,7 +666,8 @@ class IFUCubeData():
                                                    xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
                                                    dwave,
                                                    self.cdelt3_normal,
-                                                   self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+                                                   self.cdelt1, self.cdelt2, cdelt3_mean, linear,
+                                                   x_det, y_det, debug_cube_index)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
@@ -876,8 +897,8 @@ class IFUCubeData():
         a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                   par2)
         self.spatial_size = a_scale
-        if self.scale1 != 0:
-            self.spatial_size = self.scale1
+        if self.scale12 != 0:
+            self.spatial_size = self.scale12
 
         min_wave = self.instrument_info.GetWaveMin(par1, par2)
         max_wave = self.instrument_info.GetWaveMax(par1, par2)
@@ -1083,8 +1104,8 @@ class IFUCubeData():
             self.roiw = wave_roi
         if self.weight_power == 0:
             self.weight_power = weight_power
-        if self.scale1 != 0:
-            self.spatial_size = self.scale1
+        if self.scale12 != 0:
+            self.spatial_size = self.scale12
 
         # check on valid values
 
@@ -1548,8 +1569,8 @@ class IFUCubeData():
         x_all = x_all[good_data]
         y_all = y_all[good_data]
         
-        nc = 229049
-        print('Checking value: point cloud#, flux, x, y', nc, flux[nc], x_all[nc], y_all[nc])
+        #nc = 593160
+        #print('Checking value: point cloud#, flux, x, y', nc, flux[nc], x_all[nc], y_all[nc])
         
         log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
@@ -1635,7 +1656,7 @@ class IFUCubeData():
             corner_coord = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
         return coord1, coord2, corner_coord, wave, dwave, flux, err, \
             slice_no, rois_det, roiw_det, weight_det, \
-            softrad_det, scalerad_det
+            softrad_det, scalerad_det, x_all, y_all
     # ______________________________________________________________________
 
     def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background):

@@ -43,8 +43,7 @@ class CubeBuildStep (Step):
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
          output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
-         scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
-         scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
+         scale12 = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
@@ -58,6 +57,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
+         debug_spaxel = string( default='0 0 0')
        """
 
     reference_file_types = ['cubepar']
@@ -94,10 +94,8 @@ class CubeBuildStep (Step):
         if not self.weighting.islower():
             self.weighting = self.weighting.lower()
 
-        if self.scale1 != 0.0:
-            self.log.info(f'Input Scale of axis 1 {self.scale1}')
-        if self.scale2 != 0.0:
-            self.log.info(f'Input Scale of axis 2 {self.scale2}')
+        if self.scale12 != 0.0:
+            self.log.info(f'Input Scale of axis 1 and 2 {self.scale12}')
         if self.scalew != 0.0:
             self.log.info(f'Input wavelength scale {self.scalew}')
 
@@ -229,8 +227,7 @@ class CubeBuildStep (Step):
         # these parameters are related to the building a single ifucube_model
 
         pars_cube = {
-            'scale1': self.scale1,
-            'scale2': self.scale2,
+            'scale12': self.scale12,
             'scalew': self.scalew,
             'interpolation': self.interpolation,
             'weighting': self.weighting,
@@ -241,7 +238,8 @@ class CubeBuildStep (Step):
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
             'skip_dqflagging': self.skip_dqflagging,
-            'suffix': self.suffix}
+            'suffix': self.suffix,
+            'debug_spaxel': self.debug_spaxel }
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
