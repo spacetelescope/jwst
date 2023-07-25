@@ -3489,9 +3489,14 @@ def extract_one_slit(
         if extract_model.dispaxis == HORIZONTAL:
             extract_model.ystart = max(0, fit_center - (n_sig * fit_width))
             extract_model.ystop = min(data.shape[-2] - 1, fit_center + (n_sig * fit_width))
+            extract_model.p_src = [[create_poly([extract_model.ystart]),
+                                    create_poly([extract_model.ystop])]]
+
         else:
             extract_model.xstart = max(0, fit_center - (n_sig * fit_width))
             extract_model.xstop = min(data.shape[-1] - 1, fit_center + (n_sig * fit_width))
+            extract_model.p_src = [[create_poly([extract_model.xstart]),
+                                    create_poly([extract_model.xstop])]]
 
         log.info(f"Overriding cross-dispersion bounds with slit auto-centering.")
         log.debug(f"Slit auto-centering fit_center: {fit_center}"
