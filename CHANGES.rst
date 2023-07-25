@@ -12,6 +12,13 @@ flat_field
 - Modify test_flatfield_step_interface test to prevent it from causing
   other tests to fail [#7752]
 
+resample
+--------
+
+- Use the same logic for computing input range for resample step from input
+  image shape and the bounding box both for ``SCI`` image as well as for the
+  ``ERR`` and ``VARIANCE_*`` images. [#7761]
+
 
 1.11.3 (2023-07-17)
 ===================

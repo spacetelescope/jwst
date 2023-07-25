@@ -303,3 +303,24 @@ def decode_context(context, x, y):
         )
 
     return idx
+
+
+def _xy_range_from_bbox(xmin, xmax, ymin, ymax, shape, bbox=None):
+
+    if (xmin is xmax is ymin is ymax) and xmin in (0, None):
+        xmin = ymin = 0
+        ymax, xmax = shape
+
+        if bbox:
+            ((x1, x2), (y1, y2)) = bbox
+            if x1 > x2:
+                x1, x2 = x2, x1
+            if y1 > y2:
+                y1, y2 = y2, y1
+
+            xmin = max(0, int(x1 + 0.5))
+            ymin = max(0, int(y1 + 0.5))
+            xmax = min(xmax, int(x2 + 0.4999999))
+            ymax = min(ymax, int(y2 + 0.4999999))
+
+    return xmin, xmax, ymin, ymax

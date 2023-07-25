@@ -462,13 +462,14 @@ class ResampleData:
         if outcon.ndim == 3:
             outcon = outcon[planeid]
 
-        if xmin is xmax is ymin is ymax is None:
-            bb = input_wcs.bounding_box
-            ((x1, x2), (y1, y2)) = bb
-            xmin = int(min(x1, x2))
-            ymin = int(min(y1, y2))
-            xmax = int(max(x1, x2))
-            ymax = int(max(y1, y2))
+        xmin, xmax, ymin, ymax = resample_utils._xy_range_from_bbox(
+            xmin,
+            xmax,
+            ymin,
+            ymax,
+            shape=insci.shape,
+            bbox=input_wcs.bounding_box
+        )
 
         # Compute the mapping between the input and output pixel coordinates
         # for use in drizzle.cdrizzle.tdriz

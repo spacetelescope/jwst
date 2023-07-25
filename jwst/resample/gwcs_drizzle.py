@@ -349,10 +349,14 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     if inwht is None:
         inwht = np.ones_like(insci)
 
-    if xmax is None or xmax == xmin:
-        xmax = insci.shape[1]
-    if ymax is None or ymax == ymin:
-        ymax = insci.shape[0]
+    xmin, xmax, ymin, ymax = resample_utils._xy_range_from_bbox(
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        shape=insci.shape,
+        bbox=input_wcs.bounding_box
+    )
 
     # Compute what plane of the context image this input would
     # correspond to:
@@ -384,7 +388,6 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
 
     # Call 'drizzle' to perform image combination
     log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
-
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci.astype(np.float32), inwht.astype(np.float32), pixmap,
         outsci, outwht, outcon,
