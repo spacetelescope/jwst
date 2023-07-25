@@ -147,6 +147,7 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    slit_autocen = boolean(default=True) # Auto source centering for slit-like point source data.
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
@@ -258,6 +259,7 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.center_xy,
+                        self.slit_autocen,
                         self.ifu_autocen,
                         self.ifu_rfcorr,
                         was_source_model=was_source_model
@@ -294,6 +296,7 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             self.center_xy,
+                            self.slit_autocen,
                             self.ifu_autocen,
                             self.ifu_rfcorr,
                             was_source_model=was_source_model,
@@ -333,6 +336,7 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.slit_autocen,
                     self.ifu_autocen,
                     self.ifu_rfcorr,
                     was_source_model=was_source_model,
@@ -474,6 +478,7 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.slit_autocen,
                     self.ifu_autocen,
                     self.ifu_rfcorr,
                     was_source_model=False,

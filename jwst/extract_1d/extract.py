@@ -8,6 +8,7 @@ import numpy as np
 from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
 from astropy.io import fits
+from scipy.optimize import curve_fit
 from gwcs import WCS
 from stdatamodels import DataModel
 from stdatamodels.properties import ObjectNode
@@ -86,6 +87,10 @@ HUGE_DIST = 1.e20
 NO_MATCH = "no match"
 PARTIAL = "partial match"
 EXACT = "exact match"
+
+
+def gaussian(x, a, b, c):
+    return c / a * np.exp(-1. * (x - b)**2 / (2. * a * a))
 
 
 class Aperture(NamedTuple):  # When python 3.6 is no longer supported, consider converting to DataClass
@@ -220,7 +225,8 @@ def get_extract_parameters(
         smoothing_length: Union[int, None],
         bkg_fit: str,
         bkg_order: Union[int, None],
-        use_source_posn: Union[bool, None]
+        use_source_posn: Union[bool, None],
+        slit_autocen: Union[bool, None]
 ) -> dict:
     """Get extract1d reference file values.
 
@@ -283,6 +289,10 @@ def get_extract_parameters(
         If None, the value specified in `ref_dict` will be used, or it will
         be set to True if not found in `ref_dict`.
 
+    slit_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in slit-like modes.  Default is True.
+
     Returns
     -------
     extract_params : dict
@@ -310,6 +320,7 @@ def get_extract_parameters(
         extract_params['bkg_fit'] = None  # because no background sub.
         extract_params['bkg_order'] = 0  # because no background sub.
         extract_params['subtract_background'] = False
+        extract_params['slit_autocen'] = slit_autocen
 
         if use_source_posn is None:
             extract_params['use_source_posn'] = False
@@ -386,7 +397,7 @@ def get_extract_parameters(
                     if use_source_posn is None:  # no value set on command line
                         if use_source_posn_aper is None:  # no value set in ref file
                             # Use a suitable default
-                            if meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
+                            if meta.exposure.type in ['MIR_MRS', 'NRS_IFU']:
                                 use_source_posn = True
                                 log.info(f"Turning on source position correction for exp_type = {meta.exposure.type}")
                             else:
@@ -394,6 +405,7 @@ def get_extract_parameters(
                         else:  # use the value from the ref file
                             use_source_posn = use_source_posn_aper
                     extract_params['use_source_posn'] = use_source_posn
+                    extract_params['slit_autocen'] = slit_autocen
 
                     extract_params['extract_width'] = aper.get('extract_width')
                     extract_params['position_correction'] = 0  # default value
@@ -1056,7 +1068,8 @@ class ExtractBase(abc.ABC):
             subtract_background: Union[bool, None] = None,
             use_source_posn: Union[bool, None] = None,
             match: Union[str, None] = None,
-            ref_file_type: Union[str, None] = None
+            ref_file_type: Union[str, None] = None,
+            slit_autocen: Union[bool, None] = None
     ):
         """
         Parameters
@@ -1198,6 +1211,7 @@ class ExtractBase(abc.ABC):
         self.use_source_posn = use_source_posn
         self.position_correction = position_correction
         self.subtract_background = subtract_background
+        self.slit_autocen = slit_autocen
 
         self.wcs = None  # initial value
 
@@ -1417,7 +1431,7 @@ class ExtractBase(abc.ABC):
             # Width (height) in the cross-dispersion direction, from the start of the 2-D cutout (or of the full image)
             # to the upper limit of the bounding box.
             # This may be smaller than the full width of the image, but it's all we need to consider.
-            xd_width = int(round(bb[1][1]))  # must be an int
+            xd_width = int(round(bb[1][1])+0.0001)  # must be an int
             middle = int((bb[0][0] + bb[0][1]) / 2.)  # Middle of the bounding_box in the dispersion direction.
             x = np.empty(xd_width, dtype=np.float64)
             x[:] = float(middle)
@@ -2524,6 +2538,7 @@ def run_extract1d(
         subtract_background: Union[bool, None],
         use_source_posn: Union[bool, None],
         center_xy: Union[float, None],
+        slit_autocen: Union[bool, None],
         ifu_autocen: Union[bool, None],
         ifu_rfcorr: Union[bool, None],
         was_source_model: bool = False,
@@ -2577,6 +2592,10 @@ def run_extract1d(
         of the extraction aperture for IFU data, overriding any centering
         done by the step.  Two values, in x,y order, are used for extraction
         from IFU cubes. Default is None.
+
+    slit_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in slit-like modes.  Default is True.
 
     ifu_autocen : bool
         Switch to turn on auto-centering for point source spectral extraction
@@ -2632,6 +2651,7 @@ def run_extract1d(
         subtract_background,
         use_source_posn,
         center_xy,
+        slit_autocen,
         ifu_autocen,
         ifu_rfcorr,
         was_source_model,
@@ -2694,6 +2714,7 @@ def do_extract1d(
         subtract_background: Union[int, None] = None,
         use_source_posn: Union[bool, None] = None,
         center_xy: Union[int, None] = None,
+        slit_autocen: Union[bool, None] = None,
         ifu_autocen: Union[bool, None] = None,
         ifu_rfcorr: Union[bool, None] = None,
         was_source_model: bool = False
@@ -2757,6 +2778,10 @@ def do_extract1d(
         of the IFU extraction aperture, overriding any centering done by the step.
         Two values, in x,y order, are used for extraction from IFU cubes.
         Default is None.
+
+    slit_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in slit-like modes.  Default is True.
 
     ifu_autocen : bool
         Switch to turn on auto-centering for point source spectral extraction
@@ -2869,7 +2894,7 @@ def do_extract1d(
                     smoothing_length, bkg_fit, bkg_order, use_source_posn,
                     prev_offset, exp_type, subtract_background, input_model,
                     output_model, apcorr_ref_model, log_increment,
-                    is_multiple_slits
+                    is_multiple_slits, slit_autocen
                 )
             except ContinueError:
                 continue
@@ -2918,7 +2943,7 @@ def do_extract1d(
                         smoothing_length, bkg_fit, bkg_order, use_source_posn,
                         prev_offset, exp_type, subtract_background, input_model,
                         output_model, apcorr_ref_model, log_increment,
-                        is_multiple_slits
+                        is_multiple_slits, slit_autocen
                     )
                 except ContinueError:
                     continue
@@ -2959,7 +2984,7 @@ def do_extract1d(
                         smoothing_length, bkg_fit, bkg_order, use_source_posn,
                         prev_offset, exp_type, subtract_background, input_model,
                         output_model, apcorr_ref_model, log_increment,
-                        is_multiple_slits
+                        is_multiple_slits, slit_autocen
                     )
                 except ContinueError:
                     continue
@@ -3451,6 +3476,27 @@ def extract_one_slit(
     extract_model.log_extraction_parameters()
     extract_model.assign_polynomial_limits()
 
+    if extract_model.slit_autocen is True:
+        collapsed = np.nansum(data, axis=int(-1 * extract_params['dispaxis']))
+        Y = collapsed / np.max(collapsed)
+        Y = np.where(Y > 0, Y, 0)
+        X = np.arange(len(Y))
+        fit_params, _ = curve_fit(gaussian, X, Y, bounds=(np.array([0, np.argmax(Y) - 2, 0.5]),
+                                                   np.array([2, np.argmax(Y) + 2, 3]))
+                              )
+        fit_width, fit_center, _ = fit_params
+        n_sig = 3.
+        if extract_model.dispaxis == HORIZONTAL:
+            extract_model.ystart = max(0, fit_center - (n_sig * fit_width))
+            extract_model.ystop = min(data.shape[-2] - 1, fit_center + (n_sig * fit_width))
+        else:
+            extract_model.xstart = max(0, fit_center - (n_sig * fit_width))
+            extract_model.xstop = min(data.shape[-1] - 1, fit_center + (n_sig * fit_width))
+
+        log.info(f"Overriding cross-dispersion bounds with slit auto-centering.")
+        log.debug(f"Slit auto-centering fit_center: {fit_center}"
+                  f"and fit_width: {fit_width}")
+
     # Log the extraction limits being used
     if integ < 1:
         if extract_model.src_coeff is not None:
@@ -3599,7 +3645,8 @@ def create_extraction(extract_ref_dict,
                       output_model,
                       apcorr_ref_model,
                       log_increment,
-                      is_multiple_slits):
+                      is_multiple_slits,
+                      slit_autocen):
     if slit is None:
         meta_source = input_model
     else:
@@ -3648,7 +3695,8 @@ def create_extraction(extract_ref_dict,
     # Turn off use_source_posn if the source is not POINT
     if source_type != 'POINT':
         use_source_posn = False
-        log.info(f"Setting use_source_posn to False for source type {source_type}")
+        slit_autocen = False
+        log.info(f"Setting use_source_posn and slit auto-centering to False for source type {source_type}")
 
     # Turn off use_source_posn if working on non-primary NRS fixed slits
     if is_multiple_slits:
@@ -3674,7 +3722,8 @@ def create_extraction(extract_ref_dict,
         smoothing_length,
         bkg_fit,
         bkg_order,
-        use_source_posn
+        use_source_posn,
+        slit_autocen
     )
 
     if subtract_background is not None:
