@@ -7,17 +7,11 @@ def _lsq_spline(x, y, weights, knots, degree):
     return scipy.interpolate.LSQUnivariateSpline(x, y, knots, w=weights, k=degree)
 
 
-def spline_fitter(x, y, weights, knots, degree, reject_outliers=False):
+def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10, tolerance=0.0001):
     if not reject_outliers:
         return _lsq_spline(x, y, weights, knots, degree)
 
     # fit with chi sq outlier rejection
-    # domain=10 and tolerance=0.0001 are never changed
-    domain = 10
-    tolerance = 0.0001
-    # weights are always provided
-
-
     # helpers
     def chi_sq(spline, weights):
         return np.nansum((y - spline(x)) ** 2 * weights)
