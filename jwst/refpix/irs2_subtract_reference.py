@@ -9,7 +9,7 @@ log.setLevel(logging.DEBUG)
 
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8,
-                  ovr_corr_mitigation_ftr=3.0):
+                  ovr_corr_mitigation_ftr=2.5):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
@@ -346,7 +346,7 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
                    2 * (odd_even_row - 1))
             log.debug("bad interleaved reference at pixels {} {}"
                       .format(ref, ref + 1))
-            data[..., ref:ref + 2] = 0.
+            data[..., ref:ref + 4] = 0.
 
 
 def decode_mask(output, mask):
@@ -378,14 +378,12 @@ def decode_mask(output, mask):
 
     # The bit number corresponds to a count of groups of reads of the
     # interleaved reference pixels. The 32-bit unsigned integer encoding
-    # has increasing index, following the amplifier readout direction.
+    # has increasing index, from left to right.
 
     flags = np.array([2**n for n in range(32)], dtype=np.uint32)
     temp = np.bitwise_and(flags, mask)
     bits = np.where(temp > 0)[0]
     bits = list(bits)
-    if output // 2 * 2 == output:
-        bits = [31 - bit for bit in bits]
     bits.sort()
 
     return bits
