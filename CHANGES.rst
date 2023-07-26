@@ -1,6 +1,13 @@
 1.11.4 (unreleased)
 ===================
 
+calwebb_spec2
+-------------
+
+- Run ``pixel_replace`` before setting metadata and suffix of datamodel
+  that is returned by the pipeline to ensure a file is created with the
+  expected ``_cal`` suffix. [#7772]
+
 datamodels
 ----------
 
