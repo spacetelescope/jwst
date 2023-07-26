@@ -271,13 +271,13 @@ class Spec2Pipeline(Pipeline):
         else:
             calibrated = self._process_common(calibrated)
 
+        # Replace bad pixels before rectification
+        calibrated = self.pixel_replace(calibrated)
+
         # Record ASN pool and table names in output
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
         calibrated.meta.filename = self.make_output_path(suffix=suffix)
-
-        # Replace bad pixels before rectification
-        calibrated = self.pixel_replace(calibrated)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
