@@ -104,6 +104,13 @@ class MasterBackgroundStep(Step):
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
+
+                # Save the computed 2d background if requested by user. The user has supplied
+                # the master background so just save the expanded 2d background
+                if self.save_background:
+                    asn_id = input_data.meta.asn_table.asn_id
+                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
