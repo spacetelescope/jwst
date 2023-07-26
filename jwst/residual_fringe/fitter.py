@@ -7,10 +7,7 @@ def _lsq_spline(x, y, weights, knots, degree):
     return scipy.interpolate.LSQUnivariateSpline(x, y, knots, w=weights, k=degree)
 
 
-def spline_fitter(x, y, weights, knots, degree, bounds, reject_outliers=False):
-    # bbox appears to be [None, None] even if bounds are provided
-    # TODO Spline1D and SplineExactKnotsFitter don't appear to use bounds
-
+def spline_fitter(x, y, weights, knots, degree, reject_outliers=False):
     if not reject_outliers:
         return _lsq_spline(x, y, weights, knots, degree)
 
@@ -20,8 +17,11 @@ def spline_fitter(x, y, weights, knots, degree, bounds, reject_outliers=False):
     tolerance = 0.0001
     # weights are always provided
 
+
     # helpers
-    chi_sq = lambda spline, weights: np.nansum((y - spline(x)) ** 2 * weights)
+    def chi_sq(spline, weights):
+        return np.nansum((y - spline(x)) ** 2 * weights)
+
 
     # initial fit
     spline = _lsq_spline(x, y, weights, knots, degree)

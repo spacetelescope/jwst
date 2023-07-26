@@ -475,9 +475,9 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
     # Fit the spline
     # robust fitting causing problems for fringe 2 in channels 3 and 4, just use the fitter class
     if ffreq > 1.5:
-        bg_model = spline_fitter(x, y, w, t, 2, [x[0], x[-1]], reject_outliers=True)
+        bg_model = spline_fitter(x, y, w, t, 2, reject_outliers=True)
     else:
-        bg_model = spline_fitter(x, y, w, t, 1, [x[0], x[-1]], reject_outliers=False)
+        bg_model = spline_fitter(x, y, w, t, 1, reject_outliers=False)
 
     # fit the background
     bg_fit = bg_model(wavenum_scaled)
@@ -928,9 +928,9 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
     # Fit the spline
     # TODO: robust fitting causing problems for fringe 2, change to just using fitter there
     if ffreq > 1.5:
-        bg_model = spline_fitter(x, y, w, t, 2, [x[0], x[-1]], reject_outliers=True)
+        bg_model = spline_fitter(x, y, w, t, 2, reject_outliers=True)
     else:
-        bg_model = spline_fitter(x, y, w, t, 1, [x[0], x[-1]], reject_outliers=False)
+        bg_model = spline_fitter(x, y, w, t, 1, reject_outliers=False)
 
     # fit the background
     bg_fit = bg_model(wavenum_scaled)
