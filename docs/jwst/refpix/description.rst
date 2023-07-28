@@ -203,7 +203,9 @@ each of these arrays (the mean of the absolute values for the
 differences array), and flag all values greater than the corresponding
 mean plus the standard deviation times a factor to avoid overcorrection.
 All suspicious pixels will be replaced by their nearest good reference
-pixel, or set to zero if there were no good reference pixels left.
+pixel, or set to zero if there were no good reference pixels left
+(although this is unlikely to happen as there are typically only a few
+pixels flagged as suspicious).
 
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary

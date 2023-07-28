@@ -9,7 +9,7 @@ log.setLevel(logging.DEBUG)
 
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8,
-                  ovr_corr_mitigation_ftr=2.5):
+                  ovr_corr_mitigation_ftr=3.0):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
