@@ -1,594 +1,572 @@
 #! /usr/bin/env python
+
 """
+
 RawOifits class: takes fringefitter class, which contains nrm_list and instrument_data attributes,
 all info needed to write oifits.
 populate structure needed to write out oifits files according to schema.
 averaged and multi-integration versions, sigma-clipped stats over ints
 
-CalibOifits class: takes two AmiOIModel datamodels and produces a final calibrated datamodel.
+
+calibrate oifits class, that takes two oifitses and makes the final one?
+ questions:
+ do we want to retain ability to take median or mean over integrations?
+
+TO DO:
+remove 'if verbose' statements, use logging when useful
+
 """
 import numpy as np
 
 from scipy.special import comb
+from scipy import stats
 from astropy.stats import sigma_clipped_stats
-from astropy.time.core import Time
 
 from stdatamodels.jwst import datamodels
 
 
 class RawOifits:
-    def __init__(self, fringefitter, method="median"):
-        """
-        Class to store AMI data in the format required to write out to OIFITS files
-        Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
+	def __init__(self, fringefitter, nh=7, angunit="radians", method='median'):
+		"""
+		Short Summary
+		-------------
+		Class to store AMI data in the format required to write out to OIFITS files
+		Based on ObservablesFromText from ImPlaneIA.
+		Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
 
-        Parameters
-        ----------
-        fringefitter: FringeFitter object
-            Object containing nrm_list attribute (list of nrm objects)
-            and other info needed for OIFITS files
-        method: string
-            Method to average observables: mean or median. Default median.
+		Parameters
+		----------
+		fringefitter: object, containing nrm_list attribute (list of nrm objects)
+		nh: default 7, number of holes in the NRM
 
-        Notes
-        -----
-        Based on ObservablesFromText from ImPlaneIA, e.g. 
-        https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
-        """
-        self.fringe_fitter = fringefitter
-        self.n_holes = 7
+		kwargs options:
 
-        self.nslices = len(self.fringe_fitter.nrm_list)  # n ints
-        self.n_baselines = int(comb(self.n_holes, 2))  # 21
-        self.n_closure_phases = int(comb(self.n_holes, 3))  # 35
-        self.n_closure_amplitudes = int(comb(self.n_holes, 4))
+		"""
+		self.ff = fringefitter
+		self.nh = nh
+		self.nslices = len(self.ff.nrm_list)
+		self.nbl = int(comb(self.nh, 2))
+		self.ncp = int(comb(self.nh, 3))
+		self.nca = int(comb(self.nh, 4))
 
-        self.method = method
+		self.angunit = angunit
+		self.method = method
 
-        self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
-        self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
-        self.pa = (
-            self.fringe_fitter.instrument_data.pav3
-        )  # header pav3, not including v3i_yang??
+		if verbose:
+			print("ImPlaneIA text output angle unit: %s" % angunit)
 
-        self.bholes, self.bls = self._makebaselines()
-        self.tholes, self.tuv = self._maketriples_all()
+		if angunit == 'radians':
+			print("Will convert all angular quantities to degrees for saving")
+			self.degree = 180.0 / np.pi
+		else:
+			self.degree = 1
 
-    def make_obsarrays(self):
-        """
-        Make arrays of observables of the correct shape for saving to datamodels
-        """
-        # arrays of observables, (nslices,nobservables) shape.
-        self.fringe_phases = np.zeros((self.nslices, self.n_baselines))
-        self.fringe_amplitudes = np.zeros((self.nslices, self.n_baselines))
-        self.closure_phases = np.zeros((self.nslices, self.n_closure_phases))
-        self.closure_amplitudes = np.zeros((self.nslices, self.n_closure_amplitudes))
-        self.pistons = np.zeros((self.nslices, self.n_holes))
-        # model parameters
-        self.solns = np.zeros((self.nslices, 44))
+		self.ctrs_eqt = self.ff.instrument_data.ctrs_eqt	
+		self.ctrs_inst = self.ff.instrument_data.ctrs_inst
+		self.pa = self.ff.instrument_data.pav3 # header pav3, not including v3i_yang??
 
-        for i, nrmslc in enumerate(self.fringe_fitter.nrm_list):
-            self.fringe_phases[i, :] = np.rad2deg(nrmslc.fringephase)  # FPs in degrees
-            self.fringe_amplitudes[i, :] = nrmslc.fringeamp
-            self.closure_phases[i, :] = np.rad2deg(nrmslc.redundant_cps)  # CPs in degrees
-            self.closure_amplitudes[i, :] = nrmslc.redundant_cas
-            self.pistons[i, :] = np.rad2deg(
-                nrmslc.fringepistons
-            )  # segment pistons in degrees
-            self.solns[i, :] = nrmslc.soln
 
-        self.fringe_amplitudes_squared = self.fringe_amplitudes ** 2  # squared visibilities
+		self.bholes, self.bls = self._makebaselines()
+		self.tholes, self.tuv = self._maketriples_all()
+		self.qholes, self.quvw = self._makequads_all()
 
-    def make_oifits(self):
-        """
-        Perform final manipulations of observable arrays, calculate uncertainties, and
-        populate AmiOIModel
+		self.make_obsarrays()
+		self.populate_nrm_dict()
+		oimodel = self.populate_oimodel()
+		return oimodel
 
-        Returns
-        -------
-        m: AmiOIModel
-            Fully populated datamodel
+	def make_obsarrays(self):
+		"""
+		Populate arrays of observables
+		"""
 
-        """
-        self.make_obsarrays()
-        instrument_data = self.fringe_fitter.instrument_data
-        observation_date = Time(
-            "%s-%s-%s"
-            % (instrument_data.year, instrument_data.month, instrument_data.day),
-            format="fits",
-        )
+		# 3d arrays of centered data, models, and residuals (data-model)
+		self.ctrd_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
+		self.n_ctrd_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
+		self.model_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
+		self.n_model_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
+		self.resid_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
+		self.n_resid_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
+		# arrays of observables, (nslices,nobservables) shape.
+		self.fp = np.zeros((self.nslices, self.nbl))
+		self.fa = np.zeros((self.nslices, self.nbl))
+		self.cp = np.zeros((self.nslices, self.ncp))
+		self.ca = np.zeros((self.nslices, self.nca))
+		self.pistons = np.zeros((self.nslices, self.nh))
+		# model parameters
+		self.solns = np.zeros((self.nslices,44))
 
-        # central wavelength, equiv. width from effstims used for fringe fitting
-        wl = instrument_data.lam_c
-        e_wl = instrument_data.lam_c * instrument_data.lam_w
+		for i,nrmslc in enumerate(self.ff.nrm_list):
+			datapeak = nrmslc.reference.max()
+			# NOTE: still have to write this out into datamodel
+			self.ctrd_arr[i,:,:] = nrmslc.reference
+			self.n_ctrd_arr[i,:,:] = nrmslc.reference/datapeak
+			self.model_arr[i,:,:] = nrmslc.modelpsf
+			self.n_model_arr[i,:,:] = nrmslc.modelpsf/datapeak
+			self.resid_arr[i,:,:] = nrmslc.residual
+			self.n_resid_arr[i,:,:] = nrmslc.residual/datapeak
+			#
+			self.fp[i,:] = np.rad2deg(nrmslc.fringephase) # FPs in degrees
+			self.fa[i,:] = nrmslc.fringeamp
+			self.cp[i,:] = np.rad2deg(nrmslc.redundant_cps) # CPs in degrees
+			self.ca[i,:] = nrmslc.redundant_cas
+			self.pistons[i,:] = np.rad2deg(nrmslc.fringepistons) # segment pistons in degrees
+			self.solns[i,:] = nrmslc.soln
 
-        # Index 0 and 1 reversed to get the good u-v coverage (same fft)
-        ucoord = self.bls[:, 1]
-        vcoord = self.bls[:, 0]
+		self.fa2 = self.fa**2 # squared visibilities
 
-        v1coord = self.tuv[:, 0, 0]
-        u1coord = self.tuv[:, 0, 1]
-        v2coord = self.tuv[:, 1, 0]
-        u2coord = self.tuv[:, 1, 1]
+	def populate_nrm_dict(self):
+		"""
+		Remaining manipulations for OIFITS writing
+		Produce a dictionary that will be given to whatever actually writes out the files according to datamodels
+		"""
+		info4oif = self.ff.instrument_data
+		t = Time('%s-%s-%s' %
+             (info4oif.year, info4oif.month, info4oif.day), format='fits')
+	    ins = info4oif.telname
+	    filt = info4oif.filt
 
-        flagVis = [False] * self.n_baselines
-        flagT3 = [False] * self.n_closure_phases
+		# central wavelength, equiv. width from effstims used for fringe fitting
+	    wl, e_wl = info4oif.lam_c, info4oif.lam_c*info4oif.lam_w 
 
-        # do the things done by populate_nrm here
-        # average or don't, and get uncertainties
-        # Unwrap phases
-        shift2pi = np.zeros(self.closure_phases.shape)
-        shift2pi[self.closure_phases >= 6] = 2 * np.pi
-        shift2pi[self.closure_phases <= -6] = -2 * np.pi
-        self.closure_phases -= shift2pi
+	    # Index 0 and 1 reversed to get the good u-v coverage (same fft)
+	    ucoord = self.bls[:, 1]
+	    vcoord = self.bls[:, 0]
 
-        if self.method not in ["mean", "median", "multi"]:
-            self.method = "median"
-        # set these as attributes (some may exist and be overwritten)
-        if self.method == "multi":
-            self.vis2 = self.fringe_amplitudes_squared.T
-            self.e_vis2 = np.zeros(self.vis2.shape)
-            self.visamp = self.fringe_amplitudes.T
-            self.e_visamp = np.zeros(self.visamp.shape)
-            self.visphi = self.fringe_phases.T
-            self.e_visphi = np.zeros(self.visphi.shape)
-            self.closure_phases = self.closure_phases.T
-            self.e_cp = np.zeros(self.closure_phases.shape)
-            self.camp = self.closure_amplitudes.T
-            self.e_camp = np.zeros(self.camp.shape)
-            self.pist = self.pistons.T
-            self.e_pist = np.zeros(self.pist.shape)
+	    D = 6.5  # Primary mirror display
 
-        # apply sigma-clipping to uncertainties
-        # sigma_clipped_stats returns mean, median, stddev. nsigma=3, niters=5
-        elif self.method == "median":
-            _, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
-            _, self.visamp, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
-            _, self.visphi, self.e_visphi = sigma_clipped_stats(self.fringe_phases, axis=0)
-            _, self.closure_phases, self.e_cp = sigma_clipped_stats(self.closure_phases, axis=0)
-            _, self.camp, self.e_camp = sigma_clipped_stats(self.closure_amplitudes, axis=0)
-            _, self.pist, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
+	    theta = np.linspace(0, 2*np.pi, 100)
 
-        else:  # take the mean
-            self.vis2, _, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
-            self.visamp, _, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
-            self.visphi, _, self.e_visphi = sigma_clipped_stats(self.fringe_phases, axis=0)
-            self.closure_phases, _, self.e_cp = sigma_clipped_stats(self.closure_phases, axis=0)
-            self.camp, _, self.e_camp = sigma_clipped_stats(self.closure_amplitudes, axis=0)
-            self.pist, _, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
+	    x = D/2. * np.cos(theta)  # Primary mirror display
+	    y = D/2. * np.sin(theta)
 
-        # prepare arrays for OI_ARRAY ext
-        self.staxy = instrument_data.ctrs_inst
-        N_ap = len(self.staxy)
-        tel_name = ["A%i" % x for x in np.arange(N_ap) + 1]
-        sta_name = tel_name
-        diameter = [0] * N_ap
+	    bl_vis = ((ucoord**2 + vcoord**2)**0.5)
 
-        staxyz = []
-        for x in self.staxy:
-            a = list(x)
-            line = [a[0], a[1], 0]
-            staxyz.append(line)
+	    tuv = self.tuv
+	    v1coord = tuv[:, 0, 0]
+	    u1coord = tuv[:, 0, 1]
+	    v2coord = tuv[:, 1, 0]
+	    u2coord = tuv[:, 1, 1]
+	    u3coord = -(u1coord+u2coord)
+	    v3coord = -(v1coord+v2coord)
 
-        sta_index = np.arange(N_ap) + 1
+	    bl_cp = []
+	    n_bispect = len(v1coord)
+	    for k in range(n_bispect):
+	        B1 = np.sqrt(u1coord[k] ** 2 + v1coord[k] ** 2)
+	        B2 = np.sqrt(u2coord[k] ** 2 + v2coord[k] ** 2)
+	        B3 = np.sqrt(u3coord[k] ** 2 + v3coord[k] ** 2)
+	        bl_cp.append(np.max([B1, B2, B3]))  # rad-1
+	    bl_cp = np.array(bl_cp)
 
-        pscale = instrument_data.pscale_mas / 1000.0  # arcsec
-        isz = self.fringe_fitter.scidata.shape[
-            1
-        ]  # Size of the image to extract NRM data
-        fov = [pscale * isz] * N_ap
-        fovtype = ["RADIUS"] * N_ap
+	    flagVis = [False] * self.nbl
+	    flagT3 = [False] * self.ncp
 
-        m = datamodels.AmiOIModel()
-        self.init_oimodel_arrays(m)
+	    # do the things done by populate_nrm here
+	    # average or don't, and get uncertainties
+	    # Unwrap phases
+	    shift2pi = np.zeros(self.cp.shape)
+	    shift2pi[self.cp >= 6] = 2 * np.pi
+	    shift2pi[self.cp <= -6] = -2 * np.pi
+	    self.cp -= shift2pi
 
-        # primary header keywords
-        m.meta.telescope = instrument_data.telname
-        m.meta.origin = "STScI"
-        m.meta.instrument.name = instrument_data.instrument
-        m.meta.program.pi_name = instrument_data.pi_name
-        m.meta.target.proposer_name = instrument_data.proposer_name
-        m.meta.observation.date = observation_date.fits
-        m.meta.oifits.array_name = instrument_data.arrname
-        m.meta.oifits.instrument_mode = instrument_data.pupil
+		if self.method not in ['mean','median','multi']:
+			self.method = 'median'
+		# set these as attributes (some may exist and be overwritten)
+	    if self.method == 'multi':
+	        self.vis2 = self.fa2.T
+	        self.e_vis2 = np.zeros(vis2.shape)
+	        self.visamp = self.fa.T
+	        self.e_visamp = np.zeros(visamp.shape)
+	        self.visphi = self.fp.T
+	        self.e_visphi = np.zeros(visphi.shape)
+	        self.cp = self.cp.T
+	        self.e_cp = np.zeros(cp.shape)
+	        self.camp = self.ca.T
+	        self.e_camp = np.zeros(camp.shape)
+	        self.pist = self.pistons.T
+	        self.e_pist = np.zeros(pist.shape)
 
-        # oi_array extension data
-        m.array["TEL_NAME"] = tel_name
-        m.array["STA_NAME"] = sta_name
-        m.array["STA_INDEX"] = sta_index
-        m.array["DIAMETER"] = diameter
-        m.array["STAXYZ"] = staxyz
-        m.array["FOV"] = fov
-        m.array["FOVTYPE"] = fovtype
-        m.array["CTRS_EQT"] = instrument_data.ctrs_eqt
-        m.array["PISTONS"] = self.pist
-        m.array["PIST_ERR"] = self.e_pist
+	    # apply sigma-clipping to uncertainties
+	    # sigma_clipped_stats returns mean, median, stddev. nsigma=3, niters=5
+	    elif self.method == 'median':
+	    	_, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fa2, axis=0)
+	    	_, self.visamp, self.e_visamp = sigma_clipped_stats(self.fa, axis=0)
+	    	_, self.visphi, self.e_visphi = sigma_clipped_stats(self.fp, axis=0)
+	    	_, self.cp, self.e_cp = sigma_clipped_stats(self.cp, axis=0)
+	    	_, self.camp, self.e_camp = sigma_clipped_stats(self.ca, axis=0)
+	    	_, self.pist, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
 
-        # oi_target extension data
-        m.target['TARGET_ID'] = [1]
-        m.target['TARGET'] = instrument_data.objname
-        m.target['RAEP0'] = instrument_data.ra
-        m.target['DECEP0'] = instrument_data.dec
-        m.target['EQUINOX'] = [2000]
-        m.target['RA_ERR'] = instrument_data.ra_uncertainty
-        m.target['DEC_ERR'] = instrument_data.dec_uncertainty
-        m.target['SYSVEL'] = [0]
-        m.target['VELTYP'] = ['UNKNOWN']
-        m.target['VELDEF'] = ['OPTICAL']
-        m.target['PMRA'] = instrument_data.pmra
-        m.target['PMDEC'] = instrument_data.pmdec
-        m.target['PMRA_ERR'] = [0]
-        m.target['PMDEC_ERR'] = [0]
-        m.target['PARALLAX'] = [0]
-        m.target['PARA_ERR'] = [0]
-        m.target['SPECTYP'] = ['UNKNOWN']
+	    else: # take the mean
+	    	self.vis2, _, self.e_vis2 = sigma_clipped_stats(self.fa2, axis=0)
+	    	self.visamp, _, self.e_visamp = sigma_clipped_stats(self.fa, axis=0)
+	    	self.visphi, _, self.e_visphi = sigma_clipped_stats(self.fp, axis=0)
+	    	self.cp, _, self.e_cp = sigma_clipped_stats(self.cp, axis=0)
+	    	self.camp, _, self.e_camp = sigma_clipped_stats(self.ca, axis=0)
+	    	self.pist, _, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
 
-        # oi_vis extension data
-        m.vis['TARGET_ID'] = 1
-        m.vis['TIME'] = 0
-        m.vis['MJD'] = observation_date.mjd
-        m.vis['INT_TIME'] = instrument_data.itime
-        m.vis['VISAMP'] = self.visamp
-        m.vis['VISAMPERR'] = self.e_visamp
-        m.vis['VISPHI'] = self.visphi
-        m.vis['VISPHIERR'] = self.e_visphi
-        m.vis['UCOORD'] = ucoord
-        m.vis['VCOORD'] = vcoord
-        m.vis['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        m.vis['FLAG'] = flagVis
+		# prepare arrays for OI_ARRAY ext
+		self.staxy = info4oif.ctrs_inst
+		N_ap = len(staxy)
+	    tel_name = ['A%i' % x for x in np.arange(N_ap)+1]
+	    sta_name = tel_name
+	    diameter = [0] * N_ap
 
-        # oi_vis2 extension data
-        m.vis2['TARGET_ID'] = 1
-        m.vis2['TIME'] = 0
-        m.vis2['MJD'] = observation_date.mjd
-        m.vis2['INT_TIME'] = instrument_data.itime
-        m.vis2['VIS2DATA'] = self.vis2
-        m.vis2['VIS2ERR'] = self.e_vis2
-        m.vis2['UCOORD'] = ucoord
-        m.vis2['VCOORD'] = vcoord
-        m.vis2['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        m.vis2['FLAG'] = flagVis
+	    staxyz = []
+	    for x in staxy:
+	        a = list(x)
+	        line = [a[0], a[1], 0]
+	        staxyz.append(line)
 
-        # oi_t3 extension data
-        m.t3['TARGET_ID'] = 1
-        m.t3['TIME'] = 0
-        m.t3['MJD'] = observation_date.mjd
-        m.t3['T3AMP'] = self.camp
-        m.t3['T3AMPERR'] = self.e_camp
-        m.t3['T3PHI'] = self.closure_phases
-        m.t3['T3PHIERR'] = self.e_cp
-        m.t3['U1COORD'] = u1coord
-        m.t3['V1COORD'] = v1coord
-        m.t3['U2COORD'] = u2coord
-        m.t3['V2COORD'] = v2coord
-        m.t3['STA_INDEX'] = self._format_STAINDEX_T3(self.tholes)
-        m.t3['FLAG'] = flagT3
+    	sta_index = np.arange(N_ap) + 1
 
-        # oi_wavelength extension data
-        m.wavelength["EFF_WAVE"] = wl
-        m.wavelength["EFF_BAND"] = e_wl
+    	pscale = info4oif.pscale/1000.  # arcsec
+	    isz = info4oif.isz  # Size of the image to extract NRM data
+	    fov = [pscale * isz] * N_ap
+	    fovtype = info4oif.radius * N_ap
 
-        return m
+	    # prepare info for OI_TARGET ext
+	    name_star = info4oif.objname
 
-    def init_oimodel_arrays(self, oimodel):
-        """
-        Set dtypes and initialize shapes for AmiOiModel arrays,
-        depending on if averaged or multi-integration version.
+	    customSimbad = Simbad()
+	    customSimbad.add_votable_fields('propermotions', 'sptype', 'parallax')
 
-        Parameters
-        ----------
-        oimodel: AmiOIModel object
-            empty model
-        """
-        if self.method == "multi":
-            # update dimensions of arrays for multi-integration oifits
-            target_dtype = oimodel.target.dtype
-            wavelength_dtype = np.dtype([("EFF_WAVE", "<f4"), ("EFF_BAND", "<f4")])
-            array_dtype = np.dtype(
-                [
-                    ("TEL_NAME", "S16"),
-                    ("STA_NAME", "S16"),
-                    ("STA_INDEX", "<i2"),
-                    ("DIAMETER", "<f4"),
-                    ("STAXYZ", "<f8", (3,)),
-                    ("FOV", "<f8"),
-                    ("FOVTYPE", "S6"),
-                    ("CTRS_EQT", "<f8", (2,)),
-                    ("PISTONS", "<f8", (self.nslices,)),
-                    ("PIST_ERR", "<f8", (self.nslices,)),
-                ]
-            )
-            vis_dtype = np.dtype(
-                [
-                    ("TARGET_ID", "<i2"),
-                    ("TIME", "<f8"),
-                    ("MJD", "<f8"),
-                    ("INT_TIME", "<f8"),
-                    ("VISAMP", "<f8", (self.nslices,)),
-                    ("VISAMPERR", "<f8", (self.nslices,)),
-                    ("VISPHI", "<f8", (self.nslices,)),
-                    ("VISPHIERR", "<f8", (self.nslices,)),
-                    ("UCOORD", "<f8"),
-                    ("VCOORD", "<f8"),
-                    ("STA_INDEX", "<i2", (2,)),
-                    ("FLAG", "i1"),
-                ]
-            )
-            vis2_dtype = np.dtype(
-                [
-                    ("TARGET_ID", "<i2"),
-                    ("TIME", "<f8"),
-                    ("MJD", "<f8"),
-                    ("INT_TIME", "<f8"),
-                    ("VIS2DATA", "<f8", (self.nslices,)),
-                    ("VIS2ERR", "<f8", (self.nslices,)),
-                    ("UCOORD", "<f8"),
-                    ("VCOORD", "<f8"),
-                    ("STA_INDEX", "<i2", (2,)),
-                    ("FLAG", "i1"),
-                ]
-            )
-            t3_dtype = np.dtype(
-                [
-                    ("TARGET_ID", "<i2"),
-                    ("TIME", "<f8"),
-                    ("MJD", "<f8"),
-                    ("INT_TIME", "<f8"),
-                    ("T3AMP", "<f8", (self.nslices,)),
-                    ("T3AMPERR", "<f8", (self.nslices,)),
-                    ("T3PHI", "<f8", (self.nslices,)),
-                    ("T3PHIERR", "<f8", (self.nslices,)),
-                    ("U1COORD", "<f8"),
-                    ("V1COORD", "<f8"),
-                    ("U2COORD", "<f8"),
-                    ("V2COORD", "<f8"),
-                    ("STA_INDEX", "<i2", (3,)),
-                    ("FLAG", "i1"),
-                ]
-            )
-        else:
-            target_dtype = oimodel.target.dtype
-            wavelength_dtype = oimodel.wavelength.dtype
-            array_dtype = np.dtype(
-                [
-                    ("TEL_NAME", "S16"),
-                    ("STA_NAME", "S16"),
-                    ("STA_INDEX", "<i2"),
-                    ("DIAMETER", "<f4"),
-                    ("STAXYZ", "<f8", (3,)),
-                    ("FOV", "<f8"),
-                    ("FOVTYPE", "S6"),
-                    ("CTRS_EQT", "<f8", (2,)),
-                    ("PISTONS", "<f8"),
-                    ("PIST_ERR", "<f8"),
-                ]
-            )
-            vis_dtype = oimodel.vis.dtype
-            vis2_dtype = oimodel.vis2.dtype
-            t3_dtype = oimodel.t3.dtype
-        oimodel.array = np.zeros(self.n_holes, dtype=array_dtype)
-        oimodel.target = np.zeros(1, dtype=target_dtype)
-        oimodel.vis = np.zeros(self.n_baselines, dtype=vis_dtype)
-        oimodel.vis2 = np.zeros(self.n_baselines, dtype=vis2_dtype)
-        oimodel.t3 = np.zeros(self.n_closure_phases, dtype=t3_dtype)
-        oimodel.wavelength = np.zeros(1, dtype=wavelength_dtype)
+	    # Add informations from Simbad:
+	    if name_star == 'UNKNOWN':
+	        ra, dec, spectyp = [0], [0], ['unknown']
+	        pmra, pmdec, plx = [0], [0], [0]
+	    else:
+	        try:
+	            query = customSimbad.query_object(name_star)
+	            coord = SkyCoord(query['RA'][0]+' '+query['DEC']
+	                             [0], unit=(u.hourangle, u.deg))
+	            ra, dec = [coord.ra.deg], [coord.dec.deg]
+	            spectyp, plx = query['SP_TYPE'], query['PLX_VALUE']
+	            pmra, pmdec = query['PMRA'], query['PMDEC']
+	        except TypeError:
+	            ra, dec, spectyp = [0], [0], ['unknown']
+	            pmra, pmdec, plx = [0], [0], [0]
 
-    def _maketriples_all(self):
-        """
-        Calculate all three-hole combinations, baselines
 
-        Returns
-        -------
-        tarray: integer array
-            Triple hole indices (0-indexed),
-        float array of two uv vectors in all triangles
-        """
-        tlist = []
-        for i in range(self.n_holes):
-            for j in range(self.n_holes):
-                for k in range(self.n_holes):
-                    if i < j and j < k:
-                        tlist.append((i, j, k))
-        tarray = np.array(tlist).astype(int)
+		self.oifits_dct = {
+			'OI_VIS2': {'VIS2DATA': self.vis2,
+                       'VIS2ERR': self.e_vis2,
+                       'UCOORD': ucoord,
+                       'VCOORD': vcoord,
+                       'STA_INDEX': self.bholes,
+                       'MJD': t.mjd,
+                       'INT_TIME': info4oif.itime,
+                       'TIME': 0,
+                       'TARGET_ID': 1,
+                       'FLAG': flagVis,
+                       'BL': bl_vis
+                       },
 
-        tname = []
-        uvlist = []
-        # foreach row of 3 elts...
-        for triple in tarray:
-            tname.append("{0:d}_{1:d}_{2:d}".format(triple[0], triple[1], triple[2]))
+           'OI_VIS': {'TARGET_ID': 1,
+                      'TIME': 0,
+                      'MJD': t.mjd,
+                      'INT_TIME': info4oif.itime,
+                      'VISAMP': self.visamp,
+                      'VISAMPERR': self.e_visamp,
+                      'VISPHI': self.visphi,
+                      'VISPHIERR': self.e_visphi,
+                      'UCOORD': ucoord,
+                      'VCOORD': vcoord,
+                      'STA_INDEX': self.bholes,
+                      'FLAG': flagVis,
+                      'BL': bl_vis
+                      },
 
-            uvlist.append(
-                (
-                    self.ctrs_eqt[triple[0]] - self.ctrs_eqt[triple[1]],
-                    self.ctrs_eqt[triple[1]] - self.ctrs_eqt[triple[2]],
-                )
-            )
+           'OI_T3': {'TARGET_ID': 1,
+                     'TIME': 0,
+                     'MJD': t.mjd,
+                     'INT_TIME': info4oif.itime,
+                     'T3PHI': self.cp,
+                     'T3PHIERR': self.e_cp,
+                     'T3AMP': self.cpamp,
+                     'T3AMPERR': self.e_cp,
+                     'U1COORD': u1coord,
+                     'V1COORD': v1coord,
+                     'U2COORD': u2coord,
+                     'V2COORD': v2coord,
+                     'STA_INDEX': self.tholes,
+                     'FLAG': flagT3,
+                     'BL': bl_cp
+                     },
 
-        return tarray, np.array(uvlist)
+           'OI_WAVELENGTH': {'EFF_WAVE': wl,
+                             'EFF_BAND': e_wl
+                             },
+            'OI_ARRAY': {'TEL_NAME': tel_name,
+            			'STA_NAME': sta_name,
+            			'STA_INDEX': sta_index,
+            			'DIAMETER': diameter,
+            			'STAXYZ': staxyz,
+            			'FOV': fov,
+            			'FOVTYPE': fovtype,
+            			'CTRS_EQT': info4oif.ctrs_eqt, # mask hole coords rotated to equatotial
+            			'PISTONS': self.pist, # RAC 2021
+                    	'PIST_ERR': self.e_pist
+            			},
+            'OI_TARGET': {'TARGET_ID':[1],
+            			'TARGET': info4oif.objname,
+            			'RAEP0': ra,
+            			'DECEP0': dec,
+            			'EQUINOX': [2000],
+            			'RA_ERR': [0],
+            			'DEC_ERR': [0],
+            			'SYSVEL': [0],
+            			'VELTYP': ['UNKNOWN'],
+            			'VELDEF': ['OPTICAL'],
+            			'PMRA': pmra,
+            			'PMDEC': pmdec,
+            			'PMRA_ERR': [0],
+            			'PMDEC_ERR': [0],
+            			'PARALLAX': plx,
+            			'PARA_ERR': [0],
+            			'SPECTYP': spectyp
+            			},
 
-    def _makebaselines(self):
-        """
-        Calculate all hole pairs, baselines
+           'info': {'TARGET': info4oif.objname,
+                    'CALIB': info4oif.objname,
+                    'OBJECT': info4oif.objname,
+                    'PROPNAME': info4oif.proposer_name,
+                    'FILT': info4oif.filt,
+                    'INSTRUME': info4oif.instrument,
+                    'ARRNAME': info4oif.arrname,
+                    'MASK': info4oif.arrname, # oifits.py looks for dct.info['MASK']
+                    'MJD': t.mjd,
+                    'DATE-OBS': t.fits,
+                    'TELESCOP': info4oif.telname,
+                    'OBSERVER': info4oif.pi_name,
+                    'INSMODE': info4oif.pupil,
+                    'PSCALE': info4oif.pscale_mas,
+                    'STAXY': info4oif.ctrs_inst, # as-built mask hole coords
+                    'ISZ': self.ff.scidata.shape[1],  # size of the image needed (or fov)
+                    'NFILE': 0,
+                    'ARRAYX': float(0),
+                    'ARRAYY': float(0),
+                    'ARRAYZ': float(0),
+                    'PA': info4oif.pa,
+                    'FRAME': 'SKY',
+                    'OI_REVN': 2
+                    }
+           }
 
-        Returns
-        -------
-        barray: list
-            Hole pairs indices, 0-indexed
-        float array of baselines
-        """
-        blist = []
-        bllist = []
-        for i in range(self.n_holes):
-            for j in range(self.n_holes):
-                if i < j:
-                    blist.append((i, j))
-                    bllist.append(self.ctrs_eqt[i] - self.ctrs_eqt[j])
-        return np.array(blist).astype(int), np.array(bllist)
+	
 
-    def _format_STAINDEX_T3(self, tab):
-        """
-        Short Summary
-        ------------
-        Converts sta_index to save oifits T3 in the appropriate format
+	def populate_oimodel(self):
+		m = datamodels.AmiOIModel()
 
-        Parameters
-        ----------
-        tab: array
-            table of indices
+		# primary header keywords
+	    m.meta.telescope = self.oifits_dct['info']['TELESCOP']
+	    m.meta.origin = 'STScI'
+	    m.meta.instrument.name = self.oifits_dct['info']['INSTRUME']
+	    m.meta.program.pi_name = self.oifits_dct['info']['OBSERVER']
+	    m.meta.target.proposer_name = self.oifits_dct['info']['PROPNAME']
+	    m.meta.observation.date = self.oifits_dct['info']['DATE-OBS']
+	    m.meta.oifits.array_name = self.oifits_dct['info']['MASK']
+	    m.meta.oifits.instrument_mode = self.oifits_dct['info']['INSMODE']
 
-        Returns
-        -------
-        sta_index: list
-            Hole triples indices
-        int array of triangles
-        """    
-        sta_index = []
-        for x in tab:
-            ap1 = int(x[0])
-            ap2 = int(x[1])
-            ap3 = int(x[2])
-            if np.min(tab) == 0:
-                line = np.array([ap1, ap2, ap3]) + 1
-            else:
-                line = np.array([ap1, ap2, ap3])
-            sta_index.append(line)
-        return sta_index
+	    # oi_array extension data
+	    m.array = np.asarray([
+	    		self.oifits_dct['OI_ARRAY']['TEL_NAME'],
+	    		self.oifits_dct['OI_ARRAY']['STA_NAME']
+	    		self.oifits_dct['OI_ARRAY']['STA_INDEX'],
+	    		self.oifits_dct['OI_ARRAY']['DIAMTER'],
+	    		self.oifits_dct['OI_ARRAY']['STAXYZ'],
+	    		self.oifits_dct['OI_ARRAY']['FOV'],
+	    		self.oifits_dct['OI_ARRAY']['FOVTYPE'],
+	    		self.oifits_dct['OI_ARRAY']['CTRS_EQT'],
+	    		self.oifits_dct['OI_ARRAY']['PISTONS'],
+	    		self.oifits_dct['OI_ARRAY']['PIST_ERR'],
+	    		]).T
 
-    def _format_STAINDEX_V2(self, tab):
-        """
-        Short Summary
-        ------------
-        Converts sta_index to save oifits V2 in the appropriate format
+	    # oi_target extension data
+	    m.target = np.asarray([
+	    		self.oifits_dct['OI_TARGET']['TARGET_ID'],
+	    		self.oifits_dct['OI_TARGET']['TARGET'],
+	    		self.oifits_dct['OI_TARGET']['RAEP0'],
+	    		self.oifits_dct['OI_TARGET']['DECEP0'],
+	    		self.oifits_dct['OI_TARGET']['EQUINOX'],
+	    		self.oifits_dct['OI_TARGET']['RA_ERR'],
+	    		self.oifits_dct['OI_TARGET']['DEC_ERR'],
+	    		self.oifits_dct['OI_TARGET']['SYSVEL'],
+	    		self.oifits_dct['OI_TARGET']['VELTYP'],
+	    		self.oifits_dct['OI_TARGET']['VELDEF'],
+	    		self.oifits_dct['OI_TARGET']['PMRA'],
+	    		self.oifits_dct['OI_TARGET']['PMDEC'],
+	    		self.oifits_dct['OI_TARGET']['PMRA_ERR'],
+	    		self.oifits_dct['OI_TARGET']['PMDEC_ERR'],
+	    		self.oifits_dct['OI_TARGET']['PARALLAX'],
+	    		self.oifits_dct['OI_TARGET']['PARA_ERR'],
+	    		self.oifits_dct['OI_TARGET']['SPECTYP'],
+	    		]).T
+	    # oi_vis extension data
+	    m.vis = np.asarray([
+	    		self.oifits_dct['OI_VIS']['TARGET_ID'],
+	    		self.oifits_dct['OI_VIS']['TIME'],
+	    		self.oifits_dct['OI_VIS']['MJD'],
+	    		self.oifits_dct['OI_VIS']['INT_TIME'],
+	    		self.oifits_dct['OI_VIS']['VISAMP'],
+	    		self.oifits_dct['OI_VIS']['VISAMPERR'],
+	    		self.oifits_dct['OI_VIS']['VISPHI'],
+	    		self.oifits_dct['OI_VIS']['VISPHIERR'],
+	    		self.oifits_dct['OI_VIS']['UCOORD'],
+	    		self.oifits_dct['OI_VIS']['VCOORD'],
+	    		self.oifits_dct['OI_VIS']['STA_INDEX'],
+	    		self.oifits_dct['OI_VIS']['FLAG'],
+	    		]).T
+	    # oi_vis2 extension data
+	    m.vis2 = np.asarray([
+	    		self.oifits_dct['OI_VIS2']['TARGET_ID'],
+	    		self.oifits_dct['OI_VIS2']['TIME'],
+	    		self.oifits_dct['OI_VIS2']['MJD'],
+	    		self.oifits_dct['OI_VIS2']['INT_TIME'],
+	    		self.oifits_dct['OI_VIS2']['VIS2DATA'],
+	    		self.oifits_dct['OI_VIS2']['VIS2ERR'],
+	    		self.oifits_dct['OI_VIS2']['UCOORD'],
+	    		self.oifits_dct['OI_VIS2']['VCOORD'],
+	    		self.oifits_dct['OI_VIS2']['STA_INDEX'],
+	    		self.oifits_dct['OI_VIS2']['FLAG'],
+	    		]).T
+	    # oi_t3 extension data
+	    m.t3 = np.asarray([
+	    		self.oifits_dct['OI_T3']['TARGET_ID'],
+	    		self.oifits_dct['OI_T3']['TIME'],
+	    		self.oifits_dct['OI_T3']['MJD'],
+	    		self.oifits_dct['OI_T3']['T3AMP'],
+	    		self.oifits_dct['OI_T3']['T3AMPERR'],
+	    		self.oifits_dct['OI_T3']['T3PHI'],
+	    		self.oifits_dct['OI_T3']['T3PHIERR'],
+	    		self.oifits_dct['OI_T3']['U1COORD'],
+	    		self.oifits_dct['OI_T3']['V1COORD'],
+	    		self.oifits_dct['OI_T3']['U2COORD'],
+	    		self.oifits_dct['OI_T3']['V2COORD'],
+	    		self.oifits_dct['OI_T3']['STA_INDEX'],
+	    		self.oifits_dct['OI_T3']['FLAG'],
+	    		]).T
+	    # oi_wavelength extension data
+	    m.wavelength = np.asarray([
+	    		self.oifits_dct['OI_WAVELENGTH']['EFF_WAVE'],
+	    		self.oifits_dct['OI_WAVELENGTH']['EFF_BAND'],
+	    		]).T
 
-        Parameters
-        ----------
-        tab: array
-            table of indices
+	    return m
 
-        Returns
-        -------
-        sta_index: list
-            Hole baseline indices
-        int array of baselines
-        """    
-        sta_index = []
-        for x in tab:
-            ap1 = int(x[0])
-            ap2 = int(x[1])
-            if np.min(tab) == 0:
-                line = np.array([ap1, ap2]) + 1 # RAC 2/2021
-            else:
-                line = np.array([ap1, ap2])
-            sta_index.append(line)
-        return sta_index
+	def _maketriples_all(self):
+		""" returns int array of triple hole indices (0-based), 
+			and float array of two uv vectors in all triangles
+		"""
+		nholes = self.ctrs_eqt.shape[0]
+		tlist = []
+		for i in range(nholes):
+			for j in range(nholes):
+				for k in range(nholes):
+					if i < j and j < k:
+						tlist.append((i, j, k))
+		tarray = np.array(tlist).astype(np.int)
+		if self.verbose:
+			print("tarray", tarray.shape, "\n", tarray)
+
+		tname = []
+		uvlist = []
+		# foreach row of 3 elts...
+		for triple in tarray:
+			tname.append("{0:d}_{1:d}_{2:d}".format(
+				triple[0], triple[1], triple[2]))
+			if self.verbose:
+				print('triple:', triple, tname[-1])
+			uvlist.append((self.ctrs_eqt[triple[0]] - self.ctrs_eqt[triple[1]],
+						   self.ctrs_eqt[triple[1]] - self.ctrs_eqt[triple[2]]))
+		# print(len(uvlist), "uvlist", uvlist)
+		if self.verbose:
+			print(tarray.shape, np.array(uvlist).shape)
+		return tarray, np.array(uvlist)
+
+	def _makebaselines(self):
+		"""
+		ctrs_eqt (nh,2) in m
+		returns np arrays of eg 21 baselinenames ('0_1',...), eg (21,2) baselinevectors (2-floats)
+		in the same numbering as implaneia
+		"""
+		nholes = self.ctrs_eqt.shape[0]
+		blist = []
+		for i in range(nholes):
+			for j in range(nholes):
+				if i < j:
+					blist.append((i, j))
+		barray = np.array(blist).astype(np.int)
+		# blname = []
+		bllist = []
+		for basepair in blist:
+			# blname.append("{0:d}_{1:d}".format(basepair[0],basepair[1]))
+			baseline = self.ctrs_eqt[basepair[0]] - self.ctrs_eqt[basepair[1]]
+			bllist.append(baseline)
+		return barray, np.array(bllist)
+
+
+
 
 
 class CalibOifits:
-    def __init__(self, targoimodel, caloimodel):
-        """
-        Calibrate (normalize) an AMI observation by subtracting closure phases
-        of a reference star from those of a target and dividing visibility amplitudes
-        of the target by those of the reference star.
+	def __init__(self,targoifits,caloifits):
+		"""
+		Short Summary
+		-------------
+		
 
-        Parameters
-        ----------
-        targoimodel: AmiOIModlel, target
-        caloimodel: AmiOIModlel, reference star (calibrator)
-        """
-        self.targoimodel = targoimodel
-        self.caloimodel = caloimodel
-        self.calib_oimodel = targoimodel.copy()
+		Parameters
+		----------
+		targoifits: oifits dataodel, target
+		caloifits: oifits datamodel, reference star
 
-    def update_dtype(self):
-        """
-        Modify the dtype of OI array to include different pistons columns
-        for calibrated OIFITS files
-        """
-        nrows = 7
-        modified_dtype = np.dtype(
-            [
-                ("TEL_NAME", "S16"),
-                ("STA_NAME", "S16"),
-                ("STA_INDEX", "<i2"),
-                ("DIAMETER", "<f4"),
-                ("STAXYZ", "<f8", (3,)),
-                ("FOV", "<f8"),
-                ("FOVTYPE", "S6"),
-                ("CTRS_EQT", "<f8", (2,)),
-                ("PISTON_T", "<f8"),
-                ("PISTON_C", "<f8"),
-                ("PIST_ERR", "<f8"),
-            ]
-        )
-        self.calib_oimodel.array = np.zeros(nrows, dtype=modified_dtype)
+		kwargs options:
 
-    def calibrate(self):
-        """
-        Apply the calibration (normalization) routine to calibrate the
-        target AmiOIModel by the calibrator (reference star) AmiOIModel
+		"""
+	def calibrate():
+		cp_out = dct_t['OI_T3']['T3PHI'] - dct_c['OI_T3']['T3PHI']
+	    sqv_out = dct_t['OI_VIS2']['VIS2DATA'] / dct_c['OI_VIS2']['VIS2DATA']
+	    va_out = dct_t['OI_VIS']['VISAMP'] / dct_c['OI_VIS']['VISAMP']
+	    # now using correct propagation of error for multiplication/division
+	    # which assumes uncorrelated Gaussian errors (not true...?)    
+	    cperr_t = dct_t['OI_T3']['T3PHIERR']
+	    cperr_c = dct_c['OI_T3']['T3PHIERR']
+	    sqverr_c = dct_t['OI_VIS2']['VIS2ERR']
+	    sqverr_t = dct_c['OI_VIS2']['VIS2ERR']
+	    vaerr_t = dct_t['OI_VIS']['VISAMPERR']
+	    vaerr_c = dct_c['OI_VIS']['VISAMPERR']
+	    cperr_out = np.sqrt(cperr_t**2. + cperr_c**2.)
+	    sqverr_out = sqv_out * np.sqrt((sqverr_t/dct_t['OI_VIS2']['VIS2DATA'])**2. + (sqverr_c/dct_c['OI_VIS2']['VIS2DATA'])**2.)
+	    vaerr_out = va_out * np.sqrt((vaerr_t/dct_t['OI_VIS']['VISAMP'])**2. + (vaerr_c/dct_c['OI_VIS']['VISAMP'])**2.)
 
-        Returns
-        -------
-        calib_oimodel: AmiOIModel
-            Calibrated AMI datamodel
-        """
-        cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]
-        sqv_out = self.targoimodel.vis2["VIS2DATA"] / self.caloimodel.vis2["VIS2DATA"]
-        va_out = self.targoimodel.vis["VISAMP"] / self.caloimodel.vis["VISAMP"]
-        # using standard propagation of error for multiplication/division
-        # which assumes uncorrelated Gaussian errors (questionable)
-        cperr_t = self.targoimodel.t3["T3PHIERR"]
-        cperr_c = self.caloimodel.t3["T3PHIERR"]
-        sqverr_c = self.targoimodel.vis2["VIS2ERR"]
-        sqverr_t = self.caloimodel.vis2["VIS2ERR"]
-        vaerr_t = self.targoimodel.vis["VISAMPERR"]
-        vaerr_c = self.caloimodel.vis["VISAMPERR"]
-        cperr_out = np.sqrt(cperr_t**2.0 + cperr_c**2.0)
-        sqverr_out = sqv_out * np.sqrt(
-            (sqverr_t / self.targoimodel.vis2["VIS2DATA"]) ** 2.0
-            + (sqverr_c / self.caloimodel.vis2["VIS2DATA"]) ** 2.0
-        )
-        vaerr_out = va_out * np.sqrt(
-            (vaerr_t / self.targoimodel.vis["VISAMP"]) ** 2.0
-            + (vaerr_c / self.caloimodel.vis["VISAMP"]) ** 2.0
-        )
+	    # copy the target dict and modify with the calibrated observables
+	    calib_dict = dct_t.copy()
+	    calib_dict['OI_T3']['T3PHI'] = cp_out
+	    calib_dict['OI_VIS2']['VIS2DATA'] = sqv_out
+	    calib_dict['OI_VIS']['VISAMP'] = va_out
+	    calib_dict['OI_T3']['T3PHIERR'] = cperr_out
+	    calib_dict['OI_VIS2']['VIS2ERR'] = sqverr_out
+	    calib_dict['OI_VIS']['VISAMPERR'] = vaerr_out
+	    # preserve the name of the calibrator star
+	    calib_dict['info']['CALIB'] = dct_c['info']['OBJECT']
+	    # include pistons and piston errors from target and calibrator
+	    # if old files, raw oifits won't have any pistons
+	    if ('PISTONS' in dct_t['OI_ARRAY']) & ('PISTONS' in dct_c['OI_ARRAY']):
+	        pistons_t = dct_t['OI_ARRAY']['PISTONS']
+	        pisterr_t = dct_t['OI_ARRAY']['PIST_ERR']
+	        pistons_c = dct_c['OI_ARRAY']['PISTONS']
+	        pisterr_c = dct_c['OI_ARRAY']['PIST_ERR']
+	        # sum in quadrature errors from target and calibrator pistons (only if both oifits contain pistons)
+	        pisterr_out = np.sqrt(pisterr_t**2 + pisterr_c**2)
+	        # populate calibrated dict with pistons 
+	        calib_dict['OI_ARRAY']['PISTON_T'] = pistons_t
+	        calib_dict['OI_ARRAY']['PISTON_C'] = pistons_c
+	        calib_dict['OI_ARRAY']['PIST_ERR'] = pisterr_out
+	    # remove plain "pistons" key from dict
+	    if 'PISTONS' in calib_dict['OI_ARRAY']:
+	        del calib_dict['OI_ARRAY']['PISTONS']
 
-        pistons_t = self.targoimodel.array["PISTONS"]
-        pisterr_t = self.targoimodel.array["PIST_ERR"]
-        pistons_c = self.caloimodel.array["PISTONS"]
-        pisterr_c = self.caloimodel.array["PIST_ERR"]
-        # sum in quadrature errors from target and calibrator pistons
-        pisterr_out = np.sqrt(pisterr_t**2 + pisterr_c**2)
+	    return calib_dict
 
-        # update OI array, which is currently all zeros, with input oi array
-        # and updated piston columns
-        self.update_dtype()
-        self.calib_oimodel.array["TEL_NAME"] = self.targoimodel.array["TEL_NAME"]
-        self.calib_oimodel.array["STA_NAME"] = self.targoimodel.array["STA_NAME"]
-        self.calib_oimodel.array["STA_INDEX"] = self.targoimodel.array["STA_INDEX"]
-        self.calib_oimodel.array["DIAMETER"] = self.targoimodel.array["DIAMETER"]
-        self.calib_oimodel.array["STAXYZ"] = self.targoimodel.array["STAXYZ"]
-        self.calib_oimodel.array["FOV"] = self.targoimodel.array["FOV"]
-        self.calib_oimodel.array["FOVTYPE"] = self.targoimodel.array["FOVTYPE"]
-        self.calib_oimodel.array["CTRS_EQT"] = self.targoimodel.array["CTRS_EQT"]
-        self.calib_oimodel.array["PISTON_T"] = pistons_t
-        self.calib_oimodel.array["PISTON_C"] = pistons_c
-        self.calib_oimodel.array["PIST_ERR"] = pisterr_out
 
-        # update calibrated oimodel arrays with calibrated observables
-        self.calib_oimodel.t3["T3PHI"] = cp_out
-        self.calib_oimodel.t3["T3PHIERR"] = cperr_out
-        self.calib_oimodel.vis2["VIS2DATA"] = sqv_out
-        self.calib_oimodel.vis2["VIS2ERR"] = sqverr_out
-        self.calib_oimodel.vis["VISAMP"] = va_out
-        self.calib_oimodel.vis["VISAMPERR"] = vaerr_out
-
-        self.calib_oimodel.array["PISTON_T"] = pistons_t
-        self.calib_oimodel.array["PISTON_C"] = pistons_c
-        self.calib_oimodel.array["PIST_ERR"] = pisterr_out
-
-        # add calibrated header keywords
-        calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
-        self.calib_oimodel.meta.oifits.calib = calname
-
-        return self.calib_oimodel
