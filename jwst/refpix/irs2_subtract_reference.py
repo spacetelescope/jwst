@@ -511,7 +511,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
                 good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
                 good_pix = remaining_rp[good_idx]
                 data[..., bad_pix] = data[..., good_pix]
-            log.debug('   Pixel {}'.format(bad_pix))
+            log.info('   Pixel {}'.format(bad_pix))
     log.info('Total intermittent bad reference pixels: {}'.format(len(total_rp2replace)))
 
 
