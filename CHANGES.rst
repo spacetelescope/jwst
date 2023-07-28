@@ -24,6 +24,12 @@ datamodels
 
 - Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
 
+engdb_tools
+-----------
+
+- Check alternative host is alive before attempting to run test for
+  access to avoid waiting the full timeout during test runs [#7780]
+
 flat_field
 ----------
 
