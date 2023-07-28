@@ -3,6 +3,8 @@ Arguments
 
 The ``jump`` step has five optional arguments that can be set by the user:
 
+**Parameters for Baseline Cosmic Ray Jump Detection**
+
 * ``--rejection_threshold``: A floating-point value that sets the sigma
   threshold for jump detection. In the code sigma is determined using the read noise from the
   read noise reference file and the Poisson noise (based on the median difference between
@@ -37,6 +39,7 @@ The ``jump`` step has five optional arguments that can be set by the user:
   the flagging of neighbors of marginal detections. Any primary jump below this value will
   not have its neighbors flagged. The goal is to prevent flagging jumps that would be too
   small to significantly affect the slope determination.  The default value is 10.
+**Parameters that affect after jump Flagging**
 
   After a jump of at least 'after_jump_flag_dn1' DN, groups up to 'after_jump_flag_time1'
   seconds will be also flagged as jumps. That pair of arguments is defined as:
@@ -48,6 +51,7 @@ The ``jump`` step has five optional arguments that can be set by the user:
   is defined as:
 * ``--after_jump_flag_dn2``: A floating point value in units of DN
 * ``--after_jump_flag_time2``: A floating point value in units of seconds
+**Parameters that affect Near-IR Snowball Flagging**
 
 * ``--expand_large_events``:  A boolean parameter that controls whether the jump step will expand the number of pixels that are flagged around large cosmic ray events. These are know as "snowballs" in the near-infrared detectors and "showers" for the MIRI detectors. In general, this should be set to True.
 
@@ -67,6 +71,8 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--edge_size``: The distance from the edge of the detector where saturated cores are not required for snowball detection
 
+**Parameters that affect MIRI Shower Flagging**
+
 * ``--find_showers``: Turn on the detection of showers for the MIRI detectors
 
 * ``--extend_snr_threshold``: The SNR minimum for the detection of faint extended showers in MIRI
@@ -81,9 +87,13 @@ The ``jump`` step has five optional arguments that can be set by the user:
 
 * ``--time_masked_after_showers``: Number of seconds to flag groups as jump after a detected extended emission in MIRI showers
 
+**Parameter that affects both Snowball and Shower flagging**
+
 * ``--max_extended_radius``: The maxiumum extension of the jump and saturation that will be flagged for showers or snowballs
 
-* ``--minimum_groups``: The minimum number of groups to run the jump step
+**Parameters that affect Sigma Clipping**
+
+* ``--minimum_groups``: The minimum number of groups to run the jump step with sigma clipping
 
 * ``--minimum_sigclip_groups``: The minimum number of groups to switch the jump detection to use sigma clipping
 
