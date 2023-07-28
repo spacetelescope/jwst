@@ -18,6 +18,13 @@ master_background
 - Allow the user to write the 2D expanded version of the user-provided 1D background for each
   file in the assocation. [#7714]
 
+resample
+--------
+
+- Use the same logic for computing input range for resample step from input
+  image shape and the bounding box both for ``SCI`` image as well as for the
+  ``ERR`` and ``VARIANCE_*`` images. [#7774]
+
 
 1.11.3 (2023-07-17)
 ===================
