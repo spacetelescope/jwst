@@ -271,9 +271,6 @@ class Spec2Pipeline(Pipeline):
         else:
             calibrated = self._process_common(calibrated)
 
-        # Replace bad pixels before rectification
-        calibrated = self.pixel_replace(calibrated)
-
         # Record ASN pool and table names in output
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
@@ -480,6 +477,7 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.wfss_contam(calibrated)
         calibrated = self.photom(calibrated)
+        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -497,6 +495,7 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
+        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -512,6 +511,7 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.fringe(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
+        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -525,5 +525,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
         calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
+        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
