@@ -18,6 +18,13 @@ master_background
 - Allow the user to write the 2D expanded version of the user-provided 1D background for each
   file in the assocation. [#7714]
 
+refpix
+------
+
+- Modified algorithm of intermittent bad pixels factor to be the number
+  of sigmas away from mean for the corresponding array (either differences,
+  means, or standard deviations arrays). [#7745]
+
 
 1.11.3 (2023-07-17)
 ===================
