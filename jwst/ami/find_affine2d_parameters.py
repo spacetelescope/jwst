@@ -102,7 +102,7 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     crosscorr_rots = []
 
     for (rot, aff) in zip(rotdegs, affine2d_list):
-        jw = lg_model.NrmModel(mask='jwst', holeshape=holeshape, over=over, affine2d=aff)
+        jw = lg_model.NrmModel(mask='jwst_g7s6c', holeshape=holeshape, over=over, affine2d=aff)
 
         jw.set_pixelscale(pixel)
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.
@@ -117,5 +117,8 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     # return convenient affine2d
     new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0,
                                   name="{0:.4f}".format(rot_measured_d))
+
+    # make logging statements
+    # print('rot_measured_d',rot_measured_d)
 
     return new_affine2d

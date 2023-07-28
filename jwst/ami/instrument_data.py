@@ -20,8 +20,9 @@ log.setLevel(logging.DEBUG)
 
 
 class NIRISS:
-    def __init__(self, filt,
-                 objname="obj",
+    def __init__(self, 
+                 filt,
+                 # objname="obj",
                  src="A0V",
                  chooseholes=None,
                  affine2d=None,
@@ -178,6 +179,13 @@ class NIRISS:
         self.crpix1 = input_model.meta.wcsinfo.crpix1
         self.crpix2 = input_model.meta.wcsinfo.crpix2
         self.pupil = input_model.meta.instrument.pupil
+        self.proposer_name = input_model.meta.target.proposer_name
+        if input_model.meta.target.catalog_name == 'UNKNOWN':
+            objname = input_model.meta.target.proposer_name
+        else:
+            objname = input_model.meta.target.catalog_name
+        self.objname = objname.replace('-', ' ')
+        self.pi_name = input_model.meta.program.pi_name
 
         datestr = input_model.meta.visit.start_time.replace(' ','T')
         self.date = datestr # is this the right start time?
