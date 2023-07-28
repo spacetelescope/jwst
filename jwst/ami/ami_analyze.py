@@ -136,7 +136,7 @@ def apply_LG_plus(input_model,
     rotsearch_d = np.append(np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
                             rotsearch_parameters[1])
 
-    log.info(f'Initial values to use for rotation search {rotsearch_d}')
+    log.info(f'Initial values to use for rotation search: {rotsearch_d}')
     if affine2d is None:
         # affine2d object, can be overridden by user input affine?
         # do rotation search on median image (assuming rotation constant over exposure)
@@ -161,9 +161,12 @@ def apply_LG_plus(input_model,
                                 psf_offset_ff=psf_offset_ff,
                                 oversample=oversample)
 
-    #output_model = ff_t.fit_fringes_all(input_copy)
+    output_model = ff_t.fit_fringes_all(input_copy)
     # FOR NOW: DEBUGGING
-    model_arr, resid_arr, n_resid_arr, cp_arr, va_arr = ff_t.fit_fringes_all(input_copy)
+    # model_arr, resid_arr, n_resid_arr, cp_arr, va_arr = ff_t.fit_fringes_all(input_copy)
+
+    # fringefitter = ff_t.fit_fringes_all(input_copy)
+    # oifits_model = RawOifits(fringefitter)
 
 
     # Copy header keywords from input to output
