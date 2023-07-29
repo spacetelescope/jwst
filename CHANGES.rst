@@ -1,11 +1,18 @@
 1.11.4 (unreleased)
 ===================
 
+
 assign_wcs
 ----------
 
 - Use isinstance instead of comparison with a type for lamp_mode
   inspection [#7801]
+
+cube_build
+----------
+
+- Replace scale1 and scale2 with scale12 and add debug option debug_spaxel. [#7783]
+
 
 calwebb_spec2
 -------------
