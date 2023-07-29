@@ -101,3 +101,8 @@ The arguments related to region of interest and how the fluxes are combined toge
 
   For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.
+
+A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``.
+``debug_spaxel [string]``
+The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 1. For example,
+to print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.

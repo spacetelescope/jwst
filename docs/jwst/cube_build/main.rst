@@ -211,9 +211,11 @@ The type of output IFU cube created depends on which pipeline is being run, cals
 user provided options are being set  (see the :ref:`arguments` section.). 
 Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects 
 the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS 
-information of all the included  input data.
-This default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
-the sky of all the input images. The output sampling scale in all three dimensions for the cube
+information of all the input data. The input data are mapped to the output frame based on the wcs information that is
+filled in by the assign_wcs step, this mapping includes any dither offsets.
+Therefore,  default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
+the sky of all the input images.
+The output sampling scale in all three dimensions for the cube
 is defined by a cubepar reference file as a function of wavelength, and can also be changed by the user.
 The cubepar reference file contains a predefined scale to use
 for each dimension for each band. If the output IFU cube contains more than one band, then  for MIRI the
