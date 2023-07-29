@@ -24,7 +24,7 @@ each band will be created.
   This is a MIRI only option and the valid values are SHORT, MEDIUM, LONG, and ALL.
   If the ``band`` argument is given, then only data corresponding
   to that sub-channel will be used in constructing the cube. Only one value can be specified. 
- . Note we use the name ``band`` for this argument instead of
+  Note we use the name ``band`` for this argument instead of
   ``subchannel``, because the keyword ``band`` in the input images is used to indicate which MIRI subchannel the
   data covers.   This parameter can be combined
   with the ``output_type``  parameter  to fully control the type of IFU
@@ -103,6 +103,8 @@ The arguments related to region of interest and how the fluxes are combined toge
   the :ref:`weighting` section.
 
 A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``.
+
 ``debug_spaxel [string]``
-The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 1. For example,
-to print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
+
+  The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 1. For example,
+  to print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
