@@ -57,7 +57,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
-         debug_spaxel = string( default='0 0 0')
+         debug_spaxel = string(default='0 0 0')
        """
 
     reference_file_types = ['cubepar']
