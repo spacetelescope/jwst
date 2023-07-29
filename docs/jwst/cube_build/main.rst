@@ -261,7 +261,7 @@ of all point-cloud members within a given region of influence.
 3-D drizzling
 #############
 
-This algorithm for combining data uses a 3-D generalization of the classical 2-D drizzle technique. It is used
+This algorithm for combining data uses a 3-D generalization of the classical 2-D drizzle technique.It is used
 when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output grid according to the relative overlap
 between the detector pixels and cube voxels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial and
 spectral overlap between detector pixels and cube voxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
@@ -269,6 +269,8 @@ the 3-D drizzle algorithm therefore assumes that detector pixels project as rect
 volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
 to the output voxel grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
 the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
+For more details on this method, see 'A 3D Drizzle Algorithm for JWST and Practical Application to the MIRI Medium Resolution Spectrometer',
+David D. Law et al. 2023 AJ 166 45 (https://iopscience.iop.org/article/10.3847/1538-3881/acdddc).
 
 Shepard's method of weighting
 ##############################

@@ -42,7 +42,7 @@ class CubeBuildStep (Step):
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
-         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
+         output_type = option('band','channel','grating','multi',default='channel') # Type IFUcube to create.
          scale12 = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
@@ -239,7 +239,7 @@ class CubeBuildStep (Step):
             'wavemax': self.wavemax,
             'skip_dqflagging': self.skip_dqflagging,
             'suffix': self.suffix,
-            'debug_spaxel': self.debug_spaxel }
+            'debug_spaxel': self.debug_spaxel}
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
@@ -343,7 +343,6 @@ class CubeBuildStep (Step):
 
                 cube_container.append(result)
                 del result
-                
             del thiscube
 
         # irrelevant WCS keywords we will remove from final product

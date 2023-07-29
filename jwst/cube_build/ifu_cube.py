@@ -63,8 +63,6 @@ class IFUCubeData():
         self.output_type = output_type
 
         self.scale12 = pars_cube.get('scale12')
-        print('Spatial scale', self.scale12)
-        
         self.scalew = pars_cube.get('scalew')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
@@ -563,7 +561,6 @@ class IFUCubeData():
             debug_cube_index = spaxel_z * (nxyplane) + spaxel_y * self.naxis1 + spaxel_x
             print('Printing debug information for cube spaxel index = ', debug_cube_index)
             print(spaxel_x, spaxel_y, spaxel_z, nxyplane)
-        print(type(debug_cube_index), debug_cube_index)
         # ______________________________________________________________________________
         subtract_background = True
 
@@ -638,7 +635,7 @@ class IFUCubeData():
                                               self.xcoord, self.ycoord, self.zcoord,
                                               coord1, coord2, wave, flux, err, slice_no,
                                               rois_pixel, roiw_pixel, scalerad_pixel,
-                                              weight_pixel, softrad_pixel, 
+                                              weight_pixel, softrad_pixel,
                                               self.cdelt3_normal,
                                               roiw_ave, self.cdelt1, self.cdelt2)
 
@@ -1568,10 +1565,7 @@ class IFUCubeData():
         slice_no[:] = slice_no_all[good_data]
         x_all = x_all[good_data]
         y_all = y_all[good_data]
-        
-        #nc = 593160
-        #print('Checking value: point cloud#, flux, x, y', nc, flux[nc], x_all[nc], y_all[nc])
-        
+
         log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
         # based on the wavelength define the sroi, wroi, weight_power and

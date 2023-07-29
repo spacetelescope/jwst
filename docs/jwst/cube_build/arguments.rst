@@ -14,17 +14,21 @@ each band will be created.
   If the ``channel`` argument is given, then only data corresponding to that channel  will be used in
   constructing the cube.  A comma-separated list can be used to designate multiple channels.
   For example, to create a cube with data from channels 1 and 2, specify the
-  list as ``--channel='1,2'``. If this argument is not specified, the output will be a set of IFU cubes, one for each
-  channel/sub-channel combination contained in the input data.
+  list as ``--channel='1,2'``.  All the sub-channels (``band``, see below) for the chosen channel\channels will
+  be used to create the IFU cube. See the parameter ``output_type``  If this p
+  This parameter can be combined
+  with the ``output_type``  parameter  to fully control the type of IFU
+  cubes to make.
 
 ``band [string]``
   This is a MIRI only option and the valid values are SHORT, MEDIUM, LONG, and ALL.
   If the ``band`` argument is given, then only data corresponding
-  to that sub-channel will be used in constructing the cube. Only one value can be specified, so IFU cubes are
-  created either per sub-channel or using all the sub-channels of the data.  If this argument is not specified,
-  a set of IFU cubes is created, one for each band. Note we use the name ``band`` for this argument instead of
+  to that sub-channel will be used in constructing the cube. Only one value can be specified. 
+ . Note we use the name ``band`` for this argument instead of
   ``subchannel``, because the keyword ``band`` in the input images is used to indicate which MIRI subchannel the
-  data covers.
+  data covers.   This parameter can be combined
+  with the ``output_type``  parameter  to fully control the type of IFU
+  cubes to make.
 
 ``grating [string]``
   This is a NIRSpec only option with valid values PRISM, G140M, G140H, G235M, G235H, G395M, G395H, and ALL.
@@ -44,14 +48,16 @@ each band will be created.
   with the options above [band, channel, grating, filter] to fully control the type of IFU
   cubes to make.
 
-  - ``output_type = band`` is the default mode for calspec3 and creates IFU cubes containing only one band
+  - ``output_type = band`` creates IFU cubes containing only one band
     (channel/sub-channel for MIRI or grating/filter combination for NIRSpec).
 
   - ``output_type = channel`` creates a single IFU cube from each unique channel of MIRI data
-    (or just those channels set by the 'channel' option).
+    (or just those channels set by the 'channel' option). The is the default mode for the calspec3 pipeline for
+    MIRI data. 
 
   - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
-    grating option into a single IFU cube.
+    grating option into a single IFU cube. The is the default mode for the calspec3 pipeline for
+    NIRSpec data. 
 
   - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for calspec2. If in addition,
     channel, band, grating, or filter are also set, then only the data set by those
@@ -59,11 +65,8 @@ each band will be created.
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
 
-``scale1``
-  The output cube's spaxel size in axis 1 (spatial).
-
-``scale2``
-  The output cube's spaxel size in axis 2 (spatial).
+``scale12``
+  The output cube's spaxel size for  axis 1 and 2 (spatial).
 
 ``scalew``
   The output cube's spaxel size in axis 3 (wavelength).
