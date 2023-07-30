@@ -14,11 +14,9 @@ each band will be created.
   If the ``channel`` argument is given, then only data corresponding to that channel  will be used in
   constructing the cube.  A comma-separated list can be used to designate multiple channels.
   For example, to create a cube with data from channels 1 and 2, specify the
-  list as ``--channel='1,2'``.  All the sub-channels (``band``, see below) for the chosen channel\channels will
-  be used to create the IFU cube. See the parameter ``output_type``  If this p
-  This parameter can be combined
-  with the ``output_type``  parameter  to fully control the type of IFU
-  cubes to make.
+  list as ``--channel='1,2'``.  All the sub-channels (bands) for the chosen channel\channels will
+  be used to create the IFU cube, unless the ``band`` argument is used to select specific bands.  This parameter can be combined
+  with the ``output_type``  parameter  to fully control the type of IFU cubes to make.
 
 ``band [string]``
   This is a MIRI only option and the valid values are SHORT, MEDIUM, LONG, and ALL.
