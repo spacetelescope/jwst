@@ -100,7 +100,7 @@ The arguments related to region of interest and how the fluxes are combined toge
   For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.
 
-A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``.
+A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``. This option is only valid if the ``weighting`` parameter is set to ``drizzle`` (default). 
 
 ``debug_spaxel [string]``
 
