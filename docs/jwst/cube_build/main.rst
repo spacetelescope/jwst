@@ -144,9 +144,9 @@ dimension. The calwebb_spec2 pipeline calls cube_build with
 
 In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple
-bands, the default behavior is to create a set of single-band cubes. For MIRI,
-for example, this can mean separate cubes for bands 1A, 2A, 3A, 4A, 1B, 2B, ...,
-3C, 4C, depending on what's included in the input. For NIRSpec this may mean
+bands, the default behavior is to create a set of single-channel cubes. For MIRI,
+for example, this can mean separate cubes for channel 1, 2, 3 and 4. 
+depending on what's included in the input. For NIRSpec this may mean
 multiple cubes, one for each grating+filter combination contained in the input
 collection. The calwebb_spec3 pipeline calls cube_build with
 ``output_type=band``. These types of IFU cubes will have a linear-wavelength
@@ -212,8 +212,8 @@ user provided options are being set  (see the :ref:`arguments` section.).
 Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects 
 the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS 
 information of all the input data. The input data are mapped to the output frame based on the wcs information that is
-filled in by the assign_wcs step, this mapping includes any dither offsets.
-Therefore,  default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
+filled in by the :ref:`assign_wcs <assign_wcs>` step, this mapping includes any dither offsets.
+Therefore, the default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
 the sky of all the input images.
 The output sampling scale in all three dimensions for the cube
 is defined by a cubepar reference file as a function of wavelength, and can also be changed by the user.
@@ -263,7 +263,7 @@ of all point-cloud members within a given region of influence.
 3-D drizzling
 #############
 
-This algorithm for combining data uses a 3-D generalization of the classical 2-D drizzle technique.It is used
+This algorithm for combining data uses a 3-D generalization of the classical 2-D drizzle technique. It is used
 when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output grid according to the relative overlap
 between the detector pixels and cube voxels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial and
 spectral overlap between detector pixels and cube voxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
@@ -272,7 +272,7 @@ volume is determined from the combination of the along-slice pixel size and the 
 to the output voxel grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
 the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
 For more details on this method, see 'A 3D Drizzle Algorithm for JWST and Practical Application to the MIRI Medium Resolution Spectrometer',
-David D. Law et al. 2023 AJ 166 45 (https://iopscience.iop.org/article/10.3847/1538-3881/acdddc).
+David R. Law et al. 2023 AJ 166 45 (https://iopscience.iop.org/article/10.3847/1538-3881/acdddc).
 
 Shepard's method of weighting
 ##############################

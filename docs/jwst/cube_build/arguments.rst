@@ -14,7 +14,7 @@ each band will be created.
   If the ``channel`` argument is given, then only data corresponding to that channel  will be used in
   constructing the cube.  A comma-separated list can be used to designate multiple channels.
   For example, to create a cube with data from channels 1 and 2, specify the
-  list as ``--channel='1,2'``.  All the sub-channels (bands) for the chosen channel\channels will
+  list as ``--channel='1,2'``.  All the sub-channels (bands) for the chosen channel(s) will
   be used to create the IFU cube, unless the ``band`` argument is used to select specific bands.  This parameter can be combined
   with the ``output_type``  parameter  to fully control the type of IFU cubes to make.
 
@@ -24,7 +24,7 @@ each band will be created.
   to that sub-channel will be used in constructing the cube. Only one value can be specified. 
   Note we use the name ``band`` for this argument instead of
   ``subchannel``, because the keyword ``band`` in the input images is used to indicate which MIRI subchannel the
-  data covers.   This parameter can be combined
+  data cover.   This parameter can be combined
   with the ``output_type``  parameter  to fully control the type of IFU
   cubes to make.
 
@@ -50,15 +50,16 @@ each band will be created.
     (channel/sub-channel for MIRI or grating/filter combination for NIRSpec).
 
   - ``output_type = channel`` creates a single IFU cube from each unique channel of MIRI data
-    (or just those channels set by the 'channel' option). The is the default mode for the calspec3 pipeline for
-    MIRI data. 
+    (or just those channels set by the 'channel' option). This is the default mode for the
+    :ref:`calwebb_spec3 <calwebb_spec3>` pipeline for MIRI data. 
 
   - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
-    grating option into a single IFU cube. The is the default mode for the calspec3 pipeline for
-    NIRSpec data. 
+    grating option into a single IFU cube. The is the default mode for the
+    :ref:`calwebb_spec3 <calwebb_spec3>` pipeline for NIRSpec data. 
 
-  - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for calspec2. If in addition,
-    channel, band, grating, or filter are also set, then only the data set by those
+  - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for
+    :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.  
+    If in addition,  channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
