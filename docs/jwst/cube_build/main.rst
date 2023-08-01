@@ -207,7 +207,9 @@ The string defining the type of IFU is created according to the following rules:
 
 Algorithm
 ---------
-The type of output IFU cube created depends on which pipeline is being run, calspec2 or calspec3, and if additional
+The type of output IFU cube created depends on which pipeline is being run,
+:ref:`calwebb_spec2 <calwebb_spec2>` or  :ref:`calwebb_spec3 <calwebb_spec3>`, 
+and if additional
 user provided options are being set  (see the :ref:`arguments` section.). 
 Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects 
 the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS 
@@ -229,15 +231,93 @@ pixel mapping is determined via a series of chained mapping transformations deri
 WCS of output cube. The mapping process corrects for the optical distortions and uses the spacecraft telemetry information
 to map each pixel to its projected location in the cube coordinate system.
 
-The mapping process results in an irregular spaced "cloud of points" that sample the specific intensity
-distribution at a series of locations on the sky. A schematic of this process is shown
-in Figure 1.
+
+
+.. _weighting:
+
+Weighting
++++++++++
+
+The JWST pipeline includes two methods for building IFU data cubes: the 3D drizzle approach (default), and an alternative based
+on an exponential modified-Shepard method (EMSM) weighting function. The core principle of both algorithms is to resample the 2-D detector
+data into a 3D rectified data cube while conserving flux.
+The differences in the the techniques are how the detector pixels are weighting in the final 3D data cube.
+
+
+3-D drizzling
+#############
+
+The default method uses a 3-D drizzling technique analogous to that used by 2-D imaging modes with an
+additional spectral overlap computation.  It is used when ``weighting=drizzle``.
+
+In the 3D drizzling we  project the 2D detector pixels to
+their corresponding 3D volume elements and allocate their intensities to the individual voxels of the final data cube according
+to their volumetric overlap. The drizzling algorithm
+computes  the overlap between the irregular projected volumes of the detector pixels and the regular grid of cube voxels, which,
+for simplicity, we assume corresponds to the world coordinates (R. A., decl., λ).
+
+The detector pixels illuminated by our slicer-type IFUs contain a mixture of degenerate spatial and spectral information.
+The spatial extent in the along-slice direction (α) and the spectral extent in the dispersion direction (λ) both vary continuously
+within the dispersed image of a given slice in a manner akin to a traditional slit spectrograph and are sampled by the detector pixels (x, y).
+In contrast, the spatial extent in the across-slice direction (β) is set by the IFU image slicer width and changes discretely between slices.
+The four corners of a detector pixel thus define a tilted hexahedron in (α, λ) space with the front and back faces of the
+polyhedron defined by the lines of constant β created by the IFU slicer. (α, β) is itself rotated (and incorporates some degree of
+optical distortion) with respect to world coordinates (R.A., decl.) and thus the volume element defined by a detector pixel is
+rotated in a complex manner with respect to the cube voxels, see Figure 1. The iso-α and iso-λ directions are not perfectly orthogonal
+to each other, and are similarly tilted with respect to the detector pixel grid. However, since iso-α is nearly aligned with the
+detector y-axis MIRI (or x- axis for NIRSpec) and iso-λ is nearly aligned with the detector x-axis for MIRI (or y-axis for NIRSpec),
+we make the additional simplifying assumption to ignore this small tilt when computing the projected volume of the detector pixels
+Effectively, this means that the surfaces of the volume element are flat in the α, β, and λ planes, and the spatial and spectral overlaps
+can be computed independently (see Figure 2).
+
+With these simplications, detector pixels project as rectilinear volumes into cube space.
+The detector pixel flux is redistributed onto a regular output grid according to the relative overlap
+between the detector pixels and cube voxels. The weighting applied to the detector pixel flux is the product of the fractional spatial and
+spectral overlap between detector pixels and cube voxels as a function of wavelength.
+The spatial extent of each detector pixel
+volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
+to the output voxel grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
+the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
+For more details on this method, see 'A 3D Drizzle Algorithm for JWST and Practical Application to the MIRI Medium Resolution Spectrometer',
+David R. Law et al. 2023 AJ 166 45 (https://iopscience.iop.org/article/10.3847/1538-3881/acdddc).
+.. figure:: cube_build_overlap1.png
+   :scale: 50%
+   :align: center
+
+Figure 1:
+Left: general case detector diagram in which the dispersion axis is tilted with respect to the detector columns/rows, and the four
+corners of a given pixel (bold red outline) each have different wavelengths λ and along-slice coordinates α.
+Right: projection of this generalized detector pixel into the volumetric space of the final data cube. The red hexahedron represents the
+detector pixel, where the three dimensions are set by the along-slice, across-slice, and wavelength coordinates. The regular gray hexahedra
+represent voxels in a single wavelength plane of the data cube. For clarity, the cube voxels are shown aligned with the (R.A., decl.)
+celestial coordinate frame, but this choice is arbitrary.
+
+
+.. figure:: cube_build_overlap2.png
+   :scale: 50%
+   :align: center
+
+Figure 2:
+Same as Figure 1 but representing the simplified case in which the spectral dispersion is assumed to be aligned with detector columns and
+the spatial distortion constant for all wavelengths covered by a given pixel. This assumption reduces the computation of volumetric
+overlap between red and gray hexahedra to separable 1D and 2D computations.
+
+
+
+Shepard's method of weighting
+##############################
+
+The second approach is to use a flux-conserving
+variant of Shepard's method. In this techique we ignore the overlap between the detector pixel and cube voxel and
+instead when we map the detector to the sky we treat each pixel as a single point. The mapping process results in an irregular spaced "cloud of points"
+that sample the specific intensity distribution at a series of locations on the sky.
+A schematic of this process is shown in Figure 3.
 
 .. figure:: pointcloud.png
    :scale: 50%
    :align: center
 
-Figure 1: Schematic of two dithered exposures mapped to the IFU output coordinate system (black regular grid).
+Figure 3: Schematic of two dithered exposures mapped to the IFU output coordinate system (black regular grid).
 The plus symbols represent the point cloud mapping of detector pixels to effective sampling locations
 relative to the output coordinate system at a given wavelength. The black points are from exposure one and the red points
 are from exposure two.
@@ -246,36 +326,9 @@ Each point in the cloud represents a measurement of the specific intensity (with
 of the astronomical scene at a particular location.  The final data cube is constructed by combining each of the
 irregularly-distributed samples of the scene into a regularly-sampled **voxel** grid in three dimensions for which each
 **spaxel** (i.e., a spatial pixel in the cube) has a spectrum composed of many spectral elements.
-
-.. _weighting:
-
-Weighting
-+++++++++
-
-The best algorithm with which to combine the irregularly-distributed samples of the point cloud to a rectilinear
-data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
-the science goals of a particular observing program.  At present there are two approaches to weighting the detector pixels.
-The default method uses a 3-D drizzling technique analogous to that used by 2-D imaging modes with an
-additional spectral overlap computation.  The second approach is to use a flux-conserving
-variant of Shepard's method in which the value of a given voxel of the cube is a distance-weighted average
+The final value of value of a given voxel of the cube is a distance-weighted average
 of all point-cloud members within a given region of influence.
 
-3-D drizzling
-#############
-
-This algorithm for combining data uses a 3-D generalization of the classical 2-D drizzle technique. It is used
-when ``weighting=drizzle``. In this algorithm the detector pixel flux is redistributed onto a regular output grid according to the relative overlap
-between the detector pixels and cube voxels. For IFU data the weighting applied to the detector pixel flux is the product of the fractional spatial and
-spectral overlap between detector pixels and cube voxels as a function of wavelength.  To a reasonable approximation these two terms are separable, and
-the 3-D drizzle algorithm therefore assumes that detector pixels project as rectilinear volumes into cube space.  The spatial extent of each detector pixel
-volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
-to the output voxel grid of the final data cube.  The spectral extent of each detector pixel volume is determined by the wavelength range across
-the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
-For more details on this method, see 'A 3D Drizzle Algorithm for JWST and Practical Application to the MIRI Medium Resolution Spectrometer',
-David R. Law et al. 2023 AJ 166 45 (https://iopscience.iop.org/article/10.3847/1538-3881/acdddc).
-
-Shepard's method of weighting
-##############################
 
 In order to explain this method we will introduce the follow definitions:
 
