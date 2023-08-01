@@ -208,7 +208,7 @@ class ResampleData:
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
                 output_model.save(output_name)
-                log.info(f"Exposure {output_name} saved to file")
+                log.info(f"Saved model in {output_name}")
                 self.output_models.append(output_name)
             else:
                 self.output_models.append(output_model.copy())
