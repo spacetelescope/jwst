@@ -26,8 +26,7 @@ that is combined to create the cube. See the :ref:`arguments` section for more d
 Assumptions
 -----------
 It is assumed that the :ref:`assign_wcs <assign_wcs_step>` step has been applied to the data, attaching the distortion and pointing
-information to the image(s). It is also assumed that the  :ref:`photom <photom_step>`
-step has been applied to convert the pixel
+information to the image(s). It is also assumed that the  :ref:`photom <photom_step>` step has been applied to convert the pixel
 values from units of count rate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
 The cube_build algorithm is a flux conserving method and requires the input data to be in units of surface brightness.
 The NIRSpec calibration plan for point source data is designed to produce units of flux density from the calwebb_spec2 pipeline.
