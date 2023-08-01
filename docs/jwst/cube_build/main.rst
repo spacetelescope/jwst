@@ -280,6 +280,7 @@ to the output voxel grid of the final data cube.  The spectral extent of each de
 the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
 For more details on this method, see 'A 3D Drizzle Algorithm for JWST and Practical Application to the MIRI Medium Resolution Spectrometer',
 David R. Law et al. 2023 AJ 166 45 (https://iopscience.iop.org/article/10.3847/1538-3881/acdddc).
+
 .. figure:: cube_build_overlap1.png
    :scale: 50%
    :align: center
@@ -292,7 +293,6 @@ detector pixel, where the three dimensions are set by the along-slice, across-sl
 represent voxels in a single wavelength plane of the data cube. For clarity, the cube voxels are shown aligned with the (R.A., decl.)
 celestial coordinate frame, but this choice is arbitrary.
 
-
 .. figure:: cube_build_overlap2.png
    :scale: 50%
    :align: center
@@ -301,7 +301,6 @@ Figure 2:
 Same as Figure 1 but representing the simplified case in which the spectral dispersion is assumed to be aligned with detector columns and
 the spatial distortion constant for all wavelengths covered by a given pixel. This assumption reduces the computation of volumetric
 overlap between red and gray hexahedra to separable 1D and 2D computations.
-
 
 
 Shepard's method of weighting
