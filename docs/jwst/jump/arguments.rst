@@ -1,7 +1,7 @@
 Arguments
 =========
 
-The ``jump`` step has five optional arguments that can be set by the user:
+The ``jump`` step has 29 optional arguments that can be set by the user:
 
 **Parameters for Baseline Cosmic Ray Jump Detection**
 
