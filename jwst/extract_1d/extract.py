@@ -3477,9 +3477,9 @@ def extract_one_slit(
     extract_model.assign_polynomial_limits()
 
     if extract_model.slit_autocen is True:
-        collapsed = np.nansum(data, axis=int(-1 * extract_params['dispaxis']))
-        y_fit = collapsed / np.max(collapsed)
-        y_fit[y_fit < 0] = 0
+        normed = data / np.nanmax(data, axis=2-extract_params['dispaxis'], keepdims=True)
+
+        y_fit = np.nanmedian(normed, axis=int(-1 * extract_params['dispaxis']))
         x_fit = np.arange(len(y_fit))
         y_peak = np.argmax(y_fit)
         # Provide bounds to fit to avoid wasting time in region where a fit is undesirable
