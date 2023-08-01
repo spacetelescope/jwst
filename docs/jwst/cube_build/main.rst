@@ -26,7 +26,8 @@ that is combined to create the cube. See the :ref:`arguments` section for more d
 Assumptions
 -----------
 It is assumed that the :ref:`assign_wcs <assign_wcs_step>` step has been applied to the data, attaching the distortion and pointing
-information to the image(s). It is also assumed that the ``photom`` step has been applied to convert the pixel
+information to the image(s). It is also assumed that the  :ref:`photom <photom_step>`
+step has been applied to convert the pixel
 values from units of count rate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
 The cube_build algorithm is a flux conserving method and requires the input data to be in units of surface brightness.
 The NIRSpec calibration plan for point source data is designed to produce units of flux density from the calwebb_spec2 pipeline.
@@ -241,7 +242,7 @@ Weighting
 The JWST pipeline includes two methods for building IFU data cubes: the 3D drizzle approach (default), and an alternative based
 on an exponential modified-Shepard method (EMSM) weighting function. The core principle of both algorithms is to resample the 2-D detector
 data into a 3D rectified data cube while conserving flux.
-The differences in the the techniques are how the detector pixels are weighting in the final 3D data cube.
+The differences in the the techniques are how the detector pixels are weighted in the final 3D data cube.
 
 
 3-D drizzling
@@ -249,14 +250,13 @@ The differences in the the techniques are how the detector pixels are weighting 
 
 The default method uses a 3-D drizzling technique analogous to that used by 2-D imaging modes with an
 additional spectral overlap computation.  It is used when ``weighting=drizzle``.
-
 In the 3D drizzling we  project the 2D detector pixels to
 their corresponding 3D volume elements and allocate their intensities to the individual voxels of the final data cube according
 to their volumetric overlap. The drizzling algorithm
 computes  the overlap between the irregular projected volumes of the detector pixels and the regular grid of cube voxels, which,
 for simplicity, we assume corresponds to the world coordinates (R. A., decl., λ).
 
-The detector pixels illuminated by our slicer-type IFUs contain a mixture of degenerate spatial and spectral information.
+The detector pixels illuminated by JWST slicer-type IFUs contain a mixture of degenerate spatial and spectral information.
 The spatial extent in the along-slice direction (α) and the spectral extent in the dispersion direction (λ) both vary continuously
 within the dispersed image of a given slice in a manner akin to a traditional slit spectrograph and are sampled by the detector pixels (x, y).
 In contrast, the spatial extent in the across-slice direction (β) is set by the IFU image slicer width and changes discretely between slices.
