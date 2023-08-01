@@ -39,6 +39,7 @@ The ``jump`` step has five optional arguments that can be set by the user:
   the flagging of neighbors of marginal detections. Any primary jump below this value will
   not have its neighbors flagged. The goal is to prevent flagging jumps that would be too
   small to significantly affect the slope determination.  The default value is 10.
+
 **Parameters that affect after jump Flagging**
 
   After a jump of at least 'after_jump_flag_dn1' DN, groups up to 'after_jump_flag_time1'
@@ -51,6 +52,7 @@ The ``jump`` step has five optional arguments that can be set by the user:
   is defined as:
 * ``--after_jump_flag_dn2``: A floating point value in units of DN
 * ``--after_jump_flag_time2``: A floating point value in units of seconds
+
 **Parameters that affect Near-IR Snowball Flagging**
 
 * ``--expand_large_events``:  A boolean parameter that controls whether the jump step will expand the number of pixels that are flagged around large cosmic ray events. These are know as "snowballs" in the near-infrared detectors and "showers" for the MIRI detectors. In general, this should be set to True.
