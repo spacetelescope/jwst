@@ -25,7 +25,7 @@ that is combined to create the cube. See the :ref:`arguments` section for more d
 
 Assumptions
 -----------
-It is assumed that the ``assign_wcs`` step has been applied to the data, attaching the distortion and pointing
+It is assumed that the :ref:`assign_wcs <assign_wcs_step>` step has been applied to the data, attaching the distortion and pointing
 information to the image(s). It is also assumed that the ``photom`` step has been applied to convert the pixel
 values from units of count rate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
 The cube_build algorithm is a flux conserving method and requires the input data to be in units of surface brightness.
@@ -214,7 +214,7 @@ user provided options are being set  (see the :ref:`arguments` section.).
 Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects 
 the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS 
 information of all the input data. The input data are mapped to the output frame based on the wcs information that is
-filled in by the :ref:`assign_wcs <assign_wcs>` step, this mapping includes any dither offsets.
+filled in by the :ref:`assign_wcs <assign_wcs_step>` step, this mapping includes any dither offsets.
 Therefore, the default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
 the sky of all the input images.
 The output sampling scale in all three dimensions for the cube
