@@ -19,10 +19,10 @@ flat_field
 - Modify the test_flatfield_step_interface unit test to prevent it from causing
   other tests to fail [#7752]
 
-Jump
+jump
 ____
-Updated documentation for the parameters [#7778]
 
+- Updated documentation for the step parameters [#7778]
 
 master_background
 -----------------
