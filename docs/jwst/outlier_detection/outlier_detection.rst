@@ -58,8 +58,7 @@ Specifically, this routine performs the following operations:
      should be used when resampling to create the output mosaic.  Any pixel with a
      DQ value not included in this value (or list of values) will be ignored when
      resampling.
-   * Resampled images will be written out to disk if the
-     ``save_intermediate_results`` parameter is set to `True`
+   * Resampled images will be written out to disk as `_outlier_i2d.fits` by default.
    * **If resampling is turned off** through the use of the ``resample_data`` parameter,
      a copy of the unrectified input images (as a ModelContainer)
      will be used for subsequent processing.
@@ -76,14 +75,12 @@ Specifically, this routine performs the following operations:
    * The ``grow`` parameter sets the width, in pixels, beyond the limit set by
      the rejection algorithm being used, for additional pixels to be rejected in
      an image.
-   * The median image is written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`.
+   * The median image is written out to disk as `_<asn_id>_median.fits` by default.
 
 #. By default, the median image is blotted back (inverse of resampling) to
    match each original input image.
 
-   * Resampled/blotted images are written out to disk if
-     the ``save_intermediate_results`` parameter is set to `True`
+   * Blotted images are written out to disk as `_<asn_id>_blot.fits` by default.
    * **If resampling is turned off**, the median image is compared directly to
      each input image.
 

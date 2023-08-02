@@ -30,6 +30,11 @@ master_background
 - Allow the user to write the 2D expanded version of the user-provided 1D background for each
   file in the assocation. [#7714]
 
+outlier_detection
+-----------------
+
+- Fix naming and logging of intermediate blot files written to disk for imaging modes. [#7784]
+
 resample
 --------
 
