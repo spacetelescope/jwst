@@ -28,7 +28,10 @@ Assumptions
 It is assumed that the :ref:`assign_wcs <assign_wcs_step>` step has been applied to the data, attaching the distortion and pointing
 information to the image(s). It is also assumed that the  :ref:`photom <photom_step>` step has been applied to convert the pixel
 values from units of count rate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
-The cube_build algorithm is a flux conserving method and requires the input data to be in units of surface brightness.
+The cube_build algorithm is a flux conserving method, requires the input data to be in units of surface brightness
+(MJy/sr), and produces 3-D cubes also in units of surface brightness.  1-D spectral extraction from these cubes may then
+produce spectra either in surface brightness units of MJy/sr or in flux units of Jy.
+
 The NIRSpec calibration plan for point source data is designed to produce units of flux density from the calwebb_spec2 pipeline.
 For NIRSpec IFU point source data the calwebb_spec2 pipeline divides the flux values by a pixel area map to produce pseudo
 surface brightness units (MJy/steradian). This allows the cube_build program to conserve flux when it combines and resamples
@@ -38,10 +41,12 @@ appropriate extraction aperture, with resulting units of Jy.
 Instrument Information
 ----------------------
 The JWST integral field unit (IFU) spectrographs obtain simultaneous spectral and spatial data on a relatively compact
-region of the sky. The MIRI Medium Resolution Spectrometer (MRS) consists of four IFU's
-providing four simultaneous and overlapping fields of view ranging from ~3.3" x 3.7" to ~7.2" x 7.7" and covering a
-wavelength range of 5-28 microns. The optics system for the four IFU's is split into two paths. One path
-is dedicated to the two short wavelength IFU's and the other one handles the two longer wavelength IFU's.
+region of the sky.
+
+The MIRI Medium Resolution Spectrometer (MRS) consists of four IFUs
+providing simultaneous and overlapping fields of view ranging from ~3.3" x 3.7" to ~7.2" x 7.7" and covering a
+wavelength range of 5-28 microns. The optics system for the four IFUs is split into two paths. One path
+is dedicated to the two short wavelength IFUs and the other one handles the two longer wavelength IFUs.
 There is one 1024 x 1024 detector for each path. Light entering the MRS is spectrally separated into four
 channels by dichroic mirrors. Each of these channels has its own IFU that divides the image into several
 slices. Each slice is then dispersed using a grating spectrograph and imaged on one half of a detector. While
@@ -52,7 +57,7 @@ We refer to a sub-channel as one of the three possible configurations (A/B/C) of
 sub-channel covers ~1/3 of the full wavelength range for the channel. Each of the four channels has a different
 sampling of the field, so the FOV, slice width, number of slices, and plate scales are different for each channel.
 
-The NIRSpec IFU has a 3 x 3 arcsecond field of view that is sliced into thirty 0.1 arcsecond bands. Each slice is
+The NIRSpec IFU has a 3 x 3 arcsecond field of view that is sliced into thirty 0.1 arcsecond regions. Each slice is
 dispersed by a prism or one of six diffraction gratings.  The NIRSpec IFU gratings
 provide high-resolution and  medium resolution  spectroscopy while the prism yields lower-resolution spectroscopy.
 The NIRSpec detector focal plane consists of two HgCdTe sensor chip assemblies (SCAs). Each SCA is a 2-D array of
@@ -117,12 +122,12 @@ G395H    F290LP  2.87 - 5.27
 
 Types of Output Cubes
 ---------------------
-The output 3-D spectral cubes consist rectangular cube with three orthogonal axes: two
+The output 3-D spectral data consist of rectangular cube with three orthogonal axes: two
 spatial and one spectral. Depending on how cube_build is run the spectral axes can be either linear or non-linear.
 Linear wavelength IFU cubes are constructed from a single band of data, while non-linear wavelength IFU cubes are
-created from more than one band of data. If the IFU cube have a non-linear wavelength dimension
+created from more than one band of data. If the IFU cubes have a non-linear wavelength dimension
 there will be an added binary extension table to the output fits IFU cube. This extension has
-the label, WCS-TABLE, and contains the wavelength for each of the IFU cube wavelength planes. This table follows the
+the label WCS-TABLE and contains the wavelengths for each of the IFU cube wavelength planes. This table follows the
 FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006. 
 
 The input data to ``cube_build`` can take a variety of forms, including a single file, a data
@@ -175,10 +180,12 @@ WMAP     3      2 spatial and 1 spectral  integer
 
 The SCI image contains the surface brightness of cube spaxels in units of MJy/steradian. The wavelength dimension of the IFU cube
 can either be linear or non-linear. If the wavelength is non-linear, then the IFU cube contains data from more than one band.  A
-table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
+table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths
+in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
-contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propagate the
-dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).  
+contains the number of detector pixels contributing to a given voxel. The data quality flag does not propagate the
+dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512),
+do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).
 
 The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
 the IFU cube footprint or for saturated pixels for which no slope could be measured).
@@ -220,7 +227,7 @@ the sky of all the input images.
 The output sampling scale in all three dimensions for the cube
 is defined by a cubepar reference file as a function of wavelength, and can also be changed by the user.
 The cubepar reference file contains a predefined scale to use
-for each dimension for each band. If the output IFU cube contains more than one band, then  for MIRI the
+for each dimension for each band. If the output IFU cube contains more than one band, then for MIRI the
 output scale corresponds to the channel with the smallest scale. In the case of NIRSpec only gratings of the
 same resolution are combined together in an IFU cube. The default output spatial coordinate system is right ascension-declination.
 There is an option to create IFU cubes in the coordinate system of the NIRSpec or MIRI MIRS local ifu slicer plane (see
@@ -240,14 +247,14 @@ Weighting
 
 The JWST pipeline includes two methods for building IFU data cubes: the 3D drizzle approach (default), and an alternative based
 on an exponential modified-Shepard method (EMSM) weighting function. The core principle of both algorithms is to resample the 2-D detector
-data into a 3D rectified data cube while conserving flux.
+data into a 3D rectified data cube in a single step while conserving flux.
 The differences in the the techniques are how the detector pixels are weighted in the final 3D data cube.
 
 
 3-D drizzling
 #############
 
-The default method uses a 3-D drizzling technique analogous to that used by 2-D imaging modes with an
+The default method of cube building uses a 3-D drizzling technique analogous to that used by 2-D imaging modes with an
 additional spectral overlap computation.  It is used when ``weighting=drizzle``.
 In the 3D drizzling we  project the 2D detector pixels to
 their corresponding 3D volume elements and allocate their intensities to the individual voxels of the final data cube according
@@ -261,15 +268,15 @@ within the dispersed image of a given slice in a manner akin to a traditional sl
 In contrast, the spatial extent in the across-slice direction (β) is set by the IFU image slicer width and changes discretely between slices.
 The four corners of a detector pixel thus define a tilted hexahedron in (α, λ) space with the front and back faces of the
 polyhedron defined by the lines of constant β created by the IFU slicer. (α, β) is itself rotated (and incorporates some degree of
-optical distortion) with respect to world coordinates (R.A., decl.) and thus the volume element defined by a detector pixel is
+optical distortion) with respect to world coordinates (R.A., Decl.) and thus the volume element defined by a detector pixel is
 rotated in a complex manner with respect to the cube voxels, see Figure 1. The iso-α and iso-λ directions are not perfectly orthogonal
 to each other, and are similarly tilted with respect to the detector pixel grid. However, since iso-α is nearly aligned with the
-detector y-axis MIRI (or x- axis for NIRSpec) and iso-λ is nearly aligned with the detector x-axis for MIRI (or y-axis for NIRSpec),
-we make the additional simplifying assumption to ignore this small tilt when computing the projected volume of the detector pixels
+detector y-axis for MIRI (or x- axis for NIRSpec) and iso-λ is nearly aligned with the detector x-axis for MIRI (or y-axis for NIRSpec),
+we make the additional simplifying assumption to ignore this small tilt when computing the projected volume of the detector pixels.
 Effectively, this means that the surfaces of the volume element are flat in the α, β, and λ planes, and the spatial and spectral overlaps
 can be computed independently (see Figure 2).
 
-With these simplications, detector pixels project as rectilinear volumes into cube space.
+With these simplifications, detector pixels project as rectilinear volumes into cube space.
 The detector pixel flux is redistributed onto a regular output grid according to the relative overlap
 between the detector pixels and cube voxels. The weighting applied to the detector pixel flux is the product of the fractional spatial and
 spectral overlap between detector pixels and cube voxels as a function of wavelength.
@@ -289,7 +296,7 @@ Left: general case detector diagram in which the dispersion axis is tilted with 
 corners of a given pixel (bold red outline) each have different wavelengths λ and along-slice coordinates α.
 Right: projection of this generalized detector pixel into the volumetric space of the final data cube. The red hexahedron represents the
 detector pixel, where the three dimensions are set by the along-slice, across-slice, and wavelength coordinates. The regular gray hexahedra
-represent voxels in a single wavelength plane of the data cube. For clarity, the cube voxels are shown aligned with the (R.A., decl.)
+represent voxels in a single wavelength plane of the data cube. For clarity, the cube voxels are shown aligned with the (R.A., Decl.)
 celestial coordinate frame, but this choice is arbitrary.
 
 .. figure:: cube_build_overlap2.png
@@ -305,9 +312,9 @@ overlap between red and gray hexahedra to separable 1D and 2D computations.
 Shepard's method of weighting
 ##############################
 
-The second approach is to use a flux-conserving
-variant of Shepard's method. In this techique we ignore the overlap between the detector pixel and cube voxel and
-instead when we map the detector to the sky we treat each pixel as a single point. The mapping process results in an irregular spaced "cloud of points"
+The second approach to cube building is to use a flux-conserving
+variant of Shepard's method. In this technique we ignore the overlap between the detector pixel and cube voxel and
+instead treat each pixel as a single point when mapping the detector to the sky. The mapping process results in an irregularly spaced "cloud of points"
 that sample the specific intensity distribution at a series of locations on the sky.
 A schematic of this process is shown in Figure 3.
 
@@ -328,7 +335,7 @@ The final value of value of a given voxel of the cube is a distance-weighted ave
 of all point-cloud members within a given region of influence.
 
 
-In order to explain this method we will introduce the follow definitions:
+In order to explain this method we introduce the follow definitions:
 
 * xdistance = distance between point in the cloud and voxel center in units of arc seconds along the x axis
 * ydistance = distance between point in the cloud and voxel center in units of arc seconds along the y axis
@@ -358,6 +365,6 @@ If the alternative weighting function (set by ``weighting = msm``) is selected t
 
 :math:`w_i =\frac{1.0} {\sqrt{({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)^{p} }}`
 
-In this  weighting function the default value for *p* is read in from the cubepar reference file. It can also  be set 
+In this weighting function the default value for *p* is read in from the cubepar reference file. It can also be set
 by the argument ``weight_power=value``.
 
