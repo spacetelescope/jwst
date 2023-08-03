@@ -184,7 +184,7 @@ def test_setup_wcs():
     corner_b.append(dec4)
 
     pars_cube = {
-        'scale12': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'emsm',

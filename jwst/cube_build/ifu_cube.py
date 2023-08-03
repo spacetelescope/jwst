@@ -548,19 +548,21 @@ class IFUCubeData():
         # ______________________________________________________________________________
 
         nxyplane = self.naxis1 * self.naxis2
-        if(self.spaxel_z < 0 or self.spaxel_x < 0 or self.spaxel_y < 0):
-            print('Incorrect input for Debug Spaxel values. Counting starts at 1')
+
+        if self.spaxel_z == -1 and self.spaxel_x == -1 and self.spaxel_y == -1:
+            debug_cube_index = -1
+            
+        elif(self.spaxel_z < 0 or self.spaxel_x < 0 or self.spaxel_y < 0):
+            print('Incorrect input for Debug Spaxel values. Counting starts at 0')
             debug_cube_index = -1
             print(self.spaxel_z, self.spaxel_x, self.spaxel_y)
-        elif self.spaxel_z ==0 and self.spaxel_x ==0 and self.spaxel_y ==0:
-            debug_cube_index = -1
         else:
-            spaxel_z = self.spaxel_z -1
-            spaxel_x = self.spaxel_x -1
-            spaxel_y = self.spaxel_y -1 
+            spaxel_z = self.spaxel_z
+            spaxel_x = self.spaxel_x
+            spaxel_y = self.spaxel_y
             debug_cube_index = spaxel_z * (nxyplane) + spaxel_y * self.naxis1 + spaxel_x
-            print('Printing debug information for cube spaxel index = ', debug_cube_index)
-            print(spaxel_x, spaxel_y, spaxel_z, nxyplane)
+            log.info(f"Printing debug information for cube spaxel:  {spaxel_x} {spaxel_y} {spaxel_z}")
+
         # ______________________________________________________________________________
         subtract_background = True
 

@@ -157,7 +157,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     # set up the ifucube class
 
     pars_cube = {
-        'scale12': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -217,7 +217,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     user_rois = 0.6
     user_roiw = 0.8
     pars_cube = {
-        'scale12': user_ascale,
+        'scalexy': user_ascale,
         'scalew': user_wscale,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
