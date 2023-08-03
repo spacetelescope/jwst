@@ -43,7 +43,7 @@ class CubeBuildStep (Step):
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
          output_type = option('band','channel','grating','multi',default='channel') # Type IFUcube to create.
-         scale12 = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
+         scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
@@ -94,8 +94,8 @@ class CubeBuildStep (Step):
         if not self.weighting.islower():
             self.weighting = self.weighting.lower()
 
-        if self.scale12 != 0.0:
-            self.log.info(f'Input Scale of axis 1 and 2 {self.scale12}')
+        if self.scalexy != 0.0:
+            self.log.info(f'Input Scale of axis 1 and 2 {self.scalexy}')
         if self.scalew != 0.0:
             self.log.info(f'Input wavelength scale {self.scalew}')
 
@@ -227,7 +227,7 @@ class CubeBuildStep (Step):
         # these parameters are related to the building a single ifucube_model
 
         pars_cube = {
-            'scale12': self.scale12,
+            'scalexy': self.scalexy,
             'scalew': self.scalew,
             'interpolation': self.interpolation,
             'weighting': self.weighting,

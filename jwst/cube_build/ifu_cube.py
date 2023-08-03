@@ -62,7 +62,7 @@ class IFUCubeData():
         self.master_table = master_table
         self.output_type = output_type
 
-        self.scale12 = pars_cube.get('scale12')
+        self.scalexy = pars_cube.get('scalexy')
         self.scalew = pars_cube.get('scalew')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
@@ -894,8 +894,8 @@ class IFUCubeData():
         a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                   par2)
         self.spatial_size = a_scale
-        if self.scale12 != 0:
-            self.spatial_size = self.scale12
+        if self.scalexy != 0:
+            self.spatial_size = self.scalexy
 
         min_wave = self.instrument_info.GetWaveMin(par1, par2)
         max_wave = self.instrument_info.GetWaveMax(par1, par2)
@@ -1101,8 +1101,8 @@ class IFUCubeData():
             self.roiw = wave_roi
         if self.weight_power == 0:
             self.weight_power = weight_power
-        if self.scale12 != 0:
-            self.spatial_size = self.scale12
+        if self.scalexy != 0:
+            self.spatial_size = self.scalexy
 
         # check on valid values
 
