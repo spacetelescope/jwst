@@ -3477,7 +3477,20 @@ def extract_one_slit(
     extract_model.assign_polynomial_limits()
 
     if extract_model.slit_autocen is True:
-        normed = data / np.nanmax(data, axis=2-extract_params['dispaxis'], keepdims=True)
+        good_pixels = np.where(data == data)
+        y_range = [np.min(good_pixels[0]), np.max(good_pixels[0]) + 1]
+        x_range = [np.min(good_pixels[1]), np.max(good_pixels[1]) + 1]
+        extract_model.xstart = x_range[0]
+        extract_model.xstop = x_range[1]
+        extract_model.ystart = y_range[0]
+        extract_model.ystop = y_range[1]
+
+        absdata = data.copy()
+        absdata = absdata[np.min(good_pixels[0]): np.max(good_pixels[0]) + 1,
+                          np.min(good_pixels[1]): np.max(good_pixels[1]) + 1]
+
+        absdata[absdata < 0] = 0
+        normed = absdata / np.nanmax(absdata, axis=3-extract_params['dispaxis'], keepdims=True)
 
         y_fit = np.nanmedian(normed, axis=int(-1 * extract_params['dispaxis']))
         x_fit = np.arange(len(y_fit))
@@ -3490,20 +3503,23 @@ def extract_one_slit(
             fit_width, fit_center, _ = fit_params
             n_sig = 3.
             if extract_model.dispaxis == HORIZONTAL:
-                extract_model.ystart = max(0, fit_center - (n_sig * fit_width))
-                extract_model.ystop = min(data.shape[-2] - 1, fit_center + (n_sig * fit_width))
+                extract_model.ystart = max(0, fit_center - (n_sig * fit_width)) + y_range[0]
+                extract_model.ystop = min(data.shape[-2] - 1, fit_center + (n_sig * fit_width)) + y_range[0]
                 extract_model.p_src = [[create_poly([extract_model.ystart]),
                                         create_poly([extract_model.ystop])]]
+                log.debug(f"Slit auto-centering fit_center: {fit_center + y_range[0]}"
+                          f"and fit_width: {fit_width}")
 
             else:
-                extract_model.xstart = max(0, fit_center - (n_sig * fit_width))
-                extract_model.xstop = min(data.shape[-1] - 1, fit_center + (n_sig * fit_width))
+                extract_model.xstart = max(0, fit_center - (n_sig * fit_width)) + x_range[0]
+                extract_model.xstop = min(data.shape[-1] - 1, fit_center + (n_sig * fit_width)) + x_range[0]
                 extract_model.p_src = [[create_poly([extract_model.xstart]),
                                         create_poly([extract_model.xstop])]]
 
+                log.debug(f"Slit auto-centering fit_center: {fit_center + x_range[0]}"
+                          f"and fit_width: {fit_width}")
+
             log.info("Overriding cross-dispersion bounds with slit auto-centering.")
-            log.debug(f"Slit auto-centering fit_center: {fit_center}"
-                      f"and fit_width: {fit_width}")
         except (ValueError, RuntimeError) as e:
             log.warning("Auto-centering failed; reverting to default behavior.")
             log.debug(f"Auto-centering error: {e}")
