@@ -105,5 +105,5 @@ A parameter only used for investigating which detector pixels contributed to a c
 
 ``debug_spaxel [string]``
 
-  The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 1. For example,
-  to print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
+  The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 0.
+  To print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
