@@ -203,12 +203,10 @@ class OutlierDetection:
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
-        dm0 = datamodel_open(drizzled_models[0])
-        median_model = datamodels.ImageModel(dm0.data.shape)
-        median_model.update(dm0)
-        median_model.meta.wcs = dm0.meta.wcs
-        dm0.close()
-        del dm0
+        with datamodel_open(drizzled_models[0]) as dm0:
+            median_model = datamodels.ImageModel(dm0.data.shape)
+            median_model.update(dm0)
+            median_model.meta.wcs = dm0.meta.wcs
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
@@ -216,6 +214,7 @@ class OutlierDetection:
             basepath=median_model.meta.filename,
             suffix='median')
         median_model.save(median_model_output_path)
+        log.info(f"Saved model in {median_model_output_path}")
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
@@ -247,6 +246,8 @@ class OutlierDetection:
         - 'minmed' not implemented as an option
         """
         maskpt = self.outlierpars.get('maskpt', 0.7)
+
+        log.info("Computing median")
 
         # Compute weight means without keeping datamodels for eacn input open
         # Start by insuring that the ModelContainer does NOT open and keep each datamodel
@@ -321,17 +322,9 @@ class OutlierDetection:
         # Initialize container for output blot images
         blot_models = ModelContainer(open_models=False)
 
-        log.info("Blotting median...")
+        log.info("Blotting median")
         for model in self.input_models:
             blotted_median = model.copy()
-            blot_root = '_'.join(model.meta.filename.replace(
-                '.fits', '').split('_')[:-1])
-            model_path = self.make_output_path(
-                basename=blot_root,
-                suffix='blot'
-            )
-
-            blotted_median.meta.filename = model_path
 
             # clean out extra data not related to blot result
             blotted_median.err *= 0.0  # None
@@ -341,10 +334,12 @@ class OutlierDetection:
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                             sinscl=sinscl)
 
+            model_path = self.make_output_path(basepath=model.meta.filename, suffix='blot')
             blotted_median.save(model_path)
+            log.info(f"Saved model in {model_path}")
+
+            # Append model name to the ModelContainer so it is not passed in memory
             blot_models.append(model_path)
-            blotted_median.close()
-            del blotted_median
 
         return blot_models
 
