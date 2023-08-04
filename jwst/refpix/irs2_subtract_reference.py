@@ -344,8 +344,8 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
         for k in bits:
             ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
                    2 * (odd_even_row - 1))
-            log.debug("bad interleaved reference at pixels {} {}"
-                      .format(ref, ref + 1))
+            log.debug("bad interleaved reference at pixels {} through {}"
+                      .format(ref, ref + 4))
             data[..., ref:ref + 4] = 0.
 
 
