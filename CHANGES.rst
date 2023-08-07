@@ -53,6 +53,9 @@ resample
   image shape and the bounding box both for ``SCI`` image as well as for the
   ``ERR`` and ``VARIANCE_*`` images. [#7774]
 
+- Update the following exposure time keywords according to JWST Keyword dictionary
+  equations: XPOSURE (EFFEXPTM), EFFINTTM, DURATION and TELAPSE. [#7393]
+
 residual_fringe
 ---------------
 
