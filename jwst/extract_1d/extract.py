@@ -1439,7 +1439,8 @@ class ExtractBase(abc.ABC):
         fwd_transform = self.wcs(x, y)
         middle_wl = np.nanmean(fwd_transform[2])
 
-        if input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+        if input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC',
+                                              'NRS_BRIGHTOBJ']:
             if slit is None:
                 xpos = input_model.source_xpos
                 ypos = input_model.source_ypos
