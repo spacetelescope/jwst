@@ -373,7 +373,6 @@ class ResampleData:
         output_model.meta.exposure.start_time = min(exposure_times['start'])
         output_model.meta.exposure.end_time = max(exposure_times['end'])
         output_model.meta.resample.product_exposure_time = total_exposure_time
-        print('total_exposure_time = ', total_exposure_time)
 
         # Update other exposure time keywords:
         # XPOSURE (identical to EFFEXPTM)
@@ -382,12 +381,10 @@ class ResampleData:
             output_model.meta.exposure.groupgap + output_model.meta.exposure.drop_frames1) *\
             output_model.meta.exposure.nints
         output_model.meta.exposure.effective_exposure_time = xposure
-        print('effective_exposure_time = ', xposure)
         # EFFINTTM (effective integration time)
         effinttm = (output_model.meta.exposure.ngroups - 1) * output_model.meta.exposure.group_time \
             + output_model.meta.exposure.group_time
         output_model.meta.exposure.integration_time = effinttm
-        print('integration_time = ', effinttm)
         # DURATION (identical to TELAPSE, elapsed time)
         total_photon_collection_time = output_model.meta.exposure.frame_time * \
             ((output_model.meta.exposure.ngroups * output_model.meta.exposure.nframes + \
@@ -399,7 +396,6 @@ class ResampleData:
             output_model.meta.exposure.nresets_between_ints * (output_model.meta.exposure.nints - 1))
         output_model.meta.exposure.duration = duration
         output_model.meta.exposure.elapsed_exposure_time = duration
-        print('duration = ', duration)
 
     @staticmethod
     def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht,
