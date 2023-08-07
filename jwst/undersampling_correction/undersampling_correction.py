@@ -92,49 +92,49 @@ def flag_pixels(data, gdq, signal_threshold):
                 lowest_exc_1d[wh_exc_1d] = ii_grp
 
     # Loop over exceedances and flag as UNDERSAMP and DO_NOT_USE, then flag
-    #   that pixel's 4 neighbors.
+    #   that pixel's 4 nearest neighbors
     lowest_exc_2d = lowest_exc_1d.reshape((n_rows, n_cols))
+
     for ii_int in range(n_ints):
         for ii_grp in range(n_grps):
             wh_set_flag = np.where(lowest_exc_2d == ii_grp)
-
             # set arrays of coordinates of each exceedance
             yy = wh_set_flag[0]
             xx = wh_set_flag[1]
 
-            if len(wh_set_flag) > 0 and len(xx) > 0:
-
+            if len(wh_set_flag) > 0 and len(xx) > 0:  # there are exceedances
                 gdq[ii_int, ii_grp:, yy, xx] = \
                     np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx],
                                   dqflags.group['UNDERSAMP']
                                   | dqflags.group['DO_NOT_USE'])
 
-                for ii in range(0, len(xx)):
-                    x_i = xx[ii]
-                    y_i = yy[ii]
+                # Set the same flags for the 4 nearest neighbors
+                wh_west = np.where(xx > 0)  # pixels whose western neighbors to be flagged
+                if len(wh_west[0]) > 0:
+                    gdq[ii_int, ii_grp:, yy, xx[wh_west] - 1] = \
+                        np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx[wh_west] - 1],
+                                      dqflags.group['UNDERSAMP'] |
+                                      dqflags.group['DO_NOT_USE'])
 
-                    if x_i > 0:  # 'WEST' PIXEL
-                        gdq[ii_int, ii_grp:, y_i, x_i-1] = \
-                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i, x_i-1],
-                                          dqflags.group['UNDERSAMP'] |
-                                          dqflags.group['DO_NOT_USE'])
+                wh_east = np.where(xx < ncols - 1)  # pixels whose eastern neighbors to be flagged
+                if len(wh_east[0]) > 0:
+                    gdq[ii_int, ii_grp:, yy, xx[wh_east] + 1] = \
+                        np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx[wh_east] + 1],
+                                      dqflags.group['UNDERSAMP'] |
+                                      dqflags.group['DO_NOT_USE'])
 
-                    if x_i < ncols-1:  # 'EAST' PIXEL
-                        gdq[ii_int, ii_grp:, y_i, x_i+1] = \
-                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i, x_i+1],
-                                          dqflags.group['UNDERSAMP'] |
-                                          dqflags.group['DO_NOT_USE'])
+                wh_north = np.where(yy > 0)  # pixels whose northern neighbors to be flagged
+                if len(wh_north[0]) > 0:
+                    gdq[ii_int, ii_grp:, yy[wh_north] - 1, xx] = \
+                        np.bitwise_or(gdq[ii_int, ii_grp:, yy[wh_north] - 1, xx],
+                                      dqflags.group['UNDERSAMP'] |
+                                      dqflags.group['DO_NOT_USE'])
 
-                    if y_i > 0:  # 'NORTH' PIXEL
-                        gdq[ii_int, ii_grp:, y_i-1, x_i] = \
-                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i-1, x_i],
-                                          dqflags.group['UNDERSAMP'] |
-                                          dqflags.group['DO_NOT_USE'])
-
-                    if y_i < nrows-1:  # 'SOUTH' PIXEL
-                        gdq[ii_int, ii_grp:, y_i+1, x_i] = \
-                            np.bitwise_or(gdq[ii_int, ii_grp:, y_i+1, x_i],
-                                          dqflags.group['UNDERSAMP'] |
-                                          dqflags.group['DO_NOT_USE'])
+                wh_south = np.where(yy < nrows - 1)  # pixels whose southern neighbors to be flagged
+                if len(wh_south[0]) > 0:
+                    gdq[ii_int, ii_grp:, yy[wh_south] + 1, xx] = \
+                        np.bitwise_or(gdq[ii_int, ii_grp:, yy[wh_south] + 1, xx],
+                                      dqflags.group['UNDERSAMP'] |
+                                      dqflags.group['DO_NOT_USE'])
 
     return gdq
