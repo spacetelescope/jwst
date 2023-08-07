@@ -54,7 +54,7 @@ resample
   ``ERR`` and ``VARIANCE_*`` images. [#7774]
 
 - Update the following exposure time keywords according to JWST Keyword dictionary
-  equations: XPOSURE (EFFEXPTM), EFFINTTM, DURATION and TELAPSE. [#7393]
+  equations: XPOSURE (EFFEXPTM), EFFINTTM, DURATION and TELAPSE. [#7793]
 
 residual_fringe
 ---------------
