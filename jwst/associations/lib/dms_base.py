@@ -699,7 +699,7 @@ class DMSBaseMixin(ACIDMixin):
         """
         # Retrieve all the optical elements
         opt_elems = []
-        for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3']:
+        for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3', 'opt_elem4']:
             try:
                 values = list(self.constraints[opt_elem].found_values)
             except KeyError:
