@@ -15,13 +15,15 @@ UNSA = test_dq_flags["UNDERSAMP"]
 ADFL = test_dq_flags["AD_FLOOR"]
 DROU = test_dq_flags["DROPOUT"]
 
+UNSA_DNU = UNSA + DNU
+
 
 def test_pix_0():
     """
     Having all data in ramp below the signal threshold, the only non-GOOD
     groups in the output GROUPDQ should be those DNU propagated from the input.
     """
-    ngroups, nints, nrows, ncols = set_scalars()
+    ngroups, nints, nrows, ncols = 10, 1, 1, 1
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
         ngroups, nints, nrows, ncols)
 
@@ -46,7 +48,7 @@ def test_pix_1():
     only non-GOOD groups in the output GROUPDQ should be UNSA + DNU for the first
     group exceeding the signal threshold and all subsequent groups.
     """
-    ngroups, nints, nrows, ncols = set_scalars()
+    ngroups, nints, nrows, ncols = 10, 1, 1, 1
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
         ngroups, nints, nrows, ncols)
 
@@ -77,7 +79,7 @@ def test_pix_2():
     groups will have 'DNU'+'UNSA' added to their GROUPDQ, as will all later
     groups.
     """
-    ngroups, nints, nrows, ncols = set_scalars()
+    ngroups, nints, nrows, ncols = 10, 1, 1, 1
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
         ngroups, nints, nrows, ncols)
 
@@ -107,9 +109,7 @@ def test_too_few_groups():
     Test that processing for datasets having too few (<3) groups per integration
     are skipped.
     """
-    ngroups, nints, nrows, ncols = set_scalars()
-    ngroups = 2
-
+    ngroups, nints, nrows, ncols = 2, 1, 1, 1
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
         ngroups, nints, nrows, ncols)
 
@@ -123,16 +123,86 @@ def test_too_few_groups():
     npt.assert_string_equal(status, "SKIPPED")
 
 
-def set_scalars():
+def test_flag_neighbors():
     """
-    Set needed scalars for the size of the dataset,
+    Test flagging of 4 nearest neighbors of exceedances
     """
-    ngroups = 10
-    nints = 1
-    nrows = 1
-    ncols = 1
+    ngroups, nints, nrows, ncols = 6, 1, 4, 3
+    ramp_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols)
 
-    return ngroups, nints, nrows, ncols
+    signal_threshold = 4000.
+
+    # Populate pixel-specific SCI and GROUPDQ arrays
+    ramp_model.data[0, :, :, :] = \
+        np.array([[
+            [1900., 2666., 2100.],
+            [3865., 2300., 3177.],
+            [3832., 3044., 3588.],
+            [3799., 3233., 3000.]],
+
+           [[2100., 2866., 2300.],
+            [4065., 2500., 3377.],
+            [4032., 3244., 3788.],
+            [3999., 3433., 3200.]],
+
+           [[2300., 3066., 2500.],
+            [4265., 2700., 3577.],
+            [4232., 3444., 3988.],
+            [4199., 3633., 3400.]],
+
+           [[2500., 3266., 2700.],
+            [4465., 2900., 3777.],
+            [4432., 3644., 4188.],
+            [4399., 3833., 3600.]],
+
+           [[2700., 3466., 2900.],
+            [4665., 3100., 3977.],
+            [4632., 3844., 4388.],
+            [4599., 4033., 3800.]],
+
+           [[2900., 3666., 3100.],
+            [4865., 3300., 4177.],
+            [4832., 4044., 4588.],
+            [4799., 4233., 4000.]]], dtype=np.float32)
+
+    out_model = undersampling_correction(ramp_model, signal_threshold)
+    out_gdq = out_model.groupdq
+
+    true_out_gdq = ramp_model.groupdq.copy()
+    true_out_gdq[0, :, :, :] = \
+        np.array([[
+            [0,   0,   0],
+            [0,   0,   0],
+            [0,   0,   0],
+            [0,   0,   0]],
+
+           [[UNSA_DNU,   0,   0],
+            [UNSA_DNU, UNSA_DNU,   0],
+            [UNSA_DNU, UNSA_DNU,   0],
+            [UNSA_DNU,   0,   0]],
+
+           [[UNSA_DNU,   0,   0],
+            [UNSA_DNU, UNSA_DNU,   0],
+            [UNSA_DNU, UNSA_DNU,   0],
+            [UNSA_DNU, UNSA_DNU,   0]],
+
+           [[UNSA_DNU,   0,   0],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU]],
+
+           [[UNSA_DNU,   0,   0],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU]],
+
+           [[UNSA_DNU,   0, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU],
+            [UNSA_DNU, UNSA_DNU, UNSA_DNU]]], dtype=np.uint8)
+
+    npt.assert_array_equal(out_gdq, true_out_gdq)
 
 
 def create_mod_arrays(ngroups, nints, nrows, ncols):
