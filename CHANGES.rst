@@ -90,6 +90,12 @@ engdb_tools
 - Check alternative host is alive before attempting to run test for
   access to avoid waiting the full timeout during test runs [#7780]
 
+extract_1d
+----------
+
+- Use ``source_{x/y}pos`` metadata to center extraction region for NIRSpec
+  (non-IFU) data. [#7796]
+
 extract_2d
 ----------
 
