@@ -10,6 +10,7 @@ from astropy.modeling import polynomial
 from astropy.io import fits
 from gwcs import WCS
 from stdatamodels import DataModel
+from stdatamodels.jwst.transforms.models import IdealToV2V3, V2V3ToIdeal
 from stdatamodels.properties import ObjectNode
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags, SlitModel, SpecModel
@@ -1450,12 +1451,44 @@ class ExtractBase(abc.ABC):
 
             slit2det = self.wcs.get_transform('slit_frame', 'detector')
             x_y = slit2det(xpos, ypos, middle_wl)
+            log.info(f"Using source_xpos and source_ypos to center extraction"
+                     f"at pixel position {x_y[0]:.2f} {x_y[1]:.2f}.")
+
+        elif input_model.meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS']:
+            # V2_ref and v3_ref should be in arcsec
+            idltov23 = IdealToV2V3(
+                input_model.meta.wcsinfo.v3yangle,
+                input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
+                input_model.meta.wcsinfo.vparity
+            )
+            v23toidl = V2V3ToIdeal(
+                input_model.meta.wcsinfo.v3yangle,
+                input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
+                input_model.meta.wcsinfo.vparity
+            )
+
+            worldtov23 = input_model.meta.wcs.get_transform('world', 'v2v3')
+            v23todet = input_model.meta.wcs.get_transform('v2v3', 'detector')
+
+            v23refx, v23refy = worldtov23(input_model.meta.wcsinfo.ra_ref, input_model.meta.wcsinfo.dec_ref)
+
+            idlrefx, idlrefy = v23toidl(v23refx, v23refy)
+
+            xidl_offset = input_model.meta.dither.x_offset
+            yidl_offset = input_model.meta.dither.y_offset
+
+            v2_off, v3_off = idltov23(idlrefx + xidl_offset, idlrefy + yidl_offset)  # in arcsec
+            x_y = v23todet(v2_off, v3_off)
+
+            log.info(f"Using dither offsets to center extraction"
+                     f"at pixel position {x_y[0]:.2f} {x_y[1]:.2f}.")
 
         else:
             try:
                 x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
             except NotImplementedError:
-                log.warning("Inverse wcs is not implemented, so can't use target coordinates to get location of spectrum.")
+                log.warning("Inverse wcs is not implemented, so can't use "
+                            "target coordinates to get location of spectrum.")
                 return
 
         # locn is the XD location of the spectrum:
