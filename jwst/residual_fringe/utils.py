@@ -10,10 +10,7 @@ from BayesicFitting import RobustShell
 from BayesicFitting import ConstantModel
 from BayesicFitting import Fitter
 
-from astropy.modeling.models import Spline1D
-from astropy.modeling.fitting import SplineExactKnotsFitter
-
-from .fitter import ChiSqOutlierRejectionFitter
+from .fitter import spline_fitter
 
 import logging
 log = logging.getLogger(__name__)
@@ -478,14 +475,9 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
     # Fit the spline
     # robust fitting causing problems for fringe 2 in channels 3 and 4, just use the fitter class
     if ffreq > 1.5:
-        spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
-        fitter = SplineExactKnotsFitter()
-        robust_fitter = ChiSqOutlierRejectionFitter(fitter)
-        bg_model = robust_fitter(spline_model, x, y, weights=w)
+        bg_model = spline_fitter(x, y, w, t, 2, reject_outliers=True)
     else:
-        spline_model = Spline1D(knots=t, degree=1, bounds=[x[0], x[-1]])
-        fitter = SplineExactKnotsFitter()
-        bg_model = fitter(spline_model, x, y, weights=w)
+        bg_model = spline_fitter(x, y, w, t, 1, reject_outliers=False)
 
     # fit the background
     bg_fit = bg_model(wavenum_scaled)
@@ -936,14 +928,9 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
     # Fit the spline
     # TODO: robust fitting causing problems for fringe 2, change to just using fitter there
     if ffreq > 1.5:
-        spline_model = Spline1D(knots=t, degree=2, bounds=[x[0], x[-1]])
-        fitter = SplineExactKnotsFitter()
-        robust_fitter = ChiSqOutlierRejectionFitter(fitter)
-        bg_model = robust_fitter(spline_model, x, y, weights=w)
+        bg_model = spline_fitter(x, y, w, t, 2, reject_outliers=True)
     else:
-        spline_model = Spline1D(knots=t, degree=1, bounds=[x[0], x[-1]])
-        fitter = SplineExactKnotsFitter()
-        bg_model = fitter(spline_model, x, y, weights=w)
+        bg_model = spline_fitter(x, y, w, t, 1, reject_outliers=False)
 
     # fit the background
     bg_fit = bg_model(wavenum_scaled)
