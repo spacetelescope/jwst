@@ -187,6 +187,44 @@ def test_calculate_pathloss_vector_interpolation():
     assert is_inside_slitlet is True
 
 
+def test_calculate_pathloss_vector_interpolation_nontrivial():
+    """Calculate the pathloss vector for when interpolation is necessary."""
+
+    datmod = PathlossModel()
+
+    ref_data = {'pointsource_data': np.arange(10 * 10 * 10, dtype=np.float32).reshape((10, 10, 10)),
+                'pointsource_wcs': {'crpix1': 1.75, 'crval1': -0.5, 'cdelt1': 0.5,
+                                    'crpix2': 1.25, 'crval2': -0.5, 'cdelt2': 0.5,
+                                    'crpix3': 1.0, 'crval3': 1.0, 'cdelt3': 1.0}}
+
+    datmod.apertures.append(ref_data)
+
+    wavelength, pathloss, is_inside_slitlet = calculate_pathloss_vector(datmod.apertures[0].pointsource_data,
+                                                                        datmod.apertures[0].pointsource_wcs,
+                                                                        0.0, 0.0)
+
+    # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
+    # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
+    # data array.
+    wavelength_comparison = np.array([1 + (float(i + 1) - 1.0) * 1 for i in np.arange(10)])
+    assert np.all(wavelength == wavelength_comparison)
+
+    # In this instance we interpolate to get the array for pathloss VS wavelength.
+    # Data point is at x=1.75, y=1.25, so between pixels 1 and 2, but
+    # closer to 2 in x, closer to 1 in y
+    # (remember that y comes first for numpy)
+    ps_data = datmod.apertures[0].pointsource_data
+    pathloss_comparison = np.sum([0.75 * 0.25 * ps_data[:, 1, 1],
+                                  0.75 * 0.75 * ps_data[:, 1, 2],
+                                  0.25 * 0.25 * ps_data[:, 2, 1],
+                                  0.25 * 0.75 * ps_data[:, 2, 2]], axis=0)
+
+    assert np.all(pathloss == pathloss_comparison)
+
+    # With the current wcs values, the logic should be returning True
+    assert is_inside_slitlet is True
+
+
 def test_is_pointsource():
     """Check to see if object it point source"""
 

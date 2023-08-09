@@ -30,6 +30,11 @@ outlier_detection
 
 - Fix naming and logging of intermediate blot files written to disk for imaging modes. [#7784]
 
+pathloss
+--------
+
+- Fix interpolation error for point source corrections. [#7799]
+
 refpix
 ------
 
