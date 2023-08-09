@@ -59,6 +59,10 @@ residual_fringe
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
 
+set_telescope_pointing
+----------------------
+
+- Commanded Guide Star is always relative to FGS1 [#7804]
 
 1.11.3 (2023-07-17)
 ===================
