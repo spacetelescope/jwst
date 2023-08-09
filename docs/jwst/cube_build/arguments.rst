@@ -64,7 +64,7 @@ each band will be created.
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
 
-``scale12``
+``scalexy``
   The output cube's spaxel size for  axis 1 and 2 (spatial).
 
 ``scalew``

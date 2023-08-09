@@ -89,8 +89,7 @@ class CubeBuildStep (Step):
             self.grating = self.grating.lower()
         if not self.coord_system.islower():
             self.coord_system = self.coord_system.lower()
-        #if not self.output_type.islower():
-        #    self.output_type = self.output_type.lower()
+
         if not self.weighting.islower():
             self.weighting = self.weighting.lower()
 
