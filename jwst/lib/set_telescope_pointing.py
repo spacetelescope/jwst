@@ -258,8 +258,6 @@ class Transforms:
     m_eci2sifov: np.array = None
     #: ECI to V
     m_eci2v: np.array = None
-    #: FGS1 to FGSx transformation
-    m_fgs12fgsx: np.array = None
     #: FGSX to Guide Stars transformation
     m_fgsx2gs: np.array = None
     #: FGS1 to SIFOV

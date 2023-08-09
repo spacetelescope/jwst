@@ -29,7 +29,6 @@ transforms:
     - [-0.5519140390738069, 0.8193200898511738, 0.15525940821573725]
     datatype: float64
     shape: [3, 3]
-  m_fgs12fgsx: null
   m_fgs12sifov: null
   m_gs2gsapp: null
   m_j2fgs1: null

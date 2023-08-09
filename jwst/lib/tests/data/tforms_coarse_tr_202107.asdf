@@ -39,13 +39,6 @@ transforms:
     - [-0.5518060482351074, 0.8193850752853762, 0.15530054167014012]
     datatype: float64
     shape: [3, 3]
-  m_fgs12fgsx: !core/ndarray-1.0.0
-    data:
-    - [1.0, 0.0, 0.0]
-    - [0.0, 1.0, 0.0]
-    - [0.0, 0.0, 1.0]
-    datatype: float64
-    shape: [3, 3]
   m_gs2gsapp: !core/ndarray-1.0.0
     data:
     - [1.0, 0.0, 0.0]
