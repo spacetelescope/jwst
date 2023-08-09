@@ -3490,7 +3490,8 @@ def extract_one_slit(
                           np.min(good_pixels[1]): np.max(good_pixels[1]) + 1]
 
         absdata[absdata < 0] = 0
-        normed = absdata / np.nanmax(absdata, axis=3-extract_params['dispaxis'], keepdims=True)
+
+        normed = absdata / np.nanmax(absdata, axis=extract_params['dispaxis'] - 1, keepdims=True)
 
         y_fit = np.nanmedian(normed, axis=int(-1 * extract_params['dispaxis']))
         x_fit = np.arange(len(y_fit))
