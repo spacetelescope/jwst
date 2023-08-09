@@ -187,8 +187,8 @@ def calculate_pathloss_vector(pathloss_refdata,
             a22 = dx2 * dy2
             j, i = int(object_colindex), int(object_rowindex)
             pathloss_vector = (a22 * pathloss_refdata[:, i, j]
-                               + a12 * pathloss_refdata[:, i + 1, j]
-                               + a21 * pathloss_refdata[:, i, j + 1]
+                               + a21 * pathloss_refdata[:, i + 1, j]
+                               + a12 * pathloss_refdata[:, i, j + 1]
                                + a11 * pathloss_refdata[:, i + 1, j + 1])
 
         return wavelength, pathloss_vector, is_inside_slitlet
