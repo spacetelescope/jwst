@@ -17,12 +17,12 @@ class RefPixStep(Step):
     class_alias = "refpix"
 
     spec = """
-        odd_even_columns = boolean(default=True)
-        use_side_ref_pixels = boolean(default=True)
-        side_smoothing_length = integer(default=11)
-        side_gain = float(default=1.0)
-        odd_even_rows = boolean(default=True)
-        ovr_corr_mitigation_ftr = float(default=1.8)
+        odd_even_columns = boolean(default=True) # Compute reference signal separately for even/odd columns (NIR only)
+        use_side_ref_pixels = boolean(default=True) # Use side reference pixels for reference signal for each row (NIR only)
+        side_smoothing_length = integer(default=11) # Median window smoothing height for side reference signal (NIR only)
+        side_gain = float(default=1.0) # Multiplicative factor for side reference signal before subtracting from rows (NIR only)
+        odd_even_rows = boolean(default=True) # Compute reference signal separately for even- and odd-numbered rows (MIRI only)
+        ovr_corr_mitigation_ftr = float(default=1.8) # Factor to avoid overcorrection of bad reference pixels for IRS2
     """
 
     reference_file_types = ['refpix']
