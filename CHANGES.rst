@@ -90,6 +90,8 @@ pathloss
 
 - Fix interpolation error for point source corrections. [#7799]
 
+- MIRI LRS correction defaulting to center of slit. [#7806]
+
 pixel_replace
 -------------
 
