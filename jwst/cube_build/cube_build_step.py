@@ -42,9 +42,8 @@ class CubeBuildStep (Step):
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
-         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
-         scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
-         scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
+         output_type = option('band','channel','grating','multi',default=None) # Type IFUcube to create.
+         scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
@@ -58,6 +57,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
+         debug_spaxel = string(default='-1 -1 -1') # Default not used
        """
 
     reference_file_types = ['cubepar']
@@ -89,15 +89,12 @@ class CubeBuildStep (Step):
             self.grating = self.grating.lower()
         if not self.coord_system.islower():
             self.coord_system = self.coord_system.lower()
-        if not self.output_type.islower():
-            self.output_type = self.output_type.lower()
+
         if not self.weighting.islower():
             self.weighting = self.weighting.lower()
 
-        if self.scale1 != 0.0:
-            self.log.info(f'Input Scale of axis 1 {self.scale1}')
-        if self.scale2 != 0.0:
-            self.log.info(f'Input Scale of axis 2 {self.scale2}')
+        if self.scalexy != 0.0:
+            self.log.info(f'Input Scale of axis 1 and 2 {self.scalexy}')
         if self.scalew != 0.0:
             self.log.info(f'Input wavelength scale {self.scalew}')
 
@@ -159,7 +156,7 @@ class CubeBuildStep (Step):
         self.pars_input['grating'] = []
 
         # including values in pars_input that could get updated in cube_build_step.py
-        self.pars_input['output_type'] = self.output_type
+
         self.pars_input['coord_system'] = self.coord_system
 
         if self.single:
@@ -185,7 +182,8 @@ class CubeBuildStep (Step):
         # if they are then self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
 # ________________________________________________________________________________
-# DataTypes: Read in the input data - 4 formats are allowed:
+# DataTypes
+# Read in the input data - 4 formats are allowed:
 # 1. filename
 # 2. single model
 # 3. ASN table
@@ -205,6 +203,20 @@ class CubeBuildStep (Step):
         self.input_models = input_table.input_models
         self.output_name_base = input_table.output_name
 # ________________________________________________________________________________
+
+# Read in the first input model to determine with instrument we have
+# output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
+        instrument = self.input_models[0].meta.instrument.name.upper()
+        if self.output_type is None:
+            if instrument == 'NIRSPEC':
+                self.output_type = 'band'
+
+            elif instrument == 'MIRI':
+                self.output_type = 'channel'
+        self.pars_input['output_type'] = self.output_type
+        
+        self.log.info(f'Setting output type to: {self.output_type}')
+         
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
 
@@ -229,8 +241,7 @@ class CubeBuildStep (Step):
         # these parameters are related to the building a single ifucube_model
 
         pars_cube = {
-            'scale1': self.scale1,
-            'scale2': self.scale2,
+            'scalexy': self.scalexy,
             'scalew': self.scalew,
             'interpolation': self.interpolation,
             'weighting': self.weighting,
@@ -241,7 +252,8 @@ class CubeBuildStep (Step):
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
             'skip_dqflagging': self.skip_dqflagging,
-            'suffix': self.suffix}
+            'suffix': self.suffix,
+            'debug_spaxel': self.debug_spaxel}
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
@@ -345,7 +357,6 @@ class CubeBuildStep (Step):
 
                 cube_container.append(result)
                 del result
-                
             del thiscube
 
         # irrelevant WCS keywords we will remove from final product
