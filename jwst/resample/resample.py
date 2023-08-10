@@ -365,11 +365,12 @@ class ResampleData:
         exposure_times = {'start': [], 'end': []}
         effinttm, duration = 0.0, 0.0
         for exposure in self.input_models.models_grouped:
-            total_exposure_time += exposure[0].meta.exposure.exposure_time
-            exposure_times['start'].append(exposure[0].meta.exposure.start_time)
-            exposure_times['end'].append(exposure[0].meta.exposure.end_time)
-            effinttm += exposure[0].meta.exposure.integration_time
-            duration += exposure[0].meta.exposure.duration
+            for n, _ in enumerate(exposure):
+                total_exposure_time += exposure[n].meta.exposure.exposure_time
+                exposure_times['start'].append(exposure[n].meta.exposure.start_time)
+                exposure_times['end'].append(exposure[n].meta.exposure.end_time)
+                effinttm += exposure[n].meta.exposure.integration_time
+                duration += exposure[n].meta.exposure.duration
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
