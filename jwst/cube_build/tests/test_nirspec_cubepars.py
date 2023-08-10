@@ -157,8 +157,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     # set up the ifucube class
 
     pars_cube = {
-        'scale1': 0.0,
-        'scale2': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -169,11 +168,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
         'wavemin': None,
         'wavemax': None,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     pipeline = 3
     input_model = None
@@ -222,8 +217,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     user_rois = 0.6
     user_roiw = 0.8
     pars_cube = {
-        'scale1': user_ascale,
-        'scale2': user_ascale,
+        'scalexy': user_ascale,
         'scalew': user_wscale,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -234,11 +228,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
         'wavemin': user_wave_min,
         'wavemax': user_wave_max,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     this_cube = ifu_cube.IFUCubeData(
         pipeline,

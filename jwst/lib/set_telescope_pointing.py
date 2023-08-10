@@ -258,8 +258,8 @@ class Transforms:
     m_eci2sifov: np.array = None
     #: ECI to V
     m_eci2v: np.array = None
-    #: FGS1 to FGSx transformation
-    m_fgs12fgsx: np.array = None
+    #: FGSX to Guide Stars transformation
+    m_fgsx2gs: np.array = None
     #: FGS1 to SIFOV
     m_fgs12sifov: np.array = None
     #: Velocity aberration
@@ -2233,13 +2233,19 @@ def calc_v3pags(t_pars: TransformParameters):
     -------
     v3pags : float
         The V3 Position Angle at the Guide Star, in degrees
+
+    Notes
+    -----
+    Modification for `jwst` release post-1.11.3: The commanded position of the guide
+    star is always relative to FGS1. Hence, the aperture to use for the SIAF
+    transformation is always FGS1.
     """
 
     # Determine Guides Star estimated WCS information.
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
-    # Retrieve the Ideal Y-angle for the desired FGS
-    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid], useafter=t_pars.useafter)
+    # Retrieve the Ideal Y-angle for FGS1
+    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[1], useafter=t_pars.useafter)
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
@@ -2279,8 +2285,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
         M_eci_to_gs =
             M_z_to_x               *
             M_gsics_to_gsappics    *
-            M_fgsics_to_gsics      *
-            M_fgs1ics_to_M_fgsics  *
+            M_fgs1ics_to_gsics     *
             M_j_to_fgs1ics         *
             M_eci_to_j
 
@@ -2288,11 +2293,16 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
             M_eci_to_gs = ECI to Guide Star Ideal Frame
             M_gsics_to_gsappics = Velocity Aberration correction
-            M_fgsics_to_gsics = Convert from the FGS ICS frame to Guide Star ICS frame
-            M_fgs1ics_to_fgsics = Convert from the FGS1 ICS frame to the in-use FGS ICS frame
+            M_fgs1ics_to_gsics = Convert from the FGS1 ICS frame to Guide Star ICS frame
             M_j_to_fgs1ics = Convert from J frame to FGS1 ICS frame
             M_eci_to_j = ECI (quaternion) to J-frame
 
+    Modification for `jwst` release post-1.11.3: The commanded position of the guide
+    star is always relative to FGS1. Hence, the aperture to use is always FGS1.
+    The formulae above have been modified appropriately.
+    However, in the code, note that the transformations go to FGS1, but then
+    is suddenly referred to thereafter as FGSX. The assumption to make is that X is always 1,
+    for FGS1.
     """
 
     # Initial state of the transforms
@@ -2300,13 +2310,12 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
-    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     # Apply the Velocity Aberration. To do so, the M_eci2gsics matrix must be created. This
     # is used to calculate the aberration matrix.
     # Also, since the aberration is to be removed, the velocity is negated.
-    m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_fgs12fgsx, t.m_j2fgs1, t.m_eci2j])
+    m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_j2fgs1, t.m_eci2j])
     logger.debug('m_eci2gsics: %s', m_eci2gsics)
     t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
 
