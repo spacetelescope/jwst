@@ -4,8 +4,7 @@
 assign_wcs
 ----------
 
-- Use isinstance instead of comparison with a type for lamp_mode
-  inspection [#7801]
+- Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
 
 calwebb_spec2
 -------------
@@ -13,6 +12,12 @@ calwebb_spec2
 - Run ``pixel_replace`` before setting metadata and suffix of datamodel
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
+
+cube_build
+----------
+
+- Replace scale1 and scale2 arguments with scalexy, add debug option debug_spaxel,
+  and add more details to docs. [#7783]
 
 datamodels
 ----------
@@ -65,6 +70,12 @@ residual_fringe
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
+
+set_telescope_pointing
+----------------------
+
+- Fixes to account for the fact that the commanded Guide Star position is always
+  relative to FGS1 even when guiding with FGS2. [#7804]
 
 
 1.11.3 (2023-07-17)
