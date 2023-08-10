@@ -2236,7 +2236,7 @@ def calc_v3pags(t_pars: TransformParameters):
 
     Notes
     -----
-    Modification for release post-1.11.3: The commanded position of the guide
+    Modification for `jwst` release post-1.11.3: The commanded position of the guide
     star is always relative to FGS1. Hence, the aperture to use for the SIAF
     transformation is always FGS1.
     """
@@ -2297,7 +2297,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
             M_j_to_fgs1ics = Convert from J frame to FGS1 ICS frame
             M_eci_to_j = ECI (quaternion) to J-frame
 
-    Modification for release post-1.11.3: The commanded position of the guide
+    Modification for `jwst` release post-1.11.3: The commanded position of the guide
     star is always relative to FGS1. Hence, the aperture to use is always FGS1.
     The formulae above have been modified appropriately.
     However, in the code, note that the transformations go to FGS1, but then
