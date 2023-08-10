@@ -1,6 +1,12 @@
 1.11.4 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Use isinstance instead of comparison with a type for lamp_mode
+  inspection [#7801]
+
 calwebb_spec2
 -------------
 
@@ -18,6 +24,11 @@ flat_field
 
 - Modify the test_flatfield_step_interface unit test to prevent it from causing
   other tests to fail. [#7752]
+
+general
+-------
+
+- Require minimum asdf version 2.14.4 [#7801]
 
 master_background
 -----------------

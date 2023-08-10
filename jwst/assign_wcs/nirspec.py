@@ -401,7 +401,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """
     exp_type = input_model.meta.exposure.type.lower()
     lamp_mode = input_model.meta.instrument.lamp_mode
-    if type(lamp_mode) == str:
+    if isinstance(lamp_mode, str):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'
@@ -1825,7 +1825,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
         The slit dimensions relative to the center of the slit.
     """
     lamp_mode = input_model.meta.instrument.lamp_mode
-    if type(lamp_mode) == str:
+    if isinstance(lamp_mode, str):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'
