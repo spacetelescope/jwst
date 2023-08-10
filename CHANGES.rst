@@ -1,6 +1,13 @@
 1.11.4 (unreleased)
 ===================
 
+calwebb_spec2
+-------------
+
+- Run ``pixel_replace`` before setting metadata and suffix of datamodel
+  that is returned by the pipeline to ensure a file is created with the
+  expected ``_cal`` suffix. [#7772]
+
 datamodels
 ----------
 
@@ -12,16 +19,28 @@ flat_field
 - Modify the test_flatfield_step_interface unit test to prevent it from causing
   other tests to fail [#7752]
 
-Jump
+jump
 ____
-Updated documentation for the parameters [#7778]
 
+- Updated documentation for the step parameters [#7778]
 
 master_background
 -----------------
 
 - Allow the user to write the 2D expanded version of the user-provided 1D background for each
   file in the assocation. [#7714]
+
+outlier_detection
+-----------------
+
+- Fix naming and logging of intermediate blot files written to disk for imaging modes. [#7784]
+
+resample
+--------
+
+- Use the same logic for computing input range for resample step from input
+  image shape and the bounding box both for ``SCI`` image as well as for the
+  ``ERR`` and ``VARIANCE_*`` images. [#7774]
 
 
 1.11.3 (2023-07-17)
