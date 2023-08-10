@@ -2293,14 +2293,14 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
             M_eci_to_gs = ECI to Guide Star Ideal Frame
             M_gsics_to_gsappics = Velocity Aberration correction
-            M_fgs1ics_to_gsics = Convert from the FGS ICS frame to Guide Star ICS frame
+            M_fgs1ics_to_gsics = Convert from the FGS1 ICS frame to Guide Star ICS frame
             M_j_to_fgs1ics = Convert from J frame to FGS1 ICS frame
             M_eci_to_j = ECI (quaternion) to J-frame
 
     Modification for release post-1.11.3: The commanded position of the guide
     star is always relative to FGS1. Hence, the aperture to use is always FGS1.
     The formulae above have been modified appropriately.
-    However, in the code, one will note that the transformations go to FGS1, but then
+    However, in the code, note that the transformations go to FGS1, but then
     is suddenly referred to thereafter as FGSX. The assumption to make is that X is always 1,
     for FGS1.
     """
