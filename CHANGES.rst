@@ -1,7 +1,10 @@
 1.11.4 (unreleased)
 ===================
 
--
+set_telescope_pointing
+----------------------
+
+- Commanded Guide Star is always relative to FGS1 [#7804]
 
 1.11.3 (2023-07-17)
 ===================
