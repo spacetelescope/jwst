@@ -395,7 +395,7 @@ class IFUCubeData():
             across_cdelt = self.cdelt2
 
         if self.instrument == 'NIRSPEC':
-            self.cdelt2 = self.cdelt1  # make cubes square
+            # self.cdelt2 = self.cdelt1  # make cubes square
             along_cdelt = self.cdelt2
 
             n1a = math.ceil(alimit / along_cdelt)
@@ -469,8 +469,8 @@ class IFUCubeData():
         """
 
         log.info('Cube Geometry:')
-        if self.coord_system == 'internal IFU ':
-            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (along slice, across slice arcsec)')
+        if self.coord_system == 'internal_cal':
+            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (along slice, across slice)')
         else:
             log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (xi, eta arcsec)')
         log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
@@ -2291,6 +2291,13 @@ class IFUCubeData():
             ifucube_model.meta.ifu.roi_wave = 0
             ifucube_model.meta.ifu.roi_spatial = 0
 
+            # uncorrect cdelt for degree conversion
+            ifucube_model.meta.wcsinfo.cdelt1 *= 3600.0
+            ifucube_model.meta.wcsinfo.cdelt2 *= 3600.0
+
+            # correct "RA" axis orientation
+            ifucube_model.meta.wcsinfo.pc1_1 = 1
+
             if self.instrument == 'MIRI':
                 ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
                 ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
@@ -2300,7 +2307,7 @@ class IFUCubeData():
             if self.instrument == 'NIRSPEC':
                 ifucube_model.meta.wcsinfo.cunit1 = 'meter'
                 ifucube_model.meta.wcsinfo.cunit2 = 'meter'
-                ifucube_model.meta.wcsinfo.ctype1 = 'NRSLICERX'
+                ifucube_model.meta.wcsinfo.ctype1 = 'NRSSLICERX'
                 ifucube_model.meta.wcsinfo.ctype2 = 'NRSSLICERY'
 
         # set WCS information
