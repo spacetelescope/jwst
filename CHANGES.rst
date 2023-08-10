@@ -53,7 +53,7 @@ resample
   image shape and the bounding box both for ``SCI`` image as well as for the
   ``ERR`` and ``VARIANCE_*`` images. [#7774]
 
-- Update the following exposure time keywords: XPOSURE (EFFEXPTM), EFFINTTM,
+- Update the following exposure time keywords: XPOSURE (EFFEXPTM),
   DURATION and TELAPSE. [#7793]
 
 residual_fringe

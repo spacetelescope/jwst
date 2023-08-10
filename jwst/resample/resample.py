@@ -363,14 +363,12 @@ class ResampleData:
         """Modify exposure time metadata in-place"""
         total_exposure_time = 0.
         exposure_times = {'start': [], 'end': []}
-        effinttm, duration = 0.0, 0.0
+        duration = 0.0
         for exposure in self.input_models.models_grouped:
-            for n, _ in enumerate(exposure):
-                total_exposure_time += exposure[n].meta.exposure.exposure_time
-                exposure_times['start'].append(exposure[n].meta.exposure.start_time)
-                exposure_times['end'].append(exposure[n].meta.exposure.end_time)
-                effinttm += exposure[n].meta.exposure.integration_time
-                duration += exposure[n].meta.exposure.duration
+            total_exposure_time += exposure[0].meta.exposure.exposure_time
+            exposure_times['start'].append(exposure[0].meta.exposure.start_time)
+            exposure_times['end'].append(exposure[0].meta.exposure.end_time)
+            duration += exposure[0].meta.exposure.duration
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
@@ -382,8 +380,7 @@ class ResampleData:
         # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
         xposure = total_exposure_time
         output_model.meta.exposure.effective_exposure_time = xposure
-        # EFFINTTM (effective integration time) and DURATION (identical to TELAPSE, elapsed time)
-        output_model.meta.exposure.integration_time = effinttm
+        # DURATION (identical to TELAPSE, elapsed time)
         output_model.meta.exposure.duration = duration
         output_model.meta.exposure.elapsed_exposure_time = duration
 
