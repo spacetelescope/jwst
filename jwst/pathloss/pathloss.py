@@ -114,6 +114,9 @@ def calculate_pathloss_vector(pathloss_refdata,
     ycenter : float
         The y-center of the target (-0.5 to 0.5)
 
+    calc_wave : bool
+        Calculate a wavelength vector from the ref file
+
     Returns:
     --------
     wavelength : numpy ndarray
@@ -955,28 +958,31 @@ def _corrections_for_lrs(data, pathloss):
                                                                    xcenter, ycenter,
                                                                    calc_wave=False)
 
-    if is_inside_slit:
+    if not is_inside_slit:
+        log.info('Source is outside slit. Correction defaultling to center of the slit.')
+        xcenter, ycenter = 0.0, 0.0
+        _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
+                                                                       pathloss_wcs,
+                                                                       xcenter, ycenter,
+                                                                       calc_wave=False)
 
-        # Populate 2-D wavelength array from WCS info
-        wavelength_array = get_wavelengths(data)
+    # Populate 2-D wavelength array from WCS info
+    wavelength_array = get_wavelengths(data)
 
-        # MIRI LRS pathloss reference file data are in reverse order,
-        # so flip them here
-        wavelength_vector = wavelength_vector[::-1]
-        pathloss_vector = pathloss_vector[::-1]
+    # MIRI LRS pathloss reference file data are in reverse order,
+    # so flip them here
+    wavelength_vector = wavelength_vector[::-1]
+    pathloss_vector = pathloss_vector[::-1]
 
-        # Compute the point source pathloss 2D correction
-        pathloss_2d = interpolate_onto_grid(wavelength_array,
-                                            wavelength_vector,
-                                            pathloss_vector)
+    # Compute the point source pathloss 2D correction
+    pathloss_2d = interpolate_onto_grid(wavelength_array,
+                                        wavelength_vector,
+                                        pathloss_vector)
 
-        # Save the corrections. The `data` portion is the correction used.
-        # The individual ones will be saved in the respective attributes.
-        correction = datamodels.ImageModel(data=pathloss_2d)
-        correction.pathloss_point = pathloss_2d
-        correction.wavelength = wavelength_array
-
-    else:
-        log.warning('Source is outside slit. Skipping pathloss correction for LRS.')
+    # Save the corrections. The `data` portion is the correction used.
+    # The individual ones will be saved in the respective attributes.
+    correction = datamodels.ImageModel(data=pathloss_2d)
+    correction.pathloss_point = pathloss_2d
+    correction.wavelength = wavelength_array
 
     return correction
