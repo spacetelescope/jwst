@@ -1,18 +1,10 @@
 1.11.4 (unreleased)
 ===================
 
-
 assign_wcs
 ----------
 
-- Use isinstance instead of comparison with a type for lamp_mode
-  inspection [#7801]
-
-cube_build
-----------
-
-- Replace scale1 and scale2 with scalexy and add debug option debug_spaxel. [#7783]
-
+- Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
 
 calwebb_spec2
 -------------
@@ -20,6 +12,12 @@ calwebb_spec2
 - Run ``pixel_replace`` before setting metadata and suffix of datamodel
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
+
+cube_build
+----------
+
+- Replace scale1 and scale2 arguments with scalexy, add debug option debug_spaxel,
+  and add more details to docs. [#7783]
 
 datamodels
 ----------
@@ -69,7 +67,9 @@ residual_fringe
 set_telescope_pointing
 ----------------------
 
-- Commanded Guide Star is always relative to FGS1 [#7804]
+- Fixes to account for the fact that the commanded Guide Star position is always
+  relative to FGS1 even when guiding with FGS2. [#7804]
+
 
 1.11.3 (2023-07-17)
 ===================
