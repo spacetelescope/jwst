@@ -184,8 +184,7 @@ def test_setup_wcs():
     corner_b.append(dec4)
 
     pars_cube = {
-        'scale1': 0.0,
-        'scale2': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'emsm',
@@ -196,10 +195,7 @@ def test_setup_wcs():
         'wavemin': lambda_min,
         'wavemax': lambda_max,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     pipeline = 3
     input_model = None

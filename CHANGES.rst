@@ -1,12 +1,23 @@
 1.11.4 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
+
 calwebb_spec2
 -------------
 
 - Run ``pixel_replace`` before setting metadata and suffix of datamodel
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
+
+cube_build
+----------
+
+- Replace scale1 and scale2 arguments with scalexy, add debug option debug_spaxel,
+  and add more details to docs. [#7783]
 
 datamodels
 ----------
@@ -18,6 +29,11 @@ flat_field
 
 - Modify the test_flatfield_step_interface unit test to prevent it from causing
   other tests to fail [#7752]
+
+general
+-------
+
+- Require minimum asdf version 2.14.4 [#7801]
 
 jump
 ____
@@ -35,12 +51,29 @@ outlier_detection
 
 - Fix naming and logging of intermediate blot files written to disk for imaging modes. [#7784]
 
+pathloss
+--------
+
+- Fix interpolation error for point source corrections. [#7799]
+
 resample
 --------
 
 - Use the same logic for computing input range for resample step from input
   image shape and the bounding box both for ``SCI`` image as well as for the
   ``ERR`` and ``VARIANCE_*`` images. [#7774]
+
+residual_fringe
+---------------
+
+- Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
+  residual_fringe fitting utils [#7764]
+
+set_telescope_pointing
+----------------------
+
+- Fixes to account for the fact that the commanded Guide Star position is always
+  relative to FGS1 even when guiding with FGS2. [#7804]
 
 
 1.11.3 (2023-07-17)
