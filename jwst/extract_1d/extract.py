@@ -1450,7 +1450,7 @@ class ExtractBase(abc.ABC):
 
             slit2det = self.wcs.get_transform('slit_frame', 'detector')
             x_y = slit2det(xpos, ypos, middle_wl)
-            log.info(f"Using source_xpos and source_ypos to center extraction.")
+            log.info("Using source_xpos and source_ypos to center extraction.")
 
         else:
             try:
