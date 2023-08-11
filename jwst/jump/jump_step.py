@@ -26,26 +26,26 @@ class JumpStep(Step):
         after_jump_flag_time1 = float(default=0) # 1st flag groups after jump groups within specified time
         after_jump_flag_dn2 = float(default=0) # 2nd flag groups after jump above DN threshold
         after_jump_flag_time2 = float(default=0) # 2nd flag groups after jump groups within specified time
+        expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
         min_sat_area = float(default=1.0) # minimum required area for the central saturation of snowballs
         min_jump_area = float(default=5.0) # minimum area to trigger large events processing
         expand_factor = float(default=2.0) # The expansion factor for the enclosing circles or ellipses
         use_ellipses = boolean(default=False) # deprecated
         sat_required_snowball = boolean(default=True) # Require the center of snowballs to be saturated
         min_sat_radius_extend = float(default=2.5) # The min radius of the sat core to trigger the extension of the core
-        sat_expand = integer(default=2) Number of pixels to add to the radius of the saturated core of snowballs
-        expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
-        find_showers = boolean(default=False) Turn on shower flagging for MIRI
-        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a sat core is not required
-        extend_snr_threshold = float(default=1.2) The SNR minimum for detection of extended showers in MIRI
-        extend_min_area = integer(default=90) Min area of emission after convolution for the detection of showers
-        extend_inner_radius = float(default=1) Inner radius of the ring_2D_kernel used for convolution
-        extend_outer_radius = float(default=2.6) Outer radius of the ring_2D_Kernel used for convolution
-        extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
-        time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
-        max_extended_radius = integer(default=200) The maximum radius of an extended snowball or shower
-        minimum_groups = integer(default=3) The minimum number of groups to perform jump detection
-        minimum_sigclip_groups = integer(default=100) The minimum number of groups to switch to sigma clipping
-        only_use_ints = boolean(default=True) In sigclip only compare the same group across ints, if False compare all groups
+        sat_expand = integer(default=2) # Number of pixels to add to the radius of the saturated core of snowballs       
+        edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a sat core is not required    
+        find_showers = boolean(default=False) # Turn on shower flagging for MIRI        
+        extend_snr_threshold = float(default=1.2) # The SNR minimum for detection of extended showers in MIRI
+        extend_min_area = integer(default=90) # Min area of emission after convolution for the detection of showers
+        extend_inner_radius = float(default=1) # Inner radius of the ring_2D_kernel used for convolution
+        extend_outer_radius = float(default=2.6) # Outer radius of the ring_2D_Kernel used for convolution
+        extend_ellipse_expand_ratio = float(default=1.1) # Expand the radius of the ellipse fit to the extended emission
+        time_masked_after_shower = float(default=15) # Seconds to flag as jump after a detected extended emission
+        max_extended_radius = integer(default=200) # The maximum radius of an extended snowball or shower
+        minimum_groups = integer(default=3) # The minimum number of groups to perform jump detection using sigma clipping
+        minimum_sigclip_groups = integer(default=100) # The minimum number of groups to switch to sigma clipping
+        only_use_ints = boolean(default=True) # In sigclip only compare the same group across ints, if False compare all groups
     """
 
     reference_file_types = ['gain', 'readnoise']

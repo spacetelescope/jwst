@@ -28,12 +28,17 @@ flat_field
 ----------
 
 - Modify the test_flatfield_step_interface unit test to prevent it from causing
-  other tests to fail [#7752]
+  other tests to fail. [#7752]
 
 general
 -------
 
 - Require minimum asdf version 2.14.4 [#7801]
+
+jump
+____
+
+- Updated documentation for the step parameters [#7778]
 
 master_background
 -----------------
@@ -50,6 +55,13 @@ pathloss
 --------
 
 - Fix interpolation error for point source corrections. [#7799]
+
+refpix
+------
+
+- Modified algorithm of intermittent bad pixels factor to be the number
+  of sigmas away from mean for the corresponding array (either differences,
+  means, or standard deviations arrays). [#7745]
 
 resample
 --------
