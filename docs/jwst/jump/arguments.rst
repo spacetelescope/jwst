@@ -6,16 +6,16 @@ The ``jump`` step has 30 optional arguments that can be set by the user:
 **Parameters for Baseline Cosmic Ray Jump Detection**
 
 * ``--rejection_threshold``: A floating-point value that sets the sigma
-  threshold for jump detection. In the code sigma is determined using the read noise from the
+  threshold for jump detection. In the code, sigma is determined using the read noise from the
   read noise reference file and the Poisson noise (based on the median difference between
-  samples, and the gain reference file). Note that any noise source beyond these two that
+  samples and the gain reference file). Note that any noise source beyond these two that
   may be present in the data will lead to an increase in the false positive rate and thus
   may require an increase in the value of this parameter. The default value of 4.0 for the
   rejection threshold will yield 6200 false positives for every million pixels, if the noise
   model is correct.
 
 * ``--maximum_cores``: The fraction of available cores that will be
-  used for multi-processing in this step. The default value is 'none' which does not use
+  used for multi-processing in this step. The default value is 'none', which does not use
   multi-processing. The other options are 'quarter', 'half', and 'all'. Note that these
   fractions refer to the total available cores and on most CPUs these include physical
   and virtual cores. The clock time for the step is reduced
@@ -25,14 +25,14 @@ The ``jump`` step has 30 optional arguments that can be set by the user:
   the clock time can also decrease even more with maximum_cores is set to 'all'.
 
 * ``--flag_4_neighbors``: If set to True (default is True) it will cause the four perpendicular
-  neighbors of all detected jumps to be flagged as a jump. This is needed because of
-  the inter-pixel capacitance (IPC) causing a small jump in the neighbors. The small jump
-  might be below the rejection threshold but will affect the slope determination of
+  neighbors of all detected jumps to also be flagged as a jump. This is needed because of
+  the inter-pixel capacitance (IPC), which causes a small jump in the neighbors. The small jump
+  might be below the rejection threshold, but will affect the slope determination of
   the pixel. The step will take about 40% longer to run when this is set to True.
 
 * ``--max_jump_to_flag_neighbors``: A floating point value in units of sigma that limits
   the flagging of neighbors. Any jump above this cutoff will not have its neighbors flagged.
-  The concept is that the jumps in neighbors will be above the rejection-threshold and thus
+  The concept is that the jumps in neighbors will be above the rejection threshold and thus
   be flagged as primary jumps. The default value is 200.
 
 * ``--min_jump_to_flag_neighbors``: A floating point value in units of sigma that limits
@@ -42,14 +42,16 @@ The ``jump`` step has 30 optional arguments that can be set by the user:
 
 **Parameters that affect after jump Flagging**
 
-  After a jump of at least 'after_jump_flag_dn1' DN, groups up to 'after_jump_flag_time1'
-  seconds will be also flagged as jumps. That pair of arguments is defined as:
+After a jump of at least 'after_jump_flag_dn1' DN, groups up to 'after_jump_flag_time1'
+seconds will also be flagged as jumps. That pair of arguments is defined as:
+
 * ``--after_jump_flag_dn1``: A floating point value in units of DN
 * ``--after_jump_flag_time1``: A floating point value in units of seconds
 
-  A second threshold and time can also be set: after a jump of at least 'after_jump_flag_dn2' DN,
-  groups up to 'after_jump_flag_time2' seconds will be also flagged as jumps. That pair of arguments
-  is defined as:
+A second threshold and time can also be set: after a jump of at least 'after_jump_flag_dn2' DN,
+groups up to 'after_jump_flag_time2' seconds will also be flagged as jumps. That pair of arguments
+is defined as:
+
 * ``--after_jump_flag_dn2``: A floating point value in units of DN
 * ``--after_jump_flag_time2``: A floating point value in units of seconds
 
@@ -100,5 +102,3 @@ The ``jump`` step has 30 optional arguments that can be set by the user:
 * ``--minimum_sigclip_groups``: The minimum number of groups to switch the jump detection to use sigma clipping
 
 * ``--only_use_ints``: If true the sigma clipping is applied only for a given group across all ints. If not, all groups from all ints are used for the sigma clipping.
-
-
