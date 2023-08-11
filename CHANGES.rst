@@ -35,6 +35,11 @@ general
 
 - Require minimum asdf version 2.14.4 [#7801]
 
+jump
+____
+
+- Updated documentation for the step parameters [#7778]
+
 master_background
 -----------------
 
