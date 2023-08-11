@@ -162,8 +162,7 @@ def apply_LG_plus(input_model,
                                 oversample=oversample)
 
     output_model = ff_t.fit_fringes_all(input_copy)
-    # FOR NOW: DEBUGGING
-    # model_arr, resid_arr, n_resid_arr, cp_arr, va_arr = ff_t.fit_fringes_all(input_copy)
+    
 
     # fringefitter = ff_t.fit_fringes_all(input_copy)
     # oifits_model = RawOifits(fringefitter)
@@ -172,4 +171,4 @@ def apply_LG_plus(input_model,
     # Copy header keywords from input to output
     # output_model.update(input_model, only="PRIMARY")
 
-    # return output_model
+    return output_model

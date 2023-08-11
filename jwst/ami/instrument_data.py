@@ -67,7 +67,7 @@ class NIRISS:
             self.run_bpfix = True
         self.usebp = usebp
         self.chooseholes = chooseholes
-        self.objname = objname
+        # self.objname = objname
         self.filt = filt
         self.throughput = bandpass
         self.firstfew = firstfew
@@ -168,6 +168,7 @@ class NIRISS:
         pscaledegx, pscaledegy = utils.degrees_per_pixel(input_model)
         pscale_deg = np.mean([pscaledegx, pscaledegy])
         self.pscale_rad = np.deg2rad(pscale_deg)
+        self.pscale_mas = pscale_deg * (60*60*1000)
 
         self.pav3 = input_model.meta.pointing.pa_v3
         self.vparity = input_model.meta.wcsinfo.vparity
