@@ -10,7 +10,6 @@ from astropy.modeling import polynomial
 from astropy.io import fits
 from gwcs import WCS
 from stdatamodels import DataModel
-from stdatamodels.jwst.transforms.models import IdealToV2V3, V2V3ToIdeal
 from stdatamodels.properties import ObjectNode
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags, SlitModel, SpecModel
