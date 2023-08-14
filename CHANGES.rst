@@ -9,9 +9,9 @@ assign_wcs
 associations
 ------------
 
-- Changes the way associations are create for field  ``FXD_SLIT``.  Assocations
-  for this field will now include values for both ``S200A1`` and ``S200A2``,
-  instead of separating them. [#7795]
+- Update teh Level 3 rules for NIRSpec fixed-slit observations so that the sets
+  of exposures using ``FXD_SLIT=S200A1`` and ``FXD_SLIT=S200A2`` will be placed
+  in the same ASN.  [#7795]
 
 calwebb_spec2
 -------------
