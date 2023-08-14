@@ -1,4 +1,4 @@
-1.11.4 (unreleased)
+1.11.5 (unreleased)
 ===================
 
 assign_wcs
@@ -82,6 +82,13 @@ set_telescope_pointing
 - Fixes to account for the fact that the commanded Guide Star position is always
   relative to FGS1 even when guiding with FGS2. [#7804]
 
+1.11.4 (2023-08-14)
+===================
+
+set_telescope_pointing
+----------------------
+
+- Commanded Guide Star is always relative to FGS1 [#7804]
 
 1.11.3 (2023-07-17)
 ===================
