@@ -94,7 +94,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
 stcal==1.4.2
-stdatamodels==1.7.1
+stdatamodels==1.7.2
 stpipe==0.5.0
 stsci.image==2.3.5
 stsci.imagestats==1.6.3
