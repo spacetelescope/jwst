@@ -82,6 +82,12 @@ set_telescope_pointing
 - Fixes to account for the fact that the commanded Guide Star position is always
   relative to FGS1 even when guiding with FGS2. [#7804]
 
+undersampling_correction
+------------------------
+
+- Changed default signal threshold, added routine to flag neighborhood pixels,
+  added unit test, updated docs. [#7740]
+  
 
 1.11.3 (2023-07-17)
 ===================
