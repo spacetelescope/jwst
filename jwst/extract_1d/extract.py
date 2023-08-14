@@ -3486,8 +3486,7 @@ def extract_one_slit(
         extract_model.ystop = y_range[1]
 
         absdata = data.copy()
-        absdata = absdata[np.min(good_pixels[0]): np.max(good_pixels[0]) + 1,
-                          np.min(good_pixels[1]): np.max(good_pixels[1]) + 1]
+        absdata = absdata[y_range[0]: y_range[1], x_range[0]: x_range[1]]
 
         absdata[absdata < 0] = 0
 
