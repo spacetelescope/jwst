@@ -9,7 +9,7 @@ assign_wcs
 associations
 ------------
 
-- Update teh Level 3 rules for NIRSpec fixed-slit observations so that the sets
+- Update the Level 3 rules for NIRSpec fixed-slit observations so that the sets
   of exposures using ``FXD_SLIT=S200A1`` and ``FXD_SLIT=S200A2`` will be placed
   in the same ASN.  [#7795]
 
