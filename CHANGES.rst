@@ -1,4 +1,4 @@
-1.11.4 (unreleased)
+1.11.4 (2023-08-14)
 ===================
 
 set_telescope_pointing
