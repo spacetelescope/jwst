@@ -2296,7 +2296,7 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.cdelt2 *= 3600.0
 
             # correct "RA" axis orientation
-            ifucube_model.meta.wcsinfo.pc1_1 = 1
+            ifucube_model.meta.wcsinfo.pc1_1 *= -1.0
 
             if self.instrument == 'MIRI':
                 ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
