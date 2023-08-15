@@ -4,7 +4,7 @@ from stdatamodels.jwst import datamodels
 from scipy.optimize import minimize
 import warnings
 from ..assign_wcs.nirspec import nrs_wcs_set_input
-import pdb
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 

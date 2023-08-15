@@ -59,7 +59,7 @@ pathloss
 pixel_replace
 -------------
 
-- Add the minimum gradient method for the MIRI MRS. []
+- Add the minimum gradient method for the MIRI MRS. [#7823]
 
 refpix
 ------
