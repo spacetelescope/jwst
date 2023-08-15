@@ -389,7 +389,7 @@ class PixelReplacement:
         pad = 1 # Padding around edge of array to ensure we don't look for neighbors outside array
 
         # Find NaN-valued pixels
-        indx = np.where((np.isfinite(indata) == False)
+        indx = np.where((np.isfinite(indata) is False)
                         & (basey > pad) & (basey < ysize-pad) & (basex > pad) & (basex < xsize-pad))
         # X and Y indices
         yindx, xindx = indx[0], indx[1]
@@ -406,10 +406,6 @@ class PixelReplacement:
             diffs = np.array([np.abs(left_data - right_data), np.abs(top_data - bottom_data)])
             interp_data = np.array([(left_data + right_data) / 2., (top_data + bottom_data) / 2.])
             interp_err = np.array([(left_err + right_err) / 2., (top_err + bottom_err) / 2.])
-
-            # Compute the OR-combined dq flags from left/right and top/bottom
-            dq_lr = (indq[yindx[ii], xindx[ii] - 1]) | (indq[yindx[ii], xindx[ii] + 1])
-            dq_tb = (indq[yindx[ii] - 1, xindx[ii]]) | (indq[yindx[ii] + 1, xindx[ii]])
 
             # Replace with the value from the lowest absolute slope estimator that was not NaN
             try:
