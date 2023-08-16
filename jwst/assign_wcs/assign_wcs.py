@@ -2,7 +2,8 @@ import logging
 import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
-                   update_s_region_nrs_ifu, update_s_region_mrs)
+                   update_s_region_nrs_ifu, update_s_region_mrs,
+                   wcs_bbox_from_shape)
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
 from ..lib.wcs_utils import get_wavelengths
@@ -72,27 +73,33 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
         if output_model.meta.exposure.type.lower() not in exclude_types:
             imaging_types = IMAGING_TYPES.copy()
             imaging_types.update(['mir_lrs-fixedslit', 'mir_lrs-slitless'])
-            if output_model.meta.exposure.type.lower() in imaging_types:
-                try:
-                    update_s_region_imaging(output_model)
-                except Exception as exc:
-                    log.error("Unable to update S_REGION for type {}: {}".format(
-                        output_model.meta.exposure.type, exc))
-                else:
-                    log.info("assign_wcs updated S_REGION to {0}".format(
-                        output_model.meta.wcsinfo.s_region))
-                if output_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-                    output_model.wavelength = get_wavelengths(output_model)
-            elif output_model.meta.exposure.type.lower() == "nrs_ifu":
+            if output_model.meta.exposure.type.lower() == "nrs_ifu":
                 update_s_region_nrs_ifu(output_model, mod)
-            elif output_model.meta.exposure.type.lower() == 'mir_mrs':
-                update_s_region_mrs(output_model)
             else:
-                try:
-                    update_s_region_spectral(output_model)
-                except Exception as exc:
-                    log.info("Unable to update S_REGION for type {}: {}".format(
-                        output_model.meta.exposure.type, exc))
+                # Generate bounding_box if one does not yet exist,
+                # needed for all modes but NRS_IFU
+                if output_model.meta.wcs.bounding_box is None:
+                    output_model.meta.wcs.bounding_box = wcs_bbox_from_shape(output_model.data.shape)
+
+                if output_model.meta.exposure.type.lower() in imaging_types:
+                    try:
+                        update_s_region_imaging(output_model)
+                    except Exception as exc:
+                        log.error("Unable to update S_REGION for type {}: {}".format(
+                            output_model.meta.exposure.type, exc))
+                    else:
+                        log.info("assign_wcs updated S_REGION to {0}".format(
+                            output_model.meta.wcsinfo.s_region))
+                    if output_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
+                        output_model.wavelength = get_wavelengths(output_model)
+                elif output_model.meta.exposure.type.lower() == 'mir_mrs':
+                    update_s_region_mrs(output_model)
+                else:
+                    try:
+                        update_s_region_spectral(output_model)
+                    except Exception as exc:
+                        log.info("Unable to update S_REGION for type {}: {}".format(
+                            output_model.meta.exposure.type, exc))
 
     log.info("COMPLETED assign_wcs")
     return output_model

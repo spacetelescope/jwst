@@ -956,10 +956,6 @@ def update_s_region_imaging(model):
 
     bbox = model.meta.wcs.bounding_box
 
-    if bbox is None:
-        bbox = wcs_bbox_from_shape(model.data.shape)
-        model.meta.wcs.bounding_box = bbox
-
     # footprint is an array of shape (2, 4) as we
     # are interested only in the footprint on the sky
     footprint = model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
@@ -986,8 +982,6 @@ def compute_footprint_spectral(model):
     """
     swcs = model.meta.wcs
     bbox = swcs.bounding_box
-    if bbox is None:
-        bbox = wcs_bbox_from_shape(model.data.shape)
 
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)
