@@ -16,7 +16,7 @@ CHLO_DNU = CHLO + DNU
 
 
 def charge_migration(input_model, signal_threshold):
-"""
+    """
     Correct for chargemigration
 
     Parameters
@@ -79,13 +79,11 @@ def flag_pixels(data, gdq, signal_threshold):
 
     # Flag all exceedances with CHARGELOSS and NO_NOT_USE
     chargeloss_pix = (data > signal_threshold) == (gdq != DNU)
-    new_gdq[chargeloss_pix] = np.bitwise_or(new_gdq[chargeloss_pix], CHLO)
-    new_gdq[chargeloss_pix] = np.bitwise_or(new_gdq[chargeloss_pix], DNU)
+    new_gdq[chargeloss_pix] = np.bitwise_or(new_gdq[chargeloss_pix], CHLO | DNU)
     
     # Reset groups previously flagged as DNU
     gdq_orig = gdq.copy()  # For resetting to previously flagged DNU
     wh_gdq_DNU = np.bitwise_and(gdq_orig, DNU)
-    new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]
 
     # Get indices for exceedances
     arg_where = np.argwhere(new_gdq == CHLO_DNU)

@@ -13,10 +13,10 @@ a pixel. When the peak pixels of such stars approach the saturation level, they 
 significant :ref:`charge migration <charge_migration>`:
 the spilling of charge from a saturated pixel into its neighboring pixels. This charge migration 
 causes group-to-group differences to decrease significantly once the signal level is greater than 
-~30,000 ADU. As a result, the last several groups of these ramps get flagged by the ``jump`` step. 
-The smaller number of groups used for these pixels in the ``ramp_fitting`` step results in them having 
-larger read noise variances, which in turn leads to lower weights used during resampling. This 
-ultimately leads to a lower than normal flux for the star in resampled images.
+~25,000 ADU. As a result, the last several groups of these ramps get flagged by the :ref:`jump <jump_step>`
+step.  The smaller number of groups used for these pixels in the :ref:`ramp_fitting <ramp_fitting_step>`
+step results in them having  larger read noise variances, which in turn leads to lower weights used
+during resampling. This ultimately leads to a lower than normal flux for the star in resampled images.
 
 Once a group in a ramp has been flagged as affected by charge migration, all subsequent 
 groups in the ramp are also flagged. By flagging these groups, they are not used in the 
@@ -26,7 +26,7 @@ due to readnoise.
 
 Input details
 -------------
-The input data must have been processed through the ``jump`` step, so the input must be in the
+The input data must have been processed through the :ref:`jump <jump_step>` step, so the input must be in the
 form of a `~jwst.datamodels.RampModel`.
 
 
