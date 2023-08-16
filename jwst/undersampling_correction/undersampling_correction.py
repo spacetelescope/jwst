@@ -50,7 +50,7 @@ def undersampling_correction(input_model, signal_threshold):
 
 def flag_pixels(data, gdq, signal_threshold):
     """
-    Flag first group in each ramp that exceeds signal_threshold as UNDERSAMP and DO_NOT_USE,
+    Flag each group in each ramp that exceeds signal_threshold as UNDERSAMP and DO_NOT_USE,
     skipping groups already flagged as DO_NOT_USE.
 
     Parameters
@@ -77,13 +77,11 @@ def flag_pixels(data, gdq, signal_threshold):
 
     # Flag all exceedances with UNDERSAMP and NO_NOT_USE
     undersamp_pix = (data > signal_threshold) == (gdq != DNU)
-    new_gdq[undersamp_pix] = np.bitwise_or(new_gdq[undersamp_pix], UNSA)
-    new_gdq[undersamp_pix] = np.bitwise_or(new_gdq[undersamp_pix], DNU)
+    new_gdq[undersamp_pix] = np.bitwise_or(new_gdq[undersamp_pix], UNSA | DNU)
 
     # Reset groups previously flagged as DNU
     gdq_orig = gdq.copy()  # For resetting to previously flagged DNU
     wh_gdq_DNU = np.bitwise_and(gdq_orig, DNU)
-    new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]
 
     # Get indices for exceedances
     arg_where = np.argwhere(new_gdq == UNSA_DNU)

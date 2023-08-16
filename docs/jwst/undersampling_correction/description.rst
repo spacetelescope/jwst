@@ -12,7 +12,7 @@ a pixel. When the peak pixels of such stars approach the saturation level, they 
 significant :ref:`charge migration <charge_migration>`:
 the spilling of charge from a saturated pixel into its neighboring pixels. This charge migration 
 causes group-to-group differences to decrease significantly once the signal level is greater than 
-~25,000 ADU.  As a result, the last several groups of these ramp will be flagged by the
+~25,000 ADU.  As a result, the last several groups of these ramps will be flagged by the
 ``undersampling_correction`` step, and then ignored by the subsequent ``jump`` step. The smaller
 number of groups used for these pixels in the ``ramp_fitting`` step results in them having
 larger read noise variances, which in turn leads to lower weights used during resampling. This 
