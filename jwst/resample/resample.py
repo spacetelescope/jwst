@@ -174,8 +174,11 @@ class ResampleData:
             for img in exposure:
                 img = datamodels.open(img)
                 # TODO: should weight_type=None here?
-                inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
-                                                         good_bits=self.good_bits)
+                inwht = resample_utils.build_driz_weight(
+                    img,
+                    weight_type=self.weight_type,
+                    good_bits=self.good_bits
+                )
 
                 # apply sky subtraction
                 blevel = img.meta.background.level
@@ -184,7 +187,20 @@ class ResampleData:
                 else:
                     data = img.data
 
-                driz.add_image(data, img.meta.wcs, inwht=inwht)
+                xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                    data.shape,
+                    img.meta.wcs.bounding_box
+                )
+
+                driz.add_image(
+                    data,
+                    img.meta.wcs,
+                    inwht=inwht,
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax
+                )
                 del data
                 img.close()
 
@@ -192,7 +208,7 @@ class ResampleData:
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
                 output_model.save(output_name)
-                log.info(f"Exposure {output_name} saved to file")
+                log.info(f"Saved model in {output_name}")
                 self.output_models.append(output_name)
             else:
                 self.output_models.append(output_model.copy())
@@ -230,7 +246,20 @@ class ResampleData:
             else:
                 data = img.data.copy()
 
-            driz.add_image(data, img.meta.wcs, inwht=inwht)
+            xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                data.shape,
+                img.meta.wcs.bounding_box
+            )
+
+            driz.add_image(
+                data,
+                img.meta.wcs,
+                inwht=inwht,
+                xmin=xmin,
+                xmax=xmax,
+                ymin=ymin,
+                ymax=ymax
+            )
             del data, inwht
 
         # Resample variances array in self.input_models to output_model
@@ -292,11 +321,28 @@ class ResampleData:
             outwht = np.zeros_like(output_model.data)
             outcon = np.zeros_like(output_model.con)
 
+            xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                variance.shape,
+                model.meta.wcs.bounding_box
+            )
+
             # Resample the variance array. Fill "unpopulated" pixels with NaNs.
-            self.drizzle_arrays(variance, inwht, model.meta.wcs,
-                                output_wcs, resampled_variance, outwht, outcon,
-                                pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.nan)
+            self.drizzle_arrays(
+                variance,
+                inwht,
+                model.meta.wcs,
+                output_wcs,
+                resampled_variance,
+                outwht,
+                outcon,
+                pixfrac=self.pixfrac,
+                kernel=self.kernel,
+                fillval=np.nan,
+                xmin=xmin,
+                xmax=xmax,
+                ymin=ymin,
+                ymax=ymax
+            )
 
             # Add the inverse of the resampled variance to a running sum.
             # Update only pixels (in the running sum) with valid new values:
@@ -317,10 +363,12 @@ class ResampleData:
         """Modify exposure time metadata in-place"""
         total_exposure_time = 0.
         exposure_times = {'start': [], 'end': []}
+        duration = 0.0
         for exposure in self.input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
             exposure_times['start'].append(exposure[0].meta.exposure.start_time)
             exposure_times['end'].append(exposure[0].meta.exposure.end_time)
+            duration += exposure[0].meta.exposure.duration
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
@@ -328,10 +376,19 @@ class ResampleData:
         output_model.meta.exposure.end_time = max(exposure_times['end'])
         output_model.meta.resample.product_exposure_time = total_exposure_time
 
+        # Update other exposure time keywords:
+        # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
+        xposure = total_exposure_time
+        output_model.meta.exposure.effective_exposure_time = xposure
+        # DURATION (identical to TELAPSE, elapsed time)
+        output_model.meta.exposure.duration = duration
+        output_model.meta.exposure.elapsed_exposure_time = duration
+
     @staticmethod
-    def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht, outcon,
-                       uniqid=1, xmin=None, xmax=None, ymin=None, ymax=None,
-                       pixfrac=1.0, kernel='square', fillval="INDEF", wtscale=1.0):
+    def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht,
+                       outcon, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
+                       pixfrac=1.0, kernel='square', fillval="INDEF",
+                       wtscale=1.0):
         """
         Low level routine for performing 'drizzle' operation on one image.
 
@@ -378,31 +435,29 @@ class ResampleData:
             this function is called and incremented by one on each subsequent
             call.
 
-        xmin : float, optional
+        xmin : int, optional
             This and the following three parameters set a bounding rectangle
             on the input image. Only pixels on the input image inside this
             rectangle will have their flux added to the output image. Xmin
             sets the minimum value of the x dimension. The x dimension is the
-            dimension that varies quickest on the image. If the value is zero,
-            no minimum will be set in the x dimension. All four parameters are
-            zero based, counting starts at zero.
+            dimension that varies quickest on the image. All four parameters
+            are zero based, counting starts at zero.
 
-        xmax : float, optional
+        xmax : int, optional
             Sets the maximum value of the x dimension on the bounding box
-            of the input image. If the value is zero, no maximum will
-            be set in the x dimension, the full x dimension of the output
-            image is the bounding box.
+            of the input image. If ``xmax = 0``, no maximum will
+            be set in the x dimension (all pixels in a row of the input image
+            will be resampled).
 
-        ymin : float, optional
+        ymin : int, optional
             Sets the minimum value in the y dimension on the bounding box. The
             y dimension varies less rapidly than the x and represents the line
-            index on the input image. If the value is zero, no minimum  will be
-            set in the y dimension.
+            index on the input image.
 
-        ymax : float, optional
-            Sets the maximum value in the y dimension. If the value is zero, no
-            maximum will be set in the y dimension,  the full x dimension
-            of the output image is the bounding box.
+        ymax : int, optional
+            Sets the maximum value in the y dimension. If ``ymax = 0``,
+            no maximum will be set in the y dimension (all pixels in a column
+            of the input image will be resampled).
 
         pixfrac : float, optional
             The fraction of a pixel that the pixel flux is confined to. The
@@ -461,14 +516,6 @@ class ResampleData:
         # Alias context image to the requested plane if 3d
         if outcon.ndim == 3:
             outcon = outcon[planeid]
-
-        if xmin is xmax is ymin is ymax is None:
-            bb = input_wcs.bounding_box
-            ((x1, x2), (y1, y2)) = bb
-            xmin = int(min(x1, x2))
-            ymin = int(min(y1, y2))
-            xmax = int(max(x1, x2))
-            ymax = int(max(y1, y2))
 
         # Compute the mapping between the input and output pixel coordinates
         # for use in drizzle.cdrizzle.tdriz

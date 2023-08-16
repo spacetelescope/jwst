@@ -1,4 +1,4 @@
 # this requirements file applies upper pins on critical upstream dependencies with incompatible functionality / refactoring that has not yet been implemented in this repository
 
-stcal<1.4.0
-stdatamodels<1.4.1
+stcal<1.5.0
+stdatamodels<1.8.0

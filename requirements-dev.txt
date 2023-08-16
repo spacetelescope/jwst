@@ -3,11 +3,13 @@ git+https://github.com/asdf-format/asdf
 git+https://github.com/asdf-format/asdf-transform-schemas
 git+https://github.com/asdf-format/asdf-coordinates-schemas
 git+https://github.com/asdf-format/asdf-wcs-schemas
-astropy>=0.0.dev0
+git+https://github.com/astropy/astropy
 git+https://github.com/astropy/asdf-astropy
 git+https://github.com/spacetelescope/crds
 git+https://github.com/spacetelescope/gwcs
+numpy>=0.0.dev0
 git+https://github.com/astropy/photutils
+scipy>=0.0.dev0
 git+https://github.com/spacetelescope/stdatamodels
 git+https://github.com/spacetelescope/stpipe
 git+https://github.com/spacetelescope/stcal

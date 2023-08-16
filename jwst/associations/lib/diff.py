@@ -1,11 +1,14 @@
 """"Diff and compare associations"""
 
-from collections import Counter, UserList
+from collections import Counter, UserList, defaultdict
 from copy import copy
 import logging
+from pathlib import Path
 import re
 
-from jwst.associations.load_asn import load_asn
+from .product_utils import sort_by_candidate
+from ..load_asn import load_asn
+from ...lib.suffix import remove_suffix
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -22,7 +25,21 @@ __all__ = [
 # Define the types of diffs
 # #########################
 class DiffError(AssertionError):
-    """Base Class for difference errors"""
+    """Base Class for difference errors
+
+    Attributes
+    ----------
+    args : tuple
+        Standard exception arguments
+
+    asns : [Association[,...]]
+        List of associations that generated the exception
+    """
+    def __init__(self, *args, asns=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if asns is None:
+            asns = list()
+        self.asns = asns
 
 
 class CandidateLevelError(DiffError):
@@ -41,18 +58,44 @@ class DifferentProductSetsError(DiffError):
     """Different product sets between groups of associations"""
 
 
+class MemberLengthDifference(DiffError):
+    """Difference in number of members between associations"""
+
+
 class MemberMismatchError(DiffError):
     """Membership does not match"""
+
+
+class SubsetError(DiffError):
+    """One product is a subset of another"""
 
 
 class TypeMismatchError(DiffError):
     """Association type mismatch"""
 
 
+class UnaccountedMembersError(DiffError):
+    """Members not present in other"""
+
+
 class MultiDiffError(UserList, DiffError):
     """List of diff errors"""
     def __init__(self, *args, **kwargs):
         super(MultiDiffError, self).__init__(*args, **kwargs)
+
+    @property
+    def asns(self):
+        """Return the list of affected associations for all contained errors"""
+        asns = list()
+        for err in self:
+            asns.extend(err.asns)
+        return asns
+
+    @property
+    def err_types(self):
+        """Return list of error types"""
+        err_types = [type(err) for err in self]
+        return err_types
 
     def __str__(self):
         message = ['Following diffs found:\n']
@@ -132,13 +175,15 @@ def compare_asn_lists(left_asns, right_asns):
     left_product_names, left_duplicates = get_product_names(left_asns)
     right_product_names, right_duplicates = get_product_names(right_asns)
     if left_duplicates:
-        diffs.append(DuplicateProductError(
-            f'Left associations have duplicate products {left_duplicates}'
-        ))
+        try:
+            check_duplicate_products(left_asns)
+        except MultiDiffError as dup_errors:
+            diffs.extend(dup_errors)
     if right_duplicates:
-        diffs.append(DuplicateProductError(
-            f'Right associations have duplicate products {right_duplicates}'
-        ))
+        try:
+            check_duplicate_products(right_asns)
+        except MultiDiffError as dup_errors:
+            diffs.extend(dup_errors)
 
     # Ensure that the product name lists are the same.
     name_diff = left_product_names ^ right_product_names
@@ -298,13 +343,85 @@ def compare_membership(left, right):
         raise diffs
 
 
+def compare_nosuffix(left, right):
+    """Check if the only difference is in rate vs rateints suffixes
+
+    A valid situation is to have two associations be exactly the same except
+    for the suffix used on all the science inputs. If one association uses
+    "rate" and the other uses "rateints", this is OK.
+
+    If no errors are raised, the two associations are similar except
+    for the suffixes used in the `expname`s, which is valid.
+
+    Otherwise, the following errors can be raised:
+
+    - DifferentProductSetsError
+      Products do not match.
+
+    Parameters
+    ----------
+    left, right : Association, Association
+        The associations to compare.
+
+    Raises
+    ------
+    MultiDiffError
+    """
+    if len(left['products']) != len(right['products']):
+        raise MultiDiffError([DifferentProductSetsError(
+            f'Different products between {left.asn_name}({len(left["products"])}) and {right.asn_name}({len(right["products"])})',
+            asns=[left, right]
+        )])
+
+    diffs = MultiDiffError()
+    for left_product in left['products']:
+        left_members = set(exposure_name(member['expname'])[0]
+                         for member in left_product['members'])
+        for right_product in right['products']:
+            right_members = set(exposure_name(member['expname'])[0]
+                              for member in right_product['members'])
+            if left_members == right_members:
+                break
+        else:
+            # No right product matches the left product.
+            # This is a fail.
+            diffs.append(DifferentProductSetsError(
+                f'Left product {left_product["name"]} has not counterpart in right products',
+                asns=[left, right]
+            ))
+
+    if diffs:
+        raise diffs
+
+
 def compare_product_membership(left, right):
     """Compare membership between products
+
+    If the membership is exactly the same, or other special conditions,
+    no error is raised.
+
+    Otherwise, the following errors will be raised:
+
+    - DuplicateMemberError
+      A member exists multiple times in the member list.
+
+    - MemberLengthDifference
+      Number of members in the two products differ.
+
+    - MemberMismatchError
+      Members with the same `expname` do not share the other attributes.
+
+    - SubsetError
+      A member list is a subset of another member list.
+
+    - UnaccountedMembersError
+      Members exist in one association that do not exist in the other.
 
     Parameters
     ---------
     left, right : dict
-        Two, individual, association products to compare
+        Two, individual, association products to compare. Note that
+        these are not associations, just products from associations.
 
     Raises
     ------
@@ -325,7 +442,7 @@ def compare_product_membership(left, right):
         diffs.append(dup_member_error)
 
     if len(right['members']) != len(left['members']):
-        diffs.append(MemberMismatchError(
+        diffs.append(MemberLengthDifference(
             'Product Member length differs:'
             ' Left Product {left_product_name} len {left_len} !=  '
             ' Right Product {right_product_name} len {right_len}'
@@ -334,6 +451,7 @@ def compare_product_membership(left, right):
         ))
 
     members_right = copy(right['members'])
+    left_unaccounted_members = []
     for left_member in left['members']:
         for right_member in members_right:
             if left_member['expname'] != right_member['expname']:
@@ -344,26 +462,29 @@ def compare_product_membership(left, right):
                     'Left {left_expname}:{left_exptype}'
                     ' != Right {right_expname}:{right_exptype}'
                     ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'],
-                          right_expname=right_member['expname'], right_exptype=right_member['exptype'])
+                              right_expname=right_member['expname'], right_exptype=right_member['exptype'])
                 ))
 
             members_right.remove(right_member)
             break
         else:
-            diffs.append(MemberMismatchError(
-                'Left {left_expname}:{left_exptype} has no counterpart in right'
-                ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
-            ))
+            left_unaccounted_members.append(left_member)
+
+    if len(left_unaccounted_members):
+        diffs.append(UnaccountedMembersError(
+            f'Left has {len(left_unaccounted_members)} unaccounted members. Members are {left_unaccounted_members}'
+        ))
 
     if len(members_right) != 0:
-        diffs.append(MemberMismatchError(
-            'Right has {len_over} unaccounted for members starting with'
-            ' {right_expname}:{right_exptype}'
-            ''.format(len_over=len(members_right),
-                      right_expname=members_right[0]['expname'],
-                      right_exptype=members_right[0]['exptype']
-            )
+        diffs.append(UnaccountedMembersError(
+            f'Right has {len(members_right)} unaccounted members. Members are {members_right}'
         ))
+
+    # Check if one is a subset of the other.
+    err_types = diffs.err_types
+    is_subset = (len(diffs) == 2) and (MemberLengthDifference in err_types) and (UnaccountedMembersError in err_types)
+    if is_subset:
+        diffs = MultiDiffError([SubsetError(f'Products are subsets: {left["name"]} {right["name"]}')])
 
     if diffs:
         raise diffs
@@ -398,12 +519,100 @@ def check_duplicate_members(product):
         )
 
 
+def check_duplicate_products(asns):
+    """Check for duplicate products in a list of associations
+
+    Duplicate products are defined as any products that share the same name.
+    The errors flagged are listed below. If no `MultiDiffError` is raised,
+    There are no duplicate products.
+
+    - DuplicateProductError
+      The general error for two products that share name and otherwise do
+      not fall into any other category
+
+    - SubsetError
+      When one or more products are full subsets of another.
+
+    There is a special case where products may have the same name. For Level 2
+    processing, exposures can be processed either as time-series, indicated by
+    the "rateints" suffix, or as single exposures, indicated by the "rate" suffix.
+    Usually any particular exposure is treated one way or the other. However, for
+    coronagraphic data, exposures are processed in both ways. In this case, the product
+    name and membership will be the same, except that the members will have the different
+    suffixes.
+
+    Parameters
+    ----------
+    asns : [Associations[,...]]
+        The associations to compare. Each association should only have one
+        product. Use `separate_products` prior to calling if necessary.
+
+    Raises
+    ------
+    MultiDiffError
+    """
+    product_names, dup_names = get_product_names(asns)
+    if not dup_names:
+        return
+
+    # Order associations by candidate. This will allow choosing which
+    # association should be considered "primary" when duplicates are found.
+    # Categorize by duplicated product names.
+    ordered_asns = sort_by_candidate(asns)
+    asn_by_product = defaultdict(list)
+    for asn in ordered_asns:
+        asn_by_product[asn['products'][0]['name']].append(asn)
+
+    diffs = MultiDiffError()
+    for product in dup_names:
+        dup_asns = asn_by_product[product]
+        current_asn = dup_asns.pop()
+        for asn in dup_asns:
+            try:
+                compare_product_membership(current_asn['products'][0], asn['products'][0])
+            except MultiDiffError as compare_diffs:
+                # Check that the associations differ only in suffix.
+                # If so, the associations are not duplicates
+                try:
+                    compare_nosuffix(current_asn, asn)
+                except MultiDiffError:
+                    # Not interested in the diffs from `compare_nosuffix`.
+                    # The diffs from `compare_product_membership` will be more informative.
+                    diffs.extend(compare_diffs)
+            else:
+                # Associations are exactly the same. Pure duplicate.
+                diffs.append(DuplicateProductError(
+                    f'Associations share product name {product}',
+                    asns=[current_asn, asn]
+                ))
+    if diffs:
+        raise diffs
+
+
 # #########
 # Utilities
 # #########
 def components(s):
     """split string into its components"""
     return set(re.split('[_-]', s))
+
+
+def exposure_name(path):
+    """Extract the exposure name from a Stage 2 file name
+
+    Parameters
+    ----------
+    path : Path or str
+        The file name or path.
+
+    Returns
+    -------
+    exposure : str
+        The exposure name
+    """
+    path = Path(path)
+    exposure = remove_suffix(path.stem)
+    return exposure
 
 
 def get_product_names(asns):

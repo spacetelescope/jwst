@@ -8,7 +8,8 @@ log.setLevel(logging.DEBUG)
 
 
 def correct_model(input_model, irs2_model,
-                  scipix_n_default=16, refpix_r_default=4, pad=8):
+                  scipix_n_default=16, refpix_r_default=4, pad=8,
+                  ovr_corr_mitigation_ftr=3.0):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
@@ -31,6 +32,10 @@ def correct_model(input_model, irs2_model,
         The effective number of pixels sampled during the pause at the end
         of each row (new-row overhead).  The padding is needed to preserve
         the phase of temporally periodic signals.
+
+    ovr_corr_mitigation_ftr: float
+        Factor to avoid overcorrection of intermittently bad reference
+        pixels. This factor is the N sigmas away from the mean.
 
     Returns
     -------
@@ -135,12 +140,14 @@ def correct_model(input_model, irs2_model,
         # Set interleaved reference pixel values to zero if they are flagged
         # as bad in the DQ extension of the CRDS reference file.
         clobber_ref(data, output, odd_even, mask)
+        # Replace intermittently bad pixels
+        rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr)
     else:
         log.warning("DQ extension not found in reference file")
 
     # Compute and apply the correction to one integration at a time
     for integ in range(n_int):
-        log.info(f'Working on integration {integ+1}')
+        log.info(f'Working on integration {integ+1} out of {n_int}')
 
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
@@ -337,9 +344,9 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
         for k in bits:
             ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
                    2 * (odd_even_row - 1))
-            log.debug("bad interleaved reference at pixels {} {}"
-                      .format(ref, ref + 1))
-            data[..., ref:ref + 2] = 0.
+            log.debug("bad interleaved reference at pixels {} through {}"
+                      .format(ref, ref + 4))
+            data[..., ref:ref + 4] = 0.
 
 
 def decode_mask(output, mask):
@@ -370,21 +377,142 @@ def decode_mask(output, mask):
     """
 
     # The bit number corresponds to a count of groups of reads of the
-    # interleaved reference pixels.  It wasn't clear to us whether bit
-    # number increases from left to right or right to left within a
-    # 32-bit unsigned integer.  It also wasn't clear whether the direction
-    # should follow the direction of reading within an amplifier output.
-    # The following is our interpretation of the description.
+    # interleaved reference pixels. The 32-bit unsigned integer encoding
+    # has increasing index, from left to right.
 
     flags = np.array([2**n for n in range(32)], dtype=np.uint32)
     temp = np.bitwise_and(flags, mask)
     bits = np.where(temp > 0)[0]
     bits = list(bits)
-    if output // 2 * 2 == output:
-        bits = [31 - bit for bit in bits]
     bits.sort()
 
     return bits
+
+
+def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
+    """Find pixels that are intermittently bad and replace with nearest
+    good value.
+
+    Parameters
+    ----------
+    data : 4-D ndarray
+        The data array in detector orientation.  This includes both the
+        science and interleaved reference pixel values.  `data` will be
+        modified in-place. The science data values will not be modified.
+
+    scipix_n : int
+        Number of regular (science) samples before stepping out to collect
+        reference samples.
+
+    refpix_r : int
+        Number of reference samples before stepping back in to collect
+        regular samples.
+
+    ovr_corr_mitigation_ftr: float
+        Factor to avoid overcorrection of intermittently bad reference
+        pixels. This factor is the N sigmas away from the mean.
+
+    Returns
+    -------
+    data : 4-D ndarray
+        The data array in detector orientation.  This includes both the
+        science and interleaved reference pixel values.  The intermittently
+        bad pixels are now set to the nearest good reference pixel value.
+    """
+
+    log.info('Using overcorrection mitigation factor = {}'.format(ovr_corr_mitigation_ftr))
+
+    # The intermittently bad pixels will be replaced for all integrations
+    # and all groups. The last group will be used to identify them
+    nints, ngroups, ny, nx = np.shape(data)
+    total_rp2replace = []
+    # calculate differences of even and odd pairs per amplifier
+    amplifier = nx // 5                 # 640
+    for k in range(5):
+        diffs, rp2check = [], []
+        offset = int(k * amplifier)
+        # jump from the start of the reference pixel sequence to the next
+        ref_pix, rp2check, pair = [], [], 0
+        rp_means, rp_stds = [], []
+        for rpstart in range(scipix_n//2, amplifier, scipix_n+refpix_r):
+            rpstart += offset
+            # go through the 4 reference pixels
+            for ri in range(4):
+                ri = rpstart + ri
+                rp_m = np.mean(data[nints-1, ngroups-1, :, ri])
+                rp_s = np.std(data[nints-1, ngroups-1, :, ri])
+                # exclude ref pix flagged in the reference file
+                if rp_m != 0.:
+                    ref_pix.append(ri)
+                    rp_means.append(rp_m)
+                    rp_stds.append(rp_s)
+                if ri % 2 != 0:
+                    odd_pix = ri
+                    rp_odd = rp_m
+                else:
+                    even_pix = ri
+                    rp_even = rp_m
+                pair += 1
+                if pair == 2:
+                    # only do difference if the pixel has not already been flagged as bad
+                    if rp_odd != 0. and rp_even != 0.:
+                        diffs.append(rp_odd - rp_even)
+                        rp2check.append(even_pix)
+                        rp2check.append(odd_pix)
+                    pair = 0
+        diff_m = np.mean(np.abs(diffs))
+        std_of_diffs = np.std(diffs)
+        mean_mean = np.mean(rp_means)
+        std_of_means = np.std(rp_means)
+        mean_std = np.mean(rp_stds)
+        std_of_std = np.std(rp_stds)
+
+        # order indexes increasing from left to right
+        rp2check.sort()
+
+        # find the additional intermittent bad pixels - the factor is to avoid overcorrection
+        high_diffs = np.where(np.abs(diffs) > ovr_corr_mitigation_ftr*std_of_diffs + diff_m)[0]
+        hd_rp2replace = []
+        for j in high_diffs:
+            rp2r = rp2check[int(diffs.index(diffs[j]) * 2)]
+            # include both even and odd
+            hd_rp2replace.append(rp2r)
+            hd_rp2replace.append(rp2r+1)
+        high_means_idx = np.where(np.array(rp_means) > ovr_corr_mitigation_ftr*std_of_means + mean_mean)[0]
+        high_std_idx = np.where(np.array(rp_stds) > ovr_corr_mitigation_ftr*std_of_std + mean_std)[0]
+        log.info('high_diffs={}  high_means={}  high_stds={}'.format(len(high_diffs), len(high_means_idx), len(high_std_idx)))
+        ref_pix = np.array(ref_pix)
+        rp2replace = []
+        for rp in ref_pix:
+            if rp in ref_pix[high_means_idx] or rp in ref_pix[high_std_idx] or rp in hd_rp2replace:
+                rp2replace.append(rp)
+        rp2replace.sort()
+        rp2replace = np.unique(rp2replace)
+        total_rp2replace.extend(rp2replace)
+        log.info('{} supicious bad reference pixels in amplifier {}'.format(len(rp2replace), k))
+
+        remaining_rp_even, remaining_rp_odd = [], []
+        for rp in ref_pix:
+            if rp not in rp2replace:
+                if rp % 2 == 0:
+                    remaining_rp_even.append(rp)
+                else:
+                    remaining_rp_odd.append(rp)
+        remaining_rp_even, remaining_rp_odd = np.array(remaining_rp_even), np.array(remaining_rp_odd)
+        for bad_pix in rp2replace:
+            # find nearest even/odd good reference pixel
+            if bad_pix % 2 == 0:
+                remaining_rp = remaining_rp_even
+            else:
+                remaining_rp = remaining_rp_odd
+            if len(remaining_rp) == 0:   # no good ref pix left, let interpolation do it's magic
+                data[..., bad_pix] = 0.
+            else:
+                good_idx = (np.abs(remaining_rp - bad_pix)).argmin()
+                good_pix = remaining_rp[good_idx]
+                data[..., bad_pix] = data[..., good_pix]
+            log.info('   Pixel {}'.format(bad_pix))
+    log.info('Total intermittent bad reference pixels: {}'.format(len(total_rp2replace)))
 
 
 def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad):
@@ -761,7 +889,6 @@ def replace_bad_pixels(data0, ngroups, ny, row):
         dat = numerator / denominator
         dat = dat.reshape(ny, row)
         mask = mask.reshape(ny, row)
-        # xxx why '+=' instead of just '=' ?
         data0[kk, jj, :, :] += dat * (1. - mask)
 
 
@@ -801,7 +928,7 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
 
     # IDL:  aa = a # replicate(1, s[3]) ; for application to the data
     # In IDL, aa is a 2-D array with one column of `a` for each group.  In
-    # Python, numpy broadcasting should take care of this.
+    # Python, numpy broadcasting takes care of this.
 
     n_iter_norm = 3
     dd0 = data0[0, :, :, :]

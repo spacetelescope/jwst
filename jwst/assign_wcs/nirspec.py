@@ -171,7 +171,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         The reference files used for this mode.
@@ -294,7 +294,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         The reference files used for this mode.
@@ -401,7 +401,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """
     exp_type = input_model.meta.exposure.type.lower()
     lamp_mode = input_model.meta.instrument.lamp_mode
-    if type(lamp_mode) == str:
+    if isinstance(lamp_mode, str):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'
@@ -674,6 +674,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             log.warning(message)
             message = ("MSA configuration file has more than 1 shutter with primary source")
             log.warning(message)
+            msa_file.close()
             raise MSAFileError(message)
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
@@ -747,7 +748,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data model.
     wavelengthrange_file : str
         Reference file of type "wavelengthrange".
@@ -1330,7 +1331,7 @@ def get_disperser(input_model, disperserfile):
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.DataModel`
+    input_model : `jwst.datamodels.JwstDataModel`
         The input data model - either an ImageModel or a CubeModel.
     disperserfile : str
         The name of the disperser reference file.
@@ -1597,7 +1598,7 @@ def _nrs_wcs_set_input(input_model, slit_name):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         A WCS object for the all open slitlets in an observation.
     slit_name : int or str
         Slit.name of an open slit.
@@ -1633,7 +1634,7 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None,
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         A WCS object for the all open slitlets in an observation.
     slit_name : int or str
         Slit.name of an open slit.
@@ -1679,7 +1680,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodels.DataModel
+    input_model : jwst.datamodels.JwstDataModel
         Input data model
 
     Returns
@@ -1747,7 +1748,7 @@ def spectral_order_wrange_from_model(input_model):
 
     Parameters
     ----------
-    input_model : jwst.datamodels.DataModel
+    input_model : jwst.datamodels.JwstDataModel
         The data model. Must have been through the assign_wcs step.
 
     """
@@ -1762,7 +1763,7 @@ def nrs_ifu_wcs(input_model):
 
     Parameters
     ----------
-    input_model : jwst.datamodels.DataModel
+    input_model : jwst.datamodels.JwstDataModel
         The data model. Must have been through the assign_wcs step.
     """
     _, wrange = spectral_order_wrange_from_model(input_model)
@@ -1816,7 +1817,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         The reference files used for this mode.
@@ -1824,7 +1825,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
         The slit dimensions relative to the center of the slit.
     """
     lamp_mode = input_model.meta.instrument.lamp_mode
-    if type(lamp_mode) == str:
+    if isinstance(lamp_mode, str):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'

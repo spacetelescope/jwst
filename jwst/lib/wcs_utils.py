@@ -9,7 +9,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The input science data, or a slit from a
         `~jwst.datamodels.MultiSlitModel`.
 

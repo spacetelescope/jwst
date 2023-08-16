@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
+from . import miri_mrs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -78,7 +79,8 @@ class DataSet():
 
     """
 
-    def __init__(self, model, inverse=False, source_type=None, correction_pars=None):
+    def __init__(self, model, inverse=False, source_type=None, mrs_time_correction=False,
+                 correction_pars=None):
         """
         Short Summary
         -------------
@@ -87,7 +89,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             input Data Model object
 
         inverse : boolean
@@ -95,6 +97,9 @@ class DataSet():
 
         source_type : str or None
             Force processing using the specified source type.
+
+        mrs_time_correction: bool
+            Switch to apply/not apply the mrs time correction
 
         correction_pars : dict
             Correction meta-data from a previous run.
@@ -135,6 +140,7 @@ class DataSet():
         self.specnum = -1
         self.inverse = inverse
         self.source_type = None
+        self.mrs_time_correction = mrs_time_correction
 
         # For MultiSlitModels, only set a generic source_type value for the
         # entire datamodel if the user has set the source_type parameter.
@@ -274,22 +280,18 @@ class DataSet():
                 tabdata = ftab.phot_table[row]
 
                 # Get the scalar conversion factor from the PHOTMJ column;
-                # Note that this is the conversion to flux units, which is
-                # appropriate for a POINT source
                 conv_factor = tabdata['photmj']
                 unit_is_surface_brightness = False
 
-                # Figure out if the calibration needs to be converted to surface
-                # brightness units, which is done if the source is extended.
-                if self.source_type is None or self.source_type.upper() != 'POINT':
-                    if self.input.meta.photometry.pixelarea_steradians is None:
-                        log.warning("Pixel area is None, so can't convert "
-                                    "flux to surface brightness!")
-                    else:
-                        log.debug("Converting conversion factor from flux "
-                                  "to surface brightness")
-                        conv_factor /= self.input.meta.photometry.pixelarea_steradians
-                        unit_is_surface_brightness = True
+                # Convert to surface brightness units for all types of data
+                if self.input.meta.photometry.pixelarea_steradians is None:
+                    log.warning("Pixel area is None, so can't convert "
+                                "flux to surface brightness!")
+                else:
+                    log.debug("Converting conversion factor from flux "
+                              "to surface brightness")
+                    conv_factor /= self.input.meta.photometry.pixelarea_steradians
+                    unit_is_surface_brightness = True
 
                 # Populate the photometry keywords
                 log.info(f'PHOTMJSR value: {conv_factor:.6g}')
@@ -328,11 +330,9 @@ class DataSet():
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
                 sens2d *= tabdata['photmj']  # include the initial scalar conversion factor -> MJ
-                # This line used to be applied to all IFU data, but I think this was an error -
-                # masked by the fact that the initial pixel area maps for IFU data were
-                # arrays of 1-values (in arcsec**2). If srctype==POINT, do not apply.
-                if self.source_type.upper() != 'POINT':
-                    sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJ/sr
+                # convert all data (both point source and extended) to surface brightness
+                sens2d /= area2d * A2_TO_SR  # divide by pixel area * A2_TO_SR -> MJy/sr
+
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
                 where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
@@ -502,6 +502,26 @@ class DataSet():
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
+
+            # Check if reference file contains time dependent correction
+
+            try:
+                ftab.getarray_noinit("timecoeff_ch1")
+            except AttributeError:
+                # Old style ref file; skip the correction
+                log.info("Skipping MRS MIRI time correction. Extensions not found in the reference file.")
+                self.mrs_time_correction = False
+            
+            #if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+            if self.mrs_time_correction:
+                log.info("Applying MRS IFU time dependent correction.")
+                mid_time = self.input.meta.exposure.mid_time
+                correction = miri_mrs.time_correction(self.input, self.detector,
+                                                     ftab, mid_time)
+                self.input.data /= correction
+                self.input.err /= correction
+            else:
+                log.info("Not applying MRS IFU time dependent correction.")
 
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
@@ -927,7 +947,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information
         exptype : str
             Exposure type of the input
@@ -974,7 +994,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : `~jwst.datamodels.DataModel`
+        model : `~jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information
         conversion : float
             Initial scalar photometric conversion value
@@ -1040,7 +1060,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.DataModel`
+        ftab : `~jwst.datamodels.JwstDataModel`
             A photom reference file data model
 
         area_fname : str
@@ -1112,7 +1132,7 @@ class DataSet():
 
         Parameters
         ----------
-        pix_area : `~jwst.datamodels.DataModel`
+        pix_area : `~jwst.datamodels.JwstDataModel`
             Pixel area reference file data model
         """
 
@@ -1214,7 +1234,7 @@ class DataSet():
 
         Returns
         -------
-        output_model : ~jwst.datamodels.DataModel
+        output_model : ~jwst.datamodels.JwstDataModel
             output data model with the flux calibrations applied
 
         """

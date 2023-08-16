@@ -744,10 +744,10 @@ def test_twenty_groups_two_segments():
     np.testing.assert_allclose(oslope[wh_data], 10. / deltatime, rtol=1E-4)
     np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
 
-    np.testing.assert_allclose(
-        opedestal[0, 0, :],
-        model1.data[0, 0, 0, :] - 10.,
-        rtol=1E-5)
+    check = model1.data[0, 0, 0, :] - oslope
+    tol = 1E-5
+    # Pixel 1 has zero slope, so ignore it.
+    np.testing.assert_allclose(opedestal[0, 0, 1:], check[0, 0, 0, 1:], tol)
 
 
 def test_miri_all_sat():
@@ -897,7 +897,7 @@ def test_zeroframe_usage():
     # Check slopes information
     sdata, sdq, svp, svr, serr = slopes
 
-    check = np.array([[20.709406, 0.46572033, 4.6866207]])
+    check = np.array([[41.003822, 0.46572033, 21.655062]])
     np.testing.assert_allclose(sdata, check, tol, tol)
 
     # Since the second integration is GOOD the final DQ is GOOD.
@@ -916,8 +916,8 @@ def test_zeroframe_usage():
     # Check slopes information
     cdata, cdq, cvp, cvr, cerr = cube
 
-    check = np.array([[[186.28912, np.nan, 93.14456]],
-                      [[0.46572027, 0.46572033, 0.46572033]]])
+    check = np.array([[[3.7257825e+02,        np.nan, 4.6572281e+02]],
+                      [[4.6572030e-01, 4.6572030e-01, 4.6572030e-01]]])
     np.testing.assert_allclose(cdata, check, tol, tol)
 
     # Column 2 in the first integration is marked GOOD because there
@@ -1041,8 +1041,8 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 
 
 # Need test for multi-ints near zero with positive and negative slopes
-def setup_inputs(ngroups=10, readnoise=10, nints=1,
-                 nrows=103, ncols=102, nframes=1, grouptime=1.0, gain=1, deltatime=1):
+def setup_inputs(ngroups=10, readnoise=10, nints=1, nrows=103, ncols=102,
+                 nframes=1, grouptime=1.0, gain=1, deltatime=1):
 
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)

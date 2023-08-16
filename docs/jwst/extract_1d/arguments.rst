@@ -99,6 +99,16 @@ The ``extract_1d`` step has the following step-specific arguments.
   Switch to select whether or not to apply an APERTURE correction during the
   Extract1dStep processing. Default is ``True``
 
+``--ifu_autocen``
+  Switch to select whether or not to enable auto-centroiding of the extraction
+  aperture for IFU point sources.  Auto-centroiding works by median collapsing the
+  IFU cube across all wavelengths and using DAOStarFinder to locate the brightest
+  source in the field. Default is ``False``.
+
+``--ifu_rfcorr``
+  Switch to select whether or not to run 1d residual fringe correction on the
+  extracted 1d spectrum (MIRI MRS only). Default is ``False``.
+
 ``--soss_atoca``
   This is a NIRISS-SOSS algorithm-specific parameter; if True, use the ATOCA
   algorithm to treat order contamination. Default is ``True``.

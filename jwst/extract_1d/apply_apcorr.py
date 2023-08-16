@@ -15,7 +15,7 @@ class ApCorrBase(abc.ABC):
 
     Parameters
     ----------
-    input_model : `~/jwst.datamodels.DataModel`
+    input_model : `~/jwst.datamodels.JwstDataModel`
         Input data model used to determine matching parameters.
     apcorr_table : `~/astropy.io.fits.FITS_rec`
         Aperture correction table data from APCORR reference file.
@@ -358,7 +358,7 @@ def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhas
 
     Parameters
     ----------
-    input_model : `~/jwst.datamodels.DataModel`
+    input_model : `~/jwst.datamodels.JwstDataModel`
         Input data on which the aperture correction is to be applied.
 
     Returns

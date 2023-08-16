@@ -2,6 +2,7 @@ import os
 import requests
 
 from astropy import table
+from astropy.time import Time
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 from astropy import units as u
@@ -26,19 +27,19 @@ Primary function for creating an astrometric reference catalog.
 """
 
 
-def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.ecsv",
+def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.ecsv",
                                gaia_only=False, table_format="ascii.ecsv",
-                               existing_wcs=None, num_sources=None):
+                               existing_wcs=None, num_sources=None, epoch=None):
     """Create an astrometric catalog that covers the inputs' field-of-view.
 
     Parameters
     ----------
-    input : str, list
-        Filenames of images to be aligned to astrometric catalog
+    input_models : list of `~jwst.datamodel.JwstDataModel`
+        Each datamodel must have a ~gwcs.WCS object.
 
     catalog : str, optional
         Name of catalog to extract astrometric positions for sources in the
-        input images' field-of-view. Default: GAIADR2. Options available are
+        input images' field-of-view. Default: GAIADR3. Options available are
         documented on the catalog web page.
 
     output : str, optional
@@ -56,6 +57,11 @@ def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.
         Maximum number of brightest/faintest sources to return in catalog.
         If `num_sources` is negative, return that number of the faintest
         sources.  By default, all sources are returned.
+    
+    epoch : float, optional
+        Reference epoch used to update the coordinates for proper motion
+        (in decimal year). If `None` then the epoch is obtained from
+        the metadata.
 
     Notes
     -----
@@ -81,8 +87,13 @@ def create_astrometric_catalog(input_models, catalog="GAIADR2", output="ref_cat.
     radius, fiducial = compute_radius(outwcs)
 
     # perform query for this field-of-view
-    ref_dict = get_catalog(fiducial[0], fiducial[1], sr=radius, catalog=catalog)
-    colnames = ('ra', 'dec', 'mag', 'objID')
+    epoch = (
+        epoch
+        if epoch is not None
+        else Time(input_models[0].meta.observation.date).decimalyear
+    )
+    ref_dict = get_catalog(fiducial[0], fiducial[1], epoch=epoch, sr=radius, catalog=catalog)
+    colnames = ('ra', 'dec', 'mag', 'objID', 'epoch')
 
     ref_table = ref_dict[colnames]
 
@@ -146,7 +157,7 @@ def compute_radius(wcs):
     return radius, fiducial
 
 
-def get_catalog(ra, dec, sr=0.1, catalog='GSC241'):
+def get_catalog(ra, dec, epoch=2016.0, sr=0.1, catalog='GAIADR3'):
     """ Extract catalog from VO web service.
 
     Parameters
@@ -157,12 +168,16 @@ def get_catalog(ra, dec, sr=0.1, catalog='GSC241'):
     dec : float
         Declination (Dec) of center of field-of-view (in decimal degrees)
 
+    epoch : float, optional
+        Reference epoch used to update the coordinates for proper motion 
+        (in decimal year). Default: 2016.0
+
     sr : float, optional
         Search radius (in decimal degrees) from field-of-view center to use
         for sources from catalog.  Default: 0.1 degrees
 
     catalog : str, optional
-        Name of catalog to query, as defined by web-service.  Default: 'GSC241'
+        Name of catalog to query, as defined by web-service.  Default: 'GAIADR3'
 
     Returns
     -------
@@ -170,13 +185,13 @@ def get_catalog(ra, dec, sr=0.1, catalog='GSC241'):
         CSV object of returned sources with all columns as provided by catalog
 
     """
-    service_type = 'vo/CatalogSearch.aspx'
-    spec_str = 'RA={}&DEC={}&SR={}&FORMAT={}&CAT={}&MINDET=5'
-    headers = {'Content-Type': 'text/csv'}
-    fmt = 'CSV'
+    service_type = "vo/CatalogSearch.aspx"
+    spec_str = "RA={}&DEC={}&EPOCH={}&SR={}&FORMAT={}&CAT={}&MINDET=5"
+    headers = {"Content-Type": "text/csv"}
+    fmt = "CSV"
 
-    spec = spec_str.format(ra, dec, sr, fmt, catalog)
-    service_url = '{}/{}?{}'.format(SERVICELOCATION, service_type, spec)
+    spec = spec_str.format(ra, dec, epoch, sr, fmt, catalog)
+    service_url = f"{SERVICELOCATION}/{service_type}?{spec}"
     rawcat = requests.get(service_url, headers=headers, timeout=TIMEOUT)
     r_contents = rawcat.content.decode()  # convert from bytes to a String
     rstr = r_contents.split('\r\n')
