@@ -1,4 +1,4 @@
-1.11.4 (unreleased)
+1.11.5 (unreleased)
 ===================
 
 assign_wcs
@@ -70,18 +70,23 @@ resample
   image shape and the bounding box both for ``SCI`` image as well as for the
   ``ERR`` and ``VARIANCE_*`` images. [#7774]
 
+- Update the following exposure time keywords: XPOSURE (EFFEXPTM),
+  DURATION and TELAPSE. [#7793]
+
 residual_fringe
 ---------------
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
 
+1.11.4 (2023-08-14)
+===================
+
 set_telescope_pointing
 ----------------------
 
 - Fixes to account for the fact that the commanded Guide Star position is always
   relative to FGS1 even when guiding with FGS2. [#7804]
-
 
 1.11.3 (2023-07-17)
 ===================
