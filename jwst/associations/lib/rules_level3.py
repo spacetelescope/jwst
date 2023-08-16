@@ -8,7 +8,7 @@ from jwst.associations.lib.dms_base import (nrccoron_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources, dms_product_name_noopt,
+    dms_product_name_sources, dms_product_name_noopt, dms_product_name_coronimage,
     format_product
 )
 
@@ -473,6 +473,10 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
 
         # Check and continue initialization.
         super(Asn_Lv3NRCCoronImage, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        return dms_product_name_coronimage(self)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
