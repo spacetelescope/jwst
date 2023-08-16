@@ -1,5 +1,5 @@
 """ Test for the detector1 pipeline using NIRISS image mode, starting with
-    an uncal file. The undersampling_correction and ramp fitting output
+    an uncal file. The charge_migration and ramp fitting output
     products are saved for comparisons for those two steps.
 """
 
@@ -18,8 +18,8 @@ def run_detector1(rtdata_module):
 
     # Run detector1 pipeline on an _uncal files
     args = ["calwebb_detector1", rtdata.input,
-            "--steps.undersampling_correction.skip=False",
-            "--steps.undersampling_correction.save_results=True",
+            "--steps.charge_migration.skip=False",
+            "--steps.charge_migration.save_results=True",
             "--steps.ramp_fit.save_results=True",
             "--steps.persistence.save_trapsfilled=False",
             ]
@@ -28,7 +28,7 @@ def run_detector1(rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["undersampling_correction", "rate", "rateints"])
+@pytest.mark.parametrize("suffix", ["charge_migration", "rate", "rateints"])
 def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on NIRISS imaging data.
     """
