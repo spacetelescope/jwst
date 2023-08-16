@@ -6,6 +6,14 @@ assign_wcs
 
 - Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
 
+associations
+------------
+
+- Update the Level 3 product name construction for NIRCam coronagraphic data that
+  get processed through both coron3 and image3, to add the suffix "-image3" to the
+  product name for the data processed as imaging, in order to prevent duplicate
+  Level 3 file names from each pipeline. [#7826]
+
 calwebb_spec2
 -------------
 
