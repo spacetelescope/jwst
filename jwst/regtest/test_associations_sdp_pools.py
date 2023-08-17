@@ -32,11 +32,6 @@ SPECIAL_DEFAULT = {
     'slow': False,
 }
 SPECIAL_POOLS = {
-    'jw00016_20230331t130733_pool': {
-        'args': [],
-        'xfail': 'See issue JP-3230',
-        'slow': False,
-    },
     'jw00623_20190607t021101_pool': {
         'args': [],
         'xfail': None,
