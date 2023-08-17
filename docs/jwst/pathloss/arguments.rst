@@ -12,3 +12,9 @@ the behavior of the processing.
   Force the processing to use the given source type (POINT, EXTENDED),
   instead of using the information contained in the input data. Only
   applicable to NIRSpec data.
+
+``--usr_slt_loc`` (float, default=None)
+  Only applies to MIRI LRS. Corrects the target center location by
+  the ammount of arcsec provided in this variable. By definition, the
+  center of the slit is at (0,0), and the edges in the dispersion
+  direction are about +/-0.255 arcsec.

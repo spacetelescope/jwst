@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 NIRSPEC_IFU_SLICES = np.arange(30)
 
 
-def get_center(exp_type, input):
+def get_center(exp_type, input, offsets=False):
     """Get the center of the target in the aperture.
     (0.0, 0.0) is the aperture center.  Coordinates go
     from -0.5 to 0.5.
@@ -61,7 +61,10 @@ def get_center(exp_type, input):
         # compute location relative to LRS aperture reference point
         xcenter -= imx
         ycenter -= imy
-        return xcenter, ycenter
+        if offsets:
+            return xcenter, ycenter, imx, imy
+        else:
+            return xcenter, ycenter
 
     else:
         log.warning(f'No method to get centering for exp_type {exp_type}')
@@ -197,7 +200,8 @@ def calculate_pathloss_vector(pathloss_refdata,
         return wavelength, pathloss_vector, is_inside_slitlet
 
 
-def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None, correction_pars=None):
+def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None,
+                  correction_pars=None, usr_slt_loc=None):
     """
     Short Summary
     -------------
@@ -219,6 +223,10 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
 
     correction_pars : dict or None
         Correction parameters to use instead of recalculation.
+
+    usr_slt_loc: float
+        User-provided slit location in units of arcsec, where (0,0)
+        is the center and the edges are +/-0.255 arcsec.
 
     Returns
     -------
@@ -248,7 +256,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
     elif exp_type == 'MIR_LRS-FIXEDSLIT':
         # only apply correction to LRS fixed-slit if target is point source
         if is_pointsource(output_model.meta.target.source_type):
-            corrections = do_correction_lrs(output_model, pathloss_model)
+            corrections = do_correction_lrs(output_model, pathloss_model, usr_slt_loc)
         else:
             log.warning('Not a point source; skipping correction for LRS.')
             output_model.meta.cal_step.pathloss = 'SKIPPED'
@@ -543,7 +551,7 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     return correction
 
 
-def do_correction_lrs(data, pathloss):
+def do_correction_lrs(data, pathloss, usr_slt_loc):
     """Path loss correction for MIRI LRS fixed-slit
 
     Data are modified in-place.
@@ -555,8 +563,12 @@ def do_correction_lrs(data, pathloss):
 
     pathloss : jwst.datamodel.JwstDataModel
         The pathloss reference data.
+
+    usr_slt_loc: float
+        User-provided slit location in units of arcsec, where (0,0)
+        is the center and the edges are +/-0.255 arcsec.
     """
-    correction = _corrections_for_lrs(data, pathloss)
+    correction = _corrections_for_lrs(data, pathloss, usr_slt_loc)
 
     if not correction:
         log.warning("No correction available; skipping step")
@@ -926,7 +938,7 @@ def _corrections_for_ifu(data, pathloss, source_type):
     return correction
 
 
-def _corrections_for_lrs(data, pathloss):
+def _corrections_for_lrs(data, pathloss, usr_slt_loc):
     """Calculate the correction arrays for MIRI LRS slit
 
     Parameters
@@ -937,6 +949,10 @@ def _corrections_for_lrs(data, pathloss):
     pathloss : jwst.datamodels.MirLrsPathlossModel
         The pathloss reference data
 
+    usr_slt_loc: float
+        User-provided slit location in units of arcsec, where (0,0)
+        is the center and the edges are +/-0.255 arcsec.
+
     Returns
     -------
     correction : jwst.datamodels.JwstDataModel
@@ -945,7 +961,7 @@ def _corrections_for_lrs(data, pathloss):
     correction = None
 
     # Get location of target
-    xcenter, ycenter = get_center(data.meta.exposure.type, data)
+    xcenter, ycenter, offset_1, offset_2 = get_center(data.meta.exposure.type, data, offsets=True)
 
     # Get 1-d wavelength vector from reference file data
     wavelength_vector = pathloss.pathloss_table['wavelength']
@@ -953,13 +969,33 @@ def _corrections_for_lrs(data, pathloss):
     # Calculate the 1-d pathloss vector for the source position
     pathloss_data = pathloss.pathloss_table['pathloss']
     pathloss_wcs = pathloss.meta.wcsinfo
-    _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
-                                                                   pathloss_wcs,
-                                                                   xcenter, ycenter,
-                                                                   calc_wave=False)
+    if usr_slt_loc is None:
+        _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
+                                                                       pathloss_wcs,
+                                                                       xcenter, ycenter,
+                                                                       calc_wave=False)
+
+    else:
+        log.info('Correction now using provided target center correction: {}'.format(usr_slt_loc))
+        # The slit is oriented with the long axis (the spatial
+        # axis) horizontal, so the edges in the dispersion direction (the
+        # narrow axis) would be negative down and positive up. Because the
+        # slit is only 510 mas across, the edges would be at about
+        # +/-0.255 arcsec. Hence, the xcenter coordinate remains the same.
+        ra, dec, wav = data.meta.wcs(offset_1, offset_2)
+        location = (ra, dec, wav)
+        scale_degrees = util.compute_scale(data.meta.wcs, location,
+                                           disp_axis=data.meta.wcsinfo.dispersion_direction)
+        scale_arcsec = scale_degrees * 3600.0
+        usr_slt_loc_pix = usr_slt_loc * scale_arcsec
+        yusr_recenter = ycenter + usr_slt_loc_pix
+        _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
+                                                                       pathloss_wcs,
+                                                                       xcenter, yusr_recenter,
+                                                                       calc_wave=False)
 
     if not is_inside_slit:
-        log.info('Source is outside slit. Correction defaultling to center of the slit.')
+        log.info('Source is outside slit. Correction defaulting to center of the slit.')
         xcenter, ycenter = 0.0, 0.0
         _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
                                                                        pathloss_wcs,
