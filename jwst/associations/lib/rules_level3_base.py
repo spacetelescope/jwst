@@ -268,9 +268,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             item['filename'],
             exp_type=item['exp_type'],
             use_integrations=(self.is_item_coron(item) |
-                              # NIS_AMI currently uses cal files;
-                              # uncomment the next line to switch to calints
-                              # self.is_item_ami(item) |
+                              # NIS_AMI used to use cal files;
+                              # now switched to calints
+                              self.is_item_ami(item) |
                               self.is_item_tso(item)),
             member_exptype=exptype
         )

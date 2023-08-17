@@ -213,9 +213,9 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'expname': Utility.rename_to_level2a(
                     item['filename'],
                     use_integrations=(self.is_item_coron(item) |
-                                      # NIS_AMI currently uses rate files;
-                                      # uncomment the next line to switch to rateints
-                                      # self.is_item_ami(item) |
+                                      # NIS_AMI used to use rate files;
+                                      # updated to use rateints
+                                      self.is_item_ami(item) |
                                       self.is_item_tso(item)),
                 ),
                 'exptype': self.get_exposure_type(item),
