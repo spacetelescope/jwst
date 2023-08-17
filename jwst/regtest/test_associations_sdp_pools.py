@@ -34,7 +34,7 @@ SPECIAL_DEFAULT = {
 SPECIAL_POOLS = {
     'jw00016_20230331t130733_pool': {
         'args': [],
-        'xfail': 'See issue JP-3230',
+        'xfail': None,
         'slow': False,
     },
     'jw00623_20190607t021101_pool': {
