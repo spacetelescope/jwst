@@ -14,6 +14,10 @@ associations
   product name for the data processed as imaging, in order to prevent duplicate
   Level 3 file names from each pipeline. [#7826]
 
+- Update the Level 2 spectroscopic ASN rules to exclude any NIRSpec IFU exposures that
+  use filter/grating combinations known to produce no data on the NRS2 detector.
+  [#7833]
+
 calwebb_spec2
 -------------
 
