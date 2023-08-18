@@ -76,7 +76,8 @@ def flag_pixels(data, gdq, signal_threshold):
     new_gdq = gdq.copy()   # Updated gdq
 
     # Flag all exceedances with UNDERSAMP and NO_NOT_USE
-    undersamp_pix = (data > signal_threshold) == (gdq != DNU)
+    undersamp_pix = (data > signal_threshold) & (gdq != DNU)
+
     new_gdq[undersamp_pix] = np.bitwise_or(new_gdq[undersamp_pix], UNSA | DNU)
 
     # Reset groups previously flagged as DNU
