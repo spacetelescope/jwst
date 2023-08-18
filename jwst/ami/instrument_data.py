@@ -21,7 +21,6 @@ log.setLevel(logging.DEBUG)
 class NIRISS:
     def __init__(self, 
                  filt,
-                 # objname="obj",
                  src="A0V",
                  chooseholes=None,
                  affine2d=None,
@@ -44,9 +43,6 @@ class NIRISS:
         filt: string
             filter name
 
-        objname: string
-            name of object
-
         src: string
             spectral type
 
@@ -67,15 +63,11 @@ class NIRISS:
             self.run_bpfix = True
         self.usebp = usebp
         self.chooseholes = chooseholes
-        # self.objname = objname
         self.filt = filt
         self.throughput = bandpass
         self.firstfew = firstfew
 
         self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
-        ####### 
-
-
         self.wls = [self.throughput, ]
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
         self.wavextension = ([self.lam_c,], [self.lam_w,])
@@ -87,9 +79,6 @@ class NIRISS:
         self.arrname = "jwst_g7s6c"
         self.holeshape = "hex"
         self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=chooseholes, holeshape=self.holeshape)
-        # pscale_deg = utils.degrees_per_pixel(input_model)
-        # self.pscale_rad = np.deg2rad(pscale_deg)
-        # dim = input_model.data.shape[-1] # 80 pixels
 
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
@@ -158,18 +147,16 @@ class NIRISS:
         Data and parameters from input data model
         """
 
-        # the following is done by updatewithheaderinfo in implaneia, 
-        # don't need to pickle a dict here though.
-        # all instrumentdata attributes will be available when oifits files written out?
+        # all instrumentdata attributes will be available when oifits files written out
         scidata = copy.deepcopy(np.array(input_model.data))
         bpdata = copy.deepcopy(np.array(input_model.dq))
 
         # pixel scale recalculated and averaged
         pscaledegx, pscaledegy = utils.degrees_per_pixel(input_model)
+        # At some point we want to use different X and Y pixel scales
         pscale_deg = np.mean([pscaledegx, pscaledegy])
         self.pscale_rad = np.deg2rad(pscale_deg)
         self.pscale_mas = pscale_deg * (60*60*1000)
-
         self.pav3 = input_model.meta.pointing.pa_v3
         self.vparity = input_model.meta.wcsinfo.vparity
         self.v3iyang = input_model.meta.wcsinfo.v3yangle
@@ -206,10 +193,7 @@ class NIRISS:
                     bpdata = bpdata[:self.firstfew, :, :]
             self.nwav = scidata.shape[0]
             [self.wls.append(self.wls[0]) for f in range(self.nwav-1)]
-
-
-
-        # do all the stuff with rotating centers, save as attributes instead of info4oif_dict
+        # Rotate mask hole centers by pav3 + v3i_yang to be in equatorial coordinates
         ctrs_sky = self.mast2sky()
         oifctrs = np.zeros(self.mask.ctrs.shape)
         oifctrs[:,0] = ctrs_sky[:,1].copy() * -1
@@ -226,7 +210,7 @@ class NIRISS:
         # find peak in median of refpix-trimmed scidata
         med_im = np.median(scidata, axis=0)
 
-        # Use median image to find big CR hits not already caught
+        # Use median image to find big CR hits not already caught by pipeline
         std_im = np.std(scidata,axis=0)
         mediandiff = np.empty_like(scidata)
         mediandiff[:,:,:] = scidata - med_im
@@ -321,11 +305,11 @@ class NIRISS:
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise?>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
-                log.debug(f'Rotating mask hole centers clockwise by {rot_ang:.3f} degrees')
+                log.info(f'Rotating mask hole centers clockwise by {rot_ang:.3f} degrees')
             else:
                 # counterclockwise  <rotate coords counterclockwise?>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
-                log.debug(f'Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees')
+                log.info(f'Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees')
         else:
             ctrs_rot = mask_ctrs
         return ctrs_rot

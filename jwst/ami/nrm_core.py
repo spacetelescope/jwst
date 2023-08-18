@@ -101,15 +101,10 @@ class FringeFitter:
 		output_model = oifits_model.make_oifits()
 
 		# multi-integration
-		oifits_model_multi = oifits.RawOifits(self,method='multi')
-		oifits_model_multi.make_oifits()
+		# oifits_model_multi = oifits.RawOifits(self,method='multi')
+		# oifits_model_multi.make_oifits()
 
-		return output_model, oifits_model_multi
-
-
-		# for now (DEBUGGING)
-		# return arrays of observables
-		# return model_arr, resid_arr, n_resid_arr, cp_arr, va_arr
+		return output_model#, oifits_model_multi
 		
 
 
@@ -191,17 +186,6 @@ class FringeFitter:
 		self.nrm = nrm # this gets updated with each slice
 		return nrm # to fit_fringes_all, where the output model will be created from list of nrm objects
 
-		# output_model = datamodels.AmiLgModel(
-		#     fit_image=nrm.modelpsf,
-		#     resid_image=nrm.residual,
-		#     closure_amp_table=np.asarray(nrm.redundant_cas),
-		#     closure_phase_table=np.asarray(nrm.redundant_cps),
-		#     fringe_amp_table=np.asarray(nrm.fringeamp),
-		#     fringe_phase_table=np.asarray(nrm.fringephase),
-		#     pupil_phase_table=np.asarray(nrm.fringepistons),
-		#     solns_table=np.asarray(nrm.soln))
-
-		# return output_model
 
 
 class Calibrate:
