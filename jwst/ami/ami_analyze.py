@@ -32,9 +32,6 @@ def apply_LG_plus(input_model,
     input_model : data model object
         AMI science image to be analyzed
 
-    # filter_model : filter model object
-    #     filter throughput reference data
-
     oversample : integer
         Oversampling factor
 
@@ -91,9 +88,6 @@ def apply_LG_plus(input_model,
     yo = 0.0
 
     psf_offset_ff = None
-
-    # there should be an offset search?
-
     # get filter, pixel scale from input_model,
     # make bandpass array for find_rotation, instrument_data calls
     filt = input_copy.meta.instrument.filter
