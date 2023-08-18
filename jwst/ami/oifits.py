@@ -524,5 +524,69 @@ class RawOifits:
 
 
 
+class CalibOifits:
+	def __init__(self,targoimodel,caloimodel):
+		"""
+		Short Summary
+		-------------
+		Calibrate (normalize) an AMI observation by subtracting closure phases
+		of a reference star from those of a target and dividing visibility amplitudes
+		of the target by those of the reference star.
+
+		Parameters
+		----------
+		targoimodel: AmiOIModlel, target
+		caloimodel: AmiOIModlel, reference star (calibrator)
+
+		kwargs options:
+
+		"""
+		self.targoimodel = targoimodel
+		self.caloimodel = caloimodel
+		self.calib_oimodel = targoimodel.copy()
+
+	def calibrate():
+
+
+		cp_out = self.targoimodel.t3['T3PHI'] - self.caloimodel.t3['T3PHI']
+		sqv_out = self.targoimodel.vis2['VIS2DATA'] / self.caloimodel.vis2['VIS2DATA']
+		va_out = self.targoimodel.vis['VISAMP'] / self.caloimodel.vis['VISAMP']
+		# using standard propagation of error for multiplication/division
+		# which assumes uncorrelated Gaussian errors (questionable)    
+		cperr_t = self.targoimodel.t3 ['T3PHIERR']
+		cperr_c = self.caloimodel.t3['T3PHIERR']
+		sqverr_c = self.targoimodel.vis2['VIS2ERR']
+		sqverr_t = self.caloimodel.vis2['VIS2ERR']
+		vaerr_t = self.targoimodel.vis['VISAMPERR']
+		vaerr_c = self.caloimodel.vis['VISAMPERR']
+		cperr_out = np.sqrt(cperr_t**2. + cperr_c**2.)
+		sqverr_out = sqv_out * np.sqrt((sqverr_t/self.targoimodel.vis2['VIS2DATA'])**2. + (sqverr_c/self.caloimodel.vis2['VIS2DATA'])**2.)
+		vaerr_out = va_out * np.sqrt((vaerr_t/self.targoimodel.vis['VISAMP'])**2. + (vaerr_c/self.caloimodel.vis['VISAMP'])**2.)
+
+		pistons_t = self.targoimodel.array['PISTONS']
+		pisterr_t = self.targoimodel.array['PIST_ERR']
+		pistons_c = self.caloimodel.array['PISTONS']
+		pisterr_c = self.caloimodel.array['PIST_ERR']
+		# sum in quadrature errors from target and calibrator pistons
+		pisterr_out = np.sqrt(pisterr_t**2 + pisterr_c**2)
+
+		# update calibrated oimodel arrays with calibrated observables
+		self.calib_oimodel.t3['T3PHI'] = cp_out
+		self.calib_oimodel.t3['T3PHIERR'] = cperr_out
+		self.calib_oimodel.vis2['VIS2DATA'] = sqv_out
+		self.calib_oimodel.vis2['VIS2ERR'] = sqverr_out
+		self.calib_oimodel.vis['VISAMP'] = va_out
+		self.calib_oimodel.vis['VISAMPERR'] = vaerr_out
+
+		self.calib_oimodel.array['PISTON_T'] = pistons_t
+		self.calib_oimodel.array['PISTON_C'] = pistons_c
+		self.calib_oimodel.array['PIST_ERR'] = pisterr_out
+		# remove plain "pistons" key from model
+		del self.calib_oimodel.array['PISTONS']
+
+
+		return self.calib_oimodel
+
+
 
 
