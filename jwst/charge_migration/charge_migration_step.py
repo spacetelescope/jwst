@@ -10,7 +10,7 @@ from . import charge_migration
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["ChargeMigrationtionStep"]
+__all__ = ["ChargeMigrationStep"]
 
 
 class ChargeMigrationStep(Step):
