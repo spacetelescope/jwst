@@ -1,10 +1,18 @@
-1.11.4 (unreleased)
+1.11.5 (unreleased)
 ===================
 
 assign_wcs
 ----------
 
 - Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
+
+associations
+------------
+
+- Update the Level 3 product name construction for NIRCam coronagraphic data that
+  get processed through both coron3 and image3, to add the suffix "-image3" to the
+  product name for the data processed as imaging, in order to prevent duplicate
+  Level 3 file names from each pipeline. [#7826]
 
 calwebb_spec2
 -------------
@@ -13,6 +21,12 @@ calwebb_spec2
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
 
+charge_migration
+----------------
+ - Step was renamed from undersampling_migration. Changed default signal threshold,
+   added efficient routine to flag neighborhood pixels, added new unit test,
+   improved earlier unit tests, updated docs. [#7825]
+  
 cube_build
 ----------
 
@@ -23,6 +37,12 @@ datamodels
 ----------
 
 - Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
+
+engdb_tools
+-----------
+
+- Check alternative host is alive before attempting to run test for
+  access to avoid waiting the full timeout during test runs [#7780]
 
 flat_field
 ----------
@@ -70,18 +90,24 @@ resample
   image shape and the bounding box both for ``SCI`` image as well as for the
   ``ERR`` and ``VARIANCE_*`` images. [#7774]
 
+- Update the following exposure time keywords: XPOSURE (EFFEXPTM),
+  DURATION and TELAPSE. [#7793]
+
 residual_fringe
 ---------------
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
 
+  
+1.11.4 (2023-08-14)
+===================
+
 set_telescope_pointing
 ----------------------
 
 - Fixes to account for the fact that the commanded Guide Star position is always
   relative to FGS1 even when guiding with FGS2. [#7804]
-
 
 1.11.3 (2023-07-17)
 ===================
