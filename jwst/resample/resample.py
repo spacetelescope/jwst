@@ -363,16 +363,26 @@ class ResampleData:
         """Modify exposure time metadata in-place"""
         total_exposure_time = 0.
         exposure_times = {'start': [], 'end': []}
+        duration = 0.0
         for exposure in self.input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
             exposure_times['start'].append(exposure[0].meta.exposure.start_time)
             exposure_times['end'].append(exposure[0].meta.exposure.end_time)
+            duration += exposure[0].meta.exposure.duration
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
         output_model.meta.exposure.start_time = min(exposure_times['start'])
         output_model.meta.exposure.end_time = max(exposure_times['end'])
         output_model.meta.resample.product_exposure_time = total_exposure_time
+
+        # Update other exposure time keywords:
+        # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
+        xposure = total_exposure_time
+        output_model.meta.exposure.effective_exposure_time = xposure
+        # DURATION (identical to TELAPSE, elapsed time)
+        output_model.meta.exposure.duration = duration
+        output_model.meta.exposure.elapsed_exposure_time = duration
 
     @staticmethod
     def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht,
