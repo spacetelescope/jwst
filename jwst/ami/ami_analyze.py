@@ -32,9 +32,6 @@ def apply_LG_plus(input_model,
     input_model : data model object
         AMI science image to be analyzed
 
-    # filter_model : filter model object
-    #     filter throughput reference data
-
     oversample : integer
         Oversampling factor
     rotation : float (degrees)
@@ -110,18 +107,6 @@ def apply_LG_plus(input_model,
     yo = 0.0
 
     psf_offset_ff = None
-    # get filter, pixel scale from input_model,
-    # make bandpass array for find_rotation, instrument_data calls
-    filt = input_copy.meta.instrument.filter
-    pscaledegx, pscaledegy = utils.degrees_per_pixel(input_copy)
-    # model requires single pixel scale, so average X and Y scales
-    # (this is done again in instrument_data?)
-    pscale_deg = np.mean([pscaledegx, pscaledegy])
-    PIXELSCALE_r = np.deg2rad(pscale_deg)
-    holeshape = "hex"
-
-    # there should be an offset search?
-
     # get filter, pixel scale from input_model,
     # make bandpass array for find_rotation, instrument_data calls
     filt = input_copy.meta.instrument.filter
