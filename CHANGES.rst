@@ -6,6 +6,9 @@ assign_wcs
 
 - Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
 
+- Save bounding box to imaging WCS matching the shape of the data, for datamodels
+  without a defined bounding box. [#7809]
+
 associations
 ------------
 
