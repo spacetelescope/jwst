@@ -6,6 +6,9 @@ assign_wcs
 
 - Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
 
+- Save bounding box to imaging WCS matching the shape of the data, for datamodels
+  without a defined bounding box. [#7809]
+
 associations
 ------------
 
@@ -13,6 +16,10 @@ associations
   get processed through both coron3 and image3, to add the suffix "-image3" to the
   product name for the data processed as imaging, in order to prevent duplicate
   Level 3 file names from each pipeline. [#7826]
+
+- Update the Level 2 spectroscopic ASN rules to exclude any NIRSpec IFU exposures that
+  use filter/grating combinations known to produce no data on the NRS2 detector.
+  [#7833]
 
 calwebb_spec2
 -------------
