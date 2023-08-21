@@ -61,6 +61,9 @@ ____
 
 - Updated documentation for the step parameters [#7778]
 
+- Added argument description for three_group_rejection_threshold and
+  four_group_rejection_threshold [#7839].
+
 master_background
 -----------------
 
