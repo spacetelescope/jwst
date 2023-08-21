@@ -32,13 +32,13 @@ class AmiNormalizeStep(Step):
 
         Returns
         -------
-        result: AmiLgModel object
+        result: AmiOIModel object
             AMI data model that's been normalized
         """
 
         # Open the target and reference input models
-        target_model = datamodels.AmiLgModel(target)
-        reference_model = datamodels.AmiLgModel(reference)
+        target_model = datamodels.AmiOIModel(target)
+        reference_model = datamodels.AmiOIModel(reference)
 
         # Call the normalization routine
         result = ami_normalize.normalize_LG(target_model, reference_model)
