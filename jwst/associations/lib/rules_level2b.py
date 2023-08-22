@@ -198,7 +198,7 @@ class Asn_Lv2ImageSpecial(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science, self.get_exposure_type),
-            Constraint_Special(),
+            Constraint_Special(),  # background and ref_psf exposures
         ])
 
         # Now check and continue initialization.
@@ -350,6 +350,11 @@ class Asn_Lv2SpecImprint(
             Constraint_Mode(),
             Constraint_Spectral_Science(),
             Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
             DMSAttrConstraint(
                 name='imprint',
                 sources=['is_imprt']
@@ -382,7 +387,12 @@ class Asn_Lv2SpecSpecial(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(),
-            Constraint_Special(),
+            Constraint_Special(),  # background and ref_psf exposures
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint_Imprint_Special(self),

@@ -14,6 +14,14 @@ The ``jump`` step has 30 optional arguments that can be set by the user:
   rejection threshold will yield 6200 false positives for every million pixels, if the noise
   model is correct.
 
+* ``--three_group_rejection_threshold``: Cosmic ray sigma rejection threshold for ramps
+  having 3 groups. This is a floating-point value with default value of 6.0, and minimum
+  of 0.0.
+
+* ``--four_group_rejection_threshold``: Cosmic ray sigma rejection threshold for ramps
+  having 4 groups. This is a floating-point value with default value of 5.0, and minimum
+  of 0.0.
+
 * ``--maximum_cores``: The fraction of available cores that will be
   used for multi-processing in this step. The default value is 'none', which does not use
   multi-processing. The other options are 'quarter', 'half', and 'all'. Note that these
