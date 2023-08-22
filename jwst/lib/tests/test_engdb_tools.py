@@ -62,6 +62,10 @@ def engdb():
         yield engdb
 
 
+@pytest.mark.skipif(
+    not is_alive(ALTERNATE_HOST),
+    reason='Alternate test host not available.'
+)
 def test_environmental(jail_environ):
     os.environ['ENG_BASE_URL'] = ALTERNATE_URL
     try:

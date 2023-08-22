@@ -12,10 +12,14 @@ a pixel. When the peak pixels of such stars approach the saturation level, they 
 significant :ref:`charge migration <charge_migration>`:
 the spilling of charge from a saturated pixel into its neighboring pixels. This charge migration 
 causes group-to-group differences to decrease significantly once the signal level is greater than 
-~30,000 ADU. As a result, the last several groups of these ramps get flagged by the ``jump`` step. 
-The smaller number of groups used for these pixels in the ``ramp_fitting`` step results in them having 
+~25,000 ADU.  As a result, the last several groups of these ramps will be flagged by the
+``undersampling_correction`` step, and then ignored by the subsequent ``jump`` step. The smaller
+number of groups used for these pixels in the ``ramp_fitting`` step results in them having
 larger read noise variances, which in turn leads to lower weights used during resampling. This 
 ultimately leads to a lower than normal flux for the star in resampled images.
+
+Pixels that are the four nearest neighbors of those high-intensity pixels, will also be flagged
+as affected by charge migration.
 
 Once a group in a ramp has been flagged as affected by charge migration, all subsequent 
 groups in the ramp are also flagged. By flagging these groups, they are not used in the 
@@ -41,6 +45,8 @@ This results in a readnoise variance for undersampled pixels that is similar to 
 pixels unaffected by charge migration. For the Poisson noise variance calculation in 
 :ref:`ramp_fitting <ramp_fitting_step>`, the UNDERSAMP/DO_NOT_USE groups are not included.
 
+Pixels that are the four nearest neighbors of those high-intensity pixels will be similarly flagged.
+     
 For integrations having only 1 or 2 groups, no flagging will be performed.
 
 

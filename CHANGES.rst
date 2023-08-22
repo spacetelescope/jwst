@@ -41,6 +41,9 @@ cube_build
 - Replace scale1 and scale2 arguments with scalexy, add debug option debug_spaxel,
   and add more details to docs. [#7783]
 
+- Correct slicer scale and orientation in output WCS for IFU cubes built in internal_cal
+  coordinates, for NIRSpec calibration analysis. [#7811]
+
 datamodels
 ----------
 
@@ -68,6 +71,9 @@ ____
 
 - Updated documentation for the step parameters [#7778]
 
+- Added argument description for three_group_rejection_threshold and
+  four_group_rejection_threshold [#7839].
+
 master_background
 -----------------
 
@@ -83,6 +89,11 @@ pathloss
 --------
 
 - Fix interpolation error for point source corrections. [#7799]
+
+pixel_replace
+-------------
+
+- Add the minimum gradient method for the MIRI MRS. [#7823]
 
 refpix
 ------
@@ -106,6 +117,16 @@ residual_fringe
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
+  
+
+1.11.4 (2023-08-14)
+===================
+
+undersampling_correction
+------------------------
+
+- Changed default signal threshold, added efficient routine to flag neighborhood
+  pixels, added new unit test, improved earlier unit tests, updated docs. [#7740]
   
 
 1.11.4 (2023-08-14)

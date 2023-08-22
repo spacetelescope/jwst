@@ -8,6 +8,11 @@ from stdatamodels.jwst.datamodels import dqflags
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+GOOD = dqflags.group["GOOD"]
+DNU = dqflags.group["DO_NOT_USE"]
+UNSA = dqflags.group["UNDERSAMP"]
+UNSA_DNU = UNSA + DNU
+
 
 def undersampling_correction(input_model, signal_threshold):
     """
@@ -24,8 +29,8 @@ def undersampling_correction(input_model, signal_threshold):
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
-        Data model with undersampling_correction applied; add UNDERSAMP flag
-        to groups exceeding signal_threshold
+        Data model with undersampling_correction applied; add UNDERSAMP and
+        DO_NOT_USE flags to groups exceeding signal_threshold
     """
     data = input_model.data
     gdq = input_model.groupdq
@@ -45,8 +50,8 @@ def undersampling_correction(input_model, signal_threshold):
 
 def flag_pixels(data, gdq, signal_threshold):
     """
-    Flag first group in each ramp that exceeds signal_threshold as UNDERSAMP and DO_NOT_USE,
-    skipping groups already flagged as DO_NOT_USE; then flag all subsequent groups in the ramp.
+    Flag each group in each ramp that exceeds signal_threshold as UNDERSAMP and DO_NOT_USE,
+    skipping groups already flagged as DO_NOT_USE.
 
     Parameters
     ----------
@@ -61,44 +66,78 @@ def flag_pixels(data, gdq, signal_threshold):
 
     Returns
     -------
-    gdq : int, 4D array
+    new_gdq : int, 4D array
         updated group dq array
     """
     n_ints, n_grps, n_rows, n_cols = gdq.shape
-    num_pix = n_cols * n_rows
+    ncols = data.shape[3]
+    nrows = data.shape[2]
 
-    lowest_exc_1d = np.zeros(num_pix) + n_grps
+    new_gdq = gdq.copy()   # Updated gdq
 
-    for ii_int in range(n_ints):
-        for ii_grp in range(n_grps):
-            data_1d = data[ii_int, ii_grp, :, :].reshape(num_pix)  # vectorize slice
-            gdq_1d = gdq[ii_int, ii_grp, :, :].reshape(num_pix)
+    # Flag all exceedances with UNDERSAMP and NO_NOT_USE
+    undersamp_pix = (data > signal_threshold) & (gdq != DNU)
 
-            wh_not_dnu = np.logical_not(gdq_1d & dqflags.group['DO_NOT_USE'])
+    new_gdq[undersamp_pix] = np.bitwise_or(new_gdq[undersamp_pix], UNSA | DNU)
 
-            # In the current group for all ramps, locate pixels that :
-            #  a) exceed the signal_threshold, and
-            #  b) have not been previously flagged as an exceedance, and
-            #  c) were not flagged in an earlier step as DO_NOT_USE
-            wh_exc_1d = np.where((data_1d > signal_threshold) &
-                                 (lowest_exc_1d == n_grps) & wh_not_dnu)
+    # Reset groups previously flagged as DNU
+    gdq_orig = gdq.copy()  # For resetting to previously flagged DNU
+    wh_gdq_DNU = np.bitwise_and(gdq_orig, DNU)
 
-            # ... and mark those pixels, as current group is their first exceedance
-            if len(wh_exc_1d[0] > 0):  # For ramps previously unflagged ...
-                lowest_exc_1d[wh_exc_1d] = ii_grp
+    # Get indices for exceedances
+    arg_where = np.argwhere(new_gdq == UNSA_DNU)
+    a_int = arg_where[:, 0]  # array of integrations
+    a_grp = arg_where[:, 1]  # array of groups
+    a_row = arg_where[:, 2]  # array of rows
+    a_col = arg_where[:, 3]  # array of columns
 
-    # Flag current and subsequent groups
-    lowest_exc_2d = lowest_exc_1d.reshape((n_rows, n_cols))
-    for ii_int in range(n_ints):
-        for ii_grp in range(n_grps):
-            wh_set_flag = np.where(lowest_exc_2d == ii_grp)
+    # Process the 4 nearest neighbors of each exceedance
+    # Pixel to the east
+    xx_max_p1 = a_col[a_col < (ncols-1)] + 1
+    i_int = a_int[a_col < (ncols-1)]
+    i_grp = a_grp[a_col < (ncols-1)]
+    i_row = a_row[a_col < (ncols-1)]
 
-            # set arrays of components
-            yy = wh_set_flag[0]
-            xx = wh_set_flag[1]
+    if len(xx_max_p1) > 0:
+        new_gdq[i_int, i_grp, i_row, xx_max_p1] = \
+            np.bitwise_or(new_gdq[i_int, i_grp, i_row, xx_max_p1], UNSA | DNU)
 
-            gdq[ii_int, ii_grp:, yy, xx] = \
-                np.bitwise_or(gdq[ii_int, ii_grp:, yy, xx], dqflags.group['UNDERSAMP']
-                              | dqflags.group['DO_NOT_USE'])
+    new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
 
-    return gdq
+    # Pixel to the west
+    xx_m1 = a_col[a_col > 0] - 1
+    i_int = a_int[a_col > 0]
+    i_grp = a_grp[a_col > 0]
+    i_row = a_row[a_col > 0]
+
+    if len(xx_m1) > 0:
+        new_gdq[i_int, i_grp, i_row, xx_m1] = \
+            np.bitwise_or(new_gdq[i_int, i_grp, i_row, xx_m1], UNSA | DNU)
+
+    new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
+
+    # Pixel to the north
+    yy_m1 = a_row[a_row > 0] - 1
+    i_int = a_int[a_row > 0]
+    i_grp = a_grp[a_row > 0]
+    i_col = a_col[a_row > 0]
+
+    if len(yy_m1) > 0:
+        new_gdq[i_int, i_grp, yy_m1, i_col] = \
+            np.bitwise_or(new_gdq[i_int, i_grp, yy_m1, i_col], UNSA | DNU)
+
+    new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
+
+    # Pixel to the south
+    yy_max_p1 = a_row[a_row < (nrows-1)] + 1
+    i_int = a_int[a_row < (nrows-1)]
+    i_grp = a_grp[a_row < (nrows-1)]
+    i_col = a_col[a_row < (nrows-1)]
+
+    if len(yy_max_p1) > 0:
+        new_gdq[i_int, i_grp, yy_max_p1, i_col] = \
+            np.bitwise_or(new_gdq[i_int, i_grp, yy_max_p1, i_col], UNSA | DNU)
+
+    new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
+
+    return new_gdq
