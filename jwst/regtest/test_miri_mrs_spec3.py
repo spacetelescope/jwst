@@ -30,28 +30,6 @@ def run_spec3_ifushort(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec3_ifushort_emsm(jail, rtdata_module):
-    """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT"""
-
-    # Test has bands medium and long for IFUSHORT
-
-    rtdata = rtdata_module
-    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json')
-
-    args = [
-        "calwebb_spec3",
-        rtdata.input,
-        '--steps.cube_build.save_results=true',
-        '--steps.cube_build.weighting=emsm',
-        '--steps.cube_build.output_file=miri_mrs_emsm'
-        '--steps.extract_1d.save_results=true',
-    ]
-
-    Step.from_cmdline(args)
-    return rtdata
-
-
-@pytest.fixture(scope='module')
 def run_spec3_ifulong(jail, rtdata_module):
     """Run the Spec3Pipeline dithered flight data """
 
@@ -64,6 +42,29 @@ def run_spec3_ifulong(jail, rtdata_module):
         "calwebb_spec3",
         rtdata.input,
         '--steps.cube_build.save_results=true',
+        '--steps.extract_1d.save_results=true',
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
+
+
+@pytest.fixture(scope='module')
+def run_spec3_ifushort_emsm(jail, rtdata_module):
+    """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT"""
+
+    # Test has bands medium and long for IFUSHORT
+
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json')
+    output_name = "miri_mrs_emsm"
+    
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        '--steps.cube_build.save_results=true',
+        '--steps.cube_build.weighting=emsm',
+        '--steps.cube_build.output_file="miri_mrs_emsm"',
         '--steps.extract_1d.save_results=true',
     ]
 

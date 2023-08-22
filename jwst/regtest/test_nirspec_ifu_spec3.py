@@ -41,7 +41,7 @@ def run_spec3_multi_emsm(jail, rtdata_module):
         'args': {
             '--steps.cube_build.save_results=true',
             '--steps.cube_build.weighting=emsm',
-            '--steps.cube_build.output_file=nirspec_emsm',
+            '--steps.cube_build.output_file="nirspec_emsm"',
             '--steps.extract_1d.save_results=true',
         }
     }
