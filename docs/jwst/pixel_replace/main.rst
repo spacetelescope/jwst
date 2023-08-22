@@ -17,10 +17,10 @@ unsets the ``DO_NOT_USE`` flag and sets the ``FLUX_ESTIMATED`` flag for each pix
 Algorithms
 ==========
 
-Currently, one algorithm has been tested to estimate the missing fluxes.
-
 Adjacent Profile Approximation
 ------------------------------
+
+This is the default (and most extensively tested) algorithm for most spectroscopic modes.
 
 First, the input 2-d spectral cutout is scanned across the dispersion axis to determine
 which cross-dispersion vectors (column or row, depending on dispersion direction) contain
@@ -32,3 +32,24 @@ the median of the normalized values. This results in a median of normalized valu
 
 Finally, this profile is scaled to the vector containing a missing pixel, and the value is
 estimated from the scaled profile.
+
+Minimum Gradient Estimator
+--------------------------
+
+In the case of the MIRI MRS, NaN-valued pixels are partially compensated during the cube building process
+using the overlap between detector pixels and output cube voxels.  The effects of NaN values are thus not
+as severe as for slit spectra, but can manifest as small dips in the extracted spectrum when a NaN value
+lands atop the peak of a spectral trace and cube building interpolates from lower-flux adjacent values.
+
+Pixel replacement can thus be useful in some science cases for the MIRI MRS as well, but undersampling combined with
+the curvature of spectral traces on the detector
+can lead the model-based adjacent profile estimator to derive incorrect values in the vicinity of
+emission lines.  The minimum gradient estimator is thus another optional algorithm that uses entirely
+local information to fill in the missing pixel values.
+
+This method tests the gradient along the spatial and spectral axes using immediately adjacent pixels.  It chooses
+whichever dimension has the minimum absolute gradient and replaces the missing pixel with the average of the
+two adjacent pixels along that dimension.  Near point sources this will thus favor replacement along the spectral
+axis due to spatial undersampling of the PSF profile, while near bright extended emission lines it will favor
+replacement along the spatial axis due to the steep spectral profile.  No replacement is attempted if a NaN
+value is bordered by another NaN value along a given axis.
