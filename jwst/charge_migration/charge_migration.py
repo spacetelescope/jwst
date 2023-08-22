@@ -128,10 +128,10 @@ def flag_pixels(data, gdq, signal_threshold):
     new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
 
     # Pixel to the south
-    yy_max_p1 = a_row[a_row < (nrows-1)] + 1
-    i_int = a_int[a_row < (nrows-1)]
-    i_grp = a_grp[a_row < (nrows-1)]
-    i_col = a_col[a_row < (nrows-1)]
+    yy_max_p1 = a_row[a_row < (n_rows-1)] + 1
+    i_int = a_int[a_row < (n_rows-1)]
+    i_grp = a_grp[a_row < (n_rows-1)]
+    i_col = a_col[a_row < (n_rows-1)]
 
     if len(yy_max_p1) > 0:
         new_gdq[i_int, i_grp, yy_max_p1, i_col] = \
