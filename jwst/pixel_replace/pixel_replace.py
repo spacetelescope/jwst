@@ -119,8 +119,8 @@ class PixelReplacement:
 
                             trace_model.close()
 
-                        n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
-                        log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
+                    n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
+                    log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
                 else:
                     # NRS_IFU method - Fixed number of IFU slices to iterate over
                     for i in range(30):
@@ -205,14 +205,14 @@ class PixelReplacement:
             Either the input to the pixel_replace step in the
             case of DataModels containing only one 2D spectrum,
             or a single 2D spectrum from the input DataModel
-            containting multiple spectra (i.e. MultiSlitModel).
+            containing multiple spectra (i.e. MultiSlitModel).
             Requires data and dq attributes.
 
         Returns
         -------
         model_replaced : DataModel
             DataModel with flagged bad pixels now flagged with
-            TO-BE-DETERMINED and holding a flux value estimated
+            FLUX_ESTIMATED and holding a flux value estimated
             from spatial profile, derived from adjacent columns.
 
         """
@@ -354,14 +354,14 @@ class PixelReplacement:
             Either the input to the pixel_replace step in the
             case of DataModels containing only one 2D spectrum,
             or a single 2D spectrum from the input DataModel
-            containting multiple spectra (i.e. MultiSlitModel).
+            containing multiple spectra (i.e. MultiSlitModel).
             Requires data and dq attributes.
 
         Returns
         -------
         model_replaced : DataModel
             DataModel with flagged bad pixels now flagged with
-            TO-BE-DETERMINED and holding a flux value estimated
+            FLUX_ESTIMATED and holding a flux value estimated
             from spatial profile, derived from adjacent columns.
 
         """
@@ -422,8 +422,6 @@ class PixelReplacement:
                 nreplaced += 1
             except Exception:
                 pass
-
-        log.info(f"Number of pixels replaced: {nreplaced}")
 
         model_replaced.data = newdata
         model_replaced.err = newerr
