@@ -23,6 +23,32 @@ def get_center(exp_type, input, offsets=False):
     """Get the center of the target in the aperture.
     (0.0, 0.0) is the aperture center.  Coordinates go
     from -0.5 to 0.5.
+
+    Parameters
+    ----------
+    exp_type : str
+        Keyword value
+
+    input_model : data model object
+        science data to be corrected
+
+    offsets: bool
+        Only applies for MIRI LRS, if True the offsets will be returned
+        as well (imx, imy)
+
+    Returns
+    -------
+    xcenter: float
+        x-coordinate center of the target in the aperture
+
+    ycenter: float
+        y-coordinate center of the target in the aperture
+
+    imx: float
+        x-location relative to LRS aperture reference point
+
+    imy: float
+        y-location relative to LRS aperture reference point
     """
     if exp_type == "NRS_IFU":
 
@@ -75,7 +101,20 @@ def get_center(exp_type, input, offsets=False):
 def get_aperture_from_model(input_model, match):
     """Figure out the correct aperture based on the value of the 'match'
     parameter.  For MSA, match is the number of shutters, for fixed slit,
-    match is the name of the slit
+    match is the name of the slit.
+
+    Parameters
+    ----------
+    input_model : data model object
+        science data to be corrected
+
+    match: str
+        Aperture name
+
+    Returns
+    -------
+    aperture: str or None
+        Aperture name
     """
     if input_model.meta.exposure.type == 'NRS_MSASPEC':
         for aperture in input_model.apertures:
@@ -99,12 +138,11 @@ def calculate_pathloss_vector(pathloss_refdata,
                               xcenter,
                               ycenter,
                               calc_wave=True):
-    """
-    Calculate the pathloss vectors from the pathloss model using the
+    """Calculate the pathloss vectors from the pathloss model using the
     coordinates of the center of the target to interpolate the
     pathloss value as a function of wavelength at that location
 
-    Parameters:
+    Parameters
     -----------
     pathloss_refdata : numpy ndarray
         The input pathloss data array
@@ -120,7 +158,7 @@ def calculate_pathloss_vector(pathloss_refdata,
     calc_wave : bool
         Calculate a wavelength vector from the ref file
 
-    Returns:
+    Returns
     --------
     wavelength : numpy ndarray
         The 1-d wavelength array
@@ -131,7 +169,6 @@ def calculate_pathloss_vector(pathloss_refdata,
     is_inside_slitlet : bool
         Returns True if the object source position is inside the slitlet,
         otherwise returns False
-
     """
     is_inside_slitlet = True
     if len(pathloss_refdata.shape) == 3:
@@ -202,10 +239,7 @@ def calculate_pathloss_vector(pathloss_refdata,
 
 def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None,
                   correction_pars=None, usr_slt_loc=None):
-    """
-    Short Summary
-    -------------
-    Execute all tasks for Path Loss Correction
+    """Execute all tasks for Path Loss Correction
 
     Parameters
     ----------
@@ -233,7 +267,6 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
     output_model, corrections : jwst.datamodel.JwstDataModel, jwst.datamodel.datamodel
         2-tuple of the corrected science data with pathloss extensions added, and a
         model of the correction arrays.
-
     """
     if not pathloss_model and not correction_pars:
         raise RuntimeError(
@@ -289,32 +322,26 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
 
 
 def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
-    """
-    Get the value of pathloss by interpolating each non-NaN element of
+    """Get the value of pathloss by interpolating each non-NaN element of
     wavelength_grid into pathloss_vector using the index lookup of
     wavelength_vector.  Pixels with wavelengths outside the range of the
     reference file should have a correction of NaN.
 
-    Parameters:
+    Parameters
     -----------
-
     wavelength_grid: numpy ndarray (2-d)
-
-    The grid of wavelengths for each science data pixel
+        The grid of wavelengths for each science data pixel
 
     wavelength_vector: numpy ndarray (1-d)
-
-    Vector of wavelengths
+        Vector of wavelengths
 
     pathloss_vector:  numpy ndarray (1-d)
+        Corresponding vector of pathloss values
 
-    Corresponding vector of pathloss values
-
-    Returns:
+    Returns
     --------
-
-    grid of pathloss corrections for each non-Nan pixel
-
+    pathloss_grid: numpy array
+        Grid of pathloss corrections for each non-Nan pixel
     """
 
     # Need to set the pathloss correction of pixels whose wavelength is outside
@@ -363,7 +390,17 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
 
 
 def is_pointsource(srctype):
-    """Returns True if srctype is POINT"""
+    """Source type to boolean
+
+    Parameters
+    ----------
+    srctype : str
+        Determined type of source.
+
+    Returns
+    -------
+        Returns True if srctype is POINT
+    """
     if srctype is None:
         return False
     elif srctype.upper() == 'POINT':
