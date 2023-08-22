@@ -204,6 +204,25 @@ NRS_FSS_VALID_LAMP_OPTICAL_PATHS = (
     ('g140m', 'flat4', 'nrs2'),
 )
 
+# Define the valid optical paths vs detector for NIRSpect IFU Science
+# Tuples are (GRATING, FILTER, DETECTOR)
+# The only combinations that result in data on the NRS2 detector are
+# g140h/f100lp, g235h/f170lp, and g395h/f290lp.
+NRS_IFU_VALID_OPTICAL_PATHS = (
+    ('prism', 'clear',  'nrs1'),
+    ('g140m', 'f070lp', 'nrs1'),
+    ('g140m', 'f100lp', 'nrs1'),
+    ('g235m', 'f170lp', 'nrs1'),
+    ('g395m', 'f290lp', 'nrs1'),
+    ('g140h', 'f070lp', 'nrs1'),
+    ('g140h', 'f100lp', 'nrs1'),
+    ('g140h', 'f100lp', 'nrs2'),
+    ('g235h', 'f170lp', 'nrs1'),
+    ('g235h', 'f170lp', 'nrs2'),
+    ('g395h', 'f290lp', 'nrs1'),
+    ('g395h', 'f290lp', 'nrs2'),
+)
+
 # Key that uniquely identifies members.
 MEMBER_KEY = 'expname'
 
@@ -997,7 +1016,7 @@ def item_getattr(item, attributes, association=None):
 
 
 def nrsfss_valid_detector(item):
-    """Check that a grating/filter combo can appear on the detector"""
+    """Check that a slit/grating/filter combo can appear on the detector"""
     try:
         _, detector = item_getattr(item, ['detector'])
         _, filter = item_getattr(item, ['filter'])
@@ -1015,6 +1034,10 @@ def nrsfss_valid_detector(item):
 
 def nrsifu_valid_detector(item):
     """Check that a grating/filter combo can appear on the detector"""
+    _, exp_type = item_getattr(item, ['exp_type'])
+    if exp_type != 'nrs_ifu':
+        return True
+
     try:
         _, detector = item_getattr(item, ['detector'])
         _, filter = item_getattr(item, ['filter'])
@@ -1022,21 +1045,7 @@ def nrsifu_valid_detector(item):
     except KeyError:
         return False
 
-    # Just a checklist of paths:
-    if grating in ['g395h', 'g235h']:
-        return True
-    elif grating in ['g395m', 'g235m', 'g140m'] and detector == 'nrs1':
-        return True
-    elif grating == 'prism' and filter == 'clear' and detector == 'nrs1':
-        return True
-    elif grating == 'g140h':
-        if filter == 'f100lp':
-            return True
-        elif filter == 'f070lp' and detector == 'nrs1':
-            return True
-
-    # Nothing has matched. Not valid.
-    return False
+    return (grating, filter, detector) in NRS_IFU_VALID_OPTICAL_PATHS
 
 
 def nrslamp_valid_detector(item):
