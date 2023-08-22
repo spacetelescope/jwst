@@ -33,8 +33,8 @@ cube_build
 
 - Replace scale1 and scale2 arguments with scalexy, add debug option debug_spaxel,
   and add more details to docs. [#7783]
-- Fix output WCS for IFU cubes built in internal_cal coordinates, for NIRSpec
-  calibration analysis. [#7811]
+- Correct slicer scale and orientation in output WCS for IFU cubes built in internal_cal
+  coordinates, for NIRSpec calibration analysis. [#7811]
 
 datamodels
 ----------
