@@ -52,7 +52,7 @@ def charge_migration(input_model, signal_threshold):
 
 def flag_pixels(data, gdq, signal_threshold):
     """
-    Flag first group in each ramp that exceeds signal_threshold as CHARGELOSS and DO_NOT_USE,
+    Flag each group in each ramp that exceeds signal_threshold as CHARGELOSS and DO_NOT_USE,
     skipping groups already flagged as DO_NOT_USE.
 
     Parameters
@@ -72,15 +72,12 @@ def flag_pixels(data, gdq, signal_threshold):
         updated group dq array
     """
     n_ints, n_grps, n_rows, n_cols = gdq.shape
-    ncols = data.shape[3]
-    nrows = data.shape[2]
 
     new_gdq = gdq.copy()   # Updated gdq
 
     # Flag all exceedances with CHARGELOSS and NO_NOT_USE
-    chargeloss_pix = (data > signal_threshold) == (gdq != DNU)
-    new_gdq[chargeloss_pix] = np.bitwise_or(new_gdq[chargeloss_pix], CHLO | DNU)
-    
+    chargeloss_pix = (data > signal_threshold) & (gdq != DNU)
+
     # Reset groups previously flagged as DNU
     gdq_orig = gdq.copy()  # For resetting to previously flagged DNU
     wh_gdq_DNU = np.bitwise_and(gdq_orig, DNU)
@@ -102,7 +99,7 @@ def flag_pixels(data, gdq, signal_threshold):
 
     if len(xx_max_p1) > 0:
         new_gdq[i_int, i_grp, i_row, xx_max_p1] = \
-            np.bitwise_or(new_gdq[i_int, i_grp, i_row, xx_max_p1], CHLO | DNU)        
+            np.bitwise_or(new_gdq[i_int, i_grp, i_row, xx_max_p1], CHLO | DNU)
 
     new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
 
@@ -115,7 +112,7 @@ def flag_pixels(data, gdq, signal_threshold):
     if len(xx_m1) > 0:
         new_gdq[i_int, i_grp, i_row, xx_m1] = \
             np.bitwise_or(new_gdq[i_int, i_grp, i_row, xx_m1], CHLO | DNU)
-        
+
     new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
 
     # Pixel to the north
@@ -127,7 +124,7 @@ def flag_pixels(data, gdq, signal_threshold):
     if len(yy_m1) > 0:
         new_gdq[i_int, i_grp, yy_m1, i_col] = \
             np.bitwise_or(new_gdq[i_int, i_grp, yy_m1, i_col], CHLO | DNU)
-        
+
     new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
 
     # Pixel to the south
@@ -139,7 +136,7 @@ def flag_pixels(data, gdq, signal_threshold):
     if len(yy_max_p1) > 0:
         new_gdq[i_int, i_grp, yy_max_p1, i_col] = \
             np.bitwise_or(new_gdq[i_int, i_grp, yy_max_p1, i_col], CHLO | DNU)
-        
+
     new_gdq[wh_gdq_DNU == 1] = gdq_orig[wh_gdq_DNU == 1]  # reset for earlier DNUs
 
     return new_gdq

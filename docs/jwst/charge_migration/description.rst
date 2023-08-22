@@ -26,8 +26,7 @@ due to readnoise.
 
 Input details
 -------------
-The input data must have been processed through the :ref:`jump <jump_step>` step, so the input must be in the
-form of a `~jwst.datamodels.RampModel`.
+The input must be in the form of a `~jwst.datamodels.RampModel`.
 
 
 Algorithm
