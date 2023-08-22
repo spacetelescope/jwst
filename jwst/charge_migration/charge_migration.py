@@ -77,6 +77,7 @@ def flag_pixels(data, gdq, signal_threshold):
 
     # Flag all exceedances with CHARGELOSS and NO_NOT_USE
     chargeloss_pix = (data > signal_threshold) & (gdq != DNU)
+    new_gdq[chargeloss_pix] = np.bitwise_or(new_gdq[chargeloss_pix], CHLO | DNU)
 
     # Reset groups previously flagged as DNU
     gdq_orig = gdq.copy()  # For resetting to previously flagged DNU
@@ -92,10 +93,10 @@ def flag_pixels(data, gdq, signal_threshold):
 
     # Process the 4 nearest neighbors of each exceedance
     # Pixel to the east
-    xx_max_p1 = a_col[a_col < (ncols-1)] + 1
-    i_int = a_int[a_col < (ncols-1)]
-    i_grp = a_grp[a_col < (ncols-1)]
-    i_row = a_row[a_col < (ncols-1)]
+    xx_max_p1 = a_col[a_col < (n_cols-1)] + 1
+    i_int = a_int[a_col < (n_cols-1)]
+    i_grp = a_grp[a_col < (n_cols-1)]
+    i_row = a_row[a_col < (n_cols-1)]
 
     if len(xx_max_p1) > 0:
         new_gdq[i_int, i_grp, i_row, xx_max_p1] = \
