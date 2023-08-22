@@ -383,10 +383,11 @@ class RawOifits:
 								('FOV', '<f8'), 
 								('FOVTYPE', 'S6'), 
 								('CTRS_EQT', '<f8', (2,)),
-								# ('PISTONS', '<f8'),
-								# ('PIST_ERR', '<f8'),
+								('PISTONS', '<f8'),
+								('PIST_ERR', '<f8'),
 								])
 		m.array = np.zeros(nrows, dtype=modified_dtype)
+		m.array = np.zeros(nrows,dtype=m.array.dtype)
 		m.array['TEL_NAME'] = self.oifits_dct['OI_ARRAY']['TEL_NAME']
 		m.array['STA_NAME'] = self.oifits_dct['OI_ARRAY']['STA_NAME']
 		m.array['STA_INDEX'] = self.oifits_dct['OI_ARRAY']['STA_INDEX']
@@ -395,8 +396,8 @@ class RawOifits:
 		m.array['FOV'] = self.oifits_dct['OI_ARRAY']['FOV']
 		m.array['FOVTYPE'] = self.oifits_dct['OI_ARRAY']['FOVTYPE']
 		m.array['CTRS_EQT'] = self.oifits_dct['OI_ARRAY']['CTRS_EQT']
-		# m.array['PISTONS'] = self.oifits_dct['OI_ARRAY']['PISTONS']
-		# m.array['PIST_ERR'] = self.oifits_dct['OI_ARRAY']['PIST_ERR']
+		m.array['PISTONS'] = self.oifits_dct['OI_ARRAY']['PISTONS']
+		m.array['PIST_ERR'] = self.oifits_dct['OI_ARRAY']['PIST_ERR']
 		
 
 		# oi_target extension data
