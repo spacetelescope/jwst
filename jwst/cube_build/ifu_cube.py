@@ -395,7 +395,6 @@ class IFUCubeData():
             across_cdelt = self.cdelt2
 
         if self.instrument == 'NIRSPEC':
-            # self.cdelt2 = self.cdelt1  # make cubes square
             along_cdelt = self.cdelt2
 
             n1a = math.ceil(alimit / along_cdelt)
