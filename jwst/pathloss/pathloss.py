@@ -32,22 +32,22 @@ def get_center(exp_type, input, offsets=False):
     input_model : data model object
         science data to be corrected
 
-    offsets: bool
+    offsets : bool
         Only applies for MIRI LRS, if True the offsets will be returned
         as well (imx, imy)
 
     Returns
     -------
-    xcenter: float
+    xcenter : float
         x-coordinate center of the target in the aperture
 
-    ycenter: float
+    ycenter : float
         y-coordinate center of the target in the aperture
 
-    imx: float
+    imx : float
         x-location relative to LRS aperture reference point
 
-    imy: float
+    imy : float
         y-location relative to LRS aperture reference point
     """
     if exp_type == "NRS_IFU":
@@ -108,12 +108,12 @@ def get_aperture_from_model(input_model, match):
     input_model : data model object
         science data to be corrected
 
-    match: str
+    match : str
         Aperture name
 
     Returns
     -------
-    aperture: str or None
+    aperture : str or None
         Aperture name
     """
     if input_model.meta.exposure.type == 'NRS_MSASPEC':
@@ -258,7 +258,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
     correction_pars : dict or None
         Correction parameters to use instead of recalculation.
 
-    usr_slt_loc: float
+    usr_slt_loc : float
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
 
@@ -329,18 +329,18 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
 
     Parameters
     -----------
-    wavelength_grid: numpy ndarray (2-d)
+    wavelength_grid : numpy ndarray (2-d)
         The grid of wavelengths for each science data pixel
 
-    wavelength_vector: numpy ndarray (1-d)
+    wavelength_vector : numpy ndarray (1-d)
         Vector of wavelengths
 
-    pathloss_vector:  numpy ndarray (1-d)
+    pathloss_vector :  numpy ndarray (1-d)
         Corresponding vector of pathloss values
 
     Returns
     --------
-    pathloss_grid: numpy array
+    pathloss_grid : numpy array
         Grid of pathloss corrections for each non-Nan pixel
     """
 
