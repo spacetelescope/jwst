@@ -83,6 +83,11 @@ pathloss
 
 - Fix interpolation error for point source corrections. [#7799]
 
+pixel_replace
+-------------
+
+- Add the minimum gradient method for the MIRI MRS. [#7823]
+
 refpix
 ------
 
