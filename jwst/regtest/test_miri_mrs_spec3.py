@@ -57,8 +57,7 @@ def run_spec3_ifushort_emsm(jail, rtdata_module):
 
     rtdata = rtdata_module
     rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json')
-    output_name = "miri_mrs_emsm"
-    
+
     args = [
         "calwebb_spec3",
         rtdata.input,
