@@ -389,7 +389,7 @@ class PixelReplacement:
         pad = 1 # Padding around edge of array to ensure we don't look for neighbors outside array
 
         # Find NaN-valued pixels
-        indx = np.where((np.isfinite(indata) == False)
+        indx = np.where((~np.isfinite(indata))
                         & (basey > pad) & (basey < ysize-pad) & (basex > pad) & (basex < xsize-pad))
         # X and Y indices
         yindx, xindx = indx[0], indx[1]
