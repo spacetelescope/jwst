@@ -387,7 +387,6 @@ class RawOifits:
 								('PIST_ERR', '<f8'),
 								])
 		m.array = np.zeros(nrows, dtype=modified_dtype)
-		m.array = np.zeros(nrows,dtype=m.array.dtype)
 		m.array['TEL_NAME'] = self.oifits_dct['OI_ARRAY']['TEL_NAME']
 		m.array['STA_NAME'] = self.oifits_dct['OI_ARRAY']['STA_NAME']
 		m.array['STA_INDEX'] = self.oifits_dct['OI_ARRAY']['STA_INDEX']
@@ -545,9 +544,26 @@ class CalibOifits:
 		self.caloimodel = caloimodel
 		self.calib_oimodel = targoimodel.copy()
 
-	def calibrate():
+	def update_dtype(self):
+		# modify the dtype of OI array to include different pistons columns,
+		# 
+		nrows=7
+		modified_dtype = np.dtype([('TEL_NAME', 'S16'), 
+								('STA_NAME', 'S16'), 
+								('STA_INDEX', '<i2'), 
+								('DIAMETER', '<f4'), 
+								('STAXYZ', '<f8', (3,)), 
+								('FOV', '<f8'), 
+								('FOVTYPE', 'S6'), 
+								('CTRS_EQT', '<f8', (2,)),
+								('PISTON_T', '<f8'),
+								('PISTON_C', '<f8'),
+								('PIST_ERR', '<f8'),
+								])
+		self.calib_oimodel.array = np.zeros(nrows, dtype=modified_dtype)
 
 
+	def calibrate(self):
 		cp_out = self.targoimodel.t3['T3PHI'] - self.caloimodel.t3['T3PHI']
 		sqv_out = self.targoimodel.vis2['VIS2DATA'] / self.caloimodel.vis2['VIS2DATA']
 		va_out = self.targoimodel.vis['VISAMP'] / self.caloimodel.vis['VISAMP']
@@ -570,6 +586,21 @@ class CalibOifits:
 		# sum in quadrature errors from target and calibrator pistons
 		pisterr_out = np.sqrt(pisterr_t**2 + pisterr_c**2)
 
+		# update OI array, which is currently all zeros, with input oi array 
+		# and updated piston columns
+		self.update_dtype()
+		self.calib_oimodel.array['TEL_NAME'] = self.targoimodel.array['TEL_NAME']
+		self.calib_oimodel.array['STA_NAME'] = self.targoimodel.array['STA_NAME']
+		self.calib_oimodel.array['STA_INDEX'] = self.targoimodel.array['STA_INDEX']
+		self.calib_oimodel.array['DIAMETER'] = self.targoimodel.array['DIAMETER']
+		self.calib_oimodel.array['STAXYZ'] = self.targoimodel.array['STAXYZ']
+		self.calib_oimodel.array['FOV'] = self.targoimodel.array['FOV']
+		self.calib_oimodel.array['FOVTYPE'] = self.targoimodel.array['FOVTYPE']
+		self.calib_oimodel.array['CTRS_EQT'] = self.targoimodel.array['CTRS_EQT']
+		self.calib_oimodel.array['PISTON_T'] = pistons_t
+		self.calib_oimodel.array['PISTON_C'] = pistons_c
+		self.calib_oimodel.array['PIST_ERR'] = pisterr_out
+
 		# update calibrated oimodel arrays with calibrated observables
 		self.calib_oimodel.t3['T3PHI'] = cp_out
 		self.calib_oimodel.t3['T3PHIERR'] = cperr_out
@@ -581,8 +612,6 @@ class CalibOifits:
 		self.calib_oimodel.array['PISTON_T'] = pistons_t
 		self.calib_oimodel.array['PISTON_C'] = pistons_c
 		self.calib_oimodel.array['PIST_ERR'] = pisterr_out
-		# remove plain "pistons" key from model
-		del self.calib_oimodel.array['PISTONS']
 
 
 		return self.calib_oimodel
