@@ -613,6 +613,9 @@ class CalibOifits:
 		self.calib_oimodel.array['PISTON_C'] = pistons_c
 		self.calib_oimodel.array['PIST_ERR'] = pisterr_out
 
+		# add calibrated header keywords
+		calname = self.caloimodel.meta.target.proposer_name # name of calibrator star
+		self.calib_oimodel.meta.oifits.calib = calname
 
 		return self.calib_oimodel
 
