@@ -76,16 +76,17 @@ The ``extract_1d`` step has the following step-specific arguments.
   the step will make the decision of whether to use the source position based
   on the observing mode and the source type. The source position will only be
   used for point sources and for modes where the source could be located
-  off-center due to things like nodding or dithering. If turned on, the sky
-  (RA/Dec) position of the source is used in conjunction with the World
-  Coordinate System (WCS) to compute the x/y source location. For long-slit
-  type modes (e.g. MIRI LRS and NIRSpec fixed-slit and MOS), only the position
-  in the cross-dispersion direction is used to potentially offset the
-  extraction regions in that direction. If this parameter is specified in the
-  :ref:`EXTRACT1D <extract1d_reffile>` reference file, the reference file value
-  will override any automatic settings based on exposure and source type.
-  As always, a value given by the user as an argument to the step overrides all
-  settings in the reference file or within the step code.
+  off-center due to things like nodding or dithering. If turned on, the position
+  of the source is used in conjunction with the World Coordinate System (WCS) to
+  compute the x/y source location. For NIRSpec non-IFU modes, the source position
+  is determined from the ``source_xpos/source_ypos`` parameters, while other modes
+  use ``targ_ra/targ_dec``. For long-slit type modes (e.g. MIRI LRS and NIRSpec
+  fixed-slit and MOS), only the position in the cross-dispersion direction is used
+  to potentially offset the extraction regions in that direction. If this parameter
+  is specified in the :ref:`EXTRACT1D <extract1d_reffile>` reference file, the
+  reference file value will override any automatic settings based on exposure and
+  source type. As always, a value given by the user as an argument to the step
+  overrides all settings in the reference file or within the step code.
 
 ``--center_xy``
   A list of two integer values giving the desired x/y location for the center
