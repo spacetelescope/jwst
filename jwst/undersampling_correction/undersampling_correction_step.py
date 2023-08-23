@@ -21,7 +21,7 @@ class UndersamplingCorrectionStep(Step):
     class_alias = "undersampling_correction"
 
     spec = """
-        signal_threshold = float(default=30000)
+        signal_threshold = float(default=25000)
         skip = boolean(default=True)
     """
 
@@ -31,7 +31,7 @@ class UndersamplingCorrectionStep(Step):
         with datamodels.RampModel(input) as input_model:
             if (input_model.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
                 log.info('Too few groups per integration; skipping undersampling_correction')
-                
+
                 result = input_model
                 result.meta.cal_step.undersampling_correction = 'SKIPPED'
 

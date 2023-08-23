@@ -6,6 +6,21 @@ assign_wcs
 
 - Use isinstance instead of comparison with a type for lamp_mode inspection [#7801]
 
+- Save bounding box to imaging WCS matching the shape of the data, for datamodels
+  without a defined bounding box. [#7809]
+
+associations
+------------
+
+- Update the Level 3 product name construction for NIRCam coronagraphic data that
+  get processed through both coron3 and image3, to add the suffix "-image3" to the
+  product name for the data processed as imaging, in order to prevent duplicate
+  Level 3 file names from each pipeline. [#7826]
+
+- Update the Level 2 spectroscopic ASN rules to exclude any NIRSpec IFU exposures that
+  use filter/grating combinations known to produce no data on the NRS2 detector.
+  [#7833]
+
 calwebb_spec2
 -------------
 
@@ -18,6 +33,9 @@ cube_build
 
 - Replace scale1 and scale2 arguments with scalexy, add debug option debug_spaxel,
   and add more details to docs. [#7783]
+
+- Correct slicer scale and orientation in output WCS for IFU cubes built in internal_cal
+  coordinates, for NIRSpec calibration analysis. [#7811]
 
 datamodels
 ----------
@@ -46,6 +64,9 @@ ____
 
 - Updated documentation for the step parameters [#7778]
 
+- Added argument description for three_group_rejection_threshold and
+  four_group_rejection_threshold [#7839].
+
 master_background
 -----------------
 
@@ -61,6 +82,11 @@ pathloss
 --------
 
 - Fix interpolation error for point source corrections. [#7799]
+
+pixel_replace
+-------------
+
+- Add the minimum gradient method for the MIRI MRS. [#7823]
 
 refpix
 ------
@@ -84,6 +110,13 @@ residual_fringe
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
+
+undersampling_correction
+------------------------
+
+- Changed default signal threshold, added efficient routine to flag neighborhood
+  pixels, added new unit test, improved earlier unit tests, updated docs. [#7740]
+  
 
 1.11.4 (2023-08-14)
 ===================

@@ -19,8 +19,8 @@ from ..linearity import linearity_step
 from ..dark_current import dark_current_step
 from ..reset import reset_step
 from ..persistence import persistence_step
+from ..undersampling_correction import undersampling_correction_step
 from ..jump import jump_step
-from ..undersampling_correction import  undersampling_correction_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
@@ -60,8 +60,8 @@ class Detector1Pipeline(Pipeline):
                  'dark_current': dark_current_step.DarkCurrentStep,
                  'reset': reset_step.ResetStep,
                  'persistence': persistence_step.PersistenceStep,
-                 'jump': jump_step.JumpStep,
                  'undersampling_correction': undersampling_correction_step.UndersamplingCorrectionStep,
+                 'jump': jump_step.JumpStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
                  'gain_scale': gain_scale_step.GainScaleStep,
                  }
@@ -119,11 +119,11 @@ class Detector1Pipeline(Pipeline):
 
             input = self.dark_current(input)
 
-        # apply the jump step
-        input = self.jump(input)
-
         # apply the undersampling_correction step
         input = self.undersampling_correction(input)
+
+        # apply the jump step
+        input = self.jump(input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
