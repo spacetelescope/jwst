@@ -14,6 +14,8 @@ from . import lg_model
 from . import utils
 from . import oifits
 
+from stdatamodels.jwst import datamodels
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -95,7 +97,7 @@ class FringeFitter:
 			self.nrm_list.append(self.fit_fringes_single_integration(slc))
 
 
-		# Now save final output model(s) of all slices, averaged slices
+		# Now save final output model(s) of all slices, averaged slices to AmiOiModels
 		# averaged
 		oifits_model = oifits.RawOifits(self)
 		output_model = oifits_model.make_oifits()
@@ -104,8 +106,55 @@ class FringeFitter:
 		# oifits_model_multi = oifits.RawOifits(self,method='multi')
 		# oifits_model_multi.make_oifits()
 
-		return output_model#, oifits_model_multi
+		# Save cropped/centered data, model, residual in AmiLgFitModel
+		lgfit = self.make_lgfitmodel()
+
+
+		return output_model, lgfit #, oifits_model_multi
 		
+	def make_lgfitmodel(self):
+		"""
+		Short Summary
+		------------
+		Populate the LGFitModel with the output of the fringe fitting
+		(LG algorithm)
+
+		Parameters
+		----------
+
+		Returns
+		-------
+		m: AmiLgFitModel object
+			LG analysis centered data, fit, residual, and model info
+		"""
+		nslices = len(self.nrm_list)
+		# 3d arrays of centered data, models, and residuals (data - model)
+		ctrd_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+		n_ctrd_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+		model_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+		n_model_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+		resid_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+		n_resid_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+
+		for i,nrmslc in enumerate(self.nrm_list):
+			datapeak = nrmslc.reference.max()
+			ctrd_arr[i,:,:] = nrmslc.reference
+			n_ctrd_arr[i,:,:] = nrmslc.reference/datapeak
+			model_arr[i,:,:] = nrmslc.modelpsf
+			n_model_arr[i,:,:] = nrmslc.modelpsf/datapeak
+			resid_arr[i,:,:] = nrmslc.residual
+			n_resid_arr[i,:,:] = nrmslc.residual/datapeak
+
+		# Populate datamodel
+		m = datamodels.AmiLgFitModel()
+		m.centered_image = ctrd_arr
+		m.norm_centered_image = n_ctrd_arr
+		m.fit_image = model_arr
+		m.norm_fit_image = n_model_arr
+		m.resid_image = resid_arr
+		m.norm_resid_image = n_resid_arr
+
+		return m
 
 
 	def fit_fringes_single_integration(self, slc):

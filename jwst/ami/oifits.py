@@ -79,14 +79,6 @@ class RawOifits:
 		"""
 		Populate arrays of observables
 		"""
-
-		# 3d arrays of centered data, models, and residuals (data-model)
-		self.ctrd_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
-		self.n_ctrd_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
-		self.model_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
-		self.n_model_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
-		self.resid_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
-		self.n_resid_arr = np.zeros((self.nslices,self.ff.scidata.shape[1],self.ff.scidata.shape[2]))
 		# arrays of observables, (nslices,nobservables) shape.
 		self.fp = np.zeros((self.nslices, self.nbl))
 		self.fa = np.zeros((self.nslices, self.nbl))
@@ -97,14 +89,6 @@ class RawOifits:
 		self.solns = np.zeros((self.nslices,44))
 
 		for i,nrmslc in enumerate(self.ff.nrm_list):
-			datapeak = nrmslc.reference.max()
-			# NOTE: still have to write this out into datamodel
-			self.ctrd_arr[i,:,:] = nrmslc.reference
-			self.n_ctrd_arr[i,:,:] = nrmslc.reference/datapeak
-			self.model_arr[i,:,:] = nrmslc.modelpsf
-			self.n_model_arr[i,:,:] = nrmslc.modelpsf/datapeak
-			self.resid_arr[i,:,:] = nrmslc.residual
-			self.n_resid_arr[i,:,:] = nrmslc.residual/datapeak
 			#
 			self.fp[i,:] = np.rad2deg(nrmslc.fringephase) # FPs in degrees
 			self.fa[i,:] = nrmslc.fringeamp
