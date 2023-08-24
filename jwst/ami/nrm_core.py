@@ -103,14 +103,14 @@ class FringeFitter:
 		output_model = oifits_model.make_oifits()
 
 		# multi-integration
-		# oifits_model_multi = oifits.RawOifits(self,method='multi')
-		# oifits_model_multi.make_oifits()
+		oifits_model_multi = oifits.RawOifits(self,method='multi')
+		output_model_multi = oifits_model_multi.make_oifits()
 
 		# Save cropped/centered data, model, residual in AmiLgFitModel
 		lgfit = self.make_lgfitmodel()
 
 
-		return output_model, lgfit #, oifits_model_multi
+		return output_model, output_model_multi, lgfit
 		
 	def make_lgfitmodel(self):
 		"""
