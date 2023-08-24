@@ -72,8 +72,8 @@ on either the first group or frame zero pixel values.
 +----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 |                                                                      |         |         | :ref:`refpix <refpix_step>`             | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
-| :ref:`undersampling_correction <undersampling_correction_step>` [3]_ | |check| |         |                                         |         |         |
-+----------------------------------------------------------------------+---------+---------+----------------------+------------------+---------+---------+
+| :ref:`charge_migration <charge_migration_step>` [3]_                 | |check| |         |                                         |         |         |
++----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 | :ref:`jump <jump_step>`                                              | |check| | |check| | :ref:`jump <jump_step>`                 | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 | :ref:`ramp_fitting <ramp_fitting_step>`                              | |check| | |check| | :ref:`ramp_fitting <ramp_fitting_step>` | |check| | |check| |
@@ -86,7 +86,7 @@ on either the first group or frame zero pixel values.
    retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step for all instruments.
 .. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
    the `Detector1Pipeline` module for all NIRSpec exposures.
-.. [3] By default, the :ref:`undersampling_correction <undersampling_correction_step>` step is skipped in
+.. [3] By default, the :ref:`charge_migration <charge_migration_step>` step is skipped in
    the `Detector1Pipeline` module for all instruments.
    
 

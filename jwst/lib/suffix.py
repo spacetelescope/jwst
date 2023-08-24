@@ -189,7 +189,7 @@ _calculated_suffixes = {
     'assign_mtwcs',
     'wavecorrstep',
     'wfsscontamstep',
-    'undersamplingcorrectionstep',
+    'chargemigrationstep',
     'pixelreplacestep',
 }
 
