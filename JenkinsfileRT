@@ -74,15 +74,11 @@ bc0.conda_ver = '22.11.1'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
-bc0.pip_reqs_files = ['requirements-sdp.txt', 'requirements-max.txt']
+bc0.pip_reqs_files = ['requirements-sdp.txt', 'requirements-max.txt', 'requirements-dev-st.txt']
 bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
-    // these latest-commit installs are overridden by `requirements-sdp.txt` if it is populated
-    "pip install git+https://github.com/spacetelescope/stdatamodels.git@master git+https://github.com/spacetelescope/stcal.git@main",
-    "pip install -r requirements-max.txt",
-    "pip install -r requirements-sdp.txt",
 ] + PipInject(env.OVERRIDE_REQUIREMENTS) + ["pip list"]
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
@@ -105,6 +101,9 @@ bc1.nodetype = 'macos'
 bc1.name = 'macos-stable-deps'
 bc1.test_cmds = []
 bc1.test_configs = []
+
+bc2 = utils.copy(bc0)
+bc2.pip_reqs_files = ['requirements-dev-st.txt']
 
 utils.run([jobconfig, bc0, bc1])
 }  // withCredentials
