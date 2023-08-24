@@ -12,6 +12,7 @@ class AmiAverageStep(Step):
     class_alias = "ami_average"
 
     spec = """
+    skip = True # Do not run this step
     """
 
     def flatten_input(self, input_items):
