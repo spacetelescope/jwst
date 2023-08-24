@@ -125,7 +125,7 @@ undersampling_correction
   pixels, added new unit test, improved earlier unit tests, updated docs. [#7740]
 
 - Removed directories for undersampling_correction step, as the step has been
-  renamed charge_migration. [#????]
+  renamed charge_migration. [#7850]
   
 
 1.11.4 (2023-08-14)
