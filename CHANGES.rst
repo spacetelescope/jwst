@@ -118,10 +118,6 @@ residual_fringe
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
   
-
-1.11.4 (2023-08-14)
-===================
-
 undersampling_correction
 ------------------------
 
