@@ -28,6 +28,13 @@ calwebb_spec2
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
 
+charge_migration
+----------------
+
+- Step was renamed from undersampling_migration. Changed default signal threshold,
+  added efficient routine to flag neighborhood pixels, added new unit test,
+  improved earlier unit tests, updated docs. [#7825]
+  
 cube_build
 ----------
 
@@ -110,7 +117,7 @@ residual_fringe
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
-
+  
 undersampling_correction
 ------------------------
 
