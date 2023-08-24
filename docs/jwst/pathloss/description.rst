@@ -62,8 +62,8 @@ science data. The 2-D correction array is then applied to the science data and
 stored (as a record of what was applied) in the output datamodel ("PATHLOSS_PS"
 extension).
 
-If the source is outside of slit, the calculation defaults to the center of the
-slit.
+If for any reason the source is determined to be outside of the slit, the
+correction defaults to the center of the slit.
 
 The MIRI LRS correction is only applicable to point source data. The step is
 skipped if the SRCTYPE of the input data does not indicate a point source.

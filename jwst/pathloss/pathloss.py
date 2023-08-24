@@ -33,8 +33,8 @@ def get_center(exp_type, input, offsets=False):
         science data to be corrected
 
     offsets : bool
-        Only applies for MIRI LRS, if True the offsets will be returned
-        as well (imx, imy)
+        Only applies for MIRI LRS fixed-slit, if True the offsets
+        will be returned as well (imx, imy)
 
     Returns
     -------
@@ -238,7 +238,7 @@ def calculate_pathloss_vector(pathloss_refdata,
 
 
 def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None,
-                  correction_pars=None, usr_slt_loc=None):
+                  correction_pars=None, user_slit_loc=None):
     """Execute all tasks for Path Loss Correction
 
     Parameters
@@ -258,7 +258,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
     correction_pars : dict or None
         Correction parameters to use instead of recalculation.
 
-    usr_slt_loc : float
+    user_slit_loc : float
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
 
@@ -289,7 +289,7 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
     elif exp_type == 'MIR_LRS-FIXEDSLIT':
         # only apply correction to LRS fixed-slit if target is point source
         if is_pointsource(output_model.meta.target.source_type):
-            corrections = do_correction_lrs(output_model, pathloss_model, usr_slt_loc)
+            corrections = do_correction_lrs(output_model, pathloss_model, user_slit_loc)
         else:
             log.warning('Not a point source; skipping correction for LRS.')
             output_model.meta.cal_step.pathloss = 'SKIPPED'
@@ -588,7 +588,7 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     return correction
 
 
-def do_correction_lrs(data, pathloss, usr_slt_loc):
+def do_correction_lrs(data, pathloss, user_slit_loc):
     """Path loss correction for MIRI LRS fixed-slit
 
     Data are modified in-place.
@@ -601,11 +601,11 @@ def do_correction_lrs(data, pathloss, usr_slt_loc):
     pathloss : jwst.datamodel.JwstDataModel
         The pathloss reference data.
 
-    usr_slt_loc: float
+    user_slit_loc: float
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
     """
-    correction = _corrections_for_lrs(data, pathloss, usr_slt_loc)
+    correction = _corrections_for_lrs(data, pathloss, user_slit_loc)
 
     if not correction:
         log.warning("No correction available; skipping step")
@@ -975,7 +975,7 @@ def _corrections_for_ifu(data, pathloss, source_type):
     return correction
 
 
-def _corrections_for_lrs(data, pathloss, usr_slt_loc):
+def _corrections_for_lrs(data, pathloss, user_slit_loc):
     """Calculate the correction arrays for MIRI LRS slit
 
     Parameters
@@ -986,7 +986,7 @@ def _corrections_for_lrs(data, pathloss, usr_slt_loc):
     pathloss : jwst.datamodels.MirLrsPathlossModel
         The pathloss reference data
 
-    usr_slt_loc: float
+    user_slit_loc: float
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
 
@@ -1006,14 +1006,14 @@ def _corrections_for_lrs(data, pathloss, usr_slt_loc):
     # Calculate the 1-d pathloss vector for the source position
     pathloss_data = pathloss.pathloss_table['pathloss']
     pathloss_wcs = pathloss.meta.wcsinfo
-    if usr_slt_loc is None:
+    if user_slit_loc is None:
         _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
                                                                        pathloss_wcs,
                                                                        xcenter, ycenter,
                                                                        calc_wave=False)
 
     else:
-        log.info('Correction now using provided target center correction: {}'.format(usr_slt_loc))
+        log.info('Correction now using provided target center correction: {}'.format(user_slit_loc))
         # The slit is oriented with the long axis (the spatial
         # axis) horizontal, so the edges in the dispersion direction (the
         # narrow axis) would be negative down and positive up. Because the
@@ -1024,8 +1024,8 @@ def _corrections_for_lrs(data, pathloss, usr_slt_loc):
         scale_degrees = util.compute_scale(data.meta.wcs, location,
                                            disp_axis=data.meta.wcsinfo.dispersion_direction)
         scale_arcsec = scale_degrees * 3600.0
-        usr_slt_loc_pix = usr_slt_loc * scale_arcsec
-        yusr_recenter = ycenter + usr_slt_loc_pix
+        user_slit_loc_pix = user_slit_loc * scale_arcsec
+        yusr_recenter = ycenter + user_slit_loc_pix
         _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(pathloss_data,
                                                                        pathloss_wcs,
                                                                        xcenter, yusr_recenter,
