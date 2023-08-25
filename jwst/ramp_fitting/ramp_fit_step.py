@@ -459,7 +459,7 @@ class RampFitStep(Step):
 
             if len(wh_chargeloss[0]) > 0:
                 # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
-                gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGE_LOSS'])
+                gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGELOSS'])
 
                 # Flag SATURATED groups as DO_NOT_USE for later segment determination
                 where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
