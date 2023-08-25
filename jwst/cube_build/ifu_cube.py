@@ -68,7 +68,7 @@ class IFUCubeData():
         self.roiw = pars_cube.get('roiw')
         self.debug_spaxel = pars_cube.get('debug_spaxel')
 
-        self.spaxel_x, self.spaxel_y, self.spaxel_z =  [int(val) for val in self.debug_spaxel.split()]
+        self.spaxel_x, self.spaxel_y, self.spaxel_z = [int(val) for val in self.debug_spaxel.split()]
         self.spatial_size = None
         self.spectral_size = None
         self.interpolation = pars_cube.get('interpolation')
@@ -641,10 +641,10 @@ class IFUCubeData():
                                               roiw_ave, self.cdelt1, self.cdelt2)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-                        self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
-                        self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
-                        self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
-                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3], np.float64)
+                        self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                        self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                        self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
                         spaxel_dq.astype(np.uint)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
