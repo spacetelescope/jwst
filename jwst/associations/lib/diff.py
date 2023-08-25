@@ -176,12 +176,12 @@ def compare_asn_lists(left_asns, right_asns):
     right_product_names, right_duplicates = get_product_names(right_asns)
     if left_duplicates:
         try:
-            check_duplicate_products(left_asns)
+            check_duplicate_products(left_asns, product_names=left_product_names, dup_names=left_duplicates)
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
     if right_duplicates:
         try:
-            check_duplicate_products(right_asns)
+            check_duplicate_products(right_asns, product_names=right_product_names, dup_names=right_duplicates)
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
 
