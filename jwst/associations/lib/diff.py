@@ -584,13 +584,13 @@ def check_duplicate_products(asns):
             try:
                 compare_product_membership(current_asn['products'][0], asn['products'][0])
             except MultiDiffError as compare_diffs:
-                # Check that the associations differ only in suffix.
-                # If so, the associations are not duplicates
+                # Re-check membership, but allow products that different only in the suffix
+                # of the members. If there are no differences, then the products are not duplicates.
                 try:
-                    compare_nosuffix(current_asn, asn)
+                    compare_product_membership(current_asn['products'][0], asn['products'][0], strict_expname=False)
                 except MultiDiffError:
-                    # Not interested in the diffs from `compare_nosuffix`.
-                    # The diffs from `compare_product_membership` will be more informative.
+                    # Not interested if the second compare generates diffs.
+                    # The initial diffs will be more informative.
                     diffs.extend(compare_diffs)
             else:
                 # Associations are exactly the same. Pure duplicate.
