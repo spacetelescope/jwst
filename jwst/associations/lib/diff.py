@@ -321,7 +321,7 @@ def compare_membership(left, right):
             if components(right_product['name']) != left_product_name:
                 continue
             try:
-                compare_product_membership(left_product, right_product)
+                compare_product_membership(left_product, right_product, strict_expname=False)
             except MultiDiffError as compare_diffs:
                 diffs.extend(compare_diffs)
             products_right.remove(right_product)
@@ -375,10 +375,10 @@ def compare_nosuffix(left, right):
 
     diffs = MultiDiffError()
     for left_product in left['products']:
-        left_members = set(exposure_name(member['expname'])[0]
+        left_members = set(exposure_name(member['expname'])
                          for member in left_product['members'])
         for right_product in right['products']:
-            right_members = set(exposure_name(member['expname'])[0]
+            right_members = set(exposure_name(member['expname'])
                               for member in right_product['members'])
             if left_members == right_members:
                 break
@@ -394,7 +394,7 @@ def compare_nosuffix(left, right):
         raise diffs
 
 
-def compare_product_membership(left, right):
+def compare_product_membership(left, right, strict_expname=True):
     """Compare membership between products
 
     If the membership is exactly the same, or other special conditions,
@@ -423,6 +423,13 @@ def compare_product_membership(left, right):
         Two, individual, association products to compare. Note that
         these are not associations, just products from associations.
 
+    strict_expname : bool
+        Compare `expname` exactly. If False, `expname` munging
+        will occur. See `exposure_name` for further details.
+        Generally False for when comparing unreleated association lists.
+        Generally True when comparing related associations;
+        those associations generated together.
+
     Raises
     ------
     MultiDiffError
@@ -430,6 +437,12 @@ def compare_product_membership(left, right):
         all the differences.
     """
     diffs = MultiDiffError()
+
+    # Determine how to compare expnames
+    if strict_expname:
+        munge_expname = lambda expname: expname
+    else:
+        munge_expname = exposure_name
 
     # Check for duplicate members.
     try:
@@ -454,7 +467,7 @@ def compare_product_membership(left, right):
     left_unaccounted_members = []
     for left_member in left['members']:
         for right_member in members_right:
-            if left_member['expname'] != right_member['expname']:
+            if munge_expname(left_member['expname']) != munge_expname(right_member['expname']):
                 continue
 
             if left_member['exptype'] != right_member['exptype']:
@@ -611,7 +624,7 @@ def exposure_name(path):
         The exposure name
     """
     path = Path(path)
-    exposure = remove_suffix(path.stem)
+    exposure, _ = remove_suffix(path.stem)
     return exposure
 
 
