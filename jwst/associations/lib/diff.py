@@ -481,7 +481,7 @@ def check_duplicate_members(product):
         )
 
 
-def check_duplicate_products(asns):
+def check_duplicate_products(asns, product_names=None, dup_names=None):
     """Check for duplicate products in a list of associations
 
     Duplicate products are defined as any products that share the same name.
@@ -509,11 +509,20 @@ def check_duplicate_products(asns):
         The associations to compare. Each association should only have one
         product. Use `separate_products` prior to calling if necessary.
 
+    product_names : [str[,...]]
+        Product names in given associations.
+        If None, will be generated internally.
+
+    dup_names : [str[,...]]
+        Duplicate product names in the given associations.
+        If None, will be generated internally.
+
     Raises
     ------
     MultiDiffError
     """
-    product_names, dup_names = get_product_names(asns)
+    if product_names is None or dup_names is None:
+        product_names, dup_names = get_product_names(asns)
     if not dup_names:
         return
 
