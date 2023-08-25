@@ -343,57 +343,6 @@ def compare_membership(left, right):
         raise diffs
 
 
-def compare_nosuffix(left, right):
-    """Check if the only difference is in rate vs rateints suffixes
-
-    A valid situation is to have two associations be exactly the same except
-    for the suffix used on all the science inputs. If one association uses
-    "rate" and the other uses "rateints", this is OK.
-
-    If no errors are raised, the two associations are similar except
-    for the suffixes used in the `expname`s, which is valid.
-
-    Otherwise, the following errors can be raised:
-
-    - DifferentProductSetsError
-      Products do not match.
-
-    Parameters
-    ----------
-    left, right : Association, Association
-        The associations to compare.
-
-    Raises
-    ------
-    MultiDiffError
-    """
-    if len(left['products']) != len(right['products']):
-        raise MultiDiffError([DifferentProductSetsError(
-            f'Different products between {left.asn_name}({len(left["products"])}) and {right.asn_name}({len(right["products"])})',
-            asns=[left, right]
-        )])
-
-    diffs = MultiDiffError()
-    for left_product in left['products']:
-        left_members = set(exposure_name(member['expname'])
-                         for member in left_product['members'])
-        for right_product in right['products']:
-            right_members = set(exposure_name(member['expname'])
-                              for member in right_product['members'])
-            if left_members == right_members:
-                break
-        else:
-            # No right product matches the left product.
-            # This is a fail.
-            diffs.append(DifferentProductSetsError(
-                f'Left product {left_product["name"]} has not counterpart in right products',
-                asns=[left, right]
-            ))
-
-    if diffs:
-        raise diffs
-
-
 def compare_product_membership(left, right, strict_expname=True):
     """Compare membership between products
 
