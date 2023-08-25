@@ -44,7 +44,7 @@ cube_build
 - Correct slicer scale and orientation in output WCS for IFU cubes built in internal_cal
   coordinates, for NIRSpec calibration analysis. [#7811]
 
-- Fix a bug when weighting=emsm. [#7847]
+- Fix a bug with memory allocation in C extensions when weighting=emsm. [#7847]
 
 datamodels
 ----------
