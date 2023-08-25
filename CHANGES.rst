@@ -57,6 +57,11 @@ engdb_tools
 - Check alternative host is alive before attempting to run test for
   access to avoid waiting the full timeout during test runs [#7780]
 
+extract_2d
+----------
+
+- Updated unit test truth values after NIRCam WFSS transform updates [#7851]
+
 flat_field
 ----------
 
