@@ -21,6 +21,8 @@ associations
   use filter/grating combinations known to produce no data on the NRS2 detector.
   [#7833]
 
+- Remove order dependency on association diffing. [#7853]
+
 calwebb_spec2
 -------------
 
