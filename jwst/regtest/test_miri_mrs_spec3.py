@@ -49,6 +49,28 @@ def run_spec3_ifulong(jail, rtdata_module):
     return rtdata
 
 
+@pytest.fixture(scope='module')
+def run_spec3_ifushort_emsm(jail, rtdata_module):
+    """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT"""
+
+    # Test has bands medium and long for IFUSHORT
+
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json')
+
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        '--steps.cube_build.save_results=true',
+        '--steps.cube_build.weighting=emsm',
+        '--steps.cube_build.output_file="miri_mrs_emsm"',
+        '--steps.extract_1d.save_results=true',
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
+
+
 @pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
@@ -86,6 +108,29 @@ def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
 
     rtdata = run_spec3_ifushort
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.slow
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    [
+        'miri_mrs_emsm_ch1-mediumlong_x1d.fits',
+        'miri_mrs_emsm_ch2-mediumlong_x1d.fits',
+        'miri_mrs_emsm_ch1-mediumlong_s3d.fits',
+        'miri_mrs_emsm_ch2-mediumlong_s3d.fits'
+    ],
+)
+def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, output):
+    """Regression test using weighting = 'emsm' """
+
+    rtdata = run_spec3_ifushort_emsm
     rtdata.output = output
 
     rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))

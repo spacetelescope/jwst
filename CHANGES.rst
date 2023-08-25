@@ -44,6 +44,8 @@ cube_build
 - Correct slicer scale and orientation in output WCS for IFU cubes built in internal_cal
   coordinates, for NIRSpec calibration analysis. [#7811]
 
+- Fix a bug with memory allocation in C extensions when weighting=emsm. [#7847]
+
 datamodels
 ----------
 
@@ -125,6 +127,9 @@ undersampling_correction
 
 - Changed default signal threshold, added efficient routine to flag neighborhood
   pixels, added new unit test, improved earlier unit tests, updated docs. [#7740]
+
+- Removed directories for undersampling_correction step, as the step has been
+  renamed charge_migration. [#7850]
   
 
 1.11.4 (2023-08-14)
