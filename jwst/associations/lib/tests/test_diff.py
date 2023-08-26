@@ -227,6 +227,46 @@ asns_subset = {
 }
 
 
+# Test case when comparing groups of associations.
+# There should be no difference because of the `rate/rateints`
+# equivalence. Tests will try different ordering due to a bug
+# which made the comparison order-dependent.
+NODIFF_ASNS = [
+    {
+        "asn_type": "image2",
+        "asn_id": "o006",
+        "products": [
+            {
+                "name": "jw00016006001_04105_00001_nrca4",
+                "members": [
+                    {
+                        "expname": "jw00016006001_04105_00001_nrca4_rate.fits",
+                        "exptype": "science",
+                        "exposerr": "null"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "asn_type": "image2",
+        "asn_id": "o006",
+        "products": [
+            {
+                "name": "jw00016006001_04105_00001_nrca4",
+                "members": [
+                    {
+                        "expname": "jw00016006001_04105_00001_nrca4_rateints.fits",
+                        "exptype": "science",
+                        "exposerr": "null"
+                    }
+                ]
+            }
+        ]
+    },
+]
+
+
 def test_duplicate_members():
     """Test duplicate members"""
     product = badcandidate_asn['products'][0]
@@ -281,6 +321,26 @@ def test_fromfiles():
         json.dump(standard_asn, fh)
 
     asn_diff.compare_asn_files(['test.json'], ['test.json'])
+
+
+@pytest.mark.parametrize(
+    'left_indexes, right_indexes',
+    [
+        ([0, 1], [0, 1]),
+        ([0, 1], [1, 0]),
+        ([1, 0], [0, 1]),
+        ([1, 0], [1, 0]),
+    ]
+)
+def test_nodiff_order(left_indexes, right_indexes):
+    """Associations should have no difference, regardless of order"""
+
+    # Order the associations as specified in the indexes.
+    left_asns = [NODIFF_ASNS[idx] for idx in left_indexes]
+    right_asns = [NODIFF_ASNS[idx] for idx in right_indexes]
+
+    # Execute test. Success will not generate any exceptions.
+    asn_diff.compare_asn_lists(left_asns, right_asns)
 
 
 def test_separate_products():
