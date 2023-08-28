@@ -14,6 +14,7 @@ Package Index
    background_step/index.rst
    background_subtraction/index.rst
    barshadow/index.rst
+   charge_migration/index.rst
    combine_1d/index.rst
    cube_build/index.rst
    dark_current/index.rst
@@ -63,7 +64,6 @@ Package Index
    superbias/index.rst
    tso_photometry/index.rst
    tweakreg/index.rst
-   undersampling_correction/index.rst
    wavecorr/index.rst
    wfs_combine/index.rst
    wfss_contam/index.rst

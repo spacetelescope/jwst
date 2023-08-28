@@ -958,6 +958,7 @@ def update_s_region_imaging(model):
 
     if bbox is None:
         bbox = wcs_bbox_from_shape(model.data.shape)
+        model.meta.wcs.bounding_box = bbox
 
     # footprint is an array of shape (2, 4) as we
     # are interested only in the footprint on the sky

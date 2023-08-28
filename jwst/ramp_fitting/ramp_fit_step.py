@@ -187,7 +187,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     ----------
     groupdq : ndarray
         The group data quality array for the exposure, 4-D flag.
-        For groups that have been flagged as both UNDERSAMP and
+        For groups that have been flagged as both CHARGELOSS and
         DO_NOT_USE, both flags have been reset.
 
     readnoise_2d : ndarray
@@ -451,15 +451,15 @@ class RampFitStep(Step):
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
                 suppress_one_group=self.suppress_one_group)
 
-            # Create a gdq to modify if there are undersampling-corrected groups
+            # Create a gdq to modify if there are charge_migrated groups
             gdq = input_model_W.groupdq.copy()
 
-            # Locate groups where that are flagged with UNDERSAMP
-            wh_undersamp = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['UNDERSAMP']))
+            # Locate groups where that are flagged with CHARGELOSS
+            wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
 
-            if len(wh_undersamp[0]) > 0:
-                # Unflag groups flagged as both UNDERSAMP and DO_NOT_USE
-                gdq[wh_undersamp] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['UNDERSAMP'])
+            if len(wh_chargeloss[0]) > 0:
+                # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
+                gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGELOSS'])
 
                 # Flag SATURATED groups as DO_NOT_USE for later segment determination
                 where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
