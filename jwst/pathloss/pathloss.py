@@ -986,7 +986,7 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
     pathloss : jwst.datamodels.MirLrsPathlossModel
         The pathloss reference data
 
-    user_slit_loc: float
+    user_slit_loc : float
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
 
