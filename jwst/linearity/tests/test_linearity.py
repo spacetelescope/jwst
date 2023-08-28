@@ -43,7 +43,7 @@ def test_coeff_dq():
     # DN(i) = signal in pixel, Ln = coefficient from ref file
     # L0 = 0 for all pixels for CDP6
 
-    coeffs = np.asfarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16])
+    coeffs = np.asarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
 
     # pixels to test using default coeffs
     ref_model.coeffs[:, 30, 50] = coeffs
@@ -56,7 +56,7 @@ def test_coeff_dq():
     L4 = 7.23E-16
 
     # check behavior with NaN coefficients: should not alter pixel values
-    coeffs2 = np.asfarray([L0, np.nan, L2, L3, L4])
+    coeffs2 = np.asarray([L0, np.nan, L2, L3, L4], dtype=float)
     ref_model.coeffs[:, 20, 50] = coeffs2
     im.data[0, 50, 20, 50] = 500.0
 
@@ -200,7 +200,7 @@ def test_pixeldqprop():
     ref_model = LinearityModel((numcoeffs, ysize, xsize))
     ref_model.dq = dq
 
-    coeffs = np.asfarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16])
+    coeffs = np.asarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
 
     # pixels to test using default coeffs.
     ref_model.coeffs[:, 550, 550] = coeffs
