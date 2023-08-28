@@ -53,6 +53,8 @@ datamodels
 
 - Remove ``jwst.datamodels.schema`` in favor of ``stdatamodels.schema`` [#7660]
 
+- updated ``stdatamodels`` pin to ``>=1.8.0`` [#7854]
+
 engdb_tools
 -----------
 
