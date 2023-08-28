@@ -176,12 +176,12 @@ def compare_asn_lists(left_asns, right_asns):
     right_product_names, right_duplicates = get_product_names(right_asns)
     if left_duplicates:
         try:
-            check_duplicate_products(left_asns)
+            check_duplicate_products(left_asns, product_names=left_product_names, dup_names=left_duplicates)
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
     if right_duplicates:
         try:
-            check_duplicate_products(right_asns)
+            check_duplicate_products(right_asns, product_names=right_product_names, dup_names=right_duplicates)
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
 
@@ -321,7 +321,7 @@ def compare_membership(left, right):
             if components(right_product['name']) != left_product_name:
                 continue
             try:
-                compare_product_membership(left_product, right_product)
+                compare_product_membership(left_product, right_product, strict_expname=False)
             except MultiDiffError as compare_diffs:
                 diffs.extend(compare_diffs)
             products_right.remove(right_product)
@@ -343,58 +343,7 @@ def compare_membership(left, right):
         raise diffs
 
 
-def compare_nosuffix(left, right):
-    """Check if the only difference is in rate vs rateints suffixes
-
-    A valid situation is to have two associations be exactly the same except
-    for the suffix used on all the science inputs. If one association uses
-    "rate" and the other uses "rateints", this is OK.
-
-    If no errors are raised, the two associations are similar except
-    for the suffixes used in the `expname`s, which is valid.
-
-    Otherwise, the following errors can be raised:
-
-    - DifferentProductSetsError
-      Products do not match.
-
-    Parameters
-    ----------
-    left, right : Association, Association
-        The associations to compare.
-
-    Raises
-    ------
-    MultiDiffError
-    """
-    if len(left['products']) != len(right['products']):
-        raise MultiDiffError([DifferentProductSetsError(
-            f'Different products between {left.asn_name}({len(left["products"])}) and {right.asn_name}({len(right["products"])})',
-            asns=[left, right]
-        )])
-
-    diffs = MultiDiffError()
-    for left_product in left['products']:
-        left_members = set(exposure_name(member['expname'])[0]
-                         for member in left_product['members'])
-        for right_product in right['products']:
-            right_members = set(exposure_name(member['expname'])[0]
-                              for member in right_product['members'])
-            if left_members == right_members:
-                break
-        else:
-            # No right product matches the left product.
-            # This is a fail.
-            diffs.append(DifferentProductSetsError(
-                f'Left product {left_product["name"]} has not counterpart in right products',
-                asns=[left, right]
-            ))
-
-    if diffs:
-        raise diffs
-
-
-def compare_product_membership(left, right):
+def compare_product_membership(left, right, strict_expname=True):
     """Compare membership between products
 
     If the membership is exactly the same, or other special conditions,
@@ -423,6 +372,13 @@ def compare_product_membership(left, right):
         Two, individual, association products to compare. Note that
         these are not associations, just products from associations.
 
+    strict_expname : bool
+        Compare `expname` exactly. If False, `expname` munging
+        will occur. See `exposure_name` for further details.
+        Generally False for when comparing unreleated association lists.
+        Generally True when comparing related associations;
+        those associations generated together.
+
     Raises
     ------
     MultiDiffError
@@ -430,6 +386,12 @@ def compare_product_membership(left, right):
         all the differences.
     """
     diffs = MultiDiffError()
+
+    # Determine how to compare expnames
+    if strict_expname:
+        munge_expname = lambda expname: expname
+    else:
+        munge_expname = exposure_name
 
     # Check for duplicate members.
     try:
@@ -454,7 +416,7 @@ def compare_product_membership(left, right):
     left_unaccounted_members = []
     for left_member in left['members']:
         for right_member in members_right:
-            if left_member['expname'] != right_member['expname']:
+            if munge_expname(left_member['expname']) != munge_expname(right_member['expname']):
                 continue
 
             if left_member['exptype'] != right_member['exptype']:
@@ -519,7 +481,7 @@ def check_duplicate_members(product):
         )
 
 
-def check_duplicate_products(asns):
+def check_duplicate_products(asns, product_names=None, dup_names=None):
     """Check for duplicate products in a list of associations
 
     Duplicate products are defined as any products that share the same name.
@@ -547,11 +509,20 @@ def check_duplicate_products(asns):
         The associations to compare. Each association should only have one
         product. Use `separate_products` prior to calling if necessary.
 
+    product_names : [str[,...]]
+        Product names in given associations.
+        If None, will be generated internally.
+
+    dup_names : [str[,...]]
+        Duplicate product names in the given associations.
+        If None, will be generated internally.
+
     Raises
     ------
     MultiDiffError
     """
-    product_names, dup_names = get_product_names(asns)
+    if product_names is None or dup_names is None:
+        product_names, dup_names = get_product_names(asns)
     if not dup_names:
         return
 
@@ -571,13 +542,13 @@ def check_duplicate_products(asns):
             try:
                 compare_product_membership(current_asn['products'][0], asn['products'][0])
             except MultiDiffError as compare_diffs:
-                # Check that the associations differ only in suffix.
-                # If so, the associations are not duplicates
+                # Re-check membership, but allow products that different only in the suffix
+                # of the members. If there are no differences, then the products are not duplicates.
                 try:
-                    compare_nosuffix(current_asn, asn)
+                    compare_product_membership(current_asn['products'][0], asn['products'][0], strict_expname=False)
                 except MultiDiffError:
-                    # Not interested in the diffs from `compare_nosuffix`.
-                    # The diffs from `compare_product_membership` will be more informative.
+                    # Not interested if the second compare generates diffs.
+                    # The initial diffs will be more informative.
                     diffs.extend(compare_diffs)
             else:
                 # Associations are exactly the same. Pure duplicate.
@@ -611,7 +582,7 @@ def exposure_name(path):
         The exposure name
     """
     path = Path(path)
-    exposure = remove_suffix(path.stem)
+    exposure, _ = remove_suffix(path.stem)
     return exposure
 
 

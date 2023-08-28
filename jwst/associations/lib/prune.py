@@ -144,7 +144,7 @@ def prune_duplicate_products(asns):
                     # If the difference is only in suffix, this is an acceptable duplication of product names.
                     # Trap and do not report.
                     try:
-                        diff.compare_nosuffix(asn, entrant)
+                        diff.compare_product_membership(asn['products'][0], entrant['products'][0], strict_expname=False)
                     except diff.MultiDiffError:
                         # Something is different. Report but do not remove.
                         logger.warning('Following associations have the same product name but significant differences.')
