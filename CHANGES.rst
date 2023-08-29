@@ -101,6 +101,10 @@ pathloss
 
 - Fix interpolation error for point source corrections. [#7799]
 
+- Update the MIRI LRS fixed-slit correction to default to the center of the slit
+  when the computed target location is outside the slit. Add the parameter 
+  "user_slit_loc" to allow specifying the source location to use. [#7806]
+
 pixel_replace
 -------------
 
