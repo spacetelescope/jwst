@@ -70,17 +70,13 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
+        in_memory = boolean(default=True)
     """
 
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
 
-        # interpret how memory should be used
-        if self.save_intermediate_results:
-            self.in_memory = False
-        else:
-            self.in_memory = True
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, ModelContainer):
@@ -176,7 +172,7 @@ class OutlierDetectionStep(Step):
 
             state = 'COMPLETE'
             if self.input_container:
-                if not self.save_intermediate_results:
+                if not self.in_memory and not self.save_intermediate_results:
                     self.log.info("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
