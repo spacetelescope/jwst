@@ -25,6 +25,7 @@ def run_spec2(jail, rtdata_module):
             '--steps.srctype.save_results=true',
             '--steps.fringe.save_results=true',
             '--steps.photom.save_results=true',
+            '--steps.photom.mrs_time_correction=false',  # turn on after JP-3359 is fixed
             ]
 
     Step.from_cmdline(args)
