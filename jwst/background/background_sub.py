@@ -1,3 +1,4 @@
+import copy
 import math
 import numpy as np
 
@@ -8,8 +9,111 @@ from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+class ImageSubsetArray:
+    """
+    This class is intended to keep track of where different images
+    may relate to each other when using e.g. subarray observations
+    """
+
+    def __init__(self, model):
+
+        im = datamodels.open(model)
+
+        # Make sure xstart/ystart/xsize/ysize exist in the model metadata
+        if (im.meta.subarray.xstart is None or im.meta.subarray.ystart is None or
+                im.meta.subarray.xsize is None or im.meta.subarray.ysize is None):
+
+            # If the ref file is full-frame, set the missing params to
+            # default values
+            if im.meta.instrument.name.upper() == 'MIRI':
+                if im.data.shape[-1] == 1032 and im.data.shape[-2] == 1024:
+                    im.meta.subarray.xstart = 1
+                    im.meta.subarray.ystart = 1
+                    im.meta.subarray.xsize = 1032
+                    im.meta.subarray.ysize = 1024
+                else:
+                    raise ValueError('xstart or ystart metadata values not found in model')
+            else:
+                if im.data.shape[-1] == 2048 and im.data.shape[-2] == 2048:
+                    im.meta.subarray.xstart = 1
+                    im.meta.subarray.ystart = 1
+                    im.meta.subarray.xsize = 2048
+                    im.meta.subarray.ysize = 2048
+                else:
+                    raise ValueError('xstart or ystart metadata values not found in model')
+
+        # Account for the fact these things are 1-indexed
+        self.jmin = im.meta.subarray.ystart - 1
+        self.jmax = im.meta.subarray.ysize + self.jmin
+        self.imin = im.meta.subarray.xstart - 1
+        self.imax = im.meta.subarray.xsize + self.imin
+
+        # Check the dimensionality of this thing
+        self.im_dim = len(im.data.shape)
+
+        self.data = im.data
+        self.err = im.err
+        self.dq = im.dq
+
+        im.close()
+
+    def overlaps(self, other):
+        """Find whether this subset and another overlap"""
+        return not (
+                self.imax <= other.imin
+                or other.imax <= self.imin
+                or self.jmax <= other.jmin
+                or other.jmax <= self.jmin
+        )
+
+    def get_subset_array(self, other):
+        """
+        Pull out the overlapping part of two arrays, and put data/err/DQ
+        to match the science image pixels
+        """
+
+        imin = max(self.imin, other.imin)
+        imax = min(self.imax, other.imax)
+        jmin = max(self.jmin, other.jmin)
+        jmax = min(self.jmax, other.jmax)
+
+        if imax < imin:
+            imax = imin
+
+        if jmax < jmin:
+            jmax = jmin
+
+        # Set up arrays, NaN out data/err for sigma clipping, keep DQ as 0 for bitwise_or
+        data_overlap = np.ones_like(self.data) * np.nan
+        err_overlap = np.ones_like(self.data) * np.nan
+        dq_overlap = np.zeros_like(self.data, dtype=np.uint32)
+
+        if self.im_dim == 2:
+            idx = (slice(jmin - other.jmin, jmax - other.jmin),
+                   slice(imin - other.imin, imax - other.imin),
+                   )
+        if self.im_dim == 3:
+            idx = (slice(None, None),
+                   slice(jmin - other.jmin, jmax - other.jmin),
+                   slice(imin - other.imin, imax - other.imin),
+                   )
+
+        # Pull the values from the background obs
+        data_cutout = other.data[idx]
+        err_cutout = other.err[idx]
+        dq_cutout = other.dq[idx]
+
+        # Put them into the right place in the original image array shape
+        data_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(data_cutout)
+        err_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(err_cutout)
+        dq_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(dq_cutout)
+
+        return data_overlap, err_overlap, dq_overlap
 
 
 def background_sub(input_model, bkg_list, sigma, maxiters):
@@ -21,32 +125,36 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
     Parameters
     ----------
-    input_model: JWST data model
+    input_model : JWST data model
         input target exposure data model
 
-    bkg_list: filename list
+    bkg_list : filename list
         list of background exposure file names
 
-    sigma: float, optional
+    sigma : float, optional
         Number of standard deviations to use for both the lower
         and upper clipping limits.
 
-    maxiters: int or None, optional
+    maxiters : int or None, optional
         Maximum number of sigma-clipping iterations to perform
 
     Returns
     -------
-    bkg_model: JWST data model
+    bkg_model : JWST data model
         background data model
 
-    result: JWST data model
+    result : JWST data model
         background-subtracted target data model
 
     """
 
     # Compute the average of the background images associated with
     # the target exposure
-    bkg_model = average_background(bkg_list, sigma, maxiters)
+    bkg_model = average_background(input_model,
+                                   bkg_list,
+                                   sigma,
+                                   maxiters,
+                                   )
 
     # Subtract the average background from the member
     log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
@@ -57,7 +165,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     return bkg_model, result
 
 
-def average_background(bkg_list, sigma, maxiters):
+def average_background(input_model, bkg_list, sigma, maxiters):
     """
     Average multiple background exposures into a combined data model.
     Processes backgrounds from various DataModel types, including those
@@ -65,26 +173,30 @@ def average_background(bkg_list, sigma, maxiters):
 
     Parameters:
     -----------
-    bkg_list: filename list
+    input_model : JWST data model
+        input target exposure data model
+
+    bkg_list : filename list
         List of background exposure file names
 
-    sigma: float, optional
+    sigma : float, optional
         Number of standard deviations to use for both the lower
         and upper clipping limits.
 
-    maxiters: int or None, optional
+    maxiters : int or None, optional
         Maximum number of sigma-clipping iterations to perform
 
     Returns:
     --------
-    avg_bkg: data model
+    avg_bkg : data model
         The averaged background exposure
     """
 
-    # Determine the dimensionality of the background files
-    bkg_model = datamodels.open(bkg_list[0])
-    bkg_dim = len(bkg_model.data.shape)
-    image_shape = bkg_model.data.shape[-2:]
+    # Determine the dimensionality of the input file
+    bkg_dim = len(input_model.data.shape)
+    image_shape = input_model.data.shape[-2:]
+
+    im_array = ImageSubsetArray(input_model)
 
     avg_bkg = datamodels.ImageModel(image_shape)
     num_bkg = len(bkg_list)
@@ -97,31 +209,37 @@ def average_background(bkg_list, sigma, maxiters):
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
         log.info(f'Accumulate bkg from {bkg_file}')
-        bkg_model = datamodels.open(bkg_file)
+
+        bkg_array = ImageSubsetArray(bkg_file)
+        if not bkg_array.overlaps(im_array):
+            # We don't overlap, so put in a bunch of NaNs so sigma-clip
+            # isn't affected and move on
+            log.debug(f'{bkg_file} does not overlap input image')
+            cdata[i] = np.ones(image_shape) * np.nan
+            cerr[i] = np.ones(image_shape) * np.nan
+            continue
+
+        bkg_data, bkg_err, bkg_dq = im_array.get_subset_array(bkg_array)
 
         if bkg_dim == 2:
             # Accumulate the data from this background image
-            cdata[i] = bkg_model.data  # 2D slice
-            cerr[i] = bkg_model.err * bkg_model.err
-            avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_model.dq)
-
-            bkg_model.close()
+            cdata[i] = bkg_data  # 2D slice
+            cerr[i] = bkg_err * bkg_err
+            avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_dq)
 
         if bkg_dim == 3:
             # Sigma clip the bkg model's data and err along the integration axis
-            sc_bkg_data = sigma_clip(bkg_model.data, sigma=sigma, maxiters=maxiters, axis=0)
-            sc_bkg_err = sigma_clip(bkg_model.err * bkg_model.err, sigma=sigma, maxiters=maxiters, axis=0)
+            sc_bkg_data = sigma_clip(bkg_data, sigma=sigma, maxiters=maxiters, axis=0)
+            sc_bkg_err = sigma_clip(bkg_err * bkg_err, sigma=sigma, maxiters=maxiters, axis=0)
 
             # Accumulate the integ-averaged clipped data and err for the file
             cdata[i] = sc_bkg_data.mean(axis=0)
             cerr[i] = sc_bkg_err.mean(axis=0)
 
             # Collapse the DQ by doing a bitwise_OR over all integrations
-            for i_nint in range(bkg_model.dq.shape[0]):
-                accum_dq_arr = np.bitwise_or(bkg_model.dq[i_nint, :, :], accum_dq_arr)
+            for i_nint in range(bkg_dq.shape[0]):
+                accum_dq_arr = np.bitwise_or(bkg_dq[i_nint, :, :], accum_dq_arr)
             avg_bkg.dq = np.bitwise_or(avg_bkg.dq, accum_dq_arr)
-
-            bkg_model.close()
 
     # Clip the background data
     log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
@@ -144,21 +262,21 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
 
     Parameters
     ----------
-    input_model: JWST data model
+    input_model : JWST data model
         input target exposure data model
 
-    bkg_filename: str
+    bkg_filename : str
         name of master background file for WFSS/GRISM
 
-    wl_range_name: str
+    wl_range_name : str
         name of wavelengthrange reference file
 
-    mmag_extract: float
+    mmag_extract : float
         minimum abmag of grism objects to extract
 
     Returns
     -------
-    result: JWST data model
+    result : JWST data model
         background-subtracted target data model
     """
 
@@ -218,15 +336,15 @@ def no_NaN(model, fill_value=0.):
 
     Parameters
     ----------
-    model: JWST data model
+    model : JWST data model
         Reference file model.
 
-    fill_value: float
+    fill_value : float
         NaNs will be replaced with this value.
 
     Returns
     -------
-    result: JWST data model
+    result : JWST data model
         Reference file model without NaNs in data array.
     """
 
@@ -244,18 +362,18 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
 
     Parameters
     ----------
-    input_model: JWST data model
+    input_model : JWST data model
         input target exposure data model
 
-    wl_range_name: str
+    wl_range_name : str
         Name of the wavelengthrange reference file
 
-    mmag_extract: float
+    mmag_extract : float
         Minimum abmag of grism objects to extract
 
     Returns
     -------
-    bkg_mask: ndarray
+    bkg_mask : ndarray
         Boolean mask:  True for background, False for pixels that are
         inside at least one of the source regions defined in the source
         catalog.
@@ -272,7 +390,7 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
         for order in order_bounding.keys():
             ((ymin, ymax), (xmin, xmax)) = order_bounding[order]
             xmin = int(math.floor(xmin))
-            xmax = int(math.ceil(xmax)) + 1     # convert to slice limit
+            xmax = int(math.ceil(xmax)) + 1  # convert to slice limit
             ymin = int(math.floor(ymin))
             ymax = int(math.ceil(ymax)) + 1
             xmin = max(xmin, 0)
@@ -289,20 +407,20 @@ def robust_mean(x, lowlim=25., highlim=75.):
 
     Parameters
     ----------
-    x: ndarray
+    x : ndarray
         The array for which we want a mean value.
 
-    lowlim: float
+    lowlim : float
         The lower `lowlim` percent of the data will not be used when
         computing the mean.
 
-    highlim: float
+    highlim : float
         The upper `highlim` percent of the data will not be used when
         computing the mean.
 
     Returns
     -------
-    mean_value: float
+    mean_value : float
         The mean of `x`, excluding data outside `lowlim` to `highlim`
         percentile limits.
     """

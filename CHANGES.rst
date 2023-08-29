@@ -23,6 +23,11 @@ associations
 
 - Remove order dependency on association diffing. [#7853]
 
+background
+----------
+
+- Allow background accumulation for combinations of full and subarray observations [#7827]
+
 calwebb_spec2
 -------------
 

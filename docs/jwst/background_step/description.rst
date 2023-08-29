@@ -35,7 +35,8 @@ image depends on whether the background exposures are "rate" (2D) or
 "rateint" (3D) exposures. In the case of "rate" exposures, the average
 background image is produced as follows:
 
- * Clip the combined SCI arrays of all background exposures
+ * Clip the combined SCI arrays of all background exposures. For mixtures
+    of full chip and subarray data, only overlapping regions are used
  * Compute the mean of the unclipped SCI values
  * Sum in quadrature the ERR arrays of all background exposures, clipping the
    same input values as determined for the SCI arrays, and convert the result
