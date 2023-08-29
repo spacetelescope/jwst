@@ -98,8 +98,30 @@ def apply_emicorr(input_model, emicorr_model, save_intermediate_results=False,
 
     # Make very crude slope image and fixed pattern "super"bias for each
     # integration, ignoring everything (nonlin, saturation, badpix, etc)
-    
+    img_slope()
+    fix_pattern_superbias()
 
+    # Subtract scaled slope image and bias from each frame of each integration
+    subtract_scaled_slope()
+
+    # Calculate phase of every pixel in the image at the desired emi frequency
+    # (e.g. 390 Hz) relative to the first pixel in the image
+    calc_phase()
+
+    # Make a binned, phased amplitude (pa) wave from the cleaned data (plot
+    # cleaned vs phase, then bin by phase)
+    bin_pa_wave()
+
+    # Measure the phase shift between the binned pa wave and the input
+    # reference wave
+    measure_phase_shift()
+
+    # Use look-up table to get the aligned reference wave value for each pixel
+    # (the noise array corresponding to the input image)
+    get_ref_wave()
+
+    # Subtract the noise array from the input image and return the cleaned result
+    subtract_img_noise()
 
     # DQ values remain the same as the input
     log.info('DQ values in the reference file NOT used to update the output DQ.')

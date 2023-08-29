@@ -22,7 +22,7 @@ class EmiCorrStep(Step):
 
     reference_file_types = ['emicorr']
 
-    rfile_suffix = '390hz_ref_wave'
+    rfile_suffix = 'emi_ref_waves'
 
     def process(self, input):
         with datamodels.open(input) as input_model:
