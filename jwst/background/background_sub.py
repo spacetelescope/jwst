@@ -24,8 +24,9 @@ class ImageSubsetArray:
 
         im = datamodels.open(model)
 
-        # Make sure xstart/ystart exist in the model metadata
-        if im.meta.subarray.xstart is None or im.meta.subarray.ystart is None:
+        # Make sure xstart/ystart/xsize/ysize exist in the model metadata
+        if (im.meta.subarray.xstart is None or im.meta.subarray.ystart is None or
+                im.meta.subarray.xsize is None or im.meta.subarray.ysize is None):
 
             # If the ref file is full-frame, set the missing params to
             # default values
