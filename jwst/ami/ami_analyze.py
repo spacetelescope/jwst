@@ -7,7 +7,7 @@ import copy
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
-from .utils import img_median_replace
+from . import utils
 from stdatamodels.jwst.datamodels import dqflags
 
 from astropy import units as u
@@ -19,7 +19,8 @@ log.setLevel(logging.DEBUG)
 def apply_LG_plus(input_model, 
                 oversample, rotation,
                 psf_offset, rotsearch_parameters, 
-                src, bandpass, usebp, firstfew, chooseholes, affine2d
+                src, bandpass, usebp, firstfew, 
+                chooseholes, affine2d, run_bpfix
                 # **kwargs?
                 ):
     """
@@ -145,7 +146,8 @@ def apply_LG_plus(input_model,
                                     src=src,
                                     firstfew=firstfew,
                                     usebp=usebp,
-                                    chooseholes=chooseholes)
+                                    chooseholes=chooseholes,
+                                    run_bpfix=run_bpfix)
     # more args to pass to instrument_data: src, usebp, firstfew, chooseholes. should these be kwargs?
 
     # data will be trimmed, bp fix run, etc in nrm_core.FringeFitter.fit_fringes_all()
@@ -155,14 +157,10 @@ def apply_LG_plus(input_model,
                                 psf_offset_ff=psf_offset_ff,
                                 oversample=oversample)
 
-    output_model = ff_t.fit_fringes_all(input_copy)
-    
-
-    # fringefitter = ff_t.fit_fringes_all(input_copy)
-    # oifits_model = RawOifits(fringefitter)
+    oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
 
 
     # Copy header keywords from input to output
-    # output_model.update(input_model, only="PRIMARY")
+    amilgmodel.update(input_model, only="PRIMARY")
 
-    return output_model
+    return oifitsmodel, oifitsmodel_multi, amilgmodel
