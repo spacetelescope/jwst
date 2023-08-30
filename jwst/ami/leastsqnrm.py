@@ -479,7 +479,7 @@ def weighted_operations(img, model, dqm=None):
 	flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 	for fringe in range(np.shape(model)[2]):
 		flatmodel[:,fringe] = np.delete(flatmodel_nan[:,fringe], nanlist)
-	#print(flatmodel.shape)
+	#log.info(flatmodel.shape)
 
 	# A.w 
 	# Aw = A * np.sqrt(w[:,np.newaxis]) # w as a column vector
@@ -542,37 +542,36 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
 		condition number of the inverse of the product of model and its
 		transpose
 	"""
-	print("leastsqnrm.matrix_operations() - equally-weighted")
 
 	flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
 	flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
 	if verbose: 
-		print(f'fringefitting.leastsqnrm.matrix_operations(): ', end='')
-		print(f'\n\timg {img.shape:} \n\tdqm {dqm.shape:}', end='')
-		print(f'\n\tL x W = {img.shape[0]:d} x {img.shape[1]:d} = {img.shape[0] * img.shape[1]:d}', end='')
-		print(f'\n\tflatimg {flatimg.shape:}', end='')
-		print(f'\n\tflatdqm {flatdqm.shape:}', end='')
+		log.info(f'fringefitting.leastsqnrm.matrix_operations(): ', end='')
+		log.info(f'\n\timg {img.shape:} \n\tdqm {dqm.shape:}', end='')
+		log.info(f'\n\tL x W = {img.shape[0]:d} x {img.shape[1]:d} = {img.shape[0] * img.shape[1]:d}', end='')
+		log.info(f'\n\tflatimg {flatimg.shape:}', end='')
+		log.info(f'\n\tflatdqm {flatdqm.shape:}', end='')
 
 	# Originally Alex had  nans coding bad pixels in the image.
 	# Anand: re-use the nan terminology code but driven by bad pixel frame
 	#        nanlist shoud get renamed eg donotuselist
 
-	if verbose: print('\n\ttype(dqm)', type(dqm), end='')
+	if verbose: log.info('\n\ttype(dqm)', type(dqm), end='')
 	if dqm is not None: nanlist = np.where(flatdqm==True)  # where DO_NOT_USE up.
 	else: nanlist = (np.array(()), ) # shouldn't occur w/MAST JWST data
 
 	if verbose: 
-		print(f'\n\ttype(nanlist) {type(nanlist):}, len={len(nanlist):}', end='')
-		print(f'\n\tnumber of nanlist pixels: {len(nanlist[0]):d} items', end='') 
-		print(f'\n\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice',
+		log.info(f'\n\ttype(nanlist) {type(nanlist):}, len={len(nanlist):}', end='')
+		log.info(f'\n\tnumber of nanlist pixels: {len(nanlist[0]):d} items', end='') 
+		log.info(f'\n\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice',
 		  end='')
 	else:
-		print(f'\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice')
+		log.info(f'\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice')
 		  
 
 	flatimg = np.delete(flatimg, nanlist)
 
-	if verbose: print(f'\n\tflatimg {flatimg.shape:} after deleting {len(nanlist[0]):d}',
+	if verbose: log.info(f'\n\tflatimg {flatimg.shape:} after deleting {len(nanlist[0]):d}',
 		  end='')
 
 
@@ -584,12 +583,12 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
 								  np.shape(model)[2])
 	flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 	if verbose: 
-		print(f'\n\tflatmodel_nan {flatmodel_nan.shape:}', end='')
-		print(f'\n\tflatmodel     {flatmodel.shape:}', end='')
-		print(f'\n\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}', end='')
-		print()
-		print("flat model dimensions ", np.shape(flatmodel))
-		print("flat image dimensions ", np.shape(flatimg))
+		log.info(f'\n\tflatmodel_nan {flatmodel_nan.shape:}', end='')
+		log.info(f'\n\tflatmodel     {flatmodel.shape:}', end='')
+		log.info(f'\n\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}', end='')
+		log.info()
+		log.info("flat model dimensions ", np.shape(flatmodel))
+		log.info("flat image dimensions ", np.shape(flatimg))
 
 	for fringe in range(np.shape(model)[2]):
 		flatmodel[:,fringe] = np.delete(flatmodel_nan[:,fringe], nanlist)
@@ -613,13 +612,13 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
 	res = res.reshape(img.shape[0], img.shape[1])
 
 	if verbose:
-		print('model flux', flux)
-		print('data flux', flatimg.sum())
-		print("flat model dimensions ", np.shape(flatmodel))
-		print("model transpose dimensions ", np.shape(flatmodeltransp))
-		print("flat image dimensions ", np.shape(flatimg))
-		print("transpose * image data dimensions", np.shape(data_vector))
-		print("flat img * transpose dimensions", np.shape(inverse))
+		log.info('model flux', flux)
+		log.info('data flux', flatimg.sum())
+		log.info("flat model dimensions ", np.shape(flatmodel))
+		log.info("model transpose dimensions ", np.shape(flatmodeltransp))
+		log.info("flat image dimensions ", np.shape(flatimg))
+		log.info("transpose * image data dimensions", np.shape(data_vector))
+		log.info("flat img * transpose dimensions", np.shape(inverse))
 
 	if linfit:
 		try:
@@ -650,15 +649,16 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
 			result.inverse_covariance_matrix = []
 
 			linfit_result = result
-			print("Returned linearfit result")
+			log.info("Returned linearfit result")
 
 		except ImportError:
 			linfit_result = None
-	#         if verbose:
-			print("linearfit module not imported, no covariances saved.")
+			if verbose:
+				log.info("linearfit module not imported, no covariances saved.")
 	else:
 		linfit_result = None
-		print("linearfit module not imported, no covariances saved.")
+		if verbose:
+			log.info("linearfit module not imported, no covariances saved.")
 
 	return x, res, cond, linfit_result
 

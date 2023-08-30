@@ -53,7 +53,6 @@ class RawOifits:
 
 
 		if angunit == 'radians':
-			print("Will convert all angular quantities to degrees for saving")
 			self.degree = 180.0 / np.pi
 		else:
 			self.degree = 1
