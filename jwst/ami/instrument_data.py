@@ -31,7 +31,8 @@ class NIRISS:
                  rotsearch_parameters=None,
                  oversample=None,
                  psf_offset=None,
-                 **kwargs):
+                 run_bpfix=True
+                 ):
         """
         Short Summary
         ------------
@@ -71,10 +72,7 @@ class NIRISS:
         run_bpfix : boolean
             Run Fourier bad pixel fix on cropped data
         """
-        if 'run_bpfix' in kwargs: # is this allowed?
-            self.run_bpfix = kwargs['run_bpfix']
-        else:
-            self.run_bpfix = True
+        self.run_bpfix = run_bpfix
         self.usebp = usebp
         self.chooseholes = chooseholes
         self.filt = filt
@@ -306,12 +304,13 @@ class NIRISS:
 
     def mast2sky(self):
         """
+        Short Summary
+        -------------
         Rotate hole center coordinates:
             Clockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = -1
             Counterclockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = 1
         Hole center coords are in the V2, V3 plane in meters.
-        Return rotated coordinates to be put in info4oif_dict.
-        implane2oifits.ObservablesFromText uses these to calculate baselines.
+        Return rotated coordinates to be put in OIFITS files.
         """
         pa = self.pav3
         mask_ctrs = copy.deepcopy(self.mask.ctrs)

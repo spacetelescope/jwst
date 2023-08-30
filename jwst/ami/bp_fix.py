@@ -2,6 +2,7 @@
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
 
 from scipy import stats
 
@@ -15,6 +16,9 @@ from poppy import matrixDFT
 from scipy.ndimage import median_filter
 
 from stdatamodels.jwst.datamodels import dqflags
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 """pipeline implementation of Jens Kammerer's bp_fix code based on Ireland 2013 algorithm"""
@@ -80,7 +84,7 @@ def calcsupport(filtername, sqfov_npix, pupil="NRM"):
 	send back absolute value of FT(image) in filter - the CV Vsq array
 	"""
 	wls = create_wavelengths(filtername)
-	print(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
+	log.info(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
 	detimage = np.zeros((sqfov_npix, sqfov_npix), float)
 	for wl in wls:
 		psf = calcpsf(wl, sqfov_npix, pupil=pupil)
@@ -125,8 +129,8 @@ def bad_pixels(data,
 	pxdq = diff_data > median_tres * np.median(diff_data)
 	pxdq = pxdq.astype('int')
 
-	print('         Identified %.0f bad pixels (%.2f%%)' % (np.sum(pxdq), np.sum(pxdq) / np.prod(pxdq.shape) * 100.))
-	print('         %.3f' % np.max(diff_data/np.median(diff_data)))
+	log.info('         Identified %.0f bad pixels (%.2f%%)' % (np.sum(pxdq), np.sum(pxdq) / np.prod(pxdq.shape) * 100.))
+	log.info('         %.3f' % np.max(diff_data/np.median(diff_data)))
 
 	return pxdq
 
@@ -187,14 +191,14 @@ def fix_bad_pixels(data, pxdq0, filt):
 
 	pxdq = np.where(dqmask, pxdq0, 0)
 	nflagged_dnu = np.count_nonzero(pxdq)
-	print('%i pixels flagged DO_NOT_USE in cropped data' % nflagged_dnu)
+	log.info('%i pixels flagged DO_NOT_USE in cropped data' % nflagged_dnu)
 
 	# DNU, some other pixels are now NaNs in cal level products.
 	# Replace them with 0, then
 	# add DO_NOT_USE flags to positions in DQ array so they will be corrected.
 	nanidxlist = np.argwhere(np.isnan(data))
 	if len(nanidxlist) > 1:
-		print("Identified %i NaN pixels to correct" % len(nanidxlist))
+		log.info("Identified %i NaN pixels to correct" % len(nanidxlist))
 		for idx in nanidxlist:
 			data[idx[0],idx[1],idx[2]] = 0
 			pxdq0[idx[0],idx[1],idx[2]] += 1 # add DNU flag to each nan pixel
@@ -217,7 +221,7 @@ def fix_bad_pixels(data, pxdq0, filt):
 	# Compute field-of-view and Fourier sampling.
 	fov = 2 * sh * pxsc / 1000.  # arcsec
 	fsam = filtwl_d[filt] / (fov / 3600. / 180. * np.pi)  # m/pix
-	print('      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix' % (fov, fsam))
+	log.info('      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix' % (fov, fsam))
 
 	#
 	cvis = calcsupport(filt, 2 * sh, pupil=pupil) # CHECK IF THIS IS CAUSING PROBLEMS
@@ -237,13 +241,13 @@ def fix_bad_pixels(data, pxdq0, filt):
 	else:
 		pmas = dist > 12. * filtwl_d[filt] / diam * 180. / np.pi * 1000. * 3600. / pxsc
 	# if (np.sum(pmas) < np.mean(flagged_per_int)):
-	#     print('   SKIPPING: subframe too small to estimate noise')
+	#     log.info('   SKIPPING: subframe too small to estimate noise')
 	#     continue
 
 
 	# Go through all frames.
 	for j in range(imsz[0]):
-		print('         Frame %.0f of %.0f' % (j + 1, imsz[0]))
+		log.info('         Frame %.0f of %.0f' % (j + 1, imsz[0]))
 
 		# Now cut out the subframe.
 		# no need to cut out sub-frame; data already cropped
@@ -296,7 +300,7 @@ def fix_bad_pixels(data, pxdq0, filt):
 			# analytically determined noise with the empirically measured
 			# noise.
 			pxdq_new = np.sum(temp[pxdq_cut < 0.5])
-			print('         Iteration %.0f: %.0f new bad pixels, sdev of norm noise = %.3f' % (k + 1, pxdq_new, np.std(fmas_data[pmas])))
+			log.info('         Iteration %.0f: %.0f new bad pixels, sdev of norm noise = %.3f' % (k + 1, pxdq_new, np.std(fmas_data[pmas])))
 
 			# If no new bad pixels were identified, terminate the
 			# iteration.
