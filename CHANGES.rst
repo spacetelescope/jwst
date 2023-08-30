@@ -82,7 +82,7 @@ general
 
 - Require minimum asdf version 2.14.4 [#7801]
 
-- Require minimum asdf version 2.15.1 [#7861]
+- Require minimum asdf version 2.15.1 and numpy 1.22 [#7861]
 
 jump
 ____
