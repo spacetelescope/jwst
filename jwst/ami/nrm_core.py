@@ -68,6 +68,10 @@ class FringeFitter:
 		self.weighted = False    
 		if "weighted" in kwargs:
 			self.weighted = kwargs["weighted"]
+		if self.weighted is True:
+			log.info("leastsqnrm.weighted_operations() - weighted by Poisson variance")
+		else:
+			log.info("leastsqnrm.matrix_operations() - equally-weighted")
 
 	def fit_fringes_all(self, input_model):
 		"""
@@ -203,7 +207,7 @@ class FringeFitter:
 			nrm.psf_offset = nrm.xpos, nrm.ypos  # renamed .bestcenter to .psf_offset
 		else:
 			nrm.psf_offset = self.psf_offset_ff  # user-provided psf_offsetoffsets from array center are here.
-		print('DEBUG: nrm.pixel',nrm.pixel)
+
 		nrm.make_model(fov=self.ctrd.shape[0], 
 					   bandpass=nrm.bandpass,
 					   over=self.oversample,

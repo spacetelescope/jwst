@@ -1410,11 +1410,11 @@ def degrees_per_pixel(datamodel):
         # transform pixel x and y steps to RA-tan, Dec-tan degrees
         dxsky = cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
         dysky = cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
-        print("Used CD matrix for pixel scales")
+        log.info("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
     elif 'cdelt1' in wcsinfo and 'cdelt2' in wcsinfo:
         return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
-        print("Used CDELT[12] for pixel scales")
+        log.info("Used CDELT[12] for pixel scales")
     else:
-        print('InstrumentData.NIRISS: Warning: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix')
+        log.info('WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix')
         return 65.6/(60.0*60.0*1000), 65.6/(60.0*60.0*1000)
