@@ -71,7 +71,7 @@ class OutlierDetectionStep(Step):
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
-        in_memory = boolean(default=True)
+        in_memory = boolean(default=False)
     """
 
     def process(self, input_data):
@@ -173,7 +173,7 @@ class OutlierDetectionStep(Step):
             state = 'COMPLETE'
             if self.input_container:
                 if not self.save_intermediate_results:
-                    self.log.info("The following files will be deleted since save_intermediate_results=False:")
+                    self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
                     if not self.save_intermediate_results:
@@ -184,11 +184,11 @@ class OutlierDetectionStep(Step):
                         outlr_path = crf_file.replace(outlr_basename, outlr_file)
                         if os.path.isfile(outlr_path):
                             os.remove(outlr_path)
-                            self.log.info(f"    {outlr_path}")
+                            self.log.debug(f"    {outlr_path}")
                         blot_file = crf_file.replace('crf', 'blot')
                         if os.path.isfile(blot_file):
                             os.remove(blot_file)
-                            self.log.info(f"    {blot_file}")
+                            self.log.debug(f"    {blot_file}")
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
             return self.input_models
