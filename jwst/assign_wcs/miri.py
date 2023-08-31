@@ -9,13 +9,11 @@ from astropy.io import fits
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from gwcs.wcs import WCS
 
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
                                           RegionsModel, SpecwcsModel)
-from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, V2V3ToIdeal,
-                                                 IdealToV2V3)
+from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, IdealToV2V3)
 
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform,
@@ -620,11 +618,6 @@ def store_dithered_position(input_model):
     """
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(
-        input_model.meta.wcsinfo.v3yangle,
-        input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
-        input_model.meta.wcsinfo.vparity
-    )
-    v23toidl = V2V3ToIdeal(
         input_model.meta.wcsinfo.v3yangle,
         input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
         input_model.meta.wcsinfo.vparity
