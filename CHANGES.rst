@@ -9,6 +9,9 @@ assign_wcs
 - Save bounding box to imaging WCS matching the shape of the data, for datamodels
   without a defined bounding box. [#7809]
 
+- Update NIRSpec fixed-slit `source_id` assignments for each `SlitModel`, so that
+  the slit with the primary target always has source_id=1. [#7863]
+
 associations
 ------------
 
@@ -34,6 +37,13 @@ calwebb_spec2
 - Run ``pixel_replace`` before setting metadata and suffix of datamodel
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
+
+calwebb_spec3
+-------------
+
+- Update the construction of output product names for NIRSpec fixed-slit observations,
+  so that each source-based product contains the name of the slit from the data were
+  extracted. [#7863]
 
 charge_migration
 ----------------
