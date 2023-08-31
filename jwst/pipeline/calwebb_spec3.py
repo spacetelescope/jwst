@@ -202,13 +202,19 @@ class Spec3Pipeline(Pipeline):
         # Process each source
         for source in sources:
 
-            # If each source is a SourceModelContainer
-            # the output name needs to be updated with the source name.
+            # If each source is a SourceModelContainer,
+            # the output name needs to be updated with the source ID.
             if isinstance(source, tuple):
                 source_id, result = source
                 self.output_file = format_product(
-                    output_file, source_id=source_id.lower()
+                    output_file, source_id=source_id.lower(),
                 )
+                # For NIRSpec fixed-slit products containing data from secondary slits
+                # (source_id not 1), replace the primary slit name with the name of the
+                # slit from which these data were obtained.
+                if result[0].meta.exposure.type == "NRS_FIXEDSLIT" and source_id != "1":
+                    self.output_file = (self.output_file[:self.output_file.find("-s")+1] +
+                        result[0].name.lower())
             else:
                 result = source
 
