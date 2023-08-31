@@ -10,6 +10,66 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+subarray_cases = {
+
+    # 390Hz out-of-phase - these all need 390hz correction
+
+    "SLITLESSPRISM": {
+        "rowclocks": 28,
+        "frameclocks": "15904L"
+    },
+
+    "MASKLYOT": {
+        "rowclocks": 90,
+        "frameclocks": "32400L"
+    },
+
+    "SUB64": {
+        "rowclocks": 28,
+        "frameclocks": "8512L"
+    },
+
+    "SUB128": {
+        "rowclocks": 44,
+        "frameclocks": "11904L"
+    },
+
+    "MASK1140": {
+        "rowclocks": 82,
+        "frameclocks": "23968"
+    },
+
+    "MASK1550": {
+        "rowclocks": 82,
+        "frameclocks": "23968L"
+    },
+
+    # 390Hz already in-phase for these, but may need corr for other
+    # frequencies (e.g. 10Hz heater noise)
+
+    "FULL_FASTR1": {
+        "rowclocks": 271,
+        "frameclocks": "277504L"
+    },
+
+    "FULL_SLOWR1": {
+        "rowclocks": 2333,
+        "frameclocks": "2388992L"
+    },
+
+    "BRIGHTSKY": {
+        "rowclocks": 162,
+        "frameclocks": "86528L"
+    },
+
+    "SUB256": {
+        "rowclocks": 96,
+        "frameclocks": "29952L"
+    }
+
+}
+
+
 def do_correction(input_model, emicorr_model, **pars):
     """
     EMI-correct a JWST data model using an emicorr model
@@ -17,10 +77,10 @@ def do_correction(input_model, emicorr_model, **pars):
     Parameters
     ----------
     input_model : JWST data model
-        input science data model to be emi-corrected
+        Input science data model to be emi-corrected
 
     emicorr_model : JWST data model
-        data model containing emi correction
+        Data model containing emi correction
 
     pars : dict
         Optional user-specified parameters to modify how outlier_detection
@@ -37,10 +97,10 @@ def do_correction(input_model, emicorr_model, **pars):
     """
     save_intermediate_results = pars['save_intermediate_results']
     user_supplied_reffile = pars['user_supplied_reffile']
+
     output_model = apply_emicorr(input_model, emicorr_model,
                         save_intermediate_results=save_intermediate_results,
                         user_supplied_reffile=user_supplied_reffile)
-    output_model.meta.cal_step.emicorr = 'COMPLETE'
 
     return output_model
 
@@ -94,8 +154,13 @@ def apply_emicorr(input_model, emicorr_model, save_intermediate_results=False,
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
+    subname = input_model.meta.subarray.name
+    if subname == 'FULL':
+        subname = subname + '_' + input_model.meta.exposure.readpatt
+
     # Read image data
     data = input_model.data.copy()
+    dshape = np.shape(data)
 
     # Make very crude slope image and fixed pattern "super"bias for each
     # integration, ignoring everything (nonlin, saturation, badpix, etc)

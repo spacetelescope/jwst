@@ -6,6 +6,12 @@ from . import emicorr
 import os
 
 
+# These are the exposure types to correct for EMI
+exp_types2correct = [
+    'MIR_4QPM'
+]
+
+
 __all__ = ["EmiCorrStep"]
 
 
@@ -27,6 +33,13 @@ class EmiCorrStep(Step):
 
     def process(self, input):
         with datamodels.open(input) as input_model:
+
+            # Catch the cases to skip
+            exp_type = input_model.meta.exposure.type.upper()
+            if exp_type not in exp_types2correct:
+                log.info(f'EMI correction not implemented for EXP_TYPE {exp_type}.')
+                input_model.meta.cal_step.emicorr = 'SKIPPED'
+                return input_model
 
             # Setup outlier detection parameters
             pars = {
@@ -56,6 +69,7 @@ class EmiCorrStep(Step):
 
             # Do the correction
             output_model = emicorr.do_correction(input_model, emicorr_model, **pars)
+            output_model.meta.cal_step.emicorr = 'COMPLETE'
 
             # close and remove the reference file created on-the-fly
             emicorr_model.close()
