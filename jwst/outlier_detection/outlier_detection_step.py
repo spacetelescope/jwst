@@ -1,4 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
+import os
+
 from functools import partial
 
 from stdatamodels.jwst import datamodels
@@ -68,14 +70,13 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=False)
     """
 
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
 
-        # interpret how memory should be used
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, ModelContainer):
@@ -171,8 +172,23 @@ class OutlierDetectionStep(Step):
 
             state = 'COMPLETE'
             if self.input_container:
+                if not self.save_intermediate_results:
+                    self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
+                    if not self.save_intermediate_results:
+                        # remove unwanted files
+                        crf_file = self.make_output_path(basepath=model.meta.filename)
+                        outlr_basename = os.path.basename(crf_file)
+                        outlr_file = model.meta.filename.replace('cal', 'outlier_i2d')
+                        outlr_path = crf_file.replace(outlr_basename, outlr_file)
+                        if os.path.isfile(outlr_path):
+                            os.remove(outlr_path)
+                            self.log.debug(f"    {outlr_path}")
+                        blot_file = crf_file.replace('crf', 'blot')
+                        if os.path.isfile(blot_file):
+                            os.remove(blot_file)
+                            self.log.debug(f"    {blot_file}")
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
             return self.input_models
