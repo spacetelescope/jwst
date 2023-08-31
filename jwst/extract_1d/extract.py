@@ -1452,12 +1452,18 @@ class ExtractBase(abc.ABC):
             x_y = slit2det(xpos, ypos, middle_wl)
             log.info("Using source_xpos and source_ypos to center extraction.")
 
-        else:
+        elif input_model.meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
             try:
-                x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
-            except NotImplementedError:
-                log.warning("Inverse wcs is not implemented, so can't use "
-                            "target coordinates to get location of spectrum.")
+                if slit is None:
+                    dithra = input_model.meta.dither.dithered_ra
+                    dithdec = input_model.meta.dither.dithered_dec
+                else:
+                    dithra = slit.meta.dither.dithered_ra
+                    dithdec = slit.meta.dither.dithered_dec
+                x_y = self.wcs.backward_transform(dithra, dithdec, middle_wl)
+            except AttributeError:
+                log.warning("Dithered pointing location not found in wcsinfo. "
+                            "Defaulting to TARG_RA / TARG_DEC for centering.")
                 return
 
         # locn is the XD location of the spectrum:
@@ -1465,6 +1471,7 @@ class ExtractBase(abc.ABC):
             locn = x_y[1]
         else:
             locn = x_y[0]
+            log.info(f"LOCN: {locn}")
 
         if locn < lower or locn > upper and targ_ra > 340.:
             # Try this as a temporary workaround.
