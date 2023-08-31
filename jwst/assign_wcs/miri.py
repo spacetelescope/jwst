@@ -623,12 +623,9 @@ def store_dithered_position(input_model):
         input_model.meta.wcsinfo.vparity
     )
 
-    v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
-
     dithered_v2, dithered_v3 = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
 
-    log.info(f"Number of expected inputs to transform: {v23toworld.n_inputs}")
-    log.info(f"{dithered_v2} {dithered_v3}")
+    v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
     dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)  # needs a wavelength,
                                                                               # but does not affect return
 
