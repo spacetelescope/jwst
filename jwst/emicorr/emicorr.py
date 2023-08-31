@@ -4,6 +4,7 @@
 
 import numpy as np
 import logging
+from astropy.io import fits
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -129,35 +130,41 @@ def apply_emicorr(input_model, emicorr_model, save_intermediate_results=False,
     return output_model
 
 
-def reffile_waveform(input_model, emicorr_ref_file, save_intermediary_resutls,
-        ret_phased_wav=True):
-    """ Read or create the reference file from the input science data.
+def mk_reffile_waveform(input_model, emicorr_ref_filename):
+    """ Create the reference file from the input science data.
 
     Parameters
     ----------
     input_model: JWST data model
-        input science data model to be emi-corrected
+        Input science data model to be emi-corrected
 
-    emicorr_ref_file : str
-        Path and name of the reference file
-
-    save_intermediate_results : bool
-        Saves the output into a file and the reference file (if created on-the-fly)
-
-    ret_phased_wav : bool
-        If True, the phased wave from this data set will be returned
+    emicorr_ref_filename : str
+        Name of the reference file
 
     Returns
     -------
-    emicorr_ref_file: string
-        Path and name of the reference file just created
-
-    phased_wav : float
-        The phased wave from this data set (only if ret_phased_wav=True)
+        Nothing
     """
+    # initialize the reference fits file
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
 
-    if emicorr_ref_file != 'N/A':
-        # read the reference file
-    else:
-        log.info('No emicorr CRDS reference file found, one will be created from the data.')
+    # image
+    #e = fits.ImageHDU(arr, name='extension_name')
+
+    # table
+    #col_names = ['integration_number', 'int_start_MJD_UTC', 'int_mid_MJD_UTC',
+    #             'int_end_MJD_UTC', 'int_start_BJD_TDB', 'int_mid_BJD_TDB',
+    #             'int_end_BJD_TDB']
+    #c1 = fits.Column(name=col_names[0], array=np.array([]), format='D')
+    # e = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7], name='INT_TIMES')
+
+    # add extension
+    #hdulist.append(e)
+
+    # use the reference file model to format and write file
+    model = datamodels.EmiModel(hdulist)
+    model.save(emicorr_ref_filename)
+    log.debug('On-the-fly reference file written as: %s', emicorr_ref_filename)
+
 

@@ -3,6 +3,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import emicorr
+import os
 
 
 __all__ = ["EmiCorrStep"]
@@ -36,27 +37,31 @@ class EmiCorrStep(Step):
             # Get the reference file
             save_onthefly_reffile = False
             if self.user_supplied_reffile is None:
-                emicorr_ref_file = self.get_reference_file(input_model, 'emicorr')
-                if emicorr_ref_file == 'N/A':
+                emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
+                # Create the reference file
+                if emicorr_ref_filename == 'N/A':
                     save_onthefly_reffile = True
-            else:
-                emicorr_ref_file = self.user_supplied_reffile
+                    emicorr_ref_filename = Step._make_output_path(self, suffix=rfile_suffix)
+                    emicorr.mk_reffile_waveform(input_model, emicorr_ref_filename)
+                    self.log.info('Using on-the-fly reference file: %s', emicorr_ref_filename)
+                else:
+                    self.log.info('Using CRDS reference file: %s', emicorr_ref_filename)
 
-            # Read/create the reference file
-            self.emicorr_ref_file = emicorr.reffile_waveform(input_model, emicorr_ref_file)
-            self.log.info('Using emicorr reference file: %s', self.emicorr_ref_file)
+            else:
+                emicorr_ref_filename = self.user_supplied_reffile
+                log.info('Using user-supplied reference file: '.format(emicorr_ref_filename))
 
             # Load the reference file
-            emicorr_model = datamodels.EmiModel(self.emicorr_ref_file)
+            emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
 
             # Do the correction
             output_model = emicorr.do_correction(input_model, emicorr_model, **pars)
 
-            # save the reference file created on-the-fly
-            if save_onthefly_reffile:
-                reffile_path = emicorr_model.save(suffix=rfile_suffix, force=True)
-                self.log.info('On-the-fly reference file saved as: %s', reffile_path)
-
+            # close and remove the reference file created on-the-fly
             emicorr_model.close()
+            if save_onthefly_reffile and not self.save_intermediate_results:
+                if os.path.isfile(emicorr_ref_filename):
+                    os.remove(emicorr_ref_filename)
+                    self.log.debug('On-the-fly reference file deleted: %s', emicorr_ref_filename)
 
         return output_model

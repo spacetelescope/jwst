@@ -1,3 +1,3 @@
-from .fringe_step import FringeStep
+from .emicorr_step import EmiCorrStep
 
-__all__ = ['FringeStep']
+__all__ = ['EmiCorrStep']
