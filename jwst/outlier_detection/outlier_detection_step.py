@@ -172,11 +172,11 @@ class OutlierDetectionStep(Step):
 
             state = 'COMPLETE'
             if self.input_container:
-                if not self.in_memory and not self.save_intermediate_results:
+                if not self.save_intermediate_results:
                     self.log.info("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
-                    if not self.in_memory and not self.save_intermediate_results:
+                    if not self.save_intermediate_results:
                         # remove unwanted files
                         crf_file = self.make_output_path(basepath=model.meta.filename)
                         outlr_basename = os.path.basename(crf_file)
