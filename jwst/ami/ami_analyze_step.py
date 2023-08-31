@@ -79,5 +79,7 @@ class AmiAnalyzeStep(Step):
 
         # Close the reference file and update the step status
         amilgmodel.meta.cal_step.ami_analyze = 'COMPLETE'
+        oifitsmodel.meta.cal_step.ami_analyze = 'COMPLETE'
+        oifitsmodel_multi.meta.cal_step.ami_analyze = 'COMPLETE'
 
         return oifitsmodel, oifitsmodel_multi, amilgmodel

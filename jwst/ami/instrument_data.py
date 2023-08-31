@@ -10,7 +10,6 @@ from .mask_definitions import NRM_mask_definitions
 from . import utils
 from . import bp_fix
 from stdatamodels.jwst.datamodels import dqflags
-import pysiaf
 import copy
 
 
@@ -238,13 +237,14 @@ class NIRISS:
         scidata_ctrd = scidata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
         bpdata_ctrd = bpdata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
 
-        log.info("Cropping all integrations to %ix%i pixels around peak (%i,%i) " % (2*r+1,2*r+1,peakx+4,peaky))# +4 because of trimmed refpx
+        log.info("Cropping all integrations to %ix%i pixels around peak (%i,%i)" % 
+                (2*r+1,2*r+1,peakx+4,peaky))# +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
-            log.info(f'Applying Fourier bad pixel correction to cropped data, updating DQ array')
+            log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
             scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,bpdata_ctrd,input_model.meta.instrument.filter)
         else:
-            log.info(f'Not running Fourier bad pixel fix')
+            log.info('Not running Fourier bad pixel fix')
 
         self.rootfn = input_model.meta.filename.replace('.fits','')
 
