@@ -2,15 +2,13 @@
 import logging
 import numpy as np
 import copy
+import synphot
 
 
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
 from . import utils
-from stdatamodels.jwst.datamodels import dqflags
-
-from astropy import units as u
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

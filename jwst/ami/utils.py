@@ -9,9 +9,9 @@ import numpy.fft as fft
 from scipy.integrate import simps
 from astropy.io import fits
 from astropy import units as u
+import matplotlib.pyplot as plt
 
 import synphot
-import stsynphot
 from stsynphot import grid_to_spec
 
 log = logging.getLogger(__name__)
@@ -1212,7 +1212,8 @@ def get_filt_spec(filt, verbose=False):
     webbpsf_path = os.getenv('WEBBPSF_PATH')
     filterdir = os.path.join(webbpsf_path, 'NIRISS/filters/')
     filtfile = os.path.join(filterdir, filt + '_throughput.fits')
-    if verbose: print("\n Using filter file:", filtfile)
+    if verbose: 
+        print("\n Using filter file:", filtfile)
     thruput = fits.getdata(filtfile)
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
     tr_list = np.asarray([tup[1] for tup in thruput])
@@ -1234,6 +1235,7 @@ def get_src_spec(sptype):
         return sptype
     else:
         # phoenix model lookup table used in JWST ETCs
+        catname = 'Phoenix'
         lookuptable = {
             "O3V": (45000, 0.0, 4.0),
             "O5V": (41000, 0.0, 4.5),
@@ -1293,7 +1295,7 @@ def get_src_spec(sptype):
         try:
             return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
         except IOError:
-            errmsg = ("Could not find a match in catalog {0} for key {1}. Check that is a valid name in the " +
+            errmsg = ("Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the " +
                       "lookup table, and/or that synphot is installed properly.".format(catname, sptype))
             raise LookupError(errmsg)
 
@@ -1317,13 +1319,14 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, pl
     # print(len(wl_filt),len(th_filt))
 
     if trim:
-        if verbose: print("Trimming bandpass to above %.1e throughput" % trim)
+        if verbose: 
+            print("Trimming bandpass to above %.1e throughput" % trim)
         goodthru = np.where(np.asarray(th_filt) > trim)
         low_idx, high_idx = goodthru[0][0], goodthru[0][-1]
         wl_filt, th_filt = wl_filt[low_idx:high_idx], th_filt[low_idx:high_idx]
         # print(len(wl_filt),len(th_filt))
     ptsin = len(wl_filt)
-    if nlambda == None:
+    if nlambda is None:
         nlambda = ptsin # Don't bin throughput
     # get effstim for bins of wavelengths
     # plt.plot(wl_filt,th_filt)
