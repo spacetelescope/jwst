@@ -2,6 +2,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import ami_analyze
+from .utils import Affine2D
 
 __all__ = ["AmiAnalyzeStep"]
 
@@ -17,16 +18,14 @@ class AmiAnalyzeStep(Step):
         rotation = float(default=0.0)           # Rotation initial guess [deg]
         psf_offset = string(default='0.0 0.0') # PSF offset values to use to create the model array
         rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
-        affine2d = string(default=None) # User-defined Affine2d object
-        src = string(default='A0V') # Source spectral type for model
-        bandpass = string(default=None) # Synphot spectrum or numpy array to override filter/source
+        src = string(default='A0V') # Source spectral type for model (Phoenix models)
+        bandpass = any(default=None) # Synphot spectrum or array to override filter/source
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
-        firstfew = integer(default=None) # analyze only first few integrations
-        chooseholes = string(default=None) # fit only certain fringes e.g. ['B4','B5','B6','C2']
-        run_bpfix = boolean(default=True) # Fun Fourier bad pixel fix on cropped data
+        firstfew = integer(default=None) # If not None, process only the first few integrations
+        chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
+        affine2d = any(default=None) # None or user-defined Affine2d object
+        run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
-
-    #reference_file_types = ['throughput']
 
     def process(self, input):
         """
@@ -39,8 +38,12 @@ class AmiAnalyzeStep(Step):
 
         Returns
         -------
-        result: AmiLgModel object
-            AMI image to which the LG fringe detection has been applied
+        oifitsmodel: AmiOIModel object
+            AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
+        oifitsmodel_multi: AmiOIModel object
+            AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
+        amilgmodel: AmiLGFitModel object
+            AMI cropped data, model, and residual data from LG algorithm fringe fitting
         """
         # Retrieve the parameter values
         oversample = self.oversample
@@ -66,6 +69,10 @@ class AmiAnalyzeStep(Step):
             input_model = datamodels.DataModel(input)
         except ValueError as err:
             raise RuntimeError(f"{err}. Input unable to be read into a DataModel.")
+
+        # Make sure oversample is odd
+        if value % 2 == 0:
+            raise ValueError("Oversample value must be an odd integer.")
 
         # Apply the LG+ methods to the data
         oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(input_model,
