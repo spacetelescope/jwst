@@ -84,9 +84,14 @@ class FringeFitter:
 
         Returns
         -------
-        output_model: Fringe model object
-            Fringe analysis data
+        output_model: AmiOIModel object
+            AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
+        output_model_multi: AmiOIModel object
+            AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
+        lgfit:
+            AMI cropped data, model, and residual data from LG algorithm fringe fitting
         """
+
         # scidata, dqmask are already centered around peak
         self.scidata, self.dqmask = self.instrument_data.read_data_model(input_model)
 
@@ -135,6 +140,8 @@ class FringeFitter:
         n_model_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
         resid_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
         n_resid_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+        # Model parameters
+        solns_arr = np.zeros((nslices,44))
 
         for i,nrmslc in enumerate(self.nrm_list):
             datapeak = nrmslc.reference.max()
@@ -144,6 +151,7 @@ class FringeFitter:
             n_model_arr[i,:,:] = nrmslc.modelpsf/datapeak
             resid_arr[i,:,:] = nrmslc.residual
             n_resid_arr[i,:,:] = nrmslc.residual/datapeak
+            solns_arr[i,:] = nrmslc.soln
 
         # Populate datamodel
         m = datamodels.AmiLgFitModel()
@@ -153,6 +161,7 @@ class FringeFitter:
         m.norm_fit_image = n_model_arr
         m.resid_image = resid_arr
         m.norm_resid_image = n_resid_arr
+        m.solns_table = solns_arr
 
         return m
 
@@ -166,13 +175,14 @@ class FringeFitter:
 
         Parameters
         ----------
-        input_model: instance Data Model
-            DM object for input
+        slc: numpy array
+            2D slice of data
 
         Returns
         -------
-        output_model: Fringe model object
-            Fringe analysis data
+        nrm: NrmModel object
+            Model with best fit results
+
         """
 
 
@@ -230,7 +240,7 @@ class FringeFitter:
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
         """
-        nrm.create_modelpsf() # instead of setting self.nrm = nrm and self.save_output as in implane??
+        nrm.create_modelpsf()
         # model now stored as nrm.modelpsf, also nrm.residual
         self.nrm = nrm # this gets updated with each slice
         return nrm # to fit_fringes_all, where the output model will be created from list of nrm objects

@@ -19,7 +19,6 @@ def apply_LG_plus(input_model,
                 psf_offset, rotsearch_parameters, 
                 src, bandpass, usebp, firstfew, 
                 chooseholes, affine2d, run_bpfix
-                # **kwargs?
                 ):
     """
     Short Summary
@@ -30,7 +29,6 @@ def apply_LG_plus(input_model,
     ----------
     input_model : data model object
         AMI science image to be analyzed
-
     oversample : integer
         Oversampling factor
     rotation : float (degrees)
@@ -39,6 +37,8 @@ def apply_LG_plus(input_model,
         PSF offset values to use to create the model array\
     rotsearch_parameters : string ('start stop step')
         Rotation search parameters
+    src : string
+        Source spectral type for model
     bandpass : synphot spectrum or array
         Synphot spectrum or array to override filter/source
     usebp : boolean
@@ -115,8 +115,7 @@ def apply_LG_plus(input_model,
     pscale_deg = np.mean([pscaledegx, pscaledegy])
     PIXELSCALE_r = np.deg2rad(pscale_deg)
     holeshape = 'hex'
-    # # throughput ref file is too coarsely sampled, use webbpsf data instead
-    # # get throughput here instead of in instrument_data
+    # Throughput (combined filter and source spectrum) calculated here
     if bandpass is not None:
         log.info('User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES')
         # bandpass can be user-defined synphot object or appropriate array
@@ -150,8 +149,8 @@ def apply_LG_plus(input_model,
 
     log.info(f'Initial values to use for rotation search: {rotsearch_d}')
     if affine2d is None:
-        # affine2d object, can be overridden by user input affine?
-        # do rotation search on median image (assuming rotation constant over exposure)
+        # affine2d object, can be overridden by user input affine.
+        # do rotation search on uncropped median image (assuming rotation constant over exposure)
         meddata = np.median(data,axis=0)
         affine2d = find_rotation(meddata, psf_offset, rotsearch_d,
                                  mx, my, sx, sy, xo, yo,
@@ -165,10 +164,6 @@ def apply_LG_plus(input_model,
                                     usebp=usebp,
                                     chooseholes=chooseholes,
                                     run_bpfix=run_bpfix)
-    # more args to pass to instrument_data: src, usebp, firstfew, chooseholes. should these be kwargs?
-
-    # data will be trimmed, bp fix run, etc in nrm_core.FringeFitter.fit_fringes_all()
-    # call to instrument_data.NIRISS.read_data_model(). So affine finding, etc done on full 80x80
 
     ff_t = nrm_core.FringeFitter(niriss, 
                                 psf_offset_ff=psf_offset_ff,

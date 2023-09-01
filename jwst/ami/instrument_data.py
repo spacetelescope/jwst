@@ -54,8 +54,8 @@ class NIRISS:
         bandpass: synphot spectrum or array
             None, synphot object or [(wt,wlen),(wt,wlen),...].  Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
-            the given bandpass, so you could simulate, for example, a 21cm psf through something called "F430M"!
-
+            the given bandpass, so you can simulate 21cm psfs through something called "F430M"!
+        
         usebp : boolean
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
 
@@ -65,7 +65,7 @@ class NIRISS:
         chooseholes : string
             If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
 
-        affine2d : Affine2D object
+        affine2d : user-defined Affine2D object
             None or user-defined Affine2d object
 
         run_bpfix : boolean
@@ -89,7 +89,7 @@ class NIRISS:
         self.instrument = "NIRISS"
         self.arrname = "jwst_g7s6c"
         self.holeshape = "hex"
-        self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=chooseholes, holeshape=self.holeshape)
+        self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=self.chooseholes, holeshape=self.holeshape)
 
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
@@ -264,7 +264,7 @@ class NIRISS:
         # apply bp fix here
         if self.run_bpfix:
             log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
-            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,bpdata_ctrd,input_model.meta.instrument.filter)
+            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,bpdata_ctrd,input_model.meta.instrument.filter, self.pscale_mas)
         else:
             log.info('Not running Fourier bad pixel fix')
 
@@ -310,27 +310,29 @@ class NIRISS:
             Clockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = -1
             Counterclockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = 1
         Hole center coords are in the V2, V3 plane in meters.
-        Return rotated coordinates to be put in OIFITS files.
+
+        Returns
+        -------
+        ctrs_rot: array
+            Rotated coordinates to be put in OIFITS files.
         """
-        pa = self.pav3
         mask_ctrs = copy.deepcopy(self.mask.ctrs)
         # rotate by an extra 90 degrees (RAC 9/21)
         # these coords are just used to orient output in OIFITS files
         # NOT used for the fringe fitting itself
         mask_ctrs = utils.rotate2dccw(mask_ctrs,np.pi/2.)
         vpar = self.vparity # Relative sense of rotation between Ideal xy and V2V3
-        v3iyang = self.v3iyang
-        rot_ang = pa - v3iyang # subject to change!
+        rot_ang = self.pav3 - self.v3iyang # subject to change!
 
-        if pa != 0.0:
+        if self.pav3 != 0.0:
             # Using rotate2sccw, which rotates **vectors** CCW in a fixed coordinate system,
             # so to rotate coord system CW instead of the vector, reverse sign of rotation angle.  Double-check comment
             if vpar == -1:
-                # rotate clockwise  <rotate coords clockwise?>
+                # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
                 log.info(f'Rotating mask hole centers clockwise by {rot_ang:.3f} degrees')
             else:
-                # counterclockwise  <rotate coords counterclockwise?>
+                # counterclockwise  <rotate coords counterclockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
                 log.info(f'Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees')
         else:
