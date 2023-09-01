@@ -1198,10 +1198,18 @@ def img_median_replace(img_model, box_size):
 
 def get_filt_spec(filt, verbose=False):
     """
+    Short Summary
+    ------------
     Load WebbPSF filter throughput into synphot spectrum object
-    filt: string, known NIRISS AMI filter name
-    Returns:
-        synphot Spectrum object
+
+    Parameters
+    ----------
+    filt: string
+        Known AMI filter name
+
+    Returns
+    -------
+    band: synphot Spectrum object
     """
     goodfilts = ["F277W", "F380M", "F430M", "F480M"]
     # make uppercase
@@ -1223,11 +1231,19 @@ def get_filt_spec(filt, verbose=False):
 
 def get_src_spec(sptype):
     """
-    Modified from poppy's spectrum_from_spectral_type
-    src: either valid source string (e.g. "A0V") or existing synphot Spectrum object
-    Defaults to A0V spectral type if input string not recognized.
-    Returns:
-        synphot Spectrum object
+    Short Summary
+    ------------
+    Retrieve source spectrum. Modified from poppy's spectrum_from_spectral_type
+
+    Parameters
+    ----------
+    src: string or synphot.Spectrum
+        valid source string (e.g. "A0V") or existing synphot Spectrum object
+        Defaults to A0V spectral type if input string not recognized.
+
+    Returns
+    -------
+    synphot Spectrum object
     """
     # check if it's already a synphot spectrum
     if isinstance(sptype, synphot.spectrum.SourceSpectrum):
@@ -1301,17 +1317,28 @@ def get_src_spec(sptype):
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, plot=False):
     """
+    Short Summary
+    ------------
     Get the observed spectrum through a filter.
     Largely copied from Poppy instrument.py
     Define nlambda bins of wavelengths, calculate effstim for each, normalize by effstim total.
     nlambda should be calculated so there are ~10 wavelengths per resolution element (19 should work)
-    Inputs:
-        bandpass: synphot Spectrum (from get_filt_spec)
-        srcspec: synphot Spectrum (from get_src_spec)
-        trim: if not None, trim bandpass to where throughput greater than trim
-        nlambda: number of wavelengths across filter to return
-    Returns:
-        finalsrc: numpy array of shape (nlambda,2) containing wavelengths, final throughputs
+
+    Parameters
+    ----------
+    bandpass: synphot Spectrum
+        filter bandpass (from get_filt_spec)
+    srcspec: synphot Spectrum
+         source spectrum (from get_src_spec)
+    trim: float, None
+        if not None, trim bandpass to where throughput greater than trim
+    nlambda: integer
+        number of wavelengths across filter to return
+
+    Returns
+    -------
+    finalsrc: numpy array
+        Array of shape (nlambda,2) containing wavelengths, final throughputs
 
     """
 

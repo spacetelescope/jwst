@@ -155,8 +155,8 @@ class RawOifits:
 
         theta = np.linspace(0, 2*np.pi, 100)
 
-        x = D/2. * np.cos(theta)  # Primary mirror display
-        y = D/2. * np.sin(theta)
+        # x = D/2. * np.cos(theta)  # Primary mirror display
+        # y = D/2. * np.sin(theta)
 
         bl_vis = ((ucoord**2 + vcoord**2)**0.5)
 
@@ -523,7 +523,6 @@ class RawOifits:
         m.target['SPECTYP'] = self.oifits_dct['OI_TARGET']['SPECTYP']
 
         # oi_vis extension data
-        nrows = 21
         m.vis['TARGET_ID'] = self.oifits_dct['OI_VIS']['TARGET_ID']
         m.vis['TIME'] = self.oifits_dct['OI_VIS']['TIME']
         m.vis['MJD'] = self.oifits_dct['OI_VIS']['MJD']

@@ -2,7 +2,6 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import ami_analyze
-from .utils import Affine2D
 
 __all__ = ["AmiAnalyzeStep"]
 
@@ -71,7 +70,7 @@ class AmiAnalyzeStep(Step):
             raise RuntimeError(f"{err}. Input unable to be read into a DataModel.")
 
         # Make sure oversample is odd
-        if value % 2 == 0:
+        if oversample % 2 == 0:
             raise ValueError("Oversample value must be an odd integer.")
 
         # Apply the LG+ methods to the data
