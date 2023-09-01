@@ -258,7 +258,10 @@ class NIRISS:
         # apply bp fix here
         if self.run_bpfix:
             log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
-            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,bpdata_ctrd,input_model.meta.instrument.filter, self.pscale_mas)
+            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,
+                                                            bpdata_ctrd,
+                                                            input_model.meta.instrument.filter,
+                                                            self.pscale_mas)
         else:
             log.info('Not running Fourier bad pixel fix')
 
