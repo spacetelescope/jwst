@@ -151,9 +151,9 @@ class RawOifits:
         ucoord = self.bls[:, 1]
         vcoord = self.bls[:, 0]
 
-        D = 6.5  # Primary mirror display
+        # D = 6.5  # Primary mirror display
 
-        theta = np.linspace(0, 2*np.pi, 100)
+        # theta = np.linspace(0, 2*np.pi, 100)
 
         # x = D/2. * np.cos(theta)  # Primary mirror display
         # y = D/2. * np.sin(theta)
@@ -490,7 +490,6 @@ class RawOifits:
         m.meta.oifits.instrument_mode = self.oifits_dct['info']['INSMODE']
 
         # oi_array extension data
-        nrows = 7
         m.array['TEL_NAME'] = self.oifits_dct['OI_ARRAY']['TEL_NAME']
         m.array['STA_NAME'] = self.oifits_dct['OI_ARRAY']['STA_NAME']
         m.array['STA_INDEX'] = self.oifits_dct['OI_ARRAY']['STA_INDEX']
