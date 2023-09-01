@@ -53,7 +53,7 @@ class ResampleStep(Step):
         rotation = float(default=None)
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         pixel_scale = float(default=None) # Absolute pixel scale in arcsec
-        output_wcs = string(default='')  # Custom output WCS.
+        output_wcs = string(default='')  # Custom output WCS file path
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -170,12 +170,19 @@ class ResampleStep(Step):
             raise ValueError(f"Both '{name}' values must be either None or not None.")
 
     @staticmethod
-    def _load_custom_wcs(asdf_wcs_file, output_shape):
-        if not asdf_wcs_file:
+    def _load_custom_wcs(input_wcs_file, output_shape):
+        if not input_wcs_file:
             return None
 
-        with asdf.open(asdf_wcs_file) as af:
-            wcs = deepcopy(af.tree["wcs"])
+        with asdf.open(input_wcs_file) as af:
+            try:
+                # File is ASDF file with a top-level wcs in the tree
+                wcs = deepcopy(af.tree["wcs"])
+            except KeyError:
+                # File is ImageModel or SlitModel with the wcs under meta
+                wcs = deepcopy(af.tree["meta"]["wcs"])
+                if not output_shape:
+                    output_shape = af.tree["data"].shape
 
         if output_shape is not None or wcs is None:
             wcs.array_shape = output_shape[::-1]
