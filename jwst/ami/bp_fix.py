@@ -18,6 +18,7 @@ log.setLevel(logging.DEBUG)
 
 micron = 1.0e-6
 filts = ['F277W', 'F380M', 'F430M', 'F480M', 'F356W', 'F444W']
+# TO DO: get these from some context-controlled place
 filtwl_d = {  # pivot wavelengths
     'F277W': 2.776e-6,  # less than Nyquist
     'F380M': 3.828e-6,
@@ -36,9 +37,6 @@ filthp_d = {  # half power limits
 }
 WL_OVERSIZEFACTOR = 0.1  # increase filter wl support by this amount to 'oversize' in wl space
 
-pix_arcsec = 0.0656  # nominal isotropic pixel scale - refine later
-pix_rad = pix_arcsec * np.pi / (60 * 60 * 180)
-
 # GET PUPIL MASK FROM WEBBPSF
 webbpsf_path = os.getenv('WEBBPSF_PATH')
 pupilfile_nrm = os.path.join(webbpsf_path,'NIRISS/optics/MASK_NRM.fits.gz')
@@ -56,9 +54,14 @@ PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
 
 def create_wavelengths(filtername):
     """
-    filtername str: filter name
-    Extend filter support slightly past half power points.
-    Filter transmissions are quasi-rectangular.
+    Short Summary
+    ------------
+        Extend filter support slightly past half power points.
+        Filter transmissions are quasi-rectangular.
+    Parameters
+    ----------
+        filtername: string
+            AMI filter name
     """
     wl_ctr = filtwl_d[filtername]
     wl_hps = filthp_d[filtername]
@@ -68,38 +71,91 @@ def create_wavelengths(filtername):
 
     return (wl_ctr, wl_ctr - dleft, wl_ctr + drite)
 
-def calcsupport(filtername, sqfov_npix, pupil="NRM"):
+def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil="NRM"):
     """
-    filtername str: filter name
-    calculate psf at low center high wavelengths of filter
-    coadd psfs
-    perform fft-style transform of image w/dft
-    send back absolute value of FT(image) in filter - the CV Vsq array
+    Short Summary
+    ------------
+    Calculate psf at low center high wavelengths of filter.
+    Coadd psfs and perform fft-style transform of image w/ dft
+
+    Parameters
+    ----------
+    filtername: string
+        AMI filter name
+
+    sqfov_npix: float
+        Square field of view in number of pixels
+
+    pxsc_rad: float
+        Detector pixel scale in rad/px
+
+    pupil: str
+        Pupil name (NRM)
+
+    Returns
+    -------
+    Absolute value of FT(image) in filter - the CV Vsq array
+
+
     """
     wls = create_wavelengths(filtername)
     log.info(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
     detimage = np.zeros((sqfov_npix, sqfov_npix), float)
     for wl in wls:
-        psf = calcpsf(wl, sqfov_npix, pupil=pupil)
+        psf = calcpsf(wl, sqfov_npix, pxsc_rad, pupil=pupil)
         detimage += psf
 
     return transform_image(detimage)
 
 
 def transform_image(image):
+    """
+    Short Summary
+    ------------
+        Take FT of image
+
+    Parameters
+    ----------
+    image: numpy array
+        Science image
+
+    Returns
+    -------
+    Absolute value of FT(image)
+
+    """
     ft = matrixDFT.MatrixFourierTransform()
     ftimage = ft.perform(image, image.shape[0], image.shape[0])  # fake the no-loss fft w/ dft
 
     return np.abs(ftimage)
 
-def calcpsf(wl, fovnpix, pupil="NRM"):
+def calcpsf(wl, fovnpix, pxsc_rad, pupil="NRM"):
     """
-    input wl: float meters wavelength
-    input fovnpix: feld of view (square) in number of pixels
-    returns monochromatic unnormalized psf
+    Short Summary
+    ------------
+    Calculate the PSF
+
+    Parameters
+    ----------
+    wl: float
+        Wavelength (meters)
+
+    fovnpix: float
+        Square field of view in number of pixels
+
+    pxsc_rad: float
+        Detector pixel scale in rad/px
+
+    pupil: str
+        Pupil name (NRM)
+
+    Returns
+    -------
+    image_intensity: numpy array
+        Monochromatic unnormalized psf
     """
     reselt = wl / PUPLDIAM  # radian
-    nlamD = fovnpix * pix_rad / reselt  # Soummer nlamD FOV in reselts
+    nlamD = fovnpix * pxsc_rad / reselt  # Soummer nlamD FOV in reselts
     # instantiate an mft object:
     ft = matrixDFT.MatrixFourierTransform()
 
@@ -113,8 +169,25 @@ def bad_pixels(data,
                median_size,
                median_tres):
     """
+    Short Summary
+    ------------
     Identify bad pixels by subtracting median-filtered data and searching for
     outliers.
+
+    Parameters
+    ----------
+    data: numpy array
+        Science data
+    median_size: float
+        Median filter size (pixels)
+    median_tres: float
+        Empirically determined threshold
+
+    Returns
+    -------
+    pxdq: int array
+        Bad pixel mask identified by median filtering
+    
     """
 
     mfil_data = median_filter(data, size=median_size)
@@ -132,8 +205,25 @@ def fourier_corr(data,
                  pxdq,
                  fmas):
     """
+    Short Summary
+    ------------
     Compute and apply the bad pixel corrections based on Section 2.5 of
     Ireland 2013. This function is the core of the bad pixel cleaning code.
+
+    Parameters
+    ----------
+    data: numpy array
+        Science data
+    pxdq: numpy array
+        Bad pixel mask
+    fmas:
+        FT of science data
+
+    Returns
+    -------
+    data_out: numpy array
+        Corrected science data
+    
     """
 
     # Get the dimensions.
@@ -167,13 +257,31 @@ def fourier_corr(data,
     return data_out
 
 
-def fix_bad_pixels(data, pxdq0, filt):
+def fix_bad_pixels(data, pxdq0, filt, pxsc):
     """
-    the first thing original run_bp_fix code does is crop the data (roughly) around the psf center,
-    and make a mask from the dq array. Then passed to the function that actually does the fourier correction.
-    the step also does the cropping, dq-mask-making for fringe fitting. So, bp-fix the data after this is done. currently cropping
-    is done of each slice, in fringe fitting. why not do it up front? 
-    needs to know filter -- pass in as arg?
+    Short Summary
+    ------------
+    Apply the Fourier bad pixel correction to pixels 
+    flagged DO_NOT_USE or JUMP_DET.
+    Original code implementation by Jens Kammerer.
+
+    Parameters
+    ----------
+    data:
+        Cropped science data
+    pxdq0: array
+        Cropped DQ array
+    filt: string
+        AMI filter name
+    pxsc: float
+        Pixel scale, mas/pixel
+
+    Returns
+    -------
+    data: numpy array
+        Corrected data
+    pxdq: 
+        Mask of bad pixels, updated if new ones were found
 
     """
     DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -201,7 +309,7 @@ def fix_bad_pixels(data, pxdq0, filt):
     diam = PUPLDIAM  # m
     gain = 1.61  # e-/ADU
     rdns = 18.32  # e-
-    pxsc = pix_arcsec * 1000.  # mas/pix
+    pxsc_rad = (pxsc/1000) * np.pi / (60 * 60 * 180)
 
     # These values were determined empirically for NIRISS/AMI and need to be
     # tweaked for any other instrument.
@@ -217,7 +325,7 @@ def fix_bad_pixels(data, pxdq0, filt):
     log.info('      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix' % (fov, fsam))
 
     #
-    cvis = calcsupport(filt, 2 * sh, pupil=pupil) # CHECK IF THIS IS CAUSING PROBLEMS
+    cvis = calcsupport(filt, 2 * sh, pxsc_rad, pupil=pupil)
     cvis /= np.max(cvis)
     fmas = cvis < 1e-3  # 1e-3 seems to be a reasonable threshold
     # fmas_show = fmas.copy()

@@ -7,9 +7,7 @@ all info needed to write oifits.
 populate structure needed to write out oifits files according to schema.
 averaged and multi-integration versions, sigma-clipped stats over ints
 
-TO DO:
-add logging when useful, docstrings
-
+CalibOifits class: takes two AmiOIModel datamodels and produces a final calibrated datamodel.
 """
 import numpy as np
 
@@ -34,10 +32,17 @@ class RawOifits:
 
         Parameters
         ----------
-        fringefitter: object, containing nrm_list attribute (list of nrm objects)
-        nh: default 7, number of holes in the NRM
+        fringefitter: FringeFitter object
+            Object containing nrm_list attribute (list of nrm objects) 
+            and other info needed for OIFITS files
+        nh: integer
+            default 7, number of holes in the NRM
+        angunit: string
+            Unit of incoming angular quantities (radians or degrees). 
+            Will be converted to degrees for OIFITS. Default radians
+        method: string
+            Method to average observables: mean or median. Default median.
 
-        kwargs options:
 
         """
         self.ff = fringefitter
@@ -68,14 +73,37 @@ class RawOifits:
         self.make_oifits()
 
     def make_oifits(self):
+        """
+        Short Summary
+        ------------
+        Calls the functions to prepare data for saving and 
+        populate AmiOIModel.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        oimodel: AmiOIModel object
+            Datamodel containing AMI observables
+        """
         self.make_obsarrays()
         self.populate_nrm_dict()
         oimodel = self.populate_oimodel()
+
         return oimodel
 
     def make_obsarrays(self):
         """
-        Populate arrays of observables
+        Short Summary
+        ------------
+        Make arrays of observables of the correct shape for saving to datamodels
+
+        Parameters
+        ----------
+
+        Returns
+        -------
         """
         # arrays of observables, (nslices,nobservables) shape.
         self.fp = np.zeros((self.nslices, self.nbl))
@@ -99,8 +127,18 @@ class RawOifits:
 
     def populate_nrm_dict(self):
         """
-        Remaining manipulations for OIFITS writing
-        Produce a dictionary that will be given to whatever actually writes out the files according to datamodels
+        Short Summary
+        ------------
+        Do all remaining manipulations for OIFITS writing
+        Produce a dictionary containing all data to write
+        to OIFITS files
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        
         """
         info4oif = self.ff.instrument_data
         t = Time('%s-%s-%s' %
@@ -335,8 +373,19 @@ class RawOifits:
 
     def init_oimodel_arrays(self, oimodel):
         """
+        Short Summary
+        ------------
         Set dtypes and initialize shapes for AmiOiModel arrays, 
         depending on if averaged or multi-integration version.
+
+        Parameters
+        ----------
+        oimodel: AmiOIModel object
+            empty model
+
+        Returns
+        -------
+        
         """
         if self.method == 'multi':
             # update dimensions of arrays for multi-integration oifits
@@ -416,7 +465,16 @@ class RawOifits:
 
     def populate_oimodel(self):
         """
-        Populate the AmiOIModel with the data
+        Short Summary
+        ------------
+        Populate the AmiOIModel with the data.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        
         """
         m = datamodels.AmiOIModel()
         self.init_oimodel_arrays(m)
@@ -513,8 +571,19 @@ class RawOifits:
         return m
 
     def _maketriples_all(self):
-        """ returns int array of triple hole indices (0-based), 
-            and float array of two uv vectors in all triangles
+        """
+        Short Summary
+        ------------
+        Calculate all three-hole combinations, baselines
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        tarray: integer array
+            Triple hole indices (0-indexed), 
+        float array of two uv vectors in all triangles
         """
         nholes = self.ctrs_eqt.shape[0]
         tlist = []
@@ -541,9 +610,18 @@ class RawOifits:
 
     def _makebaselines(self):
         """
-        ctrs_eqt (nh,2) in m
-        returns np arrays of eg 21 baselinenames ('0_1',...), eg (21,2) baselinevectors (2-floats)
-        in the same numbering as implaneia
+        Short Summary
+        ------------
+        Calculate all hole pairs, baselines
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        barray: list
+            Hole pairs indices, 0-indexed
+        float array of baselines
         """
         nholes = self.ctrs_eqt.shape[0]
         blist = []
@@ -576,16 +654,24 @@ class CalibOifits:
         targoimodel: AmiOIModlel, target
         caloimodel: AmiOIModlel, reference star (calibrator)
 
-        kwargs options:
-
         """
         self.targoimodel = targoimodel
         self.caloimodel = caloimodel
         self.calib_oimodel = targoimodel.copy()
 
     def update_dtype(self):
-        # modify the dtype of OI array to include different pistons columns,
-        # 
+        """
+        Short Summary
+        ------------
+        Modify the dtype of OI array to include different pistons columns
+        for calibrated OIFITS files
+    
+        Parameters
+        ----------
+    
+        Returns
+        -------
+        """
         nrows=7
         modified_dtype = np.dtype([('TEL_NAME', 'S16'), 
                                 ('STA_NAME', 'S16'), 
@@ -603,6 +689,20 @@ class CalibOifits:
 
 
     def calibrate(self):
+        """
+        Short Summary
+        ------------
+        Apply the calibration (normalization) routine to calibrate the 
+        target AmiOIModel by the calibrator (reference star) AmiOIModel
+    
+        Parameters
+        ----------
+    
+        Returns
+        -------
+        calib_oimodel: AmiOIModel
+            Calibrated AMI datamodel
+        """
         cp_out = self.targoimodel.t3['T3PHI'] - self.caloimodel.t3['T3PHI']
         sqv_out = self.targoimodel.vis2['VIS2DATA'] / self.caloimodel.vis2['VIS2DATA']
         va_out = self.targoimodel.vis['VISAMP'] / self.caloimodel.vis['VISAMP']
