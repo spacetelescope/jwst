@@ -1251,7 +1251,6 @@ def get_src_spec(sptype):
         return sptype
     else:
         # phoenix model lookup table used in JWST ETCs
-        catname = 'Phoenix'
         lookuptable = {
             "O3V": (45000, 0.0, 4.0),
             "O5V": (41000, 0.0, 4.5),
@@ -1312,7 +1311,7 @@ def get_src_spec(sptype):
             return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
         except IOError:
             errmsg = ("Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the " +
-                      "lookup table, and/or that synphot is installed properly.".format(catname, sptype))
+                      "lookup table, and/or that synphot is installed properly.".format())
             raise LookupError(errmsg)
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, plot=False):
@@ -1365,7 +1364,8 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, pl
     effstims = []
 
     binfac = ptsin // nlambda
-    if verbose: print("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
+    if verbose: 
+        print("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
     for wave in wavesteps:
         if verbose:
             print(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
