@@ -6,7 +6,7 @@ from ..stpipe import Pipeline
 
 # step imports
 from ..ami import ami_analyze_step
-from ..ami import ami_average_step
+# from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 from ..model_blender import blendmeta
 
@@ -22,7 +22,7 @@ class Ami3Pipeline(Pipeline):
     Ami3Pipeline: Apply all level-3 calibration steps to an
     association of level-2b AMI exposures. Included steps are:
     ami_analyze (fringe detection)
-    ami_average (average results of fringe detection)
+    # ami_average (average results of fringe detection)
     ami_normalize (normalize results by reference target)
     """
 
@@ -34,7 +34,7 @@ class Ami3Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {'ami_analyze': ami_analyze_step.AmiAnalyzeStep,
-                 'ami_average': ami_average_step.AmiAverageStep,
+                 # 'ami_average': ami_average_step.AmiAverageStep,
                  'ami_normalize': ami_normalize_step.AmiNormalizeStep
                  }
 
@@ -80,15 +80,15 @@ class Ami3Pipeline(Pipeline):
 
             # Do the LG analysis for this image
             log.debug('Do LG processing for member %s', input_file)
-            result = self.ami_analyze(input_file)
+            result1, result2, result3 = self.ami_analyze(input_file)
 
-            # Save the LG analysis results to a file
-            result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = op.basename(asn.filename)
-            self.save_model(result, output_file=input_file, suffix='ami', asn_id=asn_id)
+            # Save the averaged LG analysis results to a file
+            result1.meta.asn.pool_name = asn['asn_pool']
+            result1.meta.asn.table_name = op.basename(asn.filename)
+            self.save_model(result1, output_file=input_file, suffix='ami', asn_id=asn_id)
 
             # Save the result for use as input to ami_average
-            targ_lg.append(result)
+            targ_lg.append(result1)
 
         # Run ami_analyze on all the psf members
         psf_lg = []
@@ -96,69 +96,87 @@ class Ami3Pipeline(Pipeline):
 
             # Do the LG analysis for this image
             log.debug('Do LG processing for member %s', input_file)
-            result = self.ami_analyze(input_file)
+            result1, result2, result3 = self.ami_analyze(input_file)
 
             # Save the LG analysis results to a file
-            result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = op.basename(asn.filename)
-            self.save_model(result, output_file=input_file, suffix='ami', asn_id=asn_id)
+            result1.meta.asn.pool_name = asn['asn_pool']
+            result1.meta.asn.table_name = op.basename(asn.filename)
+            self.save_model(result1, output_file=input_file, suffix='ami', asn_id=asn_id)
 
             # Save the result for use as input to ami_average
-            psf_lg.append(result)
+            psf_lg.append(result1)
 
-        # Average the reference PSF image results
-        psf_avg = None
-        if len(psf_files) > 0:
-            self.log.debug('Calling ami_average for PSF results ...')
-            psf_avg = self.ami_average(psf_lg)
+        # # Average the reference PSF image results
+        # psf_avg = None
+        # if len(psf_files) > 0:
+        #     self.log.debug('Calling ami_average for PSF results ...')
+        #     psf_avg = self.ami_average(psf_lg)
 
-            # Save the results to a file, if requested
-            if self.save_averages:
-                psf_avg.meta.asn.pool_name = asn['asn_pool']
-                psf_avg.meta.asn.table_name = op.basename(asn.filename)
+        #     # Save the results to a file, if requested
+        #     if self.save_averages:
+        #         psf_avg.meta.asn.pool_name = asn['asn_pool']
+        #         psf_avg.meta.asn.table_name = op.basename(asn.filename)
 
-                # Perform blending of metadata for all inputs to this
-                # output file
-                self.log.info('Blending metadata for averaged psf')
-                blendmeta.blendmodels(psf_avg, inputs=psf_lg)
-                self.save_model(psf_avg, suffix='psf-amiavg')
-                del psf_lg
+        #         # Perform blending of metadata for all inputs to this
+        #         # output file
+        #         self.log.info('Blending metadata for averaged psf')
+        #         blendmeta.blendmodels(psf_avg, inputs=psf_lg)
+        #         self.save_model(psf_avg, suffix='psf-amiavg')
+        #         del psf_lg
 
-        # Average the science target image results
-        if len(targ_files) > 0:
-            self.log.debug('Calling ami_average for target results ...')
-            targ_avg = self.ami_average(targ_lg)
+        # # Average the science target image results
+        # if len(targ_files) > 0:
+        #     self.log.debug('Calling ami_average for target results ...')
+        #     targ_avg = self.ami_average(targ_lg)
 
-            # Save the results to a file, if requested
-            if self.save_averages:
-                targ_avg.meta.asn.pool_name = asn['asn_pool']
-                targ_avg.meta.asn.table_name = op.basename(asn.filename)
+        #     # Save the results to a file, if requested
+        #     if self.save_averages:
+        #         targ_avg.meta.asn.pool_name = asn['asn_pool']
+        #         targ_avg.meta.asn.table_name = op.basename(asn.filename)
 
-                # Perform blending of metadata for all inputs to this
-                # output file
-                self.log.info('Blending metadata for averaged target')
-                blendmeta.blendmodels(targ_avg, inputs=targ_lg)
-                self.save_model(targ_avg, suffix='amiavg')
-                del targ_lg
+        #         # Perform blending of metadata for all inputs to this
+        #         # output file
+        #         self.log.info('Blending metadata for averaged target')
+        #         blendmeta.blendmodels(targ_avg, inputs=targ_lg)
+        #         self.save_model(targ_avg, suffix='amiavg')
+        #         del targ_lg
 
         # Now that all LGAVG products have been produced, do
         # normalization of the target results by the reference
         # results, if reference results exist
-        if psf_avg is not None:
+        # if psf_avg is not None:
 
-            result = self.ami_normalize(targ_avg, psf_avg)
+        #     result = self.ami_normalize(targ_avg, psf_avg)
 
-            # Save the result
-            result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = op.basename(asn.filename)
+        #     # Save the result
+        #     result.meta.asn.pool_name = asn['asn_pool']
+        #     result.meta.asn.table_name = op.basename(asn.filename)
 
-            # Perform blending of metadata for all inputs to this output file
-            self.log.info('Blending metadata for PSF normalized target')
-            blendmeta.blendmodels(result, inputs=[targ_avg, psf_avg])
-            self.save_model(result, suffix='aminorm')
-            result.close()
-            del psf_avg
-            del targ_avg
+        #     # Perform blending of metadata for all inputs to this output file
+        #     self.log.info('Blending metadata for PSF normalized target')
+        #     blendmeta.blendmodels(result, inputs=[targ_avg, psf_avg])
+        #     self.save_model(result, suffix='aminorm')
+        #     result.close()
+        #     del psf_avg
+        #     del targ_avg
+
+        # Normalize all target results by matching psf results
+        # assuming one ref star exposure per targ exposure
+        if (len(psf_files) > 0) & (len(targ_files) > 0): 
+            for (targ, psf) in zip(targ_files,psf_files):
+                result = self.ami_normalize(targ, psf)
+                # Save the result
+                result.meta.asn.pool_name = asn['asn_pool']
+                result.meta.asn.table_name = op.basename(asn.filename)
+
+                # Perform blending of metadata for all inputs to this output file
+                self.log.info('Blending metadata for PSF normalized target')
+                blendmeta.blendmodels(result, inputs=[targ, psf])
+                self.save_model(result, suffix='aminorm')
+                result.close()
+                del psf_lg
+                del targ_lg
+
 
         # We're done
         log.info('... ending calwebb_ami3')
