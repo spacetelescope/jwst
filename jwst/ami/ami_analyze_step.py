@@ -17,7 +17,7 @@ class AmiAnalyzeStep(Step):
         rotation = float(default=0.0)           # Rotation initial guess [deg]
         psf_offset = string(default='0.0 0.0') # PSF offset values to use to create the model array
         rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
-        src = string(default='A0V') # Source spectral type for model (Phoenix models)
+        src = string(default='A0V') # Source spectral type for model, Phoenix models
         bandpass = any(default=None) # Synphot spectrum or array to override filter/source
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
