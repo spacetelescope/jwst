@@ -115,6 +115,12 @@ pathloss
   when the computed target location is outside the slit. Add the parameter 
   "user_slit_loc" to allow specifying the source location to use. [#7806]
 
+photom
+------
+
+- Adapt MRS time dependent correction so that it can run successfully on
+  TSO mode data. [#7869]
+
 pixel_replace
 -------------
 
