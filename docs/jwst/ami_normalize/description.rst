@@ -19,31 +19,33 @@ The ``ami_normalize`` step does not have any step-specific arguments.
 Inputs
 ------
 
-LG model parameters
-^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiLgModel`
-:File suffix: _amiavg and _psf-amiavg
+Interferometric Observables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:Data model: `~jwst.datamodels.AmiOIModel`
+:File suffix: _ami.oifits and/or _psf-ami.oifits
 
-The ``ami_normalize`` step takes two inputs: the first is the LG results for
-a science target and the second is the LG results for the PSF target. These should
-be the "_amiavg" and "_psf-amiavg" products resulting from the
-:ref:`ami_average <ami_average_step>` step. The inputs can be in the form of file
-names or `~jwst.datamodels.AmiLgModel` data models.
+The ``ami_normalize`` step takes two inputs: the first is the 
+interferometric observables for a science target and the second 
+is the interferometric observables for the PSF target. These should
+be the _ami.oifits and _psf-ami.oifits products resulting from the
+:ref:`ami_analyze <ami_analyze_step>` step, or two _ami.oifits files if the steps 
+are run independently. The inputs can be in the form of filenames or 
+`~jwst.datamodels.AmiOIModel` data models.
 
 Outputs
 -------
 
-Normalized LG model parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiLgModel`
-:File suffix: _aminorm
+Normalized Interferometric Observables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:Data model: `~jwst.datamodels.AmiOIModel`
+:File suffix: _aminorm.oifits
 
-The output is a new LG product for the science target in which the closure
-phases and fringe amplitudes have been normalized using the PSF target
+The output is a new set of interferometric observables for the science target
+in which the closure phases and fringe amplitudes have been normalized using the PSF target
 closure phases and fringe amplitudes. The remaining components of the science
 target data model are left unchanged. The output file name syntax is source-based,
 using the product name specified in the input ASN file and having a product type
-of "_aminorm", e.g. "jw87600-a3001_t001_niriss_f480m-nrm_aminorm.fits."
+of "_aminorm.oifits", e.g. "jw87600-a3001_t001_niriss_f480m-nrm_aminorm.oifits."
 
 Reference Files
 ---------------

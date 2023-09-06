@@ -83,11 +83,11 @@ for optical interferometry, containing the following list of extensions:
 1)  ``OI_ARRAY``: AMI subaperture information  
 2)  ``OI_TARGET``: target properties  
 3)  ``OI_T3``: extracted closure amplitudes, phases 
-4)  ``OI_VIS``: extracted visibility amplitudes, phases
-5)  ``OI_VIS2``: squared extracted visibility amplitudes
+4)  ``OI_VIS``: extracted visibility (fringe) amplitudes, phases
+5)  ``OI_VIS2``: squared visibility (fringe) amplitudes
 6)  ``OI_WAVELENGTH``: filter information
 
-For more information on the format and contents of OIFITS files, see the `updated standard <https://doi.org/10.1051/0004-6361/201526405>`_.
+For more information on the format and contents of OIFITS files, see the `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
 The _ami.oifits file contains tables of median observables over all integrations of the input file and errors 
 are computed as the sigma-clipped standard deviation over integrations.
@@ -100,7 +100,7 @@ LG model parameters
 :Data model: `~jwst.datamodels.AmiLgFitModel`
 :File suffix: _amilg.fits
 
-The _amilg.fits output file contains the cropped and (by default) cleaned data, model, and residuals (data - model) as well as 
+The _amilg.fits output file contains the cropped and cleaned data, model, and residuals (data - model) as well as 
 the parameters of the best-fit LG model. It contains the following extensions:
 
 1) ``CTRD``: a 3D image of the centered, cropped data
