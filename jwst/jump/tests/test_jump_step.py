@@ -7,7 +7,7 @@ from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel
 
 from jwst.jump import JumpStep
 
-MAXIMUM_CORES = ['none', 'quarter', 'half', 'all']
+MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
 
 
 @pytest.fixture(scope="module")
