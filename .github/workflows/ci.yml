@@ -19,15 +19,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  crds:
-    name: retrieve current CRDS context
+  data:
+    name: retrieve current CRDS context and WEBBPSF data
     runs-on: ubuntu-latest
     env:
+      CACHE_PATH: /tmp/cache
+      WEBBPSF_PATH: /tmp/cache/webbpsf-data
+      WEBBPSF_SERVER_URL: https://stsci.box.com/shared/static/qxpiaxsjwo15ml6m4pkhtk36c9jgj70k.gz
       OBSERVATORY: jwst
-      CRDS_PATH: /tmp/crds_cache
+      CRDS_PATH: /tmp/cache/crds
       CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+    outputs:
+      cache_path: ${{ steps.cache_path.outputs.cache_path }}
+      crds_context: ${{ steps.crds_context.outputs.pmap }}
+      crds_path: ${{ steps.crds_path.outputs.path }}
+      crds_server: ${{ steps.crds_server.outputs.url }}
+      webbpsf_path: ${{ steps.webbpsf_path.outputs.path }}
+      hash: ${{ steps.hash.outputs.hash }}
     steps:
-      - id: context
+      - id: crds_context
         run: >
           echo "pmap=$(
           curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.OBSERVATORY }}"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ |
@@ -35,14 +45,30 @@ jobs:
           )" >> $GITHUB_OUTPUT
         # Get default CRDS_CONTEXT without installing crds client
         # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
-      - id: path
+      - id: crds_path
         run: echo "path=${{ env.CRDS_PATH }}" >> $GITHUB_OUTPUT
-      - id: server
+      - id: crds_server
         run: echo "url=${{ env.CRDS_SERVER_URL }}" >> $GITHUB_OUTPUT
-    outputs:
-      context: ${{ steps.context.outputs.pmap }}
-      path: ${{ steps.path.outputs.path }}
-      server: ${{ steps.server.outputs.url }}
+      - id: cache_path
+        run: echo "cache_path=${{ env.CACHE_PATH }}" >> $GITHUB_OUTPUT
+      - id: webbpsf_path
+        run: echo "path=${{ env.WEBBPSF_PATH }}" >> $GITHUB_OUTPUT
+      - id: webbpsf_server
+        run: echo "server=${{ env.WEBBPSF_SERVER_URL }}" >> $GITHUB_OUTPUT
+      - id: webbpsf_data
+        # unfortunately we have to download the data to compute the hash   
+        run: |
+          mkdir -p ${{ env.CACHE_PATH }}
+          wget ${{ steps.webbpsf_server.outputs.server }} -O ${{ env.CACHE_PATH }}/webbpsf-data.tar.gz
+          cd ${{ env.CACHE_PATH }}
+          echo "hash=$( shasum webbpsf-data.tar.gz | awk '{ print $1 }' )" >> $GITHUB_OUTPUT
+          tar -xzvf webbpsf-data.tar.gz
+      - id: hash
+        run: echo "hash=data-${{ steps.webbpsf_data.outputs.hash }}-${{ steps.crds_context.outputs.pmap }}" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        with:
+          path: ${{ steps.cache_path.outputs.cache_path }}
+          key: ${{ steps.hash.outputs.hash }}
   check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
@@ -53,15 +79,16 @@ jobs:
         - linux: build-dist
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
-    needs: [ crds ]
+    needs: [ data ]
     with:
       setenv: |
-        CRDS_PATH: ${{ needs.crds.outputs.path }}
-        CRDS_SERVER_URL: ${{ needs.crds.outputs.server }}
+        CRDS_PATH: ${{ needs.data.outputs.crds_path }}
+        CRDS_SERVER_URL: ${{ needs.data.outputs.crds_server }}
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-      cache-path: ${{ needs.crds.outputs.path }}
-      cache-key: crds-${{ needs.crds.outputs.context }}
+        WEBBPSF_PATH: ${{ needs.data.outputs.webbpsf_path }}
+      cache-path: ${{ needs.data.outputs.cache_path }}
+      cache-key: ${{ needs.data.outputs.hash }}
       envs: |
         - linux: py39-oldestdeps-xdist-cov
           pytest-results-summary: true
