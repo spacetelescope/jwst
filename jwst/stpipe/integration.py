@@ -86,7 +86,7 @@ def get_steps():
         ("jwst.step.SuperBiasStep", 'superbias', False),
         ("jwst.step.TSOPhotometryStep", 'tso_photometry', False),
         ("jwst.step.TweakRegStep", 'tweakreg', False),
-        ("jwst.step.UndersamplingCorrectionStep", 'undersampling_correction', False),
+        ("jwst.step.ChargeMigrationStep", 'charge_migration', False),
         ("jwst.step.WavecorrStep", 'wavecorr', False),
         ("jwst.step.WfsCombineStep", 'calwebb_wfs-image3', False),
         ("jwst.step.WfssContamStep", 'wfss_contam', False),

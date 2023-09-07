@@ -657,6 +657,58 @@ def dms_product_name_sources(asn):
     return product_name.lower()
 
 
+def dms_product_name_coronimage(asn):
+    """Produce image-based product name
+       for coronagraphic data
+
+    Parameters
+    ---------
+    asn : Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    product_name : str
+        The product name
+    """
+
+    target = asn._get_target()
+
+    instrument = asn._get_instrument()
+
+    opt_elem = asn._get_opt_element()
+
+    exposure = asn._get_exposure()
+    if exposure:
+        exposure = '-' + exposure
+
+    subarray = asn._get_subarray()
+    if subarray:
+        subarray = '-' + subarray
+
+    suffix = '-image3'
+
+    product_name = (
+        'jw{program}-{acid}'
+        '_{target}'
+        '_{instrument}'
+        '_{opt_elem}{subarray}{suffix}'
+    )
+    product_name = product_name.format(
+        program=asn.data['program'],
+        acid=asn.acid.id,
+        target=target,
+        instrument=instrument,
+        opt_elem=opt_elem,
+        subarray=subarray,
+        suffix=suffix,
+        exposure=exposure
+    )
+
+    return product_name.lower()
+
+
 # -----------------
 # Basic constraints
 # -----------------

@@ -45,6 +45,9 @@ def background(tmpdir_factory):
         image.meta.subarray.xstart = 1
         image.meta.subarray.ystart = 1
 
+        image.meta.subarray.xsize = image.data.shape[-1]
+        image.meta.subarray.ysize = image.data.shape[-2]
+
         image.meta.instrument.gwa_xtilt = 0.0001
         image.meta.instrument.gwa_ytilt = 0.0001
         image.meta.instrument.gwa_tilt = 37.0610
@@ -70,6 +73,9 @@ def science_image():
     image.meta.date = '2019-02-27T13:37:18.548'
     image.meta.subarray.xstart = 1
     image.meta.subarray.ystart = 1
+
+    image.meta.subarray.xsize = image.data.shape[-1]
+    image.meta.subarray.ysize = image.data.shape[-2]
 
     image.meta.instrument.gwa_xtilt = 0.0001
     image.meta.instrument.gwa_ytilt = 0.0001

@@ -13,7 +13,7 @@ DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 SATURATED = dqflags.pixel["SATURATED"]
 NO_GAIN = dqflags.pixel["NO_GAIN_VALUE"]
-UNDERSAMP = dqflags.pixel["UNDERSAMP"]
+CHARGELOSS = dqflags.pixel["CHARGELOSS"]
 
 DELIM = "-" * 70
 
@@ -47,7 +47,7 @@ def test_drop_frames1_not_set():
 
 
 def test_readnoise_variance():
-    # test RN variance calculations for handling undersample_correction
+    # test RN variance calculations for handling charge_migration
     group_time = 10.6
 
     model1, gdq_4d, rnoise, pixdq, err, gain = \
@@ -61,16 +61,16 @@ def test_readnoise_variance():
     # Populate ramps with a variety of flags
     gdq_4d[:, 7, 1, 3] = JUMP_DET
     gdq_4d[:, 6:, 1, 2] = SATURATED
-    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + UNDERSAMP
-    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + CHARGELOSS
+    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 3, 2, 2] = JUMP_DET
     gdq_4d[:, 6, 2, 2] = JUMP_DET
-    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 8, 2, 2] += JUMP_DET
     gdq_4d[:, 0, 0, 0] = DO_NOT_USE + SATURATED
     gdq_4d[:, 1:, 0, 0] = SATURATED
     gdq_4d[:, 0, 0, 2] = SATURATED + DO_NOT_USE
-    gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 0:, 1, 0] = JUMP_DET
 
     var_r2, var_r3, var_r4 = compute_RN_variances(gdq_4d, readnoise_2d, gain_2d, group_time)

@@ -219,7 +219,7 @@ def test_create_box_fits():
         assert ids[0].xcentroid > 0
         assert ids[0].ycentroid > 0
         if sid == 19:
-            assert [1, 2] == list(ids[0].order_bounding.keys())
+            assert [1] == list(ids[0].order_bounding.keys())
         if sid == 9:
             assert [1] == list(ids[0].order_bounding.keys())
 
@@ -251,7 +251,7 @@ def test_create_box_gwcs():
         assert ids[0].xcentroid > 0
         assert ids[0].ycentroid > 0
         if sid == 19:
-            assert [1, 2] == list(ids[0].order_bounding.keys())
+            assert [1] == list(ids[0].order_bounding.keys())
         if sid == 9:
             assert [1] == list(ids[0].order_bounding.keys())
 
@@ -392,14 +392,14 @@ def test_extract_wfss_object():
     assert isinstance(outmodel, MultiSlitModel)
     assert len(outmodel.slits) == 3
     ids = [slit.source_id for slit in outmodel.slits]
-    assert ids == [9, 19, 19]
+    assert ids == [9, 19, 25]
 
     # Compare SRCDEC and SRCRA values
     assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
     assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
 
     names = [slit.name for slit in outmodel.slits]
-    assert names == ['9', '19', '19']
+    assert names == ['9', '19', '25']
 
     with pytest.raises(TypeError):
         extract_tso_object(wcsimage, reference_files='myspecwcs.asdf')
