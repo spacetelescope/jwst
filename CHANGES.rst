@@ -96,6 +96,9 @@ ____
 - Added argument description for three_group_rejection_threshold and
   four_group_rejection_threshold [#7839].
 
+- Updated argument description and parameter definition to allow
+  integer number of cores to be passed to STCAL jump.py. [#7871]
+
 master_background
 -----------------
 
