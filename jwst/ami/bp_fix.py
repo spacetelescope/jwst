@@ -2,6 +2,7 @@
 import astropy.io.fits as fits
 import numpy as np
 import logging
+import warnings
 import os
 
 from copy import deepcopy
@@ -12,6 +13,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+logging.captureWarnings(True)
 
 
 """pipeline implementation of Jens Kammerer's bp_fix code based on Ireland 2013 algorithm"""
@@ -38,15 +40,13 @@ filthp_d = {  # half power limits
 WL_OVERSIZEFACTOR = 0.1  # increase filter wl support by this amount to 'oversize' in wl space
 
 # GET PUPIL MASK FROM WEBBPSF
+pupil_masks = {}
 webbpsf_path = os.getenv('WEBBPSF_PATH')
-pupilfile_nrm = os.path.join(webbpsf_path,'NIRISS/optics/MASK_NRM.fits.gz')
-nrm_pupil = fits.getdata(pupilfile_nrm)
-
-#clearp_pupil = fits.getdata(pupilfile_clearp)
-pupil_masks = {
-    "NRM": nrm_pupil,
-#    "CLEARP": clearp_pupil,
-}
+if webbpsf_path is not None:
+    pupilfile_nrm = os.path.join(webbpsf_path,'NIRISS/optics/MASK_NRM.fits.gz')
+    pupil_masks["NRM"] = fits.getdata(pupilfile_nrm)
+else:
+    warnings.warn("WEBBPSF_PATH environment variable is undefined but is required in this code")
 
 DIAM = 6.559348  # / Flat-to-flat distance across pupil in V3 axis
 PUPLDIAM = 6.603464  # / Full pupil file size, incl padding.
