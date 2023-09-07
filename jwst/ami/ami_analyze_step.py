@@ -73,6 +73,9 @@ class AmiAnalyzeStep(Step):
         if oversample % 2 == 0:
             raise ValueError("Oversample value must be an odd integer.")
 
+        if os.getenv('WEBBPSF_PATH') is None:
+            raise RuntimeError("WEBBPSF_PATH environment variable is required for this step")
+
         # Apply the LG+ methods to the data
         oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(input_model,
                                            oversample, rotate,
