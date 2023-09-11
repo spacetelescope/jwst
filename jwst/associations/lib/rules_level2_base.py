@@ -839,7 +839,7 @@ class Constraint_Mode(Constraint):
                 required=False,
             ),
             DMSAttrConstraint(
-                name='opt_elem3',
+                name='fxd_slit',
                 sources=['fxd_slit'],
                 required=False,
             ),
