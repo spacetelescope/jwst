@@ -2548,6 +2548,7 @@ def run_extract1d(
         ifu_autocen: Union[bool, None],
         ifu_rfcorr: Union[bool, None],
         ifu_set_point_source: Union[bool, None],
+        ifu_rscale: float,
         was_source_model: bool = False,
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2612,6 +2613,13 @@ def run_extract1d(
         Override srctype and set POINT source extraction for IFU spectra.
         Default is False.
 
+    ifu_rscale: float
+        For MRS IFU data a value for changing the extraction radi. The value provided is the number of PSF
+        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
+        default extraction size is set to 2 * FWHM. Values below 2 will results in a smaller
+        radi, a value of 2 results in no change to radi and a value above 2 results in a larger
+        extraction radi.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2661,6 +2669,7 @@ def run_extract1d(
         ifu_autocen,
         ifu_rfcorr,
         ifu_set_point_source,
+        ifu_rscale,
         was_source_model,
     )
 
@@ -2724,6 +2733,7 @@ def do_extract1d(
         ifu_autocen: Union[bool, None] = None,
         ifu_rfcorr: Union[bool, None] = None,
         ifu_set_point_source: Union[bool, None] = None,
+        ifu_rscale: float = None,
         was_source_model: bool = False
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2797,6 +2807,13 @@ def do_extract1d(
     ifu_set_point_source : bool
         Override srctype and perform POINT source extraction for IFU spectra.
         Default is False.
+
+    ifu_rscale: float
+        For MRS IFU data a value for changing the extraction radi. The value provided is the number of PSF
+        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
+        default extraction size is set to 2 * FWHM. Values below 2 will results in a smaller
+        radi, a value of 2 results in no change to radi and a value above 2 results in a larger
+        extraction radi.
 
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
@@ -3010,7 +3027,7 @@ def do_extract1d(
                 log.info('Overriding source type and setting it to POINT')
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr
+                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale
             )
 
         else:

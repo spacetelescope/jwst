@@ -84,6 +84,13 @@ class Extract1dStep(Step):
     ifu_set_point_source: bool
         For IFU data ignore the srctype value and perform a point source extraction.
 
+    ifu_rscale: float
+        For MRS IFU data a value for changing the extraction radi. The value provided is the number of PSF
+        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
+        default extraction size is set to 2 * FWHM. Values below 2 will results in a smaller
+        radi, a value of 2 results in no change to radi and a value above 2 results in a larger
+        extraction radi.
+
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
         WARNING: ATOCA results not fully validated, and require the photom step
@@ -153,6 +160,7 @@ class Extract1dStep(Step):
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_point_source = boolean(default=False) # Override srctype and perform point source extraction
+    ifu_rscale = float(default=None, min=0.5, max=3) Radius in terms of PSF FWHM to scale extraction radii
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -265,6 +273,7 @@ class Extract1dStep(Step):
                         self.ifu_autocen,
                         self.ifu_rfcorr,
                         self.ifu_set_point_source,
+                        self.ifu_rscsale,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -302,6 +311,7 @@ class Extract1dStep(Step):
                             self.ifu_autocen,
                             self.ifu_rfcorr,
                             self.ifu_set_point_source,
+                            self.ifu_rscale,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -342,6 +352,7 @@ class Extract1dStep(Step):
                     self.ifu_autocen,
                     self.ifu_rfcorr,
                     self.ifu_set_point_source,
+                    self.ifu_rscale,
                     was_source_model=was_source_model,
                 )
 
@@ -484,6 +495,7 @@ class Extract1dStep(Step):
                     self.ifu_autocen,
                     self.ifu_rfcorr,
                     self.ifu_set_point_source,
+                    self.ifu_rscale,
                     was_source_model=False,
                 )
 
