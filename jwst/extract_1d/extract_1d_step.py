@@ -81,6 +81,9 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
+    ifu_set_point_source: bool
+        For IFU data ignore the srctype value and perform a point source extraction.
+
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
         WARNING: ATOCA results not fully validated, and require the photom step
@@ -149,6 +152,7 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
+    ifu_set_point_source = boolean(default=False) # Override srctype and perform point source extraction
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -260,6 +264,7 @@ class Extract1dStep(Step):
                         self.center_xy,
                         self.ifu_autocen,
                         self.ifu_rfcorr,
+                        self.ifu_set_point_source,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -296,6 +301,7 @@ class Extract1dStep(Step):
                             self.center_xy,
                             self.ifu_autocen,
                             self.ifu_rfcorr,
+                            self.ifu_set_point_source,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -335,6 +341,7 @@ class Extract1dStep(Step):
                     self.center_xy,
                     self.ifu_autocen,
                     self.ifu_rfcorr,
+                    self.ifu_set_point_source,
                     was_source_model=was_source_model,
                 )
 
@@ -476,6 +483,7 @@ class Extract1dStep(Step):
                     self.center_xy,
                     self.ifu_autocen,
                     self.ifu_rfcorr,
+                    self.ifu_set_point_source,
                     was_source_model=False,
                 )
 
