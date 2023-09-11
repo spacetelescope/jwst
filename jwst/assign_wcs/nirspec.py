@@ -435,9 +435,9 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     if input_model.meta.instrument.fixed_slit is None:
-        raise ValueError("Input file is missing FXD_SLIT value/keyword.")
+        input_model.meta.instrument.fixed_slit = 'NONE'
 
-    slit_nums = {'S200A1':1, 'S200A2':2, 'S400A1':3, 'S1600A1':4, 'S200B1':5}
+    slit_nums = {'NONE':0, 'S200A1':1, 'S200A2':2, 'S400A1':3, 'S1600A1':4, 'S200B1':5}
     primary_slit = input_model.meta.instrument.fixed_slit
     ylow, yhigh = slit_y_range
 
