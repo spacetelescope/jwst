@@ -262,29 +262,15 @@ class IFUCubeData():
         ra_ave = circmean(ravalues * u.deg).value
 
         if self.ra_center is not None:
-            # check that user provided ra center are within the already
-            # determined min and max values. 
-            #TODO check if ra value is wrapping 0 border
-            if np.logical_or(self.ra_center < ra_min, self.ra_center > ra_max):
-                log.error('RA CENTER ERROR: Value provided outside of range', self.ra_center, ra_min, ra_max)
-                raise IncorrectInput("RA CENTER ERROR")
-            else:
-                self.crval1 = self.ra_center
-
+            self.crval1 = self.ra_center
         else:
             self.crval1 = ra_ave
 
         if self.dec_center is not None:
-            # check that user provided dec center are within the already
-            # determined min and max values. 
-            if np.logical_or(self.dec_center < dec_min, self.dec_center > dec_max):
-                log.error('DEC CENTER ERROR: Value provided outside of range', self.dec_center, dec_min, dec_max)
-                raise IncorrectInput("DEC CENTER ERROR")
-            else:
-                self.crval2 = self.dec_center
+            self.crval2 = self.dec_center
         else:
             self.crval2 = dec_ave
-            
+
         rot_angle = self.rot_angle
 
         # find the 4 corners
@@ -312,7 +298,7 @@ class IFUCubeData():
         nb = math.ceil(etalimit / self.cdelt2) + 1
 
         # if the user set the nspax_xi or nspax_eta then redefine na, nb
-        # it is assumed that both value are even numbers 
+        # it is assumed that both values are ODD numbers
         if self.nspax_xi is not None:
             na = int(self.nspax_xi/2)
         if self.nspax_eta is not None:
@@ -584,7 +570,7 @@ class IFUCubeData():
 
         if self.spaxel_z == -1 and self.spaxel_x == -1 and self.spaxel_y == -1:
             debug_cube_index = -1
-            
+
         elif(self.spaxel_z < 0 or self.spaxel_x < 0 or self.spaxel_y < 0):
             print('Incorrect input for Debug Spaxel values. Counting starts at 0')
             debug_cube_index = -1
@@ -1243,7 +1229,6 @@ class IFUCubeData():
 
         parameter1 = self.list_par1
         parameter2 = self.list_par2
-
 # ________________________________________________________________________________
 # Define the rotation angle
 
@@ -1292,12 +1277,12 @@ class IFUCubeData():
             self.rot_angle = 90 + np.arctan2(dra, ddec) * 180. / np.pi
             log.info(f'Rotation angle between ifu and sky: {self.rot_angle}')
 
-# If coord_system = iskyalign and the user provided a position angle. Define the rotation angle
-# to be the user provided value.
+        # If coord_system = iskyalign and the user provided a position angle. Define the rotation angle
+        # to be the user provided value.
 
         if self.coord_system == 'skyalign' and self.cube_pa is not None:
-           self.rot_angle = self.cube_pa
-           log.info(f'Setting rotation angle between ifu and sky: {self.rot_angle}')
+            self.rot_angle = self.cube_pa
+            log.info(f'Setting rotation angle between ifu and sky: {self.rot_angle}')
 # ________________________________________________________________________________
 # now loop over data and find min and max ranges data covers
 

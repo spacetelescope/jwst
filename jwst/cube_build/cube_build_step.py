@@ -115,17 +115,17 @@ class CubeBuildStep (Step):
 
         # check that if self.nspax_xi or self.nspax_eta is provided they must be even numbers
         if self.nspax_xi is not None:
-            if self.nspax_xi % 2 ==0:
+            if self.nspax_xi % 2 == 0:
                 self.log.info(f'Input nspax_xi must be an odd number {self.nspax_xi}')
                 self.nspax_xi = self.nspax_xi + 1
                 self.log.info(f'Updating nspax by 1. New value {self.nspax_xi}')
 
         if self.nspax_eta is not None:
-            if self.nspax_eta % 2 ==0:
+            if self.nspax_eta % 2 == 0:
                 self.log.info(f'Input nspax_eta must be an odd number {self.nspax_eta}')
                 self.nspax_eta = self.nspax_eta + 1
                 self.log.info(f'Updating nspax_eta by 1. New value {self.nspax_eta}')
-    
+
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
         # 2. ifualign (ifu cube aligned with slicer plane/ MRS local coord system)
@@ -232,9 +232,8 @@ class CubeBuildStep (Step):
             elif instrument == 'MIRI':
                 self.output_type = 'channel'
         self.pars_input['output_type'] = self.output_type
-        
         self.log.info(f'Setting output type to: {self.output_type}')
-         
+
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
 
@@ -258,7 +257,6 @@ class CubeBuildStep (Step):
         # shove the input parameters in to pars_cube to pull out ifu_cube.py
         # these parameters are related to the building a single ifucube_model
 
-        
         pars_cube = {
             'scalexy': self.scalexy,
             'scalew': self.scalew,
@@ -266,11 +264,11 @@ class CubeBuildStep (Step):
             'weighting': self.weighting,
             'weight_power': self.weight_power,
             'coord_system': self.pars_input['coord_system'],
-            'ra_center':self.ra_center,
-            'dec_center':self.dec_center,
-            'cube_pa':self.cube_pa,
-            'nspax_xi':self.nspax_xi,
-            'nspax_eta':self.nspax_eta,
+            'ra_center': self.ra_center,
+            'dec_center': self.dec_center,
+            'cube_pa': self.cube_pa,
+            'nspax_xi': self.nspax_xi,
+            'nspax_eta': self.nspax_eta,
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,
