@@ -142,6 +142,7 @@ def create_nirspec_fs_file(grating, filter, lamp="N/A"):
     image[0].header['GWA_XTIL'] = 0.3316612243652344
     image[0].header['GWA_YTIL'] = 0.1260581910610199
     image[0].header['SUBARRAY'] = "FULL"
+    image[0].header['FXD_SLIT'] = "S200A1"
     return image
 
 
