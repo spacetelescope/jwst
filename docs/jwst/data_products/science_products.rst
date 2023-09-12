@@ -763,49 +763,89 @@ structure shown below.
  - ADSF: The data model meta data.
 
 .. _ami:
-.. _amiavg:
+.. _amimulti:
+.. _amilg:
 .. _aminorm:
 
-AMI data: ``ami``, ``amiavg``, and ``aminorm``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`,
-:ref:`ami_average <ami_average_step>`, and :ref:`ami_normalize <ami_normalize_step>` steps,
-as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline, are stored in FITS files that
-contain a mixture of images and binary table extensions. The output format of all three
-pipeline steps is the same, encapsulated within a `~jwst.datamodels.AmiLgModel` data model.
-The overall layout of the corresponding FITS files is as follows:
 
-+-----+-------------+----------+-----------+-----------------+
-| HDU | EXTNAME     | HDU Type | Data Type | Dimensions      |
-+=====+=============+==========+===========+=================+
-|  0  | N/A         | primary  | N/A       | N/A             |
-+-----+-------------+----------+-----------+-----------------+
-|  1  | FIT         | IMAGE    | float32   | ncols x nrows   |
-+-----+-------------+----------+-----------+-----------------+
-|  2  | RESID       | IMAGE    | float32   | ncols x nrows   |
-+-----+-------------+----------+-----------+-----------------+
-|  3  | CLOSURE_AMP | BINTABLE | float64   | 1 col x 35 rows |
-+-----+-------------+----------+-----------+-----------------+
-|  4  | CLOSURE_PHA | BINTABLE | float64   | 1 col x 35 rows |
-+-----+-------------+----------+-----------+-----------------+
-|  5  | FRINGE_AMP  | BINTABLE | float64   | 1 col x 21 rows |
-+-----+-------------+----------+-----------+-----------------+
-|  6  | FRINGE_PHA  | BINTABLE | float64   | 1 col x 21 rows |
-+-----+-------------+----------+-----------+-----------------+
-|  7  | PUPIL_PHA   | BINTABLE | float64   | 1 col x 7 rows  |
-+-----+-------------+----------+-----------+-----------------+
-|  8  | SOLNS       | BINTABLE | float64   | 1 col x 44 rows |
-+-----+-------------+----------+-----------+-----------------+
-|  9  | ASDF        | BINTABLE | N/A       | variable        |
-+-----+-------------+----------+-----------+-----------------+
+AMI data: ``ami``, ``amimulti``, ``amilg``, and ``aminorm``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`
+and :ref:`ami_normalize <ami_normalize_step>` steps
+as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline are stored in OIFITS files.
+These are a particular type of FITS files containing several binary table extensions
+and are encapsulated within a `~jwst.datamodels.AmiOIModel` data model.
+There are two additional outputs of the :ref:`ami_analyze <ami_analyze_step>` intended
+to enable a more detailed look at the data. The ``amimulti`` file contains per-integration
+interferometric observables and is also a contained in a `~jwst.datamodels.AmiOIModel`,
+while the ``amilg`` product is a primarily image-based FITS file containing the 
+cropped data, model, and residuals as well as the best-fit model parameters. It
+is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
- - FIT: A 2-D image of the fitted model.
- - RESID: A 2-D image of the fit residuals.
- - CLOSURE_AMP: A table of closure amplitudes.
- - CLOSURE_PHA: A table of closure phases.
- - FRINGE_AMP: A table of fringe amplitudes.
- - FRINGE_PHA: A table of fringe phases.
- - PUPIL_PHA: A table of pupil phases.
- - SOLNS: A table of fringe coefficients.
+The :ref:`ami_normalize <ami_normalize_step>` produces an ``aminorm`` product,
+which is also contained in a `~jwst.datamodels.AmiOIModel`.
+
+The overall structure of the OIFITS files (``ami``, ``amiamimulti``, and 
+``aminorm`` products) is as follows:
+
++-----+--------------+----------+-----------+-----------------+
+| HDU |   EXTNAME    | HDU Type | Data Type |   Dimensions    |
++=====+==============+==========+===========+=================+
+|  0  |    PRIMARY   | primary  |    N/A    |      N/A        |
++-----+--------------+----------+-----------+-----------------+
+|  1  |  OI_ARRAY    | BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
+|  2  |  OI_TARGET   | BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
+|  3  |    OI_T3     | BINTABLE |    N/A    | 14 cols x 35 rows|
++-----+--------------+----------+-----------+-----------------+
+|  4  |   OI_VIS     | BINTABLE |    N/A    | 12 cols x 21 rows|
++-----+--------------+----------+-----------+-----------------+
+|  5  |   OI_VIS2    | BINTABLE |    N/A    | 10 col x 21 rows|
++-----+--------------+----------+-----------+-----------------+
+|  6  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
+|  7  |     ASDF     | BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
+
+ - OI_ARRAY: AMI subaperture information
+ - OI_TARGET: Target properties
+ - OI_T3: Table of closure amplitudes, phases
+ - OI_VIS: Table of visibility (fringe) amplitudes, phases
+ - OI_VIS2: Table of squared visibility (fringe) amplitudes
+ - OI_WAVELENGTH: Filter information
  - ADSF: The data model meta data.
 
+
+The overall structure of the ``amilg`` FITS files is as follows:
+
++-----+-------------+----------+-----------+-----------------------+
+| HDU |   EXTNAME   | HDU Type | Data Type |      Dimensions       |
++=====+=============+==========+===========+=======================+
+|  0  |   PRIMARY   |  primary |    N/A    |          N/A          |
++-----+-------------+----------+-----------+-----------------------+
+|  1  |    CTRD     |  IMAGE   |  float32  | nints x ncols x nrows |
++-----+-------------+----------+-----------+-----------------------+
+|  2  |   N_CTRD    |  IMAGE   |  float32  | nints x ncols x nrows |
++-----+-------------+----------+-----------+-----------------------+
+|  3  |     FIT     |  IMAGE   |  float32  | nints x ncols x nrows |
++-----+-------------+----------+-----------+-----------------------+
+|  4  |    N_FIT    |  IMAGE   |  float32  | nints x ncols x nrows |
++-----+-------------+----------+-----------+-----------------------+
+|  5  |   RESID     |  IMAGE   |  float32  | nints x ncols x nrows |
++-----+-------------+----------+-----------+-----------------------+
+|  6  |   N_RESID   |  IMAGE   |  float32  | nints x ncols x nrows |
++-----+-------------+----------+-----------+-----------------------+
+|  7  |   SOLNS     | BINTABLE |  float64  | nints cols x 44 rows |
++-----+-------------+----------+-----------+-----------------------+
+|  8  |    ASDF     | BINTABLE |    N/A    |       variable        |
++-----+-------------+----------+-----------+-----------------------+
+
+ - CTRD: A 3D image of the centered, cropped data.
+ - N_CTRD: A 3D image CTRD normalized by data peak.
+ - FIT: 3D image of the best-fit model.
+ - N_FIT: A 3D image of FIT normalized by data peak.
+ - RESID: A 3D image of the fit residuals.
+ - N_RESID: A 3D image of RESID normalized by data peak.
+ - SOLNS: A table of fringe coefficients.
+ - ADSF: The data model meta data.

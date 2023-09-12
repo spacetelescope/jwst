@@ -105,10 +105,10 @@ the parameters of the best-fit LG model. It contains the following extensions:
 
 1) ``CTRD``: a 3D image of the centered, cropped data
 2) ``N_CTRD``: a 3D image CTRD normalized by data peak
-3) ``FIT``: a 3D image of the fitted model
-4) ``N_FIT``: a 3D imageFIT normalized by data peak
+3) ``FIT``: a 3D image of the best-fit model
+4) ``N_FIT``: a 3D image of FIT normalized by data peak
 5) ``RESID``: a 3D image of the fit residuals
-6) ``N_RESID``: a 3D image, RESID normalized by data peak
+6) ``N_RESID``: a 3D image of RESID normalized by data peak
 7) ``SOLNS``: table of fringe coefficients
 
 The output file name syntax is exposure-based, using the input file name as the root, with
