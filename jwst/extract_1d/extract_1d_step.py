@@ -81,8 +81,8 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
-    ifu_set_point_source: bool
-        For IFU data ignore the srctype value and perform a point source extraction.
+    ifu_set_srctype: src
+        For IFU data override srctype and set it to either POINT or EXTENDED.
 
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radi. The value provided is the number of PSF
@@ -159,7 +159,7 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
-    ifu_set_point_source = boolean(default=False) # Override srctype and perform point source extraction
+    ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) Radius in terms of PSF FWHM to scale extraction radii
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
@@ -272,7 +272,7 @@ class Extract1dStep(Step):
                         self.center_xy,
                         self.ifu_autocen,
                         self.ifu_rfcorr,
-                        self.ifu_set_point_source,
+                        self.ifu_set_srctype,
                         self.ifu_rscsale,
                         was_source_model=was_source_model
                     )
@@ -310,7 +310,7 @@ class Extract1dStep(Step):
                             self.center_xy,
                             self.ifu_autocen,
                             self.ifu_rfcorr,
-                            self.ifu_set_point_source,
+                            self.ifu_set_srctype,
                             self.ifu_rscale,
                             was_source_model=was_source_model,
                         )
@@ -351,7 +351,7 @@ class Extract1dStep(Step):
                     self.center_xy,
                     self.ifu_autocen,
                     self.ifu_rfcorr,
-                    self.ifu_set_point_source,
+                    self.ifu_set_srctype,
                     self.ifu_rscale,
                     was_source_model=was_source_model,
                 )
@@ -494,7 +494,7 @@ class Extract1dStep(Step):
                     self.center_xy,
                     self.ifu_autocen,
                     self.ifu_rfcorr,
-                    self.ifu_set_point_source,
+                    self.ifu_set_srctype,
                     self.ifu_rscale,
                     was_source_model=False,
                 )

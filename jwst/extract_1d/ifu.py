@@ -502,7 +502,6 @@ def extract_ifu(input_model, source_type, extract_params):
     method = extract_params['method']
     subpixels = extract_params['subpixels']
     subtract_background = extract_params['subtract_background']
-    ifu_rscale = extract_params['ifu_rscale']
 
     radius = None
     inner_bkg = None
@@ -526,9 +525,9 @@ def extract_ifu(input_model, source_type, extract_params):
         outer_bkg = extract_params['outer_bkg'].flatten()
         radius = extract_params['radius'].flatten()
 
-        if ifu_rscale is not None:
-            radius = radius * ifu_rscale/2.0
-            log.info("Scaling radius by factor = %g", ifu_rscale / 2.0)
+        if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is not None)):
+            radius = radius * extract_params['ifu_rscale']/2.0
+            log.info("Scaling radius by factor =  %g",extract_params['ifu_rscale']/2.0 )
 
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
