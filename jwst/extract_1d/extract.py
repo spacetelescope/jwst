@@ -1471,7 +1471,6 @@ class ExtractBase(abc.ABC):
             locn = x_y[1]
         else:
             locn = x_y[0]
-            log.info(f"LOCN: {locn}")
 
         if locn < lower or locn > upper and targ_ra > 340.:
             # Try this as a temporary workaround.
