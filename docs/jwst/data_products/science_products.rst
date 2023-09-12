@@ -762,58 +762,51 @@ structure shown below.
    based on read noise only.
  - ADSF: The data model meta data.
 
-.. _ami-oi:
-.. _amimulti-oi:
+.. _ami:
+.. _amimulti:
 .. _amilg:
-.. _aminorm-oi:
+.. _aminorm:
 
 
-AMI data: ``ami-oi``, ``amimulti-oi``, ``amilg``, and ``aminorm-oi``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AMI data: ``ami``, ``amimulti``, ``amilg``, and ``aminorm``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`
 and :ref:`ami_normalize <ami_normalize_step>` steps
 as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline are stored in OIFITS files.
 These are a particular type of FITS files containing several binary table extensions
 and are encapsulated within a `~jwst.datamodels.AmiOIModel` data model.
 There are two additional outputs of the :ref:`ami_analyze <ami_analyze_step>` intended
-to enable a more detailed look at the data. The ``amimulti-oi`` file contains per-integration
+to enable a more detailed look at the data. The ``amimulti`` file contains per-integration
 interferometric observables and is also a contained in a `~jwst.datamodels.AmiOIModel`,
 while the ``amilg`` product is a primarily image-based FITS file containing the 
 cropped data, model, and residuals as well as the best-fit model parameters. It
 is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
-The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` product,
-which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard 
-defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
+The :ref:`ami_normalize <ami_normalize_step>` produces an ``aminorm`` product,
+which is also contained in a `~jwst.datamodels.AmiOIModel`.
 
-In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", 
-and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals 
-the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
-products, these columns have a single dimension whose length is independent of the number 
-of integrations.
+The overall structure of the OIFITS files (``ami``, ``amiamimulti``, and 
+``aminorm`` products) is as follows:
 
-The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and 
-``aminorm-oi`` products) is as follows:
-
-+-----+--------------+----------+-----------+------------------+
-| HDU |   EXTNAME    | HDU Type | Data Type |   Dimensions     |
-+=====+==============+==========+===========+==================+
-|  0  |    PRIMARY   | primary  |    N/A    |      N/A         |
-+-----+--------------+----------+-----------+------------------+
-|  1  |  OI_ARRAY    | BINTABLE |    N/A    |    variable      |
-+-----+--------------+----------+-----------+------------------+
-|  2  |  OI_TARGET   | BINTABLE |    N/A    |    variable      |
-+-----+--------------+----------+-----------+------------------+
++-----+--------------+----------+-----------+-----------------+
+| HDU |   EXTNAME    | HDU Type | Data Type |   Dimensions    |
++=====+==============+==========+===========+=================+
+|  0  |    PRIMARY   | primary  |    N/A    |      N/A        |
++-----+--------------+----------+-----------+-----------------+
+|  1  |  OI_ARRAY    | BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
+|  2  |  OI_TARGET   | BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
 |  3  |    OI_T3     | BINTABLE |    N/A    | 14 cols x 35 rows|
-+-----+--------------+----------+-----------+------------------+
++-----+--------------+----------+-----------+-----------------+
 |  4  |   OI_VIS     | BINTABLE |    N/A    | 12 cols x 21 rows|
-+-----+--------------+----------+-----------+------------------+
-|  5  |   OI_VIS2    | BINTABLE |    N/A    | 10 col x 21 rows |
-+-----+--------------+----------+-----------+------------------+
-|  6  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
-+-----+--------------+----------+-----------+------------------+
-|  7  |     ASDF     | BINTABLE |    N/A    |    variable      |
-+-----+--------------+----------+-----------+------------------+
++-----+--------------+----------+-----------+-----------------+
+|  5  |   OI_VIS2    | BINTABLE |    N/A    | 10 col x 21 rows|
++-----+--------------+----------+-----------+-----------------+
+|  6  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
+|  7  |     ASDF     | BINTABLE |    N/A    |    variable     |
++-----+--------------+----------+-----------+-----------------+
 
  - OI_ARRAY: AMI subaperture information
  - OI_TARGET: Target properties
@@ -843,7 +836,7 @@ The overall structure of the ``amilg`` FITS files is as follows:
 +-----+-------------+----------+-----------+-----------------------+
 |  6  |   N_RESID   |  IMAGE   |  float32  | nints x ncols x nrows |
 +-----+-------------+----------+-----------+-----------------------+
-|  7  |   SOLNS     | BINTABLE |  float64  | nints cols x 44 rows  |
+|  7  |   SOLNS     | BINTABLE |  float64  | nints cols x 44 rows |
 +-----+-------------+----------+-----------+-----------------------+
 |  8  |    ASDF     | BINTABLE |    N/A    |       variable        |
 +-----+-------------+----------+-----------+-----------------------+
