@@ -392,7 +392,7 @@ class PixelReplacement:
         newdq = model_replaced.dq
 
         # Make an array of x/y values on the detector
-        ysize, xsize = self.input.meta.subarray.xsize, self.input.meta.subarray.ysize
+        xsize, ysize = self.input.meta.subarray.xsize, self.input.meta.subarray.ysize
         basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
         pad = 1 # Padding around edge of array to ensure we don't look for neighbors outside array
 
