@@ -3,7 +3,6 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import emicorr
-import os
 
 
 # These are the exposure types to correct for EMI
@@ -37,7 +36,7 @@ class EmiCorrStep(Step):
             # Catch the cases to skip
             exp_type = input_model.meta.exposure.type.upper()
             if exp_type not in exp_types2correct:
-                log.info(f'EMI correction not implemented for EXP_TYPE {exp_type}.')
+                log.info('EMI correction not implemented for EXP_TYPE: {}'.format(exp_type))
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
@@ -53,29 +52,27 @@ class EmiCorrStep(Step):
                 emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
                 # Create the reference file
                 if emicorr_ref_filename == 'N/A':
-                    save_onthefly_reffile = True
                     emicorr_ref_filename = Step._make_output_path(self, suffix=rfile_suffix)
-                    emicorr.mk_reffile_waveform(input_model, emicorr_ref_filename)
-                    self.log.info('Using on-the-fly reference file: %s', emicorr_ref_filename)
+                    emicorr_model = emicorr.mk_reffile_waveform(input_model, emicorr_ref_filename,
+                                                                save_mdl=self.save_intermediate_results)
                 else:
-                    self.log.info('Using CRDS reference file: %s', emicorr_ref_filename)
+                    self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
+                    emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
 
             else:
-                emicorr_ref_filename = self.user_supplied_reffile
-                log.info('Using user-supplied reference file: '.format(emicorr_ref_filename))
-
-            # Load the reference file
-            emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
+                log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
+                emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
             # Do the correction
             output_model = emicorr.do_correction(input_model, emicorr_model, **pars)
-            output_model.meta.cal_step.emicorr = 'COMPLETE'
+            if isinstance(output_model, str):
+                # in this case output_model=subarray_readpatt configuration
+                log.info('No correction match for this configuration: {}'.format(output_model))
+                input_model.meta.cal_step.emicorr = 'SKIPPED'
+                return input_model
 
             # close and remove the reference file created on-the-fly
+            output_model.meta.cal_step.emicorr = 'COMPLETE'
             emicorr_model.close()
-            if save_onthefly_reffile and not self.save_intermediate_results:
-                if os.path.isfile(emicorr_ref_filename):
-                    os.remove(emicorr_ref_filename)
-                    self.log.debug('On-the-fly reference file deleted: %s', emicorr_ref_filename)
 
         return output_model

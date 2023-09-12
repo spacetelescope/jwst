@@ -16,32 +16,32 @@ subarray_cases = {
 
     "SLITLESSPRISM": {
         "rowclocks": 28,
-        "frameclocks": "15904L"
+        "frameclocks": 15904
     },
 
     "MASKLYOT": {
         "rowclocks": 90,
-        "frameclocks": "32400L"
+        "frameclocks": 32400
     },
 
     "SUB64": {
         "rowclocks": 28,
-        "frameclocks": "8512L"
+        "frameclocks": 8512
     },
 
     "SUB128": {
         "rowclocks": 44,
-        "frameclocks": "11904L"
+        "frameclocks": 11904
     },
 
     "MASK1140": {
         "rowclocks": 82,
-        "frameclocks": "23968"
+        "frameclocks": 23968
     },
 
     "MASK1550": {
         "rowclocks": 82,
-        "frameclocks": "23968L"
+        "frameclocks": 23968
     },
 
     # 390Hz already in-phase for these, but may need corr for other
@@ -49,22 +49,22 @@ subarray_cases = {
 
     "FULL_FASTR1": {
         "rowclocks": 271,
-        "frameclocks": "277504L"
+        "frameclocks": 277504
     },
 
     "FULL_SLOWR1": {
         "rowclocks": 2333,
-        "frameclocks": "2388992L"
+        "frameclocks": 2388992
     },
 
     "BRIGHTSKY": {
         "rowclocks": 162,
-        "frameclocks": "86528L"
+        "frameclocks": 86528
     },
 
     "SUB256": {
         "rowclocks": 96,
-        "frameclocks": "29952L"
+        "frameclocks": 29952
     }
 
 }
@@ -150,65 +150,126 @@ def apply_emicorr(input_model, emicorr_model, save_intermediate_results=False,
     output_model : JWST data model
         input science data model which has been emi-corrected
     """
+    # get the subarray case
+    subarray = input_model.meta.subarray.name
+    readpatt = input_model.meta.exposure.readpatt
+    subname, rowclocks, frameclocks = get_subarcase(subarray, readpatt)
+    if rowclocks is None:
+        return subname
 
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
-    subname = input_model.meta.subarray.name
-    if subname == 'FULL':
-        subname = subname + '_' + input_model.meta.exposure.readpatt
+    # Read image data and set up some variables
+    data = output_model.data
+    nints, ngroups, ny, nx = np.shape(data)
+    dd_all = np.ones((nints, ngroups, ny, nx/4))
+    # s[0] = 4 in idl
+    # s[1] = nx
+    # s[2] = ny
+    # s[3] = ngroups
+    # s[4] = nints
+    times = np.ones((nints, ngroups, ny, nx/4), dtype='uint64')
 
-    # Read image data
-    data = input_model.data.copy()
-    dshape = np.shape(data)
+    # Find the phase
+    counter = 0
+    for inti in range(nints):
+        log.info('Working on integration: {}'.format(inti))
 
-    # Make very crude slope image and fixed pattern "super"bias for each
-    # integration, ignoring everything (nonlin, saturation, badpix, etc)
-    img_slope()
-    fix_pattern_superbias()
+        # Remove source signal and fixed bias from each integration ramp
+        # (linear is good enough for phase finding)
 
-    # Subtract scaled slope image and bias from each frame of each integration
-    subtract_scaled_slope()
+        # do linear fit for source + sky
+        s0 = sloper(data[inti, ngroups-2, :, :], intercept=mm0)
 
-    # Calculate phase of every pixel in the image at the desired emi frequency
-    # (e.g. 390 Hz) relative to the first pixel in the image
-    calc_phase()
+        # subtract source+sky from each frame of this ramp
+        for groupi in ngroups:
+            data[inti, groupi, ...] = data[inti, groupi, ...] - (s0 * groupi)
 
-    # Make a binned, phased amplitude (pa) wave from the cleaned data (plot
-    # cleaned vs phase, then bin by phase)
-    bin_pa_wave()
+        # make a self-superbias
+        m0 = minmed(data[inti, ngroups-2, :, :])
 
-    # Measure the phase shift between the binned pa wave and the input
-    # reference wave
-    measure_phase_shift()
+        # subtract self-superbias from each frame of this ramp
+        for groupi in ngroups:
+            data[inti, groupi, ...] = data[inti, groupi, ...] - m0
 
-    # Use look-up table to get the aligned reference wave value for each pixel
-    # (the noise array corresponding to the input image)
-    get_ref_wave()
+            # de-interleave each frame into the 4 separate output channels and
+            # average (or median) them together for S/N
+            tmp0 = np.ones((inti, groupi, :, (nx/4)*4+0))
+            d0 = data[tmp0]
+            tmp1 = np.ones((inti, groupi, :, (nx/4)*4+1))
+            d1 = data[tmp1]
+            tmp2 = np.ones((inti, groupi, :, (nx/4)*4+2))
+            d2 = data[tmp2]
+            tmp3 = np.ones((inti, groupi, :, (nx/4)*4+3))
+            d3 = data[tmp3]
+            dd = (d0 + d1 + d2 + d3)/4.
 
-    # Subtract the noise array from the input image and return the cleaned result
-    subtract_img_noise()
+            # fix a bad ref col
 
     # DQ values remain the same as the input
-    log.info('DQ values in the reference file NOT used to update the output DQ.')
+    log.info('DQ values remain the same as input data.')
 
     return output_model
 
 
-def mk_reffile_waveform(input_model, emicorr_ref_filename):
+def sloper():
+    pass
+
+
+def minmed():
+    pass
+
+
+def get_subarcase(subarray, readpatt):
+    """ Get the rowclocks and frameclocks values for the given configuration.
+
+    Parameters
+    ----------
+    subarray : str
+        Keyword value
+
+    readpatt : str
+        Keyword value
+
+    Returns
+    -------
+    subname : str
+        Modified subarray name
+
+    rowclocks : int
+
+    frameclocks : int
+
+    """
+    subname = subarray
+    if subname == 'FULL':
+        subname = subname + '_' + readpatt
+    if subname in subarray_cases:
+        rowclocks = subarray_cases[subname]["rowclocks"]
+        frameclocks = subarray_cases[subname]["frameclocks"]
+        return subname, rowclocks, frameclocks
+    else:
+        return subname, None, None
+
+
+def mk_reffile_waveform(input_model, emicorr_ref_filename, save_mdl=False):
     """ Create the reference file from the input science data.
 
     Parameters
     ----------
-    input_model: JWST data model
+    input_model : JWST data model
         Input science data model to be emi-corrected
 
-    emicorr_ref_filename : str
+    emicorr_ref_filename : str or None
         Name of the reference file
+
+    save_mdl : bool
+        Save the on-the-fly reference file
 
     Returns
     -------
-        Nothing
+    return_mdl: JWST data model
     """
     # initialize the reference fits file
     hdulist = fits.HDUList()
@@ -229,7 +290,10 @@ def mk_reffile_waveform(input_model, emicorr_ref_filename):
 
     # use the reference file model to format and write file
     model = datamodels.EmiModel(hdulist)
-    model.save(emicorr_ref_filename)
-    log.debug('On-the-fly reference file written as: %s', emicorr_ref_filename)
+    if save_mdl:
+        model.save(emicorr_ref_filename)
+        log.debug('On-the-fly reference file written as: %s', emicorr_ref_filename)
+
+    return model
 
 
