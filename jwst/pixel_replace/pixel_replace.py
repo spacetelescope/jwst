@@ -23,7 +23,6 @@ class PixelReplacement:
     DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
     FLUX_ESTIMATED = datamodels.dqflags.pixel['FLUX_ESTIMATED']
     NON_SCIENCE = datamodels.dqflags.pixel['NON_SCIENCE']
-    UNRELIABLE_FLAT = datamodels.dqflags.pixel['UNRELIABLE_FLAT']
 
     # Shortcuts for dispersion direction for ease of reading
     HORIZONTAL = 1
@@ -166,9 +165,6 @@ class PixelReplacement:
 
             for i, slit in enumerate(self.input.slits):
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
-                slit_model.dq = np.where(slit_model.dq & self.UNRELIABLE_FLAT,
-                                         slit_model.dq | self.DO_NOT_USE,
-                                         slit_model.dq)
 
                 slit_replaced = self.algorithm(slit_model)
 
