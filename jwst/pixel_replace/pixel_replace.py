@@ -23,6 +23,7 @@ class PixelReplacement:
     DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
     FLUX_ESTIMATED = datamodels.dqflags.pixel['FLUX_ESTIMATED']
     NON_SCIENCE = datamodels.dqflags.pixel['NON_SCIENCE']
+    UNRELIABLE_FLAT = datamodels.dqflags.pixel['UNRELIABLE_FLAT']
 
     # Shortcuts for dispersion direction for ease of reading
     HORIZONTAL = 1
@@ -165,6 +166,10 @@ class PixelReplacement:
 
             for i, slit in enumerate(self.input.slits):
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
+                slit_model.dq = np.where(slit_model.dq & self.UNRELIABLE_FLAT,
+                                         slit_model.dq | self.DO_NOT_USE,
+                                         slit_model.dq)
+
                 slit_replaced = self.algorithm(slit_model)
 
                 n_replaced = np.count_nonzero(slit_replaced.dq & self.FLUX_ESTIMATED)
@@ -308,14 +313,21 @@ class PixelReplacement:
                 current_profile
             )[range(*profile_cut)]
 
+            replace_mask = np.where(~np.isnan(cleaned_current))[0]
+            min_median = median_profile[replace_mask]
+            min_current = cleaned_current[replace_mask]
+            norm_current = min_current / np.max(min_current)
+
             # Scale median profile to current profile with bad pixel - minimize mse?
-            scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(cleaned_current)),
-                             args=(median_profile, cleaned_current)).x
+            norm_scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(norm_current)),
+                             args=(min_median, norm_current)).x
+
+            scale = np.max(min_current)
 
             replaced_current = np.where(
                 (model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] & self.DO_NOT_USE ^
                  model.dq[self.custom_slice(dispaxis, ind)][range(*profile_cut)] & self.NON_SCIENCE) == 1,
-                median_profile * scale,
+                median_profile * norm_scale * scale,
                 cleaned_current
             )
 
@@ -384,7 +396,7 @@ class PixelReplacement:
         newdq = model_replaced.dq
 
         # Make an array of x/y values on the detector
-        xsize, ysize = self.input.meta.subarray.xsize, self.input.meta.subarray.ysize
+        ysize, xsize = indata.shape
         basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
         pad = 1 # Padding around edge of array to ensure we don't look for neighbors outside array
 
