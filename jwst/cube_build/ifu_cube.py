@@ -67,8 +67,8 @@ class IFUCubeData():
         self.ra_center = pars_cube.get('ra_center')
         self.dec_center = pars_cube.get('dec_center')
         self.cube_pa = pars_cube.get('cube_pa')
-        self.nspax_xi = pars_cube.get('nspax_xi')
-        self.nspax_eta = pars_cube.get('nspax_eta')
+        self.nspax_x = pars_cube.get('nspax_x')
+        self.nspax_y = pars_cube.get('nspax_y')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
         self.debug_spaxel = pars_cube.get('debug_spaxel')
@@ -297,12 +297,14 @@ class IFUCubeData():
         na = math.ceil(xilimit / self.cdelt1) + 1
         nb = math.ceil(etalimit / self.cdelt2) + 1
 
-        # if the user set the nspax_xi or nspax_eta then redefine na, nb
+        # if the user set the nspax_x or nspax_y then redefine na, nb
         # it is assumed that both values are ODD numbers
-        if self.nspax_xi is not None:
-            na = int(self.nspax_xi/2)
-        if self.nspax_eta is not None:
-            nb = int(self.nspax_eta/2)
+        # We want the central pixel to be the tangent point with na/nb pixels on either
+        # side of central pixel. 
+        if self.nspax_x is not None:
+            na = int(self.nspax_x/2)
+        if self.nspax_y is not None:
+            nb = int(self.nspax_y/2)
 
         xi_min = 0.0 - (na * self.cdelt1) - (self.cdelt1 / 2.0)
         xi_max = (na * self.cdelt1) + (self.cdelt1 / 2.0)

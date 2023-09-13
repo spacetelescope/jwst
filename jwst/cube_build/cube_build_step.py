@@ -50,8 +50,8 @@ class CubeBuildStep (Step):
          ra_center = float(default=None) # RA center of the IFU cube
          dec_center = float(default=None) # Declination center of the IFU cube
          cube_pa = float(default=None) # The position angle of the desired cube in decimal degrees E from N
-         nspax_xi = integer(default=None) # The odd integer number of spaxels to use in the xi  dimension.
-         nspax_eta = integer(default=None) # The odd integer number of spaxels to use in the eta dimensions.
+         nspax_x = integer(default=None) # The odd integer number of spaxels to use in the x dimension of cube tangent plane.
+         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent plane.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
@@ -113,18 +113,18 @@ class CubeBuildStep (Step):
         if self.roiw != 0.0:
             self.log.info(f'Input Wave ROI size {self.roiw}')
 
-        # check that if self.nspax_xi or self.nspax_eta is provided they must be odd numbers
-        if self.nspax_xi is not None:
-            if self.nspax_xi % 2 == 0:
-                self.log.info(f'Input nspax_xi must be an odd number {self.nspax_xi}')
-                self.nspax_xi = self.nspax_xi + 1
-                self.log.info(f'Updating nspax by 1. New value {self.nspax_xi}')
+        # check that if self.nspax_x or self.nspax_y is provided they must be odd numbers
+        if self.nspax_x is not None:
+            if self.nspax_x % 2 == 0:
+                self.log.info(f'Input nspax_x must be an odd number {self.nspax_x}')
+                self.nspax_x = self.nspax_x + 1
+                self.log.info(f'Updating nspa by 1. New value {self.nspax_x}')
 
-        if self.nspax_eta is not None:
-            if self.nspax_eta % 2 == 0:
-                self.log.info(f'Input nspax_eta must be an odd number {self.nspax_eta}')
-                self.nspax_eta = self.nspax_eta + 1
-                self.log.info(f'Updating nspax_eta by 1. New value {self.nspax_eta}')
+        if self.nspax_y is not None:
+            if self.nspax_y % 2 == 0:
+                self.log.info(f'Input nspax_y must be an odd number {self.nspax_y}')
+                self.nspax_y = self.nspax_y + 1
+                self.log.info(f'Updating nspax_y by 1. New value {self.nspax_y}')
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
@@ -267,8 +267,8 @@ class CubeBuildStep (Step):
             'ra_center': self.ra_center,
             'dec_center': self.dec_center,
             'cube_pa': self.cube_pa,
-            'nspax_xi': self.nspax_xi,
-            'nspax_eta': self.nspax_eta,
+            'nspax_x': self.nspax_x,
+            'nspax_y': self.nspax_y,
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,
