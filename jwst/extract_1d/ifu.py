@@ -527,7 +527,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rscale'] is not None)):
             radius = radius * extract_params['ifu_rscale']/2.0
-            log.info("Scaling radius by factor =  %g",extract_params['ifu_rscale']/2.0 )
+            log.info("Scaling radius by factor =  %g", extract_params['ifu_rscale'] / 2.0 )
 
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
