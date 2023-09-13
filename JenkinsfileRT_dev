@@ -86,13 +86,17 @@ bc0.build_cmds = [
     "pip install -r requirements-sdp.txt",
 ] + PipInject(env.OVERRIDE_REQUIREMENTS) + ["pip list"]
 bc0.test_cmds = [
-    "pytest sxf -n auto --bigdata --slow \
+    "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
     // The following line needs single quotes to avoid insecure interpolation
     // of the codecov_token
+    "curl -Os https://uploader.codecov.io/latest/linux/codecov",
+    "chmod +x codecov",
+    './codecov --token=${codecov_token} -F nightly',
 ]
 bc0.test_configs = [data_config]
+bc0.failedFailureThresh = 0
 
 // macos-specific buildconfig to cause the creation of counterparts to the linux
 // environment dumps. Packages in a minimal conda environment differ by OS
