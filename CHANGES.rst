@@ -189,7 +189,9 @@ residual_fringe
 set_telescope_pointing
 ----------------------
 
--  Update WCS calculations for the GUIDING modes [#7889]
+- Update the WCS calculations for GUIDING modes to match the actual operation
+  of the different FGS guiding modes. Previously, the algorithm used was the
+  same for all modes. [#7889]
 
 undersampling_correction
 ------------------------
