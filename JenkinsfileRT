@@ -38,8 +38,7 @@ withCredentials([string(
     variable: 'codecov_token')]) {
 
 jobconfig = new JobConfig()
-//jobconfig.enable_env_publication = true
-jobconfig.enable_env_publication = false
+jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
 jobconfig.publish_env_filter = "spacetelescope/master"
 
