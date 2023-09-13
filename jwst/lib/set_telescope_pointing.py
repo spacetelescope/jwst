@@ -270,10 +270,23 @@ R2A = 3600. * R2D
 PI2 = np.pi * 2.
 
 # Pointing container
+# Attributes are as follows. Except for the observation time, all values
+# are retrieved from the engineering data.
+#    q            : Quaternion of the FGS.
+#    j2fgs_matrix : J-frame to FGS transformation.
+#    fsmcorr      : Fine Steering Mirror position.
+#    obstime      : Mid-point time of the observation at which all other values have been calculated.
+#    gs_commanded : Guide star position as originally commanded.
+#    fgsid        : FGS in use, 1 or 2.
+#    gs_position  : X/Y guide star position in the FGS.
 Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid', 'gs_position'])
 Pointing.__new__.__defaults__ = ((None,) * 5)
 
 # Guide Star ACQ pointing container
+# Attributes are as follows. All values are retrieved from the engineering.
+#    position : X/Y position of the guide star within the acquisition window of the FGS.
+#    corner   : X/Y corner of the acquisition window within the FGS.
+#    size     : X/Y size of the acquisition window.
 GuideStarPosition = namedtuple('GuideStarPosition', ['position', 'corner', 'size'])
 GuideStarPosition.__new__.__defaults__ = ((None,) * 3)
 
