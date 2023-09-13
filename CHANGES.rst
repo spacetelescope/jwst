@@ -189,7 +189,7 @@ residual_fringe
 set_telescope_pointing
 ----------------------
 
--  Update WCS calculations for the GUIDING modes [#6975]
+-  Update WCS calculations for the GUIDING modes [#7889]
 
 undersampling_correction
 ------------------------
