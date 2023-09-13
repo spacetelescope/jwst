@@ -86,7 +86,7 @@ cube_build
 - Fix a bug with memory allocation in C extensions when weighting=emsm. [#7847]
 
 - Add options to set ra,dec tangent projection center, position angle and size of cube
-  in tangent plane.[#7882]
+  in tangent plane. [#7882]
 
 datamodels
 ----------
