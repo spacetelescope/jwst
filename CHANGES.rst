@@ -108,6 +108,8 @@ general
 
 - Require minimum asdf version 2.15.1 and numpy 1.22 [#7861]
 
+- Add required jsonschema as a dependency [#7880]
+
 jump
 ____
 
@@ -152,6 +154,13 @@ pixel_replace
 -------------
 
 - Add the minimum gradient method for the MIRI MRS. [#7823]
+
+ramp_fitting
+------------
+
+- Removed unnecessary ramp fitting testing that duplicated testing already done
+  in STCAL. [#7888]
+
 
 refpix
 ------
