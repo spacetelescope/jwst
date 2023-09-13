@@ -24,7 +24,8 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
-@pytest.mark.parametrize("source_id,slit_name", [("s00001","s200a2"), ("s00021","s200a1"), ("s00023","s400a1"), ("s00024","s1600a1"), ("s00025","s200b1")])
+@pytest.mark.parametrize("source_id,slit_name", [("s00001","s200a2"), ("s00021","s200a1"), ("s00023","s400a1"),
+    ("s00024","s1600a1"), ("s00025","s200b1")])
 def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix, source_id, slit_name):
     """Test spec3 pipeline on a set of NIRSpec FS exposures."""
     rtdata = rtdata_module
