@@ -41,7 +41,7 @@ jobconfig = new JobConfig()
 //jobconfig.enable_env_publication = true
 jobconfig.enable_env_publication = false
 jobconfig.publish_env_on_success_only = true
-jobconfig.publish_env_filter = "spacetelescope/master"
+//jobconfig.publish_env_filter = "spacetelescope/master"
 
 // Define python version for conda
 python_version = "3.11"
