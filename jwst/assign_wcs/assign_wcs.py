@@ -97,8 +97,8 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
 
         # Store position of dithered pointing location in metadata for later spectral extraction
         if output_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-            output_model = store_dithered_position(output_model)
+            store_dithered_position(output_model)
             log.debug(f"Storing dithered pointing location information:"
-                     f"{output_model.meta.dither.dithered_ra} {output_model.meta.dither.dithered_dec}")
+                      f"{output_model.meta.dither.dithered_ra} {output_model.meta.dither.dithered_dec}")
     log.info("COMPLETED assign_wcs")
     return output_model
