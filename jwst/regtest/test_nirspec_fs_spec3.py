@@ -29,7 +29,6 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     """Test spec3 pipeline on a set of NIRSpec FS exposures."""
     rtdata = rtdata_module
 
-    #output = f"jw01309-o022_{source_id}_nirspec_f290lp-g395h-s200a2-allslits_{suffix}.fits"
     output = f"jw01309-o022_{source_id}_nirspec_f290lp-g395h-{slit_name}-allslits_{suffix}.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nirspec_fs_spec3/{output}")
