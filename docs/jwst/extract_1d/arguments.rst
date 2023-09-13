@@ -109,6 +109,19 @@ The ``extract_1d`` step has the following step-specific arguments.
   Switch to select whether or not to run 1d residual fringe correction on the
   extracted 1d spectrum (MIRI MRS only). Default is ``False``.
 
+``--ifu_set_srctype``
+  A string that can be used to override the extraction method for the source_type
+  given by the SRCTYPE keyword. The allowed values are POINT and EXTENDED. The SRCTYPE keyword is
+  not changed, instead the extraction method used is based on this parameter setting. This is
+  only allowed for IFU data. 
+
+``ifu_rscale``
+   A float designating the number of PSF FWHMs to use for the extraction radius. This
+   is  MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
+   size is set to 2 * FWHM. Values below 2 will result in a smaller
+   radius, a value of 2 results in no change to radius and a value above 2 results in a larger
+   extraction radius.  
+   
 ``--soss_atoca``
   This is a NIRISS-SOSS algorithm-specific parameter; if True, use the ATOCA
   algorithm to treat order contamination. Default is ``True``.

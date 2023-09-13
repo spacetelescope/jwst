@@ -78,11 +78,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         for MIRI MRS IFU spectra.  Default is False.
 
     ifu_rscale: float
-        For MRS IFU data a value for changing the extraction radi. The value provided is the number of PSF
+        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
         FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
-        default extraction size is set to 2 * FWHM. Values below 2 will results in a smaller
-        radi, a value of 2 results in no change to radi and a value above 2 results in a larger
-        extraction radi.
+        default extraction size is set to 2 * FWHM. Values below 2 will resuls in a smaller
+        radius, a value of 2 results in no change to radius and a value above 2 results in a larger
+        extraction radius.
 
     Returns
     -------
@@ -527,7 +527,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rscale'] is not None)):
             radius = radius * extract_params['ifu_rscale']/2.0
-            log.info("Scaling radius by factor =  %g", extract_params['ifu_rscale'] / 2.0 )
+            log.info("Scaling radius by factor =  %g", extract_params['ifu_rscale'] / 2.0)
 
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
