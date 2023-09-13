@@ -202,13 +202,18 @@ class Spec3Pipeline(Pipeline):
         # Process each source
         for source in sources:
 
-            # If each source is a SourceModelContainer
-            # the output name needs to be updated with the source name.
+            # If each source is a SourceModelContainer,
+            # the output name needs to be updated with the source ID, and potentially
+            # also the slit name (for NIRSpec fixed-slit only).
             if isinstance(source, tuple):
                 source_id, result = source
-                self.output_file = format_product(
-                    output_file, source_id=source_id.lower()
-                )
+                if result[0].meta.exposure.type == "NRS_FIXEDSLIT":
+                    slit_name = self._create_nrsfs_slit_name(result)
+                    self.output_file = format_product(
+                        output_file, source_id=source_id.lower(), slit_name=slit_name)
+                else:
+                    self.output_file = format_product(
+                        output_file, source_id=source_id.lower())
             else:
                 result = source
 
@@ -282,3 +287,21 @@ class Spec3Pipeline(Pipeline):
 
         self.log.info('Ending calwebb_spec3')
         return
+
+
+    def _create_nrsfs_slit_name(self, source_models):
+        """Create the complete slit_name product field for NIRSpec fixed-slit products
+
+        Each unique value of slit name within the list of input source models
+        is appended to the final slit name string.
+        """
+                    
+        slit_names = []
+        slit_names.append(source_models[0].name.lower())
+        for i in range(len(source_models)):
+            name = source_models[i].name.lower()
+            if name not in slit_names:
+                slit_names.append(name)
+        slit_name = "-".join(slit_names)  # append slit names using a dash separator
+
+        return slit_name

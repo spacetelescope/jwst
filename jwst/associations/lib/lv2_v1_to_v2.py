@@ -2,7 +2,6 @@
 import argparse
 from glob import glob
 import json
-import jsonschema
 import logging
 import os.path as path
 import re

@@ -9,6 +9,11 @@ assign_wcs
 - Save bounding box to imaging WCS matching the shape of the data, for datamodels
   without a defined bounding box. [#7809]
 
+- Update the assignment of "source_id" values for NIRSpec fixed-slit exposures, so
+  that the slit containing the primary target always has source_id=1 and secondary
+  slits use a two-digit source_id value that reflects both the primary target in
+  use and the secondary slit from which the data are extracted. [#7879]
+
 associations
 ------------
 
@@ -23,6 +28,17 @@ associations
 
 - Remove order dependency on association diffing. [#7853]
 
+- Update the Level 3 association rules for NIRSpec fixed-slit so that observations
+  the put the primary target in both the S200A1 and S200A2 slits get the data from
+  those two slits combined into a single final product. [#7879]
+
+- Update the Level 3 product name construction for NIRSpec fixed-slit observations
+  so that both the "source_id" and "slit_name" are left as variables for the
+  "calwebb_spec3" to populate at execution time. This update required an update to
+  the handling of the "opt_elem" attribute, so that it now only contains filter
+  and pupil information, while slit information is contained in the separate
+  attribute "fxd_slit". [#7879]
+
 background
 ----------
 
@@ -34,6 +50,14 @@ calwebb_spec2
 - Run ``pixel_replace`` before setting metadata and suffix of datamodel
   that is returned by the pipeline to ensure a file is created with the
   expected ``_cal`` suffix. [#7772]
+
+calwebb_spec3
+-------------
+
+- Updated to create output product names for NIRSpec fixed-slit data based on
+  both the "source_id" and "slit_name" values for each set of slit data, so that
+  the product name properly reflects the slit from which the data were taken.
+  [#7879]
 
 charge_migration
 ----------------
@@ -86,6 +110,8 @@ general
 
 - fix various deprecated usages of Numpy 2.0 [#7856]
 
+- Add required jsonschema as a dependency [#7880]
+
 jump
 ____
 
@@ -93,6 +119,9 @@ ____
 
 - Added argument description for three_group_rejection_threshold and
   four_group_rejection_threshold [#7839].
+
+- Updated argument description and parameter definition to allow
+  integer number of cores to be passed to STCAL jump.py. [#7871]
 
 master_background
 -----------------
@@ -117,10 +146,23 @@ pathloss
   when the computed target location is outside the slit. Add the parameter 
   "user_slit_loc" to allow specifying the source location to use. [#7806]
 
+photom
+------
+
+- Adapt MRS time dependent correction so that it can run successfully on
+  TSO mode data. [#7869]
+
 pixel_replace
 -------------
 
 - Add the minimum gradient method for the MIRI MRS. [#7823]
+
+ramp_fitting
+------------
+
+- Removed unnecessary ramp fitting testing that duplicated testing already done
+  in STCAL. [#7888]
+
 
 refpix
 ------

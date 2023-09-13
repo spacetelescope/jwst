@@ -413,7 +413,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model, slit_y_range)
     elif exp_type == "nrs_brightobj":
-        slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 4)]
+        slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 1)]
     elif exp_type in ["nrs_lamp", "nrs_autowave"]:
         if lamp_mode in ['fixedslit', 'brightobj']:
             slits = get_open_fixed_slits(input_model, slit_y_range)
@@ -434,17 +434,37 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     """ Return the opened fixed slits."""
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
+    if input_model.meta.instrument.fixed_slit is None:
+        input_model.meta.instrument.fixed_slit = 'NONE'
 
-    slits = []
+    slit_nums = {'NONE':0, 'S200A1':1, 'S200A2':2, 'S400A1':3, 'S1600A1':4, 'S200B1':5}
+    primary_slit = input_model.meta.instrument.fixed_slit
     ylow, yhigh = slit_y_range
 
-    s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5, 1)
-    s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5, 2)
-    s4a1 = Slit('S400A1', 2, 0, 0, 0, ylow, yhigh, 5, 3)
-    s16a1 = Slit('S1600A1', 3, 0, 0, 0, ylow, yhigh, 5, 4)
-    s2b1 = Slit('S200B1', 4, 0, 0, 0, ylow, yhigh, 5, 5)
+    # Slits are defined with hardwired source ID's, based on the assignments
+    # in the "slit_nums" dictionary. Exact assignments depend on whether the
+    # slit is the "primary" and hence contains the target of interest. The
+    # source_id for the primary slit is always 1, while source_ids for secondary
+    # slits is a two-digit value, where the first (tens) digit corresponds to
+    # primary slit in use and the second (ones) digit corresponds to the
+    # secondary slit number. All fixed slits are assigned to the virtual MSA
+    # quadrant 5.
+    #
+    # Slit(Name, ShutterID, DitherPos, Xcen, Ycen, Ymin, Ymax, Quad, SourceID)
+    s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5,
+        1 if primary_slit=='S200A1' else 10*slit_nums[primary_slit] + 1)
+    s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5,
+        1 if primary_slit=='S200A2' else 10*slit_nums[primary_slit] + 2)
+    s4a1 = Slit('S400A1', 2, 0, 0, 0, ylow, yhigh, 5,
+        1 if primary_slit=='S400A1' else 10*slit_nums[primary_slit] + 3)
+    s16a1 = Slit('S1600A1', 3, 0, 0, 0, ylow, yhigh, 5,
+        1 if primary_slit=='S1600A1' else 10*slit_nums[primary_slit] + 4)
+    s2b1 = Slit('S200B1', 4, 0, 0, 0, ylow, yhigh, 5,
+        1 if primary_slit=='S200B1' else 10*slit_nums[primary_slit] + 5)
 
+    # Decide which slits need to be added to this exposure
     subarray = input_model.meta.subarray.name.upper()
+    slits = []
     if subarray == "SUBS200A1":
         slits.append(s2a1)
     elif subarray == "SUBS200A2":

@@ -38,7 +38,8 @@ def nirspec_rate():
         'name': 'NIRSPEC',
         'gwa_tilt': 37.0610,
         'gwa_xtilt': 0.0001,
-        'gwa_ytilt': 0.0001}
+        'gwa_ytilt': 0.0001,
+        'fixed_slit': 'S200A1'}
     im.meta.subarray = {
         'fastaxis': 1,
         'name': 'SUBS200A1',
