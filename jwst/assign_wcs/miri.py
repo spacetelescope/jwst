@@ -607,14 +607,12 @@ def get_wavelength_range(input_model, path=None):
 
 def store_dithered_position(input_model):
     """Store the location of the dithered pointing
-    location in the wcsinfo
+    location in the dither metadata
 
     Parameters
     ----------
-    input_model : jwst.datamodels.ImageModel
+    input_model : `jwst.datamodels.ImageModel`
         Data model containing dither offset information
-    pipeline : list
-        List of transforms to create a WCS object
     """
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(
@@ -626,9 +624,8 @@ def store_dithered_position(input_model):
     dithered_v2, dithered_v3 = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
 
     v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
-    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)  # needs a wavelength,
-                                                                              # but does not affect return
+    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
+    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
 
     input_model.meta.dither.dithered_ra = dithered_ra
     input_model.meta.dither.dithered_dec = dithered_dec
-    return input_model
