@@ -1439,11 +1439,32 @@ class ExtractBase(abc.ABC):
         fwd_transform = self.wcs(x, y)
         middle_wl = np.nanmean(fwd_transform[2])
 
-        try:
-            x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
-        except NotImplementedError:
-            log.warning("Inverse wcs is not implemented, so can't use target coordinates to get location of spectrum.")
-            return
+        if input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC',
+                                              'NRS_BRIGHTOBJ']:
+            if slit is None:
+                xpos = input_model.source_xpos
+                ypos = input_model.source_ypos
+            else:
+                xpos = slit.source_xpos
+                ypos = slit.source_ypos
+
+            slit2det = self.wcs.get_transform('slit_frame', 'detector')
+            x_y = slit2det(xpos, ypos, middle_wl)
+            log.info("Using source_xpos and source_ypos to center extraction.")
+
+        elif input_model.meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+            try:
+                if slit is None:
+                    dithra = input_model.meta.dither.dithered_ra
+                    dithdec = input_model.meta.dither.dithered_dec
+                else:
+                    dithra = slit.meta.dither.dithered_ra
+                    dithdec = slit.meta.dither.dithered_dec
+                x_y = self.wcs.backward_transform(dithra, dithdec, middle_wl)
+            except AttributeError:
+                log.warning("Dithered pointing location not found in wcsinfo. "
+                            "Defaulting to TARG_RA / TARG_DEC for centering.")
+                return
 
         # locn is the XD location of the spectrum:
         if self.dispaxis == HORIZONTAL:

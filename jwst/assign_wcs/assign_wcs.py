@@ -6,6 +6,7 @@ from .util import (update_s_region_spectral, update_s_region_imaging,
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
 from ..lib.wcs_utils import get_wavelengths
+from .miri import store_dithered_position
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -94,5 +95,10 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
                     log.info("Unable to update S_REGION for type {}: {}".format(
                         output_model.meta.exposure.type, exc))
 
+        # Store position of dithered pointing location in metadata for later spectral extraction
+        if output_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+            store_dithered_position(output_model)
+            log.debug(f"Storing dithered pointing location information:"
+                      f"{output_model.meta.dither.dithered_ra} {output_model.meta.dither.dithered_dec}")
     log.info("COMPLETED assign_wcs")
     return output_model
