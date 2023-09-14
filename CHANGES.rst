@@ -1,7 +1,11 @@
 1.12.2 (unreleased)
 ===================
 
-- 
+- charge_migration
+----------------
+
+- Added tests to see if the data array is changed after runnung the step. [#7895]
+
 
 1.12.1 (2023-09-26)
 ===================
