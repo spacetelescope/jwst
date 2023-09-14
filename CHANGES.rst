@@ -1,7 +1,12 @@
 1.12.1 (unreleased)
 ===================
 
-- 
+extract_1d
+----------
+
+- For IFU data allow the user to set the src_type. For MIRI MRS data allow
+  the user to scale the extraction radius between 0.5 to 3.0 FWHM [#7883]
+ 
 
 1.12.0 (2023-09-18)
 ===================
@@ -111,6 +116,7 @@ extract_1d
 
 - Use ``source_{x/y}pos`` metadata to center extraction region for NIRSpec
   (non-IFU) data; use dithered pointing info for MIRI LRS fixed slit data. [#7796]
+
 
 extract_2d
 ----------
