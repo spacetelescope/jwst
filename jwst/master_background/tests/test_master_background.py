@@ -43,6 +43,8 @@ def science_image():
     image.meta.subarray.ystart = 1
     image.meta.wcsinfo.v2_ref = 0
     image.meta.wcsinfo.v3_ref = 0
+    image.meta.wcsinfo.v3yangle = 0
+    image.meta.wcsinfo.vparity = 0
     image.meta.wcsinfo.roll_ref = 0
     image.meta.wcsinfo.ra_ref = 0
     image.meta.wcsinfo.dec_ref = 0
