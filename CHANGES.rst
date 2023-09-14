@@ -84,6 +84,11 @@ datamodels
 
 - updated ``stdatamodels`` pin to ``>=1.8.0`` [#7854]
 
+documentation
+------------
+
+- Fixed a reference to the ``ramp_fitting` module in the user documentation. [#7898]
+
 engdb_tools
 -----------
 
