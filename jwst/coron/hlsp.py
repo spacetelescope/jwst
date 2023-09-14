@@ -64,7 +64,7 @@ def contrast_curve(target_model, width):
         rmid = (rmin + rmax) / 2.0
 
         # Initialize all pixels in the mask to NaN
-        mask[:] = np.NaN
+        mask[:] = np.nan
 
         # Loop over all pixels in the data array, determining which ones are
         # within the limits of the current annulus

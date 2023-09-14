@@ -310,7 +310,7 @@ def test_no_Nan():
     # Call no_NaN
     result = no_NaN(model, fill_value=fill_val)
 
-    # Use np.NaN to find NaNs.
+    # Use np.nan to find NaNs.
     test_result = np.isnan(model.data)
     # Assign fill values to NaN indices
     model.data[test_result] = fill_val
