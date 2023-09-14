@@ -81,7 +81,7 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
-    ifu_set_srctype: src
+    ifu_set_srctype: str
         For IFU data override srctype and set it to either POINT or EXTENDED.
 
     ifu_rscale: float

@@ -3022,7 +3022,7 @@ def do_extract1d(
 
             if ifu_set_srctype is not None:
                 source_type = ifu_set_srctype
-                log.info('Overriding source type and setting it to POINT')
+                log.info(f"Overriding source type and setting it to = {ifu_set_srctype}")
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
                 bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale

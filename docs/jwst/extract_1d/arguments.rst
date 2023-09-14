@@ -115,9 +115,9 @@ The ``extract_1d`` step has the following step-specific arguments.
   not changed, instead the extraction method used is based on this parameter setting. This is
   only allowed for IFU data. 
 
-``ifu_rscale``
+``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
-   is  MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
+   is a MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
    size is set to 2 * FWHM. Values below 2 will result in a smaller
    radius, a value of 2 results in no change to radius and a value above 2 results in a larger
    extraction radius.  
