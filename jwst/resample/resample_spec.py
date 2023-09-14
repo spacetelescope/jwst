@@ -77,6 +77,9 @@ class ResampleSpecData(ResampleData):
         output_wcs = kwargs.get('output_wcs', None)
         output_shape = kwargs.get('output_shape', None)
 
+        self.input_pixscale0 = None  # computed pixel scale of the first image (deg)
+        self._recalc_pscale_ratio = pscale is not None
+
         # Define output WCS based on all inputs, including a reference WCS
         if output_wcs is None:
             if resample_utils.is_sky_like(
