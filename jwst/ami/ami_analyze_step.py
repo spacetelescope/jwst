@@ -1,3 +1,4 @@
+import os
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
