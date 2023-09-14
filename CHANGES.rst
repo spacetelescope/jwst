@@ -14,6 +14,9 @@ assign_wcs
   slits use a two-digit source_id value that reflects both the primary target in
   use and the secondary slit from which the data are extracted. [#7879]
 
+- Compute sky position of dithered slit center for MIRI LRS fixed slit data, and
+  store in dither metadata under ``dithered_ra`` and ``dithered_dec``. [#7796]
+
 associations
 ------------
 
@@ -89,6 +92,12 @@ engdb_tools
 
 - Check alternative host is alive before attempting to run test for
   access to avoid waiting the full timeout during test runs [#7780]
+
+extract_1d
+----------
+
+- Use ``source_{x/y}pos`` metadata to center extraction region for NIRSpec
+  (non-IFU) data; use dithered pointing info for MIRI LRS fixed slit data. [#7796]
 
 extract_2d
 ----------
