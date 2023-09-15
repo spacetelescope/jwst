@@ -388,7 +388,7 @@ class Dataset():
                 else:
                     log.info('Single readout amplifier used')
                     if ngoodtopbottom == 0:
-                        log.info('No valid reference pixels.  This step wil have no effect')
+                        log.info('No valid reference pixels.  This step will have no effect.')
                     else:
                         log.info('The following parameter is valid for this mode:')
                         log.info(f'odd_even_columns = {self.odd_even_columns}')

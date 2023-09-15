@@ -171,6 +171,10 @@ pixel_replace
 
 - Add the minimum gradient method for the MIRI MRS. [#7823]
 
+- Corrected ``fit_profile`` algorithm behavior when estimating
+  flux of pixels centered in spectral trace, fitting normalization
+  scale independent of flux. [#7886]
+
 ramp_fitting
 ------------
 
