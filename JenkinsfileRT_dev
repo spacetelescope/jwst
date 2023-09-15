@@ -84,7 +84,7 @@ bc0.build_cmds = [
 bc0.test_cmds = [
     "pytest -r sxf --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml \
-    -n 4 --dist=loadscope \
+    -n 8 --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
 ]
 bc0.test_configs = [data_config]
