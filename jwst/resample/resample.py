@@ -156,9 +156,9 @@ class ResampleData:
         self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
         self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
-        self.blank_output.meta.photometry.pixelarea_arcsecsq = np.rad2deg(
-            3600 * output_pix_area
-        )**2
+        self.blank_output.meta.photometry.pixelarea_arcsecsq = (
+            output_pix_area * np.rad2deg(3600)**2
+        )
 
         self.output_models = ModelContainer(open_models=False)
 
@@ -225,7 +225,9 @@ class ResampleData:
                             f"image {repr(img.meta.filename)}."
                         )
                     if self.input_pixscale0 is None:
-                        self.input_pixscale0 = np.rad2deg(np.sqrt(input_pixel_area))
+                        self.input_pixscale0 = np.rad2deg(
+                            np.sqrt(input_pixel_area)
+                        )
                         if self._recalc_pscale_ratio:
                             self.pscale_ratio = self.pscale / self.input_pixscale0
                     iscale = np.sqrt(input_pixflux_area / input_pixel_area)
@@ -306,7 +308,9 @@ class ResampleData:
                         f"image {repr(img.meta.filename)}."
                     )
                 if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(np.sqrt(input_pixel_area))
+                    self.input_pixscale0 = np.rad2deg(
+                        np.sqrt(input_pixel_area)
+                    )
                     if self._recalc_pscale_ratio:
                         self.pscale_ratio = self.pscale / self.input_pixscale0
                 iscale = np.sqrt(input_pixflux_area / input_pixel_area)
@@ -692,7 +696,7 @@ def _compute_image_pixel_area(wcs):
     ymin = max(0, int(ymin + 0.5))
     ymax = min(ny - 1, int(ymax - 0.5))
 
-    for shrink in range(30):
+    for shrink in range(5):
         try:
             x, y, image_area, center = _get_boundary_points(
                 xmin=xmin,
