@@ -87,7 +87,7 @@ bc0.build_cmds = [
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov=./ -r sxf --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml \
-    -n 4 --dist=loadscope \
+    -n 8 --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
     // The following line needs single quotes to avoid insecure interpolation
     // of the codecov_token
