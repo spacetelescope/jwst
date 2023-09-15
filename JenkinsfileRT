@@ -40,9 +40,10 @@ withCredentials([string(
 jobconfig = new JobConfig()
 jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
+jobconfig.publish_env_filter = "spacetelescope/master"
 
 // Define python version for conda
-python_version = "3.9"
+python_version = "3.11"
 
 // Define environment variables needed for the regression tests
 env_vars = [
@@ -86,7 +87,7 @@ bc0.build_cmds = [
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov=./ -r sxf --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml \
-    -n 4 --dist=loadscope \
+    -n 8 --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
     // The following line needs single quotes to avoid insecure interpolation
     // of the codecov_token
