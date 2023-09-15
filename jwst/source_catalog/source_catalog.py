@@ -118,13 +118,16 @@ class JWSTSourceCatalog:
                              'MJy/sr')
 
         unit = u.Jy
-        to_jy = 1.e6 * self.model.meta.photometry.pixelarea_steradians
-        self.model.data *= to_jy
-        self.model.err *= to_jy
-        self.model.data <<= unit
-        self.model.err <<= unit
-        self.model.meta.bunit_data = unit.name
-        self.model.meta.bunit_err = unit.name
+        if self.model.meta.photometry.pixelarea_steradians is None:
+            log.warning("Pixel area is None. Can't convert to Jy.")
+        else:
+            to_jy = 1.e6 * self.model.meta.photometry.pixelarea_steradians
+            self.model.data *= to_jy
+            self.model.err *= to_jy
+            self.model.data <<= unit
+            self.model.err <<= unit
+            self.model.meta.bunit_data = unit.name
+            self.model.meta.bunit_err = unit.name
 
     def convert_from_jy(self):
         """
@@ -132,15 +135,18 @@ class JWSTSourceCatalog:
         `~astropy.unit.Quantity` objects to `~numpy.ndarray`.
         """
 
-        to_mjy_sr = 1.e6 * self.model.meta.photometry.pixelarea_steradians
-        self.model.data /= to_mjy_sr
-        self.model.err /= to_mjy_sr
+        if self.model.meta.photometry.pixelarea_steradians is None:
+            log.warning("Pixel area is None. Can't convert from Jy.")
+        else:
+            to_mjy_sr = 1.e6 * self.model.meta.photometry.pixelarea_steradians
+            self.model.data /= to_mjy_sr
+            self.model.err /= to_mjy_sr
 
-        self.model.data = self.model.data.value  # remove units
-        self.model.err = self.model.err.value  # remove units
+            self.model.data = self.model.data.value  # remove units
+            self.model.err = self.model.err.value  # remove units
 
-        self.model.meta.bunit_data = 'MJy/sr'
-        self.model.meta.bunit_err = 'MJy/sr'
+            self.model.meta.bunit_data = 'MJy/sr'
+            self.model.meta.bunit_err = 'MJy/sr'
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):

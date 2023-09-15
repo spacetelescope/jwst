@@ -1094,15 +1094,11 @@ class DataSet():
         # Don't need to do this for NIRSpec, because pixel areas come from
         # the AREA ref file, which have already been copied using save_area_nirspec
         if self.instrument != 'NIRSPEC':
-            try:
-                area_ster = ftab.meta.photometry.pixelarea_steradians
-            except AttributeError:
-                area_ster = None
+            area_ster = ftab.meta.photometry.pixelarea_steradians
+            if area_ster is None:
                 log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
-            try:
-                area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
-            except AttributeError:
-                area_a2 = None
+            area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
+            if area_a2 is None:
                 log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
 
             # Copy the pixel area values to the output
