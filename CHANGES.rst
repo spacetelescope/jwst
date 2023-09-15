@@ -122,6 +122,8 @@ general
 
 - Require minimum asdf version 2.15.1 and numpy 1.22 [#7861]
 
+- fix various deprecated usages of Numpy 2.0 [#7856]
+
 - Add required jsonschema as a dependency [#7880]
 
 jump

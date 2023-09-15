@@ -979,7 +979,7 @@ class DataSet():
 
         # Interpolate the photometric response values onto the
         # 2D wavelength grid
-        conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
+        conv_2d = np.interp(wl_array, waves, relresps, left=np.nan, right=np.nan)
 
         # Combine the scalar and 2D conversion factors
         conversion = conversion * conv_2d
@@ -1033,7 +1033,7 @@ class DataSet():
 
         # Interpolate the photometric response values onto the
         # 1D wavelength grid
-        conv_1d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
+        conv_1d = np.interp(wl_array, waves, relresps, left=np.nan, right=np.nan)
 
         if flip_wl:
             # If wl_array was flipped, flip the conversion before returning it.
