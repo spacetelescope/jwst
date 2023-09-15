@@ -464,9 +464,6 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
 def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
     """Test using the database"""
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
-
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate

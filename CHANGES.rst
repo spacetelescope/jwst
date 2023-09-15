@@ -14,6 +14,9 @@ assign_wcs
   slits use a two-digit source_id value that reflects both the primary target in
   use and the secondary slit from which the data are extracted. [#7879]
 
+- Compute sky position of dithered slit center for MIRI LRS fixed slit data, and
+  store in dither metadata under ``dithered_ra`` and ``dithered_dec``. [#7796]
+
 associations
 ------------
 
@@ -65,7 +68,7 @@ charge_migration
 - Step was renamed from undersampling_migration. Changed default signal threshold,
   added efficient routine to flag neighborhood pixels, added new unit test,
   improved earlier unit tests, updated docs. [#7825]
-  
+
 cube_build
 ----------
 
@@ -84,11 +87,22 @@ datamodels
 
 - updated ``stdatamodels`` pin to ``>=1.8.0`` [#7854]
 
+documentation
+------------
+
+- Fixed a reference to the ``ramp_fitting` module in the user documentation. [#7898]
+
 engdb_tools
 -----------
 
 - Check alternative host is alive before attempting to run test for
   access to avoid waiting the full timeout during test runs [#7780]
+
+extract_1d
+----------
+
+- Use ``source_{x/y}pos`` metadata to center extraction region for NIRSpec
+  (non-IFU) data; use dithered pointing info for MIRI LRS fixed slit data. [#7796]
 
 extract_2d
 ----------
@@ -186,7 +200,15 @@ residual_fringe
 
 - Use scipy.interpolate.BSpline instead of astropy.modeling.Spline1D in
   residual_fringe fitting utils [#7764]
-  
+
+
+set_telescope_pointing
+----------------------
+
+- Update the WCS calculations for GUIDING modes to match the actual operation
+  of the different FGS guiding modes. Previously, the algorithm used was the
+  same for all modes. [#7889]
+
 undersampling_correction
 ------------------------
 
@@ -195,7 +217,7 @@ undersampling_correction
 
 - Removed directories for undersampling_correction step, as the step has been
   renamed charge_migration. [#7850]
-  
+
 
 1.11.4 (2023-08-14)
 ===================
