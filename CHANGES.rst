@@ -166,6 +166,9 @@ photom
 - Adapt MRS time dependent correction so that it can run successfully on
   TSO mode data. [#7869]
 
+- Issue a warning when the PIXAR_SR or PIXAR_A2 keywords are not found in the
+  PHOTOM reference file. [#7905]
+
 pixel_replace
 -------------
 
@@ -212,6 +215,12 @@ set_telescope_pointing
 - Update the WCS calculations for GUIDING modes to match the actual operation
   of the different FGS guiding modes. Previously, the algorithm used was the
   same for all modes. [#7889]
+
+source_catalog
+--------------
+
+- Issue a warning when the pixelarea meta value is not available for converting
+  to and from flux density and surface brightness. [#7905]
 
 undersampling_correction
 ------------------------
