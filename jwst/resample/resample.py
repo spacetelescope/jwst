@@ -652,10 +652,10 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     sx = max(1, int(np.ceil(nx / dx)))
     sy = max(1, int(np.ceil(ny / dy)))
 
-    xmin = shrink
-    xmax = nx - 1 - shrink
-    ymin = shrink
-    ymax = ny - 1 - shrink
+    xmin += shrink
+    xmax -= shrink
+    ymin += shrink
+    ymax -= shrink
 
     size = 2 * sx + 2 * sy + 1
     x = np.empty(size)
@@ -703,8 +703,8 @@ def _compute_image_pixel_area(wcs):
                 xmax=xmax,
                 ymin=ymin,
                 ymax=ymax,
-                dx=min(nx // 4, 15),
-                dy=min(ny // 4, 15),
+                dx=min((xmax - xmin) // 4, 15),
+                dy=min((ymax - ymin) // 4, 15),
                 shrink=shrink
             )
         except ValueError:
