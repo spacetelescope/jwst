@@ -657,30 +657,34 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     ymin += shrink
     ymax -= shrink
 
-    size = 2 * sx + 2 * sy + 1
+    size = 2 * sx + 2 * sy
     x = np.empty(size)
     y = np.empty(size)
 
-    x[0:sx] = np.linspace(xmin, xmax, sx, False)
-    y[0:sx] = ymin
-    x[sx:sx + sy] = xmax
-    y[sx:sx + sy] = np.linspace(ymin, ymax, sy, False)
-    x[sx + sy:2 * sx + sy] = np.linspace(xmax, xmin, sx, False)
-    y[sx + sy:2 * sx + sy] = ymax
-    x[2 * sx + sy:2 * sx + 2 * sy] = xmin
-    y[2 * sx + sy:2 * sx + 2 * sy] = np.linspace(ymax, ymin, sy, False)
-    x[-1] = xmin
-    y[-1] = ymin
+    b = np.s_[0:sx]  # bottom edge
+    r = np.s_[sx:sx + sy]  # right edge
+    t = np.s_[sx + sy:2 * sx + sy]  # top edge
+    l = np.s_[2 * sx + sy:2 * sx + 2 * sy]  # left
+
+    x[b] = np.linspace(xmin, xmax, sx, False)
+    y[b] = ymin
+    x[r] = xmax
+    y[r] = np.linspace(ymin, ymax, sy, False)
+    x[t] = np.linspace(xmax, xmin, sx, False)
+    y[t] = ymax
+    x[l] = xmin
+    y[l] = np.linspace(ymax, ymin, sy, False)
 
     area = (xmax - xmin) * (ymax - ymin)
     center = (0.5 * (xmin + xmax), 0.5 * (ymin + ymax))
 
-    return x, y, area, center
+    return x, y, area, center, b, r, t, l
 
 
 def _compute_image_pixel_area(wcs):
     """ Computes pixel area in steradians.
     """
+
     if wcs.array_shape is None:
         raise ValueError("WCS must have array_shape attribute set.")
 
@@ -695,17 +699,23 @@ def _compute_image_pixel_area(wcs):
     xmax = min(nx - 1, int(xmax - 0.5))
     ymin = max(0, int(ymin + 0.5))
     ymax = min(ny - 1, int(ymax - 0.5))
+    if xmin > xmax:
+        (xmin, xmax) = (xmax, xmin)
+    if ymin > ymax:
+        (ymin, ymax) = (ymax, ymin)
 
-    for shrink in range(5):
+    k = 0
+    dxy = [1, -1, -1, 1]
+
+    while xmin < xmax and ymin < ymax:
         try:
-            x, y, image_area, center = _get_boundary_points(
+            x, y, image_area, center, b, r, t, l = _get_boundary_points(
                 xmin=xmin,
                 xmax=xmax,
                 ymin=ymin,
                 ymax=ymax,
                 dx=min((xmax - xmin) // 4, 15),
-                dy=min((ymax - ymin) // 4, 15),
-                shrink=shrink
+                dy=min((ymax - ymin) // 4, 15)
             )
         except ValueError:
             return None
@@ -714,9 +724,22 @@ def _compute_image_pixel_area(wcs):
         ra = world[spatial_idx[0]]
         dec = world[spatial_idx[1]]
 
-        if (np.all(np.isfinite(ra)) and np.all(np.isfinite(dec))):
+        limits = [ymin, xmax, ymax, xmin]
+
+        for j in range(4):
+            sl = [b, r, t, l][k]
+            if not (np.all(np.isfinite(ra[sl])) and
+                    np.all(np.isfinite(dec[sl]))):
+                limits[k] += dxy[k]
+                ymin, xmax, ymax, xmin = limits
+                k = (k + 1) % 4
+                break
+            k = (k + 1) % 4
+        else:
             valid_polygon = True
             break
+
+        ymin, xmax, ymax, xmin = limits
 
     if not valid_polygon:
         return None
