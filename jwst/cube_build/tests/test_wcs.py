@@ -84,8 +84,8 @@ def test_coord_trans1():
     # and an eta close to diff_dec
 
     xi, eta = coord.radec2std(crval1, crval2, ra, dec)
-    assert math.isclose(xi, 0.0, abs_tol=0.001)
-    assert math.isclose(eta, diff_ra, abs_tol=0.001)
+    assert math.isclose(xi.item(), 0.0, abs_tol=0.001)
+    assert math.isclose(eta.item(), diff_ra, abs_tol=0.001)
 
 
 def test_coord_trans2():
@@ -101,8 +101,8 @@ def test_coord_trans2():
     # and an eta close to diff_dec
 
     xi, eta = coord.radec2std(crval1, crval2, ra, dec)
-    assert math.isclose(xi, -3.535, abs_tol=0.001)
-    assert math.isclose(eta, diff_ra, abs_tol=0.001)
+    assert math.isclose(xi.item(), -3.535, abs_tol=0.001)
+    assert math.isclose(eta.item(), diff_ra, abs_tol=0.001)
 
 
 def test_coord_trans3():
@@ -120,8 +120,8 @@ def test_coord_trans3():
 
     xi, eta = coord.radec2std(crval1, crval2, ra, dec)
     ra_test, dec_test = coord.std2radec(crval1, crval2, xi, eta)
-    assert math.isclose(ra, ra_test, abs_tol=0.00001)
-    assert math.isclose(dec, dec_test, abs_tol=0.00001)
+    assert math.isclose(ra, ra_test.item(), abs_tol=0.00001)
+    assert math.isclose(dec, dec_test.item(), abs_tol=0.00001)
 
 
 def test_wrap_ra():
