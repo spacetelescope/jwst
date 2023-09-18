@@ -234,12 +234,12 @@ class Extract1dStep(Step):
                 self.log.warning("The option to apply a residual refringe correction is"
                                  f"not supported for {input_model.meta.exposure.type} data")
 
-        if self.ifu_rscale:
+        if self.ifu_rscale is not None:
             if input_model.meta.exposure.type != "MIR_MRS":
                 self.log.warning("The option to change the extraction radius is"
                                  f"not supported for {input_model.meta.exposure.type} data")
 
-        if self.ifu_set_srctype:
+        if self.ifu_set_srctype is not None:
             if input_model.meta.exposure.type != "MIR_MRS":
                 self.log.warning("The option to change the source type is"
                                  f"not supported for {input_model.meta.exposure.type} data")
