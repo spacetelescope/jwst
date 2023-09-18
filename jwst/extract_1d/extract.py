@@ -2804,7 +2804,7 @@ def do_extract1d(
         for MIRI MRS IFU spectra.  Default is False.
 
     ifu_set_srctype : str
-        For IFU data override srctype and set it to either POINT or EXTENDED.
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
 
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
