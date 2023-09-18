@@ -82,7 +82,7 @@ class Extract1dStep(Step):
         for MIRI MRS IFU spectra.  Default is False.
 
     ifu_set_srctype: str
-        For IFU data override srctype and set it to either POINT or EXTENDED.
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
 
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
@@ -160,7 +160,7 @@ class Extract1dStep(Step):
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
-    ifu_rscale = float(default=None, min=0.5, max=3) Radius in terms of PSF FWHM to scale extraction radii
+    ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -228,6 +228,21 @@ class Extract1dStep(Step):
             self.log.error('extract_1d will be skipped.')
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
+
+        if self.ifu_rfcorr:
+            if input_model.meta.exposure.type != "MIR_MRS":
+                self.log.warning("The option to apply a residual refringe correction is"
+                                 f"not supported for {input_model.meta.exposure.type} data")
+
+        if self.ifu_rscale:
+            if input_model.meta.exposure.type != "MIR_MRS":
+                self.log.warning("The option to change the extraction radius is"
+                                 f"not supported for {input_model.meta.exposure.type} data")
+
+        if self.ifu_set_srctype:
+            if input_model.meta.exposure.type != "MIR_MRS":
+                self.log.warning("The option to change the source type is"
+                                 f"not supported for {input_model.meta.exposure.type} data")
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data

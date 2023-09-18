@@ -2610,7 +2610,7 @@ def run_extract1d(
         for MIRI MRS IFU spectra.  Default is False.
 
     ifu_set_srctype : str
-        For IFU data override srctype and set it to either POINT or EXTENDED.
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
 
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
@@ -2803,7 +2803,7 @@ def do_extract1d(
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
-    ifu_set_srctype : src
+    ifu_set_srctype : str
         For IFU data override srctype and set it to either POINT or EXTENDED.
 
     ifu_rscale: float
@@ -3020,7 +3020,7 @@ def do_extract1d(
             if source_type is None:
                 source_type = "UNKNOWN"
 
-            if ifu_set_srctype is not None:
+            if ifu_set_srctype is not None and input_model.meta.exposure.type == 'MIR_MRS':
                 source_type = ifu_set_srctype
                 log.info(f"Overriding source type and setting it to = {ifu_set_srctype}")
             output_model = ifu.ifu_extract1d(

@@ -113,7 +113,7 @@ The ``extract_1d`` step has the following step-specific arguments.
   A string that can be used to override the extraction method for the source_type
   given by the SRCTYPE keyword. The allowed values are POINT and EXTENDED. The SRCTYPE keyword is
   not changed, instead the extraction method used is based on this parameter setting. This is
-  only allowed for IFU data. 
+  only allowed for MIRI MRS IFU data. 
 
 ``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
