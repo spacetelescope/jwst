@@ -1,0 +1,65 @@
+name: tests with development versions of dependencies
+
+on:
+  push:
+    branches:
+      - master
+      - '*x'
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Weekly Monday 9AM build
+    - cron: "0 9 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  data:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run devdeps tests')))
+    name: retrieve current CRDS context
+    runs-on: ubuntu-latest
+    env:
+      OBSERVATORY: jwst
+      CRDS_PATH: /tmp/crds_cache
+      CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+    steps:
+      - id: crds_context
+        run: >
+          echo "pmap=$(
+          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.OBSERVATORY }}"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ |
+          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
+          )" >> $GITHUB_OUTPUT
+        # Get default CRDS_CONTEXT without installing crds client
+        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
+      - id: crds_path
+        run: echo "path=${{ env.CRDS_PATH }}" >> $GITHUB_OUTPUT
+      - id: crds_server
+        run: echo "url=${{ env.CRDS_SERVER_URL }}" >> $GITHUB_OUTPUT
+    outputs:
+      crds_context: ${{ steps.crds_context.outputs.pmap }}
+      crds_path: ${{ steps.crds_path.outputs.path }}
+      crds_server: ${{ steps.crds_server.outputs.url }}
+  test:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run devdeps tests')))
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    needs: [ data ]
+    with:
+      setenv: |
+        CRDS_PATH: ${{ needs.data.outputs.crds_path }}
+        CRDS_SERVER_URL: ${{ needs.data.outputs.crds_server }}
+        CRDS_CLIENT_RETRY_COUNT: 3
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+      cache-path: ${{ needs.data.outputs.crds_path }}
+      cache-key: crds-${{ needs.data.outputs.crds_context }}
+      envs: |
+        - linux: py311-devdeps-xdist
+          pytest-results-summary: true
+        - macos: py311-devdeps-xdist
+          pytest-results-summary: true
+        - windows: py311-devdeps-xdist
+          pytest-results-summary: true
