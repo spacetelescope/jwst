@@ -4,7 +4,7 @@
 extract_1d
 ----------
 
-- For IFU data allow the user to set the src_type. For MIRI MRS data allow
+- For MIRS MRS IFU data allow the user to set the src_type and allow 
   the user to scale the extraction radius between 0.5 to 3.0 FWHM [#7883]
  
 
