@@ -64,6 +64,11 @@ class IFUCubeData():
 
         self.scalexy = pars_cube.get('scalexy')
         self.scalew = pars_cube.get('scalew')
+        self.ra_center = pars_cube.get('ra_center')
+        self.dec_center = pars_cube.get('dec_center')
+        self.cube_pa = pars_cube.get('cube_pa')
+        self.nspax_x = pars_cube.get('nspax_x')
+        self.nspax_y = pars_cube.get('nspax_y')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
         self.debug_spaxel = pars_cube.get('debug_spaxel')
@@ -231,6 +236,7 @@ class IFUCubeData():
         """ Based on the ra,dec and wavelength footprint set up the size
         of the cube in the tangent plane projected coordinate system.
 
+
         Parameters
         ----------
         footprint: tuple
@@ -255,8 +261,16 @@ class IFUCubeData():
         # we have angles in degrees
         ra_ave = circmean(ravalues * u.deg).value
 
-        self.crval1 = ra_ave
-        self.crval2 = dec_ave
+        if self.ra_center is not None:
+            self.crval1 = self.ra_center
+        else:
+            self.crval1 = ra_ave
+
+        if self.dec_center is not None:
+            self.crval2 = self.dec_center
+        else:
+            self.crval2 = dec_ave
+
         rot_angle = self.rot_angle
 
         # find the 4 corners
@@ -269,7 +283,6 @@ class IFUCubeData():
                                       corner_a[i], corner_b[i], rot_angle)
             xi_corner.append(xi)
             eta_corner.append(eta)
-
         xi_min = min(xi_corner)
         xi_max = max(xi_corner)
         eta_min = min(eta_corner)
@@ -283,6 +296,15 @@ class IFUCubeData():
 
         na = math.ceil(xilimit / self.cdelt1) + 1
         nb = math.ceil(etalimit / self.cdelt2) + 1
+
+        # if the user set the nspax_x or nspax_y then redefine na, nb
+        # it is assumed that both values are ODD numbers
+        # We want the central pixel to be the tangent point with na/nb pixels on either
+        # side of central pixel. 
+        if self.nspax_x is not None:
+            na = int(self.nspax_x/2)
+        if self.nspax_y is not None:
+            nb = int(self.nspax_y/2)
 
         xi_min = 0.0 - (na * self.cdelt1) - (self.cdelt1 / 2.0)
         xi_max = (na * self.cdelt1) + (self.cdelt1 / 2.0)
@@ -550,7 +572,7 @@ class IFUCubeData():
 
         if self.spaxel_z == -1 and self.spaxel_x == -1 and self.spaxel_y == -1:
             debug_cube_index = -1
-            
+
         elif(self.spaxel_z < 0 or self.spaxel_x < 0 or self.spaxel_y < 0):
             print('Incorrect input for Debug Spaxel values. Counting starts at 0')
             debug_cube_index = -1
@@ -1209,11 +1231,11 @@ class IFUCubeData():
 
         parameter1 = self.list_par1
         parameter2 = self.list_par2
-
 # ________________________________________________________________________________
-# Define the rotation angle between the ra-dec and alpha beta coord system using
-# the first input model. Use first file in first band to set up rotation angle
+# Define the rotation angle
 
+# If coord_system = ifualign then the angle is between the ra-dec and alpha beta
+# coord system using the first input model. Use first file in first band to set up rotation angle
 # Compute the rotation angle between local IFU system  and RA-DEC
 
         if self.coord_system == 'ifualign':
@@ -1257,6 +1279,12 @@ class IFUCubeData():
             self.rot_angle = 90 + np.arctan2(dra, ddec) * 180. / np.pi
             log.info(f'Rotation angle between ifu and sky: {self.rot_angle}')
 
+        # If coord_system = iskyalign and the user provided a position angle. Define the rotation angle
+        # to be the user provided value.
+
+        if self.coord_system == 'skyalign' and self.cube_pa is not None:
+            self.rot_angle = self.cube_pa
+            log.info(f'Setting rotation angle between ifu and sky: {self.rot_angle}')
 # ________________________________________________________________________________
 # now loop over data and find min and max ranges data covers
 
@@ -1285,8 +1313,9 @@ class IFUCubeData():
                 spectral_found = hasattr(input_model.meta.wcsinfo, 'spectral_region')
                 spatial_found = hasattr(input_model.meta.wcsinfo, 's_region')
                 world = False
-                if self.coord_system == 'skyalign':
+                if self.coord_system == 'skyalign' and self.cube_pa is None:
                     world = True
+
                 # Do not use the default spatial or spectral region found in the wcs if
                 # 1. instrument is MIRI and
                 # 2. Output type is not multi and (not default calspec2) and
