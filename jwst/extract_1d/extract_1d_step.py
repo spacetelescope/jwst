@@ -81,15 +81,15 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
-    ifu_set_srctype: str
+    ifu_set_srctype : str
         For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
 
-    ifu_rscale: float
-        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
-        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
-        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
-        radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
-        extraction radius.
+    ifu_rscale : float
+        For MRS IFU data a value for changing the extraction radius. The value provided is
+        the number of PSF FWHMs to use for the extraction radius. Values accepted are between
+        0.5 to 3.0. The default extraction size is set to 2 * FWHM. Values below 2 will result
+        in a smaller radius, a value of 2 results in no change to the radius and a value above
+        2 results in a larger extraction radius.
 
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
