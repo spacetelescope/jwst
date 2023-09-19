@@ -25,10 +25,38 @@ ENGDB_PATH = os.path.join(
     'engdb'
 )
 MNEMONICS_TO_CACHE = [
+    'IFGS_ACQ_DETXCOR',
+    'IFGS_ACQ_DETYCOR',
+    'IFGS_ACQ_DETXSIZ',
+    'IFGS_ACQ_DETYSIZ',
+    'IFGS_ACQ_XPOSG',
+    'IFGS_ACQ_YPOSG',
+    'IFGS_CTDGS_X',
+    'IFGS_CTDGS_Y',
+    'IFGS_ID_XPOSG',
+    'IFGS_ID_YPOSG',
+    'IFGS_ID_DETXCOR',
+    'IFGS_ID_DETYCOR',
+    'IFGS_ID_DETXSIZ',
+    'IFGS_ID_DETYSIZ',
+    'IFGS_TFGGS_X',
+    'IFGS_TFGGS_Y',
+    'IFGS_TFGDET_XCOR',
+    'IFGS_TFGDET_YCOR',
+    'IFGS_TFGDET_XSIZ',
+    'IFGS_TFGDET_YSIZ',
+    'INRSI_GWA_Y_TILT_AVGED',
+    'SA_ZADUCMDX',
+    'SA_ZADUCMDY',
     'SA_ZATTEST1',
     'SA_ZATTEST2',
     'SA_ZATTEST3',
     'SA_ZATTEST4',
+    'SA_ZFGDETID',
+    'SA_ZFGGSCMDX',
+    'SA_ZFGGSCMDY',
+    'SA_ZFGGSPOSX',
+    'SA_ZFGGSPOSY',
     'SA_ZRFGS2J11',
     'SA_ZRFGS2J21',
     'SA_ZRFGS2J31',
@@ -38,14 +66,6 @@ MNEMONICS_TO_CACHE = [
     'SA_ZRFGS2J13',
     'SA_ZRFGS2J23',
     'SA_ZRFGS2J33',
-    'SA_ZADUCMDX',
-    'SA_ZADUCMDY',
-    'SA_ZFGGSCMDX',
-    'SA_ZFGGSCMDY',
-    'SA_ZFGGSPOSX',
-    'SA_ZFGGSPOSY',
-    'SA_ZFGDETID',
-    'INRSI_GWA_Y_TILT_AVGED',
 ]
 
 # Path templates
@@ -132,23 +152,6 @@ class EngDB_Mocker(requests_mock.Mocker):
         )
         context.status_code = 200
         return data
-
-    def __enter__(self):
-        """Setup environment for the context
-
-        Remove MAST_API_TOKEN to ensure the EngdbMast service is not used.
-        """
-        self._environ = os.environ.copy()
-        try:
-            del os.environ['MAST_API_TOKEN']
-        except KeyError:
-            pass
-        super().__enter__()
-
-    def __exit__(self, type, value, traceback):
-        """Restore the environment"""
-        super().__exit__(type, value, traceback)
-        os.environ = self._environ
 
 
 class EngDB_Local():
