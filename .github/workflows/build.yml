@@ -1,0 +1,27 @@
+name: build
+
+on:
+  release:
+    types: [ released ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: check that `requirements-sdp.txt` is populated
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: grep -v '^ *#' requirements-sdp.txt
+      - run: if [[ -z $(grep -v '^ *#' requirements-sdp.txt) ]]; then echo "requirements-sdp.txt is empty"; exit 1; fi
+  build:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
+    needs: [ check ]
+    with:
+      upload_to_pypi: ${{ github.event_name == 'released'}}
+      targets: |
+        - linux
+        - macos
+      sdist: true
+    secrets:
+      pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
