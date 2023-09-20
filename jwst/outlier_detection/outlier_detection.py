@@ -211,7 +211,7 @@ class OutlierDetection:
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
         median_model_output_path = self.make_output_path(
-            basepath=median_model.meta.filename,
+            basepath=median_model.meta.filename.replace(self.resample_suffix, '.fits'),
             suffix='median')
         median_model.save(median_model_output_path)
         log.info(f"Saved model in {median_model_output_path}")
