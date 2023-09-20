@@ -288,7 +288,7 @@ class Extract1dStep(Step):
                         self.ifu_autocen,
                         self.ifu_rfcorr,
                         self.ifu_set_srctype,
-                        self.ifu_rscsale,
+                        self.ifu_rscale,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
