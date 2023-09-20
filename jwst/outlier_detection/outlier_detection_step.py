@@ -183,10 +183,13 @@ class OutlierDetectionStep(Step):
                         outlr_file = crf_file.replace('crf', 'outlier_i2d')
                         outlr_path = crf_path.replace(crf_file, outlr_file)
                         blot_path = outlr_path.replace('outlier_i2d', 'blot')
-                        # Need to insert outlier into filename, as median filename is generated from drizzled model
-                        undersplit = outlr_file.split('_')
-                        median_file = '_'.join(undersplit[:-3]) + '_'.join(['_outlier', undersplit[-3], 'median.fits'])
-                        median_path = crf_path.replace(crf_file, median_file)
+                        if pars['resample_data'] is True:
+                            # Need to insert outlier into filename if median filename is generated from drizzled model
+                            undersplit = outlr_file.split('_')
+                            median_file = '_'.join(undersplit[:-3]) + '_'.join(['_outlier', undersplit[-3], 'median.fits'])
+                            median_path = crf_path.replace(crf_file, median_file)
+                        else:
+                            median_path = blot_path.replace('blot', 'median')
                         for fle in [outlr_path, blot_path, median_path]:
                             if os.path.isfile(fle):
                                 os.remove(fle)
