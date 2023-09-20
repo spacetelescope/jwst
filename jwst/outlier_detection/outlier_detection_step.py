@@ -180,11 +180,13 @@ class OutlierDetectionStep(Step):
                         # Remove unwanted files
                         crf_path = self.make_output_path(basepath=model.meta.filename)
                         crf_file = os.path.basename(crf_path)
-                        outlr_file = crf_file.replace('crf', 'outlier_i2d')
+                        outlr_file = model.meta.filename.replace('cal', 'outlier_i2d')
                         outlr_path = crf_path.replace(crf_file, outlr_file)
-                        blot_path = outlr_path.replace('outlier_i2d', 'blot')
+                        blot_path = crf_path.replace('crf', 'blot')
                         median_path = blot_path.replace('blot', 'median')
-                        for fle in [outlr_path, blot_path, median_path]:
+                        self.log.info(f"{crf_path} {outlr_path} {blot_path} "
+                                      f"{median_path}")
+                        for fle in [outlr_file, blot_path, median_path]:
                             if os.path.isfile(fle):
                                 os.remove(fle)
                                 self.log.debug(f"    {fle}")
