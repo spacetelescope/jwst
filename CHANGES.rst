@@ -10,6 +10,12 @@ extract_1d
 - Bug fix for #7883. The input model type is checked to see if the input is
   a single model or a model container. [#7965]
 
+outlier_detection
+-----------------
+
+- Remove median file output from ``output_dir`` if ``save_intermediate_results``
+  is set to False. [#7961]
+
 set_telescope_pointing
 ----------------------
 
