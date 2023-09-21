@@ -11,10 +11,10 @@
 #   jwst_velocity: None, method: '<Methods.COARSE_TR_202111: ''coarse_tr_202111''>', obsend: None, obsstart: None, override_transforms: None,
 #   pcs_mode: None, pointing: "Pointing(q=array([-0.30521413, -0.79144945, -0.25000546,  0.46685048]), j2fgs_matrix=array([-8.73067300e-04,\
 #     \  3.60334320e-03,  9.99993132e-01,  9.99757625e-01,\n       -2.19949530e-02,  9.52115800e-04,  2.19982331e-02,  9.99751584e-01,\n\
-#     \       -3.58325960e-03]), fsmcorr=array([-0.15910795, -0.00529688]), obstime=<Time object: scale='utc' format='unix' value=1643840741.0208645>,\
+#     \       -3.58325960e-03]), fsmcorr=array([-0.1592274 , -0.00642305]), obstime=<Time object: scale='utc' format='unix' value=1643840741.6157956>,\
 #     \ gs_commanded=array([0., 0.]), fgsid=0, gs_position=array([0., 0.]))", reduce_func: None, siaf: 'SIAF(v2_ref=0.0, v3_ref=0.0, v3yangle=0.0,
 #     vparity=1.0, crpix1=0, crpix2=0, cdelt1=3600, cdelt2=3600, vertices_idl=(0, 1, 1, 0, 0, 0, 1, 1))', siaf_db: <jwst.lib.siafdb.SiafDb
-#     object at 0x7f97d8f7d270>, tolerance: '60.0', useafter: None, v3pa_at_gs: None}
+#     object at 0x164da3890>, tolerance: '60.0', useafter: None, v3pa_at_gs: None}
 # schema: astropy-2.0
 source obstime ra dec pa_v3
-<ImageModel> 2022-02-02T22:25:41.021 146.5503941066434 63.08387154277842 194.1482993002141
+<ImageModel> 2022-02-02T22:25:41.616 146.5503945670982 63.08387151112689 194.14829980981426
