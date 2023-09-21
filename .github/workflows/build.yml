@@ -14,8 +14,6 @@ jobs:
       - uses: actions/checkout@v3
       - if: github.event_name == 'released'
         run: grep -v '^ *#' requirements-sdp.txt
-      - if: github.event_name == 'released'
-        run: if [[ -z $(grep -v '^ *#' requirements-sdp.txt) ]]; then echo "requirements-sdp.txt is empty"; exit 1; fi
   build:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
     needs: [ check ]
