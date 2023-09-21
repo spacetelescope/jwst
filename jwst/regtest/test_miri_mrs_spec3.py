@@ -71,6 +71,30 @@ def run_spec3_ifushort_emsm(jail, rtdata_module):
     return rtdata
 
 
+@pytest.fixture(scope='module')
+def run_spec3_ifushort_extract1d(jail, rtdata_module):
+    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
+
+    # Test has bands medium and long for IFUSHORT
+
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_extract1d_00001_asn.json')
+
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        '--steps.outlier_detection.save_results=true',
+        '--steps.cube_build.save_results=true',
+        '--steps.extract_1d.ifu_set_srctype="POINT"',
+        '--steps.extract_1d.ifu_rscale=3.0',
+        '--steps.extract_1d.ifu_rfcorr=true',
+        '--steps.extract_1d.save_results=true',
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
+
+
 @pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
@@ -131,6 +155,28 @@ def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, o
     """Regression test using weighting = 'emsm' """
 
     rtdata = run_spec3_ifushort_emsm
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.slow
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    [
+        'jw01024-c1000_t002_extract1dtest_miri_ch1-mediumlong_x1d.fits',
+        'jw01024-c1000_t002_extract1dtest_miri_ch2-mediumlong_x1d.fits'
+    ],
+)
+def test_spec3_ifushort_extract1d(run_spec3_ifushort_extract1d, fitsdiff_default_kwargs, output):
+    """Regression test for extract_1d using ifu_set_srctype=POINT, ifu_rscale=3.0,
+    ifu_rfcorr=true"""
+
+    rtdata = run_spec3_ifushort_extract1d
     rtdata.output = output
 
     rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
