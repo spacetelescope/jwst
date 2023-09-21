@@ -229,7 +229,7 @@ class Extract1dStep(Step):
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
 
-        if isinstance(input_model, datamodels.IFUImageModel):
+        if isinstance(input_model, datamodels.IFUCubeModel):
             exp_type = input_model.meta.exposure.type
         elif isinstance(input_model, ModelContainer):
             exp_type = input_model[0].meta.exposure.type
