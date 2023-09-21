@@ -3,6 +3,15 @@ Description
 
 :Class: `jwst.ami.AmiAverageStep`
 :Alias: ami_average
+	
+.. Attention:: 
+	The ``ami_average`` step has been removed from the default ami3 pipeline
+	until the effects of averaging multiple exposures has been more thoroughly examined.
+	It may be updated in the future; until then the legacy code is left in place. It
+	does not use the OIFITS-format (`~jwst.datamodels.AmiOIModel`) input that the current 
+	``ami_analayze`` step produces. It uses the deprecated `~jwst.datamodels.AmiLgModel`
+	for both input and output.
+
 
 The ``ami_average`` step is one of the AMI-specific steps in the ``ami``
 sub-package and is part of Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>` processing.

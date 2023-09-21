@@ -22,15 +22,11 @@ class Ami3Pipeline(Pipeline):
     Ami3Pipeline: Apply all level-3 calibration steps to an
     association of level-2b AMI exposures. Included steps are:
     ami_analyze (fringe detection)
-    # ami_average (average results of fringe detection)
     ami_normalize (normalize results by reference target)
     """
 
     class_alias = "calwebb_ami3"
 
-    spec = """
-        save_averages = boolean(default=True)
-    """
 
     # Define aliases to steps
     step_defs = {'ami_analyze': ami_analyze_step.AmiAnalyzeStep,
@@ -120,8 +116,8 @@ class Ami3Pipeline(Pipeline):
                 # blendmeta.blendmodels(result, inputs=[targ, psf])
                 self.save_model(result, suffix='aminorm')
                 result.close()
-                del psf_lg
-                del targ_lg
+            del psf_lg
+            del targ_lg
 
 
         # We're done
