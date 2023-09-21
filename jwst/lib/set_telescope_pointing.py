@@ -1895,18 +1895,22 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
             mnemonics[mnemonic] = engdb.get_values(
                 mnemonic, obsstart, obsend,
                 time_format='mjd', include_obstime=True,
-                include_bracket_values=True
+                include_bracket_values=False
             )
         except Exception as exception:
             raise ValueError(f'Cannot retrieve {mnemonic} from engineering.') from exception
 
         # If more than two points exist, throw off the bracket values.
         # Else, ensure the bracket values are within the allowed time.
-        if len(mnemonics[mnemonic]) > 2:
-            mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
-        else:
+        if len(mnemonics[mnemonic]) < 2:
             logger.warning('Mnemonic %s has no telemetry within the observation time.', mnemonic)
             logger.warning('Attempting to use bracket values within %s seconds', tolerance)
+
+            mnemonics[mnemonic] = engdb.get_values(
+                mnemonic, obsstart, obsend,
+                time_format='mjd', include_obstime=True,
+                include_bracket_values=True
+            )
 
             tolerance_mjd = tolerance * SECONDS2MJD
             allowed_start = obsstart - tolerance_mjd
@@ -3005,7 +3009,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
 
     # Getting the timing to extract from the engineering database is complicated by
     # the fact that the observation times and the processing of the guide star
-    # acquisition do not always exactly match. Extend the end time by one second.
+    # acquisition do not always exactly match. Extend the end time by two seconds.
     #
     # For ID modes, the mnemonics are valid only after the exposure is completed.
     # The time to examine is within 10 seconds after the end of exposure
@@ -3015,7 +3019,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
         obsstart = obsend
         obsend = (Time(obsend, format='mjd') + (10 * U.second)).mjd
     elif t_pars.exp_type in FGS_ACQ_EXP_TYPES:
-        obsend = (Time(obsend, format='mjd') + (1 * U.second)).mjd
+        obsend = (Time(obsend, format='mjd') + (2 * U.second)).mjd
 
     gs_position = get_pointing(obsstart, obsend,
                                mnemonics_to_read=mnemonics_to_read,
