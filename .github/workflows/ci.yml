@@ -51,7 +51,6 @@ jobs:
         - linux: check-style
         - linux: check-security
         - linux: check-dependencies
-        - linux: build-dist
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
     needs: [ crds ]
