@@ -9,7 +9,11 @@ extract_1d
 
 - Bug fix for #7883. The input model type is checked to see if the input is
   a single model or a model container. [#7965]
- 
+
+set_telescope_pointing
+----------------------
+
+- Extend engineering coverage time for guiding modes. [#7966]
 
 1.12.0 (2023-09-18)
 ===================
