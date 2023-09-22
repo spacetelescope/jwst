@@ -20,8 +20,8 @@ jobs:
     with:
       upload_to_pypi: ${{ github.event_name == 'released' }}
       targets: |
-        - linux
-        - macos
+        - cp3?-manylinux_x86_64
+        - cp3?-macosx_x86_64
       sdist: true
     secrets:
       pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
