@@ -213,26 +213,14 @@ def correct_xartifact(input_model, modelpars):
     # Now measure and remove the pedestal dark count rate measured between the channels
     # Embed in a try/except loop to catch unusual failures
     try:
-        # Define y positions and fluxes in the dark region
-        _, basey = np.meshgrid(np.arange(1032), np.arange(1024))
-        tempy = basey[yd1:yd2, xd1:xd2].ravel()
-        tempf = usedata[yd1:yd2, xd1:xd2].ravel()
-        themed, _, therms = scs(tempf)
-        # Trim to eliminate values more than 3 sigma discrepant
-        indx = np.where((tempf >= themed - 3 * therms) & (tempf <= themed + 3 * therms))
-        tempy = tempy[indx]
-        tempf = tempf[indx]
-        # Fit a 1d polynomial up the detector (order = 1)
-        pedestal_coeff = np.polyfit(tempy, tempf, 1)
-        pedestal_model = np.poly1d(pedestal_coeff)
-        pedestal_yfit = pedestal_model(basey)
-        pedestal_min, pedestal_max = np.min(pedestal_yfit), np.max(pedestal_yfit)
+        _, themed, therms = scs(usedata[yd1:yd2, xd1:xd2])
+        pedestal = np.zeros_like(output.data) + themed
         # remove the pedestal correction for the reference pixels
-        pedestal_yfit[:, 1028:1032] = 0.0
-        pedestal_yfit[:, 0:4] = 0.0
+        pedestal[:, 1028:1032] = 0.0
+        pedestal[:, 0:4] = 0.0
 
-        output.data = output.data - pedestal_yfit
-        log.info("Derived pedestal correction " + str(pedestal_min) + " to " + str(pedestal_max) + " DN/s")
+        output.data = output.data - pedestal
+        log.info("Derived pedestal correction " + str(themed) + " DN/s")
     except Exception:
         log.info("Straylight pedestal correction failed.")
 
