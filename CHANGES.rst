@@ -9,6 +9,12 @@ extract_1d
 
 - Bug fix for #7883. The input model type is checked to see if the input is
   a single model or a model container. [#7965]
+
+resample
+--------
+
+- Simplify interface for matching a resampled mosaic to an existing output
+  image [#7971]
  
 
 1.12.0 (2023-09-18)
