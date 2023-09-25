@@ -2838,7 +2838,9 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
     logger.debug('%s', ordered)
     valid = ordered[ordered['IFGS_ACQ_XPOSG'] != 0.0]
     if len(valid) < FGS_ACQ_MINVALUES[exp_type]:
-        raise ValueError(f'exp_type {exp_type} IFGS_ACQ_XPOSG only has {len(valid)} locations. Requires {FGS_ACQ_MINVALUES[exp_type]}')
+        raise ValueError(
+            f'exp_type {exp_type} IFGS_ACQ_XPOSG only has {len(valid)} locations. Requires {FGS_ACQ_MINVALUES[exp_type]}'
+        )
 
     # Setup parameters depending on ACQ1 vs ACQ2
     if exp_type == 'fgs_acq1':
@@ -2892,7 +2894,7 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
     valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0)
     valid = ordered[valid_flags]
     if len(valid) < 1:
-        raise ValueError(f'Fine guide track mode, no valid engineering is found.')
+        raise ValueError('Fine guide track mode, no valid engineering is found.')
 
     # Get the positions
     position = (np.average(valid['IFGS_TFGGS_X']),
@@ -2938,7 +2940,7 @@ def gs_position_id(mnemonics_to_read, mnemonics):
     valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0)
     valid = ordered[valid_flags]
     if len(valid) < 1:
-        raise ValueError(f'Guide Star ID mode, no valid engineering is found.')
+        raise ValueError('Guide Star ID mode, no valid engineering is found.')
 
     # Get the positions
     position = (valid['IFGS_ID_XPOSG'][0], valid['IFGS_ID_YPOSG'][0])
