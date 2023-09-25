@@ -1173,7 +1173,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
         nelem_col = None
     wl_col = data["wavelength"]
     flat_col = data["data"]
-    flat_err_col = data["err"]
+    flat_err_col = data["error"]
 
     nrows = len(wl_col)
     row = None
