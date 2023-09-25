@@ -184,8 +184,7 @@ class OutlierDetectionStep(Step):
                         outlr_path = crf_path.replace(crf_file, outlr_file)
                         blot_path = crf_path.replace('crf', 'blot')
                         median_path = blot_path.replace('blot', 'median')
-                        self.log.info(f"{crf_path} {outlr_path} {blot_path} "
-                                      f"{median_path}")
+
                         for fle in [outlr_file, blot_path, median_path]:
                             if os.path.isfile(fle):
                                 os.remove(fle)
