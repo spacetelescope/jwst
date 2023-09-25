@@ -34,6 +34,7 @@ def test_combine_fast_slow():
              'c5': 2.0e-3}
     poly = polynomial.Polynomial1D(degree=5, **coeff)
     tab_flat = poly(tab_wl)
+    tab_flat_err = np.full(tab_flat.shape, np.nan, dtype=tab_flat.dtype)
 
     wl0 = 7.37
     dwl0 = 2.99
@@ -52,8 +53,7 @@ def test_combine_fast_slow():
     flat_dq = np.zeros((10, 10), dtype=np.uint32)
     dispaxis = 1
 
-    value, new_dq = combine_fast_slow(wl, flat_2d, flat_dq, tab_wl,
-                                      tab_flat, dispaxis)
+    value, new_dq, err = combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, tab_flat_err, dispaxis)
 
     # Column 5 is the expected value
     assert np.allclose(value[:, 5], correct_value, rtol=1.e-8, atol=1.e-8)
@@ -68,3 +68,7 @@ def test_combine_fast_slow():
     bad_value = dqflags.pixel['NO_FLAT_FIELD'] | dqflags.pixel['DO_NOT_USE']
     assert np.all(value[:, (3, 4, 6, 7, 8, 9)] == 1)
     assert np.all(new_dq[:, (3, 4, 6, 7, 8, 9)] == bad_value)
+
+    # as we've only provided nans for tab_flat_err the expected err should be nan
+    assert err.shape == value.shape
+    assert np.all(np.isnan(err))
