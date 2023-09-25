@@ -12,13 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - if: github.event_name == 'released'
+      - if: github.event_name == 'release'
         run: grep -v '^ *#' requirements-sdp.txt
   build:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
     needs: [ check ]
     with:
-      upload_to_pypi: ${{ github.event_name == 'released' }}
+      upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
       targets: |
         - cp3?-manylinux_x86_64
         - cp3?-macosx_x86_64
