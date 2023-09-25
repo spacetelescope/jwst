@@ -165,6 +165,21 @@ FGS_ID_MNEMONICS = {
     'IFGS_ID_DETYSIZ',
 }
 
+# FGS ACQ1/ACQ2 modes, a dedicated range of mmenonics need to be present.
+# These define those ranges. Key is the ACQ exposure type.
+FGS_ACQ_MINVALUES = {
+    'fgs_acq1': 1,
+    'fgs_acq2': 4
+}
+FGS_ACQ_SLICES = {
+    'fgs_acq1': slice(0, 3),
+    'fgs_acq2': slice(3, 8)
+}
+FGS_ACQ_WINDOW_INDEX = {
+    'fgs_acq1': 0,
+    'fgs_acq2': -1
+}
+
 
 # The available methods for transformation
 class Methods(Enum):
@@ -2819,15 +2834,19 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
         raise ValueError(f'exp_type {exp_type} not one of {FGS_ACQ_EXP_TYPES}')
 
     ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('%s available mnemonics:', exp_type)
+    logger.debug('%s', ordered)
     valid = ordered[ordered['IFGS_ACQ_XPOSG'] != 0.0]
+    if len(valid) < FGS_ACQ_MINVALUES[exp_type]:
+        raise ValueError(f'exp_type {exp_type} IFGS_ACQ_XPOSG only has {len(valid)} locations. Requires {FGS_ACQ_MINVALUES[exp_type]}')
 
     # Setup parameters depending on ACQ1 vs ACQ2
     if exp_type == 'fgs_acq1':
-        subarray = valid[0]
-        posg_slice = slice(0, 3)
+        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+        posg_slice = FGS_ACQ_SLICES[exp_type]
     else:
-        subarray = valid[-1]
-        posg_slice = slice(3, 8)
+        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+        posg_slice = FGS_ACQ_SLICES[exp_type]
 
     position = (np.average(valid['IFGS_ACQ_XPOSG'][posg_slice]),
                 np.average(valid['IFGS_ACQ_YPOSG'][posg_slice]))
@@ -2868,8 +2887,12 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('Guide Star track available mnemonics:')
+    logger.debug('%s', ordered)
     valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0)
     valid = ordered[valid_flags]
+    if len(valid) < 1:
+        raise ValueError(f'Fine guide track mode, no valid engineering is found.')
 
     # Get the positions
     position = (np.average(valid['IFGS_TFGGS_X']),
@@ -2910,8 +2933,12 @@ def gs_position_id(mnemonics_to_read, mnemonics):
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('Guide STar ID mode available mnemonics:')
+    logger.debug('%s', ordered)
     valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0)
     valid = ordered[valid_flags]
+    if len(valid) < 1:
+        raise ValueError(f'Guide Star ID mode, no valid engineering is found.')
 
     # Get the positions
     position = (valid['IFGS_ID_XPOSG'][0], valid['IFGS_ID_YPOSG'][0])
