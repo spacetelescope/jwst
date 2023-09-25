@@ -530,6 +530,8 @@ def test_custom_refwcs_resample_imaging(nircam_rate, reference_shape, match,
     if match:
         assert np.allclose(result2.data, reference_result.data)
 
+    # Test with just the datamodel as output_wcs
+    ResampleStep.call(im, output_wcs=reference_result)
 
 
 @pytest.mark.parametrize('ratio', [1.3, 1])
@@ -551,7 +553,6 @@ def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
 
 
 def test_pixscale(nircam_rate):
-
     # check that if both 'pixel_scale_ratio' and 'pixel_scale' are passed in,
     # that 'pixel_scale' overrides correctly
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
@@ -572,7 +573,6 @@ def test_pixscale(nircam_rate):
 
 def test_phot_keywords(nircam_rate):
     # test that resample keywords agree with photometry keywords after step is run
-
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
 
     orig_pix_area_sr = im.meta.photometry.pixelarea_steradians

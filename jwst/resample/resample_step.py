@@ -54,7 +54,7 @@ class ResampleStep(Step):
         rotation = float(default=None) # Position angle of output image Y-axis east of north
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         pixel_scale = float(default=None) # Absolute pixel scale in arcsec
-        output_wcs = string(default=None)  # Custom output WCS file path
+        output_wcs = is_string_or_datamodel(default=None)  # Custom output WCS file
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -175,15 +175,16 @@ class ResampleStep(Step):
         if not input_wcs_file:
             return None
 
-        with asdf.open(input_wcs_file) as af:
-            try:
-                # File is ASDF file with a top-level wcs in the tree
+        try:
+            # File is ASDF file with a top-level wcs in the tree
+            with asdf.open(input_wcs_file) as af:
                 wcs = deepcopy(af.tree["wcs"])
-            except KeyError:
-                # File is ImageModel or SlitModel with the wcs under meta
-                wcs = deepcopy(af.tree["meta"]["wcs"])
+        except (KeyError, ValueError):
+            # File is ImageModel or SlitModel with the wcs under meta
+            with datamodels.open(input_wcs_file) as model:
+                wcs = deepcopy(model.meta.wcs)
                 if not output_shape:
-                    output_shape = af.tree["data"].shape[::-1]
+                    output_shape = model.data.shape[::-1]
 
         if output_shape is not None or wcs is None:
             wcs.array_shape = output_shape[::-1]
