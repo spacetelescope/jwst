@@ -55,14 +55,17 @@ image.
 
     .. note::
         Specifying ``output_shape`` *is required* when the WCS in
-        ``output_wcs`` does not have ``bounding_box`` property set.
+        ``output_wcs`` does not have ``bounding_box`` property set
+        or is not the WCS of a JWST i2d or s2d FITS file.
 
 ``--output_wcs`` (str, default='')
-    File name of a ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
-    under the root of the file. The output image size is determined from the
-    bounding box of the WCS (if any). Argument ``output_shape`` overrides
-    computed image size and it is required when output WCS does not have
-    ``bounding_box`` property set.
+    File name of either a JWST i2d or s2d FITS file with a GWCS stored under
+    ``meta.wcs``, or an ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
+    under the root of the file. The output image size is determined from the i2d
+    or s2d data size in the case of a FITS file, or from the bounding box of the
+    WCS in the enclosed ``ASDF`` file. Argument ``output_shape`` overrides
+    computed image size and it is required when output WCS is ASDF and does not
+    have ``bounding_box`` property set.
 
     .. note::
         When ``output_wcs`` is specified, WCS-related arguments such as
