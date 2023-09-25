@@ -46,7 +46,7 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0) # Fraction by which input pixels are "shrunk" before being drizzled
         kernel = option('square', 'gaussian', 'point, 'tophat', 'turbo', \
             'lanczos2', 'lanczos3', default='square') # Function used to distribute flux onto the output image
-        fillval = string(default='INDEF' ) # Fill value where there is no flux in output resampled image
+        fillval = string(default='INDEF') # Fill value where there is no flux in output resampled image
         weight_type = option('ivm', 'exptime', None, default='ivm') # The weighting type for each input image
         output_shape = int_list(min=2, max=2, default=None) # Shape of output resampled image in [x, y] order
         crpix = float_list(min=2, max=2, default=None) # Position of the reference pixel in the image array [x, y] order
@@ -54,7 +54,7 @@ class ResampleStep(Step):
         rotation = float(default=None) # Position angle of output image Y-axis east of north
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         pixel_scale = float(default=None) # Absolute pixel scale in arcsec
-        output_wcs = string(default='')  # Custom output WCS file path
+        output_wcs = string(default=None)  # Custom output WCS file path
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -183,7 +183,7 @@ class ResampleStep(Step):
                 # File is ImageModel or SlitModel with the wcs under meta
                 wcs = deepcopy(af.tree["meta"]["wcs"])
                 if not output_shape:
-                    output_shape = af.tree["data"].shape
+                    output_shape = af.tree["data"].shape[::-1]
 
         if output_shape is not None or wcs is None:
             wcs.array_shape = output_shape[::-1]

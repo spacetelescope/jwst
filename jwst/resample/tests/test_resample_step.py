@@ -482,10 +482,10 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
 
 
 @pytest.mark.parametrize(
-    'output_shape2, match',
+    'reference_shape, match',
     [((1205, 1100), True), ((1222, 1111), False), (None, True)]
 )
-def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
+def test_custom_refwcs_resample_imaging(nircam_rate, reference_shape, match,
                                         tmp_path):
     crpix = (600, 550)
     crval = (50, 77)
@@ -496,7 +496,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
 
     # first pass - create a reference output WCS:
     im.data[:, :] = np.random.random(im.data.shape)
-    result = ResampleStep.call(
+    reference_result = ResampleStep.call(
         im,
         output_shape=(1205, 1100),
         crpix=crpix,
@@ -505,27 +505,31 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
         pixel_scale_ratio=ratio
     )
 
-    data1 = result.data
-
     refwcs = str(tmp_path / "resample_refwcs.asdf")
-    result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
-    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(tmp_path / refwcs)
+    reference_result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
+    asdf.AsdfFile({"wcs": reference_result.meta.wcs}).write_to(tmp_path / refwcs)
 
     result = ResampleStep.call(
         im,
-        output_shape=output_shape2,
+        output_shape=reference_shape,
         output_wcs=refwcs
     )
 
-    data2 = result.data
-
-    if output_shape2 is not None:
-        assert data2.shape == output_shape2[::-1]
+    if reference_shape is not None:
+        assert result.data.shape == reference_shape[::-1]
 
     if match:
         # test output image shape
-        assert data1.shape == data2.shape
-        assert np.allclose(data1, data2)
+        assert result.data.shape == reference_result.data.shape
+        assert np.allclose(result.data, reference_result.data)
+
+    # Test interface of just passing the resampled image as output_wcs
+    reference_mosaic_path = str(tmp_path / "resample_refwcs_i2d.fits")
+    reference_result.save(reference_mosaic_path)
+    result2 = ResampleStep.call(im, output_wcs=reference_mosaic_path)
+    if match:
+        assert np.allclose(result2.data, reference_result.data)
+
 
 
 @pytest.mark.parametrize('ratio', [1.3, 1])
