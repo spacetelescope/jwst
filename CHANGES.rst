@@ -14,6 +14,13 @@ set_telescope_pointing
 ----------------------
 
 - Extend engineering coverage time for guiding modes. [#7966]
+ 
+flat_field
+----------
+
+- Update ``combine_fast_slow`` to use error values provided by f-flat
+  reference files. [#7972]
+
 
 1.12.0 (2023-09-18)
 ===================
