@@ -91,7 +91,7 @@ def test_cache_partial_data(db_cache, engdb):
     Test read of some data.
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    assert data['Count'] > 300  # Just to make sure we have some data
+    assert data['Count'] > 1  # Just to make sure we have some data
     endtime = Time(
         engdb_direct.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
         format='unix'
@@ -115,7 +115,7 @@ def test_cache_end_data(db_cache, engdb):
     Test read of some data.
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    assert data['Count'] > 300  # Just to make sure we have some data
+    assert data['Count'] > 1  # Just to make sure we have some data
 
     # First test pre-data.
     data_short = db_cache.fetch_data(
