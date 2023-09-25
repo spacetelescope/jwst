@@ -15,10 +15,9 @@ from jwst.lib import engdb_direct, engdb_tools
 # For mocking, just use localhost
 ENGDB_MOCK_URL = 'http://localhost/'
 
-# Midpoint is about 2022-01-26T02:32:26.205
-# When checking against an actual engineering DB, use the production one.
-GOOD_STARTTIME = '2022-01-26 02:29:02.188'
-GOOD_ENDTIME = '2022-01-26 02:35:50.185'
+# Midpoint is about 2021-01-26T02:32:26.205
+GOOD_STARTTIME = '2021-01-26 02:29:02.188'
+GOOD_ENDTIME = '2021-01-26 02:35:50.185'
 GOOD_MNEMONIC = 'inrsi_gwa_y_tilt_avged'
 EARLY_STARTTIME = '2014-01-01'
 EARLY_ENDTIME = '2014-01-02'
@@ -91,7 +90,7 @@ def test_cache_partial_data(db_cache, engdb):
     Test read of some data.
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    assert data['Count'] > 1  # Just to make sure we have some data
+    assert data['Count'] > 4  # Just to make sure we have some data
     endtime = Time(
         engdb_direct.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
         format='unix'
@@ -115,7 +114,7 @@ def test_cache_end_data(db_cache, engdb):
     Test read of some data.
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    assert data['Count'] > 1  # Just to make sure we have some data
+    assert data['Count'] > 4  # Just to make sure we have some data
 
     # First test pre-data.
     data_short = db_cache.fetch_data(
