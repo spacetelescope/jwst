@@ -229,18 +229,25 @@ class Extract1dStep(Step):
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
 
+        if isinstance(input_model, datamodels.IFUCubeModel):
+            exp_type = input_model.meta.exposure.type
+        elif isinstance(input_model, ModelContainer):
+            exp_type = input_model[0].meta.exposure.type
+        else:
+            exp_type = None
+
         if self.ifu_rfcorr:
-            if input_model.meta.exposure.type != "MIR_MRS":
+            if exp_type != "MIR_MRS":
                 self.log.warning("The option to apply a residual refringe correction is"
                                  f" not supported for {input_model.meta.exposure.type} data.")
 
         if self.ifu_rscale is not None:
-            if input_model.meta.exposure.type != "MIR_MRS":
+            if exp_type != "MIR_MRS":
                 self.log.warning("The option to change the extraction radius is"
                                  f" not supported for {input_model.meta.exposure.type} data.")
 
         if self.ifu_set_srctype is not None:
-            if input_model.meta.exposure.type != "MIR_MRS":
+            if exp_type != "MIR_MRS":
                 self.log.warning("The option to change the source type is"
                                  f" not supported for {input_model.meta.exposure.type} data.")
 
