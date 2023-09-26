@@ -7,6 +7,12 @@ charge_migration
 - Added tests to see if the data array is changed after runnung the step and
   setting signal_threshold to 25000. [#7895]
 
+flat_field
+----------
+
+- Update ``combine_fast_slow`` to use 1D error values provided by f-flat
+  reference files. [#7978]
+
 1.12.1 (2023-09-26)
 ===================
 
