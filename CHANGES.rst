@@ -1,7 +1,10 @@
 1.12.2 (unreleased)
 ===================
 
-- 
+assign_wcs
+----------
+
+- Increase margin at edges of NIRSpec MOS slits to reduce edge effects in resampling. [#7976]
 
 1.12.1 (2023-09-26)
 ===================
