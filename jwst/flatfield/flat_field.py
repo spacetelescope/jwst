@@ -666,16 +666,17 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
                          default_shape=flat_2d.shape)
 
     # Combine the uncertainty arrays, excluding the ones that are None
+    # Divide error by flat before squaring to avoid overflow
     sum_var = np.zeros_like(flat_2d)
     if f_flat_err is not None:
         np.place(f_flat, f_flat == 0, 1.)
-        sum_var += f_flat_err ** 2 / f_flat ** 2
+        sum_var += (f_flat_err / f_flat) ** 2
     if s_flat_err is not None:
         np.place(s_flat, s_flat == 0, 1.)
-        sum_var += s_flat_err ** 2 / s_flat ** 2
+        sum_var += (s_flat_err / s_flat) ** 2
     if d_flat_err is not None:
         np.place(d_flat, d_flat == 0, 1.)
-        sum_var += d_flat_err ** 2 / d_flat ** 2
+        sum_var += (d_flat_err / d_flat) ** 2
     flat_err = flat_2d * np.sqrt(sum_var)
 
     mask = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
