@@ -216,7 +216,8 @@ class ResampleData:
                 img = datamodels.open(img)
 
                 input_pixflux_area = img.meta.photometry.pixelarea_steradians
-                if input_pixflux_area:
+                if (input_pixflux_area and
+                        'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
                     img.meta.wcs.array_shape = img.data.shape
                     input_pixel_area = _compute_image_pixel_area(img.meta.wcs)
                     if input_pixel_area is None:
@@ -299,7 +300,8 @@ class ResampleData:
         log.info("Resampling science data")
         for img in self.input_models:
             input_pixflux_area = img.meta.photometry.pixelarea_steradians
-            if input_pixflux_area:
+            if (input_pixflux_area and
+                    'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
                 img.meta.wcs.array_shape = img.data.shape
                 input_pixel_area = _compute_image_pixel_area(img.meta.wcs)
                 if input_pixel_area is None:
@@ -684,7 +686,6 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
 def _compute_image_pixel_area(wcs):
     """ Computes pixel area in steradians.
     """
-
     if wcs.array_shape is None:
         raise ValueError("WCS must have array_shape attribute set.")
 
@@ -748,6 +749,12 @@ def _compute_image_pixel_area(wcs):
     wcenter = (world[spatial_idx[0]], world[spatial_idx[1]])
 
     sky_area = SphericalPolygon.from_radec(ra, dec, center=wcenter).area()
+    if sky_area > 2 * np.pi:
+        log.warning(
+            "Unexpectedly large computed sky area for an image. "
+            "Setting area to: 4*Pi - area"
+        )
+        sky_area = 4 * np.pi - sky_area
     pix_area = sky_area / image_area
 
     return pix_area
