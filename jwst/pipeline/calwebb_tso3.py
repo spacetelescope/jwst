@@ -155,8 +155,10 @@ class Tso3Pipeline(Pipeline):
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
+            nints_per_mdl = [mdl.meta.exposure.nints for mdl in input_models]
+            nrows = max(nints_per_mdl)   # avoid an index error
             x1d_result.int_times = FITS_rec.from_columns(input_models[0].int_times.columns,
-                                                         nrows=input_models[0].meta.exposure.nints)
+                                                         nrows=nrows)
 
             # Remove source_type from the output model, if it exists, to prevent
             # the creation of an empty SCI extension just for that keyword.
