@@ -177,18 +177,19 @@ class OutlierDetectionStep(Step):
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
                     if not self.save_intermediate_results:
-                        # remove unwanted files
-                        crf_file = self.make_output_path(basepath=model.meta.filename)
-                        outlr_basename = os.path.basename(crf_file)
+                        #  Remove unwanted files
+                        crf_path = self.make_output_path(basepath=model.meta.filename)
+                        #  These lines to be used when/if outlier_i2d files follow output_dir
+                        #  crf_file = os.path.basename(crf_path)
+                        #  outlr_path = crf_path.replace(crf_file, outlr_file)
                         outlr_file = model.meta.filename.replace('cal', 'outlier_i2d')
-                        outlr_path = crf_file.replace(outlr_basename, outlr_file)
-                        if os.path.isfile(outlr_path):
-                            os.remove(outlr_path)
-                            self.log.debug(f"    {outlr_path}")
-                        blot_file = crf_file.replace('crf', 'blot')
-                        if os.path.isfile(blot_file):
-                            os.remove(blot_file)
-                            self.log.debug(f"    {blot_file}")
+                        blot_path = crf_path.replace('crf', 'blot')
+                        median_path = blot_path.replace('blot', 'median')
+
+                        for fle in [outlr_file, blot_path, median_path]:
+                            if os.path.isfile(fle):
+                                os.remove(fle)
+                                self.log.debug(f"    {fle}")
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
             return self.input_models

@@ -1,7 +1,30 @@
-1.12.1 (unreleased)
+1.12.2 (unreleased)
 ===================
 
 - 
+
+1.12.1 (2023-09-26)
+===================
+
+extract_1d
+----------
+
+- For MIRS MRS IFU data allow the user to set the src_type and allow 
+  the user to scale the extraction radius between 0.5 to 3.0 FWHM. [#7883]
+
+- Bug fix for #7883. The input model type is checked to see if the input is
+  a single model or a model container. [#7965]
+
+outlier_detection
+-----------------
+
+- Remove median file output from ``output_dir`` if ``save_intermediate_results``
+  is set to False. [#7961]
+
+set_telescope_pointing
+----------------------
+
+- Extend engineering coverage time for guiding modes. [#7966]
 
 1.12.0 (2023-09-18)
 ===================
@@ -85,6 +108,9 @@ cube_build
 
 - Fix a bug with memory allocation in C extensions when weighting=emsm. [#7847]
 
+- Add options to set ra,dec tangent projection center, position angle and size of cube
+  in tangent plane. [#7882]
+
 datamodels
 ----------
 
@@ -108,6 +134,7 @@ extract_1d
 
 - Use ``source_{x/y}pos`` metadata to center extraction region for NIRSpec
   (non-IFU) data; use dithered pointing info for MIRI LRS fixed slit data. [#7796]
+
 
 extract_2d
 ----------

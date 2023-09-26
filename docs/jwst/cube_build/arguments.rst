@@ -76,6 +76,21 @@ The following arguments control the size and sampling characteristics of the out
 ``wavemax``
   The maximum wavelength, in microns, to use in constructing the IFU cube.
 
+``ra_center``
+  Right ascension center, in decimal degrees, of the IFU cube that defines the location of xi/eta tangent plane projection origin.
+
+``dec_center``
+  Declination center, in decimal degrees, of the IFU cube that defines the location of xi/eta tangent plane projection origin.
+
+``cube_pa``
+  The position angle of the IFU cube in decimal degrees (E from N).
+
+``nspax_x``
+  The odd integer number of spaxels to use in the x dimension of the tangent plane.
+
+``nspax_y``
+  The odd integer number of spaxels to use in the y dimension of the tangent plane.
+
 ``coord_system [string]``
   The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
   and east is left. There are two other coordinate systems an IFU cube can be built on:

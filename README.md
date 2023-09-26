@@ -210,6 +210,7 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| 1.12.1              | B10.0rc2  | 2023.3.x | 1132         | 2023-09-26 |             | Second release candidate for B10.0            |
 | 1.12.0              | B10.0rc1  | 2023.3.x | 1130         | 2023-09-18 |             | First release candidate for B10.0             |
 | 1.11.4              | B9.3.1    | 2023.2.1 | 1107         | 2023-08-14 |             | Final release for B9.3.1 patch                |
 | 1.11.3              | B9.3      | 2023.2.0 | 1097         | 2023-07-17 |             | Final release candidate for B9.3              |

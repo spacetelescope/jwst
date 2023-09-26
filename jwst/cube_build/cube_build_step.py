@@ -47,6 +47,11 @@ class CubeBuildStep (Step):
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
+         ra_center = float(default=None) # RA center of the IFU cube
+         dec_center = float(default=None) # Declination center of the IFU cube
+         cube_pa = float(default=None) # The position angle of the desired cube in decimal degrees E from N
+         nspax_x = integer(default=None) # The odd integer number of spaxels to use in the x dimension of cube tangent plane.
+         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent plane.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
@@ -107,6 +112,19 @@ class CubeBuildStep (Step):
             self.log.info(f'Input Spatial ROI size {self.rois}')
         if self.roiw != 0.0:
             self.log.info(f'Input Wave ROI size {self.roiw}')
+
+        # check that if self.nspax_x or self.nspax_y is provided they must be odd numbers
+        if self.nspax_x is not None:
+            if self.nspax_x % 2 == 0:
+                self.log.info(f'Input nspax_x must be an odd number {self.nspax_x}')
+                self.nspax_x = self.nspax_x + 1
+                self.log.info(f'Updating nspa by 1. New value {self.nspax_x}')
+
+        if self.nspax_y is not None:
+            if self.nspax_y % 2 == 0:
+                self.log.info(f'Input nspax_y must be an odd number {self.nspax_y}')
+                self.nspax_y = self.nspax_y + 1
+                self.log.info(f'Updating nspax_y by 1. New value {self.nspax_y}')
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
@@ -214,9 +232,8 @@ class CubeBuildStep (Step):
             elif instrument == 'MIRI':
                 self.output_type = 'channel'
         self.pars_input['output_type'] = self.output_type
-        
         self.log.info(f'Setting output type to: {self.output_type}')
-         
+
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
 
@@ -247,6 +264,11 @@ class CubeBuildStep (Step):
             'weighting': self.weighting,
             'weight_power': self.weight_power,
             'coord_system': self.pars_input['coord_system'],
+            'ra_center': self.ra_center,
+            'dec_center': self.dec_center,
+            'cube_pa': self.cube_pa,
+            'nspax_x': self.nspax_x,
+            'nspax_y': self.nspax_y,
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,
