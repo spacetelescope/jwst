@@ -1319,7 +1319,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
         this condition, and the fast-variation flat field value at that
         pixel will be set to 1.
 
-    flat_error : ndarray, 1-D
+    flat_error : ndarray, 2-D, float32
         The `tab_flat_err` values interpolated to the wavelengths of the
         science image, i.e. `wl`. Missing values are set to 0.
     """
