@@ -656,6 +656,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     s_flat, s_flat_dq, s_flat_err = spectrograph_flat(
         wl, s_flat_model, xstart, xstop, ystart, ystop,
         exposure_type, dispaxis, slit_name)
+
     d_flat, d_flat_dq, d_flat_err = detector_flat(
         wl, d_flat_model, xstart, xstop, ystart, ystop,
         exposure_type, dispaxis, slit_name)
@@ -731,8 +732,8 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     else:
         quadrant = slit_nt.quadrant - 1  # convert to zero indexed
 
-    (tab_wl, tab_flat) = read_flat_table(f_flat_model, exposure_type,
-                                         slit_name, quadrant)
+    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(f_flat_model, exposure_type,
+                                                       slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in f_flat table appear to be in meters")
 
@@ -776,10 +777,10 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
         tab_flat *= np.interp(tab_wl, image_wl, one_d_flat, 1., 1.)
         f_flat_err = np.interp(wl, image_wl, one_d_err, 0., 0.)
 
+    # Combine 2D and 1D components with error propagation.
     # The shape of the output array is obtained from `wl`.
-
-    f_flat, f_flat_dq = combine_fast_slow(wl, flat_2d, f_flat_dq,
-                                          tab_wl, tab_flat, dispaxis)
+    f_flat, f_flat_dq, f_flat_err = combine_fast_slow(
+        wl, flat_2d, f_flat_dq, f_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
 
     # Find pixels in the flat that have a value of NaN and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
@@ -787,7 +788,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     flat_nan = np.isnan(f_flat)
     f_flat_dq[flat_nan] = np.bitwise_or(f_flat_dq[flat_nan], bad_flag)
 
-    # Find pixels in the flat have have a value of zero, and add to
+    # Find pixels in the flat that have a value of zero, and add to
     # DQ mask,  DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(f_flat == 0.)
     f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero], bad_flag)
@@ -856,7 +857,7 @@ def spectrograph_flat(wl, s_flat_model,
     if xstart >= xstop or ystart >= ystop:
         return 1., None
 
-    (tab_wl, tab_flat) = read_flat_table(s_flat_model, exposure_type,
+    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(s_flat_model, exposure_type,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in s_flat table appear to be in meters")
@@ -902,8 +903,9 @@ def spectrograph_flat(wl, s_flat_model,
     # correction is made
     flat_2d[np.where(flat_bad)] = 1.0
 
-    s_flat, s_flat_dq = combine_fast_slow(wl, flat_2d, s_flat_dq,
-                                          tab_wl, tab_flat, dispaxis)
+    # Combine 2D and 1D components with error propagation
+    s_flat, s_flat_dq, s_flat_err = combine_fast_slow(
+        wl, flat_2d, s_flat_dq, s_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
 
     return s_flat, s_flat_dq, s_flat_err
 
@@ -963,7 +965,7 @@ def detector_flat(wl, d_flat_model,
     if xstart >= xstop or ystart >= ystop:
         return 1., None
 
-    (tab_wl, tab_flat) = read_flat_table(d_flat_model, exposure_type,
+    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(d_flat_model, exposure_type,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in d_flat table appear to be in meters.")
@@ -1001,8 +1003,9 @@ def detector_flat(wl, d_flat_model,
     # correction is made
     flat_2d[np.where(flat_bad)] = 1.0
 
-    d_flat, d_flat_dq = combine_fast_slow(wl, flat_2d, d_flat_dq,
-                                          tab_wl, tab_flat, dispaxis)
+    # Combine 2D and 1D components with error propagation
+    d_flat, d_flat_dq, d_flat_err = combine_fast_slow(
+        wl, flat_2d, d_flat_dq, d_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
     return d_flat, d_flat_dq, d_flat_err
 
 
@@ -1146,6 +1149,10 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
     tab_flat : ndarray, 1-D, float
         The column of flat_field values read from the fast-variation table.
         `tab_wl` and `tab_flat` should be the same length.
+
+    tab_flat_err : ndarray, 1-D
+        The column of flat_field error values read from the fast-variation
+        table.
     """
 
     if quadrant is not None:  # NRS_MSASPEC
@@ -1163,6 +1170,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
         nelem_col = None
     wl_col = data["wavelength"]
     flat_col = data["data"]
+    flat_err_col = data["error"]
 
     nrows = len(wl_col)
     row = None
@@ -1188,6 +1196,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
         # Table contains arrays; use the row that was found above.
         tab_wl = wl_col[row].copy()
         tab_flat = flat_col[row].copy()
+        tab_flat_err = flat_err_col[row].copy()
         if nelem_col is not None:
             nelem = nelem_col[row]
     else:
@@ -1196,12 +1205,14 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
             # Table contains arrays, but there should be only one row.
             tab_wl = wl_col[0].copy()
             tab_flat = flat_col[0].copy()
+            tab_flat_err = flat_err_col[0].copy()
             if nelem_col is not None:
                 nelem = nelem_col[0]
         else:
             # Table contains scalar columns.
             tab_wl = wl_col.copy()
             tab_flat = flat_col.copy()
+            tab_flat_err = flat_err_col.copy()
             if nelem_col is not None:
                 nelem = nelem_col[0]  # arbitrary choice of row
     if nelem is not None:
@@ -1213,6 +1224,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
         else:
             tab_wl = tab_wl[:nelem]
             tab_flat = tab_flat[:nelem]
+            tab_flat_err = tab_flat_err[:nelem]
     else:
         nelem = len(tab_wl)
 
@@ -1227,6 +1239,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
                   "%d NaNs; these have been skipped.", nelem - n1)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
+        tab_flat_err = tab_flat_err[filter]
     del filter1, filter2, filter
     # Skip zero or negative wavelengths, and skip zero flat-field values.
     filter1 = (tab_wl > 0.)
@@ -1239,6 +1252,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
                   n1 - n2)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
+        tab_flat_err = tab_flat_err[filter]
     del filter1, filter2, filter
 
     # Check that the wavelengths are increasing.  This is a requirement
@@ -1249,10 +1263,10 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
             log.warning("Wavelengths in the fast-variation table "
                         "must be strictly increasing.")
 
-    return tab_wl, tab_flat
+    return tab_wl, tab_flat, tab_flat_err
 
 
-def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
+def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat_error, dispaxis):
     """Multiply the image by the tabular values.
 
     Parameters
@@ -1271,6 +1285,12 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
         on the fast-variation component, and the updated array will be
         returned.
 
+    flat_err : ndarray or None
+        If not None, the error array corresponding to `flat_2d`.
+        A copy of this will be updated with errors added in quadrature from
+        the fast-variation component, and the updated array will be
+        returned.
+
     tab_wl : ndarray, 1-D
         Wavelengths corresponding to `tab_flat`.
 
@@ -1278,6 +1298,9 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
         The flat field from the table part of the reference file.  This
         is the "fast" variation of the flat, i.e. fast with respect to
         wavelength.
+
+    tab_flat_err : ndarray, 1-D
+        The flat field error from the table part of the reference file.
 
     dispaxis : int
         1 is horizontal, 2 is vertical.
@@ -1294,6 +1317,10 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
         within the range of `tab_wl`, NO_FLAT_FIELD will be used to flag
         this condition, and the fast-variation flat field value at that
         pixel will be set to 1.
+
+    flat_error : ndarray, 1-D
+        The `tab_flat_err` values interpolated to the wavelengths of the
+        science image, i.e. `wl`. Missing values are set to 0.
     """
 
     wl_c = clean_wl(wl, dispaxis)
@@ -1303,6 +1330,11 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
         combined_dq = np.zeros(wl.shape, dtype=np.uint32)
     else:
         combined_dq = flat_dq.copy()
+
+    if flat_err is None:
+        combined_err = np.zeros(wl.shape, dtype=np.float64)
+    else:
+        combined_err = flat_err.copy()
 
     if dispaxis == HORIZONTAL:
         dwl[:, 0:-1] = wl_c[:, 1:] - wl_c[:, 0:-1]
@@ -1328,17 +1360,31 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
         values += weight * np.interp(wavelengths, tab_wl, tab_flat,
                                      left=np.nan, right=np.nan)
 
+    # Interpolate error values from reference file using a simple
+    # linear interpolation as these don't have the required precision
+    # to justify a more complex interpolation
+    error_value = np.interp(wl_c, tab_wl, tab_flat_error, left=np.nan, right=np.nan)
+
     # Handle bad wavelength values in un-cleaned wavelength array
     bad = (wl <= 0)
     values[bad] = 1.0
+    error_value[bad] = 0.0
 
     # Handle missing values
     missing = np.isnan(values)
     values[missing] = 1.0
+    error_value[missing] = 0.0
     combined_dq[missing] |= dqflags.pixel['NO_FLAT_FIELD']
     combined_dq[missing] |= dqflags.pixel['DO_NOT_USE']
 
-    return flat_2d * values, combined_dq
+    # Handle NaNs in errors
+    combined_err[np.isnan(combined_err)] = 0.0
+    error_value[np.isnan(error_value)] = 0.0
+
+    # Add new 1D errors and input 2D errors in quadrature
+    combined_err = np.sqrt(combined_err**2 + error_value**2)
+
+    return flat_2d * values, combined_dq, combined_err
 
 
 def clean_wl(wl, dispaxis):
