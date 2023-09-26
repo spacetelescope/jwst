@@ -1,11 +1,11 @@
 1.12.2 (unreleased)
 ===================
 
-- charge_migration
+charge_migration
 ----------------
 
-- Added tests to see if the data array is changed after runnung the step. [#7895]
-
+- Added tests to see if the data array is changed after runnung the step and
+  setting signal_threshold to 25000. [#7895]
 
 1.12.1 (2023-09-26)
 ===================
