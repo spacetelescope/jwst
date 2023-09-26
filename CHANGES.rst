@@ -1,7 +1,12 @@
 1.12.2 (unreleased)
 ===================
 
-- 
+calwebb_tso3
+------------
+
+- Fix index error occurring because the int_times table was being created
+  with nrows=nints of first model. Instead, now the code uses the model with
+  the largest number of integrations. [#7977]
 
 1.12.1 (2023-09-26)
 ===================
