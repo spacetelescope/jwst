@@ -7,6 +7,12 @@ charge_migration
 - Added tests to see if the data array is changed after runnung the step and
   setting signal_threshold to 25000. [#7895]
 
+flat_field
+----------
+
+- For NIRSpec flat fields, set new DO_NOT_USE pixels to NaN after
+  correction. [#7979]
+
 1.12.1 (2023-09-26)
 ===================
 
