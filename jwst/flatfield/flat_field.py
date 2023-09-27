@@ -434,7 +434,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         flat_data_squared = slit_flat.data ** 2
         slit.var_poisson /= flat_data_squared
         slit.var_rnoise /= flat_data_squared
-        slit.var_flat = slit.data ** 2 / flat_data_squared * slit_flat.err ** 2
+        slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
         slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
 
         # Combine the science and flat DQ arrays
@@ -510,7 +510,7 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
     flat_data_squared = interpolated_flat.data ** 2
     output_model.var_poisson /= flat_data_squared
     output_model.var_rnoise /= flat_data_squared
-    output_model.var_flat = output_model.data ** 2 / flat_data_squared * interpolated_flat.err ** 2
+    output_model.var_flat = (output_model.data / interpolated_flat.data * interpolated_flat.err) ** 2
     output_model.err = np.sqrt(
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
@@ -576,7 +576,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         flat_data_squared = flat ** 2
         output_model.var_poisson /= flat_data_squared
         output_model.var_rnoise /= flat_data_squared
-        output_model.var_flat = output_model.data ** 2 / flat_data_squared * flat_err ** 2
+        output_model.var_flat = (output_model.data / flat * flat_err) ** 2
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
@@ -1380,8 +1380,8 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
 
     # Add new 1D errors and input 2D errors in quadrature,
     # treating NaNs as zeros
-    v1 = error_value**2 * flat_2d**2
-    v2 = combined_err**2 * values**2
+    v1 = np.square(error_value * flat_2d)
+    v2 = np.square(combined_err * values)
     combined_err = np.sqrt(np.nansum([v1, v2], axis=0))
 
     return flat_2d * values, combined_dq, combined_err
