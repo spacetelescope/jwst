@@ -211,7 +211,7 @@ def correct_xartifact(input_model, modelpars):
     usedata = usedata - model
 
     # Now measure and remove the pedestal dark count rate measured between the channels
-    # Embed in a try/except loop to catch unusual failures
+    # Embed in a try/except block to catch unusual failures
     try:
         _, themed, therms = scs(usedata[yd1:yd2, xd1:xd2])
         pedestal = np.zeros_like(output.data) + themed

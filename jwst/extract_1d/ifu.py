@@ -187,7 +187,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         else:
             channel = ''
 
-        # Embed all calls to residual fringe code in try/except loops as the default behavior
+        # Embed all calls to residual fringe code in try/except blocks as the default behavior
         # if problems are encountered should be to not apply this optional step
 
         # Apply residual fringe to the flux array
