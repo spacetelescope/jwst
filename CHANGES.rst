@@ -1,4 +1,13 @@
-1.12.1 (unreleased)
+1.12.2 (unreleased)
+===================
+
+charge_migration
+----------------
+
+- Added tests to see if the data array is changed after runnung the step and
+  setting signal_threshold to 25000. [#7895]
+
+1.12.1 (2023-09-26)
 ===================
 
 extract_1d
@@ -9,7 +18,17 @@ extract_1d
 
 - Bug fix for #7883. The input model type is checked to see if the input is
   a single model or a model container. [#7965]
- 
+
+outlier_detection
+-----------------
+
+- Remove median file output from ``output_dir`` if ``save_intermediate_results``
+  is set to False. [#7961]
+
+set_telescope_pointing
+----------------------
+
+- Extend engineering coverage time for guiding modes. [#7966]
 
 1.12.0 (2023-09-18)
 ===================

@@ -165,6 +165,21 @@ FGS_ID_MNEMONICS = {
     'IFGS_ID_DETYSIZ',
 }
 
+# FGS ACQ1/ACQ2 modes, a dedicated range of mmenonics need to be present.
+# These define those ranges. Key is the ACQ exposure type.
+FGS_ACQ_MINVALUES = {
+    'fgs_acq1': 1,
+    'fgs_acq2': 4
+}
+FGS_ACQ_SLICES = {
+    'fgs_acq1': slice(0, 3),
+    'fgs_acq2': slice(3, 8)
+}
+FGS_ACQ_WINDOW_INDEX = {
+    'fgs_acq1': 0,
+    'fgs_acq2': -1
+}
+
 
 # The available methods for transformation
 class Methods(Enum):
@@ -1895,18 +1910,22 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
             mnemonics[mnemonic] = engdb.get_values(
                 mnemonic, obsstart, obsend,
                 time_format='mjd', include_obstime=True,
-                include_bracket_values=True
+                include_bracket_values=False
             )
         except Exception as exception:
             raise ValueError(f'Cannot retrieve {mnemonic} from engineering.') from exception
 
         # If more than two points exist, throw off the bracket values.
         # Else, ensure the bracket values are within the allowed time.
-        if len(mnemonics[mnemonic]) > 2:
-            mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
-        else:
+        if len(mnemonics[mnemonic]) < 2:
             logger.warning('Mnemonic %s has no telemetry within the observation time.', mnemonic)
             logger.warning('Attempting to use bracket values within %s seconds', tolerance)
+
+            mnemonics[mnemonic] = engdb.get_values(
+                mnemonic, obsstart, obsend,
+                time_format='mjd', include_obstime=True,
+                include_bracket_values=True
+            )
 
             tolerance_mjd = tolerance * SECONDS2MJD
             allowed_start = obsstart - tolerance_mjd
@@ -2815,15 +2834,21 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
         raise ValueError(f'exp_type {exp_type} not one of {FGS_ACQ_EXP_TYPES}')
 
     ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('%s available mnemonics:', exp_type)
+    logger.debug('%s', ordered)
     valid = ordered[ordered['IFGS_ACQ_XPOSG'] != 0.0]
+    if len(valid) < FGS_ACQ_MINVALUES[exp_type]:
+        raise ValueError(
+            f'exp_type {exp_type} IFGS_ACQ_XPOSG only has {len(valid)} locations. Requires {FGS_ACQ_MINVALUES[exp_type]}'
+        )
 
     # Setup parameters depending on ACQ1 vs ACQ2
     if exp_type == 'fgs_acq1':
-        subarray = valid[0]
-        posg_slice = slice(0, 3)
+        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+        posg_slice = FGS_ACQ_SLICES[exp_type]
     else:
-        subarray = valid[-1]
-        posg_slice = slice(3, 8)
+        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+        posg_slice = FGS_ACQ_SLICES[exp_type]
 
     position = (np.average(valid['IFGS_ACQ_XPOSG'][posg_slice]),
                 np.average(valid['IFGS_ACQ_YPOSG'][posg_slice]))
@@ -2864,8 +2889,12 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('Guide Star track available mnemonics:')
+    logger.debug('%s', ordered)
     valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0)
     valid = ordered[valid_flags]
+    if len(valid) < 1:
+        raise ValueError('Fine guide track mode, no valid engineering is found.')
 
     # Get the positions
     position = (np.average(valid['IFGS_TFGGS_X']),
@@ -2906,8 +2935,12 @@ def gs_position_id(mnemonics_to_read, mnemonics):
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('Guide STar ID mode available mnemonics:')
+    logger.debug('%s', ordered)
     valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0)
     valid = ordered[valid_flags]
+    if len(valid) < 1:
+        raise ValueError('Guide Star ID mode, no valid engineering is found.')
 
     # Get the positions
     position = (valid['IFGS_ID_XPOSG'][0], valid['IFGS_ID_YPOSG'][0])
@@ -3005,7 +3038,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
 
     # Getting the timing to extract from the engineering database is complicated by
     # the fact that the observation times and the processing of the guide star
-    # acquisition do not always exactly match. Extend the end time by one second.
+    # acquisition do not always exactly match. Extend the end time by two seconds.
     #
     # For ID modes, the mnemonics are valid only after the exposure is completed.
     # The time to examine is within 10 seconds after the end of exposure
@@ -3015,7 +3048,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
         obsstart = obsend
         obsend = (Time(obsend, format='mjd') + (10 * U.second)).mjd
     elif t_pars.exp_type in FGS_ACQ_EXP_TYPES:
-        obsend = (Time(obsend, format='mjd') + (1 * U.second)).mjd
+        obsend = (Time(obsend, format='mjd') + (2 * U.second)).mjd
 
     gs_position = get_pointing(obsstart, obsend,
                                mnemonics_to_read=mnemonics_to_read,
