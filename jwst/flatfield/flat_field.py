@@ -1378,12 +1378,11 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
     combined_dq[missing] |= dqflags.pixel['NO_FLAT_FIELD']
     combined_dq[missing] |= dqflags.pixel['DO_NOT_USE']
 
-    # Handle NaNs in errors
-    combined_err[np.isnan(combined_err)] = 0.0
-    error_value[np.isnan(error_value)] = 0.0
-
-    # Add new 1D errors and input 2D errors in quadrature
-    combined_err = np.sqrt(combined_err**2 + error_value**2)
+    # Add new 1D errors and input 2D errors in quadrature,
+    # treating NaNs as zeros
+    v1 = error_value**2 * flat_2d**2
+    v2 = combined_err**2 * values**2
+    combined_err = np.sqrt(np.nansum([v1, v2], axis=0))
 
     return flat_2d * values, combined_dq, combined_err
 

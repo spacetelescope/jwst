@@ -10,11 +10,12 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.flatfield.flat_field import combine_fast_slow
 
 
-@pytest.mark.parametrize('flat_err_1,flat_err_2,err_result',
-                         [(0.0, None, 0.0), (np.nan, None, 0.0),
-                          (0.0, 0.1, 0.1), (0.1, 0.0, 0.1), (0.1, np.nan, 0.1),
-                          (0.1, None, 0.1), (0.1, 0.1, np.sqrt(0.02))])
-def test_combine_fast_slow(flat_err_1, flat_err_2, err_result):
+@pytest.mark.parametrize('flat_err_1,flat_err_2',
+                         [(0.0, None), (np.nan, None), (np.nan, np.nan),
+                          (0.0, 0.1), (np.nan, 0.1), (0, np.nan),
+                          (0.1, 0.0), (0.1, np.nan),
+                          (0.1, None), (0.1, 0.1)])
+def test_combine_fast_slow(flat_err_1, flat_err_2):
     """Assign an array of values to tab_wl; these are strictly increasing,
     but they're not uniformly spaced.
     The abscissas and weights in combine_fast_slow are for three-point
@@ -56,12 +57,20 @@ def test_combine_fast_slow(flat_err_1, flat_err_2, err_result):
     wl = np.tile(wl_1d, (10, 1))
     flat_2d = np.ones((10, 10), dtype=float)
     flat_dq = np.zeros((10, 10), dtype=np.uint32)
+
+    # input 2d flat error
     if flat_err_2 is None:
         flat_err = None
+        v2 = 0
     else:
         flat_err = np.full((10, 10), flat_err_2)
-    dispaxis = 1
+        v2 = flat_err_2**2
 
+    # Expected output variance is:
+    #   v = v1 * f2^2 + v2 * f1^2, where f2 is always 1
+    err_result = np.sqrt(np.nansum([flat_err_1**2, v2 * correct_value**2]))
+
+    dispaxis = 1
     value, new_dq, new_err = combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
 
     # Check output shapes
@@ -72,8 +81,7 @@ def test_combine_fast_slow(flat_err_1, flat_err_2, err_result):
     # Column 5 is the expected value
     assert np.allclose(value[:, 5], correct_value, rtol=1.e-8, atol=1.e-8)
     assert np.all(new_dq[:, 5] == 0)
-    assert np.allclose(new_err[:, 5], err_result, rtol=1.e-8, atol=1.e-8,
-                       equal_nan=True)
+    assert np.allclose(new_err[:, 5], err_result, rtol=1.e-8, atol=1.e-8)
 
     # Columns 0-2 are bad (negative wavelengths, not marked in DQ)
     assert np.all(value[:, :3] == 1)
@@ -92,4 +100,4 @@ def test_combine_fast_slow(flat_err_1, flat_err_2, err_result):
         assert np.all(new_err[:, (3, 4, 6, 7, 8, 9)] == 0)
     else:
         assert np.allclose(new_err[:, (3, 4, 6, 7, 8, 9)],
-                           flat_err[:, (3, 4, 6, 7, 8, 9)], equal_nan=True)
+                           flat_err[:, (3, 4, 6, 7, 8, 9)])
