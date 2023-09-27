@@ -6,6 +6,13 @@ assign_wcs
 
 - Increase margin at edges of NIRSpec MOS slits to reduce edge effects in resampling. [#7976]
 
+charge_migration
+----------------
+
+- Added tests to see if the data array is changed after runnung the step and
+  set the default signal_threshold to 25000. [#7895]
+
+
 1.12.1 (2023-09-26)
 ===================
 
