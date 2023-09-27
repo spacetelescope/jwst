@@ -10,7 +10,8 @@ charge_migration
 extract_1d
 ----------
 
-- Move MIRI MRS residual fringe correction later in the code, and apply to surface
+- Move MIRI MRS residual fringe correction later in the code after normalization by
+  pixel area of each wavelength plane, and apply residual fringe correction to surface
   brightness and background vectors as well as flux. [#7980]
 
 straylight
