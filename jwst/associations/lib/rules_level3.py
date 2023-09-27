@@ -906,6 +906,14 @@ class Asn_Lv3TSO(AsnMixin_Science):
             )
         ])
 
+        # Only valid if candidate is not a GROUP.
+        self.validity.update({
+            'is_not_group': {
+                'validated': False,
+                'check': self._validate_candidates
+            }
+        })
+
         super(Asn_Lv3TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
@@ -913,6 +921,26 @@ class Asn_Lv3TSO(AsnMixin_Science):
 
         self.data['asn_type'] = 'tso3'
         super(Asn_Lv3TSO, self)._init_hook(item)
+
+    def _validate_candidates(self, member):
+        """Disallow GROUP candidates
+
+        Parameters
+        ----------
+        member : Member
+            Member being added. Ignored.
+
+        Returns
+        -------
+        False if candidate is GROUP.
+        True otherwise.
+        """
+
+        # If a group candidate, reject.
+        if self.acid.type.lower() == 'group':
+            return False
+
+        return True
 
 
 @RegistryMarker.rule
