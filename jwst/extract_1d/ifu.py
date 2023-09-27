@@ -192,21 +192,21 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
         # Apply residual fringe to the flux array
         try:
-            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
+            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=channel,
                                                         dichroic_only=False, max_amp=None)
         except Exception:
             log.info("Flux residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the surf_bright array
         try:
-            surf_bright = rfutils.fit_residual_fringes_1d(surf_bright, wavelength, channel=thischannel,
+            surf_bright = rfutils.fit_residual_fringes_1d(surf_bright, wavelength, channel=channel,
                                                           dichroic_only=False, max_amp=None)
         except Exception:
             log.info("Surf bright residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the background array
         try:
-            background = rfutils.fit_residual_fringes_1d(background, wavelength, channel=thischannel,
+            background = rfutils.fit_residual_fringes_1d(background, wavelength, channel=channel,
                                                          dichroic_only=False, max_amp=None)
         except Exception:
             log.info("Background residual fringe correction failed- skipping.")
