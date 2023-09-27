@@ -10,8 +10,8 @@ charge_migration
 flat_field
 ----------
 
-- Update ``combine_fast_slow`` to use 1D error values provided by f-flat
-  reference files. [#7978]
+- Update the ``combine_fast_slow`` function for NIRSpec spectroscopic flats 
+   to use 1D error values provided by F-flat reference files. [#7978]
 
 1.12.1 (2023-09-26)
 ===================
