@@ -281,7 +281,7 @@ def test_msa_configuration_normal():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
                              0.13, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -310,7 +310,7 @@ def test_msa_configuration_all_background():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -1.7, 1.7, 4, 0, '1x1', 'background_57', 'bkg_57',
+    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 0, '1x1', 'background_57', 'bkg_57',
                              0, -0.5, -0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -326,7 +326,7 @@ def test_msa_configuration_row_skipped():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+    ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
                              0.130, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -341,9 +341,9 @@ def test_msa_configuration_multiple_returns():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+    ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
                               0.13000000000000003, -0.31716078999999997, -0.18092266)
-    ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
+    ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -3.3, 4.45, 4, 2, '11x111', '95065_2', '172',
                               0.70000000000000007, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
