@@ -11,13 +11,13 @@ extract_1d
 ----------
 
 - Move MIRI MRS residual fringe correction later in the code, and apply to surface
-  brightness and background vectors as well as flux. [#]
+  brightness and background vectors as well as flux. [#7980]
 
 straylight
 ----------
 
 - Adjust MIRI MRS straylight routine to ensure cross-artifact correction does not
-  get applied to pedestal dark signal.
+  get applied to pedestal dark signal. [#7980]
 
 1.12.1 (2023-09-26)
 ===================
