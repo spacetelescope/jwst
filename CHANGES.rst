@@ -39,7 +39,6 @@ straylight
 - Adjust MIRI MRS straylight routine to ensure cross-artifact correction does not
   get applied to pedestal dark signal. [#7980]
 
->>>>>>> master
 
 1.12.1 (2023-09-26)
 ===================
