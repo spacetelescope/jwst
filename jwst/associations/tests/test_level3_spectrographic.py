@@ -56,7 +56,7 @@ def nirspec_params_id(fixture_value):
             'o001',
             'spec3',
             r'jw99009-o001_spec3_\d{5}_asn',
-            'jw99009-o001_{source_id}_nirspec_f100lp-g140m-s200a2-s200a2',
+            'jw99009-o001_{source_id}_nirspec_f100lp-g140m-{slit_name}-s200a2',
             set(('science', 'target_acquisition', 'autowave'))
         ),
         (

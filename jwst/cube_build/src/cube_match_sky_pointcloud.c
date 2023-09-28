@@ -108,7 +108,7 @@ extern int dq_miri(int start_region, int end_region, int overlap_partial, int ov
 		   double *xc, double *yc, double *zc,
 		   double *coord1, double *coord2, double *wave,
 		   double *sliceno,
-		   long ncube, int npt,
+		   long ncube, long npt,
 		   int **spaxel_dq);
 
 extern int dq_nirspec(int overlap_partial,
@@ -117,7 +117,7 @@ extern int dq_nirspec(int overlap_partial,
 		      double *xc, double *yc, double *zc,
 		      double *coord1, double *coord2, double *wave,
 		      double *sliceno,
-		      long ncube, int npt,
+		      long ncube, long npt,
 		      int **spaxel_dq);
 
 extern int set_dqplane_to_zero(int ncube, int **spaxel_dq);

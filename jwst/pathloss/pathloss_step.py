@@ -18,7 +18,8 @@ class PathLossStep(Step):
 
     spec = """
         inverse = boolean(default=False)    # Invert the operation
-        source_type = string(default=None)  # Process as specified source type.
+        source_type = string(default=None)  # Process as specified source type
+        user_slit_loc = float(default=None)   # User-provided correction to MIRI LRS source location
     """
 
     reference_file_types = ['pathloss']
@@ -55,7 +56,8 @@ class PathLossStep(Step):
             # Do the pathloss correction
             result, self.correction_pars = pathloss.do_correction(
                 input_model, pathloss_model,
-                inverse=self.inverse, source_type=self.source_type, correction_pars=correction_pars
+                inverse=self.inverse, source_type=self.source_type,
+                correction_pars=correction_pars, user_slit_loc=self.user_slit_loc
             )
 
             if pathloss_model:

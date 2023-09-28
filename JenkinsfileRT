@@ -43,7 +43,7 @@ jobconfig.publish_env_on_success_only = true
 jobconfig.publish_env_filter = "spacetelescope/master"
 
 // Define python version for conda
-python_version = "3.9"
+python_version = "3.11"
 
 // Define environment variables needed for the regression tests
 env_vars = [
@@ -85,8 +85,9 @@ bc0.build_cmds = [
     "pip install -r requirements-sdp.txt",
 ] + PipInject(env.OVERRIDE_REQUIREMENTS) + ["pip list"]
 bc0.test_cmds = [
-    "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
+    "pytest --cov-report=xml --cov=./ -r sxf --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml \
+    -n 8 --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
     // The following line needs single quotes to avoid insecure interpolation
     // of the codecov_token

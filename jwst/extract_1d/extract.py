@@ -1439,11 +1439,32 @@ class ExtractBase(abc.ABC):
         fwd_transform = self.wcs(x, y)
         middle_wl = np.nanmean(fwd_transform[2])
 
-        try:
-            x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
-        except NotImplementedError:
-            log.warning("Inverse wcs is not implemented, so can't use target coordinates to get location of spectrum.")
-            return
+        if input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC',
+                                              'NRS_BRIGHTOBJ']:
+            if slit is None:
+                xpos = input_model.source_xpos
+                ypos = input_model.source_ypos
+            else:
+                xpos = slit.source_xpos
+                ypos = slit.source_ypos
+
+            slit2det = self.wcs.get_transform('slit_frame', 'detector')
+            x_y = slit2det(xpos, ypos, middle_wl)
+            log.info("Using source_xpos and source_ypos to center extraction.")
+
+        elif input_model.meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+            try:
+                if slit is None:
+                    dithra = input_model.meta.dither.dithered_ra
+                    dithdec = input_model.meta.dither.dithered_dec
+                else:
+                    dithra = slit.meta.dither.dithered_ra
+                    dithdec = slit.meta.dither.dithered_dec
+                x_y = self.wcs.backward_transform(dithra, dithdec, middle_wl)
+            except AttributeError:
+                log.warning("Dithered pointing location not found in wcsinfo. "
+                            "Defaulting to TARG_RA / TARG_DEC for centering.")
+                return
 
         # locn is the XD location of the spectrum:
         if self.dispaxis == HORIZONTAL:
@@ -2526,6 +2547,8 @@ def run_extract1d(
         center_xy: Union[float, None],
         ifu_autocen: Union[bool, None],
         ifu_rfcorr: Union[bool, None],
+        ifu_set_srctype: str,
+        ifu_rscale: float,
         was_source_model: bool = False,
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2586,6 +2609,16 @@ def run_extract1d(
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
+    ifu_set_srctype : str
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
+
+    ifu_rscale: float
+        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
+        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
+        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
+        radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
+        extraction radius.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2634,6 +2667,8 @@ def run_extract1d(
         center_xy,
         ifu_autocen,
         ifu_rfcorr,
+        ifu_set_srctype,
+        ifu_rscale,
         was_source_model,
     )
 
@@ -2696,6 +2731,8 @@ def do_extract1d(
         center_xy: Union[int, None] = None,
         ifu_autocen: Union[bool, None] = None,
         ifu_rfcorr: Union[bool, None] = None,
+        ifu_set_srctype: str = None,
+        ifu_rscale: float = None,
         was_source_model: bool = False
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2765,6 +2802,16 @@ def do_extract1d(
     ifu_rfcorr : bool
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
+
+    ifu_set_srctype : str
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
+
+    ifu_rscale: float
+        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
+        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
+        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
+        radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
+        extraction radius.
 
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
@@ -2973,9 +3020,12 @@ def do_extract1d(
             if source_type is None:
                 source_type = "UNKNOWN"
 
+            if ifu_set_srctype is not None and input_model.meta.exposure.type == 'MIR_MRS':
+                source_type = ifu_set_srctype
+                log.info(f"Overriding source type and setting it to = {ifu_set_srctype}")
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr
+                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale
             )
 
         else:

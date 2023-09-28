@@ -18,7 +18,6 @@ def run_spec3_multi(jail, rtdata_module):
         'step': 'calwebb_spec3',
         'args': {
             '--steps.master_background.save_results=true',
-            '--steps.mrs_imatch.save_results=true',
             '--steps.outlier_detection.save_results=true',
             '--steps.resample_spec.save_results=true',
             '--steps.cube_build.save_results=true',

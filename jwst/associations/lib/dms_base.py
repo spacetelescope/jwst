@@ -708,7 +708,9 @@ class DMSBaseMixin(ACIDMixin):
         return instrument
 
     def _get_opt_element(self):
-        """Get string representation of the optical elements
+        """Get string representation of the optical elements.
+        This includes only elements contained in the filter/pupil
+        wheels of the instrument.
 
         Returns
         -------
@@ -718,7 +720,7 @@ class DMSBaseMixin(ACIDMixin):
         """
         # Retrieve all the optical elements
         opt_elems = []
-        for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3']:
+        for opt_elem in ['opt_elem', 'opt_elem2']:
             try:
                 values = list(self.constraints[opt_elem].found_values)
             except KeyError:
@@ -737,6 +739,38 @@ class DMSBaseMixin(ACIDMixin):
             opt_elem = 'clear'
 
         return opt_elem
+
+    def _get_slit_name(self):
+        """Get string representation of the slit name (NIRSpec fixed-slit only)
+
+        Returns
+        -------
+        slit_name : str
+            The Level3 Product name representation
+            of the slit name.
+        """
+        # Retrieve all the slit names (sometimes there can be 2)
+        slit_names = []
+        for fxd_slit in ['fxd_slit', 'fxd_slit2']:
+            try:
+                values = list(self.constraints[fxd_slit].found_values)
+            except KeyError:
+                pass
+            else:
+                values.sort(key=str.lower)
+                value = format_list(values)
+                if value not in _EMPTY:
+                    slit_names.append(value)
+
+        # Build the string. Sort the elements in order to
+        # create data-independent results
+        slit_names.sort(key=str.lower)
+        slit_name = '-'.join(slit_names)
+
+        if slit_name == '':
+            slit_name = None
+
+        return slit_name
 
     def _get_subarray(self):
         """Get string representation of the subarray

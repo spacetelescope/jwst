@@ -18,7 +18,7 @@ class JumpStep(Step):
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold
         three_group_rejection_threshold = float(default=6.0,min=0) # CR sigma rejection threshold
         four_group_rejection_threshold = float(default=5.0,min=0) # CR sigma rejection threshold
-        maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
+        maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
         flag_4_neighbors = boolean(default=True) # flag the four perpendicular neighbors of each CR
         max_jump_to_flag_neighbors = float(default=1000) # maximum jump sigma that will trigger neighbor flagging
         min_jump_to_flag_neighbors = float(default=10) # minimum jump sigma that will trigger neighbor flagging

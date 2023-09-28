@@ -48,7 +48,7 @@ Individual pipeline steps can be imported by name from their respective module
 in ``jwst``::
 
 	from jwst.saturation import SaturationStep
-	from jwst.ramp_fit import RampFitStep
+	from jwst.ramp_fitting import RampFitStep
 
 Details of all the available pipeline modules and their names can be found at
 :ref:`pipeline-modules`.

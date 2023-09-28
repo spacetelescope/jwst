@@ -450,7 +450,7 @@ class Spec2Pipeline(Pipeline):
                 # Compute the simple mean of the gain image, excluding reference pixels.
                 # The gain ref file doesn't have a DQ array that can be used to
                 # mask bad values, so manually exclude NaN's and gain <= 0.
-                gain_image[gain_image <= 0.] = np.NaN
+                gain_image[gain_image <= 0.] = np.nan
                 mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
                 self.log.info('mean gain = %s', mean_gain)
 

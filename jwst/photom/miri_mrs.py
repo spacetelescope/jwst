@@ -157,7 +157,7 @@ def time_correction(input, detector, ftab, mid_time):
     timecoeff['right']['ccoeff'] = table_ch[right]['ccoeff']
     timecoeff['right']['x0'] = table_ch[right]['x0']
 
-    ysize, xsize = input.data.shape
+    ysize, xsize = input.data.shape[-2], input.data.shape[-1]
     # the correction is time and wavelength dependent. Pull out the
     # wavelength of the data
     x, y = grid_from_bounding_box(input.meta.wcs.bounding_box)

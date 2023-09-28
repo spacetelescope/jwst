@@ -33,9 +33,9 @@ import argparse
 
 import re
 import inspect
-import jsonschema
 import numpy as np
 from os import path as os_path
+from asdf import ValidationError
 from asdf.tags.core import ndarray
 
 from stdatamodels import validate
@@ -768,7 +768,7 @@ def validate_value(im, name, value):
     if schema:
         try:
             validate._check_value(value, schema, im)
-        except jsonschema.ValidationError:
+        except ValidationError:
             valid = False
     return valid
 

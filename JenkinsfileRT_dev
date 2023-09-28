@@ -82,11 +82,13 @@ bc0.build_cmds = [
     "pip install -r requirements-dev.txt",
 ] + PipInject(env.OVERRIDE_REQUIREMENTS) + ["pip list"]
 bc0.test_cmds = [
-    "pytest -r sxf -n auto --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
+    "pytest -r sxf --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml \
+    -n 8 --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
 ]
 bc0.test_configs = [data_config]
+bc0.failedFailureThresh = 0
 
 // macos-specific buildconfig to cause the creation of counterparts to the linux
 // environment dumps. Packages in a minimal conda environment differ by OS

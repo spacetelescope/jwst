@@ -8,7 +8,7 @@ from jwst.associations.lib.dms_base import (nrccoron_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources, dms_product_name_noopt, dms_product_name_coronimage,
+    dms_product_name_sources, dms_product_name_nrsfs_sources, dms_product_name_noopt, dms_product_name_coronimage,
     format_product
 )
 
@@ -539,7 +539,7 @@ class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
 
     @property
     def dms_product_name(self):
-        return dms_product_name_sources(self)
+        return dms_product_name_nrsfs_sources(self)
 
 
 @RegistryMarker.rule

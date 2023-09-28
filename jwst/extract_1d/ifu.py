@@ -37,7 +37,7 @@ HUGE_DIST = 1.e10
 
 def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
                   bkg_sigma_clip, apcorr_ref_model=None, center_xy=None,
-                  ifu_autocen=False, ifu_rfcorr=False):
+                  ifu_autocen=False, ifu_rfcorr=False, ifu_rscale=None):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -77,6 +77,13 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
 
+    ifu_rscale: float
+        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
+        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
+        default extraction size is set to 2 * FWHM. Values below 2 will resuls in a smaller
+        radius, a value of 2 results in no change to radius and a value above 2 results in a larger
+        extraction radius.
+
     Returns
     -------
     output_model : MultiSpecModel
@@ -108,14 +115,17 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     extract_params = get_extract_parameters(ref_dict, bkg_sigma_clip, slitname)
 
-    # Add info about IFU auto-centroiding and residual fringe correction to extract_params for use later
+    # Add info about IFU auto-centroiding, residual fringe correction and extraction radius scale
+    # to extract_params for use later
     extract_params['ifu_autocen'] = ifu_autocen
     extract_params['ifu_rfcorr'] = ifu_rfcorr
+    extract_params['ifu_rscale'] = ifu_rscale
 
     # If the user supplied extraction center coords,
     # load them into extract_params for use later.
     extract_params['x_center'] = None
     extract_params['y_center'] = None
+
     if center_xy is not None:
         if len(center_xy) == 2:
             extract_params['x_center'] = float(center_xy[0])
@@ -515,6 +525,10 @@ def extract_ifu(input_model, source_type, extract_params):
         outer_bkg = extract_params['outer_bkg'].flatten()
         radius = extract_params['radius'].flatten()
 
+        if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rscale'] is not None)):
+            radius = radius * extract_params['ifu_rscale']/2.0
+            log.info("Scaling radius by factor =  %g", extract_params['ifu_rscale'] / 2.0)
+
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
         # radius_match is in arc seconds - need to convert to pixels
@@ -741,14 +755,14 @@ def extract_ifu(input_model, source_type, extract_params):
         # Determine which MRS channel the spectrum is from
         thischannel = input_model.meta.instrument.channel
         # Valid single-channel values
-        validch=['1','2','3','4']
+        validch = ['1', '2', '3', '4']
         # Embed all calls to residual fringe code in a try/except loop as the default behavior
         # if problems are encountered should be to not apply this optional step
         try:
             # If a valid single channel, specify it in call to residual fringe code
             if (thischannel in validch):
                 temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
-                                              dichroic_only=False, max_amp=None)
+                                                            dichroic_only=False, max_amp=None)
             # Otherwise leave channel blank
             else:
                 temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,

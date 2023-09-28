@@ -32,13 +32,6 @@ MOCK_GOOD_STARTTIME = Time('59240.10349754328', format='mjd')
 MOCK_GOOD_ENDTIME = Time('59240.1082197338', format='mjd')
 
 
-@pytest.fixture
-def engdb_service():
-    """Setup the service to operate through the mock service"""
-    with EngDB_Mocker():
-        yield engdb_tools.ENGDB_Service(base_url='http://localhost')
-
-
 def test_from_models(engdb_service, tmp_path):
     """Test v1_calculate_from_models for basic running"""
     model = ImageModel()
@@ -110,6 +103,16 @@ def test_over_time_mast(tmp_path):
     errors = v1_compare_simplified_tables(v1_formatted, truth)
     errors_str = '\n'.join(errors)
     assert len(errors) == 0, f'V1 tables are different: {errors_str}'
+
+
+# ######################
+# Fixtures and utilities
+# ######################
+@pytest.fixture
+def engdb_service():
+    """Setup the service to operate through the mock service"""
+    with EngDB_Mocker():
+        yield engdb_tools.ENGDB_Service(base_url='http://localhost')
 
 
 def v1_compare_simplified_tables(a, b, rtol=1e-05):
