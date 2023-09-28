@@ -398,6 +398,30 @@ def test_add_wcs_default(data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
+def test_add_wcs_default_fgsacq(tmp_path):
+    """Handle when no pointing exists and the default is used."""
+    with datamodels.Level1bModel(DATA_PATH / 'add_wcs_default_acq1.fits') as model:
+        expected_name = 'add_wcs_default_acq1.fits'
+        try:
+            stp.update_wcs(
+                model, siaf_path=siaf_path, tolerance=0, allow_default=True
+            )
+        except ValueError:
+            pass  # This is what we want for the test.
+        except Exception as e:
+            pytest.skip(
+                'Live ENGDB service is not accessible.'
+                '\nException={}'.format(e)
+            )
+
+        # Save for post-test comparison and update
+        model.save(tmp_path / expected_name)
+
+        # Check some keywords
+        assert model.meta.wcsinfo.crpix1 == 0
+        assert model.meta.wcsinfo.crpix2 == 0
+
+
 def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     with pytest.raises(ValueError):
@@ -738,6 +762,28 @@ def data_file_fromsim(tmp_path):
     model.meta.ephemeris.velocity_z_bary = -7.187
 
     file_path = tmp_path / 'file_fromsim.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
+def data_file_acq1(tmp_path):
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.aperture.name = "FGS2_FULL"
+    model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "FGS_ACQ1"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file.fits'
     model.save(file_path)
     model.close()
     yield file_path

@@ -1,11 +1,21 @@
 1.12.2 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Increase margin at edges of NIRSpec MOS slits to reduce edge effects in resampling. [#7976]
+
 charge_migration
 ----------------
 
 - Added tests to see if the data array is changed after runnung the step and
-  setting signal_threshold to 25000. [#7895]
+  set the default signal_threshold to 25000. [#7895]
+
+set_telescope_pointing
+----------------------
+
+- Ensure that CRPIX1/2 are set to default values for Guiding modes that fail pointing determination [#7983]
 
 flat_field
 ----------
