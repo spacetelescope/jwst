@@ -12,16 +12,34 @@ charge_migration
 - Added tests to see if the data array is changed after runnung the step and
   set the default signal_threshold to 25000. [#7895]
 
+extract_1d
+----------
+
+- Move MIRI MRS residual fringe correction later in the code after normalization by
+  pixel area of each wavelength plane, and apply residual fringe correction to surface
+  brightness and background vectors as well as flux. [#7980]
+
+flat_field
+----------
+
+- Update the ``combine_fast_slow`` function for NIRSpec spectroscopic flats 
+  to use 1D error values provided by F-flat reference files. [#7978]
+
+- For NIRSpec modes, set all DO_NOT_USE pixels to NaN after flat
+  correction. [#7979]
+
 set_telescope_pointing
 ----------------------
 
 - Ensure that CRPIX1/2 are set to default values for Guiding modes that fail pointing determination [#7983]
 
-flat_field
+straylight
 ----------
 
-- For NIRSpec flat fields, set new DO_NOT_USE pixels to NaN after
-  correction. [#7979]
+- Adjust MIRI MRS straylight routine to ensure cross-artifact correction does not
+  get applied to pedestal dark signal. [#7980]
+
+>>>>>>> master
 
 1.12.1 (2023-09-26)
 ===================

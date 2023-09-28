@@ -173,6 +173,44 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     del npixels_temp
     del npixels_bkg_temp
 
+    # If selected, apply 1d residual fringe correction to the extracted spectrum
+    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
+        log.info("Applying 1d residual fringe correction.")
+        # Determine which MRS channel the spectrum is from
+        thischannel = input_model.meta.instrument.channel
+        # Valid single-channel values
+        validch = ['1', '2', '3', '4']
+
+        # If a valid single channel, specify it in call to residual fringe code
+        if (thischannel in validch):
+            channel = thischannel
+        else:
+            channel = ''
+
+        # Embed all calls to residual fringe code in try/except blocks as the default behavior
+        # if problems are encountered should be to not apply this optional step
+
+        # Apply residual fringe to the flux array
+        try:
+            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=channel,
+                                                        dichroic_only=False, max_amp=None)
+        except Exception:
+            log.info("Flux residual fringe correction failed- skipping.")
+
+        # Apply residual fringe to the surf_bright array
+        try:
+            surf_bright = rfutils.fit_residual_fringes_1d(surf_bright, wavelength, channel=channel,
+                                                          dichroic_only=False, max_amp=None)
+        except Exception:
+            log.info("Surf bright residual fringe correction failed- skipping.")
+
+        # Apply residual fringe to the background array
+        try:
+            background = rfutils.fit_residual_fringes_1d(background, wavelength, channel=channel,
+                                                         dichroic_only=False, max_amp=None)
+        except Exception:
+            log.info("Background residual fringe correction failed- skipping.")
+
     pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
     if pixel_solid_angle is None:
         log.warning("Pixel area (solid angle) is not populated; "
@@ -748,27 +786,6 @@ def extract_ifu(input_model, source_type, extract_params):
     b_var_poisson = b_var_poisson[nan_slc]
     b_var_rnoise = b_var_rnoise[nan_slc]
     b_var_flat = b_var_flat[nan_slc]
-
-    # If selected, apply 1d residual fringe correction to the extracted spectrum
-    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
-        log.info("Applying 1d residual fringe correction.")
-        # Determine which MRS channel the spectrum is from
-        thischannel = input_model.meta.instrument.channel
-        # Valid single-channel values
-        validch = ['1', '2', '3', '4']
-        # Embed all calls to residual fringe code in a try/except loop as the default behavior
-        # if problems are encountered should be to not apply this optional step
-        try:
-            # If a valid single channel, specify it in call to residual fringe code
-            if (thischannel in validch):
-                temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=thischannel,
-                                                            dichroic_only=False, max_amp=None)
-            # Otherwise leave channel blank
-            else:
-                temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength,
-                                                            dichroic_only=False, max_amp=None)
-        except Exception:
-            log.info("Residual fringe correction failed- skipping.")
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat,
