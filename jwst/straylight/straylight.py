@@ -10,7 +10,7 @@ import numpy as np
 import logging
 
 from stdatamodels.jwst.datamodels import dqflags
-
+from astropy.stats import sigma_clipped_stats as scs
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
@@ -100,17 +100,17 @@ def correct_xartifact(input_model, modelpars):
 
     # Create a copy of the input data array that will be modified
     # for use in the straylight calculations
-    input = input_model.copy()
+    usedata = input_model.data.copy()
 
     # mask is same size as image - set = 1 everywhere to start
-    mask = np.ones_like(input.data)
+    mask = np.ones_like(usedata)
 
     # if there are nans remove them because they mess up the correction
     # Set them to zero in the copy of input data used for calculation
-    index_inf = np.isinf(input.data).nonzero()
-    input.data[index_inf] = 0.0
-    index_inf = np.isnan(input.data).nonzero()
-    input.data[index_inf] = 0.0
+    index_inf = np.isinf(usedata).nonzero()
+    usedata[index_inf] = 0.0
+    index_inf = np.isnan(usedata).nonzero()
+    usedata[index_inf] = 0.0
     # flag associated mask so we do not  use any
     # slice gaps that are nans, now data=0.
     mask[index_inf] = 0
@@ -128,6 +128,25 @@ def correct_xartifact(input_model, modelpars):
     # Which channel/band are we using?
     channel = input_model.meta.instrument.channel
     band = input_model.meta.instrument.band
+
+    # Define the 'dark' region to use between the channels
+    if (channel == '12'):
+        xd1, xd2 = 503, 516
+        yd1, yd2 = 50, 1024-50
+    else:
+        xd1, xd2 = 474, 507
+        yd1, yd2 = 50, 1024-50
+
+    # Estimate a first-pass pedestal correction based on sigma-clipped
+    # statistics in the dark region. We need to do this here so that
+    # the cross-artifact correction doesn't get applied to dark glow, but since
+    # the pedestal measurement can also be biased by cross-artifact we'll estimate
+    # the final pedestal correction afterwards
+    pedestal_guess, _, pedestal_rms = scs(usedata[yd1:yd2, xd1:xd2])
+
+    # Don't apply the cross artifact correction to pixels dominated by detector noise
+    indx = np.where(usedata < pedestal_guess + 3 * pedestal_rms)
+    mask[indx] = 0
 
     # Deal with normal cases only, we won't apply to cross-dichroic cases for now
     left, right = 'N/A', 'N/A'
@@ -150,15 +169,16 @@ def correct_xartifact(input_model, modelpars):
         log.info("Warning: no parameters found for channel = " + str(channel) + " band = " + str(band))
 
     xvec = (np.arange(ncols)).astype(float)
-    left_model = np.zeros_like(input.data)
-    right_model = np.zeros_like(input.data)
+    left_model = np.zeros_like(usedata)
+    right_model = np.zeros_like(usedata)
 
     # Left-half of detector
     try:
         param = modelpars[left]
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 0, 516
-        fimg = input.data * mask
+        # Subtract off intial guess at pedestal first
+        fimg = (usedata - pedestal_guess) * mask
         left_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                      param['LOR_SCALE'], param['GAU_FWHM'],
                                      param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
@@ -171,7 +191,7 @@ def correct_xartifact(input_model, modelpars):
         param = modelpars[right]
         log.info("Found parameters for right detector half, applying Cross-Artifact correction.")
         istart, istop = 516, 1024
-        fimg = input.data * mask
+        fimg = (usedata - pedestal_guess) * mask
         right_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                       param['LOR_SCALE'], param['GAU_FWHM'],
                                       param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
@@ -184,25 +204,28 @@ def correct_xartifact(input_model, modelpars):
     model[:, 1028:1032] = 0.0
     model[:, 0:4] = 0.0
 
-    # Delete our temporary working copy of the data
-    del input
-
     # Create output as a copy of the real data prior to replacement of NaNs with zeros
     output = input_model.copy()
     # Subtract the model from the data
     output.data = output.data - model
+    usedata = usedata - model
 
-    # Remove any remaining pedestal stray light values based on inter-channel region
-    # chosen based on analysis of multiple bands of data from various programs
-    if (channel == '12'):
-        pedestal = np.nanmedian(output.data[280:740, 503:516])
-    else:
-        pedestal = np.nanmedian(output.data[280:740, 474:507])
+    # Now measure and remove the pedestal dark count rate measured between the channels
+    # Embed in a try/except block to catch unusual failures
     try:
+        _, themed, therms = scs(usedata[yd1:yd2, xd1:xd2])
+        pedestal = np.zeros_like(output.data) + themed
+        # remove the pedestal correction for the reference pixels
+        pedestal[:, 1028:1032] = 0.0
+        pedestal[:, 0:4] = 0.0
+
         output.data = output.data - pedestal
-        log.info("Derived pedestal correction " + str(pedestal) + " DN/s")
+        log.info("Derived pedestal correction " + str(themed) + " DN/s")
     except Exception:
         log.info("Straylight pedestal correction failed.")
+
+    # Delete our temporary working copy of the data
+    del usedata
 
     log.info("Cross-artifact model complete.")
     return output
