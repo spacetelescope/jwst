@@ -15,7 +15,7 @@ charge_migration
 set_telescope_pointing
 ----------------------
 
-- Ensure that default WCS information is set for Guiding modes that fail pointing determination [#7983]
+- Ensure that CRPIX1/2 are set to default values for Guiding modes that fail pointing determination [#7983]
 
 1.12.1 (2023-09-26)
 ===================
