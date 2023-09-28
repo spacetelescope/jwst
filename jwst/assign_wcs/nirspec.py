@@ -635,7 +635,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         slitlet_ids_unique.remove(-1)
 
     # add a margin to the slit y limits
-    margin = 0.05
+    margin = 0.5
 
     # Now lets look at each unique slitlet id
     for slitlet_id in slitlet_ids_unique:

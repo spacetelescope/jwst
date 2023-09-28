@@ -1,4 +1,24 @@
-1.12.1 (unreleased)
+1.12.2 (unreleased)
+===================
+
+assign_wcs
+----------
+
+- Increase margin at edges of NIRSpec MOS slits to reduce edge effects in resampling. [#7976]
+
+charge_migration
+----------------
+
+- Added tests to see if the data array is changed after runnung the step and
+  set the default signal_threshold to 25000. [#7895]
+
+resample
+--------
+
+- Simplify interface for matching a resampled mosaic to an existing output
+  image [#7971]
+
+1.12.1 (2023-09-26)
 ===================
 
 extract_1d
@@ -10,12 +30,16 @@ extract_1d
 - Bug fix for #7883. The input model type is checked to see if the input is
   a single model or a model container. [#7965]
 
-resample
---------
+outlier_detection
+-----------------
 
-- Simplify interface for matching a resampled mosaic to an existing output
-  image [#7971]
- 
+- Remove median file output from ``output_dir`` if ``save_intermediate_results``
+  is set to False. [#7961]
+
+set_telescope_pointing
+----------------------
+
+- Extend engineering coverage time for guiding modes. [#7966]
 
 1.12.0 (2023-09-18)
 ===================

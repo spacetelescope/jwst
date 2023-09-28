@@ -21,7 +21,7 @@ class ChargeMigrationStep(Step):
     class_alias = "charge_migration"
 
     spec = """
-        signal_threshold = float(default=30000)
+        signal_threshold = float(default=25000)
         skip = boolean(default=True)
     """
 
