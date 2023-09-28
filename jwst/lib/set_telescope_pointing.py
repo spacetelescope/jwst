@@ -3050,15 +3050,19 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     elif t_pars.exp_type in FGS_ACQ_EXP_TYPES:
         obsend = (Time(obsend, format='mjd') + (2 * U.second)).mjd
 
-    gs_position = get_pointing(obsstart, obsend,
-                               mnemonics_to_read=mnemonics_to_read,
-                               engdb_url=t_pars.engdb_url,
-                               tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
-
-    crpix1 = crpix2 = None
-    apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
-    aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
-    crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture, flip=True)
+    try:
+        gs_position = get_pointing(obsstart, obsend,
+                                   mnemonics_to_read=mnemonics_to_read,
+                                   engdb_url=t_pars.engdb_url,
+                                   tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+    except ValueError as exception:
+        logger.warning('Cannot determine guide star position from engineering. Defaulting to CRPIX = 0')
+        logger.warning('Engineering failure due to exception: %s', exception)
+        crpix1 = crpix2 = 0
+    else:
+        apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
+        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
+        crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture, flip=True)
 
     # Determine PC matrix
 
