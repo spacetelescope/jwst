@@ -6,6 +6,11 @@ assign_wcs
 
 - Increase margin at edges of NIRSpec MOS slits to reduce edge effects in resampling. [#7976]
 
+associations
+------------
+
+- Prevent group candidates from generating level 3 TSO associations. [#7982]
+
 charge_migration
 ----------------
 
@@ -42,11 +47,6 @@ straylight
 
 1.12.1 (2023-09-26)
 ===================
-
-associations
-------------
-
-- Prevent group candidates from generating level 3 TSO associations. [#7982]
 
 extract_1d
 ----------
