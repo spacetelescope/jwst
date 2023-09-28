@@ -64,7 +64,7 @@ image.
     under the root of the file. The output image size is determined from the i2d
     or s2d data size in the case of a FITS file, or from the bounding box of the
     WCS in the enclosed ``ASDF`` file. Argument ``output_shape`` overrides
-    computed image size and it is required when output WCS is ASDF and does not
+    computed image size and it is required when output WCS is provided as an ASDF file and does not
     have ``bounding_box`` property set.
 
     .. note::
