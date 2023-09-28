@@ -17,6 +17,12 @@ set_telescope_pointing
 
 - Ensure that CRPIX1/2 are set to default values for Guiding modes that fail pointing determination [#7983]
 
+flat_field
+----------
+
+- Update the ``combine_fast_slow`` function for NIRSpec spectroscopic flats 
+   to use 1D error values provided by F-flat reference files. [#7978]
+
 1.12.1 (2023-09-26)
 ===================
 
