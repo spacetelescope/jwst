@@ -937,7 +937,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
         """
 
         # If a group candidate, reject.
-        if self.acid.type.lower() == 'group':
+        if self.acid.type.lower() != 'observation':
             return False
 
         return True
