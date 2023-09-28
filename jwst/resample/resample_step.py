@@ -43,17 +43,18 @@ class ResampleStep(Step):
     class_alias = "resample"
 
     spec = """
-        pixfrac = float(default=1.0) # change back to None when drizpar reference files are updated
-        kernel = string(default='square') # change back to None when drizpar reference files are updated
-        fillval = string(default='INDEF' ) # change back to None when drizpar reference files are updated
-        weight_type = option('ivm', 'exptime', None, default='ivm')  # change back to None when drizpar ref update
-        output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
-        crpix = float_list(min=2, max=2, default=None)
-        crval = float_list(min=2, max=2, default=None)
-        rotation = float(default=None)
+        pixfrac = float(default=1.0) # Fraction by which input pixels are "shrunk" before being drizzled
+        kernel = option('square', 'gaussian', 'point, 'tophat', 'turbo', \
+            'lanczos2', 'lanczos3', default='square') # Function used to distribute flux onto the output image
+        fillval = string(default='INDEF') # Fill value where there is no flux in output resampled image
+        weight_type = option('ivm', 'exptime', None, default='ivm') # The weighting type for each input image
+        output_shape = int_list(min=2, max=2, default=None) # Shape of output resampled image in [x, y] order
+        crpix = float_list(min=2, max=2, default=None) # Position of the reference pixel in the image array [x, y] order
+        crval = float_list(min=2, max=2, default=None) # RA and Dec of the reference pixel
+        rotation = float(default=None) # Position angle of output image Y-axis east of north
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         pixel_scale = float(default=None) # Absolute pixel scale in arcsec
-        output_wcs = string(default='')  # Custom output WCS.
+        output_wcs = is_string_or_datamodel(default=None)  # Custom output WCS file
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -170,12 +171,20 @@ class ResampleStep(Step):
             raise ValueError(f"Both '{name}' values must be either None or not None.")
 
     @staticmethod
-    def _load_custom_wcs(asdf_wcs_file, output_shape):
-        if not asdf_wcs_file:
+    def _load_custom_wcs(input_wcs_file, output_shape):
+        if not input_wcs_file:
             return None
 
-        with asdf.open(asdf_wcs_file) as af:
-            wcs = deepcopy(af.tree["wcs"])
+        try:
+            # File is ASDF file with a top-level wcs in the tree
+            with asdf.open(input_wcs_file) as af:
+                wcs = deepcopy(af.tree["wcs"])
+        except (KeyError, ValueError):
+            # File is ImageModel or SlitModel with the wcs under meta
+            with datamodels.open(input_wcs_file) as model:
+                wcs = deepcopy(model.meta.wcs)
+                if not output_shape:
+                    output_shape = model.data.shape[::-1]
 
         if output_shape is not None or wcs is None:
             wcs.array_shape = output_shape[::-1]

@@ -12,6 +12,11 @@ charge_migration
 - Added tests to see if the data array is changed after runnung the step and
   set the default signal_threshold to 25000. [#7895]
 
+resample
+--------
+
+- Simplify interface for matching a resampled mosaic to an existing output
+  image [#7971]
 
 1.12.1 (2023-09-26)
 ===================
