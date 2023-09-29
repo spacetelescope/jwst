@@ -440,6 +440,10 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         # Combine the science and flat DQ arrays
         slit.dq |= slit_flat.dq
 
+        # Make sure all DO_NOT_USE pixels are set to NaN,
+        # including those flagged by this step
+        slit.data[np.where(slit.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
+
         any_updated = True
 
     if any_updated:
@@ -515,6 +519,10 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
 
+    # Make sure all DO_NOT_USE pixels are set to NaN,
+    # including those flagged by this step
+    output_model.data[np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
+
     output_model.meta.cal_step.flat_field = 'COMPLETE'
 
     return interpolated_flat
@@ -580,6 +588,10 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
+
+        # Make sure all DO_NOT_USE pixels are set to NaN,
+        # including those flagged by this step
+        output_model.data[np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
 
         output_model.meta.cal_step.flat_field = 'COMPLETE'
 

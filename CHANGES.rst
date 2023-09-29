@@ -25,6 +25,9 @@ flat_field
 - Update the ``combine_fast_slow`` function for NIRSpec spectroscopic flats 
   to use 1D error values provided by F-flat reference files. [#7978]
 
+- For NIRSpec modes, set all DO_NOT_USE pixels to NaN after flat
+  correction. [#7979]
+
 set_telescope_pointing
 ----------------------
 
