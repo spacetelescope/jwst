@@ -35,7 +35,15 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
         bad_slits = []
         for idx, slits in enumerate(zip(data.slits, unflatted.slits)):
             data_slit, unflatted_slit = slits
-            if not np.allclose(data_slit.data, unflatted_slit.data):
+
+            # flat fielding may set some new NaN values - ignore these in test
+            is_nan = np.isnan(unflatted_slit.data)
+            test1 = np.allclose(data_slit.data[~is_nan], unflatted_slit.data[~is_nan])
+
+            # make sure NaNs are only at do_not_use pixels
+            test2 = np.all(unflatted_slit.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
+
+            if not test1 and test2:
                 bad_slits.append(idx)
 
     assert not bad_slits, f'Inversion failed for slits {bad_slits}'
