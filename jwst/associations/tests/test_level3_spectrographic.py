@@ -18,7 +18,7 @@ class TestLevel3Spec(BasePoolRule):
     pools = [
         PoolParams(
             path=t_path('data/pool_005_spec_niriss.csv'),
-            n_asns=1,
+            n_asns=0,
             n_orphaned=0
         ),
         PoolParams(

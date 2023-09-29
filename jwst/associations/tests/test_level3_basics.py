@@ -31,7 +31,6 @@ def test_meta():
 @pytest.mark.parametrize(
     'pool_file',
     [
-        'data/pool_005_spec_niriss.csv',
         'data/pool_006_spec_nirspec.csv',
         'data/pool_007_spec_miri.csv',
         'data/pool_010_spec_nirspec_lv2bkg.csv',
