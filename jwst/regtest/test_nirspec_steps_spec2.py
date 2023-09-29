@@ -53,8 +53,12 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
         flatted = FlatFieldStep.call(data)
         unflatted = FlatFieldStep.call(flatted, inverse=True)
 
-    assert np.allclose(data.data, unflatted.data), 'Inversion failed'
+    # flat fielding may set some new NaN values - ignore these in test
+    is_nan = np.isnan(unflatted.data)
+    assert np.allclose(data.data[~is_nan], unflatted.data[~is_nan]), 'Inversion failed'
 
+    # make sure NaNs are only at do_not_use pixels
+    assert np.all(unflatted.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
 
 @pytest.mark.slow
 @pytest.mark.bigdata
