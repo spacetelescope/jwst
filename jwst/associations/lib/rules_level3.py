@@ -906,9 +906,9 @@ class Asn_Lv3TSO(AsnMixin_Science):
             )
         ])
 
-        # Only valid if candidate is not a GROUP.
+        # Only valid if candidate type is 'observation'.
         self.validity.update({
-            'is_not_group': {
+            'is_type_observation': {
                 'validated': False,
                 'check': self._validate_candidates
             }
@@ -923,7 +923,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
         super(Asn_Lv3TSO, self)._init_hook(item)
 
     def _validate_candidates(self, member):
-        """Disallow GROUP candidates
+        """Allow only observation-type candidates
 
         Parameters
         ----------
@@ -932,8 +932,8 @@ class Asn_Lv3TSO(AsnMixin_Science):
 
         Returns
         -------
-        False if candidate is GROUP.
-        True otherwise.
+        True if candidate type is observation.
+        False otherwise.
         """
 
         # If a group candidate, reject.
