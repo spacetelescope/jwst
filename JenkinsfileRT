@@ -74,7 +74,7 @@ bc0.conda_ver = '22.11.1'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
-bc0.pip_reqs_files = ['requirements-sdp.txt', 'requirements-max.txt', 'requirements-dev-st.txt']
+bc0.pip_reqs_files = ['requirements-dev-st.txt', 'requirements-max.txt', 'requirements-sdp.txt']
 bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
