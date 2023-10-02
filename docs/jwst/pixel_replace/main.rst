@@ -34,7 +34,7 @@ The adjacent arrays (the number of which is set by the step argument
 ``n_adjacent_cols``) are individually normalized. Next, each pixel in the profile is set to
 the median of the normalized values. This results in a median of normalized values filling the vector.
 
-Finally, this profile is scaled to the vector containing a missing pixel and the value is
+Finally, this profile is scaled to the vector containing a missing pixel, and the value is
 estimated from the scaled profile.
 
 Minimum Gradient Estimator
