@@ -906,6 +906,14 @@ class Asn_Lv3TSO(AsnMixin_Science):
             )
         ])
 
+        # Only valid if candidate type is 'observation'.
+        self.validity.update({
+            'is_type_observation': {
+                'validated': False,
+                'check': self._validate_candidates
+            }
+        })
+
         super(Asn_Lv3TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
@@ -913,6 +921,26 @@ class Asn_Lv3TSO(AsnMixin_Science):
 
         self.data['asn_type'] = 'tso3'
         super(Asn_Lv3TSO, self)._init_hook(item)
+
+    def _validate_candidates(self, member):
+        """Allow only observation-type candidates
+
+        Parameters
+        ----------
+        member : Member
+            Member being added. Ignored.
+
+        Returns
+        -------
+        True if candidate type is observation.
+        False otherwise.
+        """
+
+        # If a group candidate, reject.
+        if self.acid.type.lower() != 'observation':
+            return False
+
+        return True
 
 
 @RegistryMarker.rule

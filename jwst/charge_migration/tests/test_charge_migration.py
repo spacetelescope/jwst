@@ -33,11 +33,14 @@ def test_pix_0():
     # GROUPDQ to be DNU
     ramp_model.data[0, :, 0, 0] = np.array((signal_threshold - 100.), dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = [GOOD, DNU, GOOD, DNU, DNU, GOOD, GOOD, GOOD, GOOD, DNU]
+    in_data = ramp_model.data
     in_gdq = ramp_model.groupdq
 
     out_model = charge_migration(ramp_model, signal_threshold)
+    out_data = out_model.data
     out_gdq = out_model.groupdq
 
+    npt.assert_array_equal(in_data, out_data)
     npt.assert_array_equal(out_gdq, in_gdq)
 
 
@@ -68,14 +71,17 @@ def test_pix_1():
     ramp_model.data[0, 4:, 0, 0] = np.array((signal_threshold + 6000.), dtype=np.float32)
     ramp_model.groupdq[0, 4:, 0, 0] = GOOD
 
+    true_out_data = ramp_model.data.copy()
     true_out_gdq = ramp_model.groupdq.copy()
     true_out_gdq[0, 2, 0, 0] = DNU
     true_out_gdq[0, 3, 0, 0] = DNU
     true_out_gdq[0, 4:, 0, 0] = CHLO_DNU
 
     out_model = charge_migration(ramp_model, signal_threshold)
+    out_data = out_model.data
     out_gdq = out_model.groupdq
 
+    npt.assert_array_equal(true_out_data, out_data)
     npt.assert_array_equal(out_gdq, true_out_gdq)
 
 
@@ -184,6 +190,7 @@ def test_flag_neighbors():
             [CHLO_DNU, CHLO_DNU, CHLO_DNU],
             [CHLO_DNU, CHLO_DNU, CHLO_DNU]]], dtype=np.uint8)
 
+    npt.assert_array_equal(out_model.data, ramp_model.data)
     npt.assert_array_equal(out_gdq, true_out_gdq)
 
 

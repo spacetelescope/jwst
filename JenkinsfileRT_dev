@@ -74,12 +74,11 @@ bc0.conda_ver = '22.11.1'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
-bc0.pip_reqs_files = ['requirements-dev.txt']
+bc0.pip_reqs_files = ['requirements-dev-st.txt', 'requirements-dev-thirdparty.txt']
 bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
-    "pip install -r requirements-dev.txt",
 ] + PipInject(env.OVERRIDE_REQUIREMENTS) + ["pip list"]
 bc0.test_cmds = [
     "pytest -r sxf --bigdata --slow \
