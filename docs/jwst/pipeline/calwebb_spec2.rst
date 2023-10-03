@@ -77,7 +77,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`residual_fringe <residual_fringe_step>` \ :sup:`2` |     |     |     |     |     | |c| |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
-| :ref:`pixel_replace <pixel_replace_step>` \ :sup:`2`     | |c| | |c| |     | |c| | |c| |     |                 | |c|  |  |c|   |     |
+| :ref:`pixel_replace <pixel_replace_step>` \ :sup:`2`     | |c| | |c| | |c| | |c| | |c| |     |                 | |c|  |  |c|   |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`resample_spec <resample_step>`                     | |c| | |c| |     | |c| |     |     |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
@@ -92,7 +92,8 @@ For NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
 flat_field, extract_2d, and srctype (no wavecorr).
 For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 
-:sup:`2`\ By default this step is skipped in the ``calwebb_spec2`` pipeline.
+:sup:`2`\ By default this step is skipped in the ``calwebb_spec2`` pipeline, but
+is enabled for some modes via overrides provided in parameter reference files.
 
 :sup:`3`\ NIRISS SOSS can have multiple spectral orders contribute flux to one pixel; because
 photometric correction values depend on the spectral order assigned to a pixel, the order of
