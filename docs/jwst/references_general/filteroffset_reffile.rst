@@ -20,6 +20,7 @@ Instrument Keywords
 ========== ================================================
 MIRI       INSTRUME, DETECTOR, EXP_TYPE, DATE-OBS, TIME-OBS
 NIRCam     INSTRUME, CHANNEL, MODULE, DATE-OBS, TIME-OBS
+NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ================================================
 
 .. include:: ../includes/standard_keywords.inc
@@ -30,8 +31,12 @@ The filteroffset reference file is an ASDF file that contains a list
 called ``filters``. Every item in the list contains one or more entries that
 are used as selectors, as well as the column and row offset values to be applied.
 For the MIRI instrument, there is one selector "filter", which is the name of
-the filter to which the offsets apply. For NIRCam, the selectors are "filter" and
-"pupil". The offsets, in pixels, are applied in the image science frame.
+the filter to which the offsets apply. For NIRCam and NIRISS, the selectors are "filter" and
+"pupil".
+
+The offsets, in units of pixels, are *added* to positions in images that use
+the reference filter/pupil, in order to align images to the reference filter/pupil
+frame.
 
 :filters:
     :filter: Filter name
