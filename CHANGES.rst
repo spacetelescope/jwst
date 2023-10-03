@@ -1,7 +1,13 @@
 1.12.3 (unreleased)
 ===================
 
--
+documentation
+-------------
+
+- Updated the ``calwebb_spec2`` pipeline docs to indicate that the ``pixel_replace`` step is
+  applied to NIRSpec IFU data, and made minor wording updates to the ``pixel_replace`` step
+  docs.  [#7990]
+
 
 1.12.2 (2023-10-02)
 ===================
@@ -166,7 +172,7 @@ datamodels
 - updated ``stdatamodels`` pin to ``>=1.8.0`` [#7854]
 
 documentation
-------------
+-------------
 
 - Fixed a reference to the ``ramp_fitting` module in the user documentation. [#7898]
 
