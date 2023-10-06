@@ -94,9 +94,9 @@ class DataTypes():
             # close files opened above
             self.close()
             raise TypeError("Failed to process file type {}".format(type(input_models)))
-        # if the user has set the output name - strip out *.fits
-        # later suffixes will be added to this name to designate the
-        # channel, subchannel or grating,filter the data is covers.
+        # If the user has set the output name, strip off *.fits.
+        # Suffixes will be added to this name later, to designate the
+        # channel+subchannel (MIRI MRS) or grating+filter (NRS IFU) the output cube covers.
 
 
         if output_file is not None:
