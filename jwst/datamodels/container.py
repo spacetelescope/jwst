@@ -141,7 +141,7 @@ to supply custom catalogs.
 
         .. note::
             ``group_id`` can be an integer, a string, or Null. When ``group_id``
-            is ``Null`, it is converted to `None` in Python and it will be
+            is `Null`, it is converted to `None` in Python and it will be
             assigned a group ID based on various exposure attributes - see
             ``models_grouped`` property for more details.
 
