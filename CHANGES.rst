@@ -1,6 +1,12 @@
 1.12.5 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Added support for user-supplied ``group_id`` either via
+ ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+
 refpix
 ------
 
@@ -16,6 +22,7 @@ cube_build
 
 - Keep data models opened by cube build open until the step completes. [#7998]
 
+
 general
 -------
 
@@ -23,6 +30,7 @@ general
 
 - Pinned dependencies for several in-development packages below their next versions
   to maintain compatibility. [#8003, #8006]
+
 
 
 1.12.3 (2023-10-03)
