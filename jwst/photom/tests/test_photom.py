@@ -1130,7 +1130,7 @@ def test_nirspec_fs():
             result.append(ds.input.slits[k].meta.bunit_data == 'MJy/sr')
             result.append(ds.input.slits[k].meta.bunit_err == 'MJy/sr')
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
     ftab.close()
 
@@ -1191,7 +1191,7 @@ def test_nirspec_bright():
     result.append(ds.input.meta.bunit_data == 'MJy')
     result.append(ds.input.meta.bunit_err == 'MJy')
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_nirspec_msa():
@@ -1231,7 +1231,7 @@ def test_nirspec_msa():
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 """ Skip this test because it would require a realistic wcs.
@@ -1276,7 +1276,7 @@ def test_niriss_wfss():
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_niriss_soss():
@@ -1364,7 +1364,7 @@ def test_miri_mrs():
     compare = value
     ratio = output[iy, ix] / input[iy, ix]
     result.append(math.isclose(ratio, compare, rel_tol=1.e-7))
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_miri_lrs():
@@ -1623,7 +1623,7 @@ def test_apply_photom_2(srctype):
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_find_row():
