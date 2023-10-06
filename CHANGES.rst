@@ -1,7 +1,11 @@
 1.12.4 (unreleased)
 ===================
 
-- 
+cube_build
+----------
+
+- Keep data models opened by cube build open until the step completes. [#7998] 
+
 
 1.12.3 (2023-10-03)
 ===================
