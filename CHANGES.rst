@@ -4,7 +4,12 @@
 cube_build
 ----------
 
-- Keep data models opened by cube build open until the step completes. [#7998] 
+- Keep data models opened by cube build open until the step completes. [#7998]
+
+general
+-------
+
+- Fix numpy 2.0 deprecation warnings in cube_build, photom and wfs_combine. [#7999]
 
 
 1.12.3 (2023-10-03)
@@ -50,7 +55,7 @@ extract_1d
 flat_field
 ----------
 
-- Update the ``combine_fast_slow`` function for NIRSpec spectroscopic flats 
+- Update the ``combine_fast_slow`` function for NIRSpec spectroscopic flats
   to use 1D error values provided by F-flat reference files. [#7978]
 
 - For NIRSpec modes, set all DO_NOT_USE pixels to NaN after flat
@@ -74,7 +79,7 @@ straylight
 extract_1d
 ----------
 
-- For MIRS MRS IFU data allow the user to set the src_type and allow 
+- For MIRS MRS IFU data allow the user to set the src_type and allow
   the user to scale the extraction radius between 0.5 to 3.0 FWHM. [#7883]
 
 - Bug fix for #7883. The input model type is checked to see if the input is
@@ -254,7 +259,7 @@ pathloss
 - Fix interpolation error for point source corrections. [#7799]
 
 - Update the MIRI LRS fixed-slit correction to default to the center of the slit
-  when the computed target location is outside the slit. Add the parameter 
+  when the computed target location is outside the slit. Add the parameter
   "user_slit_loc" to allow specifying the source location to use. [#7806]
 
 photom
