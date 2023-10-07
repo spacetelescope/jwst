@@ -220,6 +220,8 @@ def nircam_rate():
     return im
 
 
+# ignore the warning - raised because the data array is all zeroes
+@pytest.mark.filterwarnings("ignore:invalid value encountered in scalar divide")
 def test_nirspec_wcs_roundtrip(nirspec_rate):
     im = AssignWcsStep.call(nirspec_rate)
     im = Extract2dStep.call(im)

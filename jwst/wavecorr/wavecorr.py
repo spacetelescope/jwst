@@ -38,6 +38,10 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+WAVECORR_SUPPORTED_MODES = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
+                            'NRS_AUTOFLAT']
+
+
 def do_correction(input_model, wavecorr_file):
     """ Main wavecorr correction function for NIRSpec MOS and FS.
 
@@ -49,12 +53,9 @@ def do_correction(input_model, wavecorr_file):
         Wavecorr reference file name.
     """
 
-    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
-                                'NRS_AUTOFLAT']
-
     # Check for valid exposure type
     exp_type = input_model.meta.exposure.type.upper()
-    if exp_type not in wavecorr_supported_modes:
+    if exp_type not in WAVECORR_SUPPORTED_MODES:
         log.info(f'Skipping wavecorr correction for EXP_TYPE {exp_type}')
         return input_model
 

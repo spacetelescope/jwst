@@ -17,7 +17,10 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
-from ..assign_wcs.util import wrap_ra
+from jwst.assign_wcs.util import wrap_ra
+from jwst.wavecorr.wavecorr import _is_point_source
+from jwst.wavecorr.wavecorr import WAVECORR_SUPPORTED_MODES
+
 from . import resample_utils
 from .resample import ResampleData
 
@@ -26,6 +29,37 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 _S2C = SphericalToCartesian()
+
+
+# def _use_wavecorr(model, lam):
+# def _use_wavecorr(model):
+#     # Replace wavelength with wavelength array corrected by wavecorr.
+#     # Can the corrected wavelength array be used?
+#     if not isinstance(model, list):
+#         model = [model]
+#
+#     exp_type = [m.meta.exposure.type.lower()  for m in model]
+#     is_point_source = []
+#     if exp_type in WAVECORR_SUPPORTED_MODES:
+#         if _is_point_source(model, exp_type):
+#             # try:
+#             #     if lam.shape == refmodel.wavelength.shape:
+#             #         lam = refmodel.wavelength.copy()
+#             #     else:
+#             #         warning.warn("Not using wavecorr wavelength arrays, shapes don't match.")
+#             # except AttributeError:
+#             #     pass
+#     return lam
+
+def _use_wavecorr(model):
+    if model.meta.exposure.type in WAVECORR_SUPPORTED_MODES:
+        if hasattr(model, "wavelength") and not (model.wavelength is None or (np.isnan(model.wavelength)).all()):
+            log.info('Using wavelengths corrected for source position.')
+            return model.wavelength
+        else:
+            x,y = grid_from_bounding_box(model.meta.wcs.bounding_box)
+            log.info('not using wavecor in resample_spec')
+            return model.meta.wcs(x, y)[2]
 
 
 class ResampleSpecData(ResampleData):
@@ -108,11 +142,16 @@ class ResampleSpecData(ResampleData):
 
     def build_nirspec_output_wcs(self, refmodel=None):
         """
-        Create a spatial/spectral WCS covering footprint of the input
+        Create a spatial/spectral WCS covering footprint of the input.
         """
         all_wcs = [m.meta.wcs for m in self.input_models if m is not refmodel]
+
+        all_lambdas = []
+        for model in self.input_models:
+            all_lambdas.append(_use_wavecorr(model))
+
         if refmodel:
-            all_wcs.insert(0, refmodel.meta.wcs)
+            all_lambdas.insert(0, _use_wavecorr(refmodel))
         else:
             refmodel = self.input_models[0]
 
@@ -135,8 +174,11 @@ class ResampleSpecData(ResampleData):
         # by the spectral intensity
         bbox = refwcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
-        _, s, lam = np.array(d2s(*grid))
-        sd = s * refmodel_data
+        _, slit_y, _ = np.array(d2s(*grid))
+        # Replace wavelength with wavelength array corrected by wavecorr.
+        lam = all_lambdas[0]
+
+        sd = slit_y * refmodel_data
         ld = lam * refmodel_data
         good_s = np.isfinite(sd)
         if np.any(good_s):
@@ -145,13 +187,17 @@ class ResampleSpecData(ResampleData):
             wmean_l = np.sum(ld[good_s]) / total
         else:
             wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
-            wmean_l = d2s(*np.mean(bbox, axis=1))[2]
+            wmean_l = np.mean(lam)
 
         # transform the weighted means into target RA/Dec
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
 
+        # ref_lam = _find_nirspec_output_sampling_wavelengths(
+        #     all_wcs,
+        #     targ_ra, targ_dec
+        # )
         ref_lam = _find_nirspec_output_sampling_wavelengths(
-            all_wcs,
+            all_lambdas,
             targ_ra, targ_dec
         )
         ref_lam = np.array(ref_lam)
@@ -288,6 +334,7 @@ class ResampleSpecData(ResampleData):
             w2s = wcs.get_transform('world', 'slit_frame')
 
             x, y = wcstools.grid_from_bounding_box(wcs.bounding_box)
+            # this wavelength does not need the wavecorr correction
             ra, dec, lam = wcs(x, y)
 
             good = np.logical_and(np.isfinite(ra), np.isfinite(dec))
@@ -585,9 +632,10 @@ class ResampleSpecData(ResampleData):
         wcs = model.meta.wcs
         bbox = wcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
-        x_msa, y_msa, lam = np.array(wcs(*grid))
-        # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
-        # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
+        x_msa, y_msa, _ = np.array(wcs(*grid))
+
+        # Use corrected wavelengths
+        lam = _use_wavecorr(model)
         spectral_axis = find_dispersion_axis(model)
         spatial_axis = spectral_axis ^ 1
 
@@ -690,23 +738,10 @@ def _spherical_sep(j, k, wcs, xyz_ref):
     return 1 - np.dot(_S2C(ra, dec), xyz_ref)
 
 
-def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode='median'):
-    assert mode in ['median', 'fast', 'accurate']
-    refwcs = wcs_list[0]
-    bbox = refwcs.bounding_box
+def _find_nirspec_output_sampling_wavelengths(all_lambdas, targ_ra, targ_dec):
+    lambdas = all_lambdas[0]
 
-    grid = wcstools.grid_from_bounding_box(bbox)
-    ra, dec, lambdas = refwcs(*grid)
-
-    if mode == 'median':
-        ref_lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
-    else:
-        ref_lam, _, _ = _find_nirspec_sampling_wavelengths(
-            refwcs,
-            targ_ra, targ_dec,
-            ra, dec,
-            fast=mode == 'fast'
-        )
+    ref_lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
 
     lam1 = ref_lam[0]
     lam2 = ref_lam[-1]
@@ -714,19 +749,9 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
     min_delta = np.fabs(np.ediff1d(ref_lam).min())
 
     image_lam = []
-    for w in wcs_list[1:]:
-        bbox = w.bounding_box
-        grid = wcstools.grid_from_bounding_box(bbox)
-        ra, dec, lambdas = w(*grid)
-        if mode == 'median':
-            lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
-        else:
-            lam, _, _ = _find_nirspec_sampling_wavelengths(
-                w,
-                targ_ra, targ_dec,
-                ra, dec,
-                fast=mode == 'fast'
-            )
+    for w in all_lambdas[1:]:
+        lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
+
         image_lam.append((lam, np.min(lam), np.max(lam)))
         min_delta = min(min_delta, np.fabs(np.ediff1d(ref_lam).min()))
 
@@ -734,12 +759,10 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
     # function of the pixel index along the X-axis. It will not work correctly
     # if this assumption does not hold.
 
-    # Estimate overlaps between ranges and decide in which order to combine
-    # them:
-
     while image_lam:
         best_overlap = -np.inf
         best_wcs = 0
+        ### ND Looking for the smallest overlap between lambdas in slits-> best_overlap?
         for k, (lam, lmin, lmax) in enumerate(image_lam):
             overlap = min(lam2, lmax) - max(lam1, lmin)
             if best_overlap < overlap:
@@ -773,123 +796,3 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
         del ref_lam[i]
 
     return ref_lam
-
-
-def _find_nirspec_sampling_wavelengths(wcs, ra0, dec0, ra, dec, fast=True):
-    xdet = []
-    lms = []
-    ys = []
-    skipped = []
-
-    eps = 10 * np.finfo(float).eps
-
-    xyz_ref = _S2C(ra0, dec0)
-    ymax, xmax = ra.shape
-    good = np.logical_and(np.isfinite(ra), np.isfinite(dec))
-
-    j0 = 0
-
-    for k in range(xmax):
-        if not any(good[:, k]):
-            if xdet:
-                skipped.append(k)
-            continue
-
-        idx = np.flatnonzero(good[:, k]).tolist()
-        if j0 in idx:
-            i = idx.index(j0)
-        else:
-            i = 0
-            j0 = idx[0]
-
-        dmin = _spherical_sep(j0, k, wcs, xyz_ref)
-
-        for j in idx[i + 1:]:
-            d = _spherical_sep(j, k, wcs, xyz_ref)
-            if d < dmin:
-                dmin = d
-                j0 = j
-            elif d > dmin:
-                break
-
-        for j in idx[max(i - 1, 0):None if i else 0:-1]:
-            d = _spherical_sep(j, k, wcs, xyz_ref)
-            if d < dmin:
-                dmin = d
-                j0 = j
-            elif d > dmin:
-                break
-
-        if j0 == 0 or not good[j0 - 1, k]:
-            j1 = j0 - 0.49999
-        else:
-            j1 = j0 - 0.99999
-
-        if j0 == ymax - 1 or not good[j0 + 1, k]:
-            j2 = j0 + 0.49999
-        else:
-            j2 = j0 + 0.99999
-
-        if fast:
-            # parabolic minimization:
-            f0 = dmin
-            f1 = _spherical_sep(j1, k, wcs, xyz_ref)
-            if not np.isfinite(f1):
-                # give another try with 1/2 step:
-                j1 = 0.5 * (j1 + j0)
-                f1 = _spherical_sep(j1, k, wcs, xyz_ref)
-
-            f2 = _spherical_sep(j2, k, wcs, xyz_ref)
-            if not np.isfinite(f2):
-                # give another try with 1/2 step:
-                j2 = 0.5 * (j2 + j0)
-                f2 = _spherical_sep(j2, k, wcs, xyz_ref)
-
-            if np.isfinite(f1) and np.isfinite(f2):
-                dn = (j0 - j1) * (f0 - f2) - (j0 - j2) * (f0 - f1)
-                if np.abs(dn) < eps:
-                    jmin = j0
-                else:
-                    jmin = j0 - 0.5 * ((j0 - j1)**2 * (f0 - f2) -
-                                       (j0 - j2)**2 * (f0 - f1)) / dn
-                    jmin = max(min(jmin, j2), j1)
-            else:
-                jmin = j0
-
-        else:
-            r = minimize_scalar(
-                _spherical_sep,
-                method='golden',
-                bracket=(j1, j2),
-                args=(k, wcs, xyz_ref),
-                tol=None,
-                options={'maxiter': 10, 'xtol': 1e-2 / (j0 + 1)}
-            )
-            jmin = r['x']
-            if np.isfinite(jmin):
-                jmin = max(min(jmin, j2), j1)
-            else:
-                jmin = j0
-
-        targ_lam = wcs(k, jmin)[-1]
-        if not np.isfinite(targ_lam):
-            targ_lam = wcs(k, j0)[-1]
-
-        if not np.isfinite(targ_lam):
-            if xdet:
-                skipped.append(k)
-            continue
-
-        lms.append(targ_lam)
-        ys.append(jmin)
-        xdet.append(k)
-
-    skipped = [s for s in skipped if s <= xdet[-1]]
-    if skipped and skipped[0] < xdet[-1]:
-        # there are columns with all pixels having invalid world,
-        # coordinates. Fill the gaps using linear interpolation.
-        raise NotImplementedError(
-            "Support for discontinuous sampling was not implemented."
-        )
-
-    return lms, xdet, ys
