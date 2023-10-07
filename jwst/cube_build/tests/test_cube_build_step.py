@@ -6,8 +6,10 @@ import numpy as np
 import pytest
 from astropy.io import fits
 
+from gwcs import WCS
 from stdatamodels.jwst.datamodels import IFUImageModel
 
+from jwst import assign_wcs
 from jwst.cube_build import CubeBuildStep
 from jwst.cube_build.file_table import ErrorNoAssignWCS
 from jwst.cube_build.cube_build import ErrorNoChannels
@@ -100,8 +102,15 @@ def miri_image():
     return image
 
 
-def test_call_cube_build(_jail, miri_cube_pars, miri_image):
+@pytest.mark.parametrize("as_filename", [True, False])
+def test_call_cube_build(_jail, miri_cube_pars, miri_image, tmp_path, as_filename):
     """ test defaults of step are set up and user input are defined correctly """
+    if as_filename:
+        fn = tmp_path / 'miri.fits'
+        miri_image.save(fn)
+        step_input = fn
+    else:
+        step_input = miri_image
 
     # we do not want to run the CubeBuild through to completion because
     # the image needs to be a full image and this take too much time
@@ -112,7 +121,7 @@ def test_call_cube_build(_jail, miri_cube_pars, miri_image):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
-        step.run(miri_image)
+        step.run(step_input)
 
     # Test some defaults to step are setup correctly and
     # is user specifies channel is set up correctly
@@ -121,7 +130,7 @@ def test_call_cube_build(_jail, miri_cube_pars, miri_image):
     step.channel = '1'
 
     try:
-        step.run(miri_image)
+        step.run(step_input)
     except ErrorNoAssignWCS:
         pass
 
@@ -132,8 +141,53 @@ def test_call_cube_build(_jail, miri_cube_pars, miri_image):
 
     # Set Assign WCS has been run but the user input to channels is wrong
     miri_image.meta.cal_step.assign_wcs = 'COMPLETE'
+    # save file with modifications
+    if as_filename:
+        miri_image.save(step_input)
     with pytest.raises(ErrorNoChannels):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
-        step.run(miri_image)
+        step.run(step_input)
+
+
+@pytest.fixture(scope='function')
+def nirspec_data():
+    image = IFUImageModel((2048, 2048))
+    image.data = np.random.random((2048, 2048))
+    image.meta.instrument.name = 'NIRSPEC'
+    image.meta.instrument.detector = 'NRS1'
+    image.meta.exposure.type = 'NRS_IFU'
+    image.meta.filename = 'test_nirspec.fits'
+    image.meta.observation.date = '2023-10-06'
+    image.meta.observation.time = '00:00:00.000'
+    # below values taken from regtest using file
+    # jw01249005001_03101_00004_nrs1_cal.fits
+    image.meta.instrument.filter = 'F290LP'
+    image.meta.instrument.grating = 'G395H'
+    image.meta.wcsinfo.v2_ref = 299.83548
+    image.meta.wcsinfo.v3_ref = -498.256805
+    image.meta.wcsinfo.ra_ref = 358.0647567841019
+    image.meta.wcsinfo.dec_ref = -2.167207258876695
+    image.meta.cal_step.assign_wcs = 'COMPLETE'
+    step = assign_wcs.assign_wcs_step.AssignWcsStep()
+    refs = {}
+    for reftype in assign_wcs.assign_wcs_step.AssignWcsStep.reference_file_types:
+        refs[reftype] = step.get_reference_file(image, reftype)
+    pipe = assign_wcs.nirspec.create_pipeline(image, refs, slit_y_range=[-.5, .5])
+    image.meta.wcs = WCS(pipe)
+    return image
+
+
+@pytest.mark.parametrize("as_filename", [True, False])
+def test_call_cube_build_nirspec(_jail, nirspec_data, tmp_path, as_filename):
+    if as_filename:
+        fn = tmp_path / 'test_nirspec.fits'
+        nirspec_data.save(fn)
+        step_input = fn
+    else:
+        step_input = nirspec_data
+    step = CubeBuildStep()
+    step.channel = '1'
+    step.coord_system = 'internal_cal'
+    step.run(step_input)

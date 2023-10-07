@@ -241,6 +241,7 @@ class CubeBuildStep (Step):
         # Check for a valid reference file
         if par_filename == 'N/A':
             self.log.warning('No default cube parameters reference file found')
+            input_table.close()
             return
 # ________________________________________________________________________________
 # shove the input parameters in to pars to pull out in general cube_build.py
@@ -299,6 +300,7 @@ class CubeBuildStep (Step):
         if instrument == 'MIRI' and self.coord_system == 'internal_cal':
             self.log.warning('The output coordinate system of internal_cal is not valid for MIRI')
             self.log.warning('use output_coord = ifualign instead')
+            input_table.close()
             return
         filenames = master_table.FileMap['filename']
 
@@ -402,6 +404,7 @@ class CubeBuildStep (Step):
         if status_cube == 1:
             self.skip = True
 
+        input_table.close()
         return cube_container
 # ******************************************************************************
 
