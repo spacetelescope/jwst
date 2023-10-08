@@ -425,10 +425,10 @@ to supply custom catalogs.
         Returns a list of a list of datamodels grouped by exposure.
         Assign an ID grouping by exposure if not already assigned.
 
-        If ``model.meta.group_id`` does not exist or it is `None` then data
-        from different detectors of the same exposure will be assigned
+        If ``model.meta.group_id`` does not exist or it is `None`, then data
+        from different detectors of the same exposure will be assigned the
         same group ID, which allows grouping by exposure in the ``tweakreg`` and
-        in the ``skymatch`` steps. The following metadata is used when
+        ``skymatch`` steps. The following metadata is used when
         determining grouping:
 
         meta.observation.program_number
