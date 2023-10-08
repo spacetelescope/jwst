@@ -423,7 +423,7 @@ to supply custom catalogs.
     def models_grouped(self):
         """
         Returns a list of a list of datamodels grouped by exposure.
-        Assign an ID grouping by exposure if not already assigned.
+        Assign a grouping ID by exposure, if not already assigned.
 
         If ``model.meta.group_id`` does not exist or it is `None`, then data
         from different detectors of the same exposure will be assigned the
