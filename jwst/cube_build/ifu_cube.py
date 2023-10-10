@@ -1506,6 +1506,8 @@ class IFUCubeData():
         weight_det = None
         softrad_det = None
         scalerad_det = None
+        x_det = None
+        y_det = None
 
         if self.instrument == 'MIRI':
             sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background)
@@ -1576,7 +1578,7 @@ class IFUCubeData():
 
             return coord1, coord2, corner_coord, wave, dwave, flux, err, \
                 slice_no, rois_det, roiw_det, weight_det, \
-                softrad_det, scalerad_det
+                softrad_det, scalerad_det, x_det, y_det
 
         # good data holds the location of pixels we want to map to cube
         # define variables as numpy arrays (numba needs this defined)
@@ -1593,8 +1595,8 @@ class IFUCubeData():
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
-        x_all = x_all[good_data]
-        y_all = y_all[good_data]
+        x_det = x_all[good_data]
+        y_det = y_all[good_data]
 
         log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
@@ -1680,7 +1682,7 @@ class IFUCubeData():
             corner_coord = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
         return coord1, coord2, corner_coord, wave, dwave, flux, err, \
             slice_no, rois_det, roiw_det, weight_det, \
-            softrad_det, scalerad_det, x_all, y_all
+            softrad_det, scalerad_det, x_det, y_det
     # ______________________________________________________________________
 
     def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background):
