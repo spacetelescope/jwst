@@ -73,7 +73,8 @@ def wfs_association(tmp_path_factory):
     im1.save(path1)
     im2.save(path2)
 
-    asn = asn_from_list([path1, path2],
+    #asn = asn_from_list([path1, path2],
+    asn = asn_from_list(["image1_cal.fits", "image2_cal.fits"],
                         product_name='jw00024-a3001_t001_nircam_nrca4_{suffix}')
     asn.data["program"] = "00024"
     asn.data["asn_type"] = "wfs-image2"
