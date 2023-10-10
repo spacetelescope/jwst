@@ -94,7 +94,7 @@ class NSClean:
         with np.errstate(divide='ignore'):
             self.P = 1 / np.fft.irfft2(np.fft.rfft2(np.array(self.M,
                                        dtype=np.float32)) * FW, (self.ny,self.nx))
-        self.P = np.where(self.M==True, self.P, 0.) # Illuminated areas carry no weight
+        self.P = np.where(self.M is True, self.P, 0.) # Illuminated areas carry no weight
 
         # Build a 1-dimensional Gaussian kernel for "buffing". Buffing is in the
         # dispersion direction only. In detector coordinates, this is axis zero. Even though
