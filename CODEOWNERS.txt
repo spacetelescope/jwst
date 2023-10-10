@@ -24,6 +24,7 @@ jwst/ipc                 @philhodge         @stscirij
 jwst/jump                @dmggh             @hbushouse
 jwst/lastframe           @jemorrison        @dmggh
 jwst/linearity           @hbushouse         @stscirij
+jwst/nsclean             @hbushouse         @jemorrison
 jwst/outlier_detection   @stsci-hack        @jdavies-st
 jwst/persistence         @philhodge         @stscirij
 jwst/photom              @hbushouse         @dmggh
