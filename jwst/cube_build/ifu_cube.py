@@ -20,7 +20,7 @@ from ..assign_wcs import pointing
 from jwst.datamodels import ModelContainer
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
-from . import cube_build_wcs_util©
+from . import cube_build_wcs_util
 from . import cube_internal_cal
 from . import coord
 from ..mrs_imatch.mrs_imatch_step import apply_background_2d
