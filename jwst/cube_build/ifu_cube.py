@@ -20,7 +20,7 @@ from ..assign_wcs import pointing
 from jwst.datamodels import ModelContainer
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
-from . import cube_build_wcs_util
+from . import cube_build_wcs_util©
 from . import cube_internal_cal
 from . import coord
 from ..mrs_imatch.mrs_imatch_step import apply_background_2d
@@ -294,13 +294,13 @@ class IFUCubeData():
         xilimit = max(np.abs(xi_min), np.abs(xi_max))
         etalimit = max(np.abs(eta_min), np.abs(eta_max))
 
-        na = math.ceil(xilimit / self.cdelt1) + 1
-        nb = math.ceil(etalimit / self.cdelt2) + 1
+        na = math.ceil((xilimit / self.cdelt1).item()) + 1
+        nb = math.ceil((etalimit / self.cdelt2).item()) + 1
 
         # if the user set the nspax_x or nspax_y then redefine na, nb
         # it is assumed that both values are ODD numbers
         # We want the central pixel to be the tangent point with na/nb pixels on either
-        # side of central pixel. 
+        # side of central pixel.
         if self.nspax_x is not None:
             na = int(self.nspax_x/2)
         if self.nspax_y is not None:
