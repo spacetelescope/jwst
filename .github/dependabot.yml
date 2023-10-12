@@ -7,6 +7,8 @@ updates:
     target-branch: "master"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "zacharyburnett"
 
   # Maintain dependencies for pip
   - package-ecosystem: "pip"
@@ -14,3 +16,6 @@ updates:
     target-branch: "master"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "zacharyburnett"
+
