@@ -511,7 +511,7 @@ class DataSet():
                 # Old style ref file; skip the correction
                 log.info("Skipping MRS MIRI time correction. Extensions not found in the reference file.")
                 self.mrs_time_correction = False
-            
+
             #if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
             if self.mrs_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
@@ -1151,7 +1151,7 @@ class DataSet():
                     slit.meta.photometry.pixelarea_arcsecsq = 1.
                     slit.meta.photometry.pixelarea_steradians = 1.
                 else:
-                    slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[match])
+                    slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[match].item())
                     slit.meta.photometry.pixelarea_steradians = \
                         slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
             if n_failures > 0:
