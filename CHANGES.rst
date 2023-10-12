@@ -1,4 +1,4 @@
-1.12.4 (unreleased)
+1.12.4 (2023-10-12)
 ===================
 
 cube_build
@@ -11,6 +11,7 @@ general
 
 - Fix numpy 2.0 deprecation warnings in cube_build, photom and wfs_combine. [#7999]
 
+- pinned dependencies for several in-development packages below their next versions to maintain compatibility
 
 1.12.3 (2023-10-03)
 ===================
