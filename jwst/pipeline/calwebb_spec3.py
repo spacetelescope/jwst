@@ -23,7 +23,7 @@ from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 from ..combine_1d import combine_1d_step
 from ..photom import photom_step
-
+from ..spectral_leak import spectral_leak_step
 
 __all__ = ['Spec3Pipeline']
 
@@ -65,6 +65,7 @@ class Spec3Pipeline(Pipeline):
         'extract_1d': extract_1d_step.Extract1dStep,
         'photom': photom_step.PhotomStep,
         'combine_1d': combine_1d_step.Combine1dStep
+        'spectral_leak': spectral_leak_step:SpectralLeakStep
     }
 
     # Main processing
@@ -277,6 +278,10 @@ class Spec3Pipeline(Pipeline):
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
+
+                if exptype in ['MIR_MRS']:
+                    print('result from extract1d',type(result)
+                    result = self.spectral_leak(result)
 
             else:
                 self.log.warning(

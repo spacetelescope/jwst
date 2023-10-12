@@ -1,3 +1,3 @@
-from .pixel_replace_step import PixelReplaceStep
+from .spectral_leak_step import SpectralLeakStep
 
-__all__ = ["PixelReplaceStep"]
+__all__ = ["SpectralLeakStep"]
