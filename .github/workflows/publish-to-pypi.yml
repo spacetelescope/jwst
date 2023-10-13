@@ -9,7 +9,7 @@ jobs:
     name: check that `requirements-sdp.txt` is populated
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: grep -v '^ *#' requirements-sdp.txt
       - run: if [[ -z $(grep -v '^ *#' requirements-sdp.txt) ]]; then echo requirements-sdp.txt is empty; exit 1; fi
   publish:

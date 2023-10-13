@@ -1,4 +1,9 @@
-1.12.4 (unreleased)
+1.12.5 (unreleased)
+===================
+
+- 
+
+1.12.4 (2023-10-12)
 ===================
 
 cube_build
@@ -11,11 +16,15 @@ general
 
 - Fix numpy 2.0 deprecation warnings in cube_build, photom and wfs_combine. [#7999]
 
+- Pinned dependencies for several in-development packages below their next versions
+  to maintain compatibility. [#8003, #8006]
+
 refpix
 ------
 
 - Revert a change introduced in #7745, erroneously setting 2 detector columns near
   bad reference pixels to zero. [#8005]
+
 
 1.12.3 (2023-10-03)
 ===================
