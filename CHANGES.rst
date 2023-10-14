@@ -22,7 +22,6 @@ cube_build
 
 - Keep data models opened by cube build open until the step completes. [#7998]
 
-
 general
 -------
 
@@ -30,7 +29,6 @@ general
 
 - Pinned dependencies for several in-development packages below their next versions
   to maintain compatibility. [#8003, #8006]
-
 
 
 1.12.3 (2023-10-03)
