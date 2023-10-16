@@ -4,7 +4,7 @@
 cube_build
 ----------
 
-- Add return x_det and y_det (set to None) when no data is found on detector to build cube. [#8001]
+- Return x_det and y_det (set to None) when no data is found on detector to build cube. [#8001]
  
 
 1.12.4 (2023-10-12)
