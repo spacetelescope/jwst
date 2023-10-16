@@ -15,7 +15,6 @@ cube_build
 
 - Keep data models opened by cube build open until the step completes. [#7998]
 
-
 general
 -------
 
