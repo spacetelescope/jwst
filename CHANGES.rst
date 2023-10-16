@@ -1,7 +1,11 @@
 1.12.5 (unreleased)
 ===================
 
-- 
+cube_build
+----------
+
+- Add return x_det and y_det (set to None) when no data is found on detector to build cube. [#8001]
+ 
 
 1.12.4 (2023-10-12)
 ===================
@@ -10,7 +14,7 @@ cube_build
 ----------
 
 - Keep data models opened by cube build open until the step completes. [#7998]
-- Add return x_det and y_det (set to None) when no data is found on detector to build cube. [#8001]
+
 
 general
 -------
