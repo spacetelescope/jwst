@@ -344,9 +344,9 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
         for k in bits:
             ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
                    2 * (odd_even_row - 1))
-            log.debug("bad interleaved reference at pixels {} through {}"
-                      .format(ref, ref + 4))
-            data[..., ref:ref + 4] = 0.
+            log.debug("bad interleaved reference at pixels {} {}"
+                      .format(ref, ref + 1))
+            data[..., ref:ref + 2] = 0.
 
 
 def decode_mask(output, mask):
@@ -489,7 +489,7 @@ def rm_intermittent_badpix(data, scipix_n, refpix_r, ovr_corr_mitigation_ftr):
         rp2replace.sort()
         rp2replace = np.unique(rp2replace)
         total_rp2replace.extend(rp2replace)
-        log.info('{} supicious bad reference pixels in amplifier {}'.format(len(rp2replace), k))
+        log.info('{} suspicious bad reference pixels in amplifier {}'.format(len(rp2replace), k))
 
         remaining_rp_even, remaining_rp_odd = [], []
         for rp in ref_pix:
