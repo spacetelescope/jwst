@@ -11,7 +11,7 @@ jobs:
     name: check that `requirements-sdp.txt` is populated
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - if: github.event_name == 'release'
         run: grep -v '^ *#' requirements-sdp.txt
   build:
