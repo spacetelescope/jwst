@@ -1,6 +1,12 @@
 1.12.5 (unreleased)
 ===================
 
+datamodels
+----------
+
+- Added support for user-supplied ``group_id`` either via
+ ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+
 refpix
 ------
 

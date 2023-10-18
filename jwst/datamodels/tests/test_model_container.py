@@ -1,5 +1,6 @@
 import os
 import warnings
+from jwst.associations import load_as_asn
 
 import pytest
 
@@ -16,6 +17,7 @@ from jwst.lib.file_utils import pushdir
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
+CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, 'association_group_id.json')
 
 
 @pytest.fixture
@@ -108,3 +110,29 @@ def test_all_datamodels_init(model):
 def test_model_container_ind_asn_exptype(container):
     ind = container.ind_asn_type('science')
     assert ind == [0, 1]
+
+
+def test_group_id(tmp_path):
+    c = ModelContainer(CUSTOM_GROUP_ID_ASN_FILE)
+    groups = list(c.models_grouped)
+
+    assert len(groups) == 5
+    assert sorted(map(len, groups)) == [1, 1, 1, 1, 4]
+
+    with open(CUSTOM_GROUP_ID_ASN_FILE) as f:
+        asn_data = load_as_asn.load_asn(f)
+
+    asn_group_ids = set()
+    for d in asn_data['products'][0]['members']:
+        group_id = d.get('group_id')
+        if group_id is None:
+            asn_group_ids.add('jw00001001001_02201_00001')
+        else:
+            asn_group_ids.add(group_id)
+
+    model_droup_ids = set()
+    for g in groups:
+        for m in g:
+            model_droup_ids.add(m.meta.group_id)
+
+    assert asn_group_ids == model_droup_ids
