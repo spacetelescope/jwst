@@ -1,7 +1,18 @@
 1.12.5 (unreleased)
 ===================
 
-- 
+datamodels
+----------
+
+- Added support for user-supplied ``group_id`` either via
+ ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+
+refpix
+------
+
+- Revert a change introduced in #7745, erroneously setting 2 detector columns near
+  bad reference pixels to zero. [#8005]
+
 
 1.12.4 (2023-10-12)
 ===================
@@ -16,7 +27,9 @@ general
 
 - Fix numpy 2.0 deprecation warnings in cube_build, photom and wfs_combine. [#7999]
 
-- pinned dependencies for several in-development packages below their next versions to maintain compatibility
+- Pinned dependencies for several in-development packages below their next versions
+  to maintain compatibility. [#8003, #8006]
+
 
 1.12.3 (2023-10-03)
 ===================

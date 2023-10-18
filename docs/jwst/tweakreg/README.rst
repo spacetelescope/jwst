@@ -124,6 +124,35 @@ in the catalog is the ``'weight'`` column, which when present, will be used
 in fitting. The catalog must be in a format automatically recognized by
 :py:meth:`~astropy.table.Table.read`.
 
+Grouping
+--------
+
+Images taken at the same time (e.g., NIRCam images from all short-wave
+detectors) can be aligned together, that is, a single correction
+can be computed and applied to all these images because any error in
+telescope pointing will be identical in all these images and it is assumed
+that the relative positions of (e.g., NIRCam) detectors do not change.
+Identification of images that belong to the same "exposure" and therefore
+can be grouped together is based on several attributes described in
+`~jwst.datamodels.ModelContainer`. This grouping is performed automatically
+in the ``tweakreg`` step using the
+`~jwst.datamodels.ModelContainer.models_grouped` property, which assigns
+a group ID to each input image model in ``meta.group_id``.
+
+However, when detector calibrations are not accurate, alignment of groups
+of images may fail (or result in poor alignment). In this case, it may be
+desirable to align each image independently. This can be achieved either by
+setting the ``image_model.meta.group_id`` attribute to a unique string or integer
+value for each image, or by adding the ``group_id`` attribute to the ``members`` of the input ASN
+table - see `~jwst.datamodels.ModelContainer` for more details.
+
+.. note::
+    Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
+    and so modifying it for one step will affect the results in another step.
+    If it is desirable to apply different grouping strategies to the ``tweakreg``
+    and ``skymatch`` steps, one may need to run each step individually and
+    provide a different ASN as input to each step.
+
 WCS Correction
 --------------
 The linear coordinate transformation computed in the previous step
