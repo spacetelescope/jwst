@@ -10,38 +10,65 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+known_emi_freqs = {
+    "390": 390.625,
+    "218a": 218.52055,
+    "218b": 218.520470,
+    "218c": 218.520665,
+    "164": 164.9305,
+    "10": 10.039216
+}
+
 subarray_cases = {
 
     # 390Hz out-of-phase - these all need 390hz correction
 
     "SLITLESSPRISM": {
         "rowclocks": 28,
-        "frameclocks": 15904
+        "frameclocks": 15904,
+        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
+                known_emi_freqs["218b"], known_emi_freqs["218c"],
+                known_emi_freqs["164"], known_emi_freqs["10"]]
     },
 
     "MASKLYOT": {
         "rowclocks": 90,
-        "frameclocks": 32400
+        "frameclocks": 32400,
+        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
+                known_emi_freqs["218b"], known_emi_freqs["218c"],
+                known_emi_freqs["164"], known_emi_freqs["10"]]
     },
 
     "SUB64": {
         "rowclocks": 28,
-        "frameclocks": 8512
+        "frameclocks": 8512,
+        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
+                known_emi_freqs["218b"], known_emi_freqs["218c"],
+                known_emi_freqs["164"], known_emi_freqs["10"]]
     },
 
     "SUB128": {
         "rowclocks": 44,
-        "frameclocks": 11904
+        "frameclocks": 11904,
+        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
+                known_emi_freqs["218b"], known_emi_freqs["218c"],
+                known_emi_freqs["164"], known_emi_freqs["10"]]
     },
 
     "MASK1140": {
         "rowclocks": 82,
-        "frameclocks": 23968
+        "frameclocks": 23968,
+        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
+                known_emi_freqs["218b"], known_emi_freqs["218c"],
+                known_emi_freqs["164"], known_emi_freqs["10"]]
     },
 
     "MASK1550": {
         "rowclocks": 82,
-        "frameclocks": 23968
+        "frameclocks": 23968,
+        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
+                known_emi_freqs["218b"], known_emi_freqs["218c"],
+                known_emi_freqs["164"], known_emi_freqs["10"]]
     },
 
     # 390Hz already in-phase for these, but may need corr for other
@@ -49,28 +76,40 @@ subarray_cases = {
 
     "FULL_FASTR1": {
         "rowclocks": 271,
-        "frameclocks": 277504
+        "frameclocks": 277504,
+        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
+                known_emi_freqs["218c"], known_emi_freqs["164"],
+                known_emi_freqs["10"]]
     },
 
     "FULL_SLOWR1": {
         "rowclocks": 2333,
-        "frameclocks": 2388992
+        "frameclocks": 2388992,
+        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
+                known_emi_freqs["218c"], known_emi_freqs["164"],
+                known_emi_freqs["10"]]
     },
 
     "BRIGHTSKY": {
         "rowclocks": 162,
-        "frameclocks": 86528
+        "frameclocks": 86528,
+        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
+                known_emi_freqs["218c"], known_emi_freqs["164"],
+                known_emi_freqs["10"]]
     },
 
     "SUB256": {
         "rowclocks": 96,
-        "frameclocks": 29952
+        "frameclocks": 29952,
+        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
+                known_emi_freqs["218c"], known_emi_freqs["164"],
+                known_emi_freqs["10"]]
     }
 
 }
 
 
-def do_correction(input_model, emicorr_model, **pars):
+def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     """
     EMI-correct a JWST data model using an emicorr model
 
@@ -81,6 +120,9 @@ def do_correction(input_model, emicorr_model, **pars):
 
     emicorr_model : JWST data model
         Data model containing emi correction
+
+    save_onthefly_reffile : str or None
+        Full path and root name of on-the-fly reference file
 
     pars : dict
         Optional user-specified parameters to modify how outlier_detection
@@ -98,16 +140,20 @@ def do_correction(input_model, emicorr_model, **pars):
     save_intermediate_results = pars['save_intermediate_results']
     user_supplied_reffile = pars['user_supplied_reffile']
 
-    output_model = apply_emicorr(input_model, emicorr_model,
+    output_model = apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                         save_intermediate_results=save_intermediate_results,
                         user_supplied_reffile=user_supplied_reffile)
 
     return output_model
 
 
-def apply_emicorr(input_model, emicorr_model, save_intermediate_results=False,
-        user_supplied_reffile=None):
+def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
+        save_intermediate_results=False,
+        user_supplied_reffile=None, nints_to_phase=None, nbins=None,
+        scale_reference=False):
     """
+    -> NOTE: This is translated from IDL code fix_miri_emi.pro
+
     EMI-corrects data and error arrays by the following procedure:
          [repeat recursively for each discrete emi frequency desired]
     1) Read image data.
@@ -139,86 +185,442 @@ def apply_emicorr(input_model, emicorr_model, save_intermediate_results=False,
     emicorr_model : JWST data model
          ImageModel of emi
 
+    save_onthefly_reffile : str or None
+        Full path and root name of on-the-fly reference file
+
     save_intermediate_results : bool
         Saves the output into a file and the reference file (if created on-the-fly)
 
     user_supplied_reffile : str
         Reference file supplied by the user
 
+    scale_reference : bool
+        If True, the reference wavelength will be scaled to the data's phase amplitude
+
     Returns
     -------
     output_model : JWST data model
         input science data model which has been emi-corrected
     """
-    # get the subarray case
+    # get the subarray case and other info
     subarray = input_model.meta.subarray.name
     readpatt = input_model.meta.exposure.readpatt
-    subname, rowclocks, frameclocks = get_subarcase(subarray, readpatt)
+    subname, rowclocks, frameclocks, freqs2correct = get_subarcase(subarray, readpatt)
     if rowclocks is None:
+        # no subarray match found, print to log and skip correction
         return subname
+    xsize = input_model.meta.subarray.xsize   # SUBZIZE1 keyword
+    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
+
+    # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
+    nsamples = input_model.meta.exposure.nsamples
 
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
-    # Read image data and set up some variables
-    data = output_model.data
-    nints, ngroups, ny, nx = np.shape(data)
-    dd_all = np.ones((nints, ngroups, ny, nx/4))
-    # s[0] = 4 in idl
-    # s[1] = nx
-    # s[2] = ny
-    # s[3] = ngroups
-    # s[4] = nints
-    times = np.ones((nints, ngroups, ny, nx/4), dtype='uint64')
+    # Loop over the frequencies to correct
+    freqs2correct = [known_emi_freqs["390"]]
+    print_statements = False
+    for frequency in freqs2correct:
+        log.info('Correcting for frequency: {} Hz'.format(frequency))
 
-    # Find the phase
-    counter = 0
-    for inti in range(nints):
-        log.info('Working on integration: {}'.format(inti))
+        # Read image data and set up some variables
+        reffile_hdulist = None
+        orig_data = output_model.data
+        data = orig_data.copy()
+        if print_statements:
+            print('data[5, 5, 5, 5] = ', data[5, 5, 5, 5])
+        nints, ngroups, ny, nx = np.shape(data)
+        # Correspondance of array order in IDL
+        # sz[0] = 4 in idl
+        # sz[1] = nx
+        # sz[2] = ny
+        # sz[3] = ngroups
+        # sz[4] = nints
+        nx4 = int(nx/4)
+        times = np.ones((nints, ngroups, ny, nx4), dtype='ulonglong')
+        if nints_to_phase is None:
+            nints_to_phase = nints
 
-        # Remove source signal and fixed bias from each integration ramp
-        # (linear is good enough for phase finding)
+        counter = 0
+        dd_all = np.ones((nints_to_phase, ngroups, ny, nx4))
+        log.info('Subtracting self-superbias from each group of each integration')
+        for ninti in range(nints_to_phase):
+            log.debug('  Working on integration: {}'.format(ninti+1))
 
-        # do linear fit for source + sky
-        s0 = sloper(data[inti, ngroups-2, :, :], intercept=mm0)
+            # Remove source signal and fixed bias from each integration ramp
+            # (linear is good enough for phase finding)
 
-        # subtract source+sky from each frame of this ramp
-        for groupi in ngroups:
-            data[inti, groupi, ...] = data[inti, groupi, ...] - (s0 * groupi)
+            # do linear fit for source + sky
+            s0, mm0 = sloper(data[ninti, 1:ngroups-1, :, :])
 
-        # make a self-superbias
-        m0 = minmed(data[inti, ngroups-2, :, :])
+            # subtract source+sky from each frame of this ramp
+            for ngroupi in range(ngroups):
+                data[ninti, ngroupi, ...] = orig_data[ninti, ngroupi, ...] - (s0 * ngroupi)
 
-        # subtract self-superbias from each frame of this ramp
-        for groupi in ngroups:
-            data[inti, groupi, ...] = data[inti, groupi, ...] - m0
+            # make a self-superbias
+            m0 = minmed(data[ninti, 1:ngroups-1, :, :])
 
-            # de-interleave each frame into the 4 separate output channels and
-            # average (or median) them together for S/N
-            tmp0 = np.ones((inti, groupi, :, (nx/4)*4+0))
-            d0 = data[tmp0]
-            tmp1 = np.ones((inti, groupi, :, (nx/4)*4+1))
-            d1 = data[tmp1]
-            tmp2 = np.ones((inti, groupi, :, (nx/4)*4+2))
-            d2 = data[tmp2]
-            tmp3 = np.ones((inti, groupi, :, (nx/4)*4+3))
-            d3 = data[tmp3]
-            dd = (d0 + d1 + d2 + d3)/4.
+            # subtract self-superbias from each frame of this ramp
+            for ngroupi in range(ngroups):
+                data[ninti, ngroupi, ...] = data[ninti, ngroupi, ...] - m0
 
-            # fix a bad ref col
+                # de-interleave each frame into the 4 separate output channels and
+                # average (or median) them together for S/N
+                d0 = data[ninti, ngroupi, :, 0:nx:4]
+                d1 = data[ninti, ngroupi, :, 1:nx:4]
+                d2 = data[ninti, ngroupi, :, 2:nx:4]
+                d3 = data[ninti, ngroupi, :, 3:nx:4]
+                dd = (d0 + d1 + d2 + d3)/4.
+                '''
+                print('s0 = ', np.shape(s0), s0[220:, 284:])
+                print('mm0 = ', np.shape(mm0), mm0[220:, 284:])
+                print('m0 = ', np.shape(m0), m0[220:, 284:])
+                print('data[0,0,20,20] = ', data[0,0,20,20])
+                print('d0 = ', np.shape(d0), d0[2, 2])
+                print('d1 = ', np.shape(d1), d1[2, 2])
+                print('d2 = ', np.shape(d2), d2[2, 2])
+                print('d3 = ', np.shape(d3), d3[2, 2])
+                print('dd = ', np.shape(dd), dd[2, 2])
+                print('dd_all = ', np.shape(dd_all), dd_all[2, 2, 2, 2])
+                exit()
+                '''
 
-    # DQ values remain the same as the input
-    log.info('DQ values remain the same as input data.')
+                # fix a bad ref col
+                dd[:, 1] = (dd[:, 0] + dd[:, 3])/2
+                dd[:, 2] = (dd[:, 0] + dd[:, 3])/2
+                # This is the quad-averaged, cleaned, input image data for the exposure
+                dd_all[ninti, ngroupi, ...] = dd - np.median(dd)
+
+        if print_statements:
+            print('s0 = ', np.shape(s0), s0[220:, 284:])
+            print('mm0 = ', np.shape(mm0), mm0[220:, 284:])
+            print('m0 = ', np.shape(m0), m0[220:, 284:])
+            print('data[0,0,20,20] = ', data[0,0,20,20])
+            print('d0[2, 2] = ', np.shape(d0), d0[2, 2])
+            print('d1[2, 2] = ', np.shape(d1), d1[2, 2])
+            print('d2[2, 2] = ', np.shape(d2), d2[2, 2])
+            print('d3[2, 2] = ', np.shape(d3), d3[2, 2])
+            print('dd[2, 2] = ', np.shape(dd), dd[2, 2])
+            print('dd_all[2, 2, 2, 2] = ', np.shape(dd_all), dd_all[2, 2, 2, 2])
+
+        # Calculate times of all pixels in the input integration, then use that to calculate
+        # phase of all pixels. Times here is in integer numbers of 10us pixels starting from
+        # the first data pixel in the input image. Times can be a very large integer, so use
+        # a big datatype. Phaseall (below) is just 0-1.0.
+
+        # A safer option is to calculate times_per_integration and calculate the phase at each
+        # int separately. That way times array will have a smaller number of elements at each
+        # int, with less risk of datatype overflow. Still, use the largest datatype available
+        # for the time_this_int array.
+
+        times_this_int = np.zeros((ngroups, ny, nx4), dtype='ulonglong')
+        phaseall = np.zeros((nints, ngroups, ny, nx4))
+
+        # non-roi rowclocks between subarray frames (this will be 0 for fullframe)
+        extra_rowclocks = (1024. - ny) * (4 + 3.)
+        # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
+        period_in_pixels = (1./frequency) / 10.0e-6
+        if print_statements:
+            print('period_in_pixels = ', period_in_pixels)
+
+        start_time, ref_pix_sample = 0, 3
+
+        # Need colstop for phase calculation in case of last refpixel in a row. Technically,
+        # this number comes from the subarray definition (see subarray_cases dict above), but
+        # calculate it from the input image header here just in case the subarray definitions
+        # are not available to this routine.
+        colstop = int( xsize/4 + xstart - 1 )
+        log.info('Phase calculation per integration')
+        for l in range(nints_to_phase):
+            log.debug('  Working on integration: {}'.format(l+1))
+            for k in range(ngroups):   # frames
+                for j in range(ny):    # rows
+                    # nsamples= 1 for fast, 9 for slow (from metadata)
+                    times_this_int[k, j, :] = np.arange(nx4, dtype='ulonglong') * nsamples + start_time
+
+                    # If the last pixel in a row is a reference pixel, need to push it out
+                    # by ref_pix_sample sample times. The same thing happens for the first
+                    # ref pix in each row, but that gets absorbed into the inter-row pad and
+                    # can be ignored here. Since none of the current subarrays hit the
+                    # right-hand reference pixel, this correction is not in play, but for
+                    # fast and slow fullframe (e.g. 10Hz) it should be applied. And even
+                    # then, leaving this out adds just a *tiny* phase error on the last ref
+                    # pix in a row (only) - it does not affect the phase of the other pixels.
+
+                    if colstop == 258:
+                        times_this_int[k, j, nx4-1] = times_this_int[k, j, nx4-1] + ref_pix_sample.astype('ulonglong')
+
+                    # point to the first pixel of the next row (add "end-of-row" pad)
+                    start_time += rowclocks
+
+                    #print('l, k, j:  start_time = ', l, k, j, start_time)
+
+                # point to the first pixel of the next frame (add "end-of-frame" pad)
+                start_time += extra_rowclocks
+
+            # Convert "times" to phase each integration. Nothe times has units of
+            # number of 10us from the first data pixel in this integration, so to
+            # convert to phase, divide by the waveform *period* in float pixels
+            phase_this_int = times_this_int / period_in_pixels
+            phaseall[l, ...] = phase_this_int - phase_this_int.astype('ulonglong')
+
+            # add a frame time to account for the extra frame reset between MIRI integrations
+            start_time += frameclocks
+
+        if print_statements:
+            print('\n *** phase_this_int = ', np.shape(phase_this_int), np.size(phase_this_int))
+            print("phase_this_int[5,5,5] =", phase_this_int[5,5,5])
+            print("phase_this_int[5,5,5].astype('ulonglong') =", phase_this_int[5,5,5].astype('ulonglong'))
+            print('shape, phaseall[5,5,5,5] = ', np.shape(phaseall), phaseall[5,5,5,5])
+
+        # use phaseall vs dd_all
+
+        # Define the sizew of 1 wave of the phased waveform vector, then bin the whole
+        # dataset at this interval. This is essentially the desired number of bins along
+        # the waveform. This can be any number that is at least 1 less than the period in
+        # pixels. If larger, some bins could end up sparsely sampled. Fewer bins results
+        # in a smoother waveform but lower resolution. Can always be smoothed and/or
+        # streched to a different dimension later. By default, use period_in_pixels/2.0
+
+        # number of bins in one phased wave (e.g. 255, 218, etc)
+        if nbins is None:
+            # the IDL code sets nbins as ulong type (ulonglong in python)
+            nbins = int(period_in_pixels/2.0)
+
+        # bin the whole set
+        log.info('Calculating the phase amplitude for {} bins'.format(nbins))
+        # Define the binned waveform amplitude (pa = phase amplitude)
+        pa = np.arange(nbins, dtype=float)
+        # keep track of n per bin to check for low n
+        nu = np.arange(nbins)
+        if print_statements:
+            print('np.shape(phaseall) = ', np.shape(phaseall), phaseall.size)
+            print('nbins = ', nbins)
+            print('np.shape(dd_all) = ', np.shape(dd_all), dd_all.size)
+        for nb in range(nbins):
+            u = np.where((phaseall > nb/nbins) & (phaseall <= (nb + 1)/nbins) & (np.isfinite(dd_all) == True))
+            nu[nb] = phaseall[u].size
+            # calculate the sigma-clipped mean
+            dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
+            pa[nb] = dmean   # amplitude in this bin
+
+            if print_statements:
+                if nb == 2: #nbins-1:
+                    print(' ** nbins loop: ', nb)
+                    #print('phaseall[3,3,3,3] = ', phaseall[3,3,3,3])
+                    #print('dd_all[3,3,3,3] = ', dd_all[3,3,3,3])
+                    #print('phaseall[5,5,5,5] = ', phaseall[5,5,5,5])
+                    #print('dd_all[5,5,5,5] = ', dd_all[5,5,5,5])
+                    kk1 = np.where(phaseall.flatten() > nb/nbins)
+                    print('np.where(phaseall > nb/nbins) = ', np.size(kk1), kk1[0][:5])
+                    kk2 = np.where(phaseall.flatten() <= (nb + 1)/nbins)
+                    print('np.where(phaseall <= (nb + 1)/nbins)) = ', np.size(kk2), kk2[0][:5])
+                    kk3 = np.where(np.isfinite(dd_all.flatten()) == True)
+                    print('np.where(np.isfinite(dd_all) == True) = ', np.size(kk3), kk3[0][:5])
+                    print('np.shape(u) = ', np.shape(u))
+                    print('u = ', u)
+                    print('phaseall[u].size, dd_all[u].size = ', phaseall[u].size, dd_all[u].size)
+                    print('nu[i] = ', nu[nb])
+                    print('dmean = ', dmean)
+                #exit()
+        pa -= np.median(pa)
+
+        # pa_phase is the phase corresponding to each bin in pa. The +0.5 here is to center in
+        # the bin. Together, (pa, pa_phase) define the waveform to phase against the
+        # reference_wave, or to use directly for a self correction (likely noiser than the
+        # reference_wave, but perfectly matched in phase by definition so no need for a
+        # crosscor or other phase-finder against a reference_wave). This may not be
+        # necessary. Can just assume pa and the reference_wave are exactly 1.0 waves long.
+        #pa_phase = (np.arange(nbins, dtype=np.float32) + 0.5) / nbins
+
+        # Correction using direct look-up from either pa (self-correction) or
+        # the reference wave (if provided)
+        # Make a vector to hold a version of pa that is close to an integer number of
+        # pixels long. This will be the noise amplitude look-up table.
+        lut = rebin(pa, [period_in_pixels])   # shift and resample reference_wave at pa's phase
+        if print_statements:
+            print('shape, lut[50] = ', np.shape(lut), lut[50])
+
+        # If a reference_wave_filename was provided, use it to measure phase shift between
+        # pa (binned phased wave) from the input image vs. the reference_wave using xcorr.
+        # These two methods give the same integer-reference_wave-element resolution results.
+        if emicorr_model is not None:
+            log.info('Using reference file to measure phase shift')
+            reference_wave = emicorr_model.data
+            print('reference_wave = ', reference_wave)
+            input()
+            cc = np.zeros(np.size(reference_wave))
+            for rfw, i in enumerate(reference_wave):
+                # method A: brute-force
+                pears_coeff = np.corrcoef(np.roll(reference_wave, i), rebin(pa, [size(reference_wave)]))
+                cc[rfw] = pears_coeff[0, 1]
+                u = np.where(cc >= max(cc))
+                # u[0] is the phase shift of reference_wave *to* pa
+
+                # method B
+                # standard correlation function
+                #fna = np.fft.ifft(rebin(pa, [size(reference_wave)])))
+                #fnb = np.fft.ifft(reference_wave)
+                # compute the correlation function between na and ab
+                #ccf = np.fft.fft(fna * np.real(fnb))   # only get the real part
+
+            # Use the reference file (shifted to match the phase of pa,
+            # and optionally amplitude scaled)
+            # shift and resample reference_wave at pa's phase
+            lut_reference = rebin(np.roll(reference_wave, u[0]), [period_in_pixels])
+
+            # Scale reference wave amplitude to match the pa amplitude from this dataset by
+            # fitting a line rather than taking a mean ratio so that any DC offset drops out
+            # in the intercept (and to avoid potential divide-by-zeros)
+            m, b = np.polyfit(lut_reference, lut, 1)   # the slope is the amplitude ratio
+
+            # check pa-to-reference_wave phase match and optional scale
+            if scale_reference:
+                lut_reference = lut_reference * m
+
+            #if check_pahse:
+            print('PLOTTING!')
+            import matplotlib.pyplot as plt
+            nlut = np.size(lut)
+            if scale_reference:
+                rat = '1.0'
+            else:
+                rat = repr(m)
+            plt.plot(np.arange(nlut)/nlut, lut, 'b')
+            plt.plot(np.arange(nlut)/nlut, lut_reference+b, 'r')
+            plt.show()
+
+            lut = lut_reference
+
+        if save_intermediate_results:
+            mk_reffile_hdulist(frequency, pa, save_onthefly_reffile)
+
+        log.info('Creating phased-matched noise model to subtract from data')
+        # This is the phase matched noise model to subtract from each pixel of the input image
+        dd_noise = lut[(phaseall * period_in_pixels).astype(int)]
+
+        # Interleave (straight copy) into 4 amps
+        noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
+        for k in range(4):
+            noise_x = np.arange(nx4)*4 + k
+            noise[..., noise_x] = dd_noise
+
+        # Subtract EMI noise from the input data
+        log.info('Subtracting EMI noise from data')
+        corr_data = orig_data - noise
+        output_model.data = corr_data
+        if print_statements:
+            print('shape, dd_noise[5,5,5,5] = ', np.shape(dd_noise), dd_noise[5,5,5,5])
+            print('shape, orig_data[5,5,5,5] = ', np.shape(orig_data), orig_data[5,5,5,5])
+            print('shape, noise[5,5,5,5] = ', np.shape(noise), noise[5,5,5,5])
+            print('shape, corr_data[5,5,5,5] = ', np.shape(corr_data), corr_data[5,5,5,5])
 
     return output_model
 
 
-def sloper():
-    pass
+def sloper(data):
+    """ Fit slopes to all pix of a ramp, using numerical recipies plane-adding
+     returning intercept image.
+
+    Parameters
+    ----------
+    data : numpy array
+        3-D integration data array
+
+    Returns
+    -------
+    outarray : numpy array
+        3-D integration data array
+
+    intercept: numpy array
+        slope intercept values
+    """
+    ngroups, ny, nx = np.shape(data)
+    frametime = 1.0   # use 1.0 for per-frame slopes, otherwise put a real time here
+    grouptimes = np.arange(ngroups) * frametime
+
+    sxy = np.zeros((ny, nx))
+    sx = np.zeros((ny, nx))
+    sy = np.zeros((ny, nx))
+    sxx = np.zeros((ny, nx))
+
+    for groupcount in range(ngroups):
+        # do the incremental slope calculation operations
+        sxy = sxy + grouptimes[groupcount] * data[groupcount, ...]
+        sx = sx + grouptimes[groupcount]
+        sy = sy + data[groupcount, ...]
+        sxx = sxx + grouptimes[groupcount]**2
+        #print('grouptimes[groupcount] = ', grouptimes[groupcount])
+        #print('data[groupcount, ny-5:, nx-5:] = ', data[groupcount, ny-5:, nx-5:])
+        #print('grouptimes[groupcount] * data[groupcount, ny-5:, nx-5:] = ', grouptimes[groupcount] * data[groupcount, ny-5:, nx-5:])
+        #print('sxy[ny-5:, nx-5:] = ', sxy[ny-5:, nx-5:])
+        #input()
+
+    # calculate the final per-pixel slope values
+    outarray = (ngroups * sxy - sx * sy)/(ngroups * sxx - sx * sx)
+
+    # calculate the final per-pixel intercept values
+    intercept = (sxx * sy - sx * sxy)/(ngroups * sxx - sx * sx)
+
+    '''
+    print('sxy[1, 1] = ', sxy[1, 1])
+    print('sx[1, 1] = ', sx[1, 1])
+    print('sy[1, 1] = ', sy[1, 1])
+    print('sxx[1, 1] = ', sxx[1, 1])
+    print('outarray[1, 1] = ', outarray[1, 1])
+    print('intercept[1, 1] = ', intercept[1, 1])
+    '''
+
+    return outarray, intercept
 
 
-def minmed():
-    pass
+def minmed(data, minval=False, avgval=False, maxval=False):
+    """ Returns the median image of a stack of images, or if there are 2 or less
+    non-zero frames, returns the minimum (or this minimum can be forced).
+
+    Parameters
+    ----------
+    data : numpy array
+        3-D integration data array
+
+    minval : bool
+        Returned image will be the minimum
+
+    avgval : bool
+        Returned image will be the mean
+
+    maxval : bool
+        Returned image will be the maximum
+
+    Returns
+    -------
+    medimg : numpy array
+        Median image of a stack of images
+    """
+
+    ngroups, ny, nx = np.shape(data)
+    medimg = np.zeros((ny, nx))
+
+    for i in range(nx):
+        for j in range(ny):
+            vec = data[:, j, i]
+            u = np.where(vec != 0)
+            n = vec[u].size
+            #print('MINMED: u = ', u)
+            #print('MINMED: n = ', n)
+            if n > 0:
+                if n <= 2 or minval:
+                    medimg[j, i] = np.min(vec[u])
+                if maxval:
+                    medimg[j, i] = np.max(vec[u])
+                if not minval and not maxval and not avgval:
+                    medimg[j, i] = np.median(vec[u])
+                    #print('here!  medimg[j, i]=', medimg[j, i])
+                if avgval:
+                    dmean , _, _, _ = iter_stat_sig_clip(vec[u])
+                    medimg[j, i] = dmean
+    return medimg
 
 
 def get_subarcase(subarray, readpatt):
@@ -241,6 +643,8 @@ def get_subarcase(subarray, readpatt):
 
     frameclocks : int
 
+    frequencies : list
+        List of frequencies to correct according to subarray name
     """
     subname = subarray
     if subname == 'FULL':
@@ -248,52 +652,141 @@ def get_subarcase(subarray, readpatt):
     if subname in subarray_cases:
         rowclocks = subarray_cases[subname]["rowclocks"]
         frameclocks = subarray_cases[subname]["frameclocks"]
-        return subname, rowclocks, frameclocks
+        frequencies = subarray_cases[subname]["freqs"]
+        return subname, rowclocks, frameclocks, frequencies
     else:
-        return subname, None, None
+        return subname, None, None, None
 
 
-def mk_reffile_waveform(input_model, emicorr_ref_filename, save_mdl=False):
-    """ Create the reference file from the input science data.
+def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
+    """ Compute the mean, mediand and/or sigma of data with iterative sigma clipping.
+    This funtion is based on djs_iterstat.pro (authors thetein)
 
     Parameters
     ----------
-    input_model : JWST data model
-        Input science data model to be emi-corrected
+    data : numpy array
 
-    emicorr_ref_filename : str or None
-        Name of the reference file
+    sigrej : float
+        Sigma for rejection
 
-    save_mdl : bool
-        Save the on-the-fly reference file
+    maxiter: int
+        Maximum number of sigma rejection iterations
 
     Returns
     -------
-    return_mdl: JWST data model
+    dmean : float
+        Computed mean
+
+    dmedian : float
+        Computed median
+
+    dsigma : float
+        Computed sigma
+
+    dmask : numpy array
+        Mask set to 1 for good points, and 0 for rejected points
     """
-    # initialize the reference fits file
-    hdulist = fits.HDUList()
-    hdulist.append(fits.PrimaryHDU())
+    # special cases of 0 or 1 data points
+    ngood = np.size(data)
+    dmean, dmedian, dsigma, dmask = 0.0, 0.0, 0.0, np.zeros(np.shape(data))
+    if ngood == 0:
+        log.info('No data points for sigma clipping')
+        return dmean, dmedian, dsigma, dmask
+    elif ngood == 1:
+        log.info('Only 1 data point for sigma clipping')
+        return dmean, dmedian, dsigma, dmask
 
-    # image
-    #e = fits.ImageHDU(arr, name='extension_name')
+    # Compute the mean + standard deviation of the entire data array,
+    # these values will be returned if there are fewer than 2 good points.
+    dmask = np.ones(ngood, dtype='b') + 1
+    dmean = sum(data * dmask) / ngood
+    dsigma = np.sqrt(sum((data - dmean)**2) / (ngood - 1))
+    dsigma = dsigma
+    iiter = 1
 
-    # table
-    #col_names = ['integration_number', 'int_start_MJD_UTC', 'int_mid_MJD_UTC',
-    #             'int_end_MJD_UTC', 'int_start_BJD_TDB', 'int_mid_BJD_TDB',
-    #             'int_end_BJD_TDB']
-    #c1 = fits.Column(name=col_names[0], array=np.array([]), format='D')
-    # e = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7], name='INT_TIMES')
+    # Iteratively compute the mean + stdev, updating the sigma-rejection thresholds
+    # each iteration
+    nlast = -1
+    while iiter < maxiter and nlast != ngood and ngood >= 2:
+        loval = dmean - sigrej * dsigma
+        hival = dmean + sigrej * dsigma
+        nlast = ngood
 
-    # add extension
-    #hdulist.append(e)
+        dmask[data < loval] = 0
+        dmask[data > hival] = 0
+        ngood = sum(dmask)
 
-    # use the reference file model to format and write file
-    model = datamodels.EmiModel(hdulist)
-    if save_mdl:
-        model.save(emicorr_ref_filename)
-        log.debug('On-the-fly reference file written as: %s', emicorr_ref_filename)
+        if ngood >= 2:
+            dmean = sum(data*dmask) / ngood
+            dsigma = np.sqrt( sum((data - dmean)**2 * dmask) / (ngood - 1) )
+            dsigma = dsigma
 
-    return model
+        iiter += 1
+
+    return dmean, dmedian, dsigma, dmask
+
+
+def rebin(arr, newshape):
+    """Rebin an array to a new shape.
+
+    Parameters
+    ----------
+    arr : numpy array
+        array to rebin
+
+    newshape : list
+        New shape for the input array
+
+    Returns
+    -------
+    arr : numpy array
+        rebinned array
+    """
+    assert len(arr.shape) == len(newshape)
+
+    slices = [ slice(0,old, float(old)/new) for old,new in zip(arr.shape,newshape) ]
+    coordinates = np.mgrid[slices]
+    indices = coordinates.astype('i')   # choose the biggest smaller integer index
+
+    return arr[tuple(indices)]
+
+
+def mk_reffile_hdulist(freq, pa, save_onthefly_reffile):
+    """ Create the reference file hdulist object.
+
+    Parameters
+    ----------
+    freq : float
+        Frequency to correct for
+
+    pa : numpy array
+        Phase amplitude array
+
+    save_onthefly_reffile : str or None
+        Full path and root name of on-the-fly reference file
+
+    Returns
+    -------
+    reffile_hdulist: fits object
+        The HDU list to be written in the reference file
+    """
+    # initialize the reference fits object
+    reffile_hdulist = fits.HDUList()
+    reffile_hdulist.append(fits.PrimaryHDU())
+
+    sci = fits.ImageHDU(pa, name='SCI')
+    sci.header['FREQ'] = freq
+    reffile_hdulist.append(sci)
+
+    # save the reference file if save_intermediate_results=True and no CRDS file exists
+    if save_onthefly_reffile is not None:
+        #emicorr_model = datamodels.EmiModel(reffile_hdulist)
+        #emicorr_model.save(emicorr_ref_filename)
+        #emicorr_model.close()
+        emicorr_ref_filename = save_onthefly_reffile.replace('.fits', repr(freq)+'.fits')
+        reffile_hdulist.writeto(emicorr_ref_filename, overwrite=True)
+        log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
+
+    return reffile_hdulist
 
 
