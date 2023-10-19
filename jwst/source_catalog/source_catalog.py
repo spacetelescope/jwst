@@ -235,6 +235,13 @@ class JWSTSourceCatalog:
         self._xpeak = segm_cat.maxval_xindex
         self._ypeak = segm_cat.maxval_yindex
 
+        # newer versions of photutils use 'versions' instead of 'version'
+        # so copy over the new 'versions' into 'version' and remove 'versions'
+        # to stay consistent with the old behavior that this code expects
+        if 'versions' in segm_cat.meta:
+            segm_cat.meta['version'] = segm_cat.meta['versions']
+            del segm_cat.meta['versions']
+
         self.meta.update(segm_cat.meta)
         for key in ('sklearn', 'matplotlib'):
             self.meta['version'].pop(key)
