@@ -47,7 +47,7 @@ refpix
 tweakreg
 --------
 
-- Improved how a image group name is determined. [#8011]
+- Improved how a image group name is determined. [#8012]
 
 
 1.12.4 (2023-10-12)
