@@ -80,7 +80,7 @@ requests==2.31.0
 requests-mock==1.11.0
 rpds-py==0.10.3
 ruff==0.0.291
-scipy==1.9.3
+scipy==1.10.0
 semantic-version==2.10.0
 six==1.16.0
 snowballstemmer==2.2.0
