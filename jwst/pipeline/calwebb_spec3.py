@@ -64,8 +64,8 @@ class Spec3Pipeline(Pipeline):
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep,
         'photom': photom_step.PhotomStep,
-        'combine_1d': combine_1d_step.Combine1dStep
-        'spectral_leak': spectral_leak_step:SpectralLeakStep
+        'combine_1d': combine_1d_step.Combine1dStep,
+        'spectral_leak': spectral_leak_step.SpectralLeakStep
     }
 
     # Main processing
@@ -280,7 +280,7 @@ class Spec3Pipeline(Pipeline):
                 result = self.extract_1d(result)
 
                 if exptype in ['MIR_MRS']:
-                    print('result from extract1d',type(result)
+                    print('result from extract1d',type(result))
                     result = self.spectral_leak(result)
 
             else:
