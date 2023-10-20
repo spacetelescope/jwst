@@ -5,7 +5,7 @@ git+https://github.com/asdf-format/asdf-transform-schemas
 git+https://github.com/asdf-format/asdf-coordinates-schemas
 git+https://github.com/asdf-format/asdf-wcs-schemas
 
-# Use weekly astropy dev build
+# Use nightly astropy dev build
 git+https://github.com/astropy/asdf-astropy
 git+https://github.com/astropy/photutils
 --extra-index-url https://pypi.anaconda.org/astropy/simple astropy --pre
