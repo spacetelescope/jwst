@@ -79,7 +79,7 @@ referencing==0.30.2
 requests==2.31.0
 requests-mock==1.11.0
 rpds-py==0.10.3
-ruff==0.0.291
+ruff==0.1.1
 scipy==1.9.3
 semantic-version==2.10.0
 six==1.16.0
