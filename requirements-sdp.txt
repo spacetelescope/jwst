@@ -15,7 +15,7 @@
 #     pip install -e .[test,sdp]
 #     pip freeze | grep -v jwst >> requirements-sdp.txt
 alabaster==0.7.13
-asdf==2.15.2
+asdf==3.0.0
 asdf-astropy==0.4.0
 asdf-coordinates-schemas==0.2.0
 asdf-standard==1.0.3
