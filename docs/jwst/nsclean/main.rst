@@ -4,6 +4,8 @@ Description
 :Class: `jwst.nsclean.NSCleanStep`
 :Alias: nsclean
 
+Overview
+========
 The ``nsclean`` step applies an algorithm for removing correlated read
 noise from NIRSpec images. The noise often appears as faint vertical
 banding and so-called "picture frame noise." The algorithm uses dark
@@ -18,13 +20,24 @@ Details on the source of the correlated noise and the algorithm used
 in the ``nsclean`` step to fit and remove it can be found in
 `Rauscher 2023 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`_.
 
-In its current form, the step can only be applied to full-frame images,
-which limits the applicability to IFU and MOS mode exposures, as well
-as fixed-slit exposures that use full-frame. Any fixed-slit or
-bright object mode (BOTS) exposures using subarrays are not supported.
+.. Note:: In its current form, this step can only be applied to full-frame images,
+          which limits the applicability to IFU and MOS mode exposures, as well
+          as fixed-slit exposures that use full-frame. Any fixed-slit or
+          bright object mode (BOTS) exposures using subarrays are not supported.
 
 Upon completion of the step, the step status keyword "S_NSCLEN" gets set
 to "COMPLETE" in the output science data.
+
+Assumptions
+===========
+As described below, the creation of a pixel mask depends on the presence
+of a World Coordinate System (WCS) object for the image, which is
+constructed by the :ref:`assign_wcs <assign_wcs_step>` step.
+In addition, creating a mask for IFU and MOS images depends on
+the presence of DQ flags assigned by the
+:ref:`msaflagopen <msaflagopen_step>` step.
+It is therefore required that those steps be run before attempting to
+apply ``nsclean``.
 
 Creation of an image mask
 =========================
