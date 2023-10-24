@@ -1,6 +1,11 @@
 1.12.6 (unreleased)
 ===================
 
+general
+-------
+
+- Increase asdf maximum version to 4 [#8018]
+
 nsclean
 -------
 
