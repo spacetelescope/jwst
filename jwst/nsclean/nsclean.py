@@ -91,7 +91,7 @@ def mask_slits(input_model, Mask):
 
     from jwst.extract_2d.nirspec import offset_wcs
 
-    log.info("Finding slitlet pixels for a MOS image")
+    log.info("Finding slit/slitlet pixels")
 
     # Get the slit-to-msa frame transform from the WCS object
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
@@ -253,7 +253,6 @@ def do_correction(input_model, n_sigma, save_mask):
     # Clean a 2D image
     else:
         # Instantiate an NSClean object
-        log.info(" instantiating cleaner ...")
         cleaner = NSClean(detector, Mask)
         image = np.float32(input_model.data)
 
