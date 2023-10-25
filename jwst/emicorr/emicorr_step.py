@@ -1,21 +1,8 @@
 #! /usr/bin/env python
 
-
-
-### TESTING my local datamodels branch
-import os, sys
-datamdl_branch = os.path.dirname('/Users/pena/Documents/SCSB/stdatamodels/stdatamodels')
-print(datamdl_branch)
-sys.path.insert(1, datamdl_branch)
-print('\n *** tesing new datamodels branch *** \n')
-###
-
-
 from stdatamodels.jwst import datamodels
-
 from ..stpipe import Step
 from . import emicorr
-import traceback
 
 
 # These are the exposure types to correct for EMI
@@ -40,6 +27,9 @@ class EmiCorrStep(Step):
     spec = """
         save_intermediate_results = boolean(default=False)
         user_supplied_reffile = string(default=None)  # User-supplied reference file
+        nints_to_phase = integer(default=None)  # Number of integrations to phase
+        nbins = integer(default=None)  # Number of bins in one phased wave
+        scale_reference = boolean(default=False)  # If True, the reference wavelength will be scaled to the data's phase amplitude
     """
 
     reference_file_types = ['emicorr']
@@ -57,26 +47,25 @@ class EmiCorrStep(Step):
             # Setup outlier detection parameters
             pars = {
                 'save_intermediate_results': self.save_intermediate_results,
-                'user_supplied_reffile': self.user_supplied_reffile
+                'user_supplied_reffile': self.user_supplied_reffile,
+                'nints_to_phase': self.nints_to_phase,
+                'nbins': self.nbins,
+                'scale_reference': self.scale_reference
             }
 
             # Get the reference file
-            save_onthefly_reffile = None
+            save_onthefly_reffile, emicorr_ref_filename = None, None
             if self.user_supplied_reffile is None:
                 try:
                     emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
                     # Create the reference file only of told to save outputs, else correct on-the-fly
                     if emicorr_ref_filename == 'N/A':
                         emicorr_model = None
-                        if self.save_intermediate_results:
-                            emicorr_ref_filename = Step._make_output_path(self, suffix='emi_ref_')
-                            save_onthefly_reffile = emicorr_ref_filename
                     else:
                         self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
                         emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
                 except Exception:
                     # CRDS rules not there yet
-                    #print(traceback.print_exc())
                     self.log.info('CRDS rules for emicorr reference file not implemented yet. Creating on-the-fly reference file.')
                     emicorr_model = None
 
@@ -85,7 +74,11 @@ class EmiCorrStep(Step):
                 emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
             # Do the correction
-            #save_onthefly_reffile = Step._make_output_path(self, suffix='emi_ref_')
+            if self.save_intermediate_results:
+                if emicorr_ref_filename is None:
+                    # get the same full path as input file to save the on-the-fly reference file
+                    emicorr_ref_filename = Step._make_output_path(self, suffix='emi_ref_')
+                save_onthefly_reffile = emicorr_ref_filename
             output_model = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
             if isinstance(output_model, str):
                 # in this case output_model=subarray_readpatt configuration

@@ -5,6 +5,7 @@
 import numpy as np
 import logging
 from astropy.io import fits
+from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -139,18 +140,24 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     """
     save_intermediate_results = pars['save_intermediate_results']
     user_supplied_reffile = pars['user_supplied_reffile']
+    nints_to_phase = pars['nints_to_phase']
+    nbins = pars['nbins']
+    scale_reference = pars['scale_reference']
 
     output_model = apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                         save_intermediate_results=save_intermediate_results,
-                        user_supplied_reffile=user_supplied_reffile)
+                        user_supplied_reffile=user_supplied_reffile,
+                        nints_to_phase=nints_to_phase,
+                        nbins=nbins,
+                        scale_reference=scale_reference
+                        )
 
     return output_model
 
 
 def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
-        save_intermediate_results=False,
-        user_supplied_reffile=None, nints_to_phase=None, nbins=None,
-        scale_reference=False):
+        save_intermediate_results=False, user_supplied_reffile=None,
+        nints_to_phase=None, nbins=None, scale_reference=False):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -194,6 +201,12 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     user_supplied_reffile : str
         Reference file supplied by the user
 
+    nints_to_phase : int
+        Number of integrations to phase
+
+    nbins : int
+        Number of bins in one phased wave
+
     scale_reference : bool
         If True, the reference wavelength will be scaled to the data's phase amplitude
 
@@ -219,18 +232,19 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     output_model = input_model.copy()
 
     # Loop over the frequencies to correct
-    freqs2correct = [known_emi_freqs["390"]]
-    print_statements = False
-    for frequency in freqs2correct:
-        log.info('Correcting for frequency: {} Hz'.format(frequency))
+    log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
+    log.info('   {}'.format(freqs2correct))
+    for fi, frequency in enumerate(freqs2correct):
+        log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
 
         # Read image data and set up some variables
         reffile_hdulist = None
         orig_data = output_model.data
         data = orig_data.copy()
-        if print_statements:
-            print('data[5, 5, 5, 5] = ', data[5, 5, 5, 5])
         nints, ngroups, ny, nx = np.shape(data)
+        if nints_to_phase is None:
+            nints_to_phase = nints
+
         # Correspondance of array order in IDL
         # sz[0] = 4 in idl
         # sz[1] = nx
@@ -239,11 +253,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # sz[4] = nints
         nx4 = int(nx/4)
         times = np.ones((nints, ngroups, ny, nx4), dtype='ulonglong')
-        if nints_to_phase is None:
-            nints_to_phase = nints
 
         counter = 0
-        dd_all = np.ones((nints_to_phase, ngroups, ny, nx4))
+        dd_all = np.ones((nints, ngroups, ny, nx4))
         log.info('Subtracting self-superbias from each group of each integration')
         for ninti in range(nints_to_phase):
             log.debug('  Working on integration: {}'.format(ninti+1))
@@ -272,37 +284,12 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                 d2 = data[ninti, ngroupi, :, 2:nx:4]
                 d3 = data[ninti, ngroupi, :, 3:nx:4]
                 dd = (d0 + d1 + d2 + d3)/4.
-                '''
-                print('s0 = ', np.shape(s0), s0[220:, 284:])
-                print('mm0 = ', np.shape(mm0), mm0[220:, 284:])
-                print('m0 = ', np.shape(m0), m0[220:, 284:])
-                print('data[0,0,20,20] = ', data[0,0,20,20])
-                print('d0 = ', np.shape(d0), d0[2, 2])
-                print('d1 = ', np.shape(d1), d1[2, 2])
-                print('d2 = ', np.shape(d2), d2[2, 2])
-                print('d3 = ', np.shape(d3), d3[2, 2])
-                print('dd = ', np.shape(dd), dd[2, 2])
-                print('dd_all = ', np.shape(dd_all), dd_all[2, 2, 2, 2])
-                exit()
-                '''
 
                 # fix a bad ref col
                 dd[:, 1] = (dd[:, 0] + dd[:, 3])/2
                 dd[:, 2] = (dd[:, 0] + dd[:, 3])/2
                 # This is the quad-averaged, cleaned, input image data for the exposure
                 dd_all[ninti, ngroupi, ...] = dd - np.median(dd)
-
-        if print_statements:
-            print('s0 = ', np.shape(s0), s0[220:, 284:])
-            print('mm0 = ', np.shape(mm0), mm0[220:, 284:])
-            print('m0 = ', np.shape(m0), m0[220:, 284:])
-            print('data[0,0,20,20] = ', data[0,0,20,20])
-            print('d0[2, 2] = ', np.shape(d0), d0[2, 2])
-            print('d1[2, 2] = ', np.shape(d1), d1[2, 2])
-            print('d2[2, 2] = ', np.shape(d2), d2[2, 2])
-            print('d3[2, 2] = ', np.shape(d3), d3[2, 2])
-            print('dd[2, 2] = ', np.shape(dd), dd[2, 2])
-            print('dd_all[2, 2, 2, 2] = ', np.shape(dd_all), dd_all[2, 2, 2, 2])
 
         # Calculate times of all pixels in the input integration, then use that to calculate
         # phase of all pixels. Times here is in integer numbers of 10us pixels starting from
@@ -321,8 +308,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         extra_rowclocks = (1024. - ny) * (4 + 3.)
         # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
         period_in_pixels = (1./frequency) / 10.0e-6
-        if print_statements:
-            print('period_in_pixels = ', period_in_pixels)
 
         start_time, ref_pix_sample = 0, 3
 
@@ -354,8 +339,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                     # point to the first pixel of the next row (add "end-of-row" pad)
                     start_time += rowclocks
 
-                    #print('l, k, j:  start_time = ', l, k, j, start_time)
-
                 # point to the first pixel of the next frame (add "end-of-frame" pad)
                 start_time += extra_rowclocks
 
@@ -367,12 +350,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
             # add a frame time to account for the extra frame reset between MIRI integrations
             start_time += frameclocks
-
-        if print_statements:
-            print('\n *** phase_this_int = ', np.shape(phase_this_int), np.size(phase_this_int))
-            print("phase_this_int[5,5,5] =", phase_this_int[5,5,5])
-            print("phase_this_int[5,5,5].astype('ulonglong') =", phase_this_int[5,5,5].astype('ulonglong'))
-            print('shape, phaseall[5,5,5,5] = ', np.shape(phaseall), phaseall[5,5,5,5])
 
         # use phaseall vs dd_all
 
@@ -394,10 +371,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         pa = np.arange(nbins, dtype=float)
         # keep track of n per bin to check for low n
         nu = np.arange(nbins)
-        if print_statements:
-            print('np.shape(phaseall) = ', np.shape(phaseall), phaseall.size)
-            print('nbins = ', nbins)
-            print('np.shape(dd_all) = ', np.shape(dd_all), dd_all.size)
         for nb in range(nbins):
             u = np.where((phaseall > nb/nbins) & (phaseall <= (nb + 1)/nbins) & (np.isfinite(dd_all) == True))
             nu[nb] = phaseall[u].size
@@ -405,25 +378,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
             dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
             pa[nb] = dmean   # amplitude in this bin
 
-            if print_statements:
-                if nb == 2: #nbins-1:
-                    print(' ** nbins loop: ', nb)
-                    #print('phaseall[3,3,3,3] = ', phaseall[3,3,3,3])
-                    #print('dd_all[3,3,3,3] = ', dd_all[3,3,3,3])
-                    #print('phaseall[5,5,5,5] = ', phaseall[5,5,5,5])
-                    #print('dd_all[5,5,5,5] = ', dd_all[5,5,5,5])
-                    kk1 = np.where(phaseall.flatten() > nb/nbins)
-                    print('np.where(phaseall > nb/nbins) = ', np.size(kk1), kk1[0][:5])
-                    kk2 = np.where(phaseall.flatten() <= (nb + 1)/nbins)
-                    print('np.where(phaseall <= (nb + 1)/nbins)) = ', np.size(kk2), kk2[0][:5])
-                    kk3 = np.where(np.isfinite(dd_all.flatten()) == True)
-                    print('np.where(np.isfinite(dd_all) == True) = ', np.size(kk3), kk3[0][:5])
-                    print('np.shape(u) = ', np.shape(u))
-                    print('u = ', u)
-                    print('phaseall[u].size, dd_all[u].size = ', phaseall[u].size, dd_all[u].size)
-                    print('nu[i] = ', nu[nb])
-                    print('dmean = ', dmean)
-                #exit()
         pa -= np.median(pa)
 
         # pa_phase is the phase corresponding to each bin in pa. The +0.5 here is to center in
@@ -439,8 +393,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # Make a vector to hold a version of pa that is close to an integer number of
         # pixels long. This will be the noise amplitude look-up table.
         lut = rebin(pa, [period_in_pixels])   # shift and resample reference_wave at pa's phase
-        if print_statements:
-            print('shape, lut[50] = ', np.shape(lut), lut[50])
 
         # If a reference_wave_filename was provided, use it to measure phase shift between
         # pa (binned phased wave) from the input image vs. the reference_wave using xcorr.
@@ -448,26 +400,19 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
             reference_wave = emicorr_model.data
-            print('reference_wave = ', reference_wave)
-            input()
-            cc = np.zeros(np.size(reference_wave))
-            for rfw, i in enumerate(reference_wave):
-                # method A: brute-force
-                pears_coeff = np.corrcoef(np.roll(reference_wave, i), rebin(pa, [size(reference_wave)]))
-                cc[rfw] = pears_coeff[0, 1]
-                u = np.where(cc >= max(cc))
-                # u[0] is the phase shift of reference_wave *to* pa
-
-                # method B
-                # standard correlation function
-                #fna = np.fft.ifft(rebin(pa, [size(reference_wave)])))
-                #fnb = np.fft.ifft(reference_wave)
-                # compute the correlation function between na and ab
-                #ccf = np.fft.fft(fna * np.real(fnb))   # only get the real part
+            reference_wave_size = np.size(reference_wave)
+            rebinned_pa = rebin(pa, [reference_wave_size])
+            cc = np.zeros(reference_wave_size)
+            for i in range(reference_wave_size):
+                shifted_ref_wave = np.roll(reference_wave, i)
+                pears_coeff = np.corrcoef(shifted_ref_wave, rebinned_pa)
+                cc[i] = pears_coeff[0, 1]
 
             # Use the reference file (shifted to match the phase of pa,
             # and optionally amplitude scaled)
             # shift and resample reference_wave at pa's phase
+            # u[0] is the phase shift of reference_wave *to* pa
+            u = np.where(cc >= max(cc))
             lut_reference = rebin(np.roll(reference_wave, u[0]), [period_in_pixels])
 
             # Scale reference wave amplitude to match the pa amplitude from this dataset by
@@ -478,18 +423,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
             # check pa-to-reference_wave phase match and optional scale
             if scale_reference:
                 lut_reference = lut_reference * m
-
-            #if check_pahse:
-            print('PLOTTING!')
-            import matplotlib.pyplot as plt
-            nlut = np.size(lut)
-            if scale_reference:
-                rat = '1.0'
-            else:
-                rat = repr(m)
-            plt.plot(np.arange(nlut)/nlut, lut, 'b')
-            plt.plot(np.arange(nlut)/nlut, lut_reference+b, 'r')
-            plt.show()
 
             lut = lut_reference
 
@@ -510,11 +443,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         log.info('Subtracting EMI noise from data')
         corr_data = orig_data - noise
         output_model.data = corr_data
-        if print_statements:
-            print('shape, dd_noise[5,5,5,5] = ', np.shape(dd_noise), dd_noise[5,5,5,5])
-            print('shape, orig_data[5,5,5,5] = ', np.shape(orig_data), orig_data[5,5,5,5])
-            print('shape, noise[5,5,5,5] = ', np.shape(noise), noise[5,5,5,5])
-            print('shape, corr_data[5,5,5,5] = ', np.shape(corr_data), corr_data[5,5,5,5])
 
     return output_model
 
@@ -551,26 +479,12 @@ def sloper(data):
         sx = sx + grouptimes[groupcount]
         sy = sy + data[groupcount, ...]
         sxx = sxx + grouptimes[groupcount]**2
-        #print('grouptimes[groupcount] = ', grouptimes[groupcount])
-        #print('data[groupcount, ny-5:, nx-5:] = ', data[groupcount, ny-5:, nx-5:])
-        #print('grouptimes[groupcount] * data[groupcount, ny-5:, nx-5:] = ', grouptimes[groupcount] * data[groupcount, ny-5:, nx-5:])
-        #print('sxy[ny-5:, nx-5:] = ', sxy[ny-5:, nx-5:])
-        #input()
 
     # calculate the final per-pixel slope values
     outarray = (ngroups * sxy - sx * sy)/(ngroups * sxx - sx * sx)
 
     # calculate the final per-pixel intercept values
     intercept = (sxx * sy - sx * sxy)/(ngroups * sxx - sx * sx)
-
-    '''
-    print('sxy[1, 1] = ', sxy[1, 1])
-    print('sx[1, 1] = ', sx[1, 1])
-    print('sy[1, 1] = ', sy[1, 1])
-    print('sxx[1, 1] = ', sxx[1, 1])
-    print('outarray[1, 1] = ', outarray[1, 1])
-    print('intercept[1, 1] = ', intercept[1, 1])
-    '''
 
     return outarray, intercept
 
@@ -607,8 +521,6 @@ def minmed(data, minval=False, avgval=False, maxval=False):
             vec = data[:, j, i]
             u = np.where(vec != 0)
             n = vec[u].size
-            #print('MINMED: u = ', u)
-            #print('MINMED: n = ', n)
             if n > 0:
                 if n <= 2 or minval:
                     medimg[j, i] = np.min(vec[u])
@@ -616,7 +528,6 @@ def minmed(data, minval=False, avgval=False, maxval=False):
                     medimg[j, i] = np.max(vec[u])
                 if not minval and not maxval and not avgval:
                     medimg[j, i] = np.median(vec[u])
-                    #print('here!  medimg[j, i]=', medimg[j, i])
                 if avgval:
                     dmean , _, _, _ = iter_stat_sig_clip(vec[u])
                     medimg[j, i] = dmean
@@ -690,10 +601,10 @@ def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
     ngood = np.size(data)
     dmean, dmedian, dsigma, dmask = 0.0, 0.0, 0.0, np.zeros(np.shape(data))
     if ngood == 0:
-        log.info('No data points for sigma clipping')
+        log.debug('No data points for sigma clipping')
         return dmean, dmedian, dsigma, dmask
     elif ngood == 1:
-        log.info('Only 1 data point for sigma clipping')
+        log.debug('Only 1 data point for sigma clipping')
         return dmean, dmedian, dsigma, dmask
 
     # Compute the mean + standard deviation of the entire data array,
@@ -751,7 +662,7 @@ def rebin(arr, newshape):
     return arr[tuple(indices)]
 
 
-def mk_reffile_hdulist(freq, pa, save_onthefly_reffile):
+def mk_reffile_hdulist(freq, pa, emicorr_ref_filename):
     """ Create the reference file hdulist object.
 
     Parameters
@@ -762,7 +673,7 @@ def mk_reffile_hdulist(freq, pa, save_onthefly_reffile):
     pa : numpy array
         Phase amplitude array
 
-    save_onthefly_reffile : str or None
+    emicorr_ref_filename : str or None
         Full path and root name of on-the-fly reference file
 
     Returns
@@ -772,19 +683,19 @@ def mk_reffile_hdulist(freq, pa, save_onthefly_reffile):
     """
     # initialize the reference fits object
     reffile_hdulist = fits.HDUList()
-    reffile_hdulist.append(fits.PrimaryHDU())
+    prim = fits.PrimaryHDU()
+    reffile_hdulist.append(prim)
 
     sci = fits.ImageHDU(pa, name='SCI')
     sci.header['FREQ'] = freq
     reffile_hdulist.append(sci)
 
     # save the reference file if save_intermediate_results=True and no CRDS file exists
-    if save_onthefly_reffile is not None:
-        #emicorr_model = datamodels.EmiModel(reffile_hdulist)
-        #emicorr_model.save(emicorr_ref_filename)
-        #emicorr_model.close()
-        emicorr_ref_filename = save_onthefly_reffile.replace('.fits', repr(freq)+'.fits')
-        reffile_hdulist.writeto(emicorr_ref_filename, overwrite=True)
+    if emicorr_ref_filename is not None:
+        emicorr_model = datamodels.EmiModel(reffile_hdulist)
+        emicorr_ref_filename = emicorr_ref_filename.replace('.fits', repr(freq)+'.fits')
+        emicorr_model.save(emicorr_ref_filename)
+        emicorr_model.close()
         log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
 
     return reffile_hdulist
