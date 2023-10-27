@@ -191,6 +191,8 @@ _calculated_suffixes = {
     'wfsscontamstep',
     'chargemigrationstep',
     'pixelreplacestep',
+    'nsclean',
+    'nscleanstep',
 }
 
 
