@@ -15,11 +15,35 @@ class NSCleanStep(Step):
     class_alias = "nsclean"
 
     spec = """
-        n_sigma = float(default=5.0)
-        save_mask = boolean(default=False)
+        n_sigma = float(default=5.0)  # Clipping level for outliers
+        save_mask = boolean(default=False)  # Save the created mask
+        user_mask = string(default=None)  # Path to user-supplied mask
+        skip = boolean(default=True)  # By default, skip the step
     """
 
     def process(self, input):
+        """
+        Fit and subtract 1/f background noise from a NIRSpec image
+
+        Parameters
+        ----------
+        input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
+            Input datamodel to be corrected
+
+        n_sigma : float, optional
+            Sigma clipping threshold to be used in detecting outliers in the image
+
+        save_mask : boolean, optional
+            Save the computed mask image
+
+        user_mask : None, string, or `~jwst.datamodels.ImageModel`
+            Optional user-supplied mask image; path to file or opened datamodel
+
+        Returns
+        -------
+        output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
+            The 1/f corrected datamodel
+        """
 
         # Open the input data model
         with datamodels.open(input) as input_model:
@@ -34,7 +58,7 @@ class NSCleanStep(Step):
                 return output_model
 
             # Do the NSClean correction
-            result = nsclean.do_correction(input_model, self.n_sigma, self.save_mask)
+            result = nsclean.do_correction(input_model, self.n_sigma, self.save_mask, self.user_mask)
             output_model, mask_model = result
 
             # Save the mask, if requested

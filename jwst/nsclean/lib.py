@@ -117,14 +117,14 @@ class NSClean:
         
         Parameters
         ----------
-        Data : CuArray{Float32,2}
+        Data : float array
             A NIRSpec image. The image must be in the detector-space
             orientation with the IRS2 zipper running along the bottom as
             displayed in SAOImage DS9.
 
         Returns
         -------
-        Bkg : CuArray{Float32,2}
+        Bkg : float array
             The fitted background model.
 
         Notes
@@ -136,11 +136,17 @@ class NSClean:
         for y in np.arange(self.ny)[4:-4]:
             
             # Get data and weights for this line
-            d = Data[y][self.M[y]]  # Data
+            d = Data[y][self.M[y]]  # unmasked (useable) data
             p = np.diag(self.P[y][self.M[y]])  # Weights
+
+            # If none of the pixels in this line is useable (all masked out),
+            # skip and move on to the next line.
+            if len(d) == 0:
+                continue
             
             # Fill statistical outliers with line median. We know that the rolling
-            # median cleaning technique worked reasonably well, so this is fast and not crazy.
+            # median cleaning technique worked reasonably well, so this is a fast
+            # justifiable approximation.
             _mu = np.median(d)  # Robust estimate of mean
             _sigma = 1.4826 * np.median(np.abs(d - _mu))  # Robust estimate of standard deviation
 

@@ -161,7 +161,7 @@ def create_mask(input_model, n_sigma):
     # applied to data that uses all 2048 columns of the detector.
     if Mask.shape[-1] == 2048:
         Mask[..., :, :5] = True
-        Mask[..., :, -5:] = True  # keep one extra column on the right (always empty)
+        Mask[..., :, -4:] = True
 
     # Mask outliers using sigma clipping stats.
     # For BOTS mode, which uses 3D data, loop over each integration separately.
@@ -181,7 +181,7 @@ def create_mask(input_model, n_sigma):
     return Mask, nan_pix
 
 
-def do_correction(input_model, n_sigma, save_mask):
+def do_correction(input_model, n_sigma, save_mask, user_mask):
 
     """Apply the NSClean 1/f noise correction
 
@@ -195,6 +195,9 @@ def do_correction(input_model, n_sigma, save_mask):
 
     save_mask : boolean
         switch to indicate whether the mask should be saved
+
+    user_mask : string or None
+        Path to user-supplied mask image
 
     Returns
     -------
@@ -216,28 +219,42 @@ def do_correction(input_model, n_sigma, save_mask):
         output_model.meta.cal_step.nsclean = 'SKIPPED'
         return output_model
 
-    # Create the pixel mask that'll be used to indicate which pixels
-    # to include in the 1/f noise measurements. Basically, we're setting
-    # all illuminated pixels to False, so that they do not get used, and
-    # setting all unilluminated pixels to True (so they DO get used).
-    # For BOTS mode the Mask will be 3D, to accommodate changes in masked
-    # pixels per integration.
-    log.info("Creating mask")
-    Mask, nan_pix = create_mask(input_model, n_sigma)
-
-    # Store the mask image in a model, if requested
-    if save_mask:
-        if len(Mask.shape) == 3:
-            mask_model = datamodels.CubeModel(data=Mask)
-        else:
-            mask_model = datamodels.ImageModel(data=Mask)
+    # Check for a user-supplied mask image. If so, use it.
+    if user_mask is not None:
+        mask_model = datamodels.open(user_mask)
+        Mask = mask_model.data.copy()
+    
     else:
-        mask_model = None
+        # Create the pixel mask that'll be used to indicate which pixels
+        # to include in the 1/f noise measurements. Basically, we're setting
+        # all illuminated pixels to False, so that they do not get used, and
+        # setting all unilluminated pixels to True (so they DO get used).
+        # For BOTS mode the Mask will be 3D, to accommodate changes in masked
+        # pixels per integration.
+        log.info("Creating mask")
+        Mask, nan_pix = create_mask(input_model, n_sigma)
+
+        # Store the mask image in a model, if requested
+        if save_mask:
+            if len(Mask.shape) == 3:
+                mask_model = datamodels.CubeModel(data=Mask)
+            else:
+                mask_model = datamodels.ImageModel(data=Mask)
+        else:
+            mask_model = None
 
     # If data are 3D, loop over integrations, applying correction to
     # each integration individually.
     log.info(f"Cleaning image {input_model.meta.filename}")
-    if len(Mask.shape) == 3:
+    if len(input_model.data.shape) == 3:
+
+        # Check for 3D mask
+        if len(Mask.shape) == 2:
+            log.warning("Data are 3D, but Mask is 2D. Step will be skipped.")
+            output_model.meta.cal_step.nsclean = 'SKIPPED'
+            return output_model
+
+        # Loop over integrations
         for i in range(Mask.shape[0]):
             log.debug(f" working on integration {i+1}")
             cleaner = NSClean(detector, Mask[i])
