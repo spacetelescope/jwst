@@ -12,12 +12,12 @@ log.setLevel(logging.DEBUG)
 
 
 known_emi_freqs = {
-    "390": 390.625,
-    "218a": 218.52055,
-    "218b": 218.520470,
-    "218c": 218.520665,
-    "164": 164.9305,
-    "10": 10.039216
+    "Hz390": 390.625,
+    "Hz218a": 218.52055,
+    "Hz218b": 218.520470,
+    "Hz218c": 218.520665,
+    "Hz164": 164.9305,
+    "Hz10": 10.039216
 }
 
 subarray_cases = {
@@ -231,10 +231,15 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
+    # create the dictionary to store the frequencies and corresponding phase amplidues
+    if save_intermediate_results and save_onthefly_reffile is not None:
+        freq_pa_dict = {}
+
     # Loop over the frequencies to correct
     log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
     log.info('   {}'.format(freqs2correct))
     for fi, frequency in enumerate(freqs2correct):
+        frequency_name = get_frequency_name(frequency)
         log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
 
         # Read image data and set up some variables
@@ -399,7 +404,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
-            reference_wave = emicorr_model.data
+            reference_wave = emicorr_model.data[frequency_name]
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
             cc = np.zeros(reference_wave_size)
@@ -426,8 +431,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
             lut = lut_reference
 
-        if save_intermediate_results:
-            mk_reffile_hdulist(frequency, pa, save_onthefly_reffile)
+        if save_intermediate_results and save_onthefly_reffile is not None:
+            freq_pa_dict[frequency_name] = pa
 
         log.info('Creating phased-matched noise model to subtract from data')
         # This is the phase matched noise model to subtract from each pixel of the input image
@@ -443,6 +448,10 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         log.info('Subtracting EMI noise from data')
         corr_data = orig_data - noise
         output_model.data = corr_data
+
+    if save_intermediate_results and save_onthefly_reffile is not None:
+        print('\n **** emicorr_ref_filename = ', emicorr_ref_filename)
+        mk_reffile(freq_pa_dict, save_onthefly_reffile)
 
     return output_model
 
@@ -569,6 +578,25 @@ def get_subarcase(subarray, readpatt):
         return subname, None, None, None
 
 
+def get_frequency_name(frequency):
+    """Get the frequency name from the known_emi_freqs dictionary
+    Parameters
+    ----------
+    frequency : float
+        Frequency of interest
+
+    Returns
+    -------
+    frequency_name : string
+        Name of the frequency
+    """
+    for freq_nme, val in known_emi_freqs.items():
+        if frequency == val:
+            frequency_name = freq_nme
+            break
+    return frequency_name
+
+
 def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
     """ Compute the mean, mediand and/or sigma of data with iterative sigma clipping.
     This funtion is based on djs_iterstat.pro (authors thetein)
@@ -662,42 +690,26 @@ def rebin(arr, newshape):
     return arr[tuple(indices)]
 
 
-def mk_reffile_hdulist(freq, pa, emicorr_ref_filename):
+def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     """ Create the reference file hdulist object.
 
     Parameters
     ----------
-    freq : float
-        Frequency to correct for
+    freq_pa_dict : dictionary
+        Dictionary containing the phase amplitude (pa) array
+        corresponding to the appropriate frequency
 
-    pa : numpy array
-        Phase amplitude array
-
-    emicorr_ref_filename : str or None
+    emicorr_ref_filename : str
         Full path and root name of on-the-fly reference file
 
     Returns
     -------
-    reffile_hdulist: fits object
-        The HDU list to be written in the reference file
+    Nothing
     """
-    # initialize the reference fits object
-    reffile_hdulist = fits.HDUList()
-    prim = fits.PrimaryHDU()
-    reffile_hdulist.append(prim)
-
-    sci = fits.ImageHDU(pa, name='SCI')
-    sci.header['FREQ'] = freq
-    reffile_hdulist.append(sci)
-
     # save the reference file if save_intermediate_results=True and no CRDS file exists
-    if emicorr_ref_filename is not None:
-        emicorr_model = datamodels.EmiModel(reffile_hdulist)
-        emicorr_ref_filename = emicorr_ref_filename.replace('.fits', repr(freq)+'.fits')
-        emicorr_model.save(emicorr_ref_filename)
-        emicorr_model.close()
-        log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
-
-    return reffile_hdulist
+    emicorr_model = datamodels.EmiModel(freq_pa_dict)
+    emicorr_model.save(emicorr_ref_filename)
+    emicorr_model.close()
+    log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
 
 

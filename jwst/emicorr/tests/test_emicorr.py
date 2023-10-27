@@ -8,7 +8,6 @@ Unit tests for EMI correction
 import numpy as np
 from jwst.emicorr import EmiCorrStep, emicorr
 from stdatamodels.jwst.datamodels import Level1bModel
-from astropy.io import fits
 
 
 def test_get_subarcase():
