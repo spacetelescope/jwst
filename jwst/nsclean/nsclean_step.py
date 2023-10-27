@@ -15,6 +15,7 @@ class NSCleanStep(Step):
     class_alias = "nsclean"
 
     spec = """
+        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined regions
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
@@ -39,6 +40,9 @@ class NSCleanStep(Step):
         user_mask : None, string, or `~jwst.datamodels.ImageModel`
             Optional user-supplied mask image; path to file or opened datamodel
 
+        mask_spectral_regions : boolean, optional
+            Mask regions of the image defined by WCS bounding boxes for slits/slices
+
         Returns
         -------
         output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
@@ -58,7 +62,8 @@ class NSCleanStep(Step):
                 return output_model
 
             # Do the NSClean correction
-            result = nsclean.do_correction(input_model, self.n_sigma, self.save_mask, self.user_mask)
+            result = nsclean.do_correction(input_model, self.mask_spectral_regions, self.n_sigma,
+                                           self.save_mask, self.user_mask)
             output_model, mask_model = result
 
             # Save the mask, if requested

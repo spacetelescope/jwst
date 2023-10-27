@@ -41,9 +41,9 @@ apply ``nsclean``.
 
 Creation of an image mask
 =========================
-One of the key components to the algorithm is knowing which pixels are
+One of the key components of the correction is knowing which pixels are
 unilluminated and hence can be used in fitting the background noise.
-The step builds a mask on the fly for each image, that is used to mark
+The step builds a mask on the fly for each image, which is used to mark
 useable and unuseable pixels. The mask is a 2D boolean array, having the same
 size as the image, with pixels set to True interpreted as being OK to use.
 The process of building the mask varies somewhat depending on the
@@ -54,6 +54,10 @@ is a summary of the types applied to each image mode.
 
 The user-settable step parameter `save_mask` can be used to save the
 mask to a file, if desired (see :ref:`nsclean step arguments <nsclean_arguments>`).
+
+Note that a user may supply their own mask image as input to the step,
+in which case the process of creating a mask is skipped. The step parameter
+`user_mask` is used to specify an input mask.
 
 IFU Slices
 ----------
@@ -121,22 +125,27 @@ images from each type of observing mode.
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+-----------------+-----+-----+-----+
-|                 |     | Mode|     |
-+-----------------+-----+-----+-----+
-| Masking         | IFU | MOS |  FS |
-+=================+=====+=====+=====+
-| IFU Slices      | |c| |     |     |
-+-----------------+-----+-----+-----+
-| Slits/Slitlets  |     | |c| | |c| |
-+-----------------+-----+-----+-----+
-| MSA_FAILED_OPEN | |c| | |c| | |c| |
-+-----------------+-----+-----+-----+
-| NaN Pixels      | |c| | |c| | |c| |
-+-----------------+-----+-----+-----+
-| FS Region       | |c| | |c| |     |
-+-----------------+-----+-----+-----+
-| Reference Pix   | |c| | |c| | |c| |
-+-----------------+-----+-----+-----+
-| Outliers        | |c| | |c| | |c| |
-+-----------------+-----+-----+-----+
++--------------------------+-----+-----+-----+
+|                          |     | Mode|     |
++--------------------------+-----+-----+-----+
+| Masking                  | IFU | MOS |  FS |
++==========================+=====+=====+=====+
+| IFU Slices\ :sup:`1`     | |c| |     |     |
++--------------------------+-----+-----+-----+
+| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |
++--------------------------+-----+-----+-----+
+| MSA_FAILED_OPEN          | |c| | |c| | |c| |
++--------------------------+-----+-----+-----+
+| NaN Pixels               | |c| | |c| | |c| |
++--------------------------+-----+-----+-----+
+| FS Region                | |c| | |c| |     |
++--------------------------+-----+-----+-----+
+| Reference Pix            | |c| | |c| | |c| |
++--------------------------+-----+-----+-----+
+| Outliers                 | |c| | |c| | |c| |
++--------------------------+-----+-----+-----+
+
+:sup:`1`\ The application of these steps can be turned on and off via
+the step parameter `mask_spectral_regions`. This parameter controls
+whether the "IFU Slices" and "Slits/Slitlets" portions of the masking
+are applied.

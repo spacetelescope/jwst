@@ -107,7 +107,7 @@ def mask_slits(input_model, Mask):
     return Mask
 
     
-def create_mask(input_model, n_sigma):
+def create_mask(input_model, mask_spectral_regions, n_sigma):
     """Create the pixel mask needed for setting which pixels to use
     for measuring 1/f noise.
 
@@ -115,6 +115,9 @@ def create_mask(input_model, n_sigma):
     ----------
     input_model : data model object
         science data
+
+    mask_spectral_regions : boolean
+        mask slit/slice regions defined in WCS
 
     n_sigma : float
         sigma threshold for masking outliers
@@ -135,11 +138,11 @@ def create_mask(input_model, n_sigma):
     Mask = np.full(np.shape(input_model.dq), True)
 
     # If IFU, mask all pixels contained in the IFU slices
-    if exptype == 'nrs_ifu':
+    if exptype == 'nrs_ifu' and mask_spectral_regions:
         Mask = mask_ifu_slices(input_model, Mask)
 
     # If MOS or FS, mask all pixels affected by open slitlets
-    if exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec']:
+    if exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec'] and mask_spectral_regions:
         Mask = mask_slits(input_model, Mask)
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
@@ -181,7 +184,7 @@ def create_mask(input_model, n_sigma):
     return Mask, nan_pix
 
 
-def do_correction(input_model, n_sigma, save_mask, user_mask):
+def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_mask):
 
     """Apply the NSClean 1/f noise correction
 
@@ -189,6 +192,9 @@ def do_correction(input_model, n_sigma, save_mask, user_mask):
     ----------
     input_model : data model object
         science data to be corrected
+
+    mask_spectral_regions : boolean
+        Mask slit/slice regions defined in WCS
 
     n_sigma : float
         n-sigma rejection level for finding outliers
@@ -232,7 +238,7 @@ def do_correction(input_model, n_sigma, save_mask, user_mask):
         # For BOTS mode the Mask will be 3D, to accommodate changes in masked
         # pixels per integration.
         log.info("Creating mask")
-        Mask, nan_pix = create_mask(input_model, n_sigma)
+        Mask, nan_pix = create_mask(input_model, mask_spectral_regions, n_sigma)
 
         # Store the mask image in a model, if requested
         if save_mask:
