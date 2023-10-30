@@ -12,12 +12,12 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     Short Summary
     -------------
     Using the spectral leak reference correction and spectrum containing CH1 B
-    correct the CH 3 A spectrum. 
+    correct the CH 3 A spectrum.
 
     Parameters
     ----------
     sp_leak_ref: ~datamodels.MirMrsPtCorrModel
-        spectral leak reference information 
+        spectral leak reference information
 
     ch1b: numpy array 
 
@@ -28,7 +28,6 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     output_model: ~jwst.datamodels.RampModel
         RSCD-corrected science data
     """
-
 
     wave1b = ch1b.spec[0].spec_table.WAVELENGTH
     spec1b = ch1b.spec[0].spec_table.FLUX

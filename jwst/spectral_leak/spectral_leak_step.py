@@ -44,7 +44,7 @@ class SpectralLeakStep(Step):
         result = input.copy()  # copy input to return
         with datamodels.open(input) as input_model:
             if isinstance(input_model, ModelContainer):
-                # Retrieve the reference parameters for this type of data                
+                # Retrieve the reference parameters for this type of data
                 sp_leak_ref = self.get_reference_file(input[0], 'mrsptcorr')
 
                 self.log.info('Input is a ModelContainer')
