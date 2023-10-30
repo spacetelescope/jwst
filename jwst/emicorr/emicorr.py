@@ -27,49 +27,49 @@ subarray_cases = {
     "SLITLESSPRISM": {
         "rowclocks": 28,
         "frameclocks": 15904,
-        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
-                known_emi_freqs["218b"], known_emi_freqs["218c"],
-                known_emi_freqs["164"], known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
+                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
+                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
     },
 
     "MASKLYOT": {
         "rowclocks": 90,
         "frameclocks": 32400,
-        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
-                known_emi_freqs["218b"], known_emi_freqs["218c"],
-                known_emi_freqs["164"], known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
+                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
+                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
     },
 
     "SUB64": {
         "rowclocks": 28,
         "frameclocks": 8512,
-        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
-                known_emi_freqs["218b"], known_emi_freqs["218c"],
-                known_emi_freqs["164"], known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
+                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
+                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
     },
 
     "SUB128": {
         "rowclocks": 44,
         "frameclocks": 11904,
-        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
-                known_emi_freqs["218b"], known_emi_freqs["218c"],
-                known_emi_freqs["164"], known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
+                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
+                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
     },
 
     "MASK1140": {
         "rowclocks": 82,
         "frameclocks": 23968,
-        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
-                known_emi_freqs["218b"], known_emi_freqs["218c"],
-                known_emi_freqs["164"], known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
+                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
+                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
     },
 
     "MASK1550": {
         "rowclocks": 82,
         "frameclocks": 23968,
-        "freqs": [known_emi_freqs["390"], known_emi_freqs["218a"],
-                known_emi_freqs["218b"], known_emi_freqs["218c"],
-                known_emi_freqs["164"], known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
+                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
+                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
     },
 
     # 390Hz already in-phase for these, but may need corr for other
@@ -78,33 +78,33 @@ subarray_cases = {
     "FULL_FASTR1": {
         "rowclocks": 271,
         "frameclocks": 277504,
-        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
-                known_emi_freqs["218c"], known_emi_freqs["164"],
-                known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
+                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
+                known_emi_freqs["Hz10"]]
     },
 
     "FULL_SLOWR1": {
         "rowclocks": 2333,
         "frameclocks": 2388992,
-        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
-                known_emi_freqs["218c"], known_emi_freqs["164"],
-                known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
+                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
+                known_emi_freqs["Hz10"]]
     },
 
     "BRIGHTSKY": {
         "rowclocks": 162,
         "frameclocks": 86528,
-        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
-                known_emi_freqs["218c"], known_emi_freqs["164"],
-                known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
+                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
+                known_emi_freqs["Hz10"]]
     },
 
     "SUB256": {
         "rowclocks": 96,
         "frameclocks": 29952,
-        "freqs": [known_emi_freqs["218a"], known_emi_freqs["218b"],
-                known_emi_freqs["218c"], known_emi_freqs["164"],
-                known_emi_freqs["10"]]
+        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
+                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
+                known_emi_freqs["Hz10"]]
     }
 
 }
@@ -161,8 +161,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
-    EMI-corrects data and error arrays by the following procedure:
-         [repeat recursively for each discrete emi frequency desired]
+    EMI-corrects data by the following procedure:
+         [repeat recursively for each discrete EMI frequency desired]
     1) Read image data.
     2) Make very crude slope image and fixed pattern "super"bias for each
        integration, ignoring everything (nonlin, saturation, badpix, etc).
@@ -404,7 +404,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
-            reference_wave = emicorr_model.data[frequency_name]
+            reference_wave = emicorr_model[frequency_name]
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
             cc = np.zeros(reference_wave_size)
@@ -450,7 +450,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         output_model.data = corr_data
 
     if save_intermediate_results and save_onthefly_reffile is not None:
-        print('\n **** emicorr_ref_filename = ', emicorr_ref_filename)
         mk_reffile(freq_pa_dict, save_onthefly_reffile)
 
     return output_model
@@ -708,6 +707,8 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     """
     # save the reference file if save_intermediate_results=True and no CRDS file exists
     emicorr_model = datamodels.EmiModel(freq_pa_dict)
+    if 'fits' in emicorr_ref_filename:
+        emicorr_ref_filename = emicorr_ref_filename.replace('fits', 'asdf')
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
     log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
