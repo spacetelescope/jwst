@@ -7,6 +7,8 @@ from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, d
 from jwst.jump.jump import run_detect_jumps
 import multiprocessing
 
+import os
+import platform
 import time
 import random
 
@@ -28,13 +30,19 @@ def test_exec_time_0_crs(setup_inputs):
                                        nints=2, readnoise=6.5, gain=5.5,
                                        grouptime=2.775, deltatime=2.775)
 
-    tstart = time.time()
+    tstart = time.monotonic()
     # using dummy variable in next to prevent "F841-variable is assigned to but never used"
     _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-    tstop = time.time()
+    tstop = time.monotonic()
 
     t_elapsed = tstop - tstart
-    MAX_TIME = 10  # takes 1.6 sec on my Mac
+    if platform.system() == 'Darwin' and os.environ.get('CI', False):
+        # github mac runners have known performance issues see:
+        # https://github.com/actions/runner-images/issues/1336
+        # use a longer MAX_TIME when running on github on a mac
+        MAX_TIME = 20
+    else:
+        MAX_TIME = 10  # takes 1.6 sec on my Mac
 
     assert t_elapsed < MAX_TIME
 
