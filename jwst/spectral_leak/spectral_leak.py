@@ -20,7 +20,6 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
         spectral leak reference information
 
     ch1b: numpy array 
-
     ch3a: numpy array
 
     Returns
