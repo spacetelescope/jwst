@@ -93,6 +93,8 @@ class Spec3Pipeline(Pipeline):
         self.extract_1d.save_results = self.save_results
         self.combine_1d.suffix = 'c1d'
         self.combine_1d.save_results = self.save_results
+        self.spectral_leak.suffix = 'x1d'
+        self.spectral_leak.save_results = self.save_results
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -275,14 +277,20 @@ class Spec3Pipeline(Pipeline):
             elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
 
                 # If 2D data were resampled and combined, just do a 1D extraction
+
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
+                    if exptype in ['MIR_MRS']:
+                        if not self.spectral_leak.skip:
+                            self.extract_1d.save_results = False
+                            self.spectral_leak.suffix = 'x1d'
+                            self.spectral_leak.search_output_file = False
+                            self.spectral_leak.save_results = self.save_results
+
                 result = self.extract_1d(result)
 
                 if exptype in ['MIR_MRS']:
-                    print('result from extract1d',type(result))
                     result = self.spectral_leak(result)
-
             else:
                 self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'
@@ -293,14 +301,13 @@ class Spec3Pipeline(Pipeline):
         self.log.info('Ending calwebb_spec3')
         return
 
-
     def _create_nrsfs_slit_name(self, source_models):
         """Create the complete slit_name product field for NIRSpec fixed-slit products
 
         Each unique value of slit name within the list of input source models
         is appended to the final slit name string.
         """
-                    
+
         slit_names = []
         slit_names.append(source_models[0].name.lower())
         for i in range(len(source_models)):
