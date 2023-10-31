@@ -49,8 +49,8 @@ class ImprintStep(Step):
 
         if match is not None:
             # Subtract the matching imprint image
-            self.log.info(f"Subtracting imprint image {imprint[match]}")
             imprint_model = datamodels.open(imprint[match])
+            self.log.info(f"Subtracting imprint image {imprint_model.meta.filename}")
             result = subtract_images.subtract(input_model, imprint_model)
 
             # Update the step status and close the imprint model
