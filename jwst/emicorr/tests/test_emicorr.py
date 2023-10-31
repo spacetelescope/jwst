@@ -49,7 +49,7 @@ def test_apply_emicorr():
     compare_model = Level1bModel(data=data)
 
     # correction should equal input for data of all 1.0
-    assert compare_model.data.all() == output_model.data.all()
+    assert compare_model.all() == output_model.all()
 
 
 def test_sloper():
