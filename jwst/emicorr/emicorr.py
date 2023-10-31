@@ -373,7 +373,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # keep track of n per bin to check for low n
         nu = np.arange(nbins)
         for nb in range(nbins):
-            u = np.where((phaseall > nb/nbins) & (phaseall <= (nb + 1)/nbins) & (np.isfinite(dd_all) == True))
+            u = np.where((phaseall > nb/nbins) & (phaseall <= (nb + 1)/nbins) & (np.isfinite(dd_all)))
             nu[nb] = phaseall[u].size
             # calculate the sigma-clipped mean
             dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
