@@ -62,7 +62,23 @@ image.
     under the root of the file. The output image size is determined from the
     bounding box of the WCS (if any). Argument ``output_shape`` overrides
     computed image size and it is required when output WCS does not have
-    ``bounding_box`` property set.
+    ``bounding_box`` property set or if ``pixel_shape`` or ``array_shape`` keys
+    (see below) are not provided.
+
+    Additional information may be stored under
+    other keys under the root of the file. Currently, the following keys are
+    recognized:
+
+    - ``pixel_area``: Indicates average pixel area of the output WCS in
+      units of steradians. When provided, this value will be used for updating
+      photometric quantities  ``PIXAR_SR`` and ``PIXAR_A2`` of the output image.
+      If ``pixel_area`` is not provided, the code will attempt to estimate
+      this value from the WCS.
+
+    - ``pixel_shape``: dimensions of the output image in the order (nx, ny).
+      Overrides the value of ``array_shape`` if provided.
+
+    - ``array_shape``: shape of the output image in ``numpy`` order: (ny, nx).
 
     .. note::
         When ``output_wcs`` is specified, WCS-related arguments such as
