@@ -46,6 +46,7 @@ jobs:
   check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
+      default_python: "3.11"
       envs: |
         - linux: check-style
         - linux: check-security
@@ -69,6 +70,7 @@ jobs:
         - linux: py39-sdpdeps-xdist
         - linux: py310-xdist
         - linux: py311-xdist
+        - linux: py312-xdist
         - macos: py311-xdist
           pytest-results-summary: true
         - linux: py311-stdevdeps-xdist
