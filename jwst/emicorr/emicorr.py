@@ -4,7 +4,6 @@
 
 import numpy as np
 import logging
-from astropy.io import fits
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -243,7 +242,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
 
         # Read image data and set up some variables
-        reffile_hdulist = None
         orig_data = output_model.data
         data = orig_data.copy()
         nints, ngroups, ny, nx = np.shape(data)
@@ -257,9 +255,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # sz[3] = ngroups
         # sz[4] = nints
         nx4 = int(nx/4)
-        times = np.ones((nints, ngroups, ny, nx4), dtype='ulonglong')
 
-        counter = 0
         dd_all = np.ones((nints, ngroups, ny, nx4))
         log.info('Subtracting self-superbias from each group of each integration')
         for ninti in range(nints_to_phase):

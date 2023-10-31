@@ -6,7 +6,7 @@ Unit tests for EMI correction
 
 
 import numpy as np
-from jwst.emicorr import EmiCorrStep, emicorr
+from jwst.emicorr import emicorr
 from stdatamodels.jwst.datamodels import Level1bModel
 
 
@@ -44,12 +44,12 @@ def test_apply_emicorr():
     input_model = Level1bModel(data=data)
     emicorr_model = None
     save_onthefly_reffile = None
-    mdl = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile)
+    output_model = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile)
 
     compare_model = Level1bModel(data=data)
 
     # correction should equal input for data of all 1.0
-    assert compare_model.data.all() == input_model.data.all()
+    assert compare_model.data.all() == output_model.data.all()
 
 
 def test_sloper():
