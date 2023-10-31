@@ -7,7 +7,7 @@ MIRI EMI Correction
 .. toctree::
    :maxdepth: 2
 
-   main.rst
+   description.rst
    arguments.rst
    reference_files.rst
 
