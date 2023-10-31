@@ -61,7 +61,7 @@ pytest_basetemp = "test_outputs"
 // Configure artifactory ingest
 data_config = new DataConfig()
 data_config.server_id = 'bytesalad'
-data_config.root = '${PYTEST_BASETEMP}'
+data_config.root = 'clone/${pytest_basetemp}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 
