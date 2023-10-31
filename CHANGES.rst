@@ -4,6 +4,8 @@
 general
 -------
 
+- Add lack of python 3.12 support to project metadata [#8042]
+
 - Increase asdf maximum version to 4 [#8018]
 
 1.12.5 (2023-10-19)
