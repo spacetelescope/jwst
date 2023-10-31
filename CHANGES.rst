@@ -6,6 +6,13 @@ general
 
 - Increase asdf maximum version to 4 [#8018]
 
+imprint
+-------
+
+- Updated the logging to report which imprint image is being subtracted from the
+  science image. [#8041]
+
+
 1.12.5 (2023-10-19)
 ===================
 
