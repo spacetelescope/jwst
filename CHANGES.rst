@@ -6,6 +6,15 @@ general
 
 - Increase asdf maximum version to 4 [#8018]
 
+resample
+--------
+
+- Completely re-designed computation of the pixel area keywords
+  ``PIXAR_SR`` and ``PIXAR_A2`` for the resampled image. This change also
+  results in modified values in the resampled images. New computations
+  significantly reduce photometric errors. [#7894]
+
+
 1.12.5 (2023-10-19)
 ===================
 
@@ -29,11 +38,6 @@ resample
 
 - Set output image size when ``output_wcs`` is provided based on the largest
   coordinates in the bounding box of the ``output_wcs``. [#7894]
-
-- Completely re-designed computation of the pixel area keywords
-  ``PIXAR_SR`` and ``PIXAR_A2`` for the resampled image. This change also
-  results in modified values in the resampled images. New computations
-  significantly reduce photometric errors. [#7894]
 
 
 1.12.4 (2023-10-12)
