@@ -414,7 +414,8 @@ class RampFitStep(Step):
             max_cores = self.maximum_cores
             readnoise_filename = self.get_reference_file(input_model, 'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
-
+            avg_dark_current = self.avg_dark_current
+            
             log.info('Using READNOISE reference file: %s', readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
 
@@ -452,6 +453,7 @@ class RampFitStep(Step):
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
+                avg_dark_current,
                 suppress_one_group=self.suppress_one_group)
 
             # Create a gdq to modify if there are charge_migrated groups
