@@ -413,7 +413,7 @@ class RampFitStep(Step):
             readnoise_filename = self.get_reference_file(input_model, 'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
             avg_dark_current = self.avg_dark_current
-            
+
             log.info('Using READNOISE reference file: %s', readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
 
