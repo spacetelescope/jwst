@@ -453,7 +453,7 @@ class RampFitStep(Step):
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
-                avg_dark_current,
+                avg_dark_current=avg_dark_current,
                 suppress_one_group=self.suppress_one_group)
 
             # Create a gdq to modify if there are charge_migrated groups
