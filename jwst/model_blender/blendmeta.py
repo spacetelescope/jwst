@@ -25,7 +25,7 @@ __doctest_skip__ = ['blendmodels']
 # Primary functional interface for the code
 
 
-def blendmodels(product, inputs=None, output=None, verbose=False):
+def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
     """
     Run main interface for blending metadata from multiple models.
 
@@ -72,6 +72,10 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     output : str, optional
         If provided, update `meta.filename` in the blended `product`
         to define what file this model will get written out to.
+
+    ignore : list of str, None, optional
+        A list of string the meta attribute names which, if provided,
+        will show which attributes should not be blended.
 
     verbose : bool, optional [Default: False]
         Print out additional messages during processing when specified.
@@ -122,6 +126,8 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     # Start by identifying elements of the model which need to be ignored
     ignore_list = _build_schema_ignore_list(newmeta._schema)
     ignore_list += ['meta.wcs']  # Necessary since meta.wcs is not in schema
+    if ignore:
+        ignore_list.extend(ignore)
 
     # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
