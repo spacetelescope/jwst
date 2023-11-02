@@ -1,6 +1,12 @@
 1.12.6 (unreleased)
 ===================
 
+extract_1d
+----------
+
+- Include zero values in dispersion direction check during
+  SOSS ATOCA algorithm [#8038]
+
 general
 -------
 
