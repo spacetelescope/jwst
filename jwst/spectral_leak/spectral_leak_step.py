@@ -49,6 +49,12 @@ class SpectralLeakStep(Step):
 
                 self.log.info('Input is a ModelContainer')
                 for i, x1d in enumerate(input_model):
+                    print(type(x1d))
+                    # check that we have the correct type of data
+                    if not isinstance(input_model, datamodels.Extract1dIFUModel):
+                        log.warning('Data sent to spectral_leak step is not an extracted spectrum. It is  {}.' .format(type(x1d)))
+                        return
+                                 
                     channel = x1d.meta.instrument.channel
                     band = x1d.meta.instrument.band
                     srctype = x1d.spec[0].source_type
