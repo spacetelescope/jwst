@@ -172,7 +172,9 @@ def apply_LG_plus(input_model,
     oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
 
 
-    # Copy header keywords from input to output
+    # Copy header keywords from input to outputs
+    oifitsmodel.update(input_model, only="PRIMARY")
+    oifitsmodel_multi.update(input_model, only="PRIMARY")
     amilgmodel.update(input_model, only="PRIMARY")
-
+    
     return oifitsmodel, oifitsmodel_multi, amilgmodel
