@@ -28,6 +28,9 @@ resample
   results in modified values in the resampled images. New computations
   significantly reduce photometric errors. [#7894]
 
+- Apply a median filter to IVM weight array to better handle saturated
+  pixels. [#7563]
+
 
 1.12.5 (2023-10-19)
 ===================
@@ -354,6 +357,7 @@ resample
 - Update the following exposure time keywords: XPOSURE (EFFEXPTM),
   DURATION and TELAPSE. [#7793]
 
+
 residual_fringe
 ---------------
 
@@ -652,6 +656,10 @@ tweakreg
 
 - Added the 'GAIADR3' catalog to the available options for alignment;
   this has been enabled as the default option [#7611].
+
+- Apply median filtering to IVM weight array to better handle saturated
+  pixels. Added option of 'ivm-med', 'ivm-smed' (recommended default) to the
+  ``weight_type`` argument of ``ResampleStep``. [#7563]
 
 
 1.10.2 (2023-04-14)
