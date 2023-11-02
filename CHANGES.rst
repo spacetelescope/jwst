@@ -28,6 +28,11 @@ resample
   results in modified values in the resampled images. New computations
   significantly reduce photometric errors. [#7894]
 
+tweakreg
+--------
+
+- Improved how a image group name is determined. [#8012]
+
 
 1.12.5 (2023-10-19)
 ===================
@@ -43,11 +48,6 @@ refpix
 
 - Revert a change introduced in #7745, erroneously setting 2 detector columns near
   bad reference pixels to zero. [#8005]
-
-tweakreg
---------
-
-- Improved how a image group name is determined. [#8012]
 
 
 1.12.4 (2023-10-12)
