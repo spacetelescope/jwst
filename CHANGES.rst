@@ -4,7 +4,15 @@
 general
 -------
 
+- Add lack of python 3.12 support to project metadata [#8042]
+
 - Increase asdf maximum version to 4 [#8018]
+
+imprint
+-------
+
+- Updated the logging to report which imprint image is being subtracted from the
+  science image. [#8041]
 
 nsclean
 -------
@@ -19,6 +27,20 @@ pipeline
   for NIRSpec exposures. Also rearranged the order of the steps, so that
   ``msa_flagging`` immediately follows ``assign_wcs``, so that both steps have
   been applied before calling ``nsclean``. [#8000]
+
+resample
+--------
+
+- Recognize additional keys in ASDF files that provide ``output_wcs`` for the
+  resample step. [#7894]
+
+- Set output image size when ``output_wcs`` is provided based on the largest
+  coordinates in the bounding box of the ``output_wcs``. [#7894]
+
+- Completely re-designed computation of the pixel area keywords
+  ``PIXAR_SR`` and ``PIXAR_A2`` for the resampled image. This change also
+  results in modified values in the resampled images. New computations
+  significantly reduce photometric errors. [#7894]
 
 
 1.12.5 (2023-10-19)
