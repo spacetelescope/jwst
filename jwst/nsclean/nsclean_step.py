@@ -19,7 +19,8 @@ class NSCleanStep(Step):
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
-        skip = boolean(default=True)  # By default, skip the step
+        #skip = boolean(default=True)  # By default, skip the step
+        skip = boolean(default=False)  # turn on for testing
     """
 
     def process(self, input):
@@ -51,15 +52,6 @@ class NSCleanStep(Step):
 
         # Open the input data model
         with datamodels.open(input) as input_model:
-
-            # For now, only allow operations on full-frame images.
-            # Skip for subarrays.
-            if input_model.meta.subarray.name.upper() != "FULL":
-                self.log.warning("Step cannot be applied to subarray images.")
-                self.log.warning("Step will be skipped.")
-                output_model = input_model.copy()
-                output_model.meta.cal_step.nsclean = 'SKIPPED'
-                return output_model
 
             # Do the NSClean correction
             result = nsclean.do_correction(input_model, self.mask_spectral_regions, self.n_sigma,

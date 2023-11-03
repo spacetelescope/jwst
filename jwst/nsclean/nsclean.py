@@ -7,7 +7,7 @@ from jwst import datamodels
 from .. assign_wcs import nirspec
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.nsclean.lib import NSClean
+from jwst.nsclean.lib import NSClean, NSCleanSubarray
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -219,12 +219,6 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
     output_model = input_model.copy()
 
-    # Check for full readout length in dispersion direction
-    if input_model.data.shape[-1] != 2048:
-        log.warning("Can't clean subarrays of this size; step will be skipped")
-        output_model.meta.cal_step.nsclean = 'SKIPPED'
-        return output_model
-
     # Check for a user-supplied mask image. If so, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
@@ -275,18 +269,46 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
 
     # Clean a 2D image
     else:
-        # Instantiate an NSClean object
-        cleaner = NSClean(detector, Mask)
         image = np.float32(input_model.data)
 
-        # Clean the image
-        try:
-            cleaned_image = cleaner.clean(image, buff=True)
-            output_model.data = cleaned_image
-        except np.linalg.LinAlgError:
-            log.warning("Error cleaning image; step will be skipped")
-            output_model.meta.cal_step.nsclean = 'SKIPPED'
-            return output_model
+        # Clean a full-frame image
+        if input_model.meta.subarray.name.lower() == "full":
+            cleaner = NSClean(detector, Mask)
+            # Clean the image
+            try:
+                cleaned_image = cleaner.clean(image, buff=True)
+                output_model.data = cleaned_image
+            except np.linalg.LinAlgError:
+                log.warning("Error cleaning image; step will be skipped")
+                output_model.meta.cal_step.nsclean = 'SKIPPED'
+                return output_model
+
+        # Clean a subarray image
+        else:
+
+            # Flip the image to detector coords
+            if detector.upper() == "NRS1":
+                image = image.transpose()
+                Mask = Mask.transpose()
+            else:
+                image = image.transpose()[::-1]
+                Mask = Mask.transpose()[::-1]
+
+            cleaner = NSCleanSubarray(image, Mask)
+
+            # Clean the image
+            try:
+                cleaned_image = cleaner.clean()
+            except np.linalg.LinAlgError:
+                log.warning("Error cleaning image; step will be skipped")
+                output_model.meta.cal_step.nsclean = 'SKIPPED'
+                return output_model
+
+            # Restore the cleaned image to the science frame
+            if detector.upper() == "NRS1":
+                output_model.data = cleaned_image.transpose()
+            else:
+                output_model.data = cleaned_image[::-1].transpose()
 
     # Restore NaN's from original image
     output_model.data[nan_pix] = np.nan
