@@ -19,8 +19,7 @@ class NSCleanStep(Step):
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
-        #skip = boolean(default=True)  # By default, skip the step
-        skip = boolean(default=False)  # turn on for testing
+        skip = boolean(default=True)  # By default, skip the step
     """
 
     def process(self, input):

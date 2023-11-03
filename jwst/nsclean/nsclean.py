@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def mask_ifu_slices(input_model, Mask):
+def mask_ifu_slices(input_model, mask):
 
     """Find pixels located within IFU slices and flag them in the
     mask, so that they do not get used.
@@ -23,12 +23,12 @@ def mask_ifu_slices(input_model, Mask):
     input_model : data model object
         science data
 
-    Mask : 2D boolean array
+    mask : 2D boolean array
         input mask that will be updated
 
     Returns
     -------
-    Mask : 2D boolean array
+    mask : 2D boolean array
         output mask with additional flags for science pixels
     """
 
@@ -65,12 +65,12 @@ def mask_ifu_slices(input_model, Mask):
         dqmap[y.astype(int), x.astype(int)] = dq
 
     # Now set all non-zero locations in the mask to False (do not use)
-    Mask[dqmap==1] = False
+    mask[dqmap==1] = False
 
-    return Mask
+    return mask
 
 
-def mask_slits(input_model, Mask):
+def mask_slits(input_model, mask):
 
     """Find pixels located within MOS or fixed slit footprints
     and flag them in the mask, so that they do not get used.
@@ -80,12 +80,12 @@ def mask_slits(input_model, Mask):
     input_model : data model object
         science data
 
-    Mask : 2D boolean array
+    mask : 2D boolean array
         input mask that will be updated
 
     Returns
     -------
-    Mask : 2D boolean array
+    mask : 2D boolean array
         output mask with additional flags for slit pixels
     """
 
@@ -102,9 +102,9 @@ def mask_slits(input_model, Mask):
     for slit in slit2msa.slits:
         slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
         xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
-        Mask[..., ylo:yhi, xlo:xhi] = False
+        mask[..., ylo:yhi, xlo:xhi] = False
 
-    return Mask
+    return mask
 
     
 def create_mask(input_model, mask_spectral_regions, n_sigma):
@@ -124,7 +124,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
 
     Returns
     -------
-    Mask : 2D boolean array
+    mask : 2D boolean array
         image mask
 
     nan_pix : array
@@ -134,54 +134,135 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
 
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
-    # Note: Mask will be 3D for BOTS mode data
-    Mask = np.full(np.shape(input_model.dq), True)
+    # Note: mask will be 3D for BOTS mode data
+    mask = np.full(np.shape(input_model.dq), True)
 
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
-        Mask = mask_ifu_slices(input_model, Mask)
+        mask = mask_ifu_slices(input_model, mask)
 
     # If MOS or FS, mask all pixels affected by open slitlets
     if exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec'] and mask_spectral_regions:
-        Mask = mask_slits(input_model, Mask)
+        mask = mask_slits(input_model, mask)
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
     if exptype in ['nrs_ifu', 'nrs_msaspec']:
         open_pix = np.where(input_model.dq & dqflags.pixel['MSA_FAILED_OPEN'])
-        Mask[open_pix] = False
+        mask[open_pix] = False
 
     # Temporarily reset NaN pixels and mask them.
     # Save the list of NaN pixel coords, so that they can be reset at the end.
     nan_pix = np.where(np.isnan(input_model.data))
     input_model.data[nan_pix] = 0
-    Mask[nan_pix] = False
+    mask[nan_pix] = False
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
     if exptype in ['nrs_ifu', 'nrs_msaspec']:
-        Mask[922:1116, :] = False
+        mask[922:1116, :] = False
 
     # Use left/right reference pixel columns (first and last 4). Can only be
     # applied to data that uses all 2048 columns of the detector.
-    if Mask.shape[-1] == 2048:
-        Mask[..., :, :5] = True
-        Mask[..., :, -4:] = True
+    if mask.shape[-1] == 2048:
+        mask[..., :, :5] = True
+        mask[..., :, -4:] = True
 
     # Mask outliers using sigma clipping stats.
     # For BOTS mode, which uses 3D data, loop over each integration separately.
     if len(input_model.data.shape) == 3:
         for i in range(input_model.data.shape[0]):
-            _, median, sigma = sigma_clipped_stats(input_model.data[i], mask=~Mask[i], mask_value=0, sigma=5.0)
+            _, median, sigma = sigma_clipped_stats(input_model.data[i], mask=~mask[i], mask_value=0, sigma=5.0)
             outliers = np.where(input_model.data[i] > (median + n_sigma * sigma))
-            Mask[i][outliers] = False
+            mask[i][outliers] = False
     else:
-        _, median, sigma = sigma_clipped_stats(input_model.data, mask=~Mask, mask_value=0, sigma=5.0)
+        _, median, sigma = sigma_clipped_stats(input_model.data, mask=~mask, mask_value=0, sigma=5.0)
         outliers = np.where(input_model.data > (median + n_sigma * sigma))
-        Mask[outliers] = False
+        mask[outliers] = False
 
 
     # Return the mask and the record of which pixels were NaN in the input;
     # it'll be needed later
-    return Mask, nan_pix
+    return mask, nan_pix
+
+
+def clean_full_frame(detector, image, mask):
+    """Clean a full-frame (2048x2048) image.
+
+    Parameters
+    ----------
+    detector : string
+        The name of the detector from which the data originate.
+
+    image : 2D float array
+        The image to be cleaned.
+
+    mask : 2D boolean array
+        The mask that indicates which pixels are to be used in fitting.
+
+    Returns
+    -------
+    cleaned_image : 2D float array
+        The cleaned image.
+    """
+
+    # Instantiate the cleaner
+    cleaner = NSClean(detector, mask)
+
+    # Clean the image
+    try:
+        cleaned_image = cleaner.clean(image, buff=True)
+    except np.linalg.LinAlgError:
+        log.warning("Error cleaning image; step will be skipped")
+        return None
+
+    return cleaned_image
+
+
+def clean_subarray(detector, image, mask):
+    """Clean a subarray image.
+
+    Parameters
+    ----------
+    detector : string
+        The name of the detector from which the data originate.
+
+    image : 2D float array
+        The image to be cleaned.
+
+    mask : 2D boolean array
+        The mask that indicates which pixels are to be used in fitting.
+
+    Returns
+    -------
+    cleaned_image : 2D float array
+        The cleaned image.
+    """
+
+    # Flip the image to detector coords. NRS1 requires a transpose
+    # of the axes, while NRS2 requires a transpose and flip.
+    if detector == "NRS1":
+        image = image.transpose()
+        mask = mask.transpose()
+    else:
+        image = image.transpose()[::-1]
+        mask = mask.transpose()[::-1]
+
+    # Instantiate the cleaner
+    cleaner = NSCleanSubarray(image, mask)
+
+    # Clean the image
+    try:
+        cleaned_image = cleaner.clean()
+    except np.linalg.LinAlgError:
+        log.warning("Error cleaning image; step will be skipped")
+        return None
+
+    # Restore the cleaned image to the science frame
+    if detector == "NRS1":
+        cleaned_image = cleaned_image.transpose()
+    else:
+        cleaned_image = cleaned_image[::-1].transpose()
+
+    return cleaned_image
 
 
 def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_mask):
@@ -222,24 +303,24 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Check for a user-supplied mask image. If so, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
-        Mask = mask_model.data.copy()
+        mask = mask_model.data.copy()
     
     else:
         # Create the pixel mask that'll be used to indicate which pixels
         # to include in the 1/f noise measurements. Basically, we're setting
         # all illuminated pixels to False, so that they do not get used, and
         # setting all unilluminated pixels to True (so they DO get used).
-        # For BOTS mode the Mask will be 3D, to accommodate changes in masked
+        # For BOTS mode the mask will be 3D, to accommodate changes in masked
         # pixels per integration.
         log.info("Creating mask")
-        Mask, nan_pix = create_mask(input_model, mask_spectral_regions, n_sigma)
+        mask, nan_pix = create_mask(input_model, mask_spectral_regions, n_sigma)
 
         # Store the mask image in a model, if requested
         if save_mask:
-            if len(Mask.shape) == 3:
-                mask_model = datamodels.CubeModel(data=Mask)
+            if len(mask.shape) == 3:
+                mask_model = datamodels.CubeModel(data=mask)
             else:
-                mask_model = datamodels.ImageModel(data=Mask)
+                mask_model = datamodels.ImageModel(data=mask)
         else:
             mask_model = None
 
@@ -249,15 +330,15 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     if len(input_model.data.shape) == 3:
 
         # Check for 3D mask
-        if len(Mask.shape) == 2:
-            log.warning("Data are 3D, but Mask is 2D. Step will be skipped.")
+        if len(mask.shape) == 2:
+            log.warning("Data are 3D, but mask is 2D. Step will be skipped.")
             output_model.meta.cal_step.nsclean = 'SKIPPED'
             return output_model
 
         # Loop over integrations
-        for i in range(Mask.shape[0]):
+        for i in range(mask.shape[0]):
             log.debug(f" working on integration {i+1}")
-            cleaner = NSClean(detector, Mask[i])
+            cleaner = NSClean(detector, mask[i])
             image = np.float32(input_model.data[i])
             try:
                 cleaned_image = cleaner.clean(image, buff=True)
@@ -273,47 +354,23 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
 
         # Clean a full-frame image
         if input_model.meta.subarray.name.lower() == "full":
-            cleaner = NSClean(detector, Mask)
-            # Clean the image
-            try:
-                cleaned_image = cleaner.clean(image, buff=True)
-                output_model.data = cleaned_image
-            except np.linalg.LinAlgError:
-                log.warning("Error cleaning image; step will be skipped")
-                output_model.meta.cal_step.nsclean = 'SKIPPED'
-                return output_model
+            cleaned_image = clean_full_frame(detector, image, mask)
 
         # Clean a subarray image
         else:
+            cleaned_image = clean_subarray(detector, image, mask)
 
-            # Flip the image to detector coords
-            if detector.upper() == "NRS1":
-                image = image.transpose()
-                Mask = Mask.transpose()
-            else:
-                image = image.transpose()[::-1]
-                Mask = Mask.transpose()[::-1]
+    # Check for failure
+    if cleaned_image is None:
+        output_model.meta.cal_step.nsclean = 'SKIPPED'
+    else:
+        # Store the cleaned image in the output model
+        output_model.data = cleaned_image
 
-            cleaner = NSCleanSubarray(image, Mask)
+        # Restore NaN's from original image
+        output_model.data[nan_pix] = np.nan
 
-            # Clean the image
-            try:
-                cleaned_image = cleaner.clean()
-            except np.linalg.LinAlgError:
-                log.warning("Error cleaning image; step will be skipped")
-                output_model.meta.cal_step.nsclean = 'SKIPPED'
-                return output_model
-
-            # Restore the cleaned image to the science frame
-            if detector.upper() == "NRS1":
-                output_model.data = cleaned_image.transpose()
-            else:
-                output_model.data = cleaned_image[::-1].transpose()
-
-    # Restore NaN's from original image
-    output_model.data[nan_pix] = np.nan
-
-    # Set completion status
-    output_model.meta.cal_step.nsclean = 'COMPLETE'
+        # Set completion status
+        output_model.meta.cal_step.nsclean = 'COMPLETE'
 
     return output_model, mask_model
