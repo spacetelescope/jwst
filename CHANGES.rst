@@ -28,6 +28,11 @@ resample
   results in modified values in the resampled images. New computations
   significantly reduce photometric errors. [#7894]
 
+tweakreg
+--------
+
+- Improved how a image group name is determined. [#8012]
+
 
 1.12.5 (2023-10-19)
 ===================
