@@ -28,6 +28,11 @@ resample
   results in modified values in the resampled images. New computations
   significantly reduce photometric errors. [#7894]
 
+source_catalog
+--------------
+
+- Update meta data for compatibility with photutils changes [#8014]
+
 tweakreg
 --------
 
