@@ -236,8 +236,14 @@ class JWSTSourceCatalog:
         self._ypeak = segm_cat.maxval_yindex
 
         self.meta.update(segm_cat.meta)
+        versions_meta = self.meta.get('versions', self.meta.get('version'))
+        if versions_meta is None:
+            raise KeyError(
+                "SourceCatalog is missing both 'version' and 'versions' "
+                "keywords in the meta attribute."
+            )
         for key in ('sklearn', 'matplotlib'):
-            self.meta['version'].pop(key)
+            versions_meta.pop(key)
 
         # rename some columns in the output catalog
         prop_names = {}
