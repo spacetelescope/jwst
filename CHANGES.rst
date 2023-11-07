@@ -14,6 +14,11 @@ imprint
 - Updated the logging to report which imprint image is being subtracted from the
   science image. [#8041]
 
+ramp_fitting
+------------
+
+- Moving some ramp fitting CI tests from JWST to STCAL. [#8060]
+
 resample
 --------
 
