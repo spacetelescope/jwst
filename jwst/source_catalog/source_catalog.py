@@ -239,8 +239,7 @@ class JWSTSourceCatalog:
         # so copy over the new 'versions' into 'version' and remove 'versions'
         # to stay consistent with the old behavior that this code expects
         if 'versions' in segm_cat.meta:
-            segm_cat.meta['version'] = segm_cat.meta['versions']
-            del segm_cat.meta['versions']
+            segm_cat.meta['version'] = segm_cat.meta.pop('versions')
 
         self.meta.update(segm_cat.meta)
         for key in ('sklearn', 'matplotlib'):
