@@ -14,6 +14,12 @@ imprint
 - Updated the logging to report which imprint image is being subtracted from the
   science image. [#8041]
 
+photom
+--------
+
+- Added time-dependent correction for MIRI Imager data [#, spacetelescope/stdatamodels#]
+
+
 resample
 --------
 
