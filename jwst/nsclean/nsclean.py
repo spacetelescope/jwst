@@ -327,6 +327,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # If data are 3D, loop over integrations, applying correction to
     # each integration individually.
     log.info(f"Cleaning image {input_model.meta.filename}")
+
     if len(input_model.data.shape) == 3:
 
         # Check for 3D mask
@@ -338,15 +339,27 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         # Loop over integrations
         for i in range(mask.shape[0]):
             log.debug(f" working on integration {i+1}")
-            cleaner = NSClean(detector, mask[i])
             image = np.float32(input_model.data[i])
-            try:
-                cleaned_image = cleaner.clean(image, buff=True)
-                output_model.data[i] = cleaned_image
-            except np.linalg.LinAlgError:
-                log.warning("Error cleaning image; step will be skipped")
+
+            # Check for full-frame vs. subarray
+            if input_model.data.shape[-2:] == (2048, 2048):
+                # Clean a full-frame image
+                cleaned_image = clean_full_frame(detector, image, mask[i])
+            else:
+                # Clean a subarray image
+                cleaned_image = clean_subarray(detector, image, mask[i])
+
+            if cleaned_image is NONE:
                 output_model.meta.cal_step.nsclean = 'SKIPPED'
-                return output_model
+                break
+
+            output_model.data[i] = cleaned_image
+
+        # Restore NaN's from original image
+        output_model.data[nan_pix] = np.nan
+
+        # Set completion status
+        output_model.meta.cal_step.nsclean = 'COMPLETE'
 
     # Clean a 2D image
     else:
@@ -360,17 +373,17 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         else:
             cleaned_image = clean_subarray(detector, image, mask)
 
-    # Check for failure
-    if cleaned_image is None:
-        output_model.meta.cal_step.nsclean = 'SKIPPED'
-    else:
-        # Store the cleaned image in the output model
-        output_model.data = cleaned_image
+        # Check for failure
+        if cleaned_image is None:
+            output_model.meta.cal_step.nsclean = 'SKIPPED'
+        else:
+            # Store the cleaned image in the output model
+            output_model.data = cleaned_image
 
-        # Restore NaN's from original image
-        output_model.data[nan_pix] = np.nan
+            # Restore NaN's from original image
+            output_model.data[nan_pix] = np.nan
 
-        # Set completion status
-        output_model.meta.cal_step.nsclean = 'COMPLETE'
+            # Set completion status
+            output_model.meta.cal_step.nsclean = 'COMPLETE'
 
     return output_model, mask_model
