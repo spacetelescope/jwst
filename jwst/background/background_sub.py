@@ -295,7 +295,9 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     # i.e. in regions we can use as background.
     if got_catalog:
         bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
-        if bkg_mask.sum() < 100:
+        # Ensure mask has 100 pixels and that those pixels correspond to valid
+        # pixels using model DQ array
+        if bkg_mask.sum() < 100 or sum(input_model.dq[bkg_mask] % 2 ^ 1) < 100:
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
             return None
