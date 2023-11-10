@@ -3,6 +3,7 @@ import math
 import numpy as np
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from . import subtract_images
 from ..assign_wcs.util import create_grism_bbox
@@ -297,7 +298,10 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
         bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
         # Ensure mask has 100 pixels and that those pixels correspond to valid
         # pixels using model DQ array
-        if bkg_mask.sum() < 100 or sum(input_model.dq[bkg_mask] % 2 ^ 1) < 100:
+        if np.count_nonzero(input_model.dq[bkg_mask]
+                            ^ pixel['DO_NOT_USE']
+                            & pixel['DO_NOT_USE']
+                            ) < 100:
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
             return None
