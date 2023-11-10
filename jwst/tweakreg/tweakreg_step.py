@@ -276,11 +276,12 @@ class TweakRegStep(Step):
         elif len(grp_img) > 1:
             # create a list of WCS-Catalog-Images Info and/or their Groups:
             imcats = []
+            all_group_names = []
             for g in grp_img:
                 if len(g) == 0:
                     raise AssertionError("Logical error in the pipeline code.")
                 else:
-                    group_name = _common_name(g)
+                    group_name = _common_name(g, all_group_names)
                     wcsimlist = list(map(self._imodel2wcsim, g))
                     # Remove the attached catalogs
                     for model in g:
@@ -541,13 +542,31 @@ class TweakRegStep(Step):
         return im
 
 
-def _common_name(group):
+def _common_name(group, all_group_names=None):
     file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
                   for im in group]
-    fname_len = list(map(len, file_names))
-    assert all(fname_len[0] == length for length in fname_len)
+
     cn = path.commonprefix(file_names)
-    assert cn
+
+    if all_group_names is None:
+        if not cn:
+            return 'Unnamed Group'
+    else:
+        if not cn or cn in all_group_names:
+            # find the smallest group number to make "Group #..." unique
+            max_id = 1
+            if not cn:
+                cn = "Group #"
+            for name in all_group_names:
+                try:
+                    cid = int(name.lstrip(cn))
+                    if cid >= max_id:
+                        max_id = cid + 1
+                except ValueError:
+                    pass
+            cn = f"{cn}{max_id}"
+        all_group_names.append(cn)
+
     return cn
 
 

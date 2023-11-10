@@ -1,6 +1,12 @@
 1.12.6 (unreleased)
 ===================
 
+extract_1d
+----------
+
+- Include zero values in dispersion direction check during
+  SOSS ATOCA algorithm [#8038]
+
 general
 -------
 
@@ -28,6 +34,11 @@ pipeline
   ``msa_flagging`` immediately follows ``assign_wcs``, so that both steps have
   been applied before calling ``nsclean``. [#8000]
 
+ramp_fitting
+------------
+
+- Moving some ramp fitting CI tests from JWST to STCAL. [#8060]
+
 resample
 --------
 
@@ -41,6 +52,14 @@ resample
   ``PIXAR_SR`` and ``PIXAR_A2`` for the resampled image. This change also
   results in modified values in the resampled images. New computations
   significantly reduce photometric errors. [#7894]
+
+- Improved compatibility with upcoming ``numpy 2.0`` that was affecting
+  decoding of context images and creation of masks. [#8059]
+
+tweakreg
+--------
+
+- Improved how a image group name is determined. [#8012]
 
 
 1.12.5 (2023-10-19)
