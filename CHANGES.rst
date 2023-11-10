@@ -1,6 +1,12 @@
 1.12.6 (unreleased)
 ===================
 
+background
+----------
+
+- Ensure that WFSS background mask does not leave only
+  pixels with DO_NOT_USE flagged. [#8070]
+
 general
 -------
 
