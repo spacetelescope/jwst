@@ -303,7 +303,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Check for a user-supplied mask image. If so, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
-        mask = mask_model.data.copy()
+        Mask = mask_model.data.copy()
     
     else:
         # Create the pixel mask that'll be used to indicate which pixels
@@ -313,77 +313,62 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         # For BOTS mode the mask will be 3D, to accommodate changes in masked
         # pixels per integration.
         log.info("Creating mask")
-        mask, nan_pix = create_mask(input_model, mask_spectral_regions, n_sigma)
+        Mask, nan_pix = create_mask(input_model, mask_spectral_regions, n_sigma)
 
         # Store the mask image in a model, if requested
         if save_mask:
-            if len(mask.shape) == 3:
-                mask_model = datamodels.CubeModel(data=mask)
+            if len(Mask.shape) == 3:
+                mask_model = datamodels.CubeModel(data=Mask)
             else:
-                mask_model = datamodels.ImageModel(data=mask)
+                mask_model = datamodels.ImageModel(data=Mask)
         else:
             mask_model = None
 
-    # If data are 3D, loop over integrations, applying correction to
-    # each integration individually.
     log.info(f"Cleaning image {input_model.meta.filename}")
 
-    if len(input_model.data.shape) == 3:
-
+    # Setup for handling 2D or 3D inputs
+    if len(input_model.data.shape == 3):
+        nints = input_model.data.shape[0]
         # Check for 3D mask
-        if len(mask.shape) == 2:
+        if len(Mask.shape) == 2:
             log.warning("Data are 3D, but mask is 2D. Step will be skipped.")
             output_model.meta.cal_step.nsclean = 'SKIPPED'
             return output_model
-
-        # Loop over integrations
-        for i in range(mask.shape[0]):
-            log.debug(f" working on integration {i+1}")
-            image = np.float32(input_model.data[i])
-
-            # Check for full-frame vs. subarray
-            if input_model.data.shape[-2:] == (2048, 2048):
-                # Clean a full-frame image
-                cleaned_image = clean_full_frame(detector, image, mask[i])
-            else:
-                # Clean a subarray image
-                cleaned_image = clean_subarray(detector, image, mask[i])
-
-            if cleaned_image is NONE:
-                output_model.meta.cal_step.nsclean = 'SKIPPED'
-                break
-
-            output_model.data[i] = cleaned_image
-
-        # Restore NaN's from original image
-        output_model.data[nan_pix] = np.nan
-
-        # Set completion status
-        output_model.meta.cal_step.nsclean = 'COMPLETE'
-
-    # Clean a 2D image
     else:
-        image = np.float32(input_model.data)
+        nints = 1
 
-        # Clean a full-frame image
-        if input_model.meta.subarray.name.lower() == "full":
-            cleaned_image = clean_full_frame(detector, image, mask)
-
-        # Clean a subarray image
+    # Loop over integrations (even if there's only 1)
+    for i in range(nints):
+        log.debug(f" working on integration {i+1}")
+        if len(input_model.data.shape == 3):
+            image = np.float32(input_model.data[i])
+            mask = Mask[i]
         else:
+            image = np.float32(input_model.data)
+            mask = Mask
+
+        if input_model.data.shape[-2:] == (2048, 2048):
+            # Clean a full-frame image
+            cleaned_image = clean_full_frame(detector, image, mask)
+        else:
+            # Clean a subarray image
             cleaned_image = clean_subarray(detector, image, mask)
 
         # Check for failure
-        if cleaned_image is None:
+        if cleaned_image is NONE:
             output_model.meta.cal_step.nsclean = 'SKIPPED'
+            break
         else:
             # Store the cleaned image in the output model
-            output_model.data = cleaned_image
+            if len(output_model.data.shape) == 3):
+                output_model.data[i] = cleaned_image
+            else:
+                output_model.data = cleaned_image
 
-            # Restore NaN's from original image
-            output_model.data[nan_pix] = np.nan
+    # Restore NaN's from original image
+    output_model.data[nan_pix] = np.nan
 
-            # Set completion status
-            output_model.meta.cal_step.nsclean = 'COMPLETE'
+    # Set completion status
+    output_model.meta.cal_step.nsclean = 'COMPLETE'
 
     return output_model, mask_model
