@@ -327,7 +327,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     log.info(f"Cleaning image {input_model.meta.filename}")
 
     # Setup for handling 2D or 3D inputs
-    if len(input_model.data.shape == 3):
+    if len(input_model.data.shape) == 3:
         nints = input_model.data.shape[0]
         # Check for 3D mask
         if len(Mask.shape) == 2:
@@ -340,7 +340,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Loop over integrations (even if there's only 1)
     for i in range(nints):
         log.debug(f" working on integration {i+1}")
-        if len(input_model.data.shape == 3):
+        if len(input_model.data.shape) == 3:
             image = np.float32(input_model.data[i])
             mask = Mask[i]
         else:
@@ -360,7 +360,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
             break
         else:
             # Store the cleaned image in the output model
-            if len(output_model.data.shape) == 3):
+            if len(output_model.data.shape) == 3:
                 output_model.data[i] = cleaned_image
             else:
                 output_model.data = cleaned_image
