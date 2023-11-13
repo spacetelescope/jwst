@@ -21,6 +21,7 @@ def run_pipeline(rtdata_module):
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
+            "--steps.nsclean.skip=False",
             "--steps.nsclean.save_results=true",
             "--steps.bkg_subtract.save_results=true",
             "--steps.extract_2d.save_results=true",

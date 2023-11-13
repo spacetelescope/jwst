@@ -355,7 +355,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
             cleaned_image = clean_subarray(detector, image, mask)
 
         # Check for failure
-        if cleaned_image is NONE:
+        if cleaned_image is None:
             output_model.meta.cal_step.nsclean = 'SKIPPED'
             break
         else:

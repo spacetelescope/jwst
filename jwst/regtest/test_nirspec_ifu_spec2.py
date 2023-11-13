@@ -24,6 +24,7 @@ def run_spec2(jail, rtdata_module):
         'args': [
             '--steps.assign_wcs.save_results=true',
             '--steps.msa_flagging.save_results=true',
+            '--steps.nsclean.skip=False',
             '--steps.nsclean.save_results=true',
             '--steps.srctype.save_results=true',
             '--steps.flat_field.save_results=true',

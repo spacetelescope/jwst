@@ -52,6 +52,7 @@ def run_pipeline(jail, rtdata_module, request):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
+            "--steps.nsclean.skip=False",
             "--steps.nsclean.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.wavecorr.save_results=true",
