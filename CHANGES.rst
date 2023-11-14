@@ -7,6 +7,12 @@ background
 - Ensure that WFSS background mask does not leave only
   pixels with DO_NOT_USE flagged. [#8070]
 
+extract_1d
+----------
+
+- Include zero values in dispersion direction check during
+  SOSS ATOCA algorithm [#8038]
+
 general
 -------
 

@@ -228,7 +228,7 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
 
         # Compute the change in wavelength for valid cols
         idx_valid = np.isfinite(wave_col)
-        idx_valid &= (wave_col > 0)
+        idx_valid &= (wave_col >= 0)
         wv_col_valid = wave_col[idx_valid]
         delta_wave = np.diff(wv_col_valid)
 
