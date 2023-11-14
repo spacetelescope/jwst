@@ -84,7 +84,7 @@ class EmiCorrStep(Step):
             if isinstance(output_model, str) or output_model is None:
                 # in this case output_model=subarray_readpatt configuration
                 self.log.info('No correction match for this configuration: {}'.format(output_model))
-                self.log.info(f'Step skipped')
+                self.log.info('Step skipped')
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
