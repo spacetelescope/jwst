@@ -96,11 +96,24 @@ def get_center(exp_type, input, offsets=False):
         log.warning(f'No method to get centering for exp_type {exp_type}')
         log.warning("Using (0.0, 0.0)")
         return 0.0, 0.0
+def shutter_above_is_closed(shutter_state):
+    reference_location = shutter_state.find('x')
+    nshutters = len(shutter_state)
+    if reference_location == nshutters - 1 or shutter_state[reference_location + 1] == '0':
+        return True
+    else:
+        return False
 
+def shutter_below_is_closed(shutter_state):
+    reference_location = shutter_state.find('x')
+    if reference_location == 0 or shutter_state[reference_location - 1] == '0':
+        return True
+    else:
+        return False
 
 def get_aperture_from_model(input_model, match):
     """Figure out the correct aperture based on the value of the 'match'
-    parameter.  For MSA, match is the number of shutters, for fixed slit,
+    parameter.  For MSA, match is the shutter state string, for fixed slit,
     match is the name of the slit.
 
     Parameters
@@ -109,7 +122,7 @@ def get_aperture_from_model(input_model, match):
         science data to be corrected
 
     match : str
-        Aperture name
+        Aperture name or shutter state
 
     Returns
     -------
@@ -117,8 +130,15 @@ def get_aperture_from_model(input_model, match):
         Aperture name
     """
     if input_model.meta.exposure.type == 'NRS_MSASPEC':
+        # Currently there are only 2 apertures in the MSA pathloss reference file: 1x1 and 1x3
+        # Only return the 1x1 aperture if the reference shutter has closed shutters above and below
+        if shutter_below_is_closed(match) and shutter_above_is_closed(match):
+            matchsize = 1
+        else:
+            matchsize = 3
         for aperture in input_model.apertures:
-            if aperture.shutters == match:
+            # Only return the aperture
+            if aperture.shutters == matchsize:
                 return aperture
     elif input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ',
                                             'NIS_SOSS']:
@@ -752,8 +772,16 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
         # Calculate the 1-d wavelength and pathloss vectors
         # for the source position
         # Get the aperture from the reference file that matches the slit
-        nshutters = util.get_num_msa_open_shutters(slit.shutter_state)
-        aperture = get_aperture_from_model(pathloss, nshutters)
+        slitlength = len(slit.shutter_state)
+        openshutters = util.get_num_msa_open_shutters(slit.shutter_state)
+        aperture = get_aperture_from_model(pathloss, slit.shutter_state)
+        log.info(f"Shutter state = {slit.shutter_state}, using {aperture.name} entry in ref file")
+        if shutter_below_is_closed(slit.shutter_state) and not shutter_above_is_closed(slit.shutter_state):
+            ycenter = ycenter - 1.0
+            log.info('Shutter below fiducial is closed, using lower region of pathloss array')
+        if not shutter_below_is_closed(slit.shutter_state) and shutter_above_is_closed(slit.shutter_state):
+            ycenter = ycenter + 1.0
+            log.info('Shutter above fiducial is closed, using upper region of pathloss array')
         if aperture is not None:
             (wavelength_pointsource,
              pathloss_pointsource_vector,
@@ -801,7 +829,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
                 log.warning("Source is outside slit.")
         else:
             log.warning("Cannot find matching pathloss model for slit with"
-                        f"{nshutters} shutters")
+                        f"{slitlength} shutters")
     else:
         log.warning(f"Slit has data size = {size}")
 
