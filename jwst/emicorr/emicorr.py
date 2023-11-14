@@ -221,7 +221,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     if rowclocks is None:
         # no subarray match found, print to log and skip correction
         return subname
-    xsize = input_model.meta.subarray.xsize   # SUBZIZE1 keyword
+    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
     xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
 
     # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)

@@ -42,6 +42,12 @@ def test_get_subarcase():
 def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
     input_model = Level1bModel(data=data)
+    input_model.meta.exposure.type = 'MIR_4QPM'
+    input_model.meta.subarray.name = 'MASK1550'
+    input_model.meta.exposure.readpatt = 'FASTR1'
+    input_model.meta.subarray.xsize = 288
+    input_model.meta.subarray.xstart = 1
+    input_model.meta.exposure.nsamples = 1
     emicorr_model = None
     save_onthefly_reffile = None
     output_model = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile)
@@ -49,7 +55,7 @@ def test_apply_emicorr():
     compare_model = Level1bModel(data=data)
 
     # correction should equal input for data of all 1.0
-    assert compare_model.all() == output_model.all()
+    assert compare_model.data.all() == output_model.data.all()
 
 
 def test_sloper():
