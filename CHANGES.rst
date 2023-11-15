@@ -1,6 +1,11 @@
 1.12.6 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Remove the CRDS PUB notices througout the documentation [#8075]
+
 extract_1d
 ----------
 
