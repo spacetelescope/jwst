@@ -7,6 +7,11 @@ background
 - Ensure that WFSS background mask does not leave only
   pixels with DO_NOT_USE flagged. [#8070]
 
+documentation
+-------------
+
+- Remove the CRDS PUB notices througout the documentation [#8075]
+
 extract_1d
 ----------
 
