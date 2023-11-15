@@ -16,14 +16,14 @@ algorithm is more thorough and uniform. It is also computationally
 undemanding, typically requiring only a few seconds to clean a full-frame
 image.
 
+The correction can be applied to any type of NIRSpec exposure, including
+IFU, MOS, fixed slit, and Bright Object Time Series (BOTS), in both full-frame
+and subarray readouts. Time series (3D) data are corrected one integration
+at a time.
+
 Details on the source of the correlated noise and the algorithm used
 in the ``nsclean`` step to fit and remove it can be found in
 `Rauscher 2023 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`_.
-
-.. Note:: In its current form, this step can only be applied to full-frame images,
-          which limits the applicability to IFU and MOS mode exposures, as well
-          as fixed-slit exposures that use full-frame. Any fixed-slit or
-          bright object mode (BOTS) exposures using subarrays are not supported.
 
 Upon completion of the step, the step status keyword "S_NSCLEN" gets set
 to "COMPLETE" in the output science data.
