@@ -40,7 +40,6 @@ desk at `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
 
    jwst/user_documentation/introduction.rst
    jwst/user_documentation/reference_files_crds.rst
-   jwst/user_documentation/pub_deprecation.rst
    jwst/user_documentation/parameters.rst
    jwst/user_documentation/running_pipeline_python.rst
    jwst/user_documentation/running_pipeline_command_line.rst
@@ -48,6 +47,7 @@ desk at `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
    jwst/user_documentation/input_output_file_conventions.rst
    jwst/user_documentation/logging_configuration.rst
    jwst/user_documentation/datamodels.rst
+   jwst/user_documentation/pub_deprecation.rst
 
 .. toctree::
    :maxdepth: 2
