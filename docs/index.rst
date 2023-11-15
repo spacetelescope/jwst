@@ -8,12 +8,6 @@
    :width: 400
    :align: center
 
-.. warning::
-
-   As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
-
-   For details, refer to the :ref:`pub-deprecation` page.
-
 Welcome to the documentation for `jwst`. This package contains the Python
 software suite for the James Webb Space Telescope (JWST) calibration pipeline,
 which processes data from all JWST instruments by applying various corrections to
