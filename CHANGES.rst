@@ -17,7 +17,7 @@ imprint
 photom
 --------
 
-- Added time-dependent correction for MIRI Imager data [#, spacetelescope/stdatamodels#]
+- Added time-dependent correction for MIRI Imager data [#8064, spacetelescope/stdatamodels#235]
 
 
 resample
