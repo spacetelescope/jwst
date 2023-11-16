@@ -96,20 +96,24 @@ def get_center(exp_type, input, offsets=False):
         log.warning(f'No method to get centering for exp_type {exp_type}')
         log.warning("Using (0.0, 0.0)")
         return 0.0, 0.0
+
+
 def shutter_above_is_closed(shutter_state):
-    reference_location = shutter_state.find('x')
+    ref_loc = shutter_state.find('x')
     nshutters = len(shutter_state)
-    if reference_location == nshutters - 1 or shutter_state[reference_location + 1] == '0':
+    if ref_loc == nshutters - 1 or shutter_state[ref_loc + 1] == '0':
         return True
     else:
         return False
 
+
 def shutter_below_is_closed(shutter_state):
-    reference_location = shutter_state.find('x')
-    if reference_location == 0 or shutter_state[reference_location - 1] == '0':
+    ref_loc = shutter_state.find('x')
+    if ref_loc == 0 or shutter_state[ref_loc - 1] == '0':
         return True
     else:
         return False
+
 
 def get_aperture_from_model(input_model, match):
     """Figure out the correct aperture based on the value of the 'match'
@@ -773,7 +777,6 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
         # for the source position
         # Get the aperture from the reference file that matches the slit
         slitlength = len(slit.shutter_state)
-        openshutters = util.get_num_msa_open_shutters(slit.shutter_state)
         aperture = get_aperture_from_model(pathloss, slit.shutter_state)
         log.info(f"Shutter state = {slit.shutter_state}, using {aperture.name} entry in ref file")
         if shutter_below_is_closed(slit.shutter_state) and not shutter_above_is_closed(slit.shutter_state):
