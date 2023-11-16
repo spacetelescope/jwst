@@ -53,6 +53,11 @@ resample
 - Improved compatibility with upcoming ``numpy 2.0`` that was affecting
   decoding of context images and creation of masks. [#8059]
 
+source_catalog
+--------------
+
+- Made meta data flexible for photutils changes. [#8066]
+
 tweakreg
 --------
 
