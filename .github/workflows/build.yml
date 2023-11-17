@@ -8,15 +8,16 @@ on:
 
 jobs:
   check:
+    if: github.event_name == 'release'
     name: check that `requirements-sdp.txt` is populated
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - if: github.event_name == 'release'
-        run: grep -v '^ *#' requirements-sdp.txt
+      - run: grep -v '^ *#' requirements-sdp.txt
   build:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
     needs: [ check ]
+    if: always() && (needs.check.result == 'success' || needs.check.result == 'skipped')
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
     with:
       upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
       targets: |
