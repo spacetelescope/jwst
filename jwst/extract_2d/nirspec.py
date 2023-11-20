@@ -45,15 +45,18 @@ def nrs_extract2d(input_model, slit_name=None):
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa.slits[:]
     if slit_name is not None:
+        new_open_slits = []
         if not isinstance(slit_name, str):
             slit_name = str(slit_name)
-        #open_slits = [sub for sub in open_slits if sub.name == slit_name]
-        open_slits = []
         for sub in open_slits:
             if not isinstance(sub.name, str):
                 str_subnme = str(sub.name)
             if str_subnme == slit_name:
-                open_slits.append(sub.name)
+                new_open_slits.append(sub)
+                break
+        if len(new_open_slits) == 0:
+            raise AttributeError("Slit {} not in open slits.".format(slit_name))
+        open_slits = new_open_slits
 
     # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == 'NRS_BRIGHTOBJ':
