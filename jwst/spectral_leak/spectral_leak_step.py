@@ -52,7 +52,7 @@ class SpectralLeakStep(Step):
                     if not isinstance(x1d, datamodels.MultiSpecModel):
                         self.log.warning("Data sent to spectral_leak step is not an extracted spectrum. It is  {}." .format(type(x1d)))
                         return
-                                 
+
                     channel = x1d.meta.instrument.channel
                     band = x1d.meta.instrument.band
                     srctype = x1d.spec[0].source_type
