@@ -18,6 +18,13 @@ extract_1d
 - Include zero values in dispersion direction check during
   SOSS ATOCA algorithm [#8038]
 
+extract_2d
+----------
+
+- Fixed crash with slit_name for MOS. Now the argument should
+  be passed as a string, e.g. slit_name='67'. Included this
+  in the corresponding documentation. [#8081]
+
 general
 -------
 
