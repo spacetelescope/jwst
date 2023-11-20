@@ -47,12 +47,10 @@ class SpectralLeakStep(Step):
                 # Retrieve the reference parameters for this type of data
                 sp_leak_ref = self.get_reference_file(input[0], 'mrsptcorr')
 
-                self.log.info('Input is a ModelContainer')
-                for i, x1d in enumerate(input_model):
-                    print(type(x1d))
+                for i, x1d in enumerate(input_model):  # input_models is a Model Container
                     # check that we have the correct type of data
-                    if not isinstance(input_model, datamodels.Extract1dIFUModel):
-                        log.warning('Data sent to spectral_leak step is not an extracted spectrum. It is  {}.' .format(type(x1d)))
+                    if not isinstance(x1d, datamodels.MultiSpecModel):
+                        self.log.warning("Data sent to spectral_leak step is not an extracted spectrum. It is  {}." .format(type(x1d)))
                         return
                                  
                     channel = x1d.meta.instrument.channel
