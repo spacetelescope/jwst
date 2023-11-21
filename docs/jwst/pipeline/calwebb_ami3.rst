@@ -81,24 +81,24 @@ Outputs
 Interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
-:File suffix: _ami.oifits
+:File suffix: _ami-oi.fits
 
 
 For every input exposure, the fringe parameters and closure phases calculated
-by the :ref:`ami_analyze <ami_analyze_step>` step are saved to "_ami.oifits" product file,
+by the :ref:`ami_analyze <ami_analyze_step>` step are saved to "_ami-oi.fits" product file,
 which is a kind of FITS table of median observables over all integrations of the input file.
 Product names use the input "_calints" exposure-based file name, with the association candidate ID
-included and the product type changed to "_ami.oifits", e.g.
-"jw93210001001_03101_00001_nis_a0003_ami.oifits."
+included and the product type changed to "_ami-oi.fits", e.g.
+"jw93210001001_03101_00001_nis_a0003_ami-oi.fits."
 
 Normalized Interferometric Observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
-:File suffix: _aminorm.oifits
+:File suffix: _aminorm-oi.fits
 
 If reference PSF exposures are included in the input ASN, the AMI results
 for the target will be normalized by the AMI results for the reference PSF,
-via the :ref:`ami_normalize <ami_normalize_step>` step, and will be saved to an "_aminorm.oifits"
-product file. This file has the same FITS table format as the "_ami.oifits" products.
+via the :ref:`ami_normalize <ami_normalize_step>` step, and will be saved to an "_aminorm-oi.fits"
+product file. This file has the same FITS table format as the "_ami-oi.fits" products.
 The file name root uses the source-based output product name given in the ASN file,
-e.g. "jw93210-a0003_t001_niriss_f480m-nrm_aminorm.oifits."
+e.g. "jw93210-a0003_t001_niriss_f480m-nrm_aminorm-oi.fits."

@@ -22,13 +22,13 @@ Inputs
 Interferometric Observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
-:File suffix: _ami.oifits and/or _psf-ami.oifits
+:File suffix: _ami-oi.fits and/or _psf-ami.oifits
 
 The ``ami_normalize`` step takes two inputs: the first is the 
 interferometric observables for a science target and the second 
 is the interferometric observables for the PSF target. These should
-be the _ami.oifits and _psf-ami.oifits products resulting from the
-:ref:`ami_analyze <ami_analyze_step>` step, or two _ami.oifits files if the steps 
+be the _ami-oi.fits and _psf-ami-oi.fits products resulting from the
+:ref:`ami_analyze <ami_analyze_step>` step, or two _ami-oi.fits files if the steps 
 are run independently. The inputs can be in the form of filenames or 
 `~jwst.datamodels.AmiOIModel` data models.
 
@@ -38,14 +38,14 @@ Outputs
 Normalized Interferometric Observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
-:File suffix: _aminorm.oifits
+:File suffix: _aminorm-oi.fits
 
 The output is a new set of interferometric observables for the science target
 in which the closure phases and fringe amplitudes have been normalized using the PSF target
 closure phases and fringe amplitudes. The remaining components of the science
 target data model are left unchanged. The output file name syntax is source-based,
 using the product name specified in the input ASN file and having a product type
-of "_aminorm.oifits", e.g. "jw87600-a3001_t001_niriss_f480m-nrm_aminorm.oifits."
+of "_aminorm-oi.fits", e.g. "jw87600-a3001_t001_niriss_f480m-nrm_aminorm-oi.fits."
 
 Reference Files
 ---------------
