@@ -18,6 +18,9 @@ extract_1d
 - Include zero values in dispersion direction check during
   SOSS ATOCA algorithm [#8038]
 
+- Use masked median instead of nanmedian wavelength collapse during
+  source finding for ifu_autocen [#8080]
+
 extract_2d
 ----------
 
