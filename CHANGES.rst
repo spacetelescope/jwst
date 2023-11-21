@@ -21,6 +21,13 @@ extract_1d
 - Use masked median instead of nanmedian wavelength collapse during
   source finding for ifu_autocen [#8080]
 
+extract_2d
+----------
+
+- Fixed crash with slit_name for MOS. Now the argument should
+  be passed as a string, e.g. slit_name='67'. Included this
+  in the corresponding documentation. [#8081]
+
 general
 -------
 
