@@ -15,16 +15,16 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
 
     Parameters
     ----------
-    sp_leak_ref: ~datamodels.MirMrsPtCorrModel
-        spectral leak reference information
+    sp_leak_ref : string
+        name of the spectral leak refile file defined by datamodels.MirMrsPtCorrModel
 
-    ch1b: numpy array
-    ch3a: numpy array
+    ch1b : numpy array
+    ch3a : numpy array
 
     Returns
     -------
-    output_model: ~jwst.datamodels.RampModel
-        RSCD-corrected science data
+    output_model : ~jwst.datamodels.RampModel
+        Spectral leak corrected science data
     """
 
     wave1b = ch1b.spec[0].spec_table.WAVELENGTH
