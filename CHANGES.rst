@@ -1,11 +1,32 @@
 1.12.6 (unreleased)
 ===================
 
+background
+----------
+
+- Ensure that WFSS background mask does not leave only
+  pixels with DO_NOT_USE flagged. [#8070]
+
+documentation
+-------------
+
+- Remove the CRDS PUB notices througout the documentation [#8075]
+
 extract_1d
 ----------
 
 - Include zero values in dispersion direction check during
   SOSS ATOCA algorithm [#8038]
+
+- Use masked median instead of nanmedian wavelength collapse during
+  source finding for ifu_autocen [#8080]
+
+extract_2d
+----------
+
+- Fixed crash with slit_name for MOS. Now the argument should
+  be passed as a string, e.g. slit_name='67'. Included this
+  in the corresponding documentation. [#8081]
 
 general
 -------
@@ -55,6 +76,11 @@ resample
 
 - Improved compatibility with upcoming ``numpy 2.0`` that was affecting
   decoding of context images and creation of masks. [#8059]
+
+source_catalog
+--------------
+
+- Made meta data flexible for photutils changes. [#8066]
 
 tweakreg
 --------
