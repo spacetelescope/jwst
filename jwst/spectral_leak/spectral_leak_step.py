@@ -61,18 +61,18 @@ class SpectralLeakStep(Step):
                         return input
                     # search x1d containing CH 1 B
                     if '1' in channel and 'MEDIUM' in band:
-                        print('found ch 1B')
+                        self.log.info('Found CH 1B from parsing string MEDIUM from the band parameter')
                         ch1b = x1d
                     elif '1' in channel and 'MULTIPLE' in band:
                         # read in the wavelength array and see
                         # if it covers ch1b_wave
                         wave = x1d.spec[0].spec_table.WAVELENGTH
                         if np.min(wave) < ch1b_wave and np.max(wave) > ch1b_wave:
-                            print('found ch 1B from wavelength')
+                            self.log.info('Found the CH 1B wavelength range in the extracted spectrum wavelenth array')
                             ch1b = x1d
                     # search x1d containing CH 3 A
                     if '3' in channel and 'SHORT' in band:
-                        print('found ch 3A')
+                        self.log.info('Found CH 3A from parsing string SHORT from the band parameter')
                         ch3a = x1d
                         ich3a = i  # store the datamodel # to update later
                     elif '3' in channel and 'MULTIPLE' in band:
@@ -80,7 +80,7 @@ class SpectralLeakStep(Step):
                         # if it covers ch3a_wave
                         wave = x1d.spec[0].spec_table.WAVELENGTH
                         if np.min(wave) < ch3a_wave and np.max(wave) > ch3a_wave:
-                            print('found ch 3A from wavelength')
+                            self.log.info('Found the CH 3A wavelength range in the extracted spectrum wavelenth array')
                             ch3a = x1d
                             ich3a = i  # store the datamodel to update later
 
