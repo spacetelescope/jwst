@@ -75,7 +75,7 @@ Outputs
 Interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
-:File suffix: _ami.oifits, _amimulti.oifits
+:File suffix: _ami-oi.fits, _amimulti-oi.fits
 
 The ``ami_analyze`` step produces three output files. The first two are OIFITS files, a registered FITS format
 for optical interferometry, containing the following list of extensions:
@@ -89,10 +89,10 @@ for optical interferometry, containing the following list of extensions:
 
 For more information on the format and contents of OIFITS files, see the `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-The _ami.oifits file contains tables of median observables over all integrations of the input file and errors 
+The _ami-oi.fits file contains tables of median observables over all integrations of the input file and errors 
 are computed as the sigma-clipped standard deviation over integrations.
-The _amimulti.oifits file contains observables for each integration, and does not contain error estimates. The
-structure is the same as the _ami.oifits file, but certain data columns are 2D, with the second dimension being 
+The _amimulti-oi.fits file contains observables for each integration, and does not contain error estimates. The
+structure is the same as the _ami-oi.fits file, but certain data columns are 2D, with the second dimension being 
 the number of integrations.
 
 LG model parameters
@@ -113,7 +113,7 @@ the parameters of the best-fit LG model. It contains the following extensions:
 
 The output file name syntax is exposure-based, using the input file name as the root, with
 the addition of the association candidate ID and the "_ami", "_amimulti", or "amilg" product type suffix, e.g.
-"jw87600027001_02101_00002_nis_a3001_ami.oifits."
+"jw87600027001_02101_00002_nis_a3001_ami-oi.fits."
 
 Reference Files
 ---------------
