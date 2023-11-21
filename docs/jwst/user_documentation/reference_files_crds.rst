@@ -9,12 +9,6 @@ The JWST pipeline uses version-controlled :ref:`reference files <crds_reference_
 and set pipeline/step parameters, respectivley. These files both use the ASDF format,
 and are managed by the Calibration References Data System (:ref:`CRDS <crds>`) system.
 
-.. warning::
-
-   As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
-
-   For details, refer to the :ref:`pub-deprecation` page.
-
 .. _crds_reference_files:
 
 Reference Files

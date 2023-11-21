@@ -21,18 +21,18 @@ def test_clobber_ref():
     clobber_ref(data, output, odd_even, mask)
 
     compare = np.ones((2, 3, 5, 3200))
-    compare[..., 648: 648+4] = 0.
-    compare[..., 668: 668+4] = 0.
-    compare[..., 690: 690+4] = 0.
-    compare[..., 710: 710+4] = 0.
-    compare[..., 1890: 1890+4] = 0.
-    compare[..., 1910: 1910+4] = 0.
-    compare[..., 1808: 1808+4] = 0.
-    compare[..., 1828: 1828+4] = 0.
-    compare[..., 2028: 2028+4] = 0.
-    compare[..., 2068: 2068+4] = 0.
-    compare[..., 2150: 2150+4] = 0.
-    compare[..., 2190: 2190+4] = 0.
+    compare[..., 648: 648+2] = 0.
+    compare[..., 668: 668+2] = 0.
+    compare[..., 690: 690+2] = 0.
+    compare[..., 710: 710+2] = 0.
+    compare[..., 1890: 1890+2] = 0.
+    compare[..., 1910: 1910+2] = 0.
+    compare[..., 1808: 1808+2] = 0.
+    compare[..., 1828: 1828+2] = 0.
+    compare[..., 2028: 2028+2] = 0.
+    compare[..., 2068: 2068+2] = 0.
+    compare[..., 2150: 2150+2] = 0.
+    compare[..., 2190: 2190+2] = 0.
 
     assert np.allclose(data, compare)
 

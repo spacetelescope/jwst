@@ -214,6 +214,8 @@ def build_mask(dqarr, bitvalue):
 
     if bitvalue is None:
         return np.ones(dqarr.shape, dtype=np.uint8)
+
+    bitvalue = np.array(bitvalue).astype(dqarr.dtype)
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
 
 
@@ -293,13 +295,13 @@ def decode_context(context, x, y):
         raise ValueError('Pixel coordinates must be integer values')
 
     nbits = 8 * context.dtype.itemsize
+    one = np.array(1, context.dtype)
+    flags = np.array([one << i for i in range(nbits)])
 
     idx = []
     for xi, yi in zip(x, y):
         idx.append(
-            np.flatnonzero(
-                [v & (1 << k) for v in context[:, yi, xi] for k in range(nbits)]
-            )
+            np.flatnonzero(np.bitwise_and.outer(context[:, yi, xi], flags))
         )
 
     return idx

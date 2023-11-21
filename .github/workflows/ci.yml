@@ -46,6 +46,7 @@ jobs:
   check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
+      default_python: "3.11"
       envs: |
         - linux: check-style
         - linux: check-security

@@ -9,7 +9,7 @@ __all__ = ["ImprintStep"]
 class ImprintStep(Step):
     """
     ImprintStep: Removes NIRSpec MSA imprint structure from an exposure
-    by subtracting an imprint exposure.
+    by subtracting an imprint (a.k.a. leakcal) exposure.
     """
 
     class_alias = "imprint"
@@ -19,46 +19,46 @@ class ImprintStep(Step):
 
     def process(self, input, imprint):
 
-        # subtract leakcal (imprint) image
-        # If there is only one imprint image is in the association use it  for all the data.
-        # If there is more than one imprint image in the association then select
-        # the imprint  image to subtract based on position number (DataModel.meta.dither.position_number) &
-        # observation number (Datamodel.meta.observation.observation_number)
-
-        # Open the input data model and get position number of image
+        # Open the input science image and get its dither pattern position number
         input_model = datamodels.open(input)
         pos_no = input_model.meta.dither.position_number
         obs_no = input_model.meta.observation.observation_number
 
-        # find imprint that goes with input image - if there is only 1 imprint image - use it.
+        # If there is only one imprint image listed in the association,
+        # use it for all science images.
+        # If there is more than one imprint image in the association,
+        # then select the imprint image to be used by matching the dither pattern position
+        # number and observation number to the science image.
         num_imprint = len(imprint)
-        match = None
         if num_imprint == 1:
-            match = 0
+            match = 0  # use the first, and only, imprint image
         else:
-            i = 0
-            while match is None and i < num_imprint:
-                # open imprint images and read in pos_no to find match
+            match = None
+            for i in range(num_imprint):
+                # open imprint image and read in pos_no to find match
                 imprint_model = datamodels.open(imprint[i])
                 imprint_pos_no = imprint_model.meta.dither.position_number
                 imprint_obs_no = imprint_model.meta.observation.observation_number
                 imprint_model.close()
                 if pos_no == imprint_pos_no and obs_no == imprint_obs_no:
                     match = i
-                i = i + 1
+                    break
 
-        # Initialize result to be input (just in case no matching imprint image was found)
+        # Copy the input image to the output (just in case no matching imprint image was found)
         result = input_model.copy()
 
         if match is not None:
+            # Subtract the matching imprint image
             imprint_model = datamodels.open(imprint[match])
+            self.log.info(f"Subtracting imprint image {imprint_model.meta.filename}")
             result = subtract_images.subtract(input_model, imprint_model)
 
             # Update the step status and close the imprint model
             result.meta.cal_step.imprint = 'COMPLETE'
             imprint_model.close()
         else:
-            self.log.info(f'No imprint image was found for {input}')
+            self.log.warning(f'No matching imprint image was found for {input}')
+            self.log.warning('Step will be skipped')
             result.meta.cal_step.imprint = 'SKIPPED'
 
         input_model.close()

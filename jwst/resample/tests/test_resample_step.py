@@ -12,7 +12,28 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
+from jwst.resample.resample import _compute_image_pixel_area
 from jwst.resample.resample_spec import ResampleSpecData
+
+
+def _set_photom_kwd(im):
+    xmin = im.meta.subarray.xstart - 1
+    xmax = xmin + im.meta.subarray.xsize
+    ymin = im.meta.subarray.ystart - 1
+    ymax = ymin + im.meta.subarray.ysize
+
+    im.meta.wcs.array_shape = im.data.shape
+
+    if im.meta.wcs.bounding_box is None:
+        bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
+        im.meta.wcs.bounding_box = bb
+
+    mean_pixel_area = _compute_image_pixel_area(im.meta.wcs)
+    if mean_pixel_area:
+        im.meta.photometry.pixelarea_steradians = mean_pixel_area
+        im.meta.photometry.pixelarea_arcsecsq = (
+            mean_pixel_area * np.rad2deg(3600)**2
+        )
 
 
 @pytest.fixture
@@ -202,6 +223,8 @@ def nircam_rate():
 def test_nirspec_wcs_roundtrip(nirspec_rate):
     im = AssignWcsStep.call(nirspec_rate)
     im = Extract2dStep.call(im)
+    for slit in im.slits:
+        _set_photom_kwd(slit)
     im = ResampleSpecStep.call(im)
 
     for slit in im.slits:
@@ -215,6 +238,7 @@ def test_nirspec_wcs_roundtrip(nirspec_rate):
 
 def test_miri_wcs_roundtrip(miri_rate):
     im = AssignWcsStep.call(miri_rate)
+    _set_photom_kwd(im)
     im = ResampleSpecStep.call(im)
 
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
@@ -228,6 +252,7 @@ def test_miri_wcs_roundtrip(miri_rate):
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_spec(miri_rate, ratio):
     im = AssignWcsStep.call(miri_rate, sip_approx=False)
+    _set_photom_kwd(im)
     result1 = ResampleSpecStep.call(im)
     result2 = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
 
@@ -237,14 +262,17 @@ def test_pixel_scale_ratio_spec(miri_rate, ratio):
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im)
     im.data += 5
     result1 = ResampleStep.call(im)
     result2 = ResampleStep.call(im, pixel_scale_ratio=ratio)
 
-    assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
-
-    # Avoid edge effects; make sure data values are identical for surface brightness data
-    assert np.mean(result1.data[10:-10, 10:-10]) == np.mean(result2.data[10:-10, 10:-10])
+    assert_allclose(
+        np.array(result1.data.shape),
+        np.array(result2.data.shape) * ratio,
+        rtol=1,
+        atol=1
+    )
 
     # Make sure the photometry keywords describing the solid angle of a pixel
     # are updated
@@ -259,6 +287,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
 def test_weight_type(nircam_rate, _jail):
     """Check that weight_type of exptime and ivm work"""
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im1)
     im1.var_rnoise[:] = 0
     im2 = im1.copy()
     im3 = im1.copy()
@@ -289,6 +318,7 @@ def test_weight_type(nircam_rate, _jail):
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):
     im = AssignWcsStep.call(nircam_rate, sip_degree=2)
+    _set_photom_kwd(im)
 
     # Check some SIP keywords produced above
     assert im.meta.wcsinfo.cd1_1 is not None
@@ -414,6 +444,7 @@ def test_resample_variance(nircam_rate, n_images):
     var_rnoise = 0.00034
     var_poisson = 0.00025
     im = AssignWcsStep.call(nircam_rate)
+    _set_photom_kwd(im)
     im.var_rnoise += var_rnoise
     im.var_poisson += var_poisson
     im.err += err
@@ -551,6 +582,7 @@ def test_pixscale(nircam_rate):
     # check that if both 'pixel_scale_ratio' and 'pixel_scale' are passed in,
     # that 'pixel_scale' overrides correctly
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im)
     pixarea = im.meta.photometry.pixelarea_arcsecsq
 
     # check when both pixel_scale and pixel_scale_ratio are passed in
@@ -570,6 +602,7 @@ def test_phot_keywords(nircam_rate):
     # test that resample keywords agree with photometry keywords after step is run
 
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im)
 
     orig_pix_area_sr = im.meta.photometry.pixelarea_steradians
     orig_pix_area_arcsec = im.meta.photometry.pixelarea_arcsecsq
@@ -578,6 +611,21 @@ def test_phot_keywords(nircam_rate):
     res = ResampleStep.call(im, pixel_scale=0.04)
     new_psr = res.meta.resample.pixel_scale_ratio
 
-    assert res.meta.resample.pixel_scale_ratio == 0.04 / np.sqrt(orig_pix_area_arcsec)
-    assert res.meta.photometry.pixelarea_steradians == orig_pix_area_sr * new_psr**2
-    assert res.meta.photometry.pixelarea_arcsecsq == orig_pix_area_arcsec * new_psr**2
+    assert np.allclose(
+        res.meta.resample.pixel_scale_ratio,
+        0.04 / np.sqrt(orig_pix_area_arcsec),
+        atol=0,
+        rtol=1e-12
+    )
+    assert np.allclose(
+        res.meta.photometry.pixelarea_steradians,
+        orig_pix_area_sr * new_psr**2,
+        atol=0,
+        rtol=1e-12
+    )
+    assert np.allclose(
+        res.meta.photometry.pixelarea_arcsecsq,
+        orig_pix_area_arcsec * new_psr**2,
+        atol=0,
+        rtol=1e-12
+    )

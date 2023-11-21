@@ -236,8 +236,6 @@ class JWSTSourceCatalog:
         self._ypeak = segm_cat.maxval_yindex
 
         self.meta.update(segm_cat.meta)
-        for key in ('sklearn', 'matplotlib'):
-            self.meta['version'].pop(key)
 
         # rename some columns in the output catalog
         prop_names = {}
@@ -966,7 +964,20 @@ class JWSTSourceCatalog:
         catalog = self.format_columns(catalog)
 
         # update metadata
-        self.meta['version']['jwst'] = jwst_version
+        # photutils 1.11.0 will change the meta dict key name from
+        # version to versions; can remove this check when we require
+        # photutils >= 1.11.0
+        verkeys = ('versions', 'version')
+        verkey = set(self.meta.keys()).intersection(verkeys).pop()
+        verdict = self.meta.get(verkey, None)
+
+        if verdict is not None:
+            verdict['jwst'] = jwst_version
+            packages = ['Python', 'numpy', 'scipy', 'astropy', 'photutils',
+                        'gwcs', 'jwst']
+            verdict = {key: verdict[key] for key in packages if key in verdict}
+            self.meta[verkey] = verdict
+
         self.meta['aperture_params'] = self.aperture_params
         self.meta['abvega_offset'] = self.abvega_offset
         catalog.meta.update(self.meta)

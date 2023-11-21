@@ -117,7 +117,7 @@ def artifactory_get_breadcrumbs(build_number, job_name, suffix):
     args = list(
         ['jfrog', 'rt', 'dl']
         + [f'{ARTIFACTORY_REPO}/*/*{suffix}']
-        + [f'--build={build_name}/{build_number}']
+        + [f'--props=build.number={build_number};build.name={build_name}']
         + ['--flat']
     )
     subprocess.run(args, check=True, capture_output=True)

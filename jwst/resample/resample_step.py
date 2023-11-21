@@ -140,12 +140,11 @@ class ResampleStep(Step):
             # if pixel_scale exists, it will override pixel_scale_ratio.
             # calculate the actual value of pixel_scale_ratio based on pixel_scale
             # because source_catalog uses this value from the header.
-            if not self.pixel_scale:
+            if self.pixel_scale is None:
                 model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
             else:
-                model.meta.resample.pixel_scale_ratio = self.pixel_scale / np.sqrt(model.meta.photometry.pixelarea_arcsecsq)
+                model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
             model.meta.resample.pixfrac = kwargs['pixfrac']
-            self.update_phot_keywords(model)
 
         if len(result) == 1:
             result = result[0]
@@ -176,17 +175,23 @@ class ResampleStep(Step):
 
         with asdf.open(asdf_wcs_file) as af:
             wcs = deepcopy(af.tree["wcs"])
+            wcs.pixel_area = af.tree.get("pixel_area", None)
+            wcs.array_shape = af.tree.get("pixel_shape", None)
+            wcs.array_shape = af.tree.get("array_shape", None)
 
-        if output_shape is not None or wcs is None:
+        if output_shape is not None:
             wcs.array_shape = output_shape[::-1]
+            wcs.pixel_shape = output_shape
         elif wcs.pixel_shape is not None:
             wcs.array_shape = wcs.pixel_shape[::-1]
+        elif wcs.array_shape is not None:
+            wcs.pixel_shape = wcs.array_shape[::-1]
         elif wcs.bounding_box is not None:
             wcs.array_shape = tuple(
-                int(axs[1] - axs[0] + 0.5)
+                int(axs[1] + 0.5)
                 for axs in wcs.bounding_box.bounding_box(order="C")
             )
-        elif wcs.array_shape is None:
+        else:
             raise ValueError(
                 "Step argument 'output_shape' is required when custom WCS "
                 "does not have neither of 'array_shape', 'pixel_shape', or "
@@ -195,12 +200,6 @@ class ResampleStep(Step):
 
         return wcs
 
-    def update_phot_keywords(self, model):
-        """Update pixel scale keywords"""
-        if model.meta.photometry.pixelarea_steradians is not None:
-            model.meta.photometry.pixelarea_steradians *= model.meta.resample.pixel_scale_ratio**2
-        if model.meta.photometry.pixelarea_arcsecsq is not None:
-            model.meta.photometry.pixelarea_arcsecsq *= model.meta.resample.pixel_scale_ratio**2
 
     def get_drizpars(self, ref_filename, input_models):
         """

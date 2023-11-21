@@ -20,7 +20,7 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 _ONE_MB = 1 << 20
-RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog']
+RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -109,13 +109,21 @@ to supply custom catalogs.
                         {
                             "expname": "input_image1_cal.fits",
                             "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog1.ecsv"
+                            "tweakreg_catalog": "custom_catalog1.ecsv",
+                            "group_id": "custom_group_id_number_1",
                         },
                         {
                             "expname": "input_image2_cal.fits",
                             "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog2.ecsv"
-                        }
+                            "tweakreg_catalog": "custom_catalog2.ecsv",
+                            "group_id": 2
+                        },
+                        {
+                            "expname": "input_image3_cal.fits",
+                            "exptype": "science",
+                            "tweakreg_catalog": "custom_catalog3.ecsv",
+                            "group_id": Null
+                        },
                     ]
                 }
             ]
@@ -123,6 +131,19 @@ to supply custom catalogs.
         .. warning::
             Input files will be updated in-place with new ``meta`` attribute
             values when ASN table's members contain additional attributes.
+
+        .. warning::
+            Custom ``group_id`` affects how models are grouped **both** for
+            ``tweakreg`` and ``skymatch`` steps. If one wants to group models
+            in one way for the ``tweakreg`` step and in a different way for the
+            ``skymatch`` step, one will need to run each step separately with
+            their own ASN tables.
+
+        .. note::
+            ``group_id`` can be an integer, a string, or Null. When ``group_id``
+            is `Null`, it is converted to `None` in Python and it will be
+            assigned a group ID based on various exposure attributes - see
+            ``models_grouped`` property for more details.
 
     """
     schema_url = None
@@ -402,11 +423,13 @@ to supply custom catalogs.
     def models_grouped(self):
         """
         Returns a list of a list of datamodels grouped by exposure.
-        Assign an ID grouping by exposure.
+        Assign a grouping ID by exposure, if not already assigned.
 
-        Data from different detectors of the same exposure will have the
-        same group id, which allows grouping by exposure.  The following
-        metadata is used for grouping:
+        If ``model.meta.group_id`` does not exist or it is `None`, then data
+        from different detectors of the same exposure will be assigned the
+        same group ID, which allows grouping by exposure in the ``tweakreg`` and
+        ``skymatch`` steps. The following metadata is used when
+        determining grouping:
 
         meta.observation.program_number
         meta.observation.observation_number
@@ -415,6 +438,9 @@ to supply custom catalogs.
         meta.observation.sequence_id
         meta.observation.activity_id
         meta.observation.exposure_number
+
+        If a model already has ``model.meta.group_id`` set, that value will be
+        used for grouping.
         """
         unique_exposure_parameters = [
             'program_number',
@@ -432,19 +458,31 @@ to supply custom catalogs.
             if not self._save_open:
                 model = datamodel_open(model, memmap=self._memmap)
 
-            for param in unique_exposure_parameters:
-                params.append(getattr(model.meta.observation, param))
-            try:
-                group_id = ('jw' + '_'.join([''.join(params[:3]),
-                                             ''.join(params[3:6]), params[6]]))
-                model.meta.group_id = group_id
-            except TypeError:
-                model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+            if (hasattr(model.meta, 'group_id') and
+                        model.meta.group_id not in [None, '']):
+                group_id = model.meta.group_id
 
-            group_id = model.meta.group_id
-            if not self._save_open and not self._return_open:
-                model.close()
-                model = self._models[i]
+            else:
+                for param in unique_exposure_parameters:
+                    params.append(getattr(model.meta.observation, param))
+                try:
+                    group_id = (
+                        'jw' + '_'.join(
+                            [
+                                ''.join(params[:3]),
+                                ''.join(params[3:6]),
+                                params[6],
+                            ]
+                        )
+                    )
+                    model.meta.group_id = group_id
+                except TypeError:
+                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+
+                group_id = model.meta.group_id
+                if not self._save_open and not self._return_open:
+                    model.close()
+                    model = self._models[i]
 
             if group_id in group_dict:
                 group_dict[group_id].append(model)

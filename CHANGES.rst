@@ -1,11 +1,100 @@
-1.12.5 (unreleased)
+1.12.6 (unreleased)
 ===================
+
+background
+----------
+
+- Ensure that WFSS background mask does not leave only
+  pixels with DO_NOT_USE flagged. [#8070]
 
 cube_build
 ----------
 
-- Return x_det and y_det (set to None) when no data is found on detector to build cube. [#8001]
- 
+- Fix bug that was causing cube_build to crash when no valid data is found
+  on the detector in the input image(s). [#8001]
+
+documentation
+-------------
+
+- Remove the CRDS PUB notices througout the documentation [#8075]
+
+extract_1d
+----------
+
+- Include zero values in dispersion direction check during
+  SOSS ATOCA algorithm [#8038]
+
+- Use masked median instead of nanmedian wavelength collapse during
+  source finding for ifu_autocen [#8080]
+
+extract_2d
+----------
+
+- Fixed crash with slit_name for MOS. Now the argument should
+  be passed as a string, e.g. slit_name='67'. Included this
+  in the corresponding documentation. [#8081]
+
+general
+-------
+
+- Add lack of python 3.12 support to project metadata [#8042]
+
+- Increase asdf maximum version to 4 [#8018]
+
+imprint
+-------
+
+- Updated the logging to report which imprint image is being subtracted from the
+  science image. [#8041]
+
+ramp_fitting
+------------
+
+- Moving some ramp fitting CI tests from JWST to STCAL. [#8060]
+
+resample
+--------
+
+- Recognize additional keys in ASDF files that provide ``output_wcs`` for the
+  resample step. [#7894]
+
+- Set output image size when ``output_wcs`` is provided based on the largest
+  coordinates in the bounding box of the ``output_wcs``. [#7894]
+
+- Completely re-designed computation of the pixel area keywords
+  ``PIXAR_SR`` and ``PIXAR_A2`` for the resampled image. This change also
+  results in modified values in the resampled images. New computations
+  significantly reduce photometric errors. [#7894]
+
+- Improved compatibility with upcoming ``numpy 2.0`` that was affecting
+  decoding of context images and creation of masks. [#8059]
+
+source_catalog
+--------------
+
+- Made meta data flexible for photutils changes. [#8066]
+
+tweakreg
+--------
+
+- Improved how a image group name is determined. [#8012]
+
+
+1.12.5 (2023-10-19)
+===================
+
+datamodels
+----------
+
+- Added support for user-supplied ``group_id`` either via
+ ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+
+refpix
+------
+
+- Revert a change introduced in #7745, erroneously setting 2 detector columns near
+  bad reference pixels to zero. [#8005]
+
 
 1.12.4 (2023-10-12)
 ===================
@@ -20,7 +109,9 @@ general
 
 - Fix numpy 2.0 deprecation warnings in cube_build, photom and wfs_combine. [#7999]
 
-- pinned dependencies for several in-development packages below their next versions to maintain compatibility
+- Pinned dependencies for several in-development packages below their next versions
+  to maintain compatibility. [#8003, #8006]
+
 
 1.12.3 (2023-10-03)
 ===================
