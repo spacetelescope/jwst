@@ -474,11 +474,11 @@ class DataSet():
                 
             # Check if reference file contains the coefficients for the time-dependent correction of the PHOTOM value
             try:
-                ftab.getarray_noinit("correction_table")
+                ftab.getarray_noinit("timecoeff")
                 log.info("Applying the time-dependent correction to the PHOTOM value.")
 
                 mid_time = self.input.meta.exposure.mid_time
-                photom_corr = miri_imager.time_corr_photom(ftab.correction_table[row], mid_time)
+                photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
 
                 data = np.array(
                     [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr']+photom_corr, ftab.phot_table[row]['uncertainty'])],
@@ -493,7 +493,7 @@ class DataSet():
                 self.photom_io(fftab.phot_table[0])
             except:
                 # No time-dependent correction is applied
-                log.info("Skipping MIRI imager time correction. Extension not found in the reference file.")
+                log.info(" Skipping MIRI imager time correction. Extension not found in the reference file.")
                 self.photom_io(ftab.phot_table[row])
 
         # MRS detectors
