@@ -1,6 +1,5 @@
 import numpy as np
 import logging
-import math
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -19,7 +18,7 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     sp_leak_ref: ~datamodels.MirMrsPtCorrModel
         spectral leak reference information
 
-    ch1b: numpy array 
+    ch1b: numpy array
     ch3a: numpy array
 
     Returns
@@ -44,7 +43,7 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     # Factor of 2 in 2*wavelb is  necessary because we're dealing with second order light.  Without this the interpolation simply
     # uses the last point in the spectrum, which is close enough to correct as won't be noticeable for BAND spectra,
     # but for CH spectra can be quite different.
-    
+
     # Correct the data
     spec3a_corr = spec3a - leak
     return spec3a_corr
