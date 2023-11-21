@@ -33,7 +33,15 @@ general
 
 - Add lack of python 3.12 support to project metadata [#8042]
 
-- Increase asdf maximum version to 4 [#8018]
+- Increase asdf maximum version to 4. [#8018]
+
+- Remove upper version limit for scipy. [#8033]
+
+outlier_detection
+-----------------
+
+- Remove use of ``scipy.signal.medfilt`` which is undefined for ``nan``
+  inputs. [#8033]
 
 imprint
 -------
