@@ -7,6 +7,12 @@ background
 - Ensure that WFSS background mask does not leave only
   pixels with DO_NOT_USE flagged. [#8070]
 
+cube_build
+----------
+
+- Fix bug that was causing cube_build to crash when no valid data is found
+  on the detector in the input image(s). [#8001]
+
 documentation
 -------------
 
