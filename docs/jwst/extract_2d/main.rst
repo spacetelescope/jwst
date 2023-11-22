@@ -49,7 +49,8 @@ to extract all slits that project onto the detector. A single slit may be extrac
 specifying the slit name with the ``slit_name`` argument. In the case of a NIRSpec
 fixed-slit exposure the allowed slit names are: "S1600A1", "S200A1", "S200A2", "S200B1"
 and "S400A1". For NIRSpec MOS exposures, the slit name is the slitlet number from the
-MSA metadata file, corresponding to the value of the "SLTNAME" keyword in FITS products.
+MSA metadata file, corresponding to the value of the "SLTNAME" keyword in FITS products,
+and it has to be provided as a string, e.g. slit_name='60'.
 
 To find out what slits are available for extraction:
 
