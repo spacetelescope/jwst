@@ -303,7 +303,12 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Check for a user-supplied mask image. If so, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
-        Mask = mask_model.data.copy()
+        Mask = (mask_model.data.copy()).astype(np.bool_)
+
+        # Reset and save list of NaN pixels in the input image
+        nan_pix = np.where(np.isnan(input_model.data))
+        input_model.data[nan_pix] = 0
+        Mask[nan_pix] = False
     
     else:
         # Create the pixel mask that'll be used to indicate which pixels
