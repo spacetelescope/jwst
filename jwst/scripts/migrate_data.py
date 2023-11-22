@@ -4,7 +4,7 @@
 Migrate .fits files whose format has changed between jwst package versions.
 """
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import re
 import traceback
@@ -166,7 +166,8 @@ def migrate_file(filename, args):
             return
 
         migrate_method(hdul)
-        hdul[0].header['HISTORY'] = f'Migrated with jwst {jwst.__version__} migrate_data script {datetime.utcnow().isoformat()}'
+        timestamp = datetime.now(timezone.utc).isoformat()
+        hdul[0].header['HISTORY'] = f'Migrated with jwst {jwst.__version__} migrate_data script {timestamp}'
 
         try:
             getattr(datamodels, model_type)(hdul, strict_validation=True)

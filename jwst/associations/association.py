@@ -1,6 +1,6 @@
 from collections.abc import MutableMapping
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import jsonschema
 import logging
@@ -564,7 +564,7 @@ def finalize(asns):
 
 
 def make_timestamp():
-    timestamp = datetime.utcnow().strftime(
+    timestamp = datetime.now(timezone.utc).strftime(
         _TIMESTAMP_TEMPLATE
     )
     return timestamp

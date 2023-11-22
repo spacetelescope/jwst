@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import asdf
@@ -56,7 +56,8 @@ def test_step_config_to_asdf(config):
     assert asdf_file["parameters"] == config.parameters
     assert asdf_file["steps"] == [s.to_asdf().tree for s in config.steps]
     assert asdf_file["meta"]["author"] == "<SPECIFY>"
-    assert (datetime.utcnow() - datetime.fromisoformat(asdf_file["meta"]["date"])) < timedelta(seconds=10)
+    current_time = datetime.now(timezone.utc).replace(tzinfo=None)
+    assert (current_time - datetime.fromisoformat(asdf_file["meta"]["date"])) < timedelta(seconds=10)
     assert asdf_file["meta"]["description"] == "Parameters for calibration step some.PipelineClass"
     assert asdf_file["meta"]["instrument"]["name"] == "<SPECIFY>"
     assert asdf_file["meta"]["origin"] == "<SPECIFY>"
