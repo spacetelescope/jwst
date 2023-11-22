@@ -49,6 +49,8 @@ outlier_detection
 - Remove use of ``scipy.signal.medfilt`` which is undefined for ``nan``
   inputs. [#8033]
 
+- Replace uses of ``datetime.utcnow`` (deprecated in python 3.12) [#8051]
+
 imprint
 -------
 
