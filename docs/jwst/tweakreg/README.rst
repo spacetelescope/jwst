@@ -62,26 +62,26 @@ other ways of supplying custom source catalogs to the step:
    and the file names of the corresponding catalogs in the second column.
    Catalog file names are relative to ``catfile`` file path.
 
-Specifying custom source catalogs via either the input ASN table or
+Specifying custom source catalogs via either the input ASN file or
 ``catfile``, will update input data models' ``meta.tweakreg_catalog``
-attributes to the catalog file names provided in either in the ASN table or
+attributes to the catalog file names provided in either in the ASN file or
 ``catfile``.
 
 .. note::
     When custom source catalogs are provided via both ``catfile`` and
-    ASN table members' attributes, the ``catfile`` takes precedence and
-    catalogs specified via ASN table are ignored altogether.
+    ASN file members' attributes, the ``catfile`` takes precedence and
+    catalogs specified via ASN file are ignored altogether.
 
 .. note::
     1. Providing a data model file name in the ``catfile`` and leaving
        the corresponding source catalog file name empty -- same as setting
-       ``'tweakreg_catalog'`` in the ASN table to an empty string ``""`` --
+       ``'tweakreg_catalog'`` in the ASN file to an empty string ``""`` --
        would set corresponding input data model's ``meta.tweakreg_catalog``
        attribute to `None`. In this case, ``tweakreg_step`` will automatically
        generate a source catalog for that data model.
 
     2. If an input data model is not listed in the ``catfile`` or does not
-       have ``'tweakreg_catalog'`` attribute provided in the ASN table,
+       have ``'tweakreg_catalog'`` attribute provided in the ASN file,
        then the catalog file name in that model's ``meta.tweakreg_catalog``
        attribute will be used. If ``model.meta.tweakreg_catalog`` is `None`,
        ``tweakreg_step`` will automatically generate a source catalog for

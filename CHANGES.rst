@@ -20,6 +20,10 @@ documentation
 
 - Improve Step.spec formatting [#8101]
 
+- Added warnings about incompatibility of models modified with ``adjust_wcs``
+  with ``tweakreg`` step and ``transfer_wcs_correction`` function. Fixed
+  reported typos in ``tweakreg`` documentation. [#8084]
+
 extract_1d
 ----------
 
