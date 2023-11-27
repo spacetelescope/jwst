@@ -43,6 +43,8 @@ general
 
 - Remove upper version limit for scipy. [#8033]
 
+- Remove the use of ``pkg_resources`` by ``jwst``. [#8095]
+
 outlier_detection
 -----------------
 
