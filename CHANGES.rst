@@ -60,7 +60,7 @@ imprint
 photom
 --------
 
-- Added time-dependent correction for MIRI Imager data [#, spacetelescope/stdatamodels#235]
+- Added time-dependent correction for MIRI Imager data [#8096, spacetelescope/stdatamodels#235]
 
 ramp_fitting
 ------------
