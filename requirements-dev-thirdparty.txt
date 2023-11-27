@@ -15,3 +15,5 @@ git+https://github.com/astropy/photutils
 --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
 numpy>=0.0.dev0
 scipy>=0.0.dev0
+contourpy>=0.0.dev0
+matplotlib>=0.0.dev0
