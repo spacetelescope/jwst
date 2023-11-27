@@ -9,6 +9,7 @@ git+https://github.com/asdf-format/asdf-wcs-schemas
 git+https://github.com/astropy/asdf-astropy
 git+https://github.com/astropy/photutils
 --extra-index-url https://pypi.anaconda.org/astropy/simple astropy --pre
+--extra-index-url https://pypi.anaconda.org/liberfa/simple erfa --pre
 
 # Use Bi-weekly numpy/scipy dev builds
 --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
