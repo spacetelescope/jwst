@@ -20,4 +20,6 @@ uncorrected and corrected spectrum is given in the figure below for a G dwarf st
    :scale: 50%
    :align: center
 
-Figure: MRS spectral leak as seen for very-blue sources (A-type star HD 2811) and very-red sources (Asteroid 515 Athalia) in 2 different versions of the JWST pipeline.
+Figure: MRS spectral leak as seen in G Dwarf star. The red extracted spectrum does not have the spectral_leak step applied,
+while the the black extracted spectrum has the spectral leak correction applied. 
+
