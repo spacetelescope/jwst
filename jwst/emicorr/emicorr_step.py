@@ -1,5 +1,14 @@
 #! /usr/bin/env python
 
+
+### TESTING my local datamodels branch
+import os, sys
+datamdl_branch = os.path.dirname('/Users/pena/Documents/SCSB/stdatamodels/stdatamodels')
+print(datamdl_branch)
+sys.path.insert(1, datamdl_branch)
+print('\n *** TESTING my local datamodels branch *** \n')
+###
+
 from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from . import emicorr

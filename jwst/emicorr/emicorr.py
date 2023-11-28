@@ -4,72 +4,82 @@
 
 import numpy as np
 import logging
+
+### TESTING my local datamodels branch
+import os, sys
+datamdl_branch = os.path.dirname('/Users/pena/Documents/SCSB/stdatamodels/stdatamodels')
+print(datamdl_branch)
+sys.path.insert(1, datamdl_branch)
+print('\n *** TESTING my local datamodels branch *** \n')
+###
+
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-known_emi_freqs = {
+default_emi_freqs = {
     "Hz390": 390.625,
-    "Hz218a": 218.52055,
-    "Hz218b": 218.520470,
-    "Hz218c": 218.520665,
+    "Hz390_sub128": 390.625,
     "Hz164": 164.9305,
-    "Hz10": 10.039216
+    "Hz10": 10.039216,
+    "Hz10_slow_MIRIMAGE": 10.039216,
+    "Hz10_slow_MIRIFULONG": 10.039216,
+    "Hz10_slow_MIRIFUSHORT": 10.039216
 }
 
-subarray_cases = {
+default_subarray_cases = {
 
     # 390Hz out-of-phase - these all need 390hz correction
 
     "SLITLESSPRISM": {
         "rowclocks": 28,
         "frameclocks": 15904,
-        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
-                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
-                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
-    },
+        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "MASKLYOT": {
         "rowclocks": 90,
         "frameclocks": 32400,
-        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
-                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
-                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
-    },
+        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "SUB64": {
         "rowclocks": 28,
         "frameclocks": 8512,
-        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
-                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
-                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
-    },
+        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "SUB128": {
         "rowclocks": 44,
         "frameclocks": 11904,
-        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
-                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
-                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
-    },
+        "freqs":  {"FASTR1": ["Hz390_sub128", "Hz164", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390_sub128", "Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390_sub128", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390_sub128", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "MASK1140": {
         "rowclocks": 82,
         "frameclocks": 23968,
-        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
-                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
-                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
-    },
+        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "MASK1550": {
         "rowclocks": 82,
         "frameclocks": 23968,
-        "freqs": [known_emi_freqs["Hz390"], known_emi_freqs["Hz218a"],
-                known_emi_freqs["Hz218b"], known_emi_freqs["Hz218c"],
-                known_emi_freqs["Hz164"], known_emi_freqs["Hz10"]]
-    },
+        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     # 390Hz already in-phase for these, but may need corr for other
     # frequencies (e.g. 10Hz heater noise)
@@ -77,35 +87,30 @@ subarray_cases = {
     "FULL_FASTR1": {
         "rowclocks": 271,
         "frameclocks": 277504,
-        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
-                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
-                known_emi_freqs["Hz10"]]
-    },
+        "freqs": {"FASTR1" : ["Hz164", "Hz10"]}},
 
     "FULL_SLOWR1": {
         "rowclocks": 2333,
         "frameclocks": 2388992,
-        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
-                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
-                known_emi_freqs["Hz10"]]
-    },
+        "freqs": {"SLOWR1":  {"MIRIMAGE" : ["Hz164", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "BRIGHTSKY": {
         "rowclocks": 162,
         "frameclocks": 86528,
-        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
-                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
-                known_emi_freqs["Hz10"]]
-    },
+        "freqs": {"FASTR1" : ["Hz164", "Hz10"],
+                  "SLOWR1": {"MIRIMAGE" : ["Hz164", "Hz10_slow_MIRIMAGE"],
+                            "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                            "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "SUB256": {
         "rowclocks": 96,
         "frameclocks": 29952,
-        "freqs": [known_emi_freqs["Hz218a"], known_emi_freqs["Hz218b"],
-                known_emi_freqs["Hz218c"], known_emi_freqs["Hz164"],
-                known_emi_freqs["Hz10"]]
-    }
-
+        "freqs": {"FASTR1" : ["Hz164", "Hz10"],
+                  "SLOWR1": {"MIRIMAGE" : ["Hz164", "Hz10_slow_MIRIMAGE"],
+                            "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
+                            "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}}
 }
 
 
@@ -215,14 +220,30 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         input science data model which has been emi-corrected
     """
     # get the subarray case and other info
+    detector = input_model.meta.instrument.detector
     subarray = input_model.meta.subarray.name
     readpatt = input_model.meta.exposure.readpatt
-    subname, rowclocks, frameclocks, freqs2correct = get_subarcase(subarray, readpatt)
+    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
+    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
+
+    # get the subarray case from either the ref file or set default values
+    freqs_numbers = []
+    if emicorr_model is not None:
+        log.info('Using reference file to get subarray case.')
+        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model['frequencies'], subarray, readpatt, detector)
+        for fnme in freqs2correct:
+            freq = get_frequency_number(emicorr_model, fnme)
+            freqs_numbers.append(freq)
+    else:
+        log.info('Using default subarray case corrections.')
+        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(default_subarray_cases, subarray, readpatt, detector)
+        for fnme in freqs2correct:
+            freq = get_frequency_number(default_emi_freqs, fnme)
+            freqs_numbers.append(freq)
+
     if rowclocks is None:
         # no subarray match found, print to log and skip correction
         return subname
-    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
-    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
 
     # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
     nsamples = input_model.meta.exposure.nsamples
@@ -232,13 +253,13 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
     # create the dictionary to store the frequencies and corresponding phase amplidues
     if save_intermediate_results and save_onthefly_reffile is not None:
-        freq_pa_dict = {}
+        freq_pa_dict = {'frequencies': {}, 'subarray_cases': {}}
 
     # Loop over the frequencies to correct
     log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
-    log.info('   {}'.format(freqs2correct))
-    for fi, frequency in enumerate(freqs2correct):
-        frequency_name = get_frequency_name(frequency)
+    log.info('   {}'.format(freqs_numbers))
+    for fi, frequency_name in enumerate(freqs2correct):
+        frequency = freqs_numbers[fi]
         log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
 
         # Read image data and set up some variables
@@ -400,7 +421,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
-            reference_wave = emicorr_model[frequency_name]
+            reference_wave = emicorr_model['frequencies'][frequency_name]['pahse_amplitudes']
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
             cc = np.zeros(reference_wave_size)
@@ -428,7 +449,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
             lut = lut_reference
 
         if save_intermediate_results and save_onthefly_reffile is not None:
-            freq_pa_dict[frequency_name] = pa
+            freq_pa_dict['frequencies'][frequency_name] = {'frequency' : frequency,
+                                                        'pahse_amplitudes' : pa}
 
         log.info('Creating phased-matched noise model to subtract from data')
         # This is the phase matched noise model to subtract from each pixel of the input image
@@ -446,6 +468,16 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         output_model.data = corr_data
 
     if save_intermediate_results and save_onthefly_reffile is not None:
+        if readpatt == 'FASTR1':
+            freqs_dict = {readpatt: freqs2correct}
+        else:
+            freqs_dict = {readpatt: {detector: freqs2correct} }
+        on_the_fly_subarr_case = {}
+        on_the_fly_subarr_case[subarray] = {
+            'rowclocks': rowclocks,
+            'frameclocks': frameclocks,
+            'freqs': freqs_dict }
+        freq_pa_dict['subarray_cases'] = on_the_fly_subarr_case
         mk_reffile(freq_pa_dict, save_onthefly_reffile)
 
     return output_model
@@ -538,15 +570,21 @@ def minmed(data, minval=False, avgval=False, maxval=False):
     return medimg
 
 
-def get_subarcase(subarray, readpatt):
+def get_subarcase(subarray_cases, subarray, readpatt, detector):
     """ Get the rowclocks and frameclocks values for the given configuration.
 
     Parameters
     ----------
+    subarray_cases : dict
+        Either default corrections dictionary or datamodel
+
     subarray : str
         Keyword value
 
     readpatt : str
+        Keyword value
+
+    detector : str
         Keyword value
 
     Returns
@@ -560,6 +598,9 @@ def get_subarcase(subarray, readpatt):
 
     frequencies : list
         List of frequencies to correct according to subarray name
+
+    freqs_names : list
+        List of frequency names to use
     """
     subname = subarray
     if subname == 'FULL':
@@ -567,29 +608,38 @@ def get_subarcase(subarray, readpatt):
     if subname in subarray_cases:
         rowclocks = subarray_cases[subname]["rowclocks"]
         frameclocks = subarray_cases[subname]["frameclocks"]
-        frequencies = subarray_cases[subname]["freqs"]
+        if readpatt == "SLOWR1":
+            frequencies = subarray_cases[subname]["freqs"]["SLOWR1"][detector]
+        else:
+            frequencies = subarray_cases[subname]["freqs"]["FASTR1"]
         return subname, rowclocks, frameclocks, frequencies
     else:
         return subname, None, None, None
 
 
-def get_frequency_name(frequency):
-    """Get the frequency name from the known_emi_freqs dictionary
+def get_frequency_number(freqs_dict, frequency_name):
+    """Get the frequency number from the given dictionary
     Parameters
     ----------
-    frequency : float
+    freqs_dict : dict
+        Either default corrections dictionary or datamodel
+
+    frequency_name : str
         Frequency of interest
 
     Returns
     -------
-    frequency_name : string
-        Name of the frequency
+    frequency_number : float
+        Frequency
     """
-    for freq_nme, val in known_emi_freqs.items():
-        if frequency == val:
-            frequency_name = freq_nme
-            break
-    return frequency_name
+    try:
+        for freq_nme in freqs_dict['frecuencies']:
+            if freq_nme['frequency'] == frequency_name:
+                return freq_nme['frequency']
+    except KeyError:
+        for freq_nme, val in freqs_dict.items():
+            if freq_nme == frequency_name:
+                return val
 
 
 def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
