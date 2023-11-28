@@ -41,11 +41,10 @@ class SpectralLeakStep(Step):
         ch1b_wave = 6.0
         ch3a_wave = 12.0
 
-        result = input.copy()  # copy input to return
         with datamodels.open(input) as input_model:
             if isinstance(input_model, ModelContainer):
                 # Retrieve the reference parameters for this type of data
-                sp_leak_ref = self.get_reference_file(input[0], 'mrsptcorr')
+                sp_leak_ref = self.get_reference_file(input_model, 'mrsptcorr')
 
                 for i, x1d in enumerate(input_model):  # input_model is a Model Container
                     # check that we have the correct type of data
@@ -87,8 +86,13 @@ class SpectralLeakStep(Step):
         # done looping over data now if 1B and 3A data exists make a correction
         # update result and return
         if ch1b is not None and ch3a is not None:
+            result = input_model.copy()  # copy input to return
             corrected_3a = spectral_leak.do_correction(sp_leak_ref, ch1b, ch3a)
             result[ich3a].spec[0].spec_table.FLUX = corrected_3a
             result[ich3a].meta.cal_step.spectral_leak = 'COMPLETE'
+            return result
+        else:
+            self.log.info('CH1B and CH3A were not found. Not spectral leak correction')
+            return input 
 
-        return result
+
