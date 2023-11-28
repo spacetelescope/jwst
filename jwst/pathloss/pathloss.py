@@ -260,20 +260,21 @@ def calculate_pathloss_vector(pathloss_refdata,
 
         return wavelength, pathloss_vector, is_inside_slitlet
 
+
 def calculate_two_shutter_uniform_pathloss(pathloss_model):
     """The two shutter MOS case for uniform source calculation requires a custom
      routine since it uses both the 1X1 and 1X3 extensions of the pathloss reference file
-      
+
     Parameters
      ---------
         pathloss_model : pathloss datamodel
 
         The pathloss datamodel
-    
+
     Returns
     -------
         (wavelength, pathloss_vector) : tuple of 2 1-d numpy arrays
-        
+
         The wavelength and pathloss 1-d arrays
 
     """
@@ -314,7 +315,7 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
         wavelength[i] = crval1 + (float(i + 1) - crpix1) * cdelt1
     average_pathloss = 0.5 * (pathloss1x1 + pathloss1x3)
     return (wavelength, average_pathloss)
-    
+
 
 def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None,
                   correction_pars=None, user_slit_loc=None):
@@ -856,8 +857,8 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
                 (wavelength_uniformsource,
                  pathloss_uniform_vector,
                  dummy) = calculate_pathloss_vector(aperture.uniform_data,
-                                                aperture.uniform_wcs,
-                                                xcenter, ycenter)
+                                                    aperture.uniform_wcs,
+                                                    xcenter, ycenter)
             # This should only happen if the 2 shutter uniform pathloss calculation has an error
             if wavelength_uniformsource is None or pathloss_uniform_vector is None:
                 log.warning("Unable to calculate 2 shutter uniform pathloss, using 3 shutter aperture")

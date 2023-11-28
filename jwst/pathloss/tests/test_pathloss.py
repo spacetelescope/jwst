@@ -338,6 +338,7 @@ def test_interpolate_onto_grid():
 
     np.testing.assert_array_equal(result, result_comparison)
 
+
 def test_shutter_below_is_closed():
     shutter_below_closed = ['x111', 'x', '10x11']
     shutter_below_open = ['11x11', '111x', '11x01']
@@ -346,6 +347,7 @@ def test_shutter_below_is_closed():
     for shutter_state in shutter_below_open:
         assert not shutter_below_is_closed(shutter_state)
 
+
 def test_shutter_above_is_closed():
     shutter_above_closed = ['111x', 'x', '1x011']
     shutter_above_open = ['11x11', 'x111', '110x1']
@@ -353,4 +355,3 @@ def test_shutter_above_is_closed():
         assert shutter_above_is_closed(shutter_state)
     for shutter_state in shutter_above_open:
         assert not shutter_above_is_closed(shutter_state)
-
