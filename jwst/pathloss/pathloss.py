@@ -260,6 +260,61 @@ def calculate_pathloss_vector(pathloss_refdata,
 
         return wavelength, pathloss_vector, is_inside_slitlet
 
+def calculate_two_shutter_uniform_pathloss(pathloss_model):
+    """The two shutter MOS case for uniform source calculation requires a custom
+     routine since it uses both the 1X1 and 1X3 extensions of the pathloss reference file
+      
+    Parameters
+     ---------
+        pathloss_model : pathloss datamodel
+
+        The pathloss datamodel
+    
+    Returns
+    -------
+        (wavelength, pathloss_vector) : tuple of 2 1-d numpy arrays
+        
+        The wavelength and pathloss 1-d arrays
+
+    """
+    # This routine will run if the fiducial shutter has 1 adjacent open shutter
+    n_apertures = len(pathloss_model.apertures)
+    if n_apertures != 2:
+        log.warning(f"Expected 2 apertures in pathloss reference file, found {n_apertures}")
+        return (None, None)
+    for aperture in pathloss_model.apertures:
+        aperture_name = aperture.name.upper()
+        if aperture_name == 'MOS1X1':
+            aperture1x1 = aperture
+        elif aperture_name == 'MOS1X3':
+            aperture1x3 = aperture
+        if aperture_name not in ['MOS1X1', 'MOS1X3']:
+            log.warning(f"Unexpected aperture name {aperture_name} (Expected 'MOS1X1' or 'MOS1X3')")
+            return (None, None)
+    pathloss1x1 = aperture1x1.uniform_data
+    pathloss1x3 = aperture1x3.uniform_data
+    if len(pathloss1x1) != len(pathloss1x3):
+        log.warning("Pathloss 1x1 and 1x3 arrays have different sizes")
+        return (None, None)
+    if aperture1x1.uniform_wcs.crval1 != aperture1x3.uniform_wcs.crval1:
+        log.warning("1x1 and 1x3 apertures have different WCS CRVAL1")
+        return (None, None)
+    if aperture1x1.uniform_wcs.crpix1 != aperture1x3.uniform_wcs.crpix1:
+        log.warning("1x1 and 1x3 apertures have different WCS CRPIX1")
+        return (None, None)
+    if aperture1x1.uniform_wcs.cdelt1 != aperture1x3.uniform_wcs.cdelt1:
+        log.warning("1x1 and 1x3 apertures have different WCS CDELT1")
+        return (None, None)
+    wavesize = len(pathloss1x1)
+    wavelength = np.zeros(wavesize)
+    crpix1 = aperture1x1.uniform_wcs.crpix1
+    crval1 = aperture1x1.uniform_wcs.crval1
+    cdelt1 = aperture1x1.uniform_wcs.cdelt1
+    for i in np.arange(wavesize):
+        wavelength[i] = crval1 + (float(i + 1) - crpix1) * cdelt1
+    average_pathloss = 0.5 * (pathloss1x1 + pathloss1x3)
+    return (wavelength, average_pathloss)
+    
 
 def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None,
                   correction_pars=None, user_slit_loc=None):
@@ -779,23 +834,38 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
         slitlength = len(slit.shutter_state)
         aperture = get_aperture_from_model(pathloss, slit.shutter_state)
         log.info(f"Shutter state = {slit.shutter_state}, using {aperture.name} entry in ref file")
+        two_shutters = False
         if shutter_below_is_closed(slit.shutter_state) and not shutter_above_is_closed(slit.shutter_state):
             ycenter = ycenter - 1.0
             log.info('Shutter below fiducial is closed, using lower region of pathloss array')
+            two_shutters = True
         if not shutter_below_is_closed(slit.shutter_state) and shutter_above_is_closed(slit.shutter_state):
             ycenter = ycenter + 1.0
             log.info('Shutter above fiducial is closed, using upper region of pathloss array')
+            two_shutters = True
         if aperture is not None:
             (wavelength_pointsource,
              pathloss_pointsource_vector,
              is_inside_slitlet) = calculate_pathloss_vector(aperture.pointsource_data,
                                                             aperture.pointsource_wcs,
                                                             xcenter, ycenter)
-            (wavelength_uniformsource,
-             pathloss_uniform_vector,
-             dummy) = calculate_pathloss_vector(aperture.uniform_data,
+            if two_shutters:
+                (wavelength_uniformsource,
+                 pathloss_uniform_vector) = calculate_two_shutter_uniform_pathloss(pathloss)
+            else:
+                (wavelength_uniformsource,
+                 pathloss_uniform_vector,
+                 dummy) = calculate_pathloss_vector(aperture.uniform_data,
                                                 aperture.uniform_wcs,
                                                 xcenter, ycenter)
+            # This should only happen if the 2 shutter uniform pathloss calculation has an error
+            if wavelength_uniformsource is None or pathloss_uniform_vector is None:
+                log.warning("Unable to calculate 2 shutter uniform pathloss, using 3 shutter aperture")
+                (wavelength_uniformsource,
+                 pathloss_uniform_vector,
+                 dummy) = calculate_pathloss_vector(aperture.uniform_data,
+                                                    aperture.uniform_wcs,
+                                                    xcenter, ycenter)
             if is_inside_slitlet:
 
                 # Wavelengths in the reference file are in meters,
