@@ -20,6 +20,11 @@ imprint
 - Updated the logging to report which imprint image is being subtracted from the
   science image. [#8041]
 
+pathloss
+--------
+
+- Implemented correction for NIRSPEC MSA slits that are not 1x1 or 1x3
+
 ramp_fitting
 ------------
 
