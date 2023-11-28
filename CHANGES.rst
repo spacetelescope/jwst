@@ -23,7 +23,7 @@ imprint
 pathloss
 --------
 
-- Implemented correction for NIRSPEC MSA slits that are not 1x1 or 1x3
+- Implemented correction for NIRSPEC MSA slits that are not 1x1 or 1x3. [#8100]
 
 ramp_fitting
 ------------
