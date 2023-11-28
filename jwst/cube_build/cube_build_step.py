@@ -14,7 +14,7 @@ __all__ = ["CubeBuildStep"]
 
 
 class CubeBuildStep (Step):
-    """CubeBuildStep: Creates a 3-D spectral cube
+    ''' CubeBuildStep: Creates a 3-D spectral cube
 
     Notes
     -----
@@ -32,11 +32,11 @@ class CubeBuildStep (Step):
        to the output array.
        4. Updates the output data model with correct meta data
 
-    """
+    '''
 
     class_alias = "cube_build"
 
-    spec = """
+    spec = '''
          channel = option('1','2','3','4','all',default='all') # Channel
          band = option('short','medium','long','short-medium','short-long','medium-short', \
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
@@ -63,7 +63,7 @@ class CubeBuildStep (Step):
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          debug_spaxel = string(default='-1 -1 -1') # Default not used
-       """
+       '''
 
     reference_file_types = ['cubepar']
 
