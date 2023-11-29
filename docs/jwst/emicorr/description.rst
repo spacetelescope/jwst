@@ -9,9 +9,8 @@ Overview
 The ``emicorr`` step corrects for known noise patterns in the raw MIRI data.
 The majority of the MIRI subarrays have an 390 Hz or other electromagnetic
 interference (EMI) noise pattern in the raw data. The known frequencies to
-correct for are \[\Hz\]\: 390.625, 218.52055, 218.520470, 218.520665, 164.9305,
-10.039216. For 390 Hz, the wave maps exactly to 256 pixels and has a constant
-amplitude of \+\- 4 DN. The effect of this is to imprint this into the rate
+correct for are in the EMI reference file, under the key ``frequencies``.
+The effect of these EMI frequencies is to imprint each into the rate
 images. For short integrations in LRSSLITLESS the correlated noise from this
 is quite apparent in the rate images. For longer integrations the net effect
 is to increase the read noise by about 20\%\.
@@ -41,7 +40,11 @@ be fixed the ``emicorr`` step.
 
 An EMICORR reference file can be used for to correct for all known noise
 patterns. The reference file is expected to be in an ASDF format, containing
-the phase amplitude values corresponding to the known frequencies.
+the exact frequency numbers, the corresponding 1D array for the phase
+amplitude values corresponding, and a ``subarray_cases`` key that contains
+the frequencies to correct for according tu subarray, read pattern, and
+detector. If there is no reference file found in CRDS, the step has a set
+of default frequencies and subarray cases to correct for.
 
 Input
 -----

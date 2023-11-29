@@ -5,14 +5,6 @@
 import numpy as np
 import logging
 
-### TESTING my local datamodels branch
-import os, sys
-datamdl_branch = os.path.dirname('/Users/pena/Documents/SCSB/stdatamodels/stdatamodels')
-print(datamdl_branch)
-sys.path.insert(1, datamdl_branch)
-print('\n *** TESTING my local datamodels branch *** \n')
-###
-
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -230,15 +222,17 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     freqs_numbers = []
     if emicorr_model is not None:
         log.info('Using reference file to get subarray case.')
-        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model['frequencies'], subarray, readpatt, detector)
+        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
+        reference_wave_list = []
         for fnme in freqs2correct:
-            freq = get_frequency_number(emicorr_model, fnme)
+            freq, ref_wave = get_frequency_info(emicorr_model, fnme)
             freqs_numbers.append(freq)
+            reference_wave_list.append(ref_wave)
     else:
         log.info('Using default subarray case corrections.')
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(default_subarray_cases, subarray, readpatt, detector)
         for fnme in freqs2correct:
-            freq = get_frequency_number(default_emi_freqs, fnme)
+            freq = get_frequency_info(default_emi_freqs, fnme)
             freqs_numbers.append(freq)
 
     if rowclocks is None:
@@ -421,7 +415,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
-            reference_wave = emicorr_model['frequencies'][frequency_name]['pahse_amplitudes']
+            reference_wave = reference_wave_list[fi]
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
             cc = np.zeros(reference_wave_size)
@@ -575,7 +569,7 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
 
     Parameters
     ----------
-    subarray_cases : dict
+    subarray_cases : dict or model object
         Either default corrections dictionary or datamodel
 
     subarray : str
@@ -602,26 +596,45 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     freqs_names : list
         List of frequency names to use
     """
-    subname = subarray
-    if subname == 'FULL':
-        subname = subname + '_' + readpatt
-    if subname in subarray_cases:
-        rowclocks = subarray_cases[subname]["rowclocks"]
-        frameclocks = subarray_cases[subname]["frameclocks"]
-        if readpatt == "SLOWR1":
-            frequencies = subarray_cases[subname]["freqs"]["SLOWR1"][detector]
-        else:
-            frequencies = subarray_cases[subname]["freqs"]["FASTR1"]
-        return subname, rowclocks, frameclocks, frequencies
+    subname, rowclocks, frameclocks, frequencies = None, None, None, None
+    if isinstance(subarray_cases, dict):
+        for subname in subarray_cases:
+            if subname == 'FULL':
+                subname = subname + '_' + readpatt
+            rowclocks = subarray_cases[subname]["rowclocks"]
+            frameclocks = subarray_cases[subname]["frameclocks"]
+            if readpatt == "SLOWR1":
+                frequencies = subarray_cases[subname]["freqs"]["SLOWR1"][detector]
+            else:
+                frequencies = subarray_cases[subname]["freqs"]["FASTR1"]
+            break
     else:
-        return subname, None, None, None
+        frequencies = []
+        mdl_dict = subarray_cases.to_flat_dict()
+        for subname in subarray_cases.subarray_cases:
+            subname = subname.split(sep='.')[0]
+            if 'FULL' in subname:
+                subname = subname + '_' + readpatt
+            for item, val in mdl_dict.items():
+                if subname in item:
+                    if "rowclocks" in item:
+                        rowclocks = val
+                    elif "frameclocks" in item:
+                        frameclocks = val
+                    elif "SLOWR1" in item and detector in item:
+                        frequencies.append(val)
+                    elif "FASTR1" in item:
+                        frequencies.append(val)
+            if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
+                break
+    return subname, rowclocks, frameclocks, frequencies
 
 
-def get_frequency_number(freqs_dict, frequency_name):
+def get_frequency_info(freqs_names_vals, frequency_name):
     """Get the frequency number from the given dictionary
     Parameters
     ----------
-    freqs_dict : dict
+    freqs_names_vals : dict or model object
         Either default corrections dictionary or datamodel
 
     frequency_name : str
@@ -631,15 +644,26 @@ def get_frequency_number(freqs_dict, frequency_name):
     -------
     frequency_number : float
         Frequency
+
+    phase_amplitudes : array
+        1-D array of the corresponding phase amplidues for this frequency
     """
-    try:
-        for freq_nme in freqs_dict['frecuencies']:
-            if freq_nme['frequency'] == frequency_name:
-                return freq_nme['frequency']
-    except KeyError:
-        for freq_nme, val in freqs_dict.items():
+    if isinstance(freqs_names_vals, dict):
+        for freq_nme, val in freqs_names_vals.items():
             if freq_nme == frequency_name:
                 return val
+    else:
+        freq_number, phase_amplitudes = None, None
+        mdl_dict = freqs_names_vals.to_flat_dict()
+        for item, val in mdl_dict.items():
+            if frequency_name in item:
+                if 'frequency' in item:
+                    freq_number = val
+                elif 'pahse_amplitudes' in item:
+                    phase_amplitudes = val
+            if freq_number is not None and phase_amplitudes is not None:
+                break
+        return freq_number, phase_amplitudes
 
 
 def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
