@@ -21,12 +21,40 @@ from configparser import ConfigParser
 import sphinx
 import stsci_rtd_theme
 
+from stpipe import Step
+from sphinx.ext.autodoc import AttributeDocumenter
+
+
+class StepSpecDocumenter(AttributeDocumenter):
+    def should_suppress_value_header(self):
+        if self.name == "spec" and issubclass(self.parent, Step):
+            # if this attribute is named "spec" and belongs to a "Step"
+            # don't show the value, it will be formatted in add_context below
+            return True
+        return super().should_suppress_value_header()
+
+    def add_content(self, more_content):
+        super().add_content(more_content)
+        if self.name != "spec" or not issubclass(self.parent, Step):
+            return
+        if not self.object.strip():
+            return
+
+        # format the long "Step.spec" string to improve readability
+        source_name = self.get_sourcename()
+        self.add_line("::", source_name, 0)
+        self.add_line("  ", source_name, 1)
+        txt = "\n".join((l.strip() for l in self.object.strip().splitlines()))
+        self.add_line(f"  {txt}", source_name, 2)
+
 
 def setup(app):
     try:
         app.add_css_file("stsci.css")
     except AttributeError:
         app.add_stylesheet("stsci.css")
+    # add a custom AttributeDocumenter subclass to handle Step.spec formatting
+    app.add_autodocumenter(StepSpecDocumenter, True)
 
 
 conf = ConfigParser()

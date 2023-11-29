@@ -18,6 +18,8 @@ documentation
 
 - Remove the CRDS PUB notices througout the documentation [#8075]
 
+- Improve Step.spec formatting [#8101]
+
 extract_1d
 ----------
 
