@@ -10,6 +10,5 @@ from the JWST calibration pipeline.
 
 .. currentmodule:: jwst.skymatch.skymatch_step
 
-.. automodule:: jwst.skymatch.skymatch_step
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.skymatch.skymatch_step
+   :noindex:
