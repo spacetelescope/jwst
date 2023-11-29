@@ -491,7 +491,7 @@ class DataSet():
                 )
                 fftab = MirImgPhotomModel(phot_table=data)
                 self.photom_io(fftab.phot_table[0])
-            except:
+            except AttributeError:
                 # No time-dependent correction is applied
                 log.info(" Skipping MIRI imager time correction. Extension not found in the reference file.")
                 self.photom_io(ftab.phot_table[row])
