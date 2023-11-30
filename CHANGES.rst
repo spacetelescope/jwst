@@ -350,7 +350,11 @@ ____
   four_group_rejection_threshold [#7839].
 
 - Updated argument description and parameter definition to allow
-  integer number of cores to be passed to STCAL jump.py. [#7871]
+  integer number of cores to be passed to STCAL jump.py.
+  [#7871, spacetelescope/stcal#183]
+
+- Enable the detection of snowballs that occur in frames that are
+  within a group. [spacetelescope/stcal#207]
 
 master_background
 -----------------
@@ -399,6 +403,12 @@ ramp_fitting
 - Removed unnecessary ramp fitting testing that duplicated testing already done
   in STCAL. [#7888]
 
+- Added more allowable selections for the number of cores to use for
+  multiprocessing. [spacetelescope/stcal#183]
+
+- Updated variance computation for invalid integrations, as well as
+  updating the median rate computation by excluding groups marked as
+  DO_NOT_USE. [spacetelescope/stcal#208]
 
 refpix
 ------
