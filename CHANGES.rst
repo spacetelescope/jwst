@@ -59,6 +59,12 @@ imprint
 - Updated the logging to report which imprint image is being subtracted from the
   science image. [#8041]
 
+pixel_replace
+-------------
+
+- Fixed a bug that included ``NON_SCIENCE`` flagged pixels while checking
+  for science pixels to be replaced. [#8090]
+
 ramp_fitting
 ------------
 
