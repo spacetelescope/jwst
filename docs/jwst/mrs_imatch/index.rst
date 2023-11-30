@@ -10,6 +10,12 @@ MIRI MRS Sky Matching
    :maxdepth: 2
 
    description.rst
+
+**Also See:**
+
+.. toctree::
+   :maxdepth: 1
+
    mrs_imatch_step.rst
 
 .. automodapi:: jwst.mrs_imatch

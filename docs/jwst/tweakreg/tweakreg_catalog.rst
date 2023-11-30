@@ -7,6 +7,5 @@ of sources from images.
 
 .. currentmodule:: jwst.tweakreg.tweakreg_catalog
 
-.. automodule:: jwst.tweakreg.tweakreg_catalog
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.tweakreg.tweakreg_catalog
+   :noindex:
