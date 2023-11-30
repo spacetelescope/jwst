@@ -106,7 +106,7 @@ for proper motion to a given epoch. The epoch is computed from the observation d
 of the input data. If for any reason the epoch cannot be computed from the data, it defaults to 2016.0,
 which results in no proper motion correction.
 
-.. STScI MAST Catalogs: https://outerspace.stsci.edu/display/MASTDATA/Catalog+Access
+.. _STScI MAST Catalogs: https://outerspace.stsci.edu/display/MASTDATA/Catalog+Access
 
 The combined source catalog derived in the first step
 then gets cross-matched and fit to this astrometric reference catalog.
