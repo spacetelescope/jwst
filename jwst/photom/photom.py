@@ -11,7 +11,6 @@ from stdatamodels.jwst.datamodels import dqflags
 from .. lib.wcs_utils import get_wavelengths
 from . import miri_mrs
 from . import miri_imager
-from jwst.datamodels import MirImgPhotomModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -489,7 +488,7 @@ class DataSet():
                         ("uncertainty", "<f4")
                         ],
                 )
-                fftab = MirImgPhotomModel(phot_table=data)
+                fftab = datamodels.MirImgPhotomModel(phot_table=data)
                 self.photom_io(fftab.phot_table[0])
             except AttributeError:
                 # No time-dependent correction is applied

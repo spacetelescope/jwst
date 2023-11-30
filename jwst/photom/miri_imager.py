@@ -19,13 +19,14 @@ def time_corr_photom(param, t):
     Parameters
     ----------
     param : numpy array
-            Set of parameters for the PHOTOM value
+        Set of parameters for the PHOTOM value
     t : int
         Modified Julian Day (MJD) of the observation
 
     Returns
     -------
-    The time-dependent correction to the photmjsr term.
+    corr: float
+        The time-dependent correction to the photmjsr term.
     """
     
     amplitude, tau, t0 = param["amplitude"], param["tau"], param["t0"]
