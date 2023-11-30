@@ -13,6 +13,11 @@ SkyMatch
    arguments.rst
    reference_files.rst
 
+**Also See:**
+
+.. toctree::
+   :maxdepth: 1
+
    skymatch_step
    skymatch
    skyimage

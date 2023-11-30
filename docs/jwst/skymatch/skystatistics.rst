@@ -9,6 +9,5 @@ functions used by ``skymatch.``
 
 .. currentmodule:: jwst.skymatch.skystatistics
 
-.. automodule:: jwst.skymatch.skystatistics
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.skymatch.skystatistics
+   :noindex:
