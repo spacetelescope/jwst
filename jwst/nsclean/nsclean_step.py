@@ -58,7 +58,7 @@ class NSCleanStep(Step):
             output_model, mask_model = result
 
             # Save the mask, if requested
-            if self.save_mask:
+            if self.save_mask and mask_model is not None:
                 mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix='mask')
                 self.log.info(f"Saving mask file {mask_path}")
                 mask_model.save(mask_path)
