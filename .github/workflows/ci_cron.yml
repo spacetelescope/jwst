@@ -46,10 +46,10 @@ jobs:
         - macos: py39-xdist
         - macos: py39-sdpdeps-xdist
         - macos: py310-xdist
-        - macos: py311-xdist
-        - windows: py312-xdist
+        - macos: py312-xdist
+        - windows: py311-xdist
           pytest-results-summary: true
-        - linux: py312-pyargs-xdist
+        - linux: py311-pyargs-xdist
         - linux: py312-devdeps-xdist
           pytest-results-summary: true
         - macos: py312-devdeps-xdist

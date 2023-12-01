@@ -71,10 +71,10 @@ jobs:
         - linux: py310-xdist
         - linux: py311-xdist
         - linux: py312-xdist
-        - macos: py312-xdist
+        - macos: py311-xdist
           pytest-results-summary: true
-        - linux: py312-stdevdeps-xdist
+        - linux: py311-stdevdeps-xdist
         - linux: py312-devdeps-xdist
-        - linux: py312-xdist-cov
+        - linux: py311-xdist-cov
           coverage: codecov
           pytest-results-summary: true
