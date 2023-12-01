@@ -30,9 +30,9 @@ class SpectralLeakStep(Step):
         Returns
         -------
         JWST DataModel
-            This will be `input` if the step was skipped; otherwise,
-            it will be a corrected 1-D extracted spectra that contains
-            the  3B MRS range.
+            The corrected data model. This will be "input" if the step is skipped,
+            otherwise it will be a corrected 1D extracted spectrum that contains
+            the MRS channel 3B range.
         """
 
         ch1b = None
@@ -43,21 +43,25 @@ class SpectralLeakStep(Step):
 
         with datamodels.open(input) as input_model:
             if isinstance(input_model, ModelContainer):
+                result = input_model.copy()  # copy input to return
                 # Retrieve the reference parameters for this type of data
-                sp_leak_ref = self.get_reference_file(input_model, 'mrsptcorr')
+                sp_leak_ref = self.get_reference_file(input_model[0], 'mrsptcorr')
 
                 for i, x1d in enumerate(input_model):  # input_model is a Model Container
                     # check that we have the correct type of data
                     if not isinstance(x1d, datamodels.MultiSpecModel):
                         self.log.warning("Data sent to spectral_leak step is not an extracted spectrum. It is  {}." .format(type(x1d)))
-                        return input
-
+                        for r in result:
+                            r.meta.cal_step.spectral_leak = 'SKIPPED'
+                        return result
                     channel = x1d.meta.instrument.channel
                     band = x1d.meta.instrument.band
                     srctype = x1d.spec[0].source_type
                     if srctype == 'EXTENDED':
-                        self.log.info('No spectral leak correction for extended source data')
-                        return input
+                        self.log.warning('No spectral leak correction for extended source data')
+                        for r in result:
+                            r.meta.cal_step.spectral_leak = 'SKIPPED'
+                        return result
                     # search x1d containing CH 1 B
                     if '1' in channel and 'MEDIUM' in band:
                         self.log.info('Found CH 1B in input data')
@@ -83,16 +87,20 @@ class SpectralLeakStep(Step):
                             ch3a = x1d
                             ich3a = i  # store the datamodel to update later
 
-        # done looping over data now if 1B and 3A data exists make a correction
-        # update result and return
-        if ch1b is not None and ch3a is not None:
-            result = input_model.copy()  # copy input to return
-            corrected_3a = spectral_leak.do_correction(sp_leak_ref, ch1b, ch3a)
-            result[ich3a].spec[0].spec_table.FLUX = corrected_3a
-            result[ich3a].meta.cal_step.spectral_leak = 'COMPLETE'
-            return result
-        else:
-            self.log.info('CH1B and CH3A were not found. Not spectral leak correction')
-            return input 
+                # done looping over data now if 1B and 3A data exists make a correction
+                # update result and return
+                if ch1b is not None and ch3a is not None:
+                    corrected_3a = spectral_leak.do_correction(sp_leak_ref, ch1b, ch3a)
+                    result[ich3a].spec[0].spec_table.FLUX = corrected_3a
+                    result[ich3a].meta.cal_step.spectral_leak = 'COMPLETE'
+                    return result
+                else:
+                    for r in result:
+                        r.meta.cal_step.spectral_leak = 'SKIPPED'
+                    self.log.warning('CH1B and CH3A were not found. No spectral leak correction')
+                    return result
 
-
+            else:
+                self.log.warning("Data sent to spectral_leak step is not a ModelContainer. It is  {}." .format(type(input_model)))
+                self.log.warning("Step is skipped")
+                return input

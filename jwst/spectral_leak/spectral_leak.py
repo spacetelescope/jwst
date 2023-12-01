@@ -16,10 +16,12 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     Parameters
     ----------
     sp_leak_ref : string
-        name of the spectral leak refile file defined by datamodels.MirMrsPtCorrModel
+        name of the spectral leak reference file defined by datamodels.MirMrsPtCorrModel
 
     ch1b : numpy array
+        Input channel 1 B spectrum
     ch3a : numpy array
+        Input channel 3 A spectrum
 
     Returns
     -------
