@@ -8,6 +8,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
+write_to = "jwst/_version.py"
 
 [tool.ruff]
 line-length = 130
