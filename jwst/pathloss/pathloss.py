@@ -267,14 +267,12 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
 
     Parameters
      ---------
-        pathloss_model : pathloss datamodel
-
+    pathloss_model : pathloss datamodel
         The pathloss datamodel
 
     Returns
     -------
-        (wavelength, pathloss_vector) : tuple of 2 1-d numpy arrays
-
+    (wavelength, pathloss_vector) : tuple of 2 1-d numpy arrays
         The wavelength and pathloss 1-d arrays
 
     """
