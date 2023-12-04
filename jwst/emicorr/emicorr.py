@@ -599,6 +599,8 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     subname, rowclocks, frameclocks, frequencies = None, None, None, None
     if isinstance(subarray_cases, dict):
         for subname in subarray_cases:
+            if subarray not in subname:
+                continue
             if subname == 'FULL':
                 subname = subname + '_' + readpatt
             rowclocks = subarray_cases[subname]["rowclocks"]

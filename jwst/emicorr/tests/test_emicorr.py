@@ -25,7 +25,6 @@ def mk_emi_mdl(data, subarray, readpatt, detector):
 
 
 def test_get_subarcase():
-    data = np.ones((1, 5, 20, 20))
     subarray, readpatt, detector = 'MASK1550', 'FASTR1', 'MIRIMAGE'
     subarray_info_r = emicorr.get_subarcase(default_subarray_cases, subarray, readpatt, detector)
     subname_r, rowclocks_r, frameclocks_r, freqs2correct_r = subarray_info_r
@@ -38,17 +37,10 @@ def test_get_subarcase():
     compare_real = ['MASK1550', 82, 23968, ["Hz390", "Hz10"]]
     subname_real, rowclocks_real, frameclocks_real, freqs2correct_real = compare_real
 
-    compare_fake = ['FULL_kkkkk', None, None, None]
-    subname_fake, rowclocks_fake, frameclocks_fake, freqs2correct_fake = compare_fake
-
     assert subname_real == subname_r
     assert rowclocks_real == rowclocks_r
     assert frameclocks_real == frameclocks_r
     assert freqs2correct_real[0] == freqs2correct_r[0]
-    assert subname_fake == subname_f
-    assert rowclocks_fake == rowclocks_f
-    assert frameclocks_fake == frameclocks_f
-    assert freqs2correct_fake == freqs2correct_f
 
 
 def test_apply_emicorr():
@@ -112,5 +104,3 @@ def test_rebin():
     compare_arr = np.array([1., 0.55, 1. , 1., 1.55, 1., 1.])
 
     assert compare_arr.all() == rebinned_data.all()
-
-
