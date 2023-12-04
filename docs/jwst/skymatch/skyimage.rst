@@ -6,6 +6,5 @@ skyimage
 
 .. currentmodule:: jwst.skymatch.skyimage
 
-.. automodule:: jwst.skymatch.skyimage
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.skymatch.skyimage
+   :noindex:

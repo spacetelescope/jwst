@@ -1,15 +1,26 @@
 """Class definition for performing outlier detection on IFU data."""
 
-import numpy as np
-from stdatamodels.jwst import datamodels
-from scipy.signal import medfilt
-from .outlier_detection import OutlierDetection
-from stdatamodels.jwst.datamodels import dqflags
 import logging
+
+import numpy as np
+from skimage.util import view_as_windows
+
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
+from .outlier_detection import OutlierDetection
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 __all__ = ["OutlierDetectionIFU"]
+
+
+def medfilt(arr, kern_size):
+    # scipy.signal.medfilt (and many other median filters) have undefined behavior
+    # for nan inputs. See: https://github.com/scipy/scipy/issues/4800
+    padded = np.pad(arr, [[k // 2] for k in kern_size])
+    windows = view_as_windows(padded, kern_size, np.ones(len(kern_size), dtype='int'))
+    return np.nanmedian(windows, axis=np.arange(-len(kern_size), 0))
 
 
 class OutlierDetectionIFU(OutlierDetection):
@@ -220,7 +231,7 @@ class OutlierDetectionIFU(OutlierDetection):
         minarr = np.nanmin(diffarr, axis=0)
 
         # Normalise the differences to a local median image to deal with ultra-bright sources
-        normarr = medfilt(minarr, kernel_size=kern_size)
+        normarr = medfilt(minarr, kern_size)
         nfloor = np.nanmedian(minarr)/3
         normarr[normarr < nfloor] = nfloor  # Ensure we never divide by a tiny number
         minarr_norm = minarr / normarr
