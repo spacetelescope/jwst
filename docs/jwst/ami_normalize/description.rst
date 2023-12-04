@@ -22,7 +22,7 @@ Inputs
 Interferometric Observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
-:File suffix: _ami-oi.fits and/or _psf-ami.oifits
+:File suffix: _ami-oi.fits and/or _psf-ami-oi.fits
 
 The ``ami_normalize`` step takes two inputs: the first is the 
 interferometric observables for a science target and the second 
