@@ -14,7 +14,6 @@ log.setLevel(logging.DEBUG)
 default_emi_freqs = {
     "Hz390": 390.625,
     "Hz390_sub128": 390.625,
-    "Hz164": 164.9305,
     "Hz10": 10.039216,
     "Hz10_slow_MIRIMAGE": 10.039216,
     "Hz10_slow_MIRIFULONG": 10.039216,
@@ -28,50 +27,50 @@ default_subarray_cases = {
     "SLITLESSPRISM": {
         "rowclocks": 28,
         "frameclocks": 15904,
-        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
-                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs":  {"FASTR1": ["Hz390", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "MASKLYOT": {
         "rowclocks": 90,
         "frameclocks": 32400,
-        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
-                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs":  {"FASTR1": ["Hz390", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "SUB64": {
         "rowclocks": 28,
         "frameclocks": 8512,
-        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
-                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs":  {"FASTR1": ["Hz390", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "SUB128": {
         "rowclocks": 44,
         "frameclocks": 11904,
-        "freqs":  {"FASTR1": ["Hz390_sub128", "Hz164", "Hz10"],
-                   "SLOWR1":  {"MIRIMAGE" : ["Hz390_sub128", "Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390_sub128", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390_sub128", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs":  {"FASTR1": ["Hz390_sub128", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "MASK1140": {
         "rowclocks": 82,
         "frameclocks": 23968,
-        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
-                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs":  {"FASTR1": ["Hz390", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
     "MASK1550": {
         "rowclocks": 82,
         "frameclocks": 23968,
-        "freqs":  {"FASTR1": ["Hz390", "Hz164", "Hz10"],
-                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs":  {"FASTR1": ["Hz390", "Hz10"],
+                   "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
     # 390Hz already in-phase for these, but may need corr for other
     # frequencies (e.g. 10Hz heater noise)
@@ -79,30 +78,30 @@ default_subarray_cases = {
     "FULL_FASTR1": {
         "rowclocks": 271,
         "frameclocks": 277504,
-        "freqs": {"FASTR1" : ["Hz164", "Hz10"]}},
+        "freqs": {"FASTR1" : ["Hz10"]}},
 
     "FULL_SLOWR1": {
         "rowclocks": 2333,
         "frameclocks": 2388992,
-        "freqs": {"SLOWR1":  {"MIRIMAGE" : ["Hz164", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs": {"SLOWR1":  {"MIRIMAGE" : ["Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz10_slow_MIRIFUSHORT"]}}},
 
     "BRIGHTSKY": {
         "rowclocks": 162,
         "frameclocks": 86528,
-        "freqs": {"FASTR1" : ["Hz164", "Hz10"],
-                  "SLOWR1": {"MIRIMAGE" : ["Hz164", "Hz10_slow_MIRIMAGE"],
-                            "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                            "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}},
+        "freqs": {"FASTR1" : ["Hz10"],
+                  "SLOWR1": {"MIRIMAGE" : ["Hz10_slow_MIRIMAGE"],
+                            "MIRIFULONG" : ["Hz10_slow_MIRIFULONG"],
+                            "MIRIFUSHORT" : ["Hz10_slow_MIRIFUSHORT"]}}},
 
     "SUB256": {
         "rowclocks": 96,
         "frameclocks": 29952,
-        "freqs": {"FASTR1" : ["Hz164", "Hz10"],
-                  "SLOWR1": {"MIRIMAGE" : ["Hz164", "Hz10_slow_MIRIMAGE"],
-                            "MIRIFULONG" : ["Hz390", "Hz164", "Hz10_slow_MIRIFULONG"],
-                            "MIRIFUSHORT" : ["Hz390", "Hz164", "Hz10_slow_MIRIFUSHORT"]}}}
+        "freqs": {"FASTR1" : ["Hz10"],
+                  "SLOWR1": {"MIRIMAGE" : ["Hz10_slow_MIRIMAGE"],
+                            "MIRIFULONG" : ["Hz10_slow_MIRIFULONG"],
+                            "MIRIFUSHORT" : ["Hz10_slow_MIRIFUSHORT"]}}},
 }
 
 
@@ -153,7 +152,7 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
 
 def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         save_intermediate_results=False, user_supplied_reffile=None,
-        nints_to_phase=None, nbins=None, scale_reference=False):
+        nints_to_phase=None, nbins=None, scale_reference=True):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -250,8 +249,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         freq_pa_dict = {'frequencies': {}, 'subarray_cases': {}}
 
     # Loop over the frequencies to correct
+    log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
     log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
-    log.info('   {}'.format(freqs_numbers))
+    log.info('   {}'.format(freqs2correct))
     for fi, frequency_name in enumerate(freqs2correct):
         frequency = freqs_numbers[fi]
         log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
@@ -444,7 +444,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
         if save_intermediate_results and save_onthefly_reffile is not None:
             freq_pa_dict['frequencies'][frequency_name] = {'frequency' : frequency,
-                                                        'pahse_amplitudes' : pa}
+                                                        'phase_amplitudes' : pa}
 
         log.info('Creating phased-matched noise model to subtract from data')
         # This is the phase matched noise model to subtract from each pixel of the input image
@@ -613,6 +613,9 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
         mdl_dict = subarray_cases.to_flat_dict()
         for subname in subarray_cases.subarray_cases:
             subname = subname.split(sep='.')[0]
+            if subarray not in subname:
+                continue
+            log.debug('Found subarray case {}!'.format(subname))
             if 'FULL' in subname:
                 subname = subname + '_' + readpatt
             for item, val in mdl_dict.items():
@@ -621,10 +624,11 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
                         rowclocks = val
                     elif "frameclocks" in item:
                         frameclocks = val
-                    elif "SLOWR1" in item and detector in item:
-                        frequencies.append(val)
-                    elif "FASTR1" in item:
-                        frequencies.append(val)
+                    else:
+                        if readpatt == "SLOWR1" and "SLOWR1" in item and detector in item:
+                            frequencies.append(val)
+                        elif readpatt == "FASTR1" and "FASTR1" in item:
+                            frequencies.append(val)
             if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
                 break
     return subname, rowclocks, frameclocks, frequencies
@@ -659,7 +663,7 @@ def get_frequency_info(freqs_names_vals, frequency_name):
             if frequency_name in item:
                 if 'frequency' in item:
                     freq_number = val
-                elif 'pahse_amplitudes' in item:
+                if 'phase_amplitudes' in item:
                     phase_amplitudes = val
             if freq_number is not None and phase_amplitudes is not None:
                 break
