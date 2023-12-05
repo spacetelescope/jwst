@@ -52,3 +52,4 @@ jobs:
         - linux: py311-xdist-cov
           coverage: codecov
           pytest-results-summary: true
+        - linux: py312-xdist
