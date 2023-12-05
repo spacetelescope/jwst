@@ -463,15 +463,15 @@ class DataSet():
                 warnings.simplefilter("ignore")
                 row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
-
+                # Search again using subarray="GENERIC" for old ref files
                 fields_to_match = {'subarray': 'GENERIC',
                                    'filter': self.filter}
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-                self.photom_io(ftab.phot_table[row])
                 
-            # Check if reference file contains the coefficients for the time-dependent correction of the PHOTOM value
+            # Check to see if the reference file contains the coefficients for the
+            # time-dependent correction of the PHOTOM value
             try:
                 ftab.getarray_noinit("timecoeff")
                 log.info("Applying the time-dependent correction to the PHOTOM value.")
