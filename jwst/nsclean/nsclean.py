@@ -5,7 +5,7 @@ import gwcs
 from astropy.stats import sigma_clipped_stats
 
 from jwst import datamodels
-from .. assign_wcs import nirspec
+from jwst.assign_wcs import nirspec
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.nsclean.lib import NSClean, NSCleanSubarray
@@ -146,12 +146,12 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
     if exptype in ['nrs_ifu', 'nrs_msaspec']:
-        open_pix = np.where(input_model.dq & dqflags.pixel['MSA_FAILED_OPEN'])
-        mask[open_pix] = False
+        open_pix = input_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
+        mask[open_pix > 0] = False
 
     # Temporarily reset NaN pixels and mask them.
     # Save the list of NaN pixel coords, so that they can be reset at the end.
-    nan_pix = np.where(np.isnan(input_model.data))
+    nan_pix = np.isnan(input_model.data)
     input_model.data[nan_pix] = 0
     mask[nan_pix] = False
 
@@ -170,7 +170,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     if len(input_model.data.shape) == 3:
         for i in range(input_model.data.shape[0]):
             _, median, sigma = sigma_clipped_stats(input_model.data[i], mask=~mask[i], mask_value=0, sigma=5.0)
-            outliers = np.where(input_model.data[i] > (median + n_sigma * sigma))
+            outliers = input_model.data[i] > (median + n_sigma * sigma)
             mask[i][outliers] = False
     else:
         _, median, sigma = sigma_clipped_stats(input_model.data, mask=~mask, mask_value=0, sigma=5.0)
@@ -313,7 +313,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         Mask = (mask_model.data.copy()).astype(np.bool_)
 
         # Reset and save list of NaN pixels in the input image
-        nan_pix = np.where(np.isnan(input_model.data))
+        nan_pix = np.isnan(input_model.data)
         input_model.data[nan_pix] = 0
         Mask[nan_pix] = False
     
