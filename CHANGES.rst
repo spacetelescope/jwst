@@ -36,6 +36,9 @@ extract_2d
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
 
+- Fixed potential future crash if MSA slitlet name is not an
+  integer. [#8108]
+
 general
 -------
 
