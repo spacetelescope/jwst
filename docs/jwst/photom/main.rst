@@ -76,6 +76,14 @@ The step also computes the equivalent conversion factor to units of
 microJy/square-arcsecond (or microjanskys) and stores it in the header
 keyword PHOTUJA2.
 
+MIRI Imaging
+^^^^^^^^^^^^
+For MIRI imaging mode, the reference file can optionally contain a table of
+coefficients that are used to apply time-dependent corrections to the scalar
+conversion factor. If the time-dependent coefficients are present in the
+reference file, the photom step will apply the correction based on the
+observation date of the exposure being processed.
+
 NIRSpec Fixed-Slit Primary Slit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The primary slit in a NIRSpec fixed-slit exposure receives special handling.

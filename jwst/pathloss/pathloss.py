@@ -266,7 +266,7 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
      routine since it uses both the 1X1 and 1X3 extensions of the pathloss reference file
 
     Parameters
-     ---------
+    ----------
     pathloss_model : pathloss datamodel
         The pathloss datamodel
 

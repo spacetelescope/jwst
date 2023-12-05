@@ -504,7 +504,7 @@ def extract_ifu(input_model, source_type, extract_params):
         # If ifu_autocen is set, try to find the source in the field using DAOphot
         if extract_params['ifu_autocen'] is True:
             log.info('Using auto source detection.')
-            collapse = np.nanmedian(data, axis=0)
+            collapse = np.ma.median(np.ma.masked_invalid(data), axis=0)
             # Sigma-clipped stats on collapsed image
             _, clipmed, cliprms = sigclip(collapse)
             # Find source in the collapsed image above 3 sigma

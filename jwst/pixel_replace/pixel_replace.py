@@ -122,40 +122,45 @@ class PixelReplacement:
                     n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
                     log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
                 else:
-                    # NRS_IFU method - Fixed number of IFU slices to iterate over
-                    for i in range(30):
-                        slice_wcs = nrs_wcs_set_input(self.input, i)
-                        _, _, wave = slice_wcs.transform('detector', 'slicer', yy, xx)
+                    # Mingrad method
+                    if (self.pars['algorithm'] == 'mingrad'):
+                        new_model = self.algorithm(self.input)
+                        self.output = new_model
+                    # fit_profile method - iterate over IFU slices
+                    else:
+                        for i in range(30):
+                            slice_wcs = nrs_wcs_set_input(self.input, i)
+                            _, _, wave = slice_wcs.transform('detector', 'slicer', yy, xx)
 
-                        # Define a mask that is True where this trace is located
-                        trace_mask = (wave > 0)
-                        trace_model = self.input.copy()
-                        trace_model.dq = np.where(
-                            # When not in this trace, set NON_SCIENCE and DO_NOT_USE
-                            ~trace_mask,
-                            trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
-                            trace_model.dq
-                        )
+                            # Define a mask that is True where this trace is located
+                            trace_mask = (wave > 0)
+                            trace_model = self.input.copy()
+                            trace_model.dq = np.where(
+                                # When not in this trace, set NON_SCIENCE and DO_NOT_USE
+                                ~trace_mask,
+                                trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
+                                trace_model.dq
+                            )
 
-                        trace_model = self.algorithm(trace_model)
-                        self.output.data = np.where(
-                            # Where trace is located, set replaced values
-                            trace_mask,
-                            trace_model.data,
-                            self.output.data
-                        )
+                            trace_model = self.algorithm(trace_model)
+                            self.output.data = np.where(
+                                # Where trace is located, set replaced values
+                                trace_mask,
+                                trace_model.data,
+                                self.output.data
+                            )
 
-                        self.output.dq = np.where(
-                            # Where trace is located, set replaced values
-                            trace_mask,
-                            trace_model.dq,
-                            self.output.dq
-                        )
+                            self.output.dq = np.where(
+                                # Where trace is located, set replaced values
+                                trace_mask,
+                                trace_model.dq,
+                                self.output.dq
+                            )
 
-                        n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
-                        log.info(f"Input NRS_IFU frame had {n_replaced} pixels replaced in IFU slice {i + 1}.")
+                            n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
+                            log.info(f"Input NRS_IFU frame had {n_replaced} pixels replaced in IFU slice {i + 1}.")
 
-                        trace_model.close()
+                            trace_model.close()
 
                     n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
                     log.info(f"Input NRS_IFU frame had {n_replaced} total pixels replaced.")
@@ -227,7 +232,7 @@ class PixelReplacement:
         model_replaced = model.copy()
 
         # Truncate array to region where good pixels exist
-        good_pixels = np.where(~model.dq & 1)
+        good_pixels = np.where(~model.dq & self.DO_NOT_USE)
         if np.any(0 in np.shape(good_pixels)):
             log.warning("No good pixels in at least one dimension of "
                         "data array - skipping pixel replacement.")
@@ -262,7 +267,8 @@ class PixelReplacement:
             )
             # Find bad pixels in region containing valid data.
             n_bad = np.count_nonzero(dq_slice & self.DO_NOT_USE)
-            if n_bad == len(dq_slice):
+            n_nonscience = np.count_nonzero(dq_slice & self.NON_SCIENCE)
+            if n_bad + n_nonscience == len(dq_slice):
                 log.debug(f"Slice {ind} contains no good pixels. Skipping replacement.")
                 valid_profiles.discard(ind)
             elif n_bad == 0:

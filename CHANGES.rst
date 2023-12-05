@@ -39,13 +39,13 @@ extract_2d
 general
 -------
 
-- Add lack of python 3.12 support to project metadata [#8042]
-
 - Increase asdf maximum version to 4. [#8018]
 
 - Remove upper version limit for scipy. [#8033]
 
 - Remove the use of ``pkg_resources`` by ``jwst``. [#8095]
+
+- Fix Python 3.12 support. [#8093]
 
 outlier_detection
 -----------------
@@ -64,7 +64,7 @@ imprint
 pathloss
 --------
 
-- Updated code to handle slits that aren't 1X1 or 1X3. [#8106]
+- Updated code to handle NIRSpec MOS slitlets that aren't 1X1 or 1X3. [#8106]
 
 photom
 --------

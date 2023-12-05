@@ -27,6 +27,9 @@ Primary function for creating an astrometric reference catalog.
 """
 
 
+__all__ = ["TIMEOUT", "compute_radius", "create_astrometric_catalog", "get_catalog"]
+
+
 def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.ecsv",
                                gaia_only=False, table_format="ascii.ecsv",
                                existing_wcs=None, num_sources=None, epoch=None):

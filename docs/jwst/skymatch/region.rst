@@ -9,6 +9,5 @@ used by ``skymatch`` to create data masks.
 
 .. currentmodule:: jwst.skymatch.region
 
-.. automodule:: jwst.skymatch.region
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.skymatch.region
+   :noindex:
