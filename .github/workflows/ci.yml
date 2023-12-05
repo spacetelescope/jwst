@@ -46,12 +46,11 @@ jobs:
   check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
-      default_python: "3.11"
+      default_python: "3.12"
       envs: |
         - linux: check-style
         - linux: check-security
         - linux: check-dependencies
-        - linux: build-dist
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
     needs: [ crds ]
@@ -70,10 +69,11 @@ jobs:
         - linux: py39-sdpdeps-xdist
         - linux: py310-xdist
         - linux: py311-xdist
+        - linux: py312-xdist
         - macos: py311-xdist
           pytest-results-summary: true
         - linux: py311-stdevdeps-xdist
-        - linux: py311-devdeps-xdist
+        - linux: py312-devdeps-xdist
         - linux: py311-xdist-cov
           coverage: codecov
           pytest-results-summary: true
