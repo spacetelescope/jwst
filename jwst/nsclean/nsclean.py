@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 
+import gwcs
 from astropy.stats import sigma_clipped_stats
 
 from jwst import datamodels
@@ -23,16 +24,14 @@ def mask_ifu_slices(input_model, mask):
     input_model : data model object
         science data
 
-    mask : 2D boolean array
+    mask : 2D bool array
         input mask that will be updated
 
     Returns
     -------
-    mask : 2D boolean array
+    mask : 2D bool array
         output mask with additional flags for science pixels
     """
-
-    import gwcs
 
     log.info("Finding slice pixels for an IFU image")
 
@@ -80,12 +79,12 @@ def mask_slits(input_model, mask):
     input_model : data model object
         science data
 
-    mask : 2D boolean array
+    mask : 2D bool array
         input mask that will be updated
 
     Returns
     -------
-    mask : 2D boolean array
+    mask : 2D bool array
         output mask with additional flags for slit pixels
     """
 
@@ -116,7 +115,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     input_model : data model object
         science data
 
-    mask_spectral_regions : boolean
+    mask_spectral_regions : bool
         mask slit/slice regions defined in WCS
 
     n_sigma : float
@@ -124,7 +123,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
 
     Returns
     -------
-    mask : 2D boolean array
+    mask : 2D or 3D bool array
         image mask
 
     nan_pix : array
@@ -175,7 +174,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
             mask[i][outliers] = False
     else:
         _, median, sigma = sigma_clipped_stats(input_model.data, mask=~mask, mask_value=0, sigma=5.0)
-        outliers = np.where(input_model.data > (median + n_sigma * sigma))
+        outliers = input_model.data > (median + n_sigma * sigma)
         mask[outliers] = False
 
 
@@ -189,13 +188,13 @@ def clean_full_frame(detector, image, mask):
 
     Parameters
     ----------
-    detector : string
+    detector : str
         The name of the detector from which the data originate.
 
     image : 2D float array
         The image to be cleaned.
 
-    mask : 2D boolean array
+    mask : 2D bool array
         The mask that indicates which pixels are to be used in fitting.
 
     Returns
@@ -222,13 +221,13 @@ def clean_subarray(detector, image, mask):
 
     Parameters
     ----------
-    detector : string
+    detector : str
         The name of the detector from which the data originate.
 
     image : 2D float array
         The image to be cleaned.
 
-    mask : 2D boolean array
+    mask : 2D bool array
         The mask that indicates which pixels are to be used in fitting.
 
     Returns
@@ -274,24 +273,24 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     input_model : data model object
         science data to be corrected
 
-    mask_spectral_regions : boolean
+    mask_spectral_regions : bool
         Mask slit/slice regions defined in WCS
 
     n_sigma : float
         n-sigma rejection level for finding outliers
 
-    save_mask : boolean
+    save_mask : bool
         switch to indicate whether the mask should be saved
 
-    user_mask : string or None
+    user_mask : str or None
         Path to user-supplied mask image
 
     Returns
     -------
-    output_model : jwst.datamodel.JwstDataModel
+    output_model : `~jwst.datamodel.JwstDataModel`
         corrected data
 
-    mask_model : jwst.datamodel.JwstDataModel
+    mask_model : `~jwst.datamodel.JwstDataModel`
         pixel mask to be saved or None
     """
 

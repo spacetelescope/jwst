@@ -34,13 +34,13 @@ class NSCleanStep(Step):
         n_sigma : float, optional
             Sigma clipping threshold to be used in detecting outliers in the image
 
-        save_mask : boolean, optional
+        save_mask : bool, optional
             Save the computed mask image
 
-        user_mask : None, string, or `~jwst.datamodels.ImageModel`
+        user_mask : None, str, or `~jwst.datamodels.ImageModel`
             Optional user-supplied mask image; path to file or opened datamodel
 
-        mask_spectral_regions : boolean, optional
+        mask_spectral_regions : bool, optional
             Mask regions of the image defined by WCS bounding boxes for slits/slices
 
         Returns
