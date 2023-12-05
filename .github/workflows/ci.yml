@@ -27,7 +27,6 @@ jobs:
         - linux: check-style
         - linux: check-security
         - linux: check-dependencies
-        - linux: build-dist
   crds_contexts:
     uses: spacetelescope/crds/.github/workflows/contexts.yml@master
   test:
