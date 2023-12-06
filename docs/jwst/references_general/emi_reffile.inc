@@ -17,31 +17,54 @@ EMI Reference File Format
 +++++++++++++++++++++++++
 
 MIRI EMI reference files are in ASDF format.  The EMI
-reference file contains data in the following keyes:
-``Hz390``, ``Hz218a``, ``Hz218b``, ``Hz218c``, ``Hz164`` and
-``Hz10``.  The content of each entry is a 1-D array with the
-phase amplitude values corresponding to each frequency.
+reference file contains the frequencies to correct for.
+Example file contents:
+root (AsdfObject)
+├─frequencies (dict)
+│ ├─Hz10 (dict)
+│ │ ├─frequency (float): 10.039216
+│ │ └─phase_amplitudes (NDArrayType): shape=(500,), dtype=float32
+│ ├─Hz10_slow_MIRIFULONG (dict)
+│ │ ├─frequency (float): 10.039216
+│ │ └─phase_amplitudes (NDArrayType): shape=(250,), dtype=float32
 
-+------------+---------------+-----------+------------+----------+
-| Instrument | Key name      | Data type | Dimensions | Units    |
-+============+===============+===========+============+==========+
-| MIRI       | Hz390         | float     | scalar     | Hz       |
-+            +---------------+-----------+------------+----------+
-|            | Hz218a        | float     | scalar     | Hz       |
-+            +---------------+-----------+------------+----------+
-|            | Hz218b        | float     | scalar     | Hz       |
-+            +---------------+-----------+------------+----------+
-|            | Hz218c        | float     | scalar     | Hz       |
-+            +---------------+-----------+------------+----------+
-|            | Hz164         | float     | scalar     | Hz       |
-+            +---------------+-----------+------------+----------+
-|            | Hz10          | float     | scalar     | Hz       |
-+------------+---------------+-----------+------------+----------+
+└─subarray_cases (dict)
+  ├─BRIGHTSKY (dict)
+  │ ├─frameclocks (int): 23968
+  │ ├─freqs (dict)
+  │ │ ├─FASTR1 (list)
+  │ │ │ └─[0] (str): Hz10
+  │ │ └─SLOWR1 (dict)
+  │ │   ├─MIRIFULONG (list)
+  │ │   │ └─[0] (str): Hz10_slow_MIRIFULONG
+  │ │   ├─MIRIFUSHORT (list)
+  │ │   │ └─[0] (str): Hz10_slow_MIRIFUSHORT
+  │ │   └─MIRIMAGE (list)
+  │ │     └─[0] (str): Hz10_slow_MIRIMAGE
+  │ └─rowclocks (int): 82
+  ├─MASK1140 (dict)
+  │ ├─frameclocks (int): 23968
+  │ ├─freqs (dict)
+  │ │ ├─FASTR1 (list)
+  │ │ │ ├─[0] (str): Hz390
+  │ │ │ └─[1] (str): Hz10
+  │ │ └─SLOWR1 (dict)
+  │ │   ├─MIRIFULONG (list)
+  │ │   │ ├─[0] (str): Hz390
+  │ │   │ └─[1] (str): Hz10_slow_MIRIFULONG
+  │ │   ├─MIRIFUSHORT (list)
+  │ │   │ ├─[0] (str): Hz390
+  │ │   │ └─[1] (str): Hz10_slow_MIRIFUSHORT
+  │ │   └─MIRIMAGE (list)
+  │ │     ├─[0] (str): Hz390
+  │ │     └─[1] (str): Hz10_slow_MIRIMAGE
+  │ └─rowclocks (int): 82
 
 
 Frequency Selection
 ^^^^^^^^^^^^^^^^^^^
 
 The frequency to be corrected for will be selected according to the
-dictionary ``subarray_cases``, key ``freqs``, located in the
-``emicorr.py`` script within the ``emicorr` directory under ``jwst``.
+dictionary contained in the key ``subarray_cases`` in the reference
+file. This contains the subarray names and the names of the
+corresponding frequencies to correct for.

@@ -6,15 +6,6 @@ from ..stpipe import Step
 from . import emicorr
 
 
-# These are the exposure types to correct for EMI
-exp_types2correct = [
-    'MIR_4QPM',
-    'MIR_IMAGE',
-    'MIR_LRS-SLITLESS',
-    'MIR_LYOT'
-]
-
-
 __all__ = ["EmiCorrStep"]
 
 
@@ -38,10 +29,10 @@ class EmiCorrStep(Step):
     def process(self, input):
         with datamodels.open(input) as input_model:
 
-            # Catch the cases to skip
-            exp_type = input_model.meta.exposure.type.upper()
-            if exp_type not in exp_types2correct:
-                self.log.info('EMI correction not implemented for EXP_TYPE: {}'.format(exp_type))
+            # Catch the cases to skip, i.e. all instruments other than MIRI
+            instrument = input_model.meta.instrument.name
+            if instrument != 'MIRI':
+                self.log.info('EMI correction not implemented for Instrument: {}'.format(instrument))
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
