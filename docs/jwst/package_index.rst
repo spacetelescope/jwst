@@ -41,6 +41,7 @@ Package Index
    model_blender/index.rst
    mrs_imatch/index.rst
    msaflagopen/index.rst
+   nsclean/index.rst
    outlier_detection/index.rst
    pathloss/index.rst
    persistence/index.rst

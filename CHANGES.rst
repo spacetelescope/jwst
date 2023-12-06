@@ -36,6 +36,9 @@ extract_2d
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
 
+- Fixed potential future crash if MSA slitlet name is not an
+  integer. [#8108]
+
 general
 -------
 
@@ -47,6 +50,18 @@ general
 
 - Fix Python 3.12 support. [#8093]
 
+imprint
+-------
+
+- Updated the logging to report which imprint image is being subtracted from the
+  science image. [#8041]
+
+nsclean
+-------
+
+- Implemented this new step, which is used to remove 1/f noise from NIRSpec
+  images. [#8000]
+
 outlier_detection
 -----------------
 
@@ -55,22 +70,24 @@ outlier_detection
 
 - Replace uses of ``datetime.utcnow`` (deprecated in python 3.12) [#8051]
 
-imprint
--------
-
-- Updated the logging to report which imprint image is being subtracted from the
-  science image. [#8041]
-
 pathloss
 --------
 
 - Updated code to handle NIRSpec MOS slitlets that aren't 1X1 or 1X3. [#8106]
 
 photom
---------
+------
 
 - Added time-dependent correction for MIRI Imager data.
   [#8096, #8102, spacetelescope/stdatamodels#235]
+
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to add in calling the ``nsclean`` step
+  for NIRSpec exposures. Also rearranged the order of the steps, so that
+  ``msa_flagging`` immediately follows ``assign_wcs``, so that both steps have
+  been applied before calling ``nsclean``. [#8000]
 
 pixel_replace
 -------------

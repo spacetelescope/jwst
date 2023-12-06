@@ -20,8 +20,10 @@ def run_pipeline(rtdata_module):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
-            "--steps.bkg_subtract.save_results=true",
             "--steps.msa_flagging.save_results=true",
+            "--steps.nsclean.skip=False",
+            "--steps.nsclean.save_results=true",
+            "--steps.bkg_subtract.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.srctype.save_results=true",
             "--steps.wavecorr.save_results=true",
@@ -35,7 +37,7 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "bsub", "msa_flagging", "extract_2d", "wavecorr", "flat_field",
+    "assign_wcs", "msa_flagging", "nsclean", "bsub", "extract_2d", "wavecorr", "flat_field",
     "srctype", "pathloss", "barshadow", "cal", "s2d", "x1d"])
 def test_nirspec_mos_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
