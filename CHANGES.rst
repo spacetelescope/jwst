@@ -50,6 +50,8 @@ general
 
 - Fix Python 3.12 support. [#8093]
 
+- add ignores for lint checks [#8112]
+
 outlier_detection
 -----------------
 
