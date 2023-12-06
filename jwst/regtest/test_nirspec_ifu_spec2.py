@@ -24,6 +24,8 @@ def run_spec2(jail, rtdata_module):
         'args': [
             '--steps.assign_wcs.save_results=true',
             '--steps.msa_flagging.save_results=true',
+            '--steps.nsclean.skip=False',
+            '--steps.nsclean.save_results=true',
             '--steps.srctype.save_results=true',
             '--steps.flat_field.save_results=true',
             '--steps.pathloss.save_results=true',
@@ -39,7 +41,7 @@ def run_spec2(jail, rtdata_module):
 @pytest.mark.parametrize(
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'msa_flagging',
-     'pathloss', 's3d', 'srctype', 'x1d']
+     'nsclean', 'pathloss', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
