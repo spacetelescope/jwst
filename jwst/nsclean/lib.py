@@ -91,7 +91,7 @@ class NSClean:
         FW = np.fft.rfft2(np.fft.ifftshift(W))
         with np.errstate(divide='ignore'):
             self.P = 1 / np.fft.irfft2(np.fft.rfft2(np.array(self.mask, dtype=np.float32)) * FW, (self.ny,self.nx))
-        self.P = np.where(self.mask==True, self.P, 0.) # Illuminated areas carry no weight
+        self.P = np.where(self.mask==True, self.P, 0.) # noqa E712 Illuminated areas carry no weight
 
         # Build a 1-dimensional Gaussian kernel for "buffing". Buffing is in the
         # dispersion direction only. In detector coordinates, this is axis zero. Even though
@@ -484,7 +484,7 @@ class NSCleanSubarray:
             _M = np.hstack((self.mask, np.zeros((self.ny,self.nloh), dtype=np.bool_))).flatten() # Add new line overhead to mask
             with np.errstate(divide='ignore'):
                 P = 1/np.fft.irfft(np.fft.rfft(np.array(_M, dtype=np.float32)) * FW, self.n) # Compute weights
-            P = P[_M==True] # Keep only background samples
+            P = P[_M==True] # noqa E712 Keep only background samples
         
             # NSClean's weighting requires the Moore-Penrose invers of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
