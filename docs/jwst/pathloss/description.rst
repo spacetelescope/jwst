@@ -93,8 +93,8 @@ by how many shutters next to the fiducial shutter are open:
  entry used:
 
  * if both shutters adjacent to the fiducial are closed, the 1x1 entry is used
- * if both shutters adjecent to the fiducial are open, the 1x3 entry is used
- * if one is closed and 1 is open, the correction used is the average of the 1x1
+ * if both shutters adjacent to the fiducial are open, the 1x3 entry is used
+ * if one is closed and one is open, the correction used is the average of the 1x1
    and 1x3 entries.
 
 Like for the point source case, the 1-d arrays of pathloss correction and wavelength
