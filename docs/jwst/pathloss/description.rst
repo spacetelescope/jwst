@@ -63,20 +63,20 @@ of shutters that make up the slit, with 1 denoting an open shutter, 0 a closed
 shutter and x the fiducial (target) shutter.  The reference entry is determined
 by how many shutters next to the fiducial shutter are open:
 
- * if both adjacent shutters are closed, the 1x1 entry is used.  A matching
-   shutter_state might be 'x' or '10x01'
- * if both adjacent shutters are open, the center region of the 1x3 entry is used.
-   This would be the case for a slit with shutter state '1x1' or '1011x1'.
- * if one adjacent shutter is open and one closed, the 1x3 entry is used.  If the
-   shutter below the fiducial is open and the shutter above closed, then the upper
-   region of the 1x3 pathloss array is used.  This is implemented by adding 1 to the
-   Y coordinate of the target position (bringing it into the range +0.5 to +1.5),
-   moving it to the upper third of the pathloss array.  A matching shutter state
-   might be '1x' or '11x011'
- * similarly, if the shutter below the fiducial is closed and that above is open, the
-   lower third of the pathloss array is used by subtracting 1 from the Y coordinate of
-   the target position (bringing it into the range -1.5 to -0.5).  A matching shutter
-   state could be 'x111' or '110x1'.
+- if both adjacent shutters are closed, the 1x1 entry is used.  A matching
+  shutter_state might be 'x' or '10x01'
+- if both adjacent shutters are open, the center region of the 1x3 entry is used.
+  This would be the case for a slit with shutter state '1x1' or '1011x1'.
+- if one adjacent shutter is open and one closed, the 1x3 entry is used.  If the
+  shutter below the fiducial is open and the shutter above closed, then the upper
+  region of the 1x3 pathloss array is used.  This is implemented by adding 1 to the
+  Y coordinate of the target position (bringing it into the range +0.5 to +1.5),
+  moving it to the upper third of the pathloss array.  A matching shutter state
+  might be '1x' or '11x011'
+- similarly, if the shutter below the fiducial is closed and that above is open, the
+  lower third of the pathloss array is used by subtracting 1 from the Y coordinate of
+  the target position (bringing it into the range -1.5 to -0.5).  A matching shutter
+  state could be 'x111' or '110x1'.
 
  Once the X and Y coordinates of the source are mapped into a pixel location in the
  spatial dimensions of the pathloss array using the WCS of the transformation of position
@@ -92,9 +92,9 @@ by how many shutters next to the fiducial shutter are open:
  again, the shutter_state attribute of each slit is used to determine the correction
  entry used:
 
- * if both shutters adjacent to the fiducial are closed, the 1x1 entry is used
- * if both shutters adjacent to the fiducial are open, the 1x3 entry is used
- * if one is closed and one is open, the correction used is the average of the 1x1
+- if both shutters adjacent to the fiducial are closed, the 1x1 entry is used
+- if both shutters adjacent to the fiducial are open, the 1x3 entry is used
+- if one is closed and one is open, the correction used is the average of the 1x1
    and 1x3 entries.
 
 Like for the point source case, the 1-d arrays of pathloss correction and wavelength
