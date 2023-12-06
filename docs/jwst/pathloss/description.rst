@@ -81,19 +81,19 @@ by how many shutters next to the fiducial shutter are open:
   the target position (bringing it into the range -1.5 to -0.5).  A matching shutter
   state could be 'x111' or '110x1'.
 
- Once the X and Y coordinates of the source are mapped into a pixel location in the
- spatial dimensions of the pathloss array using the WCS of the transformation of position
- to pixel location, the wavelength dependence is determined
- by interpolating at that (fractional) pixel position in each wavelength plane,
- resulting in a pair of 1-d arrays of pathloss correction and wavelength.  These arrays
- are used to interpolate the correction for each pixel of the 2-d extracted science
- array, since each pixel has a different wavelength, and the correction is applied
- to the science pixel array.
+Once the X and Y coordinates of the source are mapped into a pixel location in the
+spatial dimensions of the pathloss array using the WCS of the transformation of position
+to pixel location, the wavelength dependence is determined
+by interpolating at that (fractional) pixel position in each wavelength plane,
+resulting in a pair of 1-d arrays of pathloss correction and wavelength.  These arrays
+are used to interpolate the correction for each pixel of the 2-d extracted science
+array, since each pixel has a different wavelength, and the correction is applied
+to the science pixel array.
 
- For uniform sources, there is no dependence of the pathloss correction on position,
- so the correction arrays are just 1-d arrays of correction and wavelength.  Once
- again, the shutter_state attribute of each slit is used to determine the correction
- entry used:
+For uniform sources, there is no dependence of the pathloss correction on position,
+so the correction arrays are just 1-d arrays of correction and wavelength.  Once
+again, the shutter_state attribute of each slit is used to determine the correction
+entry used:
 
 * if both shutters adjacent to the fiducial are closed, the 1x1 entry is used
 
