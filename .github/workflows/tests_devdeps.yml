@@ -1,4 +1,4 @@
-name: test
+name: test with development versions
 
 on:
   push:
@@ -13,23 +13,17 @@ on:
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
-    with:
-      default_python: "3.12"
-      envs: |
-        - linux: check-style
-        - linux: check-security
-        - linux: check-dependencies
   crds_contexts:
     uses: spacetelescope/crds/.github/workflows/contexts.yml@master
   test:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run devdeps tests')))
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     needs: [ crds_contexts ]
     with:
@@ -41,15 +35,23 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_contexts.outputs.jwst }}
       envs: |
-        - linux: py39-oldestdeps-xdist-cov
+        - linux: py3-xdist
           pytest-results-summary: true
-        - linux: py39-xdist
-        - linux: py310-xdist
-        - linux: py311-xdist
+        - macos: py3-xdist
           pytest-results-summary: true
-        - macos: py311-xdist
+        - linux: py311-stdevdeps-xdist
           pytest-results-summary: true
-        - linux: py311-xdist-cov
-          coverage: codecov
+        - macos: py311-stdevdeps-xdist
           pytest-results-summary: true
-        - linux: py312-xdist
+        - linux: py3-stdevdeps-xdist
+          pytest-results-summary: true
+        - macos: py3-stdevdeps-xdist
+          pytest-results-summary: true
+        - linux: py311-devdeps-xdist
+          pytest-results-summary: true
+        - macos: py311-devdeps-xdist
+          pytest-results-summary: true
+        - linux: py3-devdeps-xdist
+          pytest-results-summary: true
+        - macos: py3-devdeps-xdist
+          pytest-results-summary: true

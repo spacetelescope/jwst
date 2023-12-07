@@ -88,15 +88,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.8.2 --file https://ssb.stsci.edu/releases/jwstdp/1.8.2/conda_python_stable-deps.txt
-    conda activate jwstdp-1.8.2
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.8.2/reqs_stable-deps.txt
+    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_stable-deps.txt
+    conda activate jwstdp-1.12.5
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.8.2 --file https://ssb.stsci.edu/releases/jwstdp/1.8.2/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.8.2
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.8.2/reqs_macos-stable-deps.txt
+    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.12.5
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -210,10 +210,10 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.12.5              | B10.0.1   | 2023.3.0 | 1140         | 2023-10-19 |             | Patch release B10.0.1                         |
-| 1.12.4              |           | 2023.3.0 | 1135         | 2023-10-12 |             | Pinning dependencies for external users       |
+| 1.12.5              | B10.0.1   | 2023.3.1 | 1166         | 2023-10-19 | 2023-12-05  | Patch release B10.0.1                         |
+| 1.12.4              |           |          |              | 2023-10-12 |             | Pinning dependencies for external users       |
 | 1.12.3              | B10.0     | 2023.3.0 | 1135         | 2023-10-03 | 2023-12-05  | Final release candidate for B10.0             |
-| 1.12.2              | B10.0rc3  |          | 1135         | 2023-10-02 | (tentative) | Third release candidate for B10.0             |
+| 1.12.2              | B10.0rc3  |          | 1135         | 2023-10-02 |             | Third release candidate for B10.0             |
 | 1.12.1              | B10.0rc2  |          | 1132         | 2023-09-26 |             | Second release candidate for B10.0            |
 | 1.12.0              | B10.0rc1  |          | 1130         | 2023-09-18 |             | First release candidate for B10.0             |
 | 1.11.4              | B9.3.1    | 2023.2.1 | 1107         | 2023-08-14 | 2023-08-24  | Final release for B9.3.1 patch                |
