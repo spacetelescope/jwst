@@ -134,6 +134,7 @@ _calculated_suffixes = {
  'wfsscontamstep',
  'straylightstep',
  'spectral_leak',
+ 'spectralleakstep',    
  'rscdstep',
  'barshadowstep',
  'msaflagopenstep',
