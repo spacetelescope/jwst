@@ -219,7 +219,7 @@ successfully  (i.e, produces a working .html file). This happens on the CI when 
 open a pull request, but it is a good idea to build the documentation yourself locally
 as well. Before you do this, you will need to make sure you have the correct dependencies
 installed in your current environment. All of these optional dependencies are specified
-in `setup.cfg` and include things like the correct version of sphinx, as well as the
+in `pyproject.toml` and include things like the correct version of sphinx, as well as the
 necessary sphinx themes that the project uses. These do not install automatically
 when you install `jwst` unless directly specified. To do this, while in the top level
 directory of `jwst` on your my_feature branch:
@@ -266,7 +266,7 @@ for running tests.
 
 	>> pip install -e ".[test]"
 
-This will install the optional 'test' dependencies specified in `setup.cfg` that
+This will install the optional 'test' dependencies specified in `pyproject.toml` that
 don't install by default. The package `pytest` is one of these and is what's used
 to run the tests. `pytest` searches through all the directories in your repository
 (underneath the directory from which it was invoked command line) and looks for any
@@ -324,14 +324,14 @@ in your environment, you can check their versions by doing:
 
 	>> conda list
 When opening up two dependent pull requests in `jwst` and one of its dependency packages,
-unit tests will not pass on the CI because the setup.cfg file in `jwst` points to the
+unit tests will not pass on the CI because the `pyproject.toml` file in `jwst` points to the
 last released version of `stcal`, and stcal points to the last version of `jwst`, so the
-issue becomes circular. What you will need to do is modify the setup.cfg files in both
+issue becomes circular. What you will need to do is modify the `pyproject.toml` files in both
 packages to point to the other to demonstrate that CI tests pass (and make a comment
 noting this in your PR), and then change it back before the PR is merge so that changes
-to setup.cfg are not merged into master/main. In your `jwst` branch, to point to your
+to `pyproject.toml` are not merged into master/main. In your `jwst` branch, to point to your
 branch in the dependent package (in this example `stcal`), change the required `stcal`
-version in setup.cfg to:
+version in `pyproject.toml` to:
 
 	>> stcal @  git+https://github.com/<your_username>/stcal.git@<your_branch>
 
