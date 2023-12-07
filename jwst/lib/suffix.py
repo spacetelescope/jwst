@@ -133,7 +133,7 @@ _calculated_suffixes = {
  'dq_init',
  'wfsscontamstep',
  'straylightstep',
- 'spectralleakstep',
+ 'spectral_leak',
  'rscdstep',
  'barshadowstep',
  'msaflagopenstep',
