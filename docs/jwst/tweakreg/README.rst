@@ -103,8 +103,7 @@ measured sources in the combined field-of-view of the set of input
 images. This catalog is generated from the catalogs available
 through the `STScI MAST Catalogs`_ and has the ability to account
 for proper motion to a given epoch. The epoch is computed from the observation date and time
-of the input data. If for any reason the epoch cannot be computed from the data, it defaults to 2016.0,
-which results in no proper motion correction.
+of the input data.
 
 .. _STScI MAST Catalogs: https://outerspace.stsci.edu/display/MASTDATA/Catalog+Access
 
