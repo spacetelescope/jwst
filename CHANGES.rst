@@ -50,6 +50,8 @@ general
 
 - Fix Python 3.12 support. [#8093]
 
+- Moved build configuration from ``setup.cfg`` to ``pyproject.toml`` to support PEP621 [#6847]
+
 outlier_detection
 -----------------
 
@@ -57,8 +59,6 @@ outlier_detection
   inputs. [#8033]
 
 - Replace uses of ``datetime.utcnow`` (deprecated in python 3.12) [#8051]
-
-- Moved build configuration from ``setup.cfg`` to ``pyproject.toml`` to support PEP621 [#6847]
 
 imprint
 -------
