@@ -52,14 +52,6 @@ general
 
 - Moved build configuration from ``setup.cfg`` to ``pyproject.toml`` to support PEP621 [#6847]
 
-outlier_detection
------------------
-
-- Remove use of ``scipy.signal.medfilt`` which is undefined for ``nan``
-  inputs. [#8033]
-
-- Replace uses of ``datetime.utcnow`` (deprecated in python 3.12) [#8051]
-
 imprint
 -------
 
@@ -71,6 +63,19 @@ nsclean
 
 - Implemented this new step, which is used to remove 1/f noise from NIRSpec
   images. [#8000]
+
+outlier_detection
+-----------------
+
+- Remove use of ``scipy.signal.medfilt`` which is undefined for ``nan``
+  inputs. [#8033]
+
+- Replace uses of ``datetime.utcnow`` (deprecated in python 3.12) [#8051]
+
+pathloss
+--------
+
+- Updated code to handle NIRSpec MOS slitlets that aren't 1X1 or 1X3. [#8106]
 
 photom
 ------
