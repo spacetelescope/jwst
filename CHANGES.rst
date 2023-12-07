@@ -50,6 +50,8 @@ general
 
 - Fix Python 3.12 support. [#8093]
 
+- Moved build configuration from ``setup.cfg`` to ``pyproject.toml`` to support PEP621 [#6847]
+
 outlier_detection
 -----------------
 
@@ -811,7 +813,6 @@ resample_spec
 
 - Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
   rateints input, because that mode is not allowed. [#7516]
-
 
 1.10.0 (2023-04-03)
 ===================

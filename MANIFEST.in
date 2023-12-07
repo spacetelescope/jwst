@@ -1,6 +1,5 @@
 include README.md
 include CHANGES.rst
-include setup.cfg
 include LICENSE
 include pyproject.toml
 

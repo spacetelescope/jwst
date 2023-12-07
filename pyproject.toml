@@ -1,34 +1,311 @@
+[project]
+name = "jwst"
+description = "Library for calibration of science observations from the James Webb Space Telescope"
+requires-python = ">=3.9"
+authors = [
+    { name = "JWST calibration pipeline developers" },
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "asdf>=2.15.1,<4",
+    "asdf-transform-schemas>=0.3.0",
+    "astropy>=5.3",
+    "BayesicFitting>=3.0.1",
+    "crds>=11.16.19",
+    "drizzle>=1.14.3,<1.15.0",
+    "gwcs>=0.19.0,<0.20.0",
+    "numpy>=1.22",
+    "opencv-python-headless>=4.6.0.66",
+    "photutils>=1.4.0",
+    "psutil>=5.7.2",
+    "poppy>=1.0.2",
+    "pyparsing>=2.2.1",
+    "requests>=2.22",
+    "scikit-image>=0.19",
+    "scipy>=1.6.0",
+    "spherical-geometry>=1.2.22",
+    "stcal>=1.4.4,<1.5.0",
+    "stdatamodels>=1.8.4,<1.9.0",
+    "stpipe>=0.5.0,<0.6.0",
+    "stsci.image>=2.3.5",
+    "stsci.imagestats>=1.6.3",
+    "tweakwcs>=0.8.3",
+    "asdf-astropy>=0.3.0",
+    "wiimatch>=0.2.1",
+    "packaging>20.0",
+    "importlib-metadata>=4.11.4",
+    "jsonschema>=4.8",
+]
+dynamic = [
+    "version",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.license]
+file = "LICENSE"
+content-type = "text/plain"
+
+[project.urls]
+Homepage = "https://github.com/spacetelescope/jwst"
+Tracker = "https://github.com/spacetelescope/jwst/issues"
+Documentation = "https://jwst-pipeline.readthedocs.io/en/stable/"
+"Source Code" = "https://github.com/spacetelescope/jwst"
+
+[project.scripts]
+adjust_wcs = "jwst.scripts.adjust_wcs:main"
+asn_edit = "jwst.scripts.asn_edit:main"
+asn_from_list = "jwst.associations.asn_from_list:main"
+asn_gather = "jwst.scripts.asn_gather:main"
+asn_generate = "jwst.associations.main:main"
+asn_make_pool = "jwst.scripts.asn_make_pool:main"
+assign_wcs = "jwst.scripts.assign_wcs:main"
+collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
+coron = "jwst.scripts.coron:main"
+create_data = "jwst.scripts.create_data:main"
+csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
+cube_build = "jwst.scripts.cube_build:main"
+dark_current = "jwst.scripts.dark_current:main"
+data_generate = "jwst.scripts.data_generate:main"
+dqinit = "jwst.scripts.dqinit:main"
+exp_to_source = "jwst.exp_to_source.main:Main"
+flatfieldcorr = "jwst.scripts.flatfieldcorr:main"
+fringecorr = "jwst.scripts.fringecorr:main"
+ipc = "jwst.scripts.ipc:main"
+jump = "jwst.scripts.jump:main"
+linearitycorr = "jwst.scripts.linearitycorr:main"
+make_header = "jwst.scripts.make_header:main"
+migrate_data = "jwst.scripts.migrate_data:main"
+move_wcs = "jwst.scripts.move_wcs:main"
+okify_regtests = "jwst.scripts.okify_regtests:main"
+outlier_detection = "jwst.scripts.outlier_detection:main"
+persistencecorr = "jwst.scripts.persistencecorr:main"
+photomcorr = "jwst.scripts.photomcorr:main"
+pointing_summary = "jwst.scripts.pointing_summary:main"
+rampfitcorr = "jwst.scripts.rampfitcorr:main"
+refpix = "jwst.scripts.refpix:main"
+resample = "jwst.scripts.resample:main"
+saturationcorr = "jwst.scripts.saturationcorr:main"
+schema_editor = "jwst.scripts.schema_editor:main"
+schemadoc = "jwst.scripts.schemadoc:main"
+set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
+"set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
+set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
+"set_velocity_aberration.py" = "jwst.scripts.set_velocity_aberration:deprecated_name"
+straylight = "jwst.scripts.straylight:main"
+superbias = "jwst.scripts.superbias:main"
+v1_calculate = "jwst.scripts.v1_calculate:main"
+verify_install_requires = "jwst.scripts.verify_install_requires:main"
+world_coords = "jwst.scripts.world_coords:main"
+
+[project.entry-points."stpipe.steps"]
+jwst = "jwst.stpipe.integration:get_steps"
+
+[project.entry-points.pytest11]
+report_crds_context = "pytest_crds.plugin"
+
+[project.optional-dependencies]
+docs = [
+    "matplotlib",
+    "sphinx",
+    "sphinx-asdf>=0.1.2",
+    "sphinx-astropy",
+    "sphinx-automodapi",
+    "sphinx-rtd-theme",
+    "stsci-rtd-theme",
+    "tomli; python_version <\"3.11\"",
+]
+sdp = [
+    "jplephem>=2.9",
+    "pysiaf>=0.13.0",
+]
+test = [
+    "ci-watson>=0.5.0",
+    "colorama>=0.4.1",
+    "readchar>=3.0",
+    "ruff",
+    "pytest>=6.0.0",
+    "pytest-cov>=2.9.0",
+    "pytest-doctestplus>=0.10.0",
+    "requests_mock>=1.0",
+]
+
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
     "oldest-supported-numpy",
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+zip-safe = false
+include-package-data = false
+
+[tool.setuptools.packages.find]
+namespaces = false
+
+[tool.setuptools.package-data]
+"*" = [
+    "*.asdf",
+    "*.cfg",
+    "tests/data/*.csv",
+    "tests/data/*.ecsv",
+    "tests/data/*.fits",
+    "tests/data/**/*.fits",
+    "*.json",
+    "tests/data/*.json",
+    "tests/data/**/*.json",
+    "tests/data/*.txt",
+    "*.yaml",
+    "*.cat",
+    "*.hdr",
+]
+"jwst.fits_generator" = [
+    "templates/*.inc",
+    "templates/*.txt",
+    "tests/okfile/*.prop",
+]
+"jwst.lib" = [
+    "tests/data/*.asdf",
+    "tests/data/*.db",
+    "tests/data/*.ecsv",
+    "tests/data/*.fits",
+]
+"jwst.associations" = [
+    "tests/data/*.py",
+]
+"jwst.lib.src" = [
+    "*.c",
+]
+"jwst.cube_build.src" = [
+    "*.c",
+]
+"jwst.straylight.src" = [
+    "*.c",
+]
+"jwst.transforms" = [
+    "resources/schemas/stsci.edu/jwst_pipeline/*.yaml",
+]
+"jwst.stpipe.resources" = [
+    "schemas/*.yaml",
+]
+
+[tool.build-sphinx]
+source-dir = "docs"
+build-dir = "docs"
+all_files = "1"
+
+[tool.distutils.upload_docs]
+upload-dir = "docs/_build/html"
+show-response = 1
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+norecursedirs = [
+    "docs/_build",
+    "docs/exts",
+    "jwst/timeconversion",
+    "jwst/associations/tests/data",
+    "scripts",
+    ".tox",
+    ".eggs",
+    "build",
+    "venv",
+]
+asdf_schema_tests_enabled = true
+asdf_schema_validate_default = false
+asdf_schema_root = "jwst/transforms/resources/schemas jwst/datamodels/schemas"
+junit_family = "xunit2"
+inputs_root = "jwst-pipeline"
+results_root = "jwst-pipeline-results"
+text_file_format = "rst"
+doctest_plus = "enabled"
+doctest_rst = "enabled"
+addopts = "--show-capture=no --report-crds-context"
+filterwarnings = [
+    "error::ResourceWarning",
+    "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
+]
+
+[tool.coverage.run]
+omit = [
+    "jwst/conftest.py",
+    "jwst/setup.py",
+    "jwst/tests/test*",
+    "jwst/regtest/test*",
+    "jwst/*/tests/*",
+    "docs/*",
+    "*/jwst/conftest.py",
+    "*/jwst/setup.py",
+    "*/jwst/tests/test*",
+    "*/jwst/regtest/test*",
+    "*/jwst/*/tests/*",
+    "*/docs/*",
+    "*.rmap",
+    "*.pmap",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if self.debug:",
+    "except ImportError",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == '__main__':",
+]
+omit = [
+    "*.rmap",
+    "*.pmap",
+]
+
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
 
 [tool.ruff]
-line-length = 130
 exclude = [
-    'jwst/extern',
-    'docs',
-    'jwst/associations',
-    'jwst/fits_generator',
-    '.tox',
-    '.eggs',
-    'build',
+    "jwst/extern",
+    "docs",
+    "jwst/associations",
+    "jwst/fits_generator",
+    ".tox",
+    ".eggs",
+    "build",
 ]
-
 ignore = [
-    'E741', # ambiguous variable name
+    "E741",
 ]
+line-length = 130
 
 [tool.ruff.per-file-ignores]
-'jwst/ramp_fitting/tests/compare_cr_navg_files.py' = ['E402']
-'jwst/ramp_fitting/tests/compare_crs.py' = ['E402']
-'jwst/ramp_fitting/tests/compare_cr_files.py' = ['E402']
-'jwst/ramp_fitting/tests/create_cube.py' = ['E402']
-'jwst/ramp_fitting/tests/mc_3d.py' = ['E402']
+"jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
+    "E402",
+]
+"jwst/ramp_fitting/tests/compare_crs.py" = [
+    "E402",
+]
+"jwst/ramp_fitting/tests/compare_cr_files.py" = [
+    "E402",
+]
+"jwst/ramp_fitting/tests/create_cube.py" = [
+    "E402",
+]
+"jwst/ramp_fitting/tests/mc_3d.py" = [
+    "E402",
+]
