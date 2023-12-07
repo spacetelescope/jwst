@@ -73,6 +73,8 @@ sys.path.insert(0, os.path.abspath('jwst/'))
 sys.path.insert(0, os.path.abspath('exts/'))
 
 # -- General configuration ------------------------------------------------
+with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
+    metadata = tomllib.load(metadata_file)['project']
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.3'
 
@@ -163,8 +165,6 @@ suppress_warnings = ['app.add_directive', ]
 
 
 # General information about the project
-with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
-    metadata = tomllib.load(metadata_file)['project']
 project = metadata['name']
 author = metadata["authors"][0]["name"]
 copyright = f'{datetime.datetime.today().year}, {author}'
