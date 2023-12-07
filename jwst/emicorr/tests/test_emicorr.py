@@ -6,14 +6,15 @@ Unit tests for EMI correction
 
 
 import numpy as np
-from jwst.emicorr import emicorr
-from stdatamodels.jwst.datamodels import Level1bModel
+from jwst.emicorr import emicorr, emicorr_step
+from stdatamodels.jwst.datamodels import Level1bModel, EmiModel
 
 default_subarray_cases = emicorr.default_subarray_cases
 
-def mk_emi_mdl(data, subarray, readpatt, detector):
+def mk_data_mdl(data, subarray, readpatt, detector):
     # create input_model
     input_model = Level1bModel(data=data)
+    input_model.meta.instrument.name = 'MIRI'
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = 'MIR_4QPM'
     input_model.meta.subarray.name = subarray
@@ -22,6 +23,89 @@ def mk_emi_mdl(data, subarray, readpatt, detector):
     input_model.meta.subarray.xstart = 1
     input_model.meta.exposure.nsamples = 1
     return input_model
+
+
+def mk_wave_arr():
+    arr = np.ones(200)
+    a1 = [arr[i]+0.01*i for i in range(100)]
+    a2 = [a1[-1-i]-0.01*i for i in range(100)]
+    a1.extend(a2)
+    arr = np.array(a1)
+    return arr
+
+
+def mk_emi_mdl():
+    # create the reference file datamodel
+    arr = mk_wave_arr()
+    frequencies = {
+        "Hz390": {'frequency' : 390.625,
+                'phase_amplitudes': arr},
+        "Hz390_sub128" : {'frequency' : 390.625,
+                'phase_amplitudes': arr+0.5},
+        "Hz10": {'frequency' : 10.039216,
+                'phase_amplitudes': arr+0.2},
+        "Hz10_slow_MIRIMAGE": {'frequency' : 10.039216,
+                'phase_amplitudes': arr+0.2},
+        "Hz10_slow_MIRIFULONG": {'frequency' : 10.039216,
+                'phase_amplitudes': arr+0.2},
+        "Hz10_slow_MIRIFUSHORT": {'frequency' : 10.039216,
+                'phase_amplitudes': arr+0.2},
+    }
+    subarray_cases = {
+        "MASK1550": {
+            "rowclocks": 82,
+            "frameclocks": 23968,
+            "freqs":  {"FASTR1": ["Hz390", "Hz10"],
+                       "SLOWR1":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                                  "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                                  "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+    }
+    freq_pa_dict = { 'frequencies': frequencies,
+                    'subarray_cases': subarray_cases}
+    emimdl = EmiModel(freq_pa_dict)
+    return emimdl, freq_pa_dict
+
+
+def test_EmiCorrStep():
+    data = np.ones((1, 5, 20, 20))
+    input_model = mk_data_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
+    expected_outmdl = input_model.copy()
+
+    nirmdl = input_model.copy()
+    nirmdl.meta.instrument.name = 'NIRISS'
+
+    stp = emicorr_step.EmiCorrStep()
+    nir_result = stp.call(nirmdl)
+
+    assert expected_outmdl.data.all() == nirmdl.data.all()
+
+
+def test_do_correction():
+    emicorr_model, freq_pa_dict = mk_emi_mdl()
+    Hz390 = freq_pa_dict['frequencies']['Hz390']['phase_amplitudes']
+    Hz10 = freq_pa_dict['frequencies']['Hz10']['phase_amplitudes']
+
+    data = np.ones((1, 5, 200, 200)) + 0.5
+    data = data + Hz390 + Hz10
+    input_model = mk_data_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
+    expected_outmdl = input_model.copy()
+
+    save_onthefly_reffile = None
+    pars = {'save_intermediate_results': False,
+            'user_supplied_reffile' : None,
+            'nints_to_phase': None,
+            'nbins': None,
+            'scale_reference': True}
+
+    none_emicorr_model = None
+    outmdl1 = emicorr.do_correction(input_model, none_emicorr_model, save_onthefly_reffile, **pars)
+
+    outmdl2 = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
+    expected_outmd2 = input_model.copy()
+    expected_outmd2.data = data - Hz390 - Hz10
+
+    assert expected_outmdl.data.all() == outmdl1.data.all()
+    assert expected_outmd2.data.all() == outmdl2.data.all()
 
 
 def test_get_subarcase():
@@ -45,7 +129,7 @@ def test_get_subarcase():
 
 def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
-    input_model = mk_emi_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
+    input_model = mk_data_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
     emicorr_model = None
     save_onthefly_reffile = None
     output_model = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile)

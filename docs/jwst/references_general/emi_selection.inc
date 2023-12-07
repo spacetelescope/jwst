@@ -9,5 +9,5 @@ not in the table.  All keywords used for file selection are
 ========== ============================
 Instrument Keywords
 ========== ============================
-MIRI       INSTRUME, EXP_TYPE, DATE-OBS
+MIRI       INSTRUME, DATE-OBS
 ========== ============================
