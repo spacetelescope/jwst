@@ -10,6 +10,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
 from . import miri_mrs
+from . import miri_imager
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -462,13 +463,38 @@ class DataSet():
                 warnings.simplefilter("ignore")
                 row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
-
+                # Search again using subarray="GENERIC" for old ref files
                 fields_to_match = {'subarray': 'GENERIC',
                                    'filter': self.filter}
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-            self.photom_io(ftab.phot_table[row])
+                
+            # Check to see if the reference file contains the coefficients for the
+            # time-dependent correction of the PHOTOM value
+            try:
+                ftab.getarray_noinit("timecoeff")
+                log.info("Applying the time-dependent correction to the PHOTOM value.")
+
+                mid_time = self.input.meta.exposure.mid_time
+                photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
+
+                data = np.array(
+                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr']+photom_corr, ftab.phot_table[row]['uncertainty'])],
+                    dtype=[
+                        ("filter", "O"),
+                        ("subarray", "O"),
+                        ("photmjsr", "<f4"),
+                        ("uncertainty", "<f4")
+                        ],
+                )
+                fftab = datamodels.MirImgPhotomModel(phot_table=data)
+                self.photom_io(fftab.phot_table[0])
+            except AttributeError:
+                # No time-dependent correction is applied
+                log.info(" Skipping MIRI imager time correction. Extension not found in the reference file.")
+                self.photom_io(ftab.phot_table[row])
+
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
 

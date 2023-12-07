@@ -60,6 +60,16 @@ instrument modes, as shown in the tables below.
 |            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
 +------------+-------+----------------+-----------+------------+------------------------+
 
+The MIRI Imager PHOTOM reference file can contain an optional BINTABLE extension
+named "TIMECOEFF", containing coefficients for an time-dependent correction. The format
+of this additional table extension is as follows:
+
+==========  ========  =====  ===========  =========  
+EXTNAME     XTENSION  NAXIS  Dimensions   Data type
+==========  ========  =====  ===========  =========
+TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
+==========  ========  =====  ===========  =========
+
 :Data model: `~jwst.datamodels.MirLrsPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
