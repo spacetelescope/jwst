@@ -11,9 +11,9 @@ The majority of the MIRI subarrays have an 390 Hz or other electromagnetic
 interference (EMI) noise pattern in the raw data. The known frequencies to
 correct for are in the EMI reference file, under the key ``frequencies``.
 The effect of these EMI frequencies is to imprint each into the rate
-images. For short integrations in LRSSLITLESS the correlated noise from this
-is quite apparent in the rate images. For longer integrations the net effect
-is to increase the read noise by about 20\%\.
+images. For short integrations in ``LRSSLITLESS`` the correlated noise from
+this is quite apparent in the rate images. For longer integrations the net
+effect is to increase the read noise by about 20\%.
 
 The process to do the correction is the following (repeated
 recursively for each discrete EMI frequency desired):
