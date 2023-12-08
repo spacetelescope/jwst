@@ -61,7 +61,7 @@ def test_do_correction():
     emicorr_model = EmiModel(emimdl)
     outmdl = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
 
-    assert outmdl != None
+    assert outmdl is not None
 
 
 def test_apply_emicorr():
@@ -72,7 +72,7 @@ def test_apply_emicorr():
                 save_intermediate_results=False, user_supplied_reffile=None,
                 nints_to_phase=None, nbins=None, scale_reference=True)
 
-    assert outmdl != None
+    assert outmdl is not None
 
 
 def test_get_subarcase():
