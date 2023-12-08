@@ -1,18 +1,110 @@
 1.12.6 (unreleased)
 ===================
 
+background
+----------
+
+- Ensure that WFSS background mask does not leave only
+  pixels with DO_NOT_USE flagged. [#8070]
+
+cube_build
+----------
+
+- Fix bug that was causing cube_build to crash when no valid data is found
+  on the detector in the input image(s). [#8001]
+
+documentation
+-------------
+
+- Remove the CRDS PUB notices througout the documentation [#8075]
+
+- Improve Step.spec formatting [#8101]
+
+- Added warnings about incompatibility of models modified with ``adjust_wcs``
+  with ``tweakreg`` step and ``transfer_wcs_correction`` function. Fixed
+  reported typos in ``tweakreg`` documentation. [#8084]
+
+extract_1d
+----------
+
+- Include zero values in dispersion direction check during
+  SOSS ATOCA algorithm [#8038]
+
+- Use masked median instead of nanmedian wavelength collapse during
+  source finding for ifu_autocen [#8080]
+
+extract_2d
+----------
+
+- Fixed crash with slit_name for MOS. Now the argument should
+  be passed as a string, e.g. slit_name='67'. Included this
+  in the corresponding documentation. [#8081]
+
+- Fixed potential future crash if MSA slitlet name is not an
+  integer. [#8108]
+
 general
 -------
 
-- Add lack of python 3.12 support to project metadata [#8042]
+- Increase asdf maximum version to 4. [#8018]
 
-- Increase asdf maximum version to 4 [#8018]
+- Remove upper version limit for scipy. [#8033]
+
+- Remove the use of ``pkg_resources`` by ``jwst``. [#8095]
+
+- Fix Python 3.12 support. [#8093]
+
+- Moved build configuration from ``setup.cfg`` to ``pyproject.toml`` to support PEP621 [#6847]
 
 imprint
 -------
 
 - Updated the logging to report which imprint image is being subtracted from the
   science image. [#8041]
+
+nsclean
+-------
+
+- Implemented this new step, which is used to remove 1/f noise from NIRSpec
+  images. [#8000]
+
+outlier_detection
+-----------------
+
+- Remove use of ``scipy.signal.medfilt`` which is undefined for ``nan``
+  inputs. [#8033]
+
+- Replace uses of ``datetime.utcnow`` (deprecated in python 3.12) [#8051]
+
+pathloss
+--------
+
+- Updated code to handle NIRSpec MOS slitlets that aren't 1X1 or 1X3. [#8106]
+
+photom
+------
+
+- Added time-dependent correction for MIRI Imager data.
+  [#8096, #8102, spacetelescope/stdatamodels#235]
+
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to add in calling the ``nsclean`` step
+  for NIRSpec exposures. Also rearranged the order of the steps, so that
+  ``msa_flagging`` immediately follows ``assign_wcs``, so that both steps have
+  been applied before calling ``nsclean``. [#8000]
+
+pixel_replace
+-------------
+
+- Fixed a bug that included ``NON_SCIENCE`` flagged pixels while checking
+  for science pixels to be replaced. [#8090]
+
+ramp_fitting
+------------
+
+- Moving some ramp fitting CI tests from JWST to STCAL. [#8060]
 
 resample
 --------
@@ -27,6 +119,14 @@ resample
   ``PIXAR_SR`` and ``PIXAR_A2`` for the resampled image. This change also
   results in modified values in the resampled images. New computations
   significantly reduce photometric errors. [#7894]
+
+- Improved compatibility with upcoming ``numpy 2.0`` that was affecting
+  decoding of context images and creation of masks. [#8059]
+
+source_catalog
+--------------
+
+- Made meta data flexible for photutils changes. [#8066]
 
 tweakreg
 --------
@@ -292,7 +392,11 @@ ____
   four_group_rejection_threshold [#7839].
 
 - Updated argument description and parameter definition to allow
-  integer number of cores to be passed to STCAL jump.py. [#7871]
+  integer number of cores to be passed to STCAL jump.py.
+  [#7871, spacetelescope/stcal#183]
+
+- Enable the detection of snowballs that occur in frames that are
+  within a group. [spacetelescope/stcal#207]
 
 master_background
 -----------------
@@ -341,6 +445,12 @@ ramp_fitting
 - Removed unnecessary ramp fitting testing that duplicated testing already done
   in STCAL. [#7888]
 
+- Added more allowable selections for the number of cores to use for
+  multiprocessing. [spacetelescope/stcal#183]
+
+- Updated variance computation for invalid integrations, as well as
+  updating the median rate computation by excluding groups marked as
+  DO_NOT_USE. [spacetelescope/stcal#208]
 
 refpix
 ------
@@ -712,7 +822,6 @@ resample_spec
 
 - Update ``resample_spec`` to be skipped for NIRSpec fixed slit MultiSlitModel
   rateints input, because that mode is not allowed. [#7516]
-
 
 1.10.0 (2023-04-03)
 ===================

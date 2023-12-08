@@ -1,0 +1,57 @@
+name: test with development versions
+
+on:
+  push:
+    branches:
+      - master
+      - '*x'
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Weekly Monday 9AM build
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  crds_contexts:
+    uses: spacetelescope/crds/.github/workflows/contexts.yml@master
+  test:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run devdeps tests')))
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    needs: [ crds_contexts ]
+    with:
+      setenv: |
+        CRDS_PATH: /tmp/data/crds_cache
+        CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+        CRDS_CLIENT_RETRY_COUNT: 3
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+      cache-path: /tmp/data/crds_cache
+      cache-key: crds-${{ needs.crds_contexts.outputs.jwst }}
+      envs: |
+        - linux: py3-xdist
+          pytest-results-summary: true
+        - macos: py3-xdist
+          pytest-results-summary: true
+        - linux: py311-stdevdeps-xdist
+          pytest-results-summary: true
+        - macos: py311-stdevdeps-xdist
+          pytest-results-summary: true
+        - linux: py3-stdevdeps-xdist
+          pytest-results-summary: true
+        - macos: py3-stdevdeps-xdist
+          pytest-results-summary: true
+        - linux: py311-devdeps-xdist
+          pytest-results-summary: true
+        - macos: py311-devdeps-xdist
+          pytest-results-summary: true
+        - linux: py3-devdeps-xdist
+          pytest-results-summary: true
+        - macos: py3-devdeps-xdist
+          pytest-results-summary: true

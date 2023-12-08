@@ -5,6 +5,7 @@ from .assign_mtwcs.assign_mtwcs_step import AssignMTWcsStep
 from .assign_wcs.assign_wcs_step import AssignWcsStep
 from .background.background_step import BackgroundStep
 from .barshadow.barshadow_step import BarShadowStep
+from .charge_migration.charge_migration_step import ChargeMigrationStep
 from .combine_1d.combine_1d_step import Combine1dStep
 from .coron.stack_refs_step import StackRefsStep
 from .coron.align_refs_step import AlignRefsStep
@@ -31,6 +32,7 @@ from .master_background.master_background_step import MasterBackgroundStep
 from .master_background.master_background_mos_step import MasterBackgroundMosStep
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
+from .nsclean.nsclean_step import NSCleanStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
 from .outlier_detection.outlier_detection_scaled_step import OutlierDetectionScaledStep
 from .outlier_detection.outlier_detection_stack_step import OutlierDetectionStackStep
@@ -53,8 +55,6 @@ from .straylight.straylight_step import StraylightStep
 from .superbias.superbias_step import SuperBiasStep
 from .tso_photometry.tso_photometry_step import TSOPhotometryStep
 from .tweakreg.tweakreg_step import TweakRegStep
-from .charge_migration.charge_migration_step import ChargeMigrationStep
-
 from .wavecorr.wavecorr_step import WavecorrStep
 from .wfs_combine.wfs_combine_step import WfsCombineStep
 from .wfss_contam.wfss_contam_step import WfssContamStep
@@ -95,6 +95,7 @@ __all__ = [
     "MasterBackgroundMosStep",
     "MRSIMatchStep",
     "MSAFlagOpenStep",
+    "NSCleanStep",
     "OutlierDetectionStep",
     "OutlierDetectionScaledStep",
     "OutlierDetectionStackStep",

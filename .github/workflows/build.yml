@@ -1,0 +1,36 @@
+name: build
+
+on:
+  release:
+    types: [ released ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.event_name == 'release'
+    name: check that `requirements-sdp.txt` is populated
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: grep -v '^ *#' requirements-sdp.txt
+  build:
+    needs: [ check ]
+    if: always() && (needs.check.result == 'success' || needs.check.result == 'skipped')
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
+    with:
+      upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
+      targets: |
+        # Linux wheels
+        - cp3*-manylinux_x86_64
+        # MacOS wheels
+        - cp3*-macosx_x86_64
+        # Until we have arm64 runners, we can't automatically test arm64 wheels
+        - cp3*-macosx_arm64
+      sdist: true
+    secrets:
+      pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}

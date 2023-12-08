@@ -8,6 +8,5 @@ from the JWST calibration pipeline.
 
 .. currentmodule:: jwst.tweakreg.tweakreg_step
 
-.. automodule:: jwst.tweakreg.tweakreg_step
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.tweakreg.tweakreg_step
+   :noindex:

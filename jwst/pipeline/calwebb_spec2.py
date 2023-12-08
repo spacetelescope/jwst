@@ -23,6 +23,7 @@ from ..residual_fringe import residual_fringe_step
 from ..imprint import imprint_step
 from ..master_background import master_background_mos_step
 from ..msaflagopen import msaflagopen_step
+from ..nsclean import nsclean_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..pixel_replace import pixel_replace_step
@@ -47,8 +48,8 @@ class Spec2Pipeline(Pipeline):
     Accepts a single exposure or an association as input.
 
     Included steps are:
-    assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
-    NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
+    assign_wcs, NIRSpec MSA bad shutter flagging, nsclean, background subtraction,
+    NIRSpec MSA imprint subtraction, 2-D subwindow extraction, flat field,
     source type decision, straylight, fringe, residual_fringe, pathloss,
     barshadow,  photom, resample_spec, cube_build, and extract_1d.
     """
@@ -63,10 +64,11 @@ class Spec2Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {
-        'bkg_subtract': background_step.BackgroundStep,
         'assign_wcs': assign_wcs_step.AssignWcsStep,
-        'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
+        'nsclean': nsclean_step.NSCleanStep,
+        'bkg_subtract': background_step.BackgroundStep,
+        'imprint_subtract': imprint_step.ImprintStep,
         'extract_2d': extract_2d_step.Extract2dStep,
         'master_background_mos': master_background_mos_step.MasterBackgroundMosStep,
         'wavecorr': wavecorr_step.WavecorrStep,
@@ -194,9 +196,7 @@ class Spec2Pipeline(Pipeline):
                 suffix = 'cal'
                 self.extract_1d.suffix = 'x1d'
 
-            # Apply WCS info
-            # check the datamodel to see if it's
-            # a grism image, if so get the catalog
+            # Check the datamodel to see if it's a grism image, if so get the catalog
             # name from the asn and record it to the meta
             if exp_type in WFSS_TYPES:
                 try:
@@ -216,8 +216,7 @@ class Spec2Pipeline(Pipeline):
             self._step_verification(exp_type, science, members_by_type, multi_int)
 
             # Start processing the individual steps.
-            # `assign_wcs` is the critical step. Without it, processing
-            # cannot proceed.
+            # `assign_wcs` is the critical step. Without it, processing cannot proceed.
             assign_wcs_exception = None
             try:
                 calibrated = self.assign_wcs(science)
@@ -240,7 +239,13 @@ class Spec2Pipeline(Pipeline):
                     else:
                         raise RuntimeError('Cannot determine WCS.')
 
-        # Steps whose order is the same for all types of input.
+        # Steps whose order is the same for all types of input:
+
+        # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
+        calibrated = self.msa_flagging(calibrated)
+
+        # apply the "nsclean" 1/f correction to NIRSpec images
+        calibrated = self.nsclean(calibrated)
 
         # Leakcal subtraction (imprint)  occurs before background subtraction on a per-exposure basis.
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
@@ -255,8 +260,6 @@ class Spec2Pipeline(Pipeline):
             members_by_type['background'][i] = bkg_imprint_sub
 
         calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
-
-        calibrated = self.msa_flagging(calibrated)
 
         # The order of the next few steps is tricky, depending on mode:
         # WFSS/Grism data need flat_field before extract_2d, but other modes
@@ -351,6 +354,18 @@ class Spec2Pipeline(Pipeline):
         logic can be removed.
         """
 
+        # Check for NIRSpec MSA bad shutter flagging.
+        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_LAMP',
+                                                           'NRS_AUTOFLAT', 'NRS_AUTOWAVE']:
+            self.log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
+            self.msa_flagging.skip = True
+
+        # Check for NIRSpec "nsclean" correction. Only attempt to apply to
+        # IFU, MOS, and FIXEDSLIT modes, for now.
+        if not self.nsclean.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT']:
+            self.log.debug('Science data does not allow NSClean correction. Skipping "nsclean".')
+            self.nsclean.skip = True
+
         # Check for image-to-image background subtraction can be done.
         if not self.bkg_subtract.skip:
             if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
@@ -382,12 +397,6 @@ class Spec2Pipeline(Pipeline):
             else:
                 self.log.debug('Science data does not allow imprint processing. Skipping "imprint_subtraction".')
                 self.imprint_subtract.skip = True
-
-        # Check for NIRSpec MSA bad shutter flagging.
-        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_LAMP',
-                                                           'NRS_AUTOFLAT', 'NRS_AUTOWAVE']:
-            self.log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
-            self.msa_flagging.skip = True
 
         # Check for straylight correction for MIRI MRS.
         if not self.straylight.skip and exp_type != 'MIR_MRS':

@@ -4,8 +4,11 @@ from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from .jump import run_detect_jumps
 import time
+import multiprocessing
 
 __all__ = ["JumpStep"]
+
+multiprocessing.set_start_method('forkserver', force=True)
 
 
 class JumpStep(Step):
