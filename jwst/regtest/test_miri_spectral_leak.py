@@ -12,9 +12,9 @@ def test_miri_spectral_leak(output, _jail, rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = ifu_align"""
 
     rtdata.get_asn("miri/mrs/test_spectral_leak_asn.json")
-    args = ["jwst.spectral_leak.SpectralLeakStep",rtdata.input]
+    args = ["jwst.spectral_leak.SpectralLeakStep", rtdata.input]
     Step.from_cmdline(args)
-    
+
     # The spectral_leak correction is part of calwebb_spec3. The top program, calwebb_spec3.py,
     # controls writing the file names according to the assocation rules.
     # For this test we just want to isolate the spectral_leak correction and run the extracted spectrum
@@ -27,6 +27,6 @@ def test_miri_spectral_leak(output, _jail, rtdata, fitsdiff_default_kwargs):
     rtdata.output = f"{output}"
     # Get the truth files
     rtdata.get_truth(f"truth/test_miri_spectral_leak/{output}")
-    
+
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
