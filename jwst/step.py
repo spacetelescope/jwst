@@ -50,6 +50,7 @@ from .rscd.rscd_step import RscdStep
 from .saturation.saturation_step import SaturationStep
 from .skymatch.skymatch_step import SkyMatchStep
 from .source_catalog.source_catalog_step import SourceCatalogStep
+from .spectral_leak.spectral_leak_step import SpectralLeakStep
 from .srctype.srctype_step import SourceTypeStep
 from .straylight.straylight_step import StraylightStep
 from .superbias.superbias_step import SuperBiasStep
@@ -114,6 +115,7 @@ __all__ = [
     "SkyMatchStep",
     "SourceCatalogStep",
     "SourceTypeStep",
+    "SpectralLeakStep",
     "StraylightStep",
     "SuperBiasStep",
     "TSOPhotometryStep",
