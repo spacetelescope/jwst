@@ -83,6 +83,7 @@ def get_steps():
         ("jwst.step.SkyMatchStep", 'skymatch', False),
         ("jwst.step.SourceCatalogStep", 'source_catalog', False),
         ("jwst.step.SourceTypeStep", 'srctype', False),
+        ("jwst.step.SpectralLeakStep", 'spectral_leak', False),
         ("jwst.step.StraylightStep", 'straylight', False),
         ("jwst.step.SuperBiasStep", 'superbias', False),
         ("jwst.step.TSOPhotometryStep", 'tso_photometry', False),

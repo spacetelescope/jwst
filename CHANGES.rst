@@ -134,6 +134,11 @@ source_catalog
 
 - Made meta data flexible for photutils changes. [#8066]
 
+spectral_leak
+-------------
+
+- Added the MRS spectral leak correction to calspec3. [#8039]
+
 tweakreg
 --------
 
