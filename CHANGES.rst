@@ -123,6 +123,12 @@ resample
 - Improved compatibility with upcoming ``numpy 2.0`` that was affecting
   decoding of context images and creation of masks. [#8059]
 
+residual_fringe
+---------------
+
+- Zero out MRS 1d residual fringe weight function longward of 27.6 microns
+  in channel 4C to improve performance below this wavelength. [#8119]
+
 source_catalog
 --------------
 
