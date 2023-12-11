@@ -1097,12 +1097,17 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
     # Restrict to just the non-zero fluxes
     indx = np.where(flux != 0)
     useflux = flux[indx]
+    usewave = wavelength[indx]
 
-    wavenum = 10000.0 / wavelength[indx]
+    wavenum = 10000.0 / usewave
 
     weights = useflux / np.nanmedian(useflux)
     weights[weights == np.inf] = 0
     weights[np.isnan(weights)] = 0
+
+    # Zero out any weights longward of 27.6 microns as the calibration is too uncertain
+    # and can bias the fringe finding
+    weights[usewave > 27.6] = 0
 
     # get the maxamp of the fringes
     if max_amp is None:
