@@ -58,6 +58,7 @@ Package Index
    saturation/index.rst
    skymatch/index.rst
    source_catalog/index.rst
+   spectral_leak/index.rst
    srctype/index.rst
    stack_refs/index.rst
    stpipe/index.rst
