@@ -1,5 +1,5 @@
 Reference Selection Keywords for EMICORR
-+++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++
 
 CRDS selects appropriate EMICORR references based on the
 following keywords.  EMICORR is not applicable for instruments

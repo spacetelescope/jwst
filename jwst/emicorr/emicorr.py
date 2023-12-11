@@ -111,17 +111,17 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
 
     Parameters
     ----------
-    input_model : JWST data model
+    input_model : `~jwst.datamodels.JwstDataModel`
         Input science data model to be emi-corrected
 
-    emicorr_model : JWST data model
+    emicorr_model : `~jwst.datamodels.EmiModel`
         Data model containing emi correction
 
     save_onthefly_reffile : str or None
         Full path and root name of on-the-fly reference file
 
     pars : dict
-        Optional user-specified parameters to modify how outlier_detection
+        Optional user-specified parameters to modify how emicorr
         will operate.  Valid parameters include:
             save_intermediate_results - saves the output into a file and the
                                         reference file (if created on-the-fly)
@@ -181,10 +181,10 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
     Parameters
     ----------
-    input_model : JWST data model
+    input_model : `~jwst.datamodels.JwstDataModel`
         input science data model to be emi-corrected
 
-    emicorr_model : JWST data model
+    emicorr_model : `~jwst.datamodels.EmiModel`
          ImageModel of emi
 
     save_onthefly_reffile : str or None
@@ -244,7 +244,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
-    # create the dictionary to store the frequencies and corresponding phase amplidues
+    # create the dictionary to store the frequencies and corresponding phase amplitudes
     if save_intermediate_results and save_onthefly_reffile is not None:
         freq_pa_dict = {'frequencies': {}, 'subarray_cases': {}}
 
@@ -545,10 +545,12 @@ def minmed(data, minval=False, avgval=False, maxval=False):
 
     ngroups, ny, nx = np.shape(data)
     medimg = np.zeros((ny, nx))
+    # use a mask to ignore nans for calculations
+    masked_data = np.ma.array(data, mask=np.isnan(data))
 
     for i in range(nx):
         for j in range(ny):
-            vec = data[:, j, i]
+            vec = masked_data[:, j, i]
             u = np.where(vec != 0)
             n = vec[u].size
             if n > 0:
@@ -674,7 +676,7 @@ def get_frequency_info(freqs_names_vals, frequency_name):
 
 def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
     """ Compute the mean, mediand and/or sigma of data with iterative sigma clipping.
-    This funtion is based on djs_iterstat.pro (authors thetein)
+    This funtion is based on djs_iterstat.pro (authors therein)
 
     Parameters
     ----------

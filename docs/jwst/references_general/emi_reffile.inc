@@ -17,7 +17,8 @@ EMI Reference File Format
 +++++++++++++++++++++++++
 
 MIRI EMI reference files are in ASDF format.  The EMI
-reference file contains the frequencies to correct for.
+reference file contains the frequencies for which the image will
+be corrected.
 Example file contents:
 root (AsdfObject)
 ├─frequencies (dict)
@@ -67,4 +68,4 @@ Frequency Selection
 The frequency to be corrected for will be selected according to the
 dictionary contained in the key ``subarray_cases`` in the reference
 file. This contains the subarray names and the names of the
-corresponding frequencies to correct for.
+corresponding frequencies to be used in the correction.

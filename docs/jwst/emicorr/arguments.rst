@@ -16,9 +16,10 @@ The ``emicorr`` step has the following step-specific arguments.
     This is to specify an ASDF-format user-created reference file.
 
 ``--save_intermediate_results``  (string, default=False)
-    This is a boolean flag to specify whether an output fits file
-    with the EMI correction will be saved. If ``user_supplied_reffile``
-    is None and no CRDS reference file was found, the on-the-fly
-    the phase amplitudes calculations will be saved to an ASDF output
-    file as well as the step output fits file.
+    This is a boolean flag to specify whether to write a step output
+    file with the EMI correction. Additionaly, if the flag
+    ``user_supplied_reffile`` is None and no CRDS reference file was
+    found, all the on-the-fly frequencies phase amplitudes will be
+    saved to an ASDF output with the same format as an EMI reference
+    file.
 

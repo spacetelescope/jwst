@@ -32,7 +32,7 @@ class EmiCorrStep(Step):
             # Catch the cases to skip, i.e. all instruments other than MIRI
             instrument = input_model.meta.instrument.name
             if instrument != 'MIRI':
-                self.log.info('EMI correction not implemented for Instrument: {}'.format(instrument))
+                self.log.warning('EMI correction not implemented for instrument: {}'.format(instrument))
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
@@ -50,7 +50,7 @@ class EmiCorrStep(Step):
             if self.user_supplied_reffile is None:
                 try:
                     emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
-                    # Create the reference file only of told to save outputs, else correct on-the-fly
+                    # Create the reference file only if told to save outputs, else correct on-the-fly
                     if emicorr_ref_filename == 'N/A':
                         emicorr_ref_filename = None
                     else:
@@ -75,8 +75,8 @@ class EmiCorrStep(Step):
             output_model = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
             if isinstance(output_model, str) or output_model is None:
                 # in this case output_model=subarray_readpatt configuration
-                self.log.info('No correction match for this configuration: {}'.format(output_model))
-                self.log.info('Step skipped')
+                self.log.warning('No correction match for this configuration: {}'.format(output_model))
+                self.log.warning('Step skipped')
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 

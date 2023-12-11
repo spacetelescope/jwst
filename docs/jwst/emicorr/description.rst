@@ -13,7 +13,7 @@ correct for are in the EMI reference file, under the key ``frequencies``.
 The effect of these EMI frequencies is to imprint each into the rate
 images. For short integrations in ``LRSSLITLESS`` the correlated noise from
 this is quite apparent in the rate images. For longer integrations the net
-effect is to increase the read noise by about 20\%.
+effect is to increase the read noise by about 20 \%.
 
 The process to do the correction is the following (repeated
 recursively for each discrete EMI frequency desired):
@@ -36,23 +36,27 @@ reference wave
 The long term plan is a change to the sizes and locations of the subarrays
 to get the frame times to be in phase with the known noise frequencies like
 the full frame images. For the previous and near term observations this can
-be fixed the ``emicorr`` step.
+be fixed through application of the ``emicorr`` step.
 
-An EMICORR reference file can be used for to correct for all known noise
-patterns. The reference file is expected to be in an ASDF format, containing
+An EMICORR reference file can be used to correct for all known noise
+patterns. The reference file is expected to be in ASDF format, containing
 the exact frequency numbers, the corresponding 1D array for the phase
-amplitude values corresponding, and a ``subarray_cases`` key that contains
-the frequencies to correct for according tu subarray, read pattern, and
+amplitudes, and a ``subarray_cases`` dictionary that contains
+the frequencies to correct for according to subarray, read pattern, and
 detector. If there is no reference file found in CRDS, the step has a set
-of default frequencies and subarray cases to correct for.
+of default frequencies and subarray cases for which the correction is
+applied.
 
 Input
 -----
-The input file is the ``_uncal`` file after the ``dq_init`` step has been
-ran, in the in the calwebb_detector1 pipeline.
+The input file is the ``_uncal`` file after the
+:ref:`dq_init_step <dq_init_step>` step has been
+applied, in the in the :ref:`calwebb_detector1 <calwebb_detector1>`
+pipeline.
 
 Output
 ------
-The output will be an ``_uncal`` file with the corrected data in the SCI
-extension, meaning, the effect of the known EMI frequencies subtracted. All
-other extensions will remain the same.
+The output will be a partially-processed ``RampModel`` with the
+corrected data in the SCI extension, meaning, the effect of the
+EMI frequencies (either the default values or the ones in the
+reference file) removed. All other extensions will remain the same.

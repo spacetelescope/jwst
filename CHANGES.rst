@@ -27,7 +27,7 @@ documentation
 emicorr
 ----------
 
-- Added new step for correctiong EMI from MIRI data. [#7857]
+- Added new step for removing EMI from all MIRI data. [#7857]
 
 extract_1d
 ----------
