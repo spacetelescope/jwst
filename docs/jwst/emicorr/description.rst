@@ -13,25 +13,33 @@ correct for are in the EMI reference file, under the key ``frequencies``.
 The effect of these EMI frequencies is to imprint each into the rate
 images. For short integrations in ``LRSSLITLESS`` the correlated noise from
 this is quite apparent in the rate images. For longer integrations the net
-effect is to increase the read noise by about 20 percent.
+effect is to increase the read noise by about 20\%.
 
 The process to do the correction is the following (repeated
 recursively for each discrete EMI frequency desired):
-1. Read image data.
-2. Make very crude slope image and fixed pattern "super" bias for each
-integration, ignoring everything (nonlin, saturation, badpix, etc).
-3. Subtract scaled slope image and bias from each frame of each integration.
-4. Calculate phase of every pixel in the image at the desired EMI frequency
-(e.g. 390 Hz) relative to the first pixel in the image.
-5. Make a binned, phased amplitude (pa) wave from the cleaned data (plot
-cleaned vs phase, then bin by phase).
-6.* Measure the phase shift between the binned pa wave and the input
-reference wave
-7.* Use look-up table to get the aligned reference wave value for each pixel
-(the noise array corresponding to the input image).
-*) Alternately, use the binned pa wave instead of the reference wave to
-calculate an on-the-fly correction.
-8. Subtract the noise array from the input image and return the cleaned result.
+
+#. Read image data.
+
+#. Make very crude slope image and fixed pattern "super" bias for each
+   integration, ignoring everything (nonlin, saturation, badpix, etc).
+
+#. Subtract scaled slope image and bias from each frame of each integration.
+
+#. Calculate phase of every pixel in the image at the desired EMI frequency
+   (e.g. 390 Hz) relative to the first pixel in the image.
+
+#. Make a binned, phased amplitude (pa) wave from the cleaned data (plot
+   cleaned vs phase, then bin by phase).
+
+#. Measure the phase shift between the binned pa wave and the input
+   reference wave. [#f1]_
+
+#. Use look-up table to get the aligned reference wave value for each pixel
+   (the noise array corresponding to the input image). [#f1]_
+
+#. Subtract the noise array from the input image and return the cleaned result.
+
+.. [#f1] Alternately, use the binned pa wave instead of the reference wave to "self-correct".
 
 The long term plan is a change to the sizes and locations of the subarrays
 to get the frame times to be in phase with the known noise frequencies like
