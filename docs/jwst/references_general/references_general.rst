@@ -160,6 +160,8 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`           | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         |
 +-----------------------------------------------+--------------------------------------------------+
+| :ref:`spectral_leak <spectral_leak_step>`     | :ref:`MRSPTCORR <mrsptcorr_reffile>`             |
++-----------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`             | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`   | :ref:`TSOPHOT <tsophot_reffile>`                 |
@@ -229,6 +231,8 @@ documentation on each reference file.
 | :ref:`LINEARITY <linearity_reffile>`             | :ref:`linearity <linearity_step>`             |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MASK <mask_reffile>`                       | :ref:`dq_init <dq_init_step>`                 |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`MRSPTCORR <mrsptcorr_reffile>`             | :ref:`spectral_leak <spectral_leak_step>`     |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         | :ref:`straylight <straylight_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
