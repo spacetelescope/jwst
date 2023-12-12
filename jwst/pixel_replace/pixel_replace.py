@@ -27,6 +27,7 @@ class PixelReplacement:
     # Shortcuts for dispersion direction for ease of reading
     HORIZONTAL = 1
     VERTICAL = 2
+    LOG_SLICE = ['column', 'row']
 
     default_suffix = 'pixrep'
 
@@ -316,6 +317,9 @@ class PixelReplacement:
             )[range(*profile_cut)]
 
             replace_mask = np.where(~np.isnan(cleaned_current))[0]
+            if len(replace_mask) == 0:
+                log.info(f"Profile in {self.LOG_SLICE[dispaxis - 1]} {ind} has no valid values - skipping.")
+                continue
             min_median = median_profile[replace_mask]
             min_current = cleaned_current[replace_mask]
             norm_current = min_current / np.max(min_current)

@@ -101,6 +101,9 @@ pixel_replace
 - Fixed a bug that included ``NON_SCIENCE`` flagged pixels while checking
   for science pixels to be replaced. [#8090]
 
+- Fixed a bug where slices with only unflagged NaN values would cause an error
+  to fit the profile [#8120]
+
 ramp_fitting
 ------------
 
@@ -122,6 +125,12 @@ resample
 
 - Improved compatibility with upcoming ``numpy 2.0`` that was affecting
   decoding of context images and creation of masks. [#8059]
+
+residual_fringe
+---------------
+
+- Zero out MRS 1d residual fringe weight function longward of 27.6 microns
+  in channel 4C to improve performance below this wavelength. [#8119]
 
 source_catalog
 --------------
