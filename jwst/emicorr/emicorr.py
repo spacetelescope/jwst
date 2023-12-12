@@ -555,11 +555,11 @@ def minmed(data, minval=False, avgval=False, maxval=False):
             n = vec[u].size
             if n > 0:
                 if n <= 2 or minval:
-                    medimg[j, i] = np.min(vec[u])
+                    medimg[j, i] = np.ma.min(vec[u])
                 if maxval:
-                    medimg[j, i] = np.max(vec[u])
+                    medimg[j, i] = np.ma.max(vec[u])
                 if not minval and not maxval and not avgval:
-                    medimg[j, i] = np.median(vec[u])
+                    medimg[j, i] = np.ma.median(vec[u])
                 if avgval:
                     dmean , _, _, _ = iter_stat_sig_clip(vec[u])
                     medimg[j, i] = dmean

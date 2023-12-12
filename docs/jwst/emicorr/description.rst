@@ -13,7 +13,7 @@ correct for are in the EMI reference file, under the key ``frequencies``.
 The effect of these EMI frequencies is to imprint each into the rate
 images. For short integrations in ``LRSSLITLESS`` the correlated noise from
 this is quite apparent in the rate images. For longer integrations the net
-effect is to increase the read noise by about 20 \%.
+effect is to increase the read noise by about 20 \\%.
 
 The process to do the correction is the following (repeated
 recursively for each discrete EMI frequency desired):
@@ -30,7 +30,7 @@ reference wave
 7.* Use look-up table to get the aligned reference wave value for each pixel
 (the noise array corresponding to the input image).
 *) Alternately, use the binned pa wave instead of the reference wave to
-"self-correct"
+calculate an on-the-fly correction.
 8. Subtract the noise array from the input image and return the cleaned result.
 
 The long term plan is a change to the sizes and locations of the subarrays
