@@ -91,15 +91,14 @@ array, since each pixel has a different wavelength, and the correction is applie
 to the science pixel array.
 
 For uniform sources, there is no dependence of the pathloss correction on position,
-so the correction arrays are just 1-d arrays of correction and wavelength.  Once
-again, the shutter_state attribute of each slit is used to determine the correction
-entry used:
+so the correction arrays are just 1-d arrays of correction and wavelength.  The
+correction depends only on the number of shutters in the slit:
 
-If both shutters adjacent to the fiducial are closed, the 1x1 entry is used
+If there is 1 shutters, the 1x1 entry is used
 
-If both shutters adjacent to the fiducial are open, the 1x3 entry is used
+If there are 3 or more shutters, the 1x3 entry is used
 
-If one is closed and one is open, the correction used is the average of the 1x1
+If there are 2 shutters, the correction used is the average of the 1x1
 and 1x3 entries.
 
 Like for the point source case, the 1-d arrays of pathloss correction and wavelength
