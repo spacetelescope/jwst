@@ -108,6 +108,9 @@ pixel_replace
 - Fixed a bug that included ``NON_SCIENCE`` flagged pixels while checking
   for science pixels to be replaced. [#8090]
 
+- Fixed a bug where slices with only unflagged NaN values would cause an error
+  to fit the profile [#8120]
+
 ramp_fitting
 ------------
 
