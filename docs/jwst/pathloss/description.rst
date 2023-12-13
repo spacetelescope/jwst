@@ -94,7 +94,7 @@ For uniform sources, there is no dependence of the pathloss correction on positi
 so the correction arrays are just 1-d arrays of correction and wavelength.  The
 correction depends only on the number of shutters in the slit:
 
-If there is 1 shutters, the 1x1 entry is used
+If there is 1 shutter, the 1x1 entry is used
 
 If there are 3 or more shutters, the 1x3 entry is used
 
