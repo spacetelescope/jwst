@@ -350,7 +350,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                     # pix in a row (only) - it does not affect the phase of the other pixels.
 
                     if colstop == 258:
-                        times_this_int[k, j, nx4-1] = times_this_int[k, j, nx4-1] + ref_pix_sample.astype('ulonglong')
+                        ulonglong_ref_pix_sample = ref_pix_sample + 2**32
+                        times_this_int[k, j, nx4-1] = times_this_int[k, j, nx4-1] + ulonglong_ref_pix_sample
 
                     # point to the first pixel of the next row (add "end-of-row" pad)
                     start_time += rowclocks
