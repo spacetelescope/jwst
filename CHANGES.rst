@@ -86,6 +86,10 @@ pathloss
 
 - Updated code to handle NIRSpec MOS slitlets that aren't 1X1 or 1X3. [#8106]
 
+- Fixed an issue from #8106 where the 2-shutter algorithm for uniform sources was
+  incorrectly being applied to larger slits with only 1 open shutter adjacent to
+  the fiducial [#8126]
+
 photom
 ------
 
