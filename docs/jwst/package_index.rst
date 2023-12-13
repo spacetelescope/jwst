@@ -19,6 +19,7 @@ Package Index
    cube_build/index.rst
    dark_current/index.rst
    dq_init/index.rst
+   emicorr/index.rst
    exp_to_source/index.rst
    extract_1d/index.rst
    extract_2d/index.rst

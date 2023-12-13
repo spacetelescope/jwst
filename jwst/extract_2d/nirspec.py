@@ -46,9 +46,12 @@ def nrs_extract2d(input_model, slit_name=None):
     open_slits = slit2msa.slits[:]
     if slit_name is not None:
         new_open_slits = []
-        slit_name = str(slit_name)
+        if not isinstance(slit_name, str):
+            slit_name = str(slit_name)
         for sub in open_slits:
-            if str(sub.name) == slit_name:
+            if not isinstance(sub.name, str):
+                str_subnme = str(sub.name)
+            if str_subnme == slit_name:
                 new_open_slits.append(sub)
                 break
         if len(new_open_slits) == 0:

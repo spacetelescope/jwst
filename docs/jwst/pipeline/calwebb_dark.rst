@@ -19,6 +19,8 @@ pipeline, the order of steps is a bit different for MIRI exposures.
 +---------------------------------------+-----------------------------------------+
 | :ref:`dq_init <dq_init_step>`         | :ref:`dq_init <dq_init_step>`           |
 +---------------------------------------+-----------------------------------------+
+|                                       | :ref:`emicorr <emicorr_step>`           |
++---------------------------------------+-----------------------------------------+
 | :ref:`saturation <saturation_step>`   | :ref:`saturation <saturation_step>`     |
 +---------------------------------------+-----------------------------------------+
 | :ref:`ipc <ipc_step>` [1]_            | :ref:`ipc <ipc_step>`                   |

@@ -190,6 +190,7 @@ _calculated_suffixes = {
  'persistence',
  'image2pipeline',
  'klip'
+ 'emicorrstep',
 }
 
 

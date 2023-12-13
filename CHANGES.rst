@@ -24,6 +24,11 @@ documentation
   with ``tweakreg`` step and ``transfer_wcs_correction`` function. Fixed
   reported typos in ``tweakreg`` documentation. [#8084]
 
+emicorr
+----------
+
+- Added new step for removing EMI from all MIRI data. [#7857]
+
 extract_1d
 ----------
 
@@ -98,6 +103,8 @@ pipeline
   for NIRSpec exposures. Also rearranged the order of the steps, so that
   ``msa_flagging`` immediately follows ``assign_wcs``, so that both steps have
   been applied before calling ``nsclean``. [#8000]
+
+- Added emicorr step to calwebb_detector1 and calwebb_dark. [#7857]
 
 pixel_replace
 -------------
