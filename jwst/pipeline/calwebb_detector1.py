@@ -8,6 +8,7 @@ from ..stpipe import Pipeline
 # step imports
 from ..group_scale import group_scale_step
 from ..dq_init import dq_init_step
+from ..emicorr import emicorr_step
 from ..saturation import saturation_step
 from ..ipc import ipc_step
 from ..superbias import superbias_step
@@ -49,6 +50,7 @@ class Detector1Pipeline(Pipeline):
     # Define aliases to steps
     step_defs = {'group_scale': group_scale_step.GroupScaleStep,
                  'dq_init': dq_init_step.DQInitStep,
+                 'emicorr': emicorr_step.EmiCorrStep,
                  'saturation': saturation_step.SaturationStep,
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
@@ -87,6 +89,7 @@ class Detector1Pipeline(Pipeline):
 
             input = self.group_scale(input)
             input = self.dq_init(input)
+            input = self.emicorr(input)
             input = self.saturation(input)
             input = self.ipc(input)
             input = self.firstframe(input)

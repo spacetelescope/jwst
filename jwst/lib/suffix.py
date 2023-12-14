@@ -189,7 +189,9 @@ _calculated_suffixes = {
  'darkcurrentstep',
  'persistence',
  'image2pipeline',
- 'klip'
+ 'klip',
+ 'emicorr',
+ 'emicorrstep'
 }
 
 

@@ -276,7 +276,7 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
         The wavelength and pathloss 1-d arrays
 
     """
-    # This routine will run if the fiducial shutter has 1 adjacent open shutter
+    # This routine will run if the slit has exactly 2 shutters
     n_apertures = len(pathloss_model.apertures)
     if n_apertures != 2:
         log.warning(f"Expected 2 apertures in pathloss reference file, found {n_apertures}")
@@ -312,6 +312,7 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
     for i in np.arange(wavesize):
         wavelength[i] = crval1 + (float(i + 1) - crpix1) * cdelt1
     average_pathloss = 0.5 * (pathloss1x1 + pathloss1x3)
+    log.info("2 shutter slit: Uniform correction averages corrections for 1x1 and 1x3 apertures")
     return (wavelength, average_pathloss)
 
 
@@ -834,14 +835,14 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
         aperture = get_aperture_from_model(pathloss, slit.shutter_state)
         log.info(f"Shutter state = {slit.shutter_state}, using {aperture.name} entry in ref file")
         two_shutters = False
+        if slitlength == 2:
+            two_shutters = True
         if shutter_below_is_closed(slit.shutter_state) and not shutter_above_is_closed(slit.shutter_state):
             ycenter = ycenter - 1.0
             log.info('Shutter below fiducial is closed, using lower region of pathloss array')
-            two_shutters = True
         if not shutter_below_is_closed(slit.shutter_state) and shutter_above_is_closed(slit.shutter_state):
             ycenter = ycenter + 1.0
             log.info('Shutter above fiducial is closed, using upper region of pathloss array')
-            two_shutters = True
         if aperture is not None:
             (wavelength_pointsource,
              pathloss_pointsource_vector,
