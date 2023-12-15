@@ -47,6 +47,7 @@ def get_steps():
         ("jwst.step.CubeSkyMatchStep", 'cube_skymatch', False),
         ("jwst.step.DarkCurrentStep", 'dark_current', False),
         ("jwst.step.DQInitStep", 'dq_init', False),
+        ("jwst.step.EmiCorrStep", 'emicorr', False),
         ("jwst.step.Extract1dStep", 'extract_1d', False),
         ("jwst.step.Extract2dStep", 'extract_2d', False),
         ("jwst.step.FirstFrameStep", 'firstframe', False),
