@@ -47,7 +47,8 @@ import logging
 
 from stdatamodels.jwst.datamodels import dqflags
 
-from ..lib import reffile_utils
+from ..lib import pipe_utils, reffile_utils
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -74,6 +75,26 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
                                 'side': (0, 2048, 2044, 2048),
                                 'data': (0, 2048, 1536, 2048)}
                           }
+
+# IRS2 sections for NIRSpec have a different size due to the
+# interleaved reference pixels and the reference section.
+
+IRS2_reference_sections = {'0': {'top': (2044, 2048, 0, 640),
+                                 'bottom': (0, 4, 0, 640),
+                                 'data': (0, 2048, 0, 640)},
+                           'A': {'top': (2044, 2048, 640, 1280),
+                                 'bottom': (0, 4, 640, 1280),
+                                 'data': (0, 2048, 640, 1280)},
+                           'B': {'top': (2044, 2048, 1280, 1920),
+                                 'bottom': (0, 4, 1280, 1920),
+                                 'data': (0, 2048, 1280, 1920)},
+                           'C': {'top': (2044, 2048, 1920, 2560),
+                                 'bottom': (0, 4, 1920, 2560),
+                                 'data': (0, 2048, 1920, 2560)},
+                           'D': {'top': (2044, 2048, 2560, 3200),
+                                 'bottom': (0, 4, 2560, 3200),
+                                 'data': (0, 2048, 2560, 3200)}
+                           }
 
 # Special behavior is requested for NIRSpec subarrays that do not reach
 # detector edges; for these input models, we will assign the top and bottom
@@ -194,6 +215,9 @@ class Dataset():
         self.side_gain = side_gain
         self.odd_even_rows = odd_even_rows
         self.bad_reference_pixels = False
+
+        self.reference_sections = None
+        self.amplifiers = 'ABCD'
 
         # Define temp array for processing every group
         self.pixeldq = self.get_pixeldq()
@@ -415,7 +439,7 @@ class Dataset():
         donotuse = dqflags.pixel['DO_NOT_USE']
         ngood = 0
         for amplifier in 'AD':
-            rowstart, rowstop, colstart, colstop = NIR_reference_sections[amplifier]['side']
+            rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier]['side']
             good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
             ngood += len(good[0])
         return ngood
@@ -429,8 +453,8 @@ class Dataset():
             log.debug(f"Edgeless subarray {self.subarray} has {ngood} reference pixels.")
         else:
             for edge in ['top', 'bottom']:
-                for amplifier in 'ABCD':
-                    rowstart, rowstop, colstart, colstop = NIR_reference_sections[amplifier][edge]
+                for amplifier in self.amplifiers:
+                    rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][edge]
                     log.debug(f"Ref sections for {edge} & {amplifier}: {rowstart, rowstop, colstart, colstop}")
                     good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
                     ngood += len(good[0])
@@ -481,11 +505,17 @@ class NIRDataset(Dataset):
                                          side_gain,
                                          odd_even_rows=False)
 
-#
-#  Even though the recommendation specifies calculating the mean of the
-#  combined top and bottom reference sections, there's a good chance we
-#  might want to calculate them separately
-#
+        # Set appropriate NIR sections
+        self.is_irs2 = pipe_utils.is_irs2(input_model)
+        if self.is_irs2:
+            self.reference_sections = IRS2_reference_sections
+            self.amplifiers = '0ABCD'
+        else:
+            self.reference_sections = NIR_reference_sections
+
+    #  Even though the recommendation specifies calculating the mean of the
+    #  combined top and bottom reference sections, there's a good chance we
+    #  might want to calculate them separately
     def collect_odd_refpixels(self, group, amplifier, top_or_bottom):
         """Collect up the reference pixels corresponding to odd-numbered
         rows (first, third, fifth, etc, corresponding to even array indices)
@@ -513,10 +543,11 @@ class NIRDataset(Dataset):
 
         """
         rowstart, rowstop, colstart, colstop = \
-            NIR_reference_sections[amplifier][top_or_bottom]
+            self.reference_sections[amplifier][top_or_bottom]
 
-        oddref = group[rowstart:rowstop, colstart:colstop: 2]
-        odddq = self.pixeldq[rowstart:rowstop, colstart:colstop: 2]
+        oddref = group[rowstart:rowstop, colstart:colstop:2]
+        odddq = self.pixeldq[rowstart:rowstop, colstart:colstop:2]
+
         return oddref, odddq
 
     def collect_even_refpixels(self, group, amplifier, top_or_bottom):
@@ -547,12 +578,13 @@ class NIRDataset(Dataset):
         """
 
         rowstart, rowstop, colstart, colstop = \
-            NIR_reference_sections[amplifier][top_or_bottom]
+            self.reference_sections[amplifier][top_or_bottom]
         #
         # Even columns start on the second column
         colstart = colstart + 1
-        evenref = group[rowstart:rowstop, colstart:colstop: 2]
-        evendq = self.pixeldq[rowstart:rowstop, colstart:colstop: 2]
+        evenref = group[rowstart:rowstop, colstart:colstop:2]
+        evendq = self.pixeldq[rowstart:rowstop, colstart:colstop:2]
+
         return evenref, evendq
 
     def get_odd_refvalue(self, group, amplifier, top_or_bottom):
@@ -654,7 +686,7 @@ class NIRDataset(Dataset):
             return odd, even
         else:
             rowstart, rowstop, colstart, colstop = \
-                NIR_reference_sections[amplifier][top_or_bottom]
+                self.reference_sections[amplifier][top_or_bottom]
             ref = group[rowstart:rowstop, colstart:colstop]
             dq = self.pixeldq[rowstart:rowstop, colstart:colstop]
             mean = self.sigma_clip(ref, dq)
@@ -683,7 +715,7 @@ class NIRDataset(Dataset):
         """
 
         refpix = {}
-        for amplifier in 'ABCD':
+        for amplifier in self.amplifiers:
             refpix[amplifier] = {}
             refpix[amplifier]['odd'] = {}
             refpix[amplifier]['even'] = {}
@@ -721,9 +753,9 @@ class NIRDataset(Dataset):
         top and bottom reference pixels
 
         """
-        for amplifier in 'ABCD':
+        for amplifier in self.amplifiers:
             datarowstart, datarowstop, datacolstart, datacolstop = \
-                NIR_reference_sections[amplifier]['data']
+                self.reference_sections[amplifier]['data']
             if self.odd_even_columns:
                 oddreftop = refvalues[amplifier]['odd']['top']
                 oddrefbottom = refvalues[amplifier]['odd']['bottom']
@@ -1427,6 +1459,8 @@ class MIRIDataset(Dataset):
                                           side_gain=False,
                                           odd_even_rows=odd_even_rows)
 
+        self.reference_sections = MIR_reference_sections
+
     def DMS_to_detector(self, integration, group):
         #
         # MIRI data doesn't need transforming
@@ -1463,7 +1497,7 @@ class MIRIDataset(Dataset):
 
         """
 
-        rowstart, rowstop, column = MIR_reference_sections[amplifier][left_or_right]
+        rowstart, rowstop, column = self.reference_sections[amplifier][left_or_right]
         oddref = group[rowstart:rowstop:2, column]
         odddq = self.pixeldq[rowstart:rowstop:2, column]
         return oddref, odddq
@@ -1494,7 +1528,7 @@ class MIRIDataset(Dataset):
 
         """
 
-        rowstart, rowstop, column = MIR_reference_sections[amplifier][left_or_right]
+        rowstart, rowstop, column = self.reference_sections[amplifier][left_or_right]
         #
         # Even reference pixels start on the second row
         rowstart = rowstart + 1
@@ -1604,7 +1638,7 @@ class MIRIDataset(Dataset):
                 self.bad_reference_pixels = True
             return odd, even
         else:
-            rowstart, rowstop, column = MIR_reference_sections[amplifier][left_or_right]
+            rowstart, rowstop, column = self.reference_sections[amplifier][left_or_right]
             ref = group[rowstart:rowstop, column]
             dq = self.pixeldq[rowstart:rowstop, column]
             mean = self.sigma_clip(ref, dq)
@@ -1633,7 +1667,7 @@ class MIRIDataset(Dataset):
         """
 
         refpix = {}
-        for amplifier in 'ABCD':
+        for amplifier in self.amplifiers:
             refpix[amplifier] = {}
             refpix[amplifier]['odd'] = {}
             refpix[amplifier]['even'] = {}
@@ -1672,9 +1706,9 @@ class MIRIDataset(Dataset):
 
         """
 
-        for amplifier in 'ABCD':
+        for amplifier in self.amplifiers:
             datarowstart, datarowstop, datacolstart, datacolstop, stride = \
-                MIR_reference_sections[amplifier]['data']
+                self.reference_sections[amplifier]['data']
             if self.odd_even_rows:
                 oddrefleft = refvalues[amplifier]['odd']['left']
                 oddrefright = refvalues[amplifier]['odd']['right']
