@@ -15,6 +15,7 @@ from .cube_build.cube_build_step import CubeBuildStep
 from .cube_skymatch.cube_skymatch_step import CubeSkyMatchStep
 from .dark_current.dark_current_step import DarkCurrentStep
 from .dq_init.dq_init_step import DQInitStep
+from .emicorr.emicorr_step import EmiCorrStep
 from .extract_1d.extract_1d_step import Extract1dStep
 from .extract_2d.extract_2d_step import Extract2dStep
 from .firstframe.firstframe_step import FirstFrameStep
@@ -79,6 +80,7 @@ __all__ = [
     "CubeSkyMatchStep",
     "DarkCurrentStep",
     "DQInitStep",
+    "EmiCorrStep",
     "Extract1dStep",
     "Extract2dStep",
     "FirstFrameStep",
