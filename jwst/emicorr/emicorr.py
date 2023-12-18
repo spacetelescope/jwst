@@ -382,6 +382,10 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         if nbins_all is None:
             # the IDL code sets nbins as ulong type (ulonglong in python)
             nbins = int(period_in_pixels/2.0)
+        else:
+            nbins = nbins_all
+        if nbins > 501:
+            nbins = 500
 
         # bin the whole set
         log.info('Calculating the phase amplitude for {} bins'.format(nbins))
