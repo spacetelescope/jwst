@@ -1,6 +1,11 @@
 1.13.1 (unreleased)
 ===================
 
+emicorr
+-------
+
+- Fix emicorr crashing with readpatt values other than FASTR1 or SLOWR1. [#8147]
+
 other
 -----
 
