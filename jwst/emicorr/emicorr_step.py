@@ -75,7 +75,7 @@ class EmiCorrStep(Step):
             output_model = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
             if isinstance(output_model, str) or output_model is None:
                 # in this case output_model=subarray_readpatt configuration
-                self.log.warning('No correction match for this configuration: {}'.format(output_model))
+                self.log.warning('No correction match for this configuration')
                 self.log.warning('Step skipped')
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
