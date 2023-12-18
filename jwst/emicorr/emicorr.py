@@ -143,7 +143,7 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
                         save_intermediate_results=save_intermediate_results,
                         user_supplied_reffile=user_supplied_reffile,
                         nints_to_phase=nints_to_phase,
-                        nbins=nbins,
+                        nbins_all=nbins,
                         scale_reference=scale_reference
                         )
 
@@ -152,7 +152,7 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
 
 def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         save_intermediate_results=False, user_supplied_reffile=None,
-        nints_to_phase=None, nbins=None, scale_reference=True):
+        nints_to_phase=None, nbins_all=None, scale_reference=True):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -199,8 +199,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
     nints_to_phase : int
         Number of integrations to phase
 
-    nbins : int
-        Number of bins in one phased wave
+    nbins_all : int
+        Number of bins in one phased wave (this number will be used for all
+        frequencies to be corrected)
 
     scale_reference : bool
         If True, the reference wavelength will be scaled to the data's phase amplitude
@@ -378,7 +379,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # streched to a different dimension later. By default, use period_in_pixels/2.0
 
         # number of bins in one phased wave (e.g. 255, 218, etc)
-        if nbins is None:
+        if nbins_all is None:
             # the IDL code sets nbins as ulong type (ulonglong in python)
             nbins = int(period_in_pixels/2.0)
 
