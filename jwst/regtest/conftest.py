@@ -25,8 +25,8 @@ conf.use_memmap = False
 def artifactory_repos(pytestconfig):
     """Provides Artifactory inputs_root and results_root"""
     try:
-        inputs_root = pytestconfig.getini('inputs_root')[0]
-        results_root = pytestconfig.getini('results_root')[0]
+        inputs_root = pytestconfig.getini('inputs_root')[0].strip("\"")
+        results_root = pytestconfig.getini('results_root')[0].strip("\"")
     except IndexError:
         inputs_root = "jwst-pipeline"
         results_root = "jwst-pipeline-results"
