@@ -70,7 +70,7 @@ def test_apply_emicorr():
     emicorr_model, save_onthefly_reffile = None, None
     outmdl = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                 save_intermediate_results=False, user_supplied_reffile=None,
-                nints_to_phase=None, nbins=None, scale_reference=True)
+                nints_to_phase=None, nbins_all=None, scale_reference=True)
 
     assert outmdl is not None
 
