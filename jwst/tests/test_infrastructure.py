@@ -77,7 +77,7 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     nfiles: int
         The number of files expected to find.
     """
-    inputs_root = pytestconfig.getini('inputs_root')[0]
+    inputs_root = pytestconfig.getini('inputs_root')
     env = request.config.getoption('env')
     path = os.path.join(inputs_root, env, 'infrastructure/test_data_glob')
 

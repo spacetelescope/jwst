@@ -25,8 +25,8 @@ conf.use_memmap = False
 def artifactory_repos(pytestconfig):
     """Provides Artifactory inputs_root and results_root"""
     try:
-        inputs_root = pytestconfig.getini('inputs_root')[0]
-        results_root = pytestconfig.getini('results_root')[0]
+        inputs_root = pytestconfig.getini('inputs_root')
+        results_root = pytestconfig.getini('results_root')
     except IndexError:
         inputs_root = "jwst-pipeline"
         results_root = "jwst-pipeline-results"
@@ -351,8 +351,8 @@ def pool_path_fixture(metafunc):
         return
 
     try:
-        inputs_root = metafunc.config.getini('inputs_root')[0]
-        results_root = metafunc.config.getini('results_root')[0]
+        inputs_root = metafunc.config.getini('inputs_root')
+        results_root = metafunc.config.getini('results_root')
         env = metafunc.config.getoption('env')
     except IndexError:
         inputs_root = "jwst-pipeline"
