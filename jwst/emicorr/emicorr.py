@@ -637,8 +637,6 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
             if subarray not in subname:
                 continue
             log.debug('Found subarray case {}!'.format(subname))
-            if 'FULL' in subname:
-                subname = subname + '_' + readpatt
             for item, val in mdl_dict.items():
                 if subname in item:
                     if "rowclocks" in item:

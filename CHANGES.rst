@@ -5,6 +5,7 @@ emicorr
 -------
 
 - Fix emicorr crashing with readpatt values other than FASTR1 or SLOWR1. [#8147]
+- Fix bug for subarray=Full unable to find configuration. [#8148]
 
 other
 -----
