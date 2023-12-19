@@ -1,7 +1,10 @@
 1.13.2 (unreleased)
 ===================
 
-- 
+emicorr
+-------
+
+- Fix another bug with subarray=Full. [#8151]
 
 1.13.1 (2023-12-19)
 ===================
@@ -11,7 +14,6 @@ emicorr
 
 - Fix emicorr crashing with readpatt values other than FASTR1 or SLOWR1. [#8147]
 - Fix bug for subarray=Full unable to find configuration. [#8148]
-- Fix another bug with subarray=Full. [#8151]
 
 other
 -----
