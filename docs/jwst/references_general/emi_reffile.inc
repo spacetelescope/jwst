@@ -33,9 +33,9 @@ Example file contents::
       ├─BRIGHTSKY (dict)
       │ ├─frameclocks (int): 23968
       │ ├─freqs (dict)
-      │ │ ├─FASTR1 (list)
+      │ │ ├─FAST (list)
       │ │ │ └─[0] (str): Hz10
-      │ │ └─SLOWR1 (dict)
+      │ │ └─SLOW (dict)
       │ │   ├─MIRIFULONG (list)
       │ │   │ └─[0] (str): Hz10_slow_MIRIFULONG
       │ │   ├─MIRIFUSHORT (list)
@@ -46,10 +46,10 @@ Example file contents::
       ├─MASK1140 (dict)
       │ ├─frameclocks (int): 23968
       │ ├─freqs (dict)
-      │ │ ├─FASTR1 (list)
+      │ │ ├─FAST (list)
       │ │ │ ├─[0] (str): Hz390
       │ │ │ └─[1] (str): Hz10
-      │ │ └─SLOWR1 (dict)
+      │ │ └─SLOW (dict)
       │ │   ├─MIRIFULONG (list)
       │ │   │ ├─[0] (str): Hz390
       │ │   │ └─[1] (str): Hz10_slow_MIRIFULONG

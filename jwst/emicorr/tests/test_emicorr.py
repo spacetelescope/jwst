@@ -27,7 +27,7 @@ def mk_data_mdl(data, subarray, readpatt, detector):
 
 def test_EmiCorrStep():
     data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
+    input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     expected_outmdl = input_model.copy()
 
     nirmdl = input_model.copy()
@@ -42,7 +42,7 @@ def test_EmiCorrStep():
 
 def test_do_correction():
     data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
+    input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     pars = {
         'save_intermediate_results': False,
         'user_supplied_reffile': None,
@@ -66,17 +66,17 @@ def test_do_correction():
 
 def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, 'MASK1550', 'FASTR1', 'MIRIMAGE')
+    input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     emicorr_model, save_onthefly_reffile = None, None
     outmdl = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                 save_intermediate_results=False, user_supplied_reffile=None,
-                nints_to_phase=None, nbins=None, scale_reference=True)
+                nints_to_phase=None, nbins_all=None, scale_reference=True)
 
     assert outmdl is not None
 
 
 def test_get_subarcase():
-    subarray, readpatt, detector = 'MASK1550', 'FASTR1', 'MIRIMAGE'
+    subarray, readpatt, detector = 'MASK1550', 'FAST', 'MIRIMAGE'
     subarray_info_r = emicorr.get_subarcase(default_subarray_cases, subarray, readpatt, detector)
     subname_r, rowclocks_r, frameclocks_r, freqs2correct_r = subarray_info_r
 
