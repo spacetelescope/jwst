@@ -618,10 +618,10 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     # search and return the specific values for the configuration
     if isinstance(subarray_cases, dict):
         for subname in subarray_cases:
-            if subarray not in subname:
+            if subarray == 'FULL':
+                subarray = subarray + '_' + readpatt
+            if subarray != subname:
                 continue
-            if subname == 'FULL':
-                subname = subname + '_' + readpatt
             rowclocks = subarray_cases[subname]["rowclocks"]
             frameclocks = subarray_cases[subname]["frameclocks"]
             if readpatt == "SLOW":
@@ -639,6 +639,8 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
             log.debug('Found subarray case {}!'.format(subname))
             for item, val in mdl_dict.items():
                 if subname in item:
+                    if 'FULL' in item and readpatt not in item:
+                        continue
                     if "rowclocks" in item:
                         rowclocks = val
                     elif "frameclocks" in item:
