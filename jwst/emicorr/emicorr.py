@@ -245,6 +245,11 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
+    nints, ngroups, ny, nx = np.shape(output_model.data)
+    if nints_to_phase is None:
+        nints_to_phase = nints
+    elif nints_to_phase > nints:
+        nints_to_phase = nints
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
     if save_intermediate_results and save_onthefly_reffile is not None:
@@ -260,9 +265,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # Read image data and set up some variables
         orig_data = output_model.data
         data = orig_data.copy()
-        nints, ngroups, ny, nx = np.shape(data)
-        if nints_to_phase is None:
-            nints_to_phase = nints
 
         # Correspondance of array order in IDL
         # sz[0] = 4 in idl
