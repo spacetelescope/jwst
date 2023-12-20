@@ -2,7 +2,7 @@ import logging
 import warnings
 
 import numpy as np
-from scipy.optimize import minimize_scalar
+
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import (
@@ -18,7 +18,6 @@ from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 
 from jwst.assign_wcs.util import wrap_ra
-from jwst.wavecorr.wavecorr import _is_point_source
 from jwst.wavecorr.wavecorr import WAVECORR_SUPPORTED_MODES
 
 from . import resample_utils
@@ -31,33 +30,13 @@ log.setLevel(logging.DEBUG)
 _S2C = SphericalToCartesian()
 
 
-# def _use_wavecorr(model, lam):
-# def _use_wavecorr(model):
-#     # Replace wavelength with wavelength array corrected by wavecorr.
-#     # Can the corrected wavelength array be used?
-#     if not isinstance(model, list):
-#         model = [model]
-#
-#     exp_type = [m.meta.exposure.type.lower()  for m in model]
-#     is_point_source = []
-#     if exp_type in WAVECORR_SUPPORTED_MODES:
-#         if _is_point_source(model, exp_type):
-#             # try:
-#             #     if lam.shape == refmodel.wavelength.shape:
-#             #         lam = refmodel.wavelength.copy()
-#             #     else:
-#             #         warning.warn("Not using wavecorr wavelength arrays, shapes don't match.")
-#             # except AttributeError:
-#             #     pass
-#     return lam
-
 def _use_wavecorr(model):
     if model.meta.exposure.type in WAVECORR_SUPPORTED_MODES:
         if hasattr(model, "wavelength") and not (model.wavelength is None or (np.isnan(model.wavelength)).all()):
             log.info('Using wavelengths corrected for source position.')
             return model.wavelength
         else:
-            x,y = grid_from_bounding_box(model.meta.wcs.bounding_box)
+            x,y = wcstools.grid_from_bounding_box(model.meta.wcs.bounding_box)
             log.info('not using wavecor in resample_spec')
             return model.meta.wcs(x, y)[2]
 
