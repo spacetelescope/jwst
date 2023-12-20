@@ -554,23 +554,17 @@ def minmed(data, minval=False, avgval=False, maxval=False):
     ngroups, ny, nx = np.shape(data)
     medimg = np.zeros((ny, nx))
     # use a mask to ignore nans for calculations
-    masked_data = np.ma.array(data, mask=np.isnan(data))
-
-    for i in range(nx):
-        for j in range(ny):
-            vec = masked_data[:, j, i]
-            u = np.where(vec != 0)
-            n = vec[u].size
-            if n > 0:
-                if n <= 2 or minval:
-                    medimg[j, i] = np.ma.min(vec[u])
-                if maxval:
-                    medimg[j, i] = np.ma.max(vec[u])
-                if not minval and not maxval and not avgval:
-                    medimg[j, i] = np.ma.median(vec[u])
-                if avgval:
-                    dmean , _, _, _ = iter_stat_sig_clip(vec[u])
-                    medimg[j, i] = dmean
+    vec = np.ma.array(data, mask=np.isnan(data))
+    n = vec.size
+    if n > 0:
+        if n <= 2 or minval:
+            medimg = np.ma.min(vec, axis=0)
+        if maxval:
+            medimg = np.ma.max(vec, axis=0)
+        if not minval and not maxval and not avgval:
+            medimg = np.ma.median(vec, axis=0)
+        if avgval:
+            medimg = np.ma.mean(vec, axis=0)
     return medimg
 
 
