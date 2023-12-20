@@ -1,7 +1,10 @@
 1.13.2 (unreleased)
 ===================
 
-- 
+emicorr
+-------
+
+- Fix another bug with subarray=Full. [#8151]
 
 1.13.1 (2023-12-19)
 ===================
