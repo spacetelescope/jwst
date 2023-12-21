@@ -5,6 +5,7 @@ emicorr
 -------
 
 - Fix another bug with subarray=Full. [#8151]
+- Speeding up the code and fixing case of subarray not in ref file. [#8152]
 
 1.13.1 (2023-12-19)
 ===================
