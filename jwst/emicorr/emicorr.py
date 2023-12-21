@@ -224,16 +224,18 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         log.info('Using reference file to get subarray case.')
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
         reference_wave_list = []
-        for fnme in freqs2correct:
-            freq, ref_wave = get_frequency_info(emicorr_model, fnme)
-            freqs_numbers.append(freq)
-            reference_wave_list.append(ref_wave)
+        if freqs2correct is not None:
+            for fnme in freqs2correct:
+                freq, ref_wave = get_frequency_info(emicorr_model, fnme)
+                freqs_numbers.append(freq)
+                reference_wave_list.append(ref_wave)
     else:
         log.info('Using default subarray case corrections.')
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(default_subarray_cases, subarray, readpatt, detector)
-        for fnme in freqs2correct:
-            freq = get_frequency_info(default_emi_freqs, fnme)
-            freqs_numbers.append(freq)
+        if freqs2correct is not None:
+            for fnme in freqs2correct:
+                freq = get_frequency_info(default_emi_freqs, fnme)
+                freqs_numbers.append(freq)
 
     log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
     if rowclocks is None or len(freqs_numbers) == 0:
@@ -275,7 +277,35 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         nx4 = int(nx/4)
 
         dd_all = np.ones((nints, ngroups, ny, nx4))
-        log.info('Subtracting self-superbias from each group of each integration')
+        log.info('Subtracting self-superbias from each group of each integration and')
+
+        # Calculate times of all pixels in the input integration, then use that to calculate
+        # phase of all pixels. Times here is in integer numbers of 10us pixels starting from
+        # the first data pixel in the input image. Times can be a very large integer, so use
+        # a big datatype. Phaseall (below) is just 0-1.0.
+
+        # A safer option is to calculate times_per_integration and calculate the phase at each
+        # int separately. That way times array will have a smaller number of elements at each
+        # int, with less risk of datatype overflow. Still, use the largest datatype available
+        # for the time_this_int array.
+
+        times_this_int = np.zeros((ngroups, ny, nx4), dtype='ulonglong')
+        phaseall = np.zeros((nints, ngroups, ny, nx4))
+
+        # non-roi rowclocks between subarray frames (this will be 0 for fullframe)
+        extra_rowclocks = (1024. - ny) * (4 + 3.)
+        # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
+        period_in_pixels = (1./frequency) / 10.0e-6
+
+        start_time, ref_pix_sample = 0, 3
+
+        # Need colstop for phase calculation in case of last refpixel in a row. Technically,
+        # this number comes from the subarray definition (see subarray_cases dict above), but
+        # calculate it from the input image header here just in case the subarray definitions
+        # are not available to this routine.
+        colstop = int( xsize/4 + xstart - 1 )
+        log.info('doing phase calculation per integration')
+
         for ninti in range(nints_to_phase):
             log.debug('  Working on integration: {}'.format(ninti+1))
 
@@ -310,34 +340,6 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                 # This is the quad-averaged, cleaned, input image data for the exposure
                 dd_all[ninti, ngroupi, ...] = dd - np.median(dd)
 
-        # Calculate times of all pixels in the input integration, then use that to calculate
-        # phase of all pixels. Times here is in integer numbers of 10us pixels starting from
-        # the first data pixel in the input image. Times can be a very large integer, so use
-        # a big datatype. Phaseall (below) is just 0-1.0.
-
-        # A safer option is to calculate times_per_integration and calculate the phase at each
-        # int separately. That way times array will have a smaller number of elements at each
-        # int, with less risk of datatype overflow. Still, use the largest datatype available
-        # for the time_this_int array.
-
-        times_this_int = np.zeros((ngroups, ny, nx4), dtype='ulonglong')
-        phaseall = np.zeros((nints, ngroups, ny, nx4))
-
-        # non-roi rowclocks between subarray frames (this will be 0 for fullframe)
-        extra_rowclocks = (1024. - ny) * (4 + 3.)
-        # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
-        period_in_pixels = (1./frequency) / 10.0e-6
-
-        start_time, ref_pix_sample = 0, 3
-
-        # Need colstop for phase calculation in case of last refpixel in a row. Technically,
-        # this number comes from the subarray definition (see subarray_cases dict above), but
-        # calculate it from the input image header here just in case the subarray definitions
-        # are not available to this routine.
-        colstop = int( xsize/4 + xstart - 1 )
-        log.info('Phase calculation per integration')
-        for l in range(nints_to_phase):
-            log.debug('  Working on integration: {}'.format(l+1))
             for k in range(ngroups):   # frames
                 for j in range(ny):    # rows
                     # nsamples= 1 for fast, 9 for slow (from metadata)
@@ -366,7 +368,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
             # number of 10us from the first data pixel in this integration, so to
             # convert to phase, divide by the waveform *period* in float pixels
             phase_this_int = times_this_int / period_in_pixels
-            phaseall[l, ...] = phase_this_int - phase_this_int.astype('ulonglong')
+            phaseall[ninti, ...] = phase_this_int - phase_this_int.astype('ulonglong')
 
             # add a frame time to account for the extra frame reset between MIRI integrations
             start_time += frameclocks
@@ -436,8 +438,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
             # and optionally amplitude scaled)
             # shift and resample reference_wave at pa's phase
             # u[0] is the phase shift of reference_wave *to* pa
-            u = np.where(cc >= max(cc))
-            lut_reference = rebin(np.roll(reference_wave, u[0]), [period_in_pixels])
+            u = np.argmax(cc)
+            lut_reference = rebin(np.roll(reference_wave, u), [period_in_pixels])
 
             # Scale reference wave amplitude to match the pa amplitude from this dataset by
             # fitting a line rather than taking a mean ratio so that any DC offset drops out
@@ -728,9 +730,8 @@ def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
     # Compute the mean + standard deviation of the entire data array,
     # these values will be returned if there are fewer than 2 good points.
     dmask = np.ones(ngood, dtype='b') + 1
-    dmean = sum(data * dmask) / ngood
+    dmean = np.sum(data * dmask) / ngood
     dsigma = np.sqrt(sum((data - dmean)**2) / (ngood - 1))
-    dsigma = dsigma
     iiter = 1
 
     # Iteratively compute the mean + stdev, updating the sigma-rejection thresholds
@@ -746,7 +747,7 @@ def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
         ngood = sum(dmask)
 
         if ngood >= 2:
-            dmean = sum(data*dmask) / ngood
+            dmean = np.sum(data*dmask) / ngood
             dsigma = np.sqrt( sum((data - dmean)**2 * dmask) / (ngood - 1) )
             dsigma = dsigma
 
