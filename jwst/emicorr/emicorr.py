@@ -74,7 +74,7 @@ default_subarray_cases = {
 
     "MASK1065": {
         "rowclocks": 82,
-        "frameclocks": 2396,
+        "frameclocks": 23968,
         "freqs":  {"FAST": ["Hz390", "Hz10"],
                    "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
                               "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
