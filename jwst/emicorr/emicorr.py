@@ -72,6 +72,14 @@ default_subarray_cases = {
                               "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
                               "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
 
+    "MASK1065": {
+        "rowclocks": 82,
+        "frameclocks": 2396,
+        "freqs":  {"FAST": ["Hz390", "Hz10"],
+                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
+                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
+                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+
     # 390Hz already in-phase for these, but may need corr for other
     # frequencies (e.g. 10Hz heater noise)
 
