@@ -31,14 +31,19 @@ _S2C = SphericalToCartesian()
 
 
 def _use_wavecorr(model):
+    """
+    Account for wavelength corretion in Nirspec observations.
+    """
     if model.meta.exposure.type in WAVECORR_SUPPORTED_MODES:
         if hasattr(model, "wavelength") and not (model.wavelength is None or (np.isnan(model.wavelength)).all()):
-            log.info('Using wavelengths corrected for source position.')
+            log.debug('Using wavelengths corrected for source position.')
             return model.wavelength
         else:
             x,y = wcstools.grid_from_bounding_box(model.meta.wcs.bounding_box)
-            log.info('not using wavecor in resample_spec')
             return model.meta.wcs(x, y)[2]
+    else:
+        x,y = wcstools.grid_from_bounding_box(model.meta.wcs.bounding_box)
+        return model.meta.wcs(x, y)[2]
 
 
 class ResampleSpecData(ResampleData):
@@ -171,10 +176,6 @@ class ResampleSpecData(ResampleData):
         # transform the weighted means into target RA/Dec
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
 
-        # ref_lam = _find_nirspec_output_sampling_wavelengths(
-        #     all_wcs,
-        #     targ_ra, targ_dec
-        # )
         ref_lam = _find_nirspec_output_sampling_wavelengths(
             all_lambdas,
             targ_ra, targ_dec
