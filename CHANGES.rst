@@ -1,7 +1,11 @@
 1.13.3 (unreleased)
 ===================
 
-- 
+ramp_fitting
+------------
+
+- Updated the argument description and parameter definition for `maximum_cores`
+  to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
 
 1.13.2 (2023-12-21)
 ===================
@@ -147,9 +151,6 @@ ramp_fitting
 ------------
 
 - Moving some ramp fitting CI tests from JWST to STCAL. [#8060]
-
-- Updated the argument description and parameter definition for `maximum_cores`
-  to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
 
 resample
 --------
