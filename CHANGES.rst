@@ -1,6 +1,12 @@
 1.13.3 (unreleased)
 ===================
 
+documentation
+-------------
+
+- Updated many docs to change the use of unordered/bullet lists to
+  numbered lists, to avoid formatting issues in html pages. [#8156]
+
 ramp_fitting
 ------------
 
