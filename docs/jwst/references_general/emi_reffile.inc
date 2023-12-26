@@ -1,22 +1,22 @@
-.. _emi_reffile:
+.. _emicorr_reffile:
 
-EMI Reference File
-------------------
+EMICORR Reference File
+----------------------
 
-:REFTYPE: EMI
+:REFTYPE: EMICORR
 :Data model: `~jwst.datamodels.EmiModel`
 
-The EMI reference file contains data necessary for removing
+The EMICORR reference file contains data necessary for removing
 contaminating MIRI EMI frequencies.
 
 .. include:: ../references_general/emi_selection.inc
 
 .. include:: ../includes/standard_keywords.inc
 
-EMI Reference File Format
-+++++++++++++++++++++++++
+EMICORR Reference File Format
++++++++++++++++++++++++++++++
 
-MIRI EMI reference files are in ASDF format.  The EMI
+MIRI EMICORR reference files are in ASDF format.  The EMICORR
 reference file contains the frequencies for which the image will
 be corrected.
 Example file contents::

@@ -24,35 +24,35 @@ modes included in this category are NIRCam WFSS and Time-Series Grism,
 NIRISS WFSS and SOSS, and MIRI MRS and LRS. All of these modes are processed
 as follows:
 
-- If the science data have been taken using a subarray and the FLAT
-  reference file is a full-frame image, extract the corresponding subarray
-  region from the flat-field data.
+#. If the science data have been taken using a subarray and the FLAT
+   reference file is a full-frame image, extract the corresponding subarray
+   region from the flat-field data.
 
-- Find pixels that have a value of NaN or zero in the FLAT reference file
-  SCI array and set their DQ values to "NO_FLAT_FIELD" and "DO_NOT_USE."
+#. Find pixels that have a value of NaN or zero in the FLAT reference file
+   SCI array and set their DQ values to "NO_FLAT_FIELD" and "DO_NOT_USE."
 
-- Reset the values of pixels in the flat that have DQ="NO_FLAT_FIELD" to
-  1.0, so that they have no effect when applied to the science data.
+#. Reset the values of pixels in the flat that have DQ="NO_FLAT_FIELD" to
+   1.0, so that they have no effect when applied to the science data.
 
-- Propagate the FLAT reference file DQ values into the science exposure
-  DQ array using a bitwise OR operation.
+#. Propagate the FLAT reference file DQ values into the science exposure
+   DQ array using a bitwise OR operation.
 
-- Apply the flat according to:
+#. Apply the flat according to:
 
-  .. math::
-     SCI_{science} = SCI_{science} / SCI_{flat}
+   .. math::
+      SCI_{science} = SCI_{science} / SCI_{flat}
 
-  .. math::
-     VAR\_POISSON_{science} = VAR\_POISSON_{science} / SCI_{flat}^2
+   .. math::
+      VAR\_POISSON_{science} = VAR\_POISSON_{science} / SCI_{flat}^2
 
-  .. math::
-     VAR\_RNOISE_{science} = VAR\_RNOISE_{science} / SCI_{flat}^2
+   .. math::
+      VAR\_RNOISE_{science} = VAR\_RNOISE_{science} / SCI_{flat}^2
 
-  .. math::
-     VAR\_FLAT_{science} = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
+   .. math::
+      VAR\_FLAT_{science} = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
 
-  .. math::
-     ERR_{science} = \sqrt{VAR\_POISSON + VAR\_RNOISE + VAR\_FLAT}
+   .. math::
+      ERR_{science} = \sqrt{VAR\_POISSON + VAR\_RNOISE + VAR\_FLAT}
 
 Multi-integration datasets ("_rateints.fits" products), which are common
 for modes like NIRCam Time-Series Grism, NIRISS SOSS, and MIRI LRS Slitless,

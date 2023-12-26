@@ -179,28 +179,28 @@ each column (or row, if dispersion is vertical), using pixel values from all
 background regions within each column (or row).
 
 Parameters related to background subtraction are ``smoothing_length``,
-``bkg_fit``, and ``bkg_order``.
+``bkg_fit``, and ``bkg_order``:
 
-* If ``smoothing_length`` is specified, the 2D image data used to perform
-  background extraction will be smoothed along the dispersion direction using
-  a boxcar of width ``smoothing_length`` (in pixels). If not specified, no
-  smoothing of the input 2D image data is performed.
+#. If ``smoothing_length`` is specified, the 2D image data used to perform
+   background extraction will be smoothed along the dispersion direction using
+   a boxcar of width ``smoothing_length`` (in pixels). If not specified, no
+   smoothing of the input 2D image data is performed.
 
-* ``bkg_fit`` specifies the type of background computation to be performed
-  within each column (or row). The default value is None; if not set by
-  the user, the step will search the reference file for a value. If no value
-  is found, ``bkg_fit`` will be set to "poly". The "poly" mode fits a
-  polynomial of order ``bkg_order`` to the background values within
-  the column (or row). Alternatively, values of "mean" or "median" can be
-  specified in order to compute the simple mean or median of the background
-  values in each column (or row). Note that using "bkg_fit=mean" is
-  mathematically equivalent to "bkg_fit=poly" with "bkg_order=0". If ``bkg_fit``
-  is provided both by a reference file and by the user, e.g.
-  ``steps.extract_1d.bkg_fit='poly'``, the user-supplied value will override
-  the reference file value.
+#. ``bkg_fit`` specifies the type of background computation to be performed
+   within each column (or row). The default value is None; if not set by
+   the user, the step will search the reference file for a value. If no value
+   is found, ``bkg_fit`` will be set to "poly". The "poly" mode fits a
+   polynomial of order ``bkg_order`` to the background values within
+   the column (or row). Alternatively, values of "mean" or "median" can be
+   specified in order to compute the simple mean or median of the background
+   values in each column (or row). Note that using "bkg_fit=mean" is
+   mathematically equivalent to "bkg_fit=poly" with "bkg_order=0". If ``bkg_fit``
+   is provided both by a reference file and by the user, e.g.
+   ``steps.extract_1d.bkg_fit='poly'``, the user-supplied value will override
+   the reference file value.
 
-* If ``bkg_fit=poly`` is specified, ``bkg_order`` is used to indicate the
-  polynomial order to be used. The default value is zero, i.e. a constant.
+#. If ``bkg_fit=poly`` is specified, ``bkg_order`` is used to indicate the
+   polynomial order to be used. The default value is zero, i.e. a constant.
 
 During source extraction, the background fit is evaluated at each pixel within the
 source extraction region for that column (row), and the fitted values will
