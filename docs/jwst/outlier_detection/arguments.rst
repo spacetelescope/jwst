@@ -36,9 +36,6 @@ that control the behavior of the processing:
   The percent of maximum weight to use as lower-limit for valid data;
   valid values go from 0.0 to 1.0.
 
-``--grow`` (integer, default=1)
-  The radius, in pixels, from a bad pixel for neighbor rejection.
-
 ``--snr`` (string, default='4.0 3.0')
   The signal-to-noise values to use for bad pixel identification. Valid
   values are a pair of floating-point values in a single string.
@@ -77,6 +74,10 @@ that control the behavior of the processing:
   For example, if set to ``0.5``, only resampled images that use less than half
   the available memory can be created.
 
+``--in_memory`` (boolean, default=False)
+  Specifies whether or not to load and create all images that are used during
+  processing into memory. If ``False``, input files are loaded from disk when
+  needed and all intermediate files are stored on disk, rather than in memory.
 
 Step Arguments for IFU data
 ===========================
@@ -94,3 +95,8 @@ that control the behavior of the processing:
 ``--save_intermediate_results`` (boolean, default=False)
   Specifies whether or not to save any intermediate products created
   during step processing.
+
+``--in_memory`` (boolean, default=False)
+  Specifies whether or not to load and create all images that are used during
+  processing into memory. If ``False``, input files are loaded from disk when
+  needed and all intermediate files are stored on disk, rather than in memory.

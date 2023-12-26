@@ -170,6 +170,11 @@ two environment variables:
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
+To use a specific CRDS context, other than the current default, set the ``CRDS_CONTEXT``
+environment variable:
+
+    export CRDS_CONTEXT=jwst_1179.pmap
+
 ## Documentation
 
 Documentation (built daily from the Github `master` branch) is available at:
