@@ -94,9 +94,19 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`dq_init <dq_init_step>`                 | :ref:`MASK <mask_reffile>`                       |
 +-----------------------------------------------+--------------------------------------------------+
+| :ref:`emicorr <emicorr_step>`                 | :ref:`EMICORR <emicorr_reffile>`                 |
++-----------------------------------------------+--------------------------------------------------+
 | :ref:`extract_1d <extract_1d_step>`           | :ref:`EXTRACT1D <extract1d_reffile>`             |
 +                                               +--------------------------------------------------+
 |                                               | :ref:`APCORR <apcorr_reffile>`                   |
++                                               +--------------------------------------------------+
+|                                               | SPECKERNEL (NIRISS SOSS ATOCA only)              |
++                                               +--------------------------------------------------+
+|                                               | SPECPROFILE (NIRISS SOSS ATOCA only)             |
++                                               +--------------------------------------------------+
+|                                               | SPECTRACE (NIRISS SOSS ATOCA only)               |
++                                               +--------------------------------------------------+
+|                                               | WAVEMAP (NIRISS SOSS ATOCA only)                 |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`extract_2d <extract_2d_step>`           | :ref:`WAVECORR <wavecorr_reffile>`               |
 +                                               +--------------------------------------------------+
@@ -197,6 +207,8 @@ documentation on each reference file.
 | :ref:`DISTORTION <distortion_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`DRIZPARS <drizpars_reffile>`               | :ref:`resample <resample_step>`               |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`EMICORR <emicorr_reffile>`                 | :ref:`emicorr <emicorr_step>`                 |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`EXTRACT1D <extract1d_reffile>`             | :ref:`extract_1d <extract_1d_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
@@ -454,7 +466,6 @@ S_BKDSUB    Background subtraction
 S_COMB1D    1-D spectral combination
 S_DARK      Dark subtraction
 S_DQINIT    DQ initialization
-S_ERRINI    ERR initialization
 S_EXTR1D    1-D spectral extraction
 S_EXTR2D    2-D spectral extraction
 S_FLAT      Flat field correction
@@ -470,6 +481,7 @@ S_JUMP      Jump detection
 S_KLIP      Coronagraphic PSF subtraction
 S_LASTFR    MIRI last frame correction
 S_LINEAR    Linearity correction
+S_MIREMI    MIRI EMI correction
 S_MRSMAT    MIRI MRS background matching
 S_MSAFLG    NIRSpec MSA failed shutter flagging
 S_OUTLIR    Outlier detection
@@ -663,18 +675,18 @@ For example, all the following specifications are equivalent:
 `"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"`
 
 .. note::
-   - The default value (0) will make *all* non-zero
-     pixels in the DQ mask be considered "bad" pixels and the
-     corresponding pixels will not be used in computations.
+ The default value (0) will make *all* non-zero
+ pixels in the DQ mask be considered "bad" pixels and the
+ corresponding pixels will not be used in computations.
 
-   - Setting to `None` will turn off the use of the DQ array
-     for computations.
+ Setting to `None` will turn off the use of the DQ array
+ for computations.
 
-   - In order to reverse the meaning of the flags
-     from indicating values of the "good" DQ flags
-     to indicating the "bad" DQ flags, prepend '~' to the string
-     value. For example, in order to exclude pixels with
-     DQ flags 4 and 8 for computations and to consider
-     as "good" all other pixels (regardless of their DQ flag),
-     use a value of ``~4+8``, or ``~4,8``. A string value of
-     ``~0`` would be equivalent to a setting of ``None``.
+ In order to reverse the meaning of the flags
+ from indicating values of the "good" DQ flags
+ to indicating the "bad" DQ flags, prepend '~' to the string
+ value. For example, in order to exclude pixels with
+ DQ flags 4 and 8 for computations and to consider
+ as "good" all other pixels (regardless of their DQ flag),
+ use a value of ``~4+8``, or ``~4,8``. A string value of
+ ``~0`` would be equivalent to a setting of ``None``.

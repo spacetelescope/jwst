@@ -20,11 +20,11 @@ it is skipped by default. To apply this step set the step parameter,  ``--skip =
 
 The ``residual_fringe`` step can accept several different forms of input data, including:
 
-  - a single file containing a 2-D IFU image
+#. a single file containing a 2-D IFU image
 
-  - a data model (IFUImageModel) containing a 2-D IFU image
+#. a data model (`~jwst.datamodels.IFUImageModel`) containing a 2-D IFU image
 
-  - an association table (in json format) containing a single input file
+#. an association table (in json format) containing a single input file
 
 
 Assumptions
