@@ -49,7 +49,6 @@ class JumpStep(Step):
         minimum_groups = integer(default=3) # The minimum number of groups to perform jump detection using sigma clipping
         minimum_sigclip_groups = integer(default=100) # The minimum number of groups to switch to sigma clipping
         only_use_ints = boolean(default=True) # In sigclip only compare the same group across ints, if False compare all groups
-        avg_dark_current = float(default=0.0) # The average dark current (e-/sec) for this detector
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -125,8 +124,7 @@ class JumpStep(Step):
                                       max_extended_radius=self.max_extended_radius * 2,
                                       minimum_groups=self.minimum_groups,
                                       minimum_sigclip_groups=self.minimum_sigclip_groups,
-                                      only_use_ints=self.only_use_ints,
-                                      avg_dark_current=self.avg_dark_current
+                                      only_use_ints=self.only_use_ints
                                       )
 
 
