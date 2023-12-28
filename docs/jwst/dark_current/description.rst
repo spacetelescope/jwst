@@ -35,9 +35,9 @@ GROUPGAP intervening frames.
 
 The frame-averaged dark is constructed using the following scheme:
 
-* SCI arrays are computed as the mean of the original dark SCI arrays
-* ERR arrays are computed as the uncertainty in the mean, using
-  :math:`\frac{\sqrt {\sum \mathrm{ERR}^2}}{nframes}`
+#. SCI arrays are computed as the mean of the original dark SCI arrays
+#. ERR arrays are computed as the uncertainty in the mean, using
+   :math:`\frac{\sqrt {\sum \mathrm{ERR}^2}}{nframes}`
 
 The dark reference data are not integration-dependent for most instruments,
 hence the same group-by-group dark current data are subtracted from every

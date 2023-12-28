@@ -1,4 +1,4 @@
-name: weekly tests
+name: test on schedule
 
 on:
   schedule:
@@ -7,51 +7,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  crds:
-    name: retrieve current CRDS context
-    runs-on: ubuntu-latest
-    env:
-      OBSERVATORY: jwst
-      CRDS_PATH: /tmp/crds_cache
-      CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-    steps:
-      - id: context
-        run: >
-          echo "pmap=$(
-          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.OBSERVATORY }}"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ |
-          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
-          )" >> $GITHUB_OUTPUT
-        # Get default CRDS_CONTEXT without installing crds client
-        # See https://hst-crds.stsci.edu/static/users_guide/web_services.html#generic-request
-      - id: path
-        run: echo "path=${{ env.CRDS_PATH }}" >> $GITHUB_OUTPUT
-      - id: server
-        run: echo "url=${{ env.CRDS_SERVER_URL }}" >> $GITHUB_OUTPUT
-    outputs:
-      context: ${{ steps.context.outputs.pmap }}
-      path: ${{ steps.path.outputs.path }}
-      server: ${{ steps.server.outputs.url }}
+  crds_contexts:
+    uses: spacetelescope/crds/.github/workflows/contexts.yml@master
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
-    needs: [ crds ]
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run scheduled tests')))
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    needs: [ crds_contexts ]
     with:
       setenv: |
-        CRDS_PATH: ${{ needs.crds.outputs.path }}
-        CRDS_SERVER_URL: ${{ needs.crds.outputs.server }}
+        CRDS_PATH: /tmp/crds_cache
+        CRDS_SERVER_URL: https://jwst-crds.stsci.edu
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-      cache-path: ${{ needs.crds.outputs.path }}
-      cache-key: crds-${{ needs.crds.outputs.context }}
+      cache-path: /tmp/crds_cache
+      cache-key: crds-${{ needs.crds_context.outputs.jwst }}
       envs: |
         - macos: py39-xdist
-        - macos: py39-sdpdeps-xdist
         - macos: py310-xdist
-        - windows: py311-xdist
-          pytest-results-summary: true
+        - macos: py312-xdist
         - linux: py311-pyargs-xdist
-        - linux: py311-devdeps-xdist
-          pytest-results-summary: true
-        - macos: py311-devdeps-xdist
-          pytest-results-summary: true
-        - windows: py311-devdeps-xdist
-          pytest-results-summary: true
+        - linux: py3-pyargs-xdist
+

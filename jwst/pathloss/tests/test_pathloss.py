@@ -8,7 +8,9 @@ from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     get_aperture_from_model,
                                     get_center,
                                     interpolate_onto_grid,
-                                    is_pointsource)
+                                    is_pointsource,
+                                    shutter_below_is_closed,
+                                    shutter_above_is_closed)
 from jwst.pathloss.pathloss import do_correction
 import numpy as np
 
@@ -84,10 +86,10 @@ def test_get_aper_from_model_msa():
     aperture reference data is returned for MSA mode"""
 
     datmod = PathlossModel()
-    datmod.apertures.append({'shutters': 5})
+    datmod.apertures.append({'shutters': 3})
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
-    result = get_aperture_from_model(datmod, 5)
+    result = get_aperture_from_model(datmod, '11x11')
 
     assert result == datmod.apertures[0]
 
@@ -335,3 +337,21 @@ def test_interpolate_onto_grid():
     result_comparison = np.interp(wavelength_grid, extended_wavelength_vector, extended_pathloss_vector)
 
     np.testing.assert_array_equal(result, result_comparison)
+
+
+def test_shutter_below_is_closed():
+    shutter_below_closed = ['x111', 'x', '10x11']
+    shutter_below_open = ['11x11', '111x', '11x01']
+    for shutter_state in shutter_below_closed:
+        assert shutter_below_is_closed(shutter_state)
+    for shutter_state in shutter_below_open:
+        assert not shutter_below_is_closed(shutter_state)
+
+
+def test_shutter_above_is_closed():
+    shutter_above_closed = ['111x', 'x', '1x011']
+    shutter_above_open = ['11x11', 'x111', '110x1']
+    for shutter_state in shutter_above_closed:
+        assert shutter_above_is_closed(shutter_state)
+    for shutter_state in shutter_above_open:
+        assert not shutter_above_is_closed(shutter_state)

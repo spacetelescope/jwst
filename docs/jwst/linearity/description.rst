@@ -50,18 +50,18 @@ set to "COMPLETE".
 Special Handling
 ++++++++++++++++
 
-- Pixels having at least one correction coefficient equal to NaN will not have
-  the linearity correction applied and the DQ flag "NO_LIN_CORR" is added to
-  the science exposure PIXELDQ array.
+#. Pixels having at least one correction coefficient equal to NaN will not have
+   the linearity correction applied and the DQ flag "NO_LIN_CORR" is added to
+   the science exposure PIXELDQ array.
 
-- Pixels that have the "NO_LIN_CORR" flag set in the DQ array of the linearity
-  reference file will not have the correction applied and the "NO_LIN_CORR" flag
-  is added to the science exposure PIXELDQ array.
+#. Pixels that have the "NO_LIN_CORR" flag set in the DQ array of the linearity
+   reference file will not have the correction applied and the "NO_LIN_CORR" flag
+   is added to the science exposure PIXELDQ array.
 
-- Pixel values that have the "SATURATED" flag set in a particular group of the
-  science exposure GROUPDQ array will not have the linearity correction
-  applied to that group. Any groups for that pixel that are not flagged as
-  saturated will be corrected.
+#. Pixel values that have the "SATURATED" flag set in a particular group of the
+   science exposure GROUPDQ array will not have the linearity correction
+   applied to that group. Any groups for that pixel that are not flagged as
+   saturated will be corrected.
 
 The ERR array of the input science exposure is not modified.
 

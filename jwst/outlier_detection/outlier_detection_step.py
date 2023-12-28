@@ -110,7 +110,6 @@ class OutlierDetectionStep(Step):
                 'nlow': self.nlow,
                 'nhigh': self.nhigh,
                 'maskpt': self.maskpt,
-                'grow': self.grow,
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,

@@ -68,6 +68,13 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
         calibrated imaging data models that can be used as input to Stage 3
         of the JWST pipeline (with suffixes '_cal', '_tweakreg', '_skymatch').
 
+    .. warning::
+        This function modifies the WCS of calibrated imaging data models in a
+        way that is NOT compatible with ``tweakreg``: once a WCS
+        was modified using ``adjust_wcs()``, the corresponding imaging data
+        model (whose WCS was modified) no longer be aligned using the
+        ``tweakreg`` step.
+
     Parameters
     ----------
     wcs : `gwcs.WCS`
@@ -148,10 +155,10 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
 
 def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
     """
-    Applies the same *total* WCS correction that was applied to the WCS in the
-    ``from_image`` data model to the WCS of the ``to_image`` data model.
-    In some ways this function is analogous function to the ``tweakback``
-    function for HST available in the
+    Applies the same *total* WCS correction that was applied by ``tweakreg`` (!)
+    to the WCS in the ``from_image`` data model to the WCS of the ``to_image``
+    data model. In some ways this function is analogous function to the
+    ``tweakback`` function for HST available in the
     `drizzlepac package <https://github.com/spacetelescope/drizzlepac>`_.
 
     One fundamental difference between this function and ``tweakback``
@@ -177,6 +184,11 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
         will be written out to the same file. BACKUP the file in ``to_image``
         argument before calling this function.
 
+    .. warning::
+        This function does not support input data models whose WCS were
+        modified by :py:func:`adjust_wcs`. Only WCS corrections computed by
+        either the ``tweakreg`` step or by ``tweakwcs`` package are supported.
+
     Parameters
     ----------
 
@@ -195,7 +207,7 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
         WCS.
 
         If the WCS of the ``from_image`` data model does not contain
-        corections, then *both* ``matrix`` *and* ``shift`` arguments *must be
+        corrections, then *both* ``matrix`` *and* ``shift`` arguments *must be
         supplied*.
 
     matrix : 2D list, 2D numpy.ndarray, None, optional

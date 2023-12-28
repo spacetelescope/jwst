@@ -6,6 +6,5 @@ LSQ Equation Construction and Solving
 
 .. currentmodule:: jwst.mrs_imatch.mrs_imatch_step
 
-.. automodule:: jwst.mrs_imatch.mrs_imatch_step
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.mrs_imatch.mrs_imatch_step
+   :noindex:

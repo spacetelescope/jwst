@@ -14,6 +14,8 @@ DNU = test_dq_flags["DO_NOT_USE"]
 JUMP = test_dq_flags["JUMP_DET"]
 SAT = test_dq_flags["SATURATED"]
 
+MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
+
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles():
@@ -140,7 +142,8 @@ def setup_subarray_inputs(
     return model1, gdq, rnModel, pixdq, err, gain
 
 
-def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
+@pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
+def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
     """
     Create a simple input to instantiate RampFitStep and execute a call to test
     the step class and class method.
@@ -166,7 +169,7 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
         model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        maximum_cores=max_cores)
 
     assert slopes is not None
     assert cube_model is not None
