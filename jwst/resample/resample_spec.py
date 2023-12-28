@@ -171,7 +171,8 @@ class ResampleSpecData(ResampleData):
             wmean_l = np.sum(ld[good_s]) / total
         else:
             wmean_s = 0.5 * (refmodel.slit_ymax - refmodel.slit_ymin)
-            wmean_l = np.mean(lam)
+            ## wmean_l = np.mean(lam)
+            wmean_l = d2s(*np.mean(bbox, axis=1))[2]
 
         # transform the weighted means into target RA/Dec
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
@@ -729,9 +730,9 @@ def _find_nirspec_output_sampling_wavelengths(all_lambdas, targ_ra, targ_dec):
     min_delta = np.fabs(np.ediff1d(ref_lam).min())
 
     image_lam = []
-    for w in all_lambdas[1:]:
-        lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
-
+    for wl in all_lambdas[1:]:
+        #lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
+        lam = sorted(np.nanmedian(wl[:, np.any(np.isfinite(wl), axis=0)], axis=0))
         image_lam.append((lam, np.min(lam), np.max(lam)))
         min_delta = min(min_delta, np.fabs(np.ediff1d(ref_lam).min()))
 
