@@ -8,6 +8,11 @@ general
 
 - Increase asdf maximum version to 4 [#8018]
 
+ramp fit
+-------
+
+- added paramete to ramp_fit to pass the average dark current that
+  will be included in the calcuation of the Poisson noise in STCAL[#8157]
 resample
 --------
 
