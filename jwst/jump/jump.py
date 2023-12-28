@@ -26,7 +26,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      max_extended_radius=200,
                      minimum_groups=3,
                      minimum_sigclip_groups=100,
-                     only_use_ints=True
+                     only_use_ints=True,
+                     avg_dark_current=0,
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -84,7 +85,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     max_extended_radius=max_extended_radius,
                                     minimum_groups=minimum_groups,
                                     minimum_sigclip_groups=minimum_sigclip_groups,
-                                    only_use_ints=only_use_ints
+                                    only_use_ints=only_use_ints,
+                                    avg_dark_current=avg_dark_current
                                     )
 
 
