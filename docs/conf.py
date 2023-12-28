@@ -15,11 +15,43 @@ import datetime
 import importlib
 import sys
 import os
+from pathlib import Path
+
+if sys.version_info < (3, 11):
+     import tomli as tomllib
+else:
+     import tomllib
 from packaging.version import Version
 from configparser import ConfigParser
 
 import sphinx
 import stsci_rtd_theme
+
+from stpipe import Step
+from sphinx.ext.autodoc import AttributeDocumenter
+
+
+class StepSpecDocumenter(AttributeDocumenter):
+    def should_suppress_value_header(self):
+        if self.name == "spec" and issubclass(self.parent, Step):
+            # if this attribute is named "spec" and belongs to a "Step"
+            # don't show the value, it will be formatted in add_context below
+            return True
+        return super().should_suppress_value_header()
+
+    def add_content(self, more_content):
+        super().add_content(more_content)
+        if self.name != "spec" or not issubclass(self.parent, Step):
+            return
+        if not self.object.strip():
+            return
+
+        # format the long "Step.spec" string to improve readability
+        source_name = self.get_sourcename()
+        self.add_line("::", source_name, 0)
+        self.add_line("  ", source_name, 1)
+        txt = "\n".join((l.strip() for l in self.object.strip().splitlines()))
+        self.add_line(f"  {txt}", source_name, 2)
 
 
 def setup(app):
@@ -27,6 +59,8 @@ def setup(app):
         app.add_css_file("stsci.css")
     except AttributeError:
         app.add_stylesheet("stsci.css")
+    # add a custom AttributeDocumenter subclass to handle Step.spec formatting
+    app.add_autodocumenter(StepSpecDocumenter, True)
 
 
 conf = ConfigParser()
@@ -39,9 +73,8 @@ sys.path.insert(0, os.path.abspath('jwst/'))
 sys.path.insert(0, os.path.abspath('exts/'))
 
 # -- General configuration ------------------------------------------------
-conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
-setup_cfg = dict(conf.items('metadata'))
-
+with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
+    metadata = tomllib.load(metadata_file)['project']
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.3'
 
@@ -132,16 +165,16 @@ suppress_warnings = ['app.add_directive', ]
 
 
 # General information about the project
-project = setup_cfg['name']
-author = setup_cfg['author']
-copyright = '{0}, {1}'.format(datetime.datetime.now().year, author)
+project = metadata['name']
+author = metadata["authors"][0]["name"]
+copyright = f'{datetime.datetime.today().year}, {author}'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-package = importlib.import_module(setup_cfg['name'])
+package = importlib.import_module(metadata['name'])
 try:
     version = package.__version__.split('-', 1)[0]
     # The full version, including alpha/beta/rc tags.

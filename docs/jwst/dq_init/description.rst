@@ -13,20 +13,20 @@ integrations for a given pixel.
 
 The actual process consists of the following steps:
 
- - Determine what MASK reference file to use via the interface to the bestref
+#. Determine what MASK reference file to use via the interface to the bestref
    utility in CRDS.
 
- - If the "PIXELDQ" or "GROUPDQ" arrays of the input dataset do not already exist,
+#. If the "PIXELDQ" or "GROUPDQ" arrays of the input dataset do not already exist,
    which is sometimes the case for raw input products, create these arrays in
    the input data model and initialize them to zero. The "PIXELDQ" array will be
    2D, with the same number of rows and columns as the input science data.
    The "GROUPDQ" array will be 4D with the same dimensions (nints, ngroups,
    nrows, ncols) as the input science data array.
 
- - Check to see if the input science data is in subarray mode. If so, extract a
+#. Check to see if the input science data is in subarray mode. If so, extract a
    matching subarray from the full-frame MASK reference file.
 
- - Propagate the DQ flags from the reference file DQ array to the science data "PIXELDQ"
+#. Propagate the DQ flags from the reference file DQ array to the science data "PIXELDQ"
    array using numpy's ``bitwise_or`` function.
 
 Note that when applying the ``dq_init`` step to FGS guide star data, as is done in

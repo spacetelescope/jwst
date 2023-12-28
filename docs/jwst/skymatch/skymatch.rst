@@ -9,6 +9,5 @@ matching operations on the input image data models.
 
 .. currentmodule:: jwst.skymatch.skymatch
 
-.. automodule:: jwst.skymatch.skymatch
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.skymatch.skymatch
+   :noindex:

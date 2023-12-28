@@ -85,6 +85,7 @@ def test_cache_data(db_cache, engdb):
     assert data == live_data
 
 
+@pytest.mark.xfail(reason="may have been a change in EngDB coverage")
 def test_cache_partial_data(db_cache, engdb):
     """
     Test read of some data.
@@ -109,6 +110,7 @@ def test_cache_partial_data(db_cache, engdb):
     assert data_short == live_data_short
 
 
+@pytest.mark.xfail(reason="may have been a change in EngDB coverage")
 def test_cache_end_data(db_cache, engdb):
     """
     Test read of some data.

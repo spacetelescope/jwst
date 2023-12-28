@@ -40,6 +40,6 @@ frame.
 
 :filters:
     :filter: Filter name
-    :pupil: Pupil name (NIRCam only)
+    :pupil: Pupil name (NIRCam and NIRISS only)
     :column_offset: Offset in x (in pixels)
     :row_offset: Offset in y (in pixels)

@@ -304,9 +304,9 @@ When CRDS adds a reference file to a .rmap, it uses literal matching between
 the value defined in the reference file and the existing values shown in the
 .rmap.  This enables CRDS to:
 
-* add files to existing categories
-* replace files in existing categories
-* create new categories of files.
+#. add files to existing categories
+#. replace files in existing categories
+#. create new categories of files.
 
 Because creating new categories is an unusual event which should be carefully
 reviewed,  CRDS issues a warning when a reference file defines a new category.

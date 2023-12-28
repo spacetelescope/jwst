@@ -35,42 +35,42 @@ image depends on whether the background exposures are "rate" (2D) or
 "rateint" (3D) exposures. In the case of "rate" exposures, the average
 background image is produced as follows:
 
- * Clip the combined SCI arrays of all background exposures. For mixtures
-    of full chip and subarray data, only overlapping regions are used
- * Compute the mean of the unclipped SCI values
- * Sum in quadrature the ERR arrays of all background exposures, clipping the
+#. Clip the combined SCI arrays of all background exposures. For mixtures
+   of full chip and subarray data, only overlapping regions are used
+#. Compute the mean of the unclipped SCI values
+#. Sum in quadrature the ERR arrays of all background exposures, clipping the
    same input values as determined for the SCI arrays, and convert the result
    to an uncertainty in the mean
- * Combine the DQ arrays of all background exposures using a bitwise OR
+#. Combine the DQ arrays of all background exposures using a bitwise OR
    operation
 
 In the case of "rateint" exposures, each background exposure can have multiple
 integrations, so calculations are slightly more involved. The "overall" average
 background image is produced as follows:
 
- * Clip the SCI arrays of each background exposure along its integrations
- * Compute the mean of the unclipped SCI values to yield an average image for
+#. Clip the SCI arrays of each background exposure along its integrations
+#. Compute the mean of the unclipped SCI values to yield an average image for
    each background exposure
- * Clip the means of all background exposure averages
- * Compute the mean of the unclipped background exposure averages to yield the
+#. Clip the means of all background exposure averages
+#. Compute the mean of the unclipped background exposure averages to yield the
    "overall" average background image
- * Sum in quadrature the ERR arrays of all background exposures, clipping the
+#. Sum in quadrature the ERR arrays of all background exposures, clipping the
    same input values as determined for the SCI arrays, and convert the result
    to an uncertainty in the mean (This is not yet implemented)
- * Combine the DQ arrays of all background exposures, by first using a bitwise
+#. Combine the DQ arrays of all background exposures, by first using a bitwise
    OR operation over all integrations in each exposure, followed by doing by a
    bitwise OR operation over all exposures.
         
 The average background exposure is then subtracted from the target exposure.
 The subtraction consists of the following operations:
 
- * The SCI array of the average background is subtracted from the SCI
+#. The SCI array of the average background is subtracted from the SCI
    array of the target exposure
 
- * The ERR array of the target exposure is currently unchanged, until full
+#. The ERR array of the target exposure is currently unchanged, until full
    error propagation is implemented in the entire pipeline
 
- * The DQ arrays of the average background and the target exposure are
+#. The DQ arrays of the average background and the target exposure are
    combined using a bitwise OR operation
 
 If the target exposure is a simple ImageModel, the background image is
