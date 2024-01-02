@@ -41,9 +41,11 @@
 #
 #  For MIRI subarray exposures, omit the refpix step.
 
+import logging
+from copy import deepcopy
+
 import numpy as np
 from scipy import stats
-import logging
 
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -507,7 +509,7 @@ class NIRDataset(Dataset):
         # Set appropriate NIR sections
         self.is_irs2 = pipe_utils.is_irs2(input_model)
         if self.is_irs2:
-            self.reference_sections = IRS2_reference_sections
+            self.reference_sections = deepcopy(IRS2_reference_sections)
             self.amplifiers = '0ABCD'
             self.irs2_odd_mask = self.make_irs2_odd_mask(input_model)
         else:
@@ -538,8 +540,6 @@ class NIRDataset(Dataset):
             True identifies all odd pixels (science and reference).
         """
         # Get data information from input model.
-        # Note that if these are not set to standard values, the
-        # IRS2_reference_sections values must be changed to match.
         # (y and x here refer to detector orientation, although input
         # data has not yet been rotated)
         ny = input_model.data.shape[-1]  # 2048
@@ -558,6 +558,19 @@ class NIRDataset(Dataset):
                         refpix_r_default)
             refpix_r = refpix_r_default
 
+        # If these are not set to standard values, the
+        # reference sections values must be changed to match.
+        n_sector = nx // 5
+        areas = ['top', 'bottom', 'data']  # assuming no 'side'
+        if nx != 3200:
+            for i, amplifier in enumerate('0ABCD'):
+                x_start = n_sector * i
+                x_stop = n_sector * (i + 1)
+                for area in areas:
+                    sec = self.reference_sections[amplifier][area]
+                    self.reference_sections[amplifier][area] = (
+                        sec[0], sec[1], x_start, x_stop)
+
         # Make a column mask that identifies the reference sector and
         # all interleaved pixels as False, all science pixels
         # and standard reference pixels as True
@@ -568,7 +581,6 @@ class NIRDataset(Dataset):
         x_mask = ~x_mask
 
         # Treat the reference sector like the other sectors
-        n_sector = nx // 5
         x_mask[:n_sector] = x_mask[n_sector: 2 * n_sector]
 
         # Find even and odd interleaved pixels:
