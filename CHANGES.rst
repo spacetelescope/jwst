@@ -29,6 +29,11 @@ ramp_fitting
 - Updated the argument description and parameter definition for `maximum_cores`
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
 
+resample
+--------
+
+- Use the same iscale value for resampling science data and variance arrays. [#8159]
+
 1.13.2 (2023-12-21)
 ===================
 
