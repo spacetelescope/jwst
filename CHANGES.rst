@@ -32,7 +32,7 @@ ramp_fitting
 resample
 --------
 
-- Use the same iscale value for resampling science data and variance arrays. [#8159]
+- Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
 
 1.13.2 (2023-12-21)
 ===================
