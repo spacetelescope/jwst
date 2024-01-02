@@ -298,6 +298,7 @@ class ResampleData:
                                         kernel=self.kernel, fillval=self.fillval)
 
         log.info("Resampling science data")
+        iscales = []
         for img in self.input_models:
             input_pixflux_area = img.meta.photometry.pixelarea_steradians
             if (input_pixflux_area and
@@ -318,6 +319,8 @@ class ResampleData:
                 iscale = np.sqrt(input_pixflux_area / input_pixel_area)
             else:
                 iscale = 1.0
+
+            iscales.append(iscale)
 
             inwht = resample_utils.build_driz_weight(img,
                                                      weight_type=self.weight_type,
@@ -347,9 +350,9 @@ class ResampleData:
             del data, inwht
 
         # Resample variances array in self.input_models to output_model
-        self.resample_variance_array("var_rnoise", output_model, iscale=iscale)
-        self.resample_variance_array("var_poisson", output_model, iscale=iscale)
-        self.resample_variance_array("var_flat", output_model, iscale=iscale)
+        self.resample_variance_array("var_rnoise", output_model, iscales=iscales)
+        self.resample_variance_array("var_poisson", output_model, iscales=iscales)
+        self.resample_variance_array("var_flat", output_model, iscales=iscales)
         output_model.err = np.sqrt(
             np.nansum(
                 [
@@ -366,7 +369,7 @@ class ResampleData:
 
         return self.output_models
 
-    def resample_variance_array(self, name, output_model, iscale):
+    def resample_variance_array(self, name, output_model, iscales):
         """Resample variance arrays from self.input_models to the output_model
 
         Resample the ``name`` variance array to the same name in output_model,
@@ -378,7 +381,7 @@ class ResampleData:
         inverse_variance_sum = np.full_like(output_model.data, np.nan)
 
         log.info(f"Resampling {name}")
-        for model in self.input_models:
+        for model, iscale in zip(self.input_models, iscales):
             variance = getattr(model, name)
             if variance is None or variance.size == 0:
                 log.debug(
