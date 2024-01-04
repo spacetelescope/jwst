@@ -17,6 +17,12 @@ documentation
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
 
+emicorr
+-------
+
+- Set skip=True by default in the code, to be turned on later by a parameter
+  reference file.
+
 outlier_detection
 -----------------
 
