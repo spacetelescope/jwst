@@ -55,6 +55,12 @@ class SimpleConstraintABC(abc.ABC):
     # Attributes to show in the string representation.
     _str_attrs = ('name', 'value')
 
+    def __new__(cls, *args, **kwargs):
+        """Force creation of the constraint attribute dict before anything else."""
+        obj = super().__new__(cls)
+        obj._constraint_attributes = {}
+        return obj
+
     def __init__(self, init=None, value=None, name=None, **kwargs):
 
         # Defined attributes
@@ -63,9 +69,24 @@ class SimpleConstraintABC(abc.ABC):
         self.matched = False
 
         if init is not None:
-            self.__dict__.update(init)
+            self._constraint_attributes.update(init)
         else:
-            self.__dict__.update(kwargs)
+            self._constraint_attributes.update(kwargs)
+
+    def __getattr__(self, name):
+        """Retrieve user defined attribute"""
+        if name.startswith('_'):
+            return super().__getattribute__(name)
+        if name in self._constraint_attributes:
+            return self._constraint_attributes[name]
+        raise AttributeError(f'No such attribute {name}')
+
+    def __setattr__(self, name, value):
+        """Store all attributes in the user dictionary"""
+        if not name.startswith('_'):
+            self._constraint_attributes[name] = value
+        else:
+            object.__setattr__(self, name, value)
 
     @abc.abstractmethod
     def check_and_set(self, item):
@@ -142,7 +163,7 @@ class SimpleConstraintABC(abc.ABC):
     def __repr__(self):
         result = '{}({})'.format(
             self.__class__.__name__,
-            str(self.__dict__)
+            str(self._constraint_attributes)
         )
         return result
 
@@ -274,7 +295,6 @@ class SimpleConstraint(SimpleConstraintABC):
             reprocess_rules=None,
             **kwargs
     ):
-
         # Defined attributes
         self.sources = sources
         self.force_unique = force_unique
@@ -413,7 +433,7 @@ class AttrConstraint(SimpleConstraintABC):
         self.only_on_match = only_on_match
         self.onlyif = onlyif
         self.required = required
-        super(AttrConstraint, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
 
         # Give some defaults real meaning.
         if invalid_values is None:
