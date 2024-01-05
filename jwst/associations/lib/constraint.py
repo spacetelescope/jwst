@@ -58,6 +58,7 @@ class SimpleConstraintABC(abc.ABC):
     def __new__(cls, *args, **kwargs):
         """Force creation of the constraint attribute dict before anything else."""
         obj = super().__new__(cls)
+        obj._ca_history = collections.deque()
         obj._constraint_attributes = {}
         return obj
 
@@ -154,6 +155,17 @@ class SimpleConstraintABC(abc.ABC):
         if value is not None:
             return [(self, value)]
         return []
+
+    def restore(self):
+        """Restore constraint state"""
+        try:
+            self._constraint_attributes = self._ca_history.pop()
+        except IndexError:
+            logger.debug('No more attribute history to restore from. restore is a NOOP')
+
+    def preserve(self):
+        """Save the current state of the constraints"""
+        self._ca_history.append(self._constraint_attributes.copy())
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
