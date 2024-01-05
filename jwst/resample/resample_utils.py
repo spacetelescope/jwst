@@ -135,6 +135,7 @@ def reproject(wcs1, wcs2):
     Parameters
     ----------
     wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS` or `~astropy.modeling.Model`
+        or `~astropy.wcs.wcsapi.SlicedLowLevelWCS`
         WCS objects.
 
     Returns
@@ -148,6 +149,8 @@ def reproject(wcs1, wcs2):
         forward_transform = wcs1.all_pix2world
     elif isinstance(wcs1, gwcs.WCS):
         forward_transform = wcs1.forward_transform
+    elif isinstance(wcs1, fitswcs.wcsapi.SlicedLowLevelWCS):
+        forward_transform = wcs1.pixel_to_world_values
     elif issubclass(wcs1, Model):
         forward_transform = wcs1
     else:
@@ -158,6 +161,8 @@ def reproject(wcs1, wcs2):
         backward_transform = wcs2.all_world2pix
     elif isinstance(wcs2, gwcs.WCS):
         backward_transform = wcs2.backward_transform
+    elif isinstance(wcs2, fitswcs.wcsapi.SlicedLowLevelWCS):
+        backward_transform = wcs2.world_to_pixel_values
     elif issubclass(wcs2, Model):
         backward_transform = wcs2.inverse
     else:
