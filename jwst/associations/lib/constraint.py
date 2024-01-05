@@ -3,6 +3,7 @@
 import abc
 import collections
 from copy import deepcopy
+from functools import wraps
 from itertools import chain
 import logging
 import re
@@ -791,6 +792,16 @@ class Constraint:
             result.extend(constraint.get_all_attr(attribute))
 
         return result
+
+    def preserve(self):
+        """Preserve all constraint states"""
+        for constraint in self.constraints:
+            constraint.preserve()
+
+    def restore(self):
+        """Restore all constraint states"""
+        for constraint in self.constraints:
+            constraint.restore()
 
     @staticmethod
     def all(item, constraints):
