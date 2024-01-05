@@ -40,7 +40,6 @@ class OutlierDetectionStackStep(Step):
         nlow = integer(default=0)
         nhigh = integer(default=0)
         maskpt = float(default=0.7)
-        grow = integer(default=1)
         snr = string(default='4.0 3.0')
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
@@ -74,7 +73,6 @@ class OutlierDetectionStackStep(Step):
                 'nlow': self.nlow,
                 'nhigh': self.nhigh,
                 'maskpt': self.maskpt,
-                'grow': self.grow,
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,

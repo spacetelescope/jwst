@@ -115,3 +115,8 @@ image.
 
     For example, if set to ``0.5``, only resampled images that use less than
     half the available memory can be created.
+
+``--in_memory`` (boolean, default=True)
+  Specifies whether or not to load and create all images that are used during
+  processing into memory. If ``False``, input files are loaded from disk when
+  needed and all intermediate files are stored on disk, rather than in memory.

@@ -214,22 +214,22 @@ each containing data from multiple slits, the subtraction is applied one-by-one 
 instances in all exposures. For each data instance to be subtracted the following steps are
 performed:
 
-- Compute a 2-D wavelength grid corresponding to the 2-D source data. For some observing modes,
-  such as NIRSpec MOS and fixed-slit, a 2-D wavelength array is already computed and attached to the data
-  in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline :ref:`extract_2d <extract_2d_step>` step.
-  If such a wavelength array is present, it is used. For modes that don't have a 2-D
-  wavelength array contained in the data, it is computed on the fly using the WCS object
-  for each source data instance.
+#. Compute a 2-D wavelength grid corresponding to the 2-D source data. For some observing modes,
+   such as NIRSpec MOS and fixed-slit, a 2-D wavelength array is already computed and attached to the data
+   in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline :ref:`extract_2d <extract_2d_step>` step.
+   If such a wavelength array is present, it is used. For modes that don't have a 2-D
+   wavelength array contained in the data, it is computed on the fly using the WCS object
+   for each source data instance.
 
-- Compute the background signal at each pixel in the 2-D wavelength grid by interpolating within
-  the 1-D master background spectrum as a function of wavelength.
-  Pixels in the 2-D source data with an undefined wavelength (e.g. wavelength array value
-  of NaN) or a wavelength that is beyond the limits of the master background spectrum receive
-  special handling. The interpolated background value is set to zero and a DQ flag of
-  "DO_NOT_USE" is set.
+#. Compute the background signal at each pixel in the 2-D wavelength grid by interpolating within
+   the 1-D master background spectrum as a function of wavelength.
+   Pixels in the 2-D source data with an undefined wavelength (e.g. wavelength array value
+   of NaN) or a wavelength that is beyond the limits of the master background spectrum receive
+   special handling. The interpolated background value is set to zero and a DQ flag of
+   "DO_NOT_USE" is set.
 
-- Subtract the resulting 2-D background image from the 2-D source data. DQ values from the
-  2-D background image are propagated into the DQ array of the subtracted science data.
+#. Subtract the resulting 2-D background image from the 2-D source data. DQ values from the
+   2-D background image are propagated into the DQ array of the subtracted science data.
 
 .. _nirspec_modes:
 
@@ -241,19 +241,19 @@ operations that need to be applied to accommodate some of the unique calibration
 applied to NIRSpec data. NIRSpec MOS mode requires even more special handling.
 This is due to two primary effects of NIRSpec calibration:
 
-- Point sources in MOS and Fixed-Slit mode receive wavelength offset
-  corrections if the source is not centered (along the dispersion direction) within the slit.
-  Hence the wavelength grid assigned to each 2-D slit cutout can be shifted slightly relative
-  to the wavelengths of the background signal contained in the same cutout. And because the
-  flat-field, pathloss, and photom corrections/calibrations are wavelength-dependent, the
-  pixel-level calibrations for the source signal are slightly different than the background.
+#. Point sources in MOS and Fixed-Slit mode receive wavelength offset
+   corrections if the source is not centered (along the dispersion direction) within the slit.
+   Hence the wavelength grid assigned to each 2-D slit cutout can be shifted slightly relative
+   to the wavelengths of the background signal contained in the same cutout. And because the
+   flat-field, pathloss, and photom corrections/calibrations are wavelength-dependent, the
+   pixel-level calibrations for the source signal are slightly different than the background.
 
-- Point sources and uniform sources receive different pathloss and bar shadow corrections
-  (in fact point sources don't receive any bar shadow correction). So the background signal
-  contained within a calibrated point source cutout has received a different pathloss
-  correction and hasn't received any bar shadow correction. Meanwhile, the master background
-  is created from data that had corrections for a uniform source applied to it and hence
-  there's a mismatch relative to the point source data.
+#. Point sources and uniform sources receive different pathloss and bar shadow corrections
+   (in fact point sources don't receive any bar shadow correction). So the background signal
+   contained within a calibrated point source cutout has received a different pathloss
+   correction and hasn't received any bar shadow correction. Meanwhile, the master background
+   is created from data that had corrections for a uniform source applied to it and hence
+   there's a mismatch relative to the point source data.
 
 The 2-D background that's initially created from the 1-D master background is essentially
 a perfectly calibrated background signal. However, due to the effects mentioned above, the
@@ -371,28 +371,28 @@ The detailed list of operations performed when applying master background
 subtraction to MOS data during :ref:`calwebb_spec2 <calwebb_spec2>` processing is
 as follows:
 
-1) Process all slitlets in the MOS exposure up through the
+#. Process all slitlets in the MOS exposure up through the
    :ref:`extract_2d <extract_2d_step>` and :ref:`srctype <srctype_step>` steps
-2) The `master_background_mos` step temporarily applies remaining calibration
+#. The `master_background_mos` step temporarily applies remaining calibration
    steps up through :ref:`photom <photom_step>` to all slits, treating them all as
    extended sources (appropriate for background signal), and saving the extended
    source correction arrays for each slit in an internal copy of the data model
-3) If a user-supplied master background spectrum is **not** given, the
+#. If a user-supplied master background spectrum is **not** given, the
    :ref:`resample_spec <resample_step>` and :ref:`extract_1d <extract_1d_step>`
    steps are applied to the calibrated background slits, resulting
    in extracted 1D background spectra
-4) The 1D background spectra are combined, using the
+#. The 1D background spectra are combined, using the
    :ref:`combine_1d <combine_1d_step>` step, into a master background spectrum
-5) If a user-supplied master background **is** given, steps 3 and 4 are skipped and
+#. If a user-supplied master background **is** given, steps 3 and 4 are skipped and
    the user-supplied spectrum is inserted into the processing flow
-6) The master background spectrum (either user-supplied or created on-the-fly) is
+#. The master background spectrum (either user-supplied or created on-the-fly) is
    expanded into the 2D space of each slit
-7) The 2D background "image" for each slit is processed in **inverse** mode through
+#. The 2D background "image" for each slit is processed in **inverse** mode through
    the :ref:`photom <photom_step>`, :ref:`barshadow <barshadow_step>`,
    :ref:`pathloss <pathloss_step>`, and :ref:`flatfield <flatfield_step>` steps,
    using the correction arrays that were computed in step 2, so that the background
    data now matches the partially calibrated background signal in each slit
-8) The corrected 2D background is subtracted from each slit
-9) The background-subtracted slits are processed through all remaining
+#. The corrected 2D background is subtracted from each slit
+#. The background-subtracted slits are processed through all remaining
    :ref:`calwebb_spec2 <calwebb_spec2>` calibration steps, using the corrections
    appropriate for the source type in each slit

@@ -8,6 +8,7 @@ Assign WCS
    :maxdepth: 1
 
    main.rst
+   arguments.rst
    reference_files.rst
    asdf-howto.rst
    exp_types.rst

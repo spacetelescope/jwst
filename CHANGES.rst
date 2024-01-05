@@ -1,7 +1,39 @@
-1.13.3 (unreleased)
+1.13.4 (unreleased)
 ===================
 
-- 
+-
+
+
+1.13.3 (01-05-2024)
+===================
+
+documentation
+-------------
+
+- Updated many docs to change the use of unordered/bullet lists to
+  numbered lists, to avoid formatting issues in html pages. [#8156]
+
+- Added arguments docs for the ``assign_wcs`` step. [#8156]
+
+- Added ``in_memory`` to the arguments lists in the ``outlier_detection``
+  and ``resample`` steps. [#8156]
+
+- Added instructions to the README for setting CRDS_CONTEXT to a specific
+  value. [#8156]
+
+- Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
+
+outlier_detection
+-----------------
+
+- Removed the ``grow`` parameter from the step arguments, because it's no
+  longer used in the algorithms. [#8156]
+
+ramp_fitting
+------------
+
+- Updated the argument description and parameter definition for `maximum_cores`
+  to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
 
 1.13.2 (2023-12-21)
 ===================

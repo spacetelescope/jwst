@@ -11,13 +11,13 @@ spatial and one spectral.
 
 The ``cube_build`` step can accept several different forms of input data, including:
 
-  - a single file containing a 2-D IFU image
+#. A single file containing a 2-D IFU image
 
-  - a data model (IFUImageModel) containing a 2-D IFU image
+#. A data model (`~jwst.datamodels.IFUImageModel`) containing a 2-D IFU image
 
-  - an association table (in json format) containing a list of input files
+#. An association table (in json format) containing a list of input files
 
-  - a model container with several 2-D IFU data models
+#. A model container with several 2-D IFU data models
 
 There are a number of arguments the user can provide either in a parameter file or
 on the command line that control the sampling size of the cube, as well as the type of data
@@ -98,8 +98,8 @@ We use the following terminology to define the spectral range divisions of MIRI:
   example, the shortest wavelength range on MIRI is covered by Band 1-SHORT (aka 1A) and the
   longest is covered by Band 4-LONG (aka 4C).
 
-   For **NIRSpec** we define a *band* as a single grating-filter combination, e.g. G140M-F070LP. The possible grating/filter
-   combinations for NIRSpec are given in the table below.
+  For **NIRSpec** we define a *band* as a single grating-filter combination, e.g. G140M-F070LP. The possible grating/filter
+  combinations for NIRSpec are given in the table below.
 
 NIRSpec IFU Disperser and Filter Combinations
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -355,7 +355,7 @@ user with the options: ``rois`` and ``roiw``.
 If *n* point cloud members are located within the ROI of a voxel, the voxel flux K =
 :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
 
-where the weighting ``weighting=emsm``  is
+where the weighting ``weighting=emsm``  is:
 
 :math:`w_i =e\frac{ -({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)} {scale factor}`
 

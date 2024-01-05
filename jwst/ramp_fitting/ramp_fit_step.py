@@ -391,7 +391,7 @@ class RampFitStep(Step):
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
         suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
-        maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
+        maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
     """
 
     # Prior to 04/26/17, the following were also in the spec above:

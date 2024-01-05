@@ -12,8 +12,8 @@ been incorporated into the image using the
 
 The ``resample`` step can take as input either:
 
-  * a single 2D input image
-  * an association table (in json format)
+#. a single 2D input image
+#. an association table (in json format)
 
 The defined parameters for the drizzle operation itself get
 provided by the DRIZPARS reference file (from CRDS).  The exact values

@@ -10,11 +10,11 @@ is done using the "ordinary least squares" method.
 The fit is performed independently for each pixel.  There can be up to three
 output files created by the step:
 
- - The primary output file ("rate") contains slope and other results at
+#. The primary output file ("rate") contains slope and other results at
    each pixel averaged over all integrations in the exposure.
- - The secondary product ("rateints") contains slope and other results for
+#. The secondary product ("rateints") contains slope and other results for
    each integration, stored as data cubes.
- - A third, and optional, output product is also available, containing detailed
+#. A third, and optional, output product is also available, containing detailed
    fit information for each ramp segment for each pixel.
 
 The three types of output products are described in more detail below.
