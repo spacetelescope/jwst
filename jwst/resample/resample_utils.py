@@ -146,7 +146,9 @@ def reproject(wcs1, wcs2):
     """
 
     if isinstance(wcs1, fitswcs.WCS):
-        forward_transform = lambda x, y: wcs1.all_pix2world(x, y, 0)
+        def _trans1(x, y):
+            return wcs1.all_pix2world(x, y, 0)
+        forward_transform = _trans1
     elif isinstance(wcs1, gwcs.WCS):
         forward_transform = wcs1.forward_transform
     elif isinstance(wcs1, fitswcs.wcsapi.SlicedLowLevelWCS):
@@ -158,7 +160,9 @@ def reproject(wcs1, wcs2):
                         "object or astropy.modeling.Model subclass")
 
     if isinstance(wcs2, fitswcs.WCS):
-        backward_transform = lambda x, y: wcs2.all_world2pix(x, y, 0)
+        def _trans2(x, y):
+            return wcs2.all_world2pix(x, y, 0)
+        backward_transform = _trans2
     elif isinstance(wcs2, gwcs.WCS):
         backward_transform = wcs2.backward_transform
     elif isinstance(wcs2, fitswcs.wcsapi.SlicedLowLevelWCS):
