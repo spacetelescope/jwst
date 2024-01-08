@@ -217,7 +217,10 @@ ramp_fitting
 - Updated the argument description and parameter definition for `maximum_cores`
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4eee46cd2 (Update change notes)
 1.13.2 (2023-12-21)
 ===================
 
