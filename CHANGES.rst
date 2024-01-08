@@ -1,8 +1,10 @@
 1.13.4 (unreleased)
 ===================
 
--
+outlier_detection
+-----------------
 
+- Add additional documentation of the scale and snr parameters. [#8177]
 
 1.13.3 (01-05-2024)
 ===================
