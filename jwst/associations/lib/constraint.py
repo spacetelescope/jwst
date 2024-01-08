@@ -49,6 +49,10 @@ class SimpleConstraintABC(abc.ABC):
 
     Attributes
     ----------
+    found_values : set(str[,...])
+        Set of actual found values for this condition. True SimpleConstraints
+        do not normally set this; the value is not different than `value`.
+
     matched : bool
         Last call to `check_and_set`
     """
@@ -69,6 +73,7 @@ class SimpleConstraintABC(abc.ABC):
         self.value = value
         self.name = name
         self.matched = False
+        self.found_values = set()
 
         if init is not None:
             self._constraint_attributes.update(init)
@@ -166,7 +171,9 @@ class SimpleConstraintABC(abc.ABC):
 
     def preserve(self):
         """Save the current state of the constraints"""
-        self._ca_history.append(self._constraint_attributes.copy())
+        ca_copy = self._constraint_attributes.copy()
+        ca_copy['found_values'] = self._constraint_attributes['found_values'].copy()
+        self._ca_history.append(ca_copy)
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
