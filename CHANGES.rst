@@ -17,6 +17,8 @@ documentation
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
 
+- Fixed small typo in ``user_documentation`` docs. [#8178]
+
 outlier_detection
 -----------------
 
