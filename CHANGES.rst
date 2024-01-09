@@ -5,7 +5,7 @@ extract_1d
 ----------
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
-  correction that could cause defringing to fail in some cases. [#]
+  correction that could cause defringing to fail in some cases. [#8180]
 
 1.13.3 (01-05-2024)
 ===================
