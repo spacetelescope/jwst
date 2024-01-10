@@ -1,7 +1,11 @@
 1.13.4 (unreleased)
 ===================
 
--
+photom
+------
+
+- Updated photom step to include spectral dispersion in NIRCAM WFSS and TSGRISM
+  data. [#8186]
 
 
 1.13.3 (01-05-2024)
