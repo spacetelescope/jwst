@@ -1,8 +1,12 @@
 1.13.4 (unreleased)
 ===================
 
--
+resample
+--------
 
+- Added support for ``SlicedLowLevelWCS`` to ``resample_utils.reproject`` and
+  fixed a bug by setting the ``origin`` to 0 for ``wcs1.all_pix2world`` and
+  ``wcs2.all_world2pix`` [#8172]
 
 1.13.3 (01-05-2024)
 ===================
@@ -34,13 +38,6 @@ ramp_fitting
 
 - Updated the argument description and parameter definition for `maximum_cores`
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
-
-resample
---------
-
-- Added support for ``SlicedLowLevelWCS`` to ``resample_utils.reproject`` and
-  fixed a bug by setting the ``origin`` of 0 for ``wcs1.all_pix2world`` and
-  ``wcs2.all_world2pix`` [#8172]
 
 1.13.2 (2023-12-21)
 ===================
