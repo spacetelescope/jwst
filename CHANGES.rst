@@ -1,8 +1,10 @@
 1.13.4 (unreleased)
 ===================
 
--
+tweakreg
+--------
 
+- Update sregion after WCS corrections are applied. [#8158]
 
 1.13.3 (01-05-2024)
 ===================
@@ -34,11 +36,6 @@ ramp_fitting
 
 - Updated the argument description and parameter definition for `maximum_cores`
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
-
-tweakreg
---------
-
-- Update sregion after WCS corrections are applied. [#8158]
 
 1.13.2 (2023-12-21)
 ===================
