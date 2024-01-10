@@ -5,7 +5,7 @@ resample
 --------
 
 - Added support for ``SlicedLowLevelWCS`` to ``resample_utils.reproject`` and
-  fixed a bug by setting the ``origin`` to 0 for ``wcs1.all_pix2world`` and
+  fixed a bug by setting ``origin`` to 0 for ``wcs1.all_pix2world`` and
   ``wcs2.all_world2pix`` [#8172]
 
 1.13.3 (01-05-2024)
