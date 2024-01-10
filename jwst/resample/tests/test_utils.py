@@ -32,7 +32,6 @@ JWST_NAMES = 'DO_NOT_USE, JUMP_DET'
 JWST_NAMES_INV = '~' + JWST_NAMES
 
 
-@pytest.fixture
 def create_gwcs():
     crval = (150.0, 2.0)
     crpix = (500.0, 500.0)
