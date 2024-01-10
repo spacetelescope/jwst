@@ -1,7 +1,7 @@
 1.13.4 (unreleased)
 ===================
 
--
+- Fixed small typo in ``user_documentation`` docs. [#8178]
 
 
 1.13.3 (01-05-2024)
@@ -22,8 +22,6 @@ documentation
   value. [#8156]
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
-
-- Fixed small typo in ``user_documentation`` docs. [#8178]
 
 outlier_detection
 -----------------
