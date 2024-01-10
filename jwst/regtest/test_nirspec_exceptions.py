@@ -19,10 +19,10 @@ def test_nirspec_missing_msa_fail(_jail, rtdata, fitsdiff_default_kwargs, caplog
     # Run the calwebb_spec2 pipeline
     args = ["calwebb_spec2", rtdata.input]
 
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError, match="Missing MSA meta \(MSAMETFL\) file"):
         Step.from_cmdline(args)
 
-    assert 'Missing MSA meta (MSAMETFL) file' in caplog.text
+    assert 'Missing MSA meta (MSAMETFL) file' in caplog.text, caplog.text
 
 
 @pytest.mark.bigdata
@@ -42,7 +42,7 @@ def test_nirspec_missing_msa_nofail(_jail, rtdata, fitsdiff_default_kwargs, capl
 
     Step.from_cmdline(args)
 
-    assert 'Missing MSA meta (MSAMETFL) file' in caplog.text
+    assert 'Missing MSA meta (MSAMETFL) file' in caplog.text, caplog.text
 
 
 @pytest.mark.bigdata
