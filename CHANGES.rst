@@ -59,6 +59,9 @@ photom
   the pipeline put the (variable, calculated per pixel) dispersion back in.  Assumes that
   the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
 
+- Get the values of PIXAR_A2 and PIXAR_SR from area reference file
+  instead of photom reference file to avoid missmatching values. [#8187]
+
 refpix
 ------
 
