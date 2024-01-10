@@ -467,7 +467,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                                         now_background['exptype'] = 'background'
                                         new_members.append(now_background)
                                 except (ValueError, KeyError, ZeroDivisionError):
-                                    pass
+                                    if science_exp.item['exp_type'] == 'nrs_msaspec':
+                                        now_background = Member(other_science)
+                                        now_background['exptype'] = 'background'
+                                        new_members.append(now_background)
+                                    else:
+                                        pass
                         else:
                             now_background = Member(other_science)
                             now_background['exptype'] = 'background'
