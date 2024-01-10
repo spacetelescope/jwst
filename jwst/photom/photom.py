@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
+from .. lib.dispaxis import get_dispersion_direction
 from . import miri_mrs
 from . import miri_imager
 
@@ -867,6 +868,13 @@ class DataSet():
                                                                    use_wavecorr=True)
                     slit.photom_point = conversion  # store the result
 
+                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                    log.info("Including spectral dispersion in 2-d flux calibration")
+                    conversion, no_cal = self.create_2d_conversion(slit,
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   include_dispersion=True)
+
                 else:
                     conversion, no_cal = self.create_2d_conversion(slit,
                                                                    self.exptype, conversion,
@@ -879,8 +887,17 @@ class DataSet():
                 conversion, no_cal = self.create_1d_conversion(self.input.spec[self.specnum],
                                                                conversion, waves, relresps)
             else:
-                conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
-                                                               waves, relresps, order)
+                # NRC_TSGRISM data produces a SpecModel, which is handled here
+                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                    log.info("Including spectral dispersion in 2-d flux calibration")
+                    conversion, no_cal = self.create_2d_conversion(self.input,
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   include_dispersion=True)
+
+                else:
+                    conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
+                                                                   waves, relresps, order)
 
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -966,7 +983,7 @@ class DataSet():
         return
 
     def create_2d_conversion(self, model, exptype, conversion, waves, relresps,
-                             order, use_wavecorr=None):
+                             order, use_wavecorr=None, include_dispersion=False):
         """
         Create a 2D array of photometric conversion values based on
         wavelengths per pixel and response as a function of wavelength.
@@ -989,6 +1006,9 @@ class DataSet():
         use_wavecorr : bool or None
             Flag indicating whether or not to use corrected wavelengths.
             Typically only used for NIRSpec fixed-slit data.
+        include_dispersion : bool or None
+            Flag indicating whether the dispersion needs to be incorporated
+            into the 2-d conversion factors.
 
         Returns
         -------
@@ -1007,12 +1027,49 @@ class DataSet():
         # 2D wavelength grid
         conv_2d = np.interp(wl_array, waves, relresps, left=np.nan, right=np.nan)
 
+        if include_dispersion:
+            dispaxis = get_dispersion_direction(self.exptype, self.grating, self.filter, self.pupil)
+            if dispaxis is not None:
+                dispersion_array = self.get_dispersion_array(wl_array, dispaxis)
+                # Convert dispersion from micron/pixel to angstrom/pixel
+                dispersion_array *= 1.0e4
+                conv_2d /= np.abs(dispersion_array)
+            else:
+                log.warning("Unable to get dispersion direction, so cannot calculate dispersion array")
         # Combine the scalar and 2D conversion factors
         conversion = conversion * conv_2d
         no_cal = np.isnan(conv_2d)
         conversion[no_cal] = 0.
 
         return conversion, no_cal
+
+    def get_dispersion_array(self, wavelength_array, dispaxis):
+        """Create an array of dispersion values from the wavelength array
+
+        Parameters
+        ----------
+        wavelength_array : float
+            2-d array of wavelength values, assumed to be in microns
+        dispaxis : integer
+            Direction of dispersion: 1 = along columns, 2 = along rows
+
+        Returns
+        -------
+        dispersion_array : float
+            2-d array of dispersion values, in microns/pixel
+
+        """
+        nrows, ncols = wavelength_array.shape
+        dispersion_array = np.zeros(wavelength_array.shape)
+        if dispaxis == 1:
+            for row in range(nrows):
+                dispersion_array[row] = np.gradient(wavelength_array[row])
+        elif dispaxis == 2:
+            for column in range(ncols):
+                dispersion_array[:, column] = np.gradient(wavelength_array[:, column])
+        else:
+            log.warning(f"Can't process data with DISPAXIS={dispaxis}")
+        return dispersion_array
 
     def create_1d_conversion(self, model, conversion, waves, relresps):
         """Create a 1D array of photometric conversion values based on
