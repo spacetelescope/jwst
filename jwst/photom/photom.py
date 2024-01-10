@@ -470,7 +470,7 @@ class DataSet():
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-                
+
             # Check to see if the reference file contains the coefficients for the
             # time-dependent correction of the PHOTOM value
             try:
@@ -854,9 +854,11 @@ class DataSet():
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
                     conversion_2d_uniform, no_cal = self.create_2d_conversion(slit,
-                                                                   self.exptype, conversion_uniform,
-                                                                   waves, relresps, order,
-                                                                   use_wavecorr=False)
+                                                                              self.exptype,
+                                                                              conversion_uniform,
+                                                                              waves, relresps,
+                                                                              order,
+                                                                              use_wavecorr=False)
                     slit.photom_uniform = conversion_2d_uniform  # store the result
 
                     # Now repeat the process using corrected wavelength values,
