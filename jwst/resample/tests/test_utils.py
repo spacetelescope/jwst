@@ -1,13 +1,16 @@
 """Test various utility functions"""
-from numpy.testing import assert_array_equal, assert_allclose
+from astropy import coordinates as coord
 from astropy import wcs as fitswcs
-from astropy.io import fits
+from astropy.modeling import models as astmodels
+from gwcs import coordinate_frames as cf
+from gwcs.wcstools import wcs_from_fiducial
+from numpy.testing import assert_allclose, assert_array_equal
+import functools
 import numpy as np
 import pytest
 
 from stdatamodels.jwst.datamodels import SlitModel, ImageModel, dqflags
 
-from jwst.assign_wcs import AssignWcsStep
 from jwst.resample.resample_spec import find_dispersion_axis
 from jwst.resample.resample_utils import (
     build_mask,
@@ -30,52 +33,43 @@ JWST_NAMES_INV = '~' + JWST_NAMES
 
 
 @pytest.fixture
-def create_hdul(wcskeys={
-        'wcsaxes': 2,
-        'ra_ref': 22.02351763251896,
-        'dec_ref': 11.99875540218638,
-        'v2_ref': 86.039011,
-        'v3_ref': -493.385704,
-        'roll_ref': 0.005076934167039675},
-        data_shape=(2048, 2048)):
-    """Create nircam hdulist specifically for the SIP test."""
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header['DATAMODL'] = 'ImageModel'
-    phdu.header['TELESCOP'] = "JWST"
-    phdu.header['FILENAME'] = "test+F444W"
-    phdu.header['INSTRUME'] = 'NIRCAM'
-    phdu.header['CHANNEL'] = 'LONG'
-    phdu.header['DETECTOR'] = 'NRCALONG'
-    phdu.header['FILTER'] = 'F444W'
-    phdu.header['PUPIL'] = 'CLEAR'
-    phdu.header['MODULE'] = 'A'
-    phdu.header['TIME-OBS'] = '16:58:27.258'
-    phdu.header['DATE-OBS'] = '2021-10-25'
-    phdu.header['EXP_TYPE'] = 'NRC_IMAGE'
-    scihdu = fits.ImageHDU()
-    scihdu.header['EXTNAME'] = "SCI"
-    scihdu.header['SUBARRAY'] = 'FULL'
-
-    scihdu.header.update(wcskeys)
-
-    scihdu.data = np.zeros(data_shape)
-
-    hdul.append(phdu)
-    hdul.append(scihdu)
-
-    return hdul
-
-
-@pytest.fixture
 def create_gwcs():
-    hdu1 = create_hdul()
-    im = ImageModel(hdu1)
+    crval = (150.0, 2.0)
+    crpix = (500.0, 500.0)
+    shape = (1000, 1000)
+    pscale = 0.06 / 3600
     
-    pipe = AssignWcsStep()
-    result = pipe.call(im)
-    w = result.meta.wcs
-    return w
+    prj = astmodels.Pix2Sky_TAN()
+    fiducial = np.array(crval)
+
+    transform = []
+    pc = np.array([[-1., 0.], [0., 1.]])
+    transform.append(astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix'))
+    transform.append(astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2'))
+    transform = functools.reduce(lambda x, y: x | y, transform)
+
+    out_frame = cf.CelestialFrame(name='world', axes_names=('lon', 'lat'), reference_frame=coord.ICRS())
+    input_frame = cf.Frame2D(name="detector")
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
+                             transform=transform, input_frame=input_frame)
+
+    output_bounding_box = ((0.0, float(shape[1])), (0.0, float(shape[0])))
+    offset1, offset2 = crpix
+    offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
+
+    wnew.insert_transform('detector', offsets, after=True)
+    wnew.bounding_box = output_bounding_box
+
+    tr = wnew.pipeline[0].transform
+    pix_area = (
+        np.deg2rad(tr['cdelt1'].factor.value) *
+        np.deg2rad(tr['cdelt2'].factor.value)
+    )
+
+    wnew.pixel_area = pix_area
+    wnew.pixel_shape = shape[::-1]
+    wnew.array_shape = shape
+    return wnew
 
 
 @pytest.mark.parametrize(
