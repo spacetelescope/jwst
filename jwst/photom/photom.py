@@ -903,9 +903,13 @@ class DataSet():
                 if unit_is_surface_brightness:
                     slit.meta.bunit_data = 'MJy/sr'
                     slit.meta.bunit_err = 'MJy/sr'
+                    self.input.meta.bunit_data = 'MJy/sr'
+                    self.input.meta.bunit_err = 'MJy/sr'
                 else:
                     slit.meta.bunit_data = 'MJy'
                     slit.meta.bunit_err = 'MJy'
+                    self.input.meta.bunit_data = 'MJy'
+                    self.input.meta.bunit_err = 'MJy'
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
