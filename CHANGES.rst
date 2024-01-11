@@ -1,7 +1,11 @@
 1.13.4 (unreleased)
 ===================
 
--
+emicorr
+-------
+
+- Set skip=True by default in the code, to be turned on later by a parameter
+  reference file.
 
 
 1.13.3 (01-05-2024)
@@ -22,18 +26,6 @@ documentation
   value. [#8156]
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
-
-emicorr
--------
-
-- Set skip=True by default in the code, to be turned on later by a parameter
-  reference file.
-
-outlier_detection
------------------
-
-- Removed the ``grow`` parameter from the step arguments, because it's no
-  longer used in the algorithms. [#8156]
 
 ramp_fitting
 ------------
