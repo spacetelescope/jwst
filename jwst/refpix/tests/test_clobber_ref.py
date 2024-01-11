@@ -5,6 +5,7 @@ from jwst.refpix.irs2_subtract_reference import decode_mask, clobber_ref
 
 def test_clobber_ref():
     data = np.ones((2, 3, 5, 3200))
+    data[:, :, :] = np.arange(3200, dtype=float)
 
     output = np.array([1, 1, 2, 2, 3, 3, 4, 4], dtype=np.int16)
     odd_even = np.array([1, 2, 1, 2, 1, 2, 1, 2], dtype=np.int16)
@@ -17,22 +18,34 @@ def test_clobber_ref():
                      0,
                      0],
                     dtype=np.uint32)
+    ref_flags = np.full(3200, False)
 
-    clobber_ref(data, output, odd_even, mask)
+    clobber_ref(data, output, odd_even, mask, ref_flags)
 
     compare = np.ones((2, 3, 5, 3200))
+    compare[:, :, :] = np.arange(3200, dtype=float)
+
+    # next pixel is bad, no lower value: replace with 0
     compare[..., 648: 648+2] = 0.
-    compare[..., 668: 668+2] = 0.
-    compare[..., 690: 690+2] = 0.
-    compare[..., 710: 710+2] = 0.
-    compare[..., 1890: 1890+2] = 0.
-    compare[..., 1910: 1910+2] = 0.
-    compare[..., 1808: 1808+2] = 0.
-    compare[..., 1828: 1828+2] = 0.
-    compare[..., 2028: 2028+2] = 0.
-    compare[..., 2068: 2068+2] = 0.
-    compare[..., 2150: 2150+2] = 0.
-    compare[..., 2190: 2190+2] = 0.
+    # lower pixel is bad, replace with upper pixel
+    compare[..., 668: 668+2] = [688, 689]
+    # upper pixel is bad, replace with lower pixel
+    compare[..., 690: 690+2] = [670, 671]
+    # lower pixel is bad, replace with upper pixel
+    compare[..., 710: 710+2] = [730, 731]
+    # upper pixel is bad, replace with lower pixel
+    compare[..., 1890: 1890+2] = [1870, 1871]
+    # lower bad, no upper, replace with 0
+    compare[..., 1910: 1910+2] = 0.0
+    # upper is bad, replace with lower
+    compare[..., 1808: 1808+2] = [1788, 1789]
+    # lower is bad, replace with upper
+    compare[..., 1828: 1828+2] = [1848, 1849]
+    # both good, replace with average
+    compare[..., 2028: 2028+2] = [2028, 2029]
+    compare[..., 2068: 2068+2] = [2068, 2069]
+    compare[..., 2150: 2150+2] = [2150, 2151]
+    compare[..., 2190: 2190+2] = [2190, 2191]
 
     assert np.allclose(data, compare)
 
