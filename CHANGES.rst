@@ -1,7 +1,10 @@
 1.13.4 (unreleased)
 ===================
 
--
+outlier_detection
+-----------------
+
+- Removed ``grow`` from the ``outlier_detection`` step parameters. [#8190]
 
 
 1.13.3 (01-05-2024)
