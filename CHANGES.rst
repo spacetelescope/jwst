@@ -5,7 +5,7 @@ emicorr
 -------
 
 - Set skip=True by default in the code, to be turned on later by a parameter
-  reference file.
+  reference file. [#8171]
 
 
 1.13.3 (01-05-2024)
