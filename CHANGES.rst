@@ -1,7 +1,10 @@
 1.13.4 (unreleased)
 ===================
 
--
+documentation
+-------------
+
+- Fixed small typo in ``user_documentation`` docs. [#8178]
 
 
 1.13.3 (01-05-2024)
