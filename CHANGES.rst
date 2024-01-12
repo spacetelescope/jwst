@@ -8,6 +8,11 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+documentation
+-------------
+
+- Fixed small typo in ``user_documentation`` docs. [#8178]
+
 
 1.13.3 (01-05-2024)
 ===================
