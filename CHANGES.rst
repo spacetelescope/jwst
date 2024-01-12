@@ -1,11 +1,24 @@
 1.13.4 (unreleased)
 ===================
 
+associations
+------------
+
+- Updated the level-2 rules for handling NIRSpec MOS nods that include
+  sub-pixel dithers, so that only exposures from other nod positions
+  are used as background members in "spec2" associations. [#8184]
+
+documentation
+-------------
+
+- Fixed small typo in ``user_documentation`` docs. [#8178]
+
 extract_1d
 ----------
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
+
 
 1.13.3 (01-05-2024)
 ===================
@@ -25,12 +38,6 @@ documentation
   value. [#8156]
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
-
-outlier_detection
------------------
-
-- Removed the ``grow`` parameter from the step arguments, because it's no
-  longer used in the algorithms. [#8156]
 
 ramp_fitting
 ------------
