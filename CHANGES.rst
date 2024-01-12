@@ -1,6 +1,13 @@
 1.13.4 (unreleased)
 ===================
 
+associations
+------------
+
+- Updated the level-2 rules for handling NIRSpec MOS nods that include
+  sub-pixel dithers, so that only exposures from other nod positions
+  are used as background members in "spec2" associations. [#8184]
+
 documentation
 -------------
 
