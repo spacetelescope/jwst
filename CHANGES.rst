@@ -13,6 +13,12 @@ documentation
 
 - Fixed small typo in ``user_documentation`` docs. [#8178]
 
+emicorr
+-------
+
+- Set skip=True by default in the code, to be turned on later by a parameter
+  reference file. [#8171]
+
 
 1.13.3 (01-05-2024)
 ===================
@@ -33,17 +39,12 @@ documentation
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
 
-outlier_detection
------------------
-
-- Removed the ``grow`` parameter from the step arguments, because it's no
-  longer used in the algorithms. [#8156]
-
 ramp_fitting
 ------------
 
 - Updated the argument description and parameter definition for `maximum_cores`
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
+
 
 1.13.2 (2023-12-21)
 ===================
@@ -53,6 +54,7 @@ emicorr
 
 - Fix another bug with subarray=Full. [#8151]
 - Speeding up the code and fixing case of subarray not in ref file. [#8152]
+
 
 1.13.1 (2023-12-19)
 ===================
@@ -67,6 +69,7 @@ other
 -----
 
 - Fix a typo in ``__version_commit__`` string. [#8145]
+
 
 1.13.0 (2023-12-15)
 ===================
