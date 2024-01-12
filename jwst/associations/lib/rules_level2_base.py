@@ -445,7 +445,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
                 for other_science in science_exps:
                     if other_science['expname'] != science_exp['expname']:
-                        if science_exp.item['exp_type'] == 'nrs_fixedslit':
+                        if science_exp.item['exp_type'] in ['nrs_fixedslit', 'nrs_msaspec']:
                             try:
                                 sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
                                                   int(science_exp.item['subpxpts'])
@@ -467,7 +467,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                                         now_background['exptype'] = 'background'
                                         new_members.append(now_background)
                                 except (ValueError, KeyError, ZeroDivisionError):
-                                    pass
+                                    if science_exp.item['exp_type'] == 'nrs_msaspec':
+                                        now_background = Member(other_science)
+                                        now_background['exptype'] = 'background'
+                                        new_members.append(now_background)
+                                    else:
+                                        pass
                         else:
                             now_background = Member(other_science)
                             now_background['exptype'] = 'background'

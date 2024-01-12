@@ -22,6 +22,7 @@ class EmiCorrStep(Step):
         nints_to_phase = integer(default=None)  # Number of integrations to phase
         nbins = integer(default=None)  # Number of bins in one phased wave
         scale_reference = boolean(default=True)  # If True, the reference wavelength will be scaled to the data's phase amplitude
+        skip = boolean(default=True)
     """
 
     reference_file_types = ['emicorr']

@@ -129,7 +129,7 @@ Setting CRDS Environment Variables in Python
 
 The CRDS environment variables need to be defined *before* importing anything
 from `jwst` or `crds`. The examples above show how to set an environment variable in
-the shell, but this can also be done within a Python session by using `os.envron`.
+the shell, but this can also be done within a Python session by using `os.environ`.
 In general, any scripts should assume the environment variables have been set before the scripts
 have run. If one needs to define the CRDS environment variables within a script,
 the following code snippet is the suggested method. These lines should be the first
