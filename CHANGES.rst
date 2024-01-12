@@ -13,6 +13,9 @@ documentation
 
 - Fixed small typo in ``user_documentation`` docs. [#8178]
 
+- Added additional information for the ``scale`` and ``snr`` parameters
+  in the ``outlier_detection`` step docs. [#8177]
+
 emicorr
 -------
 
