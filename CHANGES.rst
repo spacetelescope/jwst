@@ -1,10 +1,38 @@
 1.13.4 (unreleased)
 ===================
 
+associations
+------------
+
+- Updated the level-2 rules for handling NIRSpec MOS nods that include
+  sub-pixel dithers, so that only exposures from other nod positions
+  are used as background members in "spec2" associations. [#8184]
+
+documentation
+-------------
+
+- Fixed small typo in ``user_documentation`` docs. [#8178]
+
+- Added additional information for the ``scale`` and ``snr`` parameters
+  in the ``outlier_detection`` step docs. [#8177]
+
+emicorr
+-------
+
+- Set skip=True by default in the code, to be turned on later by a parameter
+  reference file. [#8171]
+
+extract_1d
+----------
+
+- Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
+  correction that could cause defringing to fail in some cases. [#8180]
+
 tweakreg
 --------
 
 - Update sregion after WCS corrections are applied. [#8158]
+
 
 1.13.3 (01-05-2024)
 ===================
@@ -25,17 +53,12 @@ documentation
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
 
-outlier_detection
------------------
-
-- Removed the ``grow`` parameter from the step arguments, because it's no
-  longer used in the algorithms. [#8156]
-
 ramp_fitting
 ------------
 
 - Updated the argument description and parameter definition for `maximum_cores`
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
+
 
 1.13.2 (2023-12-21)
 ===================
@@ -45,6 +68,7 @@ emicorr
 
 - Fix another bug with subarray=Full. [#8151]
 - Speeding up the code and fixing case of subarray not in ref file. [#8152]
+
 
 1.13.1 (2023-12-19)
 ===================
@@ -59,6 +83,7 @@ other
 -----
 
 - Fix a typo in ``__version_commit__`` string. [#8145]
+
 
 1.13.0 (2023-12-15)
 ===================

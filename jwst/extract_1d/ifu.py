@@ -183,7 +183,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
         # If a valid single channel, specify it in call to residual fringe code
         if (thischannel in validch):
-            channel = thischannel
+            channel = int(thischannel)
         else:
             channel = ''
 
