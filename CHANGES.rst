@@ -13,6 +13,12 @@ cube_build
 
 - Add a warning message to log if no valid data is found on the detector. [#8220]
 
+datamodels
+----------
+
+- Fixed a bug in the ``ModelContiner`` due to which ``models_grouped``
+  property would return opened data models instead of file names. [#8191]
+
 documentation
 -------------
 
@@ -40,7 +46,7 @@ extract_1d
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
 
-- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
   the FULL subarray with warning. [#8225]
 
 extract_2d
@@ -77,7 +83,7 @@ photom
 - Get the values of PIXAR_A2 and PIXAR_SR from AREA reference file
   instead of PHOTOM reference file to avoid missmatching values. [#8187]
 
-- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step 
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
   data in the FULL subarray. [#8225]
 
@@ -118,6 +124,7 @@ pipeline
   the list of modes to run nsclean when skip is set to False. [#8256]
 
 
+<<<<<<< HEAD
 1.13.4 (2024-01-25)
 ===================
 
@@ -129,6 +136,9 @@ emicorr
 
 
 1.13.3 (2024-01-05)
+=======
+1.13.3 (01-05-2024)
+>>>>>>> 114153eb2 (Fix: models_grouped always return opened data models)
 ===================
 
 documentation
@@ -206,7 +216,7 @@ documentation
   reported typos in ``tweakreg`` documentation. [#8084]
 
 emicorr
-----------
+-------
 
 - Added new step for removing EMI from all MIRI data. [#7857]
 
