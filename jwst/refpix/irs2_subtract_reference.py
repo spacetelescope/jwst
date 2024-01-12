@@ -145,7 +145,11 @@ def correct_model(input_model, irs2_model,
 
         # Set interleaved reference pixel values to zero if they are flagged
         # as bad in the DQ extension of the CRDS reference file and not yet handled
-        clobber_ref(data, output, odd_even, mask, ref_flags,
+        is_irs2 = ~irs2_mask.copy()
+        # treat the refout like the other sections
+        amplifier = nx // 5
+        is_irs2[:amplifier] = is_irs2[2 * amplifier:3 * amplifier]
+        clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
                     scipix_n=scipix_n, refpix_r=refpix_r)
     else:
         log.warning("DQ extension not found in reference file")
@@ -278,7 +282,8 @@ def strip_ref_pixels(output_model, irs2_mask):
         output_model.err = temp_array[..., irs2_mask]
 
 
-def clobber_ref(data, output, odd_even, mask, ref_flags, scipix_n=16, refpix_r=4):
+def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
+                scipix_n=16, refpix_r=4):
     """Set some interleaved reference pixel values to zero.
 
     Long Description
@@ -323,7 +328,11 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, scipix_n=16, refpix_r=4
 
     ref_flags : 1-D ndarray of bool
         Bad reference pixel flags, matching the data row size in detector
-        orientatin.  True indicates a bad reference pixel.
+        orientation.  True indicates a bad reference pixel.
+
+    is_irs2 : 1-D ndarray of bool
+        Array matching the data row size in detector orientation.
+        True indicates an interleaved reference pixel.
 
     scipix_n : int, optional
         Number of regular (science) samples before stepping out to collect
@@ -365,7 +374,8 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, scipix_n=16, refpix_r=4
 
         # replace new bad pixels
         for bad_pix in new_bad_pix:
-            replace_refpix(bad_pix, data, ref_flags, offset, offset + nx // 5,
+            replace_refpix(bad_pix, data, ref_flags, is_irs2,
+                           offset, offset + nx // 5,
                            scipix_n, refpix_r, axis=-1)
 
 
@@ -409,16 +419,18 @@ def decode_mask(output, mask):
     return bits
 
 
-def replace_refpix(bad_pix, data, mask, low_limit, high_limit,
+def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
                    scipix_n, refpix_r, axis=-2):
     """
     Replace a bad reference pixel with its nearest neighboring value.
 
     The nearest reference group above and below the bad pixel
-    are checked for good values.  If both are good, they are averaged
-    to determine the replacement value.  If only one is good, it is
-    directly used.  If neither are good, the value is set to 0.0 and
-    will be interpolated over during the IRS2 correction.
+    are checked for good values in pixels with the same parity as the
+    bad pixel.  If both are good, they are averaged to determine the replacement
+    value.  If only one is good, it is directly used.  If neither are good,
+    but a neighboring readout with opposite parity is good, that value is used.
+    If none of these options are available, the value is set to 0.0 and will be
+    interpolated over during the IRS2 correction.
 
     The data array is modified in place.
 
@@ -430,8 +442,11 @@ def replace_refpix(bad_pix, data, mask, low_limit, high_limit,
         The data array containing reference and science pixels.
         If in science orientation, `axis` should be -2. If in detector
         orientation, `axis` should be set to -1.
-    mask : 1-D ndarray
+    bad_mask : 1-D ndarray
         A boolean mask, where True indicates a bad reference value.
+        Should match the shape of the data along `axis`.
+    is_irs2 : 1-D ndarray
+        A boolean mask, where True indicates an interleaved reference pixel.
         Should match the shape of the data along `axis`.
     low_limit : int
         The lower limit of the data indices along `axis` to check
@@ -454,21 +469,44 @@ def replace_refpix(bad_pix, data, mask, low_limit, high_limit,
     nearest_low = bad_pix - ref_period
     nearest_high = bad_pix + ref_period
 
+    # check for neighboring good ref pixels
+    # to use as a fallback value
+    neighbor = None
+    lower_neighbor = bad_pix - 2
+    upper_neighbor = bad_pix + 2
+    if (lower_neighbor >= low_limit
+            and is_irs2[lower_neighbor]
+            and ~bad_mask[lower_neighbor]):
+        neighbor = lower_neighbor
+    elif (upper_neighbor < high_limit
+          and is_irs2[upper_neighbor]
+          and ~bad_mask[upper_neighbor]):
+        neighbor = upper_neighbor
+
+    if neighbor is not None:
+        if axis == -1:
+            replace_value = data[:, :, :, neighbor]
+        else:
+            replace_value = data[:, :, neighbor, :]
+    else:
+        # last resort: set to zero and allow cosine interpolation
+        replace_value = 0.0
+
+    # try to average upper and lower
     v1, v2 = None, None
-    if nearest_low >= low_limit and ~mask[nearest_low]:
+    if nearest_low >= low_limit and ~bad_mask[nearest_low]:
         if axis == -1:
             v1 = data[:, :, :, nearest_low]
         else:
             v1 = data[:, :, nearest_low, :]
-    if nearest_high < high_limit and ~mask[nearest_high]:
+    if nearest_high < high_limit and ~bad_mask[nearest_high]:
         if axis == -1:
             v2 = data[:, :, :, nearest_high]
         else:
             v2 = data[:, :, nearest_high, :]
 
-    replace_value = 0.0
     if v1 is not None and v2 is not None:
-        log.debug(f'   Pixel {bad_pix} replaced with value at {nearest_low}, {nearest_high}')
+        log.debug(f'   Pixel {bad_pix} replaced with value averaged from {nearest_low}, {nearest_high}')
         replace_value = np.mean([v1, v2], axis=0)
     elif v1 is not None:
         log.debug(f'   Pixel {bad_pix} replaced with value at {nearest_low}')
@@ -476,6 +514,8 @@ def replace_refpix(bad_pix, data, mask, low_limit, high_limit,
     elif v2 is not None:
         log.debug(f'   Pixel {bad_pix} replaced with value at {nearest_high}')
         replace_value = v2
+    elif neighbor is not None:
+        log.debug(f'   Pixel {bad_pix} replaced with value at neighbor {neighbor}')
     else:
         log.debug(f'   Pixel {bad_pix} replaced with 0.0')
 
@@ -485,7 +525,7 @@ def replace_refpix(bad_pix, data, mask, low_limit, high_limit,
         data[:, :, bad_pix, :] = replace_value
 
 
-def flag_bad_refpix(datamodel, n_sigma=3.0):
+def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False):
     """
     Flag bad reference pixels and replace with nearest good values.
 
@@ -496,9 +536,14 @@ def flag_bad_refpix(datamodel, n_sigma=3.0):
         science and interleaved reference pixel values.  Data and pixeldq
         will be modified in-place. The science data values will not be
         modified.
-
-    n_sigma: float, optional
+    n_sigma : float, optional
         Flagging threshold, expressed as a factor times the standard deviation.
+    flag_only : bool, optional
+        If set, bad values will be flagged in the pixeldq extension but
+        not replaced.
+    replace_only : bool, optional
+        If set, previously flagged bad values will be replaced, but new outliers
+        will not be flagged.
     """
     data = datamodel.data
     pixeldq = datamodel.pixeldq
@@ -506,14 +551,17 @@ def flag_bad_refpix(datamodel, n_sigma=3.0):
     refpix_r = datamodel.meta.exposure.nrs_reference
     log.debug('Using flagging threshold n_sigma = {}'.format(n_sigma))
 
-    # Intermittently bad pixels will be replaced for all integrations
-    # and all groups.
+    # bad pixels will be replaced for all integrations and all groups
     nints, ngroups, ny, nx = np.shape(data)
+
+    # initialize the mask with any previously marked bad pixels
+    ref_flags = (pixeldq & dqflags.pixel['BAD_REF_PIXEL'])
+    mask_bad = np.any(ref_flags, axis=1)
+    is_irs2 = np.full(ny, False)
 
     # calculate differences of readout pairs per amplifier
     amplifier = ny // 5  # 640
     ref_period = scipix_n + refpix_r
-    mask_bad = np.full(ny, False)
     for k in range(5):
         offset = int(k * amplifier)
         ref_pix, rp_diffs, rp_means, rp_stds = [], [], [], []
@@ -530,12 +578,11 @@ def flag_bad_refpix(datamodel, n_sigma=3.0):
                 rp_d = np.mean(np.abs(data[:, :, ri + 1, :] - data[:, :, ri, :]))
                 rp_m = np.mean(data[:, :, ri:ri + 2, :])
                 rp_s = np.std(data[:, :, ri:ri + 2, :])
+                is_irs2[ri:ri + 2] = True
 
                 # exclude ref pix already flagged
-                good = (~np.isclose(rp_m, 0)
-                        & ~np.any(pixeldq[ri:ri + 2, :]
-                                  & dqflags.pixel['BAD_REF_PIXEL']))
-                if good:
+                good = ~np.any(mask_bad[ri:ri + 2])
+                if good and not replace_only:
                     ref_pix.append(ri)
                     rp_means.append(rp_m)
                     rp_stds.append(rp_s)
@@ -572,18 +619,17 @@ def flag_bad_refpix(datamodel, n_sigma=3.0):
                   f'suspicious bad reference pixels in '
                   f'amplifier {k}')
 
-        # list of new bad pixels
-        all_bad = np.arange(offset, offset + amplifier)[
-            mask_bad[offset:offset + amplifier]]
+        # replace any flagged pixels if desired
+        if not flag_only:
+            # list of all bad pixels
+            all_bad = np.arange(offset, offset + amplifier)[
+                mask_bad[offset:offset + amplifier]]
+            for bad_pix in all_bad:
+                replace_refpix(bad_pix, data, mask_bad, is_irs2,
+                               offset, offset + amplifier,
+                               scipix_n, refpix_r)
 
-        # make sure any previously marked pixels aren't used for replacement
-        ref_flags = (pixeldq & dqflags.pixel['BAD_REF_PIXEL'])
-        ref_flags = mask_bad | np.any(ref_flags, axis=1)
-        for bad_pix in all_bad:
-            replace_refpix(bad_pix, data, ref_flags, offset, offset + amplifier,
-                           scipix_n, refpix_r)
-
-    log.info(f'Total intermittent bad reference pixels: {np.sum(mask_bad)}')
+    log.info(f'Total bad reference pixels: {np.sum(mask_bad)}')
     if pixeldq is not None:
         pixeldq[mask_bad] |= (dqflags.pixel['BAD_REF_PIXEL']
                               | dqflags.pixel['DO_NOT_USE'])

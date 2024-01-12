@@ -9,8 +9,10 @@ def test_flag_bad_refpix():
     pixeldq = np.full((3200, 5), 0)
 
     # set some previously marked bad reference pixels
+    data[:, :, 670, :] = 0.
     data[:, :, 688, :] = 0.
     data[:, :, 2110, :] = 0.
+    pixeldq[670, :] = datamodels.dqflags.pixel['BAD_REF_PIXEL']
     pixeldq[688, :] = datamodels.dqflags.pixel['BAD_REF_PIXEL']
     pixeldq[2110, :] = datamodels.dqflags.pixel['BAD_REF_PIXEL']
 
@@ -33,12 +35,16 @@ def test_flag_bad_refpix():
     flag_bad_refpix(input_model, n_sigma=ovr_corr_mitigation_ftr)
 
     compare = np.ones((2, 3, 3200, 5), dtype=np.float32)
-    # previously marked pixel, left alone
-    compare[:, :, 688, :] = 0.
-    compare[:, :, 2110, :] = 0.
-    # no lower pix, upper pix bad
-    compare[:, :, 648:650, :] = 0.
-    # lower and upper pix bad
+
+    # previously marked pixel, lower pix bad, upper pix good
+    compare[:, :, 688, :] = 1.
+    # previously marked pixel, lower and upper pix good
+    compare[:, :, 670, :] = 1.
+    compare[:, :, 2110, :] = 1.
+
+    # no lower pix, upper pix bad, neighbor okay
+    compare[:, :, 648:650, :] = 1.
+    # lower and upper pix bad, neighbor bad
     compare[:, :, 668, :] = 0.
     # lower pix bad, upper pix good
     compare[:, :, 669, :] = 1.

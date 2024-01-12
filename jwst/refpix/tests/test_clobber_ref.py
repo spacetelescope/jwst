@@ -18,15 +18,21 @@ def test_clobber_ref():
                      0,
                      0],
                     dtype=np.uint32)
-    ref_flags = np.full(3200, False)
+    is_irs2 = np.full(3200, True)
 
-    clobber_ref(data, output, odd_even, mask, ref_flags)
+    # mark a couple pixels already bad
+    ref_flags = np.full(3200, False)
+    ref_flags[1908:1910] = True
+    ref_flags[1912:1914] = True
+
+    clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2)
 
     compare = np.ones((2, 3, 5, 3200))
     compare[:, :, :] = np.arange(3200, dtype=float)
 
-    # next pixel is bad, no lower value: replace with 0
-    compare[..., 648: 648+2] = 0.
+    # next pixel is bad, no lower value, neighbor is okay:
+    # replace with neighbor
+    compare[..., 648: 648+2] = [646, 647]
     # lower pixel is bad, replace with upper pixel
     compare[..., 668: 668+2] = [688, 689]
     # upper pixel is bad, replace with lower pixel
@@ -35,7 +41,7 @@ def test_clobber_ref():
     compare[..., 710: 710+2] = [730, 731]
     # upper pixel is bad, replace with lower pixel
     compare[..., 1890: 1890+2] = [1870, 1871]
-    # lower bad, no upper, replace with 0
+    # lower bad, no upper, no good neighbors, replace with 0.0
     compare[..., 1910: 1910+2] = 0.0
     # upper is bad, replace with lower
     compare[..., 1808: 1808+2] = [1788, 1789]
