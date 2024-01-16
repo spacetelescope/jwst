@@ -6,6 +6,7 @@ from astropy.modeling.models import Shift
 import pytest
 
 from jwst.tweakreg import tweakreg_step
+from jwst.tweakreg import tweakreg_catalog
 from stdatamodels.jwst.datamodels import ImageModel
 
 
@@ -55,3 +56,10 @@ def test_common_name(groups, all_group_names, common_name):
 
         cn = tweakreg_step._common_name(group, all_group_names)
         assert cn == cn_truth
+
+
+def test_expected_failure_bad_starfinder():
+
+    model = ImageModel()
+    with pytest.raises(ValueError):
+        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder='bad_value')

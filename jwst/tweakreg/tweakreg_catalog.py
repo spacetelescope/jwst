@@ -1,8 +1,10 @@
 import logging
+import inspect
 
 from astropy.table import Table
 import numpy as np
-from photutils.detection import DAOStarFinder
+from photutils.detection import DAOStarFinder, IRAFStarFinder
+from photutils.segmentation import SourceFinder, SourceCatalog
 
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
 
@@ -12,9 +14,140 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
-                          sharphi=1.0, roundlo=-1.0, roundhi=1.0,
-                          brightest=None, peakmax=None, bkg_boxsize=400):
+def _SourceFinderWrapper(data, threshold, mask=None, **kwargs):
+    """
+    Wrapper function for photutils.source_finder.SourceFinder to make input
+    and output consistent with DAOStarFinder and IRAFStarFinder.
+    see `photutils segmentation tutorial <https://photutils.readthedocs.io/en/stable/segmentation.html>`_.
+
+    Parameters
+    ----------
+    data : array_like
+        The 2D array of the image.
+    threshold : float
+        The absolute image value above which to select sources.
+    mask : array_like (bool), optional
+        The image mask
+    **kwargs : Additional keyword arguments are passed to `photutils.segmentation.SourceFinder`
+        and/or `photutils.segmentation.SourceCatalog`.
+
+    Returns
+    -------
+    sources : `~astropy.table.QTable`
+        A table containing the found sources.
+    """
+
+    default_kwargs = {'npixels': 10,
+                      'progress_bar': False,
+                      }
+    kwargs = {**default_kwargs, **kwargs}
+
+    # handle passing kwargs into SourceFinder and SourceCatalog
+    # note that this suppresses TypeError: unexpected keyword arguments
+    # so user must be careful to know which kwargs are passed in here
+    finder_args = list(inspect.signature(SourceFinder).parameters)
+    catalog_args = list(inspect.signature(SourceCatalog).parameters)
+    finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
+    catalog_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in catalog_args}
+    if ('kron_params' in catalog_dict.keys()) and (catalog_dict['kron_params'] is None):
+        catalog_dict['kron_params'] = (2.5, 1.4, 0.0)  # necessary because cannot specify default in Step spec string
+
+    finder = SourceFinder(**finder_dict)
+    segment_map = finder(data, threshold, mask=mask)
+    sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table()
+    sources.rename_column('label', 'id')
+    sources.rename_column('segment_flux', 'flux')
+
+    return sources
+
+
+def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
+    """
+    Wrapper function for `photutils.detection.IRAFStarFinder` to make inputs
+    and outputs consistent across the three allowed detection methods
+
+    Parameters
+    ----------
+    data : array_like
+        The 2D array of the image.
+    threshold : float
+        The absolute image value above which to select sources.
+    mask : array_like (bool), optional
+        The image mask
+    **kwargs : Additional keyword arguments are passed to
+        `photutils.detection.IRAFStarFinder`.
+
+    Returns
+    -------
+    sources : `~astropy.table.QTable`
+        A table containing the found sources.
+    """
+
+    default_kwargs = {'fwhm': 2.5,
+                      'sharphi': 3.0,  # sharphi=1.0 was too small for test data
+                      'sigma_radius': 2.5,
+                      'brightest': 200,
+                      }
+    kwargs = {**default_kwargs, **kwargs}
+
+    # note that this suppresses TypeError: unexpected keyword arguments
+    # so user must be careful to know which kwargs are passed in here
+    finder_args = list(inspect.signature(IRAFStarFinder).parameters)
+    finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
+
+    starfind = IRAFStarFinder(threshold, **finder_dict)
+    sources = starfind(data, mask=mask)
+
+    return sources
+
+
+def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
+    """
+    Wrapper function for `photutils.detection.DAOStarFinder` to make inputs
+    and outputs consistent across the three allowed detection methods
+
+    Parameters
+    ----------
+    data : array_like
+        The 2D array of the image.
+    threshold : float
+        The absolute image value above which to select sources.
+    mask : array_like (bool), optional
+        The image mask
+    **kwargs : Additional keyword arguments are passed to
+        a`photutils.detection.DAOStarFinder`.
+
+    Returns
+    -------
+    sources : `~astropy.table.QTable`
+        A table containing the found sources.
+    """
+
+    default_kwargs = {'fwhm': 2.5,
+                      'sharphi': 3.0,  # sharphi=1.0 was too small for test data
+                      'sigma_radius': 2.5,
+                      'brightest': 200,
+                      }
+    kwargs = {**default_kwargs, **kwargs}
+    # for consistency with IRAFStarFinder, allow minsep_fwhm to be passed in
+    # and convert to pixels in the same way that IRAFStarFinder does
+    # see IRAFStarFinder readthedocs page
+    if "minsep_fwhm" in kwargs:
+        min_sep_pix = int(kwargs["minsep_fwhm"] * kwargs["fwhm"] + 0.5)
+        kwargs["min_separation"] = max(min_sep_pix, 2)
+
+    # note that this suppresses TypeError: unexpected keyword arguments
+    # so user must be careful to know which kwargs are passed in here
+    finder_args = list(inspect.signature(DAOStarFinder).parameters)
+    finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
+
+    starfind = DAOStarFinder(threshold, **finder_dict)
+    sources = starfind(data, mask=mask)
+
+    return sources
+
+
+def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='dao', starfinder_kwargs={}):
     """
     Create a catalog of point-line sources to be used for image
     alignment in tweakreg.
@@ -25,45 +158,31 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
         The input `ImageModel` of a single image.  The input image is
         assumed to be background subtracted.
 
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel
-        used to filter the image before thresholding.  Filtering the
-        image will smooth the noise and maximize detectability of
-        objects with a shape similar to the kernel.
-
     snr_threshold : float
         The signal-to-noise ratio per pixel above the ``background`` for
         which to consider a pixel as possibly being part of a source.
 
-    sharplo : float, optional
-        The lower bound on sharpness for object detection.
-
-    sharphi : float, optional
-        The upper bound on sharpness for object detection.
-
-    roundlo : float, optional
-        The lower bound on roundness for object detection.
-
-    roundhi : float, optional
-        The upper bound on roundness for object detection.
-
-    brightest : int, None, optional
-        Number of brightest objects to keep after sorting the full object list.
-        If ``brightest`` is set to `None`, all objects will be selected.
-
-    peakmax : float, None, optional
-        Maximum peak pixel value in an object. Only objects whose peak pixel
-        values are *strictly smaller* than ``peakmax`` will be selected.
-        This may be used to exclude saturated sources. By default, when
-        ``peakmax`` is set to `None`, all objects will be selected.
-
-        .. warning::
-            `DAOStarFinder` automatically excludes objects whose peak
-            pixel values are negative. Therefore, setting ``peakmax`` to a
-            non-positive value would result in exclusion of all objects.
-
     bkg_boxsize : float, optional
         The background mesh box size in pixels.
+
+    starfinder : str, optional
+        The `photutils` star finder to use.  Options are 'dao', 'iraf', or 'segmentation'.
+
+            - 'dao': `photutils.detection.DAOStarFinder`
+            - 'iraf': `photutils.detection.IRAFStarFinder`
+            - 'segmentation': `photutils.segmentation.SourceFinder` and `photutils.segmentation.SourceCatalog`
+
+    starfinder_kwargs : dict, optional
+        additional keyword arguments to be passed to the star finder.
+        for 'segmentation', these can be kwargs to `photutils.segmentation.SourceFinder`
+        and/or `photutils.segmentation.SourceCatalog`.
+        for 'dao' or 'iraf', these are kwargs to `photutils.detection.DAOStarFinder`
+        or `photutils.detection.IRAFStarFinder`, respectively.
+        Defaults are as stated in the docstrings of those functions unless noted here:
+
+            - 'dao': fwhm=2.5, sharphi=3.0, sigma_radius=2.5, brightest=200
+            - 'iraf': fwhm=2.5, sharphi=3.0, sigma_radius=2.5, brightest=200
+            - 'segmentation': npixels=10
 
     Returns
     -------
@@ -72,6 +191,15 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     """
     if not isinstance(model, ImageModel):
         raise TypeError('The input model must be an ImageModel.')
+
+    if starfinder.lower() in ['dao', 'daostarfinder']:
+        StarFinder = _DaoStarFinderWrapper
+    elif starfinder.lower() in ['iraf', 'irafstarfinder']:
+        StarFinder = _IRAFStarFinderWrapper
+    elif starfinder.lower() in ['segmentation', 'sourcefinder']:
+        StarFinder = _SourceFinderWrapper
+    else:
+        raise ValueError(f"Unknown starfinder type: {starfinder}")
 
     # Mask the non-imaging area (e.g. MIRI)
     coverage_mask = ((dqflags.pixel['NON_SCIENCE'] +
@@ -90,12 +218,7 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
         return catalog
 
     threshold = np.median(threshold_img)  # DAOStarFinder requires float
-
-    daofind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
-                            sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
-                            roundhi=roundhi, brightest=brightest,
-                            peakmax=peakmax)
-    sources = daofind(model.data, mask=coverage_mask)
+    sources = StarFinder(model.data, threshold, mask=coverage_mask, **starfinder_kwargs)
 
     if sources:
         catalog = sources[columns]
