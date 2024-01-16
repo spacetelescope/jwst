@@ -28,6 +28,10 @@ extract_1d
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
 
+- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
+  to avoid failures for moderate-brightness sources due to extremely low
+  throughput at the long wavelength end of MRS band 4C. []
+
 tweakreg
 --------
 
