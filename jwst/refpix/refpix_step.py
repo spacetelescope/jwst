@@ -23,6 +23,7 @@ class RefPixStep(Step):
         side_gain = float(default=1.0) # Multiplicative factor for side reference signal before subtracting from rows
         odd_even_rows = boolean(default=True) # Compute reference signal separately for even- and odd-numbered rows
         ovr_corr_mitigation_ftr = float(default=3.0) # Factor to avoid overcorrection of bad reference pixels for IRS2
+        preserve_irs2_refpix = boolean(default=False) # Preserve reference pixels in output
     """
 
     reference_file_types = ['refpix']
@@ -54,7 +55,8 @@ class RefPixStep(Step):
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
 
                 # Apply the IRS2 correction scheme
-                result = irs2_subtract_reference.correct_model(datamodel, irs2_model)
+                result = irs2_subtract_reference.correct_model(
+                    datamodel, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
 
                 if result.meta.cal_step.refpix != 'SKIPPED':
                     result.meta.cal_step.refpix = 'COMPLETE'
