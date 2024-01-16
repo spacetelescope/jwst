@@ -39,6 +39,13 @@ outlier_detection
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
 
+refpix
+------
+
+- Modify IRS2 bad reference pixel flagging to consider values from all
+  groups in all integrations and robustly replace values from their
+  nearest neighbors. [#8197]
+
 tweakreg
 --------
 
