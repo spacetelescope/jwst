@@ -11,6 +11,8 @@ associations
 documentation
 -------------
 
+- Remove ``sphinx-asdf`` fix issue where menu does not scroll. [#8196]
+
 - Fixed small typo in ``user_documentation`` docs. [#8178]
 
 - Added additional information for the ``scale`` and ``snr`` parameters
