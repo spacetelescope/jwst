@@ -122,7 +122,7 @@ report_crds_context = "pytest_crds.plugin"
 docs = [
     "matplotlib",
     "sphinx",
-    "sphinx-asdf>=0.1.2",
+    "sphinx-asdf @ git+https://github.com/braingram/sphinx-asdf.git@no_bootstrap", 
     "sphinx-astropy",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
