@@ -23,5 +23,6 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     rtdata.get_truth(f"truth/test_niriss_sourcefind/{stem}_{starfinder}_cat.ecsv")
     catalog_truth = ascii.read(rtdata.truth)
 
-    assert_allclose(catalog['xcentroid'], catalog_truth['xcentroid'])
-    assert_allclose(catalog['ycentroid'], catalog_truth['ycentroid'])
+    # rtol is larger than default because of numerical differences on Linux vs MacOS
+    assert_allclose(catalog['xcentroid'], catalog_truth['xcentroid'], rtol=1e-4)
+    assert_allclose(catalog['ycentroid'], catalog_truth['ycentroid'], rtol=1e-4)
