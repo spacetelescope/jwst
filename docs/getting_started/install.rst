@@ -68,13 +68,6 @@ You can also install a specific version (from `jwst 0.17.0` onward):
     | >> conda activate <env_name>
     | >> pip install jwst==1.12.5
 
-Installing specific versions before `jwst 0.17.0` need to be installed from Github:
-
-    | >> conda create -n <env_name> python
-    | >> conda activate <env_name>
-    | >> pip install git+https://github.com/spacetelescope/jwst@0.16.2
-
-
 .. _installing_dev:
 
 Installing the Development Version from Github
