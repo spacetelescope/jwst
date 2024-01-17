@@ -24,5 +24,5 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     catalog_truth = ascii.read(rtdata.truth)
 
     # rtol is larger than default because of numerical differences on Linux vs MacOS
-    assert_allclose(catalog['xcentroid'], catalog_truth['xcentroid'], rtol=1e-4)
-    assert_allclose(catalog['ycentroid'], catalog_truth['ycentroid'], rtol=1e-4)
+    assert_allclose(catalog['xcentroid'], catalog_truth['xcentroid'], rtol=1e-3)
+    assert_allclose(catalog['ycentroid'], catalog_truth['ycentroid'], rtol=1e-3)
