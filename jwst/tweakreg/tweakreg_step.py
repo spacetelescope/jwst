@@ -19,7 +19,7 @@ from jwst.datamodels import ModelContainer
 
 # LOCAL
 from ..stpipe import Step
-from ..assign_wcs.util import update_fits_wcsinfo
+from ..assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from . import astrometric_utils as amutils
 from . tweakreg_catalog import make_tweakreg_catalog
 
@@ -473,6 +473,7 @@ class TweakRegStep(Step):
                     imcat.wcs.name = "FIT-LVL3-{}".format(self.abs_refcat)
 
                 image_model.meta.wcs = imcat.wcs
+                update_s_region_imaging(image_model)
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
