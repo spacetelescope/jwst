@@ -16,6 +16,9 @@ documentation
 - Added additional information for the ``scale`` and ``snr`` parameters
   in the ``outlier_detection`` step docs. [#8177]
 
+- Updated installation instructions to include a warning that Python<=3.11
+  must be used. [#8200]
+
 emicorr
 -------
 
