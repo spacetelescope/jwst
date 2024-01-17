@@ -11,6 +11,8 @@ associations
 documentation
 -------------
 
+- Remove ``sphinx-asdf`` fix issue where menu does not scroll. [#8196]
+
 - Fixed small typo in ``user_documentation`` docs. [#8178]
 
 - Added additional information for the ``scale`` and ``snr`` parameters
@@ -28,10 +30,16 @@ extract_1d
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
 
+outlier_detection
+-----------------
+
+- Removed ``grow`` from the ``outlier_detection`` step parameters,
+  because it's no longer used in the algorithms. [#8190]
+
 tweakreg
 --------
 
-- Update sregion after WCS corrections are applied. [#8158]
+- Update ``sregion`` after WCS corrections are applied. [#8158]
 
 - Added option to choose IRAFStarFinder and segmentation.SourceFinder
 instead of DAOStarFinder and exposed star finder parameters. [#8198]
