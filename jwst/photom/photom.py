@@ -1140,7 +1140,7 @@ class DataSet():
 
         return conversion, no_cal
 
-    def save_area_info(self, area_fname):
+    def save_area_info(self, ftab, area_fname):
         """
         Short Summary
         -------------
@@ -1155,6 +1155,9 @@ class DataSet():
 
         Parameters
         ----------
+        ftab : `~jwst.datamodels.JwstDataModel`
+            A photom reference file data model
+
         area_fname : str
             Pixel area reference file name
         """
@@ -1163,28 +1166,41 @@ class DataSet():
         if area_fname is not None and area_fname != "N/A":
             pix_area = datamodels.open(area_fname)
 
-            # Load the average pixel area values from the AREA reference file header
-            # Don't need to do this for NIRSpec, because pixel areas have already
-            # been copied using save_area_nirspec
             if self.instrument != 'NIRSPEC':
-                if isinstance(self.input, datamodels.MultiSlitModel):
-                    # Note that this only copied to the first slit.
-                    self.input.slits[0].area = pix_area.data
-                else:
-                    ystart = self.input.meta.subarray.ystart - 1
-                    xstart = self.input.meta.subarray.xstart - 1
-                    yend = ystart + self.input.meta.subarray.ysize
-                    xend = xstart + self.input.meta.subarray.xsize
-                    self.input.area = pix_area.data[ystart: yend,
-                                                    xstart: xend]
-                log.info('Pixel area map copied to output.')
+                area_ster, area_a2 = None, None
+                try:
+                    # Load the average pixel area values from the AREA reference file header
+                    # Don't need to do this for NIRSpec, because pixel areas have already
+                    # been copied using save_area_nirspec
+                    if isinstance(self.input, datamodels.MultiSlitModel):
+                        # Note that this only copied to the first slit.
+                        self.input.slits[0].area = pix_area.data
+                    else:
+                        ystart = self.input.meta.subarray.ystart - 1
+                        xstart = self.input.meta.subarray.xstart - 1
+                        yend = ystart + self.input.meta.subarray.ysize
+                        xend = xstart + self.input.meta.subarray.xsize
+                        self.input.area = pix_area.data[ystart: yend,
+                                                        xstart: xend]
+                    log.info('Pixel area map copied to output.')
 
-                area_ster = pix_area.meta.photometry.pixelarea_steradians
-                if area_ster is None:
-                    log.warning('The PIXAR_SR keyword is missing from %s', area_fname)
-                area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
-                if area_a2 is None:
-                    log.warning('The PIXAR_A2 keyword is missing from %s', area_fname)
+                    area_ster = pix_area.meta.photometry.pixelarea_steradians
+                    if area_ster is None:
+                        log.warning('The PIXAR_SR keyword is missing from %s', area_fname)
+                    area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
+                    if area_a2 is None:
+                        log.warning('The PIXAR_A2 keyword is missing from %s', area_fname)
+                    log.info('PIXAR_SR and PIXAR_A2 values obtained from AREA reference file.')
+
+                except AttributeError:
+                    # The area reference file might be older, try the photom reference file
+                    area_ster = ftab.meta.photometry.pixelarea_steradians
+                    if area_ster is None:
+                        log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
+                    area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
+                    if area_a2 is None:
+                        log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
+                    log.info('Values for PIXAR_SR and PIXAR_A2 obtained from PHOTOM reference file.')
 
                 # Copy the pixel area values to the output
                 log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
@@ -1203,6 +1219,7 @@ class DataSet():
                     self.input.meta.photometry.pixelarea_steradians = area_ster
             else:
                 self.save_area_nirspec(pix_area)
+
             pix_area.close()
 
     def save_area_nirspec(self, pix_area):
@@ -1330,7 +1347,7 @@ class DataSet():
         # SOSS data are in a MultiSpecModel, which will not allow for
         # saving the area info.
         if self.exptype != 'NIS_SOSS':
-            self.save_area_info(area_fname)
+            self.save_area_info(ftab, area_fname)
 
         if self.instrument == 'NIRISS':
             self.calc_niriss(ftab)
