@@ -83,19 +83,18 @@ def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
         A table containing the found sources.
     """
 
-    default_kwargs = {'fwhm': 2.5,
-                      'sharphi': 1.0,  # sharphi=1.0 was too small for test data
-                      'sigma_radius': 2.5,
-                      'brightest': 200,
-                      }
+    # defaults are not necessary to repeat here when running full pipeline step
+    # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
+    default_kwargs = {'fwhm': 2.5,}
     kwargs = {**default_kwargs, **kwargs}
 
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
+    fwhm = finder_dict.pop('fwhm')
 
-    starfind = IRAFStarFinder(threshold, **finder_dict)
+    starfind = IRAFStarFinder(threshold, fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
     return sources
@@ -123,25 +122,25 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
         A table containing the found sources.
     """
 
-    default_kwargs = {'fwhm': 2.5,
-                      'sharphi': 1.0,  # sharphi=1.0 was too small for test data
-                      'sigma_radius': 2.5,
-                      'brightest': 200,
-                      }
+    # defaults are not necessary to repeat here when running full pipeline step
+    # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
+    default_kwargs = {'fwhm': 2.5,}
     kwargs = {**default_kwargs, **kwargs}
+
     # for consistency with IRAFStarFinder, allow minsep_fwhm to be passed in
     # and convert to pixels in the same way that IRAFStarFinder does
-    # see IRAFStarFinder readthedocs page
+    # see IRAFStarFinder readthedocs page and also
+    # https://github.com/astropy/photutils/issues/1561
     if "minsep_fwhm" in kwargs:
-        min_sep_pix = int(kwargs["minsep_fwhm"] * kwargs["fwhm"] + 0.5)
-        kwargs["min_separation"] = max(min_sep_pix, 2)
+        min_sep_pix = max(2, int(kwargs["minsep_fwhm"] * kwargs["fwhm"] + 0.5))
+        kwargs["min_separation"] = min_sep_pix
 
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
-
-    starfind = DAOStarFinder(threshold, **finder_dict)
+    fwhm = finder_dict.pop('fwhm')
+    starfind = DAOStarFinder(threshold, fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
     return sources
@@ -180,9 +179,9 @@ def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='dao
         or `photutils.detection.IRAFStarFinder`, respectively.
         Defaults are as stated in the docstrings of those functions unless noted here:
 
-            - 'dao': fwhm=2.5, sharphi=3.0, sigma_radius=2.5, brightest=200
-            - 'iraf': fwhm=2.5, sharphi=3.0, sigma_radius=2.5, brightest=200
-            - 'segmentation': npixels=10
+            - 'dao': fwhm=2.5
+            - 'iraf': fwhm=2.5
+            - 'segmentation': npixels=10, progress_bar=False
 
     Returns
     -------

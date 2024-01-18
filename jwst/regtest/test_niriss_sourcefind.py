@@ -19,7 +19,11 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     model = datamodels.ImageModel(rtdata.input)
     catalog = tweakreg_catalog.make_tweakreg_catalog(
         model, 2.5, 10.0, starfinder=starfinder, starfinder_kwargs={
-            'brightest': None})
+            'brightest': None,
+            'sharphi': 3.0,
+            'minsep_fwhm': 2.5,
+            'sigma_radius': 2.5,
+            })
     rtdata.get_truth(f"truth/test_niriss_sourcefind/{stem}_{starfinder}_cat.ecsv")
     catalog_truth = ascii.read(rtdata.truth)
 
