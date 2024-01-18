@@ -69,7 +69,7 @@ def correct_model(input_model, irs2_model,
     This agrees with the above value of tframe (14.5889 s) if NFOH = 714.
     """
 
-    # Only copy in SCI data array for now; that's all we need. The rest
+    # Copy in SCI and PIXELDQ arrays for now; that's all we need. The rest
     # of the input model will be copied to output at the end of the step.
     data = input_model.data.copy()
     pixeldq = input_model.pixeldq.copy()
