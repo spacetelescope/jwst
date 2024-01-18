@@ -84,7 +84,7 @@ def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
     """
 
     default_kwargs = {'fwhm': 2.5,
-                      'sharphi': 3.0,  # sharphi=1.0 was too small for test data
+                      'sharphi': 1.0,  # sharphi=1.0 was too small for test data
                       'sigma_radius': 2.5,
                       'brightest': 200,
                       }
@@ -124,7 +124,7 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
     """
 
     default_kwargs = {'fwhm': 2.5,
-                      'sharphi': 3.0,  # sharphi=1.0 was too small for test data
+                      'sharphi': 1.0,  # sharphi=1.0 was too small for test data
                       'sigma_radius': 2.5,
                       'brightest': 200,
                       }

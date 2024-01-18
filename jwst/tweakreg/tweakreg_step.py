@@ -60,10 +60,10 @@ class TweakRegStep(Step):
         snr_threshold = float(default=10.0) # SNR threshold above the bkg for star finder
         # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
-        minsep_fwhm = float(default=2.5) # Minimum separation between detected objects in FWHM
+        minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM
         sigma_radius = float(default=2.5) # Truncation radius of the Gaussian kernel in units of sigma
         sharplo = float(default=0.2) # The lower bound on sharpness for object detection.
-        sharphi = float(default=3.0) # The upper bound on sharpness for object detection.
+        sharphi = float(default=1.0) # The upper bound on sharpness for object detection.
         roundlo = float(default=-1.0) # The lower bound on roundness for object detection.
         roundhi = float(default=1.0) # The upper bound on roundness for object detection.
         brightest = integer(default=200) # Keep top ``brightest`` objects

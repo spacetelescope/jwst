@@ -229,7 +229,7 @@ The ``tweakreg`` step has the following optional arguments:
   pixels. (Default=2.5)
 
 * ``minsep_fwhm``: A `float` value indicating the minimum separation between
-  detected objects in units of number of FWHMs. (Default=2.5)
+  detected objects in units of number of FWHMs. (Default=0.0)
 
 * ``sigma_radius``: A `float` value indicating the truncation radius of the
   Gaussian kernel in units of number of FWHMs. (Default=2.5)
@@ -238,7 +238,7 @@ The ``tweakreg`` step has the following optional arguments:
   for object detection. (Default=0.2)
 
 * ``sharphi``: A `float` value indicating the upper bound on sharpness
-  for object detection. (Default=3.0)
+  for object detection. (Default=1.0)
 
 * ``roundlo``: A `float` value indicating the lower bound on roundness
   for object detection. (Default=-1.0)
