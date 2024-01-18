@@ -31,8 +31,9 @@ extract_1d
 photom
 ------
 
-- Fixed a bug in multislit data that did not update the bunit_data and
-  bunit_error in the top datamodel, just individual slit models. [#8189]
+- Set the top model of multislit data for bunit_data and
+  bunit_error to None, forcing information on units from come from
+  individual slit models. [#8189]
   
 tweakreg
 --------
