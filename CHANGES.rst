@@ -11,10 +11,15 @@ associations
 documentation
 -------------
 
+- Remove ``sphinx-asdf`` fix issue where menu does not scroll. [#8196]
+
 - Fixed small typo in ``user_documentation`` docs. [#8178]
 
 - Added additional information for the ``scale`` and ``snr`` parameters
   in the ``outlier_detection`` step docs. [#8177]
+
+- Updated installation instructions to include a warning that Python<=3.11
+  must be used. [#8200]
 
 emicorr
 -------
@@ -27,18 +32,24 @@ extract_1d
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
+  
+outlier_detection
+-----------------
+
+- Removed ``grow`` from the ``outlier_detection`` step parameters,
+  because it's no longer used in the algorithms. [#8190]
 
 photom
 ------
 
-- Set the top model of multislit data for bunit_data and
-  bunit_error to None, forcing information on units from come from
-  individual slit models. [#8189]
-  
+- Set bunit_data and bunit_error to None in the top level meta data for
+  ``MultiSlitModel`` data models, forcing information on units to only come
+  from individual slit meta data. [#8189]
+
 tweakreg
 --------
 
-- Update sregion after WCS corrections are applied. [#8158]
+- Update ``sregion`` after WCS corrections are applied. [#8158]
 
 
 1.13.3 (01-05-2024)
