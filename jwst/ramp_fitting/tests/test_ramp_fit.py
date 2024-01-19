@@ -228,6 +228,27 @@ def test_multiprocessing2():
 @pytest.mark.parametrize("method", ['OLS'])  # don't do GLS to see if it causes hang
 class TestMethods:
 
+    def test_segment_weighting(self, method):
+        # all pixel values are zero. So slope should be zero
+        model1, gdq, rnoise, pixdq, err, gain = setup_small_cube(ngroups=8)
+        gain[:, :] = 100000.
+        rnoise[:, :] = 1
+        model1.data[0, 0, 0, 0] = 0
+        model1.data[0, 1, 0, 0] = 0.8
+        model1.data[0, 2, 0, 0] = 1.6
+        model1.data[0, 3, 0, 0] = 2.4
+        model1.data[0, 4, 0, 0] = 10.0
+        model1.data[0, 5, 0, 0] = 11.2
+        model1.data[0, 6, 0, 0] = 12.4
+        model1.data[0, 7, 0, 0] = 13.6
+        gdq[0, 4, 0, 0] = 4
+        slopes, cube, optional, gls_dummy = ramp_fit(
+            model1, 60000, True, rnoise, gain, method, 'optimal', 'none', dqflags.pixel)
+        seg1_slope1 = optional[0][0, 0, 0, 0]
+        seg1_slope2 = optional[0][0, 1, 0, 0]
+        data = slopes[0]
+        assert data[0, 0] == 0.1
+
     def test_nocrs_noflux(self, method):
         # all pixel values are zero. So slope should be zero
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
