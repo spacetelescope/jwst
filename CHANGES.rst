@@ -50,7 +50,7 @@ photom
   data, since this varies with location in the field and wavelength.  The team had
   delivered the PHOTOM reference files with the dispersion factored out, requiring that
   the pipeline put the (variable, calculated per pixel) value back in.  Assumed that
-  the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8186]
+  the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
 
 tweakreg
 --------
@@ -76,12 +76,6 @@ documentation
   value. [#8156]
 
 - Removed unused ``grow`` parameter from ``outlier_detection`` docs. [#8156]
-
-outlier_detection
------------------
-
-- Removed the ``grow`` parameter from the step arguments, because it's no
-  longer used in the algorithms. [#8156]
 
 ramp_fitting
 ------------
