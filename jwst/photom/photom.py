@@ -922,9 +922,17 @@ class DataSet():
                 if unit_is_surface_brightness:
                     slit.meta.bunit_data = 'MJy/sr'
                     slit.meta.bunit_err = 'MJy/sr'
+                    # Setting top model to None so they will not be written to FITs File.
+                    # Information on the units should only come from the individual slits.
+                    self.input.meta.bunit_data = None
+                    self.input.meta.bunit_err = None
                 else:
                     slit.meta.bunit_data = 'MJy'
                     slit.meta.bunit_err = 'MJy'
+                    # Setting top model to None so they will not be written to FITs File.
+                    # Information on the units should only come from the individual slits.
+                    self.input.meta.bunit_data = None
+                    self.input.meta.bunit_err = None
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
