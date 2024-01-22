@@ -1190,17 +1190,20 @@ class DataSet():
                     area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
                     if area_a2 is None:
                         log.warning('The PIXAR_A2 keyword is missing from %s', area_fname)
-                    log.info('PIXAR_SR and PIXAR_A2 values obtained from AREA reference file.')
+                    if area_ster is not None and area_a2 is not None:
+                        log.info('Values for PIXAR_SR and PIXAR_A2 obtained from AREA reference file.')
 
-                except AttributeError:
+                except AttributeError or KeyError:
                     # The area reference file might be older, try the photom reference file
                     area_ster = ftab.meta.photometry.pixelarea_steradians
+                    log.info('Attempting to obtain PIXAR_SR and PIXAR_A2 values from PHOTOM reference file.')
                     if area_ster is None:
                         log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
                     area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
                     if area_a2 is None:
                         log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
-                    log.info('Values for PIXAR_SR and PIXAR_A2 obtained from PHOTOM reference file.')
+                    if area_ster is not None and area_a2 is not None:
+                        log.info('Values for PIXAR_SR and PIXAR_A2 obtained from PHOTOM reference file.')
 
                 # Copy the pixel area values to the output
                 log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
