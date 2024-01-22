@@ -113,7 +113,6 @@ def generate(pool, rules, version_id=None, finalize=True):
     logger.info('Associations generated: %s', len(finalized_asns))
     return finalized_asns
 
-
 def generate_from_item(
         item,
         version_id,

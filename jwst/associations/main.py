@@ -194,9 +194,22 @@ class Main():
         """Generate the associations"""
         logger.info('Generating associations.')
         parsed = self.parsed
-        self.associations = generate(
-            self.pool, self.rules, version_id=parsed.version_id, finalize=not parsed.no_finalize
-        )
+        if parsed.original_algorithm:
+            logger.info('Using original algorithm')
+            self.associations = generate(
+                self.pool, self.rules, version_id=parsed.version_id, finalize=not parsed.no_finalize
+            )
+        else:
+            logger.info('Using per-candidate algorithm')
+
+            # Developer Note: Importing here to avoid circular importing.
+            from jwst.associations.generate_per_candidate import generate_per_candidate
+
+            self.associations = generate_per_candidate(
+                self.pool, parsed.rules, cids=parsed.asn_candidate_ids,
+                version_id=parsed.version_id, finalize=not parsed.no_finalize,
+                ignore_default=parsed.ignore_default
+            )
 
         if parsed.discover:
             logger.debug(
@@ -355,6 +368,11 @@ class Main():
         parser.add_argument(
             '--no-merge', action=DeprecateNoMerge,
             help='Deprecated: Default is to not merge. See "--merge".'
+        )
+        parser.add_argument(
+            '--original-algorithm',
+            action='store_true',
+            help='Use the original algorithm that does not segment pools based on candidates'
         )
 
         self.parsed = parser.parse_args(args=args)
