@@ -32,12 +32,19 @@ extract_1d
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
-
+  
 outlier_detection
 -----------------
 
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
+
+photom
+------
+
+- Set bunit_data and bunit_error to None in the top level meta data for
+  ``MultiSlitModel`` data models, forcing information on units to only come
+  from individual slit meta data. [#8189]
 
 tweakreg
 --------
