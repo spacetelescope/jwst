@@ -31,7 +31,7 @@ DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
 image) and have a size and shape similar to a defined 2D Gaussian
-kernel.  DAOFind also provides an estimate of the objects
+kernel.  DAOFind also provides an estimate of the object's
 roundness and sharpness, whose lower and upper bounds can be
 specified.
 
