@@ -71,6 +71,10 @@ tweakreg
 - Added option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
 
+general
+-------
+
+- Update minimum required photutils version to 1.5.0 [#8211]
 
 1.13.3 (01-05-2024)
 ===================
