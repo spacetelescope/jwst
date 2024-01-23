@@ -46,6 +46,23 @@ photom
   ``MultiSlitModel`` data models, forcing information on units to only come
   from individual slit meta data. [#8189]
 
+- Updated photom step to include spectral dispersion when applying NIRCam WFSS and TSGRISM
+  flux calibration, because the dispersion varies with location in the field and wavelength.
+  The PHOTOM reference files have the dispersion factored out, requiring that
+  the pipeline put the (variable, calculated per pixel) dispersion back in.  Assumes that
+  the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
+
+refpix
+------
+
+- Modify NIRSpec IRS2 bad reference pixel flagging to consider values from
+  all groups in all integrations and robustly replace values from their
+  nearest neighbors. [#8197]
+
+- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
+  to avoid failures for moderate-brightness sources due to extremely low
+  throughput at the long wavelength end of MRS band 4C. [#8199]
+
 tweakreg
 --------
 
