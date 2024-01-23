@@ -4,7 +4,7 @@ updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "master"
+    target-branch: "main"
     schedule:
       interval: "weekly"
     reviewers:
@@ -13,7 +13,7 @@ updates:
   # Maintain dependencies for pip
   - package-ecosystem: "pip"
     directory: "/"
-    target-branch: "master"
+    target-branch: "main"
     schedule:
       interval: "weekly"
     reviewers:
