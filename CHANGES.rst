@@ -46,6 +46,13 @@ photom
   ``MultiSlitModel`` data models, forcing information on units to only come
   from individual slit meta data. [#8189]
 
+refpix
+------
+
+- Modify NIRSpec IRS2 bad reference pixel flagging to consider values from
+  all groups in all integrations and robustly replace values from their
+  nearest neighbors. [#8197]
+
 tweakreg
 --------
 
