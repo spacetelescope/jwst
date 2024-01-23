@@ -68,6 +68,9 @@ tweakreg
 
 - Update ``sregion`` after WCS corrections are applied. [#8158]
 
+- Added option to choose IRAFStarFinder and segmentation.SourceFinder
+  instead of DAOStarFinder and exposed star finder parameters. [#8203]
+
 
 1.13.3 (01-05-2024)
 ===================
