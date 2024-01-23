@@ -208,7 +208,7 @@ class Main():
             self.associations = generate_per_candidate(
                 self.pool, parsed.rules, cids=parsed.asn_candidate_ids,
                 version_id=parsed.version_id, finalize=not parsed.no_finalize,
-                ignore_default=parsed.ignore_default
+                ignore_default=parsed.ignore_default, discover=parsed.discover
             )
 
         if parsed.discover:

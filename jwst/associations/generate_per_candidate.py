@@ -2,7 +2,8 @@ import collections
 import logging
 
 from .generate import generate
-from .main import CANDIDATE_RULESET, constrain_on_candidates
+from .lib.utilities import evaluate
+from .main import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
 from .registry import AssociationRegistry
 
 # Configure logging
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finalize=True, ignore_default=False):
+def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finalize=True, ignore_default=False, discover=False):
     """Generate associations in the pool according to the rules.
 
     Parameters
@@ -18,8 +19,8 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     pool : AssociationPool
         The pool to generate from.
 
-    rules : AssociationRegistry
-        The association rule set.
+    user_rules : File-like
+        The rule definitions to use. None to use the defaults if `ignore_default` is False.
 
     cids : [str,[...]] or None
         List of candidates to produce for. If None, do all possible candidates
@@ -33,6 +34,12 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     finalize : bool
         Run all rule methods marked as 'finalized'.
 
+    ignore_default : bool
+        Ignore the default rules. Use only the user-specified ones.
+
+    discover : bool
+        Find associations that are not candidate-based.
+
     Returns
     -------
     associations : [Association[,...]]
@@ -43,7 +50,7 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
     """
-    # get all the candidates
+    # Get the candidates
     cids_by_type = ids_by_ctype(pool)
     if cids is None:
         cids_ctypes = [(cid, ctype)
@@ -58,7 +65,7 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
                     cids_ctypes.append((cid, ctype))
                     break
             else:
-                raise RuntimeError(f'cid {cid} not found in pool')
+                logger.warning('cid %s not found in pool', cid)
 
     associations = []
     for cid_ctype in cids_ctypes:
@@ -80,11 +87,23 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
         # Add to the list
         associations.extend(associations_cid)
 
+    # The ruleset has been generated on a per-candidate case.
+    # Here, need to do a final rebuild of the ruleset to get the finalization
+    # functions. This ruleset does not need any of the candidate specifications.
+    # This ruleset is also used if discovery is in play.
+    rules = AssociationRegistry(user_rules, include_default=not ignore_default, name=DISCOVER_RULESET)
+    if discover:
+        logger.info('Discovering associations...')
+        associations_discover = generate(pool, rules, version_id=version_id, finalize=False)
+        logger.info('# discovered associations: %d', len(associations_discover))
+        associations.extend(associations_discover)
+
     # Finalize found associations
     logger.debug('# associations before finalization: %d', len(associations))
     finalized_asns = associations
-    if finalize:
+    if finalize and len(associations):
         logger.debug('Performing association finalization.')
+
         try:
             finalized_asns = rules.callback.reduce('finalize', associations)
         except KeyError as exception:
@@ -110,9 +129,16 @@ def ids_by_ctype(pool):
     """
     ids_by_ctype = collections.defaultdict(list)
     for exp_candidates in pool['asn_candidate']:
-        candidates = eval(exp_candidates)
-        for id, ctype in candidates:
-            ids_by_ctype[ctype].append(id)
+        candidates = evaluate(exp_candidates)
+        if isinstance(candidates, int):
+            ids_by_ctype['unknown'].append(str(candidates))
+            continue
+        try:
+            for id, ctype in candidates:
+                ids_by_ctype[ctype].append(id)
+        except ValueError:
+            logger.debug('Cannot parse asn_candidate field: %s', candidates)
+
     for ctype in ids_by_ctype:
         ids_by_ctype[ctype] = collections.Counter(ids_by_ctype[ctype])
 
