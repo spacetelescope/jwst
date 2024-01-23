@@ -69,20 +69,8 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
 
     associations = []
     for cid_ctype in cids_ctypes:
-        cid, ctype = cid_ctype
-        logger.info(f'Working on {cid_ctype}')
-
-        # Get the pool
-        pool_cid = pool_from_candidate(pool, cid)
-        pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
-        logger.info(f'Len(pool_{cid}): {len(pool_cid)}')
-
-        # Create the rules with the simplified asn_candidate constraint
-        asn_constraint = constrain_on_candidates([cid])
-        rules = AssociationRegistry(user_rules, include_default=not ignore_default, global_constraints=asn_constraint, name=CANDIDATE_RULESET)
-
-        # Get the associations
-        associations_cid = generate(pool_cid, rules, version_id=version_id, finalize=False)
+        # Generate the association for the given candidate
+        associations_cid = generate_on_candidate(cid_ctype, pool, user_rules, version_id=version_id, ignore_default=ignore_default)
 
         # Add to the list
         associations.extend(associations_cid)
@@ -111,6 +99,52 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
 
     logger.info('Associations generated: %s', len(finalized_asns))
     return finalized_asns
+
+
+def generate_on_candidate(cid_ctype, pool, user_rules, version_id=None, ignore_default=False):
+    """Generate associations based on a candidate ID
+
+    Parameters
+    ----------
+    cid_ctype : (str, str)
+        2-tuple of candidate ID and the candidate type
+
+    pool : AssociationPool
+        The pool to generate from.
+
+    user_rules : File-like
+        The rule definitions to use. None to use the defaults if `ignore_default` is False.
+
+    version_id : None, True, or str
+        The string to use to tag associations and products.
+        If None, no tagging occurs.
+        If True, use a timestamp
+        If a string, the string.
+
+    ignore_default : bool
+        Ignore the default rules. Use only the user-specified ones.
+
+    Returns
+    -------
+    associations : [Association[,...]]
+        List of associations
+    """
+    cid, ctype = cid_ctype
+    logger.info(f'Working on {cid_ctype}')
+
+    # Get the pool
+    pool_cid = pool_from_candidate(pool, cid)
+    pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
+    logger.info(f'Len(pool_{cid}): {len(pool_cid)}')
+
+    # Create the rules with the simplified asn_candidate constraint
+    asn_constraint = constrain_on_candidates([cid])
+    rules = AssociationRegistry(user_rules, include_default=not ignore_default, global_constraints=asn_constraint, name=CANDIDATE_RULESET)
+
+    # Get the associations
+    associations = generate(pool_cid, rules, version_id=version_id, finalize=False)
+
+    return associations
 
 
 def ids_by_ctype(pool):
