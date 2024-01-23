@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
 
 from jwst.photom import photom
+from jwst.lib.dispaxis import get_dispersion_direction
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
 
@@ -1488,9 +1489,14 @@ def test_nircam_spec():
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
+        # Incude the dispersion in the correction, as per JP-3238
+        dispaxis = get_dispersion_direction(ds.exptype, ds.grating, ds.filter, ds.pupil)
+        dispersion_array = ds.get_dispersion_array(slit.wavelength, dispaxis)
+        # Convert dispersion in micron/pixel to Angstrom/pixel
+        disp = dispersion_array[iy, ix] * 10000.0
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        compare = photmjsr * rel_resp
+        compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         assert np.allclose(ratio, compare, rtol=1.e-7)

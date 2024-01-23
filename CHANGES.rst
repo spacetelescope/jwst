@@ -46,6 +46,12 @@ photom
   ``MultiSlitModel`` data models, forcing information on units to only come
   from individual slit meta data. [#8189]
 
+- Updated photom step to include spectral dispersion when applying NIRCam WFSS and TSGRISM
+  flux calibration, because the dispersion varies with location in the field and wavelength.
+  The PHOTOM reference files have the dispersion factored out, requiring that
+  the pipeline put the (variable, calculated per pixel) dispersion back in.  Assumes that
+  the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
+
 refpix
 ------
 
