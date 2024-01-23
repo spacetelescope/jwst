@@ -59,6 +59,10 @@ refpix
   all groups in all integrations and robustly replace values from their
   nearest neighbors. [#8197]
 
+- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
+  to avoid failures for moderate-brightness sources due to extremely low
+  throughput at the long wavelength end of MRS band 4C. [#8199]
+
 tweakreg
 --------
 
