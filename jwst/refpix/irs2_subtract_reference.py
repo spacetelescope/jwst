@@ -562,62 +562,69 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
     # calculate differences of readout pairs per amplifier
     amplifier = ny // 5  # 640
     ref_period = scipix_n + refpix_r
+    initial_mask = mask_bad.copy()
     for k in range(5):
         offset = int(k * amplifier)
-        ref_pix, rp_diffs, rp_means, rp_stds = [], [], [], []
 
-        # jump from the start of the reference pixel sequence to the next
-        # starting pixel is from 8 to 640 by 20
-        for rpstart in range(scipix_n // 2, amplifier, ref_period):
-            # amplifier offset
-            rpstart += offset
+        # get statistics for each integration individually, but
+        # apply flags to all integrations
+        for j in range(nints):
+            ref_pix, rp_diffs, rp_means, rp_stds = [], [], [], []
+            int_bad = initial_mask.copy()
 
-            # go through the reference pixels by pairs
-            for ri in range(0, refpix_r, 2):
-                ri = rpstart + ri
-                rp_d = np.mean(np.abs(data[:, :, ri + 1, :] - data[:, :, ri, :]))
-                rp_m = np.mean(data[:, :, ri:ri + 2, :])
-                rp_s = np.std(data[:, :, ri:ri + 2, :])
-                is_irs2[ri:ri + 2] = True
+            # jump from the start of the reference pixel sequence to the next
+            # starting pixel is from 8 to 640 by 20
+            for rpstart in range(scipix_n // 2, amplifier, ref_period):
+                # amplifier offset
+                rpstart += offset
 
-                # exclude ref pix already flagged
-                good = ~np.any(mask_bad[ri:ri + 2])
-                if good and not replace_only:
-                    ref_pix.append(ri)
-                    rp_means.append(rp_m)
-                    rp_stds.append(rp_s)
-                    rp_diffs.append(rp_d)
+                # go through the reference pixels by pairs
+                for ri in range(0, refpix_r, 2):
+                    ri = rpstart + ri
+                    rp_d = np.mean(np.abs(data[j, :, ri + 1, :] - data[j, :, ri, :]))
+                    rp_m = np.mean(data[j, :, ri:ri + 2, :])
+                    rp_s = np.std(data[j, :, ri:ri + 2, :])
+                    is_irs2[ri:ri + 2] = True
 
-        ref_pix = np.array(ref_pix, dtype=int)
-        rp_diffs = np.array(rp_diffs)
-        rp_means = np.array(rp_means)
-        rp_stds = np.array(rp_stds)
-        pair_pixel = ref_pix + 1
+                    # exclude ref pix already flagged
+                    good = ~np.any(int_bad[ri:ri + 2])
+                    if good and not replace_only:
+                        ref_pix.append(ri)
+                        rp_means.append(rp_m)
+                        rp_stds.append(rp_s)
+                        rp_diffs.append(rp_d)
 
-        # clipped stats for all tests
-        mean_of_diffs, _, std_of_diffs = sigma_clipped_stats(rp_diffs, sigma=n_sigma)
-        mean_of_means, _, std_of_means = sigma_clipped_stats(rp_means, sigma=n_sigma)
-        mean_of_stds, _, std_of_stds = sigma_clipped_stats(rp_stds, sigma=n_sigma)
+            ref_pix = np.array(ref_pix, dtype=int)
+            rp_diffs = np.array(rp_diffs)
+            rp_means = np.array(rp_means)
+            rp_stds = np.array(rp_stds)
+            pair_pixel = ref_pix + 1
 
-        # find the additional intermittent bad pixels, marking both readouts
-        high_diffs = (rp_diffs - mean_of_diffs) > (n_sigma * std_of_diffs)
-        high_means = (rp_means - mean_of_means) > (n_sigma * std_of_means)
-        high_stds = (rp_stds - mean_of_stds) > (n_sigma * std_of_stds)
+            # clipped stats for all tests
+            mean_of_diffs, _, std_of_diffs = sigma_clipped_stats(rp_diffs, sigma=n_sigma)
+            mean_of_means, _, std_of_means = sigma_clipped_stats(rp_means, sigma=n_sigma)
+            mean_of_stds, _, std_of_stds = sigma_clipped_stats(rp_stds, sigma=n_sigma)
 
-        log.debug(f'High diffs={np.sum(high_diffs)}, '
-                  f'high means={np.sum(high_means)}, '
-                  f'high stds={np.sum(high_stds)}')
+            # find the additional intermittent bad pixels, marking both readouts
+            high_diffs = (rp_diffs - mean_of_diffs) > (n_sigma * std_of_diffs)
+            high_means = (rp_means - mean_of_means) > (n_sigma * std_of_means)
+            high_stds = (rp_stds - mean_of_stds) > (n_sigma * std_of_stds)
 
-        mask_bad[ref_pix[high_diffs]] = True
-        mask_bad[pair_pixel[high_diffs]] = True
-        mask_bad[ref_pix[high_means]] = True
-        mask_bad[pair_pixel[high_means]] = True
-        mask_bad[ref_pix[high_stds]] = True
-        mask_bad[pair_pixel[high_stds]] = True
+            log.debug(f'High diffs={np.sum(high_diffs)}, '
+                      f'high means={np.sum(high_means)}, '
+                      f'high stds={np.sum(high_stds)}')
 
-        log.debug(f'{np.sum(mask_bad[offset:offset + amplifier])} '
-                  f'suspicious bad reference pixels in '
-                  f'amplifier {k}')
+            int_bad[ref_pix[high_diffs]] = True
+            int_bad[pair_pixel[high_diffs]] = True
+            int_bad[ref_pix[high_means]] = True
+            int_bad[pair_pixel[high_means]] = True
+            int_bad[ref_pix[high_stds]] = True
+            int_bad[pair_pixel[high_stds]] = True
+
+            log.debug(f'{np.sum(int_bad[offset:offset + amplifier])} '
+                      f'suspicious bad reference pixels in '
+                      f'amplifier {k}, integration {j}')
+            mask_bad |= int_bad
 
         # replace any flagged pixels if desired
         if not flag_only:
