@@ -38,7 +38,7 @@ class RefPixStep(Step):
                 # Flag bad reference pixels first
                 datamodel = input_model.copy()
                 irs2_subtract_reference.flag_bad_refpix(
-                    datamodel, n_sigma=self.ovr_corr_mitigation_ftr)
+                    datamodel, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
 
                 # Do the normal refpix correction before IRS2, without side pixel handling
                 if self.use_side_ref_pixels:
@@ -47,6 +47,9 @@ class RefPixStep(Step):
                 reference_pixels.correct_model(
                     datamodel, self.odd_even_columns, self.use_side_ref_pixels,
                     self.side_smoothing_length, self.side_gain, self.odd_even_rows)
+
+                # Now that values are updated, replace bad reference pixels
+                irs2_subtract_reference.flag_bad_refpix(datamodel, replace_only=True)
 
                 # Get the necessary refpix reference file for IRS2 correction
                 self.irs2_name = self.get_reference_file(datamodel, 'refpix')
