@@ -27,6 +27,10 @@ class AmiAnalyzeStep(Step):
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
+    def save_model(self, model, *args, **kwargs):
+        kwargs['suffix'] = ['ami-oi', 'amimulti-oi', 'amilg'].kwargs.pop('idx')
+        return super().save_model(model, *args, **kwargs)
+
     def process(self, input):
         """
         Performs analysis of an AMI mode exposure by applying the LG algorithm.
