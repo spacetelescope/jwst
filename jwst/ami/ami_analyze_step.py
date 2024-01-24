@@ -28,8 +28,10 @@ class AmiAnalyzeStep(Step):
     """
 
     def save_model(self, model, *args, **kwargs):
-        kwargs['suffix'] = ['ami-oi', 'amimulti-oi', 'amilg'].kwargs.pop('idx')
-        return super().save_model(model, *args, **kwargs)
+        # Override save_model to change suffix based on list of results
+        if 'idx' in kwargs and kwargs.get('suffix', None) is None:
+            kwargs['suffix'] = ['ami-oi', 'amimulti-oi', 'amilg'][kwargs.pop('idx')]
+        return Step.save_model(self, model, *args, **kwargs)
 
     def process(self, input):
         """

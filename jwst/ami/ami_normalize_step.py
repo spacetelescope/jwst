@@ -14,7 +14,9 @@ class AmiNormalizeStep(Step):
 
     class_alias = "ami_normalize"
 
+
     spec = """
+    suffix = string(default='aminorm-oi')
     """
 
     def process(self, target, reference):
