@@ -1,0 +1,77 @@
+on:
+  workflow_call:
+    outputs:
+      path:
+        value: ${{ jobs.path.outputs.path }}
+      webbpsf_path:
+        value: ${{ jobs.webbpsf_path.outputs.path }}
+      webbpsf_hash:
+        value: ${{ jobs.webbpsf_hash.outputs.hash }}
+  workflow_dispatch:
+  schedule:
+    - cron: "42 4 * * 3"
+
+env:
+  DATA_PATH: /tmp/data
+
+jobs:
+  path:
+    runs-on: ubuntu-latest
+    outputs:
+      path: ${{ steps.path.outputs.path }}
+    steps:
+      - id: path
+        run: echo "path=${{ env.DATA_PATH }}" >> $GITHUB_OUTPUT
+  webbpsf_path:
+    needs: [ path ]
+    runs-on: ubuntu-latest
+    outputs:
+      path: ${{ steps.path.outputs.path }}
+    steps:
+      - id: path
+        run: echo "path=${{ needs.path.outputs.path }}/webbpsf-data" >> $GITHUB_OUTPUT
+  webbpsf_data:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'update webbpsf data')))
+    needs: [ path, webbpsf_path ]
+    name: download and cache WebbPSF data
+    runs-on: ubuntu-latest
+    env:
+      WEBBPSF_DATA_URL: https://stsci.box.com/shared/static/qxpiaxsjwo15ml6m4pkhtk36c9jgj70k.gz
+    steps:
+      - run: mkdir -p tmp/data
+      - run: wget ${{ env.WEBBPSF_DATA_URL }} -O tmp/webbpsf-data.tar.gz
+      - id: data_hash
+        run: echo "hash=$( shasum tmp/webbpsf-data.tar.gz | cut -d ' ' -f 1 )" >> $GITHUB_OUTPUT
+      - id: cache_check
+        uses: actions/cache@v3
+        with:
+          path: ${{ needs.path.outputs.path }}
+          key: webbpsf-${{ steps.data_hash.outputs.hash }}
+      - if: ${{ steps.cache_check.outputs.cache-hit != 'true' }}
+        run: mkdir -p ${{ needs.path.outputs.path }}
+      - if: ${{ steps.cache_check.outputs.cache-hit != 'true' }}
+        run: tar -xzvf tmp/webbpsf-data.tar.gz -C ${{ needs.path.outputs.path }}
+  webbpsf_hash:
+    needs: [ webbpsf_path, webbpsf_data ]
+    # run data job if webbpsf-data succeeds or is skipped. This allows
+    # this data job to always fetch the crds context even if the webbpsf data fetching
+    # was skipped (and an existing cache will be used for the webbpsf data).
+    if: always() && (needs.webbpsf_data.result == 'success' || needs.webbpsf_data.result == 'skipped')
+    name: retrieve latest data cache key
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      hash: ${{ steps.hash.outputs.hash }}
+    steps:
+      - id: hash
+        run: |
+          # use actions/gh-actions-cache to allow filtering by key
+          gh extension install actions/gh-actions-cache
+
+          RECENT=$(gh actions-cache list -R spacetelescope/jwst --key webbpsf- --sort created-at | cut -f 1 | head -n 1)
+          echo "RECENT=$RECENT"
+          HASH=$(echo $RECENT | cut -d '-' -f 2)
+          echo "HASH=$HASH"
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          if [ "$HASH" == '' ]; then exit 1; fi
