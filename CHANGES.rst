@@ -144,6 +144,10 @@ refpix
 - Correct for mean reference pixel offsets by amplifier and detector column
   in NIRSpec IRS2 mode. [#8143]
 
+- Add option to correct for mean reference pixel offsets by amplifier and detector
+  column in NIRSpec IRS2 mode. [#8143]
+
+
 resample
 --------
 
