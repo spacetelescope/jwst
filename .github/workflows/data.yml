@@ -32,6 +32,7 @@ jobs:
         run: echo "path=${{ needs.path.outputs.path }}/webbpsf-data" >> $GITHUB_OUTPUT
   webbpsf_data:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'update webbpsf data')))
+    #if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'update webbpsf data'))
     needs: [ path, webbpsf_path ]
     name: download and cache WebbPSF data
     runs-on: ubuntu-latest
