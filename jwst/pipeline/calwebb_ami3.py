@@ -6,7 +6,6 @@ from ..stpipe import Pipeline
 
 # step imports
 from ..ami import ami_analyze_step
-# from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 
 __all__ = ['Ami3Pipeline']
@@ -112,7 +111,6 @@ class Ami3Pipeline(Pipeline):
 
                 # Perform blending of metadata for all inputs to this output file
                 # self.log.info('Blending metadata for PSF normalized target')
-                # blendmeta.blendmodels(result, inputs=[targ, psf])
                 self.save_model(result, suffix='aminorm-oi')
                 result.close()
             del psf_lg
