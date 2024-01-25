@@ -1,14 +1,16 @@
-1.13.4 (unreleased)
+1.13.5 (unreleased)
 ===================
 
--
+- 
+
+1.13.4 (2024-01-25)
+===================
 
 emicorr
 -------
 
 - Set skip=True by default in the code, to be turned on later by a parameter
   reference file. [#8171]
-
 
 1.13.3 (01-05-2024)
 ===================
