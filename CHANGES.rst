@@ -56,8 +56,8 @@ refpix
 ------
 
 - Modify NIRSpec IRS2 bad reference pixel flagging to consider values from
-  all groups in all integrations and robustly replace values from their
-  nearest neighbors. [#8197]
+  all groups in each integration and robustly replace bad values from their
+  nearest neighbors. [#8197, #8214]
 
 - Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
   to avoid failures for moderate-brightness sources due to extremely low
