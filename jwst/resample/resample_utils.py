@@ -199,9 +199,6 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
     elif weight_type == 'exptime':
         exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
-    elif weight_type == 'tmeasure':
-        exptime = model.meta.exposure.measurement_time
-        result = exptime * dqmask
     else:
         result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
 

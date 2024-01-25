@@ -318,11 +318,6 @@ def test_weight_type(nircam_rate, _jail):
     assert_allclose(result2.data[100:105, 100:105], 6.667, rtol=1e-2)
     assert_allclose(result2.wht[100:105, 100:105], 450.9, rtol=1e-1)
 
-    result3 = ResampleStep.call(c, weight_type="tmeasure", blendheaders=False)
-
-    assert_allclose(result3.data[100:105, 100:105], 6.667, rtol=1e-2)
-    assert_allclose(result2.wht[100:105, 100:105], 407., rtol=1e-1)
-
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):
     im = AssignWcsStep.call(nircam_rate, sip_degree=2)
