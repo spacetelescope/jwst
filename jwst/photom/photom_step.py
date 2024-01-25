@@ -41,6 +41,14 @@ class PhotomStep(Step):
                              "CubeModel, ImageModel, IFUImageModel, "
                              "MultiSlitModel, or MultiSpecModel.")
 
+        # check if extract_1d_step told photometry to be skipped
+        # e.g. for NIRISS SOSS data in FULL subarray
+        if input_model.meta.cal_step.photom == 'SKIPPED':
+            self.log.error('PhotomStep was set to SKIPPED by'
+                           ' a previous step. Photom will be skipped.')
+            result = input_model.copy()
+            return result
+
         # Setup reference files and whether previous correction information
         # should be used.
         if self.use_correction_pars and self.correction_pars:
