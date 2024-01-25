@@ -26,6 +26,8 @@ documentation
 - Updated installation instructions to include a warning that Python<=3.11
   must be used. [#8200]
 
+- Change docs theme to ``sphinx-rtd-theme`` [#8224]
+
 emicorr
 -------
 
