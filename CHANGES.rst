@@ -8,6 +8,11 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+cube_build
+----------
+
+- Add a warning message to log if no valid data is found on the detector. [#8220]
+
 documentation
 -------------
 
