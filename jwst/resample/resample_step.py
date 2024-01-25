@@ -46,7 +46,7 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0) # change back to None when drizpar reference files are updated
         kernel = string(default='square') # change back to None when drizpar reference files are updated
         fillval = string(default='INDEF' ) # change back to None when drizpar reference files are updated
-        weight_type = option('ivm', 'exptime', 'tmeasure', None, default='ivm')  # change back to None when drizpar ref update
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # change back to None when drizpar ref update
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
         crpix = float_list(min=2, max=2, default=None)
         crval = float_list(min=2, max=2, default=None)
@@ -199,7 +199,6 @@ class ResampleStep(Step):
             )
 
         return wcs
-
 
     def get_drizpars(self, ref_filename, input_models):
         """

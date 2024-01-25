@@ -477,16 +477,22 @@ class ResampleData:
         exposure_times = {'start': [], 'end': []}
         duration = 0.0
         total_measurement_time = 0.0
+        measurement_time_failures = []
         for exposure in self.input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
-            total_measurement_time += exposure[0].meta.exposure.measurement_time
+            if exposure[0].meta.exposure.measurement_time is None:
+                measurement_time_failures.append(1)
+            else:
+                total_measurement_time += exposure[0].meta.exposure.measurement_time
+                measurement_time_failures.append(0)
             exposure_times['start'].append(exposure[0].meta.exposure.start_time)
             exposure_times['end'].append(exposure[0].meta.exposure.end_time)
             duration += exposure[0].meta.exposure.duration
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
-        output_model.meta.exposure.measurement_time = total_measurement_time
+        if not any(measurement_time_failures):
+            output_model.meta.exposure.measurement_time = total_measurement_time
         output_model.meta.exposure.start_time = min(exposure_times['start'])
         output_model.meta.exposure.end_time = max(exposure_times['end'])
         output_model.meta.resample.product_exposure_time = total_exposure_time
