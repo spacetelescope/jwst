@@ -125,7 +125,6 @@ docs = [
     "sphinx-astropy",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "stsci-rtd-theme",
     "tomli; python_version <\"3.11\"",
 ]
 sdp = [
