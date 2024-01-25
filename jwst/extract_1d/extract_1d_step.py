@@ -419,8 +419,8 @@ class Extract1dStep(Step):
                     subarray = 'SUBSTRIP96'
                 else:
                     self.log.error('The SOSS extraction is implemented for the SUBSTRIP256'
-                                    'and SUBSTRIP96 subarrays only. Subarray is currently '
-                                    f'{input_model.meta.subarray.name}.')
+                                   'and SUBSTRIP96 subarrays only. Subarray is currently '
+                                   f'{input_model.meta.subarray.name}.')
                     self.log.error('Extract1dStep will be skipped.')
                     self.log.error('PhotomStep will be skipped: spec not created in extract_1d')
                     input_model.meta.cal_step.extract_1d = 'SKIPPED'
