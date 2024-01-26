@@ -480,7 +480,7 @@ class ResampleData:
         measurement_time_failures = []
         for exposure in self.input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
-            if exposure[0].meta.exposure.measurement_time is None:
+            if not resample_utils._check_for_tmeasure(exposure[0]):
                 measurement_time_failures.append(1)
             else:
                 total_measurement_time += exposure[0].meta.exposure.measurement_time
