@@ -111,6 +111,11 @@ outlier_detection
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
 
+resample
+--------
+- Updated exposure time weighting to use the measurement time 
+  when available [#8212]
+
 photom
 ------
 
