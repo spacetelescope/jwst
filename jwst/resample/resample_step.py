@@ -2,7 +2,6 @@ import logging
 import re
 from copy import deepcopy
 
-import numpy as np
 import asdf
 
 from stdatamodels.jwst import datamodels
