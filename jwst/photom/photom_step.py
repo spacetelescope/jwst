@@ -41,14 +41,6 @@ class PhotomStep(Step):
                              "CubeModel, ImageModel, IFUImageModel, "
                              "MultiSlitModel, or MultiSpecModel.")
 
-        # check if extract_1d_step told photometry to be skipped
-        # e.g. for NIRISS SOSS data in FULL subarray
-        if input_model.meta.cal_step.photom == 'SKIPPED':
-            self.log.error('PhotomStep was set to SKIPPED by'
-                           ' a previous step. Photom will be skipped.')
-            result = input_model.copy()
-            return result
-
         # Setup reference files and whether previous correction information
         # should be used.
         if self.use_correction_pars and self.correction_pars:
@@ -72,13 +64,22 @@ class PhotomStep(Step):
             result.meta.cal_step.photom = 'SKIPPED'
             return result
 
-        # Do the correction
-        phot = photom.DataSet(input_model, self.inverse, self.source_type,
-                              self.mrs_time_correction, correction_pars)
-        result = phot.apply_photom(phot_filename, area_filename)
-        result.meta.cal_step.photom = 'COMPLETE'
+        # check if extract_1d_step told photometry to be skipped
+        # e.g. for NIRISS SOSS data in FULL subarray
+        try:
+            # Do the correction
+            phot = photom.DataSet(input_model, self.inverse, self.source_type,
+                                  self.mrs_time_correction, correction_pars)
+            result = phot.apply_photom(phot_filename, area_filename)
+            result.meta.cal_step.photom = 'COMPLETE'
+            self.correction_pars = phot.correction_pars
+            self.correction_pars['refs'] = {'photom': phot_filename, 'area': area_filename}
 
-        self.correction_pars = phot.correction_pars
-        self.correction_pars['refs'] = {'photom': phot_filename, 'area': area_filename}
-
+        except photom.DataModelTypeError:
+            self.log.error(f'Unexpected data model type {model_type} for '
+                           f'{input_model.meta.instrument.name.upper()}. '
+                           'Photom will be skipped.')
+            result = input_model.copy()
+            result.meta.cal_step.photom = 'SKIPPED'
+            return result
         return result

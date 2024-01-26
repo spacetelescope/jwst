@@ -14,7 +14,8 @@ def test_expected_skip_niriss_soss_full():
     infile = TEST_FILES['SOSS/FULL']
     with dm.open(infile) as model:
         result = Extract1dStep().process(model)
-        assert result.meta.cal_step.photom == 'SKIPPED'
         result2 = PhotomStep().process(result)
+        assert result2.meta.cal_step.photom == 'SKIPPED'
+        assert result2.meta.cal_step.extract_1d == 'SKIPPED'
 
     assert result2.data == model.data

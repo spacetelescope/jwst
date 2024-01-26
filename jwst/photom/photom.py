@@ -33,6 +33,14 @@ class MatchFitsTableRowError(Exception):
         super().__init__(message)
 
 
+class DataModelTypeError(Exception):
+
+    def __init__(self, message):
+        if message is None:
+            message = "Unexpected DataModel type."
+        super().__init__(message)
+
+
 def find_row(fits_table, match_fields):
     """
     Find a row in a FITS table matching fields.
@@ -412,6 +420,9 @@ class DataSet():
                 if row is None:
                     continue
                 self.photom_io(ftab.phot_table[row])
+
+        elif isinstance(self.input, datamodels.CubeModel):
+            raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
 
         elif self.exptype in ['NIS_SOSS']:
             for spec in self.input.spec:

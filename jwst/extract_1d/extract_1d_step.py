@@ -422,9 +422,7 @@ class Extract1dStep(Step):
                                    'and SUBSTRIP96 subarrays only. Subarray is currently '
                                    f'{input_model.meta.subarray.name}.')
                     self.log.error('Extract1dStep will be skipped.')
-                    self.log.error('PhotomStep will be skipped: spec not created in extract_1d')
                     input_model.meta.cal_step.extract_1d = 'SKIPPED'
-                    input_model.meta.cal_step.photom = 'SKIPPED'
                     return input_model
 
                 # Load reference files.
