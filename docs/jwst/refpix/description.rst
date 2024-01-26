@@ -198,7 +198,7 @@ will be set to zero if they are flagged as bad in the DQ extension.
 At this point the algorithm looks for intermittently bad (or suspicious)
 reference pixels. This is done by calculating the means and standard
 deviations per reference pixel column, as well as the absolute value of the
-difference between readout pairs, across all groups and integrations.
+difference between readout pairs, across all groups within each integration.
 The robust mean and standard deviation of each of these arrays is then
 computed. Values greater than the robust mean plus the standard
 deviation, times a factor to avoid overcorrection, are flagged as bad

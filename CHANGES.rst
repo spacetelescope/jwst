@@ -8,6 +8,11 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+cube_build
+----------
+
+- Add a warning message to log if no valid data is found on the detector. [#8220]
+
 documentation
 -------------
 
@@ -63,8 +68,8 @@ refpix
 ------
 
 - Modify NIRSpec IRS2 bad reference pixel flagging to consider values from
-  all groups in all integrations and robustly replace values from their
-  nearest neighbors. [#8197]
+  all groups in each integration and robustly replace bad values from their
+  nearest neighbors. [#8197, #8214]
 
 - Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
   to avoid failures for moderate-brightness sources due to extremely low
@@ -78,6 +83,10 @@ tweakreg
 - Added option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
 
+general
+-------
+
+- Update minimum required photutils version to 1.5.0 [#8211]
 
 1.13.3 (01-05-2024)
 ===================
