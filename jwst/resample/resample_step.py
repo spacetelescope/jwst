@@ -4,8 +4,6 @@ from copy import deepcopy
 
 import numpy as np
 import asdf
-from stpipe.extern.configobj.validate import Validator
-from stpipe.extern.configobj.configobj import ConfigObj
 
 from stdatamodels.jwst import datamodels
 
@@ -89,7 +87,54 @@ class ResampleStep(Step):
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
-        #  Get drizzle parameters reference file, if there is one
+        # update step instance with reference data (if needed) and compute
+        # kwargs to pass to resample
+        kwargs = self._compute_resample_kwargs(
+            num_groups=len(input_models.group_names),
+            filtname=input_models[0].meta.instrument.filter,
+        )
+
+        for k in kwargs:
+            log.info('  using: %s=%s', k, repr(kwargs[k]))
+
+        # Issue a warning about the use of exptime weighting
+        if self.weight_type == 'exptime':
+            self.log.warning("Use of EXPTIME weighting will result in incorrect")
+            self.log.warning("propagated errors in the resampled product")
+
+        # Call the resampling routine
+        resamp = resample.ResampleData(input_models, output=output, **kwargs)
+        result = resamp.do_drizzle()
+
+        for model in result:
+            model.meta.cal_step.resample = 'COMPLETE'
+            self.update_fits_wcs(model)
+            util.update_s_region_imaging(model)
+            model.meta.asn.pool_name = input_models.asn_pool_name
+            model.meta.asn.table_name = input_models.asn_table_name
+
+            # if pixel_scale exists, it will override pixel_scale_ratio.
+            # calculate the actual value of pixel_scale_ratio based on pixel_scale
+            # because source_catalog uses this value from the header.
+            if self.pixel_scale is None:
+                model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+            else:
+                model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
+            model.meta.resample.pixfrac = kwargs['pixfrac']
+
+        if len(result) == 1:
+            result = result[0]
+
+        input_models.close()
+        return result
+
+    def _compute_resample_kwargs(self, num_groups, filtname):
+        """
+        Calling this will modify the instance so that it uses values from
+        the reference file (unless parameters were set by the user). After
+        modifying the instance, the "kwargs" to pass to resample will be
+        computed
+        """
         # parameters may come from commandline, reference file, default, etc
         # and end up as set attributes (ie self.pixfrac). This mapping occurs
         # when the step instance is created (before we know how many input files
@@ -117,8 +162,6 @@ class ResampleStep(Step):
             }]
 
         # read from ref_pars_table
-        num_groups = len(input_models.group_names)
-        filtname = input_models[0].meta.instrument.filter
         match = None
         # iterate through rows in ascending 'numimages' order so a later row
         # will always have >= numimages
@@ -173,82 +216,6 @@ class ResampleStep(Step):
             'kernel': str(self.kernel),  # TODO why str?
         }
 
-
-        # # from _set_spec_defaults, which also loads all defaults from configspec
-        # # commented out items are updated below
-        # kwargs = {
-        #     'good_bits': GOOD_BITS,
-        #     #'pscale_ratio': self.pixel_scale_ratio,  # FIXME this is overwritten
-        #     'wht_type': self.weight_type,
-        #     # from defaults
-        #     'pixfrac': self.pixfrac,
-        #     'kernel': self.kernel,
-        #     'fillval': self.fillval,
-        #     #'output_shape': self.output_shape,
-        #     #'crpix': self.crpix,
-        #     #'crval': self.crval,
-        #     #'rotation': self.rotation,
-        #     'pixel_scale_ratio': self.pixel_scale_ratio,  # FIXME differs with below, not used
-        #     #'pixel_scale': self.pixel_scale,
-        #     #'output_wcs': self.output_wcs,
-        #     'single': self.single,
-        #     'blendheaders': self.blendheaders,
-        #     #'allowed_memory': self.allowed_memory,
-        #     #'in_memory': self.in_memory,
-        # }
-
-        # # from get_drizpars
-        # # commented out items are updated below
-        # kwargs = {
-        #     'good_bits': GOOD_BITS,
-        #     'pixfrac': self.pixfrac,
-        #     'kernel': self.kernel,
-        #     'fillval': self.fillval,
-        #     'wht_type': self.weight_type,
-        #     #'pscale_ratio': self.pixel_scale_ratio,  # FIXME this is overwritten
-        #     'single': self.single,
-        #     'blendheaders': self.blendheaders,
-        # }
-
-        # # updated below...
-        # kwargs.update({
-        #     'allowed_memory': self.allowed_memory,
-        #     'output_shape': pass,  # TODO see below for update
-        #     'output_wcs': pass,  # TODO see below for update
-        #     'crpix': self.crpix,  # TODO see below for update
-        #     'crval': self.crval,  # TODO see below for update
-        #     'rotation': self.rotation,
-        #     'pscale': self.pixel_scale,
-        #     'pscale_ratio': self.pixel_scale_ratio,
-        #     'in_memory': self.in_memory,
-        #     'wht_type': self.weight_type,
-        # })
-
-        # log 
-        for k in kwargs:
-            log.info('  using: %s=%s', k, repr(kwargs[k]))
-
-        # so self.pixfrac if we default it to 1.0 we can't tell if the user specified
-        # 1.0 or if the default was used. If the ref file has an override we won't
-        # know which value to use. As the reference file contains values that
-        # can't be mapped directly to 
-        # if 'drizpars' in self.reference_file_types:
-        #     ref_filename = self.get_reference_file(input_models[0], 'drizpars')
-        # else:  # no drizpars reference file found
-        #     ref_filename = 'N/A'
-
-        # if ref_filename == 'N/A':
-        #     self.log.info('No drizpars reference file found.')
-        #     kwargs = self._set_spec_defaults()
-        # else:
-        #     self.log.info('Using drizpars reference file: {}'.format(ref_filename))
-        #     kwargs = self.get_drizpars(ref_filename, input_models)
-
-        # Issue a warning about the use of exptime weighting
-        if self.weight_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
         # Custom output WCS parameters.
         kwargs['output_shape'] = self._check_list_pars(
             self.output_shape,
@@ -260,31 +227,8 @@ class ResampleStep(Step):
             kwargs['output_shape']
         )
 
-        # Call the resampling routine
-        resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        result = resamp.do_drizzle()
+        return kwargs
 
-        for model in result:
-            model.meta.cal_step.resample = 'COMPLETE'
-            self.update_fits_wcs(model)
-            util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.asn_pool_name
-            model.meta.asn.table_name = input_models.asn_table_name
-
-            # if pixel_scale exists, it will override pixel_scale_ratio.
-            # calculate the actual value of pixel_scale_ratio based on pixel_scale
-            # because source_catalog uses this value from the header.
-            if self.pixel_scale is None:
-                model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-            else:
-                model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-            model.meta.resample.pixfrac = kwargs['pixfrac']
-
-        if len(result) == 1:
-            result = result[0]
-
-        input_models.close()
-        return result
 
     @staticmethod
     def _check_list_pars(vals, name, min_vals=None):
@@ -334,132 +278,6 @@ class ResampleStep(Step):
 
         return wcs
 
-
-    def get_drizpars(self, ref_filename, input_models):
-        """
-        Extract drizzle parameters from reference file.
-
-        This method extracts parameters from the drizpars reference file and
-        uses those to set defaults on the following ResampleStep configuration
-        parameters:
-
-        pixfrac = float(default=None)
-        kernel = string(default=None)
-        fillval = string(default=None)
-        weight_type = option('ivm', 'exptime', None, default=None)
-
-        Once the defaults are set from the reference file, if the user has
-        used a resample.cfg file or run ResampleStep using command line args,
-        then these will overwrite the defaults pulled from the reference file.
-        """
-        with datamodels.DrizParsModel(ref_filename) as drpt:
-            drizpars_table = drpt.data
-
-        num_groups = len(input_models.group_names)
-        filtname = input_models[0].meta.instrument.filter
-
-        row = None
-        filter_match = False
-        # look for row that applies to this set of input data models
-        for n, filt, num in zip(
-            range(0, len(drizpars_table)),
-            drizpars_table['filter'],
-            drizpars_table['numimages']
-        ):
-            # only remember this row if no exact match has already been made for
-            # the filter. This allows the wild-card row to be anywhere in the
-            # table; since it may be placed at beginning or end of table.
-
-            if str(filt) == "ANY" and not filter_match and num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            self.log.error("No row found in %s matching input data.", ref_filename)
-            raise ValueError
-
-        # Define the keys to pull from drizpars reffile table.
-        # All values should be None unless the user set them on the command
-        # line or in the call to the step
-
-        drizpars = dict(
-            pixfrac=self.pixfrac,
-            kernel=self.kernel,
-            fillval=self.fillval,
-            weight_type=self.weight_type
-            # pscale_ratio=self.pixel_scale_ratio, # I think this can be removed JEM (??)
-        )
-
-        # For parameters that are set in drizpars table but not set by the
-        # user, use these.  Otherwise, use values set by user.
-        reffile_drizpars = {k: v for k, v in drizpars.items() if v is None}
-        user_drizpars = {k: v for k, v in drizpars.items() if v is not None}
-
-        # read in values from that row for each parameter
-        for k in reffile_drizpars:
-            if k in drizpars_table.names:
-                reffile_drizpars[k] = drizpars_table[k][row]
-
-        # Convert the strings in the FITS binary table from np.bytes_ to str
-        for k, v in reffile_drizpars.items():
-            if isinstance(v, np.bytes_):
-                reffile_drizpars[k] = v.decode('UTF-8')
-
-        all_drizpars = {**reffile_drizpars, **user_drizpars}
-
-        kwargs = dict(
-            good_bits=GOOD_BITS,
-            single=self.single,
-            blendheaders=self.blendheaders
-        )
-
-        kwargs.update(all_drizpars)
-
-        for k, v in kwargs.items():
-            self.log.debug('   {}={}'.format(k, v))
-
-        return kwargs
-
-    def _set_spec_defaults(self):
-        """NIRSpec currently has no default drizpars reference file, so default
-        drizzle parameters are not set properly.  This method sets them.
-
-        Remove this class method when a drizpars reffile is delivered.
-        """
-        configspec = self.load_spec_file()
-        config = ConfigObj(configspec=configspec)
-        if config.validate(Validator()):
-            kwargs = config.dict()
-
-        if self.pixfrac is None:
-            self.pixfrac = 1.0
-        if self.kernel is None:
-            self.kernel = 'square'
-        if self.fillval is None:
-            self.fillval = 'INDEF'
-        # Force definition of good bits
-        kwargs['good_bits'] = GOOD_BITS
-        kwargs['pixfrac'] = self.pixfrac
-        kwargs['kernel'] = str(self.kernel)
-        kwargs['fillval'] = str(self.fillval)
-        #  self.weight_type has a default value of None
-        # The other instruments read this parameter from a reference file
-        if self.weight_type is None:
-            self.weight_type = 'ivm'
-
-        kwargs['weight_type'] = str(self.weight_type)
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs.pop('pixel_scale_ratio')
-
-        for k, v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
-                log.info('  using: %s=%s', k, repr(v))
-
-        return kwargs
 
     def update_fits_wcs(self, model):
         """
