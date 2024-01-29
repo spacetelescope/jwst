@@ -41,11 +41,10 @@ def create_gwcs():
     prj = astmodels.Pix2Sky_TAN()
     fiducial = np.array(crval)
 
-    transform = []
     pc = np.array([[-1., 0.], [0., 1.]])
-    transform.append(astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix'))
-    transform.append(astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2'))
-    transform = functools.reduce(lambda x, y: x | y, transform)
+    pc_matrix = astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix')
+    scale = astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2')
+    transform = pc_matrix | scale
 
     out_frame = cf.CelestialFrame(name='world', axes_names=('lon', 'lat'), reference_frame=coord.ICRS())
     input_frame = cf.Frame2D(name="detector")
