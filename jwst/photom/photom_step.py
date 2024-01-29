@@ -64,8 +64,6 @@ class PhotomStep(Step):
             result.meta.cal_step.photom = 'SKIPPED'
             return result
 
-        # check if extract_1d_step told photometry to be skipped
-        # e.g. for NIRISS SOSS data in FULL subarray
         try:
             # Do the correction
             phot = photom.DataSet(input_model, self.inverse, self.source_type,
@@ -76,6 +74,7 @@ class PhotomStep(Step):
             self.correction_pars['refs'] = {'photom': phot_filename, 'area': area_filename}
 
         except photom.DataModelTypeError:
+            # should trip e.g. for NIRISS SOSS data in FULL subarray
             self.log.error(f'Unexpected data model type {model_type} for '
                            f'{input_model.meta.instrument.name.upper()}. '
                            'Photom will be skipped.')
