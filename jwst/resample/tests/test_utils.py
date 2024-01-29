@@ -5,7 +5,6 @@ from astropy.modeling import models as astmodels
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import wcs_from_fiducial
 from numpy.testing import assert_allclose, assert_array_equal
-import functools
 import numpy as np
 import pytest
 
@@ -72,18 +71,16 @@ def wcs_gwcs():
 
 
 @pytest.fixture(scope='module')
-def wcs_fitswcs():
-    gwcs_wcs = create_gwcs()
-    fits_wcs = fitswcs.WCS(gwcs_wcs.to_fits_sip())
+def wcs_fitswcs(wcs_gwcs):
+    fits_wcs = fitswcs.WCS(wcs_gwcs.to_fits_sip())
     return fits_wcs
 
 
 @pytest.fixture(scope='module')
-def wcs_slicedwcs():
-    gwcs_wcs = create_gwcs()
+def wcs_slicedwcs(wcs_gwcs):
     xmin, xmax = 100, 500
     slices = (slice(xmin, xmax), slice(xmin, xmax))
-    sliced_wcs = fitswcs.wcsapi.SlicedLowLevelWCS(gwcs_wcs, slices)
+    sliced_wcs = fitswcs.wcsapi.SlicedLowLevelWCS(wcs_gwcs, slices)
     return sliced_wcs
 
 
