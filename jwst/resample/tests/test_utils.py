@@ -178,22 +178,22 @@ def test_decode_context():
 
 
 @pytest.mark.parametrize(
-    "wcs1, wcs2",
+    "wcs1, wcs2, offset",
     [
-        ("wcs_gwcs", "wcs_fitswcs"),
-        ("wcs_fitswcs", "wcs_gwcs"),
-        ("wcs_gwcs", "wcs_slicedwcs"),
-        ("wcs_slicedwcs", "wcs_gwcs"),
-        ("wcs_fitswcs", "wcs_slicedwcs"),
-        ("wcs_slicedwcs", "wcs_fitswcs"),
+        ("wcs_gwcs", "wcs_fitswcs", 0),
+        ("wcs_fitswcs", "wcs_gwcs", 0),
+        ("wcs_gwcs", "wcs_slicedwcs", 100),
+        ("wcs_slicedwcs", "wcs_gwcs", -100),
+        ("wcs_fitswcs", "wcs_slicedwcs", 100),
+        ("wcs_slicedwcs", "wcs_fitswcs", -100),
     ]
 )
-def test_reproject(wcs1, wcs2, request):
+def test_reproject(wcs1, wcs2, offset, request):
     wcs1 = request.getfixturevalue(wcs1)
     wcs2 = request.getfixturevalue(wcs2)
     x = np.arange(150, 200)
     
     f = reproject(wcs1, wcs2)
     res = f(x, x)
-    assert_allclose(x, res[0], atol=0.1, rtol=0)
-    assert_allclose(x, res[1], atol=0.1, rtol=0)
+    assert_allclose(x, res[0] + offset, atol=0.1, rtol=0)
+    assert_allclose(x, res[1] + offset, atol=0.1, rtol=0)
