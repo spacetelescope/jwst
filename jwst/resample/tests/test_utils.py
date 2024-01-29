@@ -32,7 +32,8 @@ JWST_NAMES = 'DO_NOT_USE, JUMP_DET'
 JWST_NAMES_INV = '~' + JWST_NAMES
 
 
-def create_gwcs():
+@pytest.fixture(scope='module')
+def wcs_gwcs():
     crval = (150.0, 2.0)
     crpix = (500.0, 500.0)
     shape = (1000, 1000)
@@ -68,6 +69,22 @@ def create_gwcs():
     wnew.pixel_shape = shape[::-1]
     wnew.array_shape = shape
     return wnew
+
+
+@pytest.fixture(scope='module')
+def wcs_fitswcs():
+    gwcs_wcs = create_gwcs()
+    fits_wcs = fitswcs.WCS(gwcs_wcs.to_fits_sip())
+    return fits_wcs
+
+
+@pytest.fixture(scope='module')
+def wcs_slicedwcs():
+    gwcs_wcs = create_gwcs()
+    xmin, xmax = 100, 500
+    slices = (slice(xmin, xmax), slice(xmin, xmax))
+    sliced_wcs = fitswcs.wcsapi.SlicedLowLevelWCS(gwcs_wcs, slices)
+    return sliced_wcs
 
 
 @pytest.mark.parametrize(
@@ -163,41 +180,21 @@ def test_decode_context():
     assert sorted(idx2) == [9, 20, 29, 36, 47, 49, 64, 69, 70, 79]
 
 
-def test_reproject():
-    gwcs_wcs = create_gwcs()
-    astropy_wcs = fitswcs.WCS(gwcs_wcs.to_fits_sip())
-    xmin, xmax = 100, 500
-    slices = (slice(xmin, xmax), slice(xmin, xmax))
-    sliced_wcs = fitswcs.wcsapi.SlicedLowLevelWCS(gwcs_wcs, slices)
-
+@pytest.mark.parametrize(
+    "wcs1, wcs2",
+    [
+        (wcs_gwcs, wcs_fitswcs),
+        (wcs_fitswcs, wcs_gwcs),
+        (wcs_gwcs, wcs_slicedwcs),
+        (wcs_slicedwcs, wcs_gwcs),
+        (wcs_fitswcs, wcs_slicedwcs),
+        (wcs_slicedwcs, wcs_fitswcs),
+    ]
+)
+def test_reproject(wcs1, wcs2):
     x = np.arange(150, 200)
     
-    f = reproject(gwcs_wcs, astropy_wcs)
+    f = reproject(wcs1, wcs2)
     res = f(x, x)
     assert_allclose(x, res[0], atol=0.1, rtol=0)
     assert_allclose(x, res[1], atol=0.1, rtol=0)
-
-    f = reproject(astropy_wcs, gwcs_wcs)
-    res = f(x, x)
-    assert_allclose(x, res[0], atol=0.1, rtol=0)
-    assert_allclose(x, res[1], atol=0.1, rtol=0)
-
-    f = reproject(gwcs_wcs, sliced_wcs)
-    res = f(x, x)
-    assert_allclose(x, res[0] + xmin, atol=0.1, rtol=0)
-    assert_allclose(x, res[1] + xmin, atol=0.1, rtol=0)
-
-    f = reproject(sliced_wcs, gwcs_wcs)
-    res = f(x, x)
-    assert_allclose(x, res[0] - xmin, atol=0.1, rtol=0)
-    assert_allclose(x, res[1] - xmin, atol=0.1, rtol=0)
-
-    f = reproject(astropy_wcs, sliced_wcs)
-    res = f(x, x)
-    assert_allclose(x, res[0] + xmin, atol=0.1, rtol=0)
-    assert_allclose(x, res[1] + xmin, atol=0.1, rtol=0)
-
-    f = reproject(sliced_wcs, astropy_wcs)
-    res = f(x, x)
-    assert_allclose(x, res[0] - xmin, atol=0.1, rtol=0)
-    assert_allclose(x, res[1] - xmin, atol=0.1, rtol=0)
