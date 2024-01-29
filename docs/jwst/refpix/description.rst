@@ -197,15 +197,20 @@ will be set to zero if they are flagged as bad in the DQ extension.
 
 At this point the algorithm looks for intermittently bad (or suspicious)
 reference pixels. This is done by calculating the means and standard
-deviations per reference pixel column, as well as the difference between
-even and odd pairs; then calculates the mean and standard deviation of
-each of these arrays (the mean of the absolute values for the
-differences array), and flag all values greater than the corresponding
-mean plus the standard deviation times a factor to avoid overcorrection.
-All suspicious pixels will be replaced by their nearest good reference
-pixel, or set to zero if there were no good reference pixels left
-(although this is unlikely to happen as there are typically only a few
-pixels flagged as suspicious).
+deviations per reference pixel column, as well as the absolute value of the
+difference between readout pairs, across all groups within each integration.
+The robust mean and standard deviation of each of these arrays is then
+computed. Values greater than the robust mean plus the standard
+deviation, times a factor to avoid overcorrection, are flagged as bad
+pixels.  Readout pairs are always flagged together, and are flagged across
+all groups and integrations. Bad values are replaced by values from the
+nearest reference group within the same amplifier, respecting parity
+(even/oddness).  The replacement value is the average of upper and lower
+values if both are good, or directly using the upper or lower values if only
+one is good. If there are no nearest good values available, but there is a
+good adjacent neighbor that does not match parity, that value is used.  If
+there are no good replacement values, the bad pixel is set to 0.0 to be
+interpolated over in the IRS2 correction to follow.
 
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary
