@@ -247,7 +247,6 @@ class DataSet():
                 if row is None:
                     continue
                 self.photom_io(ftab.phot_table[row])
-
         # Bright object fixed-slit exposures use a SlitModel
         elif self.exptype == 'NRS_BRIGHTOBJ':
 
@@ -1166,11 +1165,9 @@ class DataSet():
         if area_fname is not None and area_fname != "N/A":
             pix_area = datamodels.open(area_fname)
 
+            # Copy the pixel area data array to the appropriate attribute
+            # of the science data model
             if self.instrument != 'NIRSPEC':
-                area_ster, area_a2 = None, None
-                # Load the average pixel area values from the AREA reference file header
-                # Don't need to do this for NIRSpec, because pixel areas have already
-                # been copied using save_area_nirspec
                 if isinstance(self.input, datamodels.MultiSlitModel):
                     # Note that this only copied to the first slit.
                     self.input.slits[0].area = pix_area.data
@@ -1182,47 +1179,37 @@ class DataSet():
                     self.input.area = pix_area.data[ystart: yend,
                                                     xstart: xend]
                 log.info('Pixel area map copied to output.')
-                try:
-                    area_ster = pix_area.meta.photometry.pixelarea_steradians
-                    if area_ster is None:
-                        log.warning('The PIXAR_SR keyword is missing from %s', area_fname)
-                    area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
-                    if area_a2 is None:
-                        log.warning('The PIXAR_A2 keyword is missing from %s', area_fname)
-                    if area_ster is not None and area_a2 is not None:
-                        log.info('Values for PIXAR_SR and PIXAR_A2 obtained from AREA reference file.')
-
-                except AttributeError or KeyError:
-                    # The area reference file might be older, try the photom reference file
-                    area_ster = ftab.meta.photometry.pixelarea_steradians
-                    log.info('Attempting to obtain PIXAR_SR and PIXAR_A2 values from PHOTOM reference file.')
-                    if area_ster is None:
-                        log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
-                    area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
-                    if area_a2 is None:
-                        log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
-                    if area_ster is not None and area_a2 is not None:
-                        log.info('Values for PIXAR_SR and PIXAR_A2 obtained from PHOTOM reference file.')
-
-                # Copy the pixel area values to the output
-                log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
-                if area_a2 is not None:
-                    area_a2 = float(area_a2)
-                if area_ster is not None:
-                    area_ster = float(area_ster)
-
-                # For MultiSlitModels, copy to each slit attribute
-                if isinstance(self.input, datamodels.MultiSlitModel):
-                    for slit in self.input.slits:
-                        slit.meta.photometry.pixelarea_arcsecsq = area_a2
-                        slit.meta.photometry.pixelarea_steradians = area_ster
-                else:
-                    self.input.meta.photometry.pixelarea_arcsecsq = area_a2
-                    self.input.meta.photometry.pixelarea_steradians = area_ster
             else:
                 self.save_area_nirspec(pix_area)
 
             pix_area.close()
+
+        # Load the average pixel area values from the photom reference file header
+        # Don't need to do this for NIRSpec, because pixel areas come from
+        # the AREA ref file, which have already been copied using save_area_nirspec
+        if self.instrument != 'NIRSPEC':
+            area_ster = ftab.meta.photometry.pixelarea_steradians
+            if area_ster is None:
+                log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
+            area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
+            if area_a2 is None:
+                log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
+
+            # Copy the pixel area values to the output
+            log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
+            if area_a2 is not None:
+                area_a2 = float(area_a2)
+            if area_ster is not None:
+                area_ster = float(area_ster)
+
+            # For MultiSlitModels, copy to each slit attribute
+            if isinstance(self.input, datamodels.MultiSlitModel):
+                for slit in self.input.slits:
+                    slit.meta.photometry.pixelarea_arcsecsq = area_a2
+                    slit.meta.photometry.pixelarea_steradians = area_ster
+            else:
+                self.input.meta.photometry.pixelarea_arcsecsq = area_a2
+                self.input.meta.photometry.pixelarea_steradians = area_ster
 
     def save_area_nirspec(self, pix_area):
         """
