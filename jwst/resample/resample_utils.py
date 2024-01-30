@@ -133,9 +133,9 @@ def reproject(wcs1, wcs2):
 
     Parameters
     ----------
-    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS` or `~astropy.modeling.Model`
-        or `~astropy.wcs.wcsapi.SlicedLowLevelWCS`
-        WCS objects.
+    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
+        WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
+        attributes.
 
     Returns
     -------
@@ -144,23 +144,17 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    try:
-        forward_transform = wcs1.pixel_to_world_values
-    except AttributeError:
-        if isinstance(wcs1, Model):
-            forward_transform = wcs1
-        else:
-            raise TypeError("Expected input to be of type astropy.wcs.WCS, gwcs.WCS "
-                            f"or astropy.modeling.Model.  Instead it is {type(wcs1)}")
+    if not hasattr(wcs1, 'pixel_to_world_values'):
+        raise AttributeError(
+            "``wcs1`` should have 'pixel_to_world_values' attribute."
+        )
+    if not hasattr(wcs2, 'world_to_pixel_values'):
+        raise AttributeError(
+            "``wcs2`` should have 'world_to_pixel_values' attribute."
+        )
 
-    try:
-        backward_transform = wcs2.world_to_pixel_values
-    except AttributeError:
-        if isinstance(wcs2, Model):
-            backward_transform = wcs2.inverse
-        else:
-            raise TypeError("Expected input to be of type astropy.wcs.WCS, gwcs.WCS "
-                            f"or astropy.modeling.Model.  Instead it is {type(wcs2)}")
+    forward_transform = wcs1.pixel_to_world_values
+    backward_transform = wcs2.world_to_pixel_values
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
