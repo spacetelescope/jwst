@@ -212,4 +212,4 @@ def test_reproject_with_astropy_model(wcs_gwcs):
 
 def test_reproject_with_garbage_input():
     with pytest.raises(TypeError):
-        f = reproject("foo", "bar")
+        reproject("foo", "bar")
