@@ -3,7 +3,6 @@ import logging
 import warnings
 
 import numpy as np
-from astropy.modeling import Model
 from astropy import units as u
 import gwcs
 
