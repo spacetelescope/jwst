@@ -71,8 +71,9 @@ refpix
 resample
 --------
 
-- Changed to use APE 14 interface for reproject, which also fixed a bug, and removed
-  support for astropy model [#8172]
+- Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
+  ``world_to_pixel_values``) for reproject, which also fixed a bug, and
+  removed support for astropy model [#8172]
 
 tweakreg
 --------
