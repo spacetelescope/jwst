@@ -470,9 +470,10 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.var_poisson = np.ones(shape, dtype=im.var_poisson.dtype.type)
     im.var_flat = np.ones(shape, dtype=im.var_flat.dtype.type)
     im.meta.filename = "foo.fits"
-
     c = ModelContainer([im])
-    ResampleStep.call(c, blendheaders=False)
+
+    with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
+        ResampleStep.call(c, blendheaders=False)
 
 
 @pytest.mark.parametrize('ratio', [0.7, 1.2])
