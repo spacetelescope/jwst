@@ -24,12 +24,22 @@ conf.use_memmap = False
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
     """Provides Artifactory inputs_root and results_root"""
-    try:
-        inputs_root = pytestconfig.getini('inputs_root')[0]
-        results_root = pytestconfig.getini('results_root')[0]
-    except IndexError:
+    inputs_root = pytestconfig.getini('inputs_root')
+    # in pytest 8 inputs_root will be None
+    # in pytest <8 inputs_root will be []
+    # see: https://github.com/pytest-dev/pytest/pull/11594
+    # using "not inputs_root" will handle both cases
+    if not inputs_root:
         inputs_root = "jwst-pipeline"
+    else:
+        inputs_root = inputs_root[0]
+
+    results_root = pytestconfig.getini('results_root')
+    # see not above about inputs_root
+    if not results_root:
         results_root = "jwst-pipeline-results"
+    else:
+        results_root = results_root[0]
     return inputs_root, results_root
 
 
