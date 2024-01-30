@@ -1168,22 +1168,21 @@ class DataSet():
 
             if self.instrument != 'NIRSPEC':
                 area_ster, area_a2 = None, None
+                # Load the average pixel area values from the AREA reference file header
+                # Don't need to do this for NIRSpec, because pixel areas have already
+                # been copied using save_area_nirspec
+                if isinstance(self.input, datamodels.MultiSlitModel):
+                    # Note that this only copied to the first slit.
+                    self.input.slits[0].area = pix_area.data
+                else:
+                    ystart = self.input.meta.subarray.ystart - 1
+                    xstart = self.input.meta.subarray.xstart - 1
+                    yend = ystart + self.input.meta.subarray.ysize
+                    xend = xstart + self.input.meta.subarray.xsize
+                    self.input.area = pix_area.data[ystart: yend,
+                                                    xstart: xend]
+                log.info('Pixel area map copied to output.')
                 try:
-                    # Load the average pixel area values from the AREA reference file header
-                    # Don't need to do this for NIRSpec, because pixel areas have already
-                    # been copied using save_area_nirspec
-                    if isinstance(self.input, datamodels.MultiSlitModel):
-                        # Note that this only copied to the first slit.
-                        self.input.slits[0].area = pix_area.data
-                    else:
-                        ystart = self.input.meta.subarray.ystart - 1
-                        xstart = self.input.meta.subarray.xstart - 1
-                        yend = ystart + self.input.meta.subarray.ysize
-                        xend = xstart + self.input.meta.subarray.xsize
-                        self.input.area = pix_area.data[ystart: yend,
-                                                        xstart: xend]
-                    log.info('Pixel area map copied to output.')
-
                     area_ster = pix_area.meta.photometry.pixelarea_steradians
                     if area_ster is None:
                         log.warning('The PIXAR_SR keyword is missing from %s', area_fname)
