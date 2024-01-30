@@ -134,7 +134,7 @@ def reproject(wcs1, wcs2):
     ----------
     wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
         WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
-        attributes.
+        methods.
 
     Returns
     -------
@@ -143,17 +143,11 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    if not hasattr(wcs1, 'pixel_to_world_values'):
-        raise AttributeError(
-            "``wcs1`` should have 'pixel_to_world_values' attribute."
-        )
-    if not hasattr(wcs2, 'world_to_pixel_values'):
-        raise AttributeError(
-            "``wcs2`` should have 'world_to_pixel_values' attribute."
-        )
-
-    forward_transform = wcs1.pixel_to_world_values
-    backward_transform = wcs2.world_to_pixel_values
+    try:
+        forward_transform = wcs1.pixel_to_world_values
+        backward_transform = wcs2.world_to_pixel_values
+    except AttributeError as err:
+        raise TypeError("Input should be a WCS") from err
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
