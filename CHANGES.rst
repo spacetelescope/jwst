@@ -71,7 +71,8 @@ refpix
 resample
 --------
 
-- Changed to use APE 14 interface for reproject [#8172]
+- Changed to use APE 14 interface for reproject, which also fixed a bug, and removed
+  support for astropy model [#8172]
 
 tweakreg
 --------
