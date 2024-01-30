@@ -71,9 +71,7 @@ refpix
 resample
 --------
 
-- Added support for ``SlicedLowLevelWCS`` to ``resample_utils.reproject`` and
-  fixed a bug by setting ``origin`` to 0 for ``wcs1.all_pix2world`` and
-  ``wcs2.all_world2pix`` [#8172]
+- Changed to use APE 14 interface for reproject [#8172]
 
 tweakreg
 --------
