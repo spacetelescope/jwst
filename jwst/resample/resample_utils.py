@@ -145,33 +145,23 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    if isinstance(wcs1, fitswcs.WCS):
-        def _trans1(x, y):
-            return wcs1.all_pix2world(x, y, 0)
-        forward_transform = _trans1
-    elif isinstance(wcs1, gwcs.WCS):
-        forward_transform = wcs1.forward_transform
-    elif isinstance(wcs1, fitswcs.wcsapi.SlicedLowLevelWCS):
+    try:
         forward_transform = wcs1.pixel_to_world_values
-    elif issubclass(wcs1, Model):
-        forward_transform = wcs1
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+    except AttributeError:
+        if isinstance(wcs1, Model):
+            forward_transform = wcs1
+        else:
+            raise TypeError("Expected input to be of type astropy.wcs.WCS, gwcs.WCS "
+                            f"or astropy.modeling.Model.  Instead it is {type(wcs1)}")
 
-    if isinstance(wcs2, fitswcs.WCS):
-        def _trans2(x, y):
-            return wcs2.all_world2pix(x, y, 0)
-        backward_transform = _trans2
-    elif isinstance(wcs2, gwcs.WCS):
-        backward_transform = wcs2.backward_transform
-    elif isinstance(wcs2, fitswcs.wcsapi.SlicedLowLevelWCS):
+    try:
         backward_transform = wcs2.world_to_pixel_values
-    elif issubclass(wcs2, Model):
-        backward_transform = wcs2.inverse
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+    except AttributeError:
+        if isinstance(wcs2, Model):
+            backward_transform = wcs2.inverse
+        else:
+            raise TypeError("Expected input to be of type astropy.wcs.WCS, gwcs.WCS "
+                            f"or astropy.modeling.Model.  Instead it is {type(wcs2)}")
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
