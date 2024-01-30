@@ -25,7 +25,6 @@ from packaging.version import Version
 from configparser import ConfigParser
 
 import sphinx
-import stsci_rtd_theme
 
 from stpipe import Step
 from sphinx.ext.autodoc import AttributeDocumenter
@@ -55,10 +54,6 @@ class StepSpecDocumenter(AttributeDocumenter):
 
 
 def setup(app):
-    try:
-        app.add_css_file("stsci.css")
-    except AttributeError:
-        app.add_stylesheet("stsci.css")
     # add a custom AttributeDocumenter subclass to handle Step.spec formatting
     app.add_autodocumenter(StepSpecDocumenter, True)
 
@@ -260,13 +255,14 @@ asdf_schema_reference_mappings = [
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'stsci_rtd_theme'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "collapse_navigation": True
+    "collapse_navigation": True,
+    "sticky_navigation": False,
     # "nosidebar": "false",
     # "sidebarbgcolor": "#4db8ff",
     # "sidebartextcolor": "black",
@@ -274,8 +270,10 @@ html_theme_options = {
     # "headbgcolor": "white",
 }
 
+html_logo = '_static/stsci_pri_combo_mark_white.png'
+
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [stsci_rtd_theme.get_html_theme_path()]
+#html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
