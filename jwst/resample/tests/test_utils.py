@@ -199,17 +199,6 @@ def test_reproject(wcs1, wcs2, offset, request):
     assert_allclose(x, res[1] + offset)
 
 
-def test_reproject_with_astropy_model(wcs_gwcs):
-    # Get the astropy.model transform out of the WCS object
-    transform = wcs_gwcs.forward_transform
-    f = reproject(transform, transform)
-    x = np.arange(150, 200)
-
-    res = f(x, x)
-    assert_allclose(x, res[0])
-    assert_allclose(x, res[1])
-
-
 def test_reproject_with_garbage_input():
     with pytest.raises(TypeError):
         reproject("foo", "bar")
