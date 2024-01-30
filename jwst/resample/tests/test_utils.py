@@ -200,5 +200,5 @@ def test_reproject(wcs1, wcs2, offset, request):
 
 
 def test_reproject_with_garbage_input():
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         reproject("foo", "bar")
