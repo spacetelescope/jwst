@@ -1187,17 +1187,15 @@ class DataSet():
         """
 
         use_pixarea_rfile =  False
+        area_ster, area_a2 = None, None
         if area_fname is not None and area_fname != "N/A":
             use_pixarea_rfile =  True
+            # Load the pixel area reference file
             pix_area = datamodels.open(area_fname)
 
         if self.instrument != 'NIRSPEC':
 
             if use_pixarea_rfile:
-                # Load the pixel area reference file
-                pix_area = datamodels.open(area_fname)
-
-                area_ster, area_a2 = None, None
                 # Copy the pixel area data array to the appropriate attribute
                 # of the science data model
                 if isinstance(self.input, datamodels.MultiSlitModel):
@@ -1225,11 +1223,11 @@ class DataSet():
                     if area_ster is not None and area_a2 is not None:
                         log.info('Values for PIXAR_SR and PIXAR_A2 obtained from AREA reference file.')
 
-                pix_area.close()
-
                 # The area reference file might be older, try the photom reference file
                 except AttributeError or KeyError:
                     area_ster, area_a2 = pixarea_from_ftab(ftab)
+
+                pix_area.close()
 
             # The area reference file might be older, try the photom reference file
             else:
