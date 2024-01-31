@@ -1225,13 +1225,13 @@ class DataSet():
 
                 # The area reference file might be older, try the photom reference file
                 except AttributeError or KeyError:
-                    area_ster, area_a2 = pixarea_from_ftab(ftab)
+                    area_ster, area_a2 = self.pixarea_from_ftab(ftab)
 
                 pix_area.close()
 
             # The area reference file might be older, try the photom reference file
             else:
-                area_ster, area_a2 = pixarea_from_ftab(ftab)
+                area_ster, area_a2 = self.pixarea_from_ftab(ftab)
 
             # Copy the pixel area values to the output
             log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
