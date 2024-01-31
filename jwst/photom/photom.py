@@ -1162,7 +1162,7 @@ class DataSet():
             log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
         if area_ster is not None and area_a2 is not None:
             log.info('Values for PIXAR_SR and PIXAR_A2 obtained from PHOTOM reference file.')
-        area_ster, area_a2
+        return area_ster, area_a2
 
     def save_area_info(self, ftab, area_fname):
         """
