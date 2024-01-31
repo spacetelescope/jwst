@@ -96,7 +96,8 @@ image.
     (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
     not exist, the variance is set to 1 for all pixels (equal weighting).
     If `weight_type=exptime`, the scaling value will be set equal to the
-    exposure time found in the image header.
+    measurement time (TMEASURE) found in the image header if available; 
+    if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
 
 ``--single`` (bool, default=False)
     If set to `True`, resample each input image into a separate output.  If

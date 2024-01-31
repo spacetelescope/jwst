@@ -114,7 +114,7 @@ outlier_detection
 resample
 --------
 - Updated exposure time weighting to use the measurement time 
-  when available [#8212]
+  (TMEASURE) when available [#8212]
 
 photom
 ------
