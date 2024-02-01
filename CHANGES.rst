@@ -34,6 +34,9 @@ documentation
 
 - Change docs theme to ``sphinx-rtd-theme`` [#8224]
 
+- Reorganized ``ramp_fitting`` docs content that's split between jwst
+  and stcal. [#8253]
+
 emicorr
 -------
 
