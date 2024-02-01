@@ -83,6 +83,12 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+spec2
+-----
+
+- Added NRS_BRIGHTOBJ to the list of modes to run when skip is set
+  to False. [#8256]
+
 1.13.3 (01-05-2024)
 ===================
 
