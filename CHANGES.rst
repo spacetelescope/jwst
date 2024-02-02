@@ -80,6 +80,12 @@ refpix
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
 
+resample
+--------
+
+- Removing unnecessary warning. Errors are propagated identically for
+  the 'exptime' and 'ivm' weight options. [#8258]
+
 residual_fringe
 ---------------
 
