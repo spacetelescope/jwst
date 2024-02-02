@@ -1095,7 +1095,7 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
     """
 
     # Restrict to just the non-zero fluxes
-    indx = np.where(flux != 0)
+    indx = np.where(flux > 0)
     useflux = flux[indx]
     usewave = wavelength[indx]
 
