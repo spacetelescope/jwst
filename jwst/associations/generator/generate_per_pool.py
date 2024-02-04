@@ -27,7 +27,7 @@ def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=T
     pool : AssociationPool
         The pool to generate from.
 
-    rule_defs : [File-like[,...]
+    rule_defs : [File-like[,...] or None
         List of rule definitions to use. None to use the defaults if `ignore_default` is False.
 
     candidate_ids : [str,[...]] or None
