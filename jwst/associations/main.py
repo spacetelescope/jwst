@@ -158,10 +158,6 @@ class Main():
         """Generate the associations"""
         logger.info('Generating associations.')
         parsed = self.parsed
-        # #################
-        # DEBUGGING REMOVE!
-        # #################
-        parsed.original_algorithm = True
         if parsed.original_algorithm:
             logger.info('Using original algorithm')
 
@@ -178,9 +174,9 @@ class Main():
             from jwst.associations.generator.generate_per_candidate import generate_per_candidate
 
             self.associations = generate_per_candidate(
-                self.pool, parsed.rules, cids=parsed.asn_candidate_ids,
-                version_id=parsed.version_id, finalize=not parsed.no_finalize,
-                ignore_default=parsed.ignore_default, discover=parsed.discover
+                self.pool, rule_defs=parsed.rules,
+                candidate_ids=parsed.asn_candidate_ids, all_candidates=parsed.all_candidates, discover=parsed.discover,
+                version_id=parsed.version_id, finalize=not parsed.no_finalize, merge=parsed.merge, ignore_default=parsed.ignore_default
             )
 
 

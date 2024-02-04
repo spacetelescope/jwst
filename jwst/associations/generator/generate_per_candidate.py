@@ -3,7 +3,7 @@ import logging
 
 from .generate import generate
 from .generate_per_pool  import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
-from ..lib.utilities import evaluate
+from ..lib.utilities import evaluate, filter_discovered_only
 from ..registry import AssociationRegistry
 
 # Configure logging
@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finalize=True, ignore_default=False, discover=False):
+def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=True, discover=False,
+                           version_id=None, finalize=True, merge=False, ignore_default=False):
     """Generate associations in the pool according to the rules.
 
     Parameters
@@ -19,11 +20,17 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     pool : AssociationPool
         The pool to generate from.
 
-    user_rules : File-like
+    rule_defs : [File-like[,...]] or None
         The rule definitions to use. None to use the defaults if `ignore_default` is False.
 
-    cids : [str,[...]] or None
+    candidate_ids : [str,[...]] or None
         List of candidates to produce for. If None, do all possible candidates
+
+    all_candidates : bool
+        Keep associations generated from candidates when in discovery mode.
+
+    discover : bool
+        Find associations that are not candidate-based.
 
     version_id : None, True, or str
         The string to use to tag associations and products.
@@ -34,11 +41,11 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     finalize : bool
         Run all rule methods marked as 'finalized'.
 
+    merge : bool
+        Merge single associations into a common association with separate products.
+
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
-
-    discover : bool
-        Find associations that are not candidate-based.
 
     Returns
     -------
@@ -52,25 +59,25 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     """
     # Get the candidates
     cids_by_type = ids_by_ctype(pool)
-    if cids is None:
+    if candidate_ids is None:
         cids_ctypes = [(cid, ctype)
                        for ctype in cids_by_type
                        for cid in cids_by_type[ctype]
                        ]
     else:
         cids_ctypes = []
-        for cid in cids:
+        for cid in candidate_ids:
             for ctype in cids_by_type:
                 if cid in cids_by_type[ctype]:
                     cids_ctypes.append((cid, ctype))
                     break
             else:
-                logger.warning('cid %s not found in pool', cid)
+                logger.warning('Candidate id %s not found in pool', cid)
 
     associations = []
     for cid_ctype in cids_ctypes:
         # Generate the association for the given candidate
-        associations_cid = generate_on_candidate(cid_ctype, pool, user_rules, version_id=version_id, ignore_default=ignore_default)
+        associations_cid = generate_on_candidate(cid_ctype, pool, rule_defs, version_id=version_id, ignore_default=ignore_default)
 
         # Add to the list
         associations.extend(associations_cid)
@@ -79,12 +86,19 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
     # Here, need to do a final rebuild of the ruleset to get the finalization
     # functions. This ruleset does not need any of the candidate specifications.
     # This ruleset is also used if discovery is in play.
-    rules = AssociationRegistry(user_rules, include_default=not ignore_default, name=DISCOVER_RULESET)
+    rules = AssociationRegistry(rule_defs, include_default=not ignore_default, name=DISCOVER_RULESET)
     if discover:
         logger.info('Discovering associations...')
         associations_discover = generate(pool, rules, version_id=version_id, finalize=False)
-        logger.info('# discovered associations: %d', len(associations_discover))
         associations.extend(associations_discover)
+        logger.info('# associations found before discover filter: %d', len(associations_discover))
+        associations = filter_discovered_only(
+            associations,
+            DISCOVER_RULESET,
+            CANDIDATE_RULESET,
+            keep_candidates=all_candidates,
+        )
+        rules.Utility.resequence(associations)
 
     # Finalize found associations
     logger.debug('# associations before finalization: %d', len(associations))
@@ -97,11 +111,20 @@ def generate_per_candidate(pool, user_rules, cids=None, version_id=None, finaliz
         except KeyError as exception:
             logger.debug('Finalization failed for reason: %s', exception)
 
+
+    # Do a grand merging. This is done particularly for
+    # Level2 associations.
+    if merge:
+        try:
+            finalized_asns = rules.Utility.merge_asns(finalized_asns)
+        except AttributeError:
+            pass
+
     logger.info('Associations generated: %s', len(finalized_asns))
     return finalized_asns
 
 
-def generate_on_candidate(cid_ctype, pool, user_rules, version_id=None, ignore_default=False):
+def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False):
     """Generate associations based on a candidate ID
 
     Parameters
@@ -112,7 +135,7 @@ def generate_on_candidate(cid_ctype, pool, user_rules, version_id=None, ignore_d
     pool : AssociationPool
         The pool to generate from.
 
-    user_rules : File-like
+    rule_defs : [File-like[,...]] or None
         The rule definitions to use. None to use the defaults if `ignore_default` is False.
 
     version_id : None, True, or str
@@ -139,7 +162,7 @@ def generate_on_candidate(cid_ctype, pool, user_rules, version_id=None, ignore_d
 
     # Create the rules with the simplified asn_candidate constraint
     asn_constraint = constrain_on_candidates([cid])
-    rules = AssociationRegistry(user_rules, include_default=not ignore_default, global_constraints=asn_constraint, name=CANDIDATE_RULESET)
+    rules = AssociationRegistry(rule_defs, include_default=not ignore_default, global_constraints=asn_constraint, name=CANDIDATE_RULESET)
 
     # Get the associations
     associations = generate(pool_cid, rules, version_id=version_id, finalize=False)
