@@ -194,6 +194,10 @@ class Main():
         """Generate the associations"""
         logger.info('Generating associations.')
         parsed = self.parsed
+        # #################
+        # DEBUGGING REMOVE!
+        # #################
+        parsed.original_algorithm = True
         if parsed.original_algorithm:
             logger.info('Using original algorithm')
             self.associations = generate(
@@ -203,7 +207,7 @@ class Main():
             logger.info('Using per-candidate algorithm')
 
             # Developer Note: Importing here to avoid circular importing.
-            from jwst.associations.generate_per_candidate import generate_per_candidate
+            from jwst.associations.generator.generate_per_candidate import generate_per_candidate
 
             self.associations = generate_per_candidate(
                 self.pool, parsed.rules, cids=parsed.asn_candidate_ids,
