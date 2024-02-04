@@ -2,8 +2,8 @@ import collections
 import logging
 
 from .generate import generate
+from .generate_per_pool  import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
 from ..lib.utilities import evaluate
-from ..main import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
 from ..registry import AssociationRegistry
 
 # Configure logging

@@ -65,5 +65,5 @@ def test_load_asn_all(make_asns):
 
     for asn_file in asn_files:
         with open(asn_file, 'r') as asn_fp:
-            asns = load_asn(asn_fp, registry=generated.rules, first=False)
+            asns = load_asn(asn_fp, first=False)
         assert len(asns) > 1
