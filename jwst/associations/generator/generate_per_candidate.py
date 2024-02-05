@@ -57,6 +57,8 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
     Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
     """
+    logger.info('Generating based on the per-candidate algorithm.')
+
     # Get the candidates
     cids_by_type = ids_by_ctype(pool)
     if candidate_ids is None:
@@ -120,7 +122,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
         except AttributeError:
             pass
 
-    logger.info('Associations generated: %s', len(finalized_asns))
+    logger.info('Total associations generated: %s', len(finalized_asns))
     return finalized_asns
 
 
@@ -153,12 +155,12 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
         List of associations
     """
     cid, ctype = cid_ctype
-    logger.info(f'Working on {cid_ctype}')
+    logger.info(f'Generating associations on candidate {cid_ctype}')
 
     # Get the pool
     pool_cid = pool_from_candidate(pool, cid)
     pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
-    logger.info(f'Len(pool_{cid}): {len(pool_cid)}')
+    logger.info(f'Length of pool for {cid}: {len(pool_cid)}')
 
     # Create the rules with the simplified asn_candidate constraint
     asn_constraint = constrain_on_candidates([cid])
