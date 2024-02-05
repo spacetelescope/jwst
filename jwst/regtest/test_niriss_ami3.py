@@ -20,13 +20,12 @@ def run_pipeline(rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("obs", ["012", "015"])
-@pytest.mark.parametrize("suffix", ["ami-oi", "psf-ami-oi"])
-def test_niriss_ami3_exp(run_pipeline, obs, fitsdiff_default_kwargs):
+@pytest.mark.parametrize("obs, suffix", [("012", "ami-oi"), ("015", "psf-ami-oi")])
+def test_niriss_ami3_exp(run_pipeline, obs, suffix, fitsdiff_default_kwargs):
     """Check exposure-level results of calwebb_ami3"""
     rtdata = run_pipeline
 
-    output = "jw01093" + obs + "001_03102_" + "00001_nis_a3002_" + suffix + ".fits"
+    output = f"jw01093{obs}001_03102_00001_nis_a3002_{suffix}.fits"
     rtdata.output = output
     rtdata.get_truth("truth/test_niriss_ami3/" + output)
 
