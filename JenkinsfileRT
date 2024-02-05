@@ -50,6 +50,7 @@ env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_CONTEXT=jwst-edit",
     "ENG_BASE_URL=http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/",
+    "WEBBPSF_PATH=/grp/jwst/ote/webbpsf-data"
 ]
 if (env.ENV_VARS) {
     env_vars.addAll(MultiLineToArray(env.ENV_VARS))
