@@ -86,7 +86,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
         # Add to the list
         associations.extend(associations_cid)
 
-        logger.info('Time to process candidate %s: %s', cid_ctype[0], timer() - time_start)
+        logger.info('Time to process candidate %s: %.2f', cid_ctype[0], timer() - time_start)
 
     # The ruleset has been generated on a per-candidate case.
     # Here, need to do a final rebuild of the ruleset to get the finalization
