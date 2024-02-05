@@ -456,7 +456,7 @@ def weighted_operations(img, model, dqm=None):
     flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
 
     if dqm is not None:
-        nanlist = np.where(flatdqm is True)  # where DO_NOT_USE up.
+        nanlist = np.where(flatdqm)  # where DO_NOT_USE up.
     else:
         nanlist = (np.array(()), ) # shouldn't occur w/MAST JWST data
 
@@ -561,7 +561,7 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
     if verbose:
         log.info('\n\ttype(dqm)', type(dqm), end='')
     if dqm is not None:
-        nanlist = np.where(flatdqm is True)  # where DO_NOT_USE up.
+        nanlist = np.where(flatdqm)  # where DO_NOT_USE up.
     else:
         nanlist = (np.array(()), ) # shouldn't occur w/MAST JWST data
 
