@@ -6,7 +6,7 @@ import logging
 import os
 import numpy as np
 import numpy.fft as fft
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from astropy.io import fits
 from astropy import units as u
 import matplotlib.pyplot as plt
@@ -1405,7 +1405,7 @@ def get_cw_beta(bandpass):
     wt = bandpass[:,0]
     wl = bandpass[:,1]
     cw = (wl*wt).sum()/wt.sum() # Weighted mean wavelength in meters "central wavelength"
-    area = simps(wt, wl)
+    area = simpson(wt, x=wl)
     ew = area / wt.max() # equivalent width
     beta = ew/cw # fractional bandpass
     return cw, beta
