@@ -1,5 +1,6 @@
 import collections
 import logging
+from timeit import default_timer as timer
 
 from .generate import generate
 from .generate_per_pool  import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
@@ -78,11 +79,14 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
 
     associations = []
     for cid_ctype in cids_ctypes:
+        time_start = timer()
         # Generate the association for the given candidate
         associations_cid = generate_on_candidate(cid_ctype, pool, rule_defs, version_id=version_id, ignore_default=ignore_default)
 
         # Add to the list
         associations.extend(associations_cid)
+
+        logger.info('Time to process candidate %s: %s', cid_ctype[0], timer() - time_start)
 
     # The ruleset has been generated on a per-candidate case.
     # Here, need to do a final rebuild of the ruleset to get the finalization
