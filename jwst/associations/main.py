@@ -158,7 +158,7 @@ class Main():
         """Generate the associations"""
         logger.info('Generating associations.')
         parsed = self.parsed
-        if parsed.original_algorithm:
+        if parsed.per_pool_algorithm:
             from jwst.associations.generator.generate_per_pool import generate_per_pool
 
             self.associations = generate_per_pool(
@@ -313,9 +313,9 @@ class Main():
             help='Deprecated: Default is to not merge. See "--merge".'
         )
         parser.add_argument(
-            '--original-algorithm',
+            '--per-pool-algorithm',
             action='store_true',
-            help='Use the original algorithm that does not segment pools based on candidates'
+            help='Use the original, per-pool, algorithm that does not segment pools based on candidates'
         )
 
         self.parsed = parser.parse_args(args=args)
