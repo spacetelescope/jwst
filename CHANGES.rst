@@ -46,6 +46,8 @@ outlier_detection
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
 
+- Fixed bug to remove input file if _cal not in the name. [#8263]
+
 photom
 ------
 
