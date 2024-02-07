@@ -83,6 +83,12 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ to
+  the list of modes to run nsclean when skip is set to False. [#8256]
+
 1.13.3 (01-05-2024)
 ===================
 
