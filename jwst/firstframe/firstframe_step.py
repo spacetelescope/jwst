@@ -10,8 +10,12 @@ class FirstFrameStep(Step):
     """
     FirstFrameStep: This is a MIRI specific task.  If the number of groups
     is greater than 3, the DO_NOT_USE group data quality flag is added to
-    first group.
+    first group.  
     """
+
+    spec = """
+        bright_use_group1 = boolean(default=False) # do not flag group1 if group2 is not saturated and group3 is saturated   
+    """ 
 
     class_alias = "firstframe"
 
@@ -25,7 +29,10 @@ class FirstFrameStep(Step):
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector.upper()
-            if detector[:3] != 'MIR':
+            if detector[:3] == 'MIR':
+                # Do the firstframe correction subtraction
+                result = firstframe_sub.do_correction(input_model, bright_use_group1=self.bright_use_group1)
+            else:
                 self.log.warning('First Frame Correction is only for MIRI data')
                 self.log.warning('First frame step will be skipped')
                 input_model.meta.cal_step.firstframe = 'SKIPPED'
