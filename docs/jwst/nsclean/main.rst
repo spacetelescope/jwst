@@ -111,7 +111,7 @@ algorithm and hence are set to False in the mask.
 
 Outliers
 --------
-Pixels in the unilluminated regions of the region can contain anomalous
+Pixels in the unilluminated areas of the region can contain anomalous
 signal, due to uncaught Cosmic Rays, hot pixels, etc. A sigma-clipping
 routine is employed to find such outliers within the input image and set
 them to False in the mask. All pixels with values greater than
