@@ -33,6 +33,14 @@ class MatchFitsTableRowError(Exception):
         super().__init__(message)
 
 
+class DataModelTypeError(Exception):
+
+    def __init__(self, message):
+        if message is None:
+            message = "Unexpected DataModel type."
+        super().__init__(message)
+
+
 def find_row(fits_table, match_fields):
     """
     Find a row in a FITS table matching fields.
@@ -414,6 +422,9 @@ class DataSet():
                     continue
                 self.photom_io(ftab.phot_table[row])
 
+        elif isinstance(self.input, datamodels.CubeModel):
+            raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
+
         elif self.exptype in ['NIS_SOSS']:
             for spec in self.input.spec:
                 self.specnum += 1
@@ -482,13 +493,13 @@ class DataSet():
                 photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
 
                 data = np.array(
-                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr']+photom_corr, ftab.phot_table[row]['uncertainty'])],
+                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr'] + photom_corr, ftab.phot_table[row]['uncertainty'])],
                     dtype=[
                         ("filter", "O"),
                         ("subarray", "O"),
                         ("photmjsr", "<f4"),
                         ("uncertainty", "<f4")
-                        ],
+                    ],
                 )
                 fftab = datamodels.MirImgPhotomModel(phot_table=data)
                 self.photom_io(fftab.phot_table[0])
@@ -540,12 +551,12 @@ class DataSet():
                 log.info("Skipping MRS MIRI time correction. Extensions not found in the reference file.")
                 self.mrs_time_correction = False
 
-            #if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+            # if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
             if self.mrs_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
                 correction = miri_mrs.time_correction(self.input, self.detector,
-                                                     ftab, mid_time)
+                                                      ftab, mid_time)
                 self.input.data /= correction
                 self.input.err /= correction
             else:

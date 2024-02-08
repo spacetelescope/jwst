@@ -46,6 +46,6 @@ filter       integer  The filter used to obtain the images
 pixfrac      float    The pixel "shrinkage" fraction
 kernel       string   The kernel function used to distribute flux
 fillval      float    Value assigned to pixels with no input flux
-wht_type     sting    The input image weighting type
+wht_type     string   The input image weighting type
 stepsize     integer  Output WCS grid interpolation step size
 ===========  =======  ===========================================
