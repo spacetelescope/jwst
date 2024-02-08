@@ -277,6 +277,9 @@ omit = [
 write_to = "jwst/_version.py"
 
 [tool.ruff]
+line-length = 130
+
+[tool.ruff.lint]
 exclude = [
     "jwst/extern",
     "docs",
@@ -289,9 +292,8 @@ exclude = [
 ignore = [
     "E741",
 ]
-line-length = 130
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
     "E402",
 ]
