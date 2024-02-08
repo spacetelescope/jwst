@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
 
 from jwst.photom import photom
+from jwst.lib.dispaxis import get_dispersion_direction
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
 
@@ -340,7 +341,7 @@ def create_input(instrument, detector, exptype,
             input_model.var_flat = np.ones(shape, dtype=np.float32)
             input_model.meta.subarray.name = 'SUB256'       # matches 'GENERIC'
             input_model.meta.target.source_type = 'POINT'
-            input_model.meta.exposure.mid_time = 60000.0 # Added for new PHOTOM step
+            input_model.meta.exposure.mid_time = 60000.0  # Added for new PHOTOM step
             input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
             input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'FGS':
@@ -802,7 +803,7 @@ def create_photom_miri_image(min_wl=16.5, max_wl=19.5,
                       ('tau', '<f4'),
                       ('t0', '<f4')])
     reftabc = np.array(list(zip(timecoeff_amp, timecoeff_tau, timecoeff_t0)),
-                      dtype=dtypec)
+                       dtype=dtypec)
     ftab = datamodels.MirImgPhotomModel(phot_table=reftab, timecoeff=reftabc)
 
     return ftab
@@ -1341,6 +1342,21 @@ def test_niriss_image():
     assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
+def test_expected_failure_niriss_cubemodel():
+    """
+    Test that passing a CubeModel to calc_niriss raises an exception
+    This occurs when extract_1d step is skipped, e.g. for NIRISS SOSS data
+    in FULL subarray.
+    """
+
+    input_model = create_input('NIRISS', 'NIS', 'NIS_SOSS',
+                               filter='CLEAR', pupil='GR700XD')
+    ds = photom.DataSet(input_model)
+    ds.input = datamodels.CubeModel()
+    with pytest.raises(photom.DataModelTypeError):
+        ds.calc_niriss(None)
+
+
 def test_miri_mrs():
     """Test calc_miri, MRS data"""
 
@@ -1430,7 +1446,7 @@ def test_miri_image():
     shape = input.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
-    compare = photmjsr + amplitude * np.exp(-(60000 - t0)/tau) # Added for new PHOTOM step
+    compare = photmjsr + amplitude * np.exp(-(60000 - t0) / tau)  # Added for new PHOTOM step
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
     assert np.allclose(ratio, compare, rtol=1.e-7)
@@ -1488,9 +1504,14 @@ def test_nircam_spec():
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
+        # Incude the dispersion in the correction, as per JP-3238
+        dispaxis = get_dispersion_direction(ds.exptype, ds.grating, ds.filter, ds.pupil)
+        dispersion_array = ds.get_dispersion_array(slit.wavelength, dispaxis)
+        # Convert dispersion in micron/pixel to Angstrom/pixel
+        disp = dispersion_array[iy, ix] * 10000.0
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        compare = photmjsr * rel_resp
+        compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         assert np.allclose(ratio, compare, rtol=1.e-7)

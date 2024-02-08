@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from .. lib.wcs_utils import get_wavelengths
+from .. lib.dispaxis import get_dispersion_direction
 from . import miri_mrs
 from . import miri_imager
 
@@ -29,6 +30,14 @@ class MatchFitsTableRowError(Exception):
     def __init__(self, message):
         if message is None:
             message = "Expected to match one row in FITS table."
+        super().__init__(message)
+
+
+class DataModelTypeError(Exception):
+
+    def __init__(self, message):
+        if message is None:
+            message = "Unexpected DataModel type."
         super().__init__(message)
 
 
@@ -246,6 +255,7 @@ class DataSet():
                 if row is None:
                     continue
                 self.photom_io(ftab.phot_table[row])
+
         # Bright object fixed-slit exposures use a SlitModel
         elif self.exptype == 'NRS_BRIGHTOBJ':
 
@@ -412,6 +422,9 @@ class DataSet():
                     continue
                 self.photom_io(ftab.phot_table[row])
 
+        elif isinstance(self.input, datamodels.CubeModel):
+            raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
+
         elif self.exptype in ['NIS_SOSS']:
             for spec in self.input.spec:
                 self.specnum += 1
@@ -469,7 +482,7 @@ class DataSet():
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-                
+
             # Check to see if the reference file contains the coefficients for the
             # time-dependent correction of the PHOTOM value
             try:
@@ -480,13 +493,13 @@ class DataSet():
                 photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
 
                 data = np.array(
-                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr']+photom_corr, ftab.phot_table[row]['uncertainty'])],
+                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr'] + photom_corr, ftab.phot_table[row]['uncertainty'])],
                     dtype=[
                         ("filter", "O"),
                         ("subarray", "O"),
                         ("photmjsr", "<f4"),
                         ("uncertainty", "<f4")
-                        ],
+                    ],
                 )
                 fftab = datamodels.MirImgPhotomModel(phot_table=data)
                 self.photom_io(fftab.phot_table[0])
@@ -538,12 +551,12 @@ class DataSet():
                 log.info("Skipping MRS MIRI time correction. Extensions not found in the reference file.")
                 self.mrs_time_correction = False
 
-            #if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
+            # if np.any(ftab.timecoeff_ch1['binwave']) and self.mrs_time_correction:
             if self.mrs_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
                 correction = miri_mrs.time_correction(self.input, self.detector,
-                                                     ftab, mid_time)
+                                                      ftab, mid_time)
                 self.input.data /= correction
                 self.input.err /= correction
             else:
@@ -853,9 +866,11 @@ class DataSet():
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
                     conversion_2d_uniform, no_cal = self.create_2d_conversion(slit,
-                                                                   self.exptype, conversion_uniform,
-                                                                   waves, relresps, order,
-                                                                   use_wavecorr=False)
+                                                                              self.exptype,
+                                                                              conversion_uniform,
+                                                                              waves, relresps,
+                                                                              order,
+                                                                              use_wavecorr=False)
                     slit.photom_uniform = conversion_2d_uniform  # store the result
 
                     # Now repeat the process using corrected wavelength values,
@@ -866,6 +881,13 @@ class DataSet():
                                                                    waves, relresps, order,
                                                                    use_wavecorr=True)
                     slit.photom_point = conversion  # store the result
+
+                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                    log.info("Including spectral dispersion in 2-d flux calibration")
+                    conversion, no_cal = self.create_2d_conversion(slit,
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   include_dispersion=True)
 
                 else:
                     conversion, no_cal = self.create_2d_conversion(slit,
@@ -879,8 +901,17 @@ class DataSet():
                 conversion, no_cal = self.create_1d_conversion(self.input.spec[self.specnum],
                                                                conversion, waves, relresps)
             else:
-                conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
-                                                               waves, relresps, order)
+                # NRC_TSGRISM data produces a SpecModel, which is handled here
+                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                    log.info("Including spectral dispersion in 2-d flux calibration")
+                    conversion, no_cal = self.create_2d_conversion(self.input,
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   include_dispersion=True)
+
+                else:
+                    conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
+                                                                   waves, relresps, order)
 
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -903,9 +934,17 @@ class DataSet():
                 if unit_is_surface_brightness:
                     slit.meta.bunit_data = 'MJy/sr'
                     slit.meta.bunit_err = 'MJy/sr'
+                    # Setting top model to None so they will not be written to FITs File.
+                    # Information on the units should only come from the individual slits.
+                    self.input.meta.bunit_data = None
+                    self.input.meta.bunit_err = None
                 else:
                     slit.meta.bunit_data = 'MJy'
                     slit.meta.bunit_err = 'MJy'
+                    # Setting top model to None so they will not be written to FITs File.
+                    # Information on the units should only come from the individual slits.
+                    self.input.meta.bunit_data = None
+                    self.input.meta.bunit_err = None
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
@@ -966,7 +1005,7 @@ class DataSet():
         return
 
     def create_2d_conversion(self, model, exptype, conversion, waves, relresps,
-                             order, use_wavecorr=None):
+                             order, use_wavecorr=None, include_dispersion=False):
         """
         Create a 2D array of photometric conversion values based on
         wavelengths per pixel and response as a function of wavelength.
@@ -989,6 +1028,9 @@ class DataSet():
         use_wavecorr : bool or None
             Flag indicating whether or not to use corrected wavelengths.
             Typically only used for NIRSpec fixed-slit data.
+        include_dispersion : bool or None
+            Flag indicating whether the dispersion needs to be incorporated
+            into the 2-d conversion factors.
 
         Returns
         -------
@@ -1005,14 +1047,52 @@ class DataSet():
 
         # Interpolate the photometric response values onto the
         # 2D wavelength grid
+        # waves is in microns, so wl_array must be in microns too
         conv_2d = np.interp(wl_array, waves, relresps, left=np.nan, right=np.nan)
 
+        if include_dispersion:
+            dispaxis = get_dispersion_direction(self.exptype, self.grating, self.filter, self.pupil)
+            if dispaxis is not None:
+                dispersion_array = self.get_dispersion_array(wl_array, dispaxis)
+                # Convert dispersion from micron/pixel to angstrom/pixel
+                dispersion_array *= 1.0e4
+                conv_2d /= np.abs(dispersion_array)
+            else:
+                log.warning("Unable to get dispersion direction, so cannot calculate dispersion array")
         # Combine the scalar and 2D conversion factors
         conversion = conversion * conv_2d
         no_cal = np.isnan(conv_2d)
         conversion[no_cal] = 0.
 
         return conversion, no_cal
+
+    def get_dispersion_array(self, wavelength_array, dispaxis):
+        """Create an array of dispersion values from the wavelength array
+
+        Parameters
+        ----------
+        wavelength_array : float
+            2-d array of wavelength values, assumed to be in microns
+        dispaxis : integer
+            Direction along which light is dispersed: 1 = along rows, 2 = along columns
+
+        Returns
+        -------
+        dispersion_array : float
+            2-d array of dispersion values, in microns/pixel
+
+        """
+        nrows, ncols = wavelength_array.shape
+        dispersion_array = np.zeros(wavelength_array.shape)
+        if dispaxis == 1:
+            for row in range(nrows):
+                dispersion_array[row] = np.gradient(wavelength_array[row])
+        elif dispaxis == 2:
+            for column in range(ncols):
+                dispersion_array[:, column] = np.gradient(wavelength_array[:, column])
+        else:
+            log.warning(f"Can't process data with DISPAXIS={dispaxis}")
+        return dispersion_array
 
     def create_1d_conversion(self, model, conversion, waves, relresps):
         """Create a 1D array of photometric conversion values based on
@@ -1071,6 +1151,30 @@ class DataSet():
 
         return conversion, no_cal
 
+    def pixarea_from_ftab(self, ftab):
+        """
+        Short Summary
+        -------------
+        Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
+        primary header of the photom reference file.
+
+        Parameters
+        ----------
+        ftab : `~jwst.datamodels.JwstDataModel`
+            A photom reference file data model
+        """
+        area_ster, area_a2 = None, None
+        area_ster = ftab.meta.photometry.pixelarea_steradians
+        log.info('Attempting to obtain PIXAR_SR and PIXAR_A2 values from PHOTOM reference file.')
+        if area_ster is None:
+            log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
+        area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
+        if area_a2 is None:
+            log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
+        if area_ster is not None and area_a2 is not None:
+            log.info('Values for PIXAR_SR and PIXAR_A2 obtained from PHOTOM reference file.')
+        return area_ster, area_a2
+
     def save_area_info(self, ftab, area_fname):
         """
         Short Summary
@@ -1093,13 +1197,18 @@ class DataSet():
             Pixel area reference file name
         """
 
-        # Load the pixel area reference file
+        use_pixarea_rfile =  False
+        area_ster, area_a2 = None, None
         if area_fname is not None and area_fname != "N/A":
+            use_pixarea_rfile =  True
+            # Load the pixel area reference file
             pix_area = datamodels.open(area_fname)
 
-            # Copy the pixel area data array to the appropriate attribute
-            # of the science data model
-            if self.instrument != 'NIRSPEC':
+        if self.instrument != 'NIRSPEC':
+
+            if use_pixarea_rfile:
+                # Copy the pixel area data array to the appropriate attribute
+                # of the science data model
                 if isinstance(self.input, datamodels.MultiSlitModel):
                     # Note that this only copied to the first slit.
                     self.input.slits[0].area = pix_area.data
@@ -1111,21 +1220,29 @@ class DataSet():
                     self.input.area = pix_area.data[ystart: yend,
                                                     xstart: xend]
                 log.info('Pixel area map copied to output.')
+
+                # Load the average pixel area values from the AREA reference file header
+                # Don't need to do this for NIRSpec, because pixel areas will be
+                # copied using save_area_nirspec
+                try:
+                    area_ster = pix_area.meta.photometry.pixelarea_steradians
+                    if area_ster is None:
+                        log.warning('The PIXAR_SR keyword is missing from %s', area_fname)
+                    area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
+                    if area_a2 is None:
+                        log.warning('The PIXAR_A2 keyword is missing from %s', area_fname)
+                    if area_ster is not None and area_a2 is not None:
+                        log.info('Values for PIXAR_SR and PIXAR_A2 obtained from AREA reference file.')
+
+                # The area reference file might be older, try the photom reference file
+                except AttributeError or KeyError:
+                    area_ster, area_a2 = self.pixarea_from_ftab(ftab)
+
+                pix_area.close()
+
+            # The area reference file might be older, try the photom reference file
             else:
-                self.save_area_nirspec(pix_area)
-
-            pix_area.close()
-
-        # Load the average pixel area values from the photom reference file header
-        # Don't need to do this for NIRSpec, because pixel areas come from
-        # the AREA ref file, which have already been copied using save_area_nirspec
-        if self.instrument != 'NIRSPEC':
-            area_ster = ftab.meta.photometry.pixelarea_steradians
-            if area_ster is None:
-                log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
-            area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
-            if area_a2 is None:
-                log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
+                area_ster, area_a2 = self.pixarea_from_ftab(ftab)
 
             # Copy the pixel area values to the output
             log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
@@ -1142,6 +1259,9 @@ class DataSet():
             else:
                 self.input.meta.photometry.pixelarea_arcsecsq = area_a2
                 self.input.meta.photometry.pixelarea_steradians = area_ster
+        else:
+            self.save_area_nirspec(pix_area)
+            pix_area.close()
 
     def save_area_nirspec(self, pix_area):
         """

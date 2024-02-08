@@ -360,9 +360,9 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
 
-        # Check for NIRSpec "nsclean" correction. Only attempt to apply to
-        # IFU, MOS, and FIXEDSLIT modes, for now.
-        if not self.nsclean.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT']:
+        # Check for NIRSpec "nsclean" correction. Attempt to apply to
+        # IFU, MOS, FIXEDSLIT, and NRS_BRIGHTOBJ modes, for now.
+        if not self.nsclean.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
             self.log.debug('Science data does not allow NSClean correction. Skipping "nsclean".')
             self.nsclean.skip = True
 
