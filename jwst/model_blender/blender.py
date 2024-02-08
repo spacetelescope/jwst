@@ -53,13 +53,13 @@ class _KeywordMapping:
         if agg_func is not None:
             try:
                 for i in agg_func:
-                    if not hasattr(i, '__call__'):
+                    if not callable(i):
                         raise TypeError(
                             "The aggregating function must be a callable " +
                             "object, None or a sequence of callables")
                 self.agg_func_is_sequence = True
             except TypeError:
-                if not hasattr(agg_func, '__call__'):
+                if not callable(agg_func):
                     raise TypeError(
                         "The aggregating function must be a callable object, "
                         "None or a sequence of callables")

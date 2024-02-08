@@ -117,7 +117,7 @@ class Spec2Pipeline(Pipeline):
             self.log.info('Processing product {}'.format(product['name']))
             self.output_file = product['name']
             try:
-                getattr(asn, 'filename')
+                asn.filename
             except AttributeError:
                 asn.filename = "singleton"
             try:

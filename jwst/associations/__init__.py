@@ -9,7 +9,6 @@ For more, see the :ref:`documentation overview <asn-overview>`.
 """
 
 # Take version from the upstream package
-from .. import __version__
 
 
 # Utility
@@ -31,5 +30,4 @@ from .generate import *
 from .lib.process_list import *
 from .pool import *
 from .registry import *
-from .load_asn import load_asn
 from .main import *

@@ -105,4 +105,4 @@ else:
         """
         Returns True if object quacks like a callable.
         """
-        return hasattr(obj, '__call__')
+        return callable(obj)

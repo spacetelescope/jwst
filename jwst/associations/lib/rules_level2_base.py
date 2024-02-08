@@ -22,7 +22,6 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.dms_base import (
     Constraint_TargetAcq,
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,

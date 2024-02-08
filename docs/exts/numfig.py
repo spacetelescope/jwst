@@ -1,4 +1,4 @@
-from docutils.nodes import figure, caption, Text, reference, raw, SkipNode, Element
+from docutils.nodes import figure, caption, Text, reference, raw, SkipNode
 from sphinx.roles import XRefRole
 
 

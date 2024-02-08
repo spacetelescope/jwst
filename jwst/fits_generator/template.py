@@ -28,7 +28,6 @@
 # DAMAGE.
 
 # STDLIB
-from operator import itemgetter
 import os
 import re
 
@@ -417,7 +416,7 @@ class DataTemplateParser(TemplateParserBase):
         if len(definition):
             try:
                 value = eval(definition[2])
-            except Exception as e:
+            except Exception:
                 raise self._raise(
                     "Can't parse as literal '%s'" % definition[2])
             key = definition[0]
