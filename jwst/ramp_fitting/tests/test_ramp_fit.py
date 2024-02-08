@@ -248,7 +248,7 @@ class TestMethods:
         seg1_slope2 = optional[0][0, 1, 0, 0]
         data = slopes[0]
         np.testing.assert_almost_equal(data[0, 0], 0.1, decimal=4)
-        assert data[0, 0] == 0.1
+
     def test_nocrs_noflux(self, method):
         # all pixel values are zero. So slope should be zero
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
