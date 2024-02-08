@@ -39,6 +39,9 @@ extract_1d
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
+  the FULL subarray with warning. [#8225]
   
 outlier_detection
 -----------------
@@ -58,6 +61,10 @@ photom
   The PHOTOM reference files have the dispersion factored out, requiring that
   the pipeline put the (variable, calculated per pixel) dispersion back in.  Assumes that
   the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
+
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step 
+  was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
+  data in the FULL subarray. [#8225]
 
 refpix
 ------
