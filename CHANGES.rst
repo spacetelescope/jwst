@@ -42,6 +42,9 @@ extract_1d
 
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
   the FULL subarray with warning. [#8225]
+
+- Fixed a bug in the ATOCA algorithm that caused the step to occasionally 
+  fail for NIRISS SOSS data with many flagged pixels. [#8265]
   
 outlier_detection
 -----------------
