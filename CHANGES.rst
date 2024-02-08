@@ -26,6 +26,8 @@ documentation
 - Updated installation instructions to include a warning that Python<=3.11
   must be used. [#8200]
 
+- Change docs theme to ``sphinx-rtd-theme`` [#8224]
+
 emicorr
 -------
 
@@ -37,6 +39,9 @@ extract_1d
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
+  the FULL subarray with warning. [#8225]
   
 outlier_detection
 -----------------
@@ -57,6 +62,13 @@ photom
   the pipeline put the (variable, calculated per pixel) dispersion back in.  Assumes that
   the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
 
+- Get the values of PIXAR_A2 and PIXAR_SR from AREA reference file
+  instead of PHOTOM reference file to avoid missmatching values. [#8187]
+
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step 
+  was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
+  data in the FULL subarray. [#8225]
+
 refpix
 ------
 
@@ -75,6 +87,12 @@ resample
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
 
+residual_fringe
+---------------
+
+- Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
+  ignoring them. [#8261]
+
 tweakreg
 --------
 
@@ -87,6 +105,12 @@ general
 -------
 
 - Update minimum required photutils version to 1.5.0 [#8211]
+
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ to
+  the list of modes to run nsclean when skip is set to False. [#8256]
 
 1.13.3 (01-05-2024)
 ===================
