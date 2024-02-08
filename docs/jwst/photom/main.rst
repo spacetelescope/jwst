@@ -125,8 +125,9 @@ The step also populates the keywords PIXAR_SR and PIXAR_A2 in the
 science data product, which give the average pixel area in units of
 steradians and square arcseconds, respectively.
 For most instrument modes, the average pixel area values are copied from the
-primary header of the PHOTOM reference file.
-For NIRSpec, however,  the pixel area values are copied from a binary table
+primary header of the AREA reference file, when this file is available. Otherwise
+the pixel area values are copied from the primary header of the PHOTOM reference
+file. For NIRSpec, however, the pixel area values are copied from a binary table
 extension in the AREA reference file.
 
 NIRSpec IFU
