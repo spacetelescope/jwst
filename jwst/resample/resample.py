@@ -298,7 +298,6 @@ class ResampleData:
                                         kernel=self.kernel, fillval=self.fillval)
 
         log.info("Resampling science data")
-        iscales = []
         for img in self.input_models:
             input_pixflux_area = img.meta.photometry.pixelarea_steradians
             if (input_pixflux_area and
@@ -320,7 +319,7 @@ class ResampleData:
             else:
                 iscale = 1.0
 
-            iscales.append(iscale)
+            img.meta.iscale = iscale
 
             inwht = resample_utils.build_driz_weight(img,
                                                      weight_type=self.weight_type,
@@ -350,9 +349,9 @@ class ResampleData:
             del data, inwht
 
         # Resample variances array in self.input_models to output_model
-        self.resample_variance_array("var_rnoise", output_model, iscales=iscales)
-        self.resample_variance_array("var_poisson", output_model, iscales=iscales)
-        self.resample_variance_array("var_flat", output_model, iscales=iscales)
+        self.resample_variance_array("var_rnoise", output_model)
+        self.resample_variance_array("var_poisson", output_model)
+        self.resample_variance_array("var_flat", output_model)
         output_model.err = np.sqrt(
             np.nansum(
                 [
@@ -367,9 +366,15 @@ class ResampleData:
         self.update_exposure_times(output_model)
         self.output_models.append(output_model)
 
+        for img in self.input_models:
+            try:
+                del img.meta.iscale
+            except AttributeError:
+                pass
+
         return self.output_models
 
-    def resample_variance_array(self, name, output_model, iscales):
+    def resample_variance_array(self, name, output_model):
         """Resample variance arrays from self.input_models to the output_model
 
         Resample the ``name`` variance array to the same name in output_model,
@@ -381,7 +386,7 @@ class ResampleData:
         inverse_variance_sum = np.full_like(output_model.data, np.nan)
 
         log.info(f"Resampling {name}")
-        for model, iscale in zip(self.input_models, iscales):
+        for model in self.input_models:
             variance = getattr(model, name)
             if variance is None or variance.size == 0:
                 log.debug(
@@ -412,6 +417,11 @@ class ResampleData:
                 variance.shape,
                 model.meta.wcs.bounding_box
             )
+
+            try:
+                iscale = model.meta.iscale
+            except AttributeError:
+                iscale = 1.0
 
             # Resample the variance array. Fill "unpopulated" pixels with NaNs.
             self.drizzle_arrays(
