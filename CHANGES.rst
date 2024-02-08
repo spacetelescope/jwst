@@ -70,6 +70,12 @@ refpix
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
 
+residual_fringe
+---------------
+
+- Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
+  ignoring them. [#8261]
+
 tweakreg
 --------
 
