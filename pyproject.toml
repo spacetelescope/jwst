@@ -292,6 +292,10 @@ exclude = [
 ignore = [
     "E741",
 ]
+select = [
+    "B", # pyflakes
+    "F", # bugbear
+]
 
 [tool.ruff.lint.per-file-ignores]
 "jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
