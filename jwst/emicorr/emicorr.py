@@ -339,7 +339,8 @@ def apply_emicorr(input_model, emicorr_model,
             phaseall[ninti, ...] = phase_this_int - phase_this_int.astype('ulonglong')
 
             # add a frame time to account for the extra frame reset between MIRI integrations
-            start_time += frameclocks
+            if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
+                start_time += frameclocks
 
         # use phaseall vs dd_all
 
