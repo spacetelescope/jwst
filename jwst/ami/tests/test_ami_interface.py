@@ -10,42 +10,14 @@ from jwst.ami import AmiAnalyzeStep
 
 
 @pytest.fixture()
-def mock_nrm_reference_file(tmp_path, monkeypatch):
-    """
-    At the moment nrm only exists on CRDS-TEST so this
-    fixture will mock fetching any 'nrm' reference file
-    """
-    fn = tmp_path / "nrm.fits"
-
-    # make a fake nrm file
-    m = datamodels.NRMModel()
-    m.nrm = np.zeros((1024, 1024), dtype='f4')
-    m.save(fn)
-
-    original_get_reference_file = crds_client.get_reference_file
-
-    def mock_get_reference_file(dataset, reference_file_type, observatory):
-        if reference_file_type == 'nrm':
-            return str(fn)
-        return original_get_reference_file(dataset, reference_file_type, observatory)
-
-    monkeypatch.setattr(crds_client, "get_reference_file", mock_get_reference_file)
-
-
-@pytest.fixture()
-def example_model(mock_nrm_reference_file):
-    model = datamodels.CubeModel((2, 80, 80))
-    # some non-zero data is required as this step will center
-    # the image and find the centroid (both fail with all zeros)
-    model.data[:, 24, 24] = 1
-    model.data[:, 28, 28] = 1
+def example_model():
+    model = datamodels.CubeModel((25, 19, 19))
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "F277W"
     model.meta.subarray.name = "SUB80"
     model.meta.observation.date = "2021-12-26"
     model.meta.observation.time = "00:00:00"
-    with pytest.raises(RuntimeError, match="Input must be a 2D ImageModel."):
-        AmiAnalyzeStep.call(model)
+    return model
 
 
 @pytest.mark.parametrize("oversample", [2, 4])
@@ -55,7 +27,6 @@ def test_ami_analyze_even_oversample_fail(example_model, oversample):
         AmiAnalyzeStep.call(example_model, oversample=oversample)
 
 
-@pytest.mark.skip("reference files are not currently used")
 def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
     """Make sure that ami_analyze fails if no throughput reffile is available"""
 
@@ -64,4 +35,4 @@ def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
     monkeypatch.setattr(stpipe.crds_client, 'get_reference_file', mockreturn)
 
     with pytest.raises(RuntimeError, match="No throughput reference file found."):
-        AmiAnalyzeStep.call(model)
+        AmiAnalyzeStep.call(example_model)
