@@ -31,10 +31,17 @@ class EmiCorrStep(Step):
     def process(self, input):
         with datamodels.open(input) as input_model:
 
-            # Catch the cases to skip, i.e. all instruments other than MIRI
+            # Catch the cases to skip
             instrument = input_model.meta.instrument.name
             if instrument != 'MIRI':
                 self.log.warning('EMI correction not implemented for instrument: {}'.format(instrument))
+                input_model.meta.cal_step.emicorr = 'SKIPPED'
+                return input_model
+
+            readpatt = input_model.meta.exposure.readpatt
+            allowed_readpatts = ['FAST', 'FASTR1', 'SLOW', 'SLOWR1']
+            if readpatt.upper() not in allowed_readpatts:
+                self.log.warning('EMI correction not implemented for read pattern: {}'.format(readpatt))
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
