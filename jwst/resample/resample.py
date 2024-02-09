@@ -418,10 +418,7 @@ class ResampleData:
                 model.meta.wcs.bounding_box
             )
 
-            try:
-                iscale = model.meta.iscale
-            except AttributeError:
-                iscale = 1.0
+            iscale = model.meta.iscale
 
             # Resample the variance array. Fill "unpopulated" pixels with NaNs.
             self.drizzle_arrays(
