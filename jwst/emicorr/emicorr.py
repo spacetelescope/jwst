@@ -191,10 +191,13 @@ def apply_emicorr(input_model, emicorr_model,
                 reference_wave_list.append(ref_wave)
     else:
         # if we got here, the user requested to do correction with on-the-fly reference file
-        if subarray in subarray_clocks:
-            subname = subarray
-            if subname == 'FULL':
-                subname += '_' + readpatt
+        subname = subarray
+        if subname == 'FULL':
+            if 'FAST' in readpatt.upper():
+                subname += '_FAST'
+            elif 'SLOW' in readpatt.upper():
+                subname += '_SLOW'
+        if subname in subarray_clocks:
             rowclocks = subarray_clocks[subname]['rowclocks']
             frameclocks = subarray_clocks[subname]['frameclocks']
             freqs_numbers = onthefly_corr_freq
