@@ -71,50 +71,42 @@ class AmiAnalyzeStep(Step):
         self.log.info(f'Initial rotation guess = {rotate} deg')
         self.log.info(f'Initial values to use for psf offset = {psf_offset}')
 
-        # Open the input data model. Can be 2D or 3D image, so use general DataModel
-        try:
-            input_model = datamodels.DataModel(input)
-        except ValueError as err:
-            raise RuntimeError(f"{err}. Input unable to be read into a DataModel.")
-
         # Make sure oversample is odd
         if oversample % 2 == 0:
             raise ValueError("Oversample value must be an odd integer.")
 
-        # Get the name of the filter throughput reference file to use
-        throughput_reffile = self.get_reference_file(input_model, 'throughput')
-        self.log.info(f'Using filter throughput reference file {throughput_reffile}')
+        # Open the input data model. Can be 2D or 3D image
+        with datamodels.open(input) as input_model:
+            # Get the name of the filter throughput reference file to use
+            throughput_reffile = self.get_reference_file(input_model, 'throughput')
+            self.log.info(f'Using filter throughput reference file {throughput_reffile}')
 
-        # Check for a valid reference file or user-provided bandpass
-        if (throughput_reffile == 'N/A') & (bandpass is None):
-            self.log.warning('No THROUGHPUT reference file found')
-            self.log.warning('AMI analyze step will be skipped')
-            raise RuntimeError("No throughput reference file found. "
-                               "ami_analyze cannot continue.")
+            # Check for a valid reference file or user-provided bandpass
+            if (throughput_reffile == 'N/A') & (bandpass is None):
+                self.log.warning('No THROUGHPUT reference file found')
+                self.log.warning('AMI analyze step will be skipped')
+                raise RuntimeError("No throughput reference file found. "
+                                   "ami_analyze cannot continue.")
 
-        # Open the filter throughput reference file
-        throughput_model = datamodels.ThroughputModel(throughput_reffile)
+            # Get the name of the NRM reference file to use
+            nrm_reffile = self.get_reference_file(input_model, 'nrm')
+            self.log.info(f'Using NRM reference file {nrm_reffile}')
 
-        # Get the name of the NRM reference file to use
-        nrm_reffile = self.get_reference_file(input_model, 'nrm')
-        self.log.info(f'Using NRM reference file {nrm_reffile}')
-
-        # Open the the NRM reference file
-        nrm_model = datamodels.NRMModel(nrm_reffile)
-
-        # Apply the LG+ methods to the data
-        oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(input_model,
-                                                    throughput_model,
-                                                    nrm_model,
-                                                    oversample, rotate,
-                                                    psf_offset,
-                                                    rotsearch_parameters,
-                                                    src, bandpass, usebp, 
-                                                    firstfew, chooseholes, affine2d,
-                                                    run_bpfix)
-
-        # Close the reference file and update the step status
-        throughput_model.close()
+            with (
+                datamodels.ThroughputModel(throughput_reffile) as throughput_model,
+                datamodels.NRMModel(nrm_reffile) as nrm_model,
+            ):
+                # Apply the LG+ methods to the data
+                oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(
+                    input_model,
+                    throughput_model,
+                    nrm_model,
+                    oversample, rotate,
+                    psf_offset,
+                    rotsearch_parameters,
+                    src, bandpass, usebp,
+                    firstfew, chooseholes, affine2d,
+                    run_bpfix)
 
         amilgmodel.meta.cal_step.ami_analyze = 'COMPLETE'
         oifitsmodel.meta.cal_step.ami_analyze = 'COMPLETE'
