@@ -367,10 +367,7 @@ class ResampleData:
         self.output_models.append(output_model)
 
         for img in self.input_models:
-            try:
-                del img.meta.iscale
-            except AttributeError:
-                pass
+            del img.meta.iscale
 
         return self.output_models
 
