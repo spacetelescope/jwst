@@ -1391,7 +1391,7 @@ def get_cw_beta(bandpass):
     return cw, beta
 
 
-def cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
+def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
     """ use the global header values explicitly, for clarity 
         vec is 2d, units of pixels
         cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
@@ -1418,8 +1418,8 @@ def degrees_per_pixel(datamodel):
         dxpix  =  np.array((1.0, 0.0)) # axis 1 step
         dypix  =  np.array((0.0, 1.0)) # axis 2 step
         # transform pixel x and y steps to RA-tan, Dec-tan degrees
-        dxsky = cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
-        dysky = cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
+        dxsky = _cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
+        dysky = _cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
         log.info("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
     elif 'cdelt1' in wcsinfo and 'cdelt2' in wcsinfo:
