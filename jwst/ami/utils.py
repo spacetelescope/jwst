@@ -3,6 +3,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from . import matrix_dft
 
 import logging
+import warnings
 import numpy as np
 import numpy.fft as fft
 from scipy.integrate import simpson
@@ -1227,83 +1228,77 @@ def get_src_spec(sptype):
 
     Parameters
     ----------
-    sptype: string or synphot.Spectrum
-        valid source string (e.g. "A0V") or existing synphot Spectrum object
+    src: string
+        valid source string (e.g. "A0V")
         Defaults to A0V spectral type if input string not recognized.
 
     Returns
     -------
     synphot Spectrum object
     """
-    # check if it's already a synphot spectrum
-    if isinstance(sptype, synphot.spectrum.SourceSpectrum):
-        log.info('Input is a synphot spectrum')
-        return sptype
-    else:
-        # phoenix model lookup table used in JWST ETCs
-        lookuptable = {
-            "O3V": (45000, 0.0, 4.0),
-            "O5V": (41000, 0.0, 4.5),
-            "O7V": (37000, 0.0, 4.0),
-            "O9V": (33000, 0.0, 4.0),
-            "B0V": (30000, 0.0, 4.0),
-            "B1V": (25000, 0.0, 4.0),
-            "B3V": (19000, 0.0, 4.0),
-            "B5V": (15000, 0.0, 4.0),
-            "B8V": (12000, 0.0, 4.0),
-            "A0V": (9500, 0.0, 4.0),
-            "A1V": (9250, 0.0, 4.0),
-            "A3V": (8250, 0.0, 4.0),
-            "A5V": (8250, 0.0, 4.0),
-            "F0V": (7250, 0.0, 4.0),
-            "F2V": (7000, 0.0, 4.0),
-            "F5V": (6500, 0.0, 4.0),
-            "F8V": (6250, 0.0, 4.5),
-            "G0V": (6000, 0.0, 4.5),
-            "G2V": (5750, 0.0, 4.5),
-            "G5V": (5750, 0.0, 4.5),
-            "G8V": (5500, 0.0, 4.5),
-            "K0V": (5250, 0.0, 4.5),
-            "K2V": (4750, 0.0, 4.5),
-            "K5V": (4250, 0.0, 4.5),
-            "K7V": (4000, 0.0, 4.5),
-            "M0V": (3750, 0.0, 4.5),
-            "M2V": (3500, 0.0, 4.5),
-            "M5V": (3500, 0.0, 5.0),
-            "B0III": (29000, 0.0, 3.5),
-            "B5III": (15000, 0.0, 3.5),
-            "G0III": (5750, 0.0, 3.0),
-            "G5III": (5250, 0.0, 2.5),
-            "K0III": (4750, 0.0, 2.0),
-            "K5III": (4000, 0.0, 1.5),
-            "M0III": (3750, 0.0, 1.5),
-            "O6I": (39000, 0.0, 4.5),
-            "O8I": (34000, 0.0, 4.0),
-            "B0I": (26000, 0.0, 3.0),
-            "B5I": (14000, 0.0, 2.5),
-            "A0I": (9750, 0.0, 2.0),
-            "A5I": (8500, 0.0, 2.0),
-            "F0I": (7750, 0.0, 2.0),
-            "F5I": (7000, 0.0, 1.5),
-            "G0I": (5500, 0.0, 1.5),
-            "G5I": (4750, 0.0, 1.0),
-            "K0I": (4500, 0.0, 1.0),
-            "K5I": (3750, 0.0, 0.5),
-            "M0I": (3750, 0.0, 0.0),
-            "M2I": (3500, 0.0, 0.0)}
-        try:
-            keys = lookuptable[sptype]
-        except KeyError:
-            log.info(
-                "\n WARNING!!! \n Input spectral type %s did not match any in the catalog. Defaulting to A0V." % sptype)
-            log.info("Accepted spectral type strings are: \n %s" % lookuptable.keys())
-            keys = lookuptable["A0V"]
-        try:
-            return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
-        except IOError:
-            errmsg = ("Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the " +
-                      "lookup table, and/or that synphot is installed properly.".format())
-            raise LookupError(errmsg)
+    # phoenix model lookup table used in JWST ETCs
+    lookuptable = {
+        "O3V": (45000, 0.0, 4.0),
+        "O5V": (41000, 0.0, 4.5),
+        "O7V": (37000, 0.0, 4.0),
+        "O9V": (33000, 0.0, 4.0),
+        "B0V": (30000, 0.0, 4.0),
+        "B1V": (25000, 0.0, 4.0),
+        "B3V": (19000, 0.0, 4.0),
+        "B5V": (15000, 0.0, 4.0),
+        "B8V": (12000, 0.0, 4.0),
+        "A0V": (9500, 0.0, 4.0),
+        "A1V": (9250, 0.0, 4.0),
+        "A3V": (8250, 0.0, 4.0),
+        "A5V": (8250, 0.0, 4.0),
+        "F0V": (7250, 0.0, 4.0),
+        "F2V": (7000, 0.0, 4.0),
+        "F5V": (6500, 0.0, 4.0),
+        "F8V": (6250, 0.0, 4.5),
+        "G0V": (6000, 0.0, 4.5),
+        "G2V": (5750, 0.0, 4.5),
+        "G5V": (5750, 0.0, 4.5),
+        "G8V": (5500, 0.0, 4.5),
+        "K0V": (5250, 0.0, 4.5),
+        "K2V": (4750, 0.0, 4.5),
+        "K5V": (4250, 0.0, 4.5),
+        "K7V": (4000, 0.0, 4.5),
+        "M0V": (3750, 0.0, 4.5),
+        "M2V": (3500, 0.0, 4.5),
+        "M5V": (3500, 0.0, 5.0),
+        "B0III": (29000, 0.0, 3.5),
+        "B5III": (15000, 0.0, 3.5),
+        "G0III": (5750, 0.0, 3.0),
+        "G5III": (5250, 0.0, 2.5),
+        "K0III": (4750, 0.0, 2.0),
+        "K5III": (4000, 0.0, 1.5),
+        "M0III": (3750, 0.0, 1.5),
+        "O6I": (39000, 0.0, 4.5),
+        "O8I": (34000, 0.0, 4.0),
+        "B0I": (26000, 0.0, 3.0),
+        "B5I": (14000, 0.0, 2.5),
+        "A0I": (9750, 0.0, 2.0),
+        "A5I": (8500, 0.0, 2.0),
+        "F0I": (7750, 0.0, 2.0),
+        "F5I": (7000, 0.0, 1.5),
+        "G0I": (5500, 0.0, 1.5),
+        "G5I": (4750, 0.0, 1.0),
+        "K0I": (4500, 0.0, 1.0),
+        "K5I": (3750, 0.0, 0.5),
+        "M0I": (3750, 0.0, 0.0),
+        "M2I": (3500, 0.0, 0.0)}
+    try:
+        keys = lookuptable[sptype]
+    except KeyError:
+        warnings.warn(f"Input spectral type {sptype} did not match any in the catalog. Defaulting to A0V.")
+        keys = lookuptable["A0V"]
+    try:
+        return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
+    except IOError:
+        errmsg = ("Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the " +
+                  "lookup table, and/or that synphot is installed properly.".format())
+        raise LookupError(errmsg)
+
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
     """
