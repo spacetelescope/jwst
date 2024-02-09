@@ -14,7 +14,7 @@ def test_ami_analyze_cube_fail():
     model.meta.instrument.filter = "F277W"
     model.meta.observation.date = "2019-01-01"
     model.meta.observation.time = "00:00:00"
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="Input must be a 2D ImageModel."):
         AmiAnalyzeStep.call(model)
 
 
@@ -30,5 +30,5 @@ def test_ami_analyze_no_reffile_fail(monkeypatch):
         return "N/A"
     monkeypatch.setattr(stpipe.crds_client, 'get_reference_file', mockreturn)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="No throughput reference file found."):
         AmiAnalyzeStep.call(model)
