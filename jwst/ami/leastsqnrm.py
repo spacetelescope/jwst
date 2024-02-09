@@ -592,7 +592,6 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
         log.info(f'\n\tflatmodel_nan {flatmodel_nan.shape:}', end='')
         log.info(f'\n\tflatmodel     {flatmodel.shape:}', end='')
         log.info(f'\n\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}', end='')
-        log.info()
         log.info("flat model dimensions ", np.shape(flatmodel))
         log.info("flat image dimensions ", np.shape(flatimg))
 
