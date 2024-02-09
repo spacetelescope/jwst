@@ -119,7 +119,7 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
                                   pixel=pitch, affine2d=affine2d, minus=False) + \
         np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
                         pixel=pitch, affine2d=affine2d, minus=True)
-
-    hex_complex[int(c[0]), int(c[1])] = (np.sqrt(3) / 2.0)
+    fudge = np.sqrt(4.0) # this gives the analytic central PSF correctly.
+    hex_complex[int(c[0]),int(c[1])] = fudge * (np.sqrt(3) / 4.0)
 
     return hex_complex

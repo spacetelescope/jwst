@@ -185,7 +185,6 @@ class FringeFitter:
 
         """
 
-
         nrm = lg_model.NrmModel(mask=self.instrument_data.mask,
                                 pixscale=self.instrument_data.pscale_rad,
                                 holeshape=self.instrument_data.holeshape,

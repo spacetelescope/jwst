@@ -4,7 +4,6 @@ import numpy as np
 import copy
 import synphot
 
-
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
@@ -151,7 +150,22 @@ def apply_LG_plus(input_model,
     if affine2d is None:
         # affine2d object, can be overridden by user input affine.
         # do rotation search on uncropped median image (assuming rotation constant over exposure)
+        # replace remaining NaNs in median image with median of surrounding 8 (non-NaN) pixels
+        # (only used for centroiding in rotation search)
         meddata = np.median(data,axis=0)
+        nan_locations = np.where(np.isnan(meddata))
+        log.info(f'Replacing {len(nan_locations[0])} NaNs in median image with median of surrounding pixels')
+        box_size = 3
+        hbox = int(box_size / 2)
+        for i_pos in range(len(nan_locations[0])):
+            y_box = nan_locations[0][i_pos]
+            x_box = nan_locations[1][i_pos]
+            box = meddata[y_box - hbox:y_box + hbox + 1, x_box - hbox: x_box + hbox + 1]
+            median_fill = np.nanmedian(box)
+            if np.isnan(median_fill):
+                median_fill = 0 # not ideal
+            meddata[y_box, x_box] = median_fill
+
         affine2d = find_rotation(meddata, psf_offset, rotsearch_d,
                                  mx, my, sx, sy, xo, yo,
                                  PIXELSCALE_r, dim, bandpass, oversample, holeshape)
