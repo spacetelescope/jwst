@@ -1194,6 +1194,7 @@ def img_median_replace(img_model, box_size):
 
     return img_model
 
+
 def get_filt_spec(throughput_model):
     """
     Short Summary
@@ -1210,13 +1211,13 @@ def get_filt_spec(throughput_model):
     -------
     band: synphot Spectrum object
     """
-    
     thruput = throughput_model.filter_table
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
     tr_list = np.asarray([tup[1] for tup in thruput])
     band = synphot.spectrum.SpectralElement(synphot.models.Empirical1D, points=wl_list,
                                             lookup_table=tr_list, keep_neg=False)
     return band
+
 
 def get_src_spec(sptype):
     """
