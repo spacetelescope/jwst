@@ -16,7 +16,7 @@ cube_build
 datamodels
 ----------
 
-- Fixed a bug in the ``ModelContiner`` due to which ``models_grouped``
+- Fixed a bug in the ``ModelContainer`` data model, due to which the ``models_grouped``
   property would return opened data models instead of file names. [#8191]
 
 documentation
