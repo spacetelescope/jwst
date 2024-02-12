@@ -86,11 +86,6 @@ class ResampleSpecStep(ResampleStep):
         kwargs['allowed_memory'] = self.allowed_memory
         kwargs['output'] = output
 
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
         # Call resampling
         self.drizpars = kwargs
 
