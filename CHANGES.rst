@@ -47,7 +47,7 @@ extract_2d
 ----------
 
 - Fixed crash when user provides slit_name, and value is a string. This
-  change had been done in PR8108 but it got undone by another PR. []
+  change had been done in PR8108 but it got undone by another PR. [#8272]
 
 outlier_detection
 -----------------
