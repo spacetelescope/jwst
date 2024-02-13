@@ -146,7 +146,7 @@ def run_extract1d_spsolve_failure(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-def test_extract1d_null_order2(rtdata_module, run_extract1d_spsolve_failure, fitsdiff_default_kwargs):
+def test_extract1d_spsolve_failure(rtdata_module, run_extract1d_spsolve_failure, fitsdiff_default_kwargs):
     rtdata = rtdata_module
 
     output = "jw04098007001_04101_00001-seg003_nis_int01_extract1dstep.fits"
