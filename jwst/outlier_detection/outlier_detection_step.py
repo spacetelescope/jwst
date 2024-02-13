@@ -183,7 +183,7 @@ class OutlierDetectionStep(Step):
                         median_path = blot_path.replace('blot', 'median')
 
                         for fle in [outlr_file, blot_path, median_path]:
-                            if os.path.isfile(fle) and 'tweakreg' not in fle:
+                            if os.path.isfile(fle):
                                 os.remove(fle)
                                 self.log.debug(f"    {fle}")
             else:
