@@ -1354,7 +1354,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
                                                width=deltawave) * bandpass
 
         binset = np.linspace(wave - deltawave, wave + deltawave,
-                             30)  
+                             30)
         binset = binset[binset >= 0]  # remove any negative values
         result = synphot.observation.Observation(srcspec, box, binset=binset).effstim('count', area=area)
         effstims.append(result)
@@ -1378,7 +1378,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
 
 
 def get_cw_beta(bandpass):
-    """ 
+    """
     Bandpass: array where the columns are weights, wavelengths
     Return weighted mean wavelength in meters, fractional bandpass
     """
@@ -1392,7 +1392,7 @@ def get_cw_beta(bandpass):
 
 
 def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
-    """ use the global header values explicitly, for clarity 
+    """ use the global header values explicitly, for clarity
         vec is 2d, units of pixels
         cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
     """
@@ -1401,7 +1401,7 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
 
 def degrees_per_pixel(datamodel):
     """
-    Get pixel scale info from data model 
+    Get pixel scale info from data model
     (instead of header as in ImPlaneia InstrumentData.NIRISS.degrees_per_pixel).
     If it fails to find the right keywords, use 0.0656 as/pixel
     Input: datamodel object

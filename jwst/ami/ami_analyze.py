@@ -13,11 +13,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def apply_LG_plus(input_model, throughput_model,
+def apply_LG_plus(
+                input_model,
+                throughput_model,
                 nrm_model,
                 oversample, rotation,
-                psf_offset, rotsearch_parameters, 
-                src, bandpass, usebp, firstfew, 
+                psf_offset, rotsearch_parameters,
+                src, bandpass, usebp, firstfew,
                 chooseholes, affine2d, run_bpfix
                 ):
     """
@@ -136,12 +138,13 @@ def apply_LG_plus(input_model, throughput_model,
         log.info(f'Getting source spectrum for spectral type {src}.')
         src_spec = utils.get_src_spec(src) # always going to be A0V currently
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
-        bandpass = utils.combine_src_filt(filt_spec, 
-                                      src_spec, 
-                                      trim=0.01, 
-                                      nlambda=nspecbin,
-                                      plot=False) 
-            
+        bandpass = utils.combine_src_filt(
+            filt_spec,
+            src_spec,
+            trim=0.01,
+            nlambda=nspecbin,
+            plot=False
+        )
 
     rotsearch_d = np.append(np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
                             rotsearch_parameters[1])
@@ -163,7 +166,7 @@ def apply_LG_plus(input_model, throughput_model,
             box = meddata[y_box - hbox:y_box + hbox + 1, x_box - hbox: x_box + hbox + 1]
             median_fill = np.nanmedian(box)
             if np.isnan(median_fill):
-                median_fill = 0 # not ideal
+                median_fill = 0  # not ideal
             meddata[y_box, x_box] = median_fill
 
         affine2d = find_rotation(meddata, psf_offset, rotsearch_d,
@@ -180,16 +183,15 @@ def apply_LG_plus(input_model, throughput_model,
                                     chooseholes=chooseholes,
                                     run_bpfix=run_bpfix)
 
-    ff_t = nrm_core.FringeFitter(niriss, 
-                                psf_offset_ff=psf_offset_ff,
-                                oversample=oversample)
+    ff_t = nrm_core.FringeFitter(niriss,
+                                 psf_offset_ff=psf_offset_ff,
+                                 oversample=oversample)
 
     oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
-
 
     # Copy header keywords from input to outputs
     oifitsmodel.update(input_model, only="PRIMARY")
     oifitsmodel_multi.update(input_model, only="PRIMARY")
     amilgmodel.update(input_model, only="PRIMARY")
-    
+
     return oifitsmodel, oifitsmodel_multi, amilgmodel

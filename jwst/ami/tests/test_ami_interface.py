@@ -9,11 +9,17 @@ from jwst.ami import AmiAnalyzeStep
 
 @pytest.fixture()
 def example_model():
-    model = datamodels.CubeModel((25, 19, 19))
+    model = datamodels.CubeModel((69, 80, 80))
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "F277W"
+    model.meta.subarray.name = "SUB80"
     model.meta.observation.date = "2019-01-01"
     model.meta.observation.time = "00:00:00"
+    model.meta.target.proposer_name = ""
+    model.meta.target.catalog_name = ""
+    model.meta.visit.start_time = "2022-06-05 12:15:41.5020000"
+    model.meta.pointing.pa_v3 = 171.8779402866089
+    model.meta.wcsinfo.v3yangle = 0.56126717
     return model
 
 
@@ -33,3 +39,7 @@ def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
 
     with pytest.raises(RuntimeError, match="No throughput reference file found."):
         AmiAnalyzeStep.call(example_model)
+
+
+def test_ami_analyze_step(example_model):
+    AmiAnalyzeStep.call(example_model)

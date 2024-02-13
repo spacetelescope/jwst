@@ -14,13 +14,6 @@ log.addHandler(logging.NullHandler())
 log.setLevel(logging.DEBUG)
 
 
-# define phi at the center of F430M band:
-# phi_nb = np.array([0.028838669455909766, -0.061516214504502634,
-#                    0.12390958557781348, -0.020389361461019516,
-#                    0.016557347248600723, -0.03960017912525625,
-#                    -0.04779984719154552])  # phi in waves
-# phi_nb = phi_nb * 4.3e-6  # phi_nb in m
-
 m = 1.0
 mm = 1.0e-3 * m
 um = 1.0e-6 * m
@@ -96,42 +89,16 @@ class NrmModel:
         # get these from mask_definitions instead
         if mask is None:
             log.info("No mask name specified for model, using jwst_g7s6c")
-            mask = mask_definitions.NRM_mask_definitions(maskname="jwst_g7s6c", 
-                                    chooseholes=chooseholes, 
+            mask = mask_definitions.NRM_mask_definitions(maskname="jwst_g7s6c",
+                                    chooseholes=chooseholes,
                                     holeshape="hex")
         elif isinstance(mask, str):
-            mask = mask_definitions.NRM_mask_definitions(maskname=mask, 
-                                    chooseholes=chooseholes, 
+            mask = mask_definitions.NRM_mask_definitions(maskname=mask,
+                                    chooseholes=chooseholes,
                                     holeshape="hex")
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
-
-        # if mask.lower() == 'jwst':
-        #     """
-        #     Preserve ctrs.as_designed (treat as immutable)
-        #     Reverse V2 axis coordinates to close C5 open C2, and others
-        #         follow suit...
-        #     Preserve ctrs.as_built  (treat as immutable)
-        #     """
-        #     self.ctrs_asbuilt = self.ctrs_asdesigned.copy()
-
-        #     # create 'live' hole centers in an ideal, orthogonal undistorted
-        #     #    xy pupil space,
-        #     # eg maps open hole C5 in as_designed to C2 as_built, eg C4
-        #     #    unaffected....
-        #     self.ctrs_asbuilt[:, 0] *= -1
-
-        #     # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
-        #     # no affine2d transformations 8/2018 AS
-        #     # LG++ The above aligns the hole pattern with the hex analytic FT,
-        #     # flat top & bottom as seen in DMS data. 8/2018 AS
-        #     # overwrites attributes:
-        #     self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi / 2.0)
-
-        #     # create 'live' hole centers in an ideal, orthogonal undistorted xy
-        #     #    pupil space,
-        #     self.ctrs = self.ctrs_asbuilt.copy()
 
         self.N = len(self.ctrs)
         self.datapath = datapath
@@ -361,7 +328,7 @@ class NrmModel:
             bad pixel mask of same dimensions as image
 
         weighted: boolean
-            weight 
+            weight
 
         Returns
         -------
