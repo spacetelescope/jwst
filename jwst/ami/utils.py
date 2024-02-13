@@ -8,7 +8,6 @@ import numpy as np
 import numpy.fft as fft
 from scipy.integrate import simpson
 from astropy import units as u
-import matplotlib.pyplot as plt
 
 import synphot
 from stsynphot import grid_to_spec
@@ -1195,7 +1194,6 @@ def img_median_replace(img_model, box_size):
 
     return img_model
 
-
 def get_filt_spec(throughput_model):
     """
     Short Summary
@@ -1299,8 +1297,7 @@ def get_src_spec(sptype):
                   "lookup table, and/or that synphot is installed properly.".format())
         raise LookupError(errmsg)
 
-
-def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
+def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     """
     Short Summary
     ------------
@@ -1363,14 +1360,6 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
     effstims /= effstims.sum()  # Normalized count rate (total=1) is unitless
     wave_m = wavesteps.to_value(u.m)  # convert to meters
     effstims = effstims.to_value()  # strip units
-
-    if plot:
-        fig, ax = plt.subplots(figsize=(7, 5))
-        ax.plot(wave_m, effstims)
-        ax.set_xlabel(r"$\lambda$ [m]")
-        ax.set_ylabel("Throughput")
-        ax.set_title("Combined Binned Spectrum (filter and source)")
-        plt.show()
 
     finalsrc = np.array((effstims,wave_m)).T # this is the order expected by InstrumentData
 

@@ -143,7 +143,6 @@ def apply_LG_plus(
             src_spec,
             trim=0.01,
             nlambda=nspecbin,
-            plot=False
         )
 
     rotsearch_d = np.append(np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
