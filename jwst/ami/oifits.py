@@ -573,7 +573,6 @@ class RawOifits:
 
             uvlist.append((self.ctrs_eqt[triple[0]] - self.ctrs_eqt[triple[1]],
                            self.ctrs_eqt[triple[1]] - self.ctrs_eqt[triple[2]]))
-        # print(len(uvlist), "uvlist", uvlist)
 
         return tarray, np.array(uvlist)
 
