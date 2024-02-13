@@ -1032,6 +1032,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     transform = soss_kwargs.pop('transform')
     if transform is None:
         transform = [None, None, None]
+    else:
+        transform = [float(val) for val in transform]
     # Save names for logging
     param_name = np.array(['theta', 'x-offset', 'y-offset'])
 
