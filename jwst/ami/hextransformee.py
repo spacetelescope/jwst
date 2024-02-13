@@ -120,11 +120,26 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     if abs(d1) < 0.5 * eps_offset:  # might have the singular central pixel here
         c_adjust[1] = c[1] + eps_offset
 
-    hex_complex = np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
-                                  pixel=pitch, affine2d=affine2d, minus=False) + \
-        np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
-                        pixel=pitch, affine2d=affine2d, minus=True)
-    fudge = np.sqrt(4.0) # this gives the analytic central PSF correctly.
-    hex_complex[int(c[0]),int(c[1])] = fudge * (np.sqrt(3) / 4.0)
+    hex_complex = np.fromfunction(
+        gfunction,
+        s,
+        d=d,
+        c=c_adjust,
+        lam=lam,
+        pixel=pitch,
+        affine2d=affine2d,
+        minus=False,
+    ) + np.fromfunction(
+        gfunction,
+        s,
+        d=d,
+        c=c_adjust,
+        lam=lam,
+        pixel=pitch,
+        affine2d=affine2d,
+        minus=True,
+    )
+    fudge = np.sqrt(4.0)  # this gives the analytic central PSF correctly.
+    hex_complex[int(c[0]), int(c[1])] = fudge * (np.sqrt(3) / 4.0)
 
     return hex_complex

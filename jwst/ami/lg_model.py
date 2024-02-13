@@ -99,13 +99,13 @@ class NrmModel:
         # get these from mask_definitions instead
         if mask is None:
             log.info("No mask name specified for model, using jwst_g7s6c")
-            mask = mask_definitions.NRM_mask_definitions(maskname="jwst_g7s6c",
-                                    chooseholes=chooseholes,
-                                    holeshape="hex")
+            mask = mask_definitions.NRM_mask_definitions(
+                maskname="jwst_g7s6c", chooseholes=chooseholes, holeshape="hex"
+            )
         elif isinstance(mask, str):
-            mask = mask_definitions.NRM_mask_definitions(maskname=mask,
-                                    chooseholes=chooseholes,
-                                    holeshape="hex")
+            mask = mask_definitions.NRM_mask_definitions(
+                maskname=mask, chooseholes=chooseholes, holeshape="hex"
+            )
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
@@ -167,7 +167,7 @@ class NrmModel:
         -------
         Object's 'psf': float 2D array
             simulated psf
-        '''
+        """
         # why are we making this FITS object?
         self.simhdr = fits.PrimaryHDU().header
         # First set up conditions for choosing various parameters
@@ -175,6 +175,9 @@ class NrmModel:
 
         if over is None:
             over = 1  # ?  Always comes in as integer.
+
+        self.simhdr["OVER"] = (over, "sim pix = det pix/over")
+        self.simhdr["PIX_OV"] = (self.pixel / float(over), "Sim pixel scale in radians")
 
         self.psf_over = np.zeros((over * fov, over * fov))
         nspec = 0
@@ -297,8 +300,18 @@ class NrmModel:
 
         return self.model
 
-    def fit_image(self, image, reference=None, pixguess=None, rotguess=0,
-                  psf_offset=(0, 0), modelin=None, savepsfs=False, dqm=None, weighted=False):
+    def fit_image(
+        self,
+        image,
+        reference=None,
+        pixguess=None,
+        rotguess=0,
+        psf_offset=(0, 0),
+        modelin=None,
+        savepsfs=False,
+        dqm=None,
+        weighted=False,
+    ):
         """
         Short Summary
         -------------
@@ -381,12 +394,13 @@ class NrmModel:
         else:
             self.fittingmodel = modelin
         if self.weighted is False:
-            self.soln, self.residual, self.cond, \
-                self.linfit_result = \
+            self.soln, self.residual, self.cond, self.linfit_result = (
                 leastsqnrm.matrix_operations(image, self.fittingmodel, dqm=dqm)
+            )
         else:
-            self.soln, self.residual, self.cond, self.singvals = leastsqnrm.weighted_operations(image, \
-                            self.fittingmodel, dqm=dqm)
+            self.soln, self.residual, self.cond, self.singvals = (
+                leastsqnrm.weighted_operations(image, self.fittingmodel, dqm=dqm)
+            )
 
         self.rawDC = self.soln[-1]
         self.flux = self.soln[0]

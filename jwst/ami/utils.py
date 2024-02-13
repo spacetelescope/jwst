@@ -1253,8 +1253,9 @@ def get_filt_spec(throughput_model):
     thruput = throughput_model.filter_table
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
     tr_list = np.asarray([tup[1] for tup in thruput])
-    band = synphot.spectrum.SpectralElement(synphot.models.Empirical1D, points=wl_list,
-                                            lookup_table=tr_list, keep_neg=False)
+    band = synphot.spectrum.SpectralElement(
+        synphot.models.Empirical1D, points=wl_list, lookup_table=tr_list, keep_neg=False
+    )
     return band
 
 
@@ -1324,18 +1325,24 @@ def get_src_spec(sptype):
         "K0I": (4500, 0.0, 1.0),
         "K5I": (3750, 0.0, 0.5),
         "M0I": (3750, 0.0, 0.0),
-        "M2I": (3500, 0.0, 0.0)}
+        "M2I": (3500, 0.0, 0.0),
+    }
     try:
         keys = lookuptable[sptype]
     except KeyError:
-        warnings.warn(f"Input spectral type {sptype} did not match any in the catalog. Defaulting to A0V.")
+        warnings.warn(
+            f"Input spectral type {sptype} did not match any in the catalog. Defaulting to A0V."
+        )
         keys = lookuptable["A0V"]
     try:
-        return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
+        return grid_to_spec("phoenix", keys[0], keys[1], keys[2])
     except IOError:
-        errmsg = ("Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the " +
-                  "lookup table, and/or that synphot is installed properly.".format())
+        errmsg = (
+            "Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the "
+            + "lookup table, and/or that synphot is installed properly.".format()
+        )
         raise LookupError(errmsg)
+
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     """
@@ -1373,7 +1380,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
         wl_filt, th_filt = wl_filt[low_idx:high_idx], th_filt[low_idx:high_idx]
     ptsin = len(wl_filt)
     if nlambda is None:
-        nlambda = ptsin # Don't bin throughput
+        nlambda = ptsin  # Don't bin throughput
     # get effstim for bins of wavelengths
     minwave, maxwave = wl_filt.min(), wl_filt.max()  # trimmed or not
     wave_bin_edges = np.linspace(minwave, maxwave, nlambda + 1)
@@ -1390,10 +1397,11 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
         box = synphot.spectrum.SpectralElement(synphot.models.Box1D, amplitude=1, x_0=wave,
                                                width=deltawave) * bandpass
 
-        binset = np.linspace(wave - deltawave, wave + deltawave,
-                             30)
+        binset = np.linspace(wave - deltawave, wave + deltawave, 30)
         binset = binset[binset >= 0]  # remove any negative values
-        result = synphot.observation.Observation(srcspec, box, binset=binset).effstim('count', area=area)
+        result = synphot.observation.Observation(srcspec, box, binset=binset).effstim(
+            "count", area=area
+        )
         effstims.append(result)
 
     effstims = u.Quantity(effstims)
@@ -1401,7 +1409,9 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     wave_m = wavesteps.to_value(u.m)  # convert to meters
     effstims = effstims.to_value()  # strip units
 
-    finalsrc = np.array((effstims,wave_m)).T # this is the order expected by InstrumentData
+    finalsrc = np.array(
+        (effstims, wave_m)
+    ).T  # this is the order expected by InstrumentData
 
     return finalsrc
 
@@ -1411,21 +1421,23 @@ def get_cw_beta(bandpass):
     Bandpass: array where the columns are weights, wavelengths
     Return weighted mean wavelength in meters, fractional bandpass
     """
-    wt = bandpass[:,0]
-    wl = bandpass[:,1]
-    cw = (wl*wt).sum()/wt.sum() # Weighted mean wavelength in meters "central wavelength"
+    wt = bandpass[:, 0]
+    wl = bandpass[:, 1]
+    cw = (
+        wl * wt
+    ).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
     area = simpson(wt, x=wl)
-    ew = area / wt.max() # equivalent width
-    beta = ew/cw # fractional bandpass
+    ew = area / wt.max()  # equivalent width
+    beta = ew / cw  # fractional bandpass
     return cw, beta
 
 
 def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
-    """ use the global header values explicitly, for clarity
-        vec is 2d, units of pixels
-        cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
+    """use the global header values explicitly, for clarity
+    vec is 2d, units of pixels
+    cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
     """
-    return np.array((cd11*vec[0] + cd12*vec[1], cd21*vec[0] + cd22*vec[1]))
+    return np.array((cd11 * vec[0] + cd12 * vec[1], cd21 * vec[0] + cd22 * vec[1]))
 
 
 def degrees_per_pixel(datamodel):
@@ -1437,23 +1449,29 @@ def degrees_per_pixel(datamodel):
     Returns: pixel scale in degrees/pixel
     """
     wcsinfo = datamodel.meta.wcsinfo._instance
-    if 'cd1_1' in wcsinfo and 'cd1_2' in wcsinfo and \
-        'cd2_1' in wcsinfo and 'cd2_2' in wcsinfo:
+    if (
+        "cd1_1" in wcsinfo
+        and "cd1_2" in wcsinfo
+        and "cd2_1" in wcsinfo
+        and "cd2_2" in wcsinfo
+    ):
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2
         cd21 = datamodel.meta.wcsinfo.cd2_1
         cd22 = datamodel.meta.wcsinfo.cd2_2
         # Create unit vectors in detector pixel X and Y directions, units: detector pixels
-        dxpix  =  np.array((1.0, 0.0)) # axis 1 step
-        dypix  =  np.array((0.0, 1.0)) # axis 2 step
+        dxpix = np.array((1.0, 0.0))  # axis 1 step
+        dypix = np.array((0.0, 1.0))  # axis 2 step
         # transform pixel x and y steps to RA-tan, Dec-tan degrees
         dxsky = _cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
         dysky = _cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
         log.info("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
-    elif 'cdelt1' in wcsinfo and 'cdelt2' in wcsinfo:
+    elif "cdelt1" in wcsinfo and "cdelt2" in wcsinfo:
         return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
         log.info("Used CDELT[12] for pixel scales")
     else:
-        log.info('WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix')
-        return 65.6/(60.0*60.0*1000), 65.6/(60.0*60.0*1000)
+        log.info(
+            "WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix"
+        )
+        return 65.6 / (60.0 * 60.0 * 1000), 65.6 / (60.0 * 60.0 * 1000)
