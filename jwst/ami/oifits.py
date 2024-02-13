@@ -1,7 +1,5 @@
 #! /usr/bin/env python
-
 """
-
 RawOifits class: takes fringefitter class, which contains nrm_list and instrument_data attributes,
 all info needed to write oifits.
 populate structure needed to write out oifits files according to schema.
@@ -19,7 +17,7 @@ from stdatamodels.jwst import datamodels
 
 
 class RawOifits:
-    def __init__(self, fringefitter, nh=7, angunit="radians", method='median'):
+    def __init__(self, fringefitter, method='median'):
         """
         Short Summary
         -------------
@@ -32,42 +30,27 @@ class RawOifits:
         fringefitter: FringeFitter object
             Object containing nrm_list attribute (list of nrm objects)
             and other info needed for OIFITS files
-        nh: integer
-            default 7, number of holes in the NRM
-        angunit: string
-            Unit of incoming angular quantities (radians or degrees).
-            Will be converted to degrees for OIFITS. Default radians
         method: string
             Method to average observables: mean or median. Default median.
 
 
         """
-        self.ff = fringefitter
-        self.nh = nh # 7
-        self.nslices = len(self.ff.nrm_list) # n ints
-        self.nbl = int(comb(self.nh, 2)) # 21
-        self.ncp = int(comb(self.nh, 3)) # 35
-        self.nca = int(comb(self.nh, 4))
+        self.fringe_fitter = fringefitter
+        self.n_holes = 7
 
-        self.angunit = angunit
+        self.nslices = len(self.fringe_fitter.nrm_list)  # n ints
+        self.nbl = int(comb(self.n_holes, 2))  # 21
+        self.ncp = int(comb(self.n_holes, 3))  # 35
+        self.nca = int(comb(self.n_holes, 4))
+
         self.method = method
 
-
-        if angunit == 'radians':
-            self.degree = 180.0 / np.pi
-        else:
-            self.degree = 1
-
-        self.ctrs_eqt = self.ff.instrument_data.ctrs_eqt
-        self.ctrs_inst = self.ff.instrument_data.ctrs_inst
-        self.pa = self.ff.instrument_data.pav3 # header pav3, not including v3i_yang??
-
+        self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
+        self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
+        self.pa = self.fringe_fitter.instrument_data.pav3  # header pav3, not including v3i_yang??
 
         self.bholes, self.bls = self._makebaselines()
         self.tholes, self.tuv = self._maketriples_all()
-        #self.qholes, self.quvw = self._makequads_all()
-
-        self.make_oifits()
 
     def make_oifits(self):
         """
@@ -107,12 +90,11 @@ class RawOifits:
         self.fa = np.zeros((self.nslices, self.nbl))
         self.cp = np.zeros((self.nslices, self.ncp))
         self.ca = np.zeros((self.nslices, self.nca))
-        self.pistons = np.zeros((self.nslices, self.nh))
+        self.pistons = np.zeros((self.nslices, self.n_holes))
         # model parameters
-        self.solns = np.zeros((self.nslices,44))
+        self.solns = np.zeros((self.nslices, 44))
 
-        for i,nrmslc in enumerate(self.ff.nrm_list):
-            #
+        for i,nrmslc in enumerate(self.fringe_fitter.nrm_list):
             self.fp[i,:] = np.rad2deg(nrmslc.fringephase) # FPs in degrees
             self.fa[i,:] = nrmslc.fringeamp
             self.cp[i,:] = np.rad2deg(nrmslc.redundant_cps) # CPs in degrees
@@ -137,31 +119,24 @@ class RawOifits:
         -------
 
         """
-        info4oif = self.ff.instrument_data
+        instrument_data = self.fringe_fitter.instrument_data
         t = Time('%s-%s-%s' %
-             (info4oif.year, info4oif.month, info4oif.day), format='fits')
+             (instrument_data.year, instrument_data.month, instrument_data.day), format='fits')
 
         # central wavelength, equiv. width from effstims used for fringe fitting
-        wl, e_wl = info4oif.lam_c, info4oif.lam_c*info4oif.lam_w
+        wl = instrument_data.lam_c
+        e_wl = instrument_data.lam_c * instrument_data.lam_w
 
         # Index 0 and 1 reversed to get the good u-v coverage (same fft)
         ucoord = self.bls[:, 1]
         vcoord = self.bls[:, 0]
 
-        # D = 6.5  # Primary mirror display
-
-        # theta = np.linspace(0, 2*np.pi, 100)
-
-        # x = D/2. * np.cos(theta)  # Primary mirror display
-        # y = D/2. * np.sin(theta)
-
         bl_vis = ((ucoord**2 + vcoord**2)**0.5)
 
-        tuv = self.tuv
-        v1coord = tuv[:, 0, 0]
-        u1coord = tuv[:, 0, 1]
-        v2coord = tuv[:, 1, 0]
-        u2coord = tuv[:, 1, 1]
+        v1coord = self.tuv[:, 0, 0]
+        u1coord = self.tuv[:, 0, 1]
+        v2coord = self.tuv[:, 1, 0]
+        u2coord = self.tuv[:, 1, 1]
         u3coord = -(u1coord+u2coord)
         v3coord = -(v1coord+v2coord)
 
@@ -221,7 +196,7 @@ class RawOifits:
             self.pist, _, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
 
         # prepare arrays for OI_ARRAY ext
-        self.staxy = info4oif.ctrs_inst
+        self.staxy = instrument_data.ctrs_inst
         N_ap = len(self.staxy)
         tel_name = ['A%i' % x for x in np.arange(N_ap)+1]
         sta_name = tel_name
@@ -235,8 +210,8 @@ class RawOifits:
 
         sta_index = np.arange(N_ap) + 1
 
-        pscale = info4oif.pscale_mas/1000.  # arcsec
-        isz = self.ff.scidata.shape[1]  # Size of the image to extract NRM data
+        pscale = instrument_data.pscale_mas/1000.  # arcsec
+        isz = self.fringe_fitter.scidata.shape[1]  # Size of the image to extract NRM data
         fov = [pscale * isz] * N_ap
         fovtype = ['RADIUS'] * N_ap
 
@@ -247,7 +222,7 @@ class RawOifits:
                        'VCOORD': vcoord,
                        'STA_INDEX': self._format_STAINDEX_V2(self.bholes),
                        'MJD': t.mjd,
-                       'INT_TIME': info4oif.itime,
+                       'INT_TIME': instrument_data.itime,
                        'TIME': 0,
                        'TARGET_ID': 1,
                        'FLAG': flagVis,
@@ -257,7 +232,7 @@ class RawOifits:
            'OI_VIS': {'TARGET_ID': 1,
                       'TIME': 0,
                       'MJD': t.mjd,
-                      'INT_TIME': info4oif.itime,
+                      'INT_TIME': instrument_data.itime,
                       'VISAMP': self.visamp,
                       'VISAMPERR': self.e_visamp,
                       'VISPHI': self.visphi,
@@ -272,7 +247,7 @@ class RawOifits:
            'OI_T3': {'TARGET_ID': 1,
                      'TIME': 0,
                      'MJD': t.mjd,
-                     'INT_TIME': info4oif.itime,
+                     'INT_TIME': instrument_data.itime,
                      'T3PHI': self.cp,
                      'T3PHIERR': self.e_cp,
                      'T3AMP': self.camp,
@@ -296,45 +271,45 @@ class RawOifits:
                         'STAXYZ': staxyz,
                         'FOV': fov,
                         'FOVTYPE': fovtype,
-                        'CTRS_EQT': info4oif.ctrs_eqt, # mask hole coords rotated to equatorial
+                        'CTRS_EQT': instrument_data.ctrs_eqt, # mask hole coords rotated to equatotial
                         'PISTONS': self.pist,
                         'PIST_ERR': self.e_pist
                         },
 
             'OI_TARGET': {'TARGET_ID':[1],
-                        'TARGET': info4oif.objname,
-                        'RAEP0': info4oif.ra,
-                        'DECEP0': info4oif.dec,
+                        'TARGET': instrument_data.objname,
+                        'RAEP0': instrument_data.ra,
+                        'DECEP0': instrument_data.dec,
                         'EQUINOX': [2000],
-                        'RA_ERR': info4oif.ra_uncertainty,
-                        'DEC_ERR': info4oif.dec_uncertainty,
+                        'RA_ERR': instrument_data.ra_uncertainty,
+                        'DEC_ERR': instrument_data.dec_uncertainty,
                         'SYSVEL': [0],
                         'VELTYP': ['UNKNOWN'],
                         'VELDEF': ['OPTICAL'],
-                        'PMRA': info4oif.pmra,
-                        'PMDEC': info4oif.pmdec,
+                        'PMRA': instrument_data.pmra,
+                        'PMDEC': instrument_data.pmdec,
                         'PMRA_ERR': [0],
                         'PMDEC_ERR': [0],
                         'PARALLAX': [0],
                         'PARA_ERR': [0],
-                        'SPECTYP': info4oif.spectyp
+                        'SPECTYP': instrument_data.spectyp
                         },
 
-           'info': {'TARGET': info4oif.objname,
-                    'CALIB': info4oif.objname,
-                    'OBJECT': info4oif.objname,
-                    'PROPNAME': info4oif.proposer_name,
-                    'FILT': info4oif.filt,
-                    'INSTRUME': info4oif.instrument,
-                    'ARRNAME': info4oif.arrname,
-                    'MASK': info4oif.arrname, # oifits.py looks for dct.info['MASK']
+           'info': {'TARGET': instrument_data.objname,
+                    'CALIB': instrument_data.objname,
+                    'OBJECT': instrument_data.objname,
+                    'PROPNAME': instrument_data.proposer_name,
+                    'FILT': instrument_data.filt,
+                    'INSTRUME': instrument_data.instrument,
+                    'ARRNAME': instrument_data.arrname,
+                    'MASK': instrument_data.arrname, # oifits.py looks for dct.info['MASK']
                     'MJD': t.mjd,
                     'DATE-OBS': t.fits,
-                    'TELESCOP': info4oif.telname,
-                    'OBSERVER': info4oif.pi_name,
-                    'INSMODE': info4oif.pupil,
-                    'PSCALE': info4oif.pscale_mas,
-                    'STAXY': info4oif.ctrs_inst, # as-built mask hole coords
+                    'TELESCOP': instrument_data.telname,
+                    'OBSERVER': instrument_data.pi_name,
+                    'INSMODE': instrument_data.pupil,
+                    'PSCALE': instrument_data.pscale_mas,
+                    'STAXY': instrument_data.ctrs_inst, # as-built mask hole coords
                     'ISZ': isz,  # size of the image needed (or fov)
                     'NFILE': 0,
                     'ARRAYX': float(0),
@@ -429,7 +404,7 @@ class RawOifits:
             vis_dtype = oimodel.vis.dtype
             vis2_dtype = oimodel.vis2.dtype
             t3_dtype = oimodel.t3.dtype
-        oimodel.array = np.zeros(self.nh, dtype=array_dtype)
+        oimodel.array = np.zeros(self.n_holes, dtype=array_dtype)
         oimodel.target = np.zeros(1, dtype=target_dtype)
         oimodel.vis = np.zeros(self.nbl, dtype=vis_dtype)
         oimodel.vis2 = np.zeros(self.nbl, dtype=vis2_dtype)
@@ -555,11 +530,10 @@ class RawOifits:
             Triple hole indices (0-indexed),
         float array of two uv vectors in all triangles
         """
-        nholes = self.ctrs_eqt.shape[0]
         tlist = []
-        for i in range(nholes):
-            for j in range(nholes):
-                for k in range(nholes):
+        for i in range(self.n_holes):
+            for j in range(self.n_holes):
+                for k in range(self.n_holes):
                     if i < j and j < k:
                         tlist.append((i, j, k))
         tarray = np.array(tlist).astype(int)
@@ -591,20 +565,14 @@ class RawOifits:
             Hole pairs indices, 0-indexed
         float array of baselines
         """
-        nholes = self.ctrs_eqt.shape[0]
         blist = []
-        for i in range(nholes):
-            for j in range(nholes):
+        bllist = []
+        for i in range(self.n_holes):
+            for j in range(self.n_holes):
                 if i < j:
                     blist.append((i, j))
-        barray = np.array(blist).astype(int)
-        # blname = []
-        bllist = []
-        for basepair in blist:
-            # blname.append("{0:d}_{1:d}".format(basepair[0],basepair[1]))
-            baseline = self.ctrs_eqt[basepair[0]] - self.ctrs_eqt[basepair[1]]
-            bllist.append(baseline)
-        return barray, np.array(bllist)
+                    bllist.append(self.ctrs_eqt[i] - self.ctrs_eqt[j])
+        return np.array(blist).astype(int), np.array(bllist)
 
     def _format_STAINDEX_T3(self, tab):
         """
@@ -666,7 +634,7 @@ class RawOifits:
 
 
 class CalibOifits:
-    def __init__(self,targoimodel,caloimodel):
+    def __init__(self, targoimodel, caloimodel):
         """
         Short Summary
         -------------
