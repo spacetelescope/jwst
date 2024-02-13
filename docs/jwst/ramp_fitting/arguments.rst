@@ -26,6 +26,6 @@ The ramp fitting step has three optional arguments that can be set by the user:
   decrease of a factor of six in the clock time for the step to run. Depending on the system,
   the clock time can also decrease even more with maximum_cores is set to 'all'.
 
-* ``--avg_dark_current``: The average dark current for this detector in units of electons
+* ``--avg_dark_current``: The average dark current for this detector in units of electrons
   per second. This will be used to calculate the Poisson noise contribution due to the dark
   current.

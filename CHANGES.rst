@@ -86,6 +86,12 @@ residual_fringe
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
 
+ramp fit
+--------
+
+- added parameter to ramp_fit to pass the average dark current that
+  will be included in the calculation of the Poisson noise in STCAL[#8157]
+
 tweakreg
 --------
 
@@ -278,11 +284,6 @@ ramp_fitting
 
 - Moving some ramp fitting CI tests from JWST to STCAL. [#8060]
 
-ramp fit
--------
-
-- added paramete to ramp_fit to pass the average dark current that
-  will be included in the calcuation of the Poisson noise in STCAL[#8157]
 resample
 --------
 
