@@ -133,18 +133,33 @@ class ResampleSpecStep(ResampleStep):
         result : `~jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
         """
+        print('input to process_multislit', type(input_models))
+        
         for model in input_models:
             print('now read slits')
             for slit in model.slits:
                 print('In process mulitslit', slit.meta.bunit_data)
-                
-        containers = multislit_to_container(input_models)
+        containers = ModelContainer()
+        for model in input_models:
+            containers.append(model)
+
+        containers = [ (name, model)
+            for name, model in multislit_to_container(containers).items()
+            ]
+        print(containers)
+        #containers = multislit_to_container(input_models)
+        print('******++++++Type containers', type(containers))#, type(containers.values()))
         result = datamodels.MultiSlitModel()
         result.update(input_models[0])
-        for container in containers.values():
-            print('Type of container', type(container))
-            for slit in container:
-                print(slit.meta.bunit_data)
+        #for container in containers.values():
+        #for slitname,slit in containers:
+        #    print('Type of container', type(slit))
+        #    for s in slit:
+        #        print(s.meta.bunit_data)
+            
+            #for slit in container:
+            #    print(type(slit))
+            #    print(slit.meta.bunit_data)
             
         
         for container in containers.values():

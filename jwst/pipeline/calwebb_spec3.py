@@ -6,6 +6,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import SourceModelContainer
+from jwst.datamodels import ModelContainer
 
 from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
@@ -162,13 +163,16 @@ class Spec3Pipeline(Pipeline):
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
         sources = [source_models]
+        print('***********************')
+        print('****type of sources', type(sources), type(source_models))
+        print('***********************')
         if model_type in MULTISOURCE_MODELS:
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
                 for name, model in multislit_to_container(source_models).items()
             ]
-
+            print('type of sources', type(sources))
             # Check for negative and large source_id values
             if len(sources) > 99999:
                 self.log.critical("Data contain more than 100,000 sources;"
@@ -209,6 +213,7 @@ class Spec3Pipeline(Pipeline):
             # the output name needs to be updated with the source ID, and potentially
             # also the slit name (for NIRSpec fixed-slit only).
             if isinstance(source, tuple):
+                print('got here')
                 source_id, result = source
                 if result[0].meta.exposure.type == "NRS_FIXEDSLIT":
                     slit_name = self._create_nrsfs_slit_name(result)
@@ -246,6 +251,11 @@ class Spec3Pipeline(Pipeline):
                     except AttributeError:
                         pass
                 else:
+                    print('****', type(result))
+                    for container in result:
+                        print('Type of container', type(container))
+                        print(container.meta.bunit_data)
+
                     result = self.resample_spec(result)
                     try:
                         resample_complete = result.meta.cal_step.resample

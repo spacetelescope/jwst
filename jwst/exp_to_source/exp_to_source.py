@@ -40,18 +40,19 @@ def exp_to_source(inputs):
             log.debug(f'Copying source {slit.source_id}')
             result_slit = result[str(slit.source_id)]
             result_slit.exposures.append(slit)
-
-            #print('exp_to_source A ', slit.meta.bunit_data)
+            slit_bunit = slit.meta.bunit_data
+            print('exp_to_source A ', slit.meta.bunit_data)
             # exposure.meta.bunit_data does not exist
             # before calling merge_tree set the result_slit.meta.bunit_data
             result_slit.meta.bunit_data  = slit.meta.bunit_data            
             merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
-            #print('exp_to_source B ', slit.meta.bunit_data)
+            result_slit.meta.bunit_data  = slit_bunit            
+            print('exp_to_source B ', slit_bunit)
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)
 
             result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
-            #print('result_slit', result_slit.meta.bunit_data)
+            print('result_slit', result_slit.meta.bunit_data)
         exposure.close()
 
     # Turn off the default factory
