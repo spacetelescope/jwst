@@ -1284,7 +1284,7 @@ class _BaseOverlap:
             except MatrixRankWarning:
                 # on rare occasions spsolve's approximation of the matrix is not appropriate
                 # and fails on good input data. revert to different solver
-                log.info(f'ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
+                log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
                 sln[idx] = lsqr(matrix[idx, :][:, idx], result[idx])[0]
 
         return sln
