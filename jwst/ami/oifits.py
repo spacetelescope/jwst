@@ -52,27 +52,6 @@ class RawOifits:
         self.bholes, self.bls = self._makebaselines()
         self.tholes, self.tuv = self._maketriples_all()
 
-    def make_oifits(self):
-        """
-        Short Summary
-        ------------
-        Calls the functions to prepare data for saving and
-        populate AmiOIModel.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        oimodel: AmiOIModel object
-            Datamodel containing AMI observables
-        """
-        self.make_obsarrays()
-        self.populate_nrm_dict()
-        oimodel = self.populate_oimodel()
-
-        return oimodel
-
     def make_obsarrays(self):
         """
         Short Summary
@@ -104,23 +83,10 @@ class RawOifits:
 
         self.fa2 = self.fa**2 # squared visibilities
 
-    def populate_nrm_dict(self):
-        """
-        Short Summary
-        ------------
-        Do all remaining manipulations for OIFITS writing
-        Produce a dictionary containing all data to write
-        to OIFITS files
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        """
+    def make_oifits(self):
+        self.make_obsarrays()
         instrument_data = self.fringe_fitter.instrument_data
-        t = Time('%s-%s-%s' %
+        observation_date = Time('%s-%s-%s' %
              (instrument_data.year, instrument_data.month, instrument_data.day), format='fits')
 
         # central wavelength, equiv. width from effstims used for fringe fitting
@@ -131,23 +97,12 @@ class RawOifits:
         ucoord = self.bls[:, 1]
         vcoord = self.bls[:, 0]
 
-        bl_vis = ((ucoord**2 + vcoord**2)**0.5)
-
         v1coord = self.tuv[:, 0, 0]
         u1coord = self.tuv[:, 0, 1]
         v2coord = self.tuv[:, 1, 0]
         u2coord = self.tuv[:, 1, 1]
         u3coord = -(u1coord+u2coord)
         v3coord = -(v1coord+v2coord)
-
-        bl_cp = []
-        n_bispect = len(v1coord)
-        for k in range(n_bispect):
-            B1 = np.sqrt(u1coord[k] ** 2 + v1coord[k] ** 2)
-            B2 = np.sqrt(u2coord[k] ** 2 + v2coord[k] ** 2)
-            B3 = np.sqrt(u3coord[k] ** 2 + v3coord[k] ** 2)
-            bl_cp.append(np.max([B1, B2, B3]))  # rad-1
-        bl_cp = np.array(bl_cp)
 
         flagVis = [False] * self.nbl
         flagT3 = [False] * self.ncp
@@ -215,111 +170,96 @@ class RawOifits:
         fov = [pscale * isz] * N_ap
         fovtype = ['RADIUS'] * N_ap
 
-        self.oifits_dct = {
-            'OI_VIS2': {'VIS2DATA': self.vis2,
-                       'VIS2ERR': self.e_vis2,
-                       'UCOORD': ucoord,
-                       'VCOORD': vcoord,
-                       'STA_INDEX': self._format_STAINDEX_V2(self.bholes),
-                       'MJD': t.mjd,
-                       'INT_TIME': instrument_data.itime,
-                       'TIME': 0,
-                       'TARGET_ID': 1,
-                       'FLAG': flagVis,
-                       'BL': bl_vis
-                       },
+        m = datamodels.AmiOIModel()
+        self.init_oimodel_arrays(m)
 
-           'OI_VIS': {'TARGET_ID': 1,
-                      'TIME': 0,
-                      'MJD': t.mjd,
-                      'INT_TIME': instrument_data.itime,
-                      'VISAMP': self.visamp,
-                      'VISAMPERR': self.e_visamp,
-                      'VISPHI': self.visphi,
-                      'VISPHIERR': self.e_visphi,
-                      'UCOORD': ucoord,
-                      'VCOORD': vcoord,
-                      'STA_INDEX': self._format_STAINDEX_V2(self.bholes),
-                      'FLAG': flagVis,
-                      'BL': bl_vis
-                      },
+        # primary header keywords
+        m.meta.telescope = instrument_data.telname
+        m.meta.origin = 'STScI'
+        m.meta.instrument.name = instrument_data.instrument
+        m.meta.program.pi_name = instrument_data.pi_name
+        m.meta.target.proposer_name = instrument_data.proposer_name
+        m.meta.observation.date = observation_date.fits
+        m.meta.oifits.array_name = instrument_data.arrname
+        m.meta.oifits.instrument_mode = instrument_data.pupil
 
-           'OI_T3': {'TARGET_ID': 1,
-                     'TIME': 0,
-                     'MJD': t.mjd,
-                     'INT_TIME': instrument_data.itime,
-                     'T3PHI': self.cp,
-                     'T3PHIERR': self.e_cp,
-                     'T3AMP': self.camp,
-                     'T3AMPERR': self.e_camp,
-                     'U1COORD': u1coord,
-                     'V1COORD': v1coord,
-                     'U2COORD': u2coord,
-                     'V2COORD': v2coord,
-                     'STA_INDEX': self._format_STAINDEX_T3(self.tholes),
-                     'FLAG': flagT3,
-                     'BL': bl_cp
-                     },
+        # oi_array extension data
+        m.array['TEL_NAME'] = tel_name
+        m.array['STA_NAME'] = sta_name
+        m.array['STA_INDEX'] = sta_index
+        m.array['DIAMETER'] = diameter
+        m.array['STAXYZ'] = staxyz
+        m.array['FOV'] = fov
+        m.array['FOVTYPE'] = fovtype
+        m.array['CTRS_EQT'] = instrument_data.ctrs_eqt
+        m.array['PISTONS'] = self.pist
+        m.array['PIST_ERR'] = self.e_pist
 
-           'OI_WAVELENGTH': {'EFF_WAVE': wl,
-                             'EFF_BAND': e_wl
-                             },
-            'OI_ARRAY': {'TEL_NAME': tel_name,
-                        'STA_NAME': sta_name,
-                        'STA_INDEX': sta_index,
-                        'DIAMETER': diameter,
-                        'STAXYZ': staxyz,
-                        'FOV': fov,
-                        'FOVTYPE': fovtype,
-                        'CTRS_EQT': instrument_data.ctrs_eqt, # mask hole coords rotated to equatotial
-                        'PISTONS': self.pist,
-                        'PIST_ERR': self.e_pist
-                        },
+        # oi_target extension data
+        m.target['TARGET_ID'] = [1]
+        m.target['TARGET'] = instrument_data.objname
+        m.target['RAEP0'] = instrument_data.ra
+        m.target['DECEP0'] = instrument_data.dec
+        m.target['EQUINOX'] = [2000]
+        m.target['RA_ERR'] = instrument_data.ra_uncertainty
+        m.target['DEC_ERR'] = instrument_data.dec_uncertainty
+        m.target['SYSVEL'] = [0]
+        m.target['VELTYP'] = ['UNKNOWN']
+        m.target['VELDEF'] = ['OPTICAL']
+        m.target['PMRA'] = instrument_data.pmra
+        m.target['PMDEC'] = instrument_data.pmdec
+        m.target['PMRA_ERR'] = [0]
+        m.target['PMDEC_ERR'] = [0]
+        m.target['PARALLAX'] = [0]
+        m.target['PARA_ERR'] = [0]
+        m.target['SPECTYP'] = instrument_data.spectyp
 
-            'OI_TARGET': {'TARGET_ID':[1],
-                        'TARGET': instrument_data.objname,
-                        'RAEP0': instrument_data.ra,
-                        'DECEP0': instrument_data.dec,
-                        'EQUINOX': [2000],
-                        'RA_ERR': instrument_data.ra_uncertainty,
-                        'DEC_ERR': instrument_data.dec_uncertainty,
-                        'SYSVEL': [0],
-                        'VELTYP': ['UNKNOWN'],
-                        'VELDEF': ['OPTICAL'],
-                        'PMRA': instrument_data.pmra,
-                        'PMDEC': instrument_data.pmdec,
-                        'PMRA_ERR': [0],
-                        'PMDEC_ERR': [0],
-                        'PARALLAX': [0],
-                        'PARA_ERR': [0],
-                        'SPECTYP': instrument_data.spectyp
-                        },
+        # oi_vis extension data
+        m.vis['TARGET_ID'] = 1
+        m.vis['TIME'] = 0
+        m.vis['MJD'] = observation_date.mjd
+        m.vis['INT_TIME'] = instrument_data.itime
+        m.vis['VISAMP'] = self.visamp
+        m.vis['VISAMPERR'] = self.e_visamp
+        m.vis['VISPHI'] = self.visphi
+        m.vis['VISPHIERR'] = self.e_visphi
+        m.vis['UCOORD'] = ucoord
+        m.vis['VCOORD'] = vcoord
+        m.vis['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
+        m.vis['FLAG'] = flagVis
 
-           'info': {'TARGET': instrument_data.objname,
-                    'CALIB': instrument_data.objname,
-                    'OBJECT': instrument_data.objname,
-                    'PROPNAME': instrument_data.proposer_name,
-                    'FILT': instrument_data.filt,
-                    'INSTRUME': instrument_data.instrument,
-                    'ARRNAME': instrument_data.arrname,
-                    'MASK': instrument_data.arrname, # oifits.py looks for dct.info['MASK']
-                    'MJD': t.mjd,
-                    'DATE-OBS': t.fits,
-                    'TELESCOP': instrument_data.telname,
-                    'OBSERVER': instrument_data.pi_name,
-                    'INSMODE': instrument_data.pupil,
-                    'PSCALE': instrument_data.pscale_mas,
-                    'STAXY': instrument_data.ctrs_inst, # as-built mask hole coords
-                    'ISZ': isz,  # size of the image needed (or fov)
-                    'NFILE': 0,
-                    'ARRAYX': float(0),
-                    'ARRAYY': float(0),
-                    'ARRAYZ': float(0),
-                    'PA': self.pa,
-                    'FRAME': 'SKY',
-                    'OI_REVN': 2
-                    }
-           }
+        # oi_vis2 extension data
+        m.vis2['TARGET_ID'] = 1
+        m.vis2['TIME'] = 0
+        m.vis2['MJD'] = observation_date.mjd
+        m.vis2['INT_TIME'] = instrument_data.itime
+        m.vis2['VIS2DATA'] = self.vis2
+        m.vis2['VIS2ERR'] = self.e_vis2
+        m.vis2['UCOORD'] = ucoord
+        m.vis2['VCOORD'] = vcoord
+        m.vis2['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
+        m.vis2['FLAG'] = flagVis
+
+        # oi_t3 extension data
+        m.t3['TARGET_ID'] = 1
+        m.t3['TIME'] = 0
+        m.t3['MJD'] = observation_date.mjd
+        m.t3['T3AMP'] = self.camp
+        m.t3['T3AMPERR'] = self.e_camp
+        m.t3['T3PHI'] = self.cp
+        m.t3['T3PHIERR'] = self.e_cp
+        m.t3['U1COORD'] = u1coord
+        m.t3['V1COORD'] = v1coord
+        m.t3['U2COORD'] = u2coord
+        m.t3['V2COORD'] = v2coord
+        m.t3['STA_INDEX'] = self._format_STAINDEX_T3(self.tholes)
+        m.t3['FLAG'] = flagT3
+
+        # oi_wavelength extension data
+        m.wavelength['EFF_WAVE'] = wl
+        m.wavelength['EFF_BAND'] = e_wl
+
+        return m
 
     def init_oimodel_arrays(self, oimodel):
         """
@@ -410,110 +350,6 @@ class RawOifits:
         oimodel.vis2 = np.zeros(self.nbl, dtype=vis2_dtype)
         oimodel.t3 = np.zeros(self.ncp, dtype=t3_dtype)
         oimodel.wavelength = np.zeros(1, dtype=wavelength_dtype)
-
-
-    def populate_oimodel(self):
-        """
-        Short Summary
-        ------------
-        Populate the AmiOIModel with the data.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        """
-        m = datamodels.AmiOIModel()
-        self.init_oimodel_arrays(m)
-
-        # primary header keywords
-        m.meta.telescope = self.oifits_dct['info']['TELESCOP']
-        m.meta.origin = 'STScI'
-        m.meta.instrument.name = self.oifits_dct['info']['INSTRUME']
-        m.meta.program.pi_name = self.oifits_dct['info']['OBSERVER']
-        m.meta.target.proposer_name = self.oifits_dct['info']['PROPNAME']
-        m.meta.observation.date = self.oifits_dct['info']['DATE-OBS']
-        m.meta.oifits.array_name = self.oifits_dct['info']['MASK']
-        m.meta.oifits.instrument_mode = self.oifits_dct['info']['INSMODE']
-
-        # oi_array extension data
-        m.array['TEL_NAME'] = self.oifits_dct['OI_ARRAY']['TEL_NAME']
-        m.array['STA_NAME'] = self.oifits_dct['OI_ARRAY']['STA_NAME']
-        m.array['STA_INDEX'] = self.oifits_dct['OI_ARRAY']['STA_INDEX']
-        m.array['DIAMETER'] = self.oifits_dct['OI_ARRAY']['DIAMETER']
-        m.array['STAXYZ'] = self.oifits_dct['OI_ARRAY']['STAXYZ']
-        m.array['FOV'] = self.oifits_dct['OI_ARRAY']['FOV']
-        m.array['FOVTYPE'] = self.oifits_dct['OI_ARRAY']['FOVTYPE']
-        m.array['CTRS_EQT'] = self.oifits_dct['OI_ARRAY']['CTRS_EQT']
-        m.array['PISTONS'] = self.oifits_dct['OI_ARRAY']['PISTONS']
-        m.array['PIST_ERR'] = self.oifits_dct['OI_ARRAY']['PIST_ERR']
-
-        # oi_target extension data
-        m.target['TARGET_ID'] = self.oifits_dct['OI_TARGET']['TARGET_ID']
-        m.target['TARGET'] = self.oifits_dct['OI_TARGET']['TARGET']
-        m.target['RAEP0'] = self.oifits_dct['OI_TARGET']['RAEP0']
-        m.target['DECEP0'] = self.oifits_dct['OI_TARGET']['DECEP0']
-        m.target['EQUINOX'] = self.oifits_dct['OI_TARGET']['EQUINOX']
-        m.target['RA_ERR'] = self.oifits_dct['OI_TARGET']['RA_ERR']
-        m.target['DEC_ERR'] = self.oifits_dct['OI_TARGET']['DEC_ERR']
-        m.target['SYSVEL'] = self.oifits_dct['OI_TARGET']['SYSVEL']
-        m.target['VELTYP'] = self.oifits_dct['OI_TARGET']['VELTYP']
-        m.target['VELDEF'] = self.oifits_dct['OI_TARGET']['VELDEF']
-        m.target['PMRA'] = self.oifits_dct['OI_TARGET']['PMRA']
-        m.target['PMDEC'] = self.oifits_dct['OI_TARGET']['PMDEC']
-        m.target['PMRA_ERR'] = self.oifits_dct['OI_TARGET']['PMRA_ERR']
-        m.target['PMDEC_ERR'] = self.oifits_dct['OI_TARGET']['PMDEC_ERR']
-        m.target['PARALLAX'] = self.oifits_dct['OI_TARGET']['PARALLAX']
-        m.target['PARA_ERR'] = self.oifits_dct['OI_TARGET']['PARA_ERR']
-        m.target['SPECTYP'] = self.oifits_dct['OI_TARGET']['SPECTYP']
-
-        # oi_vis extension data
-        m.vis['TARGET_ID'] = self.oifits_dct['OI_VIS']['TARGET_ID']
-        m.vis['TIME'] = self.oifits_dct['OI_VIS']['TIME']
-        m.vis['MJD'] = self.oifits_dct['OI_VIS']['MJD']
-        m.vis['INT_TIME'] = self.oifits_dct['OI_VIS']['INT_TIME']
-        m.vis['VISAMP'] = self.oifits_dct['OI_VIS']['VISAMP']
-        m.vis['VISAMPERR'] = self.oifits_dct['OI_VIS']['VISAMPERR']
-        m.vis['VISPHI'] = self.oifits_dct['OI_VIS']['VISPHI']
-        m.vis['VISPHIERR'] = self.oifits_dct['OI_VIS']['VISPHIERR']
-        m.vis['UCOORD'] = self.oifits_dct['OI_VIS']['UCOORD']
-        m.vis['VCOORD'] = self.oifits_dct['OI_VIS']['VCOORD']
-        m.vis['STA_INDEX'] = self.oifits_dct['OI_VIS']['STA_INDEX']
-        m.vis['FLAG'] = self.oifits_dct['OI_VIS']['FLAG']
-
-        # oi_vis2 extension data
-        m.vis2['TARGET_ID'] = self.oifits_dct['OI_VIS2']['TARGET_ID']
-        m.vis2['TIME'] = self.oifits_dct['OI_VIS2']['TIME']
-        m.vis2['MJD'] = self.oifits_dct['OI_VIS2']['MJD']
-        m.vis2['INT_TIME'] = self.oifits_dct['OI_VIS2']['INT_TIME']
-        m.vis2['VIS2DATA'] = self.oifits_dct['OI_VIS2']['VIS2DATA']
-        m.vis2['VIS2ERR'] = self.oifits_dct['OI_VIS2']['VIS2ERR']
-        m.vis2['UCOORD'] = self.oifits_dct['OI_VIS2']['UCOORD']
-        m.vis2['VCOORD'] = self.oifits_dct['OI_VIS2']['VCOORD']
-        m.vis2['STA_INDEX'] = self.oifits_dct['OI_VIS2']['STA_INDEX']
-        m.vis2['FLAG'] = self.oifits_dct['OI_VIS2']['FLAG']
-
-        # oi_t3 extension data
-        m.t3['TARGET_ID'] = self.oifits_dct['OI_T3']['TARGET_ID']
-        m.t3['TIME'] = self.oifits_dct['OI_T3']['TIME']
-        m.t3['MJD'] = self.oifits_dct['OI_T3']['MJD']
-        m.t3['T3AMP'] = self.oifits_dct['OI_T3']['T3AMP']
-        m.t3['T3AMPERR'] = self.oifits_dct['OI_T3']['T3AMPERR']
-        m.t3['T3PHI'] = self.oifits_dct['OI_T3']['T3PHI']
-        m.t3['T3PHIERR'] = self.oifits_dct['OI_T3']['T3PHIERR']
-        m.t3['U1COORD'] = self.oifits_dct['OI_T3']['U1COORD']
-        m.t3['V1COORD'] = self.oifits_dct['OI_T3']['V1COORD']
-        m.t3['U2COORD'] = self.oifits_dct['OI_T3']['U2COORD']
-        m.t3['V2COORD'] = self.oifits_dct['OI_T3']['V2COORD']
-        m.t3['STA_INDEX'] = self.oifits_dct['OI_T3']['STA_INDEX']
-        m.t3['FLAG'] = self.oifits_dct['OI_T3']['FLAG']
-
-        # oi_wavelength extension data
-        m.wavelength['EFF_WAVE'] = self.oifits_dct['OI_WAVELENGTH']['EFF_WAVE']
-        m.wavelength['EFF_BAND'] = self.oifits_dct['OI_WAVELENGTH']['EFF_BAND']
-
-        return m
 
     def _maketriples_all(self):
         """
