@@ -390,7 +390,7 @@ class RampFitStep(Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
-        suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group      
+        suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
         maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
         avg_dark_current = float(default=0) # The average dark current for this detector in units of e-/sec.
     """
