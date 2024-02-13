@@ -1,4 +1,3 @@
-
 import numpy as np
 import logging
 
@@ -16,29 +15,32 @@ logging.captureWarnings(True)
 """pipeline implementation of Jens Kammerer's bp_fix code based on Ireland 2013 algorithm"""
 
 micron = 1.0e-6
-filts = ['F277W', 'F380M', 'F430M', 'F480M', 'F356W', 'F444W']
+filts = ["F277W", "F380M", "F430M", "F480M", "F356W", "F444W"]
 # TO DO: get these from some context-controlled place
 filtwl_d = {  # pivot wavelengths
-    'F277W': 2.776e-6,  # less than Nyquist
-    'F380M': 3.828e-6,
-    'F430M': 4.286e-6,
-    'F480M': 4.817e-6,
-    'F356W': 3.595e-6,  # semi-forbidden
-    'F444W': 4.435e-6,  # semi-forbidden
+    "F277W": 2.776e-6,  # less than Nyquist
+    "F380M": 3.828e-6,
+    "F430M": 4.286e-6,
+    "F480M": 4.817e-6,
+    "F356W": 3.595e-6,  # semi-forbidden
+    "F444W": 4.435e-6,  # semi-forbidden
 }
 filthp_d = {  # half power limits
-    'F277W': (2.413e-6, 3.142e-6),
-    'F380M': (3.726e-6, 3.931e-6),
-    'F430M': (4.182e-6, 4.395e-6),
-    'F480M': (4.669e-6, 4.971e-6),
-    'F356W': (3.141e-6, 4.068e-6),
-    'F444W': (3.880e-6, 5.023e-6),
+    "F277W": (2.413e-6, 3.142e-6),
+    "F380M": (3.726e-6, 3.931e-6),
+    "F430M": (4.182e-6, 4.395e-6),
+    "F480M": (4.669e-6, 4.971e-6),
+    "F356W": (3.141e-6, 4.068e-6),
+    "F444W": (3.880e-6, 5.023e-6),
 }
-WL_OVERSIZEFACTOR = 0.1  # increase filter wl support by this amount to 'oversize' in wl space
+WL_OVERSIZEFACTOR = (
+    0.1  # increase filter wl support by this amount to 'oversize' in wl space
+)
 
 DIAM = 6.559348  # / Flat-to-flat distance across pupil in V3 axis
 PUPLDIAM = 6.603464  # / Full pupil file size, incl padding.
 PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
+
 
 def create_wavelengths(filtername):
     """
@@ -58,6 +60,7 @@ def create_wavelengths(filtername):
     drite = (-wl_ctr + wl_hps[1]) * (1 + WL_OVERSIZEFACTOR)
 
     return (wl_ctr, wl_ctr - dleft, wl_ctr + drite)
+
 
 def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil_mask):
     """
@@ -87,7 +90,9 @@ def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil_mask):
 
     """
     wls = create_wavelengths(filtername)
-    log.info(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
+    log.info(
+        f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron"
+    )
     detimage = np.zeros((sqfov_npix, sqfov_npix), float)
     for wl in wls:
         psf = calcpsf(wl, sqfov_npix, pxsc_rad, pupil_mask)
@@ -113,9 +118,12 @@ def transform_image(image):
 
     """
     ft = matrixDFT.MatrixFourierTransform()
-    ftimage = ft.perform(image, image.shape[0], image.shape[0])  # fake the no-loss fft w/ dft
+    ftimage = ft.perform(
+        image, image.shape[0], image.shape[0]
+    )  # fake the no-loss fft w/ dft
 
     return np.abs(ftimage)
+
 
 def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     """
@@ -152,9 +160,8 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
 
     return image_intensity
 
-def bad_pixels(data,
-               median_size,
-               median_tres):
+
+def bad_pixels(data, median_size, median_tres):
     """
     Short Summary
     ------------
@@ -179,17 +186,18 @@ def bad_pixels(data,
     mfil_data = median_filter(data, size=median_size)
     diff_data = np.abs(data - mfil_data)
     pxdq = diff_data > median_tres * np.median(diff_data)
-    pxdq = pxdq.astype('int')
+    pxdq = pxdq.astype("int")
 
-    log.info('         Identified %.0f bad pixels (%.2f%%)' % (np.sum(pxdq), np.sum(pxdq) / np.prod(pxdq.shape) * 100.))
-    log.info('         %.3f' % np.max(diff_data/np.median(diff_data)))
+    log.info(
+        "         Identified %.0f bad pixels (%.2f%%)"
+        % (np.sum(pxdq), np.sum(pxdq) / np.prod(pxdq.shape) * 100.0)
+    )
+    log.info("         %.3f" % np.max(diff_data / np.median(diff_data)))
 
     return pxdq
 
 
-def fourier_corr(data,
-                 pxdq,
-                 fmas):
+def fourier_corr(data, pxdq, fmas):
     """
     Short Summary
     ------------
@@ -221,8 +229,13 @@ def fourier_corr(data,
     B_Z = np.zeros((len(ww[0]), len(ww_ft[0]) * 2))
     xh = data.shape[0] // 2
     yh = data.shape[1] // 2
-    xx, yy = np.meshgrid(2. * np.pi * np.arange(yh + 1) / data.shape[1],
-                         2. * np.pi * (((np.arange(data.shape[0]) + xh) % data.shape[0]) - xh) / data.shape[0])
+    xx, yy = np.meshgrid(
+        2.0 * np.pi * np.arange(yh + 1) / data.shape[1],
+        2.0
+        * np.pi
+        * (((np.arange(data.shape[0]) + xh) % data.shape[0]) - xh)
+        / data.shape[0],
+    )
     for i in range(len(ww[0])):
         cdft = np.exp(-1j * (ww[0][i] * yy + ww[1][i] * xx))
         B_Z[i, :] = np.append(cdft[ww_ft].real, cdft[ww_ft].imag)
@@ -234,7 +247,7 @@ def fourier_corr(data,
 
     # Apply the corrections for the bad pixels.
     data_out = deepcopy(data)
-    data_out[ww] = 0.
+    data_out[ww] = 0.0
     data_ft = np.fft.rfft2(data_out)[ww_ft]
     corr = -np.real(np.dot(np.append(data_ft.real, data_ft.imag), B_Z_mppinv))
     data_out[ww] += corr
@@ -279,7 +292,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     pxdq = np.where(dqmask, pxdq0, 0)
     nflagged_dnu = np.count_nonzero(pxdq)
-    log.info('%i pixels flagged DO_NOT_USE in cropped data' % nflagged_dnu)
+    log.info("%i pixels flagged DO_NOT_USE in cropped data" % nflagged_dnu)
 
     # DNU, some other pixels are now NaNs in cal level products.
     # Replace them with 0, then
@@ -288,69 +301,70 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     if len(nanidxlist) > 1:
         log.info("Identified %i NaN pixels to correct" % len(nanidxlist))
         for idx in nanidxlist:
-            data[idx[0],idx[1],idx[2]] = 0
-            pxdq0[idx[0],idx[1],idx[2]] += 1 # add DNU flag to each nan pixel
+            data[idx[0], idx[1], idx[2]] = 0
+            pxdq0[idx[0], idx[1], idx[2]] += 1  # add DNU flag to each nan pixel
 
     # These values are taken from the JDox and the SVO Filter Profile
     # Service.
     diam = PUPLDIAM  # m
     gain = 1.61  # e-/ADU
     rdns = 18.32  # e-
-    pxsc_rad = (pxsc/1000) * np.pi / (60 * 60 * 180)
+    pxsc_rad = (pxsc / 1000) * np.pi / (60 * 60 * 180)
 
     # These values were determined empirically for NIRISS/AMI and need to be
     # tweaked for any other instrument.
     median_size = 3  # pix
-    median_tres = 50. # JK: changed from 28 to 20 in order to capture all bad pixels
+    median_tres = 50.0  # JK: changed from 28 to 20 in order to capture all bad pixels
 
     pupil = "NRM"
     pupil_mask = nrm_model.nrm
     imsz = data.shape
-    sh = imsz[-1] //2 # half size, even
+    sh = imsz[-1] // 2  # half size, even
     # Compute field-of-view and Fourier sampling.
-    fov = 2 * sh * pxsc / 1000.  # arcsec
-    fsam = filtwl_d[filt] / (fov / 3600. / 180. * np.pi)  # m/pix
-    log.info('      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix' % (fov, fsam))
+    fov = 2 * sh * pxsc / 1000.0  # arcsec
+    fsam = filtwl_d[filt] / (fov / 3600.0 / 180.0 * np.pi)  # m/pix
+    log.info("      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix" % (fov, fsam))
 
     #
     cvis = calcsupport(filt, 2 * sh, pxsc_rad, pupil_mask)
     cvis /= np.max(cvis)
     fmas = cvis < 1e-3  # 1e-3 seems to be a reasonable threshold
-    fmas = np.fft.fftshift(fmas)[:, :2 * sh // 2 + 1]
+    fmas = np.fft.fftshift(fmas)[:, : 2 * sh // 2 + 1]
 
     # Compute the pupil mask. This mask defines the region where we are
     # measuring the noise. It looks like 15 lambda/D distance from the PSF
     # is reasonable.
     ramp = np.arange(2 * sh) - 2 * sh // 2
     xx, yy = np.meshgrid(ramp, ramp)
-    dist = np.sqrt(xx ** 2 + yy ** 2)
-    if (pupil == 'NRM'):
-        pmas = dist > 9. * filtwl_d[filt] / diam * 180. / np.pi * 1000. * 3600. / pxsc
+    dist = np.sqrt(xx**2 + yy**2)
+    if pupil == "NRM":
+        pmas = (
+            dist > 9.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
+        )
     else:
-        pmas = dist > 12. * filtwl_d[filt] / diam * 180. / np.pi * 1000. * 3600. / pxsc
-
+        pmas = (
+            dist > 12.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
+        )
 
     # Go through all frames.
     for j in range(imsz[0]):
-        log.info('         Frame %.0f of %.0f' % (j + 1, imsz[0]))
+        log.info("         Frame %.0f of %.0f" % (j + 1, imsz[0]))
 
         # Now cut out the subframe.
         # no need to cut out sub-frame; data already cropped
         # odd/even size issues?
-        data_cut = deepcopy(data[j,:-1,:-1])
+        data_cut = deepcopy(data[j, :-1, :-1])
         data_orig = deepcopy(data_cut)
-        pxdq_cut = deepcopy(pxdq[j,:-1,:-1])
+        pxdq_cut = deepcopy(pxdq[j, :-1, :-1])
         pxdq_cut = pxdq_cut > 0.5
         # Correct the bad pixels. This is an iterative process. After each
         # iteration, we check whether new (residual) bad pixels are
         # identified. If so, we re-compute the corrections. If not, we
-        # terminate the iteration.      
+        # terminate the iteration.
         for k in range(10):
             # Correct the bad pixels.
-            data_cut = fourier_corr(data_cut,
-                                    pxdq_cut,
-                                    fmas)
-            if (k == 0):
+            data_cut = fourier_corr(data_cut, pxdq_cut, fmas)
+            if k == 0:
                 temp = deepcopy(data_cut)
 
             # Identify residual bad pixels by looking at the high spatial
@@ -361,31 +375,32 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             # and normalize the high spatial frequency part of the image
             # by it, then identify residual bad pixels.
             mfil_data = median_filter(data_cut, size=median_size)
-            nois = np.sqrt(mfil_data / gain + rdns ** 2)
+            nois = np.sqrt(mfil_data / gain + rdns**2)
             fmas_data /= nois
-            temp = bad_pixels(fmas_data,
-                              median_size=median_size,
-                              median_tres=median_tres)
+            temp = bad_pixels(
+                fmas_data, median_size=median_size, median_tres=median_tres
+            )
 
             # Check which bad pixels are new. Also, compare the
             # analytically determined noise with the empirically measured
             # noise.
             pxdq_new = np.sum(temp[pxdq_cut < 0.5])
-            log.info('         Iteration %.0f: %.0f new bad pixels, sdev of norm noise = %.3f' % 
-                (k + 1, pxdq_new, np.std(fmas_data[pmas])))
+            log.info(
+                "         Iteration %.0f: %.0f new bad pixels, sdev of norm noise = %.3f"
+                % (k + 1, pxdq_new, np.std(fmas_data[pmas]))
+            )
 
             # If no new bad pixels were identified, terminate the
             # iteration.
-            if (pxdq_new == 0.):
+            if pxdq_new == 0.0:
                 break
 
             # If new bad pixels were identified, add them to the bad pixel
             # map.
-            pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype('int')
-
+            pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("int")
 
         # Put the modified frames back into the data cube.
-        data[j,:-1,:-1] = fourier_corr(data_orig,pxdq_cut,fmas)
-        pxdq[j,:-1,:-1] = pxdq_cut
+        data[j, :-1, :-1] = fourier_corr(data_orig, pxdq_cut, fmas)
+        pxdq[j, :-1, :-1] = pxdq_cut
 
     return data, pxdq

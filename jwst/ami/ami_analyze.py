@@ -14,14 +14,21 @@ log.setLevel(logging.DEBUG)
 
 
 def apply_LG_plus(
-                input_model,
-                throughput_model,
-                nrm_model,
-                oversample, rotation,
-                psf_offset, rotsearch_parameters,
-                src, bandpass, usebp, firstfew,
-                chooseholes, affine2d, run_bpfix
-                ):
+    input_model,
+    throughput_model,
+    nrm_model,
+    oversample,
+    rotation,
+    psf_offset,
+    rotsearch_parameters,
+    src,
+    bandpass,
+    usebp,
+    firstfew,
+    chooseholes,
+    affine2d,
+    run_bpfix,
+):
     """
     Short Summary
     -------------
@@ -79,11 +86,9 @@ def apply_LG_plus(
         # input_copy.var_rnoise = np.expand_dims(input_copy.var_rnoise, axis=0)
         # input_copy.var_flat = np.expand_dims(input_copy.var_flat, axis=0)
 
-
-
     # If the input data were taken in full-frame mode, extract a region
     # equivalent to the SUB80 subarray mode to make execution time acceptable.
-    if input_model.meta.subarray.name.upper() == 'FULL':
+    if input_model.meta.subarray.name.upper() == "FULL":
         log.info("Extracting 80x80 subarray from full-frame data")
         xstart = 1045
         ystart = 1
@@ -96,7 +101,7 @@ def apply_LG_plus(
         input_copy.err = input_copy.err[:, ystart - 1:ystop, xstart - 1:xstop]
 
     data = input_copy.data
-    dim = data.shape[-1] # 80 px 
+    dim = data.shape[-1]  # 80 px
 
     # Initialize transformation parameters:
     #   mx, my: dimensionless magnifications
@@ -118,17 +123,19 @@ def apply_LG_plus(
     # (this is done again in instrument_data?)
     pscale_deg = np.mean([pscaledegx, pscaledegy])
     PIXELSCALE_r = np.deg2rad(pscale_deg)
-    holeshape = 'hex'
+    holeshape = "hex"
     # Throughput (combined filter and source spectrum) calculated here
     if bandpass is not None:
-        log.info('User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES')
+        log.info(
+            "User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES"
+        )
         # bandpass can be user-defined synphot object or appropriate array
         if isinstance(bandpass, synphot.spectrum.SpectralElement):
-            log.info('User-defined synphot spectrum provided')
+            log.info("User-defined synphot spectrum provided")
             wl, wt = bandpass._get_arrays(bandpass.waveset)
-            bandpass = np.array((wt,wl)).T
+            bandpass = np.array((wt, wl)).T
         else:
-            log.info('User-defined bandpass array provided')
+            log.info("User-defined bandpass array provided")
             bandpass = np.array(bandpass)
 
     else:
@@ -145,32 +152,53 @@ def apply_LG_plus(
             nlambda=nspecbin,
         )
 
-    rotsearch_d = np.append(np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
-                            rotsearch_parameters[1])
+    rotsearch_d = np.append(
+        np.arange(
+            rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
+        ),
+        rotsearch_parameters[1],
+    )
 
-    log.info(f'Initial values to use for rotation search: {rotsearch_d}')
+    log.info(f"Initial values to use for rotation search: {rotsearch_d}")
     if affine2d is None:
         # affine2d object, can be overridden by user input affine.
         # do rotation search on uncropped median image (assuming rotation constant over exposure)
         # replace remaining NaNs in median image with median of surrounding 8 (non-NaN) pixels
         # (only used for centroiding in rotation search)
-        meddata = np.median(data,axis=0)
+        meddata = np.median(data, axis=0)
         nan_locations = np.where(np.isnan(meddata))
-        log.info(f'Replacing {len(nan_locations[0])} NaNs in median image with median of surrounding pixels')
+        log.info(
+            f"Replacing {len(nan_locations[0])} NaNs in median image with median of surrounding pixels"
+        )
         box_size = 3
         hbox = int(box_size / 2)
         for i_pos in range(len(nan_locations[0])):
             y_box = nan_locations[0][i_pos]
             x_box = nan_locations[1][i_pos]
-            box = meddata[y_box - hbox:y_box + hbox + 1, x_box - hbox: x_box + hbox + 1]
+            box = meddata[
+                y_box - hbox:y_box + hbox + 1, x_box - hbox:x_box + hbox + 1
+            ]
             median_fill = np.nanmedian(box)
             if np.isnan(median_fill):
                 median_fill = 0  # not ideal
             meddata[y_box, x_box] = median_fill
 
-        affine2d = find_rotation(meddata, psf_offset, rotsearch_d,
-                                 mx, my, sx, sy, xo, yo,
-                                 PIXELSCALE_r, dim, bandpass, oversample, holeshape)
+        affine2d = find_rotation(
+            meddata,
+            psf_offset,
+            rotsearch_d,
+            mx,
+            my,
+            sx,
+            sy,
+            xo,
+            yo,
+            PIXELSCALE_r,
+            dim,
+            bandpass,
+            oversample,
+            holeshape,
+        )
 
     niriss = instrument_data.NIRISS(filt,
                                     nrm_model,

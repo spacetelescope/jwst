@@ -17,7 +17,7 @@ from stdatamodels.jwst import datamodels
 
 
 class RawOifits:
-    def __init__(self, fringefitter, method='median'):
+    def __init__(self, fringefitter, method="median"):
         """
         Short Summary
         -------------
@@ -47,7 +47,9 @@ class RawOifits:
 
         self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
         self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
-        self.pa = self.fringe_fitter.instrument_data.pav3  # header pav3, not including v3i_yang??
+        self.pa = (
+            self.fringe_fitter.instrument_data.pav3
+        )  # header pav3, not including v3i_yang??
 
         self.bholes, self.bls = self._makebaselines()
         self.tholes, self.tuv = self._maketriples_all()
@@ -73,21 +75,26 @@ class RawOifits:
         # model parameters
         self.solns = np.zeros((self.nslices, 44))
 
-        for i,nrmslc in enumerate(self.fringe_fitter.nrm_list):
-            self.fp[i,:] = np.rad2deg(nrmslc.fringephase) # FPs in degrees
-            self.fa[i,:] = nrmslc.fringeamp
-            self.cp[i,:] = np.rad2deg(nrmslc.redundant_cps) # CPs in degrees
-            self.ca[i,:] = nrmslc.redundant_cas
-            self.pistons[i,:] = np.rad2deg(nrmslc.fringepistons) # segment pistons in degrees
-            self.solns[i,:] = nrmslc.soln
+        for i, nrmslc in enumerate(self.fringe_fitter.nrm_list):
+            self.fp[i, :] = np.rad2deg(nrmslc.fringephase)  # FPs in degrees
+            self.fa[i, :] = nrmslc.fringeamp
+            self.cp[i, :] = np.rad2deg(nrmslc.redundant_cps)  # CPs in degrees
+            self.ca[i, :] = nrmslc.redundant_cas
+            self.pistons[i, :] = np.rad2deg(
+                nrmslc.fringepistons
+            )  # segment pistons in degrees
+            self.solns[i, :] = nrmslc.soln
 
-        self.fa2 = self.fa**2 # squared visibilities
+        self.fa2 = self.fa**2  # squared visibilities
 
     def make_oifits(self):
         self.make_obsarrays()
         instrument_data = self.fringe_fitter.instrument_data
-        observation_date = Time('%s-%s-%s' %
-             (instrument_data.year, instrument_data.month, instrument_data.day), format='fits')
+        observation_date = Time(
+            "%s-%s-%s"
+            % (instrument_data.year, instrument_data.month, instrument_data.day),
+            format="fits",
+        )
 
         # central wavelength, equiv. width from effstims used for fringe fitting
         wl = instrument_data.lam_c
@@ -101,8 +108,6 @@ class RawOifits:
         u1coord = self.tuv[:, 0, 1]
         v2coord = self.tuv[:, 1, 0]
         u2coord = self.tuv[:, 1, 1]
-        u3coord = -(u1coord+u2coord)
-        v3coord = -(v1coord+v2coord)
 
         flagVis = [False] * self.nbl
         flagT3 = [False] * self.ncp
@@ -115,10 +120,10 @@ class RawOifits:
         shift2pi[self.cp <= -6] = -2 * np.pi
         self.cp -= shift2pi
 
-        if self.method not in ['mean','median','multi']:
-            self.method = 'median'
+        if self.method not in ["mean", "median", "multi"]:
+            self.method = "median"
         # set these as attributes (some may exist and be overwritten)
-        if self.method == 'multi':
+        if self.method == "multi":
             self.vis2 = self.fa2.T
             self.e_vis2 = np.zeros(self.vis2.shape)
             self.visamp = self.fa.T
@@ -134,7 +139,7 @@ class RawOifits:
 
         # apply sigma-clipping to uncertainties
         # sigma_clipped_stats returns mean, median, stddev. nsigma=3, niters=5
-        elif self.method == 'median':
+        elif self.method == "median":
             _, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fa2, axis=0)
             _, self.visamp, self.e_visamp = sigma_clipped_stats(self.fa, axis=0)
             _, self.visphi, self.e_visphi = sigma_clipped_stats(self.fp, axis=0)
@@ -142,7 +147,7 @@ class RawOifits:
             _, self.camp, self.e_camp = sigma_clipped_stats(self.ca, axis=0)
             _, self.pist, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
 
-        else: # take the mean
+        else:  # take the mean
             self.vis2, _, self.e_vis2 = sigma_clipped_stats(self.fa2, axis=0)
             self.visamp, _, self.e_visamp = sigma_clipped_stats(self.fa, axis=0)
             self.visphi, _, self.e_visphi = sigma_clipped_stats(self.fp, axis=0)
@@ -153,7 +158,7 @@ class RawOifits:
         # prepare arrays for OI_ARRAY ext
         self.staxy = instrument_data.ctrs_inst
         N_ap = len(self.staxy)
-        tel_name = ['A%i' % x for x in np.arange(N_ap)+1]
+        tel_name = ["A%i" % x for x in np.arange(N_ap) + 1]
         sta_name = tel_name
         diameter = [0] * N_ap
 
@@ -165,17 +170,19 @@ class RawOifits:
 
         sta_index = np.arange(N_ap) + 1
 
-        pscale = instrument_data.pscale_mas/1000.  # arcsec
-        isz = self.fringe_fitter.scidata.shape[1]  # Size of the image to extract NRM data
+        pscale = instrument_data.pscale_mas / 1000.0  # arcsec
+        isz = self.fringe_fitter.scidata.shape[
+            1
+        ]  # Size of the image to extract NRM data
         fov = [pscale * isz] * N_ap
-        fovtype = ['RADIUS'] * N_ap
+        fovtype = ["RADIUS"] * N_ap
 
         m = datamodels.AmiOIModel()
         self.init_oimodel_arrays(m)
 
         # primary header keywords
         m.meta.telescope = instrument_data.telname
-        m.meta.origin = 'STScI'
+        m.meta.origin = "STScI"
         m.meta.instrument.name = instrument_data.instrument
         m.meta.program.pi_name = instrument_data.pi_name
         m.meta.target.proposer_name = instrument_data.proposer_name
@@ -184,16 +191,16 @@ class RawOifits:
         m.meta.oifits.instrument_mode = instrument_data.pupil
 
         # oi_array extension data
-        m.array['TEL_NAME'] = tel_name
-        m.array['STA_NAME'] = sta_name
-        m.array['STA_INDEX'] = sta_index
-        m.array['DIAMETER'] = diameter
-        m.array['STAXYZ'] = staxyz
-        m.array['FOV'] = fov
-        m.array['FOVTYPE'] = fovtype
-        m.array['CTRS_EQT'] = instrument_data.ctrs_eqt
-        m.array['PISTONS'] = self.pist
-        m.array['PIST_ERR'] = self.e_pist
+        m.array["TEL_NAME"] = tel_name
+        m.array["STA_NAME"] = sta_name
+        m.array["STA_INDEX"] = sta_index
+        m.array["DIAMETER"] = diameter
+        m.array["STAXYZ"] = staxyz
+        m.array["FOV"] = fov
+        m.array["FOVTYPE"] = fovtype
+        m.array["CTRS_EQT"] = instrument_data.ctrs_eqt
+        m.array["PISTONS"] = self.pist
+        m.array["PIST_ERR"] = self.e_pist
 
         # oi_target extension data
         m.target['TARGET_ID'] = [1]
@@ -256,8 +263,8 @@ class RawOifits:
         m.t3['FLAG'] = flagT3
 
         # oi_wavelength extension data
-        m.wavelength['EFF_WAVE'] = wl
-        m.wavelength['EFF_BAND'] = e_wl
+        m.wavelength["EFF_WAVE"] = wl
+        m.wavelength["EFF_BAND"] = e_wl
 
         return m
 
@@ -276,71 +283,89 @@ class RawOifits:
         Returns
         -------
         """
-        if self.method == 'multi':
+        if self.method == "multi":
             # update dimensions of arrays for multi-integration oifits
             target_dtype = oimodel.target.dtype
-            wavelength_dtype = np.dtype([('EFF_WAVE', '<f4'),
-                                ('EFF_BAND', '<f4')])
-            array_dtype = np.dtype([('TEL_NAME', 'S16'),
-                                ('STA_NAME', 'S16'),
-                                ('STA_INDEX', '<i2'),
-                                ('DIAMETER', '<f4'),
-                                ('STAXYZ', '<f8', (3,)),
-                                ('FOV', '<f8'),
-                                ('FOVTYPE', 'S6'),
-                                ('CTRS_EQT', '<f8', (2,)),
-                                ('PISTONS', '<f8', (self.nslices,)),
-                                ('PIST_ERR', '<f8', (self.nslices,))])
-            vis_dtype = np.dtype([('TARGET_ID', '<i2'),
-                                ('TIME', '<f8'),
-                                ('MJD', '<f8'),
-                                ('INT_TIME', '<f8'),
-                                ('VISAMP', '<f8', (self.nslices,)),
-                                ('VISAMPERR', '<f8', (self.nslices,)),
-                                ('VISPHI', '<f8', (self.nslices,)),
-                                ('VISPHIERR', '<f8', (self.nslices,)),
-                                ('UCOORD', '<f8'),
-                                ('VCOORD', '<f8'),
-                                ('STA_INDEX', '<i2', (2,)),
-                                ('FLAG', 'i1')])
-            vis2_dtype = np.dtype([('TARGET_ID', '<i2'),
-                                ('TIME', '<f8'),
-                                ('MJD', '<f8'),
-                                ('INT_TIME', '<f8'),
-                                ('VIS2DATA', '<f8', (self.nslices,)),
-                                ('VIS2ERR', '<f8', (self.nslices,)),
-                                ('UCOORD', '<f8'),
-                                ('VCOORD', '<f8'),
-                                ('STA_INDEX', '<i2', (2,)),
-                                ('FLAG', 'i1')])
-            t3_dtype = np.dtype([('TARGET_ID', '<i2'),
-                                ('TIME', '<f8'),
-                                ('MJD', '<f8'),
-                                ('INT_TIME', '<f8'),
-                                ('T3AMP', '<f8', (self.nslices,)),
-                                ('T3AMPERR', '<f8', (self.nslices,)),
-                                ('T3PHI', '<f8', (self.nslices,)),
-                                ('T3PHIERR', '<f8', (self.nslices,)),
-                                ('U1COORD', '<f8'),
-                                ('V1COORD', '<f8'),
-                                ('U2COORD', '<f8'),
-                                ('V2COORD', '<f8'),
-                                ('STA_INDEX', '<i2', (3,)),
-                                ('FLAG', 'i1')])
+            wavelength_dtype = np.dtype([("EFF_WAVE", "<f4"), ("EFF_BAND", "<f4")])
+            array_dtype = np.dtype(
+                [
+                    ("TEL_NAME", "S16"),
+                    ("STA_NAME", "S16"),
+                    ("STA_INDEX", "<i2"),
+                    ("DIAMETER", "<f4"),
+                    ("STAXYZ", "<f8", (3,)),
+                    ("FOV", "<f8"),
+                    ("FOVTYPE", "S6"),
+                    ("CTRS_EQT", "<f8", (2,)),
+                    ("PISTONS", "<f8", (self.nslices,)),
+                    ("PIST_ERR", "<f8", (self.nslices,)),
+                ]
+            )
+            vis_dtype = np.dtype(
+                [
+                    ("TARGET_ID", "<i2"),
+                    ("TIME", "<f8"),
+                    ("MJD", "<f8"),
+                    ("INT_TIME", "<f8"),
+                    ("VISAMP", "<f8", (self.nslices,)),
+                    ("VISAMPERR", "<f8", (self.nslices,)),
+                    ("VISPHI", "<f8", (self.nslices,)),
+                    ("VISPHIERR", "<f8", (self.nslices,)),
+                    ("UCOORD", "<f8"),
+                    ("VCOORD", "<f8"),
+                    ("STA_INDEX", "<i2", (2,)),
+                    ("FLAG", "i1"),
+                ]
+            )
+            vis2_dtype = np.dtype(
+                [
+                    ("TARGET_ID", "<i2"),
+                    ("TIME", "<f8"),
+                    ("MJD", "<f8"),
+                    ("INT_TIME", "<f8"),
+                    ("VIS2DATA", "<f8", (self.nslices,)),
+                    ("VIS2ERR", "<f8", (self.nslices,)),
+                    ("UCOORD", "<f8"),
+                    ("VCOORD", "<f8"),
+                    ("STA_INDEX", "<i2", (2,)),
+                    ("FLAG", "i1"),
+                ]
+            )
+            t3_dtype = np.dtype(
+                [
+                    ("TARGET_ID", "<i2"),
+                    ("TIME", "<f8"),
+                    ("MJD", "<f8"),
+                    ("INT_TIME", "<f8"),
+                    ("T3AMP", "<f8", (self.nslices,)),
+                    ("T3AMPERR", "<f8", (self.nslices,)),
+                    ("T3PHI", "<f8", (self.nslices,)),
+                    ("T3PHIERR", "<f8", (self.nslices,)),
+                    ("U1COORD", "<f8"),
+                    ("V1COORD", "<f8"),
+                    ("U2COORD", "<f8"),
+                    ("V2COORD", "<f8"),
+                    ("STA_INDEX", "<i2", (3,)),
+                    ("FLAG", "i1"),
+                ]
+            )
         else:
             target_dtype = oimodel.target.dtype
             wavelength_dtype = oimodel.wavelength.dtype
-            array_dtype = np.dtype([('TEL_NAME', 'S16'),
-                                ('STA_NAME', 'S16'),
-                                ('STA_INDEX', '<i2'),
-                                ('DIAMETER', '<f4'),
-                                ('STAXYZ', '<f8', (3,)),
-                                ('FOV', '<f8'),
-                                ('FOVTYPE', 'S6'),
-                                ('CTRS_EQT', '<f8', (2,)),
-                                ('PISTONS', '<f8'),
-                                ('PIST_ERR', '<f8'),
-                                ])
+            array_dtype = np.dtype(
+                [
+                    ("TEL_NAME", "S16"),
+                    ("STA_NAME", "S16"),
+                    ("STA_INDEX", "<i2"),
+                    ("DIAMETER", "<f4"),
+                    ("STAXYZ", "<f8", (3,)),
+                    ("FOV", "<f8"),
+                    ("FOVTYPE", "S6"),
+                    ("CTRS_EQT", "<f8", (2,)),
+                    ("PISTONS", "<f8"),
+                    ("PIST_ERR", "<f8"),
+                ]
+            )
             vis_dtype = oimodel.vis.dtype
             vis2_dtype = oimodel.vis2.dtype
             t3_dtype = oimodel.t3.dtype
@@ -378,11 +403,14 @@ class RawOifits:
         uvlist = []
         # foreach row of 3 elts...
         for triple in tarray:
-            tname.append("{0:d}_{1:d}_{2:d}".format(
-                triple[0], triple[1], triple[2]))
+            tname.append("{0:d}_{1:d}_{2:d}".format(triple[0], triple[1], triple[2]))
 
-            uvlist.append((self.ctrs_eqt[triple[0]] - self.ctrs_eqt[triple[1]],
-                           self.ctrs_eqt[triple[1]] - self.ctrs_eqt[triple[2]]))
+            uvlist.append(
+                (
+                    self.ctrs_eqt[triple[0]] - self.ctrs_eqt[triple[1]],
+                    self.ctrs_eqt[triple[1]] - self.ctrs_eqt[triple[2]],
+                )
+            )
 
         return tarray, np.array(uvlist)
 
@@ -468,7 +496,6 @@ class RawOifits:
         return sta_index
 
 
-
 class CalibOifits:
     def __init__(self, targoimodel, caloimodel):
         """
@@ -501,21 +528,23 @@ class CalibOifits:
         Returns
         -------
         """
-        nrows=7
-        modified_dtype = np.dtype([('TEL_NAME', 'S16'),
-                                ('STA_NAME', 'S16'),
-                                ('STA_INDEX', '<i2'),
-                                ('DIAMETER', '<f4'),
-                                ('STAXYZ', '<f8', (3,)),
-                                ('FOV', '<f8'),
-                                ('FOVTYPE', 'S6'),
-                                ('CTRS_EQT', '<f8', (2,)),
-                                ('PISTON_T', '<f8'),
-                                ('PISTON_C', '<f8'),
-                                ('PIST_ERR', '<f8'),
-                                ])
+        nrows = 7
+        modified_dtype = np.dtype(
+            [
+                ("TEL_NAME", "S16"),
+                ("STA_NAME", "S16"),
+                ("STA_INDEX", "<i2"),
+                ("DIAMETER", "<f4"),
+                ("STAXYZ", "<f8", (3,)),
+                ("FOV", "<f8"),
+                ("FOVTYPE", "S6"),
+                ("CTRS_EQT", "<f8", (2,)),
+                ("PISTON_T", "<f8"),
+                ("PISTON_C", "<f8"),
+                ("PIST_ERR", "<f8"),
+            ]
+        )
         self.calib_oimodel.array = np.zeros(nrows, dtype=modified_dtype)
-
 
     def calibrate(self):
         """
@@ -532,59 +561,63 @@ class CalibOifits:
         calib_oimodel: AmiOIModel
             Calibrated AMI datamodel
         """
-        cp_out = self.targoimodel.t3['T3PHI'] - self.caloimodel.t3['T3PHI']
-        sqv_out = self.targoimodel.vis2['VIS2DATA'] / self.caloimodel.vis2['VIS2DATA']
-        va_out = self.targoimodel.vis['VISAMP'] / self.caloimodel.vis['VISAMP']
+        cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]
+        sqv_out = self.targoimodel.vis2["VIS2DATA"] / self.caloimodel.vis2["VIS2DATA"]
+        va_out = self.targoimodel.vis["VISAMP"] / self.caloimodel.vis["VISAMP"]
         # using standard propagation of error for multiplication/division
-        # which assumes uncorrelated Gaussian errors (questionable)    
-        cperr_t = self.targoimodel.t3 ['T3PHIERR']
-        cperr_c = self.caloimodel.t3['T3PHIERR']
-        sqverr_c = self.targoimodel.vis2['VIS2ERR']
-        sqverr_t = self.caloimodel.vis2['VIS2ERR']
-        vaerr_t = self.targoimodel.vis['VISAMPERR']
-        vaerr_c = self.caloimodel.vis['VISAMPERR']
-        cperr_out = np.sqrt(cperr_t**2. + cperr_c**2.)
-        sqverr_out = sqv_out * np.sqrt((sqverr_t/self.targoimodel.vis2['VIS2DATA'])**2. +
-                                        (sqverr_c/self.caloimodel.vis2['VIS2DATA'])**2.)
-        vaerr_out = va_out * np.sqrt((vaerr_t/self.targoimodel.vis['VISAMP'])**2. +
-                                    (vaerr_c/self.caloimodel.vis['VISAMP'])**2.)
+        # which assumes uncorrelated Gaussian errors (questionable)
+        cperr_t = self.targoimodel.t3["T3PHIERR"]
+        cperr_c = self.caloimodel.t3["T3PHIERR"]
+        sqverr_c = self.targoimodel.vis2["VIS2ERR"]
+        sqverr_t = self.caloimodel.vis2["VIS2ERR"]
+        vaerr_t = self.targoimodel.vis["VISAMPERR"]
+        vaerr_c = self.caloimodel.vis["VISAMPERR"]
+        cperr_out = np.sqrt(cperr_t**2.0 + cperr_c**2.0)
+        sqverr_out = sqv_out * np.sqrt(
+            (sqverr_t / self.targoimodel.vis2["VIS2DATA"]) ** 2.0
+            + (sqverr_c / self.caloimodel.vis2["VIS2DATA"]) ** 2.0
+        )
+        vaerr_out = va_out * np.sqrt(
+            (vaerr_t / self.targoimodel.vis["VISAMP"]) ** 2.0
+            + (vaerr_c / self.caloimodel.vis["VISAMP"]) ** 2.0
+        )
 
-        pistons_t = self.targoimodel.array['PISTONS']
-        pisterr_t = self.targoimodel.array['PIST_ERR']
-        pistons_c = self.caloimodel.array['PISTONS']
-        pisterr_c = self.caloimodel.array['PIST_ERR']
+        pistons_t = self.targoimodel.array["PISTONS"]
+        pisterr_t = self.targoimodel.array["PIST_ERR"]
+        pistons_c = self.caloimodel.array["PISTONS"]
+        pisterr_c = self.caloimodel.array["PIST_ERR"]
         # sum in quadrature errors from target and calibrator pistons
         pisterr_out = np.sqrt(pisterr_t**2 + pisterr_c**2)
 
-        # update OI array, which is currently all zeros, with input oi array 
+        # update OI array, which is currently all zeros, with input oi array
         # and updated piston columns
         self.update_dtype()
-        self.calib_oimodel.array['TEL_NAME'] = self.targoimodel.array['TEL_NAME']
-        self.calib_oimodel.array['STA_NAME'] = self.targoimodel.array['STA_NAME']
-        self.calib_oimodel.array['STA_INDEX'] = self.targoimodel.array['STA_INDEX']
-        self.calib_oimodel.array['DIAMETER'] = self.targoimodel.array['DIAMETER']
-        self.calib_oimodel.array['STAXYZ'] = self.targoimodel.array['STAXYZ']
-        self.calib_oimodel.array['FOV'] = self.targoimodel.array['FOV']
-        self.calib_oimodel.array['FOVTYPE'] = self.targoimodel.array['FOVTYPE']
-        self.calib_oimodel.array['CTRS_EQT'] = self.targoimodel.array['CTRS_EQT']
-        self.calib_oimodel.array['PISTON_T'] = pistons_t
-        self.calib_oimodel.array['PISTON_C'] = pistons_c
-        self.calib_oimodel.array['PIST_ERR'] = pisterr_out
+        self.calib_oimodel.array["TEL_NAME"] = self.targoimodel.array["TEL_NAME"]
+        self.calib_oimodel.array["STA_NAME"] = self.targoimodel.array["STA_NAME"]
+        self.calib_oimodel.array["STA_INDEX"] = self.targoimodel.array["STA_INDEX"]
+        self.calib_oimodel.array["DIAMETER"] = self.targoimodel.array["DIAMETER"]
+        self.calib_oimodel.array["STAXYZ"] = self.targoimodel.array["STAXYZ"]
+        self.calib_oimodel.array["FOV"] = self.targoimodel.array["FOV"]
+        self.calib_oimodel.array["FOVTYPE"] = self.targoimodel.array["FOVTYPE"]
+        self.calib_oimodel.array["CTRS_EQT"] = self.targoimodel.array["CTRS_EQT"]
+        self.calib_oimodel.array["PISTON_T"] = pistons_t
+        self.calib_oimodel.array["PISTON_C"] = pistons_c
+        self.calib_oimodel.array["PIST_ERR"] = pisterr_out
 
         # update calibrated oimodel arrays with calibrated observables
-        self.calib_oimodel.t3['T3PHI'] = cp_out
-        self.calib_oimodel.t3['T3PHIERR'] = cperr_out
-        self.calib_oimodel.vis2['VIS2DATA'] = sqv_out
-        self.calib_oimodel.vis2['VIS2ERR'] = sqverr_out
-        self.calib_oimodel.vis['VISAMP'] = va_out
-        self.calib_oimodel.vis['VISAMPERR'] = vaerr_out
+        self.calib_oimodel.t3["T3PHI"] = cp_out
+        self.calib_oimodel.t3["T3PHIERR"] = cperr_out
+        self.calib_oimodel.vis2["VIS2DATA"] = sqv_out
+        self.calib_oimodel.vis2["VIS2ERR"] = sqverr_out
+        self.calib_oimodel.vis["VISAMP"] = va_out
+        self.calib_oimodel.vis["VISAMPERR"] = vaerr_out
 
-        self.calib_oimodel.array['PISTON_T'] = pistons_t
-        self.calib_oimodel.array['PISTON_C'] = pistons_c
-        self.calib_oimodel.array['PIST_ERR'] = pisterr_out
+        self.calib_oimodel.array["PISTON_T"] = pistons_t
+        self.calib_oimodel.array["PISTON_C"] = pistons_c
+        self.calib_oimodel.array["PIST_ERR"] = pisterr_out
 
         # add calibrated header keywords
-        calname = self.caloimodel.meta.target.proposer_name # name of calibrator star
+        calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
         self.calib_oimodel.meta.oifits.calib = calname
 
         return self.calib_oimodel

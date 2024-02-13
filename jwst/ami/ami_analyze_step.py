@@ -7,8 +7,7 @@ __all__ = ["AmiAnalyzeStep"]
 
 
 class AmiAnalyzeStep(Step):
-    """Performs analysis of an AMI mode exposure by applying the LG algorithm.
-    """
+    """Performs analysis of an AMI mode exposure by applying the LG algorithm."""
 
     class_alias = "ami_analyze"
 
@@ -30,8 +29,8 @@ class AmiAnalyzeStep(Step):
 
     def save_model(self, model, *args, **kwargs):
         # Override save_model to change suffix based on list of results
-        if 'idx' in kwargs and kwargs.get('suffix', None) is None:
-            kwargs['suffix'] = ['ami-oi', 'amimulti-oi', 'amilg'][kwargs.pop('idx')]
+        if "idx" in kwargs and kwargs.get("suffix", None) is None:
+            kwargs["suffix"] = ["ami-oi", "amimulti-oi", "amilg"][kwargs.pop("idx")]
         return Step.save_model(self, model, *args, **kwargs)
 
     def process(self, input):
@@ -67,9 +66,9 @@ class AmiAnalyzeStep(Step):
         psf_offset = [float(a) for a in self.psf_offset.split()]
         rotsearch_parameters = [float(a) for a in self.rotation_search.split()]
 
-        self.log.info(f'Oversampling factor = {oversample}')
-        self.log.info(f'Initial rotation guess = {rotate} deg')
-        self.log.info(f'Initial values to use for psf offset = {psf_offset}')
+        self.log.info(f"Oversampling factor = {oversample}")
+        self.log.info(f"Initial rotation guess = {rotate} deg")
+        self.log.info(f"Initial values to use for psf offset = {psf_offset}")
 
         # Make sure oversample is odd
         if oversample % 2 == 0:
@@ -101,12 +100,18 @@ class AmiAnalyzeStep(Step):
                     input_model,
                     throughput_model,
                     nrm_model,
-                    oversample, rotate,
+                    oversample,
+                    rotate,
                     psf_offset,
                     rotsearch_parameters,
-                    src, bandpass, usebp,
-                    firstfew, chooseholes, affine2d,
-                    run_bpfix)
+                    src,
+                    bandpass,
+                    usebp,
+                    firstfew,
+                    chooseholes,
+                    affine2d,
+                    run_bpfix,
+                )
 
         amilgmodel.meta.cal_step.ami_analyze = 'COMPLETE'
         oifitsmodel.meta.cal_step.ami_analyze = 'COMPLETE'

@@ -21,7 +21,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 
 class NrmModel:
-    '''
+    """
     A class for conveniently dealing with an "NRM object" This should be able
     to take an NRM_mask_definitions object for mask geometry.
     Defines mask geometry and detector-scale parameters.
@@ -31,11 +31,22 @@ class NrmModel:
     Masks: gpi_g10s40, jwst, visir
     Algorithm documented in Greenbaum, A. Z., Pueyo, L. P., Sivaramakrishnan,
     A., and Lacour, S., Astrophysical Journal vol. 798, Jan 2015.
-    '''
+    """
 
-    def __init__(self, mask=None, holeshape="circ", pixscale=None,
-                 over=1, pixweight=None, datapath="", phi=None,
-                 refdir="", chooseholes=False, affine2d=None, **kwargs):
+    def __init__(
+        self,
+        mask=None,
+        holeshape="circ",
+        pixscale=None,
+        over=1,
+        pixweight=None,
+        datapath="",
+        phi=None,
+        refdir="",
+        chooseholes=False,
+        affine2d=None,
+        **kwargs,
+    ):
         """
         Short Summary
         -------------
@@ -89,13 +100,13 @@ class NrmModel:
         # get these from mask_definitions instead
         if mask is None:
             log.info("No mask name specified for model, using jwst_g7s6c")
-            mask = mask_definitions.NRM_mask_definitions(maskname="jwst_g7s6c",
-                                    chooseholes=chooseholes,
-                                    holeshape="hex")
+            mask = mask_definitions.NRM_mask_definitions(
+                maskname="jwst_g7s6c", chooseholes=chooseholes, holeshape="hex"
+            )
         elif isinstance(mask, str):
-            mask = mask_definitions.NRM_mask_definitions(maskname=mask,
-                                    chooseholes=chooseholes,
-                                    holeshape="hex")
+            mask = mask_definitions.NRM_mask_definitions(
+                maskname=mask, chooseholes=chooseholes, holeshape="hex"
+            )
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
@@ -124,14 +135,14 @@ class NrmModel:
         # We apply this when sampling the PSF, not to the pupil geometry.
 
         if affine2d is None:
-            self.affine2d = utils.Affine2d(mx=1.0, my=1.0,
-                                           sx=0.0, sy=0.0,
-                                           xo=0.0, yo=0.0, name="Ideal")
+            self.affine2d = utils.Affine2d(
+                mx=1.0, my=1.0, sx=0.0, sy=0.0, xo=0.0, yo=0.0, name="Ideal"
+            )
         else:
             self.affine2d = affine2d
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
-        '''
+        """
         Short Summary
         -------------
         Simulate a detector-scale psf using parameters input from the call and
@@ -157,7 +168,7 @@ class NrmModel:
         -------
         Object's 'psf': float 2D array
             simulated psf
-        '''
+        """
         # why are we making this FITS object?
         self.simhdr = fits.PrimaryHDU().header
         # First set up conditions for choosing various parameters
@@ -166,24 +177,26 @@ class NrmModel:
         if over is None:
             over = 1  # ?  Always comes in as integer.
 
-        self.simhdr['OVER'] = (over, 'sim pix = det pix/over')
-        self.simhdr['PIX_OV'] = (self.pixel / float(over),
-                                 'Sim pixel scale in radians')
+        self.simhdr["OVER"] = (over, "sim pix = det pix/over")
+        self.simhdr["PIX_OV"] = (self.pixel / float(over), "Sim pixel scale in radians")
 
         self.psf_over = np.zeros((over * fov, over * fov))
         nspec = 0
         # accumulate polychromatic oversampled psf in the object
 
         for w, l in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
-            self.psf_over += w * analyticnrm2.psf(self.pixel,  # det pixel, rad
-                                                  fov,   # in detpix number
-                                                  over,
-                                                  self.ctrs,
-                                                  self.d, l,
-                                                  self.phi,
-                                                  psf_offset,  # det pixels
-                                                  self.affine2d,
-                                                  shape=self.holeshape)
+            self.psf_over += w * analyticnrm2.psf(
+                self.pixel,  # det pixel, rad
+                fov,  # in detpix number
+                over,
+                self.ctrs,
+                self.d,
+                l,
+                self.phi,
+                psf_offset,  # det pixels
+                self.affine2d,
+                shape=self.holeshape,
+            )
             # offset signs fixed to agree w/DS9, +x shifts ctr R, +y shifts up
             self.simhdr["WAVL{0}".format(nspec)] = (l, "wavelength (m)")
             self.simhdr["WGHT{0}".format(nspec)] = (w, "weight")
@@ -194,8 +207,9 @@ class NrmModel:
 
         return self.psf
 
-    def make_model(self, fov=None, bandpass=None, over=1, psf_offset=(0, 0),
-                   pixscale=None):
+    def make_model(
+        self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
+    ):
         """
         Short Summary
         -------------
@@ -233,7 +247,7 @@ class NrmModel:
 
         self.over = over
 
-        if hasattr(self, 'pixscale_measured'):
+        if hasattr(self, "pixscale_measured"):
             if self.pixscale_measured is not None:
                 self.modelpix = self.pixscale_measured
 
@@ -251,41 +265,56 @@ class NrmModel:
 
         self.model = np.zeros((self.fov, self.fov, self.N * (self.N - 1) + 2))
         self.model_beam = np.zeros((self.over * self.fov, self.over * self.fov))
-        self.fringes = np.zeros((self.N * (self.N - 1) + 1, self.over * self.fov,
-                                 self.over * self.fov))
+        self.fringes = np.zeros(
+            (self.N * (self.N - 1) + 1, self.over * self.fov, self.over * self.fov)
+        )
 
         for w, l in bandpass:  # w: weight, l: lambda (wavelength)
             # model_array returns the envelope and fringe model as a list of
             #   oversampled fov x fov slices
-            pb, ff = analyticnrm2.model_array(self.modelctrs, l, self.over,
-                                              self.modelpix, self.fov, self.d,
-                                              shape=self.holeshape,
-                                              psf_offset=psf_offset,
-                                              affine2d=self.affine2d)
+            pb, ff = analyticnrm2.model_array(
+                self.modelctrs,
+                l,
+                self.over,
+                self.modelpix,
+                self.fov,
+                self.d,
+                shape=self.holeshape,
+                psf_offset=psf_offset,
+                affine2d=self.affine2d,
+            )
 
-            log.debug("Passed to model_array: psf_offset: {0}".
-                      format(psf_offset))
-            log.debug("Primary beam in the model created: {0}".
-                      format(pb))
+            log.debug("Passed to model_array: psf_offset: {0}".format(psf_offset))
+            log.debug("Primary beam in the model created: {0}".format(pb))
             self.model_beam += pb
             self.fringes += ff
 
             # this routine multiplies the envelope by each fringe "image"
             self.model_over = leastsqnrm.multiplyenv(pb, ff)
 
-            model_binned = np.zeros((self.fov, self.fov,
-                                     self.model_over.shape[2]))
+            model_binned = np.zeros((self.fov, self.fov, self.model_over.shape[2]))
             # loop over slices "sl" in the model
             for sl in range(self.model_over.shape[2]):
-                model_binned[:, :, sl] = utils.rebin(self.model_over[:, :, sl],
-                                                     (self.over, self.over))
+                model_binned[:, :, sl] = utils.rebin(
+                    self.model_over[:, :, sl], (self.over, self.over)
+                )
 
             self.model += w * model_binned
 
         return self.model
 
-    def fit_image(self, image, reference=None, pixguess=None, rotguess=0,
-                  psf_offset=(0, 0), modelin=None, savepsfs=False, dqm=None, weighted=False):
+    def fit_image(
+        self,
+        image,
+        reference=None,
+        pixguess=None,
+        rotguess=0,
+        psf_offset=(0, 0),
+        modelin=None,
+        savepsfs=False,
+        dqm=None,
+        weighted=False,
+    ):
         """
         Short Summary
         -------------
@@ -347,40 +376,43 @@ class NrmModel:
             if reference is None:
                 self.reference = image
                 if np.isnan(image.any()):
-                    raise ValueError("Must have non-NaN image to " +
-                                     "crosscorrelate for scale. Reference " +
-                                     "image should also be centered.")
+                    raise ValueError(
+                        "Must have non-NaN image to "
+                        + "crosscorrelate for scale. Reference "
+                        + "image should also be centered."
+                    )
             else:
                 self.reference = reference
 
             self.pixscale_measured = self.pixel
             self.fov = image.shape[0]
-            self.fittingmodel = self.make_model(self.fov,
-                                                bandpass=self.bandpass,
-                                                over=self.over, rotate=True,
-                                                psf_offset=self.bestcenter,
-                                                pixscale=self.pixel)
+            self.fittingmodel = self.make_model(
+                self.fov,
+                bandpass=self.bandpass,
+                over=self.over,
+                rotate=True,
+                psf_offset=self.bestcenter,
+                pixscale=self.pixel,
+            )
         else:
             self.fittingmodel = modelin
         if self.weighted is False:
-            self.soln, self.residual, self.cond, \
-                self.linfit_result = \
+            self.soln, self.residual, self.cond, self.linfit_result = (
                 leastsqnrm.matrix_operations(image, self.fittingmodel, dqm=dqm)
+            )
         else:
-            self.soln, self.residual, self.cond, self.singvals = leastsqnrm.weighted_operations(image, \
-                            self.fittingmodel, dqm=dqm)
+            self.soln, self.residual, self.cond, self.singvals = (
+                leastsqnrm.weighted_operations(image, self.fittingmodel, dqm=dqm)
+            )
 
         self.rawDC = self.soln[-1]
         self.flux = self.soln[0]
         self.soln = self.soln / self.soln[0]
 
         # fringephase now in radians
-        self.fringeamp, self.fringephase = \
-            leastsqnrm.tan2visibilities(self.soln)
-        self.fringepistons = utils.fringes2pistons(self.fringephase,
-                                                   len(self.ctrs))
-        self.redundant_cps = leastsqnrm.redundant_cps(self.fringephase,
-                                                      n=self.N)
+        self.fringeamp, self.fringephase = leastsqnrm.tan2visibilities(self.soln)
+        self.fringepistons = utils.fringes2pistons(self.fringephase, len(self.ctrs))
+        self.redundant_cps = leastsqnrm.redundant_cps(self.fringephase, n=self.N)
         self.redundant_cas = leastsqnrm.closure_amplitudes(self.fringeamp, n=self.N)
 
     def create_modelpsf(self):
@@ -408,8 +440,9 @@ class NrmModel:
 
         return None
 
-    def improve_scaling(self, img, scaleguess=None, rotstart=0.0,
-                        centering='PIXELCENTERED'):
+    def improve_scaling(
+        self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
+    ):
         """
         Short Summary
         -------------
@@ -442,7 +475,7 @@ class NrmModel:
         self.gof: float
             goodness of fit
         """
-        if not hasattr(self, 'bandpass'):
+        if not hasattr(self, "bandpass"):
             raise ValueError("This obj has no specified bandpass/wavelength")
 
         reffov = img.shape[0]
@@ -454,7 +487,7 @@ class NrmModel:
         # User can specify a reference set of phases (m) at an earlier point so
         #  that all PSFs are simulated with those phase pistons (e.g. measured
         #  from data at an earlier iteration
-        if not hasattr(self, 'refphi'):
+        if not hasattr(self, "refphi"):
             self.refphi = np.zeros(len(self.ctrs))
         else:
             pass
@@ -463,15 +496,20 @@ class NrmModel:
         for q, scal in enumerate(self.scallist):
             self.test_pixscale = self.pixel * scal
             self.pixscales[q] = self.test_pixscale
-            psf = self.simulate(bandpass=self.bandpass, fov=reffov,
-                                pixel=self.test_pixscale, centering=centering)
+            psf = self.simulate(
+                bandpass=self.bandpass,
+                fov=reffov,
+                pixel=self.test_pixscale,
+                centering=centering,
+            )
             pixscl_corrlist[q, :, :] = run_data_correlate(img, psf)
             self.pixscl_corr[q] = np.max(pixscl_corrlist[q])
             if True in np.isnan(self.pixscl_corr):
                 raise ValueError("Correlation produced NaNs, check your work!")
 
         self.pixscale_optimal, scal_maxy = utils.findmax(
-            mag=self.pixscales, vals=self.pixscl_corr)
+            mag=self.pixscales, vals=self.pixscl_corr
+        )
         self.pixscale_factor = self.pixscale_optimal / self.pixel
 
         radlist = self.rotlist_rad
@@ -480,18 +518,25 @@ class NrmModel:
 
         self.rots = radlist
         for q, rad in enumerate(radlist):
-            psf = self.simulate(bandpass=self.bandpass, fov=reffov,
-                                pixel=self.pixscale_optimal, rotate=rad,
-                                centering=centering)
+            psf = self.simulate(
+                bandpass=self.bandpass,
+                fov=reffov,
+                pixel=self.pixscale_optimal,
+                rotate=rad,
+                centering=centering,
+            )
 
             corrlist[q, :, :] = run_data_correlate(psf, img)
             self.corrs[q] = np.max(corrlist[q])
 
         self.rot_measured, maxy = utils.findmax(mag=self.rots, vals=self.corrs)
-        self.refpsf = self.simulate(bandpass=self.bandpass,
-                                    pixel=self.pixscale_factor * self.pixel,
-                                    fov=reffov, rotate=self.rot_measured,
-                                    centering=centering)
+        self.refpsf = self.simulate(
+            bandpass=self.bandpass,
+            pixel=self.pixscale_factor * self.pixel,
+            fov=reffov,
+            rotate=self.rot_measured,
+            centering=centering,
+        )
 
         try:
             self.gof = goodness_of_fit(img, self.refpsf)
@@ -558,8 +603,11 @@ def goodness_of_fit(data, bestfit, diskR=8):
     gof: float
         goodness of fit
     """
-    mask = np.ones(data.shape) + utils.makedisk(data.shape[0], 2) -\
-        utils.makedisk(data.shape[0], diskR)
+    mask = (
+        np.ones(data.shape)
+        + utils.makedisk(data.shape[0], 2)
+        - utils.makedisk(data.shape[0], diskR)
+    )
 
     difference = np.ma.masked_invalid(mask * (bestfit - data))
 
@@ -591,7 +639,7 @@ def run_data_correlate(data, model):
 
     """
     sci = data
-    log.debug('shape sci: %s', np.shape(sci))
+    log.debug("shape sci: %s", np.shape(sci))
 
     cor = utils.rcrosscorrelate(sci, model)
 

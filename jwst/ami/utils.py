@@ -17,7 +17,7 @@ log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 
-class Affine2d():
+class Affine2d:
     """
     A class to help implement the Bracewell Fourier 2D affine transformation
     theorem to calculate appropriate coordinate grids in the Fourier domain (eg
@@ -89,8 +89,17 @@ class Affine2d():
     Code by Anand Sivaramakrishnan 2018
     """
 
-    def __init__(self, mx=None, my=None, sx=None, sy=None, xo=None, yo=None,
-                 rotradccw=None, name="Affine"):
+    def __init__(
+        self,
+        mx=None,
+        my=None,
+        sx=None,
+        sy=None,
+        xo=None,
+        yo=None,
+        rotradccw=None,
+        name="Affine",
+    ):
         """
         Short Summary
         -------------
@@ -154,8 +163,9 @@ class Affine2d():
         Since this uses an offset xo yo in pixels of the affine transformation,
         these are *NOT* affected by the 'oversample' in image space.  The
         vector it is dotted with is in image space."""
-        self.phase_2vector = np.array((my * xo - sx * yo,
-                                       mx * yo - sy * xo)) / self.determinant
+        self.phase_2vector = (
+            np.array((my * xo - sx * yo, mx * yo - sy * xo)) / self.determinant
+        )
 
     def forward(self, point):
         """
@@ -173,8 +183,12 @@ class Affine2d():
         trans_point: float, float
             coordinates in distorted space
         """
-        trans_point = np.array((self.mx * point[0] + self.sx * point[1] + self.xo,
-                                self.my * point[1] + self.sy * point[0] + self.yo))
+        trans_point = np.array(
+            (
+                self.mx * point[0] + self.sx * point[1] + self.xo,
+                self.my * point[1] + self.sy * point[0] + self.yo,
+            )
+        )
 
         return trans_point
 
@@ -194,11 +208,21 @@ class Affine2d():
         trans_point: float, float
             coordinates in ideal space
         """
-        trans_point = np.array(
-            (self.my * point[0] - self.sx * point[1] -
-             self.my * self.xo + self.sx * self.yo,
-             self.mx * point[1] - self.sy * point[0] -
-             self.mx * self.yo + self.sy * self.xo)) * self.determinant
+        trans_point = (
+            np.array(
+                (
+                    self.my * point[0]
+                    - self.sx * point[1]
+                    - self.my * self.xo
+                    + self.sx * self.yo,
+                    self.mx * point[1]
+                    - self.sy * point[0]
+                    - self.mx * self.yo
+                    + self.sy * self.xo,
+                )
+            )
+            * self.determinant
+        )
 
         return trans_point
 
@@ -252,8 +276,13 @@ class Affine2d():
         phase: complex array
             phase term divided by the determinant.
         """
-        phase = np.exp(2 * np.pi * 1j / self.determinant *
-                       (self.phase_2vector[0] * u + self.phase_2vector[1] * v))
+        phase = np.exp(
+            2
+            * np.pi
+            * 1j
+            / self.determinant
+            * (self.phase_2vector[0] * u + self.phase_2vector[1] * v)
+        )
 
         return phase
 
@@ -300,14 +329,14 @@ def affinepars2header(hdr, affine2d):
         fits header, updated with affine2d parameters
     """
 
-    hdr['affine'] = (affine2d.name, 'Affine2d in pupil: name')
-    hdr['aff_mx'] = (affine2d.mx, 'Affine2d in pupil: xmag')
-    hdr['aff_my'] = (affine2d.my, 'Affine2d in pupil: ymag')
-    hdr['aff_sx'] = (affine2d.sx, 'Affine2d in pupil: xshear')
-    hdr['aff_sy'] = (affine2d.sx, 'Affine2d in pupil: yshear')
-    hdr['aff_xo'] = (affine2d.xo, 'Affine2d in pupil: x offset')
-    hdr['aff_yo'] = (affine2d.yo, 'Affine2d in pupil: y offset')
-    hdr['aff_dev'] = ('analyticnrm2', 'dev_phasor')
+    hdr["affine"] = (affine2d.name, "Affine2d in pupil: name")
+    hdr["aff_mx"] = (affine2d.mx, "Affine2d in pupil: xmag")
+    hdr["aff_my"] = (affine2d.my, "Affine2d in pupil: ymag")
+    hdr["aff_sx"] = (affine2d.sx, "Affine2d in pupil: xshear")
+    hdr["aff_sy"] = (affine2d.sx, "Affine2d in pupil: yshear")
+    hdr["aff_xo"] = (affine2d.xo, "Affine2d in pupil: x offset")
+    hdr["aff_yo"] = (affine2d.yo, "Affine2d in pupil: y offset")
+    hdr["aff_dev"] = ("analyticnrm2", "dev_phasor")
 
     return hdr
 
@@ -377,8 +406,9 @@ def trim(m, s):
         # Go through all indices in the mask:
         # the x & y lists test for any index being an edge index - if none are
         # on the edge, remember the indices in new list
-        if (m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s - 1 or
-                m[1][ii] == s - 1) is False:
+        if (
+            m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s - 1 or m[1][ii] == s - 1
+        ) is False:
             xl.append(m[0][ii])
             yl.append(m[1][ii])
     m_masked = (np.asarray(xl), np.asarray(yl))
@@ -413,7 +443,7 @@ def avoidhexsingularity(rotation):
     return rotation_adjusted
 
 
-def center_imagepeak(img, r='default', cntrimg=True):
+def center_imagepeak(img, r="default", cntrimg=True):
     """
     Short Summary
     -------------
@@ -436,13 +466,15 @@ def center_imagepeak(img, r='default', cntrimg=True):
         Cropped to place the brightest pixel at the center of the img array
     """
     peakx, peaky, h = min_distance_to_edge(img, cntrimg=cntrimg)
-    log.debug(' peakx=%g, peaky=%g, distance to edge=%g', peakx, peaky, h)
-    if r == 'default':
+    log.debug(" peakx=%g, peaky=%g, distance to edge=%g", peakx, peaky, h)
+    if r == "default":
         r = h.copy()
     else:
         pass
 
-    cropped = img[int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)]
+    cropped = img[
+        int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+    ]
 
     return cropped
 
@@ -678,10 +710,14 @@ def findslope(a, m):
     tilt = (a_r - a_l) / 2.0, (a_up - a_dn) / 2.0  # raw estimate of phase slope
     c = centerpoint(a.shape)
     C = (int(c[0]), int(c[1]))
-    sigh, sigv = tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(), \
-        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std()
-    avgh, avgv = tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean(), \
-        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean()
+    sigh, sigv = (
+        tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(),
+        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(),
+    )
+    avgh, avgv = (
+        tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean(),
+        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean(),
+    )
 
     # second stage mask cleaning: 5 sig rejection of mask
     newmaskh = np.where(np.abs(tilt[0] - avgh) < 5 * sigh)
@@ -773,8 +809,8 @@ def makeA(nh):
     matrixA: 2D float array
          nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
     """
-    log.debug('-------')
-    log.debug(' makeA:')
+    log.debug("-------")
+    log.debug(" makeA:")
 
     ncols = (nh * (nh - 1)) // 2
     nrows = nh
@@ -786,14 +822,14 @@ def makeA(nh):
             if h1 >= nh:
                 break
             else:
-                log.debug(' row: %s, h1: %s, h2: %s', row, h1, h2)
+                log.debug(" row: %s, h1: %s, h2: %s", row, h1, h2)
 
                 matrixA[row, h2] = -1
                 matrixA[row, h1] = +1
                 row += 1
 
-    log.debug('matrixA:')
-    log.debug(' %s', matrixA)
+    log.debug("matrixA:")
+    log.debug(" %s", matrixA)
 
     return matrixA
 
@@ -928,8 +964,9 @@ def lambdasteps(lam, frac_width, steps=4):
     steps = steps / 2.0
 
     # add some very small number to the end to include the last number.
-    lambda_array = np.arange(-1 * frac * lam + lam, frac * lam + lam + 10e-10,
-                             frac * lam / steps)
+    lambda_array = np.arange(
+        -1 * frac * lam + lam, frac * lam + lam + 10e-10, frac * lam / steps
+    )
 
     return lambda_array
 
@@ -984,7 +1021,7 @@ def crosscorrelate(a=None, b=None):
         complex array that is the correlation of the two input arrays.
     """
     if a.shape != b.shape:
-        log.critical('crosscorrelate: need identical arrays')
+        log.critical("crosscorrelate: need identical arrays")
         return None
 
     fac = np.sqrt(a.shape[0] * a.shape[1])
@@ -993,19 +1030,19 @@ def crosscorrelate(a=None, b=None):
     B = fft.fft2(b) / fac
     c = fft.ifft2(A * B.conj()) * fac * fac
 
-    log.debug('----------------')
-    log.debug(' crosscorrelate:')
-    log.debug(' a: %s:', a)
-    log.debug(' A: %s:', A)
-    log.debug(' b: %s:', b)
-    log.debug(' B: %s:', B)
-    log.debug(' c: %s:', c)
-    log.debug(' a.sum: %s:', a.sum())
-    log.debug(' b.sum: %s:', b.sum())
-    log.debug(' c.sum: %s:', c.sum())
-    log.debug(' a.sum*b.sum: %s:', a.sum() * b.sum())
-    log.debug(' c.sum.real: %s:', c.sum().real)
-    log.debug(' a.sum*b.sum/c.sum.real: %s:', a.sum() * b.sum() / c.sum().real)
+    log.debug("----------------")
+    log.debug(" crosscorrelate:")
+    log.debug(" a: %s:", a)
+    log.debug(" A: %s:", A)
+    log.debug(" b: %s:", b)
+    log.debug(" B: %s:", B)
+    log.debug(" c: %s:", c)
+    log.debug(" a.sum: %s:", a.sum())
+    log.debug(" b.sum: %s:", b.sum())
+    log.debug(" c.sum: %s:", c.sum())
+    log.debug(" a.sum*b.sum: %s:", a.sum() * b.sum())
+    log.debug(" c.sum.real: %s:", c.sum().real)
+    log.debug(" a.sum*b.sum/c.sum.real: %s:", a.sum() * b.sum() / c.sum().real)
 
     return fft.fftshift(c)
 
@@ -1034,8 +1071,9 @@ def rotate2dccw(vectors, thetarad):
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
     for vector in vectors:
-        ctrs_rotated.append([c * vector[0] - s * vector[1],
-                             s * vector[0] + c * vector[1]])
+        ctrs_rotated.append(
+            [c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]]
+        )
     rot_vectors = np.array(ctrs_rotated)
 
     return rot_vectors
@@ -1068,7 +1106,7 @@ def findmax(mag, vals, mid=1.0):
         value of vals corresponding to maxx
     """
     p = np.polyfit(mag, vals, 2)
-    fitr = np.arange(0.95 * mid, 1.05 * mid, .01)
+    fitr = np.arange(0.95 * mid, 1.05 * mid, 0.01)
     maxx, maxy, fitc = quadratic(p, fitr)
 
     return maxx, maxy
@@ -1106,16 +1144,15 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     # Extract the region of interest for the data
     try:
-        data_array = input_array[yc - hbox:yc + hbox + 1, xc - hbox: xc + hbox + 1]
-        dq_array = input_dq_array[yc - hbox:yc + hbox + 1, xc - hbox: xc + hbox + 1]
+        data_array = input_array[yc - hbox:yc + hbox + 1, xc - hbox:xc + hbox + 1]
+        dq_array = input_dq_array[yc - hbox:yc + hbox + 1, xc - hbox:xc + hbox + 1]
     except IndexError:
         # If the box is outside the data, return 0
-        log.warning('Box for median filter is outside the data')
-        return 0.
+        log.warning("Box for median filter is outside the data")
+        return 0.0
 
     # only keep pixels not flagged with DO_NOT_USE
-    wh_good = np.where((np.bitwise_and(dq_array, dqflags.pixel['DO_NOT_USE'])
-                        == 0))
+    wh_good = np.where((np.bitwise_and(dq_array, dqflags.pixel["DO_NOT_USE"]) == 0))
     filtered_array = data_array[wh_good]
 
     # compute the median, excluding NaN's
@@ -1123,8 +1160,8 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     # check for bad result
     if np.isnan(median_value):
-        log.warning('Median filter returned NaN; setting value to 0.')
-        median_value = 0.
+        log.warning("Median filter returned NaN; setting value to 0.")
+        median_value = 0.0
 
     return median_value
 
@@ -1145,7 +1182,7 @@ def mas2rad(mas):
     rad: float
         angle in radians
     """
-    rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
+    rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
 
 
@@ -1172,22 +1209,25 @@ def img_median_replace(img_model, box_size):
     input_dq = img_model.dq
 
     num_nan = np.count_nonzero(np.isnan(input_data))
-    num_dq_bad = np.count_nonzero(input_dq == dqflags.pixel['DO_NOT_USE'])
+    num_dq_bad = np.count_nonzero(input_dq == dqflags.pixel["DO_NOT_USE"])
 
     # check to see if any of the pixels are bad
-    if (num_nan + num_dq_bad > 0):
+    if num_nan + num_dq_bad > 0:
 
-        log.info(f'Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels')
-        bad_locations = np.where(np.isnan(input_data) |
-                                 np.equal(input_dq,
-                                          dqflags.pixel['DO_NOT_USE']))
+        log.info(
+            f"Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels"
+        )
+        bad_locations = np.where(
+            np.isnan(input_data) | np.equal(input_dq, dqflags.pixel["DO_NOT_USE"])
+        )
 
         # fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):
             y_box_pos = bad_locations[0][i_pos]
             x_box_pos = bad_locations[1][i_pos]
-            median_fill = pix_median_fill_value(input_data, input_dq,
-                                                box_size, x_box_pos, y_box_pos)
+            median_fill = pix_median_fill_value(
+                input_data, input_dq, box_size, x_box_pos, y_box_pos
+            )
             input_data[y_box_pos, x_box_pos] = median_fill
 
         img_model.data = input_data
@@ -1213,8 +1253,9 @@ def get_filt_spec(throughput_model):
     thruput = throughput_model.filter_table
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
     tr_list = np.asarray([tup[1] for tup in thruput])
-    band = synphot.spectrum.SpectralElement(synphot.models.Empirical1D, points=wl_list,
-                                            lookup_table=tr_list, keep_neg=False)
+    band = synphot.spectrum.SpectralElement(
+        synphot.models.Empirical1D, points=wl_list, lookup_table=tr_list, keep_neg=False
+    )
     return band
 
 
@@ -1284,18 +1325,24 @@ def get_src_spec(sptype):
         "K0I": (4500, 0.0, 1.0),
         "K5I": (3750, 0.0, 0.5),
         "M0I": (3750, 0.0, 0.0),
-        "M2I": (3500, 0.0, 0.0)}
+        "M2I": (3500, 0.0, 0.0),
+    }
     try:
         keys = lookuptable[sptype]
     except KeyError:
-        warnings.warn(f"Input spectral type {sptype} did not match any in the catalog. Defaulting to A0V.")
+        warnings.warn(
+            f"Input spectral type {sptype} did not match any in the catalog. Defaulting to A0V."
+        )
         keys = lookuptable["A0V"]
     try:
-        return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
+        return grid_to_spec("phoenix", keys[0], keys[1], keys[2])
     except IOError:
-        errmsg = ("Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the " +
-                  "lookup table, and/or that synphot is installed properly.".format())
+        errmsg = (
+            "Could not find a match in catalog {catname} for key {sptype}. Check that is a valid name in the "
+            + "lookup table, and/or that synphot is installed properly.".format()
+        )
         raise LookupError(errmsg)
+
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     """
@@ -1333,7 +1380,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
         wl_filt, th_filt = wl_filt[low_idx:high_idx], th_filt[low_idx:high_idx]
     ptsin = len(wl_filt)
     if nlambda is None:
-        nlambda = ptsin # Don't bin throughput
+        nlambda = ptsin  # Don't bin throughput
     # get effstim for bins of wavelengths
     minwave, maxwave = wl_filt.min(), wl_filt.max()  # trimmed or not
     wave_bin_edges = np.linspace(minwave, maxwave, nlambda + 1)
@@ -1350,10 +1397,11 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
         box = synphot.spectrum.SpectralElement(synphot.models.Box1D, amplitude=1, x_0=wave,
                                                width=deltawave) * bandpass
 
-        binset = np.linspace(wave - deltawave, wave + deltawave,
-                             30)
+        binset = np.linspace(wave - deltawave, wave + deltawave, 30)
         binset = binset[binset >= 0]  # remove any negative values
-        result = synphot.observation.Observation(srcspec, box, binset=binset).effstim('count', area=area)
+        result = synphot.observation.Observation(srcspec, box, binset=binset).effstim(
+            "count", area=area
+        )
         effstims.append(result)
 
     effstims = u.Quantity(effstims)
@@ -1361,7 +1409,9 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     wave_m = wavesteps.to_value(u.m)  # convert to meters
     effstims = effstims.to_value()  # strip units
 
-    finalsrc = np.array((effstims,wave_m)).T # this is the order expected by InstrumentData
+    finalsrc = np.array(
+        (effstims, wave_m)
+    ).T  # this is the order expected by InstrumentData
 
     return finalsrc
 
@@ -1371,21 +1421,23 @@ def get_cw_beta(bandpass):
     Bandpass: array where the columns are weights, wavelengths
     Return weighted mean wavelength in meters, fractional bandpass
     """
-    wt = bandpass[:,0]
-    wl = bandpass[:,1]
-    cw = (wl*wt).sum()/wt.sum() # Weighted mean wavelength in meters "central wavelength"
+    wt = bandpass[:, 0]
+    wl = bandpass[:, 1]
+    cw = (
+        wl * wt
+    ).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
     area = simpson(wt, x=wl)
-    ew = area / wt.max() # equivalent width
-    beta = ew/cw # fractional bandpass
+    ew = area / wt.max()  # equivalent width
+    beta = ew / cw  # fractional bandpass
     return cw, beta
 
 
 def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
-    """ use the global header values explicitly, for clarity
-        vec is 2d, units of pixels
-        cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
+    """use the global header values explicitly, for clarity
+    vec is 2d, units of pixels
+    cdij 4 scalars, conceptually 2x2 array in units degrees/pixel
     """
-    return np.array((cd11*vec[0] + cd12*vec[1], cd21*vec[0] + cd22*vec[1]))
+    return np.array((cd11 * vec[0] + cd12 * vec[1], cd21 * vec[0] + cd22 * vec[1]))
 
 
 def degrees_per_pixel(datamodel):
@@ -1397,23 +1449,29 @@ def degrees_per_pixel(datamodel):
     Returns: pixel scale in degrees/pixel
     """
     wcsinfo = datamodel.meta.wcsinfo._instance
-    if 'cd1_1' in wcsinfo and 'cd1_2' in wcsinfo and \
-        'cd2_1' in wcsinfo and 'cd2_2' in wcsinfo:
+    if (
+        "cd1_1" in wcsinfo
+        and "cd1_2" in wcsinfo
+        and "cd2_1" in wcsinfo
+        and "cd2_2" in wcsinfo
+    ):
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2
         cd21 = datamodel.meta.wcsinfo.cd2_1
         cd22 = datamodel.meta.wcsinfo.cd2_2
         # Create unit vectors in detector pixel X and Y directions, units: detector pixels
-        dxpix  =  np.array((1.0, 0.0)) # axis 1 step
-        dypix  =  np.array((0.0, 1.0)) # axis 2 step
+        dxpix = np.array((1.0, 0.0))  # axis 1 step
+        dypix = np.array((0.0, 1.0))  # axis 2 step
         # transform pixel x and y steps to RA-tan, Dec-tan degrees
         dxsky = _cdmatrix_to_sky(dxpix, cd11, cd12, cd21, cd22)
         dysky = _cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
         log.info("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
-    elif 'cdelt1' in wcsinfo and 'cdelt2' in wcsinfo:
+    elif "cdelt1" in wcsinfo and "cdelt2" in wcsinfo:
         return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
         log.info("Used CDELT[12] for pixel scales")
     else:
-        log.info('WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix')
-        return 65.6/(60.0*60.0*1000), 65.6/(60.0*60.0*1000)
+        log.info(
+            "WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix"
+        )
+        return 65.6 / (60.0 * 60.0 * 1000), 65.6 / (60.0 * 60.0 * 1000)

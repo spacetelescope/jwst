@@ -38,10 +38,10 @@ def gfunction(xi, eta, **kwargs):
         Fourier transform of one half of a hexagon.
     """
 
-    c = kwargs['c']
-    pixel = kwargs['pixel']
-    d = kwargs['d']
-    lam = kwargs['lam']
+    c = kwargs["c"]
+    pixel = kwargs["pixel"]
+    d = kwargs["d"]
+    lam = kwargs["lam"]
     xi = (d / lam) * pixel * (xi - c[0])
     eta = (d / lam) * pixel * (eta - c[1])
     affine2d = kwargs["affine2d"]
@@ -51,17 +51,22 @@ def gfunction(xi, eta, **kwargs):
 
     xip, etap = affine2d.distortFargs(xi, eta)
 
-    if kwargs['minus'] is True:
+    if kwargs["minus"] is True:
         xip = -1 * xip
 
-    g = np.exp(-i * Pi * (2 * etap / np.sqrt(3) + xip)) * \
-        (
-        (np.sqrt(3) * etap - 3 * xip) *
-        (np.exp(i * Pi * np.sqrt(3) * etap) - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip))) +
-        (np.sqrt(3) * etap + 3 * xip) *
-        (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
-    ) / \
-        (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
+    g = (
+        np.exp(-i * Pi * (2 * etap / np.sqrt(3) + xip))
+        * (
+            (np.sqrt(3) * etap - 3 * xip)
+            * (
+                np.exp(i * Pi * np.sqrt(3) * etap)
+                - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip))
+            )
+            + (np.sqrt(3) * etap + 3 * xip)
+            * (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
+        )
+        / (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
+    )
 
     return g * affine2d.distortphase(xi, eta)
 
@@ -115,11 +120,26 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     if abs(d1) < 0.5 * eps_offset:  # might have the singular central pixel here
         c_adjust[1] = c[1] + eps_offset
 
-    hex_complex = np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
-                                  pixel=pitch, affine2d=affine2d, minus=False) + \
-        np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
-                        pixel=pitch, affine2d=affine2d, minus=True)
-    fudge = np.sqrt(4.0) # this gives the analytic central PSF correctly.
-    hex_complex[int(c[0]),int(c[1])] = fudge * (np.sqrt(3) / 4.0)
+    hex_complex = np.fromfunction(
+        gfunction,
+        s,
+        d=d,
+        c=c_adjust,
+        lam=lam,
+        pixel=pitch,
+        affine2d=affine2d,
+        minus=False,
+    ) + np.fromfunction(
+        gfunction,
+        s,
+        d=d,
+        c=c_adjust,
+        lam=lam,
+        pixel=pitch,
+        affine2d=affine2d,
+        minus=True,
+    )
+    fudge = np.sqrt(4.0)  # this gives the analytic central PSF correctly.
+    hex_complex[int(c[0]), int(c[1])] = fudge * (np.sqrt(3) / 4.0)
 
     return hex_complex

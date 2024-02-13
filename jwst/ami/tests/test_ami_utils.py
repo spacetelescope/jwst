@@ -35,7 +35,7 @@ def test_get_src_spec(spectype, teff):
     spec = utils.get_src_spec(spectype)
     assert isinstance(spec, SourceSpectrum)
     # check model expression for matching teff
-    re.match(f".*T_eff=(?P<teff>[0-9]+)", spec.meta["expr"]).group("teff") == str(teff)
+    re.match(r".*T_eff=(?P<teff>[0-9]+)", spec.meta["expr"]).group("teff") == str(teff)
 
 
 def test_get_src_spec_default():
@@ -43,4 +43,4 @@ def test_get_src_spec_default():
         spec = utils.get_src_spec("missing")
     assert isinstance(spec, SourceSpectrum)
     # check model expression for matching teff
-    re.match(f".*T_eff=(?P<teff>[0-9]+)", spec.meta["expr"]).group("teff") == "9500"
+    re.match(r".*T_eff=(?P<teff>[0-9]+)", spec.meta["expr"]).group("teff") == "9500"

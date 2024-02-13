@@ -82,9 +82,18 @@ class NIRISS:
         self.src = src
 
         self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
-        self.wls = [self.throughput, ]
+        self.wls = [
+            self.throughput,
+        ]
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
-        self.wavextension = ([self.lam_c,], [self.lam_w,])
+        self.wavextension = (
+            [
+                self.lam_c,
+            ],
+            [
+                self.lam_w,
+            ],
+        )
         self.nwav = 1
 
         # only one NRM on JWST:
@@ -92,7 +101,11 @@ class NIRISS:
         self.instrument = "NIRISS"
         self.arrname = "jwst_g7s6c"
         self.holeshape = "hex"
-        self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=self.chooseholes, holeshape=self.holeshape)
+        self.mask = NRM_mask_definitions(
+            maskname=self.arrname,
+            chooseholes=self.chooseholes,
+            holeshape=self.holeshape,
+        )
 
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
@@ -101,9 +114,9 @@ class NIRISS:
         # Separating detector tilt pixel scale effects from pupil distortion effects is
         # yet to be determined... see comments in Affine class definition.
         if affine2d is None:
-            self.affine2d = utils.Affine2d(mx=1.0, my=1.0,
-                               sx=0.0, sy=0.0,
-                               xo=0.0, yo=0.0, name="Ideal")
+            self.affine2d = utils.Affine2d(
+                mx=1.0, my=1.0, sx=0.0, sy=0.0, xo=0.0, yo=0.0, name="Ideal"
+            )
         else:
             self.affine2d = affine2d
 
@@ -113,9 +126,13 @@ class NIRISS:
         # for the threshold application.
         # Data reduction gurus: tweak the threshold value with experience...
         # Gurus: tweak cvsupport with use...
-        self.cvsupport_threshold = {"F277W": 0.02, "F380M": 0.02, "F430M": 0.02, "F480M": 0.02}
+        self.cvsupport_threshold = {
+            "F277W": 0.02,
+            "F380M": 0.02,
+            "F430M": 0.02,
+            "F480M": 0.02,
+        }
         self.threshold = self.cvsupport_threshold[filt]
-
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
         """
@@ -173,7 +190,7 @@ class NIRISS:
         # At some point we want to use different X and Y pixel scales
         pscale_deg = np.mean([pscaledegx, pscaledegy])
         self.pscale_rad = np.deg2rad(pscale_deg)
-        self.pscale_mas = pscale_deg * (60*60*1000)
+        self.pscale_mas = pscale_deg * (60 * 60 * 1000)
         self.pav3 = input_model.meta.pointing.pa_v3
         self.vparity = input_model.meta.wcsinfo.vparity
         self.v3iyang = input_model.meta.wcsinfo.v3yangle
@@ -182,11 +199,11 @@ class NIRISS:
         self.crpix2 = input_model.meta.wcsinfo.crpix2
         self.pupil = input_model.meta.instrument.pupil
         self.proposer_name = input_model.meta.target.proposer_name
-        if input_model.meta.target.catalog_name == 'UNKNOWN':
+        if input_model.meta.target.catalog_name == "UNKNOWN":
             objname = input_model.meta.target.proposer_name
         else:
             objname = input_model.meta.target.catalog_name
-        self.objname = objname.replace('-', ' ')
+        self.objname = objname.replace("-", " ")
         self.pi_name = input_model.meta.program.pi_name
         self.ra = input_model.meta.target.ra
         self.dec = input_model.meta.target.dec
@@ -197,8 +214,8 @@ class NIRISS:
         self.spectyp = self.src
 
 
-        datestr = input_model.meta.visit.start_time.replace(' ','T')
-        self.date = datestr # is this the right start time?
+        datestr = input_model.meta.visit.start_time.replace(" ", "T")
+        self.date = datestr  # is this the right start time?
         self.year = datestr[:4]
         self.month = datestr[5:7]
         self.day = datestr[8:10]
@@ -211,85 +228,99 @@ class NIRISS:
             self.itime = effinttm
             if self.firstfew is not None:
                 if scidata.shape[0] > self.firstfew:
-                    log.info(f'Analyzing only the first {self.firstfew:d} integrations')
-                    scidata = scidata[:self.firstfew, :, :]
-                    bpdata = bpdata[:self.firstfew, :, :]
+                    log.info(f"Analyzing only the first {self.firstfew:d} integrations")
+                    scidata = scidata[: self.firstfew, :, :]
+                    bpdata = bpdata[: self.firstfew, :, :]
             self.nwav = scidata.shape[0]
-            [self.wls.append(self.wls[0]) for f in range(self.nwav-1)]
+            [self.wls.append(self.wls[0]) for f in range(self.nwav - 1)]
         # Rotate mask hole centers by pav3 + v3i_yang to be in equatorial coordinates
         ctrs_sky = self.mast2sky()
         oifctrs = np.zeros(self.mask.ctrs.shape)
-        oifctrs[:,0] = ctrs_sky[:,1].copy() * -1
-        oifctrs[:,1] = ctrs_sky[:,0].copy() * -1
+        oifctrs[:, 0] = ctrs_sky[:, 1].copy() * -1
+        oifctrs[:, 1] = ctrs_sky[:, 0].copy() * -1
         self.ctrs_eqt = oifctrs
         self.ctrs_inst = self.mask.ctrs
         self.hdia = self.mask.hdia
         self.nslices = self.nwav
 
         # Trim refpix from all slices
-        scidata = scidata[:,4:, :]
-        bpdata = bpdata[:,4:, :]
+        scidata = scidata[:, 4:, :]
+        bpdata = bpdata[:, 4:, :]
 
         # find peak in median of refpix-trimmed scidata
         med_im = np.median(scidata, axis=0)
 
         # Use median image to find big CR hits not already caught by pipeline
-        std_im = np.std(scidata,axis=0)
+        std_im = np.std(scidata, axis=0)
         mediandiff = np.empty_like(scidata)
-        mediandiff[:,:,:] = scidata - med_im
+        mediandiff[:, :, :] = scidata - med_im
         nsigma = 10
-        outliers = np.where(mediandiff > nsigma*std_im)
-        outliers2 = np.argwhere(mediandiff > nsigma*std_im)
+        outliers = np.where(mediandiff > nsigma * std_im)
+        outliers2 = np.argwhere(mediandiff > nsigma * std_im)
 
         dqvalues = bpdata[outliers]
-        log.info(f'{len(dqvalues)} additional pixels >10-sig from median of stack found')
+        log.info(
+            f"{len(dqvalues)} additional pixels >10-sig from median of stack found"
+        )
         # decompose DQ values to check if they are already flagged DNU
         count = 0
-        for loc, dq_value in zip(outliers2,dqvalues):
+        for loc, dq_value in zip(outliers2, dqvalues):
             bitarr = np.binary_repr(dq_value)
             bad_types = []
             for i, elem in enumerate(bitarr[::-1]):
                 if elem == str(1):
-                    badval = 2** i
-                    key = next(key for key, value in dqflags.pixel.items() if value == badval)
+                    badval = 2**i
+                    key = next(
+                        key for key, value in dqflags.pixel.items() if value == badval
+                    )
                     bad_types.append(key)
-            if 'DO_NOT_USE' not in bad_types:
-                bpdata[loc[0],loc[1],loc[2]] += 1
-                count+=1
-        log.info(f'{count} DO_NOT_USE flags added to DQ array for found outlier pixels')
+            if "DO_NOT_USE" not in bad_types:
+                bpdata[loc[0], loc[1], loc[2]] += 1
+                count += 1
+        log.info(f"{count} DO_NOT_USE flags added to DQ array for found outlier pixels")
 
         # Roughly center scidata, bpdata around peak pixel position
         peakx, peaky, r = utils.min_distance_to_edge(med_im)
-        scidata_ctrd = scidata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
-        bpdata_ctrd = bpdata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
+        scidata_ctrd = scidata[
+            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+        ]
+        bpdata_ctrd = bpdata[
+            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+        ]
 
-        log.info("Cropping all integrations to %ix%i pixels around peak (%i,%i)" %
-                (2*r+1,2*r+1,peakx+4,peaky))# +4 because of trimmed refpx
+        log.info(
+            "Cropping all integrations to %ix%i pixels around peak (%i,%i)"
+            % (2 * r + 1, 2 * r + 1, peakx + 4, peaky)
+        )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
             log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
-            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(scidata_ctrd,
-                                                            bpdata_ctrd,
-                                                            input_model.meta.instrument.filter,
-                                                            self.pscale_mas,
-                                                            self.nrm_model)
+            scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(
+                scidata_ctrd,
+                bpdata_ctrd,
+                input_model.meta.instrument.filter,
+                self.pscale_mas,
+                self.nrm_model,
+            )
         else:
-            log.info('Not running Fourier bad pixel fix')
+            log.info("Not running Fourier bad pixel fix")
 
-        self.rootfn = input_model.meta.filename.replace('.fits','')
+        self.rootfn = input_model.meta.filename.replace(".fits", "")
 
         # all info needed to write out oifits should be stored in NIRISS object attributes
 
         # Make a bad pixel mask, either from real DQ data or zeros if usebp=False
         if self.usebp:
-            log.info('usebp flag set to TRUE: bad pixels will be excluded from model fit')
+            log.info(
+                "usebp flag set to TRUE: bad pixels will be excluded from model fit"
+            )
             DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
             JUMP_DET = dqflags.pixel["JUMP_DET"]
             dq_dnu = bpdata_ctrd & DO_NOT_USE == DO_NOT_USE
             dq_jump = bpdata_ctrd & JUMP_DET == JUMP_DET
             dqmask_ctrd = dq_dnu | dq_jump
         else:
-            log.info('usebp flag set to FALSE: all pixels will be used in model fit')
+            log.info("usebp flag set to FALSE: all pixels will be used in model fit")
             dqmask_ctrd = np.zeros_like(scidata_ctrd)
 
         return scidata_ctrd, dqmask_ctrd
@@ -328,9 +359,9 @@ class NIRISS:
         # rotate by an extra 90 degrees (RAC 9/21)
         # these coords are just used to orient output in OIFITS files
         # NOT used for the fringe fitting itself
-        mask_ctrs = utils.rotate2dccw(mask_ctrs,np.pi/2.)
-        vpar = self.vparity # Relative sense of rotation between Ideal xy and V2V3
-        rot_ang = self.pav3 - self.v3iyang # subject to change!
+        mask_ctrs = utils.rotate2dccw(mask_ctrs, np.pi / 2.0)
+        vpar = self.vparity  # Relative sense of rotation between Ideal xy and V2V3
+        rot_ang = self.pav3 - self.v3iyang  # subject to change!
 
         if self.pav3 != 0.0:
             # Using rotate2sccw, which rotates **vectors** CCW in a fixed coordinate system,
@@ -338,11 +369,15 @@ class NIRISS:
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
-                log.info(f'Rotating mask hole centers clockwise by {rot_ang:.3f} degrees')
+                log.info(
+                    f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees"
+                )
             else:
                 # counterclockwise  <rotate coords counterclockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
-                log.info(f'Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees')
+                log.info(
+                    f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees"
+                )
         else:
             ctrs_rot = mask_ctrs
         return ctrs_rot
