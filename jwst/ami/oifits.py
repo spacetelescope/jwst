@@ -19,8 +19,6 @@ from stdatamodels.jwst import datamodels
 class RawOifits:
     def __init__(self, fringefitter, method="median"):
         """
-        Short Summary
-        -------------
         Class to store AMI data in the format required to write out to OIFITS files
         Based on ObservablesFromText from ImPlaneIA.
         Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
@@ -32,8 +30,6 @@ class RawOifits:
             and other info needed for OIFITS files
         method: string
             Method to average observables: mean or median. Default median.
-
-
         """
         self.fringe_fitter = fringefitter
         self.n_holes = 7
@@ -56,15 +52,7 @@ class RawOifits:
 
     def make_obsarrays(self):
         """
-        Short Summary
-        ------------
         Make arrays of observables of the correct shape for saving to datamodels
-
-        Parameters
-        ----------
-
-        Returns
-        -------
         """
         # arrays of observables, (nslices,nobservables) shape.
         self.fp = np.zeros((self.nslices, self.nbl))
@@ -270,8 +258,6 @@ class RawOifits:
 
     def init_oimodel_arrays(self, oimodel):
         """
-        Short Summary
-        ------------
         Set dtypes and initialize shapes for AmiOiModel arrays,
         depending on if averaged or multi-integration version.
 
@@ -279,9 +265,6 @@ class RawOifits:
         ----------
         oimodel: AmiOIModel object
             empty model
-
-        Returns
-        -------
         """
         if self.method == "multi":
             # update dimensions of arrays for multi-integration oifits
@@ -378,12 +361,7 @@ class RawOifits:
 
     def _maketriples_all(self):
         """
-        Short Summary
-        ------------
         Calculate all three-hole combinations, baselines
-
-        Parameters
-        ----------
 
         Returns
         -------
@@ -416,12 +394,7 @@ class RawOifits:
 
     def _makebaselines(self):
         """
-        Short Summary
-        ------------
         Calculate all hole pairs, baselines
-
-        Parameters
-        ----------
 
         Returns
         -------
@@ -499,8 +472,6 @@ class RawOifits:
 class CalibOifits:
     def __init__(self, targoimodel, caloimodel):
         """
-        Short Summary
-        -------------
         Calibrate (normalize) an AMI observation by subtracting closure phases
         of a reference star from those of a target and dividing visibility amplitudes
         of the target by those of the reference star.
@@ -509,7 +480,6 @@ class CalibOifits:
         ----------
         targoimodel: AmiOIModlel, target
         caloimodel: AmiOIModlel, reference star (calibrator)
-
         """
         self.targoimodel = targoimodel
         self.caloimodel = caloimodel
@@ -517,16 +487,8 @@ class CalibOifits:
 
     def update_dtype(self):
         """
-        Short Summary
-        ------------
         Modify the dtype of OI array to include different pistons columns
         for calibrated OIFITS files
-
-        Parameters
-        ----------
-
-        Returns
-        -------
         """
         nrows = 7
         modified_dtype = np.dtype(
@@ -548,13 +510,8 @@ class CalibOifits:
 
     def calibrate(self):
         """
-        Short Summary
-        ------------
         Apply the calibration (normalization) routine to calibrate the
         target AmiOIModel by the calibrator (reference star) AmiOIModel
-
-        Parameters
-        ----------
 
         Returns
         -------
