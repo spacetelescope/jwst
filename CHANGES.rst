@@ -46,8 +46,9 @@ extract_1d
 extract_2d
 ----------
 
-- Fixed crash when user provides slit_name, and value is a string. This
-  change had been done in PR8108 but it got undone by another PR. [#8272]
+- Fixed crash when user provides an integer value for the `slit_name` argument,
+  by converting to a string. This change had been done in #8108, but it got undone
+  by another PR. [#8272]
 
 outlier_detection
 -----------------
