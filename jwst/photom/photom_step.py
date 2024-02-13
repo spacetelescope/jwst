@@ -64,13 +64,21 @@ class PhotomStep(Step):
             result.meta.cal_step.photom = 'SKIPPED'
             return result
 
-        # Do the correction
-        phot = photom.DataSet(input_model, self.inverse, self.source_type,
-                              self.mrs_time_correction, correction_pars)
-        result = phot.apply_photom(phot_filename, area_filename)
-        result.meta.cal_step.photom = 'COMPLETE'
+        try:
+            # Do the correction
+            phot = photom.DataSet(input_model, self.inverse, self.source_type,
+                                  self.mrs_time_correction, correction_pars)
+            result = phot.apply_photom(phot_filename, area_filename)
+            result.meta.cal_step.photom = 'COMPLETE'
+            self.correction_pars = phot.correction_pars
+            self.correction_pars['refs'] = {'photom': phot_filename, 'area': area_filename}
 
-        self.correction_pars = phot.correction_pars
-        self.correction_pars['refs'] = {'photom': phot_filename, 'area': area_filename}
-
+        except photom.DataModelTypeError:
+            # should trip e.g. for NIRISS SOSS data in FULL subarray
+            self.log.error(f'Unexpected data model type {model_type} for '
+                           f'{input_model.meta.instrument.name.upper()}. '
+                           'Photom will be skipped.')
+            result = input_model.copy()
+            result.meta.cal_step.photom = 'SKIPPED'
+            return result
         return result

@@ -1575,7 +1575,7 @@ class IFUCubeData():
 
         num_good = len(good_data[0])
         if num_good == 0:  # This can occcur if all the pixels on the detector are marked DO_NOT_USE.
-
+            log.warning(f'No valid pixels found on detector {input_model.meta.filename}')
             return coord1, coord2, corner_coord, wave, dwave, flux, err, \
                 slice_no, rois_det, roiw_det, weight_det, \
                 softrad_det, scalerad_det, x_det, y_det
