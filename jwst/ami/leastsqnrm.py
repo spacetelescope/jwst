@@ -416,17 +416,17 @@ def weighted_operations(img, model, dqm=None):
     -------------
     Performs least squares matrix operations to solve A x = b, where A is the
     model, b is the data (image), and x is the coefficient vector we are solving
-    for.  
+    for.
 
     Solution 1:  equal weighting of data (matrix_operations()).
-      x = inv(At.A).(At.b) 
+      x = inv(At.A).(At.b)
 
     Solution 2:  weighting data by Poisson variance (weighted_operations())
-      x = inv(At.W.A).(At.W.b) 
-      where W is a diagonal matrix of weights w_i, 
+      x = inv(At.W.A).(At.W.b)
+      where W is a diagonal matrix of weights w_i,
       weighting each data point i by the inverse of its variance:
          w_i = 1 / sigma_i^2
-      For photon noise, the data, i.e. the image values b_i  have variance 
+      For photon noise, the data, i.e. the image values b_i  have variance
       proportional to b_i with an e.g. ADU to electrons coonversion factor.
       If this factor is the same for all pixels, we do not need to include
       it here (is that really true? Yes I think so because we're not
@@ -468,7 +468,7 @@ def weighted_operations(img, model, dqm=None):
 
     # photon noise variance - proportional to ADU 
     # (for roughly uniform adu2electron factor)
-    variance = np.abs(flatimg)  
+    variance = np.abs(flatimg)
     # this resets the weights of pixels with negative or unity values to zero
     # we ignore data with unity or lower values - weight it not-at-all..
     weights = np.where(flatimg <= 1.0, 0.0, 1.0/np.sqrt(variance))  # anand 2022 Jan
@@ -476,7 +476,7 @@ def weighted_operations(img, model, dqm=None):
     log.debug(f'{len(nanlist[0]):d} bad pixels skipped in weighted fringefitter')
 
     # A - but delete all pixels flagged by dq array
-    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], 
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
                                   np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
     for fringe in range(np.shape(model)[2]):
@@ -498,7 +498,7 @@ def weighted_operations(img, model, dqm=None):
     # actual residuals in image:  is this sign convention odd?
     # res = np.dot(flatmodel, x) - flatimg
     # changed here to data - model
-    res = flatimg - np.dot(flatmodel, x) 
+    res = flatimg - np.dot(flatmodel, x)
 
     # put bad pixels back
     naninsert = nanlist[0] - np.arange(len(nanlist[0]))
@@ -565,14 +565,14 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
     else:
         nanlist = (np.array(()), ) # shouldn't occur w/MAST JWST data
 
-    if verbose: 
+    if verbose:
         log.info(f'\n\ttype(nanlist) {type(nanlist):}, len={len(nanlist):}', end='')
-        log.info(f'\n\tnumber of nanlist pixels: {len(nanlist[0]):d} items', end='') 
+        log.info(f'\n\tnumber of nanlist pixels: {len(nanlist[0]):d} items', end='')
         log.info(f'\n\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice',
           end='')
     else:
         log.info(f'\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice')
-          
+
 
     flatimg = np.delete(flatimg, nanlist)
 
@@ -585,10 +585,10 @@ def matrix_operations(img, model, flux = None, verbose=False, linfit=False, dqm=
         flatimg = flux * flatimg / flatimg.sum()
 
     # A
-    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], 
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
                                   np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
-    if verbose: 
+    if verbose:
         log.info(f'\n\tflatmodel_nan {flatmodel_nan.shape:}', end='')
         log.info(f'\n\tflatmodel     {flatmodel.shape:}', end='')
         log.info(f'\n\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}', end='')

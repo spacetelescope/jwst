@@ -174,7 +174,6 @@ def bad_pixels(data,
     -------
     pxdq: int array
         Bad pixel mask identified by median filtering
-    
     """
 
     mfil_data = median_filter(data, size=median_size)
@@ -210,7 +209,6 @@ def fourier_corr(data,
     -------
     data_out: numpy array
         Corrected science data
-    
     """
 
     # Get the dimensions.
@@ -248,7 +246,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     """
     Short Summary
     ------------
-    Apply the Fourier bad pixel correction to pixels 
+    Apply the Fourier bad pixel correction to pixels
     flagged DO_NOT_USE or JUMP_DET.
     Original code implementation by Jens Kammerer.
 
@@ -269,7 +267,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     -------
     data: numpy array
         Corrected data
-    pxdq: 
+    pxdq:
         Mask of bad pixels, updated if new ones were found
 
     """
@@ -318,7 +316,6 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     cvis = calcsupport(filt, 2 * sh, pxsc_rad, pupil_mask)
     cvis /= np.max(cvis)
     fmas = cvis < 1e-3  # 1e-3 seems to be a reasonable threshold
-    # fmas_show = fmas.copy()
     fmas = np.fft.fftshift(fmas)[:, :2 * sh // 2 + 1]
 
     # Compute the pupil mask. This mask defines the region where we are
@@ -331,9 +328,6 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
         pmas = dist > 9. * filtwl_d[filt] / diam * 180. / np.pi * 1000. * 3600. / pxsc
     else:
         pmas = dist > 12. * filtwl_d[filt] / diam * 180. / np.pi * 1000. * 3600. / pxsc
-    # if (np.sum(pmas) < np.mean(flagged_per_int)):
-    #     log.info('   SKIPPING: subframe too small to estimate noise')
-    #     continue
 
 
     # Go through all frames.
@@ -347,25 +341,11 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
         data_orig = deepcopy(data_cut)
         pxdq_cut = deepcopy(pxdq[j,:-1,:-1])
         pxdq_cut = pxdq_cut > 0.5
-        # pxdq_orig = deepcopy(pxdq_cut)
         # Correct the bad pixels. This is an iterative process. After each
         # iteration, we check whether new (residual) bad pixels are
         # identified. If so, we re-compute the corrections. If not, we
         # terminate the iteration.      
         for k in range(10):
-
-            # plt.figure()
-            # plt.imshow(np.log10(data_cut), origin='lower')
-            # plt.imshow(pmas, alpha=0.5, origin='lower')
-            # plt.colorbar()
-            # plt.show()
-
-            # plt.figure()
-            # plt.imshow(np.log10(np.abs(np.fft.rfft2(np.fft.fftshift(data_cut)))), origin='lower')
-            # plt.imshow(fmas, alpha=0.5, origin='lower')
-            # plt.colorbar()
-            # plt.show()
-
             # Correct the bad pixels.
             data_cut = fourier_corr(data_cut,
                                     pxdq_cut,
@@ -408,4 +388,4 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
         data[j,:-1,:-1] = fourier_corr(data_orig,pxdq_cut,fmas)
         pxdq[j,:-1,:-1] = pxdq_cut
 
-    return data, pxdq 
+    return data, pxdq

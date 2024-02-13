@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 
 
 class NIRISS:
-    def __init__(self, 
+    def __init__(self,
                  filt,
                  nrm_model,
                  src="A0V",
@@ -56,7 +56,7 @@ class NIRISS:
             None, synphot object or [(wt,wlen),(wt,wlen),...].  Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you can simulate 21cm psfs through something called "F430M"!
-        
+
         usebp : boolean
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
 
@@ -210,8 +210,8 @@ class NIRISS:
         effinttm = input_model.meta.exposure.effective_exposure_time
         nints = input_model.meta.exposure.nints
         # if 2d input, model has already been expanded to 3d, so check 0th dimension
-        if input_model.data.shape[0] == 1: 
-            self.itime = effinttm * nints 
+        if input_model.data.shape[0] == 1:
+            self.itime = effinttm * nints
         else:
             self.itime = effinttm
             if self.firstfew is not None:
@@ -242,7 +242,7 @@ class NIRISS:
         std_im = np.std(scidata,axis=0)
         mediandiff = np.empty_like(scidata)
         mediandiff[:,:,:] = scidata - med_im
-        nsigma = 10 
+        nsigma = 10
         outliers = np.where(mediandiff > nsigma*std_im)
         outliers2 = np.argwhere(mediandiff > nsigma*std_im)
 
@@ -268,7 +268,7 @@ class NIRISS:
         scidata_ctrd = scidata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
         bpdata_ctrd = bpdata[:,int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
 
-        log.info("Cropping all integrations to %ix%i pixels around peak (%i,%i)" % 
+        log.info("Cropping all integrations to %ix%i pixels around peak (%i,%i)" %
                 (2*r+1,2*r+1,peakx+4,peaky))# +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
@@ -284,7 +284,7 @@ class NIRISS:
         self.rootfn = input_model.meta.filename.replace('.fits','')
 
         # all info needed to write out oifits should be stored in NIRISS object attributes
-  
+
         # Make a bad pixel mask, either from real DQ data or zeros if usebp=False
         if self.usebp:
             log.info('usebp flag set to TRUE: bad pixels will be excluded from model fit')
