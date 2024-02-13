@@ -105,7 +105,7 @@ def mask_slits(input_model, mask):
 
     return mask
 
-    
+
 def create_mask(input_model, mask_spectral_regions, n_sigma):
     """Create the pixel mask needed for setting which pixels to use
     for measuring 1/f noise.
@@ -316,7 +316,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         nan_pix = np.isnan(input_model.data)
         input_model.data[nan_pix] = 0
         Mask[nan_pix] = False
-    
+
     else:
         # Create the pixel mask that'll be used to indicate which pixels
         # to include in the 1/f noise measurements. Basically, we're setting
