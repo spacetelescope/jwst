@@ -49,6 +49,11 @@ outlier_detection
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
 
+- Fixed bug in removing intermediate files, so that the search for intermediate
+  files does not rely on the input files having a "cal" suffix, which was causing
+  original input files to accidentally get deleted instead of just the intermediate
+  files. [#8263]
+
 photom
 ------
 
