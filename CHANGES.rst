@@ -42,6 +42,9 @@ extract_1d
 
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
   the FULL subarray with warning. [#8225]
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
+  the F277W filter with warning. [#8275]
   
 outlier_detection
 -----------------
