@@ -274,6 +274,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     spec.source_type = source_type
     spec.extraction_x = x_center
     spec.extraction_y = y_center
+    spec.meta.aper_center_x = x_center
+    spec.meta.aper_center_y = y_center
+    print('x_center y_center', x_center, y_center)
+    
+    print('******* WRITING aper_center_x, aper_center_y')
 
     if source_type == 'POINT' and apcorr_ref_model is not None:
         log.info('Applying Aperture correction.')

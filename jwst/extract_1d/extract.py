@@ -2829,6 +2829,8 @@ def do_extract1d(
 
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
+    print('******* input model ', type(input_model))
+    
     if isinstance(input_model, SourceModelContainer):
         # log.debug('Input is a SourceModelContainer')
         was_source_model = True
@@ -3500,7 +3502,12 @@ def extract_one_slit(
     extract_model.add_position_correction(data.shape)
     extract_model.log_extraction_parameters()
     extract_model.assign_polynomial_limits()
-
+    extraction_values = {}
+    extraction_values['xstart': None]
+    extraction_values['xend': None]
+    extraction_values['ystart': None]
+    extraction_values['yend': None]
+    extraction_values['width': None]
     # Log the extraction limits being used
     if integ < 1:
         if extract_model.src_coeff is not None:
@@ -3764,6 +3771,7 @@ def create_extraction(extract_ref_dict,
                     integ,
                     prev_offset,
                     extract_params
+            print('ran extract_one_slit')
                 )
         except InvalidSpectralOrderNumberError as e:
             log.info(f'{str(e)}, skipping ...')
