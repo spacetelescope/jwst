@@ -42,7 +42,14 @@ extract_1d
 
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
   the FULL subarray with warning. [#8225]
-  
+
+extract_2d
+----------
+
+- Fixed crash when user provides an integer value for the `slit_name` argument,
+  by converting to a string. This change had been done in #8108, but it got undone
+  by another PR. [#8272]
+
 outlier_detection
 -----------------
 
@@ -218,9 +225,6 @@ extract_2d
 - Fixed crash with slit_name for MOS. Now the argument should
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
-
-- Fixed potential future crash if MSA slitlet name is not an
-  integer. [#8108]
 
 general
 -------
