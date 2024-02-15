@@ -518,7 +518,6 @@ def get_aperture(
     ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"], extract_params["dispaxis"])
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"], extract_params["dispaxis"])
 
-    print('*****Value of ap_ref after update from, width', ap_ref)
     return ap_ref
 
 
@@ -620,8 +619,6 @@ def update_from_width(
         lower = (lower + upper) / 2. - (width - 1.) / 2.
         upper = lower + (width - 1.)
         ap_width = Aperture(xstart=lower, xstop=upper, ystart=ap_ref.ystart, ystop=ap_ref.ystop)
-
-    print('!!!!!!!! Got Here in update_from_width' ap_width)
     
     return ap_width
 
@@ -2832,8 +2829,6 @@ def do_extract1d(
 
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
-    print('******* input model ', type(input_model))
-    
     if isinstance(input_model, SourceModelContainer):
         # log.debug('Input is a SourceModelContainer')
         was_source_model = True
@@ -3505,14 +3500,17 @@ def extract_one_slit(
     extract_model.add_position_correction(data.shape)
     extract_model.log_extraction_parameters()
     extract_model.assign_polynomial_limits()
+
+    # store the extraction values we want to save in dictionary.
+    # define all the values to be None. If they are not valid for a mode
+    # they will not be written to fits header.
     extraction_values = {}
     extraction_values['xstart'] = None
-    extraction_values['xstop'] =  None
-    extraction_values['ystart'] =  None
+    extraction_values['xstop'] = None
+    extraction_values['ystart'] = None
     extraction_values['ystop'] = None
     extraction_values['width'] = None
-    if ap is not None:
-        print('******************* WIDTH', ap)
+
     # Log the extraction limits being used
     if integ < 1:
         if extract_model.src_coeff is not None:
@@ -3548,7 +3546,6 @@ def extract_one_slit(
         extract_model.extract(data, var_poisson, var_rnoise, var_flat,
                               wl_array)
 
-    
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset,
             extraction_values)
@@ -3787,8 +3784,6 @@ def create_extraction(extract_ref_dict,
                     prev_offset,
                     extract_params
                 )
-            print('ran extract_one_slit')
-            print('extraction_values', extraction_values)
         except InvalidSpectralOrderNumberError as e:
             log.info(f'{str(e)}, skipping ...')
             raise ContinueError()
