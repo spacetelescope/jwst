@@ -1278,14 +1278,15 @@ class _BaseOverlap:
         # Only solve for valid indices, i.e. wavelengths that are
         # covered by the pixels on the detector.
         # It will be a singular matrix otherwise.
-        with warnings.catch_warnings(action="error"):
-            try:
-                sln[idx] = spsolve(matrix[idx, :][:, idx], result[idx])
-            except MatrixRankWarning:
-                # on rare occasions spsolve's approximation of the matrix is not appropriate
-                # and fails on good input data. revert to different solver
-                log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
-                sln[idx] = lsqr(matrix[idx, :][:, idx], result[idx])[0]
+        warnings.filterwarnings(action='error', category=MatrixRankWarning)
+        try:
+            sln[idx] = spsolve(matrix[idx, :][:, idx], result[idx])
+        except MatrixRankWarning:
+            # on rare occasions spsolve's approximation of the matrix is not appropriate
+            # and fails on good input data. revert to different solver
+            log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
+            sln[idx] = lsqr(matrix[idx, :][:, idx], result[idx])[0]
+        warnings.resetwarnings()
 
         return sln
 

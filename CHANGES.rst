@@ -43,7 +43,7 @@ extract_1d
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
   the FULL subarray with warning. [#8225]
 
-- Fixed a bug in the ATOCA matrix solve that would cause failures on
+- Fixed a bug in the ATOCA matrix solve for NIRISS SOSS that would cause failures on
   good input data in some cases. [#8273]
   
 outlier_detection

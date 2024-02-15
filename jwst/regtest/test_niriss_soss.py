@@ -126,7 +126,6 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.fixture(scope='module')
 def run_extract1d_spsolve_failure(jail, rtdata_module):
     """
