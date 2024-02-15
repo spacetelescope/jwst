@@ -49,6 +49,10 @@ extract_1d
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
   the FULL subarray with warning. [#8225]
 
+- Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
+  pixels in the 2nd-order spectrum are flagged and would cause the step
+  to fail. [#8265]
+
 extract_2d
 ----------
 
