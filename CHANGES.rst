@@ -1,4 +1,4 @@
-1.13.4 (unreleased)
+1.13.5 (unreleased)
 ===================
 
 associations
@@ -43,14 +43,27 @@ extract_1d
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
   the FULL subarray with warning. [#8225]
 
-- Fixed a bug in the ATOCA algorithm that caused the step to occasionally 
-  fail for NIRISS SOSS data with many flagged pixels. [#8265]
-  
+- Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
+  pixels in the 2nd-order spectrum are flagged and would cause the step
+  to fail. [#8265]
+
+extract_2d
+----------
+
+- Fixed crash when user provides an integer value for the `slit_name` argument,
+  by converting to a string. This change had been done in #8108, but it got undone
+  by another PR. [#8272]
+
 outlier_detection
 -----------------
 
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
+
+- Fixed bug in removing intermediate files, so that the search for intermediate
+  files does not rely on the input files having a "cal" suffix, which was causing
+  original input files to accidentally get deleted instead of just the intermediate
+  files. [#8263]
 
 photom
 ------
@@ -108,7 +121,18 @@ pipeline
 - Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ to
   the list of modes to run nsclean when skip is set to False. [#8256]
 
-1.13.3 (01-05-2024)
+
+1.13.4 (2024-01-25)
+===================
+
+emicorr
+-------
+
+- Set skip=True by default in the code, to be turned on later by a parameter
+  reference file. [#8171]
+
+
+1.13.3 (2024-01-05)
 ===================
 
 documentation
@@ -205,9 +229,6 @@ extract_2d
 - Fixed crash with slit_name for MOS. Now the argument should
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
-
-- Fixed potential future crash if MSA slitlet name is not an
-  integer. [#8108]
 
 general
 -------
