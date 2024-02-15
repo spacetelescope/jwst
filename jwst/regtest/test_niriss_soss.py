@@ -141,7 +141,7 @@ def run_extract1d_spsolve_failure(jail, rtdata_module):
             "--soss_tikfac=3.1881637371089252e-15",
             "--soss_transform=-0.00038201755227297866, -0.24237455427848956, 0.5404013401742825",
             ]
-    Step.from_cmdline(args)    
+    Step.from_cmdline(args)
 
 
 @pytest.fixture(scope='module')
@@ -177,7 +177,7 @@ def test_extract1d_spsolve_failure(rtdata_module, run_extract1d_spsolve_failure,
 
 @pytest.mark.bigdata
 def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdiff_default_kwargs):
-    
+
     rtdata = rtdata_module
 
     output = "jw01201008001_04101_00001-seg003_nis_int72_extract1dstep.fits"
