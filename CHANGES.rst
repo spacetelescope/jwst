@@ -13,6 +13,12 @@ cube_build
 
 - Add a warning message to log if no valid data is found on the detector. [#8220]
 
+datamodels
+----------
+
+- Fixed a bug in the ``ModelContainer`` data model, due to which the ``models_grouped``
+  property would return opened data models instead of file names. [#8191]
+
 documentation
 -------------
 
@@ -40,14 +46,35 @@ extract_1d
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
 
-- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
   the FULL subarray with warning. [#8225]
-  
+
+- Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
+  pixels in the 2nd-order spectrum are flagged and would cause the step
+  to fail. [#8265]
+
+extract_2d
+----------
+
+- Fixed crash when user provides an integer value for the `slit_name` argument,
+  by converting to a string. This change had been done in #8108, but it got undone
+  by another PR. [#8272]
+
+general
+-------
+
+- Update minimum required photutils version to 1.5.0 [#8211]
+
 outlier_detection
 -----------------
 
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
+
+- Fixed bug in removing intermediate files, so that the search for intermediate
+  files does not rely on the input files having a "cal" suffix, which was causing
+  original input files to accidentally get deleted instead of just the intermediate
+  files. [#8263]
 
 photom
 ------
@@ -65,9 +92,15 @@ photom
 - Get the values of PIXAR_A2 and PIXAR_SR from AREA reference file
   instead of PHOTOM reference file to avoid missmatching values. [#8187]
 
-- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step 
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
   data in the FULL subarray. [#8225]
+
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
+  the list of modes for running the ``nsclean`` step. [#8256]
 
 refpix
 ------
@@ -100,17 +133,6 @@ tweakreg
 
 - Added option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
-
-general
--------
-
-- Update minimum required photutils version to 1.5.0 [#8211]
-
-pipeline
---------
-
-- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ to
-  the list of modes to run nsclean when skip is set to False. [#8256]
 
 
 1.13.4 (2024-01-25)
@@ -201,7 +223,7 @@ documentation
   reported typos in ``tweakreg`` documentation. [#8084]
 
 emicorr
-----------
+-------
 
 - Added new step for removing EMI from all MIRI data. [#7857]
 
@@ -220,9 +242,6 @@ extract_2d
 - Fixed crash with slit_name for MOS. Now the argument should
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
-
-- Fixed potential future crash if MSA slitlet name is not an
-  integer. [#8108]
 
 general
 -------
