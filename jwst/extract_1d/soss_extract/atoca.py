@@ -25,6 +25,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+class MaskOverlapError(Exception):
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class _BaseOverlap:
     """Base class for the ATOCA algorithm (Darveau-Bernier 2021, in prep).
     Used to perform an overlapping extraction of the form:
@@ -180,6 +187,12 @@ class _BaseOverlap:
 
         # First estimate of a global mask and masks for each orders
         self.mask, self.mask_ord = self._get_masks(global_mask)
+
+        # Ensure there are adequate good pixels left in each order
+        good_pixels_in_order = np.sum(np.sum(~self.mask_ord, axis=-1), axis=-1)
+        min_good_pixels = 25  # hard-code to qualitatively reasonable value
+        if np.any(good_pixels_in_order < min_good_pixels):
+            raise MaskOverlapError('At least one order has no valid pixels (mask_trace_profile and mask_wave do not overlap)')
 
         # Correct i_bounds if it was not specified
         self.i_bounds = self._get_i_bnds(wave_bounds)
@@ -408,9 +421,9 @@ class _BaseOverlap:
         """
 
         # Get needed attributes
-        args = ('threshold', 'n_orders', 'throughput', 'mask_trace_profile', 'wave_map', 'trace_profile')
+        args = ('threshold', 'n_orders', 'mask_trace_profile', 'trace_profile')
         needed_attr = self.get_attributes(*args)
-        threshold, n_orders, throughput, mask_trace_profile, wave_map, trace_profile = needed_attr
+        threshold, n_orders, mask_trace_profile, trace_profile = needed_attr
 
         # Convert list to array (easier for coding)
         mask_trace_profile = np.array(mask_trace_profile)
@@ -1647,7 +1660,6 @@ class ExtractionEngine(_BaseOverlap):
 
         # Use the convolved grid (depends on the order)
         wave_grid = wave_grid[i_bnds[0]:i_bnds[1]]
-
         # Compute the wavelength coverage of the grid
         d_grid = np.diff(wave_grid)
 
