@@ -56,6 +56,11 @@ extract_2d
   by converting to a string. This change had been done in #8108, but it got undone
   by another PR. [#8272]
 
+general
+-------
+
+- Update minimum required photutils version to 1.5.0 [#8211]
+
 outlier_detection
 -----------------
 
@@ -87,6 +92,12 @@ photom
   was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
   data in the FULL subarray. [#8225]
 
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
+  the list of modes for running the ``nsclean`` step. [#8256]
+
 refpix
 ------
 
@@ -112,19 +123,7 @@ tweakreg
 - Added option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
 
-general
--------
 
-- Update minimum required photutils version to 1.5.0 [#8211]
-
-pipeline
---------
-
-- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ to
-  the list of modes to run nsclean when skip is set to False. [#8256]
-
-
-<<<<<<< HEAD
 1.13.4 (2024-01-25)
 ===================
 
@@ -136,9 +135,6 @@ emicorr
 
 
 1.13.3 (2024-01-05)
-=======
-1.13.3 (01-05-2024)
->>>>>>> 114153eb2 (Fix: models_grouped always return opened data models)
 ===================
 
 documentation
