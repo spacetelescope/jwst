@@ -518,6 +518,7 @@ def get_aperture(
     ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"], extract_params["dispaxis"])
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"], extract_params["dispaxis"])
 
+    print('*****Value of ap_ref after update from, width', ap_ref)
     return ap_ref
 
 
@@ -620,6 +621,8 @@ def update_from_width(
         upper = lower + (width - 1.)
         ap_width = Aperture(xstart=lower, xstop=upper, ystart=ap_ref.ystart, ystop=ap_ref.ystop)
 
+    print('!!!!!!!! Got Here in update_from_width' ap_width)
+    
     return ap_width
 
 
@@ -3503,11 +3506,13 @@ def extract_one_slit(
     extract_model.log_extraction_parameters()
     extract_model.assign_polynomial_limits()
     extraction_values = {}
-    extraction_values['xstart': None]
-    extraction_values['xend': None]
-    extraction_values['ystart': None]
-    extraction_values['yend': None]
-    extraction_values['width': None]
+    extraction_values['xstart'] = None
+    extraction_values['xstop'] =  None
+    extraction_values['ystart'] =  None
+    extraction_values['ystop'] = None
+    extraction_values['width'] = None
+    if ap is not None:
+        print('******************* WIDTH', ap)
     # Log the extraction limits being used
     if integ < 1:
         if extract_model.src_coeff is not None:
@@ -3517,16 +3522,24 @@ def extract_one_slit(
                 log.info("Using extraction limits: "
                          f"xstart={extract_model.xstart}, "
                          f"xstop={extract_model.xstop}, and src_coeff")
+                extraction_values['xstart'] = extract_model.xstart
+                extraction_values['xstop'] = extract_model.xstop
             else:
                 # Only print ystart/ystop, because xstart/xstop are not used
                 log.info("Using extraction limits: "
                          f"ystart={extract_model.ystart}, "
                          f"ystop={extract_model.ystop}, and src_coeff")
+                extraction_values['ystart'] = extract_model.ystart
+                extraction_values['ystop'] = extract_model.ystop
         else:
             # No src_coeff, so print all xstart/xstop and ystart/ystop values
             log.info("Using extraction limits: "
                      f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
                      f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
+            extraction_values['xstart'] = extract_model.xstart
+            extraction_values['xstop'] = extract_model.xstop
+            extraction_values['ystart'] = extract_model.ystart
+            extraction_values['ystop'] = extract_model.ystop
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
@@ -3535,8 +3548,10 @@ def extract_one_slit(
         extract_model.extract(data, var_poisson, var_rnoise, var_flat,
                               wl_array)
 
+    
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset)
+            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset,
+            extraction_values)
 
 
 def replace_bad_values(
@@ -3765,14 +3780,15 @@ def create_extraction(extract_ref_dict,
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, \
                 f_var_flat, background, b_var_poisson, b_var_rnoise, \
-                b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                b_var_flat, npixels, dq, prev_offset, extraction_values = extract_one_slit(
                     input_model,
                     slit,
                     integ,
                     prev_offset,
                     extract_params
-            print('ran extract_one_slit')
                 )
+            print('ran extract_one_slit')
+            print('extraction_values', extraction_values)
         except InvalidSpectralOrderNumberError as e:
             log.info(f'{str(e)}, skipping ...')
             raise ContinueError()
@@ -3859,6 +3875,10 @@ def create_extraction(extract_ref_dict,
         spec.slit_dec = dec
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params['dispaxis']
+        spec.xstart = extraction_values['xstart']
+        spec.xstop = extraction_values['xstop']
+        spec.ystart = extraction_values['ystart']
+        spec.ystop = extraction_values['ystop']
         copy_keyword_info(meta_source, slitname, spec)
 
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:

@@ -523,5 +523,5 @@ class Extract1dStep(Step):
 
         input_model.close()
 
-        print('******* END of extract 1d step', type(results)) 
+        print('******* END of extract 1d step', type(result)) 
         return result
