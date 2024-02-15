@@ -113,6 +113,11 @@ refpix
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
 
+resample
+--------
+
+- Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
+
 residual_fringe
 ---------------
 
