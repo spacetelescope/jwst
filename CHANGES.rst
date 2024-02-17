@@ -49,6 +49,9 @@ extract_1d
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
   the FULL subarray with warning. [#8225]
 
+- Fixed a bug in the ATOCA matrix solve for NIRISS SOSS that would cause failures on
+  good input data in some cases. [#8273]
+  
 - Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
   pixels in the 2nd-order spectrum are flagged and would cause the step
   to fail. [#8265]
@@ -115,6 +118,8 @@ refpix
 
 resample
 --------
+
+- Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
 
 - Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
