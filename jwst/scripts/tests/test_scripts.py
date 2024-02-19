@@ -22,7 +22,6 @@ SCRIPTS = [
     'linearitycorr',
     'make_header',
     'migrate_data',
-    'minimum_deps',
     'move_wcs',
     'okify_regtests',
     'outlier_detection',
