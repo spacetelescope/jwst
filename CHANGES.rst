@@ -68,6 +68,12 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+lib
+---
+
+- Updated ``set_velocity_aberration`` to use datamodels instead of fits for opening
+  and manipulating input files. [#8285]
+
 outlier_detection
 -----------------
 
@@ -126,6 +132,12 @@ residual_fringe
 
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
+
+scripts
+-------
+
+- Updated ``set_velocity_aberration`` to have an optional ``--force-level1bmodel``
+  flag. [#8285]
 
 tweakreg
 --------
