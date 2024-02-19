@@ -1,7 +1,7 @@
 import abc
 
 from typing import Tuple, Union, Type
-from scipy.interpolate import interp2d, interp1d
+from scipy.interpolate import RectBivariateSpline, interp1d
 from astropy.io import fits
 from stdatamodels import DataModel
 from stdatamodels.jwst.datamodels import MultiSlitModel
@@ -185,7 +185,7 @@ class ApCorrPhase(ApCorrBase):
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
-        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> interp2d:
+        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> RectBivariateSpline:
             """Create a 'custom' approximation function that approximates the aperture correction in two stages based on
             input data.
 
@@ -211,9 +211,10 @@ class ApCorrPhase(ApCorrBase):
             apcorr_pixphase = apcorr_pixphase_func(pixel_phase)
             size_wl = size_wl_func(wavelength)
 
-            pixphase_size_func = interp2d(self.reference['wavelength'], size_wl, apcorr_pixphase)
-
-            return pixphase_size_func(wavelength, size)
+            # by default RectBivariateSpline is 3rd order, fails for size_wl=3 as in e.g. the test data
+            pixphase_size_func = RectBivariateSpline(self.reference['wavelength'], size_wl, apcorr_pixphase.T, ky=2, kx=2)
+            size_func = pixphase_size_func(wavelength, size).T
+            return size_func
 
         return _approx_func
 
@@ -350,7 +351,8 @@ class ApCorr(ApCorrBase):
         size = self.reference['size'][:self.reference['nelem_size']]
         apcorr = self.reference['apcorr'][:self.reference['nelem_wl'], :self.reference['nelem_size']]
 
-        return interp2d(size, wavelength, apcorr)
+        # by default RectBivariateSpline is 3rd order, fails for size_wl=3 as in e.g. the test data
+        return RectBivariateSpline(size, wavelength, apcorr.T, ky=2, kx=2)
 
 
 def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:
