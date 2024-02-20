@@ -65,6 +65,8 @@ lower rate than the real cores.
 If multiprocessing is requested, the input cube will be divided into a number of
 slices in the row dimension (with the last slice being slightly larger, if needed),
 and sent for processing in parallel.
+In the event the number of cores (and hence slices) selected exceeds the number of
+available image rows, the number of slices will be reduced to match the number of rows.
 After all the slices have finished processing, the output GROUPDQ cube - containing
 the DQ flags for detected jumps - is reassembled from the slices.
 

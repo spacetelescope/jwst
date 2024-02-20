@@ -29,9 +29,17 @@ Segments are determined using the 4-D GROUPDQ array of the input data set,
 under the assumption that the :ref:`saturation detection <saturation_step>`
 and :ref:`jump detection <jump_step>` steps have already been applied, in order
 to flag occurrences of both saturation and cosmic-ray (CR) hits.
-Ramps are broken into multiple segments where CR flags are found, so that slopes
-are determined independently before and after the CR hits. Segments are
-terminated at the first instance of a saturation flag.
+A ramp segment is a set of contiguous groups that have no non-zero DQ values
+assigned. The one exception to this rule is the occurrence of a "JUMP_DET"
+(jump detected) flag: a group with this flag will be used as the first group of
+the next segment. Any occurences of a "DO_NOT_USE" flag will be excluded from a
+segment. When a "SATURATION" flag is found, the segment is terminated at the
+preceding group and all subsequent groups are rejected.
+Any segment containing only one good group is ignored if there is any other
+segment of length greater than one.
+Once all segments have been determined, slopes and variances are determined for
+each one.
+
 Pixels are processed simultaneously in blocks using the array-based functionality of numpy.
 The size of the block depends on the image size and the number of groups per
 integration.
@@ -88,7 +96,7 @@ in an integration is unsaturated and used by itself to compute a slope.
 
 Note that the computation of slopes from either a single group or the single frame
 zero value is disabled when the step parameter ``suppress_one_group`` is set to ``True``.
-In this case the slope value for such a pixel will be set to zero. <=== CHECK THIS.
+In this case the slope value for such a pixel will be set to zero.
 
 :ref:`Detailed Algorithms <stcal:ramp_slopes_and_variances>`
 ------------------------------------------------------------
