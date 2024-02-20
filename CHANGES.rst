@@ -34,6 +34,9 @@ documentation
 
 - Change docs theme to ``sphinx-rtd-theme`` [#8224]
 
+- Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
+  the jwst and stcal repos. [#8253]
+
 emicorr
 -------
 
