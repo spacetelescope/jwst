@@ -99,6 +99,9 @@ outlier_detection
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
 
+- Passed the ``weight_type`` parameter to all resampling functions so that
+  the default can be overridden by an input step parameter. [#8290]
+
 photom
 ------
 
