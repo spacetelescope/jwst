@@ -43,13 +43,9 @@ class ResampleSpecStep(ResampleStep):
         if isinstance(input_new, ImageModel):
             input_new = datamodels.SlitModel(input_new)
 
-        print('Check ModelContainer', isinstance(input_new, ModelContainer))
-        #print('First type', type(input_new))
-        #for slit in input.slits:
-        #    print(slit.meta.bunit_data)
         if isinstance(input_new, ModelContainer):
             input_models = input_new
-         #   print('Got Here') 
+
             try:
                 output = input_models.meta.asn_table.products[0].name
             except AttributeError:
@@ -61,10 +57,6 @@ class ResampleSpecStep(ResampleStep):
                 output = None
         else:
             input_models = ModelContainer([input_new])
-            #for model in input_models:
-            #    for slit in model.slits:
-            #        print("WHAT IS THIS",slit.meta.bunit_data)
-                    
             output = input_new.meta.filename
             self.blendheaders = False
 
@@ -133,45 +125,17 @@ class ResampleSpecStep(ResampleStep):
         result : `~jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
         """
-        print('input to process_multislit', type(input_models))
-        
-        for model in input_models:
-            print('now read slits')
-            for slit in model.slits:
-                print('In process mulitslit', slit.meta.bunit_data)
-        containers = ModelContainer()
-        for model in input_models:
-            containers.append(model)
-
-        containers = [ (name, model)
-            for name, model in multislit_to_container(containers).items()
-            ]
-        print(containers)
-        #containers = multislit_to_container(input_models)
-        print('******++++++Type containers', type(containers))#, type(containers.values()))
+        containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
+
         result.update(input_models[0])
-        #for container in containers.values():
-        #for slitname,slit in containers:
-        #    print('Type of container', type(slit))
-        #    for s in slit:
-        #        print(s.meta.bunit_data)
-            
-            #for slit in container:
-            #    print(type(slit))
-            #    print(slit.meta.bunit_data)
-            
-        
+
         for container in containers.values():
-            print('now here')
-            
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
             drizzled_models = resamp.do_drizzle()
-            print('TYPE ****',type(drizzled_models))
+
             for model in drizzled_models:
-                print(type(model))
-                print('model bunit',model.meta.bunit_data)                
                 self.update_slit_metadata(model)
                 update_s_region_spectral(model)
                 result.slits.append(model)
