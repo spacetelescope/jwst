@@ -34,6 +34,9 @@ documentation
 
 - Change docs theme to ``sphinx-rtd-theme`` [#8224]
 
+- Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
+  the jwst and stcal repos. [#8253]
+
 emicorr
 -------
 
@@ -123,6 +126,10 @@ resample
 --------
 
 - Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
+
+- Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
+  ``world_to_pixel_values``) for reproject, which also fixed a bug, and
+  removed support for astropy model [#8172]
 
 residual_fringe
 ---------------
