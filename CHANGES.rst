@@ -82,6 +82,12 @@ outlier_detection
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
 
+pathloss
+--------
+
+- Added a check to find all NaN values in the data with a corresponding
+  even value flag in the DQ array, and convert them to DO_NOT_USE. [#8292]
+
 photom
 ------
 
