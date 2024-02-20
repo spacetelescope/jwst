@@ -212,8 +212,12 @@ class ApCorrPhase(ApCorrBase):
             size_wl = size_wl_func(wavelength)
 
             # by default RectBivariateSpline is 3rd order, fails for size_wl=3 as in e.g. the test data
-            pixphase_size_func = RectBivariateSpline(self.reference['wavelength'], size_wl, apcorr_pixphase.T, ky=2, kx=2)
+            wl_sortidx = np.argsort(self.reference['wavelength'])
+            apcorr_pixphase = apcorr_pixphase[:, wl_sortidx]
+            wl_ref = self.reference['wavelength'][wl_sortidx]
+            pixphase_size_func = RectBivariateSpline(wl_ref, size_wl, apcorr_pixphase.T, ky=1, kx=1)
             size_func = pixphase_size_func(wavelength, size).T
+
             return size_func
 
         return _approx_func
@@ -352,7 +356,11 @@ class ApCorr(ApCorrBase):
         apcorr = self.reference['apcorr'][:self.reference['nelem_wl'], :self.reference['nelem_size']]
 
         # by default RectBivariateSpline is 3rd order, fails for size_wl=3 as in e.g. the test data
-        return RectBivariateSpline(size, wavelength, apcorr.T, ky=2, kx=2)
+        wl_sortidx = np.argsort(wavelength)
+        apcorr = apcorr[wl_sortidx, :]
+        wavelength = wavelength[wl_sortidx]
+
+        return RectBivariateSpline(size, wavelength, apcorr.T, ky=1, kx=1)
 
 
 def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:
