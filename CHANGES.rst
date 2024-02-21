@@ -1,4 +1,4 @@
-1.13.4 (unreleased)
+1.13.5 (unreleased)
 ===================
 
 associations
@@ -15,6 +15,12 @@ cube_build
 
 - Add a warning message to log if no valid data is found on the detector. [#8220]
 
+datamodels
+----------
+
+- Fixed a bug in the ``ModelContainer`` data model, due to which the ``models_grouped``
+  property would return opened data models instead of file names. [#8191]
+
 documentation
 -------------
 
@@ -30,6 +36,9 @@ documentation
 
 - Change docs theme to ``sphinx-rtd-theme`` [#8224]
 
+- Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
+  the jwst and stcal repos. [#8253]
+
 emicorr
 -------
 
@@ -41,12 +50,39 @@ extract_1d
 
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
+  the FULL subarray with warning. [#8225]
+
+- Fixed a bug in the ATOCA matrix solve for NIRISS SOSS that would cause failures on
+  good input data in some cases. [#8273]
   
+- Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
+  pixels in the 2nd-order spectrum are flagged and would cause the step
+  to fail. [#8265]
+
+extract_2d
+----------
+
+- Fixed crash when user provides an integer value for the `slit_name` argument,
+  by converting to a string. This change had been done in #8108, but it got undone
+  by another PR. [#8272]
+
+general
+-------
+
+- Update minimum required photutils version to 1.5.0 [#8211]
+
 outlier_detection
 -----------------
 
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
+
+- Fixed bug in removing intermediate files, so that the search for intermediate
+  files does not rely on the input files having a "cal" suffix, which was causing
+  original input files to accidentally get deleted instead of just the intermediate
+  files. [#8263]
 
 photom
 ------
@@ -61,6 +97,19 @@ photom
   the pipeline put the (variable, calculated per pixel) dispersion back in.  Assumes that
   the dispersion needs to be in Angstroms/pixel to match the required factor of ~10. [#8207]
 
+- Get the values of PIXAR_A2 and PIXAR_SR from AREA reference file
+  instead of PHOTOM reference file to avoid missmatching values. [#8187]
+
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
+  was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
+  data in the FULL subarray. [#8225]
+
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
+  the list of modes for running the ``nsclean`` step. [#8256]
+
 refpix
 ------
 
@@ -72,6 +121,21 @@ refpix
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
 
+resample
+--------
+
+- Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
+
+- Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
+  ``world_to_pixel_values``) for reproject, which also fixed a bug, and
+  removed support for astropy model [#8172]
+
+residual_fringe
+---------------
+
+- Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
+  ignoring them. [#8261]
+
 tweakreg
 --------
 
@@ -80,12 +144,18 @@ tweakreg
 - Added option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
 
-general
+
+1.13.4 (2024-01-25)
+===================
+
+emicorr
 -------
 
-- Update minimum required photutils version to 1.5.0 [#8211]
+- Set skip=True by default in the code, to be turned on later by a parameter
+  reference file. [#8171]
 
-1.13.3 (01-05-2024)
+
+1.13.3 (2024-01-05)
 ===================
 
 documentation
@@ -163,7 +233,7 @@ documentation
   reported typos in ``tweakreg`` documentation. [#8084]
 
 emicorr
-----------
+-------
 
 - Added new step for removing EMI from all MIRI data. [#7857]
 
@@ -182,9 +252,6 @@ extract_2d
 - Fixed crash with slit_name for MOS. Now the argument should
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
-
-- Fixed potential future crash if MSA slitlet name is not an
-  integer. [#8108]
 
 general
 -------
