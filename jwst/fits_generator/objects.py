@@ -28,10 +28,7 @@
 # DAMAGE.
 
 # STDLIB
-import datetime
-import os
 import re
-import warnings
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits

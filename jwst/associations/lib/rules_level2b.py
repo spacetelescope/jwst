@@ -1,28 +1,20 @@
 """Association Definitions: DMS Level2b product associations
 """
-from collections import deque
 import logging
-import re
 
-from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint_Imprint_Special
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
-    format_list,
-    item_getattr,
     nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
     nrslamp_valid_detector,
 )
-from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
-from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
 from jwst.associations.lib.rules_level2_base import *
-from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
     'Asn_Lv2CoronAsRate',

@@ -50,7 +50,6 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
         The copied association.
     """
     from .load_as_asn import LoadAsAssociation
-    from . import Association
 
     exclude_types = exclude_types if exclude_types is not None else []
     source_asn_path = Path(association)

@@ -1,7 +1,5 @@
 """Association Definitions: DMS Level3 product associations
 """
-import os
-import sys
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker

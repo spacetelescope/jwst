@@ -2,7 +2,6 @@
 from jwst.associations.lib.counter import Counter
 
 from jwst.associations.exceptions import (
-    AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin

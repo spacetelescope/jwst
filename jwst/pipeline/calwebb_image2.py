@@ -60,7 +60,7 @@ class Image2Pipeline(Pipeline):
             if self.save_results:
                 self.output_file = product['name']
             try:
-                getattr(asn, 'filename')
+                asn.filename
             except AttributeError:
                 asn.filename = "singleton"
 

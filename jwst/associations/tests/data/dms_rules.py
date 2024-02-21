@@ -1,6 +1,4 @@
 # To avoid relative imports and mimic actual usage
-import os
-import sys
 
 from jwst.associations import Association
 from jwst.associations.association import finalize as general_asn_finalize

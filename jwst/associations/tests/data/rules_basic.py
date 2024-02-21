@@ -1,7 +1,5 @@
 """Association Rules: Basic
 """
-import os
-import sys
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker

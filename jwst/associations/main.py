@@ -14,9 +14,6 @@ from jwst.associations import (
 )
 from jwst.associations import config
 from jwst.associations.exceptions import AssociationError
-from jwst.associations.lib.constraint import (
-    ConstraintTrue,
-)
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 from jwst.associations.lib.prune import identify_dups

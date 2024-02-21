@@ -1,6 +1,5 @@
 """Test for duplication/missing associations"""
 import logging
-import pytest
 
 from jwst.associations.tests.helpers import (
     level3_rule_path,
