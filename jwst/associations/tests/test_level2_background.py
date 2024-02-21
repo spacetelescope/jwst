@@ -6,7 +6,7 @@ from jwst.associations.tests.helpers import (
 )
 
 from jwst.associations import generate
-from jwst.associations.main import constrain_on_candidates
+from jwst.associations.lib.utilities import constrain_on_candidates
 
 DITHER_PATTERN_MULTIPLIER = {
     '0': 1,  # No pattern, 1-to-1 exposure count
