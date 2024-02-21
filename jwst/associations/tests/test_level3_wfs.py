@@ -3,7 +3,7 @@
 from jwst.associations.tests import helpers
 
 from jwst.associations import generate
-from jwst.associations.main import constrain_on_candidates
+from jwst.associations.lib.utilities import constrain_on_candidates
 
 # Generate Level3 associations
 all_candidates = constrain_on_candidates(None)
