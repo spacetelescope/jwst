@@ -7,10 +7,11 @@ import numpy as np
 from gwcs import wcstools
 
 import stdatamodels.jwst.datamodels as datamodels
-from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.assign_wcs import nirspec, util
 from jwst.lib.wcs_utils import get_wavelengths
+from jwst.lib.basic_utils import set_nans_to_donotuse
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -18,25 +19,6 @@ log.setLevel(logging.DEBUG)
 
 # There are 30 slices in the NIRSpec IFU, numbered from 0 to 29
 NIRSPEC_IFU_SLICES = np.arange(30)
-
-
-def set_nans_to_donotuse(input_model):
-    """Set all NaN values in the data that have an even value to
-    DO_NOT_USE.
-
-    Data are modified in-place.
-
-    Parameters
-    ----------
-    input_model : jwst.datamodel.JwstDataModel
-        The input_model to be corrected.
-    """
-
-    # check the dq flags have the correct value
-    sci_nans = np.where(np.isnan(input_model.data), True, False)
-    dq_even = np.where(input_model.dq % 2 == 0, True, False)
-    if np.size(dq_even) > 0:
-        input_model.dq[sci_nans & dq_even] = dqflags.pixel['DO_NOT_USE']
 
 
 def get_center(exp_type, input, offsets=False):
@@ -566,7 +548,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
         slit.pathloss_uniform = correction.pathloss_uniform
 
         # check the dq flags have the correct value
-        set_nans_to_donotuse(slit)
+        slit.dq = set_nans_to_donotuse(slit.data, slit.dq)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -632,7 +614,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
         slit.pathloss_uniform = correction.pathloss_uniform
 
         # check the dq flags have the correct value
-        set_nans_to_donotuse(slit)
+        slit.dq = set_nans_to_donotuse(slit.data, slit.dq)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -688,7 +670,7 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     data.wavelength = correction.wavelength
 
     # check the dq flags have the correct value
-    set_nans_to_donotuse(data)
+    data.dq = set_nans_to_donotuse(data.data, data.dq)
 
     # Set the step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -732,7 +714,7 @@ def do_correction_lrs(data, pathloss, user_slit_loc):
     data.wavelength = correction.wavelength
 
     # check the dq flags have the correct value
-    set_nans_to_donotuse(data)
+    data.dq = set_nans_to_donotuse(data.data, data.dq)
 
     # Set the step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -827,7 +809,7 @@ def do_correction_soss(data, pathloss):
     data.pathloss_point = pathloss_2d
 
     # check the dq flags have the correct value
-    set_nans_to_donotuse(data)
+    data.dq = set_nans_to_donotuse(data.data, data.dq)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'

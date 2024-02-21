@@ -71,6 +71,13 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+lib
+---
+
+- Added new function set_nans_to_donotuse in ``lib.basic_utils`` to
+  check the science data array for NaN values and check if they have
+  a DQ flag of DO_NOT_USE, or set it if not. [#8292]
+
 outlier_detection
 -----------------
 
