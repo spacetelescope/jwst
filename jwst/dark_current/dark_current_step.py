@@ -2,6 +2,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from stcal.dark_current import dark_sub
+import numpy as np
 
 
 __all__ = ["DarkCurrentStep"]
@@ -17,6 +18,7 @@ class DarkCurrentStep(Step):
 
     spec = """
         dark_output = output_file(default = None) # Dark model or averaged dark subtracted
+        average_dark_current = float(default=None) # The average dark current for this detector in units of e-/sec.
     """
 
     reference_file_types = ['dark']
@@ -52,6 +54,22 @@ class DarkCurrentStep(Step):
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
                 dark_model = datamodels.DarkModel(self.dark_name)
+
+            # Store user-defined average_dark_current in model, if provided
+            # A user-defined value will take precedence over any value present
+            # in dark reference file
+            if self.average_dark_current is not None:
+                input_model.average_dark_current[:, :] = self.average_dark_current
+            else:
+                # First prioritize a 2D average_dark_current, if defined in dark.
+                # If not present, apply scalar to datamodel array, if scalar is present.
+                if np.sum(dark_model.average_dark_current) == 0.0:
+                    input_model.average_dark_current[:, :] = dark_model.meta.exposure.average_dark_current
+                elif np.shape(input_model.average_dark_current) != np.shape(dark_model.average_dark_current):
+                    self.log.warning(f"DarkModel average_dark_current does not match shape of data.\n"
+                                     f"Dark current from reference file cannot be applied.")
+                else:
+                    input_model.average_dark_current = dark_model.average_dark_current
 
             # Do the dark correction
             result = dark_sub.do_correction(
