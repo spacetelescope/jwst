@@ -5,35 +5,40 @@ import logging
 
 from numpy.ma import masked
 
+from .. import config
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def return_on_exception(exceptions=(Exception,), default=None):
-    """Decorator to force functions raising exceptions to return a value
+def constrain_on_candidates(candidates):
+    """Create a constraint based on a list of candidates
 
     Parameters
     ----------
-    exceptions: (Exception(,...))
-        Tuple of exceptions to catch
-
-    default: obj
-        The value to return when a specified exception occurs
+    candidates : (str, ...) or None
+        List of candidate id's.
+        If None, then all candidates are matched.
     """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except exceptions as err:
-                logger.debug(
-                    'Caught exception %s in function %s, forcing return value of %s',
-                    err, func, default
-                )
-                return default
-        return wrapper
-    return decorator
+    from .dms_base import DMSAttrConstraint
+    if candidates is not None and len(candidates):
+        c_list = '|'.join(candidates)
+        values = ''.join([
+            '.+(', c_list, ').+'
+        ])
+    else:
+        values = None
+    constraint = DMSAttrConstraint(
+        name='asn_candidate',
+        sources=['asn_candidate'],
+        value=values,
+        force_unique=True,
+        is_acid=True,
+        evaluate=True,
+    )
+
+    return constraint
 
 
 def evaluate(value):
@@ -55,6 +60,74 @@ def evaluate(value):
     except (ValueError, SyntaxError):
         evaled = value
     return evaled
+
+
+def filter_discovered_only(
+        associations,
+        discover_ruleset,
+        candidate_ruleset,
+        keep_candidates=True,
+):
+    """Return only those associations that have multiple candidates
+
+    Parameters
+    ----------
+    associations : iterable
+        The list of associations to check. The list
+        is that returned by the `generate` function.
+
+    discover_ruleset : str
+        The name of the ruleset that has the discover rules
+
+    candidate_ruleset : str
+        The name of the ruleset that finds just candidates
+
+    keep_candidates : bool
+        Keep explicit candidate associations in the list.
+
+    Returns
+    -------
+    iterable
+        The new list of just cross candidate associations.
+
+    Notes
+    -----
+    This utility is only meant to run on associations that have
+    been constructed. Associations that have been Association.dump
+    and then Association.load will not return proper results.
+    """
+    from .prune import identify_dups
+
+    # Split the associations along discovered/not discovered lines
+    dups, valid = identify_dups(associations)
+    asn_by_ruleset = {
+        candidate_ruleset: [],
+        discover_ruleset: []
+    }
+    for asn in valid:
+        asn_by_ruleset[asn.registry.name].append(asn)
+    candidate_list = asn_by_ruleset[candidate_ruleset]
+    discover_list = asn_by_ruleset[discover_ruleset]
+
+    # Filter out the non-unique discovered.
+    for candidate in candidate_list:
+        if len(discover_list) == 0:
+            break
+        unique_list = []
+        for discover in discover_list:
+            if discover != candidate:
+                unique_list.append(discover)
+
+        # Reset the discovered list to the new unique list
+        # and try the next candidate.
+        discover_list = unique_list
+
+    if keep_candidates:
+        discover_list.extend(candidate_list)
+
+    if config.DEBUG:
+        discover_list += dups
+    return discover_list
 
 
 def getattr_from_list(adict, attributes, invalid_values=None):
@@ -100,6 +173,32 @@ def getattr_from_list(adict, attributes, invalid_values=None):
                 continue
     else:
         raise KeyError('Object has no attributes in {}'.format(attributes))
+
+
+def return_on_exception(exceptions=(Exception,), default=None):
+    """Decorator to force functions raising exceptions to return a value
+
+    Parameters
+    ----------
+    exceptions: (Exception(,...))
+        Tuple of exceptions to catch
+
+    default: obj
+        The value to return when a specified exception occurs
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exceptions as err:
+                logger.debug(
+                    'Caught exception %s in function %s, forcing return value of %s',
+                    err, func, default
+                )
+                return default
+        return wrapper
+    return decorator
 
 
 @return_on_exception(exceptions=(KeyError,), default=None)

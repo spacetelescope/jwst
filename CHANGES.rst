@@ -8,6 +8,8 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+-  JP-3290 Isolate candidate processing into their own pools [#8227]
+
 cube_build
 ----------
 

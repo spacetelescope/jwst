@@ -9,7 +9,8 @@ from jwst.associations.tests.helpers import (
 )
 
 from jwst.associations import (AssociationPool, generate)
-from jwst.associations.main import (Main, constrain_on_candidates)
+from jwst.associations.main import Main
+from jwst.associations.lib.utilities import constrain_on_candidates
 
 
 def test_duplicate_names(caplog):

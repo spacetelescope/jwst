@@ -8,6 +8,27 @@ from jwst.associations.lib.constraint import (
 )
 
 
+def test_constraint_history():
+    """Test the saving and restoring of constraint values
+
+    A baseline case is also checked to ensure no cross-talk
+    between constraints and to check restore without previous preserve.
+    """
+    sc1 = SimpleConstraint(name='sc1')
+    sc2 = SimpleConstraint(name='sc2')
+    assert sc1.name == 'sc1'
+    assert sc2.name == 'sc2'
+    sc1.preserve()
+    sc2.preserve()
+    sc1.name = 'sc1 modified'
+    assert sc1.name == 'sc1 modified'
+    assert sc2.name == 'sc2'
+    sc1.restore()
+    sc2.restore()
+    assert sc1.name == 'sc1'
+    assert sc2.name == 'sc2'
+
+
 def test_sc_dup_names():
     """Test that SimpleConstraint returns an empty dict"""
     sc = SimpleConstraint(name='sc_name')

@@ -9,26 +9,15 @@ import numpy as np
 from jwst.associations import (
     __version__,
     AssociationPool,
-    AssociationRegistry,
-    generate,
 )
 from jwst.associations import config
 from jwst.associations.exceptions import AssociationError
-from jwst.associations.lib.constraint import (
-    ConstraintTrue,
-)
-from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.log_config import (log_config, DMS_config)
-from jwst.associations.lib.prune import identify_dups
 
 __all__ = ['Main', 'main']
 
 # Configure logging
 logger = log_config(name=__package__)
-
-# Ruleset names
-DISCOVER_RULESET = 'discover'
-CANDIDATE_RULESET = 'candidate'
 
 
 class Main():
@@ -159,66 +148,33 @@ class Main():
         #  2) Only discovered associations that do not match
         #     candidate associations
         #  3) Both discovered and all candidate associations.
-        logger.info('Reading rules.')
         if not parsed.discover and\
            not parsed.all_candidates and\
            parsed.asn_candidate_ids is None:
             parsed.discover = True
             parsed.all_candidates = True
-        if parsed.discover or parsed.all_candidates:
-            global_constraints = constrain_on_candidates(
-                None
-            )
-        elif parsed.asn_candidate_ids is not None:
-            global_constraints = constrain_on_candidates(
-                parsed.asn_candidate_ids
-            )
-
-        self.rules = AssociationRegistry(
-            parsed.rules,
-            include_default=not parsed.ignore_default,
-            global_constraints=global_constraints,
-            name=CANDIDATE_RULESET
-        )
-
-        if parsed.discover:
-            self.rules.update(
-                AssociationRegistry(
-                    parsed.rules,
-                    include_default=not parsed.ignore_default,
-                    name=DISCOVER_RULESET
-                )
-            )
 
     def generate(self):
         """Generate the associations"""
         logger.info('Generating associations.')
         parsed = self.parsed
-        self.associations = generate(
-            self.pool, self.rules, version_id=parsed.version_id, finalize=not parsed.no_finalize
-        )
+        if parsed.per_pool_algorithm:
+            from jwst.associations.generator.generate_per_pool import generate_per_pool
 
-        if parsed.discover:
-            logger.debug(
-                '# asns found before discover filtering={}'.format(
-                    len(self.associations)
-                )
+            self.associations = generate_per_pool(
+                self.pool, rule_defs=parsed.rules,
+                candidate_ids=parsed.asn_candidate_ids, all_candidates=parsed.all_candidates, discover=parsed.discover,
+                version_id=parsed.version_id, finalize=not parsed.no_finalize, merge=parsed.merge, ignore_default=parsed.ignore_default
             )
-            self.associations = filter_discovered_only(
-                self.associations,
-                DISCOVER_RULESET,
-                CANDIDATE_RULESET,
-                keep_candidates=parsed.all_candidates,
-            )
-            self.rules.Utility.resequence(self.associations)
+        else:
+            from jwst.associations.generator.generate_per_candidate import generate_per_candidate
 
-        # Do a grand merging. This is done particularly for
-        # Level2 associations.
-        if parsed.merge:
-            try:
-                self.associations = self.rules.Utility.merge_asns(self.associations)
-            except AttributeError:
-                pass
+            self.associations = generate_per_candidate(
+                self.pool, rule_defs=parsed.rules,
+                candidate_ids=parsed.asn_candidate_ids, all_candidates=parsed.all_candidates, discover=parsed.discover,
+                version_id=parsed.version_id, finalize=not parsed.no_finalize, merge=parsed.merge, ignore_default=parsed.ignore_default
+            )
+
 
         logger.debug(self.__str__())
 
@@ -356,6 +312,11 @@ class Main():
             '--no-merge', action=DeprecateNoMerge,
             help='Deprecated: Default is to not merge. See "--merge".'
         )
+        parser.add_argument(
+            '--per-pool-algorithm',
+            action='store_true',
+            help='Use the original, per-pool, algorithm that does not segment pools based on candidates'
+        )
 
         self.parsed = parser.parse_args(args=args)
 
@@ -429,100 +390,6 @@ class DeprecateNoMerge(argparse.Action):
             'The "--no-merge" option is now the default and deprecated.'
             ' Use "--merge" to force merging.')
         setattr(namespace, self.dest, values)
-
-
-def constrain_on_candidates(candidates):
-    """Create a constraint based on a list of candidates
-
-    Parameters
-    ----------
-    candidates : (str, ...) or None
-        List of candidate id's.
-        If None, then all candidates are matched.
-    """
-    if candidates is not None and len(candidates):
-        c_list = '|'.join(candidates)
-        values = ''.join([
-            '.+(', c_list, ').+'
-        ])
-    else:
-        values = None
-    constraint = DMSAttrConstraint(
-        name='asn_candidate',
-        sources=['asn_candidate'],
-        value=values,
-        force_unique=True,
-        is_acid=True,
-        evaluate=True,
-    )
-
-    return constraint
-
-
-def filter_discovered_only(
-        associations,
-        discover_ruleset,
-        candidate_ruleset,
-        keep_candidates=True,
-):
-    """Return only those associations that have multiple candidates
-
-    Parameters
-    ----------
-    associations : iterable
-        The list of associations to check. The list
-        is that returned by the `generate` function.
-
-    discover_ruleset : str
-        The name of the ruleset that has the discover rules
-
-    candidate_ruleset : str
-        The name of the ruleset that finds just candidates
-
-    keep_candidates : bool
-        Keep explicit candidate associations in the list.
-
-    Returns
-    -------
-    iterable
-        The new list of just cross candidate associations.
-
-    Notes
-    -----
-    This utility is only meant to run on associations that have
-    been constructed. Associations that have been Association.dump
-    and then Association.load will not return proper results.
-    """
-    # Split the associations along discovered/not discovered lines
-    dups, valid = identify_dups(associations)
-    asn_by_ruleset = {
-        candidate_ruleset: [],
-        discover_ruleset: []
-    }
-    for asn in valid:
-        asn_by_ruleset[asn.registry.name].append(asn)
-    candidate_list = asn_by_ruleset[candidate_ruleset]
-    discover_list = asn_by_ruleset[discover_ruleset]
-
-    # Filter out the non-unique discovered.
-    for candidate in candidate_list:
-        if len(discover_list) == 0:
-            break
-        unique_list = []
-        for discover in discover_list:
-            if discover != candidate:
-                unique_list.append(discover)
-
-        # Reset the discovered list to the new unique list
-        # and try the next candidate.
-        discover_list = unique_list
-
-    if keep_candidates:
-        discover_list.extend(candidate_list)
-
-    if config.DEBUG:
-        discover_list += dups
-    return discover_list
 
 
 if __name__ == '__main__':
