@@ -43,6 +43,8 @@ def exp_to_source(inputs):
             # store values for later use (after merge_tree)
             slit_bunit = slit.meta.bunit_data
             slit_bunit_err = slit.meta.bunit_err
+            slit_model = slit.meta.model_type
+            slit_wcs = slit.meta.wcs
 
             # exposure.meta.bunit_data and bunit_err does not exist
             # before calling merge_tree save these values
@@ -50,6 +52,8 @@ def exp_to_source(inputs):
             merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
             result_slit.exposures[-1].meta.bunit_data = slit_bunit
             result_slit.exposures[-1].meta.bunit_err = slit_bunit_err
+            result_slit.exposures[-1].meta.model_type = slit_model
+            result_slit.exposures[-1].meta.wcs = slit_wcs
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)
 
