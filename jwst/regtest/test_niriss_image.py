@@ -1,6 +1,6 @@
 """ Test for the detector1 pipeline using NIRISS image mode, starting with
-    an uncal file. The charge_migration and ramp fitting output
-    products are saved for comparisons for those two steps.
+    an uncal file. Results from all intermediate steps, including
+    charge_migration, are saved for comparisons with truth files.
 """
 
 import pytest
@@ -14,21 +14,30 @@ def run_detector1(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRISS imaging data."""
     rtdata = rtdata_module
 
-    rtdata.get_data("niriss/jw01094001002_02107_00001_nis_uncal.fits")
+    rtdata.get_data("niriss/imaging/jw01094001002_02107_00001_nis_uncal.fits")
 
     # Run detector1 pipeline on an _uncal files
     args = ["calwebb_detector1", rtdata.input,
+            "--steps.persistence.save_trapsfilled=False",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.superbias.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.dark_current.save_results=True",
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
-            "--steps.ramp_fit.save_results=True",
-            "--steps.persistence.save_trapsfilled=False",
+            "--steps.jump.save_results=True"
             ]
+
 
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["charge_migration", "rate", "rateints"])
+@pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
+                                    "refpix", "linearity", "dark_current",
+                                    "charge_migration", "jump", "rate", "rateints"])
 def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on NIRISS imaging data.
     """
