@@ -1,4 +1,6 @@
 import logging
+import os
+import time
 
 import numpy as np
 from drizzle import util
@@ -269,9 +271,32 @@ class ResampleData:
 
             if not self.in_memory:
                 # Write out model to disk, then return filename
+                # This sometimes causes problems in operations because
+                # the output file isn't always fully written before the
+                # execution continues
                 output_name = output_model.meta.filename
-                output_model.save(output_name)
-                log.info(f"Saved model in {output_name}")
+                filesavedOK = False
+                wait_time = 1.0
+                max_wait_time = 40.0
+                while not filesavedOK:
+                    output_model.save(output_name)
+                    if wait_time > max_wait_time:
+                        log.warning(f"Wait time of {max_wait_time}s exceeded.")
+                        log.warning("Continuing with possibly corrupted i2d file")
+                        log.info(f"Saved model in {output_name}")
+                        break
+                    log.info(f"Sleeping for {wait_time}s and reading back saved data")
+                    time.sleep(wait_time)
+                    readback_model = datamodels.open(output_name)
+                    if output_model.data.shape == readback_model.data.shape:
+                        log.info("Shape of read back model data matches that of input model")
+                        filesavedOK = True
+                        log.info(f"Saved model in {output_name}")
+                    else:
+                        log.info("Shapes of data in datamodel before and after saving don't match")
+                        log.info("Removing outout file and re-writing")
+                        os.remove(output_name)
+                        wait_time = wait_time * 2.0
                 self.output_models.append(output_name)
             else:
                 self.output_models.append(output_model.copy())
