@@ -42,7 +42,7 @@ class JumpStep(Step):
         extend_outer_radius = float(default=2.6) Outer radius of the ring_2D_Kernel used for convolution
         extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
         time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
-        min_grps_single_pass = integer(default=10) The minimum number of groups needed to skip the iterative flagging of jumps.
+        min_diffs_single_pass = integer(default=10) The minimum number of differences needed to skip the iterative flagging of jumps.
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -116,7 +116,7 @@ class JumpStep(Step):
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
                                       time_masked_after_shower=self.time_masked_after_shower,
-                                      min_grps_single_pass=self.min_grps_single_pass)
+                                      min_diffs_single_pass=self.min_diffs_single_pass)
 
             gain_model.close()
             readnoise_model.close()
