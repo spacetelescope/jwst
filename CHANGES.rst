@@ -73,6 +73,13 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+Jump
+----
+- Add parameters to the Jump step to allow the override of the
+  parameters for flagging the saturated cores of snowballs in
+  the next integration. [#8303]
+
+
 outlier_detection
 -----------------
 
