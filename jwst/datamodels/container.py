@@ -480,9 +480,10 @@ to supply custom catalogs.
                     model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
                 group_id = model.meta.group_id
-                if not self._save_open and not self._return_open:
-                    model.close()
-                    model = self._models[i]
+
+            if not self._save_open and not self._return_open:
+                model.close()
+                model = self._models[i]
 
             if group_id in group_dict:
                 group_dict[group_id].append(model)

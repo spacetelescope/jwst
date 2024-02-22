@@ -124,3 +124,66 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.fixture(scope='module')
+def run_extract1d_spsolve_failure(jail, rtdata_module):
+    """
+    Test coverage for fix to error thrown when spsolve fails to find
+    a good solution in ATOCA and needs to be replaced with a least-
+    squares solver. Note this failure is architecture-dependent
+    and also only trips for specific values of the transform parameters.
+    Pin tikfac for faster runtime.
+    """
+    rtdata = rtdata_module
+    rtdata.get_data("niriss/soss/jw04098007001_04101_00001-seg003_nis_int01.fits")
+    args = ["extract_1d", rtdata.input,
+            "--soss_tikfac=3.1881637371089252e-15",
+            "--soss_transform=-0.00038201755227297866, -0.24237455427848956, 0.5404013401742825",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope='module')
+def run_extract1d_null_order2(jail, rtdata_module):
+    """
+    Test coverage for fix to error thrown when all of the pixels
+    in order 2 are flagged as bad. Ensure graceful handling of the
+    MaskOverlapError exception raise.
+    Pin tikfac and transform for faster runtime
+    """
+    rtdata = rtdata_module
+    rtdata.get_data("niriss/soss/jw01201008001_04101_00001-seg003_nis_int72.fits")
+    args = ["extract_1d", rtdata.input,
+            "--soss_tikfac=4.290665733550672e-17",
+            "--soss_transform=0.0794900761418923, -1.3197790951056494, -0.796875809148081",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.mark.bigdata
+def test_extract1d_spsolve_failure(rtdata_module, run_extract1d_spsolve_failure, fitsdiff_default_kwargs):
+
+    rtdata = rtdata_module
+
+    output = "jw04098007001_04101_00001-seg003_nis_int01_extract1dstep.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdiff_default_kwargs):
+
+    rtdata = rtdata_module
+
+    output = "jw01201008001_04101_00001-seg003_nis_int72_extract1dstep.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

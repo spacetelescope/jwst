@@ -319,6 +319,8 @@ class ResampleData:
             else:
                 iscale = 1.0
 
+            img.meta.iscale = iscale
+
             inwht = resample_utils.build_driz_weight(img,
                                                      weight_type=self.weight_type,
                                                      good_bits=self.good_bits)
@@ -347,9 +349,9 @@ class ResampleData:
             del data, inwht
 
         # Resample variances array in self.input_models to output_model
-        self.resample_variance_array("var_rnoise", output_model, iscale=iscale)
-        self.resample_variance_array("var_poisson", output_model, iscale=iscale)
-        self.resample_variance_array("var_flat", output_model, iscale=iscale)
+        self.resample_variance_array("var_rnoise", output_model)
+        self.resample_variance_array("var_poisson", output_model)
+        self.resample_variance_array("var_flat", output_model)
         output_model.err = np.sqrt(
             np.nansum(
                 [
@@ -364,9 +366,12 @@ class ResampleData:
         self.update_exposure_times(output_model)
         self.output_models.append(output_model)
 
+        for img in self.input_models:
+            del img.meta.iscale
+
         return self.output_models
 
-    def resample_variance_array(self, name, output_model, iscale):
+    def resample_variance_array(self, name, output_model):
         """Resample variance arrays from self.input_models to the output_model
 
         Resample the ``name`` variance array to the same name in output_model,
@@ -409,6 +414,8 @@ class ResampleData:
                 variance.shape,
                 model.meta.wcs.bounding_box
             )
+
+            iscale = model.meta.iscale
 
             # Resample the variance array. Fill "unpopulated" pixels with NaNs.
             self.drizzle_arrays(
