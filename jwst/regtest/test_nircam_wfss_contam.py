@@ -10,9 +10,10 @@ def run_wfss_contam(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Get input data files
-    rtdata.get_data('nircam/wfss/jw01076_nircam_f322w2_i2d.fits')
-    rtdata.get_data('nircam/wfss/jw01076_nircam_f322w2_segm.fits')
-    rtdata.get_data('nircam/wfss/jw01076003001_01101_00001_nrca5_srctype.fits')
+    rtdata.get_data('nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_i2d.fits')
+    rtdata.get_data('nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_segm.fits')
+    rtdata.get_data('nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_cat.ecsv')
+    rtdata.get_data('nircam/wfss/jw01076107001_02101_00002_nrcalong_srctype.fits')
 
     # Run the step
     step_params = {
@@ -26,7 +27,7 @@ def run_wfss_contam(jail, rtdata_module):
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
-
+@pytest.mark.skip(reason='Test too slow until stdatamodels PR#165 merged')
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',

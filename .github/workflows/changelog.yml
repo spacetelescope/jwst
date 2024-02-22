@@ -9,7 +9,7 @@ jobs:
     name: Verify that a changelog entry exists for this pull request
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
       - run: grep -P '\[[^\]]*#${{github.event.number}}[,\]]' CHANGES.rst

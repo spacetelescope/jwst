@@ -4,8 +4,11 @@ from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from .jump import run_detect_jumps
 import time
+import multiprocessing
 
 __all__ = ["JumpStep"]
+
+multiprocessing.set_start_method('forkserver', force=True)
 
 
 class JumpStep(Step):
@@ -18,7 +21,7 @@ class JumpStep(Step):
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold
         three_group_rejection_threshold = float(default=6.0,min=0) # CR sigma rejection threshold
         four_group_rejection_threshold = float(default=5.0,min=0) # CR sigma rejection threshold
-        maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
+        maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
         flag_4_neighbors = boolean(default=True) # flag the four perpendicular neighbors of each CR
         max_jump_to_flag_neighbors = float(default=1000) # maximum jump sigma that will trigger neighbor flagging
         min_jump_to_flag_neighbors = float(default=10) # minimum jump sigma that will trigger neighbor flagging
@@ -26,6 +29,7 @@ class JumpStep(Step):
         after_jump_flag_time1 = float(default=0) # 1st flag groups after jump groups within specified time
         after_jump_flag_dn2 = float(default=0) # 2nd flag groups after jump above DN threshold
         after_jump_flag_time2 = float(default=0) # 2nd flag groups after jump groups within specified time
+        expand_large_events = boolean(default=False) # Turns on Snowball detector for NIR detectors
         min_sat_area = float(default=1.0) # minimum required area for the central saturation of snowballs
         min_jump_area = float(default=5.0) # minimum area to trigger large events processing
         expand_factor = float(default=2.0) # The expansion factor for the enclosing circles or ellipses
@@ -43,6 +47,11 @@ class JumpStep(Step):
         extend_ellipse_expand_ratio = float(default=1.1) Expand the radius of the ellipse fit to the extended emission
         time_masked_after_shower = float(default=15) Seconds to flag as jump after a detected extended emission
         min_diffs_single_pass = integer(default=10) The minimum number of differences needed to skip the iterative flagging of jumps.
+        sat_expand = integer(default=2) # Number of pixels to add to the radius of the saturated core of snowballs       
+        max_extended_radius = integer(default=200) # The maximum radius of an extended snowball or shower
+        minimum_groups = integer(default=3) # The minimum number of groups to perform jump detection using sigma clipping
+        minimum_sigclip_groups = integer(default=100) # The minimum number of groups to switch to sigma clipping
+        only_use_ints = boolean(default=True) # In sigclip only compare the same group across ints, if False compare all groups
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -95,7 +104,6 @@ class JumpStep(Step):
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
-
             # Call the jump detection routine
             result = run_detect_jumps(input_model, gain_model, readnoise_model,
                                       rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
@@ -108,7 +116,7 @@ class JumpStep(Step):
                                       min_sat_area=min_sat_area, min_jump_area=min_jump_area,
                                       expand_factor=expand_factor, use_ellipses=use_ellipses,
                                       min_sat_radius_extend=self.min_sat_radius_extend,
-                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand,
+                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
                                       extend_min_area=self.extend_min_area,
@@ -116,7 +124,13 @@ class JumpStep(Step):
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
                                       time_masked_after_shower=self.time_masked_after_shower,
-                                      min_diffs_single_pass=self.min_diffs_single_pass)
+                                      min_diffs_single_pass=self.min_diffs_single_pass,
+                                      max_extended_radius=self.max_extended_radius * 2,
+                                      minimum_groups=self.minimum_groups,
+                                      minimum_sigclip_groups=self.minimum_sigclip_groups,
+                                      only_use_ints=self.only_use_ints
+                                      )
+
 
             gain_model.close()
             readnoise_model.close()

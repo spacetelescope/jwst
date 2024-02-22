@@ -35,11 +35,14 @@ true total sky level.
 The step records information in three keywords that are included in the output
 files:
 
-- BKGMETH: records the sky method that was used to compute sky levels
+BKGMETH
+  records the sky method that was used to compute sky levels
 
-- BKGLEVEL: the sky level computed for each image
+BKGLEVEL
+  the sky level computed for each image
 
-- BKGSUB: a boolean indicating whether or not the sky was subtracted from the
+BKGSUB
+  a boolean indicating whether or not the sky was subtracted from the
   output images. Note that by default the step argument "subtract" is set to
   ``False``, which means that the sky will *NOT* be subtracted
   (see the :ref:`skymatch step arguments <skymatch_arguments>` for more details).
@@ -75,33 +78,33 @@ In addition to the classic "local" method, two other methods have been
 introduced: "global" and "match", as well as a combination of the
 two -- "global+match".
 
-- The "global" method essentially uses the "local" method to first compute a
-  sky value for each image separately, and then assigns the minimum of those
-  results to all images in the collection. Hence after subtraction of the
-  sky values only one image will have a net sky of zero, while the remaining
-  images will have some small positive residual.
+#. The "global" method essentially uses the "local" method to first compute a
+   sky value for each image separately, and then assigns the minimum of those
+   results to all images in the collection. Hence after subtraction of the
+   sky values only one image will have a net sky of zero, while the remaining
+   images will have some small positive residual.
 
-- The "match" algorithm computes only a correction value for each image, such
-  that, when applied to each image, the mismatch between *all* pairs of images
-  is minimized, in the least-squares sense. For each pair of images, the sky 
-  mismatch is computed *only* in the regions in which the two images overlap
-  on the sky.
+#. The "match" algorithm computes only a correction value for each image, such
+   that, when applied to each image, the mismatch between *all* pairs of images
+   is minimized, in the least-squares sense. For each pair of images, the sky 
+   mismatch is computed *only* in the regions in which the two images overlap
+   on the sky.
 
-  This makes the "match" algorithm particularly useful
-  for equalizing sky values in large mosaics in which one may have
-  only pair-wise intersection of adjacent images without having
-  a common intersection region (on the sky) in all images.
+   This makes the "match" algorithm particularly useful
+   for equalizing sky values in large mosaics in which one may have
+   only pair-wise intersection of adjacent images without having
+   a common intersection region (on the sky) in all images.
 
-  Note that if the argument "match_down=True", matching will be done to the image
-  with the lowest sky value, and if "match_down=False" it will be done to the
-  image with the highest value
-  (see :ref:`skymatch step arguments <skymatch_arguments>` for full details).
+   Note that if the argument "match_down=True", matching will be done to the image
+   with the lowest sky value, and if "match_down=False" it will be done to the
+   image with the highest value
+   (see :ref:`skymatch step arguments <skymatch_arguments>` for full details).
 
-- The "global+match" algorithm combines the "global" and "match" methods.
-  It uses the "global" algorithm to find a baseline sky value common to all
-  input images and the "match" algorithm to equalize sky values among images.
-  The direction of matching (to the lowest or highest) is again controlled by
-  the "match_down" argument.
+#. The "global+match" algorithm combines the "global" and "match" methods.
+   It uses the "global" algorithm to find a baseline sky value common to all
+   input images and the "match" algorithm to equalize sky values among images.
+   The direction of matching (to the lowest or highest) is again controlled by
+   the "match_down" argument.
 
 In the "local" and "global" methods, which find sky levels in each image,
 the calculation of the image statistics takes advantage of sigma clipping
@@ -146,11 +149,15 @@ of course not be so exact.
 | 115   |  115  |  100   |   15  |        115   |
 +-------+-------+--------+-------+--------------+
 
-- "local" finds the sky level of each image independently of the rest.
-- "global" uses the minimum sky level found by "local" and applies it to all images.
-- "match" with "match_down=True" finds the offset needed to match all images
+local
+  finds the sky level of each image independently of the rest.
+global
+  uses the minimum sky level found by "local" and applies it to all images.
+match
+  with "match_down=True" finds the offset needed to match all images
   to the level of the image with the lowest sky level.
-- "global+match" with "match_down=True" finds the offsets and global value
+global+match
+  with "match_down=True" finds the offsets and global value
   needed to set all images to a sky level of zero. In this trivial example,
   the results are identical to the "local" method.
 
@@ -217,34 +224,34 @@ the computed "sky" may be the surface brightness of a large galaxy, nebula, etc.
 Here is a brief list of possible limitations and factors that can affect
 the outcome of the matching (sky subtraction in general) algorithm:
 
-- Because sky computation is performed on *flat-fielded* but
-  *not distortion corrected* images, it is important to keep in mind
-  that flat-fielding is performed to obtain correct surface brightnesses.
-  Because the surface brightness of a pixel containing a point-like source will
-  change inversely with a change to the pixel area, it is advisable to
-  mask point-like sources through user-supplied mask files. Values
-  different from zero in user-supplied masks indicate good data pixels.
-  Alternatively, one can use the ``upper`` parameter to exclude the use of
-  pixels containing bright objects when performing the sky computations.
+#. Because sky computation is performed on *flat-fielded* but
+   *not distortion corrected* images, it is important to keep in mind
+   that flat-fielding is performed to obtain correct surface brightnesses.
+   Because the surface brightness of a pixel containing a point-like source will
+   change inversely with a change to the pixel area, it is advisable to
+   mask point-like sources through user-supplied mask files. Values
+   different from zero in user-supplied masks indicate good data pixels.
+   Alternatively, one can use the ``upper`` parameter to exclude the use of
+   pixels containing bright objects when performing the sky computations.
 
-- The input images may contain cosmic rays. This
-  algorithm does not perform CR cleaning. A possible way of minimizing
-  the effect of the cosmic rays on sky computations is to use
-  clipping (\ ``nclip`` > 0) and/or set the ``upper`` parameter to a value
-  larger than most of the sky background (or extended sources) but
-  lower than the values of most CR-affected pixels.
+#. The input images may contain cosmic rays. This
+   algorithm does not perform CR cleaning. A possible way of minimizing
+   the effect of the cosmic rays on sky computations is to use
+   clipping (\ ``nclip`` > 0) and/or set the ``upper`` parameter to a value
+   larger than most of the sky background (or extended sources) but
+   lower than the values of most CR-affected pixels.
 
-- In general, clipping is a good way of eliminating bad pixels:
-  pixels affected by CR, hot/dead pixels, etc. However, for
-  images with complicated backgrounds (extended galaxies, nebulae,
-  etc.), affected by CR and noise, the clipping process may mask different
-  pixels in different images. If variations in the background are
-  too strong, clipping may converge to different sky values in
-  different images even when factoring in the true difference
-  in the sky background between the two images.
+#. In general, clipping is a good way of eliminating bad pixels:
+   pixels affected by CR, hot/dead pixels, etc. However, for
+   images with complicated backgrounds (extended galaxies, nebulae,
+   etc.), affected by CR and noise, the clipping process may mask different
+   pixels in different images. If variations in the background are
+   too strong, clipping may converge to different sky values in
+   different images even when factoring in the true difference
+   in the sky background between the two images.
 
-- In general images can have different true background values
-  (we could measure it if images were not affected by large diffuse
-  sources). However, arguments such as ``lower`` and ``upper`` will
-  apply to all images regardless of the intrinsic differences
-  in sky levels (see :ref:`skymatch step arguments <skymatch_arguments>`).
+#. In general images can have different true background values
+   (we could measure it if images were not affected by large diffuse
+   sources). However, arguments such as ``lower`` and ``upper`` will
+   apply to all images regardless of the intrinsic differences
+   in sky levels (see :ref:`skymatch step arguments <skymatch_arguments>`).

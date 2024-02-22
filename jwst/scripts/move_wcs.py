@@ -6,7 +6,7 @@ from astropy import wcs
 from astropy.io import fits
 from astropy.wcs import InvalidTransformError
 
-from stdatamodels.jwst.datamodels.schema import walk_schema
+from stdatamodels.schema import walk_schema
 from stdatamodels.jwst import datamodels
 
 wcslib_kw_to_remove = ['LONPOLE', 'LATPOLE', 'MJD-OBS', 'DATE-OBS']

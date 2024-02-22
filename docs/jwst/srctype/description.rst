@@ -37,7 +37,7 @@ is set to "UNKNOWN", the step determines a suitable value based on the
 observing mode, command line input, and other characteristics of the
 exposure. The following choices are used, in order of priority:
 
- - The source type can be specified by the user on the command line.
+#. The source type can be specified by the user on the command line.
    Exposure types for which this is permitted contain a single pre-defined
    target, i.e. MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_MRS,NRC_TSGRISM,
    NRS_FIXEDSLIT, NRS_BRIGHTOBJ, and NRS_IFU. Other EXP_TYPEs will be
@@ -46,15 +46,15 @@ exposure. The following choices are used, in order of priority:
    will retain their default settings of "EXTENDED" (which is appropriate
    for sky background).
 
- - Background target exposures default to a source type of "EXTENDED."
+#. Background target exposures default to a source type of "EXTENDED."
    Background exposures are identified by the keyword "BKGDTARG" set
    to True.
 
- - TSO exposures default to a source type of "POINT." TSO exposures are
+#. TSO exposures default to a source type of "POINT." TSO exposures are
    identified by EXP_TYPE="NRC_TSGRISM" or "NRS_BRIGHTOBJ", or
    TSOVISIT=True.
 
- - Exposures that are part of a nodded dither pattern, which are assumed
+#. Exposures that are part of a nodded dither pattern, which are assumed
    to only be used with point-like targets, default to a source type
    of "POINT." Nodded exposures are usually identified by the "PATTTYPE"
    keyword either being set to a value of "POINT-SOURCE" or containing the
@@ -63,7 +63,7 @@ exposure. The following choices are used, in order of priority:
    "PATTTYPE". If it has a value of "POINT-SOURCE", the source type is set
    to "POINT".
 
- - If none of the above conditions apply, and the user did not choose a
+#. If none of the above conditions apply, and the user did not choose a
    value in the APT, the following table of defaults is used, based on
    the "EXP_TYPE" keyword value:
 

@@ -251,6 +251,9 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, _jail):
         np.testing.assert_allclose(image.data, corrected.data)
         np.testing.assert_allclose(image.dq, corrected.dq)
 
+    container.close()
+    pristine.close()
+
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
 def test_outlier_step_image_weak_CR_dither(exptype, _jail):

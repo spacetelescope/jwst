@@ -1,46 +1,28 @@
 """Regression tests for MIRI MRS modes"""
 import os
 import pytest
-
-from jwst.regtest import regtestdata as rt
-
 from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
-from jwst.associations.asn_from_list import asn_from_list
 
 # Define artifactory source and truth
-INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs'
 
 
 @pytest.fixture(scope='module')
-def run_spec3(jail, rtdata_module):
-    """Run the Spec3Pipeline on the single cal result from the Spec2Pipeline run"""
+def run_spec3_ifushort(jail, rtdata_module):
+    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
+
+    # Test has bands medium and long for IFUSHORT
+
     rtdata = rtdata_module
-
-    # Note that we use the truth file from spec2 processing as the input to spec3
-    rtdata.get_data(TRUTH_PATH + '/' + 'ifushort_ch12_cal.fits')
-
-    asn = asn_from_list([rtdata.input], product_name='ifushort_ch12_spec3')
-    asn.data["program"] = "00024"
-    asn.data["asn_type"] = "spec3"
-    asn.sequence = 1
-    asn_name, serialized = asn.dump(format="json")
-    with open(asn_name, "w") as f:
-        f.write(serialized)
-
-    rtdata.input = asn_name
+    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json')
 
     args = [
         "calwebb_spec3",
         rtdata.input,
-        '--steps.master_background.save_results=true',
-        '--steps.mrs_imatch.save_results=true',
         '--steps.outlier_detection.save_results=true',
-        '--steps.resample_spec.save_results=true',
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.save_results=true',
-        '--steps.combine_1d.save_results=true',
     ]
 
     Step.from_cmdline(args)
@@ -48,24 +30,69 @@ def run_spec3(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec3_multi(jail, rtdata_module):
-    """Run the Spec3Pipeline on multi channel/multi filter data"""
+def run_spec3_ifulong(jail, rtdata_module):
+    """Run the Spec3Pipeline dithered flight data """
 
-    step_params = {
-        'input_path': INPUT_PATH + '/' + 'ifushort_set2_asn3.json',
-        'step': 'calwebb_spec3',
-        'args': [
-            '--steps.master_background.save_results=true',
-            '--steps.mrs_imatch.save_results=true',
-            '--steps.outlier_detection.save_results=true',
-            '--steps.resample_spec.save_results=true',
-            '--steps.cube_build.save_results=true',
-            '--steps.extract_1d.save_results=true',
-            '--steps.combine_1d.save_results=true',
-        ]
-    }
+    # Test has bands medium and long for IFULONG
 
-    return rt.run_step_from_dict(rtdata_module, **step_params)
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/jw01024_ifulong_mediumlong_spec3_00001_asn.json')
+
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        '--steps.cube_build.save_results=true',
+        '--steps.extract_1d.save_results=true',
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
+
+
+@pytest.fixture(scope='module')
+def run_spec3_ifushort_emsm(jail, rtdata_module):
+    """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT"""
+
+    # Test has bands medium and long for IFUSHORT
+
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json')
+
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        '--steps.cube_build.save_results=true',
+        '--steps.cube_build.weighting=emsm',
+        '--steps.cube_build.output_file="miri_mrs_emsm"',
+        '--steps.extract_1d.save_results=true',
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
+
+
+@pytest.fixture(scope='module')
+def run_spec3_ifushort_extract1d(jail, rtdata_module):
+    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
+
+    # Test has bands medium and long for IFUSHORT
+
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/jw01024_ifushort_mediumlong_spec3_extract1d_00001_asn.json')
+
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        '--steps.outlier_detection.save_results=true',
+        '--steps.cube_build.save_results=true',
+        '--steps.extract_1d.ifu_set_srctype="POINT"',
+        '--steps.extract_1d.ifu_rscale=3.0',
+        '--steps.extract_1d.ifu_rfcorr=true',
+        '--steps.extract_1d.save_results=true',
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
 
 
 @pytest.mark.slow
@@ -73,18 +100,15 @@ def run_spec3_multi(jail, rtdata_module):
 @pytest.mark.parametrize(
     'output',
     [
-        'ifushort_ch12_spec3_mrs_imatch.fits',
-        'ifushort_ch12_spec3_ch1-medium_s3d.fits',
-        'ifushort_ch12_spec3_ch2-medium_s3d.fits',
-        'ifushort_ch12_spec3_ch1-medium_x1d.fits',
-        'ifushort_ch12_spec3_ch2-medium_x1d.fits',
-    ],
-    ids=["mrs_imatch", "ch1-s3d", "ch2-s3d", "ch1-x1d", "ch2-x1d"]
+        'jw01024-c1000_t002_miri_ch3-mediumlong_x1d.fits',
+        'jw01024-c1000_t002_miri_ch4-mediumlong_x1d.fits',
+        'jw01024-c1000_t002_miri_ch3-mediumlong_s3d.fits',
+        'jw01024-c1000_t002_miri_ch4-mediumlong_s3d.fits',
+        ]
 )
-def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
+def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
-
-    rtdata = run_spec3
+    rtdata = run_spec3_ifulong
     rtdata.output = output
 
     rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
@@ -98,22 +122,64 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
 @pytest.mark.parametrize(
     'output',
     [
-        'ifushort_set2_0_mrs_imatch.fits',
-        'ifushort_set2_1_mrs_imatch.fits',
-        'ifushort_set2_0_a3001_crf.fits',
-        'ifushort_set2_1_a3001_crf.fits',
-        'ifushort_set2_ch1-short_s3d.fits',
-        'ifushort_set2_ch2-short_s3d.fits',
-        'ifushort_set2_ch1-short_x1d.fits',
-        'ifushort_set2_ch2-short_x1d.fits',
+        'jw01024-c1000_t002_miri_ch1-mediumlong_x1d.fits',
+        'jw01024-c1000_t002_miri_ch2-mediumlong_x1d.fits',
+        'jw01024-c1000_t002_miri_ch1-mediumlong_s3d.fits',
+        'jw01024-c1000_t002_miri_ch2-mediumlong_s3d.fits'
     ],
-    ids=["ch1-mrs_imatch", "ch2-mrs_imatch", "ch1-crf", "ch2-crf",
-         "ch1-s3d", "ch2-s3d", "ch1-x1d", "ch2-x1d"]
 )
-def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
+def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
-    rt.is_like_truth(
-        run_spec3_multi, fitsdiff_default_kwargs, output,
-        truth_path=TRUTH_PATH,
-        is_suffix=False
-    )
+
+    rtdata = run_spec3_ifushort
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.slow
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    [
+        'miri_mrs_emsm_ch1-mediumlong_x1d.fits',
+        'miri_mrs_emsm_ch2-mediumlong_x1d.fits',
+        'miri_mrs_emsm_ch1-mediumlong_s3d.fits',
+        'miri_mrs_emsm_ch2-mediumlong_s3d.fits'
+    ],
+)
+def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, output):
+    """Regression test using weighting = 'emsm' """
+
+    rtdata = run_spec3_ifushort_emsm
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.slow
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    [
+        'jw01024-c1000_t002_extract1dtest_miri_ch1-mediumlong_x1d.fits',
+        'jw01024-c1000_t002_extract1dtest_miri_ch2-mediumlong_x1d.fits'
+    ],
+)
+def test_spec3_ifushort_extract1d(run_spec3_ifushort_extract1d, fitsdiff_default_kwargs, output):
+    """Regression test for extract_1d using ifu_set_srctype=POINT, ifu_rscale=3.0,
+    ifu_rfcorr=true"""
+
+    rtdata = run_spec3_ifushort_extract1d
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

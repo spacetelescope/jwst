@@ -7,6 +7,8 @@ from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, d
 from jwst.jump.jump import run_detect_jumps
 import multiprocessing
 
+import os
+import platform
 import time
 import random
 
@@ -28,13 +30,19 @@ def test_exec_time_0_crs(setup_inputs):
                                        nints=2, readnoise=6.5, gain=5.5,
                                        grouptime=2.775, deltatime=2.775)
 
-    tstart = time.time()
+    tstart = time.monotonic()
     # using dummy variable in next to prevent "F841-variable is assigned to but never used"
     _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-    tstop = time.time()
+    tstop = time.monotonic()
 
     t_elapsed = tstop - tstart
-    MAX_TIME = 10  # takes 1.6 sec on my Mac
+    if platform.system() == 'Darwin' and os.environ.get('CI', False):
+        # github mac runners have known performance issues see:
+        # https://github.com/actions/runner-images/issues/1336
+        # use a longer MAX_TIME when running on github on a mac
+        MAX_TIME = 20
+    else:
+        MAX_TIME = 10  # takes 1.6 sec on my Mac
 
     assert t_elapsed < MAX_TIME
 
@@ -479,7 +487,6 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     assert out_model.groupdq[1, 7, 14, 5] == JUMP_DET
 
 
-@pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     """"
     A multiprocessing test that has a jump in every pixel. This is used
@@ -768,7 +775,7 @@ def test_single_CR_neighbor_flag(setup_inputs):
     model.data[0, 7, 3, 3] = 160.0
     model.data[0, 8, 3, 3] = 170.0
     model.data[0, 9, 3, 3] = 180.0
-
+    indq = model.groupdq.copy()
     # Flag neighbors
     out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
 
@@ -779,6 +786,7 @@ def test_single_CR_neighbor_flag(setup_inputs):
     assert out_model.groupdq[0, 5, 4, 3] == JUMP_DET
 
     # Do not flag neighbors
+    model.groupdq = indq
     out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, False)
 
     assert np.max(out_model.groupdq[0, 5, 3, 3]) == JUMP_DET

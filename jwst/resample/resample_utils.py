@@ -3,8 +3,6 @@ import logging
 import warnings
 
 import numpy as np
-from astropy import wcs as fitswcs
-from astropy.modeling import Model
 from astropy import units as u
 import gwcs
 
@@ -27,7 +25,7 @@ def make_output_wcs(input_models, ref_wcs=None,
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
-    input_models : list of `~jwst.datamodel.DataModel`
+    input_models : list of `~jwst.datamodel.JwstDataModel`
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
@@ -97,7 +95,7 @@ def make_output_wcs(input_models, ref_wcs=None,
             output_wcs.array_shape = shape
 
     # Check that the output data shape has no zero length dimensions
-    if not np.product(output_wcs.array_shape):
+    if not np.prod(output_wcs.array_shape):
         raise ValueError(f"Invalid output frame shape: {tuple(output_wcs.array_shape)}")
 
     return output_wcs
@@ -134,8 +132,9 @@ def reproject(wcs1, wcs2):
 
     Parameters
     ----------
-    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS` or `~astropy.modeling.Model`
-        WCS objects.
+    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
+        WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
+        methods.
 
     Returns
     -------
@@ -144,25 +143,11 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    if isinstance(wcs1, fitswcs.WCS):
-        forward_transform = wcs1.all_pix2world
-    elif isinstance(wcs1, gwcs.WCS):
-        forward_transform = wcs1.forward_transform
-    elif issubclass(wcs1, Model):
-        forward_transform = wcs1
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
-
-    if isinstance(wcs2, fitswcs.WCS):
-        backward_transform = wcs2.all_world2pix
-    elif isinstance(wcs2, gwcs.WCS):
-        backward_transform = wcs2.backward_transform
-    elif issubclass(wcs2, Model):
-        backward_transform = wcs2.inverse
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+    try:
+        forward_transform = wcs1.pixel_to_world_values
+        backward_transform = wcs2.world_to_pixel_values
+    except AttributeError as err:
+        raise TypeError("Input should be a WCS") from err
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
@@ -214,6 +199,8 @@ def build_mask(dqarr, bitvalue):
 
     if bitvalue is None:
         return np.ones(dqarr.shape, dtype=np.uint8)
+
+    bitvalue = np.array(bitvalue).astype(dqarr.dtype)
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
 
 
@@ -293,13 +280,29 @@ def decode_context(context, x, y):
         raise ValueError('Pixel coordinates must be integer values')
 
     nbits = 8 * context.dtype.itemsize
+    one = np.array(1, context.dtype)
+    flags = np.array([one << i for i in range(nbits)])
 
     idx = []
     for xi, yi in zip(x, y):
         idx.append(
-            np.flatnonzero(
-                [v & (1 << k) for v in context[:, yi, xi] for k in range(nbits)]
-            )
+            np.flatnonzero(np.bitwise_and.outer(context[:, yi, xi], flags))
         )
 
     return idx
+
+
+def _resample_range(data_shape, bbox=None):
+    # Find range of input pixels to resample:
+    if bbox is None:
+        xmin = ymin = 0
+        xmax = data_shape[1] - 1
+        ymax = data_shape[0] - 1
+    else:
+        ((x1, x2), (y1, y2)) = bbox
+        xmin = max(0, int(x1 + 0.5))
+        ymin = max(0, int(y1 + 0.5))
+        xmax = min(data_shape[1] - 1, int(x2 + 0.5))
+        ymax = min(data_shape[0] - 1, int(y2 + 0.5))
+
+    return xmin, xmax, ymin, ymax

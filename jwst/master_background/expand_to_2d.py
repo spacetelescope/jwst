@@ -23,16 +23,16 @@ def expand_to_2d(input, m_bkg_spec):
 
     Parameters
     ----------
-    input : `~jwst.datamodels.DataModel`
+    input : `~jwst.datamodels.JwstDataModel`
         The input science data.
 
-    m_bkg_spec : str or `~jwst.datamodels.DataModel`
+    m_bkg_spec : str or `~jwst.datamodels.JwstDataModel`
         Either the name of a file containing a 1-D background spectrum,
         or a data model containing such a spectrum.
 
     Returns
     -------
-    background : `~jwst.datamodels.DataModel`
+    background : `~jwst.datamodels.JwstDataModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -98,7 +98,7 @@ def create_bkg(input, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input : `~jwst.datamodels.DataModel`
+    input : `~jwst.datamodels.JwstDataModel`
         The input science data.
 
     tab_wavelength : 1-D ndarray
@@ -109,7 +109,7 @@ def create_bkg(input, tab_wavelength, tab_background):
 
     Returns
     -------
-    background : `~jwst.datamodels.DataModel`
+    background : `~jwst.datamodels.JwstDataModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """

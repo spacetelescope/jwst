@@ -15,12 +15,12 @@ def do_correction(input_model, gain_factor):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Input datamodel to be corrected
 
     Returns
     -------
-    output_model : `~jwst.datamodels.DataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         Output datamodel with rescaled data
 
     """

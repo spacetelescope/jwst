@@ -73,6 +73,24 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply an APERTURE correction during
         the Extract1dStep. Default is True
 
+    ifu_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in IFU mode.  Default is False.
+
+    ifu_rfcorr : bool
+        Switch to select whether or not to apply a 1d residual fringe correction
+        for MIRI MRS IFU spectra.  Default is False.
+
+    ifu_set_srctype : str
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
+
+    ifu_rscale : float
+        For MRS IFU data a value for changing the extraction radius. The value provided is
+        the number of PSF FWHMs to use for the extraction radius. Values accepted are between
+        0.5 to 3.0. The default extraction size is set to 2 * FWHM. Values below 2 will result
+        in a smaller radius, a value of 2 results in no change to the radius and a value above
+        2 results in a larger extraction radius.
+
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
         WARNING: ATOCA results not fully validated, and require the photom step
@@ -137,8 +155,12 @@ class Extract1dStep(Step):
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
-    center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
+    center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
+    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
+    ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
+    ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -207,6 +229,28 @@ class Extract1dStep(Step):
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
 
+        if isinstance(input_model, datamodels.IFUCubeModel):
+            exp_type = input_model.meta.exposure.type
+        elif isinstance(input_model, ModelContainer):
+            exp_type = input_model[0].meta.exposure.type
+        else:
+            exp_type = None
+
+        if self.ifu_rfcorr:
+            if exp_type != "MIR_MRS":
+                self.log.warning("The option to apply a residual refringe correction is"
+                                 f" not supported for {input_model.meta.exposure.type} data.")
+
+        if self.ifu_rscale is not None:
+            if exp_type != "MIR_MRS":
+                self.log.warning("The option to change the extraction radius is"
+                                 f" not supported for {input_model.meta.exposure.type} data.")
+
+        if self.ifu_set_srctype is not None:
+            if exp_type != "MIR_MRS":
+                self.log.warning("The option to change the source type is"
+                                 f" not supported for {input_model.meta.exposure.type} data.")
+
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
         if isinstance(input_model, ModelContainer):
@@ -248,6 +292,10 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.center_xy,
+                        self.ifu_autocen,
+                        self.ifu_rfcorr,
+                        self.ifu_set_srctype,
+                        self.ifu_rscale,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -282,6 +330,10 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             self.center_xy,
+                            self.ifu_autocen,
+                            self.ifu_rfcorr,
+                            self.ifu_set_srctype,
+                            self.ifu_rscale,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -319,6 +371,10 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
+                    self.ifu_set_srctype,
+                    self.ifu_rscale,
                     was_source_model=was_source_model,
                 )
 
@@ -356,19 +412,16 @@ class Extract1dStep(Step):
                     self.log.info('Exposure is in the SUBSTRIP256 subarray.')
                     self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
                     subarray = 'SUBSTRIP256'
-                elif input_model.meta.subarray.name == 'FULL':
-                    self.log.info('Exposure is in the FULL subarray.')
-                    self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
-                    subarray = 'FULL'
                 elif input_model.meta.subarray.name == 'SUBSTRIP96':
                     self.log.info('Exposure is in the SUBSTRIP96 subarray.')
                     self.log.info('Traces of orders 1 and 2 will be modelled but only order 1'
                                   ' will be decontaminated before extraction.')
                     subarray = 'SUBSTRIP96'
                 else:
-                    self.log.error('The SOSS extraction is implemented for the SUBSTRIP256,'
-                                   ' SUBSTRIP96 and FULL subarray only.')
-                    self.log.error('extract_1d will be skipped.')
+                    self.log.error('The SOSS extraction is implemented for the SUBSTRIP256'
+                                   'and SUBSTRIP96 subarrays only. Subarray is currently '
+                                   f'{input_model.meta.subarray.name}.')
+                    self.log.error('Extract1dStep will be skipped.')
                     input_model.meta.cal_step.extract_1d = 'SKIPPED'
                     return input_model
 
@@ -458,6 +511,10 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
+                    self.ifu_set_srctype,
+                    self.ifu_rscale,
                     was_source_model=False,
                 )
 

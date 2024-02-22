@@ -77,14 +77,10 @@ int alloc_xart_arrays(int nelem, double **fluxv) {
     // flux:
     if (!(*fluxv  = (double*)calloc(nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
-        goto failed_mem_alloc;
+        return 1;
     }
 
     return 0;
-
- failed_mem_alloc:
-    free(*fluxv);
-
 }
 
 // Do the computation of the cross-artifact values.

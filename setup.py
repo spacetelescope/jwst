@@ -1,44 +1,5 @@
 import numpy
-from setuptools import setup, find_packages, Extension
-
-# package_data values are glob patterns relative to each specific subpackage.
-package_data = {
-    "": [
-        "*.asdf",
-        "*.cfg",
-        "tests/data/*.csv",
-        "tests/data/*.ecsv",
-        "tests/data/*.fits",
-        "tests/data/**/*.fits",
-        "*.json",
-        "tests/data/*.json",
-        "tests/data/**/*.json",
-        "tests/data/*.txt",
-        "*.yaml",
-        "*.cat",
-        "*.hdr",
-    ],
-    "jwst.fits_generator": [
-        "templates/*.inc",
-        "templates/*.txt",
-        "tests/okfile/*.prop",
-    ],
-    "jwst.lib": [
-        "tests/data/*.asdf",
-        "tests/data/*.db",
-        "tests/data/*.ecsv",
-        "tests/data/*.fits",
-    ],
-    # Include the rules .py files in associations test data
-    "jwst.associations": ["tests/data/*.py"],
-    # Include C extensions
-    "jwst.lib.src": ["*.c"],
-    "jwst.cube_build.src": ["*.c"],
-    "jwst.straylight.src": ["*.c"],
-    # Include the transforms schemas
-    "jwst.transforms": ["resources/schemas/stsci.edu/jwst_pipeline/*.yaml"],
-    "jwst.stpipe.resources": ["schemas/*.yaml"],
-}
+from setuptools import setup, Extension
 
 # Setup C module include directories
 include_dirs = [numpy.get_include()]
@@ -47,10 +8,6 @@ include_dirs = [numpy.get_include()]
 define_macros = [("NUMPY", "1")]
 
 setup(
-    use_scm_version=True,
-    setup_requires=["setuptools_scm"],
-    packages=find_packages(),
-    package_data=package_data,
     ext_modules=[
         Extension(
             "jwst.lib.winclip",

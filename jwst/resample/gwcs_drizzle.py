@@ -120,7 +120,7 @@ class GWCSDrizzle:
         self._product.con = value
 
     def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
-                  expin=1.0, in_units="cps", wt_scl=1.0):
+                  expin=1.0, in_units="cps", wt_scl=1.0, iscale=1.0):
         """
         Combine an input image with the output drizzled image.
 
@@ -144,29 +144,29 @@ class GWCSDrizzle:
             Must have the same dimensions as insci. If none is supplied,
             the weighting is set to one.
 
-        xmin : float, optional
+        xmin : int, optional
             This and the following three parameters set a bounding rectangle
-            on the output image. Only pixels on the output image inside this
-            rectangle will have their flux updated. Xmin sets the minimum value
-            of the x dimension. The x dimension is the dimension that varies
-            quickest on the image. If the value is zero or less, no minimum will
-            be set in the x dimension. All four parameters are zero based,
-            counting starts at zero.
+            on the input image. Only pixels on the input image inside this
+            rectangle will have their flux added to the output image. Xmin
+            sets the minimum value of the x dimension. The x dimension is the
+            dimension that varies quickest on the image. All four parameters
+            are zero based, counting starts at zero.
 
-        xmax : float, optional
+        xmax : int, optional
             Sets the maximum value of the x dimension on the bounding box
-            of the output image. If the value is zero or less, no maximum will
-            be set in the x dimension.
+            of the input image. If ``xmax = 0``, no maximum will
+            be set in the x dimension (all pixels in a row of the input image
+            will be resampled).
 
-        ymin : float, optional
+        ymin : int, optional
             Sets the minimum value in the y dimension on the bounding box. The
             y dimension varies less rapidly than the x and represents the line
-            index on the output image. If the value is zero or less, no minimum
-            will be set in the y dimension.
+            index on the input image.
 
-        ymax : float, optional
-            Sets the maximum value in the y dimension. If the value is zero or
-            less, no maximum will be set in the y dimension.
+        ymax : int, optional
+            Sets the maximum value in the y dimension. If ``ymax = 0``,
+            no maximum will be set in the y dimension (all pixels in a column
+            of the input image will be resampled).
 
         expin : float, optional
             The exposure time of the input image, a positive number. The
@@ -185,6 +185,11 @@ class GWCSDrizzle:
             initialized with wt_scl set to "exptime" or "expsq", the exposure time
             will be used to set the weight scaling and the value of this parameter
             will be ignored.
+
+        iscale : float, optional
+            A scale factor to be applied to pixel intensities of the
+            input image before resampling.
+
         """
         if self.wt_scl == "exptime":
             wt_scl = expin
@@ -197,7 +202,8 @@ class GWCSDrizzle:
         dodrizzle(insci, inwcs, inwht, self.outwcs, self.outsci, self.outwht,
                   self.outcon, expin, in_units, wt_scl, uniqid=self.uniqid,
                   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                  pixfrac=self.pixfrac, kernel=self.kernel, fillval=self.fillval)
+                  iscale=iscale, pixfrac=self.pixfrac, kernel=self.kernel,
+                  fillval=self.fillval)
 
     def increment_id(self):
         """
@@ -227,7 +233,7 @@ class GWCSDrizzle:
 
 def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
               expin, in_units, wt_scl, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
-              pixfrac=1.0, kernel='square', fillval="INDEF"):
+              iscale=1.0, pixfrac=1.0, kernel='square', fillval="INDEF"):
     """
     Low level routine for performing 'drizzle' operation on one image.
 
@@ -279,31 +285,33 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
         this function is called and incremented by one on each subsequent
         call.
 
-    xmin : float, optional
+    xmin : int, optional
         This and the following three parameters set a bounding rectangle
         on the input image. Only pixels on the input image inside this
         rectangle will have their flux added to the output image. Xmin
         sets the minimum value of the x dimension. The x dimension is the
-        dimension that varies quickest on the image. If the value is zero,
-        no minimum will be set in the x dimension. All four parameters are
-        zero based, counting starts at zero.
+        dimension that varies quickest on the image. All four parameters
+        are zero based, counting starts at zero.
 
-    xmax : float, optional
+    xmax : int, optional
         Sets the maximum value of the x dimension on the bounding box
-        of the input image. If the value is zero, no maximum will
-        be set in the x dimension, the full x dimension of the output
-        image is the bounding box.
+        of the input image. If ``xmax = 0``, no maximum will
+        be set in the x dimension (all pixels in a row of the input image
+        will be resampled).
 
-    ymin : float, optional
+    ymin : int, optional
         Sets the minimum value in the y dimension on the bounding box. The
         y dimension varies less rapidly than the x and represents the line
-        index on the input image. If the value is zero, no minimum  will be
-        set in the y dimension.
+        index on the input image.
 
-    ymax : float, optional
-        Sets the maximum value in the y dimension. If the value is zero, no
-        maximum will be set in the y dimension,  the full x dimension
-        of the output image is the bounding box.
+    ymax : int, optional
+        Sets the maximum value in the y dimension. If ``ymax = 0``,
+        no maximum will be set in the y dimension (all pixels in a column
+        of the input image will be resampled).
+
+    iscale : float, optional
+        A scale factor to be applied to pixel intensities of the
+        input image before resampling.
 
     pixfrac : float, optional
         The fraction of a pixel that the pixel flux is confined to. The
@@ -391,6 +399,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
         uniqid=uniqid,
         xmin=xmin, xmax=xmax,
         ymin=ymin, ymax=ymax,
+        scale=iscale,
         pixfrac=pixfrac,
         kernel=kernel,
         in_units=in_units,

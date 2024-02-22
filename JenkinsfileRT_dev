@@ -61,7 +61,7 @@ pytest_basetemp = "test_outputs"
 // Configure artifactory ingest
 data_config = new DataConfig()
 data_config.server_id = 'bytesalad'
-data_config.root = '${PYTEST_BASETEMP}'
+data_config.root = 'clone/${pytest_basetemp}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 
@@ -74,20 +74,20 @@ bc0.conda_ver = '22.11.1'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
-bc0.pip_reqs_files = ['requirements-dev.txt']
+bc0.pip_reqs_files = ['requirements-dev-st.txt', 'requirements-dev-thirdparty.txt']
 bc0.build_cmds = [
     "pip install certifi -U --force-reinstall",
     "pip install -e .[test,sdp] --no-cache-dir",
     "pip install pytest-xdist",
-    "pip freeze",
-]
-bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
+] + PipInject(env.OVERRIDE_REQUIREMENTS) + ["pip list"]
 bc0.test_cmds = [
-    "pytest -r sxf -n auto --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
+    "pytest -r sxf --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml \
+    -n 8 --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
 ]
 bc0.test_configs = [data_config]
+bc0.failedFailureThresh = 0
 
 // macos-specific buildconfig to cause the creation of counterparts to the linux
 // environment dumps. Packages in a minimal conda environment differ by OS
@@ -95,20 +95,6 @@ bc0.test_configs = [data_config]
 bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-unstable-deps'
-bc1.pip_reqs_files = ['requirements-dev.txt']
-bc1.build_cmds = [
-    "pip install certifi -U --force-reinstall",
-    "pip install -e .[test,sdp] --no-cache-dir",
-    "pip install pytest-xdist",
-    "pip freeze",
-]
-bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
-bc1.test_cmds = [
-    "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
-    --env=${artifactoryenv} ${pytest_args}",
-]
-bc1.test_configs = []
 
 utils.run([jobconfig, bc0, bc1])
 }  // withCredentials

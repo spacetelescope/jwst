@@ -31,11 +31,11 @@ class DataAccessor(abc.ABC):
         access data.
     """
     @abc.abstractmethod
-    def get_data(self):
+    def get_data(self):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    def set_data(self, data):
+    def set_data(self, data):  # pragma: no cover
         """ Sets data.
 
         Parameters
@@ -47,7 +47,7 @@ class DataAccessor(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_data_shape(self):
+    def get_data_shape(self):  # pragma: no cover
         pass
 
 

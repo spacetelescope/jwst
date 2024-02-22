@@ -9,15 +9,20 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.8 or above and a C compiler for dependencies.**
+**JWST requires a C compiler for dependencies and is currently limited to Python 3.9, 3.10 or 3.11.**
+
+**Until Python 3.12 is supported, fresh conda environments will require setting the
+  Python version to one of the three supported versions.**
 
 **Linux and MacOS platforms are tested and supported.  Windows is not currently supported.**
 
-**If installing on MacOS Mojave 10.14, you must install 
-  into an environment with python 3.8 or 3.9. Installation will fail on python 3.10 due
+**If installing on MacOS Mojave 10.14, you must install
+  into an environment with python 3.9. Installation will fail on python 3.10 due
   to lack of a stable build for dependency ``opencv-python``.**
 
 ## Installation
+
+Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) for installation issues.
 
 The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
 
@@ -48,29 +53,22 @@ Remember that all conda operations must be done from within a bash/zsh shell.
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    conda create -n <env_name> python
+    conda create -n <env_name> python=3.11
     conda activate <env_name>
     pip install jwst
 
-You can also install a specific version (from `jwst 0.17.0` onward):
+You can also install a specific version:
 
-    conda create -n <env_name> python
+    conda create -n <env_name> python=3.11
     conda activate <env_name>
     pip install jwst==1.9.4
-
-Installing specific versions before `jwst 0.17.0` need to be installed from Github:
-
-    conda create -n <env_name> python
-    conda activate <env_name>
-    pip install git+https://github.com/spacetelescope/jwst@0.16.2
-
 
 ### Installing the development version from Github
 
 You can install the latest development version (not as well tested) from the
 Github master branch:
 
-    conda create -n <env_name> python
+    conda create -n <env_name> python=3.11
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
@@ -93,15 +91,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.8.2 --file https://ssb.stsci.edu/releases/jwstdp/1.8.2/conda_python_stable-deps.txt
-    conda activate jwstdp-1.8.2
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.8.2/reqs_stable-deps.txt
+    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_stable-deps.txt
+    conda activate jwstdp-1.12.5
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.8.2 --file https://ssb.stsci.edu/releases/jwstdp/1.8.2/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.8.2
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.8.2/reqs_macos-stable-deps.txt
+    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.12.5
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -122,14 +120,14 @@ already installed with released versions of the `jwst` package.
 
 As usual, the first two steps are to create and activate an environment:
 
-    conda create -n <env_name> python
+    conda create -n <env_name> python=3.11
     conda activate <env_name>
 
 To install your own copy of the code into that environment, you first need to
 fork and clone the `jwst` repo:
 
     cd <where you want to put the repo>
-    git clone https://github.com/spacetelescope/jwst
+    git clone https://github.com/<your_github_username>/jwst.git
     cd jwst
 
 *Note: `python setup.py install` and `python setup.py develop` commands do not work.*
@@ -175,6 +173,11 @@ two environment variables:
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
+To use a specific CRDS context, other than the current default, set the ``CRDS_CONTEXT``
+environment variable:
+
+    export CRDS_CONTEXT=jwst_1179.pmap
+
 ## Documentation
 
 Documentation (built daily from the Github `master` branch) is available at:
@@ -215,7 +218,25 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.10.0              | B9.2rc1   | TBD      | 1075         | 2023-03-31 | TBD         | First release candidate for B9.2              |
+| 1.13.4              |           |          | 1185         | 2024-01-25 |             | PyPI-only release for external users          |
+| 1.13.3              | B10.1     | 2023.4.0 | 1181         | 2024-01-05 |             | Final release candidate for B10.1             |
+| 1.13.2              | B10.1rc3  | 2023.4.0 | 1181         | 2023-12-21 |             | Third release candidate for B10.1             |
+| 1.13.1              | B10.1rc2  | 2023.4.0 | 1181         | 2023-12-19 |             | Second release candidate for B10.1            |
+| 1.13.0              | B10.1rc1  | 2023.4.0 | 1179         | 2023-12-15 |             | First release candidate for B10.1             |
+| 1.12.5              | B10.0.1   | 2023.3.1 | 1166         | 2023-10-19 | 2023-12-05  | Patch release B10.0.1                         |
+| 1.12.4              |           |          |              | 2023-10-12 |             | Pinning dependencies for external users       |
+| 1.12.3              | B10.0     | 2023.3.0 | 1135         | 2023-10-03 | 2023-12-05  | Final release candidate for B10.0             |
+| 1.12.2              | B10.0rc3  |          | 1135         | 2023-10-02 |             | Third release candidate for B10.0             |
+| 1.12.1              | B10.0rc2  |          | 1132         | 2023-09-26 |             | Second release candidate for B10.0            |
+| 1.12.0              | B10.0rc1  |          | 1130         | 2023-09-18 |             | First release candidate for B10.0             |
+| 1.11.4              | B9.3.1    | 2023.2.1 | 1107         | 2023-08-14 | 2023-08-24  | Final release for B9.3.1 patch                |
+| 1.11.3              | B9.3      | 2023.2.0 | 1097         | 2023-07-17 |             | Final release candidate for B9.3              |
+| 1.11.2              | B9.3rc3   |          | 1097         | 2023-07-12 |             | Third release candidate for B9.3              |
+| 1.11.1              | B9.3rc2   |          | 1094         | 2023-06-29 |             | Second release candidate for B9.3             |
+| 1.11.0              | B9.3rc1   |          | 1094         | 2023-06-21 |             | First release candidate for B9.3              |
+| 1.10.2              |           |          | 1077         | 2023-04-14 |             | Pinning dependencies for external users       |
+| 1.10.1              | B9.2.x    | 2023.1.1 | 1077         | 2023-04-13 | 2023-05-23  | Final release candidate for B9.2              |
+| 1.10.0              | B9.2rc1   |          | 1075         | 2023-03-31 |             | First release candidate for B9.2              |
 | 1.9.6               | B9.1.2    | 2022.5.2 | 1068         | 2023-03-09 | 2023-03-15  | Final release candidate for B9.1.2            |
 | 1.9.5               |           |          | 1061         | 2023-03-02 |             | First release candidate for B9.1.2            |
 | 1.9.4               | B9.1.1    | 2022.5.1 | 1041         | 2023-01-27 | 2023-02-28  | Final release candidate for B9.1.1            |

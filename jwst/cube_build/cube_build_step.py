@@ -42,12 +42,16 @@ class CubeBuildStep (Step):
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
-         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
-         scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
-         scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
+         output_type = option('band','channel','grating','multi',default=None) # Type IFUcube to create.
+         scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
+         ra_center = float(default=None) # RA center of the IFU cube
+         dec_center = float(default=None) # Declination center of the IFU cube
+         cube_pa = float(default=None) # The position angle of the desired cube in decimal degrees E from N
+         nspax_x = integer(default=None) # The odd integer number of spaxels to use in the x dimension of cube tangent plane.
+         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent plane.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
@@ -58,6 +62,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
+         debug_spaxel = string(default='-1 -1 -1') # Default not used
        """
 
     reference_file_types = ['cubepar']
@@ -89,15 +94,12 @@ class CubeBuildStep (Step):
             self.grating = self.grating.lower()
         if not self.coord_system.islower():
             self.coord_system = self.coord_system.lower()
-        if not self.output_type.islower():
-            self.output_type = self.output_type.lower()
+
         if not self.weighting.islower():
             self.weighting = self.weighting.lower()
 
-        if self.scale1 != 0.0:
-            self.log.info(f'Input Scale of axis 1 {self.scale1}')
-        if self.scale2 != 0.0:
-            self.log.info(f'Input Scale of axis 2 {self.scale2}')
+        if self.scalexy != 0.0:
+            self.log.info(f'Input Scale of axis 1 and 2 {self.scalexy}')
         if self.scalew != 0.0:
             self.log.info(f'Input wavelength scale {self.scalew}')
 
@@ -110,6 +112,19 @@ class CubeBuildStep (Step):
             self.log.info(f'Input Spatial ROI size {self.rois}')
         if self.roiw != 0.0:
             self.log.info(f'Input Wave ROI size {self.roiw}')
+
+        # check that if self.nspax_x or self.nspax_y is provided they must be odd numbers
+        if self.nspax_x is not None:
+            if self.nspax_x % 2 == 0:
+                self.log.info(f'Input nspax_x must be an odd number {self.nspax_x}')
+                self.nspax_x = self.nspax_x + 1
+                self.log.info(f'Updating nspa by 1. New value {self.nspax_x}')
+
+        if self.nspax_y is not None:
+            if self.nspax_y % 2 == 0:
+                self.log.info(f'Input nspax_y must be an odd number {self.nspax_y}')
+                self.nspax_y = self.nspax_y + 1
+                self.log.info(f'Updating nspax_y by 1. New value {self.nspax_y}')
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
@@ -159,7 +174,7 @@ class CubeBuildStep (Step):
         self.pars_input['grating'] = []
 
         # including values in pars_input that could get updated in cube_build_step.py
-        self.pars_input['output_type'] = self.output_type
+
         self.pars_input['coord_system'] = self.coord_system
 
         if self.single:
@@ -185,7 +200,8 @@ class CubeBuildStep (Step):
         # if they are then self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
 # ________________________________________________________________________________
-# DataTypes: Read in the input data - 4 formats are allowed:
+# DataTypes
+# Read in the input data - 4 formats are allowed:
 # 1. filename
 # 2. single model
 # 3. ASN table
@@ -205,6 +221,19 @@ class CubeBuildStep (Step):
         self.input_models = input_table.input_models
         self.output_name_base = input_table.output_name
 # ________________________________________________________________________________
+
+# Read in the first input model to determine with instrument we have
+# output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
+        instrument = self.input_models[0].meta.instrument.name.upper()
+        if self.output_type is None:
+            if instrument == 'NIRSPEC':
+                self.output_type = 'band'
+
+            elif instrument == 'MIRI':
+                self.output_type = 'channel'
+        self.pars_input['output_type'] = self.output_type
+        self.log.info(f'Setting output type to: {self.output_type}')
+
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
 
@@ -212,6 +241,7 @@ class CubeBuildStep (Step):
         # Check for a valid reference file
         if par_filename == 'N/A':
             self.log.warning('No default cube parameters reference file found')
+            input_table.close()
             return
 # ________________________________________________________________________________
 # shove the input parameters in to pars to pull out in general cube_build.py
@@ -229,19 +259,24 @@ class CubeBuildStep (Step):
         # these parameters are related to the building a single ifucube_model
 
         pars_cube = {
-            'scale1': self.scale1,
-            'scale2': self.scale2,
+            'scalexy': self.scalexy,
             'scalew': self.scalew,
             'interpolation': self.interpolation,
             'weighting': self.weighting,
             'weight_power': self.weight_power,
             'coord_system': self.pars_input['coord_system'],
+            'ra_center': self.ra_center,
+            'dec_center': self.dec_center,
+            'cube_pa': self.cube_pa,
+            'nspax_x': self.nspax_x,
+            'nspax_y': self.nspax_y,
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
             'skip_dqflagging': self.skip_dqflagging,
-            'suffix': self.suffix}
+            'suffix': self.suffix,
+            'debug_spaxel': self.debug_spaxel}
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
@@ -265,6 +300,7 @@ class CubeBuildStep (Step):
         if instrument == 'MIRI' and self.coord_system == 'internal_cal':
             self.log.warning('The output coordinate system of internal_cal is not valid for MIRI')
             self.log.warning('use output_coord = ifualign instead')
+            input_table.close()
             return
         filenames = master_table.FileMap['filename']
 
@@ -345,7 +381,6 @@ class CubeBuildStep (Step):
 
                 cube_container.append(result)
                 del result
-                
             del thiscube
 
         # irrelevant WCS keywords we will remove from final product
@@ -369,6 +404,7 @@ class CubeBuildStep (Step):
         if status_cube == 1:
             self.skip = True
 
+        input_table.close()
         return cube_container
 # ******************************************************************************
 

@@ -485,7 +485,7 @@ def extract_grism_objects(input_model,
 
                 if compute_wavelength:
                     log.debug("Computing wavelengths")
-                    new_slit.wavelength = compute_wavelength_array(new_slit)
+                    new_slit.wavelength = compute_wfss_wavelength(new_slit)
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.
@@ -579,4 +579,24 @@ def compute_wavelength_array(slit):
     transform = slit.meta.wcs.forward_transform
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = transform(x, y)[2]
+    return wavelength
+
+
+def compute_wfss_wavelength(slit):
+    """
+    Compute the wavelength array for a slit with gwcs object
+
+    Parameters
+    ----------
+    slit : `~jwst.datamodels.SlitModel`
+        JWST slit datamodel containing a meta.wcs GWCS object
+
+    Returns
+    -------
+    wavelength : numpy.array
+        The wavelength array
+    """
+
+    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    wavelength = slit.meta.wcs(x, y)[2]
     return wavelength

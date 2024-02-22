@@ -8,12 +8,6 @@
    :width: 400
    :align: center
 
-.. warning::
-
-   As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
-
-   For details, refer to the :ref:`pub-deprecation` page.
-
 Welcome to the documentation for `jwst`. This package contains the Python
 software suite for the James Webb Space Telescope (JWST) calibration pipeline,
 which processes data from all JWST instruments by applying various corrections to
@@ -24,6 +18,9 @@ pipeline to custom process their JWST data. Additionally, the `jwst` package
 contains the interface to JWST datamodels, the recommended method of reading and
 writing JWST data files in Python.
 
+
+If you have questions or concerns regarding the software, please contact the JWST Help
+desk at `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
 
 --------------------------------
 
@@ -43,7 +40,6 @@ writing JWST data files in Python.
 
    jwst/user_documentation/introduction.rst
    jwst/user_documentation/reference_files_crds.rst
-   jwst/user_documentation/pub_deprecation.rst
    jwst/user_documentation/parameters.rst
    jwst/user_documentation/running_pipeline_python.rst
    jwst/user_documentation/running_pipeline_command_line.rst
@@ -51,6 +47,7 @@ writing JWST data files in Python.
    jwst/user_documentation/input_output_file_conventions.rst
    jwst/user_documentation/logging_configuration.rst
    jwst/user_documentation/datamodels.rst
+   jwst/user_documentation/pub_deprecation.rst
 
 .. toctree::
    :maxdepth: 2
@@ -64,6 +61,7 @@ writing JWST data files in Python.
    :caption: Error Propagation Documentation
 
    jwst/error_propagation/index.rst
+
 
 --------------------------------
 

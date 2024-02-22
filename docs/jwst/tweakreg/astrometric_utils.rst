@@ -8,6 +8,5 @@ set of images.
 
 .. currentmodule:: jwst.tweakreg.astrometric_utils
 
-.. automodule:: jwst.tweakreg.astrometric_utils
-   :members:
-   :undoc-members:
+.. automodapi:: jwst.tweakreg.astrometric_utils
+   :include-all-objects:

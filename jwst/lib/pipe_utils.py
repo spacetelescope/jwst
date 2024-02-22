@@ -10,7 +10,7 @@ def is_tso(model):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         Data to check
 
     Returns
@@ -51,7 +51,7 @@ def is_irs2(model):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel` or ndarray
+    model : `~jwst.datamodels.JwstDataModel` or ndarray
         Data to check
 
     Returns

@@ -6,8 +6,6 @@ import pytest
 
 from astropy.io import fits
 
-from stpipe import crds_client
-
 from jwst.stpipe import Step
 import crds
 
@@ -33,7 +31,7 @@ class CrdsStep(Step):
 
         with datamodels.open(input_file) as dm:
             self.ref_filename = self.get_reference_file(dm, 'flat')
-        return datamodels.DataModel()
+        return datamodels.JwstDataModel()
 
 
 def test_crds_step():
@@ -138,14 +136,3 @@ def test_crds_failed_getreferences_bad_context():
     }
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["flat"], context="jwst_9942.pmap")
-
-
-def test_check_reference_open_s3(s3_root_dir):
-    path = str(s3_root_dir.join("test.fits"))
-    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
-        hdulist.writeto(path)
-
-    assert crds_client.check_reference_open("s3://test-s3-data/test.fits") == "s3://test-s3-data/test.fits"
-
-    with pytest.raises(RuntimeError):
-        assert crds_client.check_reference_open("s3://test-s3-data/missing.fits")

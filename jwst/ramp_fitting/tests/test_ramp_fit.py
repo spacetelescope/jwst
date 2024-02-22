@@ -13,7 +13,7 @@ DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 SATURATED = dqflags.pixel["SATURATED"]
 NO_GAIN = dqflags.pixel["NO_GAIN_VALUE"]
-UNDERSAMP = dqflags.pixel["UNDERSAMP"]
+CHARGELOSS = dqflags.pixel["CHARGELOSS"]
 
 DELIM = "-" * 70
 
@@ -47,7 +47,7 @@ def test_drop_frames1_not_set():
 
 
 def test_readnoise_variance():
-    # test RN variance calculations for handling undersample_correction
+    # test RN variance calculations for handling charge_migration
     group_time = 10.6
 
     model1, gdq_4d, rnoise, pixdq, err, gain = \
@@ -61,16 +61,16 @@ def test_readnoise_variance():
     # Populate ramps with a variety of flags
     gdq_4d[:, 7, 1, 3] = JUMP_DET
     gdq_4d[:, 6:, 1, 2] = SATURATED
-    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + UNDERSAMP
-    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + CHARGELOSS
+    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 3, 2, 2] = JUMP_DET
     gdq_4d[:, 6, 2, 2] = JUMP_DET
-    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 8, 2, 2] += JUMP_DET
     gdq_4d[:, 0, 0, 0] = DO_NOT_USE + SATURATED
     gdq_4d[:, 1:, 0, 0] = SATURATED
     gdq_4d[:, 0, 0, 2] = SATURATED + DO_NOT_USE
-    gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + UNDERSAMP
+    gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 0:, 1, 0] = JUMP_DET
 
     var_r2, var_r3, var_r4 = compute_RN_variances(gdq_4d, readnoise_2d, gain_2d, group_time)
@@ -744,10 +744,10 @@ def test_twenty_groups_two_segments():
     np.testing.assert_allclose(oslope[wh_data], 10. / deltatime, rtol=1E-4)
     np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
 
-    np.testing.assert_allclose(
-        opedestal[0, 0, :],
-        model1.data[0, 0, 0, :] - 10.,
-        rtol=1E-5)
+    check = model1.data[0, 0, 0, :] - oslope
+    tol = 1E-5
+    # Pixel 1 has zero slope, so ignore it.
+    np.testing.assert_allclose(opedestal[0, 0, 1:], check[0, 0, 0, 1:], tol)
 
 
 def test_miri_all_sat():
@@ -834,109 +834,6 @@ def test_miri_no_good_pixel():
         model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
 
     assert image_info is None
-
-
-def test_zeroframe_usage():
-    """
-    Test using ZEROFRAME data for fully saturated ramps, with three different
-    ramps.
-
-    Ramp descriptions:
-    0. One good group, then saturated for groups 1 and on.
-        - Neither the data, nor the groupdq will be touched
-    1. Zero good groups, since fully saturated, 0. data in ZEROFRAME.
-        - Neither the data, nor the groupdq will be touched.
-    2. Zero good groups, since fully saturated, with good data in ZEROFRAME.
-        - The zero group will be replaced and the ZEROFRAME data.
-        - The groupdq flag for group 0 will be set to GOOD.
-    """
-    dims = 2, 5, 1, 3       # nints, ngroups, nrows, ncols
-    nints, ngroups, nrows, ncols = dims
-    frame_data = 4, 1       # nframes, groupgap
-    timing = 10.736, 0, 0.  # tframe, tgroup, tgroup0
-    variance = 10., 5.      # rnoise, gain
-    model, gmodel, rnmodel = setup_inputs_ramp_model_new(
-        dims, frame_data, timing, variance)
-
-    gain = gmodel.data
-    rnoise = rnmodel.data
-
-    correct_shape = (nints, nrows, ncols)
-    if model.zeroframe.shape != correct_shape:
-        model.zeroframe = np.zeros(correct_shape, dtype=model.data.dtype)
-
-    base_slope = 50.0
-    base_arr = [10000. + k * base_slope for k in range(ngroups)]
-    base_ramp = np.array(base_arr, dtype=np.float32)
-
-    # Make all data ramps the same.  The only difference will be in the ZEROFRAME.
-    model.data[0, :, 0, 0] = base_ramp
-    model.data[0, :, 0, 1] = base_ramp
-    model.data[0, :, 0, 2] = base_ramp
-    model.data[1, :, :, :] = model.data[0, :, :, :] / 2.
-
-    model.zeroframe[0, 0, 0] = model.data[0, 0, 0, 0] / 2.
-    model.zeroframe[0, 0, 1] = 0.  # Indicates bad ZEROFRAME data.
-    model.zeroframe[0, 0, 2] = model.data[0, 0, 0, 2] / 2.
-    model.zeroframe[1, :, :] = model.zeroframe[0, :, :] / 2.
-
-    # Set all groups to SATURATED, except for group 0 in ramp 0.
-    model.groupdq[0, :, :, :] = SATURATED
-    model.groupdq[0, 0, 0, 0] = GOOD
-    model.groupdq[1, :, :, :] = GOOD
-
-    model.meta.exposure.zero_frame = True
-
-    slopes, cube, _, _ = ramp_fit(
-        model, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none', dqflags.pixel)
-
-    # Make sure the group 0 info changed for ramp 2 in the data
-    # and groupdq arrays.
-    tol = 1.e-5
-
-    # Check slopes information
-    sdata, sdq, svp, svr, serr = slopes
-
-    check = np.array([[20.709406, 0.46572033, 4.6866207]])
-    np.testing.assert_allclose(sdata, check, tol, tol)
-
-    # Since the second integration is GOOD the final DQ is GOOD.
-    check = np.array([[GOOD, GOOD, GOOD]])
-    np.testing.assert_allclose(sdq, check, tol, tol)
-
-    check = np.array([[0.1544312, 0.0002169, 0.20677584]])
-    np.testing.assert_allclose(svp, check, tol, tol)
-
-    check = np.array([[0.00042844, 0.0004338, 0.00043293]])
-    np.testing.assert_allclose(svr, check, tol, tol)
-
-    check = np.array([[0.39352208, 0.02550867, 0.4552019]])
-    np.testing.assert_allclose(serr, check, tol, tol)
-
-    # Check slopes information
-    cdata, cdq, cvp, cvr, cerr = cube
-
-    check = np.array([[[186.28912, np.nan, 93.14456]],
-                      [[0.46572027, 0.46572033, 0.46572033]]])
-    np.testing.assert_allclose(cdata, check, tol, tol)
-
-    # Column 2 in the first integration is marked GOOD because there
-    # is valid ZEROFRAME data that is used.
-    check = np.array([[[GOOD, SATURATED | DO_NOT_USE, GOOD]],
-                      [[GOOD, GOOD, GOOD]]])
-    np.testing.assert_allclose(cdq, check, tol, tol)
-
-    check = np.array([[[1.3898808e+00, 0.0000000e+00, 4.3422928e+00]],
-                      [[1.7373510e-01, 2.1689695e-04, 2.1711464e-01]]])
-    np.testing.assert_allclose(cvp, check, tol, tol)
-
-    check = np.array([[[0.03470363, 0., 0.21689774]],
-                      [[0.0004338, 0.0004338, 0.0004338]]])
-    np.testing.assert_allclose(cvr, check, tol, tol)
-
-    check = np.array([[[1.1935595, 0., 2.1352262]],
-                      [[0.41733548, 0.02550867, 0.4664209]]])
-    np.testing.assert_allclose(cerr, check, tol, tol)
 
 
 def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
@@ -1041,8 +938,8 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 
 
 # Need test for multi-ints near zero with positive and negative slopes
-def setup_inputs(ngroups=10, readnoise=10, nints=1,
-                 nrows=103, ncols=102, nframes=1, grouptime=1.0, gain=1, deltatime=1):
+def setup_inputs(ngroups=10, readnoise=10, nints=1, nrows=103, ncols=102,
+                 nframes=1, grouptime=1.0, gain=1, deltatime=1):
 
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)

@@ -9,7 +9,7 @@ import numpy as np
 
 from asdf import AsdfFile
 from astropy.io import fits
-from stdatamodels import DataModel, properties
+from stdatamodels import properties
 
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
@@ -20,7 +20,7 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 _ONE_MB = 1 << 20
-RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog']
+RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -81,14 +81,14 @@ class ModelContainer(JwstDataModel, Sequence):
     Notes
     -----
         The optional paramters ``save_open`` and ``return_open`` can be
-        provided to control how the `DataModel` are used by the
+        provided to control how the `JwstDataModel` are used by the
         :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
-        `DataModel` instance in ``init`` will be written out to disk and
-        closed, then only the filename for the `DataModel` will be used to
+        `JwstDataModel` instance in ``init`` will be written out to disk and
+        closed, then only the filename for the `JwstDataModel` will be used to
         initialize the :py:class:`ModelContainer` object.
-        Subsequent access of each member will then open the `DataModel` file to
-        work with it. If ``return_open`` is also `False`, then the `DataModel`
-        will be closed when access to the `DataModel` is completed. The use of
+        Subsequent access of each member will then open the `JwstDataModel` file to
+        work with it. If ``return_open`` is also `False`, then the `JwstDataModel`
+        will be closed when access to the `JwstDataModel` is completed. The use of
         these parameters can minimize the amount of memory used by this object
         during processing, with these parameters being used
         by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
@@ -109,13 +109,21 @@ to supply custom catalogs.
                         {
                             "expname": "input_image1_cal.fits",
                             "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog1.ecsv"
+                            "tweakreg_catalog": "custom_catalog1.ecsv",
+                            "group_id": "custom_group_id_number_1",
                         },
                         {
                             "expname": "input_image2_cal.fits",
                             "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog2.ecsv"
-                        }
+                            "tweakreg_catalog": "custom_catalog2.ecsv",
+                            "group_id": 2
+                        },
+                        {
+                            "expname": "input_image3_cal.fits",
+                            "exptype": "science",
+                            "tweakreg_catalog": "custom_catalog3.ecsv",
+                            "group_id": Null
+                        },
                     ]
                 }
             ]
@@ -123,6 +131,19 @@ to supply custom catalogs.
         .. warning::
             Input files will be updated in-place with new ``meta`` attribute
             values when ASN table's members contain additional attributes.
+
+        .. warning::
+            Custom ``group_id`` affects how models are grouped **both** for
+            ``tweakreg`` and ``skymatch`` steps. If one wants to group models
+            in one way for the ``tweakreg`` step and in a different way for the
+            ``skymatch`` step, one will need to run each step separately with
+            their own ASN tables.
+
+        .. note::
+            ``group_id`` can be an integer, a string, or Null. When ``group_id``
+            is `Null`, it is converted to `None` in Python and it will be
+            assigned a group ID based on various exposure attributes - see
+            ``models_grouped`` property for more details.
 
     """
     schema_url = None
@@ -155,7 +176,7 @@ to supply custom catalogs.
                 init.close()
             self._models.append(model)
         elif isinstance(init, list):
-            if all(isinstance(x, (str, fits.HDUList, DataModel)) for x in init):
+            if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 if self._save_open:
                     init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
@@ -177,7 +198,7 @@ to supply custom catalogs.
             init_from_asn = self.read_asn(init)
             self.from_asn(init_from_asn, asn_file_path=init)
         else:
-            raise TypeError('Input {0!r} is not a list of DataModels or '
+            raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
 
     def __len__(self):
@@ -185,7 +206,7 @@ to supply custom catalogs.
 
     def __getitem__(self, index):
         m = self._models[index]
-        if not isinstance(m, DataModel) and self._return_open:
+        if not isinstance(m, JwstDataModel) and self._return_open:
             m = datamodel_open(m, memmap=self._memmap)
         return m
 
@@ -197,7 +218,7 @@ to supply custom catalogs.
 
     def __iter__(self):
         for model in self._models:
-            if not isinstance(model, DataModel) and self._return_open:
+            if not isinstance(model, JwstDataModel) and self._return_open:
                 model = datamodel_open(model, memmap=self._memmap)
             yield model
 
@@ -227,7 +248,7 @@ to supply custom catalogs.
         result._schema = self._schema
         result._ctx = result
         for m in self._models:
-            if isinstance(m, DataModel):
+            if isinstance(m, JwstDataModel):
                 result.append(m.copy())
             else:
                 result.append(m)
@@ -402,11 +423,13 @@ to supply custom catalogs.
     def models_grouped(self):
         """
         Returns a list of a list of datamodels grouped by exposure.
-        Assign an ID grouping by exposure.
+        Assign a grouping ID by exposure, if not already assigned.
 
-        Data from different detectors of the same exposure will have the
-        same group id, which allows grouping by exposure.  The following
-        metadata is used for grouping:
+        If ``model.meta.group_id`` does not exist or it is `None`, then data
+        from different detectors of the same exposure will be assigned the
+        same group ID, which allows grouping by exposure in the ``tweakreg`` and
+        ``skymatch`` steps. The following metadata is used when
+        determining grouping:
 
         meta.observation.program_number
         meta.observation.observation_number
@@ -415,6 +438,9 @@ to supply custom catalogs.
         meta.observation.sequence_id
         meta.observation.activity_id
         meta.observation.exposure_number
+
+        If a model already has ``model.meta.group_id`` set, that value will be
+        used for grouping.
         """
         unique_exposure_parameters = [
             'program_number',
@@ -432,16 +458,29 @@ to supply custom catalogs.
             if not self._save_open:
                 model = datamodel_open(model, memmap=self._memmap)
 
-            for param in unique_exposure_parameters:
-                params.append(getattr(model.meta.observation, param))
-            try:
-                group_id = ('jw' + '_'.join([''.join(params[:3]),
-                                             ''.join(params[3:6]), params[6]]))
-                model.meta.group_id = group_id
-            except TypeError:
-                model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+            if (hasattr(model.meta, 'group_id') and
+                        model.meta.group_id not in [None, '']):
+                group_id = model.meta.group_id
 
-            group_id = model.meta.group_id
+            else:
+                for param in unique_exposure_parameters:
+                    params.append(getattr(model.meta.observation, param))
+                try:
+                    group_id = (
+                        'jw' + '_'.join(
+                            [
+                                ''.join(params[:3]),
+                                ''.join(params[3:6]),
+                                params[6],
+                            ]
+                        )
+                    )
+                    model.meta.group_id = group_id
+                except TypeError:
+                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+
+                group_id = model.meta.group_id
+
             if not self._save_open and not self._return_open:
                 model.close()
                 model = self._models[i]
@@ -456,7 +495,7 @@ to supply custom catalogs.
     @property
     def group_names(self):
         """
-        Return list of names for the DataModel groups by exposure.
+        Return list of names for the JwstDataModel groups by exposure.
         """
         result = []
         for group in self.models_grouped:
@@ -467,7 +506,7 @@ to supply custom catalogs.
         """Close all datamodels."""
         if not self._iscopy:
             for model in self._models:
-                if isinstance(model, DataModel):
+                if isinstance(model, JwstDataModel):
                     model.close()
 
     @property
@@ -503,7 +542,7 @@ to supply custom catalogs.
 
         Returns
         -------
-        stdatamodels.DataModel
+        stdatamodels.JwstDataModel
         """
         for exposure in self.meta.asn_table.products[0].members:
             if exposure.exptype.upper() == "SCIENCE":

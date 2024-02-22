@@ -25,12 +25,12 @@ The steps applied by the ``calwebb_ami3`` pipeline are shown below.
 When given an association file as input, which lists multiple science target and reference PSF
 exposures, the pipeline will:
 
- - apply the :ref:`ami_analyze <ami_analyze_step>` step to each input exposure
+#. apply the :ref:`ami_analyze <ami_analyze_step>` step to each input exposure
    independently, computing fringe parameters for each
- - apply the :ref:`ami_average <ami_average_step>` step to compute the average of the
+#. apply the :ref:`ami_average <ami_average_step>` step to compute the average of the
    :ref:`ami_analyze <ami_analyze_step>` results for all of the science target exposures,
    and the average for all of the reference PSF results (if present)
- - apply the :ref:`ami_normalize <ami_normalize_step>` step to correct the average science
+#. apply the :ref:`ami_normalize <ami_normalize_step>` step to correct the average science
    target results using the average reference PSF results (if present)
 
 If no reference PSF target exposures are present in the input ASN file, the ``ami_normalize``

@@ -12,9 +12,7 @@ the `jwst` package into a `conda` environment, and then to set correct
 environment variables for accessing reference files through CRDS. From there,
 the JWST pipeline can be :ref:`run in a Python session<run_from_python>` or with
 the :ref:`command line interface<run_from_strun>`, and
-.. comment out until stdatamodels is released
-.. ref JWST datamodels<data-models>
-JWST datamodels
+:ref:`JWST datamodels<jwst-data-models>`
 and other pipeline utilities can be imported
 and used in a Python session.
 
@@ -33,9 +31,9 @@ To create a conda environment specifically for the latest stable release of
 
 ::
 
-	conda create --name jwst_latest python=3.10
+	conda create --name jwst_latest python=3.11
 
-This will create a new, (nearly) empty Python 3.10 environment in which you can
+This will create a new, (nearly) empty Python 3.11 environment in which you can
 install the `jwst` package.
 
 **2. Install jwst from PyPi**
@@ -84,6 +82,4 @@ For information on how to run the pipeline using the command line interface, see
 :ref:`Running the JWST pipeline: Command Line Interface<run_from_strun>`.
 
 For information on how to read and write data files with JWST `datamodels`, see
-.. comment out until stdatamodels is released
-.. ref JWST datamodels<data-models>
-JWST datamodels.
+:ref:`JWST datamodels<jwst-data-models>`.

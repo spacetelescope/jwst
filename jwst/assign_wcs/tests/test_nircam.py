@@ -191,7 +191,6 @@ def traverse_wfss_trace(pupil):
     assert orderdet == orderin
 
 
-@pytest.mark.xfail(reason="Fails due to V2 NIRCam specwcs ref files delivered to CRDS")
 def test_traverse_wfss_grisms():
     """Check the dispersion polynomials for each grism."""
     for pupil in ['GRISMR', 'GRISMC']:

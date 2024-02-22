@@ -42,10 +42,7 @@ more efficient (read that: faster) processing.
 
   The generated output model will be considered to contain a default
   (or perhaps even empty) set of :ref:`metadata` based on some
-  model defined in 
-  .. comment out until stdatamodels is released
-  .. ref DataModels<datamodels>.
-  DataModels.
+  model defined in :ref:`stdatamodels<stdatamodels:data-models>`
   This metadata will be replaced
   **in-place** when running :ref:`blender_api`.
 

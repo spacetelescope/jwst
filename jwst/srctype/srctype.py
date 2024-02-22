@@ -96,17 +96,17 @@ def set_source_type(input_model, source_type=None):
             src_type = 'POINT'
             log.info(f'Input is a TSO exposure; setting SRCTYPE = {src_type}')
 
-        elif (patttype is not None) and (('NOD' in patttype) or ('POINT-SOURCE' in patttype)):
-
-            # Set all nodded exposures to POINT source type
-            src_type = 'POINT'
-            log.info(f'Exposure is nodded; setting SRCTYPE = {src_type}')
-
         elif user_type in ['POINT', 'EXTENDED']:
 
             # Use the value supplied by the user
             src_type = user_type
             log.info(f'Using input source type = {src_type}')
+
+        elif (patttype is not None) and (('NOD' in patttype) or ('POINT-SOURCE' in patttype)):
+
+            # Set all nodded exposures to POINT source type
+            src_type = 'POINT'
+            log.info(f'Exposure is nodded; setting SRCTYPE = {src_type}')
 
         else:
 

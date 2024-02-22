@@ -35,3 +35,4 @@ htmlcov
 requirements-min.txt
 .tox/
 .tmp/
+jwst/_version.py

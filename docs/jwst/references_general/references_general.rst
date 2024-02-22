@@ -94,9 +94,19 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`dq_init <dq_init_step>`                 | :ref:`MASK <mask_reffile>`                       |
 +-----------------------------------------------+--------------------------------------------------+
+| :ref:`emicorr <emicorr_step>`                 | :ref:`EMICORR <emicorr_reffile>`                 |
++-----------------------------------------------+--------------------------------------------------+
 | :ref:`extract_1d <extract_1d_step>`           | :ref:`EXTRACT1D <extract1d_reffile>`             |
 +                                               +--------------------------------------------------+
 |                                               | :ref:`APCORR <apcorr_reffile>`                   |
++                                               +--------------------------------------------------+
+|                                               | SPECKERNEL (NIRISS SOSS ATOCA only)              |
++                                               +--------------------------------------------------+
+|                                               | SPECPROFILE (NIRISS SOSS ATOCA only)             |
++                                               +--------------------------------------------------+
+|                                               | SPECTRACE (NIRISS SOSS ATOCA only)               |
++                                               +--------------------------------------------------+
+|                                               | WAVEMAP (NIRISS SOSS ATOCA only)                 |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`extract_2d <extract_2d_step>`           | :ref:`WAVECORR <wavecorr_reffile>`               |
 +                                               +--------------------------------------------------+
@@ -160,6 +170,8 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`           | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         |
 +-----------------------------------------------+--------------------------------------------------+
+| :ref:`spectral_leak <spectral_leak_step>`     | :ref:`MRSPTCORR <mrsptcorr_reffile>`             |
++-----------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`             | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`   | :ref:`TSOPHOT <tsophot_reffile>`                 |
@@ -196,6 +208,8 @@ documentation on each reference file.
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`DRIZPARS <drizpars_reffile>`               | :ref:`resample <resample_step>`               |
 +--------------------------------------------------+-----------------------------------------------+
+| :ref:`EMICORR <emicorr_reffile>`                 | :ref:`emicorr <emicorr_step>`                 |
++--------------------------------------------------+-----------------------------------------------+
 | :ref:`EXTRACT1D <extract1d_reffile>`             | :ref:`extract_1d <extract_1d_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`FFLAT <fflat_reffile>`                     | :ref:`flatfield <flatfield_step>`             |
@@ -229,6 +243,8 @@ documentation on each reference file.
 | :ref:`LINEARITY <linearity_reffile>`             | :ref:`linearity <linearity_step>`             |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MASK <mask_reffile>`                       | :ref:`dq_init <dq_init_step>`                 |
++--------------------------------------------------+-----------------------------------------------+
+| :ref:`MRSPTCORR <mrsptcorr_reffile>`             | :ref:`spectral_leak <spectral_leak_step>`     |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         | :ref:`straylight <straylight_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
@@ -450,7 +466,6 @@ S_BKDSUB    Background subtraction
 S_COMB1D    1-D spectral combination
 S_DARK      Dark subtraction
 S_DQINIT    DQ initialization
-S_ERRINI    ERR initialization
 S_EXTR1D    1-D spectral extraction
 S_EXTR2D    2-D spectral extraction
 S_FLAT      Flat field correction
@@ -466,6 +481,7 @@ S_JUMP      Jump detection
 S_KLIP      Coronagraphic PSF subtraction
 S_LASTFR    MIRI last frame correction
 S_LINEAR    Linearity correction
+S_MIREMI    MIRI EMI correction
 S_MRSMAT    MIRI MRS background matching
 S_MSAFLG    NIRSpec MSA failed shutter flagging
 S_OUTLIR    Outlier detection
@@ -602,7 +618,7 @@ Bit  Value         Name              Description
 4    16            OUTLIER           Flagged by outlier detection
 5    32            PERSISTENCE       High persistence
 6    64            AD_FLOOR          Below A/D floor
-7    128           RESERVED
+7    128           CHARGELOSS        Charge Migration
 8    256           UNRELIABLE_ERROR  Uncertainty exceeds quoted error
 9    512           NON_SCIENCE       Pixel not on science portion of detector
 10   1024          DEAD              Dead pixel
@@ -623,7 +639,7 @@ Bit  Value         Name              Description
 25   33554432      UNRELIABLE_FLAT   Flat variance large
 26   67108864      OPEN              Open pixel (counts move to adjacent pixels)
 27   134217728     ADJ_OPEN          Adjacent to open pixel
-28   268435456     UNRELIABLE_RESET  Sensitive to reset anomaly
+28   268435456     FLUX_ESTIMATED    Pixel flux estimated due to missing/bad data
 29   536870912     MSA_FAILED_OPEN   Pixel sees light from failed-open shutter
 30   1073741824    OTHER_BAD_PIXEL   A catch-all flag
 31   2147483648    REFERENCE_PIXEL   Pixel is a reference pixel
@@ -659,18 +675,18 @@ For example, all the following specifications are equivalent:
 `"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"`
 
 .. note::
-   - The default value (0) will make *all* non-zero
-     pixels in the DQ mask be considered "bad" pixels and the
-     corresponding pixels will not be used in computations.
+ The default value (0) will make *all* non-zero
+ pixels in the DQ mask be considered "bad" pixels and the
+ corresponding pixels will not be used in computations.
 
-   - Setting to `None` will turn off the use of the DQ array
-     for computations.
+ Setting to `None` will turn off the use of the DQ array
+ for computations.
 
-   - In order to reverse the meaning of the flags
-     from indicating values of the "good" DQ flags
-     to indicating the "bad" DQ flags, prepend '~' to the string
-     value. For example, in order to exclude pixels with
-     DQ flags 4 and 8 for computations and to consider
-     as "good" all other pixels (regardless of their DQ flag),
-     use a value of ``~4+8``, or ``~4,8``. A string value of
-     ``~0`` would be equivalent to a setting of ``None``.
+ In order to reverse the meaning of the flags
+ from indicating values of the "good" DQ flags
+ to indicating the "bad" DQ flags, prepend '~' to the string
+ value. For example, in order to exclude pixels with
+ DQ flags 4 and 8 for computations and to consider
+ as "good" all other pixels (regardless of their DQ flag),
+ use a value of ``~4+8``, or ``~4,8``. A string value of
+ ``~0`` would be equivalent to a setting of ``None``.

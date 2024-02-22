@@ -9,6 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
 
 from jwst.photom import photom
+from jwst.lib.dispaxis import get_dispersion_direction
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
 
@@ -163,7 +164,7 @@ def create_input(instrument, detector, exptype,
 
     Returns
     -------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         An open data model object of the appropriate type.
     """
 
@@ -340,6 +341,7 @@ def create_input(instrument, detector, exptype,
             input_model.var_flat = np.ones(shape, dtype=np.float32)
             input_model.meta.subarray.name = 'SUB256'       # matches 'GENERIC'
             input_model.meta.target.source_type = 'POINT'
+            input_model.meta.exposure.mid_time = 60000.0  # Added for new PHOTOM step
             input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
             input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'FGS':
@@ -397,7 +399,7 @@ def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec fixed-slit photom reference file.
     """
 
@@ -469,7 +471,7 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec MSA photom reference file.
     """
 
@@ -527,7 +529,7 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS WFSS photom reference file.
     """
 
@@ -583,7 +585,7 @@ def create_photom_niriss_soss(min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS SOSS photom reference file.
     """
 
@@ -637,7 +639,7 @@ def create_photom_niriss_image(min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS image photom reference file.
     """
 
@@ -681,7 +683,7 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI MRS photom reference file.
     """
 
@@ -716,7 +718,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI LRS photom reference file.
     """
 
@@ -775,12 +777,12 @@ def create_photom_miri_image(min_wl=16.5, max_wl=19.5,
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI image photom reference file.
     """
 
     filter = ["F1800W", "F2100W", "F2550W"]
-    subarray = ["GENERIC", "GENERIC", "GENERIC"]
+    subarray = ["SUB256", "SUB256", "SUB256"]
 
     nrows = len(filter)
 
@@ -794,7 +796,15 @@ def create_photom_miri_image(min_wl=16.5, max_wl=19.5,
                       ('uncertainty', '<f4')])
     reftab = np.array(list(zip(filter, subarray, photmjsr, uncertainty)),
                       dtype=dtype)
-    ftab = datamodels.MirImgPhotomModel(phot_table=reftab)
+    timecoeff_amp = np.linspace(2.1, 2.1 + (nrows - 1.) * 0.1, nrows)
+    timecoeff_tau = np.asarray([145, 145, 145])
+    timecoeff_t0 = np.asarray([59720, 59720, 59720])
+    dtypec = np.dtype([('amplitude', '<f4'),
+                      ('tau', '<f4'),
+                      ('t0', '<f4')])
+    reftabc = np.array(list(zip(timecoeff_amp, timecoeff_tau, timecoeff_t0)),
+                       dtype=dtypec)
+    ftab = datamodels.MirImgPhotomModel(phot_table=reftab, timecoeff=reftabc)
 
     return ftab
 
@@ -812,7 +822,7 @@ def create_photom_nircam_image(min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRCam image photom reference file.
     """
 
@@ -856,7 +866,7 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRCam WFSS photom reference file.
     """
 
@@ -907,7 +917,7 @@ def create_photom_fgs_image(value):
 
     Returns
     -------
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec fixed-slit photom reference file.
     """
 
@@ -939,7 +949,7 @@ def create_pixel_area_ref(shape, area_ster, area_a2):
 
     Returns
     -------
-    area_ref : `~jwst.datamodels.DataModel`
+    area_ref : `~jwst.datamodels.JwstDataModel`
         An open data model for a pixel area reference file.
     """
 
@@ -970,7 +980,7 @@ def create_msa_pixel_area_ref(quadrant, shutter_x, shutter_y, pixarea):
 
     Returns
     -------
-    area_ref : `~jwst.datamodels.DataModel`
+    area_ref : `~jwst.datamodels.JwstDataModel`
         An open data model for a pixel area reference file.
     """
 
@@ -990,10 +1000,10 @@ def find_row_in_ftab(input_model, ftab, select, slitname=None, order=None):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         input Data Model object
 
-    ftab : `~jwst.datamodels.DataModel`
+    ftab : `~jwst.datamodels.JwstDataModel`
         This has a `phot_table` attribute, which is a table containing
         photometric information.  This can be any of several data models
         functionally equivalent to _photom_xxxx.fits files in CRDS.
@@ -1130,7 +1140,7 @@ def test_nirspec_fs():
             result.append(ds.input.slits[k].meta.bunit_data == 'MJy/sr')
             result.append(ds.input.slits[k].meta.bunit_err == 'MJy/sr')
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
     ftab.close()
 
@@ -1191,7 +1201,7 @@ def test_nirspec_bright():
     result.append(ds.input.meta.bunit_data == 'MJy')
     result.append(ds.input.meta.bunit_err == 'MJy')
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_nirspec_msa():
@@ -1231,7 +1241,7 @@ def test_nirspec_msa():
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 """ Skip this test because it would require a realistic wcs.
@@ -1276,7 +1286,7 @@ def test_niriss_wfss():
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_niriss_soss():
@@ -1332,6 +1342,21 @@ def test_niriss_image():
     assert np.allclose(ratio, compare, rtol=1.e-7)
 
 
+def test_expected_failure_niriss_cubemodel():
+    """
+    Test that passing a CubeModel to calc_niriss raises an exception
+    This occurs when extract_1d step is skipped, e.g. for NIRISS SOSS data
+    in FULL subarray.
+    """
+
+    input_model = create_input('NIRISS', 'NIS', 'NIS_SOSS',
+                               filter='CLEAR', pupil='GR700XD')
+    ds = photom.DataSet(input_model)
+    ds.input = datamodels.CubeModel()
+    with pytest.raises(photom.DataModelTypeError):
+        ds.calc_niriss(None)
+
+
 def test_miri_mrs():
     """Test calc_miri, MRS data"""
 
@@ -1364,7 +1389,7 @@ def test_miri_mrs():
     compare = value
     ratio = output[iy, ix] / input[iy, ix]
     result.append(math.isclose(ratio, compare, rel_tol=1.e-7))
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_miri_lrs():
@@ -1415,10 +1440,13 @@ def test_miri_image():
     rownum = find_row_in_ftab(save_input, ftab, ['filter'],
                               slitname=None, order=None)
     photmjsr = ftab.phot_table['photmjsr'][rownum]
+    amplitude = ftab.timecoeff['amplitude'][rownum]
+    tau = ftab.timecoeff['tau'][rownum]
+    t0 = ftab.timecoeff['t0'][rownum]
     shape = input.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
-    compare = photmjsr
+    compare = photmjsr + amplitude * np.exp(-(60000 - t0) / tau)  # Added for new PHOTOM step
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
     assert np.allclose(ratio, compare, rtol=1.e-7)
@@ -1476,9 +1504,14 @@ def test_nircam_spec():
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
+        # Incude the dispersion in the correction, as per JP-3238
+        dispaxis = get_dispersion_direction(ds.exptype, ds.grating, ds.filter, ds.pupil)
+        dispersion_array = ds.get_dispersion_array(slit.wavelength, dispaxis)
+        # Convert dispersion in micron/pixel to Angstrom/pixel
+        disp = dispersion_array[iy, ix] * 10000.0
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        compare = photmjsr * rel_resp
+        compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         assert np.allclose(ratio, compare, rtol=1.e-7)
@@ -1623,7 +1656,7 @@ def test_apply_photom_2(srctype):
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
-    assert np.alltrue(result)
+    assert np.all(result)
 
 
 def test_find_row():

@@ -142,6 +142,7 @@ def create_nirspec_fs_file(grating, filter, lamp="N/A"):
     image[0].header['GWA_XTIL'] = 0.3316612243652344
     image[0].header['GWA_YTIL'] = 0.1260581910610199
     image[0].header['SUBARRAY'] = "FULL"
+    image[0].header['FXD_SLIT'] = "S200A1"
     return image
 
 
@@ -166,17 +167,17 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
-    ref = fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits'))
+    with fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits')) as ref:
+        # Test NRS1
+        pyw = astwcs.WCS(ref['SLITY1'].header)
+        # Test evaluating the WCS (slice 0)
+        im, refs = wcs_ifu_grating("G140M", "OPAQUE")
+        w0 = nirspec.nrs_wcs_set_input(im, 0)
 
-    # Test NRS1
-    pyw = astwcs.WCS(ref['SLITY1'].header)
-    # Test evaluating the WCS (slice 0)
-    im, refs = wcs_ifu_grating("G140M", "OPAQUE")
-    w0 = nirspec.nrs_wcs_set_input(im, 0)
+        # get positions within the slit and the corresponding lambda
+        slit1 = ref['SLITY1'].data  # y offset on the slit
+        lam = ref['LAMBDA1'].data
 
-    # get positions within the slit and the corresponding lambda
-    slit1 = ref['SLITY1'].data  # y offset on the slit
-    lam = ref['LAMBDA1'].data
     # filter out locations outside the slit
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()  # 0-based
@@ -280,7 +281,7 @@ def test_msa_configuration_normal():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
                              0.13, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -309,7 +310,7 @@ def test_msa_configuration_all_background():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -1.7, 1.7, 4, 0, '1x1', 'background_57', 'bkg_57',
+    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 0, '1x1', 'background_57', 'bkg_57',
                              0, -0.5, -0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -325,7 +326,7 @@ def test_msa_configuration_row_skipped():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+    ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
                              0.130, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -340,9 +341,9 @@ def test_msa_configuration_multiple_returns():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+    ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
                               0.13000000000000003, -0.31716078999999997, -0.18092266)
-    ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
+    ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -3.3, 4.45, 4, 2, '11x111', '95065_2', '172',
                               0.70000000000000007, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)

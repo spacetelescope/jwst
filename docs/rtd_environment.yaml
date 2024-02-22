@@ -1,0 +1,9 @@
+name: rtd311
+channels:
+ - conda-forge
+ - defaults
+dependencies:
+ - python=3.11
+ - pip
+ - graphviz
+ - sphinx_rtd_theme>1.2.0

@@ -1,6 +1,6 @@
 from collections.abc import MutableMapping
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import jsonschema
 import logging
@@ -389,10 +389,10 @@ class Association(MutableMapping):
                 - [ProcessItem[, ...]]: List of items to process again.
 
         """
-        cached_constraints = deepcopy(self.constraints)
-        match, reprocess = cached_constraints.check_and_set(item)
-        if match:
-            self.constraints = cached_constraints
+        self.constraints.preserve()
+        match, reprocess = self.constraints.check_and_set(item)
+        if not match:
+            self.constraints.restore()
 
         # Set the association type for all reprocessed items.
         for process_list in reprocess:
@@ -564,7 +564,7 @@ def finalize(asns):
 
 
 def make_timestamp():
-    timestamp = datetime.utcnow().strftime(
+    timestamp = datetime.now(timezone.utc).strftime(
         _TIMESTAMP_TEMPLATE
     )
     return timestamp

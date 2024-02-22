@@ -36,7 +36,7 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
 
     Returns
     -------
-    output_model, corrections : `~jwst.datamodels.MultiSlitModel`, jwst.datamodels.DataModel
+    output_model, corrections : `~jwst.datamodels.MultiSlitModel`, jwst.datamodels.JwstDataModel
         Science data model with correction applied and barshadow extensions added,
         and a model of the correction arrays.
     """

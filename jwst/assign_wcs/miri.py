@@ -10,11 +10,10 @@ from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
 
-from stdatamodels import s3_utils
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
                                           RegionsModel, SpecwcsModel)
-from stdatamodels.jwst.transforms import models as jwmodels
+from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, IdealToV2V3)
 
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform,
@@ -236,15 +235,8 @@ def lrs_distortion(input_model, reference_files):
     else:
         subarray_dist = distortion
 
-    # Read in the reference table data and get the zero point (SIAF reference point)
-    # of the LRS in the subarray ref frame
-    # We'd like to open this file as a DataModel, so we can consolidate
-    # the S3 URI handling to one place.  The S3-related code here can
-    # be removed once that has been changed.
-    if s3_utils.is_s3_uri(reference_files['specwcs']):
-        ref = fits.open(s3_utils.get_object(reference_files['specwcs']))
-    else:
-        ref = fits.open(reference_files['specwcs'])
+    ref = fits.open(reference_files['specwcs'])
+
     with ref:
         lrsdata = np.array([d for d in ref[1].data])
         # Get the zero point from the reference data.
@@ -495,7 +487,7 @@ def detector_to_abl(input_model, reference_files):
     ch_dict = {}
     for c in channel:
         cb = c + band
-        mapper = jwmodels.MIRI_AB2Slice(bzero[cb], bdel[cb], c)
+        mapper = MIRI_AB2Slice(bzero[cb], bdel[cb], c)
         lm = selector.LabelMapper(inputs=('alpha', 'beta', 'lam'),
                                   mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
         ch_dict[tuple(wr[cb])] = lm
@@ -590,7 +582,7 @@ def get_wavelength_range(input_model, path=None):
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.ImagingModel`
+    input_model : `jwst.datamodels.ImageModel`
         Data model after assign_wcs has been run.
     path : str
         Directory where the reference file is. (optional)
@@ -611,3 +603,29 @@ def get_wavelength_range(input_model, path=None):
     band = input_model.meta.instrument.band
 
     return dict([(ch + band, wr[ch + band]) for ch in channel])
+
+
+def store_dithered_position(input_model):
+    """Store the location of the dithered pointing
+    location in the dither metadata
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImageModel`
+        Data model containing dither offset information
+    """
+    # V2_ref and v3_ref should be in arcsec
+    idltov23 = IdealToV2V3(
+        input_model.meta.wcsinfo.v3yangle,
+        input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
+        input_model.meta.wcsinfo.vparity
+    )
+
+    dithered_v2, dithered_v3 = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
+
+    v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
+    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
+    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
+
+    input_model.meta.dither.dithered_ra = dithered_ra
+    input_model.meta.dither.dithered_dec = dithered_dec

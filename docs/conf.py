@@ -15,18 +15,47 @@ import datetime
 import importlib
 import sys
 import os
+from pathlib import Path
+
+if sys.version_info < (3, 11):
+     import tomli as tomllib
+else:
+     import tomllib
 from packaging.version import Version
 from configparser import ConfigParser
 
 import sphinx
-import stsci_rtd_theme
+
+from stpipe import Step
+from sphinx.ext.autodoc import AttributeDocumenter
+
+
+class StepSpecDocumenter(AttributeDocumenter):
+    def should_suppress_value_header(self):
+        if self.name == "spec" and issubclass(self.parent, Step):
+            # if this attribute is named "spec" and belongs to a "Step"
+            # don't show the value, it will be formatted in add_context below
+            return True
+        return super().should_suppress_value_header()
+
+    def add_content(self, more_content):
+        super().add_content(more_content)
+        if self.name != "spec" or not issubclass(self.parent, Step):
+            return
+        if not self.object.strip():
+            return
+
+        # format the long "Step.spec" string to improve readability
+        source_name = self.get_sourcename()
+        self.add_line("::", source_name, 0)
+        self.add_line("  ", source_name, 1)
+        txt = "\n".join((l.strip() for l in self.object.strip().splitlines()))
+        self.add_line(f"  {txt}", source_name, 2)
 
 
 def setup(app):
-    try:
-        app.add_css_file("stsci.css")
-    except AttributeError:
-        app.add_stylesheet("stsci.css")
+    # add a custom AttributeDocumenter subclass to handle Step.spec formatting
+    app.add_autodocumenter(StepSpecDocumenter, True)
 
 
 conf = ConfigParser()
@@ -39,9 +68,8 @@ sys.path.insert(0, os.path.abspath('jwst/'))
 sys.path.insert(0, os.path.abspath('exts/'))
 
 # -- General configuration ------------------------------------------------
-conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
-setup_cfg = dict(conf.items('metadata'))
-
+with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
+    metadata = tomllib.load(metadata_file)['project']
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.3'
 
@@ -65,6 +93,8 @@ intersphinx_mapping = {
     'scipy': ('http://scipy.github.io/devdocs', None),
     'matplotlib': ('http://matplotlib.org/', None),
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
+    'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
+    'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
 }
 
 if sys.version_info[0] == 2:
@@ -96,7 +126,6 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
-    'sphinx_asdf',
 ]
 
 
@@ -131,16 +160,16 @@ suppress_warnings = ['app.add_directive', ]
 
 
 # General information about the project
-project = setup_cfg['name']
-author = setup_cfg['author']
-copyright = '{0}, {1}'.format(datetime.datetime.now().year, author)
+project = metadata['name']
+author = metadata["authors"][0]["name"]
+copyright = f'{datetime.datetime.today().year}, {author}'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-package = importlib.import_module(setup_cfg['name'])
+package = importlib.import_module(metadata['name'])
 try:
     version = package.__version__.split('-', 1)[0]
     # The full version, including alpha/beta/rc tags.
@@ -227,13 +256,14 @@ asdf_schema_reference_mappings = [
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'stsci_rtd_theme'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "collapse_navigation": True
+    "collapse_navigation": True,
+    "sticky_navigation": False,
     # "nosidebar": "false",
     # "sidebarbgcolor": "#4db8ff",
     # "sidebartextcolor": "black",
@@ -241,8 +271,10 @@ html_theme_options = {
     # "headbgcolor": "white",
 }
 
+html_logo = '_static/stsci_pri_combo_mark_white.png'
+
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [stsci_rtd_theme.get_html_theme_path()]
+#html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

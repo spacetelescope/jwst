@@ -7,7 +7,7 @@ import pytest
 from jwst.lib import siafdb
 
 pytest.importorskip('pysiaf')
-import pysiaf  # noqa: 402
+import pysiaf  # noqa: E402
 
 # Database paths
 DATA_PATH = Path(__file__).parent / 'data'

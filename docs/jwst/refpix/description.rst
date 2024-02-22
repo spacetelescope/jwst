@@ -136,6 +136,14 @@ the reference pixels in each group and subtracted from each pixel.
   are populated when the ``dq_init`` step is run, so it is important to run that
   step before running the ``refpix`` step on subarray data.
 
+  Additionally, certain NIRSpec subarrays (SUB32, SUB512 and SUB512S) do not include
+  any physical reference pixels in their readouts.
+  For these subarrays, the first and last four image columns should not receive
+  any incoming light with the filter+grating combinations for which they are
+  approved for use, hence they can be used in place of actual reference pixels.
+  The step assigns the "REFERENCE_PIXEL" DQ flag to these image columns,
+  which then causes them to be used to perform the reference pixel correction.
+
 If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
@@ -186,6 +194,24 @@ read at the same time.  Each of these five readouts is the same size,
 640 by 2048 pixels (for IRS2).  If the CRDS reference file includes a
 DQ (data quality) BINTABLE extension, interleaved reference pixel values
 will be set to zero if they are flagged as bad in the DQ extension.
+
+At this point the algorithm looks for intermittently bad (or suspicious)
+reference pixels. This is done by calculating the means and standard
+deviations per reference pixel column, as well as the absolute value of the
+difference between readout pairs, across all groups within each integration.
+The robust mean and standard deviation of each of these arrays is then
+computed. Values greater than the robust mean plus the standard
+deviation, times a factor to avoid overcorrection, are flagged as bad
+pixels.  Readout pairs are always flagged together, and are flagged across
+all groups and integrations. Bad values are replaced by values from the
+nearest reference group within the same amplifier, respecting parity
+(even/oddness).  The replacement value is the average of upper and lower
+values if both are good, or directly using the upper or lower values if only
+one is good. If there are no nearest good values available, but there is a
+good adjacent neighbor that does not match parity, that value is used.  If
+there are no good replacement values, the bad pixel is set to 0.0 to be
+interpolated over in the IRS2 correction to follow.
+
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary
 1-D arrays (both of length 712 * 2048); this is done separately for each

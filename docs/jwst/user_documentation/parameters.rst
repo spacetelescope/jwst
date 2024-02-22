@@ -53,11 +53,11 @@ output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
 individual steps, you have two options:
 
-  - Specify ``save_results``.
+#.  Specify ``save_results``.
     This option will save the results of the step, using a filename
     created by the step.
 
-  - Specify a file name using ``output_file <basename>``.
+#.  Specify a file name using ``output_file <basename>``.
     This option will save the step results using the name specified.
 
 To do this using the Python pipeline interface, see .. _python_output_file:. To do

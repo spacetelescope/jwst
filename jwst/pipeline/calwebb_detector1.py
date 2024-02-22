@@ -8,6 +8,7 @@ from ..stpipe import Pipeline
 # step imports
 from ..group_scale import group_scale_step
 from ..dq_init import dq_init_step
+from ..emicorr import emicorr_step
 from ..saturation import saturation_step
 from ..ipc import ipc_step
 from ..superbias import superbias_step
@@ -19,8 +20,8 @@ from ..linearity import linearity_step
 from ..dark_current import dark_current_step
 from ..reset import reset_step
 from ..persistence import persistence_step
+from ..charge_migration import charge_migration_step
 from ..jump import jump_step
-from ..undersampling_correction import  undersampling_correction_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
@@ -49,6 +50,7 @@ class Detector1Pipeline(Pipeline):
     # Define aliases to steps
     step_defs = {'group_scale': group_scale_step.GroupScaleStep,
                  'dq_init': dq_init_step.DQInitStep,
+                 'emicorr': emicorr_step.EmiCorrStep,
                  'saturation': saturation_step.SaturationStep,
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
@@ -60,8 +62,8 @@ class Detector1Pipeline(Pipeline):
                  'dark_current': dark_current_step.DarkCurrentStep,
                  'reset': reset_step.ResetStep,
                  'persistence': persistence_step.PersistenceStep,
+                 'charge_migration': charge_migration_step.ChargeMigrationStep,
                  'jump': jump_step.JumpStep,
-                 'undersampling_correction': undersampling_correction_step.UndersamplingCorrectionStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
                  'gain_scale': gain_scale_step.GainScaleStep,
                  }
@@ -87,6 +89,7 @@ class Detector1Pipeline(Pipeline):
 
             input = self.group_scale(input)
             input = self.dq_init(input)
+            input = self.emicorr(input)
             input = self.saturation(input)
             input = self.ipc(input)
             input = self.firstframe(input)
@@ -119,11 +122,11 @@ class Detector1Pipeline(Pipeline):
 
             input = self.dark_current(input)
 
+        # apply the charge_migration step
+        input = self.charge_migration(input)
+
         # apply the jump step
         input = self.jump(input)
-
-        # apply the undersampling_correction step
-        input = self.undersampling_correction(input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:

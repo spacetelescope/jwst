@@ -38,8 +38,14 @@ shell.
 
 .. warning::
 
-    Users on MacOS Mojave (10.14) should limit their environment python to 3.9 -
-    there is a package dependency which currently fails to build on Mojave with
+    The jwst package requires a C compiler for dependencies and is currently
+    limited to Python 3.9, 3.10, or 3.11. Until Python 3.12 is supported, fresh
+    conda environments will require setting the Python version to <=3.11.
+
+.. warning::
+
+    Users on MacOS Mojave (10.14) should limit their environment to python 3.9 -
+    there is a package dependency that currently fails to build on Mojave with
     python>=3.10.
 
 Installing Latest Release
@@ -47,7 +53,7 @@ Installing Latest Release
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    | >> conda create -n <env_name> python
+    | >> conda create -n <env_name> python=3.11
     | >> conda activate <env_name>
     | >> pip install jwst
 
@@ -58,16 +64,9 @@ Installing Previous Releases
 
 You can also install a specific version (from `jwst 0.17.0` onward):
 
-    | >> conda create -n <env_name> python
+    | >> conda create -n <env_name> python=3.11
     | >> conda activate <env_name>
-    | >> pip install jwst==1.3.3
-
-Installing specific versions before `jwst 0.17.0` need to be installed from Github:
-
-    | >> conda create -n <env_name> python
-    | >> conda activate <env_name>
-    | >> pip install git+https://github.com/spacetelescope/jwst@0.16.2
-
+    | >> pip install jwst==1.12.5
 
 .. _installing_dev:
 
@@ -77,7 +76,7 @@ Installing the Development Version from Github
 You can install the latest development version (not as well tested) from the
 Github master branch:
 
-    | >> conda create -n <env_name> python
+    | >> conda create -n <env_name> python=3.11
     | >> conda activate <env_name>
     | >> pip install git+https://github.com/spacetelescope/jwst
 

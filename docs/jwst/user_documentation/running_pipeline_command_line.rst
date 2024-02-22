@@ -109,22 +109,22 @@ section.
 **Using Command Line Arguments**
 
 When running a pipeline, step-level parameters can be changed by passing in a command
-line argument to that step. For example, to change the ``threshold`` parameter of
+line argument to that step. For example, to change the ``rejection_threshold`` parameter of
 the jump detection step when running the full Detector1Pipeline:
 
 ::
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-        --steps.jump.threshold=12.0
+        --steps.jump.rejection_threshold=12.0
 
 
 When running a standalone step, command line arguments do not need to be nested within
-``steps``. For example, to change the parameter ``threshold`` for the jump detection
+``steps``. For example, to change the parameter ``rejection_threshold`` for the jump detection
 step when running the step individually:
 
 ::
 
-    $ strun jump jw00017001001_01101_00001_nrca1_uncal.fits --threshold=12.0
+    $ strun jump jw00017001001_01101_00001_nrca1_uncal.fits --rejection_threshold=12.0
 
 
 **Using a Parameter File**
@@ -139,7 +139,7 @@ file to add the following snippet (in this example, to a file named
   - class: jwst.jump.jump_step.JumpStep
     name: jump
     parameters:
-      threshold : 12
+      rejection_threshold : 12
 
 And pass in the modified file to ``strun``:
 

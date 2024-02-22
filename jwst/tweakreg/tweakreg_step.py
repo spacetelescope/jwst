@@ -19,7 +19,7 @@ from jwst.datamodels import ModelContainer
 
 # LOCAL
 from ..stpipe import Step
-from ..assign_wcs.util import update_fits_wcsinfo
+from ..assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from . import astrometric_utils as amutils
 from . tweakreg_catalog import make_tweakreg_catalog
 
@@ -37,7 +37,7 @@ def _oxford_or_str_join(str_list):
         return ', '.join(map(repr, str_list[:-1])) + ', or ' + repr(str_list[-1])
 
 
-SINGLE_GROUP_REFCAT = ['GAIADR2', 'GAIADR1']
+SINGLE_GROUP_REFCAT = ['GAIADR3', 'GAIADR2', 'GAIADR1']
 _SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
 
 __all__ = ['TweakRegStep']
@@ -56,21 +56,35 @@ class TweakRegStep(Step):
         use_custom_catalogs = boolean(default=False) # Use custom user-provided catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         catfile = string(default='') # Name of the file with a list of custom user-provided catalogs
+        starfinder = option('dao', 'iraf', 'segmentation', default='dao') # Star finder to use.
+        snr_threshold = float(default=10.0) # SNR threshold above the bkg for star finder
+        # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
-        snr_threshold = float(default=10.0) # SNR threshold above the bkg
+        minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM
+        sigma_radius = float(default=1.5) # Truncation radius of the Gaussian kernel in units of sigma
         sharplo = float(default=0.2) # The lower bound on sharpness for object detection.
         sharphi = float(default=1.0) # The upper bound on sharpness for object detection.
         roundlo = float(default=-1.0) # The lower bound on roundness for object detection.
         roundhi = float(default=1.0) # The upper bound on roundness for object detection.
         brightest = integer(default=200) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
+        # kwargs for SourceCatalog and SourceFinder, only used if starfinder is 'segmentation'
+        npixels = integer(default=10) # Minimum number of connected pixels
+        connectivity = option(4, 8, default=8) # The connectivity defining the neighborhood of a pixel
+        nlevels = integer(default=32) # Number of multi-thresholding levels for deblending
+        contrast = float(default=0.001) # Fraction of total source flux an object must have to be deblended
+        multithresh_mode = option('exponential', 'linear', 'sinh', default='exponential') # Multi-thresholding mode
+        localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
+        apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
+        kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
+        # continue args for rest of step
         bkg_boxsize = integer(default=400) # The background mesh box size in pixels.
         enforce_user_order = boolean(default=False) # Align images in user specified order?
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
         searchrad = float(default=2.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
-        separation = float(default=1.0) # Minimum object separation in arcsec
+        separation = float(default=1.0) # Minimum object separation for xyxymatch in arcsec
         tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec
         xoffset = float(default=0.0), # Initial guess for X offset in arcsec
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
@@ -124,7 +138,7 @@ class TweakRegStep(Step):
                         elif 'tweakreg_catalog' in member:
                             del member['tweakreg_catalog']
 
-                    images.from_asn(input)
+                    images.from_asn(asn_data)
 
                 elif is_association(input):
                     images.from_asn(input)
@@ -170,12 +184,32 @@ class TweakRegStep(Step):
 
             else:
                 # source finding
+                starfinder_kwargs = {
+                    'fwhm': self.kernel_fwhm,
+                    'sigma_radius': self.sigma_radius,
+                    'minsep_fwhm': self.minsep_fwhm,
+                    'sharplo': self.sharplo,
+                    'sharphi': self.sharphi,
+                    'roundlo': self.roundlo,
+                    'roundhi': self.roundhi,
+                    'peakmax': self.peakmax,
+                    'brightest': self.brightest,
+                    'npixels': self.npixels,
+                    'connectivity': self.connectivity,
+                    'nlevels': self.nlevels,
+                    'contrast': self.contrast,
+                    'mode': self.multithresh_mode,
+                    'error': image_model.err,
+                    'localbkg_width': self.localbkg_width,
+                    'apermask_method': self.apermask_method,
+                    'kron_params': self.kron_params,
+                }
+
                 catalog = make_tweakreg_catalog(
-                    image_model, self.kernel_fwhm, self.snr_threshold,
-                    sharplo=self.sharplo, sharphi=self.sharphi,
-                    roundlo=self.roundlo, roundhi=self.roundhi,
-                    brightest=self.brightest, peakmax=self.peakmax,
-                    bkg_boxsize=self.bkg_boxsize
+                    image_model, self.snr_threshold,
+                    starfinder=self.starfinder,
+                    bkg_boxsize=self.bkg_boxsize,
+                    starfinder_kwargs=starfinder_kwargs,
                 )
                 new_cat = True
 
@@ -276,11 +310,12 @@ class TweakRegStep(Step):
         elif len(grp_img) > 1:
             # create a list of WCS-Catalog-Images Info and/or their Groups:
             imcats = []
+            all_group_names = []
             for g in grp_img:
                 if len(g) == 0:
                     raise AssertionError("Logical error in the pipeline code.")
                 else:
-                    group_name = _common_name(g)
+                    group_name = _common_name(g, all_group_names)
                     wcsimlist = list(map(self._imodel2wcsim, g))
                     # Remove the attached catalogs
                     for model in g:
@@ -472,6 +507,7 @@ class TweakRegStep(Step):
                     imcat.wcs.name = "FIT-LVL3-{}".format(self.abs_refcat)
 
                 image_model.meta.wcs = imcat.wcs
+                update_s_region_imaging(image_model)
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
@@ -541,13 +577,31 @@ class TweakRegStep(Step):
         return im
 
 
-def _common_name(group):
+def _common_name(group, all_group_names=None):
     file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
                   for im in group]
-    fname_len = list(map(len, file_names))
-    assert all(fname_len[0] == length for length in fname_len)
+
     cn = path.commonprefix(file_names)
-    assert cn
+
+    if all_group_names is None:
+        if not cn:
+            return 'Unnamed Group'
+    else:
+        if not cn or cn in all_group_names:
+            # find the smallest group number to make "Group #..." unique
+            max_id = 1
+            if not cn:
+                cn = "Group #"
+            for name in all_group_names:
+                try:
+                    cid = int(name.lstrip(cn))
+                    if cid >= max_id:
+                        max_id = cid + 1
+                except ValueError:
+                    pass
+            cn = f"{cn}{max_id}"
+        all_group_names.append(cn)
+
     return cn
 
 

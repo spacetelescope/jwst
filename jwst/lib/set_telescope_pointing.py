@@ -53,6 +53,7 @@ of transformations, the DCM for the reference point of the target aperture
 is calculated.
 
 """
+import functools
 import sys
 
 import asdf
@@ -64,6 +65,8 @@ import logging
 from math import (cos, sin, sqrt)
 import typing
 
+from astropy import units as U
+from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 from scipy.interpolate import interp1d
@@ -130,6 +133,51 @@ TRACK_TR_202111_MNEMONICS = {
     **COURSE_TR_202111_MNEMONICS,
     'SA_ZFGGSPOSX': False,
     'SA_ZFGGSPOSY': False,
+}
+
+FGS_ACQ_EXP_TYPES = ['fgs_acq1', 'fgs_acq2']
+FGS_ACQ_MNEMONICS = {
+    'IFGS_ACQ_DETXCOR': True,
+    'IFGS_ACQ_DETYCOR': True,
+    'IFGS_ACQ_DETXSIZ': True,
+    'IFGS_ACQ_DETYSIZ': True,
+    'IFGS_ACQ_XPOSG': True,
+    'IFGS_ACQ_YPOSG': True,
+}
+
+FGS_GUIDED_EXP_TYPES = ['fgs_fineguide', 'fgs_track']
+FGS_GUIDED_MNEMONICS = {
+    'IFGS_TFGGS_X',
+    'IFGS_TFGGS_Y',
+    'IFGS_TFGDET_XCOR',
+    'IFGS_TFGDET_YCOR',
+    'IFGS_TFGDET_XSIZ',
+    'IFGS_TFGDET_YSIZ',
+}
+
+FGS_ID_EXP_TYPES = ['fgs_id-image', 'fgs_id-stack']
+FGS_ID_MNEMONICS = {
+    'IFGS_ID_XPOSG',
+    'IFGS_ID_YPOSG',
+    'IFGS_ID_DETXCOR',
+    'IFGS_ID_DETYCOR',
+    'IFGS_ID_DETXSIZ',
+    'IFGS_ID_DETYSIZ',
+}
+
+# FGS ACQ1/ACQ2 modes, a dedicated range of mmenonics need to be present.
+# These define those ranges. Key is the ACQ exposure type.
+FGS_ACQ_MINVALUES = {
+    'fgs_acq1': 1,
+    'fgs_acq2': 4
+}
+FGS_ACQ_SLICES = {
+    'fgs_acq1': slice(0, 3),
+    'fgs_acq2': slice(3, 8)
+}
+FGS_ACQ_WINDOW_INDEX = {
+    'fgs_acq1': 0,
+    'fgs_acq2': -1
 }
 
 
@@ -237,8 +285,25 @@ R2A = 3600. * R2D
 PI2 = np.pi * 2.
 
 # Pointing container
+# Attributes are as follows. Except for the observation time, all values
+# are retrieved from the engineering data.
+#    q            : Quaternion of the FGS.
+#    j2fgs_matrix : J-frame to FGS transformation.
+#    fsmcorr      : Fine Steering Mirror position.
+#    obstime      : Mid-point time of the observation at which all other values have been calculated.
+#    gs_commanded : Guide star position as originally commanded.
+#    fgsid        : FGS in use, 1 or 2.
+#    gs_position  : X/Y guide star position in the FGS.
 Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid', 'gs_position'])
 Pointing.__new__.__defaults__ = ((None,) * 5)
+
+# Guide Star ACQ pointing container
+# Attributes are as follows. All values are retrieved from the engineering.
+#    position : X/Y position of the guide star within the acquisition window of the FGS.
+#    corner   : X/Y corner of the acquisition window within the FGS.
+#    size     : X/Y size of the acquisition window.
+GuideStarPosition = namedtuple('GuideStarPosition', ['position', 'corner', 'size'])
+GuideStarPosition.__new__.__defaults__ = ((None,) * 3)
 
 
 # Transforms
@@ -258,8 +323,8 @@ class Transforms:
     m_eci2sifov: np.array = None
     #: ECI to V
     m_eci2v: np.array = None
-    #: FGS1 to FGSx transformation
-    m_fgs12fgsx: np.array = None
+    #: FGSX to Guide Stars transformation
+    m_fgsx2gs: np.array = None
     #: FGS1 to SIFOV
     m_fgs12sifov: np.array = None
     #: Velocity aberration
@@ -401,9 +466,9 @@ class TransformParameters:
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
-    #: The date of observation (`jwst.datamodel.DataModel.meta.date`)
+    #: The date of observation (`jwst.datamodels.JwstDataModel.meta.date`)
     useafter: str = None
-    #: V3 position angle at Guide Star (`jwst.datamodel.DataModel.meta.guide_star.gs_v3_pa_science`)
+    #: V3 position angle at Guide Star (`jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science`)
     v3pa_at_gs: float = None
 
     def as_reprdict(self):
@@ -620,7 +685,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
-    Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
+    Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
@@ -628,7 +693,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update.
 
     default_roll_ref : float
@@ -711,7 +776,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     return t_pars, transforms
 
 
-def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
+def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
     """ Update WCS pointing from header information
 
     For Fine Guidance guiding observations, nearly everything
@@ -723,10 +788,13 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update.
 
-    default_pa_v3 : float
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
+
+    default_roll_ref : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
 
@@ -735,48 +803,38 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
         be either "1" or "-1". "1" is the
         default since FGS guiding will be using the
         OSS aperture.
+
+    default_v3yangle : float
+        Default SIAF Y-angle.
     """
 
     logger.info('Updating WCS for Fine Guidance.')
 
-    # Get position angle
-    try:
-        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
-    except AttributeError:
-        logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
-        roll_ref = default_roll_ref
+    crpix1, crpix2, crval1, crval2, pc_matrix = calc_wcs_guiding(
+        model, t_pars, default_roll_ref, default_vparity, default_v3yangle
+    )
 
-    roll_ref = np.deg2rad(roll_ref)
+    logger.info('WCS info:'
+                f'\n\tcrpix1: {crpix1} crpix2: {crpix2}'
+                f'\n\tcrval1: {crval1} crval2: {crval2}'
+                f'\n\tpc_matrix: {pc_matrix}')
 
-    # Get VIdlParity
-    try:
-        vparity = model.meta.wcsinfo.vparity
-    except AttributeError:
-        logger.warning('Keyword "VPARITY" not found. Using %s as default value', default_vparity)
-        vparity = default_vparity
-
-    try:
-        v3i_yang = model.meta.wcsinfo.v3yangle
-    except AttributeError:
-        logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
-        v3i_yang = default_v3yangle
-
+    model.meta.wcsinfo.crpix1 = crpix1
+    model.meta.wcsinfo.crpix2 = crpix2
+    model.meta.wcsinfo.crval1 = crval1
+    model.meta.wcsinfo.crval2 = crval2
     (
         model.meta.wcsinfo.pc1_1,
         model.meta.wcsinfo.pc1_2,
         model.meta.wcsinfo.pc2_1,
         model.meta.wcsinfo.pc2_2
-    ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
-
-    # Set CRVAL as the guide star coordinates.
-    model.meta.wcsinfo.crval1 = model.meta.guidestar.gs_ra
-    model.meta.wcsinfo.crval2 = model.meta.guidestar.gs_dec
+    ) = pc_matrix
 
 
 def update_wcs_from_telem(model, t_pars: TransformParameters):
     """Update WCS pointing information
 
-    Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
+    Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
@@ -784,7 +842,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update. The update is done in-place.
 
     t_pars : `TransformParameters`
@@ -899,7 +957,7 @@ def update_s_region(model, siaf):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~jwst.datamodels.JwstDataModel`
         The model to update in-place.
     siaf : namedtuple
         The ``SIAF`` tuple with values populated from the PRD database.
@@ -1852,18 +1910,22 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
             mnemonics[mnemonic] = engdb.get_values(
                 mnemonic, obsstart, obsend,
                 time_format='mjd', include_obstime=True,
-                include_bracket_values=True
+                include_bracket_values=False
             )
         except Exception as exception:
             raise ValueError(f'Cannot retrieve {mnemonic} from engineering.') from exception
 
         # If more than two points exist, throw off the bracket values.
         # Else, ensure the bracket values are within the allowed time.
-        if len(mnemonics[mnemonic]) > 2:
-            mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
-        else:
+        if len(mnemonics[mnemonic]) < 2:
             logger.warning('Mnemonic %s has no telemetry within the observation time.', mnemonic)
             logger.warning('Attempting to use bracket values within %s seconds', tolerance)
+
+            mnemonics[mnemonic] = engdb.get_values(
+                mnemonic, obsstart, obsend,
+                time_format='mjd', include_obstime=True,
+                include_bracket_values=True
+            )
 
             tolerance_mjd = tolerance * SECONDS2MJD
             allowed_start = obsstart - tolerance_mjd
@@ -2191,6 +2253,44 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
     return filled
 
 
+def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
+    """Return time-ordered mnemonic list with progressive values
+
+    The different set of mnemonics used for observatory orientation
+    appear at different cadences. This routine creates a time-ordered dictionary
+    with all the mnemonics for each time found in the engineering. For mnemonics
+    missing for a particular time, the last previous value is used.
+
+    Parameters
+    ----------
+    mnemonics : {mnemonic: [value[,...]]}
+
+    filled_only : bool
+        Only return a matrix where observation times have all the mnemonics defined.
+
+    Returns
+    -------
+    filled_by_time : astropy.table.Table
+    """
+    filled = fill_mnemonics_chronologically(mnemonics, filled_only=filled_only)
+
+    names = [mnemonic for mnemonic in mnemonics]
+    names = ['time'] + names
+    time_idx = 0
+
+    values = [[] for _ in names]
+
+    for time in filled:
+        values[time_idx].append(time)
+        for mnemonic in filled[time]:
+            idx = names.index(mnemonic)
+            values[idx].append(filled[time][mnemonic].value)
+
+    t = Table(values, names=names)
+
+    return t
+
+
 def calc_estimated_gs_wcs(t_pars: TransformParameters):
     """Calculate the estimated guide star RA/DEC/Y-angle
 
@@ -2233,13 +2333,19 @@ def calc_v3pags(t_pars: TransformParameters):
     -------
     v3pags : float
         The V3 Position Angle at the Guide Star, in degrees
+
+    Notes
+    -----
+    Modification for `jwst` release post-1.11.3: The commanded position of the guide
+    star is always relative to FGS1. Hence, the aperture to use for the SIAF
+    transformation is always FGS1.
     """
 
     # Determine Guides Star estimated WCS information.
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
-    # Retrieve the Ideal Y-angle for the desired FGS
-    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.fgsid], useafter=t_pars.useafter)
+    # Retrieve the Ideal Y-angle for FGS1
+    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[1], useafter=t_pars.useafter)
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
@@ -2279,8 +2385,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
         M_eci_to_gs =
             M_z_to_x               *
             M_gsics_to_gsappics    *
-            M_fgsics_to_gsics      *
-            M_fgs1ics_to_M_fgsics  *
+            M_fgs1ics_to_gsics     *
             M_j_to_fgs1ics         *
             M_eci_to_j
 
@@ -2288,11 +2393,16 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
             M_eci_to_gs = ECI to Guide Star Ideal Frame
             M_gsics_to_gsappics = Velocity Aberration correction
-            M_fgsics_to_gsics = Convert from the FGS ICS frame to Guide Star ICS frame
-            M_fgs1ics_to_fgsics = Convert from the FGS1 ICS frame to the in-use FGS ICS frame
+            M_fgs1ics_to_gsics = Convert from the FGS1 ICS frame to Guide Star ICS frame
             M_j_to_fgs1ics = Convert from J frame to FGS1 ICS frame
             M_eci_to_j = ECI (quaternion) to J-frame
 
+    Modification for `jwst` release post-1.11.3: The commanded position of the guide
+    star is always relative to FGS1. Hence, the aperture to use is always FGS1.
+    The formulae above have been modified appropriately.
+    However, in the code, note that the transformations go to FGS1, but then
+    is suddenly referred to thereafter as FGSX. The assumption to make is that X is always 1,
+    for FGS1.
     """
 
     # Initial state of the transforms
@@ -2300,13 +2410,12 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
-    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     # Apply the Velocity Aberration. To do so, the M_eci2gsics matrix must be created. This
     # is used to calculate the aberration matrix.
     # Also, since the aberration is to be removed, the velocity is negated.
-    m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_fgs12fgsx, t.m_j2fgs1, t.m_eci2j])
+    m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_j2fgs1, t.m_eci2j])
     logger.debug('m_eci2gsics: %s', m_eci2gsics)
     t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
 
@@ -2547,10 +2656,19 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Instrument details
     t_pars.detector = model.meta.instrument.detector
+    try:
+        exp_type = model.meta.exposure.type.lower()
+    except AttributeError:
+        exp_type = None
+    t_pars.exp_type = exp_type
 
     # observation parameters
-    t_pars.obsstart = model.meta.exposure.start_time
-    t_pars.obsend = model.meta.exposure.end_time
+    if t_pars.exp_type in FGS_GUIDE_EXP_TYPES:
+        t_pars.obsstart = Time(model.meta.observation.date_beg, format='isot').mjd
+        t_pars.obsend = Time(model.meta.observation.date_end, format='isot').mjd
+    else:
+        t_pars.obsstart = model.meta.exposure.start_time
+        t_pars.obsend = model.meta.exposure.end_time
     logger.debug('Observation time: %s - %s', t_pars.obsstart, t_pars.obsend)
 
     # Get Guide Star information
@@ -2573,6 +2691,10 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
     # Set the transform and WCS calculation method.
     t_pars.method = method_from_pcs_mode(t_pars.pcs_mode)
+
+    # Set pointing reduction function if not already set.
+    if not t_pars.reduce_func:
+        t_pars.reduce_func = get_reduce_func_from_exptype(t_pars.exp_type)
 
     return t_pars
 
@@ -2646,10 +2768,330 @@ def method_from_pcs_mode(pcs_mode):
         )
 
 
-def check_prd_versions(model, siaf_db):
-    """Check on consistency between the model and the current PRD"""
-    if siaf_db.prd_version:
-        if model.meta.prd_software_version != siaf_db.prd_version:
-            logger.warning('PRD versions between the model %s and pysiaf %s are different.'
-                           'This may lead to incorrect pointing calculations. Consider re-running using the `--prd %s` option.',
-                           model.meta.prd_software_version, siaf_db.prd_version, model.meta.prd_software_version)
+def get_reduce_func_from_exptype(exp_type):
+    """Determine preferred pointing reduction based on exposure type
+
+    Parameters
+    ----------
+    exp_type : str
+        The exposure type.
+
+    Returns
+    -------
+    reduce_func : func
+        The preferred reduction function.
+    """
+    if exp_type in FGS_ACQ_EXP_TYPES:
+        reduce_func = functools.partial(gs_position_acq, exp_type=exp_type)
+    elif exp_type in FGS_GUIDED_EXP_TYPES:
+        reduce_func = gs_position_fgtrack
+    elif exp_type in FGS_ID_EXP_TYPES:
+        reduce_func = gs_position_id
+    else:
+        reduce_func = pointing_from_average
+
+    return reduce_func
+
+
+def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
+    """Get the guide star position from guide star telemetry for FGS
+
+    The ACQ1 and ACQ2 exposures share nearly the same time range of mnemonics
+    with ACQ2 being slightly longer. As such, the information needed by
+    both types are interleaved in the engineering.
+    ACQ1 needs the first three values of the IFGS_ACQ_*POSG mnemonics.
+    ACQ2 needs the next five values of the IFGS_ACQ_*POSG mnemonics.
+
+    The corresponding values of the acquisition box location and size
+    are also different between ACQ1 and ACQ2. The values to retrieve
+    need be coordinated with the corresponding *POSG values.
+
+    The *POSG values are in arcseconds and are relative to the full
+    FGS array. They need to be converted to pixels and shifted
+    to be with respect to the actual acquisition box in the exposure.
+
+    Parameters
+    ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
+    mnemonics : {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    exp_type: str
+        The exposure type being dealt with. Either
+        'fgs_acq1' or 'fgs_acq2'
+
+    Returns
+    =======
+    gs_position : GuideStarPosition
+        The guide star position
+    """
+    exp_type = exp_type.lower()
+    if exp_type not in FGS_ACQ_EXP_TYPES:
+        raise ValueError(f'exp_type {exp_type} not one of {FGS_ACQ_EXP_TYPES}')
+
+    ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('%s available mnemonics:', exp_type)
+    logger.debug('%s', ordered)
+    valid = ordered[ordered['IFGS_ACQ_XPOSG'] != 0.0]
+    if len(valid) < FGS_ACQ_MINVALUES[exp_type]:
+        raise ValueError(
+            f'exp_type {exp_type} IFGS_ACQ_XPOSG only has {len(valid)} locations. Requires {FGS_ACQ_MINVALUES[exp_type]}'
+        )
+
+    # Setup parameters depending on ACQ1 vs ACQ2
+    if exp_type == 'fgs_acq1':
+        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+        posg_slice = FGS_ACQ_SLICES[exp_type]
+    else:
+        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+        posg_slice = FGS_ACQ_SLICES[exp_type]
+
+    position = (np.average(valid['IFGS_ACQ_XPOSG'][posg_slice]),
+                np.average(valid['IFGS_ACQ_YPOSG'][posg_slice]))
+    corner = (subarray['IFGS_ACQ_DETXCOR'], subarray['IFGS_ACQ_DETYCOR'])
+    size = (subarray['IFGS_ACQ_DETXSIZ'], subarray['IFGS_ACQ_DETYSIZ'])
+    gs_position = GuideStarPosition(position=position, corner=corner, size=size)
+
+    return gs_position
+
+
+def gs_position_fgtrack(mnemonics_to_read, mnemonics):
+    """Get the guide star position from guide star telemetry for FGS FINEGUIDE/TRACK
+
+    For FGS FINEGUIDE and TRACK modes, the position of the guide star is
+    given by mnemonics IFGS_TFGGS_[X|Y] in arcseconds (Ideal system).
+    The values are generally valid throughout the whole length of the observation.
+    The average is used as the result. Ignore values where both coordinates are
+    exactly zero.
+
+    The position is relative to the full detector. However, the science data is cropped
+    to an 8x8 box. The location of the box is defined by the IFGS_TFGDET_* mnemonics.
+    These do not change during the duration of the exposure, so the first values are used.
+
+    Parameters
+    ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
+    mnemonics : {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    gs_position : GuideStarPosition
+        The guide star position
+    """
+    # Remove the zero positions.
+    ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('Guide Star track available mnemonics:')
+    logger.debug('%s', ordered)
+    valid_flags = (ordered['IFGS_TFGGS_X'] != 0.0) | (ordered['IFGS_TFGGS_Y'] != 0.0)
+    valid = ordered[valid_flags]
+    if len(valid) < 1:
+        raise ValueError('Fine guide track mode, no valid engineering is found.')
+
+    # Get the positions
+    position = (np.average(valid['IFGS_TFGGS_X']),
+                np.average(valid['IFGS_TFGGS_Y']))
+    corner = (valid['IFGS_TFGDET_XCOR'][0], valid['IFGS_TFGDET_YCOR'][0])
+    size = (valid['IFGS_TFGDET_XSIZ'][0], valid['IFGS_TFGDET_YSIZ'][0])
+    gs_position = GuideStarPosition(position=position, corner=corner, size=size)
+
+    return gs_position
+
+
+def gs_position_id(mnemonics_to_read, mnemonics):
+    """Get the guide star position from guide star telemetry for FGS ID
+
+    For FGS ID, the position of the guide star is given by mnemonics
+    IFGS_ID_[X|Y] in arcseconds (Ideal system). This mode is when the desired guide star is identified.
+    As such, there is no position to report. However, when completed, the position is then reported for approximately
+    five seconds after the end of the exposure. The input mnemonic array needs to have this. The first non-zero
+    report is used.
+
+    There is a box defined by the IFGS_ID_DET* mnemonics.
+
+    Parameters
+    ==========
+    mnemonics_to_read: {str: bool[,...]}
+        The mnemonics to read. Key is the mnemonic name.
+        Value is a boolean indicating whether the mnemonic
+        is required to have values or not.
+
+    mnemonics : {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    gs_position : GuideStarPosition
+        The guide star position
+
+    """
+    # Remove the zero positions.
+    ordered = fill_mnemonics_chronologically_table(mnemonics)
+    logger.debug('Guide STar ID mode available mnemonics:')
+    logger.debug('%s', ordered)
+    valid_flags = (ordered['IFGS_ID_XPOSG'] != 0.0) | (ordered['IFGS_ID_YPOSG'] != 0.0)
+    valid = ordered[valid_flags]
+    if len(valid) < 1:
+        raise ValueError('Guide Star ID mode, no valid engineering is found.')
+
+    # Get the positions
+    position = (valid['IFGS_ID_XPOSG'][0], valid['IFGS_ID_YPOSG'][0])
+    corner = (valid['IFGS_ID_DETXCOR'][0], valid['IFGS_ID_DETYCOR'][0])
+    size = (valid['IFGS_ID_DETXSIZ'][0], valid['IFGS_ID_DETYSIZ'][0])
+    gs_position = GuideStarPosition(position=position, corner=corner, size=size)
+
+    return gs_position
+
+
+def gs_ideal_to_subarray(gs_position, aperture, flip=False):
+    """Calculate pixel position for the guide star in the acquisition subarray
+
+    Parameters
+    ----------
+    gs_position : GuideStarPosition
+        The guide star position telemetry.
+
+    aperture : pysiaf.Aperture
+        The aperture in use.
+
+    flip : bool
+        Institute the magic flip. Necessary for ACQ1/ACQ2 exposures.
+
+    Returns
+    -------
+    x, y : float
+        The pixel position relative to the subarray
+    """
+    position_pixel = aperture.idl_to_det(*gs_position.position)
+    position_subarray = (position_pixel[0] - gs_position.corner[0],
+                         position_pixel[1] - gs_position.corner[1])
+
+    # The magic flip. For FGS1, both axes must be reversed. For FGS2, only the X-axis changed.
+    x, y = position_subarray
+    if flip:
+        if aperture.AperName.startswith('FGS1'):
+            x = gs_position.size[0] - position_subarray[0]
+            y = gs_position.size[1] - position_subarray[1]
+        else:
+            x = gs_position.size[0] - position_subarray[0]
+            y = position_subarray[1]
+
+    return x, y
+
+
+def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
+    """Calculate WCS info for FGS guiding
+
+    For Fine Guidance guiding observations, nearly everything
+    in the `wcsinfo` meta information is already populated,
+    except for the PC matrix and CRVAL*. This function updates the PC
+    matrix based on the rest of the `wcsinfo`.
+
+    CRVAL* values are taken from GS_RA/GS_DEC.
+
+    Parameters
+    ----------
+    model : `~jwst.datamodels.DataModel`
+        The model to update.
+
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
+
+    default_roll_ref : float
+        If pointing information cannot be retrieved,
+        use this as the V3 position angle.
+
+    default_vparity : int
+        The default `VIdlParity` to use and should
+        be either "1" or "-1". "1" is the
+        default since FGS guiding will be using the
+        OSS aperture.
+
+    default_v3yangle : float
+        Default SIAF Y-angle.
+
+    Returns
+    -------
+    crpix1, crpix2, crval1, crval2, pc1_1, pc1_2, pc2_1, pc2_2 : float
+        The WCS info.
+    """
+    # Determine reference pixel
+
+    # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
+    # in the image.
+    if t_pars.exp_type in ['fgs_acq1', 'fgs_acq2']:
+        mnemonics_to_read = FGS_ACQ_MNEMONICS
+    elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
+        mnemonics_to_read = FGS_GUIDED_MNEMONICS
+    elif t_pars.exp_type in FGS_ID_EXP_TYPES:
+        mnemonics_to_read = FGS_ID_MNEMONICS
+    else:
+        raise ValueError(f'Exposure type {t_pars.exp_type} cannot be processed as an FGS product.')
+
+    # Getting the timing to extract from the engineering database is complicated by
+    # the fact that the observation times and the processing of the guide star
+    # acquisition do not always exactly match. Extend the end time by two seconds.
+    #
+    # For ID modes, the mnemonics are valid only after the exposure is completed.
+    # The time to examine is within 10 seconds after the end of exposure
+    obsstart = t_pars.obsstart
+    obsend = t_pars.obsend
+    if t_pars.exp_type in FGS_ID_EXP_TYPES:
+        obsstart = obsend
+        obsend = (Time(obsend, format='mjd') + (10 * U.second)).mjd
+    elif t_pars.exp_type in FGS_ACQ_EXP_TYPES:
+        obsend = (Time(obsend, format='mjd') + (2 * U.second)).mjd
+
+    try:
+        gs_position = get_pointing(obsstart, obsend,
+                                   mnemonics_to_read=mnemonics_to_read,
+                                   engdb_url=t_pars.engdb_url,
+                                   tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
+    except ValueError as exception:
+        logger.warning('Cannot determine guide star position from engineering. Defaulting to CRPIX = 0')
+        logger.warning('Engineering failure due to exception: %s', exception)
+        crpix1 = crpix2 = 0
+    else:
+        apername = f'FGS{t_pars.detector[-1]}_FULL_OSS'
+        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
+        crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture, flip=True)
+
+    # Determine PC matrix
+
+    # Get position angle
+    try:
+        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
+    except AttributeError:
+        logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
+        roll_ref = default_roll_ref
+
+    roll_ref = np.deg2rad(roll_ref)
+
+    # Get VIdlParity
+    try:
+        vparity = model.meta.wcsinfo.vparity
+    except AttributeError:
+        logger.warning('Keyword "VPARITY" not found. Using %s as default value', default_vparity)
+        vparity = default_vparity
+
+    try:
+        v3i_yang = model.meta.wcsinfo.v3yangle
+    except AttributeError:
+        logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
+        v3i_yang = default_v3yangle
+
+    pc_matrix = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
+
+    # Determine reference sky values
+    crval1 = model.meta.guidestar.gs_ra
+    crval2 = model.meta.guidestar.gs_dec
+
+    return crpix1, crpix2, crval1, crval2, pc_matrix

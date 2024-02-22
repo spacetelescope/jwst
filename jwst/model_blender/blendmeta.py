@@ -25,7 +25,7 @@ __doctest_skip__ = ['blendmodels']
 # Primary functional interface for the code
 
 
-def blendmodels(product, inputs=None, output=None, verbose=False):
+def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
     """
     Run main interface for blending metadata from multiple models.
 
@@ -73,6 +73,10 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         If provided, update `meta.filename` in the blended `product`
         to define what file this model will get written out to.
 
+    ignore : list of str, None, optional
+        A list of string the meta attribute names which, if provided,
+        will show which attributes should not be blended.
+
     verbose : bool, optional [Default: False]
         Print out additional messages during processing when specified.
 
@@ -94,7 +98,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         input_filenames = extract_filenames_from_product(product)
         inputs = [datamodels.open(i) for i in inputs]  # return datamodels
     else:
-        if isinstance(inputs, datamodels.DataModel):
+        if isinstance(inputs, datamodels.JwstDataModel):
             input_filenames = [i.meta.filename for i in inputs]
         else:
             input_filenames = inputs  # assume list of filenames as input
@@ -122,6 +126,8 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     # Start by identifying elements of the model which need to be ignored
     ignore_list = _build_schema_ignore_list(newmeta._schema)
     ignore_list += ['meta.wcs']  # Necessary since meta.wcs is not in schema
+    if ignore:
+        ignore_list.extend(ignore)
 
     # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
@@ -162,7 +168,7 @@ def get_blended_metadata(input_models, verbose=False):
     ----------
     input_models : list
         Either a single list of filenames from which to extract the metadata to
-        be blended, or a list of `datamodels.DataModel` objects to be blended.
+        be blended, or a list of `datamodels.JwstDataModel` objects to be blended.
         The input models are assumed to have the blending rules defined as
         an integral part of the schema definition for the model.
 

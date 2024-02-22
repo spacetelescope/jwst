@@ -4,15 +4,16 @@ import pytest
 
 import jwst.associations.lib.diff as asn_diff
 
-standard_asn = {
+# Test cases for individual associations
+badcandidate_asn = {
     'asn_type': 'test',
-    'asn_id': 'c1001',
+    'asn_id': 'o001',
     'products': [
         {
             'name': 'product_a',
             'members': [
                 {'expname': 'member_a_a', 'exptype': 'science'},
-                {'expname': 'member_a_b', 'exptype': 'science'}
+                {'expname': 'member_a_a', 'exptype': 'science'}
             ]
         },
         {
@@ -23,10 +24,10 @@ standard_asn = {
             ]
         },
         {
-            'name': 'product_c',
+            'name': 'product_d',
             'members': [
-                {'expname': 'member_c_a', 'exptype': 'science'},
-                {'expname': 'member_c_b', 'exptype': 'science'}
+                {'expname': 'member_d_a', 'exptype': 'science'},
+                {'expname': 'member_d_b', 'exptype': 'science'}
             ]
         },
     ]
@@ -60,7 +61,7 @@ badexptype_asn = {
     ]
 }
 
-dup_product_asn = {
+badmember_asn = {
     'asn_type': 'test',
     'asn_id': 'c1001',
     'products': [
@@ -68,35 +69,7 @@ dup_product_asn = {
             'name': 'product_a',
             'members': [
                 {'expname': 'member_a_a', 'exptype': 'science'},
-                {'expname': 'member_a_b', 'exptype': 'science'}
-            ]
-        },
-        {
-            'name': 'product_a',
-            'members': [
-                {'expname': 'member_a_a', 'exptype': 'science'},
-                {'expname': 'member_a_b', 'exptype': 'science'}
-            ]
-        },
-        {
-            'name': 'product_c',
-            'members': [
-                {'expname': 'member_c_a', 'exptype': 'science'},
-                {'expname': 'member_c_b', 'exptype': 'science'}
-            ]
-        },
-    ]
-}
-
-disjoint_product_asn = {
-    'asn_type': 'test',
-    'asn_id': 'c1001',
-    'products': [
-        {
-            'name': 'product_a',
-            'members': [
-                {'expname': 'member_a_a', 'exptype': 'science'},
-                {'expname': 'member_a_b', 'exptype': 'science'}
+                {'expname': 'member_a_a', 'exptype': 'science'}
             ]
         },
         {
@@ -144,7 +117,7 @@ badtype_asn = {
     ]
 }
 
-badmember_asn = {
+disjoint_product_asn = {
     'asn_type': 'test',
     'asn_id': 'c1001',
     'products': [
@@ -152,7 +125,7 @@ badmember_asn = {
             'name': 'product_a',
             'members': [
                 {'expname': 'member_a_a', 'exptype': 'science'},
-                {'expname': 'member_a_a', 'exptype': 'science'}
+                {'expname': 'member_a_b', 'exptype': 'science'}
             ]
         },
         {
@@ -172,15 +145,43 @@ badmember_asn = {
     ]
 }
 
-badcandidate_asn = {
+dup_product_asn = {
     'asn_type': 'test',
-    'asn_id': 'o001',
+    'asn_id': 'c1001',
     'products': [
         {
             'name': 'product_a',
             'members': [
                 {'expname': 'member_a_a', 'exptype': 'science'},
-                {'expname': 'member_a_a', 'exptype': 'science'}
+                {'expname': 'member_a_b', 'exptype': 'science'}
+            ]
+        },
+        {
+            'name': 'product_a',
+            'members': [
+                {'expname': 'member_a_a', 'exptype': 'science'},
+                {'expname': 'member_a_b', 'exptype': 'science'}
+            ]
+        },
+        {
+            'name': 'product_c',
+            'members': [
+                {'expname': 'member_c_a', 'exptype': 'science'},
+                {'expname': 'member_c_b', 'exptype': 'science'}
+            ]
+        },
+    ]
+}
+
+standard_asn = {
+    'asn_type': 'test',
+    'asn_id': 'c1001',
+    'products': [
+        {
+            'name': 'product_a',
+            'members': [
+                {'expname': 'member_a_a', 'exptype': 'science'},
+                {'expname': 'member_a_b', 'exptype': 'science'}
             ]
         },
         {
@@ -191,14 +192,79 @@ badcandidate_asn = {
             ]
         },
         {
-            'name': 'product_d',
+            'name': 'product_c',
             'members': [
-                {'expname': 'member_d_a', 'exptype': 'science'},
-                {'expname': 'member_d_b', 'exptype': 'science'}
+                {'expname': 'member_c_a', 'exptype': 'science'},
+                {'expname': 'member_c_b', 'exptype': 'science'}
             ]
         },
     ]
 }
+
+# Test cases for association comparison.
+# The products in each association should be considered separate
+# associations to be compared.
+asns_subset = {
+    'asn_type': 'test',
+    'asn_id': 'c1001',
+    'products': [
+        {
+            'name': 'product_a',
+            'members': [
+                {'expname': 'member_a_1', 'exptype': 'science'},
+                {'expname': 'member_a_2', 'exptype': 'science'},
+            ]
+        },
+        {
+            'name': 'product_a',
+            'members': [
+                {'expname': 'member_a_1', 'exptype': 'science'},
+                {'expname': 'member_a_2', 'exptype': 'science'},
+                {'expname': 'member_a_3', 'exptype': 'science'},
+            ]
+        }
+    ]
+}
+
+
+# Test case when comparing groups of associations.
+# There should be no difference because of the `rate/rateints`
+# equivalence. Tests will try different ordering due to a bug
+# which made the comparison order-dependent.
+NODIFF_ASNS = [
+    {
+        "asn_type": "image2",
+        "asn_id": "o006",
+        "products": [
+            {
+                "name": "jw00016006001_04105_00001_nrca4",
+                "members": [
+                    {
+                        "expname": "jw00016006001_04105_00001_nrca4_rate.fits",
+                        "exptype": "science",
+                        "exposerr": "null"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "asn_type": "image2",
+        "asn_id": "o006",
+        "products": [
+            {
+                "name": "jw00016006001_04105_00001_nrca4",
+                "members": [
+                    {
+                        "expname": "jw00016006001_04105_00001_nrca4_rateints.fits",
+                        "exptype": "science",
+                        "exposerr": "null"
+                    }
+                ]
+            }
+        ]
+    },
+]
 
 
 def test_duplicate_members():
@@ -206,6 +272,15 @@ def test_duplicate_members():
     product = badcandidate_asn['products'][0]
     with pytest.raises(asn_diff.DuplicateMembersError):
         asn_diff.check_duplicate_members(product)
+
+
+def test_equivalency():
+    """Test that two associations equivalency
+
+    Success is the fact that no errors happen.
+    """
+    asns = asn_diff.separate_products(standard_asn)
+    asn_diff.compare_asn_lists(asns, asns)
 
 
 @pytest.mark.parametrize(
@@ -248,13 +323,24 @@ def test_fromfiles():
     asn_diff.compare_asn_files(['test.json'], ['test.json'])
 
 
-def test_equivalency():
-    """Test that two associations equivalency
+@pytest.mark.parametrize(
+    'left_indexes, right_indexes',
+    [
+        ([0, 1], [0, 1]),
+        ([0, 1], [1, 0]),
+        ([1, 0], [0, 1]),
+        ([1, 0], [1, 0]),
+    ]
+)
+def test_nodiff_order(left_indexes, right_indexes):
+    """Associations should have no difference, regardless of order"""
 
-    Success is the fact that no errors happen.
-    """
-    asns = asn_diff.separate_products(standard_asn)
-    asn_diff.compare_asn_lists(asns, asns)
+    # Order the associations as specified in the indexes.
+    left_asns = [NODIFF_ASNS[idx] for idx in left_indexes]
+    right_asns = [NODIFF_ASNS[idx] for idx in right_indexes]
+
+    # Execute test. Success will not generate any exceptions.
+    asn_diff.compare_asn_lists(left_asns, right_asns)
 
 
 def test_separate_products():
@@ -266,3 +352,13 @@ def test_separate_products():
         idx = asn['products'][0]['name'][-1]
         for member in asn['products'][0]['members']:
             assert member['expname'][:-2] == 'member' + '_' + idx
+
+
+def test_subset_product():
+    """Test subset identification"""
+    left, right = asn_diff.separate_products(asns_subset)
+    try:
+        asn_diff.compare_product_membership(left['products'][0], right['products'][0])
+    except asn_diff.MultiDiffError as exception:
+        if len(exception) > 1 or not isinstance(exception[0], asn_diff.SubsetError):
+            raise

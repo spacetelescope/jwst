@@ -2,7 +2,7 @@
 JWST-specific Step and Pipeline base classes.
 """
 from collections.abc import Sequence
-from stdatamodels import DataModel
+from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
 
 from .. import __version_commit__, __version__
@@ -76,7 +76,7 @@ class JwstStep(Step):
         return asn
 
     def finalize_result(self, result, reference_files_used):
-        if isinstance(result, DataModel):
+        if isinstance(result, JwstDataModel):
             result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
             result.meta.calibration_software_version = __version__
 
@@ -126,5 +126,5 @@ class JwstStep(Step):
 # when constructing a pipeline using JwstStep class methods.
 class JwstPipeline(Pipeline, JwstStep):
     def finalize_result(self, result, reference_files_used):
-        if isinstance(result, DataModel):
+        if isinstance(result, JwstDataModel):
             log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")

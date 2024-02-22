@@ -18,7 +18,10 @@ from astropy.nddata.bitmask import (
 )
 
 from stdatamodels.jwst.datamodels.dqflags import pixel
-from stdatamodels.jwst.datamodels.util import open as datamodel_open, is_association
+from stdatamodels.jwst.datamodels.util import (
+    open as datamodel_open,
+    is_association
+)
 
 from jwst.datamodels import ModelContainer
 

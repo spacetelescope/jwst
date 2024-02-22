@@ -1,9 +1,6 @@
 """
 Association Pools
 """
-
-from pkg_resources import parse_version, get_distribution
-
 from collections import UserDict
 
 from astropy.io.ascii import convert_numpy
@@ -134,15 +131,4 @@ def _convert_to_str():
     return [(convert_func, type_)]
 
 
-class _ConvertToStr(dict):
-    def __getitem__(self, k):
-        return _convert_to_str()
-
-    def get(self, k, default=None):
-        return self.__getitem__(k)
-
-
-if parse_version(get_distribution('astropy').version) >= parse_version('5.0.dev'):
-    convert_to_str = {'*': _convert_to_str()}
-else:
-    convert_to_str = _ConvertToStr()
+convert_to_str = {'*': _convert_to_str()}

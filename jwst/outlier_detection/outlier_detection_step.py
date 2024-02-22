@@ -1,4 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
+import os
+
 from functools import partial
 
 from stdatamodels.jwst import datamodels
@@ -56,23 +58,24 @@ class OutlierDetectionStep(Step):
         nlow = integer(default=0)
         nhigh = integer(default=0)
         maskpt = float(default=0.7)
-        grow = integer(default=1)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
         backg = float(default=0.0)
+        kernel_size = string(default='7 7')
+        threshold_percent = float(default=99.8)
+        ifu_second_check = boolean(default=False)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=False)
     """
 
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
 
-        # interpret how memory should be used
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, ModelContainer):
@@ -106,10 +109,12 @@ class OutlierDetectionStep(Step):
                 'nlow': self.nlow,
                 'nhigh': self.nhigh,
                 'maskpt': self.maskpt,
-                'grow': self.grow,
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
+                'kernel_size': self.kernel_size,
+                'threshold_percent': self.threshold_percent,
+                'ifu_second_check': self.ifu_second_check,
                 'allowed_memory': self.allowed_memory,
                 'in_memory': self.in_memory,
                 'save_intermediate_results': self.save_intermediate_results,
@@ -142,7 +147,6 @@ class OutlierDetectionStep(Step):
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
-                pars['resample_suffix'] = 's3d'
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
@@ -166,11 +170,24 @@ class OutlierDetectionStep(Step):
 
             state = 'COMPLETE'
             if self.input_container:
+                if not self.save_intermediate_results:
+                    self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
+                    if not self.save_intermediate_results:
+                        #  Remove unwanted files
+                        crf_path = self.make_output_path(basepath=model.meta.filename)
+                        suffix = model.meta.filename.split(sep='_')[-1]
+                        outlr_file = model.meta.filename.replace(suffix, 'outlier_i2d.fits')
+                        blot_path = crf_path.replace('crf', 'blot')
+                        median_path = blot_path.replace('blot', 'median')
+
+                        for fle in [outlr_file, blot_path, median_path]:
+                            if os.path.isfile(fle):
+                                os.remove(fle)
+                                self.log.debug(f"    {fle}")
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
-
             return self.input_models
 
     def check_input(self):

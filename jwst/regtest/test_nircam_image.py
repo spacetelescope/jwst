@@ -50,7 +50,6 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     # produce fresh _cal files for the image3 pipeline.  We won't check these
     # or look at intermediate products, including the resampled i2d
     rate_files = [
-        "nircam/image/jw01538046001_03105_00001_nrcalong_rate.fits",
         "nircam/image/jw01538046001_03105_00001_nrcblong_rate.fits",
         "nircam/image/jw01538046001_03105_00002_nrcalong_rate.fits",
         "nircam/image/jw01538046001_03105_00002_nrcblong_rate.fits",

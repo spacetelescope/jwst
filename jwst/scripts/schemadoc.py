@@ -32,7 +32,7 @@
 import argparse
 import sys
 
-from stdatamodels.jwst.datamodels.schema import build_docstring
+from stdatamodels.schema import build_docstring
 
 
 def get_docstrings(template, model_names, all=False):

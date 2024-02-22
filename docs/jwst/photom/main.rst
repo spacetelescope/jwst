@@ -76,6 +76,14 @@ The step also computes the equivalent conversion factor to units of
 microJy/square-arcsecond (or microjanskys) and stores it in the header
 keyword PHOTUJA2.
 
+MIRI Imaging
+^^^^^^^^^^^^
+For MIRI imaging mode, the reference file can optionally contain a table of
+coefficients that are used to apply time-dependent corrections to the scalar
+conversion factor. If the time-dependent coefficients are present in the
+reference file, the photom step will apply the correction based on the
+observation date of the exposure being processed.
+
 NIRSpec Fixed-Slit Primary Slit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The primary slit in a NIRSpec fixed-slit exposure receives special handling.
@@ -117,8 +125,9 @@ The step also populates the keywords PIXAR_SR and PIXAR_A2 in the
 science data product, which give the average pixel area in units of
 steradians and square arcseconds, respectively.
 For most instrument modes, the average pixel area values are copied from the
-primary header of the PHOTOM reference file.
-For NIRSpec, however,  the pixel area values are copied from a binary table
+primary header of the AREA reference file, when this file is available. Otherwise
+the pixel area values are copied from the primary header of the PHOTOM reference
+file. For NIRSpec, however, the pixel area values are copied from a binary table
 extension in the AREA reference file.
 
 NIRSpec IFU
@@ -134,7 +143,7 @@ It then uses the scalar conversion constant, the 1-D wavelength and relative
 response, and pixel area data to compute a 2-D sensitivity map (pixel-by-pixel)
 for the entire science image. The 2-D SCI and ERR arrays in the science
 exposure are multiplied by the 2D sensitivity map, which converts the science
-pixels from countrate to either flux density or surface brightness.
+pixels from countrate to surface brightness.
 Variance arrays are multiplied by the square of the conversion factors.
 
 MIRI MRS
@@ -146,3 +155,23 @@ sensitivity and pixel size data are used to compute a 2-D sensitivity map
 the SCI and ERR arrays of the science exposure, which converts the pixel values
 from countrate to surface brightness.
 Variance arrays are multiplied by the square of the conversion factors.
+
+MIRI MRS data have a time-variable photometric response that is significant at
+long wavelengths. A correction has been derived from observations of calibration standard stars.
+The form of the correction uses an exponential function that asymptotically approaches a
+constant value in each wavelength band. A plot of the count rate loss in each MRS
+band, as a function of time, is shown in Figure 1.
+
+.. figure:: Model_summary.png
+   :scale: 50%
+   :align: center
+	   
+Figure 1:
+Time-dependent decrease in the observed MRS count rate as measured from internal flat-field exposures.
+Solid points illustrate measurements at the central wavelength of each of the 12 MRS bands;
+curves represent the best fit models used for correction in the pipeline.
+
+The MRS photom reference file contains a table of correction coefficients
+for each band in which a correction has been determined. If the time-dependent
+coefficients are present in the reference file for a given band, the photom step will
+apply the correction to the exposure being processed.
