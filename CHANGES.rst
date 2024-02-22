@@ -73,6 +73,12 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+jump
+----
+
+- Add an additional parameter to pass the threshold number of difference to switch
+  the jump detection to run in a single pass rather than one CR at a time. [#8304]
+
 outlier_detection
 -----------------
 
