@@ -130,6 +130,9 @@ resample
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
 
+- Added sleep + check of output files that are median combined to attempt to fix intermittent
+  corruption of these files in operations [#8305]
+
 residual_fringe
 ---------------
 
