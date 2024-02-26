@@ -71,7 +71,8 @@ class JWSTBackground:
         filter_size = (3, 3)
 
         # All data has NaNs.  Supress warnings about them.
-        with warnings.catch_warnings(action="ignore", category=AstropyUserWarning):
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
             try:
                 bkg = Background2D(self.data, self.box_size,
                                 filter_size=filter_size,
@@ -153,7 +154,8 @@ def convolve_data(data, kernel_fwhm, mask=None):
     kernel = make_kernel(kernel_fwhm)
 
     # All data has NaNs.  Supress warnings about them.
-    with warnings.catch_warnings(action="ignore", category=AstropyUserWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
         return convolve(data, kernel, mask=mask, normalize_kernel=True)
 
 
