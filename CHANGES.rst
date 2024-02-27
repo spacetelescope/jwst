@@ -110,6 +110,12 @@ pipeline
 - Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
   the list of modes for running the ``nsclean`` step. [#8256]
 
+pixel_replace
+-------------
+
+- Fixed a bug that caused array size mismatches when the ``mingrad`` algorithm
+  was applied to NIRSpec data. [#8312]
+
 refpix
 ------
 
