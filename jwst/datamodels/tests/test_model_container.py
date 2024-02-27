@@ -22,7 +22,7 @@ CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, 'association_group_id.json')
 
 @pytest.fixture
 def container():
-    warnings.simplefilter("ignore")
+    warnings.simplefilter("error") # was ignore. need to make more specific
     asn_file_path, asn_file_name = os.path.split(ASN_FILE)
     with pushdir(asn_file_path):
         with ModelContainer(asn_file_name) as c:

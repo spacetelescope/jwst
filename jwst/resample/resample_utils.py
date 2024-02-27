@@ -155,9 +155,9 @@ def reproject(wcs1, wcs2):
         for axis in sky:
             flat_sky.append(axis.flatten())
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
-        warnings.simplefilter("ignore")
-        det = backward_transform(*tuple(flat_sky))
-        warnings.resetwarnings()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error") #, category=, RuntimeWarning, message="All-NaN")
+            det = backward_transform(*tuple(flat_sky))
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))

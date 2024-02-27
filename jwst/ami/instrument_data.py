@@ -5,6 +5,7 @@
 
 import logging
 import numpy as np
+from scipy.integrate import simpson as simps
 
 from .mask_definitions import NRM_mask_definitions
 from . import utils
@@ -70,8 +71,6 @@ class NIRISS:
 
         # update nominal filter parameters with those of the filter read in and used in the analysis...
         # Weighted mean wavelength in meters, etc, etc "central wavelength" for the filter:
-        from scipy.integrate import simps
-
         thru_st = np.stack(self.throughput, axis=1)
         thru_st_0 = thru_st[0, :]
         thru_st_1 = thru_st[1, :]

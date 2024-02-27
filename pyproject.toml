@@ -239,6 +239,7 @@ addopts = ["-p no:legacypath",
 filterwarnings = [
     "error::ResourceWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
+    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
 ]
 
 [tool.coverage.run]

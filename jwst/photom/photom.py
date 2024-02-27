@@ -473,7 +473,7 @@ class DataSet():
             fields_to_match = {'subarray': self.subarray,
                                'filter': self.filter}
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+                warnings.simplefilter("error") #was ignore. need to make more specific
                 row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 # Search again using subarray="GENERIC" for old ref files

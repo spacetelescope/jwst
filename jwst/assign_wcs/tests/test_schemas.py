@@ -54,7 +54,7 @@ def test_distortion_schema(distortion_model, tmp_path):
     dist.save(path)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error") #this one is fine
         with DistortionModel(path) as dist1:
             assert dist1.meta.instrument.p_pupil == dist.meta.instrument.p_pupil
             assert dist1.meta.instrument.pupil == dist.meta.instrument.pupil

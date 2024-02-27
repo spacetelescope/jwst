@@ -246,7 +246,7 @@ class ApCorrPhase(ApCorrBase):
 
             for col in cols_to_correct:
                 if correction:
-                    row[col] *= correction
+                    row[col] *= correction[0]
 
 
 class ApCorrRadial(ApCorrBase):
