@@ -61,6 +61,10 @@ extract_1d
   pixels in the 2nd-order spectrum are flagged and would cause the step
   to fail. [#8265]
 
+- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
+  to avoid failures for moderate-brightness sources due to extremely low
+  throughput at the long wavelength end of MRS band 4C. [#8199]
+
 - Replaced instances of deprecated interp2d with 
   RectBivariateSpline in ``apply_apcorr``. [#8291]
 
@@ -120,9 +124,8 @@ refpix
   all groups in each integration and robustly replace bad values from their
   nearest neighbors. [#8197, #8214]
 
-- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
-  to avoid failures for moderate-brightness sources due to extremely low
-  throughput at the long wavelength end of MRS band 4C. [#8199]
+- Add option for NIRSpec IRS2 to preserve interleaved reference pixels in the
+  output file, for calibration and diagnostic purposes. [#8255]
 
 resample
 --------
