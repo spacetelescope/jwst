@@ -61,6 +61,9 @@ extract_1d
   pixels in the 2nd-order spectrum are flagged and would cause the step
   to fail. [#8265]
 
+- Replaced instances of deprecated interp2d with 
+  RectBivariateSpline in ``apply_apcorr``. [#8291]
+
 extract_2d
 ----------
 
