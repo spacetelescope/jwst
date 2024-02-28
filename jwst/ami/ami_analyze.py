@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def apply_LG_plus(input_model, 
+def apply_LG_plus(input_model, throughput_model,
                 oversample, rotation,
                 psf_offset, rotsearch_parameters, 
                 src, bandpass, usebp, firstfew, 
@@ -28,6 +28,8 @@ def apply_LG_plus(input_model,
     ----------
     input_model : data model object
         AMI science image to be analyzed
+    throughput_model : data model object
+        Filter throughput data
     oversample : integer
         Oversampling factor
     rotation : float (degrees)
@@ -128,13 +130,11 @@ def apply_LG_plus(input_model,
 
     else:
         # get the filter and source spectrum
-        log.info(f'Getting WebbPSF throughput data for {filt}.')
-        filt_spec = utils.get_filt_spec(filt)
+        log.info(f'Reading throughput model data for {filt}.')
+        filt_spec = utils.get_filt_spec(throughput_model)
         log.info(f'Getting source spectrum for spectral type {src}.')
         src_spec = utils.get_src_spec(src) # always going to be A0V currently
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
-        # **NOTE**: As of WebbPSF version 1.0.0 filter is trimmed to where throughput is 10% of peak
-        # For consistency with WebbPSF simultions, use trim=0.1
         bandpass = utils.combine_src_filt(filt_spec, 
                                       src_spec, 
                                       trim=0.01, 
