@@ -195,7 +195,7 @@ class TweakRegStep(Step):
                     'peakmax': self.peakmax,
                     'brightest': self.brightest,
                     'npixels': self.npixels,
-                    'connectivity': int(self.connectivity),  # option returns a string, , so cast to int
+                    'connectivity': int(self.connectivity),  # option returns a string, so cast to int
                     'nlevels': self.nlevels,
                     'contrast': self.contrast,
                     'mode': self.multithresh_mode,
