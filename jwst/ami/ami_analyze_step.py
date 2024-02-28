@@ -27,6 +27,8 @@ class AmiAnalyzeStep(Step):
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
+    reference_file_types = ['throughput']
+
     def save_model(self, model, *args, **kwargs):
         # Override save_model to change suffix based on list of results
         if 'idx' in kwargs and kwargs.get('suffix', None) is None:
@@ -80,20 +82,33 @@ class AmiAnalyzeStep(Step):
         if oversample % 2 == 0:
             raise ValueError("Oversample value must be an odd integer.")
 
-        if os.getenv('WEBBPSF_PATH') is None:
-            raise RuntimeError("WEBBPSF_PATH environment variable is required for this step")
+        # Get the name of the filter throughput reference file to use
+        throughput_reffile = self.get_reference_file(input_model, 'throughput')
+        self.log.info(f'Using filter throughput reference file {throughput_reffile}')
+
+        # Check for a valid reference file or user-provided bandpass
+        if (throughput_reffile == 'N/A') & (bandpass == None):
+            self.log.warning('No THROUGHPUT reference file found')
+            self.log.warning('AMI analyze step will be skipped')
+            raise RuntimeError("No throughput reference file found. "
+                               "ami_analyze cannot continue.")
+
+        # Open the filter throughput reference file
+        throughput_model = datamodels.ThroughputModel(throughput_reffile)
 
         # Apply the LG+ methods to the data
         oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(input_model,
-                                           oversample, rotate,
-                                           psf_offset,
-                                           rotsearch_parameters,
-                                           src, bandpass, usebp, 
-                                           firstfew, chooseholes, affine2d,
-                                           run_bpfix
-                                           )
+                                                    throughput_model,
+                                                    oversample, rotate,
+                                                    psf_offset,
+                                                    rotsearch_parameters,
+                                                    src, bandpass, usebp, 
+                                                    firstfew, chooseholes, affine2d,
+                                                    run_bpfix)
 
         # Close the reference file and update the step status
+        throughput_model.close()
+
         amilgmodel.meta.cal_step.ami_analyze = 'COMPLETE'
         oifitsmodel.meta.cal_step.ami_analyze = 'COMPLETE'
         oifitsmodel_multi.meta.cal_step.ami_analyze = 'COMPLETE'

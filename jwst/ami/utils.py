@@ -1196,33 +1196,24 @@ def img_median_replace(img_model, box_size):
 
     return img_model
 
-def get_filt_spec(filt, verbose=False):
+def get_filt_spec(throughput_model, verbose=False):
     """
     Short Summary
     ------------
-    Load WebbPSF filter throughput into synphot spectrum object
+    Load filter throughput data into synphot spectrum object
 
     Parameters
     ----------
-    filt: string
-        Known AMI filter name
+    throughput_model: ThroughputModel
+        Datamodel containing normalized fractional throughput
+        data for one of the four AMI filters
 
     Returns
     -------
     band: synphot Spectrum object
     """
-    goodfilts = ["F277W", "F380M", "F430M", "F480M"]
-    # make uppercase
-    filt = filt.upper()
-    if filt not in goodfilts:
-        raise Exception("Filter name %s is not a known NIRISS AMI filter. Choose one of: %s" % (filt, tuple(goodfilts)))
-
-    webbpsf_path = os.getenv('WEBBPSF_PATH')
-    filterdir = os.path.join(webbpsf_path, 'NIRISS/filters/')
-    filtfile = os.path.join(filterdir, filt + '_throughput.fits')
-    if verbose: 
-        print("\n Using filter file:", filtfile)
-    thruput = fits.getdata(filtfile)
+    
+    thruput = throughput_model.filter_table
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
     tr_list = np.asarray([tup[1] for tup in thruput])
     band = synphot.spectrum.SpectralElement(synphot.models.Empirical1D, points=wl_list,
@@ -1237,7 +1228,7 @@ def get_src_spec(sptype):
 
     Parameters
     ----------
-    src: string or synphot.Spectrum
+    sptype: string or synphot.Spectrum
         valid source string (e.g. "A0V") or existing synphot Spectrum object
         Defaults to A0V spectral type if input string not recognized.
 
@@ -1304,8 +1295,9 @@ def get_src_spec(sptype):
         try:
             keys = lookuptable[sptype]
         except KeyError:
-            print(
+            log.info(
                 "\n WARNING!!! \n Input spectral type %s did not match any in the catalog. Defaulting to A0V." % sptype)
+            log.info("Accepted spectral type strings are: \n %s" % lookuptable.keys())
             keys = lookuptable["A0V"]
         try:
             return grid_to_spec('phoenix', keys[0], keys[1], keys[2])
