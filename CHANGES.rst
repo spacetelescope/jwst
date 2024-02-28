@@ -141,12 +141,8 @@ refpix
 - Add option for NIRSpec IRS2 to preserve interleaved reference pixels in the
   output file, for calibration and diagnostic purposes. [#8255]
 
-- Correct for mean reference pixel offsets by amplifier and detector column
-  in NIRSpec IRS2 mode. [#8143]
-
 - Add option to correct for mean reference pixel offsets by amplifier and detector
   column in NIRSpec IRS2 mode. [#8143]
-
 
 resample
 --------
