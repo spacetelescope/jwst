@@ -237,6 +237,7 @@ addopts = ["-p no:legacypath",
     "--report-crds-context",
 ]
 filterwarnings = [
+    "error",
     "error::ResourceWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
     "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
