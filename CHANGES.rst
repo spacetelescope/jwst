@@ -139,13 +139,22 @@ residual_fringe
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
 
+source_catalog
+--------------
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
+
 tweakreg
 --------
 
 - Update ``sregion`` after WCS corrections are applied. [#8158]
 
-- Added option to choose IRAFStarFinder and segmentation.SourceFinder
+- Add option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
 
 
 1.13.4 (2024-01-25)
