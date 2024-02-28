@@ -8,6 +8,8 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+-  JP-3290 Isolate candidate processing into their own pools [#8227]
+
 cube_build
 ----------
 
@@ -34,6 +36,9 @@ documentation
 
 - Change docs theme to ``sphinx-rtd-theme`` [#8224]
 
+- Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
+  the jwst and stcal repos. [#8253]
+
 emicorr
 -------
 
@@ -59,6 +64,9 @@ extract_1d
 - Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
+
+- Replaced instances of deprecated interp2d with 
+  RectBivariateSpline in ``apply_apcorr``. [#8291]
 
 extract_2d
 ----------
@@ -124,19 +132,32 @@ resample
 
 - Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
 
+- Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
+  ``world_to_pixel_values``) for reproject, which also fixed a bug, and
+  removed support for astropy model [#8172]
+
 residual_fringe
 ---------------
 
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
 
+source_catalog
+--------------
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
+
 tweakreg
 --------
 
 - Update ``sregion`` after WCS corrections are applied. [#8158]
 
-- Added option to choose IRAFStarFinder and segmentation.SourceFinder
+- Add option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
 
 
 1.13.4 (2024-01-25)

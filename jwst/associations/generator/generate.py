@@ -1,15 +1,15 @@
 import logging
 from timeit import default_timer as timer
 
-from .association import make_timestamp
-from .lib.process_list import (
+from ..association import make_timestamp
+from ..lib.process_list import (
     ListCategory,
     ProcessList,
     ProcessQueueSorted,
     workover_filter
 )
-from .pool import PoolRow
-from ..lib.progress import Bar
+from ..pool import PoolRow
+from ...lib.progress import Bar
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -93,12 +93,12 @@ def generate(pool, rules, version_id=None, finalize=True):
                 total_reprocess += len(to_process_modified)
                 bar.next()
 
+        logger.info('Seconds to process: %.2f', timer() - time_start)
         logger.debug('Existing associations modified: %d New associations created: %d', total_mod_existing, total_new)
         logger.debug('New process lists: %d', total_reprocess)
         logger.debug('Updated process queue: %s', process_queue)
         logger.debug('# associations: %d', len(associations))
         logger.debug('Associations: %s', [type(_association) for _association in associations])
-        logger.debug('Seconds to process: %.2f\n', timer() - time_start)
 
     # Finalize found associations
     logger.debug('# associations before finalization: %d', len(associations))
@@ -110,8 +110,8 @@ def generate(pool, rules, version_id=None, finalize=True):
         except KeyError as exception:
             logger.debug('Finalization failed for reason: %s', exception)
 
+    logger.info('Associations generated: %s', len(finalized_asns))
     return finalized_asns
-
 
 def generate_from_item(
         item,

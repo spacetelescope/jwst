@@ -3,8 +3,6 @@ import logging
 import warnings
 
 import numpy as np
-from astropy import wcs as fitswcs
-from astropy.modeling import Model
 from astropy import units as u
 import gwcs
 
@@ -134,8 +132,9 @@ def reproject(wcs1, wcs2):
 
     Parameters
     ----------
-    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS` or `~astropy.modeling.Model`
-        WCS objects.
+    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
+        WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
+        methods.
 
     Returns
     -------
@@ -144,25 +143,11 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    if isinstance(wcs1, fitswcs.WCS):
-        forward_transform = wcs1.all_pix2world
-    elif isinstance(wcs1, gwcs.WCS):
-        forward_transform = wcs1.forward_transform
-    elif issubclass(wcs1, Model):
-        forward_transform = wcs1
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
-
-    if isinstance(wcs2, fitswcs.WCS):
-        backward_transform = wcs2.all_world2pix
-    elif isinstance(wcs2, gwcs.WCS):
-        backward_transform = wcs2.backward_transform
-    elif issubclass(wcs2, Model):
-        backward_transform = wcs2.inverse
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+    try:
+        forward_transform = wcs1.pixel_to_world_values
+        backward_transform = wcs2.world_to_pixel_values
+    except AttributeError as err:
+        raise TypeError("Input should be a WCS") from err
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
