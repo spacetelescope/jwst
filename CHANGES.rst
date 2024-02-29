@@ -60,6 +60,12 @@ emicorr
 - Set skip=True by default in the code, to be turned on later by a parameter
   reference file. [#8171]
 
+exp_to_source
+-------------
+
+- Fixed a bug for multislit data that bunit values, model_type and wcsinfo was
+  was being overwritten with the top multispec model values. [#8294]
+
 extract_1d
 ----------
 
