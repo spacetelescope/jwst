@@ -7,7 +7,7 @@ from os.path import (
 
 import pytest
 
-from stpipe.extern.configobj.configobj import ConfigObj
+from astropy.extern.configobj.configobj import ConfigObj
 from stpipe import crds_client
 from stpipe import cmdline
 from stpipe.config import StepConfig

@@ -560,10 +560,9 @@ class Utility():
                 finalized_asns.append(asn)
 
         # Having duplicate Level 2 associations is expected.
-        # Suppress warnings.
-        with warnings.catch_warnings():
-            warnings.simplefilter('error') #was ignore. need to make more specific
-            lv2_asns = prune(lv2_asns)
+        #with warnings.catch_warnings():
+        #   warnings.simplefilter("ignore")
+        lv2_asns = prune(lv2_asns)
 
         # Ensure sequencing is correct.
         Utility_Level3.resequence(lv2_asns)

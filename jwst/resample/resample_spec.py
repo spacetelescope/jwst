@@ -402,9 +402,9 @@ class ResampleSpecData(ResampleData):
                 undist2sky1 = tan | native2celestial
                 # Filter out RuntimeWarnings due to computed NaNs in the WCS
                 with warnings.catch_warnings():
-                    warnings.simplefilter("error") #was ignore. need to make more specific
-                    # at this center of slit find x,y tangent projection - x_tan, y_tan
-                    x_tan, y_tan = undist2sky1.inverse(ra, dec)
+                    warnings.simplefilter("ignore", RuntimeWarning) #was ignore. need to make more specific
+                # at this center of slit find x,y tangent projection - x_tan, y_tan
+                x_tan, y_tan = undist2sky1.inverse(ra, dec)
 
                 # pull out data from center
                 if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
@@ -594,7 +594,7 @@ class ResampleSpecData(ResampleData):
         # Compute the wavelength array, trimming NaNs from the ends
         # In many cases, a whole slice is NaNs, so ignore those warnings
         with warnings.catch_warnings():
-            warnings.simplefilter("error") #was ignore. need to make more specific
+            warnings.simplefilter("ignore", RuntimeWarning)
             wavelength_array = np.nanmedian(lam, axis=spectral_axis)
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 

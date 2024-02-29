@@ -472,9 +472,9 @@ class DataSet():
             log.info(' subarray: %s', self.subarray)
             fields_to_match = {'subarray': self.subarray,
                                'filter': self.filter}
-            with warnings.catch_warnings():
-                warnings.simplefilter("error") #was ignore. need to make more specific
-                row = find_row(ftab.phot_table, fields_to_match)
+            #with warnings.catch_warnings():
+            #   warnings.simplefilter("ignore")
+            row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 # Search again using subarray="GENERIC" for old ref files
                 fields_to_match = {'subarray': 'GENERIC',
