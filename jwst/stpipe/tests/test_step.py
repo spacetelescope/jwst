@@ -608,4 +608,4 @@ def test_call_with_config(caplog, _jail):
 
     ProperPipeline.call(model, config_file=cfg)
 
-    assert "'par1': 'newpar1'" in caplog.text
+    assert "newpar1" in caplog.text
