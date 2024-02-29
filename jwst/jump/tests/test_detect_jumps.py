@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
-
+from astropy.io import fits
 from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, dqflags
 
 from jwst.jump.jump import run_detect_jumps
@@ -821,12 +821,13 @@ def test_proc(setup_inputs):
     model.data[0, 7, 2, 3] = 160.0
     model.data[0, 8, 2, 3] = 170.0
     model.data[0, 9, 2, 3] = 180.0
-
+    orig_model = model.copy()
     out_model_a = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
     out_model_b = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'half', 200, 4, True)
-    assert_array_equal(out_model_a.groupdq, out_model_b.groupdq)
-
+    assert_array_equal(orig_model.data, model.data)
+    assert_array_equal(orig_model.data, model.data)
     out_model_c = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
+    assert_array_equal(orig_model.data, out_model_c.data)
     assert_array_equal(out_model_a.groupdq, out_model_c.groupdq)
 
 
