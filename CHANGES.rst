@@ -68,6 +68,11 @@ extract_1d
 - Replaced instances of deprecated interp2d with 
   RectBivariateSpline in ``apply_apcorr``. [#8291]
 
+jump
+----
+Removed a unit test in Jump that was moved to STCAL to decrease
+the coupling of the two repos. [#8319]
+
 extract_2d
 ----------
 
