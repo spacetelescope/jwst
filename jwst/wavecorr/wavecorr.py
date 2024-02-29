@@ -30,6 +30,8 @@ Both ways give the same result, the current code uses the first one.
 import logging
 import numpy as np
 from gwcs import wcstools
+from astropy.modeling import tabular
+from astropy.modeling.mappings import Identity
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
@@ -127,43 +129,50 @@ def apply_zero_point_correction(slit, reffile):
         # For the MSA the aperture name is "MOS"
         aperture_name = "MOS"
 
-    lam = slit.wavelength.copy()
+    lam = slit.wavelength.copy() * 1e-6
     dispersion = compute_dispersion(slit.meta.wcs)
-    corr, dq_lam = compute_zero_point_correction(lam, reffile, source_xpos,
-                                                 aperture_name, dispersion)
-    # TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
-    # The only purpose of dq_lam is to set that flag.
 
-    # Wavelength is in um, the correction is computed in meters.
-    slit.wavelength = slit.wavelength - corr * 10 ** 6
+    wave2wavecorr = calculate_wavelength_correction_transform(lam, dispersion, 
+                                                              reffile, source_xpos, 
+                                                              aperture_name)
+    
+    # Insert the new transform into the slit wcs object
+    wave2wavecorr = Identity(2) & wave2wavecorr
+    slit_wcs.insert_transform('slit_frame', transform = wave2wavecorr, after=False)
+    
+    # Update the stored wavelengths for the slit
+    slit.wavelength = compute_wavelength(slit_wcs)
+    
 
-
-def compute_zero_point_correction(lam, freference, source_xpos,
-                                  aperture_name, dispersion):
-    """ Compute the NIRSpec wavelength zero-point correction.
+def calculate_wavelength_correction_transform(lam, dispersion, freference, 
+                                              source_xpos, aperture_name):
+    """ Generate a WCS transform for the NIRSpec wavelength zero-point correction
+    and add it to the WCS for each slit.
 
     Parameters
     ----------
+    slit_wcs : ~gwcs.wcs.WCS`
+        The WCS for this  slit.
     lam : ndarray
-        Wavelength array.
+        Wavelength array [in m].
+    dispersion : ndarray
+        The pixel dispersion [in m].
     freference : str
         ``wavecorr`` reference file name.
     source_xpos : float
         X position of the source as a fraction of the slit size.
     aperture_name : str
         Aperture name.
-    dispersion : ndarray
-        The pixel dispersion [in m].
-
+        
     Returns
     -------
-    lambda_corr : ndarray
-        Wavelength correction.
-    lam : ndarray
-        Interpolated wavelengths. Extrapolated values are reset to 0.
-        This is returned so that the DQ array can be updated with a flag
-        which indicates that no zero-point correction was done.
+    model : `~astropy.modeling.tabular.Tabular1D
+        A model which takes wavelength inputs and returns zeropoint
+        corrected wavelengths.
     """
+    
+    
+    # Open the  zerpoint reference model
     with datamodels.WaveCorrModel(freference) as wavecorr:
         for ap in wavecorr.apertures:
             if ap.aperture_name == aperture_name:
@@ -175,19 +184,31 @@ def compute_zero_point_correction(lam, freference, source_xpos,
                 break
         else:
             log.info(f'No wavelength zero-point correction found for slit {aperture_name}')
-
-    deltax = source_xpos
-    lam = lam.copy()
-    lam_no_nans = lam[~np.isnan(lam)]
+        
+    # Set lookup table to extrapolate at bounds to recover wavelengths beyond model bounds
+    # particulary for the red and blue ends of prism observations
     offset_model.bounds_error = False
-    correction = offset_model(lam_no_nans * 10 ** -6, [deltax] * lam_no_nans.size)
-    lam[~np.isnan(lam)] = correction
-
-    # The correction for pixels outside the slit and wavelengths
-    # outside the wave_range is 0.
-    lam[np.isnan(lam)] = 0.
-    lambda_cor = dispersion * lam
-    return lambda_cor, lam
+    offset_model.fill_value = None
+        
+    # Average the wavelength and dispersion across 2D extracted slit and remove nans
+    # So that we have a 1D wavelength array for building a 1D lookup table wcs transform
+    lam_mean = np.nanmean(lam, axis=0)
+    disp_mean = np.nanmean(dispersion, axis=0)
+    nan_lams = np.isnan(lam_mean) | np.isnan(disp_mean)
+    lam_mean = lam_mean[~nan_lams]
+    disp_mean = disp_mean[~nan_lams]
+    
+    # Calculate the corrected wavelengths
+    pixel_corrections = offset_model(lam_mean, source_xpos)
+    lam_corrected = lam_mean + (pixel_corrections * disp_mean)
+    
+    # Build a look up table to transform between corrected and uncorrected wavelengths
+    wave2wavecorr = tabular.Tabular1D(points=lam_mean, lookup_table=lam_corrected, 
+                                      bounds_error=False, fill_value=None)
+    wave2wavecorr.inverse = tabular.Tabular1D(points=lam_corrected, lookup_table=lam_mean, 
+                                              bounds_error=False, fill_value=None)
+    
+    return wave2wavecorr
 
 
 def compute_dispersion(wcs, xpix=None, ypix=None):
@@ -216,6 +237,32 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     _, _, lamright = wcs(xright, ypix)
     _, _, lamleft = wcs(xleft, ypix)
     return (lamright - lamleft) * 10 ** -6
+
+
+def compute_wavelength(wcs, xpix=None, ypix=None):
+    """ Compute the pixel wavelength.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.wcs.WCS`
+        The WCS object for this slit.
+    xpix : ndarray, float, optional
+    ypix : ndarray, float, optional
+        Compute the wavelength at the x, y pixels.
+        If not provided the dispersion is computed on a
+        grid based on ``wcs.bounding_box``.
+
+    Returns
+    -------
+    wavelength : ndarray
+        The wavelength [in microns].
+
+    """
+    if xpix is None or ypix is None:
+        xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
+        
+    _, _, lam = wcs(xpix, ypix)
+    return lam
 
 
 def _is_point_source(slit, exp_type):
