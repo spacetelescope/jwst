@@ -526,10 +526,10 @@ class NIRDataset(Dataset):
         ----------
         input_model : DataModel
             Input model containing data to mask.
-        scipix_n_default: int, optional
+        scipix_n_default : int, optional
             Number of regular samples before stepping out to collect
             reference samples.
-        refpix_r_default: int, optional
+        refpix_r_default : int, optional
             Number of reference samples before stepping back in to collect
             regular samples.
 
@@ -628,7 +628,7 @@ class NIRDataset(Dataset):
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             The group that is being processed
 
         amplifier: string ['A'|'B'|'C'|'D']
@@ -640,7 +640,7 @@ class NIRDataset(Dataset):
 
         Returns
         -------
-        oddref: NDArray
+        oddref : NDArray
             Array containing all the odd reference pixels
 
         odddq: NDArray
@@ -674,7 +674,7 @@ class NIRDataset(Dataset):
         Parameters
         ----------
 
-        group: NDArray
+        group : NDArray
             The group that is being processed
 
         amplifier: string ['A'|'B'|'C'|'D']
@@ -686,10 +686,10 @@ class NIRDataset(Dataset):
 
         Returns
         -------
-        evenref: NDArray
+        evenref : NDArray
             Array containing all the even reference pixels
 
-        evendq: NDArray
+        evendq : NDArray
             Array containing all the even dq values for those reference pixels
         """
         rowstart, rowstop, colstart, colstop = \
