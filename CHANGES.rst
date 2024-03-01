@@ -8,7 +8,7 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
--  JP-3290 Isolate candidate processing into their own pools [#8227]
+- Isolate candidate processing into their own pools [#8227]
 
 cube_build
 ----------
@@ -68,11 +68,6 @@ extract_1d
 - Replaced instances of deprecated interp2d with 
   RectBivariateSpline in ``apply_apcorr``. [#8291]
 
-jump
-----
-Removed a unit test in Jump that was moved to STCAL to decrease
-the coupling of the two repos. [#8319]
-
 extract_2d
 ----------
 
@@ -84,6 +79,12 @@ general
 -------
 
 - Update minimum required photutils version to 1.5.0 [#8211]
+
+jump
+----
+
+- Removed a unit test in Jump that was moved to STCAL to decrease
+  the coupling of the two repos. [#8319]
 
 outlier_detection
 -----------------
