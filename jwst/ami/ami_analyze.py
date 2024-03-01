@@ -140,7 +140,6 @@ def apply_LG_plus(input_model, throughput_model,
                                       src_spec, 
                                       trim=0.01, 
                                       nlambda=nspecbin,
-                                      verbose=False, 
                                       plot=False) 
             
 

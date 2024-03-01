@@ -245,6 +245,14 @@ class RawOifits:
 
         # prepare info for OI_TARGET ext
         name_star = info4oif.objname
+        # ra = self.ff.instrument_data.
+        # dec = 
+        # pmra = 
+        # pmdec =
+        # spectyp =
+        # plx = 
+
+
 
         customSimbad = Simbad()
         customSimbad.add_votable_fields('propermotions', 'sptype', 'parallax')
@@ -266,12 +274,14 @@ class RawOifits:
                 pmra, pmdec, plx = [0], [0], [0]
 
 
+
+
         self.oifits_dct = {
             'OI_VIS2': {'VIS2DATA': self.vis2,
                        'VIS2ERR': self.e_vis2,
                        'UCOORD': ucoord,
                        'VCOORD': vcoord,
-                       'STA_INDEX': self.bholes,
+                       'STA_INDEX': self._format_STAINDEX_V2(self.bholes),
                        'MJD': t.mjd,
                        'INT_TIME': info4oif.itime,
                        'TIME': 0,
@@ -290,7 +300,7 @@ class RawOifits:
                       'VISPHIERR': self.e_visphi,
                       'UCOORD': ucoord,
                       'VCOORD': vcoord,
-                      'STA_INDEX': self.bholes,
+                      'STA_INDEX': self._format_STAINDEX_V2(self.bholes),
                       'FLAG': flagVis,
                       'BL': bl_vis
                       },
@@ -307,7 +317,7 @@ class RawOifits:
                      'V1COORD': v1coord,
                      'U2COORD': u2coord,
                      'V2COORD': v2coord,
-                     'STA_INDEX': self.tholes,
+                     'STA_INDEX': self._format_STAINDEX_T3(self.tholes),
                      'FLAG': flagT3,
                      'BL': bl_cp
                      },
@@ -635,6 +645,63 @@ class RawOifits:
             baseline = self.ctrs_eqt[basepair[0]] - self.ctrs_eqt[basepair[1]]
             bllist.append(baseline)
         return barray, np.array(bllist)
+
+    def _format_STAINDEX_T3(self, tab):
+        """
+        Short Summary
+        ------------
+        Converts sta_index to save oifits T3 in the appropriate format
+
+        Parameters
+        ----------
+        tab: array
+            table of indices
+
+        Returns
+        -------
+        sta_index: list
+            Hole triples indices
+        int array of triangles
+        """    
+        sta_index = []
+        for x in tab:
+            ap1 = int(x[0])
+            ap2 = int(x[1])
+            ap3 = int(x[2])
+            if np.min(tab) == 0:
+                line = np.array([ap1, ap2, ap3]) + 1
+            else:
+                line = np.array([ap1, ap2, ap3])
+            sta_index.append(line)
+        return sta_index
+
+    def _format_STAINDEX_V2(self, tab):
+        """
+        Short Summary
+        ------------
+        Converts sta_index to save oifits V2 in the appropriate format
+
+        Parameters
+        ----------
+        tab: array
+            table of indices
+
+        Returns
+        -------
+        sta_index: list
+            Hole baseline indices
+        int array of baselines
+        """    
+        sta_index = []
+        for x in tab:
+            ap1 = int(x[0])
+            ap2 = int(x[1])
+            if np.min(tab) == 0:
+                line = np.array([ap1, ap2]) + 1 # RAC 2/2021
+            else:
+                line = np.array([ap1, ap2])
+            sta_index.append(line)
+        return sta_index
 
 
 
