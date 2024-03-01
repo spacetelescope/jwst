@@ -120,6 +120,9 @@ general
 
 - Remove unused asdf-transform-schemas dependency [#8337]
 
+- Replaced all instances of pytest ``tmpdir`` and ``tmpdir_factory``
+  fixtures with ``tmp_path`` and ``tmp_path_factory``. [#8327]
+
 jump
 ----
 
