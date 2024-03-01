@@ -156,6 +156,11 @@ residual_fringe
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
 
+scripts
+-------
+
+- Remove ``migrate_data`` and ``move_wcs`` scripts. [#8321]
+
 source_catalog
 --------------
 
