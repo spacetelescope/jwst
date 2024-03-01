@@ -11,8 +11,8 @@ def test_help(capsys):
     assert out.startswith('usage:')
 
 
-def test_default_run(tmpdir, capsys):
-    path = str(tmpdir)
+def test_default_run(tmp_path, capsys):
+    path = str(tmp_path)
     args = [
         '-o',
         path

@@ -39,10 +39,10 @@ def test_fitsdiff_defaults(fitsdiff_default_kwargs):
 
 
 @pytest.fixture
-def two_tables(tmpdir):
+def two_tables(tmp_path):
     """Return identical astropy tables written to 2 .ecsv file paths"""
-    path1 = str(tmpdir.join("catalog1.ecsv"))
-    path2 = str(tmpdir.join("catalog2.ecsv"))
+    path1 = os.path.join(tmp_path, "catalog1.ecsv")
+    path2 = os.path.join(tmp_path, "catalog2.ecsv")
     a = np.array([1, 4, 5], dtype=float)
     b = [2.0, 5.0, 8.5]
     c = ['x', 'y', 'z']
@@ -133,9 +133,9 @@ def test_diff_astropy_tables_all_equal(diff_astropy_tables, two_tables):
         assert diff_astropy_tables(path1, path2)
 
 
-def test_text_diff(tmpdir):
-    path1 = str(tmpdir.join("test1.txt"))
-    path2 = str(tmpdir.join("test2.txt"))
+def test_text_diff(tmp_path):
+    path1 = os.path.join(tmp_path, "test1.txt")
+    path2 = os.path.join(tmp_path, "test2.txt")
     with open(path1, "w") as text_file:
         print("foo", file=text_file)
     with open(path2, "w") as text_file:

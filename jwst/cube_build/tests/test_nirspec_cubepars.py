@@ -9,14 +9,15 @@ from astropy.io import fits
 from jwst.cube_build import ifu_cube
 from jwst.cube_build import cube_build_io_util
 from jwst.cube_build import instrument_defaults
+import os
 
 
 @pytest.fixture(scope='module')
-def nirspec_cube_pars(tmpdir_factory):
+def nirspec_cube_pars(tmp_path_factory):
     """ Set up the nirspec cube pars reference file  """
 
-    filename = tmpdir_factory.mktemp('cube_pars')
-    filename = str(filename.join('nirspec_cube_pars.fits'))
+    filename = tmp_path_factory.mktemp('cube_pars')
+    filename = os.path.join(filename, 'nirspec_cube_pars.fits')
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'NIRSPEC'

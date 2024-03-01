@@ -26,11 +26,11 @@ def get_file_path(filename):
 
 
 @pytest.fixture(scope='module')
-def background(tmpdir_factory):
+def background(tmp_path_factory):
     """Generate a  background image to feed to background step"""
 
-    filename = tmpdir_factory.mktemp('background_input')
-    filename = str(filename.join('background.fits'))
+    filename = tmp_path_factory.mktemp('background_input')
+    filename = os.path.join(filename, 'background.fits')
     with datamodels.IFUImageModel((10, 10)) as image:
         image.data[:, :] = 10
         image.meta.instrument.name = 'NIRSPEC'

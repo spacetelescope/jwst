@@ -52,7 +52,7 @@ def slow(request):
 
 
 @pytest.fixture(scope="module")
-def jail(request, tmpdir_factory):
+def jail(request, tmp_path_factory):
     """Run test in a pristine temporary working directory, scoped to module.
 
     This fixture is the same as _jail in ci_watson, but scoped to module
@@ -63,7 +63,7 @@ def jail(request, tmpdir_factory):
     path = request.module.__name__.split('.')[-1]
     if request._parent_request.fixturename is not None:
         path = path + "_" + request._parent_request.fixturename
-    newpath = tmpdir_factory.mktemp(path)
+    newpath = tmp_path_factory.mktemp(path)
     os.chdir(str(newpath))
     yield newpath
     os.chdir(old_dir)

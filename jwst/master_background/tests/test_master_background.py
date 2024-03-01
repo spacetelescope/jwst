@@ -4,6 +4,7 @@ Unit tests for master background subtraction
 import numpy as np
 import pytest
 import json
+import os
 
 from stdatamodels.jwst import datamodels
 
@@ -17,11 +18,11 @@ from jwst.master_background.master_background_step import (
 
 
 @pytest.fixture(scope='module')
-def user_background(tmpdir_factory):
+def user_background(tmp_path_factory):
     """Generate a user background spectrum"""
 
-    filename = tmpdir_factory.mktemp('master_background_user_input')
-    filename = str(filename.join('user_background.fits'))
+    filename = tmp_path_factory.mktemp('master_background_user_input')
+    filename = os.path.join(filename, 'user_background.fits')
     wavelength = np.linspace(0.5, 25, num=100)
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)

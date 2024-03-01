@@ -5,6 +5,7 @@ Unit test for Cube Build testing reading in MIRI cubepars ref file and using it
 import numpy as np
 import pytest
 from astropy.io import fits
+import os
 
 from gwcs import WCS
 from stdatamodels.jwst.datamodels import IFUImageModel
@@ -16,11 +17,11 @@ from jwst.cube_build.cube_build import ErrorNoChannels
 
 
 @pytest.fixture(scope='module')
-def miri_cube_pars(tmpdir_factory):
+def miri_cube_pars(tmp_path_factory):
     """ Set up the miri cube pars reference file  """
 
-    filename = tmpdir_factory.mktemp('cube_pars')
-    filename = str(filename.join('miri_cube_pars.fits'))
+    filename = tmp_path_factory.mktemp('cube_pars')
+    filename = os.path.join(filename, 'miri_cube_pars.fits')
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'MIRI'

@@ -34,10 +34,10 @@ def test_model_structure(run_exp_to_source):
             assert outputs[str(slit.source_id)].meta.filename != in_model.meta.filename
 
 
-def test_model_roundtrip(tmpdir, run_exp_to_source):
+def test_model_roundtrip(tmp_path, run_exp_to_source):
     inputs, outputs = run_exp_to_source
     files = []
-    path = str(tmpdir)
+    path = str(tmp_path)
     for output in outputs:
         file_path = os.path.join(path, output) + '.fits'
         outputs[output].save(file_path)

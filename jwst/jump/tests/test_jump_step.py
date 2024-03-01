@@ -2,6 +2,7 @@ from itertools import cycle
 
 import numpy as np
 import pytest
+import os
 
 from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel
 
@@ -11,12 +12,12 @@ MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
 
 
 @pytest.fixture(scope="module")
-def generate_miri_reffiles(tmpdir_factory):
+def generate_miri_reffiles(tmp_path_factory):
 
     def _generate_miri_reffiles(xsize=103, ysize=102, ingain=6):
 
-        gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
-        readnoisefile = str(tmpdir_factory.mktemp("data").join('readnoise.fits'))
+        gainfile = os.path.join(tmp_path_factory.mktemp("data"), "gain.fits")
+        readnoisefile = os.path.join(tmp_path_factory.mktemp("data"), 'readnoise.fits')
 
         ingain = ingain
         xsize = xsize
@@ -49,11 +50,11 @@ def generate_miri_reffiles(tmpdir_factory):
 
 
 @pytest.fixture(scope="module")
-def generate_nircam_reffiles(tmpdir_factory):
+def generate_nircam_reffiles(tmp_path_factory):
 
     def _generate_nircam_reffiles(xsize=20, ysize=20, ingain=6):
-        gainfile = str(tmpdir_factory.mktemp("ndata").join("gain.fits"))
-        readnoisefile = str(tmpdir_factory.mktemp("ndata").join('readnoise.fits'))
+        gainfile = os.path.join(tmp_path_factory.mktemp("ndata"), "gain.fits")
+        readnoisefile = os.path.join(tmp_path_factory.mktemp("ndata"), 'readnoise.fits')
 
         ingain = ingain
         xsize = xsize

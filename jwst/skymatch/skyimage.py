@@ -70,14 +70,14 @@ class NDArrayInMemoryAccessor(DataAccessor):
 class NDArrayMappedAccessor(DataAccessor):
     """ Data accessor for arrays stored in temporary files. """
     def __init__(self, data, tmpfile=None, prefix='tmp_skymatch_',
-                 suffix='.npy', tmpdir=''):
+                 suffix='.npy', tmp_path=''):
         super().__init__()
         if tmpfile is None:
             self._close = True
             self._tmp = tempfile.NamedTemporaryFile(
                 prefix=prefix,
                 suffix=suffix,
-                dir=tmpdir
+                dir=tmp_path
             )
             if not self._tmp:
                 raise RuntimeError("Unable to create temporary file.")
