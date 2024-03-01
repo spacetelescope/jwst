@@ -6,12 +6,12 @@ from drizzle import cdrizzle
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.library.basic_utils import bytes2human
 
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
 from . import resample_utils
-from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
