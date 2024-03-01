@@ -3874,10 +3874,7 @@ def create_extraction(extract_ref_dict,
         spec.extraction_xstop = extraction_values['xstop']
         spec.extraction_ystart = extraction_values['ystart']
         spec.extraction_ystop = extraction_values['ystop']
-        print('ADDING EXTRACTION start stop to header')
-        print(spec.extraction_xstart, spec.extraction_xstop)
-        print(spec.extraction_ystart, spec.extraction_ystop)
-        
+
         copy_keyword_info(meta_source, slitname, spec)
 
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
