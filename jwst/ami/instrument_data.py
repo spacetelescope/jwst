@@ -79,6 +79,7 @@ class NIRISS:
         self.throughput = bandpass
         self.firstfew = firstfew
         self.nrm_model = nrm_model
+        self.src = src
 
         self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
         self.wls = [self.throughput, ]
@@ -182,8 +183,6 @@ class NIRISS:
         self.vparity = input_model.meta.wcsinfo.vparity
         self.v3iyang = input_model.meta.wcsinfo.v3yangle
         self.parangh = input_model.meta.wcsinfo.roll_ref
-        self.ra = input_model.meta.target.ra
-        self.dec = input_model.meta.target.dec
         self.crpix1 = input_model.meta.wcsinfo.crpix1
         self.crpix2 = input_model.meta.wcsinfo.crpix2
         self.pupil = input_model.meta.instrument.pupil
@@ -194,6 +193,14 @@ class NIRISS:
             objname = input_model.meta.target.catalog_name
         self.objname = objname.replace('-', ' ')
         self.pi_name = input_model.meta.program.pi_name
+        self.ra = input_model.meta.target.ra
+        self.dec = input_model.meta.target.dec
+        self.pmra = input_model.meta.target.proper_motion_ra
+        self.pmdec = input_model.meta.target.proper_motion_dec
+        self.ra_uncertainty = input_model.meta.target.ra_uncertainty
+        self.dec_uncertainty = input_model.meta.target.dec_uncertainty
+        self.spectyp = self.src
+
 
         datestr = input_model.meta.visit.start_time.replace(' ','T')
         self.date = datestr # is this the right start time?
