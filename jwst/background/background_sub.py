@@ -90,9 +90,9 @@ class ImageSubsetArray:
             jmax = jmin
 
         # Set up arrays, NaN out data/err for sigma clipping, keep DQ as 0 for bitwise_or
-        data_overlap = np.ones_like(self.data) * np.nan
-        err_overlap = np.ones_like(self.data) * np.nan
-        dq_overlap = np.zeros_like(self.data, dtype=np.uint32)
+        data_overlap = np.ones_like(other.data) * np.nan
+        err_overlap = np.ones_like(other.data) * np.nan
+        dq_overlap = np.zeros_like(other.data, dtype=np.uint32)
 
         if self.im_dim == 2:
             idx = (slice(jmin - other.jmin, jmax - other.jmin),
@@ -158,7 +158,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
                                    )
 
     # Subtract the average background from the member
-    log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
+    log.info('Subtracting avg bkg from {}'.format(input_model.meta.filename))
 
     result = subtract_images.subtract(input_model, bkg_model)
 
@@ -212,6 +212,7 @@ def average_background(input_model, bkg_list, sigma, maxiters):
         log.info(f'Accumulate bkg from {bkg_file}')
 
         bkg_array = ImageSubsetArray(bkg_file)
+
         if not bkg_array.overlaps(im_array):
             # We don't overlap, so put in a bunch of NaNs so sigma-clip
             # isn't affected and move on
