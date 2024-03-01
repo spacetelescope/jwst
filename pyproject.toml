@@ -240,6 +240,8 @@ filterwarnings = [
     "error::ResourceWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
     "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
+    "ignore:Exception ignored in: <_io.FileIO:pytest.PytestUnraisableExceptionWarning",
+
 ]
 
 [tool.coverage.run]

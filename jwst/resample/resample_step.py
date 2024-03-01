@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import numpy as np
 import asdf
-from stpipe.extern.configobj.validate import Validator
+from astropy.extern.configobj.validate import Validator
 from astropy.extern.configobj.configobj import ConfigObj
 
 from stdatamodels.jwst import datamodels
