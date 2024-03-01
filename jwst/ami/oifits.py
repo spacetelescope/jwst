@@ -15,8 +15,6 @@ from scipy.special import comb
 from astropy import units as u
 from astropy.stats import sigma_clipped_stats
 from astropy.time.core import Time
-from astroquery.simbad import Simbad
-from astropy.coordinates import SkyCoord
 
 from stdatamodels.jwst import datamodels
 
@@ -243,39 +241,6 @@ class RawOifits:
         fov = [pscale * isz] * N_ap
         fovtype = ['RADIUS'] * N_ap
 
-        # prepare info for OI_TARGET ext
-        name_star = info4oif.objname
-        # ra = self.ff.instrument_data.
-        # dec = 
-        # pmra = 
-        # pmdec =
-        # spectyp =
-        # plx = 
-
-
-
-        customSimbad = Simbad()
-        customSimbad.add_votable_fields('propermotions', 'sptype', 'parallax')
-
-        # Add informations from Simbad:
-        if name_star == 'UNKNOWN':
-            ra, dec, spectyp = [0], [0], ['unknown']
-            pmra, pmdec, plx = [0], [0], [0]
-        else:
-            try:
-                query = customSimbad.query_object(name_star)
-                coord = SkyCoord(query['RA'][0]+' '+query['DEC']
-                                 [0], unit=(u.hourangle, u.deg))
-                ra, dec = [coord.ra.deg], [coord.dec.deg]
-                spectyp, plx = query['SP_TYPE'], query['PLX_VALUE']
-                pmra, pmdec = query['PMRA'], query['PMDEC']
-            except TypeError:
-                ra, dec, spectyp = [0], [0], ['unknown']
-                pmra, pmdec, plx = [0], [0], [0]
-
-
-
-
         self.oifits_dct = {
             'OI_VIS2': {'VIS2DATA': self.vis2,
                        'VIS2ERR': self.e_vis2,
@@ -332,27 +297,28 @@ class RawOifits:
                         'STAXYZ': staxyz,
                         'FOV': fov,
                         'FOVTYPE': fovtype,
-                        'CTRS_EQT': info4oif.ctrs_eqt, # mask hole coords rotated to equatotial
+                        'CTRS_EQT': info4oif.ctrs_eqt, # mask hole coords rotated to equatorial
                         'PISTONS': self.pist,
                         'PIST_ERR': self.e_pist
                         },
+
             'OI_TARGET': {'TARGET_ID':[1],
                         'TARGET': info4oif.objname,
-                        'RAEP0': ra,
-                        'DECEP0': dec,
+                        'RAEP0': info4oif.ra,
+                        'DECEP0': info4oif.dec,
                         'EQUINOX': [2000],
-                        'RA_ERR': [0],
-                        'DEC_ERR': [0],
+                        'RA_ERR': info4oif.ra_uncertainty,
+                        'DEC_ERR': info4oif.dec_uncertainty,
                         'SYSVEL': [0],
                         'VELTYP': ['UNKNOWN'],
                         'VELDEF': ['OPTICAL'],
-                        'PMRA': pmra,
-                        'PMDEC': pmdec,
+                        'PMRA': info4oif.pmra,
+                        'PMDEC': info4oif.pmdec,
                         'PMRA_ERR': [0],
                         'PMDEC_ERR': [0],
-                        'PARALLAX': plx,
+                        'PARALLAX': [0],
                         'PARA_ERR': [0],
-                        'SPECTYP': spectyp
+                        'SPECTYP': info4oif.spectyp
                         },
 
            'info': {'TARGET': info4oif.objname,
