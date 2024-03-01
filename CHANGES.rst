@@ -80,6 +80,8 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+- Update minimum required stdatamodels version to include 1.10.0 [#8322]
+
 outlier_detection
 -----------------
 
