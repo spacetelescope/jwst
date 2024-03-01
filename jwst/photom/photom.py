@@ -1,6 +1,5 @@
 import logging
 import functools
-import warnings
 
 import numpy as np
 from astropy import units as u

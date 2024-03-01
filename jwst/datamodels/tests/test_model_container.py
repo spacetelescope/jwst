@@ -5,11 +5,10 @@ from jwst.associations import load_as_asn
 import pytest
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import JwstDataModel, MultiExposureModel
-from stdatamodels.jwst.datamodels import _defined_models as defined_models
+from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels.util import NoTypeWarning
 
-from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels import ModelContainer
 from jwst.associations.asn_from_list import asn_from_list
 
 from jwst.lib.file_utils import pushdir
