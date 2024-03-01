@@ -607,37 +607,37 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                         rp_stds.append(rp_s)
                         rp_diffs.append(rp_d)
 
-            ref_pix = np.array(ref_pix, dtype=int)
-            rp_diffs = np.array(rp_diffs)
-            rp_means = np.array(rp_means)
-            rp_stds = np.array(rp_stds)
-            pair_pixel = ref_pix + 1
+            if not replace_only:
+                ref_pix = np.array(ref_pix, dtype=int)
+                rp_diffs = np.array(rp_diffs)
+                rp_means = np.array(rp_means)
+                rp_stds = np.array(rp_stds)
+                pair_pixel = ref_pix + 1
 
-            # clipped stats for all tests
-            mean_of_diffs, _, std_of_diffs = sigma_clipped_stats(rp_diffs, sigma=n_sigma)
-            mean_of_means, _, std_of_means = sigma_clipped_stats(rp_means, sigma=n_sigma)
-            mean_of_stds, _, std_of_stds = sigma_clipped_stats(rp_stds, sigma=n_sigma)
+                # clipped stats for all tests
+                mean_of_diffs, _, std_of_diffs = sigma_clipped_stats(rp_diffs, sigma=n_sigma)
+                mean_of_means, _, std_of_means = sigma_clipped_stats(rp_means, sigma=n_sigma)
+                mean_of_stds, _, std_of_stds = sigma_clipped_stats(rp_stds, sigma=n_sigma)
 
-            # find the additional intermittent bad pixels, marking both readouts
-            high_diffs = (rp_diffs - mean_of_diffs) > (n_sigma * std_of_diffs)
-            high_means = (rp_means - mean_of_means) > (n_sigma * std_of_means)
-            high_stds = (rp_stds - mean_of_stds) > (n_sigma * std_of_stds)
+                # find the additional intermittent bad pixels, marking both readouts
+                high_diffs = (rp_diffs - mean_of_diffs) > (n_sigma * std_of_diffs)
+                high_means = (rp_means - mean_of_means) > (n_sigma * std_of_means)
+                high_stds = (rp_stds - mean_of_stds) > (n_sigma * std_of_stds)
 
-            log.debug(f'High diffs={np.sum(high_diffs)}, '
-                      f'high means={np.sum(high_means)}, '
-                      f'high stds={np.sum(high_stds)}')
+                log.debug(f'High diffs={np.sum(high_diffs)}, '
+                          f'high means={np.sum(high_means)}, '
+                          f'high stds={np.sum(high_stds)}')
+                int_bad[ref_pix[high_diffs]] = True
+                int_bad[pair_pixel[high_diffs]] = True
+                int_bad[ref_pix[high_means]] = True
+                int_bad[pair_pixel[high_means]] = True
+                int_bad[ref_pix[high_stds]] = True
+                int_bad[pair_pixel[high_stds]] = True
 
-            int_bad[ref_pix[high_diffs]] = True
-            int_bad[pair_pixel[high_diffs]] = True
-            int_bad[ref_pix[high_means]] = True
-            int_bad[pair_pixel[high_means]] = True
-            int_bad[ref_pix[high_stds]] = True
-            int_bad[pair_pixel[high_stds]] = True
-
-            log.debug(f'{np.sum(int_bad[offset:offset + amplifier])} '
-                      f'suspicious bad reference pixels in '
-                      f'amplifier {k}, integration {j}')
-            mask_bad |= int_bad
+                log.debug(f'{np.sum(int_bad[offset:offset + amplifier])} '
+                          f'suspicious bad reference pixels in '
+                          f'amplifier {k}, integration {j}')
+                mask_bad |= int_bad
 
         # replace any flagged pixels if desired
         if not flag_only:
@@ -649,7 +649,10 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                                offset, offset + amplifier,
                                scipix_n, refpix_r)
 
-    log.info(f'Total bad reference pixels: {np.sum(mask_bad)}')
+    if flag_only:
+        log.info(f'Total bad reference pixels flagged: {np.sum(mask_bad)}')
+    else:
+        log.info(f'Total bad reference pixels replaced: {np.sum(mask_bad)}')
     if pixeldq is not None:
         pixeldq[mask_bad] |= (dqflags.pixel['BAD_REF_PIXEL']
                               | dqflags.pixel['DO_NOT_USE'])
