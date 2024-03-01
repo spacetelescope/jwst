@@ -1352,7 +1352,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
     effstims = []
 
     binfac = ptsin // nlambda
-    log.debug(("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
+    log.debug(("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda)))
     for wave in wavesteps:
         log.debug(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
                   f"with width {deltawave.to(u.micron):.2f}")
