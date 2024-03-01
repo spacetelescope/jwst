@@ -3870,10 +3870,10 @@ def create_extraction(extract_ref_dict,
         spec.slit_dec = dec
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params['dispaxis']
-        spec.xstart = extraction_values['xstart']
-        spec.xstop = extraction_values['xstop']
-        spec.ystart = extraction_values['ystart']
-        spec.ystop = extraction_values['ystop']
+        spec.extraction_xstart = extraction_values['xstart']
+        spec.extraction_xstop = extraction_values['xstop']
+        spec.extraction_ystart = extraction_values['ystart']
+        spec.extraction_ystop = extraction_values['ystop']
         copy_keyword_info(meta_source, slitname, spec)
 
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
