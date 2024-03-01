@@ -14,6 +14,7 @@ log.setLevel(logging.DEBUG)
 
 
 def apply_LG_plus(input_model, throughput_model,
+                nrm_model,
                 oversample, rotation,
                 psf_offset, rotsearch_parameters, 
                 src, bandpass, usebp, firstfew, 
@@ -170,7 +171,8 @@ def apply_LG_plus(input_model, throughput_model,
                                  mx, my, sx, sy, xo, yo,
                                  PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
-    niriss = instrument_data.NIRISS(filt, 
+    niriss = instrument_data.NIRISS(filt,
+                                    nrm_model,
                                     bandpass=bandpass,
                                     affine2d=affine2d,
                                     src=src,
