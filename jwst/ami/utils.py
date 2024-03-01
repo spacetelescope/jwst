@@ -1196,7 +1196,7 @@ def img_median_replace(img_model, box_size):
 
     return img_model
 
-def get_filt_spec(throughput_model, verbose=False):
+def get_filt_spec(throughput_model):
     """
     Short Summary
     ------------
@@ -1238,7 +1238,7 @@ def get_src_spec(sptype):
     """
     # check if it's already a synphot spectrum
     if isinstance(sptype, synphot.spectrum.SourceSpectrum):
-        print('Input is a synphot spectrum')
+        log.info('Input is a synphot spectrum')
         return sptype
     else:
         # phoenix model lookup table used in JWST ETCs
@@ -1306,7 +1306,7 @@ def get_src_spec(sptype):
                       "lookup table, and/or that synphot is installed properly.".format())
             raise LookupError(errmsg)
 
-def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, plot=False):
+def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, plot=False):
     """
     Short Summary
     ------------
@@ -1334,20 +1334,16 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, pl
     """
 
     wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset)
-    # print(len(wl_filt),len(th_filt))
 
     if trim:
-        if verbose: 
-            print("Trimming bandpass to above %.1e throughput" % trim)
+        log.debug("Trimming bandpass to above %.1e throughput" % trim)
         goodthru = np.where(np.asarray(th_filt) > trim)
         low_idx, high_idx = goodthru[0][0], goodthru[0][-1]
         wl_filt, th_filt = wl_filt[low_idx:high_idx], th_filt[low_idx:high_idx]
-        # print(len(wl_filt),len(th_filt))
     ptsin = len(wl_filt)
     if nlambda is None:
         nlambda = ptsin # Don't bin throughput
     # get effstim for bins of wavelengths
-    # plt.plot(wl_filt,th_filt)
     minwave, maxwave = wl_filt.min(), wl_filt.max()  # trimmed or not
     wave_bin_edges = np.linspace(minwave, maxwave, nlambda + 1)
     wavesteps = (wave_bin_edges[:-1] + wave_bin_edges[1:]) / 2
@@ -1356,11 +1352,9 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19, verbose=False, pl
     effstims = []
 
     binfac = ptsin // nlambda
-    if verbose: 
-        print("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
+    log.debug(("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
     for wave in wavesteps:
-        if verbose:
-            print(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
+        log.debug(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
                   f"with width {deltawave.to(u.micron):.2f}")
         box = synphot.spectrum.SpectralElement(synphot.models.Box1D, amplitude=1, x_0=wave,
                                                width=deltawave) * bandpass
