@@ -27,7 +27,7 @@ class AmiAnalyzeStep(Step):
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
-    reference_file_types = ['throughput']
+    reference_file_types = ['throughput', 'nrm']
 
     def save_model(self, model, *args, **kwargs):
         # Override save_model to change suffix based on list of results
@@ -96,9 +96,17 @@ class AmiAnalyzeStep(Step):
         # Open the filter throughput reference file
         throughput_model = datamodels.ThroughputModel(throughput_reffile)
 
+        # Get the name of the NRM reference file to use
+        nrm_reffile = self.get_reference_file(input_model, 'nrm')
+        self.log.info(f'Using NRM reference file {nrm_reffile}')
+
+        # Open the the NRM reference file
+        nrm_model = datamodels.NRMModel(nrm_reffile)
+
         # Apply the LG+ methods to the data
         oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(input_model,
                                                     throughput_model,
+                                                    nrm_model,
                                                     oversample, rotate,
                                                     psf_offset,
                                                     rotsearch_parameters,

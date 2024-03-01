@@ -39,15 +39,6 @@ filthp_d = {  # half power limits
 }
 WL_OVERSIZEFACTOR = 0.1  # increase filter wl support by this amount to 'oversize' in wl space
 
-# GET PUPIL MASK FROM WEBBPSF
-pupil_masks = {}
-webbpsf_path = os.getenv('WEBBPSF_PATH')
-if webbpsf_path is not None:
-    pupilfile_nrm = os.path.join(webbpsf_path,'NIRISS/optics/MASK_NRM.fits.gz')
-    pupil_masks["NRM"] = fits.getdata(pupilfile_nrm)
-else:
-    warnings.warn("WEBBPSF_PATH environment variable is undefined but is required in this code")
-
 DIAM = 6.559348  # / Flat-to-flat distance across pupil in V3 axis
 PUPLDIAM = 6.603464  # / Full pupil file size, incl padding.
 PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
@@ -71,7 +62,7 @@ def create_wavelengths(filtername):
 
     return (wl_ctr, wl_ctr - dleft, wl_ctr + drite)
 
-def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil="NRM"):
+def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil_mask):
     """
     Short Summary
     ------------
@@ -89,8 +80,8 @@ def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil="NRM"):
     pxsc_rad: float
         Detector pixel scale in rad/px
 
-    pupil: str
-        Pupil name (NRM)
+    pupil_mask: array
+        Pupil mask model (NRM)
 
     Returns
     -------
@@ -102,7 +93,7 @@ def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil="NRM"):
     log.info(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
     detimage = np.zeros((sqfov_npix, sqfov_npix), float)
     for wl in wls:
-        psf = calcpsf(wl, sqfov_npix, pxsc_rad, pupil=pupil)
+        psf = calcpsf(wl, sqfov_npix, pxsc_rad, pupil_mask)
         detimage += psf
 
     return transform_image(detimage)
@@ -129,7 +120,7 @@ def transform_image(image):
 
     return np.abs(ftimage)
 
-def calcpsf(wl, fovnpix, pxsc_rad, pupil="NRM"):
+def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     """
     Short Summary
     ------------
@@ -146,8 +137,8 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil="NRM"):
     pxsc_rad: float
         Detector pixel scale in rad/px
 
-    pupil: str
-        Pupil name (NRM)
+    pupil_mask: array
+        Pupil mask model (NRM)
 
     Returns
     -------
@@ -159,7 +150,6 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil="NRM"):
     # instantiate an mft object:
     ft = matrixDFT.MatrixFourierTransform()
 
-    pupil_mask = pupil_masks[pupil]
     image_field = ft.perform(pupil_mask, nlamD, fovnpix)
     image_intensity = (image_field * image_field.conj()).real
 
@@ -257,7 +247,7 @@ def fourier_corr(data,
     return data_out
 
 
-def fix_bad_pixels(data, pxdq0, filt, pxsc):
+def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     """
     Short Summary
     ------------
@@ -275,6 +265,8 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc):
         AMI filter name
     pxsc: float
         Pixel scale, mas/pixel
+    nrm_model: datamodel object
+        NRM pupil datamodel
 
     Returns
     -------
@@ -317,6 +309,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc):
     median_tres = 50. # JK: changed from 28 to 20 in order to capture all bad pixels
 
     pupil = "NRM"
+    pupil_mask = nrm_model.nrm
     imsz = data.shape
     sh = imsz[-1] //2 # half size, even
     # Compute field-of-view and Fourier sampling.
@@ -325,7 +318,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc):
     log.info('      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix' % (fov, fsam))
 
     #
-    cvis = calcsupport(filt, 2 * sh, pxsc_rad, pupil=pupil)
+    cvis = calcsupport(filt, 2 * sh, pxsc_rad, pupil_mask)
     cvis /= np.max(cvis)
     fmas = cvis < 1e-3  # 1e-3 seems to be a reasonable threshold
     # fmas_show = fmas.copy()
