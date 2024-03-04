@@ -10,6 +10,12 @@ associations
 
 - Isolate candidate processing into their own pools [#8227]
 
+background
+----------
+
+- Updated to allow multi-integration (rateints) background exposures to have
+  a different value of NINTS than the science exposure. [#8326]
+
 cube_build
 ----------
 
