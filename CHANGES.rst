@@ -8,7 +8,7 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
--  JP-3290 Isolate candidate processing into their own pools [#8227]
+- Isolate candidate processing into their own pools [#8227]
 
 cube_build
 ----------
@@ -84,6 +84,14 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
+- Update minimum required stdatamodels version to include 1.10.0 [#8322]
+
+jump
+----
+
+- Removed a unit test in Jump that was moved to STCAL to decrease
+  the coupling of the two repos. [#8319]
+
 outlier_detection
 -----------------
 
@@ -121,6 +129,12 @@ pipeline
 - Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
   the list of modes for running the ``nsclean`` step. [#8256]
 
+pixel_replace
+-------------
+
+- Fixed a bug that caused array size mismatches when the ``mingrad`` algorithm
+  was applied to NIRSpec data. [#8312]
+
 refpix
 ------
 
@@ -130,6 +144,9 @@ refpix
 
 - Add option for NIRSpec IRS2 to preserve interleaved reference pixels in the
   output file, for calibration and diagnostic purposes. [#8255]
+
+- Add option to correct for mean reference pixel offsets by amplifier and detector
+  column in NIRSpec IRS2 mode. [#8143]
 
 resample
 --------
@@ -145,6 +162,11 @@ residual_fringe
 
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
+
+scripts
+-------
+
+- Remove ``migrate_data`` and ``move_wcs`` scripts. [#8321]
 
 source_catalog
 --------------

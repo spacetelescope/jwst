@@ -203,10 +203,10 @@ def test_odd_even():
 
 
 @pytest.mark.parametrize('detector,ysize,odd_even',
-                         [('NRS1', 2048, True),
-                          ('NRS1', 2048, False),
-                          ('NRS2', 2048, True),
-                          ('NRS2', 2048, False),])
+                         [('NRS1', 2048, True), ('NRS1', 3200, True),
+                          ('NRS1', 2048, False), ('NRS1', 3200, False),
+                          ('NRS2', 2048, True), ('NRS2', 3200, True),
+                          ('NRS2', 2048, False), ('NRS2', 3200, False)])
 def test_odd_even_amp_nirspec(detector, ysize, odd_even):
     """Check that odd/even columns are applied when flag is set"""
 
@@ -249,7 +249,8 @@ def test_odd_even_amp_nirspec(detector, ysize, odd_even):
     im.pixeldq[:, -4:] = dqflags.pixel['REFERENCE_PIXEL']
 
     # run the step
-    out = RefPixStep.call(im, use_side_ref_pixels=False, odd_even_columns=odd_even)
+    out = RefPixStep.call(im, use_side_ref_pixels=False, odd_even_columns=odd_even,
+                          irs2_mean_subtraction=True)
 
     # values should be different by amp and by odd/even row if specified
     # pick a random pixel to test

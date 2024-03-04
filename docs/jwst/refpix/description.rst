@@ -176,7 +176,7 @@ reference pixel correction for data read out using the IRS2 readout pattern.
 See the JdoxIRS2_ page for for an overview, and see Rauscher2017_ for
 details.
 
-The raw data include both the science data and interspersed reference
+The raw data include both the science data and interleaved reference
 pixel values.  The time to read out the entire detector includes not only
 the time to read each pixel of science ("normal") data and some of the
 reference pixels, but also time for the transition between reading normal
@@ -185,17 +185,14 @@ each row and between frames.  For example, it takes the same length of time
 to jump from reading normal pixels to reading reference pixels as it does
 to read one pixel value, about ten microseconds.
 
-Before subtracting the reference pixel and reference output values from
-the science data, some processing is done on the reference values, and the
-CRDS reference file factors are applied.  IRS2 readout is only used for
-full-frame data, never for subarrays.  The full detector is read out
-by four separate amplifiers simultaneously, and the reference output is
-read at the same time.  Each of these five readouts is the same size,
-640 by 2048 pixels (for IRS2).  If the CRDS reference file includes a
-DQ (data quality) BINTABLE extension, interleaved reference pixel values
-will be set to zero if they are flagged as bad in the DQ extension.
+IRS2 readout is only used for full-frame data, never for subarrays. The full
+detector is read out by four separate amplifiers simultaneously, and the
+reference output is read at the same time.  Each of these five readouts is
+the same size, 640 by 2048 pixels, each containing a repeating set of 8
+normal pixel readouts, 4 interleaved reference pixel readouts, and 8 more
+normal pixel readouts.
 
-At this point the algorithm looks for intermittently bad (or suspicious)
+The first step in processing IRS2 data is to look for intermittently bad
 reference pixels. This is done by calculating the means and standard
 deviations per reference pixel column, as well as the absolute value of the
 difference between readout pairs, across all groups within each integration.
@@ -203,7 +200,7 @@ The robust mean and standard deviation of each of these arrays is then
 computed. Values greater than the robust mean plus the standard
 deviation, times a factor to avoid overcorrection, are flagged as bad
 pixels.  Readout pairs are always flagged together, and are flagged across
-all groups and integrations. Bad values are replaced by values from the
+all groups and integrations. Bad values will be replaced by values from the
 nearest reference group within the same amplifier, respecting parity
 (even/oddness).  The replacement value is the average of upper and lower
 values if both are good, or directly using the upper or lower values if only
@@ -211,6 +208,24 @@ one is good. If there are no nearest good values available, but there is a
 good adjacent neighbor that does not match parity, that value is used.  If
 there are no good replacement values, the bad pixel is set to 0.0 to be
 interpolated over in the IRS2 correction to follow.
+
+After flagging bad reference pixels, the step performs an optional
+correction for overall mean reference pixel offsets by amplifier and
+column parity. The algorithm described above for the traditional NIR readout
+mode is applied to IRS2 data to perform this correction, with two small
+differences:
+
+    #. Side pixel correction is never applied for IRS2 data.
+
+    #. "Even" and "odd" refer to detector column addresses, rather than
+       data array locations, to ensure that interleaved reference pixel
+       columns are accounted for correctly.
+
+After the mean offsets are subtracted and bad pixels are replaced, some processing
+is done on the remaining reference values, and the CRDS reference file
+factors are applied. If the CRDS reference file includes a DQ (data quality)
+BINTABLE extension, interleaved reference pixel values will be set to zero if
+they are flagged as bad in the DQ extension.
 
 The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary
