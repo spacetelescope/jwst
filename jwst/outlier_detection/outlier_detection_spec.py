@@ -88,7 +88,7 @@ class OutlierDetectionSpec(OutlierDetection):
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
                     self.input_models[i],
-                    weight_type='ivm',
+                    weight_type=pars['weight_type'],
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
