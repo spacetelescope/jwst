@@ -159,6 +159,8 @@ resample
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
 
+- Replace use of ``check_memory_allocation``. [#8324]
+
 residual_fringe
 ---------------
 
