@@ -244,8 +244,6 @@ class TestMethods:
         gdq[0, 4, 0, 0] = 4
         slopes, cube, optional, gls_dummy = ramp_fit(
             model1, 60000, True, rnoise, gain, method, 'optimal', 'none', dqflags.pixel)
-        seg1_slope1 = optional[0][0, 0, 0, 0]
-        seg1_slope2 = optional[0][0, 1, 0, 0]
         data = slopes[0]
         np.testing.assert_almost_equal(data[0, 0], 0.1, decimal=4)
 

@@ -66,8 +66,8 @@ class DarkCurrentStep(Step):
                 if np.sum(dark_model.average_dark_current) == 0.0:
                     input_model.average_dark_current[:, :] = dark_model.meta.exposure.average_dark_current
                 elif np.shape(input_model.average_dark_current) != np.shape(dark_model.average_dark_current):
-                    self.log.warning(f"DarkModel average_dark_current does not match shape of data.\n"
-                                     f"Dark current from reference file cannot be applied.")
+                    self.log.warning("DarkModel average_dark_current does not match shape of data.\n"
+                                     "Dark current from reference file cannot be applied.")
                 else:
                     input_model.average_dark_current = dark_model.average_dark_current
 
