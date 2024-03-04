@@ -14,7 +14,7 @@ background
 ----------
 
 - Updated to allow multi-integration (rateints) background exposures to have
-  different values of NINTS. [#8326]
+  a different value of NINTS than the science exposure. [#8326]
 
 cube_build
 ----------
