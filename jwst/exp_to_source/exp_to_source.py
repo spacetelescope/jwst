@@ -43,10 +43,10 @@ def exp_to_source(inputs):
             # store values for later use (after merge_tree)
             # these values are incorrectly getting overwritten by
             # the top model.
-            slit_bunit = slit.meta.bunit_data
-            slit_bunit_err = slit.meta.bunit_err
-            slit_model = slit.meta.model_type
-            slit_wcsinfo = slit.meta.wcsinfo
+            slit_bunit = slit.meta.bunit_data.copy()
+            slit_bunit_err = slit.meta.bunit_err.copy()
+            slit_model = slit.meta.model_type.copy()
+            slit_wcsinfo = slit.meta.wcsinfo.copy()
             # exposure.meta.bunit_data and bunit_err does not exist
             # before calling merge_tree save these values
             # Before merge_tree the slits have a model_type of SlitModel.
