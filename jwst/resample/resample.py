@@ -495,7 +495,6 @@ class ResampleData:
             output_model.meta.exposure.measurement_time = total_measurement_time
         output_model.meta.exposure.start_time = min(exposure_times['start'])
         output_model.meta.exposure.end_time = max(exposure_times['end'])
-        output_model.meta.resample.product_exposure_time = total_exposure_time
 
         # Update other exposure time keywords:
         # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
