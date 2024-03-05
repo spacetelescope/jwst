@@ -82,7 +82,6 @@ extract_1d
   pixels in the 2nd-order spectrum are flagged and would cause the step
   to fail. [#8265]
 
-
 - Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
@@ -90,7 +89,8 @@ extract_1d
 - Replaced instances of deprecated interp2d with 
   RectBivariateSpline in ``apply_apcorr``. [#8291]
 
-- Added saving the extraction location to the FITS header. [#8278]
+- Added saving the extraction aperture x/y limits for slit-like modes to
+  keywords in the output header. [#8278]
 
 
 extract_2d

@@ -619,7 +619,7 @@ def update_from_width(
         lower = (lower + upper) / 2. - (width - 1.) / 2.
         upper = lower + (width - 1.)
         ap_width = Aperture(xstart=lower, xstop=upper, ystart=ap_ref.ystart, ystop=ap_ref.ystop)
-    
+
     return ap_width
 
 
@@ -3509,7 +3509,6 @@ def extract_one_slit(
     extraction_values['xstop'] = None
     extraction_values['ystart'] = None
     extraction_values['ystop'] = None
-    extraction_values['width'] = None
 
     # Log the extraction limits being used
     if integ < 1:
@@ -3520,24 +3519,24 @@ def extract_one_slit(
                 log.info("Using extraction limits: "
                          f"xstart={extract_model.xstart}, "
                          f"xstop={extract_model.xstop}, and src_coeff")
-                extraction_values['xstart'] = extract_model.xstart
-                extraction_values['xstop'] = extract_model.xstop
+                extraction_values['xstart'] = extract_model.xstart + 1
+                extraction_values['xstop'] = extract_model.xstop + 1
             else:
                 # Only print ystart/ystop, because xstart/xstop are not used
                 log.info("Using extraction limits: "
                          f"ystart={extract_model.ystart}, "
                          f"ystop={extract_model.ystop}, and src_coeff")
-                extraction_values['ystart'] = extract_model.ystart
-                extraction_values['ystop'] = extract_model.ystop
+                extraction_values['ystart'] = extract_model.ystart + 1
+                extraction_values['ystop'] = extract_model.ystop + 1
         else:
             # No src_coeff, so print all xstart/xstop and ystart/ystop values
             log.info("Using extraction limits: "
                      f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
                      f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
-            extraction_values['xstart'] = extract_model.xstart
-            extraction_values['xstop'] = extract_model.xstop
-            extraction_values['ystart'] = extract_model.ystart
-            extraction_values['ystop'] = extract_model.ystop
+            extraction_values['xstart'] = extract_model.xstart + 1
+            extraction_values['xstop'] = extract_model.xstop + 1
+            extraction_values['ystart'] = extract_model.ystart + 1
+            extraction_values['ystop'] = extract_model.ystop + 1
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
