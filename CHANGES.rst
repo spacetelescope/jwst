@@ -97,7 +97,7 @@ jump
  lib
 ---
 
-- Updated ``set_velocity_aberration`` to use datamodels instead of fits for opening
+- Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
   and manipulating input files. [#8285]
 
 outlier_detection
