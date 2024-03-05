@@ -8,6 +8,14 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+- Isolate candidate processing into their own pools [#8227]
+
+background
+----------
+
+- Updated to allow multi-integration (rateints) background exposures to have
+  a different value of NINTS than the science exposure. [#8326]
+
 cube_build
 ----------
 
@@ -59,6 +67,13 @@ extract_1d
   pixels in the 2nd-order spectrum are flagged and would cause the step
   to fail. [#8265]
 
+- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
+  to avoid failures for moderate-brightness sources due to extremely low
+  throughput at the long wavelength end of MRS band 4C. [#8199]
+
+- Replaced instances of deprecated interp2d with 
+  RectBivariateSpline in ``apply_apcorr``. [#8291]
+
 extract_2d
 ----------
 
@@ -71,7 +86,15 @@ general
 
 - Update minimum required photutils version to 1.5.0 [#8211]
 
-lib
+- Update minimum required stdatamodels version to include 1.10.0 [#8322]
+
+jump
+----
+
+- Removed a unit test in Jump that was moved to STCAL to decrease
+  the coupling of the two repos. [#8319]
+  
+ lib
 ---
 
 - Updated ``set_velocity_aberration`` to use datamodels instead of fits for opening
@@ -114,6 +137,12 @@ pipeline
 - Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
   the list of modes for running the ``nsclean`` step. [#8256]
 
+pixel_replace
+-------------
+
+- Fixed a bug that caused array size mismatches when the ``mingrad`` algorithm
+  was applied to NIRSpec data. [#8312]
+
 refpix
 ------
 
@@ -121,9 +150,11 @@ refpix
   all groups in each integration and robustly replace bad values from their
   nearest neighbors. [#8197, #8214]
 
-- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
-  to avoid failures for moderate-brightness sources due to extremely low
-  throughput at the long wavelength end of MRS band 4C. [#8199]
+- Add option for NIRSpec IRS2 to preserve interleaved reference pixels in the
+  output file, for calibration and diagnostic purposes. [#8255]
+
+- Add option to correct for mean reference pixel offsets by amplifier and detector
+  column in NIRSpec IRS2 mode. [#8143]
 
 resample
 --------
@@ -133,6 +164,8 @@ resample
 - Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
+
+- Replace use of ``check_memory_allocation``. [#8324]
 
 residual_fringe
 ---------------
@@ -146,13 +179,24 @@ scripts
 - Updated ``set_velocity_aberration`` to have an optional ``--force-level1bmodel``
   flag. [#8285]
 
+- Remove ``migrate_data`` and ``move_wcs`` scripts. [#8321]
+
+source_catalog
+--------------
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
+
 tweakreg
 --------
 
 - Update ``sregion`` after WCS corrections are applied. [#8158]
 
-- Added option to choose IRAFStarFinder and segmentation.SourceFinder
+- Add option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
 
 
 1.13.4 (2024-01-25)

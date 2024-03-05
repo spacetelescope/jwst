@@ -4,10 +4,11 @@ import pytest
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
 from jwst.refpix import RefPixStep
-from jwst.refpix.reference_pixels import Dataset, NIRDataset, correct_model, create_dataset
+from jwst.refpix.reference_pixels import (
+    Dataset, NIRDataset, correct_model, create_dataset, NRS_edgeless_subarrays)
 
 
-def test_refpix_subarray():
+def test_refpix_subarray_miri():
     '''Check that the correction is skipped for MIR subarray data '''
 
     # For MIRI, no reference pixel correction is performed on subarray data
@@ -34,6 +35,41 @@ def test_refpix_subarray():
 
     # test that the science data are not changed
     np.testing.assert_array_equal(im.data, outim.data)
+
+
+@pytest.mark.parametrize('subarray,ysize,xsize',
+                         [('SUB512', 32, 512),
+                          ('SUBS200A1', 64, 2048)])
+def test_refpix_subarray_nirspec(subarray, ysize, xsize):
+    """Check that the correction is performed for NRS subarray data."""
+
+    # For NIRSpec, reference pixel correction is performed for all
+    # subarrays, with and without edges.
+
+    # create input data
+    ngroups = 3
+    im = make_rampmodel(ngroups, ysize, xsize, instrument='NIRSPEC', fill_value=0.0)
+    im.meta.subarray.name = subarray
+    im.meta.subarray.xstart = 1
+    im.meta.subarray.ystart = 1
+
+    # set reference pixel values top and bottom, left and right
+    im.data[:, :, :4, :] = 1.0
+    im.data[:, :, -4:] = 2.0
+    im.data[:, :, :, :4] = 3.0
+    im.data[:, :, :, -4:] = 4.0
+
+    # set reference pixels to 'REFERENCE_PIXEL'
+    if subarray not in NRS_edgeless_subarrays:
+        im.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
+        im.pixeldq[:, -4:] = dqflags.pixel['REFERENCE_PIXEL']
+
+    # run the step
+    out = RefPixStep.call(im)
+
+    # value subtracted should be the average of the left and right
+    # reference pixels
+    assert np.allclose(out.data[:, :, 4:-5, 4:-5], -3.5)
 
 
 def test_each_amp():
@@ -113,7 +149,6 @@ def test_firstframe_sub():
     # test that the science data are not changed
     np.testing.assert_array_equal(im.data, outim.data)
 
-
 def test_odd_even():
     '''Check that odd/even rows are applied when flag is set'''
 
@@ -165,6 +200,83 @@ def test_odd_even():
     assert out.data[0, 5, 101, 5] == 48.0
     assert out.data[0, 5, 101, 6] == 47.0
     assert out.data[0, 5, 101, 7] == 46.0
+
+
+@pytest.mark.parametrize('detector,ysize,odd_even',
+                         [('NRS1', 2048, True), ('NRS1', 3200, True),
+                          ('NRS1', 2048, False), ('NRS1', 3200, False),
+                          ('NRS2', 2048, True), ('NRS2', 3200, True),
+                          ('NRS2', 2048, False), ('NRS2', 3200, False)])
+def test_odd_even_amp_nirspec(detector, ysize, odd_even):
+    """Check that odd/even columns are applied when flag is set"""
+
+    # Test that odd and even rows are calculated separately
+
+    # create input data
+    # create model of data with 0 value array
+    ngroups = 1
+    xsize = 2048
+
+    # make ramp model
+    im = make_rampmodel(ngroups, ysize, xsize,
+                        instrument='NIRSPEC', fill_value=0.0)
+    im.meta.instrument.detector = detector
+
+    # check for irs2 data
+    if ysize == 3200:
+        n_amp = 5
+        is_irs = True
+    else:
+        n_amp = 4
+        is_irs = False
+    amp_size = ysize // n_amp
+
+    # set reference pixel values left and right side, odd and even rows.
+    rval = []
+    for i in range(n_amp):
+        start_y = i * amp_size
+        end_y = start_y + amp_size
+        amp_val = 10 * i + 1.0
+        im.data[:, :, start_y:end_y:2, :4] = amp_val
+        im.data[:, :, start_y + 1:end_y:2, :4] = amp_val + 1
+        im.data[:, :, start_y:end_y:2, -4:] = amp_val
+        im.data[:, :, start_y + 1:end_y:2, -4:] = amp_val + 1
+
+        rval.append(amp_val)
+
+    # set reference pixels to 'REFERENCE_PIXEL'
+    im.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
+    im.pixeldq[:, -4:] = dqflags.pixel['REFERENCE_PIXEL']
+
+    # run the step
+    out = RefPixStep.call(im, use_side_ref_pixels=False, odd_even_columns=odd_even,
+                          irs2_mean_subtraction=True)
+
+    # values should be different by amp and by odd/even row if specified
+    # pick a random pixel to test
+    # Note: only 4 amps in output, regardless of how many are in input
+    test_row = 256
+    test_col = xsize // 2
+    for i in range(n_amp):
+        if n_amp == 5:
+            # skip ref section: first for nrs1, last for nrs2
+            if i == 0 and detector == 'NRS1':
+                continue
+            elif i == n_amp - 1 and detector == 'NRS2':
+                continue
+        if odd_even:
+            if is_irs:
+                # odd/even is a little different for irs2: values get mixed
+                assert np.isclose(out.data[0, 0, test_row, test_col], -rval[i] - 0.1)
+                assert np.isclose(out.data[0, 0, test_row + 1, test_col], -rval[i] - 0.9)
+            else:
+                assert out.data[0, 0, test_row, test_col] == -rval[i]
+                assert out.data[0, 0, test_row + 1, test_col] == -rval[i] - 1
+        else:
+            assert out.data[0, 0, test_row, test_col] == -rval[i] - 0.5
+            assert out.data[0, 0, test_row + 1, test_col] == -rval[i] - 0.5
+
+        test_row += 2048 // 4
 
 
 def test_no_odd_even():
@@ -637,27 +749,42 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
             decimal=1)
 
 
-def make_rampmodel(ngroups, ysize, xsize):
-    '''Make MIRI ramp model for testing'''
+def make_rampmodel(ngroups, ysize, xsize, instrument='MIRI', fill_value=None):
+    '''Make MIRI or NIRSpec ramp model for testing'''
 
     # create the data and groupdq arrays
     csize = (1, ngroups, ysize, xsize)
 
-    # create JWST datamodel and set each frame equal to frame number
+    # create JWST datamodel
     dm_ramp = RampModel(csize)
 
-    for i in range(0, ngroups - 1):
-        dm_ramp.data[0, i, :, :] = i
+    # set each frame equal to frame number if fill value is not provided
+    if fill_value is None:
+        for i in range(0, ngroups - 1):
+            dm_ramp.data[0, i, :, :] = i
+    else:
+        dm_ramp.data[:] = fill_value
 
     # populate header of data model
+    if instrument == 'NIRSPEC':
+        dm_ramp.meta.instrument.name = 'NIRSPEC'
+        dm_ramp.meta.instrument.detector = 'NRS1'
+        dm_ramp.meta.exposure.type = 'NRS_FIXEDSLIT'
+        if ysize > 2048:
+            dm_ramp.meta.exposure.readpatt = 'NRSIRS2'
+            dm_ramp.meta.exposure.nrs_normal = 16
+            dm_ramp.meta.exposure.nrs_reference = 4
+        else:
+            dm_ramp.meta.exposure.readpatt = 'NRS'
+    else:
+        dm_ramp.meta.instrument.name = 'MIRI'
+        dm_ramp.meta.instrument.detector = 'MIRIMAGE'
+        dm_ramp.meta.instrument.filter = 'F560W'
+        dm_ramp.meta.exposure.type = 'MIR_IMAGE'
 
-    dm_ramp.meta.instrument.name = 'MIRI'
-    dm_ramp.meta.instrument.detector = 'MIRIMAGE'
-    dm_ramp.meta.instrument.filter = 'F560W'
     dm_ramp.meta.instrument.band = 'N/A'
     dm_ramp.meta.observation.date = '2016-06-01'
     dm_ramp.meta.observation.time = '00:00:00'
-    dm_ramp.meta.exposure.type = 'MIR_IMAGE'
     dm_ramp.meta.subarray.name = 'FULL'
     dm_ramp.meta.subarray.xstart = 1
     dm_ramp.meta.subarray.xsize = xsize
@@ -814,3 +941,45 @@ def test_zero_frame(setup_cube):
     zeroframe[0, 4:-4, 4:-4] = dataval / 2. - rpix / 2.
     zeroframe[0, 5, 5] = 0.  # Make sure this pixel is zero.
     np.testing.assert_almost_equal(input_model.zeroframe, zeroframe, decimal=5)
+
+
+@pytest.mark.parametrize('detector,irs2,preserve',
+                         [('NRS1', False, False),
+                          ('NRS1', False, True),
+                          ('NRS1', True, True),
+                          ('NRS1', True, False),
+                          ('NRS2', False, False),
+                          ('NRS2', False, True),
+                          ('NRS2', True, True),
+                          ('NRS2', True, False)])
+def test_preserve_refpix(detector, irs2, preserve):
+    # make some nirspec data
+    ngroups = 1
+    xsize = 2048
+    if irs2:
+        ysize = 3200
+    else:
+        ysize = 2048
+
+    # make ramp model
+    im = make_rampmodel(ngroups, ysize, xsize,
+                        instrument='NIRSPEC', fill_value=0.0)
+    im.meta.instrument.detector = detector
+
+    # run the step
+    out = RefPixStep.call(im, preserve_irs2_refpix=preserve)
+    if not irs2:
+        # parameter ignored for non-irs2 data
+        assert out.data.shape == (1, ngroups, ysize, xsize)
+        assert out.err.shape == (1, ngroups, ysize, xsize)
+        assert out.pixeldq.shape == (ysize, xsize)
+    elif preserve:
+        # output data shape is the same
+        assert out.data.shape == (1, ngroups, ysize, xsize)
+        assert out.err.shape == (1, ngroups, ysize, xsize)
+        assert out.pixeldq.shape == (ysize, xsize)
+    else:
+        # output data is trimmed to remove interleaved refpix
+        assert out.data.shape == (1, ngroups, xsize, xsize)
+        assert out.err.shape == (1, ngroups, xsize, xsize)
+        assert out.pixeldq.shape == (xsize, xsize)

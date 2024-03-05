@@ -1,4 +1,23 @@
-"""Reprocessing List"""
+"""Reprocessing Lists and Queues
+
+This modules defines what process lists are and queues of process lists.
+
+A process list, `ProcessList`, is a list of (items, rules) and meta information
+, most notably `work_over`. `work_over` is one of the values of `ListCategory`.
+A `ListCategory` defines which stage of association processing the list is
+relevant to. In other words, the order, or priority, of when a list should be processed
+is defined by its `ListCategory`. The priority is the value of each `ListCategory`,
+starting with zero.
+
+ProcessLists are primarily put into queues for processing. There are two
+queues for handling ProcessLists. `ProcessListQueue` is a basic
+First-In-First-Out (FIFO) queue that can be used as a generator.
+
+The second queue is `ProcessQueueSorted`, which returns ProcessLists according to
+their priority as defined by each ProcessList's `work_over`. An important aspect of
+ProcessQueueSorted is that it is mutable: New ProcessLists can be added to the queue
+while iterating over the queue.
+"""
 from collections import deque
 from enum import Enum
 from functools import reduce
@@ -14,14 +33,18 @@ __all__ = [
 
 
 class ListCategory(Enum):
-    RULES      = 0
-    BOTH       = 1
-    EXISTING   = 2
-    NONSCIENCE = 3
+    """The work_over categories for ProcessLists"""
+    RULES      = 0  # Operate over rules only
+    BOTH       = 1  # Operate over both rules and existing associations
+    EXISTING   = 2  # Operate over existing associations only
+    NONSCIENCE = 3  # Items that are not science specific that should be applied to only
+                    # existing associations
 
 
 class ProcessItem:
     """Items to be processed
+
+    Create hashable objects from a list of arbitrary objects.
 
     Parameters
     ----------
@@ -77,8 +100,8 @@ class ProcessList:
 
     work_over : int
         What the reprocessing should work on:
-        - `ProcessList.EXISTING`:   Only existing associations
         - `ProcessList.RULES`:      Only on the rules to create new associations
+        - `ProcessList.EXISTING`:   Only existing associations
         - `ProcessList.BOTH`:       Compare to both existing and rules
         - `ProcessList.NONSCIENCE`: Only on non-science items
 
@@ -161,10 +184,35 @@ class ProcessQueue(deque):
 class ProcessListQueue:
     """First-In-First-Out queue of ProcessLists
 
+    ProcessLists can be added either individually using `append` method, or
+    a list of ProcessLists can be added through object initialization or
+    the `extend` method.
+
+    There are two generators implement. The first is the ProcessListQueue
+    object itself. When the object is used as a generator, the generator will
+    return the earliest ProcessList added to the queue (FIFO), popping that
+    ProcessList from the queue, hence draining the queue.
+
+    The second generator is returned by the `items` method. This method will
+    return all the items from all the ProcessLists in the queue,
+    non-destructively. The ProcessLists are accessed in their order in the
+    queue, and then each item is retrieved from their ProcessList in the list
+    order of the ProcessList.
+
+    A final feature of ProcessListQueue is that it is mutable: New items can
+    be added to the queue while items are being popped from the queue.
+
     Parameters
     ----------
     init : [ProcessList[,...]] or None
         List of ProcessLists to put on the queue.
+
+    Notes
+    -----
+    The FIFO operations depends on the fact that, inherently,
+    `dict` preserves order in which key/value pairs are added to the
+    dictionary.
+
     """
     def __init__(self, init=None):
         self._queue = dict()
@@ -172,7 +220,7 @@ class ProcessListQueue:
             self.extend(init)
 
     def append(self, process_list):
-        """Add ProcessList to queue"""
+        """Add ProcessList to queue, if not already in the queue."""
         plhash = process_list.hash
         if plhash not in self._queue:
             self._queue[plhash] = process_list
@@ -180,7 +228,7 @@ class ProcessListQueue:
             self._queue[plhash].update(process_list)
 
     def extend(self, iterable):
-        """Add objects if not already in the queue"""
+        """Add lists of ProcessLists if not already in the queue"""
         for process_list in iterable:
             self.append(process_list)
 
@@ -215,13 +263,26 @@ class ProcessListQueue:
 class ProcessQueueSorted:
     """Sort ProcessItem based on work_over
 
-    `ProcessList`s are handled in order of `RULES`, `BOTH`,
-    `EXISTING`, and `NONSCIENCE`.
+    Create a generator that implements a First-In-First-Out (FIFO) queue, with the one
+    modification that the queues are handled in order of their `work_over` priority.
+    For example, even if a ProcessList with work_over of ListCategory.EXISTING had
+    been added to the queue before a ProcessList with work_over of ListCategory.RULES,
+    the second ProcessList will be returned before the first.
+
+    ProcessQueueSorted is also mutable: ProcessLists can be added to the queue
+    while the lists are being popped from the queue. When doing so, it is
+    important to remember that the order of return, as described above, still
+    pertains. For example, if the queue only has ProcessLists of work_over
+    ListCategory.EXISTING, and a new ProcessList of work_over
+    ListCategory.RULES is added during iteration, the next list returned will
+    be the RULES one, because the RULES lists have priority over EXISTING
+    lists, regardless of when the list was added.
 
     Parameters
     ----------
     init : [ProcessList[,...]]
         List of `ProcessList` to start the queue with.
+
     """
     def __init__(self, init=None):
         self.queues = {

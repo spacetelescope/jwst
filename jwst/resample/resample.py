@@ -1,17 +1,19 @@
 import logging
+import os
 
 import numpy as np
 from drizzle import util
 from drizzle import cdrizzle
+import psutil
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.library.basic_utils import bytes2human
 
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
 from . import resample_utils
-from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
@@ -141,9 +143,27 @@ class ResampleData:
         self.pscale = pscale  # in deg
 
         log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
-        can_allocate, required_memory = datamodels.util.check_memory_allocation(
-            self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
-        )
+
+        allowed_memory = kwargs['allowed_memory']
+        if allowed_memory is None:
+            allowed_memory = os.environ.get('DMODEL_ALLOWED_MEMORY', allowed_memory)
+        if allowed_memory:
+            allowed_memory = float(allowed_memory)
+            # make a small image model to get the dtype
+            dtype = datamodels.ImageModel((1, 1)).data.dtype
+
+            # get the available memory
+            available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
+
+            # compute the output array size
+            required_memory = np.prod(self.output_wcs.array_shape) * dtype.itemsize
+
+            # compare used to available
+            used_fraction = required_memory / available_memory
+            can_allocate = used_fraction <= allowed_memory
+        else:
+            can_allocate = True
+
         if not can_allocate:
             raise OutputTooLargeError(
                 f'Combined ImageModel size {self.output_wcs.array_shape} '

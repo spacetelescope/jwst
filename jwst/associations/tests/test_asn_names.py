@@ -8,7 +8,7 @@ from jwst.associations.tests import helpers
 from jwst import associations
 from jwst.associations import generate
 from jwst.associations import load_asn
-from jwst.associations.main import constrain_on_candidates
+from jwst.associations.lib.utilities import constrain_on_candidates
 
 LEVEL3_ASN_ACID_NAME_REGEX = (
     r'jw'

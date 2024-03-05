@@ -21,8 +21,6 @@ SCRIPTS = [
     'jump',
     'linearitycorr',
     'make_header',
-    'migrate_data',
-    'move_wcs',
     'okify_regtests',
     'outlier_detection',
     'persistencecorr',
