@@ -10,6 +10,12 @@ associations
 
 - Isolate candidate processing into their own pools [#8227]
 
+background
+----------
+
+- Updated to allow multi-integration (rateints) background exposures to have
+  a different value of NINTS than the science exposure. [#8326]
+
 cube_build
 ----------
 
@@ -156,6 +162,8 @@ resample
 - Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
+
+- Replace use of ``check_memory_allocation``. [#8324]
 
 residual_fringe
 ---------------
