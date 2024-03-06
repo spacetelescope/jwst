@@ -2,10 +2,9 @@
 Test script for set_velocity_aberration.py
 """
 import subprocess
-
 from numpy import isclose
 from astropy.io import fits
-
+import jwst.datamodels as dm
 from jwst.lib.set_velocity_aberration import compute_va_effects
 
 # Testing constants
@@ -33,14 +32,13 @@ def test_compute_va_effects_zero_velocity():
 def test_velocity_aberration_script(tmpdir):
     """Test the whole script on a FITS file"""
     path = str(tmpdir.join("velocity_aberration_tmpfile.fits"))
-    hdulist = fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU(name='SCI')])
-    hdulist['SCI'].header['JWST_DX'] = GOOD_VELOCITY[0]
-    hdulist['SCI'].header['JWST_DY'] = GOOD_VELOCITY[1]
-    hdulist['SCI'].header['JWST_DZ'] = GOOD_VELOCITY[2]
-    hdulist['SCI'].header['RA_REF'] = GOOD_POS[0]
-    hdulist['SCI'].header['DEC_REF'] = GOOD_POS[1]
-    hdulist.writeto(path)
-    hdulist.close()
+    model = dm.ImageModel()
+    model.meta.ephemeris.velocity_x_bary = GOOD_VELOCITY[0]
+    model.meta.ephemeris.velocity_y_bary = GOOD_VELOCITY[1]
+    model.meta.ephemeris.velocity_z_bary = GOOD_VELOCITY[2]
+    model.meta.wcsinfo.ra_ref = GOOD_POS[0]
+    model.meta.wcsinfo.dec_ref = GOOD_POS[1]
+    model.save(path)
 
     subprocess.check_call(["set_velocity_aberration", path])
 

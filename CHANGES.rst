@@ -97,6 +97,12 @@ jump
 
 - Removed a unit test in Jump that was moved to STCAL to decrease
   the coupling of the two repos. [#8319]
+  
+lib
+---
+
+- Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
+  and manipulating input files. [#8285]
 
 outlier_detection
 -----------------
@@ -173,6 +179,9 @@ residual_fringe
 
 scripts
 -------
+
+- Updated ``set_velocity_aberration`` to have an optional ``--force-level1bmodel``
+  flag. [#8285]
 
 - Remove ``migrate_data`` and ``move_wcs`` scripts. [#8321]
 
