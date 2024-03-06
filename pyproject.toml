@@ -129,7 +129,7 @@ sdp = [
     "pysiaf>=0.13.0",
 ]
 test = [
-    "git+https://github.com/spacetelescope/ci_watson.git@main",
+    "ci-watson>=0.5.0",
     "colorama>=0.4.1",
     "readchar>=3.0",
     "ruff",
