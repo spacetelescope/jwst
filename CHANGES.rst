@@ -111,6 +111,14 @@ outlier_detection
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
 
+resample
+--------
+- Updated exposure time weighting to use the measurement time 
+  (TMEASURE) when available. [#8212]
+
+- Removed product exposure time (``TEXPTIME``) from all computations
+  in the resample step. [#8212]
+
 photom
 ------
 
