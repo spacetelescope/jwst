@@ -94,7 +94,7 @@ jump
 - Removed a unit test in Jump that was moved to STCAL to decrease
   the coupling of the two repos. [#8319]
   
- lib
+lib
 ---
 
 - Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
