@@ -104,7 +104,7 @@ def miri_image():
 
 
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build(_jail, miri_cube_pars, miri_image, tmp_path, as_filename):
+def test_call_cube_build(function_jail, miri_cube_pars, miri_image, tmp_path, as_filename):
     """ test defaults of step are set up and user input are defined correctly """
     if as_filename:
         fn = tmp_path / 'miri.fits'
@@ -181,7 +181,7 @@ def nirspec_data():
 
 
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build_nirspec(_jail, nirspec_data, tmp_path, as_filename):
+def test_call_cube_build_nirspec(function_jail, nirspec_data, tmp_path, as_filename):
     if as_filename:
         fn = tmp_path / 'test_nirspec.fits'
         nirspec_data.save(fn)

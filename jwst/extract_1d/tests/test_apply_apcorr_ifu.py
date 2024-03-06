@@ -130,7 +130,7 @@ def test_select_apcorr_nirspec(nirspec_cube):
     assert apcorr_cls == ApCorrRadial
 
 
-def test_table_type_miri(_jail, dummy_miri_ref, miri_cube):
+def test_table_type_miri(function_jail, dummy_miri_ref, miri_cube):
     dummy_wave = np.zeros(100) + 0.5
     with MirMrsApcorrModel(dummy_miri_ref) as apcorr_model:
         table = apcorr_model.apcorr_table

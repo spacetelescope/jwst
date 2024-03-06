@@ -311,7 +311,7 @@ def test_fails(mismatched, standard=standard_asn):
         asn_diff.compare_asn_lists(left_asns, right_asns)
 
 
-@pytest.mark.usefixtures('_jail')
+@pytest.mark.usefixtures('function_jail')
 def test_fromfiles():
     """Test from files
 

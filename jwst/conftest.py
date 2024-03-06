@@ -69,6 +69,21 @@ def jail(request, tmp_path_factory):
     os.chdir(old_dir)
 
 
+@pytest.fixture(scope="function")
+def function_jail(request, tmp_path_factory):
+    """
+    Run test in a pristine temporary working directory, scoped to function.
+    """
+    old_dir = os.getcwd()
+    path = request.module.__name__.split('.')[-1]
+    if request._parent_request.fixturename is not None:
+        path = path + "_" + request._parent_request.fixturename
+    newpath = tmp_path_factory.mktemp(path)
+    os.chdir(str(newpath))
+    yield newpath
+    os.chdir(old_dir)
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     terminal_reporter = config.pluginmanager.getplugin('terminalreporter')

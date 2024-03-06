@@ -597,7 +597,7 @@ def test_print_configspec():
     step.print_configspec()
 
 
-def test_call_with_config(caplog, _jail):
+def test_call_with_config(caplog, function_jail):
     """Test call using a config file with substeps
 
     In particular, from JP-1482, there was a case where a substep parameter

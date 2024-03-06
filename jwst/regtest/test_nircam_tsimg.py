@@ -65,7 +65,7 @@ def test_nircam_tsimage_stage3_phot(run_pipelines):
 
 
 @pytest.mark.bigdata
-def test_nircam_setpointing_tsimg(_jail, rtdata, engdb, fitsdiff_default_kwargs):
+def test_nircam_setpointing_tsimg(function_jail, rtdata, engdb, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b
     NIRCam TSO imaging file.

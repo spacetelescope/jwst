@@ -116,7 +116,7 @@ def nirspec_cube_pars(tmp_path_factory):
     return filename
 
 
-def test_nirspec_cubepars(_jail, nirspec_cube_pars):
+def test_nirspec_cubepars(function_jail, nirspec_cube_pars):
     """ Read in the nirspec cube pars file """
 
     instrument_info = instrument_defaults.InstrumentInfo()
