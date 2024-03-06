@@ -140,7 +140,7 @@ def test_table_type_miri(function_jail, dummy_miri_ref, miri_cube):
         assert np.all(table.wavelength == dummy_wave)
 
 
-def test_table_type_nirspec(_jail, dummy_nirspec_ref, nirspec_cube):
+def test_table_type_nirspec(function_jail, dummy_nirspec_ref, nirspec_cube):
     dummy_wave = np.zeros(100) + 0.5
     with NrsIfuApcorrModel(dummy_nirspec_ref) as apcorr_model:
         table = apcorr_model.apcorr_table
