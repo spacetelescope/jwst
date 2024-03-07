@@ -24,7 +24,7 @@ def test_default_run(tmp_path, capsys):
     assert len(files) == 5
 
 
-def test_dry_run(function_jail, capsys):
+def test_dry_run(tmp_cwd, capsys):
     no_files = glob('*.fits')
     assert len(no_files) == 0
 

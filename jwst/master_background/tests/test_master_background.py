@@ -53,7 +53,7 @@ def science_image():
     return image
 
 
-def test_master_background_userbg(function_jail, user_background, science_image):
+def test_master_background_userbg(tmp_cwd, user_background, science_image):
     """Verify data can run through the step with a user-supplied background"""
 
     # Run with a user-supplied background and verify this is recorded in header
@@ -68,7 +68,7 @@ def test_master_background_userbg(function_jail, user_background, science_image)
     assert result.meta.background.master_background_file == 'user_background.fits'
 
 
-def test_master_background_logic(function_jail, user_background, science_image):
+def test_master_background_logic(tmp_cwd, user_background, science_image):
     """Verify if calspec 2 background step was run the master background step will be skipped"""
 
     # the background step in calspec2 was done

@@ -104,7 +104,7 @@ def generate_artifactory_json(request, artifactory_repos):
         postmortem(request, 'sdpdata_module')
     if rtdata:
         try:
-            # The function_jail fixture sets tmp_path
+            # The tmp_cwd fixture sets tmp_path
             cwd = str(request.node.funcargs['tmp_path'])
         except KeyError:
             # The jail fixture (module-scoped) returns the path
@@ -210,7 +210,7 @@ def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
 
 
 @pytest.fixture(scope='function')
-def rtdata(artifactory_repos, envopt, request, function_jail):
+def rtdata(artifactory_repos, envopt, request, tmp_cwd):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 

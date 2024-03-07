@@ -87,7 +87,7 @@ def miri_cube_pars(tmp_path_factory):
     return filename
 
 
-def test_miri_use_cubepars(function_jail, miri_cube_pars):
+def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     """ Test reading in the miri cube pars file """
 
     instrument_info = instrument_defaults.InstrumentInfo()
@@ -183,7 +183,7 @@ def test_miri_use_cubepars(function_jail, miri_cube_pars):
     assert math.isclose(this_cube.spatial_size, 0.13, abs_tol=0.00001)
 
 
-def test_miri_cubepars_user_defaults(function_jail, miri_cube_pars):
+def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     """ Read in the miri cube pars file and override some defaults """
 
     instrument_info = instrument_defaults.InstrumentInfo()
@@ -326,7 +326,7 @@ def test_miri_cubepars_user_defaults(function_jail, miri_cube_pars):
     assert math.isclose(this_cube.rois, user_rois, abs_tol=0.00001)
 
 
-def test_miri_cubepars_multiple_bands(function_jail, miri_cube_pars):
+def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
     """Read in the miri cube pars file. Test cube has correct values when
     multiple bands are used
     """

@@ -84,7 +84,7 @@ def science_image():
     return image
 
 
-def test_nirspec_gwa(function_jail, background, science_image):
+def test_nirspec_gwa(tmp_cwd, background, science_image):
     """Verify NIRSPEC GWA logic for in the science and background"""
 
     # open the background to read in the GWA values
@@ -106,7 +106,7 @@ def test_nirspec_gwa(function_jail, background, science_image):
     back_image.close()
 
 
-def test_nirspec_gwa_xtilt(function_jail, background, science_image):
+def test_nirspec_gwa_xtilt(tmp_cwd, background, science_image):
     """Verify NIRSPEC GWA Xtilt must be the same in the science and background image"""
 
     # open the background to read in the GWA values
@@ -128,7 +128,7 @@ def test_nirspec_gwa_xtilt(function_jail, background, science_image):
     back_image.close()
 
 
-def test_nirspec_gwa_ytilt(function_jail, background, science_image):
+def test_nirspec_gwa_ytilt(tmp_cwd, background, science_image):
     """Verify NIRSPEC GWA Ytilt must be the same in the science and background image"""
 
     # open the background to read in the GWA values

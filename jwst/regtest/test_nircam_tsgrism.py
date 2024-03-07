@@ -71,7 +71,7 @@ def test_nircam_tsgrism_stage3_whtlt(run_pipelines):
 
 
 @pytest.mark.bigdata
-def test_nircam_setpointing_tsgrism(function_jail, rtdata, fitsdiff_default_kwargs):
+def test_nircam_setpointing_tsgrism(tmp_cwd, rtdata, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b NIRCam file.
     """

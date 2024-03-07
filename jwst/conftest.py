@@ -3,6 +3,7 @@ import os
 import tempfile
 import pytest
 import inspect
+from pathlib import Path
 
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
@@ -69,19 +70,15 @@ def jail(request, tmp_path_factory):
     os.chdir(old_dir)
 
 
-@pytest.fixture(scope="function")
-def function_jail(request, tmp_path_factory):
-    """
-    Run test in a pristine temporary working directory, scoped to function.
-    """
-    old_dir = os.getcwd()
-    path = request.module.__name__.split('.')[-1]
-    if request._parent_request.fixturename is not None:
-        path = path + "_" + request._parent_request.fixturename
-    newpath = tmp_path_factory.mktemp(path)
-    os.chdir(str(newpath))
-    yield newpath
-    os.chdir(old_dir)
+@pytest.fixture
+def tmp_cwd(tmp_path):
+    """Perform test in a pristine temporary working directory."""
+    old_dir = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        yield tmp_path
+    finally:
+        os.chdir(old_dir)
 
 
 @pytest.hookimpl(trylast=True)
