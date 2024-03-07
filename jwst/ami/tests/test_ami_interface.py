@@ -17,7 +17,7 @@ def example_model():
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "F277W"
     model.meta.subarray.name = "SUB80"
-    model.meta.observation.date = "2019-01-01"
+    model.meta.observation.date = "2021-12-26"
     model.meta.observation.time = "00:00:00"
     model.meta.target.proposer_name = ""
     model.meta.program.pi_name = "someone"
@@ -27,6 +27,7 @@ def example_model():
     model.meta.wcsinfo.v3yangle = 0.56126717
     model.meta.filename = "test_calints.fits"
     model.meta.instrument.pupil = "NRM"
+    model.meta.exposure.type = "NIS_AMI"
     return model
 
 
