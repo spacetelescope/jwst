@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 import pytest
-from synphot.spectrum import SourceSpectrum, SpectralElement
+from synphot.spectrum import SourceSpectrum
 
 import jwst.ami.utils as utils
 
