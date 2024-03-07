@@ -1,4 +1,3 @@
-import os
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
@@ -87,7 +86,7 @@ class AmiAnalyzeStep(Step):
         self.log.info(f'Using filter throughput reference file {throughput_reffile}')
 
         # Check for a valid reference file or user-provided bandpass
-        if (throughput_reffile == 'N/A') & (bandpass == None):
+        if (throughput_reffile == 'N/A') & (bandpass is None):
             self.log.warning('No THROUGHPUT reference file found')
             self.log.warning('AMI analyze step will be skipped')
             raise RuntimeError("No throughput reference file found. "

@@ -3,8 +3,6 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
-from jwst.ami import AmiAnalyzeStep
-
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
