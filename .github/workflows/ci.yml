@@ -27,23 +27,19 @@ jobs:
         - linux: check-style
         - linux: check-security
         - linux: check-dependencies
-  data:
-    uses: ./.github/workflows/data.yml
   crds_contexts:
     uses: spacetelescope/crds/.github/workflows/contexts.yml@master
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
-    needs: [ data, crds_contexts ]
+    needs: [ crds_contexts ]
     with:
       setenv: |
-        WEBBPSF_PATH: ${{ needs.data.outputs.webbpsf_path }}
-        CRDS_PATH: ${{ needs.data.outputs.path }}/crds_cache
+        CRDS_PATH: /tmp/data/crds_cache
         CRDS_SERVER_URL: https://jwst-crds.stsci.edu
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-      cache-path: ${{ needs.data.outputs.path }}
-      cache-key: data-${{ needs.data.outputs.webbpsf_hash }}-${{ needs.crds_contexts.outputs.roman }}
-      cache-restore-keys: webbpsf-${{ needs.data.outputs.webbpsf_hash }}
+      cache-path: /tmp/data/crds_cache
+      cache-key: crds-${{ needs.crds_contexts.outputs.jwst }}
       envs: |
         - linux: py310-oldestdeps-xdist-cov
           pytest-results-summary: true
