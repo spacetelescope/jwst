@@ -12,7 +12,6 @@ CalibOifits class: takes two AmiOIModel datamodels and produces a final calibrat
 import numpy as np
 
 from scipy.special import comb
-from astropy import units as u
 from astropy.stats import sigma_clipped_stats
 from astropy.time.core import Time
 

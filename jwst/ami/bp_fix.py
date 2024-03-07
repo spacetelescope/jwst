@@ -1,9 +1,6 @@
 
-import astropy.io.fits as fits
 import numpy as np
 import logging
-import warnings
-import os
 
 from copy import deepcopy
 from poppy import matrixDFT

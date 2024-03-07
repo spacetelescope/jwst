@@ -3,11 +3,9 @@ from stdatamodels.jwst.datamodels import dqflags
 from . import matrix_dft
 
 import logging
-import os
 import numpy as np
 import numpy.fft as fft
 from scipy.integrate import simpson
-from astropy.io import fits
 from astropy import units as u
 import matplotlib.pyplot as plt
 
