@@ -58,7 +58,7 @@ def exp_to_source(inputs):
             result_slit.exposures[-1].meta.bunit_data = slit_bunit
             result_slit.exposures[-1].meta.bunit_err = slit_bunit_err
             result_slit.exposures[-1].meta.model_type = slit_model
-            result_slit.exposures[-1].meta.wcsinfo.instance = slit_wcsinfo
+            result_slit.exposures[-1].meta.wcsinfo = slit_wcsinfo
 
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)
