@@ -207,7 +207,7 @@ class RawOifits:
         m.target['PMDEC_ERR'] = [0]
         m.target['PARALLAX'] = [0]
         m.target['PARA_ERR'] = [0]
-        m.target['SPECTYP'] = instrument_data.spectyp
+        m.target['SPECTYP'] = ['UNKNOWN']
 
         # oi_vis extension data
         m.vis['TARGET_ID'] = 1

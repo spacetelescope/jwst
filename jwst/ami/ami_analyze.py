@@ -21,7 +21,6 @@ def apply_LG_plus(
     rotation,
     psf_offset,
     rotsearch_parameters,
-    src,
     bandpass,
     usebp,
     firstfew,
@@ -48,8 +47,6 @@ def apply_LG_plus(
         PSF offset values to use to create the model array\
     rotsearch_parameters : string ('start stop step')
         Rotation search parameters
-    src : string
-        Source spectral type for model
     bandpass : synphot spectrum or array
         Synphot spectrum or array to override filter/source
     usebp : boolean
@@ -142,12 +139,12 @@ def apply_LG_plus(
         # get the filter and source spectrum
         log.info(f'Reading throughput model data for {filt}.')
         filt_spec = utils.get_filt_spec(throughput_model)
-        log.info(f'Getting source spectrum for spectral type {src}.')
-        src_spec = utils.get_src_spec(src) # always going to be A0V currently
+        log.info(f'Using flat spectrum model.')
+        flat_spec = utils.get_flat_spec() 
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
         bandpass = utils.combine_src_filt(
             filt_spec,
-            src_spec,
+            flat_spec,
             trim=0.01,
             nlambda=nspecbin,
         )
@@ -204,7 +201,6 @@ def apply_LG_plus(
                                     nrm_model,
                                     bandpass=bandpass,
                                     affine2d=affine2d,
-                                    src=src,
                                     firstfew=firstfew,
                                     usebp=usebp,
                                     chooseholes=chooseholes,
