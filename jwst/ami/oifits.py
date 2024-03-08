@@ -35,9 +35,9 @@ class RawOifits:
         self.n_holes = 7
 
         self.nslices = len(self.fringe_fitter.nrm_list)  # n ints
-        self.nbl = int(comb(self.n_holes, 2))  # 21
-        self.ncp = int(comb(self.n_holes, 3))  # 35
-        self.nca = int(comb(self.n_holes, 4))
+        self.n_baselines = int(comb(self.n_holes, 2))  # 21
+        self.n_closure_phases = int(comb(self.n_holes, 3))  # 35
+        self.n_closure_amplitudes = int(comb(self.n_holes, 4))
 
         self.method = method
 
@@ -55,25 +55,25 @@ class RawOifits:
         Make arrays of observables of the correct shape for saving to datamodels
         """
         # arrays of observables, (nslices,nobservables) shape.
-        self.fp = np.zeros((self.nslices, self.nbl))
-        self.fa = np.zeros((self.nslices, self.nbl))
-        self.cp = np.zeros((self.nslices, self.ncp))
-        self.ca = np.zeros((self.nslices, self.nca))
+        self.fringe_phases = np.zeros((self.nslices, self.n_baselines))
+        self.fringe_amplitudes = np.zeros((self.nslices, self.n_baselines))
+        self.closure_phases = np.zeros((self.nslices, self.n_closure_phases))
+        self.closure_amplitudes = np.zeros((self.nslices, self.n_closure_amplitudes))
         self.pistons = np.zeros((self.nslices, self.n_holes))
         # model parameters
         self.solns = np.zeros((self.nslices, 44))
 
         for i, nrmslc in enumerate(self.fringe_fitter.nrm_list):
-            self.fp[i, :] = np.rad2deg(nrmslc.fringephase)  # FPs in degrees
-            self.fa[i, :] = nrmslc.fringeamp
-            self.cp[i, :] = np.rad2deg(nrmslc.redundant_cps)  # CPs in degrees
-            self.ca[i, :] = nrmslc.redundant_cas
+            self.fringe_phases[i, :] = np.rad2deg(nrmslc.fringephase)  # FPs in degrees
+            self.fringe_amplitudes[i, :] = nrmslc.fringeamp
+            self.closure_phases[i, :] = np.rad2deg(nrmslc.redundant_cps)  # CPs in degrees
+            self.closure_amplitudes[i, :] = nrmslc.redundant_cas
             self.pistons[i, :] = np.rad2deg(
                 nrmslc.fringepistons
             )  # segment pistons in degrees
             self.solns[i, :] = nrmslc.soln
 
-        self.fa2 = self.fa**2  # squared visibilities
+        self.fringe_amplitudes_squared = self.fringe_amplitudes ** 2  # squared visibilities
 
     def make_oifits(self):
         self.make_obsarrays()
@@ -97,30 +97,30 @@ class RawOifits:
         v2coord = self.tuv[:, 1, 0]
         u2coord = self.tuv[:, 1, 1]
 
-        flagVis = [False] * self.nbl
-        flagT3 = [False] * self.ncp
+        flagVis = [False] * self.n_baselines
+        flagT3 = [False] * self.n_closure_phases
 
         # do the things done by populate_nrm here
         # average or don't, and get uncertainties
         # Unwrap phases
-        shift2pi = np.zeros(self.cp.shape)
-        shift2pi[self.cp >= 6] = 2 * np.pi
-        shift2pi[self.cp <= -6] = -2 * np.pi
-        self.cp -= shift2pi
+        shift2pi = np.zeros(self.closure_phases.shape)
+        shift2pi[self.closure_phases >= 6] = 2 * np.pi
+        shift2pi[self.closure_phases <= -6] = -2 * np.pi
+        self.closure_phases -= shift2pi
 
         if self.method not in ["mean", "median", "multi"]:
             self.method = "median"
         # set these as attributes (some may exist and be overwritten)
         if self.method == "multi":
-            self.vis2 = self.fa2.T
+            self.vis2 = self.fringe_amplitudes_squared.T
             self.e_vis2 = np.zeros(self.vis2.shape)
-            self.visamp = self.fa.T
+            self.visamp = self.fringe_amplitudes.T
             self.e_visamp = np.zeros(self.visamp.shape)
-            self.visphi = self.fp.T
+            self.visphi = self.fringe_phases.T
             self.e_visphi = np.zeros(self.visphi.shape)
-            self.cp = self.cp.T
-            self.e_cp = np.zeros(self.cp.shape)
-            self.camp = self.ca.T
+            self.closure_phases = self.closure_phases.T
+            self.e_cp = np.zeros(self.closure_phases.shape)
+            self.camp = self.closure_amplitudes.T
             self.e_camp = np.zeros(self.camp.shape)
             self.pist = self.pistons.T
             self.e_pist = np.zeros(self.pist.shape)
@@ -128,19 +128,19 @@ class RawOifits:
         # apply sigma-clipping to uncertainties
         # sigma_clipped_stats returns mean, median, stddev. nsigma=3, niters=5
         elif self.method == "median":
-            _, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fa2, axis=0)
-            _, self.visamp, self.e_visamp = sigma_clipped_stats(self.fa, axis=0)
-            _, self.visphi, self.e_visphi = sigma_clipped_stats(self.fp, axis=0)
-            _, self.cp, self.e_cp = sigma_clipped_stats(self.cp, axis=0)
-            _, self.camp, self.e_camp = sigma_clipped_stats(self.ca, axis=0)
+            _, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
+            _, self.visamp, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
+            _, self.visphi, self.e_visphi = sigma_clipped_stats(self.fringe_phases, axis=0)
+            _, self.closure_phases, self.e_cp = sigma_clipped_stats(self.closure_phases, axis=0)
+            _, self.camp, self.e_camp = sigma_clipped_stats(self.closure_amplitudes, axis=0)
             _, self.pist, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
 
         else:  # take the mean
-            self.vis2, _, self.e_vis2 = sigma_clipped_stats(self.fa2, axis=0)
-            self.visamp, _, self.e_visamp = sigma_clipped_stats(self.fa, axis=0)
-            self.visphi, _, self.e_visphi = sigma_clipped_stats(self.fp, axis=0)
-            self.cp, _, self.e_cp = sigma_clipped_stats(self.cp, axis=0)
-            self.camp, _, self.e_camp = sigma_clipped_stats(self.ca, axis=0)
+            self.vis2, _, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
+            self.visamp, _, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
+            self.visphi, _, self.e_visphi = sigma_clipped_stats(self.fringe_phases, axis=0)
+            self.closure_phases, _, self.e_cp = sigma_clipped_stats(self.closure_phases, axis=0)
+            self.camp, _, self.e_camp = sigma_clipped_stats(self.closure_amplitudes, axis=0)
             self.pist, _, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
 
         # prepare arrays for OI_ARRAY ext
@@ -241,7 +241,7 @@ class RawOifits:
         m.t3['MJD'] = observation_date.mjd
         m.t3['T3AMP'] = self.camp
         m.t3['T3AMPERR'] = self.e_camp
-        m.t3['T3PHI'] = self.cp
+        m.t3['T3PHI'] = self.closure_phases
         m.t3['T3PHIERR'] = self.e_cp
         m.t3['U1COORD'] = u1coord
         m.t3['V1COORD'] = v1coord
@@ -354,9 +354,9 @@ class RawOifits:
             t3_dtype = oimodel.t3.dtype
         oimodel.array = np.zeros(self.n_holes, dtype=array_dtype)
         oimodel.target = np.zeros(1, dtype=target_dtype)
-        oimodel.vis = np.zeros(self.nbl, dtype=vis_dtype)
-        oimodel.vis2 = np.zeros(self.nbl, dtype=vis2_dtype)
-        oimodel.t3 = np.zeros(self.ncp, dtype=t3_dtype)
+        oimodel.vis = np.zeros(self.n_baselines, dtype=vis_dtype)
+        oimodel.vis2 = np.zeros(self.n_baselines, dtype=vis2_dtype)
+        oimodel.t3 = np.zeros(self.n_closure_phases, dtype=t3_dtype)
         oimodel.wavelength = np.zeros(1, dtype=wavelength_dtype)
 
     def _maketriples_all(self):
