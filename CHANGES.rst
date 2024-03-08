@@ -100,6 +100,13 @@ lib
 - Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
   and manipulating input files. [#8285]
 
+lib
+---
+
+- Added new function set_nans_to_donotuse in ``lib.basic_utils`` to
+  check the science data array for NaN values and check if they have
+  a DQ flag of DO_NOT_USE, or set it if not. [#8292]
+
 outlier_detection
 -----------------
 
@@ -111,13 +118,11 @@ outlier_detection
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
 
-resample
+pathloss
 --------
-- Updated exposure time weighting to use the measurement time 
-  (TMEASURE) when available. [#8212]
 
-- Removed product exposure time (``TEXPTIME``) from all computations
-  in the resample step. [#8212]
+- Added a check to find all NaN values in the data with a corresponding
+  even value flag in the DQ array, and convert them to DO_NOT_USE. [#8292]
 
 photom
 ------
@@ -166,6 +171,12 @@ refpix
 
 resample
 --------
+
+- Updated exposure time weighting to use the measurement time 
+  (TMEASURE) when available. [#8212]
+
+- Removed product exposure time (``TEXPTIME``) from all computations
+  in the resample step. [#8212]
 
 - Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
 
