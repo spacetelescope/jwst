@@ -3533,7 +3533,7 @@ def extract_one_slit(
             log.info("Using extraction limits: "
                      f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
                      f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
-            if extract_moodel.xstart is not None:
+            if extract_model.xstart is not None:
                 extraction_values['xstart'] = extract_model.xstart + 1
             if extract_model.xstop is not None:
                 extraction_values['xstop'] = extract_model.xstop + 1
