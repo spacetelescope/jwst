@@ -61,8 +61,6 @@ class GWCSDrizzle:
         self.outsci = None
         self.outwht = None
         self.outcon = None
-
-        self.outexptime = 0.0
         self.uniqid = 0
 
         if wt_scl is None:
@@ -79,7 +77,7 @@ class GWCSDrizzle:
 
         out_units = "cps"
 
-        self.outexptime = product.meta.resample.product_exposure_time or 0.0
+        self.outexptime = product.meta.exposure.measurement_time or 0.0
 
         self.outsci = product.data
         if outwcs:

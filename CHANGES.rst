@@ -172,6 +172,12 @@ refpix
 resample
 --------
 
+- Updated exposure time weighting to use the measurement time 
+  (TMEASURE) when available. [#8212]
+
+- Removed product exposure time (``TEXPTIME``) from all computations
+  in the resample step. [#8212]
+
 - Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
 
 - Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
