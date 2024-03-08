@@ -36,8 +36,6 @@ other options:
                     rotation search values. The default setting of '-3 3 1'
                     results in search values of [-3, -2, -1, 0, 1, 2, 3].
 
-:--src: Source spectral type for model (Phoenix models) (default='A0V')
-
 :--bandpass: Synphot spectrum or suitable array to override filter/source 
              (default=None)
 
@@ -117,5 +115,7 @@ the addition of the association candidate ID and the "_ami", "_amimulti", or "am
 
 Reference Files
 ---------------
-The ``ami_analyze`` step does not use any reference files.
+The ``ami_analyze`` step uses a THROUGHPUT reference file and NRM reference file.
 
+.. include:: ../references_general/throughput_reffile.inc
+.. include:: ../references_general/nrm_reffile.inc

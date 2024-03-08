@@ -49,7 +49,7 @@ multiple science target exposures, and optionally reference PSF exposures as wel
 The individual exposures must be in the form of 3D calibrated ("_calints") products from
 :ref:`calwebb_image2 <calwebb_image2>` processing.
 
-An example ASN file containing 2 science target and 2 reference PSF target exposures is
+An example ASN file containing one science target and one reference PSF target exposure is
 shown below. Only 1 product is defined, corresponding to the science target, with
 members consisting of exposures for both the science target and the reference PSF target,
 as indicated by the "exptype" values for each.
