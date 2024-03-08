@@ -27,32 +27,58 @@ def test_wavecorr():
     im = datamodels.ImageModel(hdul)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
-    im_ex2d.slits[0].meta.wcs.bounding_box = ((-.5, 1432.5), (-.5, 37.5))
+    bbox = ((-.5, 1432.5), (-.5, 37.5))
+    im_ex2d.slits[0].meta.wcs.bounding_box = bbox
+    x, y = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, lam_before = im_ex2d.slits[0].meta.wcs(x, y)
+    im_ex2d.slits[0].wavelength = lam_before
     im_src = SourceTypeStep.call(im_ex2d)
+    # the mock msa source is an extended source, change to point for testing
+    im_src.slits[0].source_type = 'POINT'
     im_wave = WavecorrStep.call(im_src)
 
     # test dispersion is of the correct order
     # there's one slit only
     slit = im_src.slits[0]
-    x, y = wcstools.grid_from_bounding_box(slit.meta.wcs.bounding_box)
     dispersion = wavecorr.compute_dispersion(slit.meta.wcs, x, y)
     assert_allclose(dispersion[~np.isnan(dispersion)], 1e-9, atol=1e-10)
+    
+    # test that the wavelength is on the order of microns
+    wavelength = wavecorr.compute_wavelength(slit.meta.wcs, x, y)
+    assert_allclose(np.nanmean(wavelength), 2.5, atol=0.1)
+        
+    # Check that the stored wavelengths were corrected
+    abs_wave_correction = np.abs(im_src.slits[0].wavelength - im_wave.slits[0].wavelength)
+    assert_allclose(np.nanmean(abs_wave_correction), 0.00046, atol=0.0001)
+    
+    # Check that the slit wcs has been updated to provide corrected wavelengths
+    corrected_wavelength = wavecorr.compute_wavelength(im_wave.slits[0].meta.wcs, x, y)
+    assert_allclose(im_wave.slits[0].wavelength, corrected_wavelength)
 
-    # the difference in wavelength should be of the order of e-10 in um
-    assert_allclose(im_src.slits[0].wavelength - im_wave.slits[0].wavelength, 1e-10)
+    # test the roundtripping on the wavelength correction transform
+    ref_name = im_wave.meta.ref_file.wavecorr.name
+    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
+    lam_uncorr = lam_before * 1e-6
+    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+                                                                       freference, slit.source_xpos, 'MOS')
+    lam_corr = wave2wavecorr(lam_uncorr)
+    assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))
+    
     # test on both sides of the shutter
     source_xpos1 = -.2
     source_xpos2 = .2
 
-    ra, dec, lam = slit.meta.wcs(x, y)
-    ref_name = im_wave.meta.ref_file.wavecorr.name
-    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
-    zero_point1 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos1, 'MOS', dispersion)
-    zero_point2 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos2, 'MOS', dispersion)
-    diff_correction = np.abs(zero_point1[1] - zero_point2[1])
-    non_zero = diff_correction[diff_correction != 0]
-    assert_allclose(np.nanmean(non_zero), 0.75, atol=0.01)
+    wave_transform1 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+                                                                         freference, source_xpos1, 'MOS')
+    wave_transform2 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+                                                                         freference, source_xpos2, 'MOS')
+
+    zero_point1 = wave_transform1(lam_uncorr)
+    zero_point2 = wave_transform2(lam_uncorr)
+
+    diff_correction = np.abs(zero_point1 - zero_point2)
+    assert_allclose(np.nanmean(diff_correction), 8.0e-10, atol=0.1e-10)
 
 
 def test_ideal_to_v23_fs():
@@ -171,13 +197,32 @@ def test_wavecorr_fs():
     dispersion = wavecorr.compute_dispersion(slit.meta.wcs, x, y)
     assert_allclose(dispersion[~np.isnan(dispersion)], 1e-8, atol=1.04e-8)
 
+    # Check that the slit wcs has been updated to provide corrected wavelengths
+    corrected_wavelength = wavecorr.compute_wavelength(slit.meta.wcs, x, y)
+    assert_allclose(slit.wavelength, corrected_wavelength)
+
+    # test the roundtripping on the wavelength correction transform
+    ref_name = result.meta.ref_file.wavecorr.name
+    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+
+    lam_uncorr = lam_before * 1e-6
+    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+                                                                       freference, slit.source_xpos, 'S200A1')
+    lam_corr = wave2wavecorr(lam_uncorr)
+    assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))
+
+
     # test on both sides of the slit center
     source_xpos1 = -.2
     source_xpos2 = .2
 
-    ref_name = result.meta.ref_file.wavecorr.name
-    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
-    zero_point1 = wavecorr.compute_zero_point_correction(lam_before, freference, source_xpos1, 'S200A1', dispersion)
-    zero_point2 = wavecorr.compute_zero_point_correction(lam_before, freference, source_xpos2, 'S200A1', dispersion)
-    diff_correction = np.abs(zero_point1[1] - zero_point2[1])
-    assert_allclose(np.nanmean(diff_correction), 0.45, atol=0.01)
+    wave_transform1 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+                                                                         freference, source_xpos1, 'S200A1')
+    wave_transform2 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+                                                                         freference, source_xpos2, 'S200A1')
+
+    zero_point1 = wave_transform1(lam_uncorr)
+    zero_point2 = wave_transform2(lam_uncorr)
+
+    diff_correction = np.abs(zero_point1 - zero_point2)
+    assert_allclose(np.nanmean(diff_correction), 6.3e-9, atol=0.1e-9)
