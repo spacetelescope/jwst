@@ -1,7 +1,5 @@
 """General utility objects"""
 
-# Moved to stdatamodels, kept here to preserve interface
-from stdatamodels.jwst.library.basic_utils import deprecate_class, bytes2human  # noqa: F401
 from stdatamodels.jwst.datamodels import dqflags
 import numpy as np
 
