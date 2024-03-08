@@ -1,7 +1,7 @@
 .. _nrm_reffile:
 
 NRM Reference File
-------------------------
+^^^^^^^^^^^^^^^^^^
 
 :REFTYPE: NRM
 :Data model: `~jwst.datamodels.NRMModel`
