@@ -3533,10 +3533,14 @@ def extract_one_slit(
             log.info("Using extraction limits: "
                      f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
                      f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
-            extraction_values['xstart'] = extract_model.xstart + 1
-            extraction_values['xstop'] = extract_model.xstop + 1
-            extraction_values['ystart'] = extract_model.ystart + 1
-            extraction_values['ystop'] = extract_model.ystop + 1
+            if extract_moodel.xstart is not None:
+                extraction_values['xstart'] = extract_model.xstart + 1
+            if extract_model.xstop is not None:
+                extraction_values['xstop'] = extract_model.xstop + 1
+            if extract_model.ystart is not None:
+                extraction_values['ystart'] = extract_model.ystart + 1
+            if extract_model.ystop is not None:
+                extraction_values['ystop'] = extract_model.ystop + 1
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
