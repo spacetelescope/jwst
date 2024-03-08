@@ -16,6 +16,11 @@ background
 - Updated to allow multi-integration (rateints) background exposures to have
   a different value of NINTS than the science exposure. [#8326]
 
+charge_migration
+----------------
+
+- Updated the CHARGELOSS flagging. [#8336]
+
 cube_build
 ----------
 
