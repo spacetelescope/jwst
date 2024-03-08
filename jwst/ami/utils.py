@@ -3,7 +3,6 @@ from stdatamodels.jwst.datamodels import dqflags
 from . import matrix_dft
 
 import logging
-import warnings
 import numpy as np
 import numpy.fft as fft
 from scipy.integrate import simpson

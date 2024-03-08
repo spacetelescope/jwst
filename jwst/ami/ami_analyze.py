@@ -139,7 +139,7 @@ def apply_LG_plus(
         # get the filter and source spectrum
         log.info(f'Reading throughput model data for {filt}.')
         filt_spec = utils.get_filt_spec(throughput_model)
-        log.info(f'Using flat spectrum model.')
+        log.info('Using flat spectrum model.')
         flat_spec = utils.get_flat_spec() 
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
         bandpass = utils.combine_src_filt(
