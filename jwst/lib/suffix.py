@@ -36,7 +36,7 @@ logger.addHandler(logging.NullHandler())
 # have to exist. Used by `find_suffixes` to
 # add to the result it produces.
 SUFFIXES_TO_ADD = [
-    'ami', 'amiavg', 'aminorm', 'ami-oi',
+    'ami', 'amiavg', 'aminorm', 'ami-oi', 'aminorm-oi',
     'blot', 'bsub', 'bsubints',
     'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
