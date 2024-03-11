@@ -1,6 +1,8 @@
+import numpy as np
 import pytest
 
 import stpipe
+from stpipe import crds_client
 
 from stdatamodels.jwst import datamodels
 
@@ -8,7 +10,30 @@ from jwst.ami import AmiAnalyzeStep
 
 
 @pytest.fixture()
-def example_model():
+def mock_nrm_reference_file(tmp_path, monkeypatch):
+    """
+    At the moment nrm only exists on CRDS-TEST so this
+    fixture will mock fetching any 'nrm' reference file
+    """
+    fn = tmp_path / "nrm.fits"
+
+    # make a fake nrm file
+    m = datamodels.NRMModel()
+    m.nrm = np.zeros((1024, 1024), dtype='f4')
+    m.save(fn)
+
+    original_get_reference_file = crds_client.get_reference_file
+
+    def mock_get_reference_file(dataset, reference_file_type, observatory):
+        if reference_file_type == 'nrm':
+            return str(fn)
+        return original_get_reference_file(dataset, reference_file_type, observatory)
+
+    monkeypatch.setattr(crds_client, "get_reference_file", mock_get_reference_file)
+
+
+@pytest.fixture()
+def example_model(mock_nrm_reference_file):
     model = datamodels.CubeModel((2, 80, 80))
     # some non-zero data is required as this step will center
     # the image and find the centroid (both fail with all zeros)
