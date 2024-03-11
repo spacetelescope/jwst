@@ -16,6 +16,15 @@ background
 - Updated to allow multi-integration (rateints) background exposures to have
   a different value of NINTS than the science exposure. [#8326]
 
+charge_migration
+----------------
+
+- Updated the CHARGELOSS flagging.  In an integration ramp, the first group in
+  the SCI data is found that is above the CHARGELOSS threshold and not flagged
+  as DO_NOT_USE.  This group, and all subsequent groups, are then flagged as
+  CHARGELOSS and DO_NOT_USE.  The four nearest pixel neighbor are then flagged
+  in the same group. [#8336]
+
 cube_build
 ----------
 
