@@ -110,7 +110,7 @@ the parameters of the best-fit LG model. It contains the following extensions:
 7) ``SOLNS``: table of fringe coefficients
 
 The output file name syntax is exposure-based, using the input file name as the root, with
-the addition of the association candidate ID and the "_ami", "_amimulti", or "amilg" product type suffix, e.g.
+the addition of the association candidate ID and the "_ami-oi", "_amimulti-oi", or "amilg" product type suffix, e.g.
 "jw87600027001_02101_00002_nis_a3001_ami-oi.fits."
 
 Reference Files

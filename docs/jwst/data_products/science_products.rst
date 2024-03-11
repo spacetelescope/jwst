@@ -762,13 +762,13 @@ structure shown below.
    based on read noise only.
  - ADSF: The data model meta data.
 
-.. _ami:
-.. _amimulti:
+.. _ami-oi:
+.. _amimulti-oi:
 .. _amilg:
-.. _aminorm:
+.. _aminorm-oi:
 
 
-AMI data: ``ami``, ``amimulti``, ``amilg``, and ``aminorm``
+AMI data: ``ami-oi``, ``amimulti-oi``, ``amilg``, and ``aminorm-oi``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`
 and :ref:`ami_normalize <ami_normalize_step>` steps
@@ -776,17 +776,17 @@ as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline are stored in OIFITS 
 These are a particular type of FITS files containing several binary table extensions
 and are encapsulated within a `~jwst.datamodels.AmiOIModel` data model.
 There are two additional outputs of the :ref:`ami_analyze <ami_analyze_step>` intended
-to enable a more detailed look at the data. The ``amimulti`` file contains per-integration
+to enable a more detailed look at the data. The ``amimulti-oi`` file contains per-integration
 interferometric observables and is also a contained in a `~jwst.datamodels.AmiOIModel`,
 while the ``amilg`` product is a primarily image-based FITS file containing the 
 cropped data, model, and residuals as well as the best-fit model parameters. It
 is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
-The :ref:`ami_normalize <ami_normalize_step>` produces an ``aminorm`` product,
+The :ref:`ami_normalize <ami_normalize_step>` produces an ``aminorm-oi`` product,
 which is also contained in a `~jwst.datamodels.AmiOIModel`.
 
-The overall structure of the OIFITS files (``ami``, ``amiamimulti``, and 
-``aminorm`` products) is as follows:
+The overall structure of the OIFITS files (``ami-oi``, ``amiamimulti-oi``, and 
+``aminorm-oi`` products) is as follows:
 
 +-----+--------------+----------+-----------+------------------+
 | HDU |   EXTNAME    | HDU Type | Data Type |   Dimensions     |
