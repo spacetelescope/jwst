@@ -1,5 +1,4 @@
 import pytest
-import os
 
 from numpy import zeros
 from numpy.testing import assert_allclose
@@ -180,7 +179,7 @@ def test_create_fitswcs(tmp_path, create_model_3d):
     w3d = pointing.create_fitswcs(im)
     gra, gdec, glam = w3d(1, 1, 1)
 
-    path = os.path.join(tmp_path, "fitswcs.fits")
+    path = tmp_path / "fitswcs.fits"
     im.save(path)
     with fits.open(path) as hdulist:
         hdu = hdulist["SCI"]
@@ -275,7 +274,7 @@ def test_sip_approx(tmp_path):
     assert_allclose(fitswcs_res.dec.deg, gwcs_dec, atol=1.5e-6)
 
     # now write the file out, read it back in, and check that the fit values are preserved
-    path = os.path.join(tmp_path, "tmp_sip_wcs.fits")
+    path = tmp_path / "tmp_sip_wcs.fits"
     result.write(path)
 
     with open(path) as result_read:

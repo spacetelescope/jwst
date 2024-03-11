@@ -1,5 +1,4 @@
 from glob import glob
-import os
 
 from jwst.exp_to_source.tests import helpers
 from jwst.exp_to_source.main import Main
@@ -20,7 +19,7 @@ def test_default_run(tmp_path, capsys):
     args.extend(helpers.INPUT_FILES)
     result = Main(args)
     assert len(result.sources) == 5
-    files = glob(os.path.join(path, '*.fits'))
+    files = glob(tmp_path / '*.fits')
     assert len(files) == 5
 
 

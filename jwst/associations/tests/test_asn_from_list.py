@@ -68,10 +68,10 @@ def test_file_ext():
 def test_level2_from_cmdline(tmp_path):
     """Create a level2 association from the command line"""
     rule = 'DMSLevel2bBase'
-    path = os.path.join(tmp_path, 'test_asn.json')
+    path = tmp_path / 'test_asn.json'
     inlist = ['a', 'b', 'c']
     args = [
-        '-o', path,
+        '-o', str(path),
         '-r', rule,
     ]
     args = args + inlist
@@ -199,11 +199,11 @@ def test_cmdline_fails():
 )
 def test_cmdline_success(format, tmp_path):
     """Create Level3 associations in different formats"""
-    path = os.path.join(tmp_path, 'test_asn.json')
+    path = tmp_path / 'test_asn.json'
     product_name = 'test_product'
     inlist = ['a', 'b', 'c']
     args = [
-        '-o', path,
+        '-o', str(path),
         '--product-name', product_name,
         '--format', format
     ]
@@ -224,10 +224,10 @@ def test_cmdline_success(format, tmp_path):
 def test_cmdline_change_rules(tmp_path):
     """Command line change the rule"""
     rule = 'Association'
-    path = os.path.join(tmp_path, 'test_asn.json')
+    path = tmp_path / 'test_asn.json'
     inlist = ['a', 'b', 'c']
     args = [
-        '-o', path,
+        '-o', str(path),
         '-r', rule,
     ]
     args = args + inlist

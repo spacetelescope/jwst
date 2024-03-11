@@ -5,7 +5,6 @@ Unit test for Cube Build testing reading in MIRI cubepars ref file and using it
 import numpy as np
 import pytest
 import math
-import os
 from astropy.io import fits
 from jwst.cube_build import ifu_cube
 from jwst.cube_build import cube_build_io_util
@@ -17,7 +16,7 @@ def miri_cube_pars(tmp_path_factory):
     """ Set up the miri cube pars reference file  """
 
     filename = tmp_path_factory.mktemp('cube_pars')
-    filename = os.path.join(filename, 'miri_cube_pars.fits')
+    filename = filename / 'miri_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'MIRI'

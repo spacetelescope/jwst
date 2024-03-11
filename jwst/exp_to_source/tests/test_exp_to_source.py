@@ -1,4 +1,3 @@
-import os
 import pytest
 import numpy as np
 
@@ -37,9 +36,8 @@ def test_model_structure(run_exp_to_source):
 def test_model_roundtrip(tmp_path, run_exp_to_source):
     inputs, outputs = run_exp_to_source
     files = []
-    path = str(tmp_path)
     for output in outputs:
-        file_path = os.path.join(path, output) + '.fits'
+        file_path = tmp_path / (output + '.fits')
         outputs[output].save(file_path)
         files.append(file_path)
     for file_path in files:

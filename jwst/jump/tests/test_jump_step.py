@@ -2,7 +2,6 @@ from itertools import cycle
 
 import numpy as np
 import pytest
-import os
 
 from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel
 
@@ -16,8 +15,8 @@ def generate_miri_reffiles(tmp_path_factory):
 
     def _generate_miri_reffiles(xsize=103, ysize=102, ingain=6):
 
-        gainfile = os.path.join(tmp_path_factory.mktemp("data"), "gain.fits")
-        readnoisefile = os.path.join(tmp_path_factory.mktemp("data"), 'readnoise.fits')
+        gainfile = tmp_path_factory.mktemp("data") / "gain.fits"
+        readnoisefile = tmp_path_factory.mktemp("data") / 'readnoise.fits'
 
         ingain = ingain
         xsize = xsize
@@ -53,8 +52,8 @@ def generate_miri_reffiles(tmp_path_factory):
 def generate_nircam_reffiles(tmp_path_factory):
 
     def _generate_nircam_reffiles(xsize=20, ysize=20, ingain=6):
-        gainfile = os.path.join(tmp_path_factory.mktemp("ndata"), "gain.fits")
-        readnoisefile = os.path.join(tmp_path_factory.mktemp("ndata"), 'readnoise.fits')
+        gainfile = tmp_path_factory.mktemp("ndata") / "gain.fits"
+        readnoisefile = tmp_path_factory.mktemp("ndata") / 'readnoise.fits'
 
         ingain = ingain
         xsize = xsize

@@ -22,7 +22,7 @@ data_path = os.path.split(os.path.abspath(data_directory.__file__))[0]
 
 def get_file_path(filename):
     """Construct an absolute path."""
-    return os.path.join(data_path, filename)
+    return data_path / filename
 
 
 @pytest.fixture(scope='module')
@@ -30,7 +30,7 @@ def background(tmp_path_factory):
     """Generate a  background image to feed to background step"""
 
     filename = tmp_path_factory.mktemp('background_input')
-    filename = os.path.join(filename, 'background.fits')
+    filename = filename / 'background.fits'
     with datamodels.IFUImageModel((10, 10)) as image:
         image.data[:, :] = 10
         image.meta.instrument.name = 'NIRSPEC'

@@ -10,7 +10,7 @@ def test_pool(tmp_path_factory):
     assert len(pool) == 636
 
     tmp_path = tmp_path_factory.mktemp(__name__)
-    tmp_pool = os.path.join(tmp_path, 'tmp_pool.csv')
+    tmp_pool = tmp_path / 'tmp_pool.csv'
     pool.write(tmp_pool)
 
     roundtrip = AssociationPool.read(tmp_pool)

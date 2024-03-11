@@ -126,6 +126,8 @@ general
 - Replaced the ``_jail`` fixture from ``ci_watson`` with custom
   ``tmp_cwd`` to enforce ``no:legacypath`` in the CI tests. [#8327]
 
+- Renamed the ``jail`` fixture with ``tmp_cwd_module``. [#8327]
+
 jump
 ----
 

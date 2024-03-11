@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 from asdf import AsdfFile
-import os
 
 from stdatamodels.jwst.datamodels import IFUCubeModel, NrsIfuApcorrModel, MirMrsApcorrModel
 
@@ -12,7 +11,7 @@ from jwst.extract_1d.apply_apcorr import ApCorrRadial, select_apcorr
 def dummy_nirspec_ref(tmp_path_factory):
     """ Generate a dummy apcorr ref file """
     filename = tmp_path_factory.mktemp('dummy_apcorr')
-    filename = os.path.join(filename, 'dummy_nirspec_apcorr.asdf')
+    filename = filename / 'dummy_nirspec_apcorr.asdf'
 
     refap = {}
     refap['meta'] = {}
@@ -55,7 +54,7 @@ def dummy_nirspec_ref(tmp_path_factory):
 def dummy_miri_ref(tmp_path_factory):
     """ Generate a dummy apcorr ref file """
     filename = tmp_path_factory.mktemp('dummy_apcorr')
-    filename = os.path.join(filename, 'dummy_miri_apcorr.asdf')
+    filename = filename / 'dummy_miri_apcorr.asdf'
 
     refap = {}
     refap['meta'] = {}

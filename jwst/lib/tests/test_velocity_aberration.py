@@ -2,7 +2,6 @@
 Test script for set_velocity_aberration.py
 """
 import subprocess
-import os
 
 from numpy import isclose
 from astropy.io import fits
@@ -34,7 +33,7 @@ def test_compute_va_effects_zero_velocity():
 def test_velocity_aberration_script(tmp_path):
     """Test the whole script on a FITS file"""
 
-    path = os.path.join(tmp_path, "velocity_aberration_tmpfile.fits")
+    path = tmp_path / "velocity_aberration_tmpfile.fits"
     model = dm.ImageModel()
     model.meta.ephemeris.velocity_x_bary = GOOD_VELOCITY[0]
     model.meta.ephemeris.velocity_y_bary = GOOD_VELOCITY[1]

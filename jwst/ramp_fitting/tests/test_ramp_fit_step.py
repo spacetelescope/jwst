@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-import os
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
@@ -182,8 +181,8 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
 
 def test_subarray_5groups(tmp_path_factory):
     # all pixel values are zero. So slope should be zero
-    gainfile = os.path.join(tmp_path_factory.mktemp("data"), "gain.fits")
-    readnoisefile = os.path.join(tmp_path_factory.mktemp("data"), 'readnoise.fits')
+    gainfile = tmp_path_factory.mktemp("data") / "gain.fits"
+    readnoisefile = tmp_path_factory.mktemp("data") / 'readnoise.fits'
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
         ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
