@@ -36,7 +36,7 @@ logger.addHandler(logging.NullHandler())
 # have to exist. Used by `find_suffixes` to
 # add to the result it produces.
 SUFFIXES_TO_ADD = [
-    'ami', 'amiavg', 'aminorm', 'ami-oi',
+    'ami', 'amiavg', 'aminorm', 'ami-oi', 'aminorm-oi',
     'blot', 'bsub', 'bsubints',
     'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
@@ -52,7 +52,15 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall']
+SUFFIXES_TO_DISCARD = [
+    'ami_average',
+    'engdblogstep',
+    'functionwrapper',
+    'pipeline',
+    'rscd_step',
+    'step',
+    'systemcall',
+]
 
 
 # Calculated suffixes.
