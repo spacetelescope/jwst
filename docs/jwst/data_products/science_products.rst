@@ -769,7 +769,7 @@ structure shown below.
 
 
 AMI data: ``ami-oi``, ``amimulti-oi``, ``amilg``, and ``aminorm-oi``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`
 and :ref:`ami_normalize <ami_normalize_step>` steps
 as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline are stored in OIFITS files.
@@ -782,7 +782,7 @@ while the ``amilg`` product is a primarily image-based FITS file containing the
 cropped data, model, and residuals as well as the best-fit model parameters. It
 is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
-The :ref:`ami_normalize <ami_normalize_step>` produces an ``aminorm-oi`` product,
+The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` product,
 which is also contained in a `~jwst.datamodels.AmiOIModel`.
 
 The overall structure of the OIFITS files (``ami-oi``, ``amiamimulti-oi``, and 
