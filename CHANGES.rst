@@ -88,6 +88,10 @@ general
 
 - Update minimum required stdatamodels version to include 1.10.0 [#8322]
 
+- Update minimum required gwcs version to include 0.21.0 [#8337]
+
+- Remove unused asdf-transform-schemas dependency [#8337]
+
 jump
 ----
 
