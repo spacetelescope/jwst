@@ -62,6 +62,6 @@ def test_rf1d(file):
     """
 
     (wave, influx, outflux) = read_spectrum(file)
-    outflux2 = rf1d(flux, wave, channel=2)
+    outflux2 = rf1d(influx, wave, channel=2)
 
     assert_allclose(outflux, outflux2, atol=0.001)
