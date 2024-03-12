@@ -446,19 +446,15 @@ def weighted_operations(img, model, dqm=None):
     model, b is the data (image), and x is the coefficient vector we are solving
     for.
 
-    Solution 1:  equal weighting of data (matrix_operations()).
-      x = inv(At.A).(At.b)
-
-    Solution 2:  weighting data by Poisson variance (weighted_operations())
+    Here we are weighting data by Poisson variance:
       x = inv(At.W.A).(At.W.b)
       where W is a diagonal matrix of weights w_i,
       weighting each data point i by the inverse of its variance:
          w_i = 1 / sigma_i^2
       For photon noise, the data, i.e. the image values b_i  have variance
-      proportional to b_i with an e.g. ADU to electrons coonversion factor.
+      proportional to b_i with an e.g. ADU to electrons conversion factor.
       If this factor is the same for all pixels, we do not need to include
-      it here (is that really true? Yes I think so because we're not
-      normalizing wts here, just ascribing rel wts.).
+      it here.
 
     Parameters
     ----------
@@ -478,7 +474,12 @@ def weighted_operations(img, model, dqm=None):
 
     res: 2D float array
         residual; difference between model and fit
+
+    Notes
+    -----
+    Use matrix_operations() for equal weighting of data.
     """
+
     # Remove not-to-be-fit data from the flattened "img" data vector
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
     flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
@@ -510,23 +511,14 @@ def weighted_operations(img, model, dqm=None):
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
     for fringe in range(np.shape(model)[2]):
         flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
-    # log.info(flatmodel.shape)
 
     # A.w
-    # Aw = A * np.sqrt(w[:,np.newaxis]) # w as a column vector
     Aw = flatmodel * weights[:, np.newaxis]
-    # bw = b * np.sqrt(w)
     bw = flatimg * weights
-    # x = np.linalg.lstsq(Aw, bw)[0]
     # resids are pixel value residuals, flattened to 1d vector
     x, rss, rank, singvals = np.linalg.lstsq(Aw, bw)
 
-    # inverse = linalg.inv(Atww)
-    # cond = np.linalg.cond(inverse)
-
-    # actual residuals in image:  is this sign convention odd?
-    # res = np.dot(flatmodel, x) - flatimg
-    # changed here to data - model
+    # actual residuals in image:
     res = flatimg - np.dot(flatmodel, x)
 
     # put bad pixels back

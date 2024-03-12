@@ -20,7 +20,6 @@ class RawOifits:
     def __init__(self, fringefitter, method="median"):
         """
         Class to store AMI data in the format required to write out to OIFITS files
-        Based on ObservablesFromText from ImPlaneIA.
         Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
 
         Parameters
@@ -30,6 +29,11 @@ class RawOifits:
             and other info needed for OIFITS files
         method: string
             Method to average observables: mean or median. Default median.
+
+        Notes
+        -----
+        Based on ObservablesFromText from ImPlaneIA, e.g. 
+        https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
         """
         self.fringe_fitter = fringefitter
         self.n_holes = 7

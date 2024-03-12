@@ -225,6 +225,9 @@ class NIRISS:
                     log.info(f"Analyzing only the first {self.firstfew:d} integrations")
                     scidata = scidata[: self.firstfew, :, :]
                     bpdata = bpdata[: self.firstfew, :, :]
+                else:
+                    log.warning(f"Input firstfew={self.firstfew:d} is greater than the number of integrations")
+                    log.warning("All integrations will be analyzed")
             self.nwav = scidata.shape[0]
             [self.wls.append(self.wls[0]) for f in range(self.nwav - 1)]
         # Rotate mask hole centers by pav3 + v3i_yang to be in equatorial coordinates
@@ -357,7 +360,9 @@ class NIRISS:
         vpar = self.vparity  # Relative sense of rotation between Ideal xy and V2V3
         rot_ang = self.pav3 - self.v3iyang  # subject to change!
 
-        if self.pav3 != 0.0:
+        if self.pav3 == 0.0:
+            return mask_ctrs
+        else:
             # Using rotate2sccw, which rotates **vectors** CCW in a fixed coordinate system,
             # so to rotate coord system CW instead of the vector, reverse sign of rotation angle.  Double-check comment
             if vpar == -1:
@@ -372,6 +377,4 @@ class NIRISS:
                 log.info(
                     f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees"
                 )
-        else:
-            ctrs_rot = mask_ctrs
-        return ctrs_rot
+            return ctrs_rot
