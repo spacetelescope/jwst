@@ -11,15 +11,14 @@ def test_help(capsys):
 
 
 def test_default_run(tmp_path, capsys):
-    path = str(tmp_path)
     args = [
         '-o',
-        path
+        str(tmp_path)
     ]
     args.extend(helpers.INPUT_FILES)
     result = Main(args)
     assert len(result.sources) == 5
-    files = glob(tmp_path / '*.fits')
+    files = glob(str(tmp_path / '*.fits'))
     assert len(files) == 5
 
 

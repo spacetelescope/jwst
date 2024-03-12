@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipelines(jail, rtdata_module):
+def run_pipelines(tmp_cwd_module, rtdata_module):
     """Run stage 2-3 tso pipelines on NIRCAM TSO grism data."""
     rtdata = rtdata_module
 

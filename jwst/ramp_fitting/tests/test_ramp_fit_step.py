@@ -198,7 +198,7 @@ def test_subarray_5groups(tmp_path_factory):
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model1, override_gain=gainfile, override_readnoise=readnoisefile,
+        model1, override_gain=str(gainfile), override_readnoise=str(readnoisefile),
         maximum_cores="none", save_opt=True)
 
     assert slopes is not None

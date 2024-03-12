@@ -43,7 +43,7 @@ def generate_miri_reffiles(tmp_path_factory):
         readnoise_model.save(readnoisefile)
         readnoise_model.close()
 
-        return gainfile, readnoisefile
+        return str(gainfile), str(readnoisefile)
 
     return _generate_miri_reffiles
 
@@ -80,7 +80,7 @@ def generate_nircam_reffiles(tmp_path_factory):
         readnoise_model.save(readnoisefile)
         readnoise_model.close()
 
-        return gainfile, readnoisefile
+        return str(gainfile), str(readnoisefile)
 
     return _generate_nircam_reffiles
 

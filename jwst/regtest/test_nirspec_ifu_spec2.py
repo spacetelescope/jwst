@@ -9,7 +9,7 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 
 @pytest.fixture(scope='module')
-def run_spec2(jail, rtdata_module):
+def run_spec2(tmp_cwd_module, rtdata_module):
     """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
     rtdata = rtdata_module
 
@@ -50,7 +50,7 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.fixture()
-def run_photom(jail, rtdata):
+def run_photom(tmp_cwd_module, rtdata):
     """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
 
     # Setup the inputs
@@ -76,7 +76,7 @@ def test_photom(run_photom, fitsdiff_default_kwargs):
 
 
 @pytest.fixture()
-def run_extract1d(jail, rtdata):
+def run_extract1d(tmp_cwd_module, rtdata):
     """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
 
     # Setup the inputs

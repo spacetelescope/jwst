@@ -1,7 +1,7 @@
 """
 Unit tests for background subtraction
 """
-import os
+import pathlib
 
 from astropy.stats import sigma_clipped_stats
 import pytest
@@ -12,17 +12,13 @@ from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
-from jwst.background.tests import data as data_directory
 from jwst.stpipe import Step
 from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
 
 
-data_path = os.path.split(os.path.abspath(data_directory.__file__))[0]
-
-
-def get_file_path(filename):
-    """Construct an absolute path."""
-    return data_path / filename
+@pytest.fixture(scope="module")
+def data_path():
+    return pathlib.Path(__file__).parents[0] / "data"
 
 
 @pytest.fixture(scope='module')
@@ -152,7 +148,7 @@ def test_nirspec_gwa_ytilt(tmp_cwd, background, science_image):
 
 
 @pytest.fixture(scope='module')
-def make_wfss_datamodel():
+def make_wfss_datamodel(data_path):
     """Generate WFSS Observation"""
     wcsinfo = {
         'dec_ref': -27.79156387419731,
@@ -201,7 +197,7 @@ def make_wfss_datamodel():
     image.meta.subarray._instance.update(subarray)
     image.meta.exposure._instance.update(exposure)
     image.data = np.random.rand(2048, 2048)
-    image.meta.source_catalog = get_file_path('test_cat.ecsv')
+    image.meta.source_catalog = str(data_path / "test_cat.ecsv")
 
     return image
 
@@ -213,7 +209,7 @@ filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
 @pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
 @pytest.mark.parametrize("filters", filter_list)
 @pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])
-def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
+def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_datamodel):
     """Test background subtraction for NIRCAM WFSS modes."""
     data = make_wfss_datamodel
 

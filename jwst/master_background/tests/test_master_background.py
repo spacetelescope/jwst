@@ -26,7 +26,8 @@ def user_background(tmp_path_factory):
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
     data.save(filename)
-    return filename
+    # filename must be string not Path to validate with current stpipe version
+    return str(filename)
 
 
 @pytest.fixture(scope='function')

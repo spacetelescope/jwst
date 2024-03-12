@@ -1,6 +1,5 @@
 import inspect
 import sys
-import os
 import warnings
 
 from astropy.modeling import models

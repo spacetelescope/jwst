@@ -53,11 +53,10 @@ def slow(request):
 
 
 @pytest.fixture(scope="module")
-def jail(request, tmp_path_factory):
-    """Run test in a pristine temporary working directory, scoped to module.
-
-    This fixture is the same as _jail in ci_watson, but scoped to module
-    instead of function.  This allows a fixture using it to produce files in a
+def tmp_cwd_module(request, tmp_path_factory):
+    """
+    Run test in a pristine temporary working directory, scoped to module.
+    This allows a fixture using it to produce files in a
     temporary directory, and then have the tests access them.
     """
     old_dir = os.getcwd()
@@ -72,7 +71,7 @@ def jail(request, tmp_path_factory):
 
 @pytest.fixture
 def tmp_cwd(tmp_path):
-    """Perform test in a pristine temporary working directory."""
+    """Perform test in a pristine temporary working directory, scoped to function."""
     old_dir = Path.cwd()
     os.chdir(tmp_path)
     try:
