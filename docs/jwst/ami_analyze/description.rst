@@ -47,7 +47,7 @@ other options:
 :--chooseholes: If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
                 (default=None)
 
-:--affine2d: None or user-defined Affine2d object (default=None)
+:--affine2d: User-defined Affine2d object (default=None)
 
 :--run_bpfix: Run Fourier bad pixel fix on cropped data (default=True)
             
