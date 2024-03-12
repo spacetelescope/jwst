@@ -33,6 +33,7 @@ def test_wavecorr():
     ra, dec, lam_before = im_ex2d.slits[0].meta.wcs(x, y)
     im_ex2d.slits[0].wavelength = lam_before
     im_src = SourceTypeStep.call(im_ex2d)
+
     # the mock msa source is an extended source, change to point for testing
     im_src.slits[0].source_type = 'POINT'
     im_wave = WavecorrStep.call(im_src)
@@ -55,13 +56,14 @@ def test_wavecorr():
     corrected_wavelength = wavecorr.compute_wavelength(im_wave.slits[0].meta.wcs, x, y)
     assert_allclose(im_wave.slits[0].wavelength, corrected_wavelength)
 
-    # test the roundtripping on the wavelength correction transform
+    # test the round-tripping on the wavelength correction transform
     ref_name = im_wave.meta.ref_file.wavecorr.name
-    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+    freference = datamodels.WaveCorrModel(
+        WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
     lam_uncorr = lam_before * 1e-6
-    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
-                                                                       freference, slit.source_xpos, 'MOS')
+    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(
+        lam_uncorr, dispersion, freference, slit.source_xpos, 'MOS')
     lam_corr = wave2wavecorr(lam_uncorr)
     assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))
     
@@ -69,10 +71,10 @@ def test_wavecorr():
     source_xpos1 = -.2
     source_xpos2 = .2
 
-    wave_transform1 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
-                                                                         freference, source_xpos1, 'MOS')
-    wave_transform2 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
-                                                                         freference, source_xpos2, 'MOS')
+    wave_transform1 = wavecorr.calculate_wavelength_correction_transform(
+        lam_uncorr, dispersion, freference, source_xpos1, 'MOS')
+    wave_transform2 = wavecorr.calculate_wavelength_correction_transform(
+        lam_uncorr, dispersion, freference, source_xpos2, 'MOS')
 
     zero_point1 = wave_transform1(lam_uncorr)
     zero_point2 = wave_transform2(lam_uncorr)
@@ -211,15 +213,14 @@ def test_wavecorr_fs():
     lam_corr = wave2wavecorr(lam_uncorr)
     assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))
 
-
     # test on both sides of the slit center
     source_xpos1 = -.2
     source_xpos2 = .2
 
-    wave_transform1 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
-                                                                         freference, source_xpos1, 'S200A1')
-    wave_transform2 = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
-                                                                         freference, source_xpos2, 'S200A1')
+    wave_transform1 = wavecorr.calculate_wavelength_correction_transform(
+        lam_uncorr, dispersion, freference, source_xpos1, 'S200A1')
+    wave_transform2 = wavecorr.calculate_wavelength_correction_transform(
+        lam_uncorr, dispersion, freference, source_xpos2, 'S200A1')
 
     zero_point1 = wave_transform1(lam_uncorr)
     zero_point2 = wave_transform2(lam_uncorr)
