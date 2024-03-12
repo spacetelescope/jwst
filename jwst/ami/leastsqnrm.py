@@ -586,9 +586,6 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     log.info(f"\n\tflatimg {flatimg.shape:}", end="")
     log.info(f"\n\tflatdqm {flatdqm.shape:}", end="")
 
-    # Originally Alex had  nans coding bad pixels in the image.
-    # Anand: re-use the nan terminology code but driven by bad pixel frame
-    #        nanlist shoud get renamed eg donotuselist
 
     log.info("\n\ttype(dqm)", type(dqm), end="")
     if dqm is not None:
@@ -685,7 +682,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
             log.info("linearfit module not imported, no covariances saved.")
     else:
         linfit_result = None
-        log.info("linearfit module not imported, no covariances saved.")
+        log.info("linearfit not attempted, no covariances saved.")
 
     return x, res, cond, linfit_result
 
