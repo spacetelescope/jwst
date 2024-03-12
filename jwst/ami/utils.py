@@ -1232,6 +1232,7 @@ def img_median_replace(img_model, box_size):
 
     return img_model
 
+
 def get_filt_spec(throughput_model):
     """
     Short Summary
@@ -1357,6 +1358,55 @@ def get_cw_beta(bandpass):
     ew = area / wt.max()  # equivalent width
     beta = ew / cw  # fractional bandpass
     return cw, beta
+
+def handle_bandpass(bandpass, throughput_model):
+    """
+    Logic for determining what to do with the input bandpass.
+    If user-provided, return in format expected by code. If none,
+    fetch filter throughput and combine with flat spectrum to
+    produce appropriate array.
+
+    Parameters:
+    -----------
+    bandpass: Synphot spectrum or array, or None
+        User-defined bandpass to override filter/source
+    throughput_model: ThroughputModel
+        Datamodel containing filter throughput info.
+        Will not be used if bandpass is not None.
+
+    Returns:
+    --------
+    bandpass: array
+        Array of weights, wavelengths used to generate model
+    """
+    if bandpass is not None:
+        log.info(
+            "User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES"
+        )
+        # bandpass can be user-defined synphot object or appropriate array
+        if isinstance(bandpass, synphot.spectrum.SpectralElement):
+            log.info("User-defined synphot spectrum provided")
+            wl, wt = bandpass._get_arrays(bandpass.waveset)
+            bandpass = np.array((wt, wl)).T
+        else:
+            log.info("User-defined bandpass array provided")
+            bandpass = np.array(bandpass)
+
+    else:
+        # Default behavior: get the filter and source spectrum
+        log.info(f'Reading throughput model data for {throughput_model.meta.instrument.filter}.')
+        filt_spec = get_filt_spec(throughput_model)
+        log.info('Using flat spectrum model.')
+        flat_spec = get_flat_spec() 
+        nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
+        bandpass = combine_src_filt(
+            filt_spec,
+            flat_spec,
+            trim=0.01,
+            nlambda=nspecbin,
+        )
+
+    return bandpass
 
 
 def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
