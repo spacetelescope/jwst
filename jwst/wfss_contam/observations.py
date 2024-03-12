@@ -1,6 +1,6 @@
 import time
+import multiprocessing
 import numpy as np
-from multiprocessing import Pool
 
 from scipy import sparse
 
@@ -259,7 +259,8 @@ class Observation:
 
         time1 = time.time()
         if self.max_cpu > 1:
-            mypool = Pool(self.max_cpu)  # Create the pool
+            ctx = multiprocessing.get_context("forkserver")
+            mypool = ctx.Pool(self.max_cpu)  # Create the pool
             all_res = mypool.imap_unordered(dispersed_pixel, pars)  # Fill the pool
             mypool.close()  # Drain the pool
         else:
