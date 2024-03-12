@@ -15,7 +15,6 @@ from stdatamodels.jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dq
 from jwst.dark_current.dark_current_step import DarkCurrentStep
 
 
-
 # Define frame_time and number of groups in the generated dark reffile
 TFRAME = 10.73677
 NGROUPS_DARK = 10
@@ -434,6 +433,38 @@ def test_basic_step(make_rampmodel, make_darkmodel):
 
     # test that the output data file is equal to the difference found when subtracting ref file from sci file
     np.testing.assert_array_equal(outdata, diff, err_msg='dark file should be subtracted from sci file ')
+
+
+def test_average_dark_current(make_rampmodel, make_darkmodel):
+    """
+    Test setting of average dark current.
+    """
+    # size of integration
+    nints, ngroups, nrows, ncols = 1, 10, 200, 200
+
+    # create raw input data for step
+    dm_ramp = make_rampmodel(nints, ngroups, nrows, ncols)
+    dm_ramp.meta.exposure.nframes = 1
+    dm_ramp.meta.exposure.groupgap = 0
+
+    # populate data array of science cube
+    for i in range(0, ngroups - 1):
+        dm_ramp.data[0, i] = i
+
+    # create dark reference file model with more frames than science data
+    refgroups = 15
+    dark = make_darkmodel(refgroups, nrows, ncols)
+
+    # populate data array of reference file
+    for i in range(0, refgroups - 1):
+        dark.data[0, i] = i * 0.1
+
+    average_current = 1.234
+    dark_output = DarkCurrentStep.call(dm_ramp, override_dark=dark, average_dark_current=average_current)
+
+    assert dark_output.meta.cal_step.dark_sub == "COMPLETE"
+
+    assert dark_output.average_dark_current[nrows - 1, ncols - 1] == pytest.approx(average_current)
 
 
 @pytest.fixture(scope='function')

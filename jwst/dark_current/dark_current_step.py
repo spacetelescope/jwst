@@ -58,18 +58,7 @@ class DarkCurrentStep(Step):
             # Store user-defined average_dark_current in model, if provided
             # A user-defined value will take precedence over any value present
             # in dark reference file
-            if self.average_dark_current is not None:
-                input_model.average_dark_current[:, :] = self.average_dark_current
-            else:
-                # First prioritize a 2D average_dark_current, if defined in dark.
-                # If not present, apply scalar to datamodel array, if scalar is present.
-                if np.sum(dark_model.average_dark_current) == 0.0:
-                    input_model.average_dark_current[:, :] = dark_model.meta.exposure.average_dark_current
-                elif np.shape(input_model.average_dark_current) != np.shape(dark_model.average_dark_current):
-                    self.log.warning("DarkModel average_dark_current does not match shape of data.\n"
-                                     "Dark current from reference file cannot be applied.")
-                else:
-                    input_model.average_dark_current = dark_model.average_dark_current
+            self.set_average_dark_current(input_model, dark_model)
 
             # Do the dark correction
             result = dark_sub.do_correction(
@@ -85,6 +74,36 @@ class DarkCurrentStep(Step):
             out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
 
         return out_ramp
+
+    def set_average_dark_current(self, input_model, dark_model):
+        '''Take the three possible locations specifying
+        the average dark current and assign them to the
+        input model, in priority order:
+        1) Any value provided to the step parameter, either from
+        the user or a parameter reference file
+        2) The 2-D array stored in dark_model.average_dark_current
+        3) The scalar value stored in dark_model.meta.exposure.average_dark_current
+
+        Inputs
+        ------
+        input_model : stdatamodels.jwst.datamodels.RampModel
+            The input datamodel containing the 4-D ramp array
+        dark_model : Union[stdatamodels.jwst.datamodels.DarkModel,
+                           stdatamodels.jwst.datamodels.DarkMIRIModel]
+            The dark reference file datamodel
+        '''
+        if self.average_dark_current is not None:
+            input_model.average_dark_current[:, :] = self.average_dark_current
+        else:
+            # First prioritize a 2D average_dark_current, if defined in dark.
+            # If not present, apply scalar to datamodel array, if scalar is present.
+            if np.sum(dark_model.average_dark_current) == 0.0:
+                input_model.average_dark_current[:, :] = dark_model.meta.exposure.average_dark_current
+            elif np.shape(input_model.average_dark_current) != np.shape(dark_model.average_dark_current):
+                self.log.warning("DarkModel average_dark_current does not match shape of data.\n"
+                                 "Dark current from reference file cannot be applied.")
+            else:
+                input_model.average_dark_current = dark_model.average_dark_current
 
 
 def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
