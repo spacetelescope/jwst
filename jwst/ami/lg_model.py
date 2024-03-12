@@ -169,16 +169,11 @@ class NrmModel:
         Object's 'psf': float 2D array
             simulated psf
         """
-        # why are we making this FITS object?
-        self.simhdr = fits.PrimaryHDU().header
         # First set up conditions for choosing various parameters
         self.bandpass = bandpass
 
         if over is None:
             over = 1  # ?  Always comes in as integer.
-
-        self.simhdr["OVER"] = (over, "sim pix = det pix/over")
-        self.simhdr["PIX_OV"] = (self.pixel / float(over), "Sim pixel scale in radians")
 
         self.psf_over = np.zeros((over * fov, over * fov))
         nspec = 0
@@ -198,8 +193,6 @@ class NrmModel:
                 shape=self.holeshape,
             )
             # offset signs fixed to agree w/DS9, +x shifts ctr R, +y shifts up
-            self.simhdr["WAVL{0}".format(nspec)] = (l, "wavelength (m)")
-            self.simhdr["WGHT{0}".format(nspec)] = (w, "weight")
             nspec += 1
 
         # store the detector pixel scale psf in the object
