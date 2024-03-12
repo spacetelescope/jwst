@@ -1,5 +1,6 @@
 from glob import glob
 import os
+import pathlib
 
 import pytest
 from astropy.table import Table
@@ -9,19 +10,19 @@ from jwst.regtest.regtestdata import text_diff
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_data(rtdata):
+def test_regtestdata_get_data(tmp_cwd, rtdata):
     rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_cal.fits"
 
-    assert rtdata.input == os.getcwd() / "file1_rate.fits"
+    assert rtdata.input == str(tmp_cwd / "file1_rate.fits")
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_truth(rtdata):
+def test_regtestdata_get_truth(tmp_cwd, rtdata):
     rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_rate.fits"
 
-    assert rtdata.truth == os.getcwd() / "truth" / "file1_rate.fits"
+    assert rtdata.truth == str(tmp_cwd / "truth" / "file1_rate.fits")
 
 
 @pytest.mark.bigdata
