@@ -205,6 +205,8 @@ residual_fringe
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
 
+- Add a unit test for 1d residual defringing. []
+
 scripts
 -------
 

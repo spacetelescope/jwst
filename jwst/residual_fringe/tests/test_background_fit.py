@@ -6,6 +6,7 @@ import pytest
 from pathlib import Path
 
 from jwst.residual_fringe import utils
+from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
 from numpy.testing import assert_allclose
 from astropy.io import fits
 
@@ -39,3 +40,28 @@ def test_background_fit(file):
                                                  col_wnum, ffreq=store_freq)
 
     assert_allclose(bg_fit, bg_fit2, atol=0.001)
+
+def read_spectrum(file):
+    """ Read data from a small spectrum file for test_rf1d  """
+
+    file_dir = Path(__file__).parent.resolve()
+    file_path = str(file_dir / file)
+
+    with fits.open(file_path) as hdu:
+        wave = hdu[1].data
+        influx = hdu[2].data
+        outflux = hdu[3].data
+
+        return wave, influx, outflux
+
+@pytest.mark.parametrize("file", ['testspec.fits'])
+def test_rf1d(file):
+    """ Test the performance of the 1d residual defringe routine
+        Do this using a Ch2C spectrum taken from observations of bright star 16 CygB
+        We will test calling the 1d defringer directly.
+    """
+
+    (wave, influx, outflux) = read_spectrum(file)
+    outflux2 = rf1d(flux, wave, channel=2)
+
+    assert_allclose(outflux, outflux2, atol=0.001)
