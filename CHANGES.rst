@@ -236,6 +236,9 @@ tweakreg
 - Suppress warnings from ``photutils.background.Background2D`` regarding
   NaNs in the input data. [#8308]
 
+- Fixed a bug that caused failures instead of warnings when no GAIA sources
+  were found within the bounding box of the input image. [#8334]
+
 
 1.13.4 (2024-01-25)
 ===================
