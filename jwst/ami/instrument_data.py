@@ -51,7 +51,7 @@ class NIRISS:
         bandpass: synphot spectrum or array
             None, synphot object or [(wt,wlen),(wt,wlen),...].  Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
-            the given bandpass, so you can simulate 21cm psfs through something called "F430M"!
+            the given bandpass, so you could simulate, for example, a 21cm psf through something called "F430M"!
 
         usebp : boolean
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
@@ -62,7 +62,7 @@ class NIRISS:
         chooseholes : string
             If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
 
-        affine2d : user-defined Affine2D object
+        affine2d : Affine2D object
             None or user-defined Affine2d object
 
         run_bpfix : boolean
