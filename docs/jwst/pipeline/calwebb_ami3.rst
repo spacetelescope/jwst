@@ -85,8 +85,8 @@ Interferometric observables
 
 
 For every input exposure, the fringe parameters and closure phases calculated
-by the :ref:`ami_analyze <ami_analyze_step>` step are saved to "_ami-oi.fits" product file,
-which is a kind of FITS table of median observables over all integrations of the input file.
+by the :ref:`ami_analyze <ami_analyze_step>` step are saved to an "_ami-oi.fits" product file,
+which is a FITS table of median observables over all integrations of the input file.
 Product names use the input "_calints" exposure-based file name, with the association candidate ID
 included and the product type changed to "_ami-oi.fits", e.g.
 "jw93210001001_03101_00001_nis_a0003_ami-oi.fits."

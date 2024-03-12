@@ -70,12 +70,14 @@ The ``ami_analyze`` step itself does not accept an ASN as input.
 Outputs
 -------
 
+The ``ami_analyze`` step produces three output files. The first two (``_ami-oi.fits`` and ``_amimulti-oi.fits``) contain the interferometric observables, and the third (``_amilg.fits``) contains the data, LG model, and residuals.  These are described in more detail below.
+
 Interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
 :File suffix: _ami-oi.fits, _amimulti-oi.fits
 
-The ``ami_analyze`` step produces three output files. The first two are OIFITS files, a registered FITS format
+. The inteferometric observables are saved as OIFITS files, a registered FITS format
 for optical interferometry, containing the following list of extensions:
 
 1)  ``OI_ARRAY``: AMI subaperture information  
@@ -87,7 +89,7 @@ for optical interferometry, containing the following list of extensions:
 
 For more information on the format and contents of OIFITS files, see the `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-The _ami-oi.fits file contains tables of median observables over all integrations of the input file and errors 
+The _ami-oi.fits file contains tables of median observables over all integrations of the input file.  Errors 
 are computed as the sigma-clipped standard deviation over integrations.
 The _amimulti-oi.fits file contains observables for each integration, and does not contain error estimates. The
 structure is the same as the _ami-oi.fits file, but certain data columns are 2D, with the second dimension being 
