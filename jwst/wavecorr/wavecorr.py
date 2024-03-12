@@ -138,7 +138,7 @@ def apply_zero_point_correction(slit, reffile):
     
     # Insert the new transform into the slit wcs object
     wave2wavecorr = Identity(2) & wave2wavecorr
-    slit_wcs.insert_transform('slit_frame', transform = wave2wavecorr, after=False)
+    slit_wcs.insert_transform('slit_frame', transform=wave2wavecorr, after=False)
     
     # Update the stored wavelengths for the slit
     slit.wavelength = compute_wavelength(slit_wcs)
@@ -151,7 +151,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
 
     Parameters
     ----------
-    slit_wcs : ~gwcs.wcs.WCS`
+    slit_wcs : `~gwcs.wcs.WCS`
         The WCS for this  slit.
     lam : ndarray
         Wavelength array [in m].
@@ -166,27 +166,23 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
         
     Returns
     -------
-    model : `~astropy.modeling.tabular.Tabular1D
-        A model which takes wavelength inputs and returns zeropoint
+    model : `~astropy.modeling.tabular.Tabular1D`
+        A model which takes wavelength inputs and returns zero-point
         corrected wavelengths.
     """
-    
-    
-    # Open the  zerpoint reference model
+    # Open the zero point reference model
     with datamodels.WaveCorrModel(freference) as wavecorr:
         for ap in wavecorr.apertures:
             if ap.aperture_name == aperture_name:
                 log.info(f'Using wavelength zero-point correction for aperture {ap.aperture_name}')
                 offset_model = ap.zero_point_offset.copy()
-                # TODO: implement variance
-                # variance = ap.variance.copy()
-                # width = ap.width
                 break
         else:
             log.info(f'No wavelength zero-point correction found for slit {aperture_name}')
         
-    # Set lookup table to extrapolate at bounds to recover wavelengths beyond model bounds
-    # particulary for the red and blue ends of prism observations
+    # Set lookup table to extrapolate at bounds to recover wavelengths
+    # beyond model bounds, particularly for the red and blue ends of
+    # prism observations
     offset_model.bounds_error = False
     offset_model.fill_value = None
         
