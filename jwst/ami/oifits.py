@@ -76,6 +76,16 @@ class RawOifits:
         self.fringe_amplitudes_squared = self.fringe_amplitudes ** 2  # squared visibilities
 
     def make_oifits(self):
+        """
+        Perform final manipulations of observable arrays, calculate uncertainties, and
+        populate AmiOIModel
+
+        Returns
+        -------
+        m: AmiOIModel
+            Fully populated datamodel
+
+        """
         self.make_obsarrays()
         instrument_data = self.fringe_fitter.instrument_data
         observation_date = Time(

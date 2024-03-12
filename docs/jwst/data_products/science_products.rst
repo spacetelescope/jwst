@@ -783,9 +783,16 @@ cropped data, model, and residuals as well as the best-fit model parameters. It
 is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
 The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` product,
-which is also contained in a `~jwst.datamodels.AmiOIModel`.
+which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard 
+defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-The overall structure of the OIFITS files (``ami-oi``, ``amiamimulti-oi``, and 
+In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", 
+and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals 
+the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
+products, these columns have a single dimension whose length is independent of the number 
+of integrations.
+
+The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and 
 ``aminorm-oi`` products) is as follows:
 
 +-----+--------------+----------+-----------+------------------+
