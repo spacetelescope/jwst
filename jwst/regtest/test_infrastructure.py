@@ -1,6 +1,5 @@
 from glob import glob
 import os
-import pathlib
 
 import pytest
 from astropy.table import Table
