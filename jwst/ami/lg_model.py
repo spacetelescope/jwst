@@ -2,7 +2,6 @@
 # Lacour-Greenbaum algorithm. First written by Alexandra Greenbaum in 2014.
 import logging
 import numpy as np
-from astropy.io import fits
 
 from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2

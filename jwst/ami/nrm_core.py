@@ -180,7 +180,22 @@ class FringeFitter:
         -------
         nrm: NrmModel object
             Model with best fit results
+        
+        Notes
+        -----
+        After nrm.fit_image is called, these attributes are stored in nrm object:
 
+        -----------------------------------------------------------------------------
+        soln            --- resulting sin/cos coefficients from least squares fitting
+        fringephase     --- baseline phases in radians
+        fringeamp       --- baseline amplitudes (flux normalized)
+        redundant_cps   --- closure phases in radians
+        redundant_cas   --- closure amplitudes
+        residual        --- fit residuals [data - model solution]
+        cond            --- matrix condition for inversion
+        fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
+        -----------------------------------------------------------------------------
+        
         """
 
         nrm = lg_model.NrmModel(mask=self.instrument_data.mask,
@@ -223,20 +238,6 @@ class FringeFitter:
                       dqm=self.dqslice,
                       weighted=self.weighted)
 
-        """
-        Attributes now stored in nrm object:
-
-        -----------------------------------------------------------------------------
-        soln            --- resulting sin/cos coefficients from least squares fitting
-        fringephase     --- baseline phases in radians
-        fringeamp       --- baseline amplitudes (flux normalized)
-        redundant_cps   --- closure phases in radians
-        redundant_cas   --- closure amplitudes
-        residual        --- fit residuals [data - model solution]
-        cond            --- matrix condition for inversion
-        fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
-        -----------------------------------------------------------------------------
-        """
         nrm.create_modelpsf()
         # model now stored as nrm.modelpsf, also nrm.residual
         self.nrm = nrm # this gets updated with each slice
