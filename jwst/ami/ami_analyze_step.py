@@ -80,9 +80,7 @@ class AmiAnalyzeStep(Step):
 
             # Check for a valid reference file or user-provided bandpass
             if (throughput_reffile == 'N/A') & (bandpass is None):
-                self.log.warning('No THROUGHPUT reference file found')
-                self.log.warning('AMI analyze step will be skipped')
-                raise RuntimeError("No throughput reference file found. "
+                raise RuntimeError("No THROUGHPUT reference file found. "
                                    "ami_analyze cannot continue.")
 
             # Get the name of the NRM reference file to use

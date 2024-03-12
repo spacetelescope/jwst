@@ -44,10 +44,9 @@ PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
 
 def create_wavelengths(filtername):
     """
-    Short Summary
-    ------------
-        Extend filter support slightly past half power points.
-        Filter transmissions are quasi-rectangular.
+    Extend filter support slightly past half power points.
+    Filter transmissions are quasi-rectangular.
+
     Parameters
     ----------
         filtername: string
@@ -62,11 +61,9 @@ def create_wavelengths(filtername):
     return (wl_ctr, wl_ctr - dleft, wl_ctr + drite)
 
 
-def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil_mask):
+def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
     """
-    Short Summary
-    ------------
-    Calculate psf at low center high wavelengths of filter.
+    Calculate psf at low, center, and high wavelengths of filter.
     Coadd psfs and perform fft-style transform of image w/ dft
 
     Parameters
@@ -103,9 +100,7 @@ def calcsupport(filtername, sqfov_npix, pxsc_rad, pupil_mask):
 
 def transform_image(image):
     """
-    Short Summary
-    ------------
-        Take FT of image
+    Take Fourier transform of image
 
     Parameters
     ----------
@@ -127,8 +122,6 @@ def transform_image(image):
 
 def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     """
-    Short Summary
-    ------------
     Calculate the PSF
 
     Parameters
@@ -163,8 +156,6 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
 
 def bad_pixels(data, median_size, median_tres):
     """
-    Short Summary
-    ------------
     Identify bad pixels by subtracting median-filtered data and searching for
     outliers.
 
@@ -199,10 +190,8 @@ def bad_pixels(data, median_size, median_tres):
 
 def fourier_corr(data, pxdq, fmas):
     """
-    Short Summary
-    ------------
     Compute and apply the bad pixel corrections based on Section 2.5 of
-    Ireland 2013. This function is the core of the bad pixel cleaning code.
+    Ireland 2013.
 
     Parameters
     ----------
@@ -217,6 +206,13 @@ def fourier_corr(data, pxdq, fmas):
     -------
     data_out: numpy array
         Corrected science data
+
+    References
+    ----------
+    M. J. Ireland, Phase errors in diffraction-limited imaging: contrast limits 
+    for sparse aperture masking, Monthly Notices of the Royal Astronomical 
+    Society, Volume 433, Issue 2, 01 August 2013, Pages 1718–1728, 
+    https://doi.org/10.1093/mnras/stt859 
     """
 
     # Get the dimensions.
@@ -257,15 +253,13 @@ def fourier_corr(data, pxdq, fmas):
 
 def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     """
-    Short Summary
-    ------------
     Apply the Fourier bad pixel correction to pixels
     flagged DO_NOT_USE or JUMP_DET.
     Original code implementation by Jens Kammerer.
 
     Parameters
     ----------
-    data:
+    data: array
         Cropped science data
     pxdq0: array
         Cropped DQ array
@@ -316,7 +310,6 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     median_size = 3  # pix
     median_tres = 50.0  # JK: changed from 28 to 20 in order to capture all bad pixels
 
-    pupil = "NRM"
     pupil_mask = nrm_model.nrm
     imsz = data.shape
     sh = imsz[-1] // 2  # half size, even
@@ -326,7 +319,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     log.info("      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix" % (fov, fsam))
 
     #
-    cvis = calcsupport(filt, 2 * sh, pxsc_rad, pupil_mask)
+    cvis = calc_pupil_support(filt, 2 * sh, pxsc_rad, pupil_mask)
     cvis /= np.max(cvis)
     fmas = cvis < 1e-3  # 1e-3 seems to be a reasonable threshold
     fmas = np.fft.fftshift(fmas)[:, : 2 * sh // 2 + 1]
@@ -337,14 +330,9 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     ramp = np.arange(2 * sh) - 2 * sh // 2
     xx, yy = np.meshgrid(ramp, ramp)
     dist = np.sqrt(xx**2 + yy**2)
-    if pupil == "NRM":
-        pmas = (
-            dist > 9.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
-        )
-    else:
-        pmas = (
-            dist > 12.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
-        )
+    pmas = (
+        dist > 9.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
+    )
 
     # Go through all frames.
     for j in range(imsz[0]):
