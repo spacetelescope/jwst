@@ -7,7 +7,7 @@ Description
 .. Attention:: 
 	The ``ami_average`` step has been removed from the default ami3 pipeline
 	until the effects of averaging multiple exposures has been more thoroughly examined.
-	It may be updated in the future; until then the legacy code is left in place. It
+	It may be updated in the future; until then the legacy code is left in place and skipped by default. It
 	does not use the OIFITS-format (`~jwst.datamodels.AmiOIModel`) input that the current 
 	``ami_analyze`` step produces. It uses the deprecated `~jwst.datamodels.AmiLgModel`
 	for both input and output.

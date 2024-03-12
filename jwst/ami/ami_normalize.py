@@ -31,8 +31,7 @@ def normalize_LG(target_model, reference_model):
         Normalized fringe data for the target
     """
 
-    # Apply the normalizations to the target data
-    # Initialize the calibration (normalization) class
+    # Initialize the calibration (normalization) class and apply the normalizations
     norm_model = oifits.CalibOifits(target_model, reference_model)
     output_model = norm_model.calibrate()
 
