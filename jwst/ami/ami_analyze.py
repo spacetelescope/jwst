@@ -2,7 +2,6 @@
 import logging
 import numpy as np
 import copy
-import synphot
 
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
@@ -121,33 +120,9 @@ def apply_LG_plus(
     pscale_deg = np.mean([pscaledegx, pscaledegy])
     PIXELSCALE_r = np.deg2rad(pscale_deg)
     holeshape = "hex"
-    # Throughput (combined filter and source spectrum) calculated here
-    if bandpass is not None:
-        log.info(
-            "User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES"
-        )
-        # bandpass can be user-defined synphot object or appropriate array
-        if isinstance(bandpass, synphot.spectrum.SpectralElement):
-            log.info("User-defined synphot spectrum provided")
-            wl, wt = bandpass._get_arrays(bandpass.waveset)
-            bandpass = np.array((wt, wl)).T
-        else:
-            log.info("User-defined bandpass array provided")
-            bandpass = np.array(bandpass)
 
-    else:
-        # get the filter and source spectrum
-        log.info(f'Reading throughput model data for {filt}.')
-        filt_spec = utils.get_filt_spec(throughput_model)
-        log.info('Using flat spectrum model.')
-        flat_spec = utils.get_flat_spec() 
-        nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
-        bandpass = utils.combine_src_filt(
-            filt_spec,
-            flat_spec,
-            trim=0.01,
-            nlambda=nspecbin,
-        )
+    # Throughput (combined filter and source spectrum) calculated here
+    bandpass = utils.handle_bandpass(bandpass, throughput_model)
 
     rotsearch_d = np.append(
         np.arange(
