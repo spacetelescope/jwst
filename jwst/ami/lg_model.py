@@ -390,7 +390,7 @@ class NrmModel:
             self.fittingmodel = modelin
         if self.weighted:
             self.soln, self.residual, self.cond, self.singvals = (
-                leastsqnrm.weighted_operations(image, self.fittingmodel, dqm=dqm)
+                leastsqnrm.weighted_operations(image, self.fittingmodel, dqm)
             )
         else:
             self.soln, self.residual, self.cond, self.linfit_result = (
