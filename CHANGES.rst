@@ -67,6 +67,12 @@ emicorr
 - Set skip=True by default in the code, to be turned on later by a parameter
   reference file. [#8171]
 
+exp_to_source
+-------------
+
+- Fixed a bug for multislit data that bunit values, model_type and wcsinfo was
+  was being overwritten with the top multispec model values. [#8294]
+
 extract_1d
 ----------
 
@@ -236,6 +242,9 @@ tweakreg
 
 - Suppress warnings from ``photutils.background.Background2D`` regarding
   NaNs in the input data. [#8308]
+
+- Fixed a bug that caused failures instead of warnings when no GAIA sources
+  were found within the bounding box of the input image. [#8334]
 
 
 1.13.4 (2024-01-25)
