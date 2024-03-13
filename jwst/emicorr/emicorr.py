@@ -394,7 +394,7 @@ def apply_emicorr(input_model, emicorr_model,
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
-            reference_wave = reference_wave_list[fi]
+            reference_wave = np.array(reference_wave_list[fi])
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
             cc = np.zeros(reference_wave_size)
