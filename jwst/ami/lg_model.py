@@ -388,13 +388,13 @@ class NrmModel:
             )
         else:
             self.fittingmodel = modelin
-        if self.weighted is False:
-            self.soln, self.residual, self.cond, self.linfit_result = (
-                leastsqnrm.matrix_operations(image, self.fittingmodel, dqm=dqm)
-            )
-        else:
+        if self.weighted:
             self.soln, self.residual, self.cond, self.singvals = (
                 leastsqnrm.weighted_operations(image, self.fittingmodel, dqm=dqm)
+            )
+        else:
+            self.soln, self.residual, self.cond, self.linfit_result = (
+                leastsqnrm.matrix_operations(image, self.fittingmodel, dqm=dqm)
             )
 
         self.rawDC = self.soln[-1]

@@ -16,7 +16,15 @@ log.setLevel(logging.DEBUG)
 
 
 class FringeFitter:
-    def __init__(self, instrument_data, **kwargs):
+    def __init__(
+        self,
+        instrument_data,
+        oversample=3,
+        find_rotation=False,
+        psf_offset_ff=None,
+        npix='default',
+        weighted=False,
+    ):
         """
         Short Summary
         -------------
@@ -25,45 +33,33 @@ class FringeFitter:
 
         Parameters
         ----------
-        instrument_data - jwst.ami.instrument_data.NIRISS object
+        instrument_data: jwst.ami.instrument_data.NIRISS object
             Information on the mask geometry (namely # holes), instrument,
             wavelength obs mode.
 
-        kwargs options:
-            oversample - model oversampling (also how fine to measure the centering)
-            psf_offset - subpixel centering of your data, if known
-            npix - number of data pixels to use. Default is the shape of the data frame.
-            find_rotation - will find the best pupil rotation that matches the data
+        oversample:
+            model oversampling (also how fine to measure the centering)
+
+        psf_offset:
+            subpixel centering of your data, if known
+
+        npix:
+            number of data pixels to use. Default is the shape of the data frame.
+
+        find_rotation:
+            will find the best pupil rotation that matches the data
+
+        weighted:
+            if True, weighted by Poisson variance, if False equally-weighted
         """
         self.instrument_data = instrument_data
+        self.oversample = oversample
+        self.find_rotation = find_rotation
+        self.psf_offset_ff = psf_offset_ff
+        self.npix = npix
+        self.weighted = weighted
 
-        # Options
-        if "oversample" in kwargs:
-            self.oversample = kwargs["oversample"]
-        else:
-            # default oversampling is 3
-            self.oversample = 3
-
-        if "find_rotation" in kwargs:
-            # can be True/False or 1/0
-            self.find_rotation = kwargs["find_rotation"]
-        else:
-            self.find_rotation = False
-
-        if "psf_offset_ff" in kwargs:  # if so do not find center of image in data
-            self.psf_offset_ff = kwargs["psf_offset_ff"]
-        else:
-            self.psf_offset_ff = None  # find center of image in data
-
-        if "npix" in kwargs:
-            self.npix = kwargs["npix"]
-        else:
-            self.npix = 'default'
-        # Default: unweighted fit
-        self.weighted = False    
-        if "weighted" in kwargs:
-            self.weighted = kwargs["weighted"]
-        if self.weighted is True:
+        if self.weighted:
             log.info("leastsqnrm.weighted_operations() - weighted by Poisson variance")
         else:
             log.info("leastsqnrm.matrix_operations() - equally-weighted")
