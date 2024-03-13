@@ -23,7 +23,7 @@ SCHEMA_TRUTH = 'truth/test_schema_editor'
 
 
 @pytest.fixture(scope='module')
-def keyword_db(tmp_cwd_module, rtdata_module):
+def keyword_db(rtdata_module):
     """Define the keyword database"""
     rt = rtdata_module
 

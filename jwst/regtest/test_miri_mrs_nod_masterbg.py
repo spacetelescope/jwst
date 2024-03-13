@@ -6,7 +6,7 @@ from jwst.master_background import MasterBackgroundStep
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(tmp_cwd_module, rtdata_module):
+def run_pipeline(rtdata_module):
 
     rtdata = rtdata_module
 

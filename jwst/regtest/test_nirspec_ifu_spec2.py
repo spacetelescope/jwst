@@ -9,7 +9,7 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 
 @pytest.fixture(scope='module')
-def run_spec2(tmp_cwd_module, rtdata_module):
+def run_spec2(rtdata_module):
     """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
     rtdata = rtdata_module
 
@@ -50,8 +50,10 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.fixture()
-def run_photom(tmp_cwd_module, rtdata):
+def run_photom(rtdata_module):
     """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
+
+    rtdata = rtdata_module
 
     # Setup the inputs
     rate_name = 'jw01251004001_03107_00002_nrs1_pathloss.fits'
@@ -76,8 +78,10 @@ def test_photom(run_photom, fitsdiff_default_kwargs):
 
 
 @pytest.fixture()
-def run_extract1d(tmp_cwd_module, rtdata):
+def run_extract1d(rtdata_module):
     """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
+
+    rtdata = rtdata_module
 
     # Setup the inputs
     cube_name = 'jw01251004001_03107_00002_nrs1_s3d.fits'

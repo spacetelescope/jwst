@@ -18,7 +18,7 @@ from jwst.background.background_sub import robust_mean, mask_from_source_cat, no
 
 @pytest.fixture(scope="module")
 def data_path():
-    return pathlib.Path(__file__).parents[0] / "data"
+    return pathlib.Path(__file__).parent / "data"
 
 
 @pytest.fixture(scope='module')

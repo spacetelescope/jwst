@@ -9,7 +9,7 @@ from jwst.regtest.regtestdata import text_diff
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_data(tmp_cwd, rtdata):
+def test_regtestdata_get_data(rtdata):
     rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_cal.fits"
 
@@ -17,7 +17,7 @@ def test_regtestdata_get_data(tmp_cwd, rtdata):
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_truth(tmp_cwd, rtdata):
+def test_regtestdata_get_truth(rtdata):
     rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_rate.fits"
 
