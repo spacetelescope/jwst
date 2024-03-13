@@ -16,6 +16,15 @@ background
 - Updated to allow multi-integration (rateints) background exposures to have
   a different value of NINTS than the science exposure. [#8326]
 
+charge_migration
+----------------
+
+- Updated the CHARGELOSS flagging.  In an integration ramp, the first group in
+  the SCI data is found that is above the CHARGELOSS threshold and not flagged
+  as DO_NOT_USE.  This group, and all subsequent groups, are then flagged as
+  CHARGELOSS and DO_NOT_USE.  The four nearest pixel neighbor are then flagged
+  in the same group. [#8336]
+
 cube_build
 ----------
 
@@ -55,6 +64,12 @@ emicorr
   allow the user to run the step for given frequencies with an on-the-fly
   generated reference file. [#8270]
 
+exp_to_source
+-------------
+
+- Fixed a bug for multislit data that bunit values, model_type and wcsinfo was
+  was being overwritten with the top multispec model values. [#8294]
+
 extract_1d
 ----------
 
@@ -92,6 +107,10 @@ general
 
 - Update minimum required stdatamodels version to include 1.10.0 [#8322]
 
+- Update minimum required gwcs version to include 0.21.0 [#8337]
+
+- Remove unused asdf-transform-schemas dependency [#8337]
+
 jump
 ----
 
@@ -104,6 +123,13 @@ lib
 - Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
   and manipulating input files. [#8285]
 
+lib
+---
+
+- Added new function set_nans_to_donotuse in ``lib.basic_utils`` to
+  check the science data array for NaN values and check if they have
+  a DQ flag of DO_NOT_USE, or set it if not. [#8292]
+
 outlier_detection
 -----------------
 
@@ -115,13 +141,11 @@ outlier_detection
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
 
-resample
+pathloss
 --------
-- Updated exposure time weighting to use the measurement time 
-  (TMEASURE) when available. [#8212]
 
-- Removed product exposure time (``TEXPTIME``) from all computations
-  in the resample step. [#8212]
+- Added a check to find all NaN values in the data with a corresponding
+  even value flag in the DQ array, and convert them to DO_NOT_USE. [#8292]
 
 photom
 ------
@@ -171,6 +195,12 @@ refpix
 resample
 --------
 
+- Updated exposure time weighting to use the measurement time 
+  (TMEASURE) when available. [#8212]
+
+- Removed product exposure time (``TEXPTIME``) from all computations
+  in the resample step. [#8212]
+
 - Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
 
 - Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
@@ -209,6 +239,9 @@ tweakreg
 
 - Suppress warnings from ``photutils.background.Background2D`` regarding
   NaNs in the input data. [#8308]
+
+- Fixed a bug that caused failures instead of warnings when no GAIA sources
+  were found within the bounding box of the input image. [#8334]
 
 
 1.13.4 (2024-01-25)
