@@ -10,6 +10,9 @@ associations
 
 - Isolate candidate processing into their own pools [#8227]
 
+- Update the level-3 rules for "tso3" associations so that NIRISS SOSS
+  exposures with NINTS=1 are excluded. [#8359]
+
 background
 ----------
 
