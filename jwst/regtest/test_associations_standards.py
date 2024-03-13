@@ -90,6 +90,7 @@ standards = [
     MakePars('pool_030_mir_lrs_nods_bkg'),
     MakePars('pool_031_mir_lrs_nonod_bkg'),
     MakePars('pool_032_nircam_wfss'),
+    MakePars('pool_034_wfss_parallel'),
 ]
 
 
