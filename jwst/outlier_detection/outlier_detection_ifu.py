@@ -41,8 +41,10 @@ class OutlierDetectionIFU(OutlierDetection):
          a. read in science data
          b. Store computed neighbor differences for all the pixels.
             The neighbor pixel  differences are defined by the dispersion axis.
-            For MIRI (disp axis = 1) the neighbors to find differences  are to the left and right of pixel
-            For NIRSpec (disp axis = 0) the neighbors to find the differences are above and below the pixel
+            For MIRI (disp axis = 1, y axis) the neighbors to find differences are to 
+               the left and right of pixel
+            For NIRSpec (disp axis = 0, x axis) the neighbors to find the differences are 
+               above and below the pixel
       3. For each input file store the  minimum of the pixel neighbor differences
       4. Comparing all the differences from all the input data find the minimum neighbor difference
       5. Normalize minimum difference to local median of difference array
@@ -206,8 +208,8 @@ class OutlierDetectionIFU(OutlierDetection):
                 # set all science data that have DO_NOT_USE to NAN
                 sci[bad] = np.nan
 
-                # Compute left and right differences (MIRI dispersion axis = 1)
-                # For NIRSpec dispersion axis = 0, these differences are top, bottom
+                # Compute left and right differences (MIRI dispersion axis = 1 along y axis)
+                # For NIRSpec dispersion axis = 0 (along the x axis), these differences are top, bottom
                 # prepend = 0 has the effect of keeping the same shape as sci and
                 # for MIRI data (disp axis = 1) the first column = sci data
                 # OR
