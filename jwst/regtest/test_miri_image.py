@@ -31,6 +31,23 @@ def run_detector1(rtdata_module):
 
 
 @pytest.fixture(scope="module")
+def run_detector1_with_average_dark_current(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data, providing an
+    estimate of the average dark current for inclusion in ramp_fitting
+    poisson variance estimation."""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00002_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
+            "--save_calibrated_ramp=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.dark_current.average_dark_current=1.0",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
 def run_image2(run_detector1, rtdata_module):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
@@ -73,6 +90,28 @@ def run_image3(run_image2, rtdata_module):
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["dark_current", "ramp", "rate",
+                                    "rateints"])
+def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_dark_current,
+                                                    rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of detector1 pipeline performed on MIRI imaging data with a specified
+    average dark current."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01024001001_04101_00002_mirimage_uncal.fits"
+    output = f"jw01024001001_04101_00002_mirimage_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_miri_image_stages/{output}")
+
+    # Set tolerances so the crf, rscd and rateints file comparisons work across
+    # architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata

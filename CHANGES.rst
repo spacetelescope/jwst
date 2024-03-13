@@ -30,6 +30,13 @@ cube_build
 
 - Add a warning message to log if no valid data is found on the detector. [#8220]
 
+dark_current
+------------
+
+- Adds new parameter ``average_dark_current``, either from step params or
+  pulled from dark reference file, and stores in RampModel for use downstream
+  in ``RampFitStep``. [#8302]
+
 datamodels
 ----------
 
