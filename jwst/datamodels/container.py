@@ -532,8 +532,7 @@ to supply custom catalogs.
         -------
         dict
         """
-        with self._open_first_science_exposure() as model:
-            return model.get_crds_parameters()
+        raise Exception("na")
 
     def _open_first_science_exposure(self):
         """
@@ -544,14 +543,7 @@ to supply custom catalogs.
         -------
         stdatamodels.JwstDataModel
         """
-        for exposure in self.meta.asn_table.products[0].members:
-            if exposure.exptype.upper() == "SCIENCE":
-                first_exposure = exposure.expname
-                break
-        else:
-            first_exposure = self.meta.asn_table.products[0].members[0].expname
-
-        return datamodel_open(first_exposure)
+        raise Exception("na")
 
     def ind_asn_type(self, asn_exptype):
         """
