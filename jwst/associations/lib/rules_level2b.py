@@ -1034,3 +1034,82 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
+
+
+@RegistryMarker.rule
+class Asn_Lv2WFSSParallel(
+        AsnMixin_Lv2WFSS,
+        AsnMixin_Lv2Spectral,
+):
+    """Level 2b WFSS/GRISM associations for WFSS taken in pure-parallel mode
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Multi-object science exposures
+        - Single Science exposure
+        - Require a source catalog from processing of the corresponding direct imagery.
+
+    WFSS is executed different when taken as part of a pure-parallel proposal than when WFSS
+    is done as the primary. The differences are as follows. When primary, all components, the direct
+    image and the two GRISM exposures, are all executed within the same observation. When in parallel,
+    each component is taken as a separate observation.
+
+    Another difference is that there is no ``targetid`` assigned to the parallel exposures. The identification
+    of any particular execution, or "slot", of the parallel is based on the "v" portion of the ``obs_id``.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint([
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_wfss',
+                ),
+                DMSAttrConstraint(
+                    name='image_exp_type',
+                    sources=['exp_type'],
+                    value='nis_image',
+                    force_reprocess=ListCategory.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ], reduce=Constraint.any),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+            ),
+            DMSAttrConstraint(
+                name='pupil',
+                sources=['pupil'],
+            ),
+            Constraint([
+                SimpleConstraint(
+                    value='science',
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                    ),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ], reduce=Constraint.any)
+        ])
+
+        super(Asn_Lv2WFSSParallel, self).__init__(*args, **kwargs)
+
+    def validate_candidates(self, member):
+        """Allow only DIRECT_IMAGE candidates
+
+        Parameters
+        ----------
+        member : Member
+            Member being added. Ignored.
+
+        Returns
+        -------
+        True if candidate is DIRECT_IMAGE.
+        Otherwise, False
+        """
+        if self.acid.type.lower() == 'direct_image':
+            return True
+        return False
