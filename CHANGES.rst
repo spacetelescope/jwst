@@ -61,6 +61,8 @@ documentation
 - Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
   the jwst and stcal repos. [#8253]
 
+- Correct the names of parameter options ``usigma`` and ``lsigma`` for ``sky_match``. [#8356]
+
 emicorr
 -------
 
