@@ -48,7 +48,7 @@ class GWCSDrizzle:
         kernel : str, optional
             The name of the kernel used to combine the inputs. The choice of
             kernel controls the distribution of flux over the kernel. The kernel
-            names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
+            names are: "square", "gaussian", "point", "turbo", "lanczos2",
             and "lanczos3". The square kernel is the default.
 
         fillval : str, optional
@@ -321,7 +321,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     kernel: str, optional
         The name of the kernel used to combine the input. The choice of
         kernel controls the distribution of flux over the kernel. The kernel
-        names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
+        names are: "square", "gaussian", "point", "turbo", "lanczos2",
         and "lanczos3". The square kernel is the default.
 
     fillval: str, optional
