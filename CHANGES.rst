@@ -84,7 +84,7 @@ extract_1d
 
 - Fixed a bug in the ATOCA matrix solve for NIRISS SOSS that would cause failures on
   good input data in some cases. [#8273]
-  
+
 - Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
   pixels in the 2nd-order spectrum are flagged and would cause the step
   to fail. [#8265]
@@ -93,7 +93,7 @@ extract_1d
   to avoid failures for moderate-brightness sources due to extremely low
   throughput at the long wavelength end of MRS band 4C. [#8199]
 
-- Replaced instances of deprecated interp2d with 
+- Replaced instances of deprecated interp2d with
   RectBivariateSpline in ``apply_apcorr``. [#8291]
 
 extract_2d
@@ -119,7 +119,7 @@ jump
 
 - Removed a unit test in Jump that was moved to STCAL to decrease
   the coupling of the two repos. [#8319]
-  
+
 lib
 ---
 
@@ -143,6 +143,9 @@ outlier_detection
   files does not rely on the input files having a "cal" suffix, which was causing
   original input files to accidentally get deleted instead of just the intermediate
   files. [#8263]
+
+- Removed any reference to the "tophat" kernel for ``outlier_detection``
+  step. [#8364]
 
 pathloss
 --------
@@ -198,7 +201,7 @@ refpix
 resample
 --------
 
-- Updated exposure time weighting to use the measurement time 
+- Updated exposure time weighting to use the measurement time
   (TMEASURE) when available. [#8212]
 
 - Removed product exposure time (``TEXPTIME``) from all computations
@@ -211,6 +214,8 @@ resample
   removed support for astropy model [#8172]
 
 - Replace use of ``check_memory_allocation``. [#8324]
+
+- Removed any reference to the "tophat" kernel for resample step. [#8364]
 
 residual_fringe
 ---------------
