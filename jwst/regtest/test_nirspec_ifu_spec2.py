@@ -49,7 +49,7 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def run_photom(rtdata_module):
     """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
 
@@ -77,7 +77,7 @@ def test_photom(run_photom, fitsdiff_default_kwargs):
                      truth_path=TRUTH_PATH)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def run_extract1d(rtdata_module):
     """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
 
