@@ -445,7 +445,6 @@ class RampFitStep(Step):
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
             input_model_W = copy.copy(input_model)
-
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
