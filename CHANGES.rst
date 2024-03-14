@@ -96,6 +96,10 @@ extract_1d
 - Replaced instances of deprecated interp2d with 
   RectBivariateSpline in ``apply_apcorr``. [#8291]
 
+- Added saving the extraction aperture x/y limits for slit-like modes to
+  keywords in the output header. [#8278]
+
+
 extract_2d
 ----------
 
