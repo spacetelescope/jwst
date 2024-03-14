@@ -12,7 +12,7 @@ image.
 
 ``--kernel`` (str, default='square')
     The form of the kernel function used to distribute flux onto the output
-    image.  Available kernels are `square`, `gaussian`, `point`, `tophat`,
+    image.  Available kernels are `square`, `gaussian`, `point`,
     `turbo`, `lanczos2`, and `lanczos3`.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
@@ -96,7 +96,7 @@ image.
     (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
     not exist, the variance is set to 1 for all pixels (equal weighting).
     If `weight_type=exptime`, the scaling value will be set equal to the
-    measurement time (TMEASURE) found in the image header if available; 
+    measurement time (TMEASURE) found in the image header if available;
     if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
 
 ``--single`` (bool, default=False)
