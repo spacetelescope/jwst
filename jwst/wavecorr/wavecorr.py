@@ -151,8 +151,6 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
 
     Parameters
     ----------
-    slit_wcs : `~gwcs.wcs.WCS`
-        The WCS for this  slit.
     lam : ndarray
         Wavelength array [in m].
     dispersion : ndarray
@@ -182,7 +180,9 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
         
     # Set lookup table to extrapolate at bounds to recover wavelengths
     # beyond model bounds, particularly for the red and blue ends of
-    # prism observations
+    # prism observations.  fill_value = None sets the lookup tables
+    # to use the default extrapolation which is a linear extrapolation
+    # from scipy.interpolate.interpn
     offset_model.bounds_error = False
     offset_model.fill_value = None
         
@@ -200,7 +200,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
     
     # Build a look up table to transform between corrected and uncorrected wavelengths
     wave2wavecorr = tabular.Tabular1D(points=lam_mean, lookup_table=lam_corrected, 
-                                      bounds_error=False, fill_value=None)
+                                      bounds_error=False, fill_value=None, name='wave2wavecorr')
     wave2wavecorr.inverse = tabular.Tabular1D(points=lam_corrected, lookup_table=lam_mean, 
                                               bounds_error=False, fill_value=None)
     
