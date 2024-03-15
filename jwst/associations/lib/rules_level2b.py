@@ -1064,8 +1064,9 @@ class Asn_Lv2WFSSParallel(
 
         self.constraints = Constraint([
             DMSAttrConstraint(
+                name='acdirect',
                 sources=['asn_candidate'],
-                value=('.+direct_image.+'),
+                value=r"\[\('c\d{4}', 'direct_image'\)\]"
             ),
             Constraint([
                 DMSAttrConstraint(
@@ -1088,10 +1089,88 @@ class Asn_Lv2WFSSParallel(
                     force_unique=False,
                     ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
-            ], reduce=Constraint.any)
+            ], reduce=Constraint.any),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+            ),
         ])
 
         super(Asn_Lv2WFSSParallel, self).__init__(*args, **kwargs)
+
+    def add_catalog_members(self):
+        """Add catalog and direct image member based on direct image members"""
+        directs = self.members_by_type('direct_image')
+        if not directs:
+            raise AssociationNotValidError(
+                '{} has no required direct image exposures'.format(
+                    self.__class__.__name__
+                )
+            )
+
+        # There will only ever be one direct image.
+        direct = directs[0]
+
+        sciences = self.members_by_type('science')
+        if not sciences:
+            raise AssociationNotValidError(
+                '{} has no required science exposure'.format(
+                    self.__class__.__name__
+                )
+            )
+        science = sciences[0]
+
+        # Remove all direct images from the association.
+        members = self.current_product['members']
+        direct_idxs = [
+            idx
+            for idx, member in enumerate(members)
+            if member['exptype'] == 'direct_image'
+        ]
+        deque((
+            list.pop(members, idx)
+            for idx in sorted(direct_idxs, reverse=True)
+        ))
+
+        # Add the Level3 catalog, direct image, and segmentation map members
+        self.direct_image = direct
+        lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_i2d.fits',
+                'exptype': 'direct_image'
+            })
+        )
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_cat.ecsv',
+                'exptype': 'sourcecat'
+            })
+        )
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_segm.fits',
+                'exptype': 'segmap'
+            })
+        )
+
+    def finalize(self):
+        """Finalize the association
+
+        For WFSS, this involves taking all the direct image exposures,
+        determine which one is first after last science exposure,
+        and creating the catalog name from that image.
+        """
+        try:
+            self.add_catalog_members()
+        except AssociationNotValidError as err:
+            logger.debug(
+                '%s: %s',
+                self.__class__.__name__, str(err)
+            )
+            return None
+
+        return super(Asn_Lv2WFSSParallel, self).finalize()
 
     def get_exposure_type(self, item, default='science'):
         """Modify exposure type depending on dither pointing index
@@ -1121,3 +1200,42 @@ class Asn_Lv2WFSSParallel(
         True
         """
         return True
+
+    def _get_opt_element(self):
+        """Get string representation of the optical elements
+
+        Returns
+        -------
+        opt_elem: str
+            The Level3 Product name representation
+            of the optical elements.
+        Notes
+        -----
+        This is an override for the method in `DMSBaseMixin`.
+        The optical element is retrieved from the chosen direct image
+        found in `self.direct_image`, determined in the `self.finalize`
+        method.
+        """
+        item = self.direct_image.item
+        opt_elems = []
+        for keys in [['filter', 'band'], ['pupil', 'grating']]:
+            opt_elem = getattr_from_list_nofail(
+                item, keys, _EMPTY
+            )[1]
+            if opt_elem:
+                opt_elems.append(opt_elem)
+        opt_elems.sort(key=str.lower)
+        full_opt_elem = '-'.join(opt_elems)
+        if full_opt_elem == '':
+            full_opt_elem = 'clear'
+
+        return full_opt_elem
+
+    def _get_target(self):
+        """Return the dummy pure parallel target value
+
+        Returns
+        -------
+        't999'
+        """
+        return 't999'
