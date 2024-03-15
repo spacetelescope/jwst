@@ -223,9 +223,6 @@ norecursedirs = [
     "build",
     "venv",
 ]
-asdf_schema_tests_enabled = true
-asdf_schema_validate_default = false
-asdf_schema_root = "jwst/transforms/resources/schemas jwst/datamodels/schemas"
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
 results_root = "jwst-pipeline-results"
