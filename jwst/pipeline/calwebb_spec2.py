@@ -115,7 +115,8 @@ class Spec2Pipeline(Pipeline):
         failures = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            self.output_file = product['name']
+            if (self.save_results) & (self.output_file is None):
+                self.output_file = product['name']
             try:
                 getattr(asn, 'filename')
             except AttributeError:

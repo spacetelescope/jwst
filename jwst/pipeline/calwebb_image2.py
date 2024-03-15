@@ -57,7 +57,7 @@ class Image2Pipeline(Pipeline):
         results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            if self.save_results:
+            if (self.save_results) & (self.output_file is None):
                 self.output_file = product['name']
             try:
                 getattr(asn, 'filename')
@@ -74,7 +74,7 @@ class Image2Pipeline(Pipeline):
             suffix = 'cal'
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
-            result.meta.filename = self.make_output_path(suffix=suffix)
+            result.meta.filename = self.make_output_path(basepath=self.output_file, suffix=suffix)
             results.append(result)
 
         self.log.info('... ending calwebb_image2')
