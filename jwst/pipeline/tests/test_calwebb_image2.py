@@ -1,6 +1,5 @@
 import pytest
 import os
-from jwst.pipeline.calwebb_image2 import Image2Pipeline
 from jwst.stpipe import Step
 from jwst.datamodels import ImageModel
 
