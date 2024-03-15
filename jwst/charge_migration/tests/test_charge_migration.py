@@ -8,6 +8,7 @@ from jwst.charge_migration.charge_migration_step import ChargeMigrationStep
 
 import numpy.testing as npt
 
+
 test_dq_flags = dqflags.pixel
 GOOD = test_dq_flags["GOOD"]
 DNU = test_dq_flags["DO_NOT_USE"]
@@ -78,11 +79,143 @@ def test_pix_1():
     true_out_gdq[0, 4:, 0, 0] = CHLO_DNU
 
     out_model = charge_migration(ramp_model, signal_threshold)
+
     out_data = out_model.data
     out_gdq = out_model.groupdq
 
     npt.assert_array_equal(true_out_data, out_data)
     npt.assert_array_equal(out_gdq, true_out_gdq)
+
+
+def test_pix_2():
+    """
+    Test a later group being below the threshold.
+    """
+    ngroups, nints, nrows, ncols = 10, 1, 1, 1
+    ramp_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols)
+
+    signal_threshold = 4000.
+
+    arr = [1000., 2000., 4005., 4500., 5000., 5500., 3500., 6000., 6500., 3700.]
+    ramp_model.data[0, :, 0, 0] = np.array(arr, dtype=np.float32)
+    arr = [0, DNU, 0, 0, 0,  0, 0, 0, 0, 0]
+    ramp_model.groupdq[0, :, 0, 0] = np.array(arr, dtype=np.uint8)
+
+    out_model = charge_migration(ramp_model, signal_threshold)
+
+    truth_arr = [0, DNU, CHLO_DNU, CHLO_DNU, CHLO_DNU, CHLO_DNU, CHLO_DNU, CHLO_DNU, CHLO_DNU, CHLO_DNU]
+    truth_gdq = np.array(truth_arr, dtype=np.uint8)
+
+    npt.assert_array_equal(truth_gdq, out_model.groupdq[0, :, 0, 0])
+
+
+
+def nearest_neighbor_base(chg_thresh, pixel):
+    """
+    Set up ramp array that is 5, 5 with 10 groups.
+    The flagging starts in group 3 (zero based) in the pixel tested.
+    """
+    nints, ngroups, nrows, ncols = 1, 10, 5, 5
+    ramp_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols)
+
+    # Set up dummy data
+    base = chg_thresh * 0.05
+    base_arr = [float(k+1) * base for k in range(ngroups)]
+    for row in range(nrows):
+        for col in range(ncols):
+            ramp_model.data[0, :, row, col] = np.array(base_arr, dtype=np.float32)
+
+    # Make CHARGELOSS threshold starting at group 3
+    in_row, in_col = pixel
+    ramp_model.data[0, 3:, in_row, in_col] += chg_thresh
+
+    return ramp_model, pixdq, groupdq, err
+
+
+def test_nearest_neighbor_1():
+    """
+    CHARGELOSS center
+    The flagging starts in group 3 (zero based) in the pixel tested.
+    """
+    chg_thresh = 4000.
+    pixel = (2, 2)
+    ramp_model, pixdq, groupdq, err = nearest_neighbor_base(chg_thresh, pixel)
+    gdq_check = ramp_model.groupdq.copy()
+    ngroups = gdq_check.shape[1]
+
+    out_model = charge_migration(ramp_model, chg_thresh)
+
+    check_pattern = [
+        [GOOD, GOOD,     GOOD,     GOOD,     GOOD],
+        [GOOD, GOOD,     CHLO_DNU, GOOD,     GOOD],
+        [GOOD, CHLO_DNU, CHLO_DNU, CHLO_DNU, GOOD],
+        [GOOD, GOOD,     CHLO_DNU, GOOD,     GOOD],
+        [GOOD, GOOD,     GOOD,     GOOD,     GOOD],
+    ]
+    check = np.array(check_pattern, dtype=gdq_check.dtype)
+    for group in range(3, ngroups):
+        gdq_check[0, group, :, :] = check
+
+    npt.assert_array_equal(out_model.data, ramp_model.data)
+    npt.assert_array_equal(out_model.groupdq, gdq_check)
+
+
+def test_nearest_neighbor_2():
+    """
+    CHARGELOSS corner
+    The flagging starts in group 3 (zero based) in the pixel tested.
+    """
+    chg_thresh = 4000.
+    pixel = (0, 0)
+    ramp_model, pixdq, groupdq, err = nearest_neighbor_base(chg_thresh, pixel)
+    gdq_check = ramp_model.groupdq.copy()
+    ngroups = gdq_check.shape[1]
+
+    out_model = charge_migration(ramp_model, chg_thresh)
+
+    check_pattern = [
+        [CHLO_DNU, CHLO_DNU, GOOD, GOOD, GOOD],
+        [CHLO_DNU, GOOD,     GOOD, GOOD, GOOD],
+        [GOOD,     GOOD,     GOOD, GOOD, GOOD],
+        [GOOD,     GOOD,     GOOD, GOOD, GOOD],
+        [GOOD,     GOOD,     GOOD, GOOD, GOOD],
+    ]
+    check = np.array(check_pattern, dtype=gdq_check.dtype)
+    for group in range(3, ngroups):
+        gdq_check[0, group, :, :] = check
+
+    npt.assert_array_equal(out_model.data, ramp_model.data)
+    npt.assert_array_equal(out_model.groupdq, gdq_check)
+
+
+def test_nearest_neighbor_3():
+    """
+    CHARGELOSS Edge
+    The flagging starts in group 3 (zero based) in the pixel tested.
+    """
+    chg_thresh = 4000.
+    pixel = (2, 4)
+    ramp_model, pixdq, groupdq, err = nearest_neighbor_base(chg_thresh, pixel)
+    gdq_check = ramp_model.groupdq.copy()
+    ngroups = gdq_check.shape[1]
+
+    out_model = charge_migration(ramp_model, chg_thresh)
+
+    check_pattern = [
+        [GOOD, GOOD, GOOD, GOOD,     GOOD],
+        [GOOD, GOOD, GOOD, GOOD,     CHLO_DNU],
+        [GOOD, GOOD, GOOD, CHLO_DNU, CHLO_DNU],
+        [GOOD, GOOD, GOOD, GOOD,     CHLO_DNU],
+        [GOOD, GOOD, GOOD, GOOD,     GOOD],
+    ]
+    check = np.array(check_pattern, dtype=gdq_check.dtype)
+    for group in range(3, ngroups):
+        gdq_check[0, group, :, :] = check
+
+    npt.assert_array_equal(out_model.data, ramp_model.data)
+    npt.assert_array_equal(out_model.groupdq, gdq_check)
 
 
 def test_too_few_groups():
@@ -102,96 +235,6 @@ def test_too_few_groups():
     status = result.meta.cal_step.charge_migration
 
     npt.assert_string_equal(status, "SKIPPED")
-
-
-def test_flag_neighbors():
-    """
-    Test flagging of 4 nearest neighbors of exceedances. Tests pixels on
-    array edges, Tests exclusion of groups previously flagged as DO_NOT_USE.
-    """
-    ngroups, nints, nrows, ncols = 6, 1, 4, 3
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(
-        ngroups, nints, nrows, ncols)
-
-    signal_threshold = 4400.
-
-    # Populate pixel-specific SCI and GROUPDQ arrays
-    ramp_model.data[0, :, :, :] = \
-        np.array([[
-            [1900., 2666., 2100.],
-            [3865., 2300., 3177.],
-            [3832., 3044., 3588.],
-            [3799., 3233., 3000.]],
-
-           [[2100., 2866., 2300.],
-            [4065., 2500., 3377.],
-            [4032., 3244., 3788.],
-            [3999., 3433., 3200.]],
-
-           [[2300., 3066., 2500.],
-            [4265., 2700., 3577.],
-            [4232., 3444., 3988.],
-            [4199., 3633., 3400.]],
-
-           [[2500., 3266., 2700.],
-            [4465., 2900., 3777.],
-            [4432., 3644., 4188.],
-            [4399., 3833., 3600.]],
-
-           [[2700., 3466., 2900.],
-            [4665., 3100., 3977.],
-            [4632., 3844., 4388.],
-            [4599., 4033., 3800.]],
-
-           [[2900., 3666., 3100.],
-            [4865., 3300., 4177.],
-            [4832., 4044., 4588.],
-            [4799., 4233., 4000.]]], dtype=np.float32)
-
-    # These group DQ values should propagate unchanged to the output
-    ramp_model.groupdq[:, 4, 2, 0] = [DNU]
-    ramp_model.groupdq[:, 1, 2, 2] = [DNU]
-    ramp_model.groupdq[:, 2, 1, 1] = [DROU + DNU]
-
-    out_model = charge_migration(ramp_model, signal_threshold)
-
-    out_gdq = out_model.groupdq
-
-    true_out_gdq = ramp_model.groupdq.copy()
-    true_out_gdq[0, :, :, :] = \
-        np.array([[
-            [0,   0,   0],
-            [0,   0,   0],
-            [0,   0,   0],
-            [0,   0,   0]],
-
-           [[0,   0,   0],
-            [0,   0,   0],
-            [0,   0,   DNU],
-            [0,   0,   0]],
-
-           [[0,   0,   0],
-            [0,   9,   0],
-            [0,   0,   0],
-            [0,   0,   0]],
-
-           [[CHLO_DNU,   0,      0],
-            [CHLO_DNU, CHLO_DNU, 0],
-            [CHLO_DNU, CHLO_DNU, 0],
-            [CHLO_DNU,   0,      0]],
-
-           [[CHLO_DNU,   0,      0],
-            [CHLO_DNU, CHLO_DNU, 0],
-            [DNU,        0,      0],
-            [CHLO_DNU, CHLO_DNU, 0]],
-
-           [[CHLO_DNU,   0,       0],
-            [CHLO_DNU, CHLO_DNU, CHLO_DNU],
-            [CHLO_DNU, CHLO_DNU, CHLO_DNU],
-            [CHLO_DNU, CHLO_DNU, CHLO_DNU]]], dtype=np.uint8)
-
-    npt.assert_array_equal(out_model.data, ramp_model.data)
-    npt.assert_array_equal(out_gdq, true_out_gdq)
 
 
 def create_mod_arrays(ngroups, nints, nrows, ncols):

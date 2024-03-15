@@ -419,7 +419,8 @@ def text_diff(from_path, to_path):
     with open(to_path) as fh:
         to_lines = fh.readlines()
 
-    diffs = unified_diff(from_lines, to_lines, from_path, to_path)
+    # convert path objects to strings because difflib requires strings
+    diffs = unified_diff(from_lines, to_lines, str(from_path), str(to_path))
 
     diff = list(diffs)
     if len(diff) > 0:

@@ -13,7 +13,7 @@ pytestmark = pytest.mark.bigdata
 
 
 @pytest.fixture(scope='module')
-def run_spec2_mbkg(jail, rtdata_module):
+def run_spec2_mbkg(rtdata_module):
     """Run Spec2 on MSA data with background slits"""
     rtdata = rtdata_module
 
@@ -34,7 +34,7 @@ def run_spec2_mbkg(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec2_mbkg_user(jail, rtdata_module):
+def run_spec2_mbkg_user(rtdata_module):
     """Run Spec2 on MSA data with a user-supplied master bkg spectrum"""
     rtdata = rtdata_module
 

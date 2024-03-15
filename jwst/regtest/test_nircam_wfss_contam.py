@@ -5,7 +5,7 @@ from jwst.regtest import regtestdata as rt
 
 
 @pytest.fixture(scope='module')
-def run_wfss_contam(jail, rtdata_module):
+def run_wfss_contam(rtdata_module):
     """Run the wfss_contam step"""
     rtdata = rtdata_module
 

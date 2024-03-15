@@ -363,7 +363,7 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
                 assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
 
 
-def test_asn_input(nircam_rate, tmpdir):
+def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     # This is the same test as 'test_skymatch_overlap' with
     # skymethod='match', subtract=True, skystat='mean' and with memory saving
     # feature enabled (data loaded from files as needed).
@@ -393,9 +393,9 @@ def test_asn_input(nircam_rate, tmpdir):
     for im, lev in zip(container, levels):
         im.data += np.random.normal(loc=lev, scale=0.1, size=im.data.shape)
 
-    im1_path = str(tmpdir / "skymatch_im1.fits")
-    im2_path = str(tmpdir / "skymatch_im2.fits")
-    im3_path = str(tmpdir / "skymatch_im3.fits")
+    im1_path = "skymatch_im1.fits"
+    im2_path = "skymatch_im2.fits"
+    im3_path = "skymatch_im3.fits"
 
     im1.write(im1_path)
     im2.write(im2_path)
@@ -407,7 +407,7 @@ def test_asn_input(nircam_rate, tmpdir):
         product_name='skymatch'
     )
     asn_out_fname, out_serialized = assoc_out.dump(format='json')
-    asn_out_fname = str(tmpdir / asn_out_fname)
+    asn_out_fname = asn_out_fname
     with open(asn_out_fname, "w") as asn_out:
         asn_out.write(out_serialized)
 
@@ -454,7 +454,7 @@ def test_asn_input(nircam_rate, tmpdir):
         )
     )
 )
-def test_skymatch_2x(nircam_rate, tmpdir, skymethod, subtract):
+def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     # Test that repetitive applications of skymatch produce the same results
     np.random.seed(1)
     im1 = nircam_rate.copy()
@@ -477,9 +477,9 @@ def test_skymatch_2x(nircam_rate, tmpdir, skymethod, subtract):
     for im, lev in zip(container, levels):
         im.data += np.random.normal(loc=lev, scale=0.1, size=im.data.shape)
 
-    im1_path = str(tmpdir / "skymatch_im1.fits")
-    im2_path = str(tmpdir / "skymatch_im2.fits")
-    im3_path = str(tmpdir / "skymatch_im3.fits")
+    im1_path = "skymatch_im1.fits"
+    im2_path = "skymatch_im2.fits"
+    im3_path = "skymatch_im3.fits"
 
     im1.write(im1_path)
     im2.write(im2_path)
@@ -491,7 +491,6 @@ def test_skymatch_2x(nircam_rate, tmpdir, skymethod, subtract):
         product_name='skymatch'
     )
     asn_out_fname, out_serialized = assoc_out.dump(format='json')
-    asn_out_fname = str(tmpdir / asn_out_fname)
     with open(asn_out_fname, "w") as asn_out:
         asn_out.write(out_serialized)
 

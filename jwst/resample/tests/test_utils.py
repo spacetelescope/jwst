@@ -118,7 +118,7 @@ def test_build_driz_weight(weight_type):
     """Check that correct weight map is returned of different weight types"""
     model = ImageModel((10, 10))
     model.dq[0] = DO_NOT_USE
-    model.meta.exposure.exposure_time = 10.0
+    model.meta.exposure.measurement_time = 10.0
     model.var_rnoise += 0.1
 
     weight_map = build_driz_weight(model, weight_type=weight_type, good_bits="GOOD")

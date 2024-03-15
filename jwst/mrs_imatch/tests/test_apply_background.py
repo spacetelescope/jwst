@@ -88,7 +88,7 @@ def miri_dither_ch12():
     return input_models
 
 
-def test_apply_background_2d(_jail, miri_dither_ch12):
+def test_apply_background_2d(tmp_cwd, miri_dither_ch12):
     """ Test if  background polynomial is set it is subtracted correctly"""
 
     all_models = ModelContainer(miri_dither_ch12)

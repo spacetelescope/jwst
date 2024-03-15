@@ -12,7 +12,7 @@ ENGDB_PATH = DATA_PATH / 'engdb'
 
 
 @pytest.mark.bigdata
-def test_miri_setpointing(_jail, rtdata, engdb, fitsdiff_default_kwargs):
+def test_miri_setpointing(rtdata, engdb, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b MIRI image.
     """

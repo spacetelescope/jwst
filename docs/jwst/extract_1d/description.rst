@@ -75,7 +75,14 @@ FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
 BKGD_VAR_FLAT and NPIXELS.
 Some meta data will be written to the table header, mostly copied from the
-input header.
+input header. For slit-like  modes the extraction region is
+recorded in the meta data of the table header as EXTRXSTR (x start of extraction),
+EXTRXSTP (x end of extraction),  EXTRYSTR (y start of extraction), and 
+EXTRYSTP (y end of extraction).  For MIRI and NIRSpec IFU data the center of
+the extraction region is recorded in the meta data EXTR_X (x center of extraction region)
+and EXTR_Y (y center of extraction region). The NIRISS SOSS algorithm is a specialized extraction
+algorithm that does not use fixed limits, therefore no extraction limits are provided for this mode. 
+
 
 The output WAVELENGTH data is copied from the wavelength array of the input 2D data,
 if that attribute exists and was populated, otherwise it is calculated from the WCS.
@@ -269,6 +276,7 @@ aperture is centered at the RA/DEC target location indicated by the header. If t
 region is the  center of the IFU cube. For extended source data, anything specified in the reference file
 or step arguments will be ignored; the entire image will be extracted, and no background subtraction will be done.
 
+
 For point sources a circular extraction aperture is used, along with an optional
 circular annulus for background extraction and subtraction. The size of the extraction
 region and the background annulus size varies with wavelength. 
@@ -293,4 +301,4 @@ VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only prop
 non-differentiated error term.  Note that while covariance is also extremely important for IFU data cubes
 (as the IFUs themselves are significantly undersampled) this term is not presently computed or taken
 into account in the ``extract_1d`` step.  As such, the error estimates should be taken as a rough
-approximation that will be characterized and improved as flight data become available.
+approximation that will be characterized and improved as flight data become available. 
