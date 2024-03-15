@@ -296,6 +296,9 @@ class ResampleData:
                 output_name = output_model.meta.filename
                 status = self.write_with_dimension_check(output_model, output_name,
                                                          min_wait_time=1.0, max_wait_time=40.0)
+                if status:
+                    log.warning(f"Wait time of {max_wait_time}s exceeded.")
+                    log.warning("Continuing with possibly corrupted i2d file")
                 self.output_models.append(output_name)
             else:
                 self.output_models.append(output_model.copy())
@@ -340,8 +343,6 @@ class ResampleData:
         while not filesavedOK:
             output_model.save(output_name)
             if wait_time > max_wait_time:
-                log.warning(f"Wait time of {max_wait_time}s exceeded.")
-                log.warning("Continuing with possibly corrupted i2d file")
                 log.info(f"Saved model in {output_name}")
                 status = 1
                 break
