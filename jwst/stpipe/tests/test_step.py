@@ -101,16 +101,16 @@ def test_reftype(cfg_file, expected_reftype):
     assert step.get_config_reftype() == expected_reftype
 
 
-def test_saving_pars(tmpdir):
+def test_saving_pars(tmp_path):
     """Save the step parameters from the commandline"""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
-    saved_path = tmpdir.join('savepars.asdf')
+    saved_path = os.path.join(tmp_path, 'savepars.asdf')
     step = Step.from_cmdline([
         cfg_path,
         '--save-parameters',
         str(saved_path)
     ])
-    assert saved_path.check()
+    assert os.path.exists(saved_path)
 
     with asdf.open(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))) as af:
         original_config = StepConfig.from_asdf(af)
@@ -597,7 +597,7 @@ def test_print_configspec():
     step.print_configspec()
 
 
-def test_call_with_config(caplog, _jail):
+def test_call_with_config(caplog, tmp_cwd):
     """Test call using a config file with substeps
 
     In particular, from JP-1482, there was a case where a substep parameter

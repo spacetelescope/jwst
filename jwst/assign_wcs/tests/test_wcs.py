@@ -143,7 +143,7 @@ def test_v23_to_sky():
     assert_allclose(radec, expected_ra_dec, atol=1e-10)
 
 
-def test_frame_from_model_3d(tmpdir, create_model_3d):
+def test_frame_from_model_3d(tmp_path, create_model_3d):
     """ Tests creating a frame from a data model. """
     # Test CompositeFrame initialization (celestial and spectral)
     im = create_model_3d
@@ -163,7 +163,7 @@ def test_frame_from_model_3d(tmpdir, create_model_3d):
     assert frame.frames[1].axes_names == ('ALPHA1A', 'BETA1A')
 
 
-def test_frame_from_model_2d(tmpdir, create_model_2d):
+def test_frame_from_model_2d(tmp_path, create_model_2d):
     """ Tests creating a frame from a data model. """
     # Test 2D spatial custom frame
     im = create_model_2d
@@ -173,13 +173,13 @@ def test_frame_from_model_2d(tmpdir, create_model_2d):
     assert frame.axes_names == ("RA", "DEC")
 
 
-def test_create_fitswcs(tmpdir, create_model_3d):
+def test_create_fitswcs(tmp_path, create_model_3d):
     """GWCS from create_fitswcs function and astropy.wcs give same result"""
     im = create_model_3d
     w3d = pointing.create_fitswcs(im)
     gra, gdec, glam = w3d(1, 1, 1)
 
-    path = str(tmpdir.join("fitswcs.fits"))
+    path = tmp_path / "fitswcs.fits"
     im.save(path)
     with fits.open(path) as hdulist:
         hdu = hdulist["SCI"]
@@ -191,7 +191,7 @@ def test_create_fitswcs(tmpdir, create_model_3d):
     assert_allclose((ra, dec), (gra, gdec))
 
 
-def test_sip_approx(tmpdir):
+def test_sip_approx(tmp_path):
     # some of the wcs info
     true_wcs = {
         'ctype1': 'RA---TAN-SIP',
@@ -274,7 +274,7 @@ def test_sip_approx(tmpdir):
     assert_allclose(fitswcs_res.dec.deg, gwcs_dec, atol=1.5e-6)
 
     # now write the file out, read it back in, and check that the fit values are preserved
-    path = str(tmpdir.join("tmp_sip_wcs.fits"))
+    path = tmp_path / "tmp_sip_wcs.fits"
     result.write(path)
 
     with open(path) as result_read:

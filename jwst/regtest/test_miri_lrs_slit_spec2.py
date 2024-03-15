@@ -10,7 +10,7 @@ from jwst.extract_1d import Extract1dStep
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run the calwebb_spec2 pipeline on an ASN of nodded MIRI LRS
        fixedslit exposures."""
     rtdata = rtdata_module

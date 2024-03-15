@@ -13,7 +13,7 @@ from jwst import datamodels
     scope="module",
     params=["default_wcs", "user_wcs", "user_wcs+shape", "user_wcs+shape1"]
 )
-def run_pipeline(jail, rtdata_module, request):
+def run_pipeline(rtdata_module, request):
     """
     Run the calwebb_spec3 pipeline on an ASN of nodded MIRI LRS
     fixed-slit exposures using different options for the WCS and output

@@ -9,19 +9,19 @@ from jwst.regtest.regtestdata import text_diff
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_data(rtdata):
+def test_regtestdata_get_data(rtdata, tmp_cwd):
     rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_cal.fits"
 
-    assert rtdata.input == os.path.join(os.getcwd(), "file1_rate.fits")
+    assert rtdata.input == str(tmp_cwd / "file1_rate.fits")
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_truth(rtdata):
+def test_regtestdata_get_truth(rtdata, tmp_cwd):
     rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_rate.fits"
 
-    assert rtdata.truth == os.path.join(os.getcwd(), "truth", "file1_rate.fits")
+    assert rtdata.truth == str(tmp_cwd / "truth" / "file1_rate.fits")
 
 
 @pytest.mark.bigdata
@@ -39,10 +39,10 @@ def test_fitsdiff_defaults(fitsdiff_default_kwargs):
 
 
 @pytest.fixture
-def two_tables(tmpdir):
+def two_tables(tmp_path):
     """Return identical astropy tables written to 2 .ecsv file paths"""
-    path1 = str(tmpdir.join("catalog1.ecsv"))
-    path2 = str(tmpdir.join("catalog2.ecsv"))
+    path1 = tmp_path / "catalog1.ecsv"
+    path2 = tmp_path / "catalog2.ecsv"
     a = np.array([1, 4, 5], dtype=float)
     b = [2.0, 5.0, 8.5]
     c = ['x', 'y', 'z']
@@ -133,9 +133,9 @@ def test_diff_astropy_tables_all_equal(diff_astropy_tables, two_tables):
         assert diff_astropy_tables(path1, path2)
 
 
-def test_text_diff(tmpdir):
-    path1 = str(tmpdir.join("test1.txt"))
-    path2 = str(tmpdir.join("test2.txt"))
+def test_text_diff(tmp_path):
+    path1 = tmp_path / "test1.txt"
+    path2 = tmp_path / "test2.txt"
     with open(path1, "w") as text_file:
         print("foo", file=text_file)
     with open(path2, "w") as text_file:

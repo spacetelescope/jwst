@@ -29,7 +29,7 @@ def engdb():
 
 
 @pytest.fixture(scope='module')
-def data_path(jail):
+def data_path(tmp_cwd_module):
     """Create data file with needed header parameters"""
     model = ImageModel()
 

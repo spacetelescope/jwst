@@ -10,6 +10,9 @@ associations
 
 - Isolate candidate processing into their own pools [#8227]
 
+- Update the level-3 rules for "tso3" associations so that NIRISS SOSS
+  exposures with NINTS=1 are excluded. [#8359]
+
 background
 ----------
 
@@ -60,6 +63,8 @@ documentation
 
 - Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
   the jwst and stcal repos. [#8253]
+
+- Correct the names of parameter options ``usigma`` and ``lsigma`` for ``sky_match``. [#8356]
 
 emicorr
 -------
@@ -121,6 +126,14 @@ general
 - Update minimum required gwcs version to include 0.21.0 [#8337]
 
 - Remove unused asdf-transform-schemas dependency [#8337]
+
+- Replaced all instances of pytest ``tmpdir`` and ``tmpdir_factory``
+  fixtures with ``tmp_path`` and ``tmp_path_factory``. [#8327]
+
+- Replaced the ``_jail`` fixture from ``ci_watson`` with custom
+  ``tmp_cwd`` to enforce ``no:legacypath`` in the CI tests. [#8327]
+
+- Renamed the ``jail`` fixture with ``tmp_cwd_module``. [#8327]
 
 jump
 ----

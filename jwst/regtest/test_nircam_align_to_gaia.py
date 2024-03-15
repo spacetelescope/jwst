@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_image3pipeline(rtdata_module, jail):
+def run_image3pipeline(rtdata_module):
     ''' Run calwebb_image3 on NIRCam imaging and align to gaia '''
 
     rtdata = rtdata_module

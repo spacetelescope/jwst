@@ -2,6 +2,7 @@
 Test script for set_velocity_aberration.py
 """
 import subprocess
+
 from numpy import isclose
 from astropy.io import fits
 import jwst.datamodels as dm
@@ -29,9 +30,10 @@ def test_compute_va_effects_zero_velocity():
     assert isclose(va_dec, GOOD_POS[1], atol=1e-16)
 
 
-def test_velocity_aberration_script(tmpdir):
+def test_velocity_aberration_script(tmp_path):
     """Test the whole script on a FITS file"""
-    path = str(tmpdir.join("velocity_aberration_tmpfile.fits"))
+
+    path = tmp_path / "velocity_aberration_tmpfile.fits"
     model = dm.ImageModel()
     model.meta.ephemeris.velocity_x_bary = GOOD_VELOCITY[0]
     model.meta.ephemeris.velocity_y_bary = GOOD_VELOCITY[1]

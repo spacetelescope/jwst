@@ -35,7 +35,7 @@ asn_memberdict = {
 
 
 @pytest.fixture(scope="module", params=file_roots)  # ids=ids)
-def run_pipeline(jail, rtdata_module, request):
+def run_pipeline(rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:
          1) Full-frame exposure (all slits will be extracted)

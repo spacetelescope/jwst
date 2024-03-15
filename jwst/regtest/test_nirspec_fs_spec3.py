@@ -5,7 +5,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """
     Run the calwebb_spec3 pipeline on NIRSpec Fixed-Slit exposures.
     """

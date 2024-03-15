@@ -10,7 +10,7 @@ TRUTH_PATH = 'truth/test_miri_mrs_tso'
 
 
 @pytest.fixture(scope='module')
-def run_spec2(jail, rtdata_module):
+def run_spec2(rtdata_module):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
 

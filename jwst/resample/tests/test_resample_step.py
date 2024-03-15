@@ -293,7 +293,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     assert result2.meta.resample.pixel_scale_ratio == ratio
 
 
-def test_weight_type(nircam_rate, _jail):
+def test_weight_type(nircam_rate, tmp_cwd):
     """Check that weight_type of exptime and ivm work"""
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
     _set_photom_kwd(im1)

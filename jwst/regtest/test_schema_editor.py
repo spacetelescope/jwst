@@ -23,7 +23,7 @@ SCHEMA_TRUTH = 'truth/test_schema_editor'
 
 
 @pytest.fixture(scope='module')
-def keyword_db(jail, rtdata_module):
+def keyword_db(rtdata_module):
     """Define the keyword database"""
     rt = rtdata_module
 
@@ -45,7 +45,7 @@ def model_db():
 
 
 @pytest.fixture(scope='module')
-def run_editor_full(jail, keyword_db):
+def run_editor_full(tmp_cwd_module, keyword_db):
     """Just run the editor"""
 
     editor = se.Schema_editor(
@@ -60,7 +60,7 @@ def run_editor_full(jail, keyword_db):
 
 
 @pytest.mark.bigdata
-def test_limit_datamodels_from_file(jail, model_db, keyword_db, rtdata_module):
+def test_limit_datamodels_from_file(tmp_cwd_module, model_db, keyword_db, rtdata_module):
     """Test limiting datamodels from Schema_editor"""
 
     # Create the exclusion file.
@@ -99,7 +99,7 @@ def test_limit_datamodels(model_db):
      'slitmeta.schema.yaml',
      'wcsinfo.schema.yaml', ]
 )
-def test_full_run(jail, schema, run_editor_full, rtdata_module):
+def test_full_run(tmp_cwd_module, schema, run_editor_full, rtdata_module):
     """Check fixed schema files"""
     rt = rtdata_module
     rt.output = os.path.join(run_editor_full, schema)
@@ -109,7 +109,7 @@ def test_full_run(jail, schema, run_editor_full, rtdata_module):
 
 
 @pytest.mark.bigdata
-def test_no_option_warning(jail, keyword_db):
+def test_no_option_warning(tmp_cwd_module, keyword_db):
     """If no operations is given, raise an error"""
     editor = se.Schema_editor(
         input=keyword_db

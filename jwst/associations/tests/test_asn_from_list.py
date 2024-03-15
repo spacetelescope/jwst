@@ -28,6 +28,7 @@ def test_level2():
     assert name.startswith('jwnoprogram-o999_none')
     assert isinstance(serialized, str)
 
+
 def test_level2_tuple():
     """Test level 2 association when passing in a tuple"""
     items = [('file_1.fits', 'science'), ('file_2.fits', 'background'),
@@ -48,6 +49,7 @@ def test_level2_tuple():
         if not items[3][1]:
             assert product['members'][0]['exptype'] == 'science'
 
+
 def test_file_ext():
     """check that the filename extension is correctly appended"""
     items = ['a', 'b', 'c']
@@ -63,18 +65,18 @@ def test_file_ext():
     assert name.endswith('yaml')
 
 
-def test_level2_from_cmdline(tmpdir):
+def test_level2_from_cmdline(tmp_path):
     """Create a level2 association from the command line"""
     rule = 'DMSLevel2bBase'
-    path = tmpdir.join('test_asn.json')
+    path = tmp_path / 'test_asn.json'
     inlist = ['a', 'b', 'c']
     args = [
-        '-o', path.strpath,
+        '-o', str(path),
         '-r', rule,
     ]
     args = args + inlist
     Main.cli(args)
-    with open(path.strpath, 'r') as fp:
+    with open(path, 'r') as fp:
         asn = load_asn(fp, registry=AssociationRegistry(include_bases=True))
     assert asn['asn_rule'] == 'DMSLevel2bBase'
     assert asn['asn_type'] == 'None'
@@ -195,19 +197,19 @@ def test_cmdline_fails():
     "format",
     ['json', 'yaml']
 )
-def test_cmdline_success(format, tmpdir):
+def test_cmdline_success(format, tmp_path):
     """Create Level3 associations in different formats"""
-    path = tmpdir.join('test_asn.json')
+    path = tmp_path / 'test_asn.json'
     product_name = 'test_product'
     inlist = ['a', 'b', 'c']
     args = [
-        '-o', path.strpath,
+        '-o', str(path),
         '--product-name', product_name,
         '--format', format
     ]
     args = args + inlist
     Main.cli(args)
-    with open(path.strpath, 'r') as fp:
+    with open(path, 'r') as fp:
         asn = load_asn(fp, format=format)
     assert len(asn['products']) == 1
     assert asn['products'][0]['name'] == product_name
@@ -219,18 +221,18 @@ def test_cmdline_success(format, tmpdir):
     assert inlist == expnames
 
 
-def test_cmdline_change_rules(tmpdir):
+def test_cmdline_change_rules(tmp_path):
     """Command line change the rule"""
     rule = 'Association'
-    path = tmpdir.join('test_asn.json')
+    path = tmp_path / 'test_asn.json'
     inlist = ['a', 'b', 'c']
     args = [
-        '-o', path.strpath,
+        '-o', str(path),
         '-r', rule,
     ]
     args = args + inlist
     Main.cli(args)
-    with open(path.strpath, 'r') as fp:
+    with open(path, 'r') as fp:
         asn = load_asn(fp, registry=AssociationRegistry(include_bases=True))
     assert inlist == asn['members']
 
