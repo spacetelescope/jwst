@@ -4,8 +4,6 @@ import numpy as np
 
 def gfunction(xi, eta, **kwargs):
     """
-    Short Summary
-    -------------
     Calculate the Fourier transform of one half of a hexagon that is bisected
     from one corner to its diametrically opposite corner.
 
@@ -73,8 +71,6 @@ def gfunction(xi, eta, **kwargs):
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     """
-    Short Summary
-    -------------
     Calculate the complex array analytical transform of a (distorted if necessary) hexagon
 
     Parameters

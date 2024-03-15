@@ -14,8 +14,6 @@ log.setLevel(logging.DEBUG)
 
 def create_afflist_rot(rotdegs):
     """
-    Short Summary
-    -------------
     Create a list of affine objects with various rotations to use in order to
     go through and find which fits an image plane data best.
 
@@ -40,8 +38,6 @@ def create_afflist_rot(rotdegs):
 def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
                   pixel, npix, bandpass, over, holeshape):
     """
-    Short Summary
-    -------------
     Create an affine2d object using the known rotation and scale.
 
     Parameters

@@ -13,8 +13,6 @@ log.addHandler(logging.NullHandler())
 
 def flip(holearray):
     """
-    Short Summary
-    -------------
     Change sign of 2nd coordinate of holes
 
     Parameters
@@ -36,8 +34,6 @@ def flip(holearray):
 
 def rotatevectors(vectors, thetarad):
     """
-    Short Summary
-    -------------
     Rotate vectors by specified angle
 
     Parameters
@@ -68,8 +64,6 @@ def rotatevectors(vectors, thetarad):
 
 def mas2rad(mas):
     """
-    Short Summary
-    -------------
     Convert angle in milli arc-sec to radians
 
     Parameters
@@ -89,8 +83,6 @@ def mas2rad(mas):
 
 def rad2mas(rad):
     """
-    Short Summary
-    -------------
     Convert input angle in radians to milli arc sec
 
     Parameters
@@ -110,8 +102,6 @@ def rad2mas(rad):
 
 def sin2deltapistons(coeffs):
     """
-    Short Summary
-    -------------
     Each baseline has one sine and one cosine fringe with a coefficient that
     depends on the piston difference between the two holes that make the
     baseline.  For a 7-hole mask there are 21 baselines and therefore there
@@ -139,8 +129,6 @@ def sin2deltapistons(coeffs):
 
 def cos2deltapistons(coeffs):
     """
-    Short Summary
-    -------------
     Each baseline has one sine and one cosine fringe with a coefficient that
     depends on the piston difference between the two holes that make the
     baseline.  For a 7-hole mask there are 21 baselines and therefore there
@@ -172,8 +160,6 @@ def cos2deltapistons(coeffs):
 
 def replacenan(array):
     """
-    Short Summary
-    -------------
     Replace singularities encountered in the analytical hexagon Fourier
     transform with the analytically derived limits.
 
@@ -195,8 +181,6 @@ def replacenan(array):
 
 def primarybeam(kx, ky):
     """
-    Short Summary
-    -------------
     Calculate the envelope intensity for circular holes & monochromatic light
 
     Parameters
@@ -228,8 +212,6 @@ def primarybeam(kx, ky):
 
 def hexpb():
     """
-    Short Summary
-    -------------
     Calculate the primary beam for hexagonal holes.
 
     Parameters
@@ -254,8 +236,6 @@ def hexpb():
 
 def ffc(kx, ky):
     """
-    Short Summary
-    -------------
     Calculate cosine terms of analytic model.
 
     Parameters
@@ -283,8 +263,6 @@ def ffc(kx, ky):
 
 def ffs(kx, ky):
     """
-    Short Summary
-    -------------
     Calculate sine terms of analytic model.
 
     Parameters
@@ -315,8 +293,6 @@ def model_array(
     ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED", shape="circ"
 ):
     """
-    Short Summary
-    -------------
     Create a model using the specified wavelength.
 
     Parameters
@@ -440,8 +416,6 @@ def model_array(
 
 def weighted_operations(img, model, dqm=None):
     """
-    Short Summary
-    -------------
     Performs least squares matrix operations to solve A x = b, where A is the
     model, b is the data (image), and x is the coefficient vector we are solving
     for.
@@ -533,8 +507,6 @@ def weighted_operations(img, model, dqm=None):
 
 def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     """
-    Short Summary
-    -------------
     Use least squares matrix operations to solve A x = b, where A is the model,
     b is the data (img), and x is the coefficient vector we are solving for.
     In 2-D, data x = inv(At.A).(At.b).  If a flux is given, it will be used it
@@ -681,8 +653,6 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
 def multiplyenv(env, fringeterms):
     """
-    Short Summary
-    -------------
     Multiply the envelope by each fringe 'image'.
 
     Parameters
@@ -718,20 +688,7 @@ def multiplyenv(env, fringeterms):
 
 def tan2visibilities(coeffs):
     """
-    Long Summary
-    ------------
-    Technically the fit measures phase AND amplitude, so to retrieve the
-    phase we need to consider both sin and cos terms. Consider one fringe:
-    A { cos(kx)cos(dphi) + sin(kx)sin(dphi) } =
-    A(a cos(kx) + b sin(kx)), where a = cos(dphi) and b = sin(dphi)
-    and A is the fringe amplitude, therefore coupling a and b.
-    In practice we measure A*a and A*b from the coefficients, so:
-    Ab/Aa = b/a = tan(dphi)
-    call a' = A*a and b' = A*b (we actually measure a', b')
-    (A*sin(dphi))^2 + (A*cos(dphi)^2) = A^2 = a'^2 + b'^2
 
-    Short Summary
-    -------------
     From the solution to the fit, calculate the fringe amplitude and phase.
 
     Parameters
@@ -742,6 +699,20 @@ def tan2visibilities(coeffs):
     -------
     amp, delta: 1D float array, 1D float array
         fringe amplitude & phase
+
+    Notes
+    -----
+    Technically the fit measures phase AND amplitude, so to retrieve the
+    phase we need to consider both sin and cos terms. Consider one fringe:
+    A { cos(kx)cos(dphi) + sin(kx)sin(dphi) } =
+    A(a cos(kx) + b sin(kx)), where a = cos(dphi) and b = sin(dphi)
+    and A is the fringe amplitude, therefore coupling a and b.
+    In practice we measure A*a and A*b from the coefficients, so:
+    Ab/Aa = b/a = tan(dphi)
+    call a' = A*a and b' = A*b (we actually measure a', b')
+    (A*sin(dphi))^2 + (A*cos(dphi)^2) = A^2 = a'^2 + b'^2
+
+
     """
     delta = np.zeros(int((len(coeffs) - 1) / 2))
     amp = np.zeros(int((len(coeffs) - 1) / 2))
@@ -760,8 +731,6 @@ def tan2visibilities(coeffs):
 
 def populate_antisymmphasearray(deltaps, n=7):
     """
-    Short Summary
-    -------------
     Populate the antisymmetric fringe phase array:
 
     fringephasearray[0,q+1:] = coeffs[0:6]
@@ -801,8 +770,6 @@ def populate_antisymmphasearray(deltaps, n=7):
 
 def populate_symmamparray(amps, n=7):
     """
-    Short Summary
-    -------------
     Populate the symmetric fringe amplitude array
 
     Parameters
@@ -835,8 +802,6 @@ def populate_symmamparray(amps, n=7):
 
 def redundant_cps(deltaps, n=7):
     """
-    Short Summary
-    -------------
     Calculate closure phases for each set of 3 holes
 
     Parameters
@@ -873,8 +838,6 @@ def redundant_cps(deltaps, n=7):
 
 def closurephase(deltap, n=7):
     """
-    Short Summary
-    -------------
     Calculate closure phases between each pair of holes
 
     Parameters
@@ -935,8 +898,6 @@ def closurephase(deltap, n=7):
 
 def closure_amplitudes(amps, n=7):
     """
-    Short Summary
-    -------------
     Calculate closure amplitudes
 
     Parameters

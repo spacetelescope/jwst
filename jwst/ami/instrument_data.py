@@ -33,8 +33,6 @@ class NIRISS:
                  run_bpfix=True
                  ):
         """
-        Short Summary
-        ------------
         Initialize NIRISS class
 
         Parameters
@@ -131,8 +129,6 @@ class NIRISS:
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
         """
-        Short Summary
-        ------------
         Override pixel scale in header
 
         Parameters
@@ -157,8 +153,6 @@ class NIRISS:
 
     def read_data_model(self, input_model):
         """
-        Short Summary
-        -------------
         Retrieve info from input data model and store in NIRISS class.
         Trim refpix and roughly center science data and dq array.
         Run Fourier bad pixel correction before returning science data.
@@ -324,8 +318,6 @@ class NIRISS:
 
     def reset_nwav(self, nwav):
         """
-        Short Summary
-        -------------
         Reset self.nwav
 
         Parameters
@@ -340,8 +332,6 @@ class NIRISS:
 
     def mast2sky(self):
         """
-        Short Summary
-        -------------
         Rotate hole center coordinates:
             Clockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = -1
             Counterclockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = 1

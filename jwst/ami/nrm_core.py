@@ -18,8 +18,6 @@ log.setLevel(logging.DEBUG)
 class FringeFitter:
     def __init__(self, instrument_data, **kwargs):
         """
-        Short Summary
-        -------------
         For the given information on the instrument and mask, calculate the
         fringe observables (visibilities and closure phases in the image plane.
 
@@ -70,8 +68,6 @@ class FringeFitter:
 
     def fit_fringes_all(self, input_model):
         """
-        Short Summary
-        ------------
         Extract the input data from input_model, and generate the best model to
         match the data (centering, scaling, rotation)
         May allow parallelization by integration (later)
@@ -117,8 +113,6 @@ class FringeFitter:
         
     def make_lgfitmodel(self):
         """
-        Short Summary
-        ------------
         Populate the LGFitModel with the output of the fringe fitting
         (LG algorithm)
 
@@ -166,8 +160,6 @@ class FringeFitter:
 
     def fit_fringes_single_integration(self, slc):
         """
-        Short Summary
-        ------------
         Generate the best model to
         match a single slice
 

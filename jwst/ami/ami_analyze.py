@@ -28,8 +28,6 @@ def apply_LG_plus(
     run_bpfix,
 ):
     """
-    Short Summary
-    -------------
     Applies the image plane algorithm to an AMI image
 
     Parameters

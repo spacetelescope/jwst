@@ -427,8 +427,6 @@ class RawOifits:
 
     def _format_STAINDEX_T3(self, tab):
         """
-        Short Summary
-        ------------
         Converts sta_index to save oifits T3 in the appropriate format
 
         Parameters
@@ -456,8 +454,6 @@ class RawOifits:
 
     def _format_STAINDEX_V2(self, tab):
         """
-        Short Summary
-        ------------
         Converts sta_index to save oifits V2 in the appropriate format
 
         Parameters

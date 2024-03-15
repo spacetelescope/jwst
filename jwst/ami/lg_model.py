@@ -47,8 +47,6 @@ class NrmModel:
         **kwargs,
     ):
         """
-        Short Summary
-        -------------
         Set attributes of NrmModel class.
 
         Parameters
@@ -142,8 +140,6 @@ class NrmModel:
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
         """
-        Short Summary
-        -------------
         Simulate a detector-scale psf using parameters input from the call and
         already stored in the object,and generate a simulation fits header
         storing all of the  parameters used to generate that psf.  If the input
@@ -203,8 +199,6 @@ class NrmModel:
         self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
     ):
         """
-        Short Summary
-        -------------
         Generates the fringe model with the attributes of the object using a
         bandpass that is either a single wavelength or a list of tuples of the
         form [(weight1, wavl1), (weight2, wavl2),...].  The model is
@@ -308,8 +302,6 @@ class NrmModel:
         weighted=False,
     ):
         """
-        Short Summary
-        -------------
         Run a least-squares fit on an input image; find the appropriate
         wavelength scale and rotation. If a model is not specified then this
         method will find the appropriate wavelength scale, rotation (and
@@ -409,8 +401,6 @@ class NrmModel:
 
     def create_modelpsf(self):
         """
-        Short Summary
-        -------------
         Make an image from the object's model and fit solutions, by setting the
         NrmModel object's modelpsf attribute
 
@@ -436,8 +426,6 @@ class NrmModel:
         self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
     ):
         """
-        Short Summary
-        -------------
         Determine the scale and rotation that best fits the data.  Correlations
         are calculated in the image plane, in anticipation of data with many
         bad pixels.
@@ -539,8 +527,6 @@ class NrmModel:
 
     def set_pistons(self, phi_m):
         """
-        Short Summary
-        -------------
         Set piston's phi in meters of OPD at center wavelength LG++
 
         Parameters
@@ -557,8 +543,6 @@ class NrmModel:
 
     def set_pixelscale(self, pixel_rad):
         """
-        Short Summary
-        -------------
         Set the detector pixel scale
 
         Parameters
@@ -575,8 +559,6 @@ class NrmModel:
 
 def goodness_of_fit(data, bestfit, diskR=8):
     """
-    Short Summary
-    -------------
     Calculate goodness of fit between the data and the fit.
 
     Parameters
@@ -612,8 +594,6 @@ def goodness_of_fit(data, bestfit, diskR=8):
 
 def run_data_correlate(data, model):
     """
-    Short Summary
-    -------------
     Calculate correlation between data and model
 
     Parameters
