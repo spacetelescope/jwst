@@ -14,7 +14,7 @@ jw00617196001_02102_00001_nrca4_trapsfilled.fits        trapsfilled file
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRCAM subarray data."""
     rtdata = rtdata_module
     rtdata.get_data("nircam/subarray/jw00617196001_02102_00001_nrca4_uncal.fits")

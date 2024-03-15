@@ -7,7 +7,7 @@ from jwst.regtest import regtestdata as rt
 from jwst.stpipe import Step
 
 @pytest.fixture(scope='module')
-def run_image2(jail, rtdata_module):
+def run_image2(rtdata_module):
     """Run the calwebb_image2 pipeline"""
 
     rtdata = rtdata_module

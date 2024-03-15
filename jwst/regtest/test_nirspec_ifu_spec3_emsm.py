@@ -9,7 +9,7 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 
 @pytest.fixture(scope='module')
-def run_spec3_multi_emsm(jail, rtdata_module):
+def run_spec3_multi_emsm(rtdata_module):
     """Run Spec3Pipeline"""
     rtdata = rtdata_module
 
