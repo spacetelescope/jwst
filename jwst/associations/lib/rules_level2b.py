@@ -1038,7 +1038,6 @@ class Asn_Lv2WFSC(
 
 @RegistryMarker.rule
 class Asn_Lv2WFSSParallel(
-        AsnMixin_Lv2WFSS,
         AsnMixin_Lv2Spectral,
 ):
     """Level 2b WFSS/GRISM associations for WFSS taken in pure-parallel mode
@@ -1054,15 +1053,20 @@ class Asn_Lv2WFSSParallel(
     is done as the primary. The differences are as follows. When primary, all components, the direct
     image and the two GRISM exposures, are all executed within the same observation. When in parallel,
     each component is taken as a separate observation.
+    These are always in associations of type DIRECT_IMAGE.
 
-    Another difference is that there is no ``targetid`` assigned to the parallel exposures. The identification
-    of any particular execution, or "slot", of the parallel is based on the "v" portion of the ``obs_id``.
+    Another difference is that there is no ``targetid`` assigned to the parallel exposures. However, since
+    WFSS parallels are very specific, there is not need to constrain on target. A default value is used
+    for the Level 3 product naming.
     """
 
     def __init__(self, *args, **kwargs):
 
         self.constraints = Constraint([
-            Constraint_Base(),
+            DMSAttrConstraint(
+                sources=['asn_candidate'],
+                value=('.+direct_image.+'),
+            ),
             Constraint([
                 DMSAttrConstraint(
                     name='exp_type',
@@ -1077,14 +1081,6 @@ class Asn_Lv2WFSSParallel(
                     only_on_match=True,
                 ),
             ], reduce=Constraint.any),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-            ),
-            DMSAttrConstraint(
-                name='pupil',
-                sources=['pupil'],
-            ),
             Constraint([
                 SimpleConstraint(
                     value='science',
@@ -1097,8 +1093,23 @@ class Asn_Lv2WFSSParallel(
 
         super(Asn_Lv2WFSSParallel, self).__init__(*args, **kwargs)
 
+    def get_exposure_type(self, item, default='science'):
+        """Modify exposure type depending on dither pointing index
+
+        If an imaging exposure as been found, treat is as a direct image.
+        """
+        exp_type = super(Asn_Lv2WFSSParallel, self).get_exposure_type(
+            item, default
+        )
+        if exp_type == 'science' and item['exp_type'] in ['nis_image', 'nrc_image']:
+            exp_type = 'direct_image'
+
+        return exp_type
+
     def validate_candidates(self, member):
-        """Allow only DIRECT_IMAGE candidates
+        """Stub to always return True
+
+        For this association, stub this to always return Treu
 
         Parameters
         ----------
@@ -1107,9 +1118,6 @@ class Asn_Lv2WFSSParallel(
 
         Returns
         -------
-        True if candidate is DIRECT_IMAGE.
-        Otherwise, False
+        True
         """
-        if self.acid.type.lower() == 'direct_image':
-            return True
-        return False
+        return True
