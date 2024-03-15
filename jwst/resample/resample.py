@@ -294,10 +294,13 @@ class ResampleData:
                 # the output file isn't always fully written before the
                 # execution continues
                 output_name = output_model.meta.filename
+                sleep_min = 1.0
+                sleep_max = 40.0
                 status = self.write_with_dimension_check(output_model, output_name,
-                                                         min_wait_time=1.0, max_wait_time=40.0)
+                                                         min_wait_time=sleep_min, 
+                                                         max_wait_time=sleep_max)
                 if status:
-                    log.warning(f"Wait time of {max_wait_time}s exceeded.")
+                    log.warning(f"Wait time of {sleep_max}s exceeded.")
                     log.warning("Continuing with possibly corrupted i2d file")
                 self.output_models.append(output_name)
             else:
