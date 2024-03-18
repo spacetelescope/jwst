@@ -10,7 +10,7 @@ import pytest
 
 from stdatamodels.jwst import datamodels
 
-from jwst.ami import utils, leastsqnrm, hexee, webb_psf
+from jwst.ami import utils, leastsqnrm, hexee
 from jwst.ami.leastsqnrm import hexpb, ffc, ffs, closure_amplitudes
 from jwst.ami.leastsqnrm import closurephase, redundant_cps
 from jwst.ami.leastsqnrm import populate_symmamparray
