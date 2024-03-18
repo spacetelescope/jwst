@@ -23,7 +23,7 @@ class EmiCorrStep(Step):
         nbins = integer(default=None)  # Number of bins in one phased wave
         scale_reference = boolean(default=True)  # If True, the reference wavelength will be scaled to the data's phase amplitude
         skip = boolean(default=True)  # Skip the step
-        onthefly_corr_freq = float_list(default=None)  # Frequencies number to use for correction
+        onthefly_corr_freq = float_list(default=None)  # Frequencies to use for correction
     """
 
     reference_file_types = ['emicorr']
