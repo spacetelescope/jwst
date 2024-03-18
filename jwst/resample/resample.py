@@ -358,7 +358,7 @@ class ResampleData:
                 log.info(f"Saved model in {output_name}")
             else:
                 log.info("Shapes of data in datamodel before and after saving don't match")
-                log.info("Removing outout file and re-writing")
+                log.info("Removing output file and re-writing")
                 os.remove(output_name)
                 wait_time = wait_time * 2.0
         return status
