@@ -108,6 +108,7 @@ class SimpleConstraintABC(abc.ABC):
                 - List of `~jwst.associations.ProcessList`.
         """
         self.matched = True
+        self.found_values.add(self.value)
         return self.matched, []
 
     @property
@@ -352,6 +353,7 @@ class SimpleConstraint(SimpleConstraintABC):
         if self.matched:
             if self.force_unique:
                 self.value = source_value
+            self.found_values.add(self.value)
 
         # Determine reprocessing
         reprocess = []
