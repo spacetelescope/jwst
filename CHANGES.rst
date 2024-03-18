@@ -66,7 +66,7 @@ documentation
 
 - Correct the names of parameter options ``usigma`` and ``lsigma`` for ``sky_match``. [#8356]
 
-- Updated ``outlier_detection`` for IFU data to explain the method clearer. [#8360]
+- Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
 
 
 emicorr
