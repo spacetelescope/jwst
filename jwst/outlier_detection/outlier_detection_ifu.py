@@ -42,7 +42,7 @@ class OutlierDetectionIFU(OutlierDetection):
          b. Store computed neighbor differences for all the pixels.
             The neighbor pixel  differences are defined by the dispersion axis.
             For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
-            to find the differences are to the left and right of pixel being examined.
+            to find the differences are to the left and right of each pixel being examined.
             For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
             find the differences are above and below the pixel being examined.
       3. For each input file store the  minimum of the pixel neighbor differences
