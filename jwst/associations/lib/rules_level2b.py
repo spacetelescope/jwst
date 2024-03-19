@@ -43,6 +43,7 @@ __all__ = [
     'Asn_Lv2SpecTSO',
     'Asn_Lv2WFSSNIS',
     'Asn_Lv2WFSSNRC',
+    'Asn_Lv2WFSSParallel',
     'Asn_Lv2WFSC',
 ]
 
