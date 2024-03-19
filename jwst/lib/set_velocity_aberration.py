@@ -20,9 +20,10 @@ in the header other than what is required by the standard.
 
 import logging
 import numpy as np
-import astropy.io.fits as fits
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from scipy.constants import speed_of_light
+import jwst.datamodels as dm
+from jwst.datamodels import Level1bModel
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -114,29 +115,36 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
     return scale_factor, apparent_ra, apparent_dec
 
 
-def add_dva(filename):
+def add_dva(filename, force_level1bmodel=True):
     """
     Given the name of a valid partially populated level 1b JWST file,
     determine the velocity aberration scale factor and apparent target position
     in the moving (telescope) frame.
 
     It presumes all the accessed keywords are present (see first block).
-    """
-    hdulist = fits.open(filename, mode='update')
-    pheader = hdulist[0].header
-    sheader = hdulist['SCI'].header
 
-    # compute the velocity aberration information
+    Parameters
+    ----------
+    filename : str
+        The name of the file to be updated.
+    force_level1bmodel : bool, optional.
+        If True, the input file will be force-opened as a Level1bModel.  If False,
+        the file will be opened using the generic DataModel.  The default is True.
+    """
+    if force_level1bmodel:
+        model = Level1bModel(filename)
+    else:
+        model = dm.open(filename)
     scale_factor, apparent_ra, apparent_dec = compute_va_effects(
-        velocity_x=sheader['JWST_DX'],
-        velocity_y=sheader['JWST_DY'],
-        velocity_z=sheader['JWST_DZ'],
-        ra=sheader['RA_REF'],
-        dec=sheader['DEC_REF']
+        velocity_x=model.meta.ephemeris.velocity_x_bary,
+        velocity_y=model.meta.ephemeris.velocity_y_bary,
+        velocity_z=model.meta.ephemeris.velocity_z_bary,
+        ra=model.meta.wcsinfo.ra_ref,
+        dec=model.meta.wcsinfo.dec_ref,
     )
 
     # update header
-    pheader['VA_RA'] = apparent_ra
-    pheader['VA_DEC'] = apparent_dec
-    sheader['VA_SCALE'] = scale_factor
-    hdulist.close()
+    model.meta.velocity_aberration.scale_factor = scale_factor
+    model.meta.velocity_aberration.va_ra_ref = apparent_ra
+    model.meta.velocity_aberration.va_dec_ref = apparent_dec
+    model.save(filename)

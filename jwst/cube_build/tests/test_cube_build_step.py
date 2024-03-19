@@ -16,11 +16,11 @@ from jwst.cube_build.cube_build import ErrorNoChannels
 
 
 @pytest.fixture(scope='module')
-def miri_cube_pars(tmpdir_factory):
+def miri_cube_pars(tmp_path_factory):
     """ Set up the miri cube pars reference file  """
 
-    filename = tmpdir_factory.mktemp('cube_pars')
-    filename = str(filename.join('miri_cube_pars.fits'))
+    filename = tmp_path_factory.mktemp('cube_pars')
+    filename = filename / 'miri_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'MIRI'
@@ -103,7 +103,7 @@ def miri_image():
 
 
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build(_jail, miri_cube_pars, miri_image, tmp_path, as_filename):
+def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filename):
     """ test defaults of step are set up and user input are defined correctly """
     if as_filename:
         fn = tmp_path / 'miri.fits'
@@ -180,7 +180,7 @@ def nirspec_data():
 
 
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build_nirspec(_jail, nirspec_data, tmp_path, as_filename):
+def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
     if as_filename:
         fn = tmp_path / 'test_nirspec.fits'
         nirspec_data.save(fn)

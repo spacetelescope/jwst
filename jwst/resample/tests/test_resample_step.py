@@ -76,6 +76,7 @@ def nirspec_rate():
         'duration': 11.805952,
         'end_time': 58119.85416,
         'exposure_time': 11.776,
+        'measurement_time': 11.65824,
         'frame_time': 0.11776,
         'group_time': 0.11776,
         'groupgap': 0,
@@ -129,6 +130,7 @@ def miri_rate():
         'duration': 11.805952,
         'end_time': 58119.85416,
         'exposure_time': 11.776,
+        'measurement_time': 11.65824,
         'frame_time': 0.11776,
         'group_time': 0.11776,
         'groupgap': 0,
@@ -198,6 +200,7 @@ def nircam_rate():
         'duration': 161.05155,
         'end_time': 59512.70899968495,
         'exposure_time': 150.31478,
+        'measurement_time': 139.57801,
         'frame_time': 10.73677,
         'group_time': 21.47354,
         'groupgap': 1,
@@ -290,7 +293,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     assert result2.meta.resample.pixel_scale_ratio == ratio
 
 
-def test_weight_type(nircam_rate, _jail):
+def test_weight_type(nircam_rate, tmp_cwd):
     """Check that weight_type of exptime and ivm work"""
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
     _set_photom_kwd(im1)
@@ -319,7 +322,18 @@ def test_weight_type(nircam_rate, _jail):
     result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
 
     assert_allclose(result2.data[100:105, 100:105], 6.667, rtol=1e-2)
-    assert_allclose(result2.wht[100:105, 100:105], 450.9, rtol=1e-1)
+    expectation_value = 407.
+    assert_allclose(result2.wht[100:105, 100:105], expectation_value, rtol=1e-2)
+
+    # remove measurement time to force use of exposure time
+    # this also implicitly shows that measurement time was indeed used above
+    expected_ratio = im1.meta.exposure.exposure_time / im1.meta.exposure.measurement_time
+    for im in c:
+        del im.meta.exposure.measurement_time
+
+    result3 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
+    assert_allclose(result3.data[100:105, 100:105], 6.667, rtol=1e-2)
+    assert_allclose(result3.wht[100:105, 100:105], expectation_value * expected_ratio, rtol=1e-2)
 
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):

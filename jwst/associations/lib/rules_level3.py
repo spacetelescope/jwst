@@ -903,6 +903,24 @@ class Asn_Lv3TSO(AsnMixin_Science):
                     ]),
                 ],
                 reduce=Constraint.notany
+            ),
+            # Don't allow NIRISS SOSS with NINTS=1 in tso3
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value = ('nis_soss')
+                        ),
+                        DMSAttrConstraint(
+                            name='nints',
+                            sources=['nints'],
+                            value = ('1')
+                        ),
+                    ]),
+                ],
+                reduce=Constraint.notany
             )
         ])
 

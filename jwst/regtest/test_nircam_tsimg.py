@@ -11,7 +11,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipelines(jail, rtdata_module):
+def run_pipelines(rtdata_module):
     """Run stage 2 and 3 pipelines on NIRCam TSO image data."""
 
     rtdata = rtdata_module
@@ -65,7 +65,7 @@ def test_nircam_tsimage_stage3_phot(run_pipelines):
 
 
 @pytest.mark.bigdata
-def test_nircam_setpointing_tsimg(_jail, rtdata, engdb, fitsdiff_default_kwargs):
+def test_nircam_setpointing_tsimg(rtdata, engdb, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b
     NIRCam TSO imaging file.

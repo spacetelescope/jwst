@@ -12,7 +12,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_tso_spec2_pipeline(jail, rtdata_module, request):
+def run_tso_spec2_pipeline(rtdata_module, request):
     """Run the calwebb_spec2 pipeline performed on NIRSpec
         fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit)
     """

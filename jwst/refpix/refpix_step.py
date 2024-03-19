@@ -23,6 +23,8 @@ class RefPixStep(Step):
         side_gain = float(default=1.0) # Multiplicative factor for side reference signal before subtracting from rows
         odd_even_rows = boolean(default=True) # Compute reference signal separately for even- and odd-numbered rows
         ovr_corr_mitigation_ftr = float(default=3.0) # Factor to avoid overcorrection of bad reference pixels for IRS2
+        preserve_irs2_refpix = boolean(default=False) # Preserve reference pixels in output
+        irs2_mean_subtraction = boolean(default=False) # Apply a mean offset subtraction before IRS2 correction
     """
 
     reference_file_types = ['refpix']
@@ -37,7 +39,20 @@ class RefPixStep(Step):
                 # Flag bad reference pixels first
                 datamodel = input_model.copy()
                 irs2_subtract_reference.flag_bad_refpix(
-                    datamodel, n_sigma=self.ovr_corr_mitigation_ftr)
+                    datamodel, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
+
+                # If desired, do the normal refpix correction before IRS2, without
+                # side pixel handling
+                if self.irs2_mean_subtraction:
+                    if self.use_side_ref_pixels:
+                        self.log.info('Turning off side pixel correction for IRS2')
+                        self.use_side_ref_pixels = False
+                    reference_pixels.correct_model(
+                        datamodel, self.odd_even_columns, self.use_side_ref_pixels,
+                        self.side_smoothing_length, self.side_gain, self.odd_even_rows)
+
+                # Now that values are updated, replace bad reference pixels
+                irs2_subtract_reference.flag_bad_refpix(datamodel, replace_only=True)
 
                 # Get the necessary refpix reference file for IRS2 correction
                 self.irs2_name = self.get_reference_file(datamodel, 'refpix')
@@ -54,7 +69,8 @@ class RefPixStep(Step):
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
 
                 # Apply the IRS2 correction scheme
-                result = irs2_subtract_reference.correct_model(datamodel, irs2_model)
+                result = irs2_subtract_reference.correct_model(
+                    datamodel, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
 
                 if result.meta.cal_step.refpix != 'SKIPPED':
                     result.meta.cal_step.refpix = 'COMPLETE'

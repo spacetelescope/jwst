@@ -6,7 +6,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope='module')
-def run_nis_wfss_spec2(jail, rtdata_module):
+def run_nis_wfss_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures"""
     rtdata = rtdata_module
 
@@ -60,7 +60,7 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
 
 
 @pytest.fixture(scope='module')
-def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, jail):
+def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
     """Run the calwebb_spec3 pipeline"""
     rtdata = rtdata_module
 

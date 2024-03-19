@@ -7,7 +7,7 @@ from jwst.pipeline import Spec2Pipeline
 
 
 @pytest.mark.bigdata
-def test_nirspec_missing_msa_fail(_jail, rtdata, fitsdiff_default_kwargs, caplog):
+def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, caplog):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
         that's missing an MSAMETFL. Exception should be raised.
@@ -26,7 +26,7 @@ def test_nirspec_missing_msa_fail(_jail, rtdata, fitsdiff_default_kwargs, caplog
 
 
 @pytest.mark.bigdata
-def test_nirspec_missing_msa_nofail(_jail, rtdata, fitsdiff_default_kwargs, caplog):
+def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, caplog):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
         that's missing an MSAMETFL. Exception should NOT be raised.
@@ -46,7 +46,7 @@ def test_nirspec_missing_msa_nofail(_jail, rtdata, fitsdiff_default_kwargs, capl
 
 
 @pytest.mark.bigdata
-def test_nirspec_assignwcs_skip(_jail, rtdata, fitsdiff_default_kwargs, caplog):
+def test_nirspec_assignwcs_skip(rtdata, fitsdiff_default_kwargs, caplog):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
         with the AssignWcs step skipped. The pipeline should abort.
@@ -66,7 +66,7 @@ def test_nirspec_assignwcs_skip(_jail, rtdata, fitsdiff_default_kwargs, caplog):
 
 
 @pytest.mark.bigdata
-def test_nirspec_nrs2_nodata_api(_jail, rtdata, fitsdiff_default_kwargs):
+def test_nirspec_nrs2_nodata_api(rtdata, fitsdiff_default_kwargs):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec IFU exposure
         that has a filter/grating combination that produces no data on
@@ -85,7 +85,7 @@ def test_nirspec_nrs2_nodata_api(_jail, rtdata, fitsdiff_default_kwargs):
 
 
 @pytest.mark.bigdata
-def test_nirspec_nrs2_nodata_strun(_jail, rtdata, fitsdiff_default_kwargs, caplog):
+def test_nirspec_nrs2_nodata_strun(rtdata, fitsdiff_default_kwargs, caplog):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec IFU exposure
         that has a filter/grating combination that produces no data on

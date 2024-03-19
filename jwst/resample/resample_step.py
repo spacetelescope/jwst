@@ -195,7 +195,6 @@ class ResampleStep(Step):
 
         return wcs
 
-
     def get_drizpars(self, ref_filename, input_models):
         """
         Extract drizzle parameters from reference file.

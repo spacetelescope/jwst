@@ -17,16 +17,17 @@ from jwst.master_background.master_background_step import (
 
 
 @pytest.fixture(scope='module')
-def user_background(tmpdir_factory):
+def user_background(tmp_path_factory):
     """Generate a user background spectrum"""
 
-    filename = tmpdir_factory.mktemp('master_background_user_input')
-    filename = str(filename.join('user_background.fits'))
+    filename = tmp_path_factory.mktemp('master_background_user_input')
+    filename = filename / 'user_background.fits'
     wavelength = np.linspace(0.5, 25, num=100)
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
     data.save(filename)
-    return filename
+    # filename must be string not Path to validate with current stpipe version
+    return str(filename)
 
 
 @pytest.fixture(scope='function')
@@ -52,7 +53,7 @@ def science_image():
     return image
 
 
-def test_master_background_userbg(_jail, user_background, science_image):
+def test_master_background_userbg(tmp_cwd, user_background, science_image):
     """Verify data can run through the step with a user-supplied background"""
 
     # Run with a user-supplied background and verify this is recorded in header
@@ -67,7 +68,7 @@ def test_master_background_userbg(_jail, user_background, science_image):
     assert result.meta.background.master_background_file == 'user_background.fits'
 
 
-def test_master_background_logic(_jail, user_background, science_image):
+def test_master_background_logic(tmp_cwd, user_background, science_image):
     """Verify if calspec 2 background step was run the master background step will be skipped"""
 
     # the background step in calspec2 was done

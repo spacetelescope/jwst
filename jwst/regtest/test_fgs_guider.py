@@ -11,7 +11,7 @@ file_roots = ['exptype_fgs_acq1', 'exptype_fgs_fineguide', 'exptype_fgs_id_image
 
 
 @pytest.fixture(scope='module', params=file_roots, ids=file_roots)
-def run_guider_pipelines(jail, rtdata_module, request):
+def run_guider_pipelines(rtdata_module, request):
     """Run pipeline for guider data"""
     rtdata = rtdata_module
     rtdata.get_data('fgs/level1b/' + request.param + '_uncal.fits')

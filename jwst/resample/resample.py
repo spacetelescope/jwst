@@ -1,17 +1,19 @@
 import logging
+import os
 
 import numpy as np
 from drizzle import util
 from drizzle import cdrizzle
+import psutil
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.library.basic_utils import bytes2human
 
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
 from . import resample_utils
-from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
@@ -141,9 +143,27 @@ class ResampleData:
         self.pscale = pscale  # in deg
 
         log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
-        can_allocate, required_memory = datamodels.util.check_memory_allocation(
-            self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
-        )
+
+        allowed_memory = kwargs['allowed_memory']
+        if allowed_memory is None:
+            allowed_memory = os.environ.get('DMODEL_ALLOWED_MEMORY', allowed_memory)
+        if allowed_memory:
+            allowed_memory = float(allowed_memory)
+            # make a small image model to get the dtype
+            dtype = datamodels.ImageModel((1, 1)).data.dtype
+
+            # get the available memory
+            available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
+
+            # compute the output array size
+            required_memory = np.prod(self.output_wcs.array_shape) * dtype.itemsize
+
+            # compare used to available
+            used_fraction = required_memory / available_memory
+            can_allocate = used_fraction <= allowed_memory
+        else:
+            can_allocate = True
+
         if not can_allocate:
             raise OutputTooLargeError(
                 f'Combined ImageModel size {self.output_wcs.array_shape} '
@@ -456,17 +476,25 @@ class ResampleData:
         total_exposure_time = 0.
         exposure_times = {'start': [], 'end': []}
         duration = 0.0
+        total_measurement_time = 0.0
+        measurement_time_failures = []
         for exposure in self.input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
+            if not resample_utils._check_for_tmeasure(exposure[0]):
+                measurement_time_failures.append(1)
+            else:
+                total_measurement_time += exposure[0].meta.exposure.measurement_time
+                measurement_time_failures.append(0)
             exposure_times['start'].append(exposure[0].meta.exposure.start_time)
             exposure_times['end'].append(exposure[0].meta.exposure.end_time)
             duration += exposure[0].meta.exposure.duration
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
+        if not any(measurement_time_failures):
+            output_model.meta.exposure.measurement_time = total_measurement_time
         output_model.meta.exposure.start_time = min(exposure_times['start'])
         output_model.meta.exposure.end_time = max(exposure_times['end'])
-        output_model.meta.resample.product_exposure_time = total_exposure_time
 
         # Update other exposure time keywords:
         # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
@@ -565,7 +593,7 @@ class ResampleData:
         kernel: str, optional
             The name of the kernel used to combine the input. The choice of
             kernel controls the distribution of flux over the kernel. The kernel
-            names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
+            names are: "square", "gaussian", "point", "turbo", "lanczos2",
             and "lanczos3". The square kernel is the default.
 
         fillval: str, optional
