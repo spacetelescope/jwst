@@ -1100,66 +1100,32 @@ class Asn_Lv2WFSSParallel(
 
         super(Asn_Lv2WFSSParallel, self).__init__(*args, **kwargs)
 
-    def add_catalog_members(self):
-        """Add catalog and direct image member based on direct image members"""
-        directs = self.members_by_type('direct_image')
-        if not directs:
-            raise AssociationNotValidError(
-                '{} has no required direct image exposures'.format(
-                    self.__class__.__name__
-                )
-            )
+    @staticmethod
+    def find_closest_direct(science, directs):
+        """Find the direct image that is closest to the science
 
-        # There will only ever be one direct image.
-        direct = directs[0]
+        For pure-parallel WFSS, there is only ever one direct image.
+        Simply return that.
 
-        sciences = self.members_by_type('science')
-        if not sciences:
-            raise AssociationNotValidError(
-                '{} has no required science exposure'.format(
-                    self.__class__.__name__
-                )
-            )
-        science = sciences[0]
+        Parameters
+        ----------
+        science : dict
+            The science member to compare against
 
-        # Remove all direct images from the association.
-        members = self.current_product['members']
-        direct_idxs = [
-            idx
-            for idx, member in enumerate(members)
-            if member['exptype'] == 'direct_image'
-        ]
-        deque((
-            list.pop(members, idx)
-            for idx in sorted(direct_idxs, reverse=True)
-        ))
+        directs : [dict[,...]]
+            The available direct members
 
-        # Add the Level3 catalog, direct image, and segmentation map members
-        self.direct_image = direct
-        lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
-        members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_i2d.fits',
-                'exptype': 'direct_image'
-            })
-        )
-        members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_cat.ecsv',
-                'exptype': 'sourcecat'
-            })
-        )
-        members.append(
-            Member({
-                'expname': lv3_direct_image_root + '_segm.fits',
-                'exptype': 'segmap'
-            })
-        )
+        Returns
+        -------
+        closest : dict
+            The direct image that is the "closest"
+        """
+        return directs[0]
 
     def validate_candidates(self, member):
         """Stub to always return True
 
-        For this association, stub this to always return Treu
+        For this association, stub this to always return True
 
         Parameters
         ----------
