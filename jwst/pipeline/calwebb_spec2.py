@@ -108,15 +108,19 @@ class Spec2Pipeline(Pipeline):
 
         # Retrieve the input(s)
         asn = self.load_as_level2_asn(data)
+        if len(asn['products']) > 1 and self.output_file is not None:
+            self.log.warning('Multiple products in input association. Output file name will be ignored.')
+            self.output_file = None        
 
         # Each exposure is a product in the association.
         # Process each exposure.  Delay reporting failures until the end.
         results = []
         failures = []
+        output_file = self.output_file
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            if (self.save_results) & (self.output_file is None):
-                self.output_file = product['name']
+            if self.output_file is None:
+                output_file = product['name']
             try:
                 getattr(asn, 'filename')
             except AttributeError:
@@ -125,7 +129,8 @@ class Spec2Pipeline(Pipeline):
                 result = self.process_exposure_product(
                     product,
                     asn['asn_pool'],
-                    asn.filename
+                    asn.filename,
+                    output_name=output_file
                 )
             except NoDataOnDetectorError as exception:
                 # This error merits a special return
@@ -154,7 +159,8 @@ class Spec2Pipeline(Pipeline):
             self,
             exp_product,
             pool_name=' ',
-            asn_file=' '
+            asn_file=' ',
+            output_name = None
     ):
         """Process an exposure found in the association product
 
@@ -240,6 +246,8 @@ class Spec2Pipeline(Pipeline):
                     else:
                         raise RuntimeError('Cannot determine WCS.')
 
+        # ensure outputs of steps respect the output_file parameter
+        calibrated.meta.filename = self.make_output_path(basepath=output_name, suffix=suffix)
         # Steps whose order is the same for all types of input:
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
@@ -278,7 +286,6 @@ class Spec2Pipeline(Pipeline):
         # Record ASN pool and table names in output
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
-        calibrated.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
@@ -305,7 +312,7 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated.copy()
             resampled = self.cube_build(resampled)
             if not self.cube_build.skip:
-                self.save_model(resampled[0], 's3d')
+                self.save_model(resampled[0], suffix='s3d', output_file=output_name)
         else:
             resampled = calibrated
 
