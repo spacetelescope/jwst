@@ -72,6 +72,10 @@ emicorr
 - Set skip=True by default in the code, to be turned on later by a parameter
   reference file. [#8171]
 
+- Step is skipped when no reference file is found and to add a parameter to
+  allow the user to run the step for given frequencies with an on-the-fly
+  generated reference file. [#8270]
+
 exp_to_source
 -------------
 
