@@ -79,8 +79,6 @@ class ResampleData:
         self.weight_type = wht_type
         self.good_bits = good_bits
         self.in_memory = kwargs.get('in_memory', True)
-        self.input_pixscale0 = None  # computed pixel scale of the first image (deg)
-        self._recalc_pscale_ratio = pscale is not None
 
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
@@ -245,12 +243,6 @@ class ResampleData:
                             "Unable to compute input pixel area from WCS of input "
                             f"image {repr(img.meta.filename)}."
                         )
-                    if self.input_pixscale0 is None:
-                        self.input_pixscale0 = np.rad2deg(
-                            np.sqrt(input_pixel_area)
-                        )
-                        if self._recalc_pscale_ratio:
-                            self.pscale_ratio = self.pscale / self.input_pixscale0
                     iscale = np.sqrt(input_pixflux_area / input_pixel_area)
                 else:
                     iscale = 1.0
@@ -329,12 +321,6 @@ class ResampleData:
                         "Unable to compute input pixel area from WCS of input "
                         f"image {repr(img.meta.filename)}."
                     )
-                if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
-                    )
-                    if self._recalc_pscale_ratio:
-                        self.pscale_ratio = self.pscale / self.input_pixscale0
                 iscale = np.sqrt(input_pixflux_area / input_pixel_area)
             else:
                 iscale = 1.0
