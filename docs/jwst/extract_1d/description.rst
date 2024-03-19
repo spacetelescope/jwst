@@ -332,9 +332,9 @@ in the ``residual_fringe_step``. This step is part of the :ref:`calwebb_spec2 <c
 it is skipped by default. For more information see :ref:`residual_fringe <residual_fringe_step>`.
 
 The pipeline also can apply a 1-D residual fringe correction. This correction is only for MIRI MRS data and 
-can be turned on by setting the optional parameter ``extract_1d.ifu_rfcorr = True``  in the :ref:`extract_1d <extract1d_step>` step. 
+can be turned on by setting the optional parameter ``extract_1d.ifu_rfcorr = True``  in the ``extract_1d`` step. 
 Empirically, the 1-D correction step has been found to both work better than the 2-D correction step if is applied to per-band spectra.
-For more details on this step see :ref:`extract_1d <extract_1d_step>` step.  When using the `extract_1d step` to apply a 1-D residual fringe
+When using the ``extract_1d`` step to apply a 1-D residual fringe
 correction the correction is applied during the extraction of spectra from the IFU cube. The 1D residual fringe code can be called outside the
 pipeline to correct an extracted spectrum. If running outside the pipeline the correction works best on single-band cubes and the channel of
 the data must be given. The steps to run this correction outside the pipeline are:

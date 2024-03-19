@@ -35,9 +35,9 @@ it is skipped by default. To apply this step set the step parameter,  ``--skip =
 #. an association table (in json format) containing a single input file
    
 The second of the residual fringe correction steps is a 1-D correction  that can be applied to one-dimensional spectra extracted
-from MRS data cubes by setting the optional parameter ``extract_1d.ifu_rfcorr = True``  in the :ref:`extract_1d <extract1d_step>` step. 
+from MRS data cubes by setting the optional parameter ``extract_1d.ifu_rfcorr = True``  in the :ref:`extract_1d <extract_1d_step>` step. 
 Empirically, the 1-D correction step has been found to both work better than the 2-D correction step if is applied to per-band spectra.
-For more details on this step see :ref:`extract_1d <extract1d_step>` step. 
+For more details on this step see :ref:`extract_1d <extract_1d_step>` step. 
 
 
 Assumptions
