@@ -17,7 +17,7 @@ still under study.
 The basis of the outlier detection flagging for IFU data  is to look for pixels on the detector
 that are regularly discrepant from their neighbors, with a sharper division than could be explained
 by the detector PSF. The algorithm flags pixels that are  outliers when compared to their neighbors for a set of
-input files contained in an association. The neighbor pixel differences are the neighbors in spatial direction.
+input files contained in an association. The neighbor pixel differences are the neighbors in the spatial direction.
 For MIRI data neighbor differences are found to the left and right of every
 science pixel, while for NIRSpec data the neighbor differences are
 determined from pixels above and below every science pixel. The difference between the MIRI MRS and NIRPSpec algorithm for finding the
