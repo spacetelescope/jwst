@@ -14,11 +14,16 @@ in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline.
 At this time it is believed that NIRSpec IFU data also have bad pixels that vary with time, though the time variation is
 still under study.
 
-An algorithm was developed to flag pixels that are  outliers when compared to their neighbors for a set of
-input files contained in an association. The neighbor pixel differences are the neighbors in spatial direction. For MIRI data ,the neighbor differences are found to the left and right of every
-science pixel. While for NIRSpec data neighbor differences are
-found  between the pixels above and below every science pixel. The pixel differences for each input model 
-in the association is determined and is stored in a stack of pixel differences. 
+The basis of the outlier detection flagging for IFU data  is to look for pixels on the detector
+that are regularly discrepant from their neighbors, with a sharper division than could be explained
+by the detector PSF. The algorithm flags pixels that are  outliers when compared to their neighbors for a set of
+input files contained in an association. The neighbor pixel differences are the neighbors in the spatial direction.
+For MIRI data neighbor differences are found to the left and right of every
+science pixel, while for NIRSpec data the neighbor differences are
+determined from pixels above and below every science pixel. The difference between the MIRI MRS and NIRPSpec algorithm for finding the
+spatial pixel differences is due to the opposite dispersion directions between the two instruments. 
+The  pixel differences for each input model 
+in the association are determined and stored in a stack of pixel differences. 
 For each pixel the minimum difference
 through this stack is determined and normalized. The normalization uses a local median of the difference array
 (set by the kernel size). A pixel is flagged as an outlier if  this normalized minimum difference
