@@ -311,7 +311,7 @@ is not the same in the SW and LW detectors, the fringe frequency will differ in 
 fringe is produced by the anti-reflection coating and  pixel metalization etalons, whereas above 16 microns it is
 produced by the anti-reflection coating and  bottom contact etalon, resulting in a different fringe frequency.
 
-The JWST pipeline contains multiple steps mitigate the impact of fringing on science spectra and these steps generally
+The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra and these steps generally
 suffice to reduce the fringe signal to below a few percent of the target flux.
 
 The first correction is applied by default in the ``fringe_step`` in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline

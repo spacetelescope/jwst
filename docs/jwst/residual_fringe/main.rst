@@ -4,7 +4,7 @@ Description
 :Class: `jwst.residual_fringe.ResidualFringeStep`
 :Alias: residual_fringe
 
-The JWST pipeline contains multiple steps mitigate the impact of fringing on science spectra and these steps generally
+The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra and these steps generally
 suffice to reduce the fringe signal to below a few percent of the target flux.
 
 The first correction is applied by default in the ``fringe_step`` in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline
