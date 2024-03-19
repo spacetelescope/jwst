@@ -1092,6 +1092,7 @@ class Asn_Lv2WFSSParallel(
                     ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
             ], reduce=Constraint.any),
+            Constraint_Target(),
             DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume'],
@@ -1137,12 +1138,3 @@ class Asn_Lv2WFSSParallel(
         True
         """
         return True
-
-    def _get_target(self):
-        """Return the dummy pure parallel target value
-
-        Returns
-        -------
-        't999'
-        """
-        return 't999'

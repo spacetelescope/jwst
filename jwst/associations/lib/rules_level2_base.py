@@ -1021,14 +1021,27 @@ class Constraint_Spectral_Science(Constraint):
         )
 
 
-class Constraint_Target(DMSAttrConstraint):
+class Constraint_Target(Constraint):
     """Select on target id"""
 
     def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+        constraints = [
+            Constraint([
+                DMSAttrConstraint(
+                    name='acdirect',
+                    sources=['asn_candidate'],
+                    value=r"\[\('c\d{4}', 'direct_image'\)\]"
+                ),
+                SimpleConstraint(
+                    name='target',
+                    sources=lambda item: '999'
+                )]),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+            )
+        ]
+        super(Constraint_Target, self).__init__(constraints, reduce=Constraint.any)
 
 
 # ---------------------------------------------
