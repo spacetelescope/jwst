@@ -1,7 +1,7 @@
 Step Arguments
 ==============
 
-The reference pixel correction step has five step-specific arguments:
+The reference pixel correction step has seven step-specific arguments:
 
 *  ``--odd_even_columns``
 
@@ -44,3 +44,11 @@ This is a factor to avoid overcorrection of intermittently bad reference
 pixels in the IRS2 algorithm. This factor is the number of sigmas away
 from the mean. The default value is 3.0, and this argument applies
 only to NIRSpec data taken with IRS2 mode.
+
+*  ``--preserve_irs2_refpix``
+
+If the ``preserve_irs2_refpix`` argument is set, interleaved reference pixels
+in IRS2 mode will be processed along with the normal pixels and preserved
+in the output.  This option is intended for calibration or diagnostic reductions
+only. For normal science operation, this argument should always be False,
+so that interleaved pixels are stripped before continuing processing.

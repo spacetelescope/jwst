@@ -8,7 +8,7 @@ from jwst.stpipe import Step
     'output',
     ['test_spectral_leak_asn_0_spectralleakstep.fits', 'test_spectral_leak_asn_1_spectralleakstep.fits']
 )
-def test_miri_spectral_leak(output, _jail, rtdata, fitsdiff_default_kwargs):
+def test_miri_spectral_leak(output, rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = ifu_align"""
 
     rtdata.get_asn("miri/mrs/test_spectral_leak_asn.json")

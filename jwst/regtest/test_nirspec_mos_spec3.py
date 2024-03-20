@@ -5,7 +5,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_spec3 on NIRSpec MOS data."""
     rtdata = rtdata_module
     rtdata.get_asn("nirspec/mos/jw00626-o030_20191210t193826_spec3_001_asn.json")

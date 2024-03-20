@@ -9,7 +9,7 @@ TRUTH_PATH = 'truth/test_miri_mrs'
 
 
 @pytest.fixture(scope='module')
-def run_spec3_ifushort(jail, rtdata_module):
+def run_spec3_ifushort(rtdata_module):
     """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
 
     # Test has bands medium and long for IFUSHORT
@@ -30,7 +30,7 @@ def run_spec3_ifushort(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec3_ifulong(jail, rtdata_module):
+def run_spec3_ifulong(rtdata_module):
     """Run the Spec3Pipeline dithered flight data """
 
     # Test has bands medium and long for IFULONG
@@ -50,7 +50,7 @@ def run_spec3_ifulong(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec3_ifushort_emsm(jail, rtdata_module):
+def run_spec3_ifushort_emsm(rtdata_module):
     """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT"""
 
     # Test has bands medium and long for IFUSHORT
@@ -72,7 +72,7 @@ def run_spec3_ifushort_emsm(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec3_ifushort_extract1d(jail, rtdata_module):
+def run_spec3_ifushort_extract1d(rtdata_module):
     """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
 
     # Test has bands medium and long for IFUSHORT

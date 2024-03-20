@@ -12,11 +12,11 @@ from jwst.cube_build import instrument_defaults
 
 
 @pytest.fixture(scope='module')
-def nirspec_cube_pars(tmpdir_factory):
+def nirspec_cube_pars(tmp_path_factory):
     """ Set up the nirspec cube pars reference file  """
 
-    filename = tmpdir_factory.mktemp('cube_pars')
-    filename = str(filename.join('nirspec_cube_pars.fits'))
+    filename = tmp_path_factory.mktemp('cube_pars')
+    filename = filename / 'nirspec_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'NIRSPEC'
@@ -115,7 +115,7 @@ def nirspec_cube_pars(tmpdir_factory):
     return filename
 
 
-def test_nirspec_cubepars(_jail, nirspec_cube_pars):
+def test_nirspec_cubepars(tmp_cwd, nirspec_cube_pars):
     """ Read in the nirspec cube pars file """
 
     instrument_info = instrument_defaults.InstrumentInfo()

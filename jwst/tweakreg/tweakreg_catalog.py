@@ -200,7 +200,7 @@ def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='dao
     else:
         raise ValueError(f"Unknown starfinder type: {starfinder}")
 
-    # Mask the non-imaging area (e.g. MIRI)
+    # Mask the non-imaging area, e.g. reference pixels and MIRI non-science area
     coverage_mask = ((dqflags.pixel['NON_SCIENCE'] +
                       dqflags.pixel['DO_NOT_USE']) &
                      model.dq).astype(bool)

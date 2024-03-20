@@ -11,7 +11,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_detector1pipeline(jail, rtdata_module):
+def run_detector1pipeline(rtdata_module):
     """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jw01538046001_03105_00001_nrcalong_uncal.fits")
@@ -31,7 +31,7 @@ def run_detector1pipeline(jail, rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
+def run_image2pipeline(run_detector1pipeline, rtdata_module):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
@@ -43,7 +43,7 @@ def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
+def run_image3pipeline(run_image2pipeline, rtdata_module):
     """Run calwebb_image3 on NIRCam imaging long data"""
     rtdata = rtdata_module
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
@@ -170,8 +170,9 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
 
 
 @pytest.fixture()
-def run_image3_closedfile(rtdata, jail):
+def run_image3_closedfile(rtdata_module):
     """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
+    rtdata = rtdata_module
     rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
 
     args = ["calwebb_image3", rtdata.input]

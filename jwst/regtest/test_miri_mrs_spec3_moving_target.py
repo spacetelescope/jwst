@@ -10,7 +10,7 @@ TRUTH_PATH = 'truth/test_miri_mrs_spec3_moving_target/'
 
 
 @pytest.fixture(scope='module')
-def run_spec3_moving_target(jail, rtdata_module):
+def run_spec3_moving_target(rtdata_module):
     """Run the Spec3Pipeline dithered flight data """
 
     # Association has 2 exposures from IFUSHORT
