@@ -209,6 +209,13 @@ pixel_replace
 - Fixed a bug that caused array size mismatches when the ``mingrad`` algorithm
   was applied to NIRSpec data. [#8312]
 
+ramp_fitting
+------------
+
+- Updated tests to properly handle the C extension (forcing arrays to be
+  of an expected type.  Modified the CHARGELESS portion of the ramp fit
+  step code to update read noise ramps only affected by CHARGELOSS. [#8355]
+
 refpix
 ------
 
