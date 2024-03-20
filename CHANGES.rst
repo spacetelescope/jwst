@@ -66,11 +66,18 @@ documentation
 
 - Correct the names of parameter options ``usigma`` and ``lsigma`` for ``sky_match``. [#8356]
 
+- Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
+
+
 emicorr
 -------
 
 - Set skip=True by default in the code, to be turned on later by a parameter
   reference file. [#8171]
+
+- Step is skipped when no reference file is found and to add a parameter to
+  allow the user to run the step for given frequencies with an on-the-fly
+  generated reference file. [#8270]
 
 exp_to_source
 -------------
@@ -229,6 +236,9 @@ resample
 - Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
+
+- Added sleep + check of output files that are median combined to fix intermittent
+  corruption of these files in operations [#8305]
 
 - Replace use of ``check_memory_allocation``. [#8324]
 

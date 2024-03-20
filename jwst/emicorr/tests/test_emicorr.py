@@ -9,7 +9,27 @@ import numpy as np
 from jwst.emicorr import emicorr, emicorr_step
 from stdatamodels.jwst.datamodels import Level1bModel, EmiModel
 
-default_subarray_cases = emicorr.default_subarray_cases
+
+subarray_example_case = {
+    'MASK1550': {'frameclocks': 23968,
+        'freqs': {
+            'FAST': ["Hz390", "Hz10"],
+            'SLOW': {
+                'MIRIFULONG': ['Hz390', 'Hz10_slow_MIRIFULONG'],
+                'MIRIFUSHORT': ['Hz390', 'Hz10_slow_MIRIFUSHORT'],
+                'MIRIMAGE': ['Hz390', 'Hz10_slow_MIRIMAGE']}},
+        'rowclocks': 82}
+}
+
+emimdl = {'frequencies': {
+            "Hz390": {'frequency': 390.625,
+                'phase_amplitudes': np.ones(20)+0.1},
+            "Hz10": { 'frequency': 10.039216,
+                'phase_amplitudes': np.ones(20)+0.5}},
+        'subarray_cases': subarray_example_case
+        }
+emicorr_model = EmiModel(emimdl)
+
 
 def mk_data_mdl(data, subarray, readpatt, detector):
     # create input_model
@@ -48,17 +68,10 @@ def test_do_correction():
         'user_supplied_reffile': None,
         'nints_to_phase': None,
         'nbins': None,
-        'scale_reference': True
-    }
-    emimdl = {'frequencies': {
-                "Hz390": {'frequency': 390.625,
-                    'phase_amplitudes': np.ones(20)+0.1},
-                "Hz10": { 'frequency': 10.039216,
-                    'phase_amplitudes': np.ones(20)+0.5}},
-            'subarray_cases': default_subarray_cases
+        'scale_reference': True,
+        'onthefly_corr_freq': None
     }
     save_onthefly_reffile = None
-    emicorr_model = EmiModel(emimdl)
     outmdl = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
 
     assert outmdl is not None
@@ -67,8 +80,9 @@ def test_do_correction():
 def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
-    emicorr_model, save_onthefly_reffile = None, None
-    outmdl = emicorr.apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
+    emicorr_model, onthefly_corr_freq, save_onthefly_reffile = None, [218.3], None
+    outmdl = emicorr.apply_emicorr(input_model, emicorr_model,
+                onthefly_corr_freq, save_onthefly_reffile,
                 save_intermediate_results=False, user_supplied_reffile=None,
                 nints_to_phase=None, nbins_all=None, scale_reference=True)
 
@@ -77,11 +91,11 @@ def test_apply_emicorr():
 
 def test_get_subarcase():
     subarray, readpatt, detector = 'MASK1550', 'FAST', 'MIRIMAGE'
-    subarray_info_r = emicorr.get_subarcase(default_subarray_cases, subarray, readpatt, detector)
+    subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
     subname_r, rowclocks_r, frameclocks_r, freqs2correct_r = subarray_info_r
 
     # set up a fake configuration
-    subarray_info_f = emicorr.get_subarcase(default_subarray_cases, 'FULL', 'kkkkk', detector)
+    subarray_info_f = emicorr.get_subarcase(emicorr_model, 'FULL', 'kkkkk', detector)
     subname_f, rowclocks_f, frameclocks_f, freqs2correct_f = subarray_info_f
 
     # test if we get the right configuration
