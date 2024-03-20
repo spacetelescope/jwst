@@ -69,6 +69,8 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+- Populated the wavelength attribute in the result model. [#8374]
+
 residual_fringe
 ---------------
 
