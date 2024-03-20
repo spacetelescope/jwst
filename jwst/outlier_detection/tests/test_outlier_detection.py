@@ -160,7 +160,7 @@ def we_three_sci():
     return we_many_sci(numsci=3)
 
 
-def test_outlier_step_no_outliers(we_three_sci, _jail):
+def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
     pristine = container.copy()
@@ -177,7 +177,7 @@ def test_outlier_step_no_outliers(we_three_sci, _jail):
         np.testing.assert_allclose(image.dq, corrected.dq)
 
 
-def test_outlier_step(we_three_sci, _jail):
+def test_outlier_step(we_three_sci, tmp_cwd):
     """Test whole step with an outlier including saving intermediate and results files"""
     container = ModelContainer(list(we_three_sci))
 
@@ -200,7 +200,7 @@ def test_outlier_step(we_three_sci, _jail):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_outlier_step_on_disk(we_three_sci, _jail):
+def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
     """Test whole step with an outlier including saving intermediate and results files"""
 
     for model in we_three_sci:
@@ -230,7 +230,7 @@ def test_outlier_step_on_disk(we_three_sci, _jail):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_outlier_step_square_source_no_outliers(we_three_sci, _jail):
+def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step with square source with sharp edges, no outliers"""
     container = ModelContainer(list(we_three_sci))
 
@@ -256,7 +256,7 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, _jail):
 
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
-def test_outlier_step_image_weak_CR_dither(exptype, _jail):
+def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
@@ -283,7 +283,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, _jail):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso + exptypes_coron)
-def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, _jail):
+def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, tmp_cwd):
     """Test whole step with an outlier for TSO & coronagraphic modes"""
     bkg = 1.5
     sig = 0.02

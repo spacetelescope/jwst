@@ -26,7 +26,7 @@ def miri_mrs_short_tso():
     return image
 
 
-def test_call_straylight_mrsshort_tso(_jail, miri_mrs_short_tso):
+def test_call_straylight_mrsshort_tso(tmp_cwd, miri_mrs_short_tso):
     """Test step is skipped for MRS IFUSHORT TSO data"""
     result = StraylightStep.call(miri_mrs_short_tso)
     assert result.meta.cal_step.straylight == 'SKIPPED'

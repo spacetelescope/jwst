@@ -13,7 +13,7 @@ DEFAULT_PAR2 = 'Yes, a string'
 DEFAULT_RESULT = [DEFAULT_PAR1, DEFAULT_PAR2, False]
 
 
-def test_asdf_roundtrip_pipeline(_jail):
+def test_asdf_roundtrip_pipeline(tmp_cwd):
     """Save a Pipeline pars and re-instantiate with the save parameters"""
 
     # Save the parameters

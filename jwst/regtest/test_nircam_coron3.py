@@ -5,7 +5,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_coron3 on coronographic data."""
     rtdata = rtdata_module
     rtdata.get_asn("nircam/coron/jw01386-c1020_20220909t073458_coron3_002a_asn.json")

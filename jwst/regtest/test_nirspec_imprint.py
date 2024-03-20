@@ -9,7 +9,7 @@ TRUTH_PATH = 'truth/test_nirspec_imprint'
 
 
 @pytest.fixture(scope='module')
-def run_spec2(jail, rtdata_module):
+def run_spec2(rtdata_module):
     """Run the Spec2Pipeline on a spec2 ASN containing a single exposure
     with multiple imprint exposures"""
     rtdata = rtdata_module

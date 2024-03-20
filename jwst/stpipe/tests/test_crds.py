@@ -1,6 +1,4 @@
 from os.path import join, dirname, basename
-import shutil
-import tempfile
 
 import pytest
 
@@ -8,19 +6,6 @@ from astropy.io import fits
 
 from jwst.stpipe import Step
 import crds
-
-TMP_DIR = None
-TMP_FITS = None
-
-
-def setup():
-    global TMP_DIR, TMP_FITS
-    TMP_DIR = tempfile.mkdtemp()
-    TMP_FITS = join(TMP_DIR, 'tmp.fits')
-
-
-def teardown():
-    shutil.rmtree(TMP_DIR)
 
 
 class CrdsStep(Step):
@@ -53,7 +38,7 @@ def _run_flat_fetch_on_dataset(dataset_path):
     assert basename(step.ref_filename) == "jwst_nircam_flat_0296.fits"
 
 
-def test_crds_step_override():
+def test_crds_step_override(tmp_path):
     """Run CRDS step with override parameter bypassing CRDS lookup."""
     from stdatamodels.jwst import datamodels
 
@@ -63,9 +48,10 @@ def test_crds_step_override():
     assert step.ref_filename.endswith('data/flat.fits')
     assert result.meta.ref_file.flat.name.endswith('flat.fits')
 
-    result.to_fits(TMP_FITS)
+    fn = tmp_path / 'tmp.fits'
+    result.to_fits(fn)
 
-    with fits.open(TMP_FITS) as hdulist:
+    with fits.open(fn) as hdulist:
         assert hdulist[0].header['R_FLAT'].endswith('flat.fits')
 
 

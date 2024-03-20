@@ -156,9 +156,9 @@ def main():
     name = args.job_name
 
     # Create and chdir to a temporary directory to store specfiles
-    with tempfile.TemporaryDirectory() as tmpdir:
-        print(f'Downloading test logs to {tmpdir}')
-        with pushd(tmpdir):
+    with tempfile.TemporaryDirectory() as tmp_path:
+        print(f'Downloading test logs to {tmp_path}')
+        with pushd(tmp_path):
             # Retrieve all the okify specfiles for failed tests.
             specfiles, asdffiles = artifactory_get_build_artifacts(build, name)
 

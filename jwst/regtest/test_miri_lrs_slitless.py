@@ -15,7 +15,7 @@ ASN_ID = "o028"
 
 
 @pytest.fixture(scope="module")
-def run_tso1_pipeline(jail, rtdata_module):
+def run_tso1_pipeline(rtdata_module):
     """Run the calwebb_tso1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
     rtdata.get_data(f"miri/lrs/{DATASET1_ID}_uncal.fits")
@@ -34,7 +34,7 @@ def run_tso1_pipeline(jail, rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_tso_spec2_pipeline(run_tso1_pipeline, jail, rtdata_module):
+def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module):
     """Run the calwebb_tso-spec2 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
 

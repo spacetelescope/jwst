@@ -104,7 +104,7 @@ class MyPipeline(Pipeline):
         return dm
 
 
-def test_pipeline_from_config_file(_jail):
+def test_pipeline_from_config_file(tmp_cwd):
     config_file_path = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
     pipe = Pipeline.from_config_file(config_file_path)
 
@@ -114,7 +114,7 @@ def test_pipeline_from_config_file(_jail):
     pipe.run()
 
 
-def test_pipeline_python(_jail):
+def test_pipeline_python(tmp_cwd):
     steps = {
         'flat_field': {'threshold': 42.0}
     }
@@ -132,7 +132,7 @@ def test_pipeline_python(_jail):
     pipe.run()
 
 
-def test_prefetch(_jail, monkeypatch):
+def test_prefetch(tmp_cwd, monkeypatch):
     """Test prefetching"""
 
     # Setup mock to crds to flag if the call was made.
@@ -172,7 +172,7 @@ def test_prefetch(_jail, monkeypatch):
     assert not mock_get_ref.called
 
 
-def test_pipeline_from_cmdline_cfg(_jail):
+def test_pipeline_from_cmdline_cfg(tmp_cwd):
     args = [
         join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
         '--steps.flat_field.threshold=47',
@@ -186,7 +186,7 @@ def test_pipeline_from_cmdline_cfg(_jail):
     pipe.run()
 
 
-def test_pipeline_from_cmdline_class(_jail):
+def test_pipeline_from_cmdline_class(tmp_cwd):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
         f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",

@@ -7,7 +7,7 @@ from jwst.ami import AmiAnalyzeStep
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_ami3 on NIRISS AMI data."""
     rtdata = rtdata_module
     rtdata.get_asn("niriss/ami/jw01093-c1000_20221110t003218_ami3_002_asn.json")
