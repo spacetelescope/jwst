@@ -61,9 +61,7 @@ class Image2Pipeline(Pipeline):
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             if (self.save_results) & (self.output_file is None):
-                output_file = product['name']
-            else:
-                output_file = self.output_file
+                self.output_file = product['name']
             try:
                 getattr(asn, 'filename')
             except AttributeError:
@@ -79,8 +77,9 @@ class Image2Pipeline(Pipeline):
             suffix = 'cal'
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
-            result.meta.filename = self.make_output_path(basepath=output_file, suffix=suffix)
+            result.meta.filename = self.make_output_path(basepath=self.output_file, suffix=suffix)
             results.append(result)
+            self.output_file = None
 
         self.log.info('... ending calwebb_image2')
 
@@ -94,7 +93,6 @@ class Image2Pipeline(Pipeline):
             exp_product,
             pool_name=' ',
             asn_file=' ',
-            output_name=None
     ):
         """Process an exposure found in the association product
 
@@ -137,7 +135,7 @@ class Image2Pipeline(Pipeline):
         # Record ASN pool and table names in output
         input.meta.asn.pool_name = pool_name
         input.meta.asn.table_name = asn_file
-        input.meta.filename = self.make_output_path(basepath=output_name)
+        input.meta.filename = self.make_output_path(basepath=self.output_file)
 
         # Do background processing, if necessary
         if len(members_by_type['background']) > 0:

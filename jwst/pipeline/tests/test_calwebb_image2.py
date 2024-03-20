@@ -79,11 +79,11 @@ def run_image2_pipeline_asn(make_dummy_association, request):
     and the output_file parameter should be ignored.
     '''
     # save warnings to logfile so can be checked later
-    logfile_content = f"[*] \n \
+    logcfg_content = f"[*] \n \
         level = INFO \n \
         handler = file:{LOGFILE}"
     with open(LOGCFG, 'w') as f:
-        f.write(logfile_content)
+        f.write(logcfg_content)
 
     args = ["calwebb_image2", INPUT_ASN, 
             f"--logcfg={LOGCFG}",
