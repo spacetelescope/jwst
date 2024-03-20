@@ -109,6 +109,14 @@ class ResampleSpecStep(ResampleStep):
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
 
+        # carry over the result wavelength attribute
+        if model_is_msm:
+            for slit_idx, slit in enumerate(input_new.slits):
+                wl_array = slit.wavelength
+                result.slits[slit_idx].wavelength = wl_array
+        else:
+            result.wavelength = input.wavelength
+
         return result
 
     def _process_multislit(self, input_models):
