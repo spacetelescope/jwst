@@ -22,7 +22,7 @@ whose periodicity is consistent with known fringe frequencies (set by the optica
 and dichroics) using a Lomb-Scargle periodogram. The number of fringe components to be removed is governed
 by a Bayesian evidence calculation.
 The first of these residual fringe correction steps is a 2-D correction that can be applied to the flux-calibrated detector data
-in the :ref:`residual_fringe <residual_fringe_step` step. This step is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently
+in the :ref:`residual_fringe <residual_fringe_step>` step. This step is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently
 it is skipped by default. To apply this step set the step parameter,  ``--skip = False``. This step is applied after
 :ref:`photom <photom_step>`, but before :ref:`cube_build <cube_build_step>`.
 
