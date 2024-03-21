@@ -141,8 +141,10 @@ general
 jump
 ----
 
-- Add an additional parameter to pass the threshold number of difference to switch
-  the jump detection to run in a single pass rather than one CR at a time. [#8304]
+- To improve performance an additional parameter to the jump step was added
+  that sets the threshold number of differences above which iterative flagging
+  of one CR at a time is turned off. [#8304]
+
   
 - Removed a unit test in Jump that was moved to STCAL to decrease
   the coupling of the two repos. [#8319]
