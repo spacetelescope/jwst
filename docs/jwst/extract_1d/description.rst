@@ -332,7 +332,7 @@ The pipeline also includes two optional residual fringe correction steps whose p
 whose periodicity is consistent with known fringe frequencies (set by the optical thickness of the detectors
 and dichroics) using a Lomb-Scargle periodogram. The number of fringe components to be removed is governed by
 a Bayesian evidence calculation. The first of these residual fringe correction steps is a 2-D correction that
-can be applied to the flux-calibrated detector data in the :ref:`residual_fringe <residual_fringe_step` step. This step
+can be applied to the flux-calibrated detector data in the :ref:`residual_fringe <residual_fringe_step>` step. This step
 is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently it is skipped by default. For more
 information see :ref:`residual_fringe <residual_fringe_step>`.
 
