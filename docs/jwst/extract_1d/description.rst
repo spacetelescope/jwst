@@ -319,7 +319,7 @@ different fringe frequency.
 The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra and these
 steps generally suffice to reduce the fringe signal to below a few percent of the target flux.
 
-The first correction is applied by default in the :ref: `fringe <fringe_step>` step in the
+The first correction is applied by default in the :ref:`fringe <fringe_step>` step in the
 :ref:`calwebb_spec2 <calwebb_spec2>` pipeline and consists of dividing the uncalibrated "rate" image
 by a static fringe flat constructed from observations of a bright source that fills the entire MRS field of
 view. For more details see the :ref:`fringe <fringe_step>` step.
