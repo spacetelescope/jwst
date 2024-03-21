@@ -68,7 +68,7 @@ documentation
 
 - Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
 
-- Adds documentation on the 1-D residual fringe correction for MRS data. [#8371]
+- Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
 
 
 emicorr

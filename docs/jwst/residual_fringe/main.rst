@@ -4,7 +4,7 @@ Description
 :Class: `jwst.residual_fringe.ResidualFringeStep`
 :Alias: residual_fringe
 
-The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra and these steps
+The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra, which
 generally suffice to reduce the fringe signal to below a few percent of the target flux.
 
 The first correction is applied by default in the :ref:`fringe <fringe_step>` step in the
@@ -16,7 +16,6 @@ for nearly-uniform extended sources. Since the fringe signal is different for po
 as a function of the location of a point source within the FOV, the static fringe flat cannot fully correct
 such objects and the default high level data products will therefore still
 show appreciable fringes.
-
 
 The pipeline also includes two optional residual fringe correction steps whose purpose is to find and remove signals
 whose periodicity is consistent with known fringe frequencies (set by the optical thickness of the detectors
