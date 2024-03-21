@@ -350,4 +350,4 @@ the data must be given. The steps to run this correction outside the pipeline ar
   from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
   flux_cor = rf1d(flux, wave, channel=4)
 
-where ``flux`` is the extracted spectral data , and the data are from channel 4 for this example. 
+where ``flux`` is the extracted spectral data, and the data are from channel 4 for this example. 
