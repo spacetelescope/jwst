@@ -79,6 +79,8 @@ emicorr
   allow the user to run the step for given frequencies with an on-the-fly
   generated reference file. [#8270]
 
+- Fixed bug for finding correction data for subarray FULL. [#8375]
+
 exp_to_source
 -------------
 
