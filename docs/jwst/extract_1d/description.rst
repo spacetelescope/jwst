@@ -345,7 +345,7 @@ When using the ``ifu_rfcorr`` option in the ``extract_1d`` step  to apply a 1-D 
 correction, it is applied during the extraction of spectra from the IFU cube. The 1D residual fringe code can also
 be called outside the pipeline to correct an extracted spectrum. If running outside the pipeline, the correction
 works best on single-band cubes, and the channel of
-the data must be given. The steps to run this correction outside the pipeline are:
+the data must be given. The steps to run this correction outside the pipeline are::
 
 * from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
 * flux_cor = rf1d(flux, wave, channel=4)
