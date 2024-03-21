@@ -17,16 +17,16 @@ def normalize_LG(target_model, reference_model):
 
     Parameters
     ----------
-    target_model: AmiLgModel data model
+    target_model: AmiOIModel data model
         The target data to be normalized
 
-    reference_model: AmiLgModel data model
+    reference_model: AmiOIModel data model
         The reference data
 
     Returns
     -------
-    output_model: AmiLgModel data model
-        Normalized fringe data for the target
+    output_model: AmiOIModel data model
+        Normalized interferometric observables for the target
     """
 
     # Initialize the calibration (normalization) class and apply the normalizations
