@@ -248,6 +248,8 @@ resample
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
 
+- Populated the wavelength attribute in the result model. [#8374]
+
 residual_fringe
 ---------------
 
