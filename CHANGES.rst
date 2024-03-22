@@ -68,6 +68,8 @@ documentation
 
 - Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
 
+- Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
+
 
 emicorr
 -------
@@ -78,6 +80,8 @@ emicorr
 - Step is skipped when no reference file is found and to add a parameter to
   allow the user to run the step for given frequencies with an on-the-fly
   generated reference file. [#8270]
+
+- Fixed bug for finding correction data for subarray FULL. [#8375]
 
 exp_to_source
 -------------
@@ -144,9 +148,13 @@ jump
 - Add parameters to the ``jump`` step to allow the override of the
   parameters for flagging the saturated cores of snowballs in
   the next integration. [#8303]
-  
+
 - Removed a unit test in ``jump`` that was moved to STCAL to decrease
   the coupling of the two repos. [#8319]
+
+- To improve performance an additional parameter to the jump step was added
+  that sets the threshold number of differences above which iterative flagging
+  of one CR at a time is turned off. [#8304]
 
 lib
 ---

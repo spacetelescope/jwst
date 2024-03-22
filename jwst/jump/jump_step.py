@@ -47,6 +47,7 @@ class JumpStep(Step):
         extend_outer_radius = float(default=2.6) # Outer radius of the ring_2D_Kernel used for convolution
         extend_ellipse_expand_ratio = float(default=1.1) # Expand the radius of the ellipse fit to the extended emission
         time_masked_after_shower = float(default=15) # Seconds to flag as jump after a detected extended emission
+        min_diffs_single_pass = integer(default=10) # The minimum number of differences needed to skip the iterative flagging of jumps.
         max_extended_radius = integer(default=200) # The maximum radius of an extended snowball or shower
         minimum_groups = integer(default=3) # The minimum number of groups to perform jump detection using sigma clipping
         minimum_sigclip_groups = integer(default=100) # The minimum number of groups to switch to sigma clipping
@@ -123,6 +124,7 @@ class JumpStep(Step):
                                       extend_outer_radius=self.extend_outer_radius,
                                       extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
                                       time_masked_after_shower=self.time_masked_after_shower,
+                                      min_diffs_single_pass=self.min_diffs_single_pass,
                                       max_extended_radius=self.max_extended_radius * 2,
                                       minimum_groups=self.minimum_groups,
                                       minimum_sigclip_groups=self.minimum_sigclip_groups,
