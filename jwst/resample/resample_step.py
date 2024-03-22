@@ -103,11 +103,6 @@ class ResampleStep(Step):
 
         kwargs['allowed_memory'] = self.allowed_memory
 
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
         # Custom output WCS parameters.
         # Modify get_drizpars if any of these get into reference files:
         kwargs['output_shape'] = self._check_list_pars(
