@@ -39,7 +39,7 @@ class JumpStep(Step):
         sat_expand = integer(default=2) # Number of pixels to add to the radius of the saturated core of snowballs       
         edge_size = integer(default=25) # Size of region on the edges of NIR detectors where a sat core is not required    
         mask_snowball_core_nxt_int = boolean(default=True) # Controls whether the saturated cores of snowballs are flagged in the next int.
-        snowball_time_masked_next_int(default=4000) # The number of seconds to flag the saturated cores in the next integration.
+        snowball_time_masked_next_int = integer(default=4000) # The number of seconds to flag the saturated cores in the next integration.
         find_showers = boolean(default=False) # Turn on shower flagging for MIRI        
         extend_snr_threshold = float(default=1.2) # The SNR minimum for detection of extended showers in MIRI
         extend_min_area = integer(default=90) # Min area of emission after convolution for the detection of showers
