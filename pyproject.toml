@@ -237,18 +237,8 @@ addopts = ["-p no:legacypath",
     "--report-crds-context",
 ]
 filterwarnings = [
-    "error",
     "error::ResourceWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
-    "ignore::pytest.PytestUnraisableExceptionWarning",
-    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
-    "ignore::asdf.exceptions.AsdfConversionWarning",
-    "ignore::stdatamodels.jwst.datamodels.util.NoTypeWarning",
-    "ignore::stdatamodels.validate.ValidationWarning",
-    "ignore:Polyfit may be poorly conditioned:numpy.RankWarning",
-    "ignore::photutils.utils.exceptions.NoDetectionsWarning",
-    "ignore:'expname' contains path.*:UserWarning",
-    "ignore::RuntimeWarning",
 ]
 
 [tool.coverage.run]
