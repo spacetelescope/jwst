@@ -145,6 +145,11 @@ general
 jump
 ----
 
+- To improve performance an additional parameter to the jump step was added
+  that sets the threshold number of differences above which iterative flagging
+  of one CR at a time is turned off. [#8304]
+
+  
 - Removed a unit test in Jump that was moved to STCAL to decrease
   the coupling of the two repos. [#8319]
 
@@ -153,9 +158,6 @@ lib
 
 - Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
   and manipulating input files. [#8285]
-
-lib
----
 
 - Added new function set_nans_to_donotuse in ``lib.basic_utils`` to
   check the science data array for NaN values and check if they have

@@ -776,12 +776,12 @@ def test_proc(setup_inputs):
     model.data[0, 7, 2, 3] = 160.0
     model.data[0, 8, 2, 3] = 170.0
     model.data[0, 9, 2, 3] = 180.0
-
+    model_b = model.copy()
+    model_c = model.copy()
     out_model_a = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-    out_model_b = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'half', 200, 4, True)
+    out_model_b = run_detect_jumps(model_b, gain, rnoise, 4.0, 5.0, 6.0, 'half', 200, 4, True)
     assert_array_equal(out_model_a.groupdq, out_model_b.groupdq)
-
-    out_model_c = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
+    out_model_c = run_detect_jumps(model_c, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
     assert_array_equal(out_model_a.groupdq, out_model_c.groupdq)
 
 
