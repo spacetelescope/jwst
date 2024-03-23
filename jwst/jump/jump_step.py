@@ -129,7 +129,7 @@ class JumpStep(Step):
                                       minimum_groups=self.minimum_groups,
                                       minimum_sigclip_groups=self.minimum_sigclip_groups,
                                       only_use_ints=self.only_use_ints,
-                                      mask_persist_next_int=self.mask_snowball_core_nxt_int,
+                                      mask_snowball_persist_next_int=self.mask_snowball_core_nxt_int,
                                       snowball_time_masked_next_int=self.snowball_time_masked_next_int
                                       )
 
