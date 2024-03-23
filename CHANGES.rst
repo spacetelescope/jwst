@@ -145,8 +145,7 @@ general
 jump
 ----
 
-- Add parameters to the ``jump`` step to allow the override of the
-  parameters for flagging the saturated cores of snowballs in
+- Add parameters that control the flagging of saturated cores of snowballs in
   the next integration. [#8303]
 
 - Removed a unit test in ``jump`` that was moved to STCAL to decrease
