@@ -89,7 +89,7 @@ is defined as:
 
 * ``--edge_size``: The distance from the edge of the detector where saturated cores are not required for snowball detection
 
-* ``--mask_snowball_core_nxt_int``: Turns on/off the flagging of the saturated cores of snowballs in the next integration.
+* ``--mask_snowball_core_next_int``: Turns on/off the flagging of saturated cores of snowballs in the next integration
 
 * ``--snowball_time_masked_next_int``: Controls the total time that the saturated cores of snowballs are flagged in the next integration.
 
