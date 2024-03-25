@@ -660,6 +660,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     flat_err : ndarray, 2-D, float
         The error array corresponding to flat_2d.
     """
+
     f_flat, f_flat_dq, f_flat_err = fore_optics_flat(
         wl, f_flat_model, exposure_type, dispaxis,
         slit_name, slit_nt)
