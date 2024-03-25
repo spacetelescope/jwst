@@ -9,8 +9,21 @@
 ami
 ---
 
-- Replaced use of deprecated ``scipy.integrate.simps`` 
+- Replaced use of deprecated ``scipy.integrate.simps``
   with ``scipy.integrate.simpson``. [#8320]
+
+- Overhaul of AMI processing. See documentation for full details. [#7862]
+
+- Additional optional input arguments for greater user processing flexibility.
+  See documentation for details. [#7862]
+
+- Bad pixel correction applied to data using new NRM reference file to calculate 
+  complex visibility support (M. Ireland method implemented by J. Kammerer). [#7862]
+
+- Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
+
+- Disable ``AmiAverage`` step. [#7862]
+
 
 associations
 ------------
