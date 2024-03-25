@@ -9,16 +9,14 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires a C compiler for dependencies and is currently limited to Python 3.9, 3.10 or 3.11.**
+> [!IMPORTANT]
+> JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
 
-**Until Python 3.12 is supported, fresh conda environments will require setting the
-  Python version to one of the three supported versions.**
+> [!NOTE]
+> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
-**Linux and MacOS platforms are tested and supported.  Windows is not currently supported.**
-
-**If installing on MacOS Mojave 10.14, you must install
-  into an environment with python 3.9. Installation will fail on python 3.10 due
-  to lack of a stable build for dependency ``opencv-python``.**
+> [!WARNING]
+> Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
 
