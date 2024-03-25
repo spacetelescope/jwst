@@ -243,23 +243,7 @@ class TweakRegStep(Step):
                               .format(len(catalog), filename))
 
             if new_cat and self.save_catalogs:
-                catalog_filename = filename.replace(
-                    '.fits', '_cat.{}'.format(self.catalog_format)
-                )
-                if self.catalog_format == 'ecsv':
-                    fmt = 'ascii.ecsv'
-                elif self.catalog_format == 'fits':
-                    # NOTE: The catalog must not contain any 'None' values.
-                    #       FITS will also not clobber existing files.
-                    fmt = 'fits'
-                else:
-                    raise ValueError(
-                        '\'catalog_format\' must be "ecsv" or "fits".'
-                    )
-                catalog.write(catalog_filename, format=fmt, overwrite=True)
-                self.log.info('Wrote source catalog: {}'
-                              .format(catalog_filename))
-                image_model.meta.tweakreg_catalog = catalog_filename
+                image_model = self._write_catalog(image_model, catalog, filename)
 
             # Temporarily attach catalog to the image model so that it follows
             # the grouping by exposure, to be removed after use below
@@ -412,7 +396,10 @@ class TweakRegStep(Step):
             #        whatever convention is determined by the JWST Cal Working
             #        Group.
             if self.save_abs_catalog:
-                output_name = 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower())
+                if self.output_dir is None:
+                    output_name = 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower())
+                else:
+                    output_name = path.join(self.output_dir, 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower()))
             else:
                 output_name = None
 
@@ -524,6 +511,55 @@ class TweakRegStep(Step):
                     )
 
         return images
+    
+
+    def _write_catalog(self, image_model, catalog, filename):
+        '''
+        Determine output filename for catalog based on outfile for step
+        and output dir, then write catalog to file.
+
+        Parameters
+        ----------
+        image_model : jwst.datamodels.ImageModel
+            Image model containing the source catalog.
+        catalog : astropy.table.Table
+            Table containing the source catalog.
+        filename : str
+            Output filename for step
+
+        Returns
+        -------
+        image_model : jwst.datamodels.ImageModel
+            Image model with updated catalog information.
+        '''
+
+        catalog_filename = filename.replace(
+                    '.fits', '_cat.{}'.format(self.catalog_format)
+                )
+        if self.catalog_format == 'ecsv':
+            fmt = 'ascii.ecsv'
+        elif self.catalog_format == 'fits':
+            # NOTE: The catalog must not contain any 'None' values.
+            #       FITS will also not clobber existing files.
+            fmt = 'fits'
+        else:
+            raise ValueError(
+                '\'catalog_format\' must be "ecsv" or "fits".'
+            )
+        if self.output_dir is None:
+            catalog.write(catalog_filename, format=fmt, overwrite=True)
+        else:
+            catalog.write(
+                path.join(self.output_dir, catalog_filename),
+                format=fmt,
+                overwrite=True
+            )
+        self.log.info('Wrote source catalog: {}'
+                      .format(catalog_filename))
+        image_model.meta.tweakreg_catalog = catalog_filename
+
+        return image_model
+
 
     def _is_wcs_correction_small(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
