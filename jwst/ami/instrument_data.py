@@ -5,7 +5,6 @@
 
 import logging
 import numpy as np
-from scipy.integrate import simpson as simps
 
 from .mask_definitions import NRM_mask_definitions
 from . import utils
