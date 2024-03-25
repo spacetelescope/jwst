@@ -9,6 +9,9 @@
 ami
 ---
 
+- Replaced use of deprecated ``scipy.integrate.simps``
+  with ``scipy.integrate.simpson``. [#8320]
+
 - Overhaul of AMI processing. See documentation for full details. [#7862]
 
 - Additional optional input arguments for greater user processing flexibility.
