@@ -5,6 +5,7 @@
 
 import logging
 import numpy as np
+from scipy.integrate import simpson as simps
 
 from .mask_definitions import NRM_mask_definitions
 from . import utils
@@ -70,8 +71,6 @@ class NIRISS:
 
         # update nominal filter parameters with those of the filter read in and used in the analysis...
         # Weighted mean wavelength in meters, etc, etc "central wavelength" for the filter:
-        from scipy.integrate import simps
-
         thru_st = np.stack(self.throughput, axis=1)
         thru_st_0 = thru_st[0, :]
         thru_st_1 = thru_st[1, :]
@@ -80,7 +79,7 @@ class NIRISS:
         den = thru_st[0, :].sum()
         self.lam_c[self.filt] = num / den
 
-        area = simps(thru_st_0, thru_st_1)
+        area = simps(thru_st_0, x=thru_st_1)
         ew = area / thru_st_0.max()  # equivalent width
 
         beta = ew / self.lam_c[self.filt]  # fractional bandpass
@@ -91,7 +90,7 @@ class NIRISS:
             wt = bandpass[:, 0]
             wl = bandpass[:, 1]
             cw = (wl * wt).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
-            area = simps(wt, wl)
+            area = simps(wt, x=wl)
             ew = area / wt.max()  # equivalent width
             beta = ew / cw  # fractional bandpass
             self.lam_c = {"F277W": cw, "F380M": cw, "F430M": cw, "F480M": cw, }
