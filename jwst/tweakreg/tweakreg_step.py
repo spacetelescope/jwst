@@ -533,7 +533,7 @@ class TweakRegStep(Step):
             Image model with updated catalog information.
         '''
 
-        catalog_filename = filename.replace(
+        catalog_filename = str(filename).replace(
                     '.fits', '_cat.{}'.format(self.catalog_format)
                 )
         if self.catalog_format == 'ecsv':
