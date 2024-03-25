@@ -145,13 +145,15 @@ general
 jump
 ----
 
+- Add parameters that control the flagging of saturated cores of snowballs in
+  the next integration. [#8303]
+
+- Removed a unit test in ``jump`` that was moved to STCAL to decrease
+  the coupling of the two repos. [#8319]
+
 - To improve performance an additional parameter to the jump step was added
   that sets the threshold number of differences above which iterative flagging
   of one CR at a time is turned off. [#8304]
-
-  
-- Removed a unit test in Jump that was moved to STCAL to decrease
-  the coupling of the two repos. [#8319]
 
 lib
 ---
