@@ -415,7 +415,6 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        minimize_memory=True,
         skymethod='match',
         match_down=True,
         subtract=True,
@@ -498,7 +497,6 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        minimize_memory=True,
         skymethod=skymethod,
         match_down=True,
         subtract=subtract,
