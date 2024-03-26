@@ -9,10 +9,6 @@ computing intersections and statistics in the overlap regions.
 
 """
 
-# STDLIB
-import abc
-import tempfile
-
 # THIRD-PARTY
 import numpy as np
 from spherical_geometry.polygon import SphericalPolygon
@@ -22,88 +18,7 @@ from . skystatistics import SkyStats
 from . import region
 
 
-__all__ = ['SkyImage', 'SkyGroup', 'DataAccessor', 'NDArrayInMemoryAccessor',
-           'NDArrayMappedAccessor']
-
-
-class DataAccessor(abc.ABC):
-    """ Base class for all data accessors. Provides a common interface to
-        access data.
-    """
-    @abc.abstractmethod
-    def get_data(self):  # pragma: no cover
-        pass
-
-    @abc.abstractmethod
-    def set_data(self, data):  # pragma: no cover
-        """ Sets data.
-
-        Parameters
-        ----------
-        data : numpy.ndarray
-            Data array to be set.
-
-        """
-        pass
-
-    @abc.abstractmethod
-    def get_data_shape(self):  # pragma: no cover
-        pass
-
-
-class NDArrayInMemoryAccessor(DataAccessor):
-    """ Acessor for in-memory `numpy.ndarray` data. """
-    def __init__(self, data):
-        super().__init__()
-        self._data = data
-
-    def get_data(self):
-        return self._data
-
-    def set_data(self, data):
-        self._data = data
-
-    def get_data_shape(self):
-        return np.shape(self._data)
-
-
-class NDArrayMappedAccessor(DataAccessor):
-    """ Data accessor for arrays stored in temporary files. """
-    def __init__(self, data, tmpfile=None, prefix='tmp_skymatch_',
-                 suffix='.npy', tmpdir=''):
-        super().__init__()
-        if tmpfile is None:
-            self._close = True
-            self._tmp = tempfile.NamedTemporaryFile(
-                prefix=prefix,
-                suffix=suffix,
-                dir=tmpdir
-            )
-            if not self._tmp:
-                raise RuntimeError("Unable to create temporary file.")
-        else:
-            # temp file managed by the caller
-            self._close = False
-            self._tmp = tmpfile
-
-        self.set_data(data)
-
-    def get_data(self):
-        self._tmp.seek(0)
-        return np.load(self._tmp)
-
-    def set_data(self, data):
-        data = np.asanyarray(data)
-        self._data_shape = data.shape
-        self._tmp.seek(0)
-        np.save(self._tmp, data)
-
-    def __del__(self):
-        if self._close:
-            self._tmp.close()
-
-    def get_data_shape(self):
-        return self._data_shape
+__all__ = ['SkyImage', 'SkyGroup', 'DataAccessor', 'NDArrayInMemoryAccessor']
 
 
 class SkyImage:
@@ -222,28 +137,13 @@ class SkyImage:
     @property
     def mask(self):
         """ Set or get `SkyImage`'s ``mask`` data array or `None`. """
-        if self._mask is None:
-            return None
-        else:
-            return self._mask.get_data()
+        return self._mask
 
     @mask.setter
     def mask(self, mask):
         if mask is None:
             self._mask = None
             self._mask_shape = None
-
-        elif isinstance(mask, DataAccessor):
-            if self._image is None:
-                raise ValueError("'mask' must be None when 'image' is None")
-
-            self._mask = mask
-            self._mask_shape = mask.get_data_shape()
-
-            # check that mask has the same shape as image:
-            if self._mask_shape != self.image_shape:
-                raise ValueError("'mask' must have the same shape as 'image'.")
-
         else:
             if self._image is None:
                 raise ValueError("'mask' must be None when 'image' is None")
@@ -255,18 +155,12 @@ class SkyImage:
             if self._mask_shape != self.image_shape:
                 raise ValueError("'mask' must have the same shape as 'image'.")
 
-            if self._mask is None:
-                self._mask = NDArrayInMemoryAccessor(mask)
-            else:
-                self._mask.set_data(mask)
+            self._mask = mask
 
     @property
     def image(self):
         """ Set or get `SkyImage`'s ``image`` data array. """
-        if self._image is None:
-            return None
-        else:
-            return self._image.get_data()
+        return self._image
 
     @image.setter
     def image(self, image):
@@ -274,24 +168,16 @@ class SkyImage:
             self._image = None
             self._image_shape = None
             self.mask = None
-
-        if isinstance(image, DataAccessor):
-            self._image = image
-            self._image_shape = image.get_data_shape()
-
         else:
             image = np.asanyarray(image)
             self._image_shape = image.shape
-            if self._image is None:
-                self._image = NDArrayInMemoryAccessor(image)
-            else:
-                self._image.set_data(image)
+            self._image = image
 
     @property
     def image_shape(self):
         """ Get `SkyImage`'s ``image`` data shape. """
         if self._image_shape is None and self._image is not None:
-            self._image_shape = self._image.get_data_shape()
+            self._image_shape = self._image.shape
         return self._image_shape
 
     @property
@@ -544,7 +430,7 @@ None, optional
             if self._mask is None:
                 data = self.image
             else:
-                data = self.image[self._mask.get_data()]
+                data = self.image[self._mask]
 
             polyarea = self.poly_area
 
@@ -604,7 +490,7 @@ None, optional
                 fill_mask = polygon.scan(fill_mask)
 
             if self._mask is not None:
-                fill_mask &= self._mask.get_data()
+                fill_mask &= self._mask
 
             data = self.image[fill_mask]
 
@@ -624,109 +510,6 @@ None, optional
             skyval -= self._sky
 
         return skyval, npix, polyarea
-
-#     def _calc_sky_orig(self, overlap=None, delta=True):
-#         """
-#         Compute sky background value.
-#
-#         Parameters
-#         ----------
-#         overlap : SkyImage, SkyGroup, SphericalPolygon, list of tuples, \
-# None, optional
-#             Another `SkyImage`, `SkyGroup`,
-#             :py:class:`spherical_geometry.polygons.SphericalPolygon`, or
-#             a list of tuples of (RA, DEC) of vertices of a spherical
-#             polygon. This parameter is used to indicate that sky statistics
-#             should computed only in the region of intersection of *this*
-#             image with the polygon indicated by `overlap`. When `overlap` is
-#             `None`, sky statistics will be computed over the entire image.
-#
-#         delta : bool, optional
-#             Should this function return absolute sky value or the difference
-#             between the computed value and the value of the sky stored in the
-#             `sky` property.
-#
-#         Returns
-#         -------
-#         skyval : float, None
-#             Computed sky value (absolute or relative to the `sky` attribute).
-#             If there are no valid data to perform this computations (e.g.,
-#             because this image does not overlap with the image indicated by
-#             `overlap`), `skyval` will be set to `None`.
-#
-#         npix : int
-#             Number of pixels used to compute sky statistics.
-#
-#         polyarea : float
-#             Area (in srad) of the polygon that bounds data used to compute
-#             sky statistics.
-#
-#         """
-#
-#         if overlap is None:
-#
-#             if self._mask is None:
-#                 data = self.image
-#             else:
-#                 data = self.image[self._mask.get_data()]
-#
-#             polyarea = self.poly_area
-#
-#         else:
-#             fill_mask = np.zeros(self.image_shape, dtype=bool)
-#
-#             if isinstance(overlap, (SkyImage, SkyGroup, SphericalPolygon)):
-#                 intersection = self.intersection(overlap)
-#                 polyarea = np.fabs(intersection.area())
-#                 radec = intersection.to_radec()
-#
-#             else:  # assume a list of (ra, dec) tuples:
-#                 radec = []
-#                 polyarea = 0.0
-#                 for r, d in overlap:
-#                     poly = SphericalPolygon.from_radec(r, d)
-#                     polyarea1 = np.fabs(poly.area())
-#                     if polyarea1 == 0.0 or len(r) < 4:
-#                         continue
-#                     polyarea += polyarea1
-#                     radec.append(self.intersection(poly).to_radec())
-#
-#             if polyarea == 0.0:
-#                 return None, 0, 0.0
-#
-#             for ra, dec in radec:
-#                 if len(ra) < 4:
-#                     continue
-#
-#                 # set pixels in 'fill_mask' that are inside a polygon
-#                 # to True:
-#                 x, y = self.wcs_inv(ra, dec)
-#                 poly_vert = list(zip(*[x, y]))
-#
-#                 polygon = region.Polygon(True, poly_vert)
-#                 fill_mask = polygon.scan(fill_mask)
-#
-#             if self._mask is not None:
-#                 fill_mask &= self._mask.get_data()
-#
-#             data = self.image[fill_mask]
-#
-#             if data.size < 1:
-#                 return None, 0, 0.0
-#
-#         # Calculate sky
-#         try:
-#
-#             skyval, npix = self._skystat(data)
-#
-#         except ValueError:
-#
-#             return None, 0, 0.0
-#
-#         if delta:
-#             skyval -= self._sky
-#
-#         return skyval, npix, polyarea
 
     def copy(self):
         """
