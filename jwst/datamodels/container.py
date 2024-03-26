@@ -80,18 +80,6 @@ class ModelContainer(JwstDataModel, Sequence):
 
     Notes
     -----
-        The optional paramter ``save_open`` can be
-        provided to control how the `JwstDataModel` are used by the
-        :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
-        `JwstDataModel` instance in ``init`` will be written out to disk and
-        closed, then only the filename for the `JwstDataModel` will be used to
-        initialize the :py:class:`ModelContainer` object.
-        Subsequent access of each member will then open the `JwstDataModel` file to
-        work with it. The use of
-        these parameters can minimize the amount of memory used by this object
-        during processing, with these parameters being used
-        by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
-
         When ASN table's members contain attributes listed in
         :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
         read those attribute values and update the corresponding attributes
@@ -161,22 +149,16 @@ to supply custom catalogs.
         self.asn_pool_name = None
 
         self._memmap = kwargs.get("memmap", False)
-        self._save_open = kwargs.get('save_open', True)
 
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, fits.HDUList):
-            if self._save_open:
-                model = [datamodel_open(init, memmap=self._memmap)]
-            else:
-                model = init._file.name
-                init.close()
+            model = [datamodel_open(init, memmap=self._memmap)]
             self._models.append(model)
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
-                if self._save_open:
-                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
+                init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
@@ -315,25 +297,17 @@ to supply custom catalogs.
             for member in sublist:
                 filepath = op.join(asn_dir, member['expname'])
                 update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
-                if update_model or self._save_open:
-                    m = datamodel_open(filepath, memmap=self._memmap)
-                    m.meta.asn.exptype = member['exptype']
-                    for attr, val in member.items():
-                        if attr in RECOGNIZED_MEMBER_FIELDS:
-                            if attr == 'tweakreg_catalog':
-                                if val.strip():
-                                    val = op.join(asn_dir, val)
-                                else:
-                                    val = None
+                m = datamodel_open(filepath, memmap=self._memmap)
+                m.meta.asn.exptype = member['exptype']
+                for attr, val in member.items():
+                    if attr in RECOGNIZED_MEMBER_FIELDS:
+                        if attr == 'tweakreg_catalog':
+                            if val.strip():
+                                val = op.join(asn_dir, val)
+                            else:
+                                val = None
 
-                            setattr(m.meta, attr, val)
-
-                    if not self._save_open:
-                        m.save(filepath, overwrite=True)
-                        m.close()
-                else:
-                    m = filepath
-
+                        setattr(m.meta, attr, val)
                 self._models.append(m)
 
         except IOError:
@@ -453,8 +427,6 @@ to supply custom catalogs.
         group_dict = OrderedDict()
         for i, model in enumerate(self._models):
             params = []
-            if not self._save_open:
-                model = datamodel_open(model, memmap=self._memmap)
 
             if (hasattr(model.meta, 'group_id') and
                         model.meta.group_id not in [None, '']):
@@ -478,10 +450,6 @@ to supply custom catalogs.
                     model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
                 group_id = model.meta.group_id
-
-            if not self._save_open:
-                model.close()
-                model = self._models[i]
 
             if group_id in group_dict:
                 group_dict[group_id].append(model)
