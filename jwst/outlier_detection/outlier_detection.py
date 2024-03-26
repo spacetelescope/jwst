@@ -255,13 +255,10 @@ class OutlierDetection:
         log.info("Computing median")
 
         # Compute weight means without keeping datamodels for eacn input open
-        # Start by insuring that the ModelContainer does NOT open and keep each datamodel
-        ropen_orig = resampled_models._return_open
-        resampled_models._return_open = False  # turn off auto-opening of models
         # keep track of resulting computation for each input resampled datamodel
         weight_thresholds = []
         # For each model, compute the bad-pixel threshold from the weight arrays
-        for resampled in resampled_models:
+        for resampled in resampled_models._models:
             m = datamodel_open(resampled)
             weight = m.wht
             # necessary in order to assure that mask gets applied correctly
@@ -281,8 +278,6 @@ class OutlierDetection:
             # close and delete the model, just to explicitly try to keep the memory as clean as possible
             m.close()
             del m
-        # Reset ModelContainer attribute to original value
-        resampled_models._return_open = ropen_orig
 
         # Now, set up buffered access to all input models
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb

@@ -87,7 +87,6 @@ class SkyMatchStep(Step):
         img = ModelContainer(
             input,
             save_open=not self._is_asn,
-            return_open=not self._is_asn
         )
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)

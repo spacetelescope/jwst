@@ -80,15 +80,14 @@ class ModelContainer(JwstDataModel, Sequence):
 
     Notes
     -----
-        The optional paramters ``save_open`` and ``return_open`` can be
+        The optional paramter ``save_open`` can be
         provided to control how the `JwstDataModel` are used by the
         :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
         `JwstDataModel` instance in ``init`` will be written out to disk and
         closed, then only the filename for the `JwstDataModel` will be used to
         initialize the :py:class:`ModelContainer` object.
         Subsequent access of each member will then open the `JwstDataModel` file to
-        work with it. If ``return_open`` is also `False`, then the `JwstDataModel`
-        will be closed when access to the `JwstDataModel` is completed. The use of
+        work with it. The use of
         these parameters can minimize the amount of memory used by this object
         during processing, with these parameters being used
         by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
@@ -162,7 +161,6 @@ to supply custom catalogs.
         self.asn_pool_name = None
 
         self._memmap = kwargs.get("memmap", False)
-        self._return_open = kwargs.get('return_open', True)
         self._save_open = kwargs.get('save_open', True)
 
         if init is None:
@@ -206,7 +204,7 @@ to supply custom catalogs.
 
     def __getitem__(self, index):
         m = self._models[index]
-        if not isinstance(m, JwstDataModel) and self._return_open:
+        if not isinstance(m, JwstDataModel):
             m = datamodel_open(m, memmap=self._memmap)
         return m
 
@@ -218,7 +216,7 @@ to supply custom catalogs.
 
     def __iter__(self):
         for model in self._models:
-            if not isinstance(model, JwstDataModel) and self._return_open:
+            if not isinstance(model, JwstDataModel):
                 model = datamodel_open(model, memmap=self._memmap)
             yield model
 
@@ -481,7 +479,7 @@ to supply custom catalogs.
 
                 group_id = model.meta.group_id
 
-            if not self._save_open and not self._return_open:
+            if not self._save_open:
                 model.close()
                 model = self._models[i]
 
