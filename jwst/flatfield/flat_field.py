@@ -1730,7 +1730,7 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
     indx = np.where((flat_dq & dqflags.pixel['DO_NOT_USE']) != 0)
     flat[indx] = np.nan
     flat_err[indx] = np.nan
-    indx = np.where(np.isfinite(flat) == False)
+    indx = np.where(~ np.isfinite(flat))
     flat_dq[indx] = flat_dq[indx] | dqflags.pixel['DO_NOT_USE']
 
     # That's all folks
