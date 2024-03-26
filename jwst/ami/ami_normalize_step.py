@@ -15,6 +15,7 @@ class AmiNormalizeStep(Step):
     class_alias = "ami_normalize"
 
     spec = """
+    suffix = string(default='aminorm-oi')
     """
 
     def process(self, target, reference):
@@ -32,18 +33,18 @@ class AmiNormalizeStep(Step):
 
         Returns
         -------
-        result: AmiLgModel object
+        result: AmiOIModel object
             AMI data model that's been normalized
         """
 
         # Open the target and reference input models
-        target_model = datamodels.AmiLgModel(target)
-        reference_model = datamodels.AmiLgModel(reference)
+        target_model = datamodels.AmiOIModel(target)
+        reference_model = datamodels.AmiOIModel(reference)
 
         # Call the normalization routine
         result = ami_normalize.normalize_LG(target_model, reference_model)
 
-        result.meta.cal_step.ami_normalize = 'COMPLETE'
+        result.meta.cal_step.ami_normalize = "COMPLETE"
 
         # Close the input models
         target_model.close()

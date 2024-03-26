@@ -1,5 +1,29 @@
-1.13.5 (unreleased)
+1.14.1 (unreleased)
 ===================
+
+- 
+
+1.14.0 (2024-03-25)
+===================
+
+ami
+---
+
+- Replaced use of deprecated ``scipy.integrate.simps``
+  with ``scipy.integrate.simpson``. [#8320]
+
+- Overhaul of AMI processing. See documentation for full details. [#7862]
+
+- Additional optional input arguments for greater user processing flexibility.
+  See documentation for details. [#7862]
+
+- Bad pixel correction applied to data using new NRM reference file to calculate 
+  complex visibility support (M. Ireland method implemented by J. Kammerer). [#7862]
+
+- Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
+
+- Disable ``AmiAverage`` step. [#7862]
+
 
 associations
 ------------
@@ -12,6 +36,8 @@ associations
 
 - Update the level-3 rules for "tso3" associations so that NIRISS SOSS
   exposures with NINTS=1 are excluded. [#8359]
+
+- Removed blanket warning ignore for duplicate level 2 associations. [#8320]
 
 background
 ----------
@@ -27,6 +53,9 @@ charge_migration
   as DO_NOT_USE.  This group, and all subsequent groups, are then flagged as
   CHARGELOSS and DO_NOT_USE.  The four nearest pixel neighbor are then flagged
   in the same group. [#8336]
+  
+- Added warning handler for expected NaN and inf clipping in the
+  ``sigma_clip`` function. [#8320]
 
 cube_build
 ----------
@@ -45,6 +74,9 @@ datamodels
 
 - Fixed a bug in the ``ModelContainer`` data model, due to which the ``models_grouped``
   property would return opened data models instead of file names. [#8191]
+
+- Removed ``test_all_datamodels_init`` test, which is a duplicate of a test in
+  ``stdatamodels``. [#8320]
 
 documentation
 -------------
@@ -115,6 +147,10 @@ extract_1d
 - Added saving the extraction aperture x/y limits for slit-like modes to
   keywords in the output header. [#8278]
 
+- Fixed deprecated conversions of single-element numpy arrays to scalar
+  in ``apply_apcorr``. [#8320]
+
+- Increased specificity of warning filters in ``atoca`` and ``soss_centroids``. [#8320]
 
 extract_2d
 ----------
@@ -142,16 +178,21 @@ general
 
 - Renamed the ``jail`` fixture with ``tmp_cwd_module``. [#8327]
 
+- Replaced deprecated ``tool.ruff.ignore`` and ``tool.ruff.per-file-ignores``
+  with ``tool.ruff.lint.ignore`` and ``tool.ruff.lint.per-file-ignores``. [#8320]
+
 jump
 ----
+
+- Add parameters that control the flagging of saturated cores of snowballs in
+  the next integration. [#8303]
+
+- Removed a unit test in ``jump`` that was moved to STCAL to decrease
+  the coupling of the two repos. [#8319]
 
 - To improve performance an additional parameter to the jump step was added
   that sets the threshold number of differences above which iterative flagging
   of one CR at a time is turned off. [#8304]
-
-  
-- Removed a unit test in Jump that was moved to STCAL to decrease
-  the coupling of the two repos. [#8319]
 
 lib
 ---
@@ -203,6 +244,8 @@ photom
   was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
   data in the FULL subarray. [#8225]
 
+- Removed blanket warning ignore for ``find_row``. [#8320]
+
 pipeline
 --------
 
@@ -214,6 +257,11 @@ pixel_replace
 
 - Fixed a bug that caused array size mismatches when the ``mingrad`` algorithm
   was applied to NIRSpec data. [#8312]
+
+ramp_fitting
+------------
+
+- Modified one runtime warning filter. [#8320]
 
 refpix
 ------
@@ -250,6 +298,10 @@ resample
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
 
+- Increased specificity of several warning filters. [#8320]
+
+- Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
+
 residual_fringe
 ---------------
 
@@ -263,6 +315,11 @@ scripts
   flag. [#8285]
 
 - Remove ``migrate_data`` and ``move_wcs`` scripts. [#8321]
+
+stpipe
+------
+
+- Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
 
 source_catalog
 --------------
@@ -283,6 +340,13 @@ tweakreg
 
 - Fixed a bug that caused failures instead of warnings when no GAIA sources
   were found within the bounding box of the input image. [#8334]
+  
+- Suppress AstropyUserWarnings regarding NaNs in the input data. [#8320]
+
+wfs_combine
+-----------
+
+- Fixed deprecated conversions of single-element numpy arrays to scalar. [#8320]
 
 
 1.13.4 (2024-01-25)

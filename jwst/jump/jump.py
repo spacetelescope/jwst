@@ -26,7 +26,9 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      max_extended_radius=200,
                      minimum_groups=3,
                      minimum_sigclip_groups=100,
-                     only_use_ints=True
+                     only_use_ints=True,
+                     mask_snowball_persist_next_int=True,
+                     snowball_time_masked_next_int=250
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -45,7 +47,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     after_jump_flag_n1 = int(after_jump_flag_time1 // gtime)
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
     grps_masked_after_shower = int(time_masked_after_shower // gtime)
-
+    snowball_grps_masked_next_int = int(snowball_time_masked_next_int // gtime)
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
         gain_2d = gain_model.data
@@ -85,7 +87,9 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     max_extended_radius=max_extended_radius,
                                     minimum_groups=minimum_groups,
                                     minimum_sigclip_groups=minimum_sigclip_groups,
-                                    only_use_ints=only_use_ints
+                                    only_use_ints=only_use_ints,
+                                    mask_persist_grps_next_int = mask_snowball_persist_next_int,
+                                    persist_grps_flagged = snowball_grps_masked_next_int
                                     )
 
 
