@@ -48,13 +48,6 @@ class ModelContainer(JwstDataModel, Sequence):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
-    asn_exptypes: str
-        list of exposure types from the asn file to read
-        into the ModelContainer, if None read all the given files.
-
-    asn_n_members : int
-        Open only the first N qualifying members.
-
     iscopy : bool
         Presume this model is a copy. Members will not be closed
         when the model is closed/garbage-collected.
@@ -142,8 +135,6 @@ to supply custom catalogs.
 
         self._models = []
         self._iscopy = iscopy
-        self.asn_exptypes = asn_exptypes
-        self.asn_n_members = asn_n_members
         self.asn_table = {}
         self.asn_table_name = None
         self.asn_pool_name = None
@@ -173,10 +164,10 @@ to supply custom catalogs.
             self._models = init._models
             self._iscopy = True
         elif is_association(init):
-            self.from_asn(init)
+            self.from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
             init_from_asn = self.read_asn(init)
-            self.from_asn(init_from_asn, asn_file_path=init)
+            self.from_asn(init_from_asn, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         else:
             raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
@@ -255,7 +246,7 @@ to supply custom catalogs.
             raise IOError("Cannot read ASN file.") from e
         return asn_data
 
-    def from_asn(self, asn_data, asn_file_path=None):
+    def from_asn(self, asn_data, asn_file_path=None, asn_exptypes=None, asn_n_members=None):
         """
         Load fits files from a JWST association file.
 
@@ -266,16 +257,23 @@ to supply custom catalogs.
 
         asn_file_path: str
             Filepath of the association, if known.
+
+        asn_exptypes: str
+            list of exposure types from the asn file to read
+            into the ModelContainer, if None read all the given files.
+
+        asn_n_members : int
+            Open only the first N qualifying members.
         """
         # match the asn_exptypes to the exptype in the association and retain
         # only those file that match, as a list, if asn_exptypes is set to none
         # grab all the files
-        if self.asn_exptypes:
+        if asn_exptypes:
             infiles = []
             logger.debug('Filtering datasets based on allowed exptypes {}:'
-                         .format(self.asn_exptypes))
+                         .format(asn_exptypes))
             for member in asn_data['products'][0]['members']:
-                if any([x for x in self.asn_exptypes if re.match(member['exptype'],
+                if any([x for x in asn_exptypes if re.match(member['exptype'],
                                                                  x, re.IGNORECASE)]):
                     infiles.append(member)
                     logger.debug('Files accepted for processing {}:'.format(member['expname']))
@@ -289,8 +287,8 @@ to supply custom catalogs.
             asn_dir = ''
 
         # Only handle the specified number of members.
-        if self.asn_n_members:
-            sublist = infiles[:self.asn_n_members]
+        if asn_n_members:
+            sublist = infiles[:asn_n_members]
         else:
             sublist = infiles
         try:
@@ -316,6 +314,7 @@ to supply custom catalogs.
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
+        # TODO why is there a merge with an empty dict?
         properties.merge_tree(
             self.meta.asn_table._instance, asn_data
         )
