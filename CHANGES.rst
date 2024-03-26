@@ -1,7 +1,11 @@
 1.14.1 (unreleased)
 ===================
 
-- 
+flat_field
+----------
+
+- Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
+  DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
 
 1.14.0 (2024-03-25)
 ===================
