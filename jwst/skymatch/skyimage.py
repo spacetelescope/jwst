@@ -123,8 +123,7 @@ class SkyImage:
     """
 
     def __init__(self, image, wcs_fwd, wcs_inv, pix_area=1.0, convf=1.0,
-                 mask=None, id=None, skystat=None, stepsize=None, meta=None,
-                 reduce_memory_usage=True):
+                 mask=None, id=None, skystat=None, stepsize=None, meta=None):
         """ Initializes the SkyImage object.
 
         Parameters
@@ -181,20 +180,11 @@ class SkyImage:
         meta : dict, None, optional
             A dictionary of various items to be stored within the `SkyImage`
             object.
-
-        reduce_memory_usage : bool, optional
-            Indicates whether to attempt to minimize memory usage by attaching
-            input ``image`` and/or ``mask`` `numpy.ndarray` arrays to
-            file-mapped accessor. This has no effect when input parameters
-            ``image`` and/or ``mask`` are already of `NDArrayDataAccessor`
-            objects.
-
         """
         self._image = None
         self._mask = None
         self._image_shape = None
         self._mask_shape = None
-        self._reduce_memory_usage = reduce_memory_usage
 
         self.image = image
 
@@ -266,13 +256,7 @@ class SkyImage:
                 raise ValueError("'mask' must have the same shape as 'image'.")
 
             if self._mask is None:
-                if self._reduce_memory_usage:
-                    self._mask = NDArrayMappedAccessor(
-                        mask,
-                        prefix='tmp_skymatch_mask_'
-                    )
-                else:
-                    self._mask = NDArrayInMemoryAccessor(mask)
+                self._mask = NDArrayInMemoryAccessor(mask)
             else:
                 self._mask.set_data(mask)
 
@@ -299,13 +283,7 @@ class SkyImage:
             image = np.asanyarray(image)
             self._image_shape = image.shape
             if self._image is None:
-                if self._reduce_memory_usage:
-                    self._image = NDArrayMappedAccessor(
-                        image,
-                        prefix='tmp_skymatch_image_'
-                    )
-                else:
-                    self._image = NDArrayInMemoryAccessor(image)
+                self._image = NDArrayInMemoryAccessor(image)
             else:
                 self._image.set_data(image)
 
@@ -770,7 +748,6 @@ None, optional
         si._mask = self._mask
         si._image_shape = self._image_shape
         si._mask_shape = self._mask_shape
-        si._reduce_memory_usage = self._reduce_memory_usage
 
         si._radec = self._radec
         si._polygon = self._polygon
