@@ -116,7 +116,6 @@ class OutlierDetectionStep(Step):
                 'threshold_percent': self.threshold_percent,
                 'ifu_second_check': self.ifu_second_check,
                 'allowed_memory': self.allowed_memory,
-                'in_memory': self.in_memory,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
