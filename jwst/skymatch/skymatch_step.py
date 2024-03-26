@@ -66,23 +66,8 @@ class SkyMatchStep(Step):
 
     reference_file_types = []
 
-    def __init__(self, *args, **kwargs):
-        minimize_memory = kwargs.pop('minimize_memory', False)
-        super().__init__(*args, **kwargs)
-        self.minimize_memory = minimize_memory
-
     def process(self, input):
         self.log.setLevel(logging.DEBUG)
-        # for now turn off memory optimization until we have better machinery
-        # to handle outputs in a consistent way.
-
-        if hasattr(self, 'minimize_memory') and self.minimize_memory:
-            self._is_asn = (
-                is_association(input) or isinstance(input, str)
-            )
-
-        else:
-            self._is_asn = False
 
         img = ModelContainer(input)
 
@@ -138,12 +123,10 @@ class SkyMatchStep(Step):
                         "COMPLETE" if gim.is_sky_valid else "SKIPPED"
                     )
 
-        return input if self._is_asn else img
+        return img
 
     def _imodel2skyim(self, image_model):
         input_image_model = image_model
-        if self._is_asn:
-            image_model = datamodel_open(image_model)
 
         if self._dqbits is None:
             dqmask = np.isfinite(image_model.data).astype(dtype=np.uint8)
@@ -159,9 +142,6 @@ class SkyMatchStep(Step):
         # if 'subtract' mode has changed compared to the previous pass:
         if image_model.meta.background.subtracted is None:
             if image_model.meta.background.level is not None:
-                if self._is_asn:
-                    image_model.close()
-
                 # report inconsistency:
                 raise ValueError("Background level was set but the "
                                  "'subtracted' property is undefined (None).")
@@ -175,18 +155,6 @@ class SkyMatchStep(Step):
                 # at this moment I think it is saver to quit and...
                 #
                 # report inconsistency:
-                if self._is_asn:
-                    image_model.close()
-
-                raise ValueError("Background level was subtracted but the "
-                                 "'level' property is undefined (None).")
-
-            if image_model.meta.background.subtracted != self.subtract:
-                # cannot run 'skymatch' step on already "skymatched" images
-                # when 'subtract' spec is inconsistent with
-                # meta.background.subtracted:
-                if self._is_asn:
-                    image_model.close()
 
                 raise ValueError("'subtract' step's specification is "
                                  "inconsistent with background info already "
@@ -205,12 +173,9 @@ class SkyMatchStep(Step):
             id=image_model.meta.filename,  # file name?
             skystat=self._skystat,
             stepsize=self.stepsize,
-            reduce_memory_usage=self._is_asn,
+            reduce_memory_usage=False,
             meta={'image_model': input_image_model}
         )
-
-        if self._is_asn:
-            image_model.close()
 
         if self.subtract:
             sky_im.sky = level
@@ -221,10 +186,7 @@ class SkyMatchStep(Step):
         image = sky_image.meta['image_model']
         sky = sky_image.sky
 
-        if self._is_asn:
-            dm = datamodel_open(image)
-        else:
-            dm = image
+        dm = image
 
         if step_status == "COMPLETE":
             dm.meta.background.method = str(self.skymethod)
@@ -234,7 +196,3 @@ class SkyMatchStep(Step):
                 dm.data[...] = sky_image.image[...]
 
         dm.meta.cal_step.skymatch = step_status
-
-        if self._is_asn:
-            dm.save(image)
-            dm.close()
