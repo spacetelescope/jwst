@@ -374,7 +374,6 @@ class NrmModel:
                 self.fov,
                 bandpass=self.bandpass,
                 over=self.over,
-                rotate=True,
                 psf_offset=self.bestcenter,
                 pixscale=self.pixel,
             )
@@ -478,9 +477,7 @@ class NrmModel:
             self.pixscales[q] = self.test_pixscale
             psf = self.simulate(
                 bandpass=self.bandpass,
-                fov=reffov,
                 pixel=self.test_pixscale,
-                centering=centering,
             )
             pixscl_corrlist[q, :, :] = run_data_correlate(img, psf)
             self.pixscl_corr[q] = np.max(pixscl_corrlist[q])
@@ -501,9 +498,6 @@ class NrmModel:
             psf = self.simulate(
                 bandpass=self.bandpass,
                 fov=reffov,
-                pixel=self.pixscale_optimal,
-                rotate=rad,
-                centering=centering,
             )
 
             corrlist[q, :, :] = run_data_correlate(psf, img)
@@ -514,8 +508,6 @@ class NrmModel:
             bandpass=self.bandpass,
             pixel=self.pixscale_factor * self.pixel,
             fov=reffov,
-            rotate=self.rot_measured,
-            centering=centering,
         )
 
         try:

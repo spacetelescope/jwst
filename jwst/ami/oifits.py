@@ -579,10 +579,6 @@ class CalibOifits:
         self.calib_oimodel.vis["VISAMP"] = va_out
         self.calib_oimodel.vis["VISAMPERR"] = vaerr_out
 
-        self.calib_oimodel.array["PISTON_T"] = pistons_t
-        self.calib_oimodel.array["PISTON_C"] = pistons_c
-        self.calib_oimodel.array["PIST_ERR"] = pisterr_out
-
         # add calibrated header keywords
         calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
         self.calib_oimodel.meta.oifits.calib = calname
