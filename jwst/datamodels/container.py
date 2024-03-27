@@ -20,7 +20,6 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 _ONE_MB = 1 << 20
-#RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
 RECOGNIZED_MEMBER_FIELDS = ['group_id']
 
 # Configure logging
@@ -301,18 +300,8 @@ to supply custom catalogs.
                 m.meta.asn.exptype = member['exptype']
                 for attr, val in member.items():
                     # also overwrite:
-                    # - tweakreg_catalog
                     # - group_id
                     if attr in RECOGNIZED_MEMBER_FIELDS:
-                        if attr == 'tweakreg_catalog':
-                            if val.strip():
-                                # this makes the `tweakreg_catalog` meta an
-                                # absolute path when it's defined in the association
-                                val = op.join(asn_dir, val)
-                            else:
-                                # or None if it's an empty path
-                                val = None
-
                         setattr(m.meta, attr, val)
                 self._models.append(m)
 
