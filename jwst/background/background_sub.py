@@ -1,6 +1,7 @@
 import copy
 import math
 import numpy as np
+import warnings
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
@@ -8,6 +9,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from . import subtract_images
 from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
+from astropy.utils.exceptions import AstropyUserWarning
 
 import logging
 
@@ -231,8 +233,11 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
         if bkg_dim == 3:
             # Sigma clip the bkg model's data and err along the integration axis
-            sc_bkg_data = sigma_clip(bkg_data, sigma=sigma, maxiters=maxiters, axis=0)
-            sc_bkg_err = sigma_clip(bkg_err * bkg_err, sigma=sigma, maxiters=maxiters, axis=0)
+            with warnings.catch_warnings():
+                # clipping NaNs and infs is the expected behavior
+                warnings.filterwarnings("ignore", category=AstropyUserWarning, message=".*automatically clipped.*")
+                sc_bkg_data = sigma_clip(bkg_data, sigma=sigma, maxiters=maxiters, axis=0)
+                sc_bkg_err = sigma_clip(bkg_err * bkg_err, sigma=sigma, maxiters=maxiters, axis=0)
 
             # Accumulate the integ-averaged clipped data and err for the file
             cdata[i] = sc_bkg_data.mean(axis=0)

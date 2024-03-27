@@ -170,9 +170,8 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
 
 
 @pytest.fixture()
-def run_image3_closedfile(rtdata_module):
+def run_image3_closedfile(rtdata):
     """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
-    rtdata = rtdata_module
     rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
 
     args = ["calwebb_image3", rtdata.input]
