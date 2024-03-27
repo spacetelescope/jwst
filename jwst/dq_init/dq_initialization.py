@@ -134,7 +134,7 @@ def check_dimensions(input_model):
         # Perform the same check for the input model groupdq array
         if input_model.groupdq.shape != input_shape:
             if input_model.groupdq.shape == (0, 0, 0, 0):
-                input_model.groupdq = np.zeros((input_shape)).astype('uint32')
+                input_model.groupdq = np.zeros((input_shape)).astype('uint8')
             else:
                 log.error("Groupdq array has wrong shape: (%d, %d, %d, %d)" %
                           input_model.groupdq.shape)
