@@ -20,7 +20,8 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 _ONE_MB = 1 << 20
-RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
+#RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
+RECOGNIZED_MEMBER_FIELDS = ['group_id']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -294,15 +295,22 @@ to supply custom catalogs.
         try:
             for member in sublist:
                 filepath = op.join(asn_dir, member['expname'])
-                update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
                 m = datamodel_open(filepath, memmap=self._memmap)
+                # overwrite the metadata for this model
+                # with the `exptype` in the association
                 m.meta.asn.exptype = member['exptype']
                 for attr, val in member.items():
+                    # also overwrite:
+                    # - tweakreg_catalog
+                    # - group_id
                     if attr in RECOGNIZED_MEMBER_FIELDS:
                         if attr == 'tweakreg_catalog':
                             if val.strip():
+                                # this makes the `tweakreg_catalog` meta an
+                                # absolute path when it's defined in the association
                                 val = op.join(asn_dir, val)
                             else:
+                                # or None if it's an empty path
                                 val = None
 
                         setattr(m.meta, attr, val)
