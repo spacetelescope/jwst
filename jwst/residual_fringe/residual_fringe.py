@@ -88,7 +88,7 @@ class ResidualFringeCorrection():
         # They will be re-added at the end
         output_data = self.model.data.copy()
         DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]
-        nanval_indx = np.where(np.logical_and(np.bitwise_and(self.model.dq, DO_NOT_USE).astype(bool),
+        nanval_indx = np.where(np.logical_or(np.bitwise_and(self.model.dq, DO_NOT_USE).astype(bool),
                                               ~np.isfinite(output_data)))
         output_data[nanval_indx] = 0
 
