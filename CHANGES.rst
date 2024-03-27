@@ -3,7 +3,7 @@
 
 residual_fringe
 ---------------
-- Using DQ plane and exclude pixels marked as DO_NOT_USE in correction. [#8381]
+- Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
   
 
 1.14.0 (2024-03-25)
