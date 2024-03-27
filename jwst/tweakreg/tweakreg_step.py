@@ -109,58 +109,33 @@ class TweakRegStep(Step):
     reference_file_types = []
 
     def process(self, input):
+        images = ModelContainer(input)
+
         use_custom_catalogs = self.use_custom_catalogs
 
-        if use_custom_catalogs:
-            catdict = _parse_catfile(self.catfile)
-            # if user requested the use of custom catalogs and provided a
-            # valid 'catfile' file name that has no custom catalogs,
-            # turn off the use of custom catalogs:
-            if catdict is not None and not catdict:
-                self.log.warning(
-                    "'use_custom_catalogs' is set to True but 'catfile' "
-                    "contains no user catalogs. Turning on built-in catalog "
-                    "creation."
-                )
-                use_custom_catalogs = False
-
-        try:
-            if use_custom_catalogs and catdict:
-                images = ModelContainer()
-                if isinstance(input, str):
-                    asn_dir = path.dirname(input)
-                    asn_data = images.read_asn(input)
-                    for member in asn_data['products'][0]['members']:
-                        filename = member['expname']
-                        member['expname'] = path.join(asn_dir, filename)
-                        if filename in catdict:
-                            member['tweakreg_catalog'] = catdict[filename]
-                        elif 'tweakreg_catalog' in member:
-                            del member['tweakreg_catalog']
-
-                    images.from_asn(asn_data)
-
-                elif is_association(input):
-                    images.from_asn(input)
-
-                else:
-                    images = ModelContainer(input)
-                    for im in images:
-                        filename = im.meta.filename
-                        if filename in catdict:
-                            self.log.info(
-                                f"setting meta.tweakreg_catalog of '{filename}' to {repr(catdict[filename])}"
-                            )
-                            im.meta.tweakreg_catalog = catdict[filename]
-
+        if self.use_custom_catalogs:
+            # first check catfile
+            if self.catfile.strip():
+                catdict = _parse_catfile(self.catfile)
+                # if user requested the use of custom catalogs and provided a
+                # valid 'catfile' file name that has no custom catalogs,
+                # turn off the use of custom catalogs:
+                if not catdict:
+                    self.log.warning(
+                        "'use_custom_catalogs' is set to True but 'catfile' "
+                        "contains no user catalogs. Turning on built-in catalog "
+                        "creation."
+                    )
+                    use_custom_catalogs = False
+            # else, load from association
+            elif hasattr(images.meta, "asn_table"):
+                catdict = {}
+                for member in images.meta.asn_table.products[0].members:
+                    if "tweakreg_catalog" in member:
+                        catdict[member.expname] = member.tweakreg_catalog
             else:
-                images = ModelContainer(input)
-
-        except TypeError as e:
-            e.args = ("Input to tweakreg must be a list of DataModels, an "
-                      "association, or an already open ModelContainer "
-                      "containing one or more DataModels.", ) + e.args[1:]
-            raise e
+                # no custom catalogs were found, so don't check
+                use_custom_catalogs = False
 
         if self.abs_refcat is not None and self.abs_refcat.strip():
             align_to_abs_refcat = True
@@ -175,13 +150,13 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
-            if use_custom_catalogs and image_model.meta.tweakreg_catalog:
+            if use_custom_catalogs and image_model.meta.filename in catdict:
+                image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                 # use user-supplied catalog:
                 self.log.info("Using user-provided input catalog "
                               f"'{image_model.meta.tweakreg_catalog}'")
                 catalog = Table.read(image_model.meta.tweakreg_catalog)
                 new_cat = False
-
             else:
                 # source finding
                 starfinder_kwargs = {
@@ -642,6 +617,23 @@ def _common_name(group, all_group_names=None):
 
 
 def _parse_catfile(catfile):
+    """
+    Parse a text file containing at 2 whitespace-delimited columns
+        column 1: str, datamodel filename
+        column 2: str, catalog filename
+    into a dictionary with datamodel filename keys and catalog filename
+    values. The catalog filenames will become paths relative
+    to the current working directory. So for a catalog filename
+    "mycat.ecsv" if the catfile is in a subdirectory "my_data"
+    the catalog filename will be "my_data/mycat.ecsv".
+
+    Returns:
+        - None of catfile is None (or an empty string)
+        - empty dict if catfile is empty
+
+    Raises:
+        VaueError if catfile contains >2 columns
+    """
     if catfile is None or not catfile.strip():
         return None
 
