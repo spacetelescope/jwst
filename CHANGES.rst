@@ -139,8 +139,7 @@ general
 - Renamed the ``jail`` fixture with ``tmp_cwd_module``. [#8327]
 
 - Changed the data type for several variables in ramp_fitting
-  to not use uint8. The three ramp variables were changed to
-  uint16 and the dq_init was set to uint32. [#8377]
+  to use uint16 instead of uint8. [#8377]
 
 jump
 ----
