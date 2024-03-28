@@ -110,7 +110,7 @@ class MasterBackgroundStep(Step):
                 if self.save_background:
                     asn_id = input_data.meta.asn_table.asn_id
                     self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
-                    
+
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
@@ -244,11 +244,12 @@ def split_container(container):
     background = ModelContainer()
     science = ModelContainer()
 
-    for ind_science in container.ind_asn_type('science'):
-        science.append(container._models[ind_science])
-
-    for ind_bkgd in container.ind_asn_type('background'):
-        background.append(container._models[ind_bkgd])
+    for model in container:
+        exptype = model.meta.asn.exptype.lower()
+        if exptype == 'science':
+            science.append(model)
+        elif exptype == 'background':
+            background.append(model)
 
     # Pass along the association table to the output science container
     science.meta.asn_table = {}
