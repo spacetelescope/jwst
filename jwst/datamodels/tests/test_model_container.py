@@ -96,11 +96,6 @@ def test_modelcontainer_error_from_asn(tmp_path):
         datamodels.open(path)
 
 
-def test_model_container_ind_asn_exptype(container):
-    ind = container.ind_asn_type('science')
-    assert ind == [0, 1]
-
-
 def test_group_id(tmp_path):
     c = ModelContainer(CUSTOM_GROUP_ID_ASN_FILE)
     groups = list(c.models_grouped)

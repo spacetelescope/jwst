@@ -515,26 +515,6 @@ to supply custom catalogs.
 
         return datamodel_open(first_exposure)
 
-    def ind_asn_type(self, asn_exptype):
-        """
-        Determine the indices of models corresponding to ``asn_exptype``.
-
-        Parameters
-        ----------
-        asn_exptype : str
-            Exposure type as defined in an association, e.g. "science".
-
-        Returns
-        -------
-        ind : list
-            Indices of models in ModelContainer._models matching ``asn_exptype``.
-        """
-        ind = []
-        for i, model in enumerate(self._models):
-            if model.meta.asn.exptype.lower() == asn_exptype:
-                ind.append(i)
-        return ind
-
     def set_buffer(self, buffer_size, overlap=None):
         """Set buffer size for scrolling section-by-section access.
 
