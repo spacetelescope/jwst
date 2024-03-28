@@ -155,7 +155,13 @@ class SkyMatchStep(Step):
                 # at this moment I think it is saver to quit and...
                 #
                 # report inconsistency:
+                raise ValueError("Background level was subtracted but the "
+                                 "'level' property is undefined (None).")
 
+            if image_model.meta.background.subtracted != self.subtract:
+                # cannot run 'skymatch' step on already "skymatched" images
+                # when 'subtract' spec is inconsistent with
+                # meta.background.subtracted:
                 raise ValueError("'subtract' step's specification is "
                                  "inconsistent with background info already "
                                  "present in image '{:s}' meta."
