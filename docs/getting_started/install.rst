@@ -38,15 +38,10 @@ shell.
 
 .. warning::
 
-    The jwst package requires a C compiler for dependencies and is currently
-    limited to Python 3.9, 3.10, or 3.11. Until Python 3.12 is supported, fresh
-    conda environments will require setting the Python version to <=3.11.
+    JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
 
 .. warning::
-
-    Users on MacOS Mojave (10.14) should limit their environment to python 3.9 -
-    there is a package dependency that currently fails to build on Mojave with
-    python>=3.10.
+    Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 Installing Latest Release
 -------------------------

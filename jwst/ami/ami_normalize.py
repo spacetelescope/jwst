@@ -4,6 +4,7 @@
 #
 
 import logging
+from . import oifits
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -11,33 +12,26 @@ log.addHandler(logging.NullHandler())
 
 def normalize_LG(target_model, reference_model):
     """
-    Short Summary
-    -------------
     Normalizes the LG results for a science target by the
     LG results for a reference target
 
     Parameters
     ----------
-    target_model: AmiLgModel data model
+    target_model: AmiOIModel data model
         The target data to be normalized
 
-    reference_model: AmiLgModel data model
+    reference_model: AmiOIModel data model
         The reference data
 
     Returns
     -------
-    output_model: AmiLgModel data model
-        Normalized fringe data for the target
+    output_model: AmiOIModel data model
+        Normalized interferometric observables for the target
     """
 
-    # Create the output model as a copy of the input target model
-    output_model = target_model.copy()
-
-    # Apply the normalizations to the target data
-    output_model.closure_phase_table['coeffs'] -= \
-        reference_model.closure_phase_table['coeffs']
-    output_model.fringe_amp_table['coeffs'] /= \
-        reference_model.fringe_amp_table['coeffs']
+    # Initialize the calibration (normalization) class and apply the normalizations
+    norm_model = oifits.CalibOifits(target_model, reference_model)
+    output_model = norm_model.calibrate()
 
     # Return the normalized target model
     return output_model

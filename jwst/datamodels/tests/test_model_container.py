@@ -5,10 +5,10 @@ from jwst.associations import load_as_asn
 import pytest
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import JwstDataModel, MultiExposureModel
-from stdatamodels.jwst.datamodels import _defined_models as defined_models
+from stdatamodels.jwst.datamodels import JwstDataModel
+from stdatamodels.jwst.datamodels.util import NoTypeWarning
 
-from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels import ModelContainer
 from jwst.associations.asn_from_list import asn_from_list
 
 from jwst.lib.file_utils import pushdir
@@ -22,21 +22,22 @@ CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, 'association_group_id.json')
 
 @pytest.fixture
 def container():
-    warnings.simplefilter("ignore")
-    asn_file_path, asn_file_name = os.path.split(ASN_FILE)
-    with pushdir(asn_file_path):
-        with ModelContainer(asn_file_name) as c:
-            for m in c:
-                m.meta.observation.program_number = '0001'
-                m.meta.observation.observation_number = '1'
-                m.meta.observation.visit_number = '1'
-                m.meta.observation.visit_group = '1'
-                m.meta.observation.sequence_id = '01'
-                m.meta.observation.activity_id = '1'
-                m.meta.observation.exposure_number = '1'
-                m.meta.instrument.name = 'NIRCAM'
-                m.meta.instrument.channel = 'SHORT'
-        yield c
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", NoTypeWarning)
+        asn_file_path, asn_file_name = os.path.split(ASN_FILE)
+        with pushdir(asn_file_path):
+            with ModelContainer(asn_file_name) as c:
+                for m in c:
+                    m.meta.observation.program_number = '0001'
+                    m.meta.observation.observation_number = '1'
+                    m.meta.observation.visit_number = '1'
+                    m.meta.observation.visit_group = '1'
+                    m.meta.observation.sequence_id = '01'
+                    m.meta.observation.activity_id = '1'
+                    m.meta.observation.exposure_number = '1'
+                    m.meta.instrument.name = 'NIRCAM'
+                    m.meta.instrument.channel = 'SHORT'
+            yield c
 
 
 def reset_group_id(container):
@@ -93,18 +94,6 @@ def test_modelcontainer_error_from_asn(tmp_path):
     # The foo.fits file doesn't exist
     with pytest.raises(FileNotFoundError):
         datamodels.open(path)
-
-
-@pytest.mark.parametrize("model", [v for v in defined_models.values()])
-def test_all_datamodels_init(model):
-    """
-    Test that all current datamodels can be initialized.
-    """
-    if model is SourceModelContainer:
-        # SourceModelContainer cannot have init=None
-        model(MultiExposureModel())
-    else:
-        model()
 
 
 def test_model_container_ind_asn_exptype(container):

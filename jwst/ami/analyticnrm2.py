@@ -15,8 +15,6 @@ log.addHandler(logging.NullHandler())
 
 def jinc(x, y):
     """
-    Short Summary
-    -------------
     Compute 2d Jinc for given coordinates
 
     Parameters
@@ -40,8 +38,6 @@ def jinc(x, y):
 
 def ffc(kx, ky, **kwargs):
     """
-    Short Summary
-    -------------
     Calculate cosine terms of analytic model.
 
     Parameters
@@ -84,8 +80,6 @@ def ffc(kx, ky, **kwargs):
 
 def ffs(kx, ky, **kwargs):
     """
-    Short Summary
-    -------------
     Calculate sine terms of analytic model.
 
     Parameters
@@ -127,8 +121,6 @@ def ffs(kx, ky, **kwargs):
 
 def harmonicfringes(**kwargs):
     """
-    Short Summary
-    -------------
     Calculate the sine and cosine fringes. This is in image space and, for later
     versions, this works in the oversampled space that is each slice of the model.
 
@@ -220,8 +212,6 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
 
 def image_center(fov, oversample, psf_offset):
     """
-    Short Summary
-    -------------
     Calculate the Image center location in oversampled pixels
 
     Parameters
@@ -249,8 +239,6 @@ def image_center(fov, oversample, psf_offset):
 
 def interf(kx, ky, **kwargs):
     """
-    Short Summary
-    -------------
     Calculate the complex amplitudes for all holes.
 
     Parameters
@@ -301,8 +289,6 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
                 phi=None,
                 shape='circ', affine2d=None):
     """
-    Short Summary
-    -------------
     Create a model using the specified wavelength.
 
     Parameters
@@ -383,8 +369,6 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
 
 def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     """
-    Short Summary
-    -------------
     Calculate the Amplitude Spread Function (a.k.a. image plane complex
     amplitude) for a circular aperture.
 
@@ -435,8 +419,6 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
 
 def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
     """
-    Short Summary
-    -------------
     Amplitude Spread Function (a.k.a. image plane complex amplitude)
     for a fringe
 
@@ -485,8 +467,6 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
 
 def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     """
-    Short Summary
-    -------------
     Amplitude Spread Function (a.k.a. image plane complex amplitude)
     for a hexagonal aperture
 
@@ -539,8 +519,6 @@ def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
 def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
         shape='circ'):
     """
-    Short Summary
-    -------------
     Calculate the PSF for the requested shape
 
     Parameters

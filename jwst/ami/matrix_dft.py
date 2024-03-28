@@ -54,8 +54,6 @@ CENTERING_CHOICES = (FFTSTYLE, SYMMETRIC, ADJUSTABLE, FFTRECT)
 def matrix_dft(plane, nlamD, npix,
                offset=None, inverse=False, centering=FFTSTYLE):
     """
-    Summary
-    -------
     Perform a matrix discrete Fourier transform with selectable output
     sampling and centering. Where parameters can be supplied as either
     scalars or 2-tuples, the first element of the 2-tuple is used for the

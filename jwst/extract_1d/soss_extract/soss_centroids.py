@@ -83,7 +83,7 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
 
     # Normalize each column
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
         maxvals = np.nanmax(scidata_bkg_masked, axis=0)
     scidata_norm = scidata_bkg_masked / maxvals
 

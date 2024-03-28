@@ -22,11 +22,13 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      sat_required_snowball=True, sat_expand=2,
                      expand_large_events=False, find_showers=False, edge_size=25, extend_snr_threshold=1.1,
                      extend_min_area=90, extend_inner_radius=1, extend_outer_radius=2.6, extend_ellipse_expand_ratio=1.1,
-                     time_masked_after_shower=30,
+                     time_masked_after_shower=30, min_diffs_single_pass=10,
                      max_extended_radius=200,
                      minimum_groups=3,
                      minimum_sigclip_groups=100,
-                     only_use_ints=True
+                     only_use_ints=True,
+                     mask_snowball_persist_next_int=True,
+                     snowball_time_masked_next_int=250
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -45,7 +47,7 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     after_jump_flag_n1 = int(after_jump_flag_time1 // gtime)
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
     grps_masked_after_shower = int(time_masked_after_shower // gtime)
-
+    snowball_grps_masked_next_int = int(snowball_time_masked_next_int // gtime)
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
         gain_2d = gain_model.data
@@ -81,10 +83,13 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     extend_outer_radius=extend_outer_radius,
                                     extend_ellipse_expand_ratio=extend_ellipse_expand_ratio,
                                     grps_masked_after_shower=grps_masked_after_shower,
+                                    min_diffs_single_pass=min_diffs_single_pass,
                                     max_extended_radius=max_extended_radius,
                                     minimum_groups=minimum_groups,
                                     minimum_sigclip_groups=minimum_sigclip_groups,
-                                    only_use_ints=only_use_ints
+                                    only_use_ints=only_use_ints,
+                                    mask_persist_grps_next_int = mask_snowball_persist_next_int,
+                                    persist_grps_flagged = snowball_grps_masked_next_int
                                     )
 
 
