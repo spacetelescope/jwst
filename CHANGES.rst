@@ -1,7 +1,12 @@
 1.14.1 (unreleased)
 ===================
 
-- 
+ramp_fitting
+------------
+
+- Changed the data type for several variables in ramp_fitting
+  to use uint16 instead of uint8, in order to avoid potential
+  overflow/wraparound problems. [#8377]
 
 1.14.0 (2024-03-28)
 ===================
@@ -23,7 +28,6 @@ ami
 - Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
 
 - Disable ``AmiAverage`` step. [#7862]
-
 
 associations
 ------------
@@ -102,7 +106,6 @@ documentation
 
 - Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
 
-
 emicorr
 -------
 
@@ -177,9 +180,6 @@ general
   ``tmp_cwd`` to enforce ``no:legacypath`` in the CI tests. [#8327]
 
 - Renamed the ``jail`` fixture with ``tmp_cwd_module``. [#8327]
-
-- Changed the data type for several variables in ramp_fitting
-  to use uint16 instead of uint8. [#8377]
 
 - Replaced deprecated ``tool.ruff.ignore`` and ``tool.ruff.per-file-ignores``
   with ``tool.ruff.lint.ignore`` and ``tool.ruff.lint.per-file-ignores``. [#8320]
@@ -265,9 +265,6 @@ ramp_fitting
 ------------
 
 - Modified one runtime warning filter. [#8320]
-
-- Changed the data type for several variables in ramp_fitting
-  to use uint16 instead of uint8. [#8377]
 
 refpix
 ------
