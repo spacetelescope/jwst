@@ -1,7 +1,11 @@
 1.14.1 (unreleased)
 ===================
 
-- 
+extract_1d
+----------
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
+  the F277W filter with warning. [#8275] 
 
 1.14.0 (2024-03-28)
 ===================
