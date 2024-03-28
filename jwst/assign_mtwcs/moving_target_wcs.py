@@ -16,7 +16,6 @@ from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -25,10 +24,6 @@ __all__ = ["assign_moving_target_wcs"]
 
 
 def assign_moving_target_wcs(input_model):
-
-    if not isinstance(input_model, ModelContainer):
-        raise ValueError("Expected a ModelContainer object")
-
     skip = False
     ra_sum = 0.0
     dec_sum = 0.0
