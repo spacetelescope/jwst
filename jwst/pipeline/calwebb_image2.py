@@ -51,13 +51,16 @@ class Image2Pipeline(Pipeline):
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
+        if len(asn['products']) > 1 and self.output_file is not None:
+            self.log.warning("Multiple products in input association. Output file name will be ignored.")
+            self.output_file = None
 
         # Each exposure is a product in the association.
         # Process each exposure.
         results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            if self.save_results:
+            if (self.save_results) & (self.output_file is None):
                 self.output_file = product['name']
             try:
                 getattr(asn, 'filename')
@@ -74,8 +77,9 @@ class Image2Pipeline(Pipeline):
             suffix = 'cal'
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
-            result.meta.filename = self.make_output_path(suffix=suffix)
+            result.meta.filename = self.make_output_path(basepath=self.output_file, suffix=suffix)
             results.append(result)
+            self.output_file = None
 
         self.log.info('... ending calwebb_image2')
 
@@ -88,7 +92,7 @@ class Image2Pipeline(Pipeline):
             self,
             exp_product,
             pool_name=' ',
-            asn_file=' '
+            asn_file=' ',
     ):
         """Process an exposure found in the association product
 
@@ -131,6 +135,7 @@ class Image2Pipeline(Pipeline):
         # Record ASN pool and table names in output
         input.meta.asn.pool_name = pool_name
         input.meta.asn.table_name = asn_file
+        input.meta.filename = self.make_output_path(basepath=self.output_file)
 
         # Do background processing, if necessary
         if len(members_by_type['background']) > 0:

@@ -252,6 +252,9 @@ pipeline
 - Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
   the list of modes for running the ``nsclean`` step. [#8256]
 
+- Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
+  that was causing them not to respect the ``output_file`` parameter. [#8368]
+
 pixel_replace
 -------------
 
