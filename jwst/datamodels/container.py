@@ -20,7 +20,7 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 _ONE_MB = 1 << 20
-RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
+RECOGNIZED_MEMBER_FIELDS = ['group_id']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -48,13 +48,6 @@ class ModelContainer(JwstDataModel, Sequence):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
-    asn_exptypes: str
-        list of exposure types from the asn file to read
-        into the ModelContainer, if None read all the given files.
-
-    asn_n_members : int
-        Open only the first N qualifying members.
-
     iscopy : bool
         Presume this model is a copy. Members will not be closed
         when the model is closed/garbage-collected.
@@ -80,19 +73,6 @@ class ModelContainer(JwstDataModel, Sequence):
 
     Notes
     -----
-        The optional paramters ``save_open`` and ``return_open`` can be
-        provided to control how the `JwstDataModel` are used by the
-        :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
-        `JwstDataModel` instance in ``init`` will be written out to disk and
-        closed, then only the filename for the `JwstDataModel` will be used to
-        initialize the :py:class:`ModelContainer` object.
-        Subsequent access of each member will then open the `JwstDataModel` file to
-        work with it. If ``return_open`` is also `False`, then the `JwstDataModel`
-        will be closed when access to the `JwstDataModel` is completed. The use of
-        these parameters can minimize the amount of memory used by this object
-        during processing, with these parameters being used
-        by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
-
         When ASN table's members contain attributes listed in
         :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
         read those attribute values and update the corresponding attributes
@@ -155,30 +135,21 @@ to supply custom catalogs.
 
         self._models = []
         self._iscopy = iscopy
-        self.asn_exptypes = asn_exptypes
-        self.asn_n_members = asn_n_members
         self.asn_table = {}
         self.asn_table_name = None
         self.asn_pool_name = None
 
         self._memmap = kwargs.get("memmap", False)
-        self._return_open = kwargs.get('return_open', True)
-        self._save_open = kwargs.get('save_open', True)
 
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, fits.HDUList):
-            if self._save_open:
-                model = [datamodel_open(init, memmap=self._memmap)]
-            else:
-                model = init._file.name
-                init.close()
+            model = [datamodel_open(init, memmap=self._memmap)]
             self._models.append(model)
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
-                if self._save_open:
-                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
+                init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
@@ -193,10 +164,10 @@ to supply custom catalogs.
             self._models = init._models
             self._iscopy = True
         elif is_association(init):
-            self.from_asn(init)
+            self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
-            init_from_asn = self.read_asn(init)
-            self.from_asn(init_from_asn, asn_file_path=init)
+            init_from_asn = self._read_asn(init)
+            self._from_asn(init_from_asn, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         else:
             raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
@@ -206,7 +177,7 @@ to supply custom catalogs.
 
     def __getitem__(self, index):
         m = self._models[index]
-        if not isinstance(m, JwstDataModel) and self._return_open:
+        if not isinstance(m, JwstDataModel):
             m = datamodel_open(m, memmap=self._memmap)
         return m
 
@@ -218,7 +189,7 @@ to supply custom catalogs.
 
     def __iter__(self):
         for model in self._models:
-            if not isinstance(model, JwstDataModel) and self._return_open:
+            if not isinstance(model, JwstDataModel):
                 model = datamodel_open(model, memmap=self._memmap)
             yield model
 
@@ -255,7 +226,7 @@ to supply custom catalogs.
         return result
 
     @staticmethod
-    def read_asn(filepath):
+    def _read_asn(filepath):
         """
         Load fits files from a JWST association file.
 
@@ -275,7 +246,7 @@ to supply custom catalogs.
             raise IOError("Cannot read ASN file.") from e
         return asn_data
 
-    def from_asn(self, asn_data, asn_file_path=None):
+    def _from_asn(self, asn_data, asn_file_path=None, asn_exptypes=None, asn_n_members=None):
         """
         Load fits files from a JWST association file.
 
@@ -286,16 +257,23 @@ to supply custom catalogs.
 
         asn_file_path: str
             Filepath of the association, if known.
+
+        asn_exptypes: str
+            list of exposure types from the asn file to read
+            into the ModelContainer, if None read all the given files.
+
+        asn_n_members : int
+            Open only the first N qualifying members.
         """
         # match the asn_exptypes to the exptype in the association and retain
         # only those file that match, as a list, if asn_exptypes is set to none
         # grab all the files
-        if self.asn_exptypes:
+        if asn_exptypes:
             infiles = []
             logger.debug('Filtering datasets based on allowed exptypes {}:'
-                         .format(self.asn_exptypes))
+                         .format(asn_exptypes))
             for member in asn_data['products'][0]['members']:
-                if any([x for x in self.asn_exptypes if re.match(member['exptype'],
+                if any([x for x in asn_exptypes if re.match(member['exptype'],
                                                                  x, re.IGNORECASE)]):
                     infiles.append(member)
                     logger.debug('Files accepted for processing {}:'.format(member['expname']))
@@ -309,33 +287,22 @@ to supply custom catalogs.
             asn_dir = ''
 
         # Only handle the specified number of members.
-        if self.asn_n_members:
-            sublist = infiles[:self.asn_n_members]
+        if asn_n_members:
+            sublist = infiles[:asn_n_members]
         else:
             sublist = infiles
         try:
             for member in sublist:
                 filepath = op.join(asn_dir, member['expname'])
-                update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
-                if update_model or self._save_open:
-                    m = datamodel_open(filepath, memmap=self._memmap)
-                    m.meta.asn.exptype = member['exptype']
-                    for attr, val in member.items():
-                        if attr in RECOGNIZED_MEMBER_FIELDS:
-                            if attr == 'tweakreg_catalog':
-                                if val.strip():
-                                    val = op.join(asn_dir, val)
-                                else:
-                                    val = None
-
-                            setattr(m.meta, attr, val)
-
-                    if not self._save_open:
-                        m.save(filepath, overwrite=True)
-                        m.close()
-                else:
-                    m = filepath
-
+                m = datamodel_open(filepath, memmap=self._memmap)
+                # overwrite the metadata for this model
+                # with the `exptype` in the association
+                m.meta.asn.exptype = member['exptype']
+                for attr, val in member.items():
+                    # also overwrite:
+                    # - group_id
+                    if attr in RECOGNIZED_MEMBER_FIELDS:
+                        setattr(m.meta, attr, val)
                 self._models.append(m)
 
         except IOError:
@@ -344,6 +311,7 @@ to supply custom catalogs.
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
+        # TODO why is there a merge with an empty dict?
         properties.merge_tree(
             self.meta.asn_table._instance, asn_data
         )
@@ -455,8 +423,6 @@ to supply custom catalogs.
         group_dict = OrderedDict()
         for i, model in enumerate(self._models):
             params = []
-            if not self._save_open:
-                model = datamodel_open(model, memmap=self._memmap)
 
             if (hasattr(model.meta, 'group_id') and
                         model.meta.group_id not in [None, '']):
@@ -480,10 +446,6 @@ to supply custom catalogs.
                     model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
                 group_id = model.meta.group_id
-
-            if not self._save_open and not self._return_open:
-                model.close()
-                model = self._models[i]
 
             if group_id in group_dict:
                 group_dict[group_id].append(model)
@@ -552,26 +514,6 @@ to supply custom catalogs.
             first_exposure = self.meta.asn_table.products[0].members[0].expname
 
         return datamodel_open(first_exposure)
-
-    def ind_asn_type(self, asn_exptype):
-        """
-        Determine the indices of models corresponding to ``asn_exptype``.
-
-        Parameters
-        ----------
-        asn_exptype : str
-            Exposure type as defined in an association, e.g. "science".
-
-        Returns
-        -------
-        ind : list
-            Indices of models in ModelContainer._models matching ``asn_exptype``.
-        """
-        ind = []
-        for i, model in enumerate(self._models):
-            if model.meta.asn.exptype.lower() == asn_exptype:
-                ind.append(i)
-        return ind
 
     def set_buffer(self, buffer_size, overlap=None):
         """Set buffer size for scrolling section-by-section access.

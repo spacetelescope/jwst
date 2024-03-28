@@ -29,25 +29,41 @@ def assign_moving_target_wcs(input_model):
     if not isinstance(input_model, ModelContainer):
         raise ValueError("Expected a ModelContainer object")
 
-    # get the indices of the science exposures in the ModelContainer
-    ind = input_model.ind_asn_type('science')
-    sci_models = np.asarray(input_model._models)[ind]
-    # Get the MT RA/Dec values from all the input exposures
-    mt_ra = np.array([model.meta.wcsinfo.mt_ra for model in sci_models])
-    mt_dec = np.array([model.meta.wcsinfo.mt_dec for model in sci_models])
+    skip = False
+    ra_sum = 0.0
+    dec_sum = 0.0
+    n = 0
+    for model in input_model:
+        if model.meta.asn.exptype.lower() != 'science':
+            continue
+        ra = model.meta.wcsinfo.mt_ra
+        dec = model.meta.wcsinfo.mt_dec
+        if ra is None or dec is None:
+            skip = True
+        if skip:
+            break
+        ra_sum += ra
+        dec_sum += dec
+        n += 1
 
-    # Compute the mean MT RA/Dec over all exposures
-    if None in mt_ra or None in mt_dec:
+    if skip:
         log.warning("One or more MT RA/Dec values missing in input images")
         log.warning("Step will be skipped, resulting in target misalignment")
-        for model in sci_models:
-            model.meta.cal_step.assign_mtwcs = 'SKIPPED'
-        return input_model
     else:
-        mt_avra = mt_ra.mean()
-        mt_avdec = mt_dec.mean()
+        if n == 0:
+            # TODO should this be an error? It was not previously
+            # raise ValueError("assign_moving_target_wcs called with no science exposures")
+            return input_model
+        mt_avra = ra_sum / n
+        mt_avdec = dec_sum / n
 
-    for model in sci_models:
+    for model in input_model:
+        if model.meta.asn.exptype.lower() != 'science':
+            continue
+        if skip:
+            model.meta.cal_step.assign_mtwcs = 'SKIPPED'
+            continue
+
         model.meta.wcsinfo.mt_avra = mt_avra
         model.meta.wcsinfo.mt_avdec = mt_avdec
         if isinstance(model, datamodels.MultiSlitModel):
@@ -65,7 +81,6 @@ def assign_moving_target_wcs(input_model):
             model.meta.wcs = new_wcs
 
         model.meta.cal_step.assign_mtwcs = 'COMPLETE'
-
     return input_model
 
 
