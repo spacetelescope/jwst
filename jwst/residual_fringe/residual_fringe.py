@@ -83,11 +83,13 @@ class ResidualFringeCorrection():
             raise ErrorNoFringeFlat("The fringe flat step has not been run on file %s",
                                     self.input_model.meta.filename)
 
-        # Remove any NaN values from the data prior to processing
+        # Remove any NaN values and flagged DO_NOT_USE pixels from the data prior to processing
         # Set them to 0 for the residual fringe routine
         # They will be re-added at the end
         output_data = self.model.data.copy()
-        nanval_indx = np.where(~np.isfinite(output_data))
+        DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]
+        nanval_indx = np.where(np.logical_or(np.bitwise_and(self.model.dq, DO_NOT_USE).astype(bool),
+                                              ~np.isfinite(output_data)))
         output_data[nanval_indx] = 0
 
         # normalise the output_data to remove units
