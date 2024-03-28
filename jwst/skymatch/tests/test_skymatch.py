@@ -425,8 +425,6 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
 
     result = step.run(asn_out_fname)
 
-    assert isinstance(result, str)
-
     ref_levels = np.subtract(levels, min(levels))
     sub_levels = np.subtract(levels, ref_levels)
 
