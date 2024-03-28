@@ -70,23 +70,26 @@ class JWSTBackground:
         bkg_estimator = MedianBackground()
         filter_size = (3, 3)
 
-        try:
-            bkg = Background2D(self.data, self.box_size,
-                               filter_size=filter_size,
-                               coverage_mask=self.coverage_mask,
-                               sigma_clip=sigma_clip,
-                               bkg_estimator=bkg_estimator)
-        except ValueError:
-            # use the entire unmasked array
-            bkg = Background2D(self.data, self.data.shape,
-                               filter_size=filter_size,
-                               coverage_mask=self.coverage_mask,
-                               sigma_clip=sigma_clip,
-                               bkg_estimator=bkg_estimator,
-                               exclude_percentile=100.)
-            log.info('Background could not be estimated in meshes. '
-                     'Using the entire unmasked array for background '
-                     f'estimation: bkg_boxsize={self.data.shape}.')
+        # All data have NaNs.  Suppress warnings about them.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+            try:
+                bkg = Background2D(self.data, self.box_size,
+                                   filter_size=filter_size,
+                                   coverage_mask=self.coverage_mask,
+                                   sigma_clip=sigma_clip,
+                                   bkg_estimator=bkg_estimator)
+            except ValueError:
+                # use the entire unmasked array
+                bkg = Background2D(self.data, self.data.shape,
+                                   filter_size=filter_size,
+                                   coverage_mask=self.coverage_mask,
+                                   sigma_clip=sigma_clip,
+                                   bkg_estimator=bkg_estimator,
+                                   exclude_percentile=100.)
+                log.info('Background could not be estimated in meshes. '
+                         'Using the entire unmasked array for background '
+                         f'estimation: bkg_boxsize={self.data.shape}.')
 
         return bkg
 
@@ -150,8 +153,9 @@ def convolve_data(data, kernel_fwhm, mask=None):
     """
     kernel = make_kernel(kernel_fwhm)
 
+    # All data have NaNs.  Supress warnings about them.
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', AstropyUserWarning)
+        warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
         return convolve(data, kernel, mask=mask, normalize_kernel=True)
 
 

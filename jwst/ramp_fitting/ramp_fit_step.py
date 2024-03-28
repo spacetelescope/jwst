@@ -365,11 +365,11 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
     # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be
     #   checked for and handled later
-    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
-    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-    # overwrite where segs>1
-    den_r3[wh_seg_pos] = 1. / (segs_beg_3[wh_seg_pos] ** 3. - segs_beg_3[wh_seg_pos])
-    warnings.resetwarnings()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+        # overwrite where segs>1
+        den_r3[wh_seg_pos] = 1. / (segs_beg_3[wh_seg_pos] ** 3. - segs_beg_3[wh_seg_pos])
 
     # calculate max_seg for this integ and data section
     max_seg = (np.count_nonzero(segs_beg_3, axis=0)).max()
@@ -445,7 +445,6 @@ class RampFitStep(Step):
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
             input_model_W = copy.copy(input_model)
-
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.

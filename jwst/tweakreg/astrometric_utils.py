@@ -96,8 +96,10 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
         else Time(input_models[0].meta.observation.date).decimalyear
     )
     ref_dict = get_catalog(fiducial[0], fiducial[1], epoch=epoch, sr=radius, catalog=catalog)
+    if len(ref_dict) == 0:
+        return ref_dict
+    
     colnames = ('ra', 'dec', 'mag', 'objID', 'epoch')
-
     ref_table = ref_dict[colnames]
 
     # Add catalog name as meta data

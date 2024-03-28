@@ -1,7 +1,7 @@
 import abc
 
 from typing import Tuple, Union, Type
-from scipy.interpolate import interp2d, interp1d
+from scipy.interpolate import RectBivariateSpline, interp1d
 from astropy.io import fits
 from stdatamodels import DataModel
 from stdatamodels.jwst.datamodels import MultiSlitModel
@@ -161,7 +161,7 @@ class ApCorrBase(abc.ABC):
             correction = self.apcorr_func(row['npixels'], row['wavelength'])
 
             for col in cols_to_correct:
-                row[col] *= correction
+                row[col] *= correction.item()
 
 
 class ApCorrPhase(ApCorrBase):
@@ -185,7 +185,7 @@ class ApCorrPhase(ApCorrBase):
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
-        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> interp2d:
+        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> RectBivariateSpline:
             """Create a 'custom' approximation function that approximates the aperture correction in two stages based on
             input data.
 
@@ -211,9 +211,14 @@ class ApCorrPhase(ApCorrBase):
             apcorr_pixphase = apcorr_pixphase_func(pixel_phase)
             size_wl = size_wl_func(wavelength)
 
-            pixphase_size_func = interp2d(self.reference['wavelength'], size_wl, apcorr_pixphase)
+            # by default RectBivariateSpline is 3rd order, fails for size_wl=3 as in e.g. the test data
+            wl_sortidx = np.argsort(self.reference['wavelength'])
+            apcorr_pixphase = apcorr_pixphase[:, wl_sortidx]
+            wl_ref = self.reference['wavelength'][wl_sortidx]
+            pixphase_size_func = RectBivariateSpline(wl_ref, size_wl, apcorr_pixphase.T, ky=1, kx=1)
+            size_func = pixphase_size_func(wavelength, size).T
 
-            return pixphase_size_func(wavelength, size)
+            return size_func
 
         return _approx_func
 
@@ -241,7 +246,7 @@ class ApCorrPhase(ApCorrBase):
 
             for col in cols_to_correct:
                 if correction:
-                    row[col] *= correction
+                    row[col] *= correction.item()
 
 
 class ApCorrRadial(ApCorrBase):
@@ -350,7 +355,12 @@ class ApCorr(ApCorrBase):
         size = self.reference['size'][:self.reference['nelem_size']]
         apcorr = self.reference['apcorr'][:self.reference['nelem_wl'], :self.reference['nelem_size']]
 
-        return interp2d(size, wavelength, apcorr)
+        # by default RectBivariateSpline is 3rd order, fails for size_wl=3 as in e.g. the test data
+        wl_sortidx = np.argsort(wavelength)
+        apcorr = apcorr[wl_sortidx, :]
+        wavelength = wavelength[wl_sortidx]
+
+        return RectBivariateSpline(size, wavelength, apcorr.T, ky=1, kx=1)
 
 
 def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:

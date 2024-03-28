@@ -1,7 +1,30 @@
 """General utility objects"""
 
-# Moved to stdatamodels, kept here to preserve interface
-from stdatamodels.jwst.library.basic_utils import deprecate_class, bytes2human  # noqa: F401
+from stdatamodels.jwst.datamodels import dqflags
+import numpy as np
+
+
+def set_nans_to_donotuse(data, dq):
+    """Set all NaN values in the data that have an even value to
+    DO_NOT_USE.
+
+    Parameters
+    ----------
+    data : numpy array
+        The science data array to find NaN values and
+        check of these have a DQ flag=DO_NOT_USE, or
+        set it if not.
+
+    dq : numpy array
+        The DQ array to be checked.
+
+    Returns
+    -------
+    dq : numpy array
+        The updated DQ array.
+    """
+    dq[np.isnan(data)] |= dqflags.pixel['DO_NOT_USE']
+    return dq
 
 
 class LoggingContext:

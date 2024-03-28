@@ -511,12 +511,12 @@ def interp_array(sci_data, dq_data, n_size):
         y = bad_dq[jj][0]
 
         # Linearly interpolate using scipy's griddata to fill in missing value
-        sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='linear')
+        sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='linear').item()
 
         # For those interpolations just done that result in a nan (because
         #    there may be too few pixels), check and redo with 'nearest'
         if np.isnan(sci_data[y, x]):
-            sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='nearest')
+            sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='nearest').item()
 
     return sci_data
 

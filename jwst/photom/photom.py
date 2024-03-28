@@ -1,6 +1,5 @@
 import logging
 import functools
-import warnings
 
 import numpy as np
 from astropy import units as u
@@ -472,9 +471,7 @@ class DataSet():
             log.info(' subarray: %s', self.subarray)
             fields_to_match = {'subarray': self.subarray,
                                'filter': self.filter}
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                row = find_row(ftab.phot_table, fields_to_match)
+            row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 # Search again using subarray="GENERIC" for old ref files
                 fields_to_match = {'subarray': 'GENERIC',
@@ -1235,7 +1232,7 @@ class DataSet():
                         log.info('Values for PIXAR_SR and PIXAR_A2 obtained from AREA reference file.')
 
                 # The area reference file might be older, try the photom reference file
-                except AttributeError or KeyError:
+                except (AttributeError, KeyError):
                     area_ster, area_a2 = self.pixarea_from_ftab(ftab)
 
                 pix_area.close()

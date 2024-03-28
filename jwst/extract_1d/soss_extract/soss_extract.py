@@ -12,7 +12,7 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
-from .atoca import ExtractionEngine
+from .atoca import ExtractionEngine, MaskOverlapError
 from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
@@ -463,6 +463,35 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
     return tracemodel_ord, spec_ord
 
 
+def _build_null_spec_table(wave_grid):
+    """
+    Build a SpecModel of entirely bad values
+
+    Parameters
+    ----------
+    wave_grid : np.array
+        Input wavelengths
+
+    Returns
+    -------
+    spec : SpecModel
+        Null SpecModel. Flux values are NaN, DQ flags are 1,
+        but note that DQ gets overwritten at end of run_extract1d
+    """
+    wave_grid_cut = wave_grid[wave_grid > 0.58]  # same cutoff applied for valid data
+    spec = datamodels.SpecModel()
+    spec.spectral_order = 2
+    spec.meta.soss_extract1d.type = 'OBSERVATION'
+    spec.meta.soss_extract1d.factor = np.nan
+    spec.spec_table = np.zeros((wave_grid_cut.size,), dtype=datamodels.SpecModel().spec_table.dtype)
+    spec.spec_table['WAVELENGTH'] = wave_grid_cut
+    spec.spec_table['FLUX'] = np.empty(wave_grid_cut.size) * np.nan
+    spec.spec_table['DQ'] = np.ones(wave_grid_cut.size)
+    spec.validate()
+
+    return spec
+
+
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, subarray, transform=None,
                 tikfac=None, threshold=1e-4, n_os=2, wave_grid=None,
                 estimate=None, rtol=1e-3, max_grid_size=1000000):
@@ -689,10 +718,16 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, s
         tikfac_log_range = np.log10(tikfac) + np.array([-2, 8])
 
         # Model the remaining part of order 2 with atoca
-        model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
-                                             mask_fit, global_mask, order,
-                                             pixel_wave_grid, valid_cols, save_tiktests,
-                                             tikfac_log_range=tikfac_log_range)
+        try:
+            model, spec_ord = model_single_order(scidata_bkg, scierr, ref_file_order,
+                                                 mask_fit, global_mask, order,
+                                                 pixel_wave_grid, valid_cols, save_tiktests,
+                                                 tikfac_log_range=tikfac_log_range)
+
+        except MaskOverlapError:
+            log.error('Not enough unmasked pixels to model the remaining part of order 2. Model and spectrum will be NaN in that spectral region.')
+            spec_ord = [_build_null_spec_table(pixel_wave_grid)]
+            model = np.nan * np.ones_like(scidata_bkg)
 
         # Keep only pixels from which order 2 contribution
         # is not already modeled.
@@ -1032,6 +1067,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     transform = soss_kwargs.pop('transform')
     if transform is None:
         transform = [None, None, None]
+    else:
+        transform = [float(val) for val in transform]
     # Save names for logging
     param_name = np.array(['theta', 'x-offset', 'y-offset'])
 

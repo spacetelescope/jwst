@@ -44,7 +44,7 @@ def test_asn_candidates(pool, all_candidates, case):
         (['nosuchpool.csv'], 1),
     ]
 )
-def test_cmdline_status(args, expected, _jail):
+def test_cmdline_status(args, expected, tmp_cwd):
     """Ensure command line status are as expected."""
     full_args = ['asn_generate'] + args
     status = subprocess.run(full_args)

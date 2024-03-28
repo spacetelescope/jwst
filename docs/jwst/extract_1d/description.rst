@@ -75,7 +75,14 @@ FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
 BKGD_VAR_FLAT and NPIXELS.
 Some meta data will be written to the table header, mostly copied from the
-input header.
+input header. For slit-like  modes the extraction region is
+recorded in the meta data of the table header as EXTRXSTR (x start of extraction),
+EXTRXSTP (x end of extraction),  EXTRYSTR (y start of extraction), and 
+EXTRYSTP (y end of extraction).  For MIRI and NIRSpec IFU data the center of
+the extraction region is recorded in the meta data EXTR_X (x center of extraction region)
+and EXTR_Y (y center of extraction region). The NIRISS SOSS algorithm is a specialized extraction
+algorithm that does not use fixed limits, therefore no extraction limits are provided for this mode. 
+
 
 The output WAVELENGTH data is copied from the wavelength array of the input 2D data,
 if that attribute exists and was populated, otherwise it is calculated from the WCS.
@@ -293,4 +300,54 @@ VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only prop
 non-differentiated error term.  Note that while covariance is also extremely important for IFU data cubes
 (as the IFUs themselves are significantly undersampled) this term is not presently computed or taken
 into account in the ``extract_1d`` step.  As such, the error estimates should be taken as a rough
-approximation that will be characterized and improved as flight data become available.
+approximation that will be characterized and improved as flight data become available. 
+
+
+.. _MIRI-MRS-1D-residual-fringe:
+
+MIRI MRS 1D Residual Fringe Correction
+--------------------------------------
+For MIRI MRS IFU data there is also a correction for fringing.
+As is typical for spectrometers, the MIRI MRS detectors are affected by fringes.
+The primary MRS fringe, observed in all MRS bands, is caused by the etalons between the anti-reflection coating
+and lower layers, encompassing the detector substrate and the infrared-active layer. Since the thickness
+of the substrate is not the same in the SW and LW detectors, the fringe frequency differs in the two detectors.
+Shortward of 16 microns, this fringe is produced by the anti-reflection coating and  pixel metalization etalons, whereas
+longward of 16 microns it is produced by the anti-reflection coating and  bottom contact etalon, resulting in a
+different fringe frequency.
+
+The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra and these
+steps generally suffice to reduce the fringe signal to below a few percent of the target flux.
+
+The first correction is applied by default in the :ref:`fringe <fringe_step>` step in the
+:ref:`calwebb_spec2 <calwebb_spec2>` pipeline and consists of dividing the uncalibrated "rate" image
+by a static fringe flat constructed from observations of a bright source that fills the entire MRS field of
+view. For more details see the :ref:`fringe <fringe_step>` step.
+This step generally does a good job of removing the strongest fringes from an astronomical scene, particularly
+for nearly-uniform extended sources. Since the fringe signal is different for point sources, however, and varies
+as a function of the location of a point source within the FOV, the static fringe flat cannot fully correct
+such objects. The default high level data products will therefore still show appreciable fringes.
+
+The pipeline also includes two optional residual fringe correction steps whose purpose is to find and remove signals
+whose periodicity is consistent with known fringe frequencies (set by the optical thickness of the detectors
+and dichroics) using a Lomb-Scargle periodogram. The number of fringe components to be removed is governed by
+a Bayesian evidence calculation. The first of these residual fringe correction steps is a 2-D correction that
+can be applied to the flux-calibrated detector data in the :ref:`residual_fringe <residual_fringe_step>` step. This step
+is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently it is skipped by default. For more
+information see :ref:`residual_fringe <residual_fringe_step>`.
+
+The pipeline also can apply a 1-D residual fringe correction. This correction is only relevant for MIRI MRS data and 
+can be turned on by setting the optional parameter ``extract_1d.ifu_rfcorr = True``  in the ``extract_1d`` step. 
+Empirically, the 1-D correction step has been found to work better than the 2-D correction step if it is
+applied to per-band spectra.
+
+When using the ``ifu_rfcorr`` option in the ``extract_1d`` step  to apply a 1-D residual fringe
+correction, it is applied during the extraction of spectra from the IFU cube. The 1D residual fringe code can also
+be called outside the pipeline to correct an extracted spectrum. If running outside the pipeline, the correction
+works best on single-band cubes, and the channel of
+the data must be given. The steps to run this correction outside the pipeline are::
+
+  from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
+  flux_cor = rf1d(flux, wave, channel=4)
+
+where ``flux`` is the extracted spectral data, and the data are from channel 4 for this example. 

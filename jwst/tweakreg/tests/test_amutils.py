@@ -54,3 +54,22 @@ def test_create_catalog(wcsobj):
     )
     # check that we got expected number of sources
     assert len(gcat) == EXPECTED_NUM_SOURCES
+
+
+def test_create_catalog_graceful_failure(wcsobj):
+    '''
+    Ensure catalog retuns zero sources instead of failing outright
+    when the bounding box is too small to find any sources
+    '''
+    wcsobj.bounding_box = ((0, 0.5), (0, 0.5))
+
+    # Create catalog
+    gcat = amutils.create_astrometric_catalog(
+        None,
+        existing_wcs=wcsobj,
+        catalog=TEST_CATALOG,
+        output=None,
+        epoch='2016.0',
+    )
+    # check that we got expected number of sources
+    assert len(gcat) == 0

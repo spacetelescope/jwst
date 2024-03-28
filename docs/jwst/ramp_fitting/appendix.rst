@@ -1,7 +1,12 @@
 Appendix
 ========
 
-The derivation of the segment-specific readnoise variance (:math:`{ var^R_{s}  }`) is shown here. This pertains to both the 'conventional' and 'weighted` readnoise variances - the only difference being the number of groups in the segment.  This derivation follows the standard procedure to fitting data to a straight line, such as in chapter 15 of Numerical Recipes.  The segment-specific variance from read noise corresponds to :math:`{\sigma_b^2}` in section 15.2. 
+The derivation of the segment-specific readnoise variance (:math:`{ var^R_{s}  }`)
+is shown here. This pertains to both the 'conventional' and 'weighted' readnoise
+variances - the only difference being the number of groups in the segment.
+This derivation follows the standard procedure for fitting data to a straight line,
+such as in chapter 15 of Numerical Recipes.  The segment-specific variance from
+read noise corresponds to :math:`{\sigma_b^2}` in section 15.2. 
 
 For read noise R, weight w = :math:`{1 / R^2}`, which is a constant. 
   
@@ -28,7 +33,7 @@ Summations needed:
 :math:`{\sum_{k=1}^n k^2= n \cdot (n+1) \cdot (2 \cdot n+1) / 6 = n^3/3 + n^2/2 +n/6 }`
 
       
-The variance from read noise 
+The variance due to read noise 
 = :math:`{var^R_{s} = S_1 / D = S_1 / (S_1 \cdot S_{xx} - S_x^2)}` 
 
 
@@ -43,4 +48,5 @@ The variance from read noise
 
 = :math:`{ \dfrac{12 \cdot R^2}  {(n^3 - n) \cdot t^2}}` 
 
-This is the equation in the code and in the segment-specific computations section of the Description.
+This is the equation used in the step code and listed in the segment-specific computations
+section of the step Description.

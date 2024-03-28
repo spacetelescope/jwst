@@ -1,5 +1,10 @@
 """Test various utility functions"""
-from numpy.testing import assert_array_equal
+from astropy import coordinates as coord
+from astropy import wcs as fitswcs
+from astropy.modeling import models as astmodels
+from gwcs import coordinate_frames as cf
+from gwcs.wcstools import wcs_from_fiducial
+from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
 
@@ -9,7 +14,8 @@ from jwst.resample.resample_spec import find_dispersion_axis
 from jwst.resample.resample_utils import (
     build_mask,
     build_driz_weight,
-    decode_context
+    decode_context,
+    reproject
 )
 
 
@@ -23,6 +29,59 @@ BITVALUES_STR = f'{2**0}, {2**2}'
 BITVALUES_INV_STR = f'~{2**0}, {2**2}'
 JWST_NAMES = 'DO_NOT_USE, JUMP_DET'
 JWST_NAMES_INV = '~' + JWST_NAMES
+
+
+@pytest.fixture(scope='module')
+def wcs_gwcs():
+    crval = (150.0, 2.0)
+    crpix = (500.0, 500.0)
+    shape = (1000, 1000)
+    pscale = 0.06 / 3600
+    
+    prj = astmodels.Pix2Sky_TAN()
+    fiducial = np.array(crval)
+
+    pc = np.array([[-1., 0.], [0., 1.]])
+    pc_matrix = astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix')
+    scale = astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2')
+    transform = pc_matrix | scale
+
+    out_frame = cf.CelestialFrame(name='world', axes_names=('lon', 'lat'), reference_frame=coord.ICRS())
+    input_frame = cf.Frame2D(name="detector")
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
+                             transform=transform, input_frame=input_frame)
+
+    output_bounding_box = ((0.0, float(shape[1])), (0.0, float(shape[0])))
+    offset1, offset2 = crpix
+    offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
+
+    wnew.insert_transform('detector', offsets, after=True)
+    wnew.bounding_box = output_bounding_box
+
+    tr = wnew.pipeline[0].transform
+    pix_area = (
+        np.deg2rad(tr['cdelt1'].factor.value) *
+        np.deg2rad(tr['cdelt2'].factor.value)
+    )
+
+    wnew.pixel_area = pix_area
+    wnew.pixel_shape = shape[::-1]
+    wnew.array_shape = shape
+    return wnew
+
+
+@pytest.fixture(scope='module')
+def wcs_fitswcs(wcs_gwcs):
+    fits_wcs = fitswcs.WCS(wcs_gwcs.to_fits_sip())
+    return fits_wcs
+
+
+@pytest.fixture(scope='module')
+def wcs_slicedwcs(wcs_gwcs):
+    xmin, xmax = 100, 500
+    slices = (slice(xmin, xmax), slice(xmin, xmax))
+    sliced_wcs = fitswcs.wcsapi.SlicedLowLevelWCS(wcs_gwcs, slices)
+    return sliced_wcs
 
 
 @pytest.mark.parametrize(
@@ -59,7 +118,7 @@ def test_build_driz_weight(weight_type):
     """Check that correct weight map is returned of different weight types"""
     model = ImageModel((10, 10))
     model.dq[0] = DO_NOT_USE
-    model.meta.exposure.exposure_time = 10.0
+    model.meta.exposure.measurement_time = 10.0
     model.var_rnoise += 0.1
 
     weight_map = build_driz_weight(model, weight_type=weight_type, good_bits="GOOD")
@@ -116,3 +175,30 @@ def test_decode_context():
 
     assert sorted(idx1) == [9, 12, 14, 19, 21, 25, 37, 40, 46, 58, 64, 65, 67, 77]
     assert sorted(idx2) == [9, 20, 29, 36, 47, 49, 64, 69, 70, 79]
+
+
+@pytest.mark.parametrize(
+    "wcs1, wcs2, offset",
+    [
+        ("wcs_gwcs", "wcs_fitswcs", 0),
+        ("wcs_fitswcs", "wcs_gwcs", 0),
+        ("wcs_gwcs", "wcs_slicedwcs", 100),
+        ("wcs_slicedwcs", "wcs_gwcs", -100),
+        ("wcs_fitswcs", "wcs_slicedwcs", 100),
+        ("wcs_slicedwcs", "wcs_fitswcs", -100),
+    ]
+)
+def test_reproject(wcs1, wcs2, offset, request):
+    wcs1 = request.getfixturevalue(wcs1)
+    wcs2 = request.getfixturevalue(wcs2)
+    x = np.arange(150, 200)
+    
+    f = reproject(wcs1, wcs2)
+    res = f(x, x)
+    assert_allclose(x, res[0] + offset)
+    assert_allclose(x, res[1] + offset)
+
+
+def test_reproject_with_garbage_input():
+    with pytest.raises(TypeError):
+        reproject("foo", "bar")

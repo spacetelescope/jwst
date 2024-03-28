@@ -1,5 +1,33 @@
-1.13.5 (unreleased)
+1.14.1 (unreleased)
 ===================
+
+extract_1d
+----------
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
+  the F277W filter with warning. [#8275] 
+
+1.14.0 (2024-03-25)
+===================
+
+ami
+---
+
+- Replaced use of deprecated ``scipy.integrate.simps``
+  with ``scipy.integrate.simpson``. [#8320]
+
+- Overhaul of AMI processing. See documentation for full details. [#7862]
+
+- Additional optional input arguments for greater user processing flexibility.
+  See documentation for details. [#7862]
+
+- Bad pixel correction applied to data using new NRM reference file to calculate 
+  complex visibility support (M. Ireland method implemented by J. Kammerer). [#7862]
+
+- Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
+
+- Disable ``AmiAverage`` step. [#7862]
+
 
 associations
 ------------
@@ -8,10 +36,51 @@ associations
   sub-pixel dithers, so that only exposures from other nod positions
   are used as background members in "spec2" associations. [#8184]
 
+- Isolate candidate processing into their own pools [#8227]
+
+- Update the level-3 rules for "tso3" associations so that NIRISS SOSS
+  exposures with NINTS=1 are excluded. [#8359]
+
+- Removed blanket warning ignore for duplicate level 2 associations. [#8320]
+
+background
+----------
+
+- Updated to allow multi-integration (rateints) background exposures to have
+  a different value of NINTS than the science exposure. [#8326]
+
+charge_migration
+----------------
+
+- Updated the CHARGELOSS flagging.  In an integration ramp, the first group in
+  the SCI data is found that is above the CHARGELOSS threshold and not flagged
+  as DO_NOT_USE.  This group, and all subsequent groups, are then flagged as
+  CHARGELOSS and DO_NOT_USE.  The four nearest pixel neighbor are then flagged
+  in the same group. [#8336]
+  
+- Added warning handler for expected NaN and inf clipping in the
+  ``sigma_clip`` function. [#8320]
+
 cube_build
 ----------
 
 - Add a warning message to log if no valid data is found on the detector. [#8220]
+
+dark_current
+------------
+
+- Adds new parameter ``average_dark_current``, either from step params or
+  pulled from dark reference file, and stores in RampModel for use downstream
+  in ``RampFitStep``. [#8302]
+
+datamodels
+----------
+
+- Fixed a bug in the ``ModelContainer`` data model, due to which the ``models_grouped``
+  property would return opened data models instead of file names. [#8191]
+
+- Removed ``test_all_datamodels_init`` test, which is a duplicate of a test in
+  ``stdatamodels``. [#8320]
 
 documentation
 -------------
@@ -28,11 +97,33 @@ documentation
 
 - Change docs theme to ``sphinx-rtd-theme`` [#8224]
 
+- Reorganized ``jump`` and ``ramp_fitting`` step docs content that's split between
+  the jwst and stcal repos. [#8253]
+
+- Correct the names of parameter options ``usigma`` and ``lsigma`` for ``sky_match``. [#8356]
+
+- Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
+
+- Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
+
+
 emicorr
 -------
 
 - Set skip=True by default in the code, to be turned on later by a parameter
   reference file. [#8171]
+
+- Step is skipped when no reference file is found and to add a parameter to
+  allow the user to run the step for given frequencies with an on-the-fly
+  generated reference file. [#8270]
+
+- Fixed bug for finding correction data for subarray FULL. [#8375]
+
+exp_to_source
+-------------
+
+- Fixed a bug for multislit data that bunit values, model_type and wcsinfo was
+  was being overwritten with the top multispec model values. [#8294]
 
 extract_1d
 ----------
@@ -40,17 +131,102 @@ extract_1d
 - Fixed a bug in the calling of optional MIRI MRS 1d residual fringe
   correction that could cause defringing to fail in some cases. [#8180]
 
-- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in 
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
   the FULL subarray with warning. [#8225]
 
-- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
-  the F277W filter with warning. [#8275]
-  
+- Fixed a bug in the ATOCA matrix solve for NIRISS SOSS that would cause failures on
+  good input data in some cases. [#8273]
+
+- Added a trap in the NIRISS SOSS ATOCA algorithm for cases where nearly all
+  pixels in the 2nd-order spectrum are flagged and would cause the step
+  to fail. [#8265]
+
+- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
+  to avoid failures for moderate-brightness sources due to extremely low
+  throughput at the long wavelength end of MRS band 4C. [#8199]
+
+- Replaced instances of deprecated interp2d with
+  RectBivariateSpline in ``apply_apcorr``. [#8291]
+
+- Added saving the extraction aperture x/y limits for slit-like modes to
+  keywords in the output header. [#8278]
+
+- Fixed deprecated conversions of single-element numpy arrays to scalar
+  in ``apply_apcorr``. [#8320]
+
+- Increased specificity of warning filters in ``atoca`` and ``soss_centroids``. [#8320]
+
+extract_2d
+----------
+
+- Fixed crash when user provides an integer value for the `slit_name` argument,
+  by converting to a string. This change had been done in #8108, but it got undone
+  by another PR. [#8272]
+
+general
+-------
+
+- Update minimum required photutils version to 1.5.0 [#8211]
+
+- Update minimum required stdatamodels version to include 1.10.0 [#8322]
+
+- Update minimum required gwcs version to include 0.21.0 [#8337]
+
+- Remove unused asdf-transform-schemas dependency [#8337]
+
+- Replaced all instances of pytest ``tmpdir`` and ``tmpdir_factory``
+  fixtures with ``tmp_path`` and ``tmp_path_factory``. [#8327]
+
+- Replaced the ``_jail`` fixture from ``ci_watson`` with custom
+  ``tmp_cwd`` to enforce ``no:legacypath`` in the CI tests. [#8327]
+
+- Renamed the ``jail`` fixture with ``tmp_cwd_module``. [#8327]
+
+- Replaced deprecated ``tool.ruff.ignore`` and ``tool.ruff.per-file-ignores``
+  with ``tool.ruff.lint.ignore`` and ``tool.ruff.lint.per-file-ignores``. [#8320]
+
+jump
+----
+
+- Add parameters that control the flagging of saturated cores of snowballs in
+  the next integration. [#8303]
+
+- Removed a unit test in ``jump`` that was moved to STCAL to decrease
+  the coupling of the two repos. [#8319]
+
+- To improve performance an additional parameter to the jump step was added
+  that sets the threshold number of differences above which iterative flagging
+  of one CR at a time is turned off. [#8304]
+
+lib
+---
+
+- Updated ``set_velocity_aberration`` to use datamodels instead of `astropy.io.fits` for opening
+  and manipulating input files. [#8285]
+
+- Added new function set_nans_to_donotuse in ``lib.basic_utils`` to
+  check the science data array for NaN values and check if they have
+  a DQ flag of DO_NOT_USE, or set it if not. [#8292]
+
 outlier_detection
 -----------------
 
 - Removed ``grow`` from the ``outlier_detection`` step parameters,
   because it's no longer used in the algorithms. [#8190]
+
+- Fixed bug in removing intermediate files, so that the search for intermediate
+  files does not rely on the input files having a "cal" suffix, which was causing
+  original input files to accidentally get deleted instead of just the intermediate
+  files. [#8263]
+
+- Removed any reference to the "tophat" kernel for ``outlier_detection``
+  step. [#8364]
+
+pathloss
+--------
+
+- Added a check to find all NaN values in the data with a corresponding
+  even value flag in the DQ array, and convert them to DO_NOT_USE. [#8292]
 
 photom
 ------
@@ -68,9 +244,28 @@ photom
 - Get the values of PIXAR_A2 and PIXAR_SR from AREA reference file
   instead of PHOTOM reference file to avoid missmatching values. [#8187]
 
-- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step 
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed and came before the ``photom`` step, e.g. for NIRISS SOSS
   data in the FULL subarray. [#8225]
+
+- Removed blanket warning ignore for ``find_row``. [#8320]
+
+pipeline
+--------
+
+- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ in
+  the list of modes for running the ``nsclean`` step. [#8256]
+
+pixel_replace
+-------------
+
+- Fixed a bug that caused array size mismatches when the ``mingrad`` algorithm
+  was applied to NIRSpec data. [#8312]
+
+ramp_fitting
+------------
+
+- Modified one runtime warning filter. [#8320]
 
 refpix
 ------
@@ -79,9 +274,37 @@ refpix
   all groups in each integration and robustly replace bad values from their
   nearest neighbors. [#8197, #8214]
 
-- Fixed ifu auto-centroiding to only use wavelengths shortward of 26 microns
-  to avoid failures for moderate-brightness sources due to extremely low
-  throughput at the long wavelength end of MRS band 4C. [#8199]
+- Add option for NIRSpec IRS2 to preserve interleaved reference pixels in the
+  output file, for calibration and diagnostic purposes. [#8255]
+
+- Add option to correct for mean reference pixel offsets by amplifier and detector
+  column in NIRSpec IRS2 mode. [#8143]
+
+resample
+--------
+
+- Updated exposure time weighting to use the measurement time
+  (TMEASURE) when available. [#8212]
+
+- Removed product exposure time (``TEXPTIME``) from all computations
+  in the resample step. [#8212]
+
+- Use the same ``iscale`` value for resampling science data and variance arrays. [#8159]
+
+- Changed to use the high-level APE 14 API (``pixel_to_world_values`` and
+  ``world_to_pixel_values``) for reproject, which also fixed a bug, and
+  removed support for astropy model [#8172]
+
+- Added sleep + check of output files that are median combined to fix intermittent
+  corruption of these files in operations [#8305]
+
+- Replace use of ``check_memory_allocation``. [#8324]
+
+- Removed any reference to the "tophat" kernel for resample step. [#8364]
+
+- Increased specificity of several warning filters. [#8320]
+
+- Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
 
 residual_fringe
 ---------------
@@ -89,24 +312,45 @@ residual_fringe
 - Fix a bug with 1d residual fringe zeroing out negative fluxes instead of
   ignoring them. [#8261]
 
+scripts
+-------
+
+- Updated ``set_velocity_aberration`` to have an optional ``--force-level1bmodel``
+  flag. [#8285]
+
+- Remove ``migrate_data`` and ``move_wcs`` scripts. [#8321]
+
+stpipe
+------
+
+- Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
+
+source_catalog
+--------------
+
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
+
 tweakreg
 --------
 
 - Update ``sregion`` after WCS corrections are applied. [#8158]
 
-- Added option to choose IRAFStarFinder and segmentation.SourceFinder
+- Add option to choose IRAFStarFinder and segmentation.SourceFinder
   instead of DAOStarFinder and exposed star finder parameters. [#8203]
 
-general
--------
+- Suppress warnings from ``photutils.background.Background2D`` regarding
+  NaNs in the input data. [#8308]
 
-- Update minimum required photutils version to 1.5.0 [#8211]
+- Fixed a bug that caused failures instead of warnings when no GAIA sources
+  were found within the bounding box of the input image. [#8334]
+  
+- Suppress AstropyUserWarnings regarding NaNs in the input data. [#8320]
 
-pipeline
---------
+wfs_combine
+-----------
 
-- Updated the ``calwebb_spec2`` pipeline to include NRS_BRIGHTOBJ to
-  the list of modes to run nsclean when skip is set to False. [#8256]
+- Fixed deprecated conversions of single-element numpy arrays to scalar. [#8320]
 
 
 1.13.4 (2024-01-25)
@@ -197,7 +441,7 @@ documentation
   reported typos in ``tweakreg`` documentation. [#8084]
 
 emicorr
-----------
+-------
 
 - Added new step for removing EMI from all MIRI data. [#7857]
 
@@ -216,9 +460,6 @@ extract_2d
 - Fixed crash with slit_name for MOS. Now the argument should
   be passed as a string, e.g. slit_name='67'. Included this
   in the corresponding documentation. [#8081]
-
-- Fixed potential future crash if MSA slitlet name is not an
-  integer. [#8108]
 
 general
 -------

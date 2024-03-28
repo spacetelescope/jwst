@@ -50,8 +50,6 @@ documentation on each reference file.
 +===============================================+==================================================+
 | :ref:`align_refs <align_refs_step>`           | :ref:`PSFMASK <psfmask_reffile>`                 |
 +-----------------------------------------------+--------------------------------------------------+
-| :ref:`ami_analyze <ami_analyze_step>`         | :ref:`THROUGHPUT <throughput_reffile>`           |
-+-----------------------------------------------+--------------------------------------------------+
 | :ref:`assign_wcs <assign_wcs_step>`           | :ref:`CAMERA <camera_reffile>`                   |
 +                                               +--------------------------------------------------+
 |                                               | :ref:`COLLIMATOR <collimator_reffile>`           |
@@ -283,8 +281,6 @@ documentation on each reference file.
 | :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`superbias <superbias_step>`             |
-+--------------------------------------------------+-----------------------------------------------+
-| :ref:`THROUGHPUT <throughput_reffile>`           | :ref:`ami_analyze <ami_analyze_step>`         |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`TRAPDENSITY <trapdensity_reffile>`         | :ref:`persistence <persistence_step>`         |
 +--------------------------------------------------+-----------------------------------------------+

@@ -22,7 +22,8 @@ class EmiCorrStep(Step):
         nints_to_phase = integer(default=None)  # Number of integrations to phase
         nbins = integer(default=None)  # Number of bins in one phased wave
         scale_reference = boolean(default=True)  # If True, the reference wavelength will be scaled to the data's phase amplitude
-        skip = boolean(default=True)
+        skip = boolean(default=True)  # Skip the step
+        onthefly_corr_freq = float_list(default=None)  # Frequencies to use for correction
     """
 
     reference_file_types = ['emicorr']
@@ -30,10 +31,17 @@ class EmiCorrStep(Step):
     def process(self, input):
         with datamodels.open(input) as input_model:
 
-            # Catch the cases to skip, i.e. all instruments other than MIRI
+            # Catch the cases to skip
             instrument = input_model.meta.instrument.name
             if instrument != 'MIRI':
                 self.log.warning('EMI correction not implemented for instrument: {}'.format(instrument))
+                input_model.meta.cal_step.emicorr = 'SKIPPED'
+                return input_model
+
+            readpatt = input_model.meta.exposure.readpatt
+            allowed_readpatts = ['FAST', 'FASTR1', 'SLOW', 'SLOWR1']
+            if readpatt.upper() not in allowed_readpatts:
+                self.log.warning('EMI correction not implemented for read pattern: {}'.format(readpatt))
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
@@ -43,23 +51,27 @@ class EmiCorrStep(Step):
                 'user_supplied_reffile': self.user_supplied_reffile,
                 'nints_to_phase': self.nints_to_phase,
                 'nbins': self.nbins,
-                'scale_reference': self.scale_reference
+                'scale_reference': self.scale_reference,
+                'onthefly_corr_freq': self.onthefly_corr_freq
             }
 
             # Get the reference file
             save_onthefly_reffile, emicorr_ref_filename, emicorr_model = None, None, None
-            if self.user_supplied_reffile is None:
-                try:
-                    emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
-                    # Create the reference file only if told to save outputs, else correct on-the-fly
-                    if emicorr_ref_filename == 'N/A':
-                        emicorr_ref_filename = None
-                    else:
-                        self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
-                        emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
-                except Exception:
-                    # No reference file in CRDS
-                    self.log.info('No CRDS emicorr reference file found. Creating on-the-fly reference file.')
+            if self.onthefly_corr_freq is not None:
+                emicorr_ref_filename = None
+                self.log.info('Correcting with reference file created on-the-fly.')
+
+            elif self.user_supplied_reffile is None:
+                emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
+                # Skip the spep if no reference file is found
+                if emicorr_ref_filename == 'N/A':
+                    self.log.warning('No reference file found.')
+                    self.log.warning('EMICORR step will be skipped')
+                    input_model.meta.cal_step.emicorr = 'SKIPPED'
+                    return input_model
+                else:
+                    self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
+                    emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
 
             else:
                 self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
