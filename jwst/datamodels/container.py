@@ -164,10 +164,10 @@ to supply custom catalogs.
             self._models = init._models
             self._iscopy = True
         elif is_association(init):
-            self.from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
+            self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
-            init_from_asn = self.read_asn(init)
-            self.from_asn(init_from_asn, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
+            init_from_asn = self._read_asn(init)
+            self._from_asn(init_from_asn, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         else:
             raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
@@ -226,7 +226,7 @@ to supply custom catalogs.
         return result
 
     @staticmethod
-    def read_asn(filepath):
+    def _read_asn(filepath):
         """
         Load fits files from a JWST association file.
 
@@ -246,7 +246,7 @@ to supply custom catalogs.
             raise IOError("Cannot read ASN file.") from e
         return asn_data
 
-    def from_asn(self, asn_data, asn_file_path=None, asn_exptypes=None, asn_n_members=None):
+    def _from_asn(self, asn_data, asn_file_path=None, asn_exptypes=None, asn_n_members=None):
         """
         Load fits files from a JWST association file.
 
