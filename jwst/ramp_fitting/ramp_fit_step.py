@@ -221,7 +221,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     imshape = (nrows, ncols)
     cubeshape = (ngroups,) + imshape
 
-    segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint8)
+    segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint16)
     var_r4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     var_r3 = np.zeros((nint,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     s_inv_var_r3 = np.zeros((nint,) + imshape, dtype=np.float32)
@@ -317,7 +317,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
     imshape = (asize2, asize1)
     gdq_2d = gdq_sect[:, :, :].reshape((ngroups, npix))
     segs = np.zeros((ngroups, npix), dtype=np.int32)
-    sr_index = np.zeros(npix, dtype=np.uint8)
+    sr_index = np.zeros(npix, dtype=np.uint16)
 
     i_read = 0
     while i_read < ngroups:
@@ -341,7 +341,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
         i_read += 1
 
-    segs = segs.astype(np.uint8)
+    segs = segs.astype(np.uint16)
     segs_beg_3 = segs.reshape(ngroups, imshape[0], imshape[1])
     segs_beg_3 = utils.remove_bad_singles(segs_beg_3)
 
