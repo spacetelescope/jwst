@@ -15,7 +15,7 @@ opening a new [issue](https://github.com/spacetelescope/jwst/issues).
 ## Contributing code
 
 If you would like to contribute code, this is done by submitting a [pull request](https://github.com/spacetelescope/jwst/pulls)
-to the "master" branch of `spacetelescope/jwst`. To do this, we recommend the
+to the "main" branch of `spacetelescope/jwst`. To do this, we recommend the
 following workflow (which assumes you already have a Github account / command line tools).
 If you are also new to git, please refer to the [git reference manual](https://git-scm.com/docs)
 for an overview of git basics.
@@ -33,7 +33,7 @@ First, to clarify some terms that will be commonly used here:
 The first step is to create your own 'remote' (online) and 'local' (on your machine)
 clones of the central `spacetelescope/jwst` repository. You will make code changes
 on your machine to your 'local' clone, push these to 'origin' (your online fork),
-and finally, open a pull request to the ''master'' branch of `spacetelescope/jwst`.
+and finally, open a pull request to the ''main'' branch of `spacetelescope/jwst`.
 
 1. On the 'spacetelescope/jwst' Github repository page, 'fork' the JWST repository
 to your own account space by clicking the appropriate button on the upper right-hand
@@ -77,16 +77,16 @@ If you ever want to reset these URLs, add references to other remote forks of
 
 ### Step 2: Creating a branch for your changes
 
-It is a standard practice in git to create a new 'branch' (off `upstream/master`)
+It is a standard practice in git to create a new 'branch' (off `upstream/main`)
 for each new feature or bug fix. You can call this branch whatever you like - in
 this example, we'll call it 'my_feature'. First, make sure you
 have all recent changes to upstream by 'fetching' them:
 
 		>> git fetch upstream
 
-The following will create a new branch off local/master called 'my_feature', and automatically switch you over to your new branch.
+The following will create a new branch off local/main called 'my_feature', and automatically switch you over to your new branch.
 
-		>> git checkout -b my_feature upstream/master
+		>> git checkout -b my_feature upstream/main
 
 ### Step 3: Installing `jwst` for development
 
@@ -149,14 +149,14 @@ you open a pull request, add the corresponding PR number.
 
 ### Step 4: Opening a pull request
 
-Now, you can open a pull request on the master branch of the upstream `jwst` repository.
+Now, you can open a pull request on the main branch of the upstream `jwst` repository.
 
 1. On the `spacetelescope/jwst` web page, after you push your changes you should
 see a large green banner appear at the top prompting you to open a pull request
 with your recently pushed changes. You can also open a pull request from the
 [pull request tab](https://github.com/spacetelescope/jwst/pulls) on that page.
 Select your fork and your 'my_feature' branch, and open a pull request against
-the 'master' branch.
+the 'main' branch.
 
 2. There is now a checklist of items that need to be done before your PR can be merged.
 	* The continuous integration (CI) tests must complete and pass. The CI
@@ -177,16 +177,16 @@ the 'master' branch.
 ## Keeping your development branch current - rebasing
 
 As `jwst` is constantly evolving, you will often encounter the situation where you've
-made changes to your branch off 'master', but in the time its taken you to make those
-changes, 'upstream/master' has evolved with new commits from other developers. In this
+made changes to your branch off 'main', but in the time its taken you to make those
+changes, 'upstream/main' has evolved with new commits from other developers. In this
 situation, you will want to make sure you incorporate these changes into your branch.
 Rebasing allows you to do two things - 1. apply others changes on top of yours, and 2.
 squash your commits, even if there aren't new changes to apply. 
 
 Periodically, while writing code, to keep your branch up to date you will want to
-do an interactive rebase against upstream/master to apply any new changes on top of yours:
+do an interactive rebase against upstream/main to apply any new changes on top of yours:
 
-	>> git rebase -i upstream/master
+	>> git rebase -i upstream/main
 
 This will then prompt you to select commits and commit messages - if you select
 just the top commit, this will 'squash' the others and combine them into one. You
@@ -204,7 +204,7 @@ commits into a single one, which is also done with `git rebase`
 `jwst` uses [sphinx](https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html) to generate documentation, which is then hosted online on [readthedocs](https://readthedocs.org/).
 
 You can access two versions of the documentation on the [JWST readthedocs website](https://readthedocs.org/projects/jwst-pipeline/)
-- the 'latest' version is whatever is currently on the master branch, and the 'stable'
+- the 'latest' version is whatever is currently on the main branch, and the 'stable'
 version is the last released version. If you successfully merge a PR with documentation
 changes, they will only appear on 'latest' until the next JWST release.
 
@@ -329,7 +329,7 @@ last released version of `stcal`, and stcal points to the last version of `jwst`
 issue becomes circular. What you will need to do is modify the `pyproject.toml` files in both
 packages to point to the other to demonstrate that CI tests pass (and make a comment
 noting this in your PR), and then change it back before the PR is merge so that changes
-to `pyproject.toml` are not merged into master/main. In your `jwst` branch, to point to your
+to `pyproject.toml` are not merged into main. In your `jwst` branch, to point to your
 branch in the dependent package (in this example `stcal`), change the required `stcal`
 version in `pyproject.toml` to:
 
