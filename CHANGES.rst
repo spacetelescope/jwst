@@ -1,7 +1,10 @@
 1.14.1 (unreleased)
 ===================
 
-- 
+tweakreg
+--------
+
+- Output source catalog file now respects ``output_dir`` parameter. [#8386]
 
 1.14.0 (2024-03-25)
 ===================
