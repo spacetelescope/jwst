@@ -320,7 +320,12 @@ class Asn_Lv2Spec(
                     )
                 ],
                 reduce=Constraint.notany
-            )
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
         ])
 
         # Now check and continue initialization.
