@@ -330,7 +330,11 @@ def lrs_distortion(input_model, reference_files):
     ymodel = models.Mapping([1], n_inputs=2)
     # What is the effective XY as a function of subarray x,y?
     xymodel = models.Mapping((0, 1, 0, 1)) | xmodel & ymodel
-    xytov2v3 = xymodel | det_to_v2v3
+    # Define a shift by the reference point and immediately back again
+    # This doesn't do anything effectively, but it stores the reference point for later use in pathloss
+    reftransform = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | models.Shift(+zero_point[0]) & models.Shift(+zero_point[1])
+    # Put the transforms together
+    xytov2v3 = reftransform | xymodel | det_to_v2v3
 
     # Construct the full distortion model (xsub,ysub -> v2,v3,wavelength)
     lrs_wav_model = models.Mapping([1], n_inputs=2) | wavemodel
