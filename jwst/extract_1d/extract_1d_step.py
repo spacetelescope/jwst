@@ -431,6 +431,18 @@ class Extract1dStep(Step):
                 specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
                 speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
 
+                # Generate modified wavemap and spectrace reference files that include PWCPOS information
+                import pastasoss
+                pwcpos = input_model.find_fits_keyword('PWCPOS')
+                new_wavemap_ref_name = wavemap_ref_name.replace('.fits', '_pwcpos.fits')
+                new_spectrace_ref_name = spectrace_ref_name.replace('.fits', '_pwcpos.fits')
+                pastasoss.write_soss_reffiles(pwcpos=pwcpos, wavemap_filepath=new_wavemap_ref_name,
+                                              spectrace_filepath=new_spectrace_ref_name)
+
+                # Update the spectrace and wavemap reference file locations
+                wavemap_ref_name = new_wavemap_ref_name
+                spectrace_ref_name = new_spectrace_ref_name
+
                 # Build SOSS kwargs dictionary.
                 soss_kwargs = dict()
                 soss_kwargs['threshold'] = self.soss_threshold
