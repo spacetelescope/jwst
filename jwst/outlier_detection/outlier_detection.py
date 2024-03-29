@@ -259,8 +259,9 @@ class OutlierDetection:
         weight_thresholds = []
         # For each model, compute the bad-pixel threshold from the weight arrays
         for resampled in resampled_models._models:
-            m = datamodel_open(resampled)
-            weight = m.wht
+            # FIXME why does datamode_open on a model 0 out wht?
+            # m = datamodel_open(resampled)
+            weight = resampled.wht.copy()
             # necessary in order to assure that mask gets applied correctly
             if hasattr(weight, '_mask'):
                 del weight._mask
@@ -275,9 +276,6 @@ class OutlierDetection:
             # Mask pixels where weight falls below maskpt percent
             weight_threshold = mean_weight * maskpt
             weight_thresholds.append(weight_threshold)
-            # close and delete the model, just to explicitly try to keep the memory as clean as possible
-            m.close()
-            del m
 
         # Now, set up buffered access to all input models
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
