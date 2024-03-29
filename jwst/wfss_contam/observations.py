@@ -85,6 +85,11 @@ class Observation:
         # Create pixel lists for sources labeled in segmentation map
         self.create_pixel_list()
 
+        # Initialize the list of slits
+        self.simul_slits = datamodels.MultiSlitModel()
+        self.simul_slits_order = []
+        self.simul_slits_sid = []
+
     def create_pixel_list(self):
         # Create a list of pixels to be dispersed, grouped per object ID.
 
@@ -177,7 +182,8 @@ class Observation:
         self.simulated_image = np.zeros(self.dims, float)
 
         # Loop over all source ID's from segmentation map
-        for i in range(len(self.IDs)):
+        pool_args = []
+        for i in self.IDs:
             if self.cache:
                 self.cached_object[i] = {}
                 self.cached_object[i]['x'] = []
@@ -188,8 +194,18 @@ class Observation:
                 self.cached_object[i]['maxx'] = []
                 self.cached_object[i]['miny'] = []
                 self.cached_object[i]['maxy'] = []
-
-            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
+            disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
+            pool_args.append(disperse_chunk_args)
+        if self.max_cpu > 1:
+            with Pool(self.max_cpu) as mypool:
+                simul_slits = mypool.map(self.disperse_chunk, pool_args)
+            self.simul_slits.slits = simul_slits
+            # to do - don't think this will be able to access class variables
+        else:
+            for i in range(len(self.IDs)):
+                slit = self.disperse_chunk(*pool_args[i])
+                if slit is not None:
+                    self.simul_slits.slits.append(slit)
 
     def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
         """
@@ -212,7 +228,7 @@ class Observation:
             Response (flux calibration) array from photom reference file
         """
 
-        sid = int(self.IDs[c])
+        sid = int(c)
         self.order = order
         self.wmin = wmin
         self.wmax = wmax
@@ -258,19 +274,19 @@ class Observation:
             # now have full pars list for all pixels for this object
 
         time1 = time.time()
-        if self.max_cpu > 1:
-            mypool = Pool(self.max_cpu)  # Create the pool
-            all_res = mypool.imap_unordered(dispersed_pixel, pars)  # Fill the pool
-            mypool.close()  # Drain the pool
-        else:
-            all_res = []
-            for i in range(len(pars)):
-                all_res.append(dispersed_pixel(*pars[i]))
+        
+        all_res = []
+        for i in range(len(pars)):
+            all_res.append(dispersed_pixel(*pars[i]))
+
+        time11 = time.time()
+        print(f'Elapsed time for dispersed_pixel in sid {sid}:', time11-time1)
 
         # Initialize blank image for this source
         this_object = np.zeros(self.dims, float)
 
         nres = 0
+        bounds = []
         for pp in all_res:
             if pp is None:
                 continue
@@ -288,6 +304,7 @@ class Observation:
             maxy = int(max(y))
             a = sparse.coo_matrix((f, (y - miny, x - minx)),
                                   shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+            bounds.append([minx, maxx, miny, maxy])
 
             # Accumulate results into simulated images
             self.simulated_image[miny:maxy + 1, minx:maxx + 1] += a
@@ -306,7 +323,27 @@ class Observation:
         time2 = time.time()
         log.debug(f"Elapsed time {time2-time1} sec")
 
-        return this_object
+        # figure out global bounds of object
+        if len(bounds) > 0:
+            bounds = np.array(bounds)
+            thisobj_minx = int(np.min(bounds[:, 0]))
+            thisobj_maxx = int(np.max(bounds[:, 1]))
+            thisobj_miny = int(np.min(bounds[:, 2]))
+            thisobj_maxy = int(np.max(bounds[:, 3]))
+            slit = datamodels.SlitModel()
+            slit.source_id = sid
+            slit.name = f"source_{sid}"
+            slit.xstart = thisobj_minx
+            slit.xsize = thisobj_maxx - thisobj_minx + 1
+            slit.ystart = thisobj_miny
+            slit.ysize = thisobj_maxy - thisobj_miny + 1
+            slit.meta.wcsinfo.spectral_order = self.order
+            slit.data = this_object[thisobj_miny:thisobj_maxy + 1, thisobj_minx:thisobj_maxx + 1]
+            
+            self.simul_slits_order.append(self.order)
+            self.simul_slits_sid.append(sid)
+            return slit
+        return None
 
     def disperse_all_from_cache(self, trans=None):
         if not self.cache:

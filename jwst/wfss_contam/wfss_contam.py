@@ -43,6 +43,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
         Contamination estimate images for each source slit
 
     """
+    n_sources = 5  # number of sources to simulate, for testing. note machine has 12 cores
+    source_0 = 2620  # source ID to start with
+
     # Determine number of cpu's to use for multi-processing
     if max_cores == 'none':
         ncpus = 1
@@ -115,6 +118,13 @@ def contam_corr(input_model, waverange, photom, max_cores):
     simul_all = None
     obs = Observation(image_names, seg_model, grism_wcs, filter_name,
                       boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus)
+    
+    # for testing, select a subset of the brightest sources, as extracted in extract2d
+    ids_in_extract2d = np.array(sorted([slit.source_id for slit in output_model.slits]))
+    good = (ids_in_extract2d >= source_0)
+    obs.IDs = list(ids_in_extract2d[good][:n_sources])
+    log.info(f"Simulating only {n_sources} sources starting at sid {source_0}")
+    print(obs.IDs)
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
@@ -133,40 +143,50 @@ def contam_corr(input_model, waverange, photom, max_cores):
     simul_model = datamodels.ImageModel(data=simul_all)
     simul_model.update(input_model, only="PRIMARY")
 
+    # save the simulation multislitmodel
+    obs.simul_slits.save("simulated_slits.fits")
+    simul_slit_sids = np.array(obs.simul_slits_sid)
+    simul_slit_orders = np.array(obs.simul_slits_order)
+
     # Loop over all slits/sources to subtract contaminating spectra
     log.info("Creating contamination image for each individual source")
     contam_model = datamodels.MultiSlitModel()
     contam_model.update(input_model)
+    print('number of slits in output model', len(output_model.slits))
     slits = []
     for slit in output_model.slits:
 
         # Create simulated spectrum for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
-        chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
-
-        obs.simulated_image = np.zeros(obs.dims)
-        obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order])
-        this_source = obs.simulated_image
+        good = (simul_slit_sids == sid) * (simul_slit_orders == order)
+        if not any(good):
+            continue
+        else:
+            print('Processing source', sid, 'order', order)
+        
+        good_idx = np.where(good)[0][0]
+        this_simul = obs.simul_slits.slits[good_idx]
 
         # Contamination estimate is full simulated image minus this source
-        contam = simul_all - this_source
+        # cutting out the region and then subtracting
+        x1 = this_simul.xstart - 1
+        y1 = this_simul.ystart - 1
+        this_field = simul_all[y1:y1 + this_simul.ysize, x1:x1 + this_simul.xsize]
+        contam = this_field - this_simul.data
 
-        # Create a cutout of the contam image that matches the extent
-        # of the source slit
-        x1 = slit.xstart - 1
-        y1 = slit.ystart - 1
-        cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
-        new_slit = datamodels.SlitModel(data=cutout)
-        copy_slit_info(slit, new_slit)
+        # Create a new slit model for the contamination estimate
+        new_slit = datamodels.SlitModel(data=contam)
+        # some of this slit info is wrong, because output slit has different size that input slit now
+        # other problems may be caused by output slit having different size when subtracting real data
+        # need to fix this
+        copy_slit_info(slit, new_slit) 
         slits.append(new_slit)
-
-        # Subtract the cutout from the source slit
-        slit.data -= cutout
 
     # Save the contamination estimates for all slits
     contam_model.slits.extend(slits)
+
+    # at what point does the output model get updated with the contamination-corrected data?
 
     # Set the step status to COMPLETE
     output_model.meta.cal_step.wfss_contam = 'COMPLETE'
