@@ -515,7 +515,7 @@ to supply custom catalogs.
 
         return datamodel_open(first_exposure)
 
-    def set_buffer(self, buffer_size, overlap=None):
+    def set_buffer(self, buffer_size):
         """Set buffer size for scrolling section-by-section access.
 
         Parameters
@@ -523,14 +523,7 @@ to supply custom catalogs.
         buffer_size : float, None
             Define size of buffer in MB for each section.
             If `None`, a default buffer size of 1MB will be used.
-
-        overlap : int, optional
-            Define the number of rows of overlaps between sections.
-            If `None`, no overlap will be used.
         """
-        self.overlap = 0 if overlap is None else overlap
-        self.grow = 0
-
         with datamodel_open(self._models[0]) as model:
             imrows, imcols = model.data.shape
             data_item_size = model.data.itemsize
@@ -539,7 +532,7 @@ to supply custom catalogs.
         del model
         min_buffer_size = imcols * data_item_size
 
-        self.buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
+        self.buffer_size = (buffer_size * _ONE_MB)
 
         section_nrows = min(imrows, int(self.buffer_size // min_buffer_size))
 
@@ -549,9 +542,9 @@ to supply custom catalogs.
                            f"Increasing buffer size to {self.buffer_size / _ONE_MB}MB")
             section_nrows = 1
 
-        nbr = section_nrows - self.overlap
-        nsec = (imrows - self.overlap) // nbr
-        if (imrows - self.overlap) % nbr > 0:
+        nbr = section_nrows
+        nsec = imrows // nbr
+        if imrows % nbr > 0:
             nsec += 1
 
         self.n_sections = nsec
@@ -570,7 +563,7 @@ to supply custom catalogs.
 
             if k == self.n_sections - 1:  # last section
                 e2 = min(e2, self.imrows)
-                e1 = min(e1, e2 - self.overlap - 1)
+                e1 = min(e1, e2 - 1)
 
             data_list = np.empty((len(self._models), e2 - e1, self.imcols),
                                  dtype=self.imtype)

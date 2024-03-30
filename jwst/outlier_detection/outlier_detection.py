@@ -228,7 +228,7 @@ class OutlierDetection:
 
         else:
             # Median image will serve as blot image
-            blot_models = ModelContainer(open_models=False)
+            blot_models = ModelContainer()
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
 
@@ -284,7 +284,12 @@ class OutlierDetection:
                                 resampled_models.imtype)
         median_image[:] = np.nan  # initialize with NaNs
 
+        # compute a "median_image" by...
+        # getting "sections" of images, these are defined in ModelContainer
+
+        breakpoint()
         for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
+            # resampled_sci shape = [n_models, nrows, ncols]
             # Create a mask for each input image, masking out areas where there is
             # no data or the data has very low weight
             badmasks = []
@@ -293,6 +298,9 @@ class OutlierDetection:
                 log.debug("Percentage of pixels with low weight: {}".format(
                     np.sum(badmask) / len(weight.flat) * 100))
                 badmasks.append(badmask)
+
+            # badmask list of n_models elements, each [nrows, ncols] bools
+            # where True should be set to nan (and will be below)
 
             # Fill resampled_sci array with nan's where mask values are True
             for f1, f2 in zip(resampled_sci, badmasks):
@@ -307,6 +315,8 @@ class OutlierDetection:
                 warnings.filterwarnings(action="ignore",
                                         message="All-NaN slice encountered",
                                         category=RuntimeWarning)
+                # fill in rows of median_image with nanmedian of science data
+                # across all models (axis=0)
                 median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
             del resampled_sci, resampled_weight
 
@@ -318,7 +328,7 @@ class OutlierDetection:
         sinscl = self.outlierpars.get('sinscl', 1.0)
 
         # Initialize container for output blot images
-        blot_models = ModelContainer(open_models=False)
+        blot_models = ModelContainer()
 
         log.info("Blotting median")
         for model in self.input_models:
