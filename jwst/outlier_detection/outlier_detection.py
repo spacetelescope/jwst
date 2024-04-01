@@ -312,7 +312,6 @@ class OutlierDetection:
                 median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
             del resampled_sci, resampled_weight
 
-        breakpoint()
         return median_image
 
     def blot_median(self, median_model):
