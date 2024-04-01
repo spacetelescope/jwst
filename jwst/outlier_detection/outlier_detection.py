@@ -254,9 +254,6 @@ class OutlierDetection:
 
         log.info("Computing median")
 
-        # Compute weight means without keeping datamodels for eacn input open
-        # keep track of resulting computation for each input resampled datamodel
-        weight_thresholds = []
         # For each model, compute the bad-pixel threshold from the weight arrays
         for (i, resampled) in enumerate(resampled_models._models):
             # FIXME why does datamode_open on a model 0 out wht?
@@ -281,7 +278,6 @@ class OutlierDetection:
 
             # use the mean to compute a threshold
             weight_threshold = mean_weight * maskpt
-            weight_thresholds.append(weight_threshold)
 
             # Mask pixels where weight falls below maskpt percent
             badmask = np.less(resampled.wht, weight_threshold)

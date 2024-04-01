@@ -319,6 +319,9 @@ to supply custom catalogs.
         if asn_file_path is not None:
             self.asn_table_name = op.basename(asn_file_path)
             self.asn_pool_name = asn_data['asn_pool']
+            # FIXME another iteration through models just to overwrite
+            # - meta.asn.table_name
+            # - meta.asn.pool_name
             for model in self:
                 try:
                     model.meta.asn.table_name = self.asn_table_name
