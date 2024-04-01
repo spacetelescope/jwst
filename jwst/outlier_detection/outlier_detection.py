@@ -258,68 +258,49 @@ class OutlierDetection:
         # keep track of resulting computation for each input resampled datamodel
         weight_thresholds = []
         # For each model, compute the bad-pixel threshold from the weight arrays
-        for resampled in resampled_models._models:
+        for (i, resampled) in enumerate(resampled_models._models):
             # FIXME why does datamode_open on a model 0 out wht?
             # m = datamodel_open(resampled)
             weight = resampled.wht.copy()
+
             # necessary in order to assure that mask gets applied correctly
             if hasattr(weight, '_mask'):
                 del weight._mask
+
+            # mask out all 0 and nan values in the weight array
             mask_zero_weight = np.equal(weight, 0.)
             mask_nans = np.isnan(weight)
-            # Combine the masks
             weight_masked = np.ma.array(weight, mask=np.logical_or(
                 mask_zero_weight, mask_nans))
-            # Sigma-clip the unmasked data
+
+            # Sigma-clip the masked data
             weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
+
+            # compute the mean
             mean_weight = np.mean(weight_masked)
-            # Mask pixels where weight falls below maskpt percent
+
+            # use the mean to compute a threshold
             weight_threshold = mean_weight * maskpt
             weight_thresholds.append(weight_threshold)
 
-        # Now, set up buffered access to all input models
-        resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
-        resampled_sections = resampled_models.get_sections()
-        median_image = np.empty((resampled_models.imrows, resampled_models.imcols),
-                                resampled_models.imtype)
-        median_image[:] = np.nan  # initialize with NaNs
+            # Mask pixels where weight falls below maskpt percent
+            badmask = np.less(resampled.wht, weight_threshold)
 
-        # compute a "median_image" by...
-        # getting "sections" of images, these are defined in ModelContainer
+            # assign nans to all masked values
+            if i == 0:
+                n_rows, n_cols = resampled.data.shape
+                # FIXME this is all data in memory, at once
+                filtered_data = np.empty((len(resampled_models._models), n_rows, n_cols), resampled.data.dtype)
+            filtered_data[i][:] = resampled.data
+            filtered_data[i][badmask] = np.nan
 
-        breakpoint()
-        for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
-            # resampled_sci shape = [n_models, nrows, ncols]
-            # Create a mask for each input image, masking out areas where there is
-            # no data or the data has very low weight
-            badmasks = []
-            for weight, weight_threshold in zip(resampled_weight, weight_thresholds):
-                badmask = np.less(weight, weight_threshold)
-                log.debug("Percentage of pixels with low weight: {}".format(
-                    np.sum(badmask) / len(weight.flat) * 100))
-                badmasks.append(badmask)
-
-            # badmask list of n_models elements, each [nrows, ncols] bools
-            # where True should be set to nan (and will be below)
-
-            # Fill resampled_sci array with nan's where mask values are True
-            for f1, f2 in zip(resampled_sci, badmasks):
-                for elem1, elem2 in zip(f1, f2):
-                    elem1[elem2] = np.nan
-
-            del badmasks
-
-            # For a stack of images with "bad" data replaced with Nan
-            # use np.nanmedian to compute the median.
-            with warnings.catch_warnings():
-                warnings.filterwarnings(action="ignore",
-                                        message="All-NaN slice encountered",
-                                        category=RuntimeWarning)
-                # fill in rows of median_image with nanmedian of science data
-                # across all models (axis=0)
-                median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
-            del resampled_sci, resampled_weight
-
+        # For a stack of images with "bad" data replaced with Nan
+        # use np.nanmedian to compute the median.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore",
+                                    message="All-NaN slice encountered",
+                                    category=RuntimeWarning)
+            median_image = np.nanmedian(filtered_data, axis=0)
         return median_image
 
     def blot_median(self, median_model):
