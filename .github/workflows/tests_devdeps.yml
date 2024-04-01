@@ -10,6 +10,9 @@ on:
   pull_request:
     branches:
       - master
+    types:
+      - synchronize
+      - labeled
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
