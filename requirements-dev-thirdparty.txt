@@ -17,3 +17,6 @@ numpy>=0.0.dev0
 scipy>=0.0.dev0
 contourpy>=0.0.dev0
 matplotlib>=0.0.dev0
+
+# add drizzle as well so it gets compiled with numpy 2.0
+git+https://github.com/braingram/drizzle.git@np2
