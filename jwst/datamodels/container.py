@@ -193,17 +193,17 @@ to supply custom catalogs.
                 model = datamodel_open(model, memmap=self._memmap)
             yield model
 
-    def insert(self, index, model):
-        self._models.insert(index, model)
+    #def insert(self, index, model):
+    #    self._models.insert(index, model)
 
     def append(self, model):
         self._models.append(model)
 
-    def extend(self, model):
-        self._models.extend(model)
+    #def extend(self, model):
+    #    self._models.extend(model)
 
-    def pop(self, index=-1):
-        self._models.pop(index)
+    #def pop(self, index=-1):
+    #    self._models.pop(index)
 
     def copy(self, memo=None):
         """
