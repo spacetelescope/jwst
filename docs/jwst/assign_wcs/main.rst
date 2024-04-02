@@ -25,7 +25,8 @@ For each observing mode, determined by the value of ``EXP_TYPE`` in the science 
 ``assign_wcs`` retrieves reference files from CRDS and creates a pipeline of transforms from
 input frame ``detector`` to a frame ``v2v3``. This part of the WCS pipeline may include
 intermediate coordinate frames. The basic WCS keywords are used to create
-the transform from frame ``v2v3`` to frame ``world``.
+the transform from frame ``v2v3`` to frame ``world``. All of this information is used to
+create and populate the WCS object for the exposure.
 
 For image display with software like DS9 that relies on specific WCS information, a SIP-based
 approximation to the WCS is fit. The results are FITS keywords stored in
@@ -33,20 +34,17 @@ approximation to the WCS is fit. The results are FITS keywords stored in
 for display purposes. This step, which occurs for imaging modes, is performed by default, but
 can be switched off, and parameters controlling the SIP fit can also be adjusted.
 
-For each exposure, ``assign_wcs`` uses reference files and WCS header keywords
-to create the WCS object. What reference files are retrieved
-from CRDS is determined based on `EXP_TYPE` and other keywords in the science file header.
-
-The ``assign_wcs`` step can accept the single slope image that is the result of averaging
-over all integrations or a 3D cube of integrations in the case of TSO exposures.
+The ``assign_wcs`` step can accept either a ``rate`` product, which is the result of averaging
+over all integrations in an exposure, or a ``rateints`` product, which is a 3D cube of
+per-integration images.
 
 The ``assign_wcs`` step is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
 uses `asdf <http://asdf.readthedocs.io/en/latest/>`__.
 
 .. Note:: In addition to CRDS reference files, applying ``assign_wcs`` to NIRSpec MOS
-   exposures depends critically on an MSA meta data file to provide information
+   exposures depends critically on an MSA metadata file to provide information
    for MOS slitlets in use and their constituent shutters. See :ref:`msa_metadata <msa_metadata>`
-   for detailed information about the MSA meta data files and their contents.
+   for detailed information about the MSA metadata files and their contents.
 
 Basic WCS keywords and the transform from ``v2v3`` to ``world``
 ---------------------------------------------------------------
