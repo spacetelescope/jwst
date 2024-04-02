@@ -123,7 +123,7 @@ subsequent processing steps. The list of ``Slit`` objects is attached to the
 data model for the exposure being processed and passed along to all subsequent
 calibration steps.
 
-For a given exposure, only the rows of shutter table
+For a given exposure, only the rows of the shutter table
 where the values of `MSAMETID` and `PATT_NUM` in the science exposure match
 the values of `msa_metdata_id` and `dither_point_index`, respectively, are
 loaded.
