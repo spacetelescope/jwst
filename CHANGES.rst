@@ -20,6 +20,11 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+tweakreg
+--------
+
+- Output source catalog file now respects ``output_dir`` parameter. [#8386]
+
 
 1.14.0 (2024-03-29)
 ===================
