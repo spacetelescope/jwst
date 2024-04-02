@@ -181,11 +181,11 @@ to supply custom catalogs.
             m = datamodel_open(m, memmap=self._memmap)
         return m
 
-    def __setitem__(self, index, model):
-        self._models[index] = model
+    #def __setitem__(self, index, model):
+    #    self._models[index] = model
 
-    def __delitem__(self, index):
-        del self._models[index]
+    #def __delitem__(self, index):
+    #    del self._models[index]
 
     def __iter__(self):
         for model in self._models:
