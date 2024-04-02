@@ -6,37 +6,45 @@ Description
 :Alias: assign_wcs
 
 
-``jwst.assign_wcs`` is run in the beginning of the level 2B JWST pipeline.
+The ``assign_wcs`` step is run at the beginning of the Stage 2 pipelines - :ref:`calwebb_image2 <calwebb_image2>`
+and :ref:`calwebb_spec2 <calwebb_spec2>` - for both imaging and spectroscopic exposures.
 It associates a WCS object with each science exposure. The WCS object transforms
 positions in the detector frame to positions in a world coordinate frame - ICRS and wavelength.
 In general there may be intermediate coordinate frames depending on the instrument.
 The WCS is saved in the ASDF extension of the FITS file. It can be accessed as an attribute of
-the meta object when the fits file is opened as a data model.
+the meta object when the FITS file is opened as a data model.
 
 The forward direction of the transforms is from detector to world coordinates
-and the input positions are 0-based.
+and the input pixel coordinates are 0-indexed.
 
-``jwst.assign_wcs`` expects to find the basic WCS keywords in the
-SCI header. Distortion and spectral models are stored in reference files in the
+The ``assign_wcs`` step expects to find the basic WCS keywords in the
+"SCI" extension header of the input FITS file. Distortion and spectral models are stored in reference files in the
 `ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__  format.
 
 For each observing mode, determined by the value of ``EXP_TYPE`` in the science header,
-assign_wcs retrieves reference files from CRDS and creates a pipeline of transforms from
+``assign_wcs`` retrieves reference files from CRDS and creates a pipeline of transforms from
 input frame ``detector`` to a frame ``v2v3``. This part of the WCS pipeline may include
 intermediate coordinate frames. The basic WCS keywords are used to create
-the transform from frame ``v2v3`` to frame ``world``.
+the transform from frame ``v2v3`` to frame ``world``. All of this information is used to
+create and populate the WCS object for the exposure.
 
 For image display with software like DS9 that relies on specific WCS information, a SIP-based
 approximation to the WCS is fit. The results are FITS keywords stored in
 ``model.meta.wcsinfo``. This is not an exact fit, but is accurate to ~0.25 pixel and is sufficient
-for display purposes. This step, which occurs for imaging modes early, is performed by default but
-can be switched off, and parameters controlling the fit can also be adjusted.
+for display purposes. This step, which occurs for imaging modes, is performed by default, but
+can be switched off, and parameters controlling the SIP fit can also be adjusted.
 
+The ``assign_wcs`` step can accept either a ``rate`` product, which is the result of averaging
+over all integrations in an exposure, or a ``rateints`` product, which is a 3D cube of
+per-integration images.
 
-``jwst.assign_wcs`` is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
+The ``assign_wcs`` step is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
 uses `asdf <http://asdf.readthedocs.io/en/latest/>`__.
 
-
+.. Note:: In addition to CRDS reference files, applying ``assign_wcs`` to NIRSpec MOS
+   exposures depends critically on an MSA metadata file to provide information
+   for MOS slitlets in use and their constituent shutters. See :ref:`msa_metadata <msa_metadata>`
+   for detailed information about the MSA metadata files and their contents.
 
 Basic WCS keywords and the transform from ``v2v3`` to ``world``
 ---------------------------------------------------------------
@@ -44,21 +52,21 @@ Basic WCS keywords and the transform from ``v2v3`` to ``world``
 All JWST instruments use the following FITS header keywords to
 define the transform from ``v2v3`` to ``world``:
 
-``RA_REF``, ``DEC_REF`` - a fiducial point on the sky, ICRS, [deg]
+``RA_REF``, ``DEC_REF`` - a fiducial point on the sky, ICRS [deg]
 
-``V2_REF``, ``V3_REF`` - a point in the V2V3 system which maps to ``RA_REF``, ``DEC_REF``, [arcsec]
+``V2_REF``, ``V3_REF`` - a point in the V2V3 system that maps to ``RA_REF``, ``DEC_REF`` [arcsec]
 
-``ROLL_REF`` - local roll angle associated with each aperture, [deg]
+``ROLL_REF`` - local roll angle associated with each aperture [deg]
 
 ``RADESYS`` - standard coordinate system [ICRS]
 
 These quantities are used to create a 3D Euler angle rotation between the V2V3 spherical system,
 associated with the telescope, and a standard celestial system.
 
-For spectroscopic data, ``jwst.assign_wcs`` populates keyword ``DISPAXIS``
+For spectroscopic data, ``assign_wcs`` populates the keyword ``DISPAXIS``
 with an integer value that indicates whether the dispersion direction is
 oriented more nearly along the horizontal (DISPAXIS = 1) or vertical
-(DISPAXIS = 2) direction.
+(DISPAXIS = 2) direction in the image frame.
 
 
 Using the WCS interactively
@@ -76,8 +84,8 @@ corresponding world coordinates. Using MIRI LRS fixed slit as an example:
   >>> print(ra, dec, lam)
       (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
-The WFSS modes for NIRCam and NIRISS have a slightly different calling structure,
-in addition to the (x, y) coordinate, they need to know other information about the
+The WFSS modes for NIRCam and NIRISS have a slightly different calling structure.
+In addition to the (x, y) coordinates, they need to know other information about the
 spectrum or source object. In the JWST backward direction (going from the sky to
 the detector) the WCS model also looks for the wavelength and order and returns
 the (x,y) location of that wavelength+order on the dispersed image and the original
@@ -95,8 +103,8 @@ source pixel location, as entered, along with the order that was specified:
 
 
 The WCS provides access to intermediate coordinate frames
-and transforms between any two frames in the WCS pipeline in forward or
-backward direction. For example, for a NIRSpec fixed slits exposure,
+and transforms between any two frames in the WCS pipeline in the forward or
+backward directions. For example, for a NIRSpec fixed slits exposure,
 which has been through the extract_2d step:
 
 .. doctest-skip::
@@ -107,13 +115,6 @@ which has been through the extract_2d step:
   >>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
   >>> msa2detector(0, 0, 2*10**-6)
       (5042.064255529629, 1119.8937888372516)
-
-For each exposure, assign_wcs uses reference files and WCS header keywords
-to create the WCS object. What reference files are retrieved
-from CRDS is determined based on EXP_TYPE and other keywords in the science file header.
-
-The assign_wcs step can accept the single slope image that is the result of averaging
-over all integrations or a 3D cube of integrations in the case of TSO exposures.
 
 WCS of slitless grism exposures
 -------------------------------
