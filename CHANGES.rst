@@ -1,6 +1,7 @@
 1.14.1 (unreleased)
 ===================
 
+<<<<<<< HEAD
 
 associations
 ------------
@@ -16,6 +17,11 @@ documentation
 -------------
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
+=======
+residual_fringe
+---------------
+- Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
+>>>>>>> 922e2c50c (updates after review)
   
 
 pipeline
