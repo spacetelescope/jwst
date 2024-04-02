@@ -7,6 +7,8 @@ documentation
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
 
+- Added docs for multipreocessing. [#8408]
+
 pipeline
 --------
 
