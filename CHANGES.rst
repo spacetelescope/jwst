@@ -1,7 +1,12 @@
 1.14.1 (unreleased)
 ===================
 
-- 
+ramp_fitting
+------------
+
+- Changed the data type for several variables in ramp_fitting
+  to use uint16 instead of uint8, in order to avoid potential
+  overflow/wraparound problems. [#8377]
 
 1.14.0 (2024-03-29)
 ===================
@@ -23,7 +28,6 @@ ami
 - Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
 
 - Disable ``AmiAverage`` step. [#7862]
-
 
 associations
 ------------
@@ -101,7 +105,6 @@ documentation
 - Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
 
 - Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
-
 
 emicorr
 -------
