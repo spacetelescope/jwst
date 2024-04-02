@@ -1,12 +1,19 @@
 1.14.1 (unreleased)
 ===================
 
+pipeline
+--------
+
+- Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
+  that was causing them not to respect the ``output_file`` parameter. [#8368]
+
 ramp_fitting
 ------------
 
 - Changed the data type for several variables in ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
+
 
 1.14.0 (2024-03-29)
 ===================
