@@ -566,7 +566,7 @@ The following example turns on the step multiprocessing while setting up a log
 file for each run of the pipeline and a text file with the full traceback in case
 there is a crash. Notice only one of the steps has multiprocessing turned on. We
 do not recommend to simultaneously enable both steps to do multiprocessing, as
-this may likely incur in the system running out of memory.
+this may likely lead to running out of system memory.
 
 
 
@@ -631,7 +631,7 @@ this may likely incur in the system running out of memory.
 option setting up a log file for each run of the pipeline and a text file with
 the full traceback in case there is a crash. Notice that the ``import`` statement
 of the pipeline is within the multiprocessing block that gets called by every
-worker. This is to avoid a known memory leackage issue.
+worker. This is to avoid a known memory leak.
 
 
 ::
