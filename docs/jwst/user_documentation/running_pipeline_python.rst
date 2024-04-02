@@ -529,3 +529,196 @@ individual step parameter must be set when using this method, or else the coded
 defaults will be used, which may be inappropriate for the dataset being processed.
 
 See :ref:`call_examples` for more information.
+
+
+.. _multiprocessing:
+
+Multiprocessing
+===============
+
+Python's multiprocessing module explicitly imports and executes a script's
+`__main__` with each and every worker. If `__main__` is not present the behavior is
+undefined. Hence, Python will crash unless the multiprocess code in enclosed in a
+`__main__` block like this:
+
+
+::
+
+    import sys
+
+    def main():
+        [code used in multiprocessing]
+
+    if __name__ = '__main__':
+        sys.exit(main())
+
+
+There are three scenarios to use multiprocessing with the pipeline:
+
+1. Multiprocessing with a pipeline step. At the moment, these steps are
+:ref:`jump_step <jump_step>`, :ref:`ramp_fitting_step <ramp_fitting_step>`,
+and :ref:`wfss_contam_step <wfss_contam_step>`. To enable multiprocessing the
+optional parameters are `max_cores` for the ``jump`` step, and `maximum_cores`
+for the ``ramp_fitting`` and ``wfss_contam`` steps. These parameters can be
+set to `quarter`, `half`, `all`, or `none`, which is the default value.
+
+The following example turns on the step multiprocessing while setting up a log
+file for each run of the pipeline and a text file with the full traceback in case
+there is a crash. Notice only one of the steps has multiprocessing turned on. We
+do not recommend to simultaneously enable both steps to do multiprocessing, as
+this may likely incur in the system running out of memory.
+
+
+
+::
+
+    # SampleScript1
+
+    import os, sys
+    import traceback
+    import configparser
+    from glob import glob
+    from jwst.pipeline import Detector1Pipeline
+
+    files = glob('*uncal.fits')
+    output_dir = '/my_project'
+
+    def mk_stpipe_log_cfg(output_dir, log_name):
+        """
+        Create a configuration file with the name log_name, where
+        the pipeline will write all output.
+        Args:
+            outpur_dir: str, path of the output directory
+            log_name: str, name of the log to record screen output
+        Returns:
+            nothing
+        """
+        config = configparser.ConfigParser()
+        config.add_section("*")
+        config.set("*", "handler", "file:" + log_name)
+        config.set("*", "level", "INFO")
+        pipe_log_config = os.path.join(output_dir, "pipeline-log.cfg")
+        config.write(open(pipe_log_config, "w"))
+
+    def main():
+        for item in files:
+            fle = os.path.basename(item).replace('.fits', '')
+            log_name = os.path.join(output_dir, fle)
+            mk_stpipe_log_cfg(output_dir, log_name+'.log')
+            det1 = Detector1Pipeline()
+            parameter_dict = {"ramp_fit": {"maximum_cores": 'all'}}
+            pipe_success = False
+            print('Running Detector 1 on file: ', item)
+            try:
+                det1.call(item, save_results=True, steps=parameter_dict, output_dir=output_dir, logcfg="pipeline-log.cfg")
+                pipe_success = True
+                print('\n * Pipeline finished for file: ', item, ' \n')
+            except Exception:
+                print('\n *** OH NO! The detector1 pipeline crashed! *** \n')
+                pipe_crash_msg = traceback.print_exc()
+            if not pipe_success:
+                crashfile = open(log_name+'_pipecrash.txt', 'w')
+                print('printing file with crash  message')
+                print(pipe_crash_msg, file=crashfile)
+
+        print('\n * Finished multiprocessing! \n')
+
+    if __name__ == "__main__":
+        main()
+
+
+2. Calling the pipeline using multiprocessing. The following example uses this
+option setting up a log file for each run of the pipeline and a text file with
+the full traceback in case there is a crash. Notice that the ``import`` statement
+of the pipeline is within the multiprocessing block that gets called by every
+worker. This is to avoid a known memory leackage issue.
+
+
+::
+
+    # SampleScript2
+
+    import os
+    import traceback
+    import configparser
+    import multiprocessing
+    from glob import glob
+
+    def mk_stpipe_log_cfg(output_dir, log_name):
+        """
+        Create a configuration file with the name log_name, where
+        the pipeline will write all output.
+        Args:
+            outpur_dir: str, path of the output directory
+            log_name: str, name of the log to record screen output
+        Returns:
+            nothing
+        """
+        config = configparser.ConfigParser()
+        config.add_section("*")
+        config.set("*", "handler", "file:" + log_name)
+        config.set("*", "level", "INFO")
+        pipe_log_config = os.path.join(output_dir, "pipeline-log.cfg")
+        config.write(open(pipe_log_config, "w"))
+
+    def run_det1(uncal_file, output_dir):
+        """
+        Run the Detector1 pipeline on the given file.
+        Args:
+            uncal_file: str, name of uncalibrated file to run
+            outpur_dir: str, path of the output directory
+        Returns:
+            nothing
+        """
+        log_name = os.path.basename(uncal_file).replace('.fits', '')
+        mk_stpipe_log_cfg(output_dir, log_name+'.log')
+        from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
+        pipe_success = False
+        try:
+            det1 = Detector1Pipeline()
+            det1.call(uncal_file, output_dir=output_dir, logcfg="pipeline-log.cfg", save_results=True)
+            pipe_success = True
+            print('\n * Pipeline finished for file: ', uncal_file, ' \n')
+        except Exception:
+            print('\n *** OH NO! The detector1 pipeline crashed! *** \n')
+            pipe_crash_msg = traceback.print_exc()
+        if not pipe_success:
+            crashfile = open(log_name+'_pipecrash.txt', 'w')
+            print('Printing file with full traceback')
+            print(pipe_crash_msg, file=crashfile)
+
+    def main():
+        input_data_dir = '/my_project_dir'
+        output_dir = input_data_dir
+
+        # get the files to run
+        files_to_run = glob(os.path.join(input_data_dir, '*_uncal.fits'))
+        print('Will run the pipeline on {} files'.format(len(files_to_run)))
+
+        # the output list should be the same length as the files to run
+        outptd = [output_dir for _ in range(len(files_to_run))]
+
+        # get the cores to use
+        cores2use = int(os.cpu_count()/2)   # half of all available cores
+        print('* Using ', cores2use, ' cores for multiprocessing.')
+
+        # set the pool and run multiprocess
+        p = multiprocessing.Pool(cores2use)
+        p.starmap(run_det1, zip(files_to_run, outptd))
+        p.close()
+        p.join()
+
+    if __name__ == '__main__':
+        multiprocessing.freeze_support()
+        main()
+        print('\n * Finished multiprocessing! \n')
+
+
+3. Using both, calling the pipeline with multiprocessing and turning on a step
+multiprocessing parameter. This scenario is the same as `SampleScript2` except
+with adding and calling the parameter dictionary `parameter_dict` in
+`SampleScript1`. However, this scenario will likely crash if both
+multiprocessing options are set to use all the cores, hence we recommend to
+set both to half or less. Nonetheless, we recommend not enabling step
+multiprocessing for parallel pipeline runs to avoid potentially running
+out of memory.
