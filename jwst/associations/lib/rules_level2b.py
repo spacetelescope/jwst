@@ -304,9 +304,29 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
+                    #  Allow either any background, or ensure imprint and science members
+                    #  match on mosaic tile number and dither pointing position.
                     Constraint_Background(),
-                    Constraint_Imprint(),
-                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                    Constraint(
+                        [
+                            Constraint(
+                                [
+                                    Constraint_Imprint(),
+                                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                                ],
+                                reduce=Constraint.any
+                            ),
+                            DMSAttrConstraint(
+                                name='mostilno',
+                                sources=['mostilno']
+                            ),
+                            DMSAttrConstraint(
+                                name='dithptin',
+                                sources=['dithptin']
+                            )
+                        ],
+                        reduce=Constraint.all
+                    ),
                 ],
                 reduce=Constraint.any
             ),
