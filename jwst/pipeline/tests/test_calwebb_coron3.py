@@ -2,48 +2,46 @@ import pytest
 
 from stdatamodels.jwst.datamodels import CubeModel
 
-from jwst.pipeline.calwebb_coron3 import to_container
+from jwst.pipeline.calwebb_coron3 import to_models
 
 
-# Generate data
-def make_container():
+CUBE_SIZE = 5
+
+@pytest.fixture
+def cube():
+    return CubeModel((CUBE_SIZE, CUBE_SIZE, CUBE_SIZE))
+
+
+@pytest.fixture
+def cube_models(cube):
     """Create the container to test"""
-    size = 5
-    cube = CubeModel((size, size, size))
     cube.meta.target.proposer_name = 'JWST regression test'
-    container = to_container(cube)
-    return cube, container
+    return to_models(cube)
 
 
-cube, container = make_container()
-models = [
-    (cube, model)
-    for model in container
-]
+@pytest.fixture(params=range(CUBE_SIZE))
+def single_cube_model(request, cube_models):
+    return cube_models[request.param]
 
 
-@pytest.mark.parametrize('cube, container', [(cube, container)])
-def test_container_shape(cube, container):
+def test_container_shape(cube, cube_models):
     """Test container shape"""
-    assert len(container) == cube.shape[0]
+    assert len(cube_models) == cube.shape[0]
 
 
-@pytest.mark.parametrize('cube, model', models)
-def test_meta(cube, model):
+def test_meta(cube, single_cube_model):
     """Test meta equivalency"""
-    assert model.meta.target.proposer_name == cube.meta.target.proposer_name
+    assert single_cube_model.meta.target.proposer_name == cube.meta.target.proposer_name
 
 
 @pytest.mark.parametrize('array', ['data', 'dq', 'err'])
-@pytest.mark.parametrize('cube, model', models)
-def test_shape(cube, model, array):
+def test_shape(cube, single_cube_model, array):
     """Test array shapes"""
-    assert model[array].shape == cube[array][0].shape
+    assert single_cube_model[array].shape == cube[array][0].shape
 
 
 @pytest.mark.parametrize('array', ['zeroframe', 'area', 'con', 'wht'])
-@pytest.mark.parametrize('cube, model', models)
-def test_nonexistent_arrays(cube, model, array):
+def test_nonexistent_arrays(cube, single_cube_model, array):
     """Test for non-existant arrays"""
     with pytest.raises(AttributeError):
-        model.getarray_noinit(array)
+        single_cube_model.getarray_noinit(array)

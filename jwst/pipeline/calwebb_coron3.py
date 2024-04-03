@@ -19,10 +19,10 @@ from ..resample import resample_step
 __all__ = ['Coron3Pipeline']
 
 
-def to_container(model):
-    """Convert to a ModelContainer of ImageModels for each plane"""
+def to_models(model):
+    """Convert to a list of ImageModels for each plane"""
 
-    container = ModelContainer()
+    models = []
     for plane in range(model.shape[0]):
         image = datamodels.ImageModel()
         for attribute in [
@@ -38,8 +38,8 @@ def to_container(model):
             image.meta.wcs = model.meta.wcs
         except AttributeError:
             pass
-        container.append(image)
-    return container
+        models.append(image)
+    return models
 
 
 class Coron3Pipeline(Pipeline):
@@ -86,6 +86,7 @@ class Coron3Pipeline(Pipeline):
         asn_exptypes = ['science', 'psf']
 
         # Create a DM object using the association table
+        # FIXME this opens all models just to get the asn_table?? input_models is never indexed
         input_models = datamodels.open(user_input, asn_exptypes=asn_exptypes)
         acid = input_models.meta.asn_table.asn_id
 
@@ -156,7 +157,7 @@ class Coron3Pipeline(Pipeline):
 
         # Call the sequence of steps: outlier_detection, align_refs, and klip
         # once for each input target exposure
-        resample_input = ModelContainer()
+        resample_input = []
         for target_file in targ_files:
             with datamodels.open(target_file) as target:
 
@@ -187,8 +188,8 @@ class Coron3Pipeline(Pipeline):
                 )
 
                 # Split out the integrations into separate models
-                # in a ModelContainer to pass to `resample`
-                for model in to_container(psf_sub):
+                # to pass to `resample`
+                for model in to_models(psf_sub):
                     resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
