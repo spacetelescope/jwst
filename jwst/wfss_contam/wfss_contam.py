@@ -182,11 +182,12 @@ def contam_corr(input_model, waverange, max_cores, n_sources=None, source_0=0):
         cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
         new_slit = datamodels.SlitModel(data=cutout)
         # TO DO:
-        # some of this slit info is wrong, because output slit has different size that input slit now
-        # other problems may be caused by output slit having different size when subtracting real data
-        # need to fix this
+        # not sure if the slit metadata is getting transferred properly
         copy_slit_info(slit, new_slit) 
         slits.append(new_slit)
+
+        # Subtract the cutout from the source slit
+        slit.data -= cutout
 
     # Save the contamination estimates for all slits
     contam_model.slits.extend(slits)
