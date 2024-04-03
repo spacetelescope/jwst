@@ -241,8 +241,8 @@ def split_container(container):
     """
     asn = container.meta.asn_table.instance
 
-    background = ModelContainer()
-    science = ModelContainer()
+    background = []
+    science = []
 
     for model in container:
         exptype = model.meta.asn.exptype.lower()
@@ -250,6 +250,9 @@ def split_container(container):
             science.append(model)
         elif exptype == 'background':
             background.append(model)
+
+    background = ModelContainer(background)
+    science = ModelContainer(science)
 
     # Pass along the association table to the output science container
     science.meta.asn_table = {}
