@@ -112,13 +112,19 @@ class ResampleSpecStep(ResampleStep):
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
 
-        # populate the result wavelength attribute
+        # populate the result wavelength attribute for MultiSlitModel
         if isinstance(result, MultiSlitModel):
             for slit_idx, slit in enumerate(result.slits):
                 result_wl = result.slits[slit_idx].wavelength
                 if len(result_wl) == 0 or np.all(result_wl == 0.0):
                     wl_array = get_wavelengths(result.slits[slit_idx])
                     result.slits[slit_idx].wavelength = wl_array
+        else:
+            # populate the result wavelength attribute for SlitModel
+            result_wl = result.wavelength
+            if len(result_wl) == 0 or np.all(result_wl == 0.0):
+                wl_array = get_wavelengths(result)
+                result.wavelength = wl_array
 
         return result
 
