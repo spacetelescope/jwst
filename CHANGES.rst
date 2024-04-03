@@ -14,6 +14,7 @@ associations
 
 documentation
 -------------
+
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
 
@@ -34,7 +35,8 @@ ramp_fitting
   
  residual_fringe
 ---------------
-- Using DQ plane and exclude pixels marked as DO_NOT_USE in correction. [#8381]
+
+- Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
 
 
 tweakreg
