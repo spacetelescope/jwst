@@ -9,7 +9,6 @@ from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
 from jwst.lib.wcs_utils import get_wavelengths
 
-import numpy as np
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
