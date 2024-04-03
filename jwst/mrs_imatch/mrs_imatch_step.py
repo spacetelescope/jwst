@@ -42,7 +42,7 @@ class MRSIMatchStep(Step):
         for m in all_models2d:
             ch = m.meta.instrument.channel
             if ch not in chm:
-                chm[ch] = ModelContainer(iscopy=True)
+                chm[ch] = []
             chm[ch].append(m)
 
         # check that channel combinations are reasonable, in particular that
