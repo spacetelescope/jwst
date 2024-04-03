@@ -310,5 +310,3 @@ class OutlierDetectionIFU(OutlierDetection):
                 total_bad = num_above + nadditional
                 percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
                 log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
-                # update model
-                self.input_models[i] = model
