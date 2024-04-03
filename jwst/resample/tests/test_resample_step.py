@@ -470,9 +470,7 @@ def test_resample_variance(nircam_rate, n_images):
     im.err += err
     im.meta.filename = "foo.fits"
 
-    c = ModelContainer()
-    for n in range(n_images):
-        c.append(im.copy())
+    c = ModelContainer([im.copy() for _ in range(n_images)])
 
     result = ResampleStep.call(c, blendheaders=False)
 

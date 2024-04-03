@@ -182,7 +182,7 @@ class ResampleData:
             output_pix_area * np.rad2deg(3600)**2
         )
 
-        self.output_models = ModelContainer(open_models=False)
+        self.output_models = []
 
     def do_drizzle(self):
         """Pick the correct drizzling mode based on self.single
@@ -303,7 +303,7 @@ class ResampleData:
             output_model.data *= 0.
             output_model.wht *= 0.
 
-        return self.output_models
+        return ModelContainer(self.output_models)
 
     def resample_many_to_one(self):
         """Resample and coadd many inputs to a single output.

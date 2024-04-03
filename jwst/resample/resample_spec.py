@@ -101,7 +101,7 @@ class ResampleSpecData(ResampleData):
         self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
         self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
-        self.output_models = ModelContainer()
+        self.output_models = []
 
         log.info(f"Driz parameter kernal: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
