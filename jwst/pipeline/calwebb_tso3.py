@@ -5,8 +5,6 @@ from astropy.table import vstack
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
-
 from ..stpipe import Pipeline
 
 from ..outlier_detection import outlier_detection_step
@@ -90,9 +88,9 @@ class Tso3Pipeline(Pipeline):
             # Perform regular outlier detection
             if not self.scale_detection:
 
-                # Convert CubeModel into ModelContainer of 2-D DataModels to
+                # Convert CubeModel into a list of 2-D DataModels to
                 # use as input to outlier detection step
-                input_2dmodels = ModelContainer()
+                input_2dmodels = []
                 for i in range(cube.data.shape[0]):
                     # convert each plane of data cube into its own array
                     image = datamodels.ImageModel(data=cube.data[i],
