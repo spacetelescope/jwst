@@ -130,8 +130,8 @@ class Coron3Pipeline(Pipeline):
         for member in psf_files + targ_files:
             self.prefetch(member)
 
-        # Assemble all the input psf files into a single ModelContainer
-        psf_models = ModelContainer()
+        # Assemble all the input psf files into a list
+        psf_models = []
         for i in range(len(psf_files)):
             psf_input = datamodels.CubeModel(psf_files[i])
             psf_models.append(psf_input)
@@ -150,7 +150,6 @@ class Coron3Pipeline(Pipeline):
 
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs(psf_models)
-        psf_models.close()
 
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix='psfstack')
