@@ -24,6 +24,7 @@ from ..resample import resample_spec_step
 from ..combine_1d import combine_1d_step
 from ..photom import photom_step
 from ..spectral_leak import spectral_leak_step
+from ..pixel_replace import pixel_replace_step
 
 __all__ = ['Spec3Pipeline']
 
@@ -60,6 +61,7 @@ class Spec3Pipeline(Pipeline):
         'master_background': master_background_step.MasterBackgroundStep,
         'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
+        'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep,
@@ -236,7 +238,7 @@ class Spec3Pipeline(Pipeline):
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
-
+                result = self.pixel_replace(result)
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:

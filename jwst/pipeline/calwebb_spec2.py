@@ -292,12 +292,14 @@ class Spec2Pipeline(Pipeline):
 
             # Call the resample_spec step for 2D slit data
             resampled = calibrated.copy()
+            resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
         elif is_nrs_slit_linelamp(calibrated):
 
             # Call resample_spec for NRS 2D line lamp slit data
             resampled = calibrated.copy()
+            resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
         elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
@@ -307,6 +309,7 @@ class Spec2Pipeline(Pipeline):
             # wavelength bands
 
             resampled = calibrated.copy()
+            resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], suffix='s3d')
@@ -491,7 +494,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.wfss_contam(calibrated)
         calibrated = self.photom(calibrated)
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -509,7 +511,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -525,7 +526,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.fringe(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -539,6 +539,5 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
         calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
