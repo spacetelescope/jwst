@@ -1,6 +1,4 @@
-#
-#  Top level module for WFSS contamination correction.
-#
+import matplotlib.pyplot as plt
 import logging
 import multiprocessing
 import numpy as np
@@ -8,13 +6,12 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from .observations import Observation
-from .sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def contam_corr(input_model, waverange, photom, max_cores):
+def contam_corr(input_model, waverange, max_cores, n_sources=None, source_0=0):
     """
     The main WFSS contamination correction function
 
@@ -24,14 +21,18 @@ def contam_corr(input_model, waverange, photom, max_cores):
         Input data model containing 2D spectral cutouts
     waverange : `~jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
-    photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
-        Photom (flux cal) reference file model
     max_cores : string
         Number of cores to use for multiprocessing. If set to 'none'
         (the default), then no multiprocessing will be done. The other
         allowable values are 'quarter', 'half', and 'all', which indicate
         the fraction of cores to use for multi-proc. The total number of
         cores includes the SMT cores (Hyper Threading for Intel).
+    n_sources : int
+        Number of sources to simulate. If None, then all sources in the
+        input model will be simulated. This is primarily useful for testing.
+    source_0 : int
+        Source ID to start with when selecting sources to simulate. This
+        is primarily useful for testing.
 
     Returns
     -------
@@ -43,8 +44,6 @@ def contam_corr(input_model, waverange, photom, max_cores):
         Contamination estimate images for each source slit
 
     """
-    n_sources = 5  # number of sources to simulate, for testing. note machine has 12 cores
-    source_0 = 2620  # source ID to start with
 
     # Determine number of cpu's to use for multi-processing
     if max_cores == 'none':
@@ -104,34 +103,32 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # Load lists of wavelength ranges and flux cal info for all orders
     wmin = {}
     wmax = {}
-    sens_waves = {}
-    sens_response = {}
     for order in spec_orders:
         wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
         wmin[order] = wavelength_range[order][0]
         wmax[order] = wavelength_range[order][1]
-        # Load the sensitivity (inverse flux cal) data for this mode and order
-        sens_waves[order], sens_response[order] = get_photom_data(photom, filter_kwd, pupil_kwd, order)
     log.debug(f"wmin={wmin}, wmax={wmax}")
 
-    # Initialize the simulated image object
+    # for testing, select a subset of the brightest sources, as extracted in extract2d
+    ids_in_extract2d = np.array([slit.source_id for slit in output_model.slits])
+    good = (ids_in_extract2d >= source_0)
+    selected_IDs = list(ids_in_extract2d[good])[:n_sources]
     simul_all = None
     obs = Observation(image_names, seg_model, grism_wcs, filter_name,
-                      boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus)
+                      boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus,
+                      ID=selected_IDs)
     
-    # for testing, select a subset of the brightest sources, as extracted in extract2d
-    ids_in_extract2d = np.array(sorted([slit.source_id for slit in output_model.slits]))
-    good = (ids_in_extract2d >= source_0)
-    obs.IDs = list(ids_in_extract2d[good][:n_sources])
-    log.info(f"Simulating only {n_sources} sources starting at sid {source_0}")
-    print(obs.IDs)
+    good_slits = [slit for slit in output_model.slits if slit.source_id in obs.IDs]
+    #output_model.slits = good_slits #not sure why, but this fails to index properly
+    output_model = datamodels.MultiSlitModel()
+    output_model.slits.extend(good_slits)
+    log.info(f"Simulating only the first {n_sources} sources starting at index {source_0}")
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
 
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order],
-                         sens_response[order])
+        obs.disperse_all(order, wmin[order], wmax[order])
 
         # Accumulate result for this order into the combined image
         if simul_all is None:
@@ -144,7 +141,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
     simul_model.update(input_model, only="PRIMARY")
 
     # save the simulation multislitmodel
-    obs.simul_slits.save("simulated_slits.fits")
+    obs.simul_slits.save("simulated_slits.fits", overwrite=True)
+
+    # need to re-make these now that I changed disperse_chunk
     simul_slit_sids = np.array(obs.simul_slits_sid)
     simul_slit_orders = np.array(obs.simul_slits_order)
 
@@ -152,31 +151,37 @@ def contam_corr(input_model, waverange, photom, max_cores):
     log.info("Creating contamination image for each individual source")
     contam_model = datamodels.MultiSlitModel()
     contam_model.update(input_model)
-    print('number of slits in output model', len(output_model.slits))
     slits = []
     for slit in output_model.slits:
 
-        # Create simulated spectrum for this source only
+        # Retrieve simulated slit for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
         good = (simul_slit_sids == sid) * (simul_slit_orders == order)
         if not any(good):
             continue
         else:
-            print('Processing source', sid, 'order', order)
+            print('Subtracting contamination for source', sid, 'order', order)
         
         good_idx = np.where(good)[0][0]
         this_simul = obs.simul_slits.slits[good_idx]
 
-        # Contamination estimate is full simulated image minus this source
-        # cutting out the region and then subtracting
-        x1 = this_simul.xstart - 1
-        y1 = this_simul.ystart - 1
-        this_field = simul_all[y1:y1 + this_simul.ysize, x1:x1 + this_simul.xsize]
-        contam = this_field - this_simul.data
 
-        # Create a new slit model for the contamination estimate
-        new_slit = datamodels.SlitModel(data=contam)
+        fullframe_sim = np.zeros(obs.dims)
+        y0 = this_simul.ystart 
+        x0 = this_simul.xstart 
+        #print(obs.dims, this_simul.data.shape, slit.data.shape)
+        #print(y0, x0)
+        fullframe_sim[y0:y0 + this_simul.ysize, x0:x0 + this_simul.xsize] = this_simul.data
+        contam = simul_all - fullframe_sim
+
+        # Create a cutout of the contam image that matches the extent
+        # of the source slit
+        x1 = slit.xstart - 1
+        y1 = slit.ystart - 1
+        cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
+        new_slit = datamodels.SlitModel(data=cutout)
+        # TO DO:
         # some of this slit info is wrong, because output slit has different size that input slit now
         # other problems may be caused by output slit having different size when subtracting real data
         # need to fix this
@@ -185,6 +190,9 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
     # Save the contamination estimates for all slits
     contam_model.slits.extend(slits)
+    print('number of slits in contam model', len(contam_model.slits))
+    print('number of slits in output model', len(output_model.slits))
+    print('number of slits in simul model', len(obs.simul_slits.slits))
 
     # at what point does the output model get updated with the contamination-corrected data?
 

@@ -22,7 +22,7 @@ class WfssContamStep(Step):
         skip = boolean(default=True)
     """
 
-    reference_file_types = ['photom', 'wavelengthrange']
+    reference_file_types = ['wavelengthrange']
 
     def process(self, input_model, *args, **kwargs):
 
@@ -35,15 +35,11 @@ class WfssContamStep(Step):
             self.log.info(f'Using WAVELENGTHRANGE reference file {waverange_ref}')
             waverange_model = datamodels.WavelengthrangeModel(waverange_ref)
 
-            # Get the photom ref file
-            photom_ref = self.get_reference_file(dm, 'photom')
-            self.log.info(f'Using PHOTOM reference file {photom_ref}')
-            photom_model = datamodels.open(photom_ref)
-
             result, simul, contam = wfss_contam.contam_corr(dm,
                                                             waverange_model,
-                                                            photom_model,
-                                                            max_cores)
+                                                            max_cores,
+                                                            n_sources=12,
+                                                            source_0=0)
 
             # Save intermediate results, if requested
             if self.save_simulated_image:

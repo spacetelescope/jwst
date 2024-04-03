@@ -489,8 +489,8 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.fringe(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
-        calibrated = self.wfss_contam(calibrated)
         calibrated = self.photom(calibrated)
+        calibrated = self.wfss_contam(calibrated)
         calibrated = self.pixel_replace(calibrated)
 
         return calibrated
