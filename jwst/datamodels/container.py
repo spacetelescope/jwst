@@ -19,7 +19,6 @@ __doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
-_ONE_MB = 1 << 20
 RECOGNIZED_MEMBER_FIELDS = ['group_id']
 
 # Configure logging
@@ -139,13 +138,7 @@ to supply custom catalogs.
 
         self._memmap = kwargs.get("memmap", False)
 
-        if init is None:
-            # Don't populate the container with models
-            pass
-        elif isinstance(init, fits.HDUList):
-            model = [datamodel_open(init, memmap=self._memmap)]
-            self._models.append(model)
-        elif isinstance(init, list):
+        if isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
