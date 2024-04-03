@@ -141,14 +141,15 @@ class MasterBackgroundStep(Step):
 
                     background_data.close()
 
-                    result = ModelContainer()
-                    result.update(input_data)
+                    result = []
                     background_2d_collection = ModelContainer()
                     background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
                         background_2d_collection.append(background_2d)
+                    result = ModelContainer(result)
+                    result.update(input_data)
 
                     input_data.close()
 
@@ -304,10 +305,11 @@ def subtract_2d_background(source, background):
 
     # Handle containers of many datamodels
     if isinstance(source, ModelContainer):
-        result = ModelContainer()
-        result.update(source)
+        result = []
         for model, bg in zip(source, background):
             result.append(_subtract_2d_background(model, bg))
+        result = ModelContainer(result)
+        result.update(source)
 
     # Handle single datamodels
     elif isinstance(source, (datamodels.ImageModel, datamodels.IFUImageModel, datamodels.MultiSlitModel)):

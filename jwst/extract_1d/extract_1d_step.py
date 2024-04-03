@@ -304,7 +304,7 @@ class Extract1dStep(Step):
                 # --------------------------------------------------------------
                 # Data is a ModelContainer but is not WFSS
                 else:
-                    result = ModelContainer()
+                    result = []
                     for model in input_model:
                         # Get the reference file names
                         extract_ref = self.get_reference_file(model, 'extract1d')
@@ -340,6 +340,7 @@ class Extract1dStep(Step):
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
                         result.append(temp)
                         del temp
+                    result = ModelContainer(result)
             # ------------------------------------------------------------------------
             # Still in ModelContainer type, but only 1 model
             elif len(input_model) == 1:
