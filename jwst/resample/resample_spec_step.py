@@ -115,12 +115,10 @@ class ResampleSpecStep(ResampleStep):
         # populate the result wavelength attribute for MultiSlitModel
         if isinstance(result, MultiSlitModel):
             for slit_idx, slit in enumerate(result.slits):
-                result_wl = result.slits[slit_idx].wavelength
                 wl_array = get_wavelengths(result.slits[slit_idx])
                 result.slits[slit_idx].wavelength = wl_array
         else:
             # populate the result wavelength attribute for SlitModel
-            result_wl = result.wavelength
             wl_array = get_wavelengths(result)
             result.wavelength = wl_array
 
