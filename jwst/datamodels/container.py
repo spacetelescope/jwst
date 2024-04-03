@@ -45,8 +45,7 @@ class ModelContainer(JwstDataModel, Sequence):
 
         - list: a list of DataModels of any type
 
-        - None: initializes an empty `ModelContainer` instance, to which
-          DataModels can be added via the ``append()`` method.
+        - None: initializes an empty `ModelContainer` instance
 
     iscopy : bool
         Presume this model is a copy. Members will not be closed
@@ -69,7 +68,6 @@ class ModelContainer(JwstDataModel, Sequence):
 
     >>> c = ModelContainer()
     >>> m = datamodels.open('myfile.fits')
-    >>> c.append(m)
 
     Notes
     -----
@@ -196,8 +194,8 @@ to supply custom catalogs.
     #def insert(self, index, model):
     #    self._models.insert(index, model)
 
-    def append(self, model):
-        self._models.append(model)
+    #def append(self, model):
+    #    self._models.append(model)
 
     #def extend(self, model):
     #    self._models.extend(model)
@@ -220,9 +218,9 @@ to supply custom catalogs.
         result._ctx = result
         for m in self._models:
             if isinstance(m, JwstDataModel):
-                result.append(m.copy())
+                result._models.append(m.copy())
             else:
-                result.append(m)
+                result._models.append(m)
         return result
 
     @staticmethod
