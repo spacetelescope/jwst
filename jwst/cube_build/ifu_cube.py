@@ -17,7 +17,6 @@ from stdatamodels.jwst.transforms.models import _toindex
 
 from ..model_blender import blendmeta
 from ..assign_wcs import pointing
-from jwst.datamodels import ModelContainer
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
 from . import cube_build_wcs_util
@@ -792,7 +791,7 @@ class IFUCubeData():
 
         """
         # loop over input models
-        single_ifucube_container = ModelContainer()
+        single_ifucube_models = []
 
         weight_type = 0  # default to emsm instead of msm
         if self.weighting == 'msm':
@@ -896,11 +895,11 @@ class IFUCubeData():
                 result = self.setup_final_ifucube_model(input_model)
                 ifucube_model, status = result
 
-                single_ifucube_container.append(ifucube_model)
+                single_ifucube_models.append(ifucube_model)
                 if status != 0:
                     log.debug("Possible problem with single ifu cube, no valid data in cube")
                 j = j + 1
-        return single_ifucube_container
+        return single_ifucube_models
 
     # **************************************************************************
     def determine_cube_parameters_internal(self):

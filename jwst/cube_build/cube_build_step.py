@@ -318,8 +318,8 @@ class CubeBuildStep (Step):
         if not self.single:
             self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
 
-        # ModelContainer of ifucubes
-        cube_container = ModelContainer()
+        # list of ifucubes
+        cube_models = []
         status_cube = 0
 
         # for single type cubes num_cubes always = 1, Looping over
@@ -366,7 +366,7 @@ class CubeBuildStep (Step):
 
             if self.single:
                 self.output_file = None
-                cube_container = thiscube.build_ifucube_single()
+                cube_models = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(cube_container))
 
@@ -379,7 +379,7 @@ class CubeBuildStep (Step):
                 if status == 1:
                     status_cube = 1
 
-                cube_container.append(result)
+                cube_models.append(result)
                 del result
             del thiscube
 
@@ -387,7 +387,7 @@ class CubeBuildStep (Step):
         rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
                    'v3yangle', 'vparity']
 
-        for cube in cube_container:
+        for cube in cube_models:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
@@ -405,7 +405,7 @@ class CubeBuildStep (Step):
             self.skip = True
 
         input_table.close()
-        return cube_container
+        return ModelContainer(cube_models)
 # ******************************************************************************
 
     def read_user_input(self):
