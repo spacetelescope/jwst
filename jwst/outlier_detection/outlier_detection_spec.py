@@ -3,8 +3,6 @@ from functools import partial
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
-
 from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
 
@@ -119,9 +117,7 @@ class OutlierDetectionSpec(OutlierDetection):
                 )
         else:
             # Median image will serve as blot image
-            blot_models = ModelContainer()
-            for i in range(len(self.input_models)):
-                blot_models.append(median_model)
+            blot_models = [median_model] * len(self.input_models)
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image

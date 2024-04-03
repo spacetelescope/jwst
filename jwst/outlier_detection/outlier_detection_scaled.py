@@ -139,7 +139,7 @@ class OutlierDetectionScaled(OutlierDetection):
         # Scale the median image by the initial photometry (only in aperture)
         # to create equivalent of 'blot' images
         # Area outside of aperture in median will remain unchanged
-        blot_models = ModelContainer()
+        blot_models = []
         for i in range(nints):
             scale_factor = float(phot_values[i] / median_phot_value)
             scaled_image = datamodels.ImageModel(init=median_model.data.shape)
@@ -159,7 +159,7 @@ class OutlierDetectionScaled(OutlierDetection):
                 )
                 return output_path
 
-            blot_models.save(make_output_path)
+            ModelContainer(blot_models).save(make_output_path)
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image

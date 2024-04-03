@@ -103,7 +103,7 @@ class OutlierDetection:
             self.input_models = self.inputs
             self.converted = False
         else:
-            self.input_models = ModelContainer()
+            self.input_models = []
             num_inputs = self.inputs.data.shape[0]
             log.debug("Converting CubeModel to ModelContainer with {} images".
                       format(num_inputs))
@@ -116,6 +116,7 @@ class OutlierDetection:
                                               weight_type=self.outlierpars['weight_type'],
                                               good_bits=bits)
                 self.input_models.append(image)
+            self.input_models = ModelContainer(self.input_models)
             self.converted = True
 
     def _get_outlier_pars(self):
@@ -228,9 +229,7 @@ class OutlierDetection:
 
         else:
             # Median image will serve as blot image
-            blot_models = ModelContainer()
-            for i in range(len(self.input_models)):
-                blot_models.append(median_model)
+            blot_models = [median_model] * len(self.input_models)
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
@@ -305,7 +304,7 @@ class OutlierDetection:
         sinscl = self.outlierpars.get('sinscl', 1.0)
 
         # Initialize container for output blot images
-        blot_models = ModelContainer()
+        blot_models = []
 
         log.info("Blotting median")
         for model in self.input_models:
@@ -323,10 +322,11 @@ class OutlierDetection:
             blotted_median.save(model_path)
             log.info(f"Saved model in {model_path}")
 
-            # Append model name to the ModelContainer so it is not passed in memory
+            # Append model name to the list so it is not passed in memory
             blot_models.append(model_path)
 
-        return blot_models
+        # modelcontainer is needed here as blot_models is a list of filenames
+        return ModelContainer(blot_models)
 
     def detect_outliers(self, blot_models):
         """Flag DQ array for cosmic rays in input images.
