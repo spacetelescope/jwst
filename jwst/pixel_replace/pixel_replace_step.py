@@ -84,6 +84,24 @@ class PixelReplaceStep(Step):
 
             if isinstance(input_model, datamodels.ModelContainer):  # calspec3 case for IFU data
                 output_model = input_model.copy()
+                # Setup output path naming if associations are involved.
+                asn_id = None
+                try:
+                    asn_id = self.input_model.meta.asn_table.asn_id
+                except (AttributeError, KeyError):
+                    pass
+                if asn_id is None:
+                    asn_id = self.search_attr('asn_id')
+                if asn_id is not None:
+                    _make_output_path = self.search_attr(
+                        '_make_output_path', parent_first=True
+                    )
+
+                    self._make_output_path = partial(
+                        _make_output_path,
+                        asn_id=asn_id
+                    )
+
                 for i, model in enumerate(input_model):
                     if not isinstance(model, datamodels.IFUImageModel):
                         self.log.error(f'Input is of type {str(type(input_model))} for which')
