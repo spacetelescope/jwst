@@ -1,6 +1,12 @@
 1.14.1 (unreleased)
 ===================
 
+associations
+------------
+
+- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
+  where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
+
 documentation
 -------------
 
