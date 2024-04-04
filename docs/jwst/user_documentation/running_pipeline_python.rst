@@ -570,7 +570,7 @@ optional parameters are `max_cores` for the ``jump`` step, and `maximum_cores`
 for the ``ramp_fitting`` and ``wfss_contam`` steps. These parameters can be
 set to `quarter`, `half`, `all`, or `none`, which is the default value.
 
-The following example script turns on the step multiprocessing. Notice only
+The following example turns on a step's multiprocessing option. Notice only
 one of the steps has multiprocessing turned on. We do not recommend to
 simultaneously enable both steps to do multiprocessing, as this may likely
 lead to running out of system memory.
@@ -684,11 +684,11 @@ worker. This is to avoid a known memory leak.
 
 
 .. warning::
-    Allthough it is technically possible to call the pipeline with
-    multiprocessing as well as turning on a step multiprocessing parameter, we
+    Although it is technically possible to call the pipeline with
+    multiprocessing while also enabling this option in a step, we
     strongly recommend not to do this. This scenario would be the same as
     `SampleScript2` except with adding and calling the parameter dictionary
-    `parameter_dict` in `SampleScript1`. However, this scenario will likely
-    crash if both multiprocessing options are set to use all the cores or less.
-    We recommend not enabling step multiprocessing for parallel pipeline runs
-    to avoid potentially running out of memory.
+    `parameter_dict` in `SampleScript1`. However, it will likely
+    crash if both multiprocessing options are set to use all the cores or even
+    less. We recommend not enabling step multiprocessing for parallel pipeline
+    runs to avoid potentially running out of memory.
