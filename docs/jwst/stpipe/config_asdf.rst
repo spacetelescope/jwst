@@ -238,7 +238,7 @@ requires: ``meta`` and ``history``.
 
 The direct way of creating a parameter reference file is through the
 ``Step.export_config`` method, just as one would to get a basic parameter file.
-The only addition is the argument ``include_meta=True``. For example, to get a
+The only addition is the argument ``include_metadata=True``. For example, to get a
 reference-file ready version of the ``CubeBuildStep``, use the following Python
 code:
 
@@ -246,7 +246,7 @@ code:
 
    >>> from jwst.cube_build import CubeBuildStep
    >>> step = CubeBuildStep()
-   >>> step.export_config('pars-cubebuildstep.asdf', include_meta=True)
+   >>> step.export_config('pars-cubebuildstep.asdf', include_metadata=True)
 
 
 The explanations for the ``meta`` and ``history`` blocks are given below.

@@ -106,9 +106,10 @@ def mkpool(data,
 
     params = params.difference(IGNORE_KEYS)
     params = [item.lower() for item in params]
+    # Make sure there's no duplicates
+    params = list(set(params))
     params.sort()
     defaults = {param: 'null' for param in params}
-
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     # Set default values for user-settable non-header parameters
