@@ -8,7 +8,38 @@ assign_wcs
   of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
   to ensure that iso-lambda is along pixel rows after this change. [#8411]
 
-1.14.0 (2024-03-25)
+associations
+------------
+
+- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
+  where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
+
+documentation
+-------------
+
+- Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
+  [#8399]
+
+pipeline
+--------
+
+- Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
+  that was causing them not to respect the ``output_file`` parameter. [#8368]
+
+ramp_fitting
+------------
+
+- Changed the data type for several variables in ramp_fitting
+  to use uint16 instead of uint8, in order to avoid potential
+  overflow/wraparound problems. [#8377]
+
+tweakreg
+--------
+
+- Output source catalog file now respects ``output_dir`` parameter. [#8386]
+
+
+1.14.0 (2024-03-29)
 ===================
 
 ami
@@ -28,7 +59,6 @@ ami
 - Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
 
 - Disable ``AmiAverage`` step. [#7862]
-
 
 associations
 ------------
@@ -106,7 +136,6 @@ documentation
 - Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
 
 - Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
-
 
 emicorr
 -------

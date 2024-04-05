@@ -21,7 +21,7 @@ def test_exposerr():
         pool=pool
     )
     asns = generated.associations
-    assert len(asns) > 1
+    assert len(asns) == 1
     for asn in asns:
         any_degraded = False
         for product in asn['products']:
