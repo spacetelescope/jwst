@@ -7,6 +7,9 @@ associations
 - Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
   where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
 
+- Match NIRSpec imprint observations to science exposures on mosaic tile location
+  and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
+
 documentation
 -------------
 
