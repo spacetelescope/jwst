@@ -1,6 +1,7 @@
 import time
 import numpy as np
-from multiprocessing import Pool
+import multiprocessing as mp
+import concurrent.futures
 
 from scipy import sparse
 
@@ -11,8 +12,51 @@ from .disperse import dispersed_pixel
 import logging
 import warnings
 
+from photutils.background import Background2D, MedianBackground
+from astropy.stats import SigmaClip
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclude_percentile=30.0):
+    """
+    Simple astropy background subtraction
+
+    Parameters
+    ----------
+    data : np.ndarray
+        2D array of pixel values
+    box_size : tuple
+        Size of box in pixels to use for background estimation. 
+        If not set, defaults to 1/5 of the image size.
+    filter_size : tuple
+        Size of filter to use for background estimation
+    sigma : float
+        Sigma threshold for background clipping
+    exclude_percentile : float
+        Percentage of masked pixels above which box is excluded from background estimation
+
+    Returns
+    -------
+    data : np.ndarray
+        2D array of pixel values with background subtracted
+
+    Notes
+    -----
+    Improper background subtraction in input _i2d image leads to extra flux
+    in the simulated dispersed image, and was one cause of flux scaling issues
+    in a previous version.
+    """
+    if box_size is None:
+        box_size = (int(data.shape[0]/5), int(data.shape[1]/5))
+    sigma_clip = SigmaClip(sigma=sigma)
+    bkg_estimator = MedianBackground()
+    bkg = Background2D(data, (500, 500), filter_size=filter_size,
+                   sigma_clip=sigma_clip, bkg_estimator=bkg_estimator, 
+                   exclude_percentile=exclude_percentile)
+
+    return data - bkg.background
 
 
 class Observation:
@@ -121,8 +165,6 @@ class Observation:
                 self.xs.append(xs)
                 self.ys.append(ys)
 
-        print("length of xs and ys", len(self.xs), len(self.ys))
-
         # Populate lists of direct image flux values for the sources.
         self.fluxes = {}
         for dir_image_name in self.dir_image_names:
@@ -130,6 +172,7 @@ class Observation:
             log.info(f"Using direct image {dir_image_name}")
             with datamodels.open(dir_image_name) as model:
                 dimage = model.data
+                dimage = background_subtract(dimage)
 
                 if self.sed_file is None:
                     # Default pipeline will use sed_file=None, so we need to compute
@@ -160,7 +203,7 @@ class Observation:
                     for i in range(len(self.IDs)):
                         self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
-    def disperse_all(self, order, wmin, wmax, cache=False):
+    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
         """
         Compute dispersed pixel values for all sources identified in
         the segmentation map.
@@ -173,6 +216,10 @@ class Observation:
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
+        sens_waves : float array
+            Wavelength array from photom reference file
+        sens_resp : float array
+            Response (flux calibration) array from photom reference file
         """
         if cache:
             log.debug("Object caching ON")
@@ -195,9 +242,10 @@ class Observation:
                 self.cached_object[i]['maxx'] = []
                 self.cached_object[i]['miny'] = []
                 self.cached_object[i]['maxy'] = []
-            disperse_chunk_args = [i, order, wmin, wmax, 
+
+            disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,
                                    self.IDs[i], self.xs[i], self.ys[i], 
-                                   self.fluxes, #check shape!
+                                   self.fluxes, 
                                    self.seg_wcs, self.grism_wcs, self.dims, 
                                    self.extrapolate_sed, self.xoffset, self.yoffset]
             pool_args.append(disperse_chunk_args)
@@ -206,11 +254,17 @@ class Observation:
         t0 = time.time()
         if self.max_cpu > 1:
             log.info(f"Using multiprocessing with {self.max_cpu} cores to compute dispersion")
-            with Pool(self.max_cpu) as mypool:
+            ctx = mp.get_context("forkserver")
+            with ctx.Pool(self.max_cpu) as mypool:
                 disperse_chunk_output = mypool.starmap(self.disperse_chunk, pool_args)
+            #with concurrent.futures.ProcessPoolExecutor(max_workers=self.max_cpu) as executor:
+            #    these_futures = [executor.submit(self.disperse_chunk, *args) for args in pool_args]
+            #    concurrent.futures.wait(these_futures)
+            #    disperse_chunk_output = [future.result() for future in these_futures]
         else:
+            disperse_chunk_output = []
             for i in range(len(self.IDs)):
-                disperse_chunk_output = self.disperse_chunk(*pool_args[i])
+                disperse_chunk_output.append(self.disperse_chunk(*pool_args[i]))
         t1 = time.time()
         log.info(f"Wall clock time for disperse_chunk order {order}: {(t1-t0):.1f} sec")
         
@@ -225,7 +279,7 @@ class Observation:
                 self.simul_slits_sid.append(this_sid)
 
     @staticmethod
-    def disperse_chunk(c, order, wmin, wmax, sid, xs, ys, fluxes_dict, seg_wcs, grism_wcs, dims, extrapolate_sed, xoffset, yoffset):
+    def disperse_chunk(c, order, wmin, wmax, sens_waves, sens_resp, sid, xs, ys, fluxes_dict, seg_wcs, grism_wcs, dims, extrapolate_sed, xoffset, yoffset):
         """
         Method that computes dispersion for a single source.
         To be called after create_pixel_list().
@@ -241,6 +295,10 @@ class Observation:
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
+        sens_waves : float array
+            Wavelength array from photom reference file
+        sens_resp : float array
+            Response (flux calibration) array from photom reference file        
         sid : int
             Source ID
         xs : np.ndarray
@@ -288,8 +346,8 @@ class Observation:
         log.debug(f"source {sid} contains {len(xs)} pixels")
         all_res = []
         for i in range(len(xs)):
-            # Here "i" indexes the pixel list for the object
-            # being processed, as opposed to the ID number of the object itself
+            # Here "i" indexes the pixel list for the segment
+            # being processed, as opposed to the ID number of the segment
 
             width = 1.0
             height = 1.0
@@ -302,7 +360,7 @@ class Observation:
             ]))
 
             pars_i = (xc, yc, width, height, lams, fluxes, order,
-                      wmin, wmax,
+                      wmin, wmax, sens_waves, sens_resp,
                       seg_wcs, grism_wcs, i, dims[::-1], 2,
                       extrapolate_sed, xoffset, yoffset)
             with warnings.catch_warnings():

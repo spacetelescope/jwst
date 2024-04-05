@@ -1,13 +1,14 @@
 import numpy as np
 
 from scipy.interpolate import interp1d
+import warnings
 
 from ..lib.winclip import get_clipped_pixels
-#from .sens1d import create_1d_sens
+from .sens1d import create_1d_sens
 
 
 def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    seg_wcs, grism_wcs, ID, naxis,
+                    sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
                     oversample_factor=2, extrapolate_sed=False, xoffset=0,
                     yoffset=0):
     """
@@ -155,7 +156,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         return None
 
     # compute 1D sensitivity array corresponding to list of wavelengths
-    #sens, no_cal = create_1d_sens(lams, sens_waves, sens_resp)
+    sens, no_cal = create_1d_sens(lams, sens_waves, sens_resp)
 
     # Compute countrates for dispersed pixels. Note that dispersed pixel
     # values are naturally in units of physical fluxes, so we divide out
@@ -163,7 +164,9 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # countrate (DN/s).
     # flux(lams) is either single-valued (for a single direct image) 
     # or an array of the same length as lams (for multiple direct images in different filters)
-    counts = flux(lams) * areas # / sens
-    #counts[no_cal] = 0.  # set to zero where no flux cal info available
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
+        counts = flux(lams) * areas / (sens * oversample_factor)
+    counts[no_cal] = 0.  # set to zero where no flux cal info available
 
     return xs, ys, areas, lams, counts, ID
