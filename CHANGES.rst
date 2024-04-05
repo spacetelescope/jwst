@@ -16,6 +16,12 @@ documentation
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
 
+general
+-------
+
+- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+  ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
 pipeline
 --------
 
