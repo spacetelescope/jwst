@@ -304,7 +304,7 @@ def lrs_distortion(input_model, reference_files):
                                  bounds_error=False, fill_value=np.nan)
 
     # Fit for the wavelength as a function of Y
-    # Reverse the vectors to that yinv is increasing (needed for spline fitting function)
+    # Reverse the vectors so that yinv is increasing (needed for spline fitting function)
     # Spline fit with enforced smoothness
     spl = UnivariateSpline(ycen_subarray[::-1], wavetab[::-1], s=0.002)
     # Evaluate the fit at the y reference points
