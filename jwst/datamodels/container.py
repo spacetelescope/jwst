@@ -138,6 +138,8 @@ to supply custom catalogs.
 
         self._memmap = kwargs.get("memmap", False)
 
+        if init is None:
+            init = []
         if isinstance(init, list):
             self._models = []
             for item in init:
