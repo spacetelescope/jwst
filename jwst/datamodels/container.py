@@ -139,12 +139,15 @@ to supply custom catalogs.
         self._memmap = kwargs.get("memmap", False)
 
         if isinstance(init, list):
-            if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
-                init = [datamodel_open(m, memmap=self._memmap) for m in init]
-            else:
-                raise TypeError("list must contain items that can be opened "
-                                "with jwst.datamodels.open()")
-            self._models = init
+            self._models = []
+            for item in init:
+                if isinstance(item, str):
+                    self._models.append(datamodel_open(item, memmap=self._memmap))
+                elif isinstance(item, JwstDataModel):
+                    self._models.append(item)
+                else:
+                    raise TypeError("list must contain items that can be opened "
+                                    "with jwst.datamodels.open()")
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
