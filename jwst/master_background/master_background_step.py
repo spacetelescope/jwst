@@ -142,14 +142,15 @@ class MasterBackgroundStep(Step):
                     background_data.close()
 
                     result = []
-                    background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
+                    background_2d_collection = []
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
                         background_2d_collection.append(background_2d)
                     result = ModelContainer(result)
                     result.update(input_data)
+                    background_2d_collection = ModelContainer(background_2d_collection)
+                    background_2d_collection.update(input_data)
 
                     input_data.close()
 
